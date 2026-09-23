@@ -145,6 +145,67 @@ const bundleTs: Plugin = {
   }
 }
 
+// Public entry points must not expose react-aria or allotment in their types:
+// consumers do not have them installed and they stay implementation details
+// we bundle.
+const publicTypeEntries = ['components']
+const internalTypePackages =
+  /^(react-aria-components|react-aria|react-stately|allotment|@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/)/
+
+function findInternalTypeImports(root: string): Array<string> {
+  const violations: Array<string> = []
+  const seen = new Set<string>()
+  const queue = publicTypeEntries.map(entry => ({
+    file: path.join(root, `${entry}.d.ts`),
+    chain: [entry]
+  }))
+  while (queue.length > 0) {
+    const {file, chain} = queue.shift()!
+    if (seen.has(file) || !fs.existsSync(file)) continue
+    seen.add(file)
+    const contents = fs.readFileSync(file, 'utf-8')
+    const specifiers = contents.matchAll(
+      /(?:from\s+|import\s*\(\s*)['"]([^'"]+)['"]/g
+    )
+    for (const [, specifier] of specifiers) {
+      if (internalTypePackages.test(specifier)) {
+        violations.push(`${chain.join(' > ')} imports ${specifier}`)
+        continue
+      }
+      const target = specifier.startsWith('.')
+        ? path.join(path.dirname(file), specifier)
+        : specifier.startsWith('alinea/')
+          ? path.join(root, specifier.slice('alinea/'.length))
+          : specifier.startsWith('#/')
+            ? path.join(root, specifier.slice('#/'.length))
+            : undefined
+      if (!target) continue
+      const declaration = `${target.replace(/\.js$/, '')}.d.ts`
+      queue.push({
+        file: declaration,
+        chain: [...chain, path.relative(root, declaration)]
+      })
+    }
+  }
+  return violations
+}
+
+function publicTypes({watch}: {watch: boolean}): Plugin {
+  return {
+    name: 'public-types',
+    setup(build) {
+      build.onEnd(() => {
+        const violations = findInternalTypeImports('./dist')
+        if (violations.length === 0) return
+        console.error(
+          `Public types expose bundled packages:\n  ${violations.join('\n  ')}`
+        )
+        if (!watch) process.exitCode = 1
+      })
+    }
+  }
+}
+
 const checkCycles = process.env.CHECK_CYCLES
 
 const internalPlugin: Plugin = {
@@ -564,6 +625,7 @@ async function build({
     cleanup,
     jsEntry({watch, test, report}),
     bundleTs,
+    publicTypes({watch}),
     ReporterPlugin.configure({name: 'alinea'}),
     runPlugin,
     cjsModules

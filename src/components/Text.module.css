@@ -1,0 +1,72 @@
+.Text {
+  margin: 0;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+
+  &[data-size='xs'] {
+    font-size: 0.6875rem;
+  }
+
+  &[data-size='sm'] {
+    font-size: 0.75rem;
+  }
+
+  &[data-size='lg'] {
+    font-size: 0.9375rem;
+  }
+
+  &[data-weight='regular'] {
+    font-weight: 400;
+  }
+
+  &[data-weight='medium'] {
+    font-weight: 500;
+  }
+
+  &[data-weight='semibold'] {
+    font-weight: 600;
+  }
+
+  &[data-weight='bold'] {
+    font-weight: 700;
+  }
+
+  &[data-color='default'] {
+    color: var(--alinea-fg);
+  }
+
+  &[data-color='muted'] {
+    color: var(--alinea-fg-muted);
+  }
+
+  &[data-color='primary'] {
+    color: var(--alinea-primary-subtle-fg);
+  }
+
+  &[data-color='destructive'] {
+    color: var(--alinea-danger-subtle-fg);
+  }
+
+  &[data-color='warning'] {
+    color: var(--alinea-warning-subtle-fg);
+  }
+
+  &[data-color='success'] {
+    color: var(--alinea-success-subtle-fg);
+  }
+
+  &[data-align='center'] {
+    text-align: center;
+  }
+
+  &[data-align='end'] {
+    text-align: end;
+  }
+
+  &[data-truncate] {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

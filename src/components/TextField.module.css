@@ -1,71 +1,67 @@
 .TextField {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: block;
+}
 
-  .TextField-input,
-  .TextField-multiline-area,
-  .TextField-multiline-shadow {
-    box-sizing: border-box;
-    font: inherit;
-    outline: none;
-    width: 100%;
-    padding: 8px 10px;
-    background-color: var(--alinea-input);
-    border: 1px solid var(--alinea-border);
-    border-radius: 8px;
-    outline: 3px solid transparent;
-    color: var(--alinea-fg);
-    font-size: var(--alinea-font-size-base);
-    line-height: 1.5;
-    transition: var(--alinea-transition);
+.TextFieldGrow {
+  display: grid;
+  width: 100%;
+}
 
-    &::placeholder {
-      color: var(--alinea-input-placeholder);
-    }
+.TextFieldControl {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+  outline: 3px solid transparent;
+  background-color: var(--alinea-input);
+  color: var(--alinea-fg);
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  transition: var(--alinea-transition);
+  transition-property: border-color, outline-color, opacity;
 
-    &[data-hovered] {
-      border-color: var(--alinea-border-hover);
-      outline-color: var(--alinea-ring-subtle);
-    }
-    &[data-focused] {
-      border-color: var(--alinea-border-accent);
-      outline-color: var(--alinea-primary-overlay);
-    }
-    &[data-invalid='true'] {
-      border-color: var(--alinea-border-danger);
-      outline-color: var(--alinea-danger-overlay);
-    }
-    &[disabled] {
-      pointer-events: none;
-      background-color: var(--alinea-input-disabled);
-      color: var(--alinea-fg-disabled);
-      opacity: 0.5;
-    }
-    &[readonly] {
-      pointer-events: none;
-      background-color: var(--alinea-input-disabled);
-      color: var(--alinea-fg-disabled);
-      opacity: 1;
-    }
+  &::placeholder {
+    color: var(--alinea-fg-disabled);
   }
 
-  .TextField-multiline {
-    display: grid;
-    width: 100%;
+  &:hover {
+    border-color: var(--alinea-border-strong);
+    outline-color: var(--alinea-muted);
   }
 
-  .TextField-multiline-area {
+  &:focus {
+    border-color: var(--alinea-primary);
+    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--alinea-danger);
+    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
+  }
+
+  &:disabled,
+  &[readonly] {
+    pointer-events: none;
+    background-color: var(--alinea-bg-muted);
+    color: var(--alinea-fg-disabled);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+
+  .TextFieldGrow & {
     grid-area: 1 / 1 / 2 / 2;
     overflow-x: auto;
     resize: none;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
-  .TextField-multiline-shadow {
-    grid-area: 1 / 1 / 2 / 2;
-    overflow-x: auto;
+  &.is-shadow {
     visibility: hidden;
-    white-space: pre-wrap;
   }
 }

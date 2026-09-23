@@ -15,7 +15,7 @@ import {
   TestEvents
 } from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
-import type {Key} from 'react-aria-components'
+import type {Key} from '#/components.js'
 import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'

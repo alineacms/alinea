@@ -1,2 +1,2 @@
-export {Label as InputLabel} from './components/Label.js'
+export {Field, Field as InputLabel} from './components/Field.js'
 export * from './dashboard/editor/UseField.js'

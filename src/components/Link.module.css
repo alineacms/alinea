@@ -1,20 +1,21 @@
 .Link {
-  outline: none;
-  cursor: pointer;
   position: relative;
-  color: var(--alinea-link);
+  color: var(--alinea-primary-subtle-fg);
   font-size: var(--alinea-font-size-base);
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 2px;
+  outline: none;
+  cursor: pointer;
   transition: var(--alinea-transition);
+  transition-property: color, text-decoration-color;
 
   &[data-variant='underline'] {
     text-decoration-color: currentColor;
   }
 
-  &[data-hovered] {
-    color: var(--alinea-link-hover);
+  &:hover {
+    color: var(--alinea-primary);
     text-decoration-color: currentColor;
 
     &[data-variant='underline'] {
@@ -22,20 +23,22 @@
     }
   }
 
-  &[data-pressed] {
-    color: var(--alinea-link-pressed);
+  &:active {
+    color: var(--alinea-primary);
   }
 
-  &[data-focus-visible]:after {
+  &:focus-visible::after {
     content: '';
     position: absolute;
     inset: -3px -6px;
-    border-radius: 8px;
     border: 2px solid var(--alinea-ring);
+    border-radius: var(--alinea-radius);
   }
 
-  &[data-disabled] {
-    cursor: default;
+  &[aria-disabled='true'] {
     color: var(--alinea-fg-disabled);
+    cursor: default;
+    opacity: 0.5;
+    pointer-events: none;
   }
 }

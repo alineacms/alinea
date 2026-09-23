@@ -1,24 +1,28 @@
 import {
   Button,
+  type ButtonProps,
+  Dialog,
   DialogTrigger,
+  type DragMoveEvent,
+  Field,
   Icon,
-  Label,
-  List,
-  ListCreateRow,
-  ListDragPreview,
+  SortableList,
+  SortableListItemTitle,
+  SortableListAdd,
+  SortableListDragPreview,
   ListLabel,
-  ListRow,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowFoldButton,
-  ListRowFooter,
-  ListRowHeader,
-  ListRowSettings,
-  MenuSeparator,
+  SortableListItem,
+  SortableListItemActions,
+  SortableListItemContent,
+  SortableListItemDescription,
+  SortableListHandle,
+  SortableListItemToggle,
+  SortableListItemFooter,
+  SortableListItemHeader,
+  SortableListItemSettings,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectItem,
   TextField
@@ -32,7 +36,7 @@ import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Root} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
-import {Badge} from '#/dashboard/app/Badge.js'
+import {Badge} from '#/components.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -79,15 +83,7 @@ import type {
   ReactNode,
   RefObject
 } from 'react'
-import {Fragment, useMemo, useRef, useState} from 'react'
-import {
-  type DragItem,
-  DragPreview,
-  type DragPreviewRenderer,
-  type DropItem,
-  useDrag,
-  useDrop
-} from 'react-aria'
+import {useMemo, useRef, useState} from 'react'
 import css from './LinkField.module.css'
 
 const styles = styler(css)
@@ -384,9 +380,9 @@ interface LinkPickerActionProps {
   allowDuplicates?: boolean
   anchorRef?: RefObject<Element | null>
   ariaLabel?: string
-  buttonAppearance?: 'solid' | 'outline' | 'plain' | 'active'
+  buttonVariant?: ButtonProps['variant']
   buttonIcon?: ComponentType
-  buttonSize?: 'small' | 'icon' | 'icon-small'
+  buttonSize?: ButtonProps['size']
   children?: ReactNode
   className?: string
   isDisabled?: boolean
@@ -450,7 +446,7 @@ function LinkPickerAction({
   allowDuplicates = false,
   anchorRef,
   ariaLabel,
-  buttonAppearance = 'plain',
+  buttonVariant = 'ghost',
   buttonIcon,
   buttonSize,
   children,
@@ -472,17 +468,17 @@ function LinkPickerAction({
   const resolved = useResolvedEntryPickerOptions(options, type, currentEntry)
   if (type === 'url') {
     return (
-      <DialogTrigger>
-        <Button
+      <Dialog>
+        <DialogTrigger
           aria-label={ariaLabel}
-          appearance={buttonAppearance}
+          variant={buttonVariant}
           className={className}
           icon={buttonIcon}
-          isDisabled={isDisabled}
+          disabled={isDisabled}
           size={buttonSize}
         >
           {children}
-        </Button>
+        </DialogTrigger>
         <ExternalLinkPicker
           key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
@@ -490,7 +486,7 @@ function LinkPickerAction({
           submitLabel={value ? 'Save link' : undefined}
           onConfirm={link => onPick(createUrlLink(link, picker, value))}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   const childLocation =
@@ -557,38 +553,38 @@ function LinkPickerAction({
   } as const
   if (type === 'file' || type === 'image') {
     return (
-      <DialogTrigger>
-        <Button
+      <Dialog>
+        <DialogTrigger
           aria-label={ariaLabel}
-          appearance={buttonAppearance}
+          variant={buttonVariant}
           className={className}
           icon={buttonIcon}
-          isDisabled={isDisabled}
+          disabled={isDisabled}
           size={buttonSize}
         >
           {children}
-        </Button>
+        </DialogTrigger>
         <ImagePicker
           {...pickerProps}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   return (
-    <DialogTrigger>
-      <Button
+    <Dialog>
+      <DialogTrigger
         aria-label={ariaLabel}
-        appearance={buttonAppearance}
+        variant={buttonVariant}
         className={className}
         icon={buttonIcon}
-        isDisabled={isDisabled}
+        disabled={isDisabled}
         size={buttonSize}
       >
         {children}
-      </Button>
+      </DialogTrigger>
       <LinkPicker {...pickerProps} anchorRef={anchorRef} />
-    </DialogTrigger>
+    </Dialog>
   )
 }
 
@@ -617,7 +613,7 @@ function LinkPickerDialog({
 
   if (type === 'url') {
     return (
-      <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <Button style={{display: 'none'}}>Replace link</Button>
         <ExternalLinkPicker
           key={value?._id ?? 'new'}
@@ -626,7 +622,7 @@ function LinkPickerDialog({
           submitLabel={value ? 'Save link' : undefined}
           onConfirm={link => handlePick(createUrlLink(link, picker, value))}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   const childLocation =
@@ -687,20 +683,20 @@ function LinkPickerDialog({
   } as const
   if (type === 'file' || type === 'image') {
     return (
-      <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <Button style={{display: 'none'}}>Replace link</Button>
         <ImagePicker
           {...pickerProps}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <Button style={{display: 'none'}}>Replace link</Button>
       <LinkPickerModal {...pickerProps} />
-    </DialogTrigger>
+    </Dialog>
   )
 }
 
@@ -805,33 +801,6 @@ function reorderIndex(fromIndex: number, targetIndex: number): number {
   return fromIndex < targetIndex ? targetIndex - 1 : targetIndex
 }
 
-function dragRowItem(id: string): DragItem {
-  return {
-    'text/plain': id,
-    [LINK_FIELD_ROW_DRAG_TYPE]: id
-  }
-}
-
-function rowDropPosition(
-  row: HTMLDivElement | null,
-  y: number
-): 'before' | 'after' {
-  if (!row) return 'after'
-  return y < row.offsetHeight / 2 ? 'before' : 'after'
-}
-
-async function getDraggedRowId(
-  items: Array<DropItem>,
-  dragType: string
-): Promise<string | null> {
-  for (const item of items) {
-    if (item.kind === 'text' && item.types.has(dragType) && item.getText) {
-      return item.getText(dragType)
-    }
-  }
-  return null
-}
-
 interface SingleLinkCreateActionsProps extends StandardFieldActionProps {
   value?: LinkFieldRow
 }
@@ -846,7 +815,7 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
           anchorRef={anchorRef}
-          buttonSize="small"
+          buttonSize="sm"
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={setValue}
@@ -883,7 +852,7 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
         <LinkPickerAction
           allowDuplicates={options.allowDuplicates}
           anchorRef={anchorRef}
-          buttonSize="small"
+          buttonSize="sm"
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={link => {
@@ -960,10 +929,10 @@ function LinkRowActions({
       {picker && (
         <Button
           aria-label="Replace link"
-          appearance="plain"
+          variant="ghost"
           icon={IcRoundEdit}
-          isDisabled={isDisabled}
-          onPress={() => {
+          disabled={isDisabled}
+          onClick={() => {
             closeActions()
             onEdit()
           }}
@@ -1023,9 +992,9 @@ function EntryLinkSuffixField({
   return (
     <TextField
       description="E.g. ?s=search"
-      isDisabled={isDisabled}
+      disabled={isDisabled}
       label="URL suffix"
-      onChange={next => setSuffix(next || undefined)}
+      onValueChange={next => setSuffix(next || undefined)}
       value={suffix ?? ''}
     />
   )
@@ -1055,7 +1024,7 @@ function EntryAnchorField({isDisabled, node, value}: EntryAnchorFieldProps) {
 function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
   const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
   if (value[Reference.type] !== 'entry' || !anchor) return null
-  return <Badge size="small">#{anchor}</Badge>
+  return <Badge size="sm">#{anchor}</Badge>
 }
 
 interface EntryAnchorFieldInnerProps {
@@ -1077,14 +1046,17 @@ function EntryAnchorFieldInner({
   const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
   return (
     <Select
-      isDisabled={isDisabled || anchors.length === 0}
-      items={anchors}
+      disabled={isDisabled || anchors.length === 0}
       label="Anchor"
-      onChange={next => onChange(next === null ? undefined : String(next))}
+      onValueChange={next => onChange(next ?? undefined)}
       value={anchor ?? null}
     >
-      {item => (
-        <SelectItem id={item.id} textValue={item.label ?? `#${item.id}`}>
+      {anchors.map(item => (
+        <SelectItem
+          key={item.id}
+          value={item.id}
+          textValue={item.label ?? `#${item.id}`}
+        >
           <span className={styles.LinkFieldView.anchorOption()}>
             <span className={styles.LinkFieldView.anchorOption.label()}>
               {item.label ?? `#${item.id}`}
@@ -1094,7 +1066,7 @@ function EntryAnchorFieldInner({
             </span>
           </span>
         </SelectItem>
-      )}
+      ))}
     </Select>
   )
 }
@@ -1166,7 +1138,11 @@ interface ResolvedLinkMetaLabelProps {
 function ResolvedLinkMetaLabel({className, label}: ResolvedLinkMetaLabelProps) {
   const value = label?.trim()
   if (!value) return null
-  return <span className={className}>{value}</span>
+  return (
+    <SortableListItemDescription className={className}>
+      {value}
+    </SortableListItemDescription>
+  )
 }
 
 interface LinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
@@ -1181,7 +1157,7 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
   if (type === 'image') return null
   if (type === 'file') {
     return (
-      <Badge {...props} icon={IcRoundAttachFile} size="small">
+      <Badge {...props} icon={IcRoundAttachFile} size="sm">
         File
       </Badge>
     )
@@ -1198,7 +1174,7 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
     )
   }
   return (
-    <Badge {...props} icon={fallbackIcon} size="small">
+    <Badge {...props} icon={fallbackIcon} size="sm">
       {fallbackLabel}
     </Badge>
   )
@@ -1241,7 +1217,7 @@ function EntryLinkTypeBadge({
   const type = entry ? config.schema[entry.type] : undefined
   if (!type) {
     return (
-      <Badge {...props} icon={fallbackIcon} size="small">
+      <Badge {...props} icon={fallbackIcon} size="sm">
         {fallbackLabel}
       </Badge>
     )
@@ -1253,7 +1229,7 @@ function EntryLinkTypeBadge({
         styler.merge({className: props.className})
       )}
       icon={getType(type).icon || IcRoundLink}
-      size="small"
+      size="sm"
     >
       {Type.label(type)}
     </Badge>
@@ -1302,9 +1278,9 @@ function ResolvedLinkLabelField({
   return (
     <TextField
       autoFocus
-      isDisabled={isDisabled}
+      disabled={isDisabled}
       label="Label"
-      onChange={onChange}
+      onValueChange={onChange}
       value={customLabel ?? fallbackLabel}
     />
   )
@@ -1312,11 +1288,11 @@ function ResolvedLinkLabelField({
 
 function LinkSettingsButton() {
   return (
-    <Button
-      appearance="plain"
+    <PopoverTrigger
+      variant="ghost"
       aria-label="Link settings"
       icon={IcRoundMoreHoriz}
-      size="icon-small"
+      size="icon-sm"
     />
   )
 }
@@ -1362,10 +1338,10 @@ function EntryLinkRowActions({
     return (
       <Button
         aria-label="Open link"
-        appearance="plain"
+        variant="ghost"
         icon={IcRoundOpenInNew}
-        isDisabled
-        size="small"
+        disabled
+        size="sm"
       >
         Open link
       </Button>
@@ -1378,9 +1354,9 @@ function EntryLinkRowActions({
   return (
     <Button
       aria-label="Open link"
-      appearance="plain"
+      variant="ghost"
       icon={IcRoundOpenInNew}
-      onPress={() => {
+      onClick={() => {
         window.open(href, '_blank', 'noopener,noreferrer')
         closeActions()
       }}
@@ -1414,51 +1390,49 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
       {imagePreviewEntryId && (
         <EntryLinkImagePreview entryId={imagePreviewEntryId} />
       )}
-      <ListRowDrag>
-        <ListRowBadges>
-          <LinkTypeBadge
-            className={styles.LinkFieldView.type()}
-            picker={picker}
-            type={type}
-            value={value}
-          />
-          <LinkMetaLabel
-            className={styles.LinkFieldView.metaLabel()}
-            node={node}
-            value={value}
-          />
-          <EntryAnchorBadge node={node} value={value} />
-        </ListRowBadges>
-      </ListRowDrag>
+      <SortableListItemTitle>
+        <LinkTypeBadge
+          className={styles.LinkFieldView.type()}
+          picker={picker}
+          type={type}
+          value={value}
+        />
+        <LinkMetaLabel
+          className={styles.LinkFieldView.metaLabel()}
+          node={node}
+          value={value}
+        />
+        <EntryAnchorBadge node={node} value={value} />
+      </SortableListItemTitle>
     </>
   )
 
   return (
     <>
-      <ListRow aria-label="Link item 1" first role="listitem">
-        <ListRowHeader
-          first
-          hasFold={false}
-          className={styles.LinkFieldView.inputHeader()}
-        >
+      <SortableListItem aria-label="Link item 1" role="listitem">
+        <SortableListItemHeader className={styles.LinkFieldView.inputHeader()}>
           {options.readOnly ? (
             rowContent
           ) : (
             <Button
               aria-label="Edit link"
-              appearance="plain"
+              variant="ghost"
               className={styles.LinkFieldView.rowAction()}
-              onPress={() => setActionsOpen(true)}
+              onClick={() => setActionsOpen(true)}
             >
               {rowContent}
             </Button>
           )}
           {!options.readOnly && (
-            <ListRowActions>
-              <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+            <SortableListItemActions>
+              <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
                 <LinkSettingsButton />
-                <Popover placement="bottom right">
-                  <ListRowSettings actions>
+                <PopoverContent
+                  aria-label="Link settings"
+                  side="bottom"
+                  align="end"
+                >
+                  <SortableListItemSettings variant="actions">
                     <LinkRowActions
                       closeActions={closeActions}
                       onEdit={() => setEditOpen(true)}
@@ -1466,31 +1440,31 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                       type={type}
                       value={value}
                     />
-                  </ListRowSettings>
-                  <MenuSeparator />
-                  <ListRowSettings>
+                  </SortableListItemSettings>
+                  <hr className={styles.LinkFieldView.settingsSeparator()} />
+                  <SortableListItemSettings>
                     <LinkLabelField node={node} value={value} />
                     <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField node={node} value={value} />
-                  </ListRowSettings>
-                </Popover>
-              </DialogTrigger>
+                  </SortableListItemSettings>
+                </PopoverContent>
+              </Popover>
               <Button
-                appearance="plain"
+                variant="ghost"
                 aria-label="Remove link"
                 icon={IcRoundClose}
-                onPress={removeLink}
-                size="icon-small"
+                onClick={removeLink}
+                size="icon-sm"
               />
-            </ListRowActions>
+            </SortableListItemActions>
           )}
-        </ListRowHeader>
+        </SortableListItemHeader>
         {hasFields && (
-          <ListRowBody>
+          <SortableListItemContent>
             <LinkRowEditor node={node} picker={picker} />
-          </ListRowBody>
+          </SortableListItemContent>
         )}
-      </ListRow>
+      </SortableListItem>
       {picker && (
         <LinkPickerDialog
           isOpen={editOpen}
@@ -1506,43 +1480,19 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
 }
 
 interface MultipleLinkRowProps {
-  dragging: boolean
   expanded: boolean
   field: LinksField<LinkFieldRow, unknown>
   index: number
   node: ReactiveNode<LinkFieldRow>
-  onMoveRow: (rowId: string, targetIndex: number) => void
-  onRowDragEnd: () => void
-  onRowDragStart: () => void
-  onDropIndicatorChange: (position: 'before' | 'after' | null) => void
   onToggleRow: (rowId: string) => void
   value: LinkFieldRow
 }
 
-interface LinkFieldDropIndicatorState {
-  index: number
-  position: 'before' | 'after'
-}
-
-interface LinkFieldDragPreviewProps {
-  icon: ComponentType
-  label: ReactNode
-}
-
-function LinkFieldDragPreview({icon, label}: LinkFieldDragPreviewProps) {
-  return <ListDragPreview icon={icon} label={label} />
-}
-
 function MultipleLinkRow({
-  dragging,
   expanded,
   field,
   index,
   node,
-  onMoveRow,
-  onRowDragEnd,
-  onRowDragStart,
-  onDropIndicatorChange,
   onToggleRow,
   value
 }: MultipleLinkRowProps) {
@@ -1558,51 +1508,6 @@ function MultipleLinkRow({
   const readOnly = Boolean(options.readOnly)
   const [actionsOpen, setActionsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
-  const dragPreview = useRef<DragPreviewRenderer | null>(null)
-  const rowRef = useRef<HTMLDivElement>(null)
-  const {dragProps, isDragging} = useDrag({
-    getItems() {
-      return [dragRowItem(itemId)]
-    },
-    getAllowedDropOperations() {
-      return ['move']
-    },
-    isDisabled: readOnly,
-    onDragEnd: onRowDragEnd,
-    onDragStart: onRowDragStart,
-    preview: dragPreview
-  })
-  const {dropProps, isDropTarget} = useDrop({
-    ref: rowRef,
-    isDisabled: readOnly || !dragging,
-    getDropOperation(types, allowedOperations) {
-      if (!types.has(LINK_FIELD_ROW_DRAG_TYPE)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    },
-    getDropOperationForPoint(types, allowedOperations) {
-      if (!types.has(LINK_FIELD_ROW_DRAG_TYPE)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    },
-    onDropEnter(event) {
-      const position = rowDropPosition(rowRef.current, event.y)
-      onDropIndicatorChange(position)
-    },
-    onDropMove(event) {
-      const position = rowDropPosition(rowRef.current, event.y)
-      onDropIndicatorChange(position)
-    },
-    onDropExit() {
-      onDropIndicatorChange(null)
-    },
-    async onDrop(event) {
-      const position = rowDropPosition(rowRef.current, event.y)
-      const rowId = await getDraggedRowId(event.items, LINK_FIELD_ROW_DRAG_TYPE)
-      onDropIndicatorChange(null)
-      if (!rowId) return
-      onMoveRow(rowId, insertIndex(index, position))
-    }
-  })
-
   function closeActions() {
     setActionsOpen(false)
   }
@@ -1613,117 +1518,106 @@ function MultipleLinkRow({
 
   return (
     <>
-      <div
-        {...dropProps}
-        className={styles.LinkFieldView.rowDropTarget()}
-        ref={rowRef}
+      <SortableListItem
+        aria-label={`Link item ${index + 1}`}
+        dragPreview={
+          <SortableListDragPreview
+            icon={getLinkIcon(type)}
+            label={<LinkRowText node={node} />}
+          />
+        }
+        id={itemId}
+        role="listitem"
       >
-        <ListRow
-          aria-label={`Link item ${index + 1}`}
-          dragging={isDragging}
-          first={index === 0}
-          role="listitem"
-        >
-          <ListRowHeader first={index === 0} hasFold={hasFields}>
-            {!readOnly && (
-              <ListRowDragHandle
-                {...dragProps}
-                aria-label={`Drag link item ${index + 1}`}
-                dragging={isDragging}
+        <SortableListItemHeader>
+          {!readOnly && (
+            <SortableListHandle aria-label={`Drag link item ${index + 1}`} />
+          )}
+          {imagePreviewEntryId && !hasFields && (
+            <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+          )}
+          <SortableListItemTitle>
+            {hasFields && (
+              <SortableListItemToggle
+                aria-label={expanded ? 'Collapse link' : 'Expand link'}
+                expanded={expanded}
+                onClick={() => onToggleRow(itemId)}
               />
             )}
-            {imagePreviewEntryId && !hasFields && (
+            {imagePreviewEntryId && hasFields && (
               <EntryLinkImagePreview entryId={imagePreviewEntryId} />
             )}
-            <DragPreview ref={dragPreview}>
-              {() => (
-                <LinkFieldDragPreview
-                  icon={getLinkIcon(type)}
-                  label={<LinkRowText node={node} />}
-                />
-              )}
-            </DragPreview>
-            <ListRowDrag dragging={isDragging}>
-              <ListRowBadges>
-                {hasFields && (
-                  <ListRowFoldButton
-                    aria-label={expanded ? 'Collapse link' : 'Expand link'}
-                    expanded={expanded}
-                    onPress={() => onToggleRow(itemId)}
+            <LinkTypeBadge picker={picker} type={type} value={value} />
+            <LinkMetaLabel
+              className={styles.LinkFieldView.metaLabel()}
+              node={node}
+              value={value}
+            />
+            <EntryAnchorBadge node={node} value={value} />
+          </SortableListItemTitle>
+          <SortableListItemActions>
+            <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+              <LinkSettingsButton />
+              <PopoverContent
+                aria-label="Link settings"
+                side="bottom"
+                align="end"
+              >
+                <SortableListItemSettings variant="actions">
+                  <LinkRowActions
+                    closeActions={closeActions}
+                    isDisabled={readOnly}
+                    onEdit={() => setEditOpen(true)}
+                    picker={picker}
+                    type={type}
+                    value={value}
                   />
-                )}
-                {imagePreviewEntryId && hasFields && (
-                  <EntryLinkImagePreview entryId={imagePreviewEntryId} />
-                )}
-                <LinkTypeBadge picker={picker} type={type} value={value} />
-                <LinkMetaLabel
-                  className={styles.LinkFieldView.metaLabel()}
-                  node={node}
-                  value={value}
-                />
-                <EntryAnchorBadge node={node} value={value} />
-              </ListRowBadges>
-            </ListRowDrag>
-            <ListRowActions>
-              <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
-                <LinkSettingsButton />
-                <Popover placement="bottom right">
-                  <ListRowSettings actions>
-                    <LinkRowActions
-                      closeActions={closeActions}
-                      isDisabled={readOnly}
-                      onEdit={() => setEditOpen(true)}
-                      picker={picker}
-                      type={type}
-                      value={value}
-                    />
-                  </ListRowSettings>
-                  <MenuSeparator />
-                  <ListRowSettings>
-                    <LinkLabelField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                    <EntryAnchorField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                    <EntryLinkSuffixField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                  </ListRowSettings>
-                </Popover>
-              </DialogTrigger>
-              <Button
-                appearance="plain"
-                aria-label="Remove link"
-                icon={IcRoundClose}
-                isDisabled={readOnly}
-                onPress={removeLink}
-                size="icon-small"
-              />
-            </ListRowActions>
-          </ListRowHeader>
-          {expanded && hasFields && (
-            <ListRowBody>
-              <LinkRowEditor node={node} picker={picker} />
-            </ListRowBody>
-          )}
-          {!expanded && picker?.fields && (
-            <ListRowFooter>
-              <CompactRecordFields
-                fields={Type.fields(picker.fields)}
-                layout="footer"
-                value={value}
-              />
-            </ListRowFooter>
-          )}
-        </ListRow>
-      </div>
+                </SortableListItemSettings>
+                <hr className={styles.LinkFieldView.settingsSeparator()} />
+                <SortableListItemSettings>
+                  <LinkLabelField
+                    isDisabled={readOnly}
+                    node={node}
+                    value={value}
+                  />
+                  <EntryAnchorField
+                    isDisabled={readOnly}
+                    node={node}
+                    value={value}
+                  />
+                  <EntryLinkSuffixField
+                    isDisabled={readOnly}
+                    node={node}
+                    value={value}
+                  />
+                </SortableListItemSettings>
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="ghost"
+              aria-label="Remove link"
+              icon={IcRoundClose}
+              disabled={readOnly}
+              onClick={removeLink}
+              size="icon-sm"
+            />
+          </SortableListItemActions>
+        </SortableListItemHeader>
+        {expanded && hasFields && (
+          <SortableListItemContent>
+            <LinkRowEditor node={node} picker={picker} />
+          </SortableListItemContent>
+        )}
+        {!expanded && picker?.fields && (
+          <SortableListItemFooter>
+            <CompactRecordFields
+              fields={Type.fields(picker.fields)}
+              layout="footer"
+              value={value}
+            />
+          </SortableListItemFooter>
+        )}
+      </SortableListItem>
       {picker && (
         <LinkPickerDialog
           isOpen={editOpen}
@@ -1744,20 +1638,6 @@ function MultipleLinkRow({
   )
 }
 
-interface LinkFieldDropIndicatorProps {
-  active: boolean
-}
-
-function LinkFieldDropIndicator({active}: LinkFieldDropIndicatorProps) {
-  return (
-    <div
-      aria-hidden
-      className={styles.LinkFieldView.dropIndicator()}
-      data-active={active || undefined}
-    />
-  )
-}
-
 export interface SingleLinkFieldViewProps {
   field: LinkField<LinkFieldRow, unknown>
 }
@@ -1772,7 +1652,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const hasRows = Boolean(selectedValue)
   const readOnly = Boolean(options.readOnly)
   const content = (hasRows || !readOnly) && (
-    <List aria-label={options.label || 'Link'}>
+    <SortableList aria-label={options.label || 'Link'}>
       {selectedValue && (
         <SingleLinkRow
           field={field}
@@ -1781,21 +1661,21 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         />
       )}
       {isEmpty && !readOnly && (
-        <ListCreateRow empty className={styles.LinkFieldView.inputHeader()}>
+        <SortableListAdd className={styles.LinkFieldView.inputHeader()}>
           <SingleLinkCreateActions field={field} />
-        </ListCreateRow>
+        </SortableListAdd>
       )}
-    </List>
+    </SortableList>
   )
   return (
-    <Label
+    <Field
       description={options.help}
       label={options.inline ? undefined : options.label}
-      isRequired={options.required}
+      required={options.required}
       shared={options.shared}
     >
       {content}
-    </Label>
+    </Field>
   )
 }
 
@@ -1818,9 +1698,6 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     return Boolean(picker?.fields)
   })
   const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
-  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
-  const [dropIndicator, setDropIndicator] =
-    useState<LinkFieldDropIndicatorState | null>(null)
   const rowIdsAtom = useMemo(
     () =>
       atom(get => {
@@ -1832,14 +1709,19 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const rowIds = useAtomValueRaw(rowIdsAtom)
   const moveRowAtom = useMemo(
     () =>
-      atom(null, (get, set, rowId: string, targetIndex: number) => {
+      atom(null, (get, set, {keys, target}: DragMoveEvent) => {
         const currentNodes = get(list.nodes) as Array<
           ReactiveNode<LinkFieldRow>
         >
-        const fromIndex = currentNodes.findIndex(node => {
-          return get(node.field('_id')) === rowId
-        })
-        if (fromIndex === -1) return
+        const ids = currentNodes.map(node => get(node.field('_id')))
+        const [rowId] = keys
+        const fromIndex = ids.indexOf(rowId)
+        const targetRow = ids.indexOf(target.key)
+        if (fromIndex === -1 || targetRow === -1) return
+        const targetIndex = insertIndex(
+          targetRow,
+          target.position === 'before' ? 'before' : 'after'
+        )
         const toIndex = reorderIndex(fromIndex, targetIndex)
         if (toIndex === fromIndex) return
         set(list.move, fromIndex, toIndex)
@@ -1862,69 +1744,33 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     })
   }
 
-  function isBoundaryDropTarget(index: number) {
-    return (
-      (dropIndicator?.index === index && dropIndicator.position === 'before') ||
-      (dropIndicator?.index === index - 1 && dropIndicator.position === 'after')
-    )
-  }
-
   const content = (hasRows || !readOnly) && (
-    <>
-      <LinkFieldDropIndicator
-        active={
-          dropIndicator?.index === 0 && dropIndicator.position === 'before'
-        }
-      />
-      <List aria-label={options.label || 'Links'}>
-        {nodes.length > 0 && (
-          <>
-            {nodes.map((node, index) => {
-              const value = links[index]
-              if (!value) return null
-              return (
-                <Fragment key={value._id}>
-                  {index > 0 && (
-                    <LinkFieldDropIndicator
-                      active={isBoundaryDropTarget(index)}
-                    />
-                  )}
-                  <MultipleLinkRow
-                    dragging={Boolean(draggingRowId)}
-                    expanded={!foldedIds.has(value._id)}
-                    field={field}
-                    index={index}
-                    node={node}
-                    onMoveRow={moveRow}
-                    onRowDragEnd={() => {
-                      setDraggingRowId(null)
-                      setDropIndicator(null)
-                    }}
-                    onRowDragStart={() => setDraggingRowId(value._id)}
-                    onDropIndicatorChange={position =>
-                      setDropIndicator(position ? {index, position} : null)
-                    }
-                    onToggleRow={toggleRow}
-                    value={value}
-                  />
-                </Fragment>
-              )
-            })}
-          </>
-        )}
-        <LinkFieldDropIndicator
-          active={
-            dropIndicator?.index === nodes.length - 1 &&
-            dropIndicator.position === 'after'
-          }
-        />
-        {!readOnly && (
-          <ListCreateRow empty={!hasRows}>
-            <MultipleLinkCreateActions field={field} />
-          </ListCreateRow>
-        )}
-      </List>
-    </>
+    <SortableList
+      aria-label={options.label || 'Links'}
+      dragType={LINK_FIELD_ROW_DRAG_TYPE}
+      onReorder={readOnly ? undefined : moveRow}
+    >
+      {nodes.map((node, index) => {
+        const value = links[index]
+        if (!value) return null
+        return (
+          <MultipleLinkRow
+            key={value._id}
+            expanded={!foldedIds.has(value._id)}
+            field={field}
+            index={index}
+            node={node}
+            onToggleRow={toggleRow}
+            value={value}
+          />
+        )
+      })}
+      {!readOnly && (
+        <SortableListAdd>
+          <MultipleLinkCreateActions field={field} />
+        </SortableListAdd>
+      )}
+    </SortableList>
   )
 
   return (
@@ -1939,8 +1785,8 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         }
         expanded={allExpanded}
         hasRows={hasRows}
-        isDisabled={!hasFoldableRows}
-        onPress={toggleAll}
+        disabled={!hasFoldableRows}
+        onClick={toggleAll}
         description={options.help}
         shared={options.shared}
         showFold={!options.inline && hasFoldableRows}

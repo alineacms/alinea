@@ -1,89 +1,369 @@
+/* Mirrors the dashboard explorer table so custom views feel native */
 .Table {
-  max-width: 100%;
+  --alinea-table-indent: 0px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
   overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--alinea-border) transparent;
+  color: var(--alinea-fg);
 
-  &[data-striped] .Row:nth-child(odd) {
-    background-color: var(--alinea-overlay);
+  &:not([data-selectable]) {
+    --alinea-table-indent: 6px;
   }
 
-  .Table-table {
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
+  &[data-variant='plain'] {
+    border-radius: 0;
   }
+}
 
-  .TableBody {
-    &[data-empty='true'] {
-      tr td:first-child {
-        border: 1px solid var(--alinea-border);
-        border-top: none;
-        padding: 10px 12px;
-        text-align: center;
-        font-style: italic;
-      }
-    }
+.Table-body {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  min-width: var(--alinea-table-min-width);
+  overflow-y: auto;
+  background: var(--alinea-bg);
+  outline: none;
+
+  /* Files dragged over the table, react-aria has no render prop for this */
+  &[data-drop-target]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--alinea-bg) 74%, transparent);
+    outline: 2px dashed var(--alinea-primary);
+    outline-offset: -10px;
+  }
+}
+
+.Table-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-fg-muted);
+  pointer-events: none;
+}
+
+.TableDropIndicator {
+  position: relative;
+  height: 0;
+  pointer-events: none;
+  z-index: 2;
+
+  &.is-active::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--alinea-ring);
   }
 }
 
 .TableHeader {
-  background-color: var(--alinea-header);
-  font-weight: bold;
-}
-
-.TableHeader,
-.TableBody {
-  color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-}
-
-.Column,
-.Cell {
-  border-right: 1px solid var(--alinea-border);
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: var(--alinea-table-columns);
+  min-width: var(--alinea-table-min-width);
   border-bottom: 1px solid var(--alinea-border);
-  padding: 10px 12px;
-  text-align: left;
+  background: var(--alinea-bg);
+  color: var(--alinea-field-label);
+  font-size: 11px;
+  font-weight: 500;
+}
 
-  &:last-child {
-    border-right: none;
+.TableHeader-head {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  white-space: nowrap;
+
+  &[data-align='end'] {
+    justify-content: flex-end;
+  }
+
+  .Table:not([data-selectable]) &:first-child {
+    padding-inline-start: 16px;
+  }
+
+  /* Line up with titles that follow the expand toggle */
+  &.is-indented {
+    padding-inline-start: calc(34px + var(--alinea-table-indent));
   }
 }
 
-.Column {
-  .Column-label {
-    display: inline-flex;
-    align-items: center;
+.TableHeader-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 -4px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--alinea-radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 
-    &[data-sortable] {
-      cursor: pointer;
-    }
+  &:hover,
+  &[aria-pressed='true'] {
+    color: var(--alinea-fg);
   }
 
-  .Column-sortIndicator {
-    width: 20px;
-    height: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    background-color: var(--alinea-muted);
-    margin-left: 8px;
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+  }
+}
+
+.TableHeader-sortIcon {
+  font-size: 14px;
+}
+
+.TableRow {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 100%;
+  background: var(--alinea-bg);
+  outline: none;
+  cursor: pointer;
+
+  /* A divider that does not take space from the row */
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    pointer-events: none;
+    background: var(--alinea-border);
+  }
+
+  &:hover {
+    background: var(--alinea-bg-muted);
+  }
+
+  &[aria-selected='true'] {
+    background: var(--alinea-selected);
+  }
+
+  /* Rows that cannot be selected */
+  &[data-unselectable] {
+    background: var(--alinea-bg-muted);
     color: var(--alinea-fg-muted);
-    font-size: 18px;
+  }
+
+  &[data-unselectable]:hover {
+    background: color-mix(in srgb, var(--alinea-fg-muted) 10%, var(--alinea-bg));
+  }
+
+  /* Rows without an action or selection are plain data rows */
+  &.is-static {
+    cursor: default;
+  }
+
+  &.is-static:hover {
+    background: var(--alinea-bg);
+  }
+
+  &.is-highlighted {
+    background: color-mix(in srgb, var(--alinea-selected) 60%, var(--alinea-bg));
+  }
+
+  &.is-dropTarget {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
+  }
+
+  &.is-dragging {
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
   }
 }
 
-.Row {
-  &[data-selected] {
-    background-color: var(--alinea-primary-subtle-strong) !important;
+.TableRow-grid {
+  display: grid;
+  grid-template-columns: var(--alinea-table-columns);
+  height: 100%;
+}
+
+.TableRow-selection {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.TableRow-first {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.TableRow-chevron {
+  display: inline-flex;
+  flex: 0 0 16px;
+  justify-content: center;
+  margin-inline: 10px -2px;
+  color: var(--alinea-fg-muted);
+  font-size: 16px;
+}
+
+.TableRow-chevron-button {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
   }
 }
 
-.Cell {
-  word-wrap: break-word;
+.TableCell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 5px 10px;
+  overflow: hidden;
 
-  &[data-nowrap] {
-    white-space: nowrap;
+  &[data-align='end'] {
+    align-items: flex-end;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.TableCell-label,
+.TableTitle-label {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--alinea-field-label);
+  font-size: 11px;
+  font-weight: 500;
+  /* 1.2 times the 12px explorer base size */
+  line-height: 14.4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TableCell-value {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TableThumbnail {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+}
+
+.TableThumbnail-image {
+  height: calc(var(--alinea-table-row-height) - 13px);
+  aspect-ratio: 3 / 2;
+  border-radius: var(--alinea-radius-sm);
+  background: var(--alinea-muted);
+  object-fit: cover;
+}
+
+.TableTitle {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 10px;
+  overflow: hidden;
+}
+
+.TableTitle-drag {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  outline: none;
+  cursor: grab;
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.TableTitle-icon {
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  font-size: 12px;
+}
+
+.TableTitle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.TableTitle-title {
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .TableRow[data-unselectable] & {
+    color: color-mix(in srgb, var(--alinea-fg-muted) 72%, transparent);
+  }
+}
+
+@media (max-width: 768px) {
+  .Table-body,
+  .TableHeader {
+    min-width: 0;
+  }
+
+  .TableHeader,
+  .TableRow-grid {
+    grid-template-columns: var(--alinea-table-columns-narrow);
+  }
+
+  .TableHeader-head,
+  .TableCell,
+  .TableThumbnail,
+  .TableTitle {
+    &[data-collapsible] {
+      display: none;
+    }
   }
 }

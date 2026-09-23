@@ -1,9 +1,15 @@
 import {ColorSwatch} from './ColorSwatch.js'
 
-export const Example = (args: any) => <ColorSwatch {...args} />
-
-Example.args = {
-  color: '#f00a'
+export function Example() {
+  return (
+    <div style={{display: 'flex', gap: 8, padding: 24}}>
+      <ColorSwatch color="#f80" />
+      <ColorSwatch color="#08f" />
+      <ColorSwatch color="#f00a" colorName="Translucent red" />
+    </div>
+  )
 }
 
-export default {title: 'Components / ColorSwatch'}
+export default {
+  title: 'Pure components / ColorSwatch'
+}

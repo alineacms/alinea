@@ -1,4 +1,4 @@
-import {Checkbox, Label, SharedLabelBadge} from '#/components.js'
+import {Checkbox, Field, FieldSharedBadge} from '#/components.js'
 import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {CheckField} from '#/field/check.js'
 import styler from '@alinea/styler'
@@ -15,29 +15,30 @@ export function CheckFieldView({field}: CheckFieldViewProps) {
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   return (
-    <Label
+    <Field
       label={options.description ? options.label : undefined}
       description={options.help}
-      errorMessage={error}
-      isRequired={options.description ? options.required : undefined}
+      error={error}
+      required={options.description ? options.required : undefined}
       shared={options.description ? options.shared : undefined}
     >
       <div className={styles.checkline()}>
         <Checkbox
-          isSelected={Boolean(value)}
-          isDisabled={options.readOnly}
-          onChange={setValue}
-          label={options.description ?? options.label}
-        />
+          checked={Boolean(value)}
+          disabled={options.readOnly}
+          onCheckedChange={setValue}
+        >
+          {options.description ?? options.label}
+        </Checkbox>
         {!options.description && (
           <>
             {options.required && (
               <span className={styles.checkline.required()}> *</span>
             )}
-            {options.shared && <SharedLabelBadge />}
+            {options.shared && <FieldSharedBadge />}
           </>
         )}
       </div>
-    </Label>
+    </Field>
   )
 }

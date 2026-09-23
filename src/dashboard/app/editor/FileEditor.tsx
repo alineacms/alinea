@@ -1,5 +1,16 @@
 import {type} from '#/config.js'
-import {Surface, Tab, TabList, TabPanel, Tabs} from '#/components.js'
+import {
+  DataList,
+  DataListItem,
+  DataListLabel,
+  DataListValue,
+  Link,
+  Surface,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from '#/components.js'
 import {Config} from '#/core/Config.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
@@ -42,9 +53,9 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const height = useFieldValue(MediaFile.height)
   const preview = useFieldValue(MediaFile.preview)
   const thumbHash = useFieldValue(MediaFile.thumbHash)
-  const thumbBackground = useMemo(() => {
+  const placeholder = useMemo(() => {
     if (!thumbHash) return undefined
-    return `url(${thumbHashToDataURL(base64.parse(thumbHash))})`
+    return thumbHashToDataURL(base64.parse(thumbHash))
   }, [thumbHash])
   const [focusPoint = {x: 0.5, y: 0.5}] = useField(MediaFile.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
@@ -66,20 +77,20 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const node = useEditor().node
   return (
     <Surface className={styles.FileEditor.surface()}>
-      <Tabs className={styles.FileEditor.tabs()}>
+      <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
         <div className={styles.FileEditor.tabs.header()}>
-          <TabList aria-label="File editor">
-            <Tab id="file">File</Tab>
-            <Tab id="metadata">Metadata</Tab>
-          </TabList>
+          <TabsList aria-label="File editor">
+            <TabsTrigger value="file">File</TabsTrigger>
+            <TabsTrigger value="metadata">Metadata</TabsTrigger>
+          </TabsList>
         </div>
-        <TabPanel id="file" className={styles.FileEditor.tabPanel()}>
+        <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
           <div className={styles.FileEditor({image: isImage})}>
             {isImage && (
               <FilePreview
                 liveUrl={liveUrl?.href}
                 preview={preview}
-                thumbBackground={thumbBackground}
+                placeholder={placeholder}
                 width={width}
                 height={height}
                 onHoverPointChange={setHoverPoint}
@@ -87,54 +98,38 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
             )}
             <div className={styles.FileEditor.content()}>
               <Surface variant="muted" className={styles.FileEditor.metadata()}>
-                <dl className={styles.FileEditor.metadata.grid()}>
-                  <div className={styles.FileEditor.metadata.item()}>
-                    <dt className={styles.FileEditor.metadata.term()}>
-                      Extension
-                    </dt>
-                    <dd className={styles.FileEditor.metadata.value()}>
-                      {extension}
-                    </dd>
-                  </div>
-                  <div className={styles.FileEditor.metadata.item()}>
-                    <dt className={styles.FileEditor.metadata.term()}>
-                      File size
-                    </dt>
-                    <dd className={styles.FileEditor.metadata.value()}>
-                      {prettyBytes(size)}
-                    </dd>
-                  </div>
-                  {isImage && (
-                    <div className={styles.FileEditor.metadata.item()}>
-                      <dt className={styles.FileEditor.metadata.term()}>
-                        Dimensions
-                      </dt>
-                      <dd className={styles.FileEditor.metadata.value()}>
+                <DataList orientation="vertical" aria-label="File details">
+                  <DataListItem>
+                    <DataListLabel>Extension</DataListLabel>
+                    <DataListValue>{extension}</DataListValue>
+                  </DataListItem>
+                  <DataListItem>
+                    <DataListLabel>File size</DataListLabel>
+                    <DataListValue>{prettyBytes(size)}</DataListValue>
+                  </DataListItem>
+                  {isImage && width && height ? (
+                    <DataListItem>
+                      <DataListLabel>Dimensions</DataListLabel>
+                      <DataListValue>
                         {width}px x {height}px
-                      </dd>
-                    </div>
-                  )}
+                      </DataListValue>
+                    </DataListItem>
+                  ) : null}
                   {liveUrl && (
-                    <div
-                      className={styles.FileEditor.metadata.item({full: true})}
-                    >
-                      <dt className={styles.FileEditor.metadata.term()}>URL</dt>
-                      <dd
-                        className={styles.FileEditor.metadata.value({
-                          link: true
-                        })}
-                      >
-                        <a
+                    <DataListItem full>
+                      <DataListLabel>URL</DataListLabel>
+                      <DataListValue>
+                        <Link
                           href={liveUrl.href}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
                           {displayedUrl}
-                        </a>
-                      </dd>
-                    </div>
+                        </Link>
+                      </DataListValue>
+                    </DataListItem>
                   )}
-                </dl>
+                </DataList>
               </Surface>
               {isImage && (
                 <div className={styles.FileEditor.focus()}>
@@ -154,12 +149,12 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
               )}
             </div>
           </div>
-        </TabPanel>
-        <TabPanel id="metadata" className={styles.FileEditor.tabPanel()}>
+        </TabsContent>
+        <TabsContent value="metadata" className={styles.FileEditor.tabPanel()}>
           <div className={styles.FileEditor.metadataPanel()}>
             <NodeEditor node={node} type={metadataFields} />
           </div>
-        </TabPanel>
+        </TabsContent>
       </Tabs>
     </Surface>
   )

@@ -1,4 +1,19 @@
-import {Button, Icon, Surface, Tooltip} from '#/components.js'
+import {
+  Button,
+  Code,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  Icon,
+  Page as PageLayout,
+  PageContent,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
@@ -53,7 +68,6 @@ import {
   DashboardModalDialog,
   DashboardModalFooter
 } from './../ui/DashboardModal.js'
-import {Rail, RailBody, RailContent} from './../ui/Rail.js'
 import css from './EntryPage.module.css'
 
 const styles = styler(css)
@@ -153,24 +167,27 @@ export function NotFoundPanel({
   onAction
 }: NotFoundPanelProps) {
   return (
-    <Rail main>
-      <RailBody className={styles.MissingEntry()}>
-        <Surface className={styles.MissingEntry.card()}>
-          <div className={styles.MissingEntry.icon()}>
-            <Icon icon={IcBaselineErrorOutline} />
-          </div>
-          <h1 className={styles.MissingEntry.title()}>{title}</h1>
-          <p className={styles.MissingEntry.message()}>{message}</p>
-          <p className={styles.MissingEntry.message()}>
-            {requestedLabel}:{' '}
-            <code className={styles.MissingEntry.id()}>{requestedValue}</code>
-          </p>
+    <PageLayout>
+      <PageContent className={styles.MissingEntry()}>
+        <Empty variant="card">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className={styles.MissingEntry.media()}>
+              <Icon icon={IcBaselineErrorOutline} />
+            </EmptyMedia>
+            <EmptyTitle as="h1">{title}</EmptyTitle>
+            <EmptyDescription>{message}</EmptyDescription>
+            <EmptyDescription>
+              {requestedLabel}: <Code>{requestedValue}</Code>
+            </EmptyDescription>
+          </EmptyHeader>
           {onAction && actionLabel && (
-            <Button onPress={onAction}>{actionLabel}</Button>
+            <EmptyContent>
+              <Button onClick={onAction}>{actionLabel}</Button>
+            </EmptyContent>
           )}
-        </Surface>
-      </RailBody>
-    </Rail>
+        </Empty>
+      </PageContent>
+    </PageLayout>
   )
 }
 
@@ -188,13 +205,13 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
   const tooltip = nextView === 'overview' ? 'Overview view' : 'Edit view'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
   return (
-    <Tooltip delay={300} tooltip={tooltip}>
-      <Button
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger
         aria-label={label}
-        appearance="plain"
+        variant="ghost"
         icon={ViewIcon}
         size="icon"
-        onPress={() =>
+        onClick={() =>
           setRoute({
             workspace: page.workspace,
             root: page.root,
@@ -204,6 +221,7 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
           })
         }
       />
+      <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
   )
 }
@@ -241,7 +259,7 @@ function EntryOverview({
   const policy = useAtomValueRaw(policyAtom)
   const parentId = selectedEntry.parentId
   return (
-    <Rail main>
+    <PageLayout>
       <Explorer
         controls={
           <div className={styles.EntryOverview.mobileActions()}>
@@ -268,7 +286,7 @@ function EntryOverview({
         }}
         titleControls={<EntryViewToggle entry={entry} page={page} />}
       />
-    </Rail>
+    </PageLayout>
   )
 }
 
@@ -350,8 +368,12 @@ function EntryEditorContent({
 
   let editorBody = (
     <>
-      <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
-        <RailContent className={styles.EntryEditor.fields()}>
+      <PageContent
+        ref={editorBodyRef}
+        contained
+        className={styles.EntryEditor.body()}
+      >
+        <div className={styles.EntryEditor.fields()}>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
               <EntryTranslationBanner
@@ -368,22 +390,22 @@ function EntryEditorContent({
           <NodeEditor node={node} type={type.type}>
             <EntryFields />
           </NodeEditor>
-        </RailContent>
-      </RailBody>
+        </div>
+      </PageContent>
     </>
   )
 
   if (isMediaFile) {
     editorBody = (
       <>
-        <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
+        <PageContent ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
             <FileEditor
               parentPaths={parentPaths}
               workspace={selectedEntry.workspace}
             />
           </NodeEditor>
-        </RailBody>
+        </PageContent>
       </>
     )
   }
@@ -402,7 +424,7 @@ function EntryEditorContent({
   }
 
   const mainEditor = (
-    <Rail main>
+    <PageLayout>
       <EntryHeader
         controls={
           hasChildren || defaultView === 'overview' ? (
@@ -421,13 +443,13 @@ function EntryEditorContent({
       {editorBody}
 
       <div id="alinea-toolbar" className={styles.EntryEditor.toolbar()} />
-    </Rail>
+    </PageLayout>
   )
 
   return (
     <>
       <DashboardModal
-        isOpen={Boolean(routeBlock)}
+        open={Boolean(routeBlock)}
         onOpenChange={open => !open && setRouteBlock(null)}
       >
         {routeBlock && (
@@ -436,14 +458,14 @@ function EntryEditorContent({
               This entry has unsaved changes
             </DashboardModalContent>
             <DashboardModalFooter>
-              <Button onPress={discardAndConfirm} appearance="plain">
+              <Button onClick={discardAndConfirm} variant="ghost">
                 Discard my changes
               </Button>
               <div className={styles.EntryEditorContent.navigationActions()}>
                 {dirtyActions.publish && (
                   <Button
-                    onPress={publishAndConfirm}
-                    intent={canSaveDraft ? 'secondary' : 'primary'}
+                    onClick={publishAndConfirm}
+                    color={canSaveDraft ? 'secondary' : 'primary'}
                     icon={IcRoundCheck}
                   >
                     Publish
@@ -451,8 +473,8 @@ function EntryEditorContent({
                 )}
                 {dirtyActions.saveDraft && (
                   <Button
-                    onPress={saveDraftAndConfirm}
-                    intent="primary"
+                    onClick={saveDraftAndConfirm}
+                    color="primary"
                     icon={IcRoundSave}
                   >
                     Save as draft

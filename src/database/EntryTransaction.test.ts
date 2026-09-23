@@ -833,3 +833,57 @@ test('does not add URL aliases for types without metadata aliases', async () => 
   })
   test.is(aliases, undefined)
 })
+
+const localizedCms = createCMS({
+  schema: {Page},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content/main',
+      roots: {
+        pages: Config.root('Pages', {contains: ['Page']})
+      }
+    }),
+    international: Config.workspace('International', {
+      source: 'content/international',
+      roots: {
+        articles: Config.root('Articles', {
+          contains: ['Page'],
+          i18n: {locales: ['en', 'nl']}
+        })
+      }
+    })
+  }
+})
+
+test('creates a translation in the root of its other locales', async () => {
+  const db = await EntryStore.memory(localizedCms.config, new MemorySource())
+  await db.sync()
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'article',
+      type: 'Page',
+      locale: 'en',
+      workspace: 'international',
+      root: 'articles',
+      data: {title: 'Article'}
+    }
+  ])
+  // Saving a translation from the dashboard only passes id and locale
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'article',
+      type: 'Page',
+      locale: 'nl',
+      data: {title: 'Artikel'}
+    }
+  ])
+  const translation = await db.first({
+    id: 'article',
+    locale: 'nl',
+    status: 'all',
+    select: {workspace: Entry.workspace, root: Entry.root}
+  })
+  test.equal(translation, {workspace: 'international', root: 'articles'})
+})

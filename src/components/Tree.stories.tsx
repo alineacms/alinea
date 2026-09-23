@@ -1,6 +1,4 @@
-import type {Key, Selection} from '@react-types/shared'
-import {useMemo, useState, useTransition} from 'react'
-import {Collection, ListLayout, Virtualizer} from 'react-aria-components'
+import {useMemo, useState} from 'react'
 import {
   IcOutlineDescription,
   IcRoundDescription,
@@ -8,349 +6,254 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../dashboard/icons.js'
-import {AlineaLogo as IcRoundHome} from '../dashboard/app/AlineaLogo.js'
-import {Button} from './Button.js'
-import {Checkbox} from './Checkbox.js'
-import {Select, SelectItem} from './Select.js'
 import {Tree, TreeItem} from './Tree.js'
+import type {DropTarget, Key, Selection} from './types.js'
 
-interface TreeCountOption {
-  id: string
-  label: string
-  amount: number
-}
-
-interface GeneratedTreeNode {
-  id: string
-  title: string
-  children?: GeneratedTreeNode[]
-}
-
-const treeCountOptions: TreeCountOption[] = [
-  {id: '10', label: '10 items', amount: 10},
-  {id: '50', label: '50 items', amount: 50},
-  {id: '100', label: '100 items', amount: 100},
-  {id: '1000', label: '1000 items', amount: 1000}
-]
-
-function createGeneratedTree(itemCount: number): GeneratedTreeNode[] {
-  const sections: GeneratedTreeNode[] = []
-  let itemNumber = 1
-  let sectionNumber = 1
-
-  while (itemNumber <= itemCount) {
-    const folders: GeneratedTreeNode[] = []
-
-    for (
-      let folderNumber = 1;
-      folderNumber <= 5 && itemNumber <= itemCount;
-      folderNumber++
-    ) {
-      const items: GeneratedTreeNode[] = []
-
-      for (
-        let folderItemNumber = 1;
-        folderItemNumber <= 10 && itemNumber <= itemCount;
-        folderItemNumber++
-      ) {
-        items.push({
-          id: `item-${itemNumber}`,
-          title: `Item ${itemNumber}`
-        })
-        itemNumber++
-      }
-
-      folders.push({
-        id: `folder-${sectionNumber}-${folderNumber}`,
-        title: `Folder ${sectionNumber}.${folderNumber}`,
-        children: items
-      })
-    }
-
-    sections.push({
-      id: `section-${sectionNumber}`,
-      title: `Section ${sectionNumber}`,
-      children: folders
-    })
-
-    sectionNumber++
-  }
-
-  return sections
-}
-
-function getTreeIcon(node: GeneratedTreeNode, level: number) {
-  if (!node.children?.length) return IcRoundDescription
-  if (level === 0) return IcRoundHome
-  return IcOutlineDescription
-}
-
-function collectExpandableKeys(nodes: GeneratedTreeNode[]): Key[] {
-  const keys: Key[] = []
-
-  for (const node of nodes) {
-    if (!node.children?.length) continue
-    keys.push(node.id)
-    keys.push(...collectExpandableKeys(node.children))
-  }
-
-  return keys
-}
-
-function renderGeneratedTreeNode(node: GeneratedTreeNode) {
-  const level = node.id.startsWith('section-')
-    ? 0
-    : node.id.startsWith('folder-')
-      ? 1
-      : 2
-
+export function Example() {
   return (
-    <TreeItem
-      id={node.id}
-      title={node.title}
-      icon={getTreeIcon(node, level)}
-      hasChildItems={Boolean(node.children?.length)}
-    >
-      {node.children ? (
-        <Collection items={node.children}>{renderGeneratedTreeNode}</Collection>
-      ) : null}
-    </TreeItem>
-  )
-}
-
-export const Example = () => (
-  <Tree aria-label="Files" defaultExpandedKeys={['docs', 'blog']}>
-    <TreeItem title="Documents" id="docs" icon={<IcOutlineDescription />}>
-      <TreeItem title="Project" icon={<IcOutlineDescription />}>
-        <TreeItem title="Weekly Report" icon={<IcRoundDescription />} />
-      </TreeItem>
-    </TreeItem>
-    <TreeItem title="Photos" icon={<IcOutlineDescription />}>
-      <TreeItem title="Image 1" icon={<IcRoundDescription />} />
-      <TreeItem title="Image 2" icon={<IcRoundDescription />} />
-    </TreeItem>
-  </Tree>
-)
-
-export function WithStatus() {
-  return (
-    <Tree
-      aria-label="Pages"
-      defaultExpandedKeys={['folder', 'status', 'unpublished']}
-      selectionMode="single"
-      defaultSelectedKeys={['published']}
-    >
-      <TreeItem title="Examples" id="examples" icon={<IcOutlineDescription />}>
-        <TreeItem title="Getting Started" icon={<IcRoundDescription />} />
-      </TreeItem>
-      <TreeItem title="Folder" id="folder" icon={<IcOutlineDescription />}>
-        <TreeItem
-          title="Sub folder"
-          icon={<IcOutlineDescription />}
-          suffix={<IcRoundHome style={{width: 14, height: 14}} />}
-        />
-      </TreeItem>
-      <TreeItem title="Status" id="status" icon={<IcOutlineDescription />}>
-        <TreeItem
-          id="published"
-          title="Published"
-          icon={<IcRoundDescription />}
-          suffix={
-            <IcRoundVisibility
-              style={{width: 14, height: 14, color: '#16a34a'}}
-            />
-          }
-        />
-        <TreeItem
-          title="Sub folder"
-          icon={<IcOutlineDescription />}
-          suffix={<IcRoundHome style={{width: 14, height: 14}} />}
-        />
-        <TreeItem
-          title="Unpublished"
-          id="unpublished"
-          icon={<IcOutlineDescription />}
-          suffix={
-            <IcRoundVisibilityOff
-              style={{width: 14, height: 14, color: '#d97706'}}
-            />
-          }
-        >
+    <Tree aria-label="Files" defaultExpandedKeys={['docs']}>
+      <TreeItem id="docs" title="Documents" icon={IcOutlineDescription}>
+        <TreeItem id="project" title="Project" icon={IcOutlineDescription}>
           <TreeItem
-            title="Inner"
-            icon={<IcRoundDescription />}
-            suffix={
-              <IcRoundVisibilityOff
-                style={{width: 14, height: 14, color: '#d97706'}}
-              />
-            }
+            id="report"
+            title="Weekly report"
+            icon={IcRoundDescription}
           />
         </TreeItem>
-        <TreeItem
-          title="Draft"
-          icon={<IcRoundDescription />}
-          suffix={
-            <IcRoundEdit style={{width: 14, height: 14, color: '#2563eb'}} />
-          }
-        />
+      </TreeItem>
+      <TreeItem id="photos" title="Photos" icon={IcOutlineDescription}>
+        <TreeItem id="image-1" title="Image 1" icon={IcRoundDescription} />
+        <TreeItem id="image-2" title="Image 2" icon={IcRoundDescription} />
       </TreeItem>
     </Tree>
   )
 }
 
-const layoutOptions = {
-  rowHeight: 31
+function StatusIcon({icon: Icon, color}: StatusIconProps) {
+  return <Icon style={{width: 14, height: 14, color}} />
 }
 
-function waitForTransition() {
-  return new Promise(resolve => {
-    setTimeout(resolve, 10)
+interface StatusIconProps {
+  icon: typeof IcRoundEdit
+  color: string
+}
+
+export function WithStatus() {
+  const [selected, setSelected] = useState<Selection>(new Set(['published']))
+  const [action, setAction] = useState<Key>()
+  return (
+    <div>
+      <Tree
+        aria-label="Pages"
+        defaultExpandedKeys={['status']}
+        selectionMode="single"
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
+        onAction={setAction}
+        disabledKeys={['draft']}
+      >
+        <TreeItem id="status" title="Status" icon={IcOutlineDescription}>
+          <TreeItem
+            id="published"
+            title="Published"
+            icon={IcRoundDescription}
+            href="#published"
+            suffix={<StatusIcon icon={IcRoundVisibility} color="#16a34a" />}
+          />
+          <TreeItem
+            id="unpublished"
+            title="Unpublished"
+            icon={IcRoundDescription}
+            suffix={<StatusIcon icon={IcRoundVisibilityOff} color="#d97706" />}
+          />
+          <TreeItem
+            id="draft"
+            title="Draft"
+            icon={IcRoundDescription}
+            suffix={<StatusIcon icon={IcRoundEdit} color="#2563eb" />}
+          />
+        </TreeItem>
+      </Tree>
+      <output data-testid="selected">
+        {selected === 'all' ? 'all' : [...selected].join(',')}
+      </output>
+      <output data-testid="action">{action}</output>
+    </div>
+  )
+}
+
+export function MultipleSelection() {
+  const [selected, setSelected] = useState<Selection>(new Set())
+  return (
+    <div>
+      <Tree
+        aria-label="Photos"
+        selectionMode="multiple"
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
+      >
+        <TreeItem id="image-1" title="Image 1" icon={IcRoundDescription} />
+        <TreeItem id="image-2" title="Image 2" icon={IcRoundDescription} />
+        <TreeItem id="image-3" title="Image 3" icon={IcRoundDescription} />
+      </Tree>
+      <output data-testid="selected">
+        {selected === 'all' ? 'all' : [...selected].join(',')}
+      </output>
+    </div>
+  )
+}
+
+interface Node {
+  id: string
+  title: string
+  children: Array<Node>
+}
+
+function renderNode(node: Node) {
+  return (
+    <TreeItem
+      id={node.id}
+      title={node.title}
+      icon={node.children.length ? IcOutlineDescription : IcRoundDescription}
+      hasChildItems={node.children.length > 0}
+      items={node.children}
+    >
+      {renderNode}
+    </TreeItem>
+  )
+}
+
+function removeNodes(nodes: Array<Node>, keys: ReadonlySet<Key>) {
+  const removed: Array<Node> = []
+  function walk(list: Array<Node>): Array<Node> {
+    return list.flatMap(node => {
+      if (keys.has(node.id)) {
+        removed.push(node)
+        return []
+      }
+      return [{...node, children: walk(node.children)}]
+    })
+  }
+  return {nodes: walk(nodes), removed}
+}
+
+function insertNodes(
+  nodes: Array<Node>,
+  target: DropTarget,
+  inserted: Array<Node>
+): Array<Node> {
+  return nodes.flatMap(node => {
+    const children = insertNodes(node.children, target, inserted)
+    if (node.id !== target.key) return [{...node, children}]
+    if (target.position === 'on')
+      return [{...node, children: [...children, ...inserted]}]
+    const self = {...node, children}
+    return target.position === 'before'
+      ? [...inserted, self]
+      : [self, ...inserted]
   })
 }
 
-export function DynamicList() {
-  const [selectedAmount, setSelectedAmount] = useState('100')
-  const [transitionCount, setTransitionCount] = useState(0)
-  const [isPending, startTransition] = useTransition()
-  const itemCount =
-    treeCountOptions.find(option => option.id === selectedAmount)?.amount ?? 100
-  const nodes = useMemo(() => createGeneratedTree(itemCount), [itemCount])
-  const defaultExpandedKeys = useMemo(
-    () =>
-      [nodes[0]?.id, nodes[0]?.children?.[0]?.id].filter((key): key is string =>
-        Boolean(key)
-      ),
-    [nodes]
-  )
-  const allExpandableKeys = useMemo(() => collectExpandableKeys(nodes), [nodes])
-  const [expandedKeys, setExpandedKeys] = useState<Set<Key>>(
-    () => new Set(defaultExpandedKeys)
-  )
-  const [selectedKeys, setSelectedKeys] = useState<Set<Key>>(new Set())
-  const [isExpandAllPreferred, setIsExpandAllPreferred] = useState(false)
-  const visibleExpandedKeys = useMemo(() => {
-    if (isExpandAllPreferred) return new Set<Key>(allExpandableKeys)
-    if (expandedKeys.size === 0) return expandedKeys
+function moveNodes(
+  nodes: Array<Node>,
+  keys: ReadonlySet<Key>,
+  target: DropTarget
+) {
+  const result = removeNodes(nodes, keys)
+  return insertNodes(result.nodes, target, result.removed)
+}
 
-    const validKeys = new Set(allExpandableKeys)
-    const nextKeys = new Set<Key>(
-      Array.from(expandedKeys).filter(key => validKeys.has(key))
-    )
-    return nextKeys.size ? nextKeys : new Set<Key>(defaultExpandedKeys)
-  }, [
-    allExpandableKeys,
-    defaultExpandedKeys,
-    expandedKeys,
-    isExpandAllPreferred
-  ])
-  const isAllExpanded =
-    allExpandableKeys.length > 0 &&
-    allExpandableKeys.every(key => visibleExpandedKeys.has(key))
-  const isPartiallyExpanded = visibleExpandedKeys.size > 0 && !isAllExpanded
+const initialNodes: Array<Node> = [
+  {
+    id: 'fruit',
+    title: 'Fruit',
+    children: [
+      {id: 'apple', title: 'Apple', children: []},
+      {id: 'banana', title: 'Banana', children: []}
+    ]
+  },
+  {id: 'vegetables', title: 'Vegetables', children: []},
+  {id: 'bread', title: 'Bread', children: []}
+]
 
-  function handleAmountChange(key: Key | null) {
-    if (key) setSelectedAmount(String(key))
-  }
-
-  function handleExpandAllChange(isSelected: boolean) {
-    setIsExpandAllPreferred(isSelected)
-    setExpandedKeys(
-      isSelected ? new Set<Key>(allExpandableKeys) : new Set<Key>()
-    )
-  }
-
-  function handleExpandedChange(keys: Set<Key>) {
-    setExpandedKeys(keys)
-    setIsExpandAllPreferred(
-      allExpandableKeys.length > 0 &&
-        allExpandableKeys.every(key => keys.has(key))
-    )
-  }
-
-  function runSimulatedTransition(update?: () => void) {
-    if (isPending) return
-    startTransition(async () => {
-      await waitForTransition()
-      update?.()
-      setTransitionCount(current => current + 1)
-    })
-  }
-
-  function handleSimulateTransition() {
-    runSimulatedTransition()
-  }
-
-  function handleSelectionChange(keys: Selection) {
-    if (keys === 'all') return
-    runSimulatedTransition(() => {
-      setSelectedKeys(new Set(keys))
-    })
-  }
-
+export function DragAndDrop() {
+  const [nodes, setNodes] = useState(initialNodes)
   return (
-    <div
-      style={{
-        width: 420,
-        maxWidth: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16
-      }}
+    <Tree
+      aria-label="Groceries"
+      items={nodes}
+      defaultExpandedKeys={['fruit']}
+      getDragData={keys => [...keys].map(key => ({'text/plain': String(key)}))}
+      canDrop={target => target.key !== 'bread' || target.position !== 'on'}
+      onReorder={({keys, target}) =>
+        setNodes(current => moveNodes(current, keys, target))
+      }
+      onMove={({keys, target}) =>
+        setNodes(current => moveNodes(current, keys, target))
+      }
     >
-      <Button
-        appearance="outline"
-        intent="secondary"
-        isPending={isPending}
-        onPress={handleSimulateTransition}
+      {renderNode}
+    </Tree>
+  )
+}
+
+function generateNodes(count: number): Array<Node> {
+  const result: Array<Node> = []
+  for (let section = 0; section * 50 < count; section++) {
+    const children: Array<Node> = []
+    for (let item = 0; item < 50 && section * 50 + item < count; item++) {
+      const index = section * 50 + item + 1
+      children.push({id: `item-${index}`, title: `Item ${index}`, children: []})
+    }
+    result.push({
+      id: `section-${section + 1}`,
+      title: `Section ${section + 1}`,
+      children
+    })
+  }
+  return result
+}
+
+export function Virtualized() {
+  const [count, setCount] = useState(1000)
+  const nodes = useMemo(() => generateNodes(count), [count])
+  const [expanded, setExpanded] = useState<Set<Key>>(new Set(['section-1']))
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
+      <select
+        aria-label="Items"
+        value={count}
+        onChange={event => setCount(Number(event.target.value))}
       >
-        Simulate transition
-      </Button>
-
-      <span style={{fontSize: 12, color: 'var(--alinea-content-secondary)'}}>
-        Transitions completed: {transitionCount}
-      </span>
-
-      <Select
-        items={treeCountOptions}
-        label="Items"
-        selectedKey={selectedAmount}
-        onSelectionChange={handleAmountChange}
-      >
-        {item => <SelectItem key={item.id}>{item.label}</SelectItem>}
-      </Select>
-
-      <Checkbox
-        isSelected={isAllExpanded}
-        isIndeterminate={isPartiallyExpanded}
-        onChange={handleExpandAllChange}
-      >
-        Expand all
-      </Checkbox>
-
-      <div style={{height: 420, minHeight: 0, overflow: 'hidden'}}>
-        <Virtualizer
-          key={selectedAmount}
-          layout={ListLayout}
-          layoutOptions={layoutOptions}
+        <option value={100}>100 items</option>
+        <option value={1000}>1000 items</option>
+        <option value={10000}>10000 items</option>
+      </select>
+      <div style={{height: 320, display: 'flex', flexDirection: 'column'}}>
+        <Tree
+          aria-label={`${count} items`}
+          items={nodes}
+          expandedKeys={expanded}
+          onExpandedChange={setExpanded}
+          selectionMode="single"
+          virtualized
+          rowHeight={34}
         >
-          <Tree
-            aria-label={`Generated tree with ${itemCount} items`}
-            items={nodes}
-            expandedKeys={visibleExpandedKeys}
-            onExpandedChange={handleExpandedChange}
-            selectedKeys={selectedKeys}
-            onSelectionChange={handleSelectionChange}
-            selectionMode="single"
-            style={{width: '100%', height: '100%', display: 'block'}}
-          >
-            {renderGeneratedTreeNode}
-          </Tree>
-        </Virtualizer>
+          {renderNode}
+        </Tree>
       </div>
     </div>
   )
 }
 
+export function Empty() {
+  return (
+    <Tree aria-label="Nothing" items={[]} renderEmptyState={() => 'No items'}>
+      {renderNode}
+    </Tree>
+  )
+}
+
 export default {
-  title: 'Components / Tree'
+  title: 'Pure components / Tree'
 }

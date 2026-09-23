@@ -1,0 +1,246 @@
+.SortableListAdd-inner {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  min-height: 36px;
+  border-top: 1px solid var(--alinea-border);
+}
+
+.SortableListAdd:first-child .SortableListAdd-inner {
+  border-top: 0;
+}
+
+.SortableListItem {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+}
+
+.SortableListItem:not(:first-child) {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.SortableListItem[data-dragging] {
+  opacity: 0.5;
+}
+
+.SortableListItem-dropTarget {
+  position: relative;
+  display: grid;
+  outline: none;
+}
+
+.SortableListItem-dropTarget:not(:first-child) > .SortableListItem {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.SortableListItem-dropIndicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease-out;
+}
+
+.SortableListItem-dropIndicator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190px;
+  max-width: calc(100% - 20px);
+  height: 6px;
+  background: var(--alinea-primary);
+  border-radius: var(--alinea-radius-sm);
+  transform: translate(-50%, -50%);
+}
+
+.SortableListItem-dropIndicator[data-position='before'] {
+  top: -4px;
+}
+
+.SortableListItem-dropIndicator[data-position='after'] {
+  bottom: -4px;
+}
+
+.SortableListItem-dropTarget:first-child > .SortableListItem-dropIndicator[data-position='before'] {
+  top: 0;
+}
+
+.SortableListItem-dropTarget:last-child > .SortableListItem-dropIndicator[data-position='after'] {
+  bottom: 0;
+}
+
+.SortableListItem-dropIndicator[data-active] {
+  opacity: 1;
+}
+
+.SortableListHandle {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  z-index: 3;
+  width: 56px;
+  height: 22px;
+  cursor: grab;
+  opacity: 0;
+  outline: none;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 140ms ease-out;
+}
+
+.SortableListHandle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 4px;
+  background: var(--alinea-fg-disabled);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.SortableListHandle[data-dragging],
+.SortableListHandle:active {
+  cursor: grabbing;
+}
+
+.SortableListHandle:focus-visible::before {
+  background: var(--alinea-primary);
+  outline: 2px solid color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+  outline-offset: 2px;
+}
+
+.SortableListItemHeader {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  min-height: 36px;
+  padding: 2px 8px;
+}
+
+.SortableListItemHeader:hover > .SortableListHandle,
+.SortableListItemHeader:focus-within > .SortableListHandle,
+.SortableListHandle[data-dragging] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.SortableListItemTitle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.SortableListItemTitle[data-dragging] {
+  cursor: grabbing;
+}
+
+.SortableListItemDescription {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.SortableListItemActions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.SortableListItemToggle {
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+}
+
+.SortableListItemToggle:hover,
+.SortableListItemToggle:active,
+.SortableListItemToggle[data-active] {
+  color: var(--alinea-fg);
+}
+
+.SortableListItemToggle-icon {
+  font-size: 16px;
+}
+
+.SortableListItemContent {
+  display: grid;
+  gap: 12px;
+  align-items: normal;
+  padding: 8px 16px 16px 16px;
+}
+
+.SortableListItemFooter {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 8px 16px;
+}
+
+.SortableListItemSettings {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.SortableListItemSettings[data-variant='actions'] {
+  padding: 0;
+  gap: 0;
+}
+
+.SortableListDragPreview {
+  min-width: 220px;
+  max-width: 300px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--alinea-border) 70%, transparent);
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-overlay);
+  box-shadow: var(--alinea-shadow-raised);
+}
+
+.SortableListDragPreview-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--alinea-radius);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-primary);
+  background: color-mix(in srgb, var(--alinea-primary) 12%, transparent);
+}
+
+.SortableListDragPreview-body {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.SortableListDragPreview-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--alinea-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

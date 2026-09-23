@@ -1,0 +1,80 @@
+.Command {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.CommandInput {
+  padding: 8px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.CommandList {
+  max-height: 260px;
+  overflow: auto;
+  padding: 4px;
+  outline: none;
+}
+
+.CommandEmpty {
+  padding: 16px;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  text-align: center;
+}
+
+.CommandGroup {
+  display: block;
+}
+
+.CommandGroup-heading {
+  padding: 4px 6px;
+  color: var(--alinea-fg-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.CommandItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.4rem;
+  border-radius: var(--alinea-radius-sm);
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  outline: none;
+  cursor: pointer;
+
+  &:hover:not(.is-highlighted) {
+    background: var(--alinea-muted);
+  }
+
+  &.is-highlighted {
+    background: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
+  }
+
+  &[aria-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.CommandItem-icon {
+  flex-shrink: 0;
+}
+
+.CommandItem-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CommandSeparator {
+  height: 1px;
+  margin: 4px 8px;
+  border: none;
+  background: var(--alinea-border);
+}

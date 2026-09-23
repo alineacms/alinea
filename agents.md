@@ -51,3 +51,39 @@
 - `unwrap` may preserve already-loaded atom data during recomputation, but do not
   rely on mounting a component that reads an unwrapped atom to begin a required
   load.
+
+## Public components (`alinea/components`)
+Components exported from `src/components.ts` are a long-term public API that
+must not expose react-aria. `bun run build` fails when a public declaration
+file reaches `react-aria-components`, `react-aria`, `react-stately`,
+`@react-types/*` or `@internationalized/*`.
+- Implement with react-aria internally, but write every exported props
+  interface by hand from `src/components/types.ts` (`StyleProps`, `AriaProps`,
+  `DataProps`, `OpenStateProps`, `PositionProps`, `SelectionProps`,
+  `FieldSharedProps`, ...). Never `extends` a react-aria type, never re-export
+  one, no render-prop `className`/`children` functions.
+- Follow shadcn/ui and Radix naming unless impractical: compound parts named
+  `ThingTrigger`, `ThingContent`, `ThingItem`, `ThingHeader`, ...; props
+  `open`/`defaultOpen`/`onOpenChange`, `value`/`defaultValue`/`onValueChange`,
+  `checked`/`onCheckedChange`, `pressed`/`onPressedChange`, `disabled`,
+  `required`, `readOnly`, `side`/`align`/`sideOffset`, `asChild`,
+  `onSelect` for menu items, `onClick` for buttons, `variant`/`size`.
+- Form controls extend `FieldSharedProps` (`label`, `description`, `error`,
+  `required`, `disabled`, `readOnly`, `icon`, `shared`) and render their
+  chrome with `Field` from `./Field.js`.
+- Dates and times are ISO strings (`2026-09-23`, `14:30`), keys are
+  `string | number`, selections use `Selection`.
+- Every rendered part sets `data-slot="thing-part"`; variants are exposed as
+  `data-variant`/`data-size`/`data-color`. Style interaction state with native
+  pseudo-classes and ARIA attributes (`:hover`, `:focus-visible`,
+  `:disabled`, `[aria-expanded]`, `[aria-checked]`, `[aria-selected]`), not
+  react-aria's `data-*` state attributes, so the implementation can change.
+- Keep CSS custom properties to a minimum: use the global semantic tokens
+  from `src/theme.css` and derive hover/disabled/subtle shades with
+  `color-mix()` and opacity (disabled is `opacity: 0.5`) instead of defining
+  per-state variables.
+- Helpers that are only for our own components live in
+  `src/components/internal/` and are not exported. Dashboard and field code
+  may use react-aria directly where the public API cannot express something.
+- Finished components get a Ladle story under `title: 'Pure components / X'`
+  and a Playwright spec (`X.spec.tsx`) mounting those stories.

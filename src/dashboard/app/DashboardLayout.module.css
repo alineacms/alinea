@@ -1,10 +1,8 @@
 .DashboardLayout-create {
-  margin: 8px;
-  width: calc(100% - 16px);
+  width: 100%;
   justify-content: center;
 
   &.is-toolbar {
     width: auto;
-    margin: 0;
   }
 }

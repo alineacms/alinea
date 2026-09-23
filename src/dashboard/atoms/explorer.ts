@@ -1,3 +1,4 @@
+import type {DragTypes, DropTarget, Key} from '#/components.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {filterChecker} from '#/core/Filter.js'
@@ -20,16 +21,6 @@ import {
 } from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
-import type {
-  DragItem,
-  DragTypes,
-  DropOperation,
-  DropTarget
-} from '@react-types/shared'
-import type {
-  DroppableCollectionOnItemDropEvent,
-  Key
-} from 'react-aria-components'
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
@@ -40,7 +31,6 @@ import {policyAtom} from './user.js'
 import {
   acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
-  dashboardEntryDragTypes,
   dispense
 } from './utils.js'
 
@@ -676,41 +666,30 @@ export class ExplorerAtoms {
       })
     }
   )
-  getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
-    return [...keys].map(dashboardEntryDragItem)
-  })
-  getDropOperation = atom(
+  getDragData = atom(
     null,
-    (
-      _get,
-      _set,
-      target: DropTarget,
-      types: DragTypes,
-      allowedOperations: Array<DropOperation>
-    ) => {
-      if (target.type !== 'item' || !acceptsDashboardEntryDrag(types))
-        return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
+    (_get, _set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+      return [...keys].map(dashboardEntryDragItem)
     }
   )
-  onItemDrop = atom(
+  /** Entries can be dropped on other entries */
+  canDrop = atom(null, (_get, _set, target: DropTarget, types: DragTypes) => {
+    return target.position === 'on' && acceptsDashboardEntryDrag(types)
+  })
+  /** Moves the dragged entries of this explorer into the target entry */
+  moveInto = atom(
     null,
     async (
       get,
       _set,
-      event: DroppableCollectionOnItemDropEvent,
+      ids: Iterable<string>,
+      target: DropTarget,
       locale: string | null
     ) => {
-      const target = String(event.target.key)
       const entries = get(this.items(locale))
       const policy = get(policyAtom)
       const graph = get(graphAtom)
-      for (const dragItem of event.items) {
-        if (dragItem.kind !== 'text' || !dragItem.types || !dragItem.getText)
-          continue
-        const id = dragItem.types.has(dashboardEntryDragTypes[0])
-          ? await dragItem.getText(dashboardEntryDragTypes[0])
-          : await dragItem.getText('text/plain')
+      for (const id of ids) {
         const entry = entries.find(entry => entry.id === id)
         if (!entry) continue
         const {data} = get(entry.data)
@@ -719,7 +698,7 @@ export class ExplorerAtoms {
         policy.assert(Permission.Move, item)
         await graph.move({
           id,
-          target,
+          target: String(target.key),
           targetType: 'entry',
           dropPosition: 'on'
         })

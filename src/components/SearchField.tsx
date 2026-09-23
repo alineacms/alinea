@@ -1,65 +1,121 @@
 import styler from '@alinea/styler'
+import type {FocusEvent, KeyboardEvent} from 'react'
 import {
   Button,
   Input,
-  SearchField as SearchFieldPrimitive,
-  type SearchFieldProps as SearchFieldPrimitiveProps
+  SearchField as SearchFieldPrimitive
 } from 'react-aria-components'
-import {IcRoundClose, IcRoundSearch} from '../dashboard/icons.js'
+import {IcRoundClose} from '../dashboard/icons.js'
+import {Field} from './Field.js'
 import {Icon} from './Icon.js'
-import {Label, type LabelSharedProps, labelProps} from './Label.js'
-import {ProgressCircle} from './ProgressCircle.js'
 import css from './SearchField.module.css'
+import {Spinner} from './Spinner.js'
+import type {
+  AriaProps,
+  DataProps,
+  FieldSharedProps,
+  StyleProps
+} from './types.js'
 
 const styles = styler(css)
 
 export interface SearchFieldProps
-  extends SearchFieldPrimitiveProps, LabelSharedProps {
+  extends FieldSharedProps, StyleProps, AriaProps, DataProps {
+  value?: string
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+  /** Called when the user presses enter */
+  onSubmit?: (value: string) => void
+  /** Called when the user clears the field with the clear button or escape */
+  onClear?: () => void
   placeholder?: string
-  hasIcon?: boolean
-  isPending?: boolean
+  /** Shows a spinner while results are being loaded */
+  loading?: boolean
+  name?: string
+  autoFocus?: boolean
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void
+  onFocus?: (event: FocusEvent<HTMLInputElement>) => void
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
 }
 
-export function SearchField({hasIcon, isPending, ...props}: SearchFieldProps) {
-  const {className, ...rest} = props
+/**
+ * A text input for search queries with a clear button. The `icon` is shown
+ * inside the input, in front of the query.
+ */
+export function SearchField({
+  label,
+  description,
+  error,
+  required,
+  disabled,
+  readOnly,
+  icon,
+  shared,
+  onValueChange,
+  placeholder,
+  loading,
+  onBlur,
+  onFocus,
+  onKeyDown,
+  className,
+  ...props
+}: SearchFieldProps) {
   return (
     <SearchFieldPrimitive
-      {...rest}
-      className={renderProps =>
-        styles.SearchField(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
+      data-slot="search-field"
+      {...props}
+      onChange={onValueChange}
+      isRequired={required}
+      isDisabled={disabled}
+      isReadOnly={readOnly}
+      isInvalid={Boolean(error)}
+      className={styles.SearchField(styler.merge({className}))}
     >
-      <Label {...labelProps(props)}>
-        <div className={styles.SearchField.field()}>
-          {hasIcon && (
+      <Field
+        label={label}
+        description={description}
+        error={error}
+        required={required}
+        disabled={disabled}
+        readOnly={readOnly}
+        shared={shared}
+      >
+        <div
+          data-slot="search-field-group"
+          className={styles.SearchFieldGroup()}
+        >
+          {icon && (
             <Icon
-              icon={IcRoundSearch}
-              className={styles.SearchField.field.icon()}
+              icon={icon}
+              data-slot="search-field-icon"
+              className={styles.SearchFieldIcon()}
             />
           )}
-          <Input className={styles.SearchField.field.input()} />
-          {isPending && (
-            <ProgressCircle
-              isIndeterminate
-              aria-label="Refreshing..."
-              className={styles.SearchField.field.pending()}
+          <Input
+            data-slot="search-field-input"
+            className={styles.SearchFieldInput()}
+            placeholder={placeholder}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            onKeyDown={onKeyDown}
+          />
+          {loading && (
+            <Spinner
+              aria-label="Loading results"
+              className={styles.SearchFieldSpinner()}
             />
           )}
-          <Button className={styles.SearchField.field.clear()}>
+          <Button
+            data-slot="search-field-clear"
+            className={styles.SearchFieldClear()}
+          >
             <Icon
               icon={IcRoundClose}
-              className={styles.SearchField.field.clear.icon()}
+              className={styles.SearchFieldClear.icon()}
             />
           </Button>
         </div>
-      </Label>
+      </Field>
     </SearchFieldPrimitive>
   )
 }

@@ -1,11 +1,13 @@
 import {
   Button,
-  Label,
+  Field,
   Select,
   SelectItem,
+  Text,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup
+  ToggleGroup,
+  ToggleGroupItem,
+  useDialog
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Reference} from '#/core/Reference.js'
@@ -33,8 +35,7 @@ import {NodeEditor} from '../EntryFields.js'
 import {
   DashboardModalContent,
   DashboardModalDialog,
-  DashboardModalFooter,
-  useDashboardModal
+  DashboardModalFooter
 } from '../ui/DashboardModal.js'
 import css from './CreateEntry.module.css'
 
@@ -101,17 +102,11 @@ function createLinkEditor(
 }
 
 function CreateEntryLoading() {
-  return (
-    <DashboardModalDialog
-      aria-label="Create entry"
-      variant="explorer"
-      isLoading
-    />
-  )
+  return <DashboardModalDialog variant="explorer" isLoading />
 }
 
 function CreateEntryForm() {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const {page, root} = useDashboardContext()
   const createEntry = useSetAtom(createEntryAtom)
   const config = useAtomValueRaw(configAtom).schema
@@ -225,40 +220,34 @@ function CreateEntryForm() {
   const canCreate = Boolean(selectedType && title.trim())
 
   return (
-    <DashboardModalDialog
-      aria-label="Create entry"
-      variant="explorer"
-      label="Create entry"
-    >
+    <DashboardModalDialog variant="explorer" label="Create entry">
       <form onSubmit={onSubmit} id="submit">
         <DashboardModalContent>
           <TextField
             autoFocus
             value={title}
-            onChange={setTitle}
+            onValueChange={setTitle}
             label="Title"
-            isRequired
+            required
           />
 
           <Select
             label="Type"
-            selectedKey={selectedType}
-            onSelectionChange={key => {
-              setSelectedType(key ? String(key) : null)
-            }}
-            isRequired
+            value={selectedType}
+            onValueChange={setSelectedType}
+            required
           >
             {typeOptions.map(option => (
-              <SelectItem id={option.id} key={option.id}>
+              <SelectItem value={option.id} key={option.id}>
                 {option.label}
               </SelectItem>
             ))}
           </Select>
 
           {typeOptions.length === 0 && (
-            <p className={styles.CreateEntry.message()}>
+            <Text as="p" color="muted">
               No entry types are available at this location.
-            </p>
+            </Text>
           )}
 
           <div className={styles.CreateEntry.parentRow()}>
@@ -266,28 +255,28 @@ function CreateEntryForm() {
               <NodeEditor node={parent.node} type={parent.type} />
             </div>
             {showInsertOrder && (
-              <Label
+              <Field
                 label="Insert"
                 className={styles.CreateEntry.insertOrder()}
               >
-                <ToggleButtonGroup
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
                   aria-label="Insert"
-                  selectionMode="single"
-                  disallowEmptySelection
-                  selectedKeys={[insertOrder]}
-                  onSelectionChange={key => {
-                    if (key.has('first')) setInsertOrder('first')
-                    else if (key.has('last')) setInsertOrder('last')
+                  value={insertOrder}
+                  onValueChange={value => {
+                    if (value === 'first' || value === 'last')
+                      setInsertOrder(value)
                   }}
                 >
-                  <ToggleButton id="first">
-                    <IcRoundFirstPage data-slot="icon" /> First
-                  </ToggleButton>
-                  <ToggleButton id="last">
-                    <IcRoundLastPage data-slot="icon" /> Last
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Label>
+                  <ToggleGroupItem value="first" icon={IcRoundFirstPage}>
+                    First
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="last" icon={IcRoundLastPage}>
+                    Last
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </Field>
             )}
           </div>
 
@@ -296,15 +285,15 @@ function CreateEntryForm() {
       </form>
 
       <DashboardModalFooter>
-        <Button type="button" appearance="outline" onPress={modal.close}>
+        <Button type="button" variant="outline" onClick={modal.close}>
           Cancel
         </Button>
         <Button
           type="submit"
           form="submit"
-          intent="primary"
-          isDisabled={!canCreate}
-          isPending={isCreating}
+          color="primary"
+          disabled={!canCreate}
+          loading={isCreating}
         >
           Create entry
         </Button>

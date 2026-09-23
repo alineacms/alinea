@@ -1,4 +1,13 @@
-import {Button, DialogTrigger} from '#/components.js'
+import {
+  AppShell,
+  AppShellContent,
+  Dialog,
+  DialogTrigger,
+  Sidebar,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset
+} from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
@@ -7,14 +16,12 @@ import {useAtomValueRaw} from 'jotai'
 import type {PropsWithChildren} from 'react'
 import {DashboardScope, useDashboardContext} from '../hooks.js'
 import {IcRoundAdd} from '../icons.js'
-import {AppShell, AppShellContent, AppShellInner} from './AppShell.js'
 import {SidebarTree} from './SidebarTree.js'
 import {SidebarLayout} from './SidebarLayout.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 import {CreateEntry} from './modals/CreateEntry.js'
 import {DashboardModal} from './ui/DashboardModal.js'
-import {Sidebar, SidebarFooter, SidebarHeader} from './ui/Sidebar.js'
 import css from './DashboardLayout.module.css'
 
 const styles = styler(css)
@@ -36,34 +43,32 @@ export function DashboardLayout({
   return (
     <DashboardScope value={{page, root, workspace}}>
       <AppShell>
-        <AppShellInner>
-          <WorkspaceRoots
-            canManageMembers={canManageMembers}
-            page={page}
-            root={root}
-          />
-          <AppShellContent>
-            <SidebarLayout
-              side="left"
-              sidebar={
-                <Sidebar>
-                  <SidebarHeader>
-                    <WorkspaceMenu
-                      canManageMembers={canManageMembers}
-                      page={page}
-                      root={root}
-                      workspace={workspace}
-                    />
-                  </SidebarHeader>
-                  <SidebarTree page={page} root={root} />
-                  <SidebarCreateEntryButton root={root} />
-                </Sidebar>
-              }
-            >
-              {children}
-            </SidebarLayout>
-          </AppShellContent>
-        </AppShellInner>
+        <WorkspaceRoots
+          canManageMembers={canManageMembers}
+          page={page}
+          root={root}
+        />
+        <AppShellContent>
+          <SidebarLayout
+            side="left"
+            sidebar={
+              <Sidebar>
+                <SidebarHeader>
+                  <WorkspaceMenu
+                    canManageMembers={canManageMembers}
+                    page={page}
+                    root={root}
+                    workspace={workspace}
+                  />
+                </SidebarHeader>
+                <SidebarTree page={page} root={root} />
+                <SidebarCreateEntryButton root={root} />
+              </Sidebar>
+            }
+          >
+            <SidebarInset>{children}</SidebarInset>
+          </SidebarLayout>
+        </AppShellContent>
       </AppShell>
     </DashboardScope>
   )
@@ -74,6 +79,9 @@ interface SidebarCreateEntryButtonProps {
 }
 
 function SidebarCreateEntryButton({root}: SidebarCreateEntryButtonProps) {
+  const {page} = useDashboardContext()
+  const canCreate = useAtomValueRaw(root.tree(page.locale).canCreate)
+  if (!canCreate) return null
   return (
     <SidebarFooter>
       <CreateEntryButton root={root} />
@@ -94,18 +102,18 @@ export function CreateEntryButton({
   const canCreate = useAtomValueRaw(root.tree(page.locale).canCreate)
   if (!canCreate) return null
   return (
-    <DialogTrigger>
-      <Button
+    <Dialog>
+      <DialogTrigger
         aria-label="Create new"
         className={styles.DashboardLayout.create({toolbar})}
         icon={IcRoundAdd}
-        intent={toolbar ? 'primary' : 'secondary'}
+        color={toolbar ? 'primary' : 'secondary'}
       >
         Create new
-      </Button>
-      <DashboardModal>
+      </DialogTrigger>
+      <DashboardModal aria-label="Create entry">
         <CreateEntry />
       </DashboardModal>
-    </DialogTrigger>
+    </Dialog>
   )
 }

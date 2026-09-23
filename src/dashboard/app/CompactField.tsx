@@ -6,7 +6,7 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
 import {useMemo} from 'react'
-import {Badge} from './Badge.js'
+import {Badge} from '#/components.js'
 import css from './CompactField.module.css'
 
 const styles = styler(css)
@@ -127,7 +127,7 @@ function renderArrayValue(
   return (
     <span className={styles.CompactField.items()}>
       {value.slice(0, 4).map((item, index) => (
-        <Badge key={index} size="small">
+        <Badge key={index} size="sm">
           {compactValueText(item, options)}
         </Badge>
       ))}

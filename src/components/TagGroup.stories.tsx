@@ -1,64 +1,86 @@
-import {useListData} from 'react-stately'
-import {type IntentProps, type ShapeProps, Tag, TagGroup} from './TagGroup.js'
+import {useState} from 'react'
+import {Tag, TagGroup} from './TagGroup.js'
+import type {Key, Selection} from './types.js'
 
-const intents: IntentProps[] = ['primary', 'secondary']
-const shapes: ShapeProps[] = ['square', 'circle']
-
-const items = [
-  {id: 1, name: 'Chocolate'},
-  {id: 2, name: 'Mint'},
-  {id: 3, name: 'Strawberry'},
-  {id: 4, name: 'Vanilla'}
+const flavors = [
+  {id: 'chocolate', name: 'Chocolate'},
+  {id: 'mint', name: 'Mint'},
+  {id: 'strawberry', name: 'Strawberry'},
+  {id: 'vanilla', name: 'Vanilla'}
 ]
 
-export const Intents = () => (
-  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-    {intents.map(intent => (
-      <TagGroup items={items} label={intent} intent={intent} key={intent}>
-        {item => <Tag>{item.name}</Tag>}
-      </TagGroup>
-    ))}
-  </div>
-)
-
-export const Selection = () => {
-  const list = useListData({
-    initialItems: [
-      {id: 1, name: 'Chocolate'},
-      {id: 2, name: 'Mint'},
-      {id: 3, name: 'Strawberry'},
-      {id: 4, name: 'Vanilla', isDisabled: true}
-    ]
-  })
-
+export function Example() {
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-      <TagGroup items={list.items} label="Ice cream flavor">
-        {item => <Tag isDisabled={item.isDisabled}>{item.name}</Tag>}
+    <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+      <TagGroup label="Primary">
+        {flavors.map(flavor => (
+          <Tag key={flavor.id} id={flavor.id}>
+            {flavor.name}
+          </Tag>
+        ))}
       </TagGroup>
-      <TagGroup
-        items={list.items}
-        label="Ice cream flavor"
-        description="Multiple selectionMode"
-        selectionMode="multiple"
-        onRemove={keys => list.remove(...keys)}
-      >
-        {item => <Tag isDisabled={item.isDisabled}>{item.name}</Tag>}
+      <TagGroup label="Secondary" variant="secondary">
+        {flavors.map(flavor => (
+          <Tag key={flavor.id} id={flavor.id}>
+            {flavor.name}
+          </Tag>
+        ))}
+      </TagGroup>
+      <TagGroup label="Circle" shape="circle">
+        {flavors.map(flavor => (
+          <Tag key={flavor.id} id={flavor.id}>
+            {flavor.name}
+          </Tag>
+        ))}
       </TagGroup>
     </div>
   )
 }
 
-export const Shape = () => (
-  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-    {shapes.map(shape => (
-      <TagGroup items={items} label={shape} shape={shape} key={shape}>
-        {item => <Tag>{item.name}</Tag>}
+export function Selectable() {
+  const [selected, setSelected] = useState<Selection>(new Set(['mint']))
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <TagGroup
+        label="Ice cream flavor"
+        selectionMode="multiple"
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
+        disabledKeys={['vanilla']}
+      >
+        {flavors.map(flavor => (
+          <Tag key={flavor.id} id={flavor.id}>
+            {flavor.name}
+          </Tag>
+        ))}
       </TagGroup>
-    ))}
-  </div>
-)
+      <p data-testid="state">
+        {selected === 'all' ? 'all' : [...selected].join(',')}
+      </p>
+    </div>
+  )
+}
+
+export function Removable() {
+  const [items, setItems] = useState(flavors)
+  function remove(keys: Set<Key>) {
+    setItems(current => current.filter(item => !keys.has(item.id)))
+  }
+  return (
+    <TagGroup
+      label="Removable"
+      description="Every tag has a remove button"
+      onRemove={remove}
+    >
+      {items.map(item => (
+        <Tag key={item.id} id={item.id}>
+          {item.name}
+        </Tag>
+      ))}
+    </TagGroup>
+  )
+}
 
 export default {
-  title: 'Components / TabGroup'
+  title: 'Pure components / TagGroup'
 }

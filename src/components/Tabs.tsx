@@ -1,97 +1,130 @@
 import styler from '@alinea/styler'
+import {createContext, type ReactNode, useContext} from 'react'
 import {
   TabList as TabListPrimitive,
-  type TabListProps,
   TabPanel as TabPanelPrimitive,
-  type TabPanelProps,
   Tab as TabPrimitive,
-  type TabProps,
   Tabs as TabsPrimitive
 } from 'react-aria-components'
-import type {TabsProps as TabsPrimitiveProps} from 'react-aria-components'
 import css from './Tabs.module.css'
+import type {AriaProps, DataProps, Orientation, StyleProps} from './types.js'
 
 const styles = styler(css)
 
-export type {TabProps, TabListProps, TabPanelProps} from 'react-aria-components'
+const TabsOrientationContext = createContext<Orientation>('horizontal')
 
-export interface TabsProps extends TabsPrimitiveProps {
+export interface TabsProps extends StyleProps, DataProps {
+  value?: string
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+  orientation?: Orientation
   variant?: 'line' | 'subtle' | 'enclosed'
-  overflow?: boolean
+  disabled?: boolean
+  id?: string
+  children: ReactNode
 }
 
-export function Tabs({variant = 'line', overflow, ...props}: TabsProps) {
-  const {className, ...rest} = props
+/** A set of layered sections of content, displayed one at a time */
+export function Tabs({
+  value,
+  defaultValue,
+  onValueChange,
+  orientation = 'horizontal',
+  variant = 'line',
+  disabled,
+  className,
+  children,
+  ...props
+}: TabsProps) {
   return (
     <TabsPrimitive
+      {...props}
+      data-slot={props['data-slot'] ?? 'tabs'}
       data-variant={variant}
-      data-overflow={overflow}
-      {...rest}
-      className={renderProps =>
-        styles.Tabs(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
+      data-orientation={orientation}
+      className={styles.Tabs(styler.merge({className}))}
+      selectedKey={value}
+      defaultSelectedKey={defaultValue}
+      onSelectionChange={onValueChange && (key => onValueChange(String(key)))}
+      orientation={orientation}
+      isDisabled={disabled}
+    >
+      <TabsOrientationContext.Provider value={orientation}>
+        {children}
+      </TabsOrientationContext.Provider>
+    </TabsPrimitive>
   )
 }
 
-export function Tab(props: TabProps) {
-  const {className, ...rest} = props
-  return (
-    <TabPrimitive
-      {...rest}
-      className={renderProps =>
-        styles.Tab(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
-  )
+export interface TabsListProps extends StyleProps, AriaProps, DataProps {
+  children: ReactNode
 }
 
-export function TabList<T extends object>(
-  props: TabListProps<T> & {overflow?: boolean}
-) {
-  const {className, ...rest} = props
+/**
+ * The row of tab triggers, it scrolls horizontally when the triggers do not
+ * fit.
+ */
+export function TabsList({
+  className,
+  style,
+  children,
+  ...props
+}: TabsListProps) {
+  const orientation = useContext(TabsOrientationContext)
   return (
     <div
-      className={styles.TabList(
-        styler.merge({
-          className: typeof className === 'string' ? className : undefined
-        })
-      )}
+      data-slot="tabs-list"
+      className={styles.TabsList(styler.merge({className}))}
+      style={style}
     >
-      <TabListPrimitive<T> {...rest} className={styles.TabList.list()} />
+      <TabListPrimitive
+        data-slot="tabs-list-items"
+        {...props}
+        data-orientation={orientation}
+        className={styles.TabsList.list()}
+      >
+        {children}
+      </TabListPrimitive>
     </div>
   )
 }
 
-export function TabPanel(props: TabPanelProps) {
-  const {className, ...rest} = props
+export interface TabsTriggerProps extends StyleProps, DataProps {
+  value: string
+  disabled?: boolean
+  'aria-label'?: string
+  children: ReactNode
+}
+
+export function TabsTrigger({
+  value,
+  disabled,
+  className,
+  ...props
+}: TabsTriggerProps) {
+  return (
+    <TabPrimitive
+      data-slot="tabs-trigger"
+      {...props}
+      id={value}
+      isDisabled={disabled}
+      className={styles.TabsTrigger(styler.merge({className}))}
+    />
+  )
+}
+
+export interface TabsContentProps extends StyleProps, DataProps {
+  value: string
+  children?: ReactNode
+}
+
+export function TabsContent({value, className, ...props}: TabsContentProps) {
   return (
     <TabPanelPrimitive
-      {...rest}
-      className={renderProps =>
-        styles.TabPanel(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
+      data-slot="tabs-content"
+      {...props}
+      id={value}
+      className={styles.TabsContent(styler.merge({className}))}
     />
   )
 }

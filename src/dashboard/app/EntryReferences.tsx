@@ -6,7 +6,8 @@ import {
   ListItemDescription,
   ListItemStatus,
   ListItemTitle,
-  ListItemVisual
+  ListItemVisual,
+  Text
 } from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import type {
@@ -53,9 +54,9 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
           </ListEmpty>
         </List>
         {otherSummary && (
-          <p className={styles.EntryReferences.other()}>
+          <Text as="p" size="sm" color="muted">
             {formatOtherSummary(otherSummary)}
-          </p>
+          </Text>
         )}
       </div>
     )
@@ -67,7 +68,7 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
           <EntryReferenceItem
             item={item}
             key={item.key}
-            onPress={() => {
+            onClick={() => {
               setRoute({
                 workspace: item.source.workspace,
                 root: item.source.root,
@@ -79,9 +80,9 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
         ))}
       </List>
       {otherSummary && (
-        <p className={styles.EntryReferences.other()}>
+        <Text as="p" size="sm" color="muted">
           {formatOtherSummary(otherSummary)}
-        </p>
+        </Text>
       )}
     </div>
   )
@@ -89,10 +90,10 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
 
 interface EntryReferenceItemProps {
   item: EntryReferenceGroup
-  onPress: () => void
+  onClick: () => void
 }
 
-function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
+function EntryReferenceItem({item, onClick}: EntryReferenceItemProps) {
   const {linkType, source} = item
   return (
     <ListItem
@@ -101,11 +102,11 @@ function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
           <Icon data-slot="icon" icon={referenceIcon(linkType)} />
         </ListItemVisual>
       }
-      onPress={onPress}
+      onClick={onClick}
       trailing={
         <span className={styles.EntryReferences.trailing()}>
           {item.statuses.map(status => (
-            <ListItemStatus key={status} tone={statusTone(status)}>
+            <ListItemStatus key={status} color={statusColor(status)}>
               {statusLabel(status)}
             </ListItemStatus>
           ))}
@@ -258,13 +259,13 @@ function statusOrder(status: EntryStatus): number {
   }
 }
 
-function statusTone(status: EntryStatus) {
+function statusColor(status: EntryStatus) {
   switch (status) {
     case 'published':
-      return 'positive' as const
+      return 'success' as const
     case 'draft':
-      return 'accent' as const
+      return 'primary' as const
     case 'archived':
-      return 'neutral' as const
+      return 'muted' as const
   }
 }

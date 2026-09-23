@@ -1,52 +1,81 @@
 'use client'
 
-import {Button, Dialog, Modal, ProgressCircle, Surface} from '#/components.js'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  PageContent,
+  PageFooter,
+  PageHeader,
+  Spinner,
+  type PageContentProps,
+  type PageFooterProps,
+  type PageHeaderProps,
+  Surface
+} from '#/components.js'
 import styler from '@alinea/styler'
 import {
+  createContext,
   useContext,
   type ComponentProps,
   type PropsWithChildren,
   type ReactNode
 } from 'react'
-import {
-  OverlayTriggerStateContext,
-  type ModalOverlayProps
-} from 'react-aria-components'
 import {IcRoundClose} from '../../icons.js'
 import css from './DashboardModal.module.css'
-import {RailBody, RailFooter, RailHeader} from './Rail.js'
 
 const styles = styler(css)
 
-export interface DashboardModalProps extends Omit<
-  ModalOverlayProps,
-  'children'
-> {
+const DashboardModalLabel = createContext<string | undefined>(undefined)
+
+export interface DashboardModalProps {
+  /**
+   * Controls the modal on its own. Leave out to render it as the content of
+   * a surrounding Dialog.
+   */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Close the modal when clicking outside of it, defaults to true */
+  dismissable?: boolean
+  /** Labels the modal, a DashboardModalTitle labels it otherwise */
+  'aria-label'?: string
   children?: ReactNode
   size?: 'default' | 'explorer'
 }
 
 export function DashboardModal({
+  open,
+  onOpenChange,
+  dismissable = true,
+  'aria-label': ariaLabel,
   children,
-  size = 'default',
-  ...props
+  size = 'default'
 }: DashboardModalProps) {
-  return (
-    <Modal
-      isDismissable
-      className={styles.DashboardModal(size)}
-      overlayClassName={styles.DashboardModalOverlay()}
-      {...props}
+  const content = (
+    <DialogContent
+      size={size === 'explorer' ? 'full' : 'lg'}
+      dismissable={dismissable}
+      showCloseButton={false}
+      aria-label={ariaLabel}
+      className={styles.DashboardModal()}
     >
-      <Surface className={styles.DashboardModal.surface()}>{children}</Surface>
-    </Modal>
+      <DashboardModalLabel.Provider value={ariaLabel}>
+        <Surface className={styles.DashboardModal.surface()}>
+          {children}
+        </Surface>
+      </DashboardModalLabel.Provider>
+    </DialogContent>
+  )
+  if (open === undefined) return content
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {content}
+    </Dialog>
   )
 }
 
-export interface DashboardModalDialogProps
-  extends
-    PropsWithChildren,
-    Omit<ComponentProps<typeof Dialog>, 'children' | 'className'> {
+export interface DashboardModalDialogProps extends PropsWithChildren {
   isLoading?: boolean
   label?: ReactNode
   controls?: ReactNode
@@ -58,23 +87,19 @@ export function DashboardModalDialog({
   label,
   controls,
   children,
-  variant = 'default',
-  ...props
+  variant = 'default'
 }: DashboardModalDialogProps) {
-  const loadingLabel =
-    typeof props['aria-label'] === 'string'
-      ? `Loading ${props['aria-label'].toLowerCase()}`
-      : 'Loading'
-
+  const ariaLabel = useContext(DashboardModalLabel)
+  const loadingLabel = ariaLabel
+    ? `Loading ${ariaLabel.toLowerCase()}`
+    : 'Loading'
   return (
-    <Dialog
-      {...props}
+    <div
       className={styles.DashboardModalDialog(variant, {loading: isLoading})}
       data-loading={isLoading ? '' : undefined}
     >
       {isLoading ? (
-        <ProgressCircle
-          isIndeterminate
+        <Spinner
           aria-label={loadingLabel}
           className={styles.DashboardModalDialog.loader()}
         />
@@ -94,7 +119,7 @@ export function DashboardModalDialog({
           {children}
         </>
       )}
-    </Dialog>
+    </div>
   )
 }
 
@@ -112,31 +137,19 @@ export function DashboardModalFooter({children}: PropsWithChildren) {
 
 export function DashboardModalTitle({children}: PropsWithChildren) {
   return (
-    <h2 slot="title" className={styles.DashboardModalTitle()}>
+    <DialogTitle className={styles.DashboardModalTitle()}>
       {children}
-    </h2>
+    </DialogTitle>
   )
 }
 
-export function useDashboardModal() {
-  const ctx = useContext(OverlayTriggerStateContext)
-  if (!ctx)
-    throw new Error(
-      'useDashboardModal must be used within a <DashboardModal> component'
-    )
-  return ctx
-}
-
 export function DashboardModalCloseButton() {
-  const {close} = useDashboardModal()
   return (
-    <Button
+    <DialogClose
       aria-label="Close modal"
-      appearance="plain"
+      variant="ghost"
       className={styles.DashboardModalCloseButton()}
       size="icon"
-      type="button"
-      onPress={close}
       icon={IcRoundClose}
     />
   )
@@ -157,39 +170,33 @@ export function DashboardModalForm(props: DashboardModalFormProps) {
   )
 }
 
-export interface DashboardModalFormHeaderProps extends ComponentProps<
-  typeof RailHeader
-> {}
+export interface DashboardModalFormHeaderProps extends PageHeaderProps {}
 
 export function DashboardModalFormHeader(props: DashboardModalFormHeaderProps) {
   return (
-    <RailHeader
+    <PageHeader
       {...props}
       className={styles.DashboardModalFormHeader(styler.merge(props))}
     />
   )
 }
 
-export interface DashboardModalFormBodyProps extends ComponentProps<
-  typeof RailBody
-> {}
+export interface DashboardModalFormBodyProps extends PageContentProps {}
 
 export function DashboardModalFormBody(props: DashboardModalFormBodyProps) {
   return (
-    <RailBody
+    <PageContent
       {...props}
       className={styles.DashboardModalFormBody(styler.merge(props))}
     />
   )
 }
 
-export interface DashboardModalFormFooterProps extends ComponentProps<
-  typeof RailFooter
-> {}
+export interface DashboardModalFormFooterProps extends PageFooterProps {}
 
 export function DashboardModalFormFooter(props: DashboardModalFormFooterProps) {
   return (
-    <RailFooter
+    <PageFooter
       {...props}
       className={styles.DashboardModalFormFooter(styler.merge(props))}
     />

@@ -1,4 +1,4 @@
-import {Label} from '#/components.js'
+import {Field} from '#/components.js'
 import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {CodeField} from '#/field/code.js'
 import {styler} from '@alinea/styler'
@@ -70,12 +70,12 @@ export function CodeEditorInput({
 }: CodeEditorInputProps) {
   const inputId = useId()
   return (
-    <Label
+    <Field
       htmlFor={inputId}
       label={label}
       description={description}
-      errorMessage={errorMessage}
-      isRequired={isRequired}
+      error={errorMessage}
+      required={isRequired}
       shared={shared}
     >
       <div
@@ -101,7 +101,7 @@ export function CodeEditorInput({
           value={value}
         />
       </div>
-    </Label>
+    </Field>
   )
 }
 

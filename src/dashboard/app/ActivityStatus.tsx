@@ -1,6 +1,7 @@
 import {
+  type Align,
   Button,
-  DialogTrigger,
+  Heading,
   Icon,
   List,
   ListEmpty,
@@ -10,9 +11,15 @@ import {
   ListItemTitle,
   ListItemVisual,
   Popover,
-  ProgressCircle,
+  PopoverContent,
+  PopoverTrigger,
+  Spinner,
+  type Side,
+  Text,
+  Timestamp,
   Tooltip,
-  type PopoverProps
+  TooltipContent,
+  TooltipTrigger
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
@@ -23,7 +30,6 @@ import {
   useSyncExternalStore,
   type ReactNode
 } from 'react'
-import {useInteractOutside} from 'react-aria'
 import {appAtom} from '../App.js'
 import {
   activityAtom,
@@ -61,36 +67,28 @@ function ignoreActivityBreakpoint() {
 export interface ActivityStatusProps {
   ariaLabel?: string
   children?: ReactNode
-  mobilePlacement?: PopoverProps['placement']
+  mobileAlign?: Align
+  mobileSide?: Side
   openOnFail?: boolean
-  placement?: PopoverProps['placement']
+  side?: Side
 }
 
 export function ActivityStatus({
   ariaLabel,
   children,
-  mobilePlacement,
+  mobileAlign,
+  mobileSide,
   openOnFail = false,
-  placement = 'right'
+  side = 'right'
 }: ActivityStatusProps) {
   const [appPending] = useAtomValueRaw(appAtom)
   const activity = useAtomValueRaw(activityAtom)
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)
   const [isOpen, setIsOpen] = useState(false)
-  const panelRef = useRef<HTMLDivElement>(null)
-  // The popover stays non-modal so the dashboard behind it remains usable
-  // and scrollable. Non-modal popovers don't dismiss on outside interaction
-  // by themselves, so close the panel that way using the same primitive RAC
-  // overlays use internally.
-  useInteractOutside({
-    ref: panelRef,
-    onInteractOutside: () => setIsOpen(false),
-    isDisabled: !isOpen
-  })
   const isMobile = useSyncExternalStore(
-    mobilePlacement ? subscribeToMobileActivity : ignoreActivityBreakpoint,
-    mobilePlacement ? mobileActivitySnapshot : desktopActivitySnapshot,
+    mobileSide ? subscribeToMobileActivity : ignoreActivityBreakpoint,
+    mobileSide ? mobileActivitySnapshot : desktopActivitySnapshot,
     desktopActivitySnapshot
   )
   const wasFailed = useRef(false)
@@ -100,6 +98,8 @@ export function ActivityStatus({
   if (activityLabel !== undefined) lastActivityLabel.current = activityLabel
   const visibleActivityLabel =
     activityLabel ?? (showSpinner ? lastActivityLabel.current : undefined)
+  const popoverSide = isMobile && mobileSide ? mobileSide : side
+  const popoverAlign = isMobile && mobileSide ? mobileAlign : undefined
   const label = getStatusLabel(
     visibleActivityLabel,
     activity.hasFailed,
@@ -118,26 +118,43 @@ export function ActivityStatus({
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip
-        placement={isMobile ? mobilePlacement : placement}
-        delay={300}
-        tooltip={label}
-      >
-        <Button
-          size={children ? undefined : 'icon'}
-          appearance={children ? 'outline' : 'plain'}
-          className={styles.ActivityStatus({
-            failed: activity.hasFailed,
-            syncing: showSpinner
-          })}
-          aria-label={children ? ariaLabel : label}
-        >
-          {children ? (
-            <span className={styles.ActivityStatus.label()}>
-              {showSpinner ? (
-                <ProgressCircle
-                  isIndeterminate
+    // The popover stays non-modal so the dashboard behind it remains usable
+    // and scrollable, it still closes on interaction outside of it
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
+      <PopoverTrigger asChild>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <Button
+              size={children ? undefined : 'icon'}
+              variant={children ? 'outline' : 'ghost'}
+              className={styles.ActivityStatus({
+                failed: activity.hasFailed,
+                syncing: showSpinner
+              })}
+              aria-label={children ? ariaLabel : label}
+            >
+              {children ? (
+                <span className={styles.ActivityStatus.label()}>
+                  {showSpinner ? (
+                    <Spinner
+                      aria-label={label}
+                      className={styles.ActivityStatus.icon()}
+                    />
+                  ) : activity.hasFailed ? (
+                    <IcRoundWarning
+                      aria-hidden="true"
+                      className={styles.ActivityStatus.icon()}
+                    />
+                  ) : (
+                    <IcRoundCheck
+                      aria-hidden="true"
+                      className={styles.ActivityStatus.icon()}
+                    />
+                  )}
+                  {children}
+                </span>
+              ) : showSpinner ? (
+                <Spinner
                   aria-label={label}
                   className={styles.ActivityStatus.icon()}
                 />
@@ -152,58 +169,47 @@ export function ActivityStatus({
                   className={styles.ActivityStatus.icon()}
                 />
               )}
-              {children}
-            </span>
-          ) : showSpinner ? (
-            <ProgressCircle
-              isIndeterminate
-              aria-label={label}
-              className={styles.ActivityStatus.icon()}
-            />
-          ) : activity.hasFailed ? (
-            <IcRoundWarning
-              aria-hidden="true"
-              className={styles.ActivityStatus.icon()}
-            />
-          ) : (
-            <IcRoundCheck
-              aria-hidden="true"
-              className={styles.ActivityStatus.icon()}
-            />
-          )}
-        </Button>
-      </Tooltip>
-      <Popover
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side={popoverSide} align={popoverAlign}>
+            {label}
+          </TooltipContent>
+        </Tooltip>
+      </PopoverTrigger>
+      <PopoverContent
         className={styles.ActivityStatus.popover.surface()}
-        isNonModal
-        placement={isMobile ? mobilePlacement : placement}
-        offset={16}
+        aria-label="Activity"
+        side={popoverSide}
+        align={popoverAlign}
+        sideOffset={16}
         style={{
           padding: '0',
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
+          boxShadow: 'var(--alinea-shadow-tooltip)'
         }}
       >
-        <div ref={panelRef} className={styles.ActivityStatus.popover()}>
+        <div className={styles.ActivityStatus.popover()}>
           <div className={styles.ActivityStatus.popover.header()}>
-            <h2 className={styles.ActivityStatus.popover.title()}>Activity</h2>
+            <Heading as="h2" size="xs">
+              Activity
+            </Heading>
             {activity.hasFailed && (
               <div className={styles.ActivityStatus.popover.actions()}>
                 {activity.canDiscard && (
                   <Button
-                    size="small"
-                    appearance="plain"
-                    intent="danger"
-                    onPress={() => discard()}
+                    size="sm"
+                    variant="ghost"
+                    color="destructive"
+                    onClick={() => discard()}
                   >
                     Discard
                   </Button>
                 )}
                 {activity.canRetry && (
                   <Button
-                    size="small"
-                    appearance="outline"
-                    intent="danger"
-                    onPress={() => retry()}
+                    size="sm"
+                    variant="outline"
+                    color="destructive"
+                    onClick={() => retry()}
                   >
                     Retry
                   </Button>
@@ -227,8 +233,8 @@ export function ActivityStatus({
             )}
           </List>
         </div>
-      </Popover>
-    </DialogTrigger>
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -246,12 +252,12 @@ function ActivityItem({activity}: ActivityItemProps) {
     <ListItem
       inner={
         activity.error && (
-          <p className={styles.ActivityStatus.popover.item.error()}>
+          <Text as="p" size="xs" color="destructive">
             {activity.error}
-          </p>
+          </Text>
         )
       }
-      onPress={
+      onClick={
         target
           ? () =>
               setRoute({
@@ -265,8 +271,7 @@ function ActivityItem({activity}: ActivityItemProps) {
       leading={
         <ListItemVisual>
           {showSpinner ? (
-            <ProgressCircle
-              isIndeterminate
+            <Spinner
               aria-label={displayedStatus}
               className={styles.ActivityStatus.icon()}
             />
@@ -277,7 +282,7 @@ function ActivityItem({activity}: ActivityItemProps) {
       }
       trailing={
         <ListItemStatus
-          tone={showSpinner ? 'accent' : activityStatusTone(activity.status)}
+          color={showSpinner ? 'primary' : activityStatusColor(activity.status)}
         >
           {displayedStatus}
         </ListItemStatus>
@@ -343,19 +348,19 @@ function activityStatusIcon(status: Activity['status']) {
   }
 }
 
-function activityStatusTone(status: Activity['status']) {
+function activityStatusColor(status: Activity['status']) {
   switch (status) {
     case 'running':
-      return 'accent' as const
+      return 'primary' as const
     case 'succeeded':
-      return 'positive' as const
+      return 'success' as const
     case 'failed':
-      return 'danger' as const
+      return 'destructive' as const
     case 'pending':
     case 'blocked':
       return 'warning' as const
     default:
-      return 'neutral' as const
+      return 'muted' as const
   }
 }
 
@@ -380,12 +385,15 @@ function formatActivityDescription(activity: Activity) {
       : activity.operations
           .map(operation => formatActivityOperation(operation, activity.status))
           .join(' · ')
-  const timestamp = activity.finishedAt ?? activity.startedAt
-  const time = new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-  return details ? `${details} · ${time}` : time
+  const time = (
+    <Timestamp date={activity.finishedAt ?? activity.startedAt} format="time" />
+  )
+  if (!details) return time
+  return (
+    <>
+      {details} · {time}
+    </>
+  )
 }
 
 function isFileActivity(activity: Activity) {

@@ -1,7 +1,8 @@
 .ColorSwatchPicker {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+
   &[data-layout='stack'] {
     flex-direction: column;
   }
@@ -9,26 +10,28 @@
 
 .ColorSwatchPickerItem {
   position: relative;
+  border-radius: var(--alinea-radius-sm);
   outline: none;
-  border-radius: 4px;
+  cursor: pointer;
   forced-color-adjust: none;
 
-  &[data-focus-visible] {
+  &:focus-visible {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }
 
-  &[data-selected]::after {
+  &[aria-selected='true']::after {
     content: '';
     position: absolute;
     inset: 0;
     border: 2px solid var(--alinea-fg);
+    border-radius: inherit;
     outline: 2px solid var(--alinea-bg);
     outline-offset: -4px;
-    border-radius: inherit;
   }
 
-  &[data-disabled] {
-    opacity: 0.2;
+  &[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: default;
   }
 }

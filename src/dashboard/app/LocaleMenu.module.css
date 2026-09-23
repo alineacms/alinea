@@ -1,29 +1,27 @@
 .LocaleMenu-trigger {
-  display: flex;
-  align-items: center;
+  /* Follow the color of the surrounding text, eg. inside an Alert */
+  --alinea-button-accent: currentColor;
+
   gap: 4px;
   min-width: 0;
-  width: auto;
   max-width: 92px;
-  min-height: var(--alinea-locale-height, 24px);
+  min-height: 24px;
   padding: 0 4px;
-  margin: 0;
   border: 0;
-  border-radius: 4px;
-  appearance: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--alinea-locale-font-size, 12px);
-  line-height: var(--alinea-locale-line-height, normal);
-  outline: none;
-  text-align: left;
+  border-radius: var(--alinea-radius-sm);
+  font-size: 12px;
+  font-weight: inherit;
+  line-height: normal;
+
+  &.is-lg {
+    min-height: 30px;
+    font-size: var(--alinea-font-size-base);
+    line-height: 24px;
+  }
 }
 
-.LocaleMenu-trigger[data-hovered],
-.LocaleMenu-trigger[data-pressed] {
-  background: color-mix(in srgb, currentColor 8%, transparent);
+.LocaleMenu-trigger[aria-expanded='true'] {
+  background: color-mix(in oklab, currentColor 8%, transparent);
 }
 
 .LocaleMenu-trigger .LocaleMenu-label {

@@ -2,28 +2,28 @@
   overflow: hidden;
   background-color: var(--alinea-input);
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   outline: 3px solid transparent;
   transition: var(--alinea-transition);
   transition-property: border-color, outline-color, background-color;
 
   &:hover {
-    border-color: var(--alinea-border-hover);
-    outline-color: var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    outline-color: var(--alinea-muted);
   }
 
   &:focus-within {
-    border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-primary-overlay);
+    border-color: var(--alinea-primary);
+    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[data-invalid='true'] {
-    border-color: var(--alinea-border-danger);
-    outline-color: var(--alinea-danger-overlay);
+    border-color: var(--alinea-danger);
+    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &[data-read-only='true'] {
-    background-color: var(--alinea-input-disabled);
+    background-color: var(--alinea-bg-muted);
   }
 
   &[data-read-only='true']:hover,
@@ -46,7 +46,7 @@
   color: var(--alinea-fg);
 
   &::placeholder {
-    color: var(--alinea-fg-subtle);
+    color: var(--alinea-fg-disabled);
   }
 
   &:disabled,
@@ -63,31 +63,31 @@
 }
 
 .CodeEditorInput-comment {
-  color: var(--alinea-dashboard-code-comment);
+  color: var(--alinea-fg-disabled);
   font-style: italic;
 }
 
 .CodeEditorInput-keyword {
-  color: var(--alinea-dashboard-code-keyword);
+  color: var(--alinea-fg);
   font-weight: 600;
 }
 
 .CodeEditorInput-identifier {
-  color: var(--alinea-dashboard-code-identifier);
+  color: var(--alinea-primary-subtle-fg);
 }
 
 .CodeEditorInput-number {
-  color: var(--alinea-dashboard-code-number);
+  color: var(--alinea-danger-subtle-fg);
 }
 
 .CodeEditorInput-string {
-  color: var(--alinea-dashboard-code-string);
+  color: var(--alinea-warning-subtle-fg);
 }
 
 .CodeEditorInput-regex {
-  color: var(--alinea-dashboard-code-regex);
+  color: var(--alinea-warning-subtle-fg);
 }
 
 .CodeEditorInput-punctuation {
-  color: var(--alinea-dashboard-code-punctuation);
+  color: var(--alinea-fg-muted);
 }

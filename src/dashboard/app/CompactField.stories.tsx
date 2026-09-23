@@ -18,7 +18,7 @@ import {time} from '#/field/time.js'
 import '#/theme.css'
 import type {CSSProperties, ReactNode} from 'react'
 import {views} from '../../field/views.js'
-import {Badge} from './Badge.js'
+import {Badge} from '#/components.js'
 import {CompactField, CompactRecordFields} from './CompactField.js'
 
 const featureType = type('Feature', {
@@ -33,7 +33,7 @@ const compactCustomField = new ScalarField<string, FieldOptions<string>>({
   options: {label: 'Custom'},
   view: viewKeys.HiddenInput,
   compactView({value}) {
-    return <Badge size="small">Custom: {value}</Badge>
+    return <Badge size="sm">Custom: {value}</Badge>
   }
 })
 

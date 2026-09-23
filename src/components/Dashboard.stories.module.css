@@ -1,0 +1,97 @@
+/* Content styles for the dashboard composition story */
+.DashboardStory {
+  height: 100vh;
+  min-height: 640px;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+}
+
+.DashboardStory-logo {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-primary);
+  color: var(--alinea-primary-fg);
+  font-weight: 700;
+}
+
+.DashboardStory-create {
+  justify-content: center;
+}
+
+.DashboardStory-body {
+  padding: 16px;
+}
+
+.DashboardStory-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.DashboardStory-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.DashboardStory-fields-full {
+  grid-column: 1 / -1;
+}
+
+.DashboardStory-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.DashboardStory-overview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.DashboardStory-overview-search {
+  flex: 1;
+}
+
+.DashboardStory-aside {
+  min-height: 0;
+  padding: 8px 12px 0;
+  overflow: auto;
+}
+
+.DashboardStory-aside-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 0;
+  overflow: auto;
+}
+
+.DashboardStory-preview {
+  display: grid;
+  place-items: center;
+  height: 280px;
+  border-radius: var(--alinea-radius);
+  background: linear-gradient(135deg, var(--alinea-muted), var(--alinea-bg-muted));
+  color: var(--alinea-fg-muted);
+}
+
+.DashboardStory-previewBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.DashboardStory-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 200px;
+  padding: 8px;
+}

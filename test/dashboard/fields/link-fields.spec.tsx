@@ -110,12 +110,12 @@ test('opens a functional location in another workspace and root', async ({
   await expect(
     resultModes
       .getByRole('radio', {name: 'Browse'})
-      .locator('[data-slot="icon"]')
+      .locator('svg')
   ).toHaveCount(1)
   await expect(
     resultModes
       .getByRole('radio', {name: 'Filtered'})
-      .locator('[data-slot="icon"]')
+      .locator('svg')
   ).toHaveCount(1)
 })
 

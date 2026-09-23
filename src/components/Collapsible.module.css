@@ -1,0 +1,62 @@
+.Collapsible {
+  display: flex;
+  flex-direction: column;
+  color: var(--alinea-fg);
+}
+
+.CollapsibleTrigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--alinea-fg-muted);
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
+  text-align: left;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  transition: color var(--alinea-transition);
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(--alinea-fg-strong);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.CollapsibleTrigger-icon {
+  flex: 0 0 auto;
+  font-size: 16px;
+}
+
+.CollapsibleTrigger-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CollapsibleContent {
+  min-width: 0;
+}
+
+.CollapsibleContent[hidden] {
+  display: none;
+}

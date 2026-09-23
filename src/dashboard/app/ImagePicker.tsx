@@ -1,5 +1,5 @@
 // oxlint-disable jsx_a11y/no-autofocus
-import {Button} from '#/components.js'
+import {Button, Text, useDialog} from '#/components.js'
 import {getRoot} from '#/core/Internal.js'
 import {
   createExplorerAtoms,
@@ -16,7 +16,6 @@ import {
   ExplorerModal,
   ExplorerModalActions,
   ExplorerModalFooter,
-  ExplorerModalSelection,
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
@@ -27,8 +26,7 @@ import {
 import {
   DashboardModal,
   DashboardModalCloseButton,
-  DashboardModalDialog,
-  useDashboardModal
+  DashboardModalDialog
 } from './ui/DashboardModal.js'
 
 export interface ImagePickerOptions extends ExplorerOptions {
@@ -38,29 +36,22 @@ export interface ImagePickerOptions extends ExplorerOptions {
 export function ImagePicker(options: ImagePickerOptions) {
   const label = String(options.label ?? 'Pick media')
   return (
-    <DashboardModal size="explorer">
+    <DashboardModal size="explorer" aria-label={label}>
       <Suspense
-        fallback={
-          <DashboardModalDialog
-            aria-label={label}
-            variant="explorer"
-            isLoading
-          />
-        }
+        fallback={<DashboardModalDialog variant="explorer" isLoading />}
       >
-        <ImagePickerModalContent options={options} label={label} />
+        <ImagePickerModalContent options={options} />
       </Suspense>
     </DashboardModal>
   )
 }
 
 interface ExplorerModalProps {
-  label: string
   options: ImagePickerOptions
 }
 
-function ImagePickerModalContent({label, options}: ExplorerModalProps) {
-  const modal = useDashboardModal()
+function ImagePickerModalContent({options}: ExplorerModalProps) {
+  const modal = useDialog()
   const {page, root, workspace} = useDashboardContext()
   const policy = useAtomValueRaw(policyAtom)
   const mediaRoot = Object.entries(workspace.roots).find(
@@ -114,9 +105,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const selectedItems = selection === 'all' ? 0 : selection.size
 
   if (!explorerPage)
-    return (
-      <DashboardModalDialog aria-label={label} variant="explorer" isLoading />
-    )
+    return <DashboardModalDialog variant="explorer" isLoading />
 
   function onSubmit() {
     startTransition(() => {
@@ -126,7 +115,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   }
 
   return (
-    <DashboardModalDialog aria-label={label} variant="explorer">
+    <DashboardModalDialog variant="explorer">
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
@@ -144,12 +133,12 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
             tree={tree}
           />
           <ExplorerModalFooter>
-            <ExplorerModalSelection>
+            <Text color="muted">
               {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </ExplorerModalSelection>
+            </Text>
             <ExplorerModalActions>
-              <Button onPress={modal.close}>Cancel</Button>
-              <Button intent="primary" onPress={onSubmit}>
+              <Button onClick={modal.close}>Cancel</Button>
+              <Button color="primary" onClick={onSubmit}>
                 Select
               </Button>
             </ExplorerModalActions>

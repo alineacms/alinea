@@ -1,57 +1,21 @@
-import styler from '@alinea/styler'
-import {
-  ToggleButton as ToggleButtonPrimitive,
-  type ToggleButtonGroupProps as ToggleButtonGroupPrimitiveProps,
-  ToggleButtonGroup as ToggleButtonGroupPrimitive,
-  type ToggleButtonProps as ToggleButtonPrimitiveProps
-} from 'react-aria-components'
-import css from './Toggle.module.css'
+import type {ReactElement, ReactNode, Ref} from 'react'
+import {ToggleButton} from './internal/ToggleButton.js'
+import type {AriaProps, DataProps, IconType, StyleProps} from './types.js'
 
-const styles = styler(css)
-
-export interface ToggleButtonGroupProps extends ToggleButtonGroupPrimitiveProps {
-  variant?: 'compact' | 'enclosed' | 'icon-small'
+export interface ToggleProps extends StyleProps, AriaProps, DataProps {
+  pressed?: boolean
+  defaultPressed?: boolean
+  onPressedChange?: (pressed: boolean) => void
+  variant?: 'default' | 'outline'
+  size?: 'default' | 'sm' | 'lg'
+  icon?: IconType | ReactElement
+  disabled?: boolean
+  autoFocus?: boolean
+  ref?: Ref<HTMLButtonElement>
+  children?: ReactNode
 }
 
-export function ToggleButtonGroup({
-  variant = 'enclosed',
-  className,
-  ...props
-}: ToggleButtonGroupProps) {
-  return (
-    <ToggleButtonGroupPrimitive
-      data-variant={variant}
-      {...props}
-      className={renderProps =>
-        styles.ToggleButtonGroup(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
-  )
-}
-
-export interface ToggleButtonProps extends ToggleButtonPrimitiveProps {}
-
-export function ToggleButton({className, ...props}: ToggleButtonProps) {
-  return (
-    <ToggleButtonPrimitive
-      {...props}
-      className={renderProps =>
-        styles.ToggleButton(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
-  )
+/** A two-state button that can be either on or off */
+export function Toggle(props: ToggleProps) {
+  return <ToggleButton data-slot="toggle" {...props} />
 }

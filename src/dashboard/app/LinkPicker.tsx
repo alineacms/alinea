@@ -1,4 +1,15 @@
-import {Button, Dialog, Popover, Tooltip} from '#/components.js'
+import {
+  Button,
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  type Selection,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  Text,
+  useDialog
+} from '#/components.js'
 import {
   createExplorerAtoms,
   type DashboardEntry,
@@ -18,14 +29,12 @@ import {
   type ReactNode,
   type RefObject
 } from 'react'
-import type {Selection} from 'react-aria-components'
 import {IcRoundOpenInFull} from '../icons.js'
 import {ExplorerBody, ExplorerHeader, ExplorerSearch} from './Explorer.js'
 import {
   ExplorerModal,
   ExplorerModalActions,
   ExplorerModalFooter,
-  ExplorerModalSelection,
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
@@ -37,8 +46,7 @@ import css from './LinkPicker.module.css'
 import {
   DashboardModal,
   DashboardModalCloseButton,
-  DashboardModalDialog,
-  useDashboardModal
+  DashboardModalDialog
 } from './ui/DashboardModal.js'
 
 const styles = styler(css)
@@ -51,9 +59,9 @@ export interface LinkPickerProps extends LinkPickerOptions {
 }
 
 export function LinkPicker({anchorRef, ...options}: LinkPickerProps) {
-  const trigger = useDashboardModal()
+  const dialog = useDialog()
   const [expanded, setExpanded] = useState(false)
-  if (!trigger.isOpen && !expanded) return null
+  if (!dialog.open && !expanded) return null
   return (
     <Suspense
       fallback={
@@ -72,7 +80,7 @@ export function LinkPicker({anchorRef, ...options}: LinkPickerProps) {
 
 export function LinkPickerModal(options: LinkPickerOptions) {
   return (
-    <DashboardModal size="explorer">
+    <DashboardModal size="explorer" aria-label={expandedPickerLabel}>
       <Suspense fallback={<LinkPickerModalLoading />}>
         <LinkPickerModalContent options={options} />
       </Suspense>
@@ -81,13 +89,7 @@ export function LinkPickerModal(options: LinkPickerOptions) {
 }
 
 function LinkPickerModalLoading() {
-  return (
-    <DashboardModalDialog
-      aria-label={expandedPickerLabel}
-      variant="explorer"
-      isLoading
-    />
-  )
+  return <DashboardModalDialog variant="explorer" isLoading />
 }
 
 interface LinkPickerModalContentProps {
@@ -113,14 +115,24 @@ interface LinkPickerPopoverProps {
   children: ReactNode
 }
 
+/** The compact picker opens with the surrounding Dialog, next to the anchor */
 function LinkPickerPopover({anchorRef, children}: LinkPickerPopoverProps) {
+  const dialog = useDialog()
   return (
     <Popover
-      className={styles.LinkPicker.popover()}
-      placement="bottom"
-      triggerRef={anchorRef}
+      open={dialog.open}
+      onOpenChange={open => {
+        if (!open) dialog.close()
+      }}
     >
-      {children}
+      {anchorRef && <PopoverAnchor virtualRef={anchorRef} />}
+      <PopoverContent
+        aria-label="Pick a link"
+        className={styles.LinkPicker.popover()}
+        side="bottom"
+      >
+        {children}
+      </PopoverContent>
     </Popover>
   )
 }
@@ -136,7 +148,12 @@ function LinkPickerLoading({
 }: LinkPickerLoadingProps) {
   if (!expanded) return null
   return (
-    <DashboardModal isOpen size="explorer" onOpenChange={onExpandedChange}>
+    <DashboardModal
+      open
+      size="explorer"
+      aria-label={expandedPickerLabel}
+      onOpenChange={onExpandedChange}
+    >
       <LinkPickerModalLoading />
     </DashboardModal>
   )
@@ -175,8 +192,9 @@ function LinkPickerReady({
         />
       </LinkPickerPopover>
       <DashboardModal
-        isOpen={expanded}
+        open={expanded}
         size="explorer"
+        aria-label={expandedPickerLabel}
         onOpenChange={onExpandedChange}
       >
         <LinkPickerExpanded
@@ -248,7 +266,7 @@ function LinkPickerCompact({
   onCommit,
   onExpand
 }: LinkPickerCompactProps) {
-  const popover = useDashboardModal()
+  const popover = useDialog()
   const selection = useAtomValueRaw(explorer.selection)
   const setSelection = useSetAtom(explorer.selection)
   const selectsMultiple = explorer.selectionMode === 'multiple'
@@ -284,7 +302,7 @@ function LinkPickerCompact({
   }
 
   return (
-    <Dialog aria-label="Pick a link" className={styles.LinkPickerCompact()}>
+    <div className={styles.LinkPickerCompact()}>
       <div className={styles.LinkPickerCompact.header()}>
         <ExplorerSearch
           autoFocus
@@ -292,14 +310,15 @@ function LinkPickerCompact({
           onEntryAction={commitEntry}
           page={page}
         />
-        <Tooltip tooltip="Expand entry picker">
-          <Button
+        <Tooltip>
+          <TooltipTrigger
             aria-label="Expand entry picker"
-            appearance="plain"
+            variant="ghost"
             icon={IcRoundOpenInFull}
-            size="icon-nav"
-            onPress={openExpanded}
+            size="icon-lg"
+            onClick={openExpanded}
           />
+          <TooltipContent>Expand entry picker</TooltipContent>
         </Tooltip>
       </div>
       <ExplorerBody
@@ -310,15 +329,15 @@ function LinkPickerCompact({
       />
       {selectsMultiple && (
         <div className={styles.LinkPickerCompact.footer()}>
-          <span className={styles.LinkPickerCompact.selection()}>
+          <Text color="muted">
             {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-          </span>
-          <Button intent="primary" onPress={() => commitSelection(selection)}>
+          </Text>
+          <Button color="primary" onClick={() => commitSelection(selection)}>
             Select
           </Button>
         </div>
       )}
-    </Dialog>
+    </div>
   )
 }
 
@@ -335,7 +354,7 @@ function LinkPickerExpanded({
   page,
   tree
 }: LinkPickerExpandedProps) {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValueRaw(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
@@ -346,7 +365,7 @@ function LinkPickerExpanded({
   }
 
   return (
-    <DashboardModalDialog aria-label={expandedPickerLabel} variant="explorer">
+    <DashboardModalDialog variant="explorer">
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
@@ -365,12 +384,12 @@ function LinkPickerExpanded({
             tree={tree}
           />
           <ExplorerModalFooter>
-            <ExplorerModalSelection>
+            <Text color="muted">
               {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </ExplorerModalSelection>
+            </Text>
             <ExplorerModalActions>
-              <Button onPress={modal.close}>Cancel</Button>
-              <Button intent="primary" onPress={onSubmit}>
+              <Button onClick={modal.close}>Cancel</Button>
+              <Button color="primary" onClick={onSubmit}>
                 Select
               </Button>
             </ExplorerModalActions>

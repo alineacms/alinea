@@ -1,4 +1,15 @@
-import {Button, Icon, Menu, MenuItem, Surface} from '#/components.js'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Heading,
+  Icon,
+  Surface,
+  Text,
+  Timestamp
+} from '#/components.js'
 import {Entry, type EntryAuditUser} from '#/core/Entry.js'
 import {timestampFromId} from '#/core/Id.js'
 import {getRoot, getType} from '#/core/Internal.js'
@@ -28,18 +39,6 @@ const recentEntryCount = 3
 const recentCandidateWindowSize = recentEntryCount
 const visibleRootCount = 2
 const futureTimestampTolerance = 24 * 60 * 60 * 1000
-const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, {
-  numeric: 'auto',
-  style: 'narrow'
-})
-const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-  month: 'short'
-})
-const changedAtFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium',
-  timeStyle: 'short'
-})
 
 interface RecentEntryCandidate {
   actor?: string
@@ -221,38 +220,30 @@ function SplashPage({
                   icon={IcBaselineAccountCircle}
                   className={styles.SplashPage.actionIcon()}
                 />
-                <span className={styles.SplashPage.user.label()}>
+                <Text weight="medium" truncate>
                   {userName}
-                </span>
+                </Text>
               </div>
             )}
             {searchRoot && (
               <GlobalSearch initialSearchScope="everything" root={searchRoot}>
                 <Button
-                  appearance="plain"
+                  variant="ghost"
+                  icon={IcRoundSearch}
                   className={styles.SplashPage.action()}
                   aria-label="Search content"
                 >
-                  <Icon
-                    icon={IcRoundSearch}
-                    className={styles.SplashPage.actionIcon()}
-                  />
-                  <span className={styles.SplashPage.search.label()}>
-                    Search content
-                  </span>
+                  <Text truncate>Search content</Text>
                 </Button>
               </GlobalSearch>
             )}
             {canManageMembers && (
               <Button
-                appearance="plain"
+                variant="ghost"
+                icon={IcOutlineSettings}
                 className={styles.SplashPage.action()}
-                onPress={() => setRoute({page: 'users'})}
+                onClick={() => setRoute({page: 'users'})}
               >
-                <Icon
-                  icon={IcOutlineSettings}
-                  className={styles.SplashPage.actionIcon()}
-                />
                 Manage users
               </Button>
             )}
@@ -260,9 +251,7 @@ function SplashPage({
               aria-label="Appearance"
               className={styles.SplashPage.appearance()}
             >
-              <span className={styles.SplashPage.appearance.label()}>
-                Appearance
-              </span>
+              <Text>Appearance</Text>
               <AppearanceToggle />
             </div>
           </div>
@@ -298,11 +287,15 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
   return (
     <Surface className={styles.SplashPage.card()} onClick={onCardClick}>
       <header className={styles.SplashPage.card.header()}>
-        <h2 className={styles.SplashPage.card.header.title()}>
+        <Heading
+          as="h2"
+          size="xs"
+          className={styles.SplashPage.card.header.title()}
+        >
           <Button
-            appearance="plain"
+            variant="ghost"
             className={styles.SplashPage.card.header.button()}
-            onPress={() => setRoute(openRoute)}
+            onClick={() => setRoute(openRoute)}
           >
             <WorkspaceAvatar color={workspace.color} icon={workspace.icon} />
             <span className={styles.SplashPage.card.header.content()}>
@@ -311,42 +304,44 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
               </span>
             </span>
           </Button>
-        </h2>
+        </Heading>
         <div className={styles.SplashPage.card.footer()}>
           {visibleRoots.map(root => (
             <Button
               key={root.key}
-              appearance="plain"
+              variant="ghost"
               className={styles.SplashPage.root()}
               icon={root.icon}
-              onPress={() => setRoute({workspace: key, root: root.key})}
+              onClick={() => setRoute({workspace: key, root: root.key})}
             >
               {root.label}
             </Button>
           ))}
           {remainingRoots.length > 0 && (
-            <Menu
-              aria-label={`More roots in ${workspace.label}`}
-              onAction={rootKey =>
-                setRoute({workspace: key, root: String(rootKey)})
-              }
-              popoverProps={{placement: 'bottom start'}}
-              label={
-                <Button appearance="plain" className={styles.SplashPage.root()}>
-                  +{remainingRoots.length} more
-                </Button>
-              }
-            >
-              {remainingRoots.map(root => (
-                <MenuItem key={root.key} id={root.key} textValue={root.label}>
-                  <Icon
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                variant="ghost"
+                className={styles.SplashPage.root()}
+              >
+                +{remainingRoots.length} more
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                aria-label={`More roots in ${workspace.label}`}
+                side="bottom"
+                align="start"
+              >
+                {remainingRoots.map(root => (
+                  <DropdownMenuItem
+                    key={root.key}
                     icon={root.icon}
-                    className={styles.SplashPage.root.menuIcon()}
-                  />
-                  {root.label}
-                </MenuItem>
-              ))}
-            </Menu>
+                    textValue={root.label}
+                    onSelect={() => setRoute({workspace: key, root: root.key})}
+                  >
+                    {root.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </header>
@@ -355,9 +350,9 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
           {entries.map(entry => (
             <Button
               key={entry.id}
-              appearance="plain"
+              variant="ghost"
               className={styles.SplashPage.entry()}
-              onPress={() =>
+              onClick={() =>
                 setRoute({
                   workspace: entry.workspace,
                   root: entry.root,
@@ -386,13 +381,7 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
                     </span>
                   )}
                   {entry.actor && <span aria-hidden="true">·</span>}
-                  <time
-                    className={styles.SplashPage.entry.time()}
-                    dateTime={new Date(entry.changedAt).toISOString()}
-                    title={formatChangedAt(entry.changedAt)}
-                  >
-                    {formatRelativeTime(entry.changedAt)}
-                  </time>
+                  <Timestamp date={entry.changedAt} format="relative" />
                 </span>
               </span>
             </Button>
@@ -401,22 +390,4 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
       )}
     </Surface>
   )
-}
-
-function formatChangedAt(timestamp: number) {
-  return changedAtFormatter.format(timestamp)
-}
-
-function formatRelativeTime(timestamp: number) {
-  const seconds = Math.round((timestamp - Date.now()) / 1000)
-  if (Math.abs(seconds) < 60)
-    return relativeTimeFormatter.format(seconds, 'second')
-  const minutes = Math.round(seconds / 60)
-  if (Math.abs(minutes) < 60)
-    return relativeTimeFormatter.format(minutes, 'minute')
-  const hours = Math.round(minutes / 60)
-  if (Math.abs(hours) < 24) return relativeTimeFormatter.format(hours, 'hour')
-  const days = Math.round(hours / 24)
-  if (Math.abs(days) < 7) return relativeTimeFormatter.format(days, 'day')
-  return shortDateFormatter.format(timestamp)
 }

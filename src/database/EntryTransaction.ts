@@ -191,6 +191,13 @@ export class EntryTransaction implements AsyncDisposable {
         `Cannot create entry with id ${id} in root ${root}, already exists in ${existingMain.root}`
       )
     }
+    // A new translation lives in the same workspace and root as the entry's
+    // other locales
+    const sibling = existing[0]
+    if (sibling) {
+      workspace ??= sibling.workspace
+      root ??= sibling.root
+    }
     workspace ??= keys(config.workspaces)[0]
     assert(
       workspace in config.workspaces,

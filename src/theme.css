@@ -1,3 +1,4 @@
+/* Color palette, only read by the default theme below */
 :root {
   color-scheme: light dark;
 
@@ -54,151 +55,72 @@
   --alinea-green-800: #006045;
 }
 
+/*
+  Theme inputs. A theme only needs to set these, as light-dark() pairs where
+  the value differs per color scheme. Everything else is derived from them.
+*/
 :root {
-  --alinea-transition: 0.2s ease-out;
-  --alinea-font-size-base: 0.8125rem;
+  --alinea-font: 'Inter', sans-serif;
   --alinea-mono-font: 'JetBrains Mono', monospace;
+  --alinea-font-size-base: 0.8125rem;
+  --alinea-radius: 8px;
 
   --alinea-backdrop: light-dark(var(--alinea-gray-100), var(--alinea-gray-900));
   --alinea-bg: light-dark(var(--alinea-gray-0), var(--alinea-gray-800));
-  --alinea-bg-muted: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
-  --alinea-surface-bg-muted: light-dark(
-    var(--alinea-bg-muted),
-    color-mix(in srgb, var(--alinea-gray-800) 75%, var(--alinea-gray-700))
-  );
   --alinea-fg: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
-  --alinea-fg-muted: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
-  --alinea-fg-subtle: light-dark(var(--alinea-gray-600), var(--alinea-gray-300));
-  --alinea-fg-disabled: light-dark(var(--alinea-gray-500), var(--alinea-gray-400));
-  --alinea-fg-hover: light-dark(var(--alinea-gray-700), var(--alinea-gray-300));
-  --alinea-fg-strong: light-dark(var(--alinea-gray-900), var(--alinea-gray-100));
-
   --alinea-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
-  --alinea-border-muted: light-dark(var(--alinea-gray-300), var(--alinea-gray-700));
-  --alinea-border-hover: light-dark(var(--alinea-gray-400), var(--alinea-gray-500));
-  --alinea-border-pressed: light-dark(var(--alinea-gray-500), var(--alinea-gray-400));
-  --alinea-border-accent: light-dark(var(--alinea-blue-500), var(--alinea-blue-400));
-  --alinea-border-danger: light-dark(var(--alinea-red-500), var(--alinea-red-400));
-  --alinea-border-danger-pressed: var(--alinea-red-600);
-
-  --alinea-input: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
-  --alinea-input-placeholder: light-dark(var(--alinea-gray-400), var(--alinea-gray-400));
-  --alinea-input-disabled: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
-  --alinea-muted: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
-  --alinea-muted-hover: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
-  --alinea-muted-pressed: light-dark(var(--alinea-gray-300), var(--alinea-gray-600));
-  --alinea-overlay: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
-  --alinea-overlay-hover: light-dark(var(--alinea-gray-50), var(--alinea-gray-700));
-  --alinea-header: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
 
   --alinea-primary: light-dark(var(--alinea-blue-800), var(--alinea-blue-500));
   --alinea-primary-fg: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
-  --alinea-primary-hover: light-dark(var(--alinea-blue-700), var(--alinea-blue-400));
-  --alinea-primary-pressed: light-dark(var(--alinea-blue-900), var(--alinea-blue-600));
-  --alinea-primary-subtle: light-dark(
-    var(--alinea-blue-50),
-    rgb(from var(--alinea-blue-800) r g b / 20%)
-  );
-  --alinea-primary-subtle-strong: light-dark(
-    rgb(from var(--alinea-blue-200) r g b / 50%),
-    rgb(from var(--alinea-blue-800) r g b / 30%)
-  );
-  --alinea-primary-subtle-fg: light-dark(var(--alinea-blue-700), var(--alinea-blue-300));
-  --alinea-primary-disabled-fg: light-dark(var(--alinea-blue-400), var(--alinea-blue-300));
-  --alinea-primary-icon: light-dark(var(--alinea-blue-700), var(--alinea-blue-200));
-  --alinea-primary-overlay: light-dark(
-    var(--alinea-blue-100),
-    rgb(from var(--alinea-blue-500) r g b / 28%)
-  );
-
   --alinea-danger: light-dark(var(--alinea-red-400), var(--alinea-red-500));
   --alinea-danger-fg: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
-  --alinea-danger-hover: light-dark(var(--alinea-red-500), var(--alinea-red-400));
-  --alinea-danger-strong: light-dark(var(--alinea-red-600), var(--alinea-red-500));
-  --alinea-danger-subtle: light-dark(
-    var(--alinea-red-50),
-    rgb(from var(--alinea-red-500) r g b / 20%)
-  );
-  --alinea-danger-subtle-fg: light-dark(var(--alinea-red-500), var(--alinea-red-300));
-  --alinea-danger-overlay: rgb(from var(--alinea-danger) r g b / 20%);
-
   --alinea-warning: light-dark(var(--alinea-yellow-400), var(--alinea-yellow-500));
   --alinea-warning-fg: var(--alinea-gray-900);
-  --alinea-warning-hover: light-dark(var(--alinea-yellow-500), var(--alinea-yellow-400));
-  --alinea-warning-subtle: light-dark(
-    var(--alinea-yellow-50),
-    rgb(from var(--alinea-yellow-500) r g b / 18%)
-  );
-  --alinea-warning-subtle-fg: light-dark(var(--alinea-yellow-600), var(--alinea-yellow-200));
-
-  --alinea-selected: light-dark(
-    var(--alinea-blue-50),
-    rgb(from var(--alinea-blue-800) r g b / 24%)
-  );
-  --alinea-selected-fg: var(--alinea-primary-subtle-fg);
-  --alinea-link: var(--alinea-primary-subtle-fg);
-  --alinea-link-hover: light-dark(var(--alinea-blue-800), var(--alinea-blue-300));
-  --alinea-link-pressed: light-dark(var(--alinea-blue-900), var(--alinea-blue-200));
+  --alinea-success: light-dark(var(--alinea-green-600), var(--alinea-green-500));
   --alinea-ring: var(--alinea-blue-500);
-  --alinea-ring-subtle: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
-  --alinea-scrim: rgb(from var(--alinea-gray-900) r g b / 50%);
+}
 
-  --alinea-field-label: light-dark(
-    color-mix(in srgb, var(--alinea-fg) 28%, transparent),
-    var(--alinea-fg-muted)
-  );
+/*
+  Derived tokens. Declared on every themed element so they are recomputed
+  from the inputs a nested [data-alinea-theme] overrides.
+*/
+:root,
+[data-alinea-theme] {
+  --alinea-transition: 0.2s ease-out;
+  --alinea-radius-sm: calc(var(--alinea-radius) / 2);
+  --alinea-radius-lg: calc(var(--alinea-radius) * 1.5);
+  --alinea-radius-xl: calc(var(--alinea-radius) * 2);
 
-  --alinea-dashboard-explorer-card-background: var(--alinea-overlay);
-  --alinea-dashboard-explorer-card-top-background: light-dark(
-    color-mix(in srgb, var(--alinea-overlay) 88%, var(--alinea-border)),
-    color-mix(in srgb, var(--alinea-overlay) 82%, black)
-  );
-  --alinea-dashboard-explorer-card-footer-background: light-dark(
-    color-mix(in srgb, white 94%, var(--alinea-overlay)),
-    color-mix(in srgb, var(--alinea-overlay) 96%, var(--alinea-gray-700))
-  );
-  --alinea-dashboard-explorer-card-divider: light-dark(
-    color-mix(in srgb, white 35%, var(--alinea-border)),
-    color-mix(in srgb, white 10%, var(--alinea-border))
-  );
-  --alinea-dashboard-explorer-card-selected-background: light-dark(
-    color-mix(in srgb, var(--alinea-overlay) 88%, var(--alinea-border-accent)),
-    color-mix(in srgb, var(--alinea-overlay) 78%, var(--alinea-border-accent))
-  );
-  --alinea-dashboard-code-comment: light-dark(var(--alinea-gray-400), var(--alinea-gray-500));
-  --alinea-dashboard-code-keyword: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
-  --alinea-dashboard-code-identifier: light-dark(var(--alinea-blue-500), var(--alinea-blue-300));
-  --alinea-dashboard-code-number: light-dark(var(--alinea-red-500), var(--alinea-red-300));
-  --alinea-dashboard-code-string: light-dark(var(--alinea-yellow-600), var(--alinea-yellow-200));
-  --alinea-dashboard-code-regex: light-dark(var(--alinea-yellow-500), var(--alinea-yellow-400));
-  --alinea-dashboard-code-punctuation: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
+  --alinea-fg-strong: color-mix(in oklab, var(--alinea-fg) 70%, CanvasText);
+  --alinea-fg-muted: color-mix(in oklab, var(--alinea-fg) 72%, var(--alinea-bg));
+  --alinea-fg-disabled: color-mix(in oklab, var(--alinea-fg) 45%, var(--alinea-bg));
+  --alinea-field-label: color-mix(in oklab, var(--alinea-fg) 42%, var(--alinea-bg));
 
-  --alinea-shadow-raised: 0 1px 3.5px rgba(0, 0, 0, 0.08); /*, 0 1px 1px rgba(0, 0, 0, 0.08);*/
+  --alinea-bg-muted: color-mix(in oklab, var(--alinea-bg) 97%, var(--alinea-fg));
+  --alinea-muted: color-mix(in oklab, var(--alinea-bg) 92%, var(--alinea-fg));
+  --alinea-input: var(--alinea-bg);
+  --alinea-overlay: var(--alinea-bg);
+  --alinea-border-strong: color-mix(in oklab, var(--alinea-border) 70%, var(--alinea-fg));
+  --alinea-scrim: color-mix(in oklab, black 45%, transparent);
+
+  --alinea-primary-subtle: color-mix(in oklab, var(--alinea-primary) 12%, var(--alinea-bg));
+  --alinea-primary-subtle-fg: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
+  --alinea-selected: color-mix(in oklab, var(--alinea-primary) 10%, var(--alinea-bg));
+  --alinea-selected-fg: var(--alinea-primary-subtle-fg);
+  --alinea-danger-subtle: color-mix(in oklab, var(--alinea-danger) 14%, var(--alinea-bg));
+  --alinea-danger-subtle-fg: color-mix(in oklab, var(--alinea-danger) 80%, var(--alinea-fg));
+  --alinea-warning-subtle: color-mix(in oklab, var(--alinea-warning) 18%, var(--alinea-bg));
+  --alinea-warning-subtle-fg: color-mix(in oklab, var(--alinea-warning) 55%, var(--alinea-fg));
+  --alinea-success-subtle: color-mix(in oklab, var(--alinea-success) 16%, var(--alinea-bg));
+  --alinea-success-subtle-fg: color-mix(in oklab, var(--alinea-success) 70%, var(--alinea-fg));
+
+  --alinea-shadow-raised: 0 1px 3.5px rgb(0 0 0 / 8%);
   --alinea-shadow-muted:
-    0 1px 3.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.06),
-    0 0 0 1px light-dark(transparent, var(--alinea-gray-600)),
+    0 1px 3.5px rgb(0 0 0 / 10%), 0 1px 1px rgb(0 0 0 / 6%),
+    0 0 0 1px light-dark(transparent, var(--alinea-border)),
     0 6px 16px light-dark(transparent, rgb(0 0 0 / 38%));
-
-  --alinea-shadow-tooltip: 0 8px 20px rgb(from var(--alinea-gray-900) r g b / 10%);
-  --alinea-shadow-modal: 0 2px 13px rgb(from var(--alinea-gray-900) r g b / 11%);
-  --alinea-divider-top:
-    light-dark(
-      0 -1px 0 var(--alinea-border),
-      0 -1px 0 rgb(from var(--alinea-gray-900) r g b / 25%)
-    ),
-    light-dark(
-      inset 0 1px 0 rgb(from var(--alinea-gray-50) r g b / 50%),
-      inset 0 1px 0 var(--alinea-border)
-    );
-
-  --alinea-status-published-fg: light-dark(var(--alinea-green-800), var(--alinea-green-100));
-  --alinea-status-published-bg: light-dark(var(--alinea-green-300), var(--alinea-green-800));
-  --alinea-status-unpublished-fg: light-dark(var(--alinea-orange-700), var(--alinea-orange-200));
-  --alinea-status-unpublished-bg: light-dark(var(--alinea-orange-50), var(--alinea-orange-800));
-  --alinea-status-draft-fg: light-dark(var(--alinea-blue-800), var(--alinea-blue-50));
-  --alinea-status-draft-bg: light-dark(var(--alinea-blue-50), var(--alinea-blue-800));
-  --alinea-status-archived-fg: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
-  --alinea-status-archived-bg: light-dark(var(--alinea-gray-50), var(--alinea-gray-700));
+  --alinea-shadow-tooltip: 0 8px 20px rgb(0 0 0 / 10%);
+  --alinea-shadow-modal: 0 2px 13px rgb(0 0 0 / 11%);
 }
 
 :root[data-theme='light'] {

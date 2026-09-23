@@ -1,8 +1,6 @@
 import styler from '@alinea/styler'
 import type {ComponentType, ReactNode} from 'react'
-import {DialogTrigger} from 'react-aria-components'
 import type {EntryStatus} from '#/core/Entry.js'
-import {Badge} from '#/dashboard/app/Badge.js'
 import {
   IcOutlineDrafts,
   IcRoundArchive,
@@ -13,37 +11,20 @@ import {
   IcRoundImage,
   IcRoundInsertDriveFile,
   IcRoundLink,
-  IcRoundMoreHoriz,
-  IcRoundPanorama,
   IcRoundSync,
   IcOutlineSettings as IcRoundSettings
 } from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {
   List,
-  ListCreateRow,
-  ListDragPreview,
   ListEmpty,
-  ListError,
   ListItem,
   ListItemDescription,
   ListItemStatus,
   ListItemTitle,
-  ListItemVisual,
-  ListLabel,
-  ListRow,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowFoldButton,
-  ListRowFooter,
-  ListRowHeader,
-  ListRowMeta,
-  ListRowSettings
+  ListItemVisual
 } from './List.js'
 import css from './List.stories.module.css'
-import {Popover} from './Popover.js'
 import {Surface, SurfaceContent} from './Surface.js'
 import {TextField} from './TextField.js'
 
@@ -51,8 +32,8 @@ const styles = styler(css)
 
 const itemControls = (
   <div style={{display: 'flex'}}>
-    <Button size="icon" appearance="plain" icon={IcRoundEdit} />
-    <Button size="icon" appearance="plain" icon={IcRoundClose} />
+    <Button size="icon" variant="ghost" icon={IcRoundEdit} />
+    <Button size="icon" variant="ghost" icon={IcRoundClose} />
   </div>
 )
 
@@ -93,98 +74,6 @@ export function Basic() {
       </ListItem>
     </List>
   )
-}
-
-export function FieldRows() {
-  return (
-    <div style={{maxWidth: 720}}>
-      <ListLabel aria-label="Collapse all items" expanded hasRows shared>
-        Sections
-      </ListLabel>
-      <List data-depth="muted">
-        <ListRow aria-label="Hero item 1" first role="listitem">
-          <ListRowHeader expanded first>
-            <ListRowDrag>
-              <ListRowBadges>
-                <ListRowFoldButton
-                  aria-label="Collapse hero"
-                  expanded
-                  onPress={() => undefined}
-                />
-                <Badge icon={IcRoundPanorama} size="small">
-                  Hero
-                </Badge>
-                <ListRowMeta>Landing page intro</ListRowMeta>
-                <Badge size="small">#landing-page-intro</Badge>
-              </ListRowBadges>
-            </ListRowDrag>
-            <ListRowActions>
-              <DialogTrigger>
-                <Button
-                  appearance="plain"
-                  aria-label="Hero settings"
-                  icon={IcRoundMoreHoriz}
-                  size="icon-small"
-                />
-                <Popover placement="bottom right">
-                  <ListRowSettings>
-                    <TextField label="Label" value="Landing page intro" />
-                    <TextField label="Anchor" value="landing-page-intro" />
-                  </ListRowSettings>
-                </Popover>
-              </DialogTrigger>
-            </ListRowActions>
-          </ListRowHeader>
-          <ListRowBody>
-            <TextField label="Heading" value="Build structured pages" />
-            <TextField
-              label="Body"
-              value="Compose reusable content sections with a list field."
-            />
-          </ListRowBody>
-        </ListRow>
-        <ListRow aria-label="Quote item 2" role="listitem">
-          <ListRowHeader>
-            <ListRowDrag>
-              <ListRowBadges>
-                <ListRowFoldButton
-                  aria-label="Expand quote"
-                  expanded={false}
-                  onPress={() => undefined}
-                />
-                <Badge size="small">Quote</Badge>
-                <ListRowMeta>Editorial quote</ListRowMeta>
-              </ListRowBadges>
-            </ListRowDrag>
-            <ListRowActions>
-              <Button
-                appearance="plain"
-                aria-label="Quote settings"
-                icon={IcRoundMoreHoriz}
-                size="icon-small"
-              />
-            </ListRowActions>
-          </ListRowHeader>
-          <ListRowFooter>
-            Quote: Content editing should stay close...
-          </ListRowFooter>
-        </ListRow>
-        <ListCreateRow>
-          <Button appearance="plain" size="small">
-            Add Hero
-          </Button>
-          <Button appearance="plain" size="small">
-            Add Quote
-          </Button>
-        </ListCreateRow>
-      </List>
-      <ListError>At least one section is required.</ListError>
-    </div>
-  )
-}
-
-export function DragPreview() {
-  return <ListDragPreview icon={IcRoundPanorama} label="Hero" />
 }
 
 interface ExampleProps {
@@ -316,26 +205,26 @@ function queueStatusLabel(status: QueueExample['status']): string {
   }
 }
 
-function entryStatusTone(status: EntryStatus) {
+function entryStatusColor(status: EntryStatus) {
   switch (status) {
     case 'published':
-      return 'positive' as const
+      return 'success' as const
     case 'draft':
-      return 'accent' as const
+      return 'primary' as const
     case 'archived':
-      return 'neutral' as const
+      return 'muted' as const
   }
 }
 
-function queueStatusTone(status: QueueExample['status']) {
+function queueStatusColor(status: QueueExample['status']) {
   switch (status) {
     case 'syncing':
-      return 'accent' as const
+      return 'primary' as const
     case 'pending':
     case 'blocked':
       return 'warning' as const
     case 'failed':
-      return 'danger' as const
+      return 'destructive' as const
   }
 }
 
@@ -347,7 +236,7 @@ export function SmallLists() {
           {references.map(reference => (
             <ListItem
               key={`${reference.path}:${reference.locale}`}
-              onPress={() => undefined}
+              onClick={() => undefined}
               leading={
                 <ListItemVisual className={styles.SmallLists.visual()}>
                   <reference.icon data-slot="icon" />
@@ -356,7 +245,10 @@ export function SmallLists() {
               trailing={
                 <span className={styles.SmallLists.trailing()}>
                   {reference.statuses.map(status => (
-                    <ListItemStatus key={status} tone={entryStatusTone(status)}>
+                    <ListItemStatus
+                      key={status}
+                      color={entryStatusColor(status)}
+                    >
                       {statusLabel(status)}
                     </ListItemStatus>
                   ))}
@@ -377,14 +269,14 @@ export function SmallLists() {
           {history.map((revision, index) => (
             <ListItem
               key={`${revision.title}:${index}`}
-              onPress={() => undefined}
+              onClick={() => undefined}
               leading={
                 <ListItemVisual className={styles.SmallLists.visual()}>
                   <revision.icon data-slot="icon" />
                 </ListItemVisual>
               }
               trailing={
-                <ListItemStatus tone={entryStatusTone(revision.status)}>
+                <ListItemStatus color={entryStatusColor(revision.status)}>
                   {statusLabel(revision.status)}
                 </ListItemStatus>
               }
@@ -416,7 +308,7 @@ export function SmallLists() {
                 </ListItemVisual>
               }
               trailing={
-                <ListItemStatus tone={queueStatusTone(entry.status)}>
+                <ListItemStatus color={queueStatusColor(entry.status)}>
                   {queueStatusLabel(entry.status)}
                 </ListItemStatus>
               }
@@ -480,4 +372,4 @@ export function EmptySmallLists() {
   )
 }
 
-export default {title: 'Components / List'}
+export default {title: 'Pure components / List'}

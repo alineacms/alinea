@@ -3,12 +3,6 @@
   min-height: 0;
 }
 
-.EntrySidebar-header {
-  height: 48px;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .EntrySidebar-body {
   flex: 1;
   min-height: 0;
@@ -45,12 +39,6 @@
 }
 
 .EntrySidebar-sectionTitle {
-  margin: 0;
-  color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 500;
-  transition: var(--alinea-transition);
-  transition-property: color;
   line-height: 1;
 }
 
@@ -58,19 +46,14 @@
   min-width: 0;
 }
 
-.EntrySidebar-disclosure [slot='trigger'] {
+.EntrySidebar-disclosureTrigger {
   padding-bottom: 0;
   font-size: 14px;
   line-height: 1.2;
-}
 
-.EntrySidebar-disclosure [slot='trigger'][data-focus-visible],
-.EntrySidebar-disclosure [data-focus-visible-within] {
-  outline: none;
-}
-
-.EntrySidebar-disclosure [data-focus-visible-within] {
-  padding-top: 10px;
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .EntrySidebar-disclosurePanel {

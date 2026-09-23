@@ -1,12 +1,25 @@
 import {
   Button,
-  Menu,
-  MenuItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  FileTrigger,
+  type Key,
+  PageBack,
+  PageContent,
+  PageHeader,
+  PageTitle,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
   SearchField,
+  type Selection,
   Switch,
-  ToggleButton,
-  ToggleButtonGroup
+  Text,
+  ToggleGroup,
+  ToggleGroupItem
 } from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -24,12 +37,6 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {
-  DialogTrigger,
-  FileTrigger,
-  type Key,
-  type Selection
-} from 'react-aria-components'
 import {configAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
@@ -47,15 +54,14 @@ import {
   IcRoundArrowUpward,
   IcRoundClose,
   IcRoundFilterList,
+  IcRoundSearch,
   IcRoundUploadFile
 } from '../icons.js'
-import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
-import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -214,11 +220,11 @@ export function ExplorerSearch({
       aria-label="Search"
       autoFocus={autoFocus}
       className={styles.Explorer.search()}
-      hasIcon
-      isPending={isPending || inputValue !== page.search}
+      icon={IcRoundSearch}
+      loading={isPending || inputValue !== page.search}
       placeholder="Search..."
       value={inputValue}
-      onChange={onSearchChange}
+      onValueChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
     />
   )
@@ -242,9 +248,9 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
   return (
     <Switch
       className={styles.Explorer.searchScope()}
-      isDisabled={isDisabled}
-      isSelected={searchScope === 'everything'}
-      onChange={selected =>
+      disabled={isDisabled}
+      checked={searchScope === 'everything'}
+      onCheckedChange={selected =>
         startTransition(() =>
           setSearchScope(selected ? 'everything' : 'workspace')
         )
@@ -275,30 +281,36 @@ function ExplorerResultMode({
   const canBrowse =
     navigationEnabled && !explorer.pickChildren && !search.trim()
   return (
-    <ToggleButtonGroup
+    <ToggleGroup
+      type="single"
       aria-label="Explorer results"
       className={styles.Explorer.resultMode()}
-      disallowEmptySelection
-      selectedKeys={[resultMode]}
-      selectionMode="single"
-      variant="compact"
-      onSelectionChange={(keys: Set<Key>) => {
-        const next = keys.has('matches') ? 'matches' : 'browse'
-        if (!canBrowse && next === 'browse') return
+      value={resultMode}
+      variant="outline"
+      size="sm"
+      onValueChange={value => {
+        if (value !== 'browse' && value !== 'matches') return
+        if (!canBrowse && value === 'browse') return
         startTransition(() => {
-          setResultMode(next)
+          setResultMode(value)
         })
       }}
     >
-      <ToggleButton id="browse" isDisabled={!canBrowse}>
-        <IcRoundAccountTree aria-hidden data-slot="icon" />
+      <ToggleGroupItem
+        value="browse"
+        icon={IcRoundAccountTree}
+        disabled={!canBrowse}
+      >
         Browse
-      </ToggleButton>
-      <ToggleButton id="matches" isDisabled={!canShowFiltered}>
-        <IcRoundFilterList aria-hidden data-slot="icon" />
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="matches"
+        icon={IcRoundFilterList}
+        disabled={!canShowFiltered}
+      >
         Filtered
-      </ToggleButton>
-    </ToggleButtonGroup>
+      </ToggleGroupItem>
+    </ToggleGroup>
   )
 }
 
@@ -313,16 +325,16 @@ function ExplorerHeaderLoadedParentMain({
   const parent = parents.at(-1)
   return (
     <div className={styles.ExplorerHeader.main()}>
-      <EditorBackButton
+      <PageBack
         label={parent ? 'Back to parent entry' : 'Back to root'}
-        onPress={() => {
+        onClick={() => {
           setLocation(location => ({
             ...location,
             parentId: parent?.id
           }))
         }}
       />
-      <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
+      <PageTitle>{label}</PageTitle>
       {titleControls}
     </div>
   )
@@ -338,11 +350,11 @@ function ExplorerHeaderMain({
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
-        <EditorBackButton
+        <PageBack
           label={headerEntry.backLabel}
-          onPress={headerEntry.onBack}
+          onClick={() => headerEntry.onBack()}
         />
-        <h1 className={styles.ExplorerHeader.title()}>{headerEntry.title}</h1>
+        <PageTitle>{headerEntry.title}</PageTitle>
         {titleControls}
       </div>
     )
@@ -479,9 +491,9 @@ function ExplorerLoadedLocationParent({
         </span>
       ) : (
         <Button
-          appearance="plain"
+          variant="ghost"
           className={styles.Explorer.locationBreadcrumbs.parentAction()}
-          onPress={() =>
+          onClick={() =>
             setLocation(location => ({...location, parentId: entry.id}))
           }
         >
@@ -575,34 +587,39 @@ function ExplorerLocationMenu({
     <div className={styles.Explorer.locationBreadcrumbs()}>
       <div className={styles.Explorer.locationBreadcrumbs.item()}>
         {workspaces.length > 1 && !lockNavigation ? (
-          <Menu
-            appearance="plain"
-            label={selected?.workspaceLabel ?? location.workspace}
-            selectionMode="single"
-            selectedKeys={[location.workspace]}
-            onAction={key => {
-              const workspace = String(key)
-              const next =
-                locations.find(
-                  candidate =>
-                    candidate.workspace === workspace &&
-                    candidate.root === location.root
-                ) ??
-                locations.find(candidate => candidate.workspace === workspace)
-              if (!next) return
-              selectLocation(next)
-            }}
-          >
-            {workspaces.map(workspace => (
-              <MenuItem
-                id={workspace.key}
-                key={workspace.key}
-                textValue={workspace.label}
+          <DropdownMenu>
+            <DropdownMenuTrigger variant="ghost">
+              {selected?.workspaceLabel ?? location.workspace}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuRadioGroup
+                value={location.workspace}
+                onValueChange={workspace => {
+                  const next =
+                    locations.find(
+                      candidate =>
+                        candidate.workspace === workspace &&
+                        candidate.root === location.root
+                    ) ??
+                    locations.find(
+                      candidate => candidate.workspace === workspace
+                    )
+                  if (!next) return
+                  selectLocation(next)
+                }}
               >
-                {workspace.label}
-              </MenuItem>
-            ))}
-          </Menu>
+                {workspaces.map(workspace => (
+                  <DropdownMenuRadioItem
+                    key={workspace.key}
+                    value={workspace.key}
+                    textValue={workspace.label}
+                  >
+                    {workspace.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <span className={styles.Explorer.locationBreadcrumbs.value()}>
             {selected?.workspaceLabel}
@@ -618,27 +635,32 @@ function ExplorerLocationMenu({
       <div className={styles.Explorer.locationBreadcrumbs.root()}>
         <div className={styles.Explorer.locationBreadcrumbs.item()}>
           {roots.length > 1 && !lockNavigation ? (
-            <Menu
-              appearance="plain"
-              label={selected?.rootLabel ?? location.root ?? 'Select root'}
-              selectionMode="single"
-              selectedKeys={location.root ? [location.root] : []}
-              onAction={key => {
-                const root = String(key)
-                const next = roots.find(candidate => candidate.root === root)
-                if (next) selectLocation(next)
-              }}
-            >
-              {roots.map(root => (
-                <MenuItem
-                  id={root.root}
-                  key={root.root}
-                  textValue={root.rootLabel}
+            <DropdownMenu>
+              <DropdownMenuTrigger variant="ghost">
+                {selected?.rootLabel ?? location.root ?? 'Select root'}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuRadioGroup
+                  value={location.root ?? null}
+                  onValueChange={root => {
+                    const next = roots.find(
+                      candidate => candidate.root === root
+                    )
+                    if (next) selectLocation(next)
+                  }}
                 >
-                  {root.rootLabel}
-                </MenuItem>
-              ))}
-            </Menu>
+                  {roots.map(root => (
+                    <DropdownMenuRadioItem
+                      key={root.root}
+                      value={root.root}
+                      textValue={root.rootLabel}
+                    >
+                      {root.rootLabel}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <span className={styles.Explorer.locationBreadcrumbs.value()}>
               {selected?.rootLabel ?? location.root ?? 'Select root'}
@@ -655,6 +677,7 @@ function ExplorerLocationMenu({
               </span>
             ) : (
               <LocaleMenu
+                size="lg"
                 root={localeRoot}
                 locale={selectedLocale}
                 onLocaleChange={selectLocale}
@@ -721,14 +744,15 @@ function ExplorerControlsButton({
   toggleFilter
 }: ExplorerControlsProps) {
   return (
-    <DialogTrigger>
-      <Button
+    <Popover>
+      <PopoverTrigger
         aria-label="Filter and sort"
-        appearance={selectedFilter ? 'active' : 'outline'}
+        variant="outline"
+        active={Boolean(selectedFilter)}
         icon={IcRoundFilterList}
-        size="icon-nav"
+        size="icon-lg"
       />
-      <Popover placement="bottom left">
+      <PopoverContent aria-label="Filter and sort" side="bottom" align="start">
         <ExplorerControlsPopover
           isMedia={isMedia}
           sort={sort}
@@ -736,8 +760,8 @@ function ExplorerControlsButton({
           setSort={setSort}
           toggleFilter={toggleFilter}
         />
-      </Popover>
-    </DialogTrigger>
+      </PopoverContent>
+    </Popover>
   )
 }
 function ExplorerControlsPopover({
@@ -751,12 +775,20 @@ function ExplorerControlsPopover({
     <>
       {isMedia && (
         <>
-          <p className={styles.Popover.Label()}>Filter by</p>
+          <Text
+            as="p"
+            size="sm"
+            color="muted"
+            className={styles.Explorer.popoverLabel()}
+          >
+            Filter by
+          </Text>
           {filters.map(filter => (
             <Button
               key={slugify(filter.label)}
-              appearance={selectedFilter === filter.type ? 'active' : 'plain'}
-              onPress={() => toggleFilter(filter.type)}
+              variant="ghost"
+              active={selectedFilter === filter.type}
+              onClick={() => toggleFilter(filter.type)}
               className={styles.Sorting.button()}
             >
               {filter.label}
@@ -765,13 +797,20 @@ function ExplorerControlsPopover({
           ))}
         </>
       )}
-      <p className={styles.Popover.Label()}>Sort by</p>
+      <Text
+        as="p"
+        size="sm"
+        color="muted"
+        className={styles.Explorer.popoverLabel()}
+      >
+        Sort by
+      </Text>
       {sortingOptions.map(option =>
         !isMedia && option.id === 'size' ? null : (
           <Button
             key={option.id}
-            appearance={sort.sortBy === option.id ? 'solid' : 'plain'}
-            onPress={() => setSort(option.id)}
+            variant={sort.sortBy === option.id ? 'solid' : 'ghost'}
+            onClick={() => setSort(option.id)}
             className={styles.Sorting.button()}
           >
             {option.label}
@@ -808,7 +847,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   return (
     <div className={styles.Explorer.toolbar.tools()}>
       {page.isMedia && uploadCount > 0 && (
-        <ActivityStatus ariaLabel={uploadLabel} placement="bottom">
+        <ActivityStatus ariaLabel={uploadLabel} side="bottom">
           {uploadCount}
         </ActivityStatus>
       )}
@@ -822,13 +861,8 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />
         {page.isMedia && page.canUpload && !locationIsPending && (
-          <FileTrigger
-            allowsMultiple
-            onSelect={files => {
-              if (files) upload(files)
-            }}
-          >
-            <Button icon={IcRoundUploadFile} intent="primary">
+          <FileTrigger multiple onSelect={files => upload(files)}>
+            <Button icon={IcRoundUploadFile} color="primary">
               Upload media
             </Button>
           </FileTrigger>
@@ -850,7 +884,7 @@ export function ExplorerHeader({
   titleControls
 }: ExplorerHeaderProps) {
   return (
-    <RailHeader className={styles.ExplorerHeader({navigation: navigate})}>
+    <PageHeader className={styles.ExplorerHeader({navigation: navigate})}>
       <div className={styles.ExplorerHeader.content()}>
         <div className={styles.ExplorerHeader.primary()}>
           {!navigate && (
@@ -896,7 +930,7 @@ export function ExplorerHeader({
           </div>
         )}
       </div>
-    </RailHeader>
+    </PageHeader>
   )
 }
 
@@ -907,7 +941,7 @@ export function ExplorerBody({
   page
 }: ExplorerBodyProps) {
   return (
-    <RailBody>
+    <PageContent>
       <div className={styles.Explorer.viewport()}>
         <ExplorerList
           compactTable={compactTable}
@@ -916,7 +950,7 @@ export function ExplorerBody({
           page={page}
         />
       </div>
-    </RailBody>
+    </PageContent>
   )
 }
 

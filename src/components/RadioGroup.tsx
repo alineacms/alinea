@@ -1,58 +1,128 @@
 import styler from '@alinea/styler'
-import type {PropsWithChildren} from 'react'
+import type {ReactNode} from 'react'
 import {
-  RadioGroup as AriaRadioGroup,
-  type RadioGroupProps as AriaRadioGroupProps,
-  Radio as RadioPrimitive,
-  type RadioProps
+  RadioGroup as RadioGroupPrimitive,
+  Radio as RadioPrimitive
 } from 'react-aria-components'
-import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Field, FieldDescription} from './Field.js'
 import css from './RadioGroup.module.css'
+import type {
+  AriaProps,
+  DataProps,
+  FieldSharedProps,
+  Orientation,
+  StyleProps
+} from './types.js'
 
 const styles = styler(css)
 
-export type {RadioProps} from 'react-aria-components'
-
-export function Radio(props: RadioProps) {
-  const {className, ...rest} = props
-  return (
-    <RadioPrimitive
-      {...rest}
-      className={renderProps =>
-        styles.Radio(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
-  )
+export interface RadioGroupProps
+  extends FieldSharedProps, StyleProps, AriaProps, DataProps {
+  value?: string
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+  orientation?: Orientation
+  name?: string
+  /** `RadioGroupItem` elements */
+  children?: ReactNode
 }
 
-export interface RadioGroupProps
-  extends Omit<AriaRadioGroupProps, 'children'>, LabelSharedProps {}
-
 export function RadioGroup({
-  children,
+  label,
+  description,
+  error,
+  required,
+  disabled,
+  readOnly,
+  icon,
+  shared,
+  value,
+  defaultValue,
+  onValueChange,
+  orientation = 'vertical',
   className,
+  children,
   ...props
-}: PropsWithChildren<RadioGroupProps>) {
+}: RadioGroupProps) {
   return (
-    <AriaRadioGroup {...props}>
-      <Label {...labelProps(props)}>
+    <RadioGroupPrimitive
+      data-slot="radio-group"
+      {...props}
+      className={styles.RadioGroup(styler.merge({className}))}
+      value={value}
+      defaultValue={defaultValue}
+      onChange={onValueChange}
+      orientation={orientation}
+      isRequired={required}
+      isDisabled={disabled}
+      isReadOnly={readOnly}
+      isInvalid={error ? true : undefined}
+    >
+      <Field
+        label={label}
+        description={description}
+        error={error}
+        required={required}
+        disabled={disabled}
+        readOnly={readOnly}
+        icon={icon}
+        shared={shared}
+      >
         <div
-          className={styles.RadioGroup(
-            styler.merge({
-              className: typeof className === 'string' ? className : undefined
-            })
-          )}
+          data-slot="radio-group-items"
+          data-orientation={orientation}
+          className={styles.RadioGroup.items()}
         >
           {children}
         </div>
-      </Label>
-    </AriaRadioGroup>
+      </Field>
+    </RadioGroupPrimitive>
+  )
+}
+
+export interface RadioGroupItemProps extends StyleProps, AriaProps, DataProps {
+  value: string
+  disabled?: boolean
+  autoFocus?: boolean
+  description?: ReactNode
+  /** The label */
+  children?: ReactNode
+}
+
+export function RadioGroupItem({
+  disabled,
+  description,
+  className,
+  children,
+  ...props
+}: RadioGroupItemProps) {
+  return (
+    <RadioPrimitive
+      data-slot="radio-group-item"
+      {...props}
+      className={styles.RadioGroupItem(styler.merge({className}))}
+      isDisabled={disabled}
+    >
+      <span
+        data-slot="radio-group-indicator"
+        className={styles.RadioGroupItem.indicator()}
+      />
+      {(children || description) && (
+        <span
+          data-slot="radio-group-item-content"
+          className={styles.RadioGroupItem.content()}
+        >
+          {children && (
+            <span
+              data-slot="radio-group-item-label"
+              className={styles.RadioGroupItem.label()}
+            >
+              {children}
+            </span>
+          )}
+          {description && <FieldDescription>{description}</FieldDescription>}
+        </span>
+      )}
+    </RadioPrimitive>
   )
 }

@@ -1,21 +1,21 @@
 import {
   Button,
-  DialogTrigger,
   Icon,
-  List,
-  ListRow,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowHeader,
-  ListRowSettings,
-  Popover
+  SortableList,
+  SortableListItemTitle,
+  SortableListItem,
+  SortableListItemActions,
+  SortableListItemContent,
+  SortableListHandle,
+  SortableListItemHeader,
+  SortableListItemSettings,
+  Popover,
+  PopoverContent,
+  PopoverTrigger
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
-import {Badge} from '#/dashboard/app/Badge.js'
+import {Badge} from '#/components.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
@@ -56,16 +56,16 @@ export const RichTextBlock = memo(function RichTextBlock({
   }
 
   return (
-    <List
+    <SortableList
       className={styles.RichTextBlock()}
       data-depth="muted"
       data-read-only={readOnly || undefined}
       data-richtext-block="true"
     >
-      <ListRow role="listitem" tabIndex={0}>
-        <ListRowHeader data-richtext-block-header="true" expanded>
+      <SortableListItem role="listitem" tabIndex={0}>
+        <SortableListItemHeader data-richtext-block-header="true">
           {!readOnly && (
-            <ListRowDragHandle
+            <SortableListHandle
               aria-label={`Drag ${label} block`}
               className={styles.RichTextBlock.dragHandle()}
               data-richtext-drag-handle="true"
@@ -79,56 +79,58 @@ export const RichTextBlock = memo(function RichTextBlock({
               }}
             />
           )}
-          <ListRowDrag>
-            <ListRowBadges>
-              <Badge icon={typeIcon} size="small">
-                {label}
-              </Badge>
-            </ListRowBadges>
-          </ListRowDrag>
-          <ListRowActions>
-            <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
-              <Button
-                appearance="plain"
+          <SortableListItemTitle>
+            <Badge icon={typeIcon} size="sm">
+              {label}
+            </Badge>
+          </SortableListItemTitle>
+          <SortableListItemActions>
+            <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+              <PopoverTrigger
+                variant="ghost"
                 aria-label={`${label} actions`}
                 icon={IcRoundMoreHoriz}
-                size="icon-small"
+                size="icon-sm"
               />
-              <Popover placement="bottom right">
-                <ListRowSettings actions>
+              <PopoverContent
+                aria-label={`${label} actions`}
+                side="bottom"
+                align="end"
+              >
+                <SortableListItemSettings variant="actions">
                   <Button
-                    appearance="plain"
-                    isDisabled={readOnly}
-                    onPress={() => {
+                    variant="ghost"
+                    icon={IcBaselineContentCopy}
+                    disabled={readOnly}
+                    onClick={() => {
                       onDuplicate()
                       closeActions()
                     }}
                   >
-                    <Icon icon={IcBaselineContentCopy} />
                     Duplicate
                   </Button>
-                </ListRowSettings>
-              </Popover>
-            </DialogTrigger>
+                </SortableListItemSettings>
+              </PopoverContent>
+            </Popover>
             <Button
-              appearance="plain"
+              variant="ghost"
               aria-label={`Remove ${label}`}
               icon={IcRoundClose}
-              isDisabled={readOnly}
-              onPress={onDelete}
-              size="icon-small"
+              disabled={readOnly}
+              onClick={onDelete}
+              size="icon-sm"
             />
-          </ListRowActions>
-        </ListRowHeader>
-        <ListRowBody data-richtext-block-editor="true">
+          </SortableListItemActions>
+        </SortableListItemHeader>
+        <SortableListItemContent data-richtext-block-editor="true">
           {readOnly ? (
             <ReadOnlyBlockEditor node={node} type={type} />
           ) : (
             <NodeEditor node={node} type={type} />
           )}
-        </ListRowBody>
-      </ListRow>
-    </List>
+        </SortableListItemContent>
+      </SortableListItem>
+    </SortableList>
   )
 })
 

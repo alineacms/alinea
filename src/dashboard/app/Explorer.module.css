@@ -56,18 +56,6 @@
   min-width: 0;
 }
 
-.ExplorerHeader-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.2;
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .Explorer-toolbar {
   display: flex;
   gap: 12px;
@@ -93,11 +81,6 @@
   flex-shrink: 0;
 }
 
-.Explorer-breadcrumbs {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 .Explorer-searchSlot {
   display: flex;
   flex: 1;
@@ -120,28 +103,14 @@
   flex: 0 0 auto;
 }
 
-.Explorer-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .Explorer-viewport {
   min-height: 0;
   flex: 1;
   height: 100%;
 }
 
-.Popover {
-  display: flex;
-  flex-direction: column;
-}
-
-.Popover-Label {
+.Explorer-popoverLabel {
   padding: 4px 8px;
-  color: var(--alinea-fg-subtle);
-  font-size: 12px;
 }
 
 .Sorting-button {
@@ -193,10 +162,6 @@
 }
 
 .Explorer-locationBreadcrumbs-root-locale {
-  --alinea-locale-height: 30px;
-  --alinea-locale-font-size: var(--alinea-font-size-base);
-  --alinea-locale-line-height: 24px;
-
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;

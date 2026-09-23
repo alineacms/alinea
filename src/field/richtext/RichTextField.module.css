@@ -1,7 +1,7 @@
 .RichTextFieldView {
   background-color: var(--alinea-input);
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   outline: 3px solid transparent;
   transition: var(--alinea-transition);
   transition-property: border-color, outline-color, background-color;
@@ -16,18 +16,18 @@
 }
 
 .RichTextFieldView:hover {
-  border-color: var(--alinea-border-hover);
-  outline-color: var(--alinea-ring-subtle);
+  border-color: var(--alinea-border-strong);
+  outline-color: var(--alinea-muted);
 }
 
 .RichTextFieldView:focus-within {
-  border-color: var(--alinea-border-accent);
-  outline-color: var(--alinea-primary-overlay);
+  border-color: var(--alinea-primary);
+  outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
 }
 
 .RichTextFieldView[data-focused='true'] {
-  border-color: var(--alinea-border-accent);
-  outline-color: var(--alinea-primary-overlay);
+  border-color: var(--alinea-primary);
+  outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
 }
 
 .RichTextFieldView:focus-within:not([data-focused='true']) {
@@ -36,12 +36,12 @@
 }
 
 .RichTextFieldView[data-invalid='true'] {
-  border-color: var(--alinea-border-danger);
-  outline-color: var(--alinea-danger-overlay);
+  border-color: var(--alinea-danger);
+  outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
 }
 
 .RichTextFieldView[data-read-only='true'] {
-  background-color: var(--alinea-input-disabled);
+  background-color: var(--alinea-bg-muted);
 }
 
 .RichTextFieldView[data-read-only='true']:hover,
@@ -72,7 +72,7 @@
   padding: 8px 10px;
   color: var(--alinea-fg-muted);
   border: 1px dashed var(--alinea-border);
-  border-radius: 6px;
+  border-radius: var(--alinea-radius-sm);
 }
 
 .RichTextFieldCompactView {

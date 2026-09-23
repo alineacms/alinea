@@ -91,7 +91,7 @@
 .RichTextExtensions-heading[data-anchor] {
   position: relative;
   scroll-margin-top: 80px;
-  border-radius: 2px;
+  border-radius: var(--alinea-radius-sm);
   transition: background-color 120ms ease;
 }
 
@@ -106,7 +106,7 @@
   overflow: hidden;
   padding: 1px 4px;
   border: 1px solid var(--alinea-border);
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   background: var(--alinea-bg);
   color: var(--alinea-fg-muted);
   font-family: var(--alinea-mono-font);
@@ -162,7 +162,7 @@
 }
 
 .RichTextExtensions-tableHeader {
-  background: var(--alinea-header);
+  background: var(--alinea-bg-muted);
   text-align: left;
   font-weight: 600;
 }

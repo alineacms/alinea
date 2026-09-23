@@ -1,9 +1,8 @@
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
+import type {DragTypes, Key} from '#/components.js'
 import {DeepMap} from '#/core/util/DeepMap.js'
-import type {DragItem, DragTypes} from '@react-types/shared'
 import {atom, type Atom, type WritableAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {Key} from 'react-aria-components'
 
 type RequiredAtom<Value> = WritableAtom<Value, [Value], void>
 
@@ -141,7 +140,7 @@ export function acceptsDashboardEntryDrag(types: DragTypes): boolean {
   return dashboardEntryDragTypes.some(type => types.has(type))
 }
 
-export function dashboardEntryDragItem(id: Key): DragItem {
+export function dashboardEntryDragItem(id: Key): Record<string, string> {
   const key = String(id)
   return {
     'text/plain': key,

@@ -1,0 +1,57 @@
+.ListBoxOption {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.4rem;
+  border-radius: var(--alinea-radius-sm);
+  font-size: var(--alinea-font-size-base);
+  outline: none;
+  cursor: pointer;
+
+  &[aria-selected='true'] {
+    font-weight: 500;
+    background: var(--alinea-selected);
+    color: var(--alinea-primary-subtle-fg);
+  }
+
+  &.is-highlighted {
+    background: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
+  }
+
+  &[aria-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.ListBoxOption-icon {
+  flex-shrink: 0;
+}
+
+.ListBoxOption-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ListBoxOption-label {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ListBoxOption-description {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.ListBoxOption-indicator {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 1rem;
+}

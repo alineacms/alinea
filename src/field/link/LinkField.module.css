@@ -52,7 +52,7 @@
   flex-shrink: 0;
   background: var(--alinea-bg-muted);
   margin-left: -16px;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
 }
 
 .LinkFieldView-imagePlaceholder {
@@ -62,7 +62,7 @@
   width: 32px;
   flex-shrink: 0;
   margin-left: -16px;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
   animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
 }
@@ -87,7 +87,7 @@
 .LinkFieldView-previewImagePlaceholder {
   align-self: center;
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   flex-shrink: 0;
   height: 36px;
   margin: -2px 0;
@@ -116,15 +116,7 @@
 }
 
 .LinkFieldView-metaLabel {
-  min-width: 0;
   max-width: 240px;
-  overflow: hidden;
-  color: var(--alinea-fg-muted);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 18px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .LinkFieldView-anchorOption {
@@ -155,7 +147,7 @@
   display: inline-block;
   width: 48px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: var(--alinea-radius-sm);
   background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
   animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
 }
@@ -183,35 +175,11 @@
   padding: 0;
 }
 
-.LinkFieldView-rowDropTarget {
-  display: grid;
-}
-
-.LinkFieldView-dropIndicator {
-  position: relative;
-  z-index: 2;
-  height: 8px;
-  margin: -4px 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 140ms ease-out;
-}
-
-.LinkFieldView-dropIndicator::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 190px;
-  max-width: calc(100% - 20px);
-  height: 6px;
-  background: var(--alinea-primary);
-  border-radius: 4px;
-  transform: translate(-50%, -50%);
-}
-
-.LinkFieldView-dropIndicator[data-active] {
-  opacity: 1;
+.LinkFieldView-settingsSeparator {
+  height: 1px;
+  margin: 4px 8px;
+  border: none;
+  background-color: var(--alinea-border);
 }
 
 @keyframes LinkFieldView-skeleton-pulse {

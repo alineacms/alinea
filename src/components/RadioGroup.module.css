@@ -1,83 +1,96 @@
 .RadioGroup {
+  color: var(--alinea-fg);
+}
+
+.RadioGroup-items {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: var(--alinea-fg);
-
-  [slot='description'] {
-    font-size: 12px;
-  }
 
   &[data-orientation='horizontal'] {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
+    gap: 8px 16px;
   }
 }
 
-.Radio {
+.RadioGroupItem {
   position: relative;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.571rem;
-  font-size: var(--alinea-font-size-base);
   color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  cursor: pointer;
   forced-color-adjust: none;
 
-  &:before {
-    content: '';
-    flex-shrink: 0;
-    display: block;
-    width: 18px;
-    height: 18px;
-    box-sizing: border-box;
-    border: 1px solid var(--alinea-border);
-    background: var(--alinea-input);
-    border-radius: 100%;
-    transition: var(--alinea-transition);
+  &:has(:disabled),
+  .RadioGroup[aria-readonly='true'] & {
+    pointer-events: none;
   }
 
-  &[data-hovered]:before {
-    border-color: var(--alinea-border-hover);
-    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+  &:has(:disabled) {
+    opacity: 0.5;
   }
 
-  &[data-pressed]:before {
-    border-color: var(--alinea-border-pressed);
+  &:has(.RadioGroupItem-content) {
+    align-items: flex-start;
+  }
+}
+
+.RadioGroupItem-indicator {
+  display: block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 100%;
+  background: var(--alinea-input);
+  transition: var(--alinea-transition);
+  transition-property: border-color, border-width, box-shadow;
+
+  .RadioGroupItem:hover & {
+    border-color: var(--alinea-border-strong);
+    box-shadow: 0 0 0 3px var(--alinea-muted);
   }
 
-  &[data-selected] {
-    &:before {
-      border-color: var(--alinea-primary);
-      border-width: 6px;
-    }
-
-    &[data-hovered]:before {
-      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
-    }
-
-    &[data-pressed]:before {
-      border-color: var(--alinea-primary-pressed);
-    }
+  .RadioGroupItem:active & {
+    border-color: var(--alinea-border-strong);
   }
 
-  &[data-focus-visible]:before {
+  .RadioGroupItem:has(:checked) & {
+    border-width: 6px;
+    border-color: var(--alinea-primary);
+  }
+
+  .RadioGroupItem:hover:has(:checked) & {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+  }
+
+  .RadioGroupItem:active:has(:checked) & {
+    border-color: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
+  }
+
+  .RadioGroupItem:has(:focus-visible) & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }
 
-  &[data-invalid] {
-    &:before {
-      border-color: var(--alinea-border-danger);
-    }
-
-    &[data-pressed]:before {
-      border-color: var(--alinea-border-danger-pressed);
-    }
+  .RadioGroup[aria-invalid='true'] & {
+    border-color: var(--alinea-danger);
   }
+}
 
-  &[data-disabled] {
-    pointer-events: none;
-    color: var(--alinea-fg-disabled);
-  }
+.RadioGroupItem-content {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 2px;
+  line-height: 1.1;
+}
+
+.RadioGroupItem-label {
+  color: inherit;
 }

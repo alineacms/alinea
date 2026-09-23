@@ -48,44 +48,6 @@
   padding: 12px;
 }
 
-.FileEditor-metadata-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px 40px;
-  margin: 0;
-}
-
-.FileEditor-metadata-item {
-  display: grid;
-  min-width: 0;
-  gap: 6px;
-
-  &.is-full {
-    grid-column: 1 / -1;
-  }
-}
-
-.FileEditor-metadata-term {
-  margin: 0;
-  color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 500;
-  line-height: 1;
-}
-
-.FileEditor-metadata-value {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-  color: var(--alinea-fg);
-  font-size: 13px;
-  line-height: 1.35;
-
-  &.is-link:hover {
-    text-decoration: underline;
-  }
-}
-
 .FileEditor-focus {
   display: block;
 }
@@ -136,11 +98,5 @@
 
   .FileEditor-content {
     padding: 12px;
-  }
-}
-
-@media (max-width: 560px) {
-  .FileEditor-metadata-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -1,8 +1,15 @@
-import {Icon, Menu, MenuItem} from '#/components.js'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  Icon
+} from '#/components.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
 import css from './LocaleMenu.module.css'
 
@@ -11,11 +18,13 @@ const styles = styler(css)
 interface LocaleMenuProps {
   root: RootAtoms
   locale: string | null
+  size?: 'default' | 'lg'
   onLocaleChange(locale: string): void
 }
 
 export interface LocaleMenuSelectProps {
   ariaLabel?: string
+  size?: 'default' | 'lg'
   locale: string | null
   locales: ReadonlyArray<string>
   onLocaleChange(locale: string): void
@@ -62,13 +71,19 @@ function LocaleLabel({locale}: LocaleLabelProps) {
   )
 }
 
-export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
+export function LocaleMenu({
+  root,
+  locale,
+  size,
+  onLocaleChange
+}: LocaleMenuProps) {
   const i18n = useAtomValueRaw(root.i18n)
   if (!i18n) return null
   return (
     <LocaleMenuSelect
       locale={locale}
       locales={i18n.locales}
+      size={size}
       onLocaleChange={onLocaleChange}
     />
   )
@@ -78,38 +93,42 @@ export function LocaleMenuSelect({
   ariaLabel = 'Language',
   locale,
   locales,
+  size = 'default',
   onLocaleChange
 }: LocaleMenuSelectProps) {
   const activeLocale = locale ?? locales[0]
   if (!activeLocale) return null
   return (
-    <Menu
-      label={
-        <Button aria-label={ariaLabel} className={styles.LocaleMenu.trigger()}>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          aria-label={ariaLabel}
+          className={styles.LocaleMenu.trigger({lg: size === 'lg'})}
+        >
           <LocaleLabel locale={activeLocale} />
           <Icon
             icon={IcRoundUnfoldMore}
             className={styles.LocaleMenu.trigger.icon()}
           />
         </Button>
-      }
-      aria-label={ariaLabel}
-      popoverProps={{placement: 'bottom right'}}
-      selectionMode="single"
-      selectedKeys={[activeLocale]}
-      onAction={key => {
-        onLocaleChange(String(key))
-      }}
-    >
-      {locales.map(locale => (
-        <MenuItem
-          key={locale}
-          id={locale}
-          textValue={localeDisplay(locale).textValue}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent aria-label={ariaLabel} side="bottom" align="end">
+        <DropdownMenuRadioGroup
+          value={activeLocale}
+          onValueChange={onLocaleChange}
         >
-          <LocaleLabel locale={locale} />
-        </MenuItem>
-      ))}
-    </Menu>
+          {locales.map(locale => (
+            <DropdownMenuRadioItem
+              key={locale}
+              value={locale}
+              textValue={localeDisplay(locale).textValue}
+            >
+              <LocaleLabel locale={locale} />
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
