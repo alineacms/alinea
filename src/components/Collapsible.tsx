@@ -123,7 +123,12 @@ export function CollapsibleTrigger({
       onClick={handleClick}
     >
       <FoldIcon expanded={open} className={styles.CollapsibleTrigger.icon()} />
-      <span className={styles.CollapsibleTrigger.title()}>{children}</span>
+      <span
+        data-slot="collapsible-trigger-title"
+        className={styles.CollapsibleTrigger.title()}
+      >
+        {children}
+      </span>
     </button>
   )
 }
