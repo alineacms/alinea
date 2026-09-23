@@ -235,24 +235,6 @@
       ]
     },
     {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "No Edge runtime for the handler.",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " `createHandler` throws when it runs on the Edge runtime. Keep your Alinea API route on the default Node.js runtime."
-        }
-      ]
-    },
-    {
       "_type": "heading",
       "level": 2,
       "content": [
