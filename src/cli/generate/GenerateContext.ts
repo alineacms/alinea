@@ -6,6 +6,9 @@ export interface GenerateContext {
   configDir: string
   staticDir: string
   quiet: boolean
+  /** The shared `@alinea/generated` package. */
+  packageDir: string
+  /** This project's directory inside the generated package. */
   outDir: string
   fix: boolean
 }

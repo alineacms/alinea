@@ -4,6 +4,11 @@ import {fileURLToPath} from 'node:url'
 import {createGeneratedDatabase} from './GeneratedDatabase.js'
 
 async function generatedDatabasePath(): Promise<string> {
+  // The Alinea CLI names the database of the project it serves, since several
+  // projects can share one generated package. Deployed builds have no such
+  // variable and use the location the build recorded.
+  const current = process.env.ALINEA_GENERATED_DATABASE
+  if (current) return current
   // @ts-ignore - generated at build time by the Alinea CLI
   const {database} = await import('@alinea/generated/database.node.js')
   if (!(database instanceof URL))

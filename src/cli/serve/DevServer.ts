@@ -38,7 +38,11 @@ export interface CreateDevServerOptions {
   production?: boolean
   apiKey?: string
   dashboardUrl: Promise<string>
-  onAfterGenerate?: (message: string, config: Config) => void
+  onAfterGenerate?: (
+    message: string,
+    config: Config,
+    databasePath: string
+  ) => void
 }
 
 export interface DevServer {
