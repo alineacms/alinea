@@ -5,6 +5,11 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   Icon,
+  NavRail,
+  NavRailContent,
+  NavRailFooter,
+  NavRailHeader,
+  NavRailItem,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -54,20 +59,20 @@ export function WorkspaceRoots({
     .filter(key => policy.canRead({workspace, root: key}))
     .map(key => rootAtoms(workspace, key))
   return (
-    <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
-      <div className={styles.WorkspaceRoots.workspace()}>
+    <NavRail aria-label="Workspace roots">
+      <NavRailHeader>
         <WorkspaceAvatarMenu page={page} root={currentRoot} />
-      </div>
-      <nav className={styles.WorkspaceRoots.roots()}>
+      </NavRailHeader>
+      <NavRailContent>
         {roots.map(root => (
           <WorkspaceRootButton key={root.key} page={page} root={root} />
         ))}
-      </nav>
-      <div className={styles.WorkspaceRoots.footer()}>
+      </NavRailContent>
+      <NavRailFooter>
         <ActivityStatus mobileSide="bottom" mobileAlign="end" openOnFail />
         <WorkspaceProfileMenu canManageMembers={canManageMembers} page={page} />
-      </div>
-    </aside>
+      </NavRailFooter>
+    </NavRail>
   )
 }
 
@@ -82,22 +87,17 @@ function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
   const setRoute = useSetAtom(routeAtom)
   const selected = page.root === root.key
   return (
-    <Tooltip delayDuration={100}>
-      <TooltipTrigger
-        size="icon-lg"
-        icon={icon ?? undefined}
-        className={styles.WorkspaceRoots.rootButton()}
-        aria-label={label}
-        onClick={() =>
-          setRoute({
-            workspace: root.workspace,
-            root: root.key
-          })
-        }
-        data-selected={selected ? '' : undefined}
-      />
-      <TooltipContent side="right">{label}</TooltipContent>
-    </Tooltip>
+    <NavRailItem
+      icon={icon}
+      label={label}
+      active={selected}
+      onClick={() =>
+        setRoute({
+          workspace: root.workspace,
+          root: root.key
+        })
+      }
+    />
   )
 }
 
@@ -143,7 +143,6 @@ function WorkspaceProfileMenu({
               size="icon-lg"
               variant="ghost"
               icon={IcBaselineAccountCircle}
-              className={styles.WorkspaceRoots.profile()}
               aria-label={userName}
             />
           </TooltipTrigger>

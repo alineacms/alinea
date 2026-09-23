@@ -1,10 +1,9 @@
 'use client'
 
-import {Spinner} from '#/components.js'
+import {PageHeader, Spinner, type PageHeaderProps} from '#/components.js'
 import styler from '@alinea/styler'
 import {Suspense, type ComponentProps, type PropsWithChildren} from 'react'
 import css from './ExplorerModal.module.css'
-import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -44,13 +43,11 @@ export function ExplorerModalSuspense({children}: PropsWithChildren) {
   return <Suspense fallback={<ExplorerModalLoading />}>{children}</Suspense>
 }
 
-export interface ExplorerModalFooterProps extends ComponentProps<
-  typeof RailHeader
-> {}
+export interface ExplorerModalFooterProps extends PageHeaderProps {}
 
 export function ExplorerModalFooter(props: ExplorerModalFooterProps) {
   return (
-    <RailHeader
+    <PageHeader
       {...props}
       className={styles.ExplorerModalFooter(styler.merge(props))}
     />

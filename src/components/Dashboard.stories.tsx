@@ -30,6 +30,7 @@ import {
   MaterialSymbolsRightPanelCloseRounded,
   MaterialSymbolsRightPanelOpenRounded
 } from '../dashboard/icons.js'
+import {AppShell, AppShellContent} from './AppShell.js'
 import {Badge} from './Badge.js'
 import {
   Breadcrumb,
@@ -111,11 +112,34 @@ import {
   ListRowMeta
 } from './List.js'
 import {MultipleSelect, MultipleSelectItem} from './MultipleSelect.js'
+import {
+  NavRail,
+  NavRailContent,
+  NavRailFooter,
+  NavRailHeader,
+  NavRailItem
+} from './NavRail.js'
 import {NumberField} from './NumberField.js'
+import {Page, PageActions, PageContent, PageHeader} from './Page.js'
 import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 import {RadioGroup, RadioGroupItem} from './RadioGroup.js'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup
+} from './Resizable.js'
 import {SearchField} from './SearchField.js'
 import {Select, SelectItem} from './Select.js'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset
+} from './Sidebar.js'
 import {Spinner} from './Spinner.js'
 import {Surface} from './Surface.js'
 import {Switch} from './Switch.js'
@@ -124,13 +148,12 @@ import {Text} from './Text.js'
 import {TextField} from './TextField.js'
 import {Toggle} from './Toggle.js'
 import {ToggleGroup, ToggleGroupItem} from './ToggleGroup.js'
-import {Tooltip, TooltipContent, TooltipTrigger} from './Tooltip.js'
 import {Tree, TreeItem} from './Tree.js'
 import type {DragMoveEvent, IconType, Key, Selection} from './types.js'
 
 const cx = styler(styles)
 
-interface Page {
+interface StoryPage {
   id: string
   title: string
   path: string
@@ -141,7 +164,7 @@ interface Page {
   hue: number
 }
 
-const pages: Array<Page> = [
+const pages: Array<StoryPage> = [
   {
     id: 'launch',
     title: 'Launching the new platform',
@@ -205,41 +228,20 @@ function moveSections(sections: Array<Section>, {keys, target}: DragMoveEvent) {
   return rest
 }
 
-function RailButton({
-  icon,
-  label,
-  active
-}: {
-  icon: IconType
-  label: string
-  active?: boolean
-}) {
-  return (
-    <Tooltip delayDuration={300}>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          icon={icon}
-          active={active}
-          aria-label={label}
-        />
-      </TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
-function Rail() {
+function RootRail() {
   const [theme, setTheme] = useState('system')
   return (
-    <nav className={cx.DashboardStory.rail()} aria-label="Roots">
-      <span className={cx.DashboardStory.rail.logo()} aria-hidden>
-        a
-      </span>
-      <RailButton icon={LucideFile} label="Pages" active />
-      <RailButton icon={LucideImage} label="Media" />
-      <div className={cx.DashboardStory.rail.footer()}>
+    <NavRail aria-label="Roots">
+      <NavRailHeader>
+        <span className={cx.DashboardStory.logo()} aria-hidden>
+          a
+        </span>
+      </NavRailHeader>
+      <NavRailContent>
+        <NavRailItem icon={LucideFile} label="Pages" active />
+        <NavRailItem icon={LucideImage} label="Media" />
+      </NavRailContent>
+      <NavRailFooter>
         <Popover modal={false}>
           <PopoverTrigger
             variant="ghost"
@@ -301,8 +303,8 @@ function Rail() {
             </div>
           </PopoverContent>
         </Popover>
-      </div>
-    </nav>
+      </NavRailFooter>
+    </NavRail>
   )
 }
 
@@ -351,7 +353,7 @@ function CreateDialog() {
       <DialogTrigger
         variant="outline"
         icon={IcRoundAdd}
-        className={cx.DashboardStory.sidebar.create()}
+        className={cx.DashboardStory.create()}
       >
         Create new
       </DialogTrigger>
@@ -389,17 +391,17 @@ function CreateDialog() {
   )
 }
 
-interface SidebarProps {
+interface ContentSidebarProps {
   selected: Key
   onSelect: (key: Key) => void
 }
 
-function Sidebar({selected, onSelect}: SidebarProps) {
+function ContentSidebar({selected, onSelect}: ContentSidebarProps) {
   const [workspace, setWorkspace] = useState('main')
   const [locale, setLocale] = useState('en')
   return (
-    <aside className={cx.DashboardStory.sidebar()}>
-      <div className={cx.DashboardStory.sidebar.header()}>
+    <Sidebar aria-label="Content">
+      <SidebarHeader>
         <DropdownMenu>
           <DropdownMenuTrigger variant="ghost" icon={IcRoundUnfoldMore}>
             {workspace === 'main' ? 'Main site' : 'Intranet'}
@@ -424,70 +426,76 @@ function Sidebar({selected, onSelect}: SidebarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
         <SearchDialog />
-      </div>
-      <div className={cx.DashboardStory.sidebar.root()}>
-        <Text weight="semibold">Pages</Text>
-        <DropdownMenu>
-          <DropdownMenuTrigger variant="ghost" size="sm">
-            {locale.toUpperCase()}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent aria-label="Language" align="end">
-            <DropdownMenuRadioGroup
-              aria-label="Language"
-              value={locale}
-              onValueChange={setLocale}
-            >
-              <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="nl">
-                Nederlands
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="fr">Français</DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className={cx.DashboardStory.sidebar.tree()}>
-        <Tree
-          aria-label="Pages"
-          selectionMode="single"
-          selectedKeys={new Set([selected])}
-          onSelectionChange={keys => {
-            if (keys === 'all') return
-            const [key] = keys
-            if (key !== undefined) onSelect(key)
-          }}
-          defaultExpandedKeys={['blog']}
-        >
-          <TreeItem id="home" title="Home" icon={LucideFile} />
-          <TreeItem id="blog" title="Blog" icon={LucideFolder}>
-            {pages.map(page => (
-              <TreeItem
-                key={page.id}
-                id={page.id}
-                title={page.title}
-                icon={LucideFile}
-                suffix={
-                  page.status !== 'published' && (
-                    <Badge size="sm" status={page.status}>
-                      {page.status}
-                    </Badge>
-                  )
-                }
-              />
-            ))}
-          </TreeItem>
-          <TreeItem id="about" title="About" icon={LucideFile} />
-        </Tree>
-      </div>
-      <div className={cx.DashboardStory.sidebar.footer()}>
+      </SidebarHeader>
+      <SidebarContent scroll>
+        <SidebarGroup aria-labelledby="dashboard-root-label">
+          <SidebarGroupLabel id="dashboard-root-label">Pages</SidebarGroupLabel>
+          <SidebarGroupAction>
+            <DropdownMenu>
+              <DropdownMenuTrigger variant="ghost" size="sm">
+                {locale.toUpperCase()}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent aria-label="Language" align="end">
+                <DropdownMenuRadioGroup
+                  aria-label="Language"
+                  value={locale}
+                  onValueChange={setLocale}
+                >
+                  <DropdownMenuRadioItem value="en">
+                    English
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="nl">
+                    Nederlands
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="fr">
+                    Français
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarGroupAction>
+          <Tree
+            aria-label="Pages"
+            selectionMode="single"
+            selectedKeys={new Set([selected])}
+            onSelectionChange={keys => {
+              if (keys === 'all') return
+              const [key] = keys
+              if (key !== undefined) onSelect(key)
+            }}
+            defaultExpandedKeys={['blog']}
+          >
+            <TreeItem id="home" title="Home" icon={LucideFile} />
+            <TreeItem id="blog" title="Blog" icon={LucideFolder}>
+              {pages.map(page => (
+                <TreeItem
+                  key={page.id}
+                  id={page.id}
+                  title={page.title}
+                  icon={LucideFile}
+                  suffix={
+                    page.status !== 'published' && (
+                      <Badge size="sm" status={page.status}>
+                        {page.status}
+                      </Badge>
+                    )
+                  }
+                />
+              ))}
+            </TreeItem>
+            <TreeItem id="about" title="About" icon={LucideFile} />
+          </Tree>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
         <CreateDialog />
-      </div>
-    </aside>
+      </SidebarFooter>
+    </Sidebar>
   )
 }
 
 interface HeaderProps {
-  page: Page
+  page: StoryPage
   view: string
   onViewChange: (view: string) => void
   asideOpen: boolean
@@ -504,7 +512,7 @@ function EditorHeader({
   dirty
 }: HeaderProps) {
   return (
-    <header
+    <PageHeader
       className={cx.DashboardStory.header()}
       data-dirty={dirty || undefined}
     >
@@ -536,7 +544,7 @@ function EditorHeader({
       </div>
       <Badge status={page.status}>{page.status}</Badge>
       <Badge icon={LucideFile}>{page.type}</Badge>
-      <div className={cx.DashboardStory.header.actions()}>
+      <PageActions>
         <ToggleGroup
           type="single"
           value={view}
@@ -589,12 +597,12 @@ function EditorHeader({
           }
           aria-label={asideOpen ? 'Close sidebar' : 'Open sidebar'}
         />
-      </div>
-    </header>
+      </PageActions>
+    </PageHeader>
   )
 }
 
-function EditorForm({page, onChange}: {page: Page; onChange: () => void}) {
+function EditorForm({page, onChange}: {page: StoryPage; onChange: () => void}) {
   const [sections, setSections] = useState<Array<Section>>([
     {id: 'hero', type: 'Hero', icon: IcRoundPanorama, label: 'Introduction'},
     {id: 'text', type: 'Text', icon: IcRoundEdit, label: 'Body copy'},
@@ -871,10 +879,10 @@ function Overview({onOpen}: {onOpen: (key: Key) => void}) {
   )
 }
 
-function EntryAside({page}: {page: Page}) {
+function EntryAside({page}: {page: StoryPage}) {
   return (
-    <aside className={cx.DashboardStory.aside()}>
-      <Tabs defaultValue="preview">
+    <Sidebar side="right" aria-label="Entry">
+      <Tabs defaultValue="preview" className={cx.DashboardStory.aside()}>
         <TabsList aria-label="Sidebar">
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
@@ -986,12 +994,13 @@ function EntryAside({page}: {page: Page}) {
           </div>
         </TabsContent>
       </Tabs>
-    </aside>
+    </Sidebar>
   )
 }
 
 /**
- * The dashboard chrome composed from alinea/components only: a root rail,
+ * The dashboard chrome composed from alinea/components only: an AppShell
+ * with a NavRail of roots, resizable sidebars and a Page,
  * a sidebar with workspace and language menus, search and create dialogs and
  * a page tree, an entry header with actions, the edit form with fields and a
  * reorderable list, an overview with table and card views, and the entry
@@ -1003,44 +1012,82 @@ export function Composition() {
   const [asideOpen, setAsideOpen] = useState(true)
   const [dirty, setDirty] = useState(false)
   const page = pages.find(page => page.id === selected) ?? pages[0]
+  const showAside = asideOpen && view === 'edit'
   return (
     <div className={cx.DashboardStory()}>
-      <Rail />
-      <Sidebar
-        selected={selected}
-        onSelect={key => {
-          setSelected(key)
-          setView('edit')
-          setDirty(false)
-        }}
-      />
-      <main className={cx.DashboardStory.main()}>
-        <EditorHeader
-          page={page}
-          view={view}
-          onViewChange={setView}
-          asideOpen={asideOpen}
-          onAsideOpenChange={setAsideOpen}
-          dirty={dirty}
-        />
-        <div className={cx.DashboardStory.body()}>
-          {view === 'edit' ? (
-            <EditorForm
-              key={page.id}
-              page={page}
-              onChange={() => setDirty(true)}
-            />
-          ) : (
-            <Overview
-              onOpen={key => {
-                setSelected(key)
-                setView('edit')
-              }}
-            />
-          )}
-        </div>
-      </main>
-      {asideOpen && view === 'edit' && <EntryAside page={page} />}
+      <AppShell>
+        <RootRail />
+        <AppShellContent>
+          <ResizablePanelGroup>
+            <ResizablePanel
+              key="sidebar"
+              defaultSize={280}
+              minSize={220}
+              maxSize={420}
+              priority="low"
+            >
+              <ContentSidebar
+                selected={selected}
+                onSelect={key => {
+                  setSelected(key)
+                  setView('edit')
+                  setDirty(false)
+                }}
+              />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel key="main" minSize={480} priority="high">
+              <SidebarInset>
+                <ResizablePanelGroup>
+                  <ResizablePanel key="page" minSize={400} priority="high">
+                    <Page>
+                      <EditorHeader
+                        page={page}
+                        view={view}
+                        onViewChange={setView}
+                        asideOpen={asideOpen}
+                        onAsideOpenChange={setAsideOpen}
+                        dirty={dirty}
+                      />
+                      <PageContent
+                        contained={view === 'edit'}
+                        className={cx.DashboardStory.body()}
+                      >
+                        {view === 'edit' ? (
+                          <EditorForm
+                            key={page.id}
+                            page={page}
+                            onChange={() => setDirty(true)}
+                          />
+                        ) : (
+                          <Overview
+                            onOpen={key => {
+                              setSelected(key)
+                              setView('edit')
+                            }}
+                          />
+                        )}
+                      </PageContent>
+                    </Page>
+                  </ResizablePanel>
+                  {showAside && <ResizableHandle key="handle" />}
+                  {showAside && (
+                    <ResizablePanel
+                      key="aside"
+                      defaultSize={320}
+                      minSize={280}
+                      maxSize={560}
+                      priority="low"
+                    >
+                      <EntryAside page={page} />
+                    </ResizablePanel>
+                  )}
+                </ResizablePanelGroup>
+              </SidebarInset>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </AppShellContent>
+      </AppShell>
     </div>
   )
 }

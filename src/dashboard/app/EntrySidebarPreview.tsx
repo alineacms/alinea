@@ -14,7 +14,6 @@ import {
   IcRoundVisibilityOff
 } from '../icons.js'
 import css from './EntrySidebarPreview.module.css'
-import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -106,7 +105,7 @@ function EntrySidebarBrowserPreviewHeader({
   onOpen
 }: EntrySidebarBrowserPreviewHeaderProps) {
   return (
-    <RailHeader className={styles.EntrySidebarPreview.subheader()}>
+    <header className={styles.EntrySidebarPreview.subheader()}>
       <div className={styles.EntrySidebarPreview.controls()}>
         <Button
           variant="ghost"
@@ -141,7 +140,7 @@ function EntrySidebarBrowserPreviewHeader({
         disabled={!canOpenPreview}
         onClick={onOpen}
       />
-    </RailHeader>
+    </header>
   )
 }
 

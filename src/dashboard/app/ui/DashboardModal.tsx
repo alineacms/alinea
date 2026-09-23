@@ -5,7 +5,13 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  PageContent,
+  PageFooter,
+  PageHeader,
   Spinner,
+  type PageContentProps,
+  type PageFooterProps,
+  type PageHeaderProps,
   Surface,
   useDialog
 } from '#/components.js'
@@ -19,7 +25,6 @@ import {
 } from 'react'
 import {IcRoundClose} from '../../icons.js'
 import css from './DashboardModal.module.css'
-import {RailBody, RailFooter, RailHeader} from './Rail.js'
 
 const styles = styler(css)
 
@@ -169,39 +174,33 @@ export function DashboardModalForm(props: DashboardModalFormProps) {
   )
 }
 
-export interface DashboardModalFormHeaderProps extends ComponentProps<
-  typeof RailHeader
-> {}
+export interface DashboardModalFormHeaderProps extends PageHeaderProps {}
 
 export function DashboardModalFormHeader(props: DashboardModalFormHeaderProps) {
   return (
-    <RailHeader
+    <PageHeader
       {...props}
       className={styles.DashboardModalFormHeader(styler.merge(props))}
     />
   )
 }
 
-export interface DashboardModalFormBodyProps extends ComponentProps<
-  typeof RailBody
-> {}
+export interface DashboardModalFormBodyProps extends PageContentProps {}
 
 export function DashboardModalFormBody(props: DashboardModalFormBodyProps) {
   return (
-    <RailBody
+    <PageContent
       {...props}
       className={styles.DashboardModalFormBody(styler.merge(props))}
     />
   )
 }
 
-export interface DashboardModalFormFooterProps extends ComponentProps<
-  typeof RailFooter
-> {}
+export interface DashboardModalFormFooterProps extends PageFooterProps {}
 
 export function DashboardModalFormFooter(props: DashboardModalFormFooterProps) {
   return (
-    <RailFooter
+    <PageFooter
       {...props}
       className={styles.DashboardModalFormFooter(styler.merge(props))}
     />

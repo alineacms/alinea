@@ -1,4 +1,6 @@
 import {
+  AppShell,
+  AppShellContent,
   Button,
   Dialog,
   DialogTrigger,
@@ -6,8 +8,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  Icon,
   MultipleSelect,
+  NavRail,
+  NavRailContent,
+  NavRailFooter,
+  NavRailItem,
+  Page as PageLayout,
+  PageHeader,
   MultipleSelectItem,
   Spinner,
   SearchField,
@@ -34,7 +41,6 @@ import {
   IcRoundSearch
 } from '../../icons.js'
 import {ActivityStatus} from '../ActivityStatus.js'
-import {AppShell, AppShellContent, AppShellInner} from '../AppShell.js'
 import {Badge} from '#/components.js'
 import {
   DashboardModal,
@@ -42,7 +48,6 @@ import {
   DashboardModalDialog,
   DashboardModalFooter
 } from '../ui/DashboardModal.js'
-import {SidebarHeader} from '../ui/Sidebar.js'
 import css from './UsersPage.module.css'
 
 const styles = styler(css)
@@ -145,12 +150,10 @@ function removeUser(users: Array<User>, email: string): Array<User> {
 export const usersPage = page(page => {
   return (
     <AppShell>
-      <AppShellInner>
-        <UsersPageSidebar page={page} />
-        <AppShellContent>
-          <UsersPage />
-        </AppShellContent>
-      </AppShellInner>
+      <UsersPageSidebar page={page} />
+      <AppShellContent>
+        <UsersPage />
+      </AppShellContent>
     </AppShell>
   )
 })
@@ -174,8 +177,8 @@ export function UsersPage() {
   }, [config.roles, query, users])
 
   return (
-    <div className={styles.UsersPage()}>
-      <SidebarHeader className={styles.UsersPage.header()}>
+    <PageLayout className={styles.UsersPage()}>
+      <PageHeader className={styles.UsersPage.header()}>
         <div className={styles.UsersPage.header.title()}>Manage users</div>
 
         <SearchField
@@ -198,7 +201,7 @@ export function UsersPage() {
             <UserModal />
           </DashboardModal>
         </Dialog>
-      </SidebarHeader>
+      </PageHeader>
       <div className={styles.UsersPage.content()}>
         {usersState.status === 'loading' ? (
           <UsersPageStatus label="Loading users" pending />
@@ -229,7 +232,7 @@ export function UsersPage() {
       >
         {deletingUser && <DeactivateUserModal user={deletingUser} />}
       </DashboardModal>
-    </div>
+    </PageLayout>
   )
 }
 
@@ -249,25 +252,18 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
   }
 
   return (
-    <aside className={styles.UsersPageSidebar()} aria-label="Users">
-      <nav className={styles.UsersPageSidebar.nav()}>
-        <Button
-          aria-label="Back to app"
-          variant="ghost"
-          className={styles.UsersPageSidebar.item()}
-          size="icon-lg"
+    <NavRail aria-label="Users">
+      <NavRailContent>
+        <NavRailItem
+          icon={IcRoundArrowBack}
+          label="Back to app"
           onClick={handleBack}
-        >
-          <Icon
-            icon={IcRoundArrowBack}
-            className={styles.UsersPageSidebar.icon()}
-          />
-        </Button>
-      </nav>
-      <div className={styles.UsersPageSidebar.footer()}>
+        />
+      </NavRailContent>
+      <NavRailFooter>
         <ActivityStatus mobileSide="bottom" mobileAlign="end" />
-      </div>
-    </aside>
+      </NavRailFooter>
+    </NavRail>
   )
 }
 

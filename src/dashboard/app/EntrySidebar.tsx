@@ -9,6 +9,9 @@ import {
   ListItemDescription,
   ListItemTitle,
   ListItemVisual,
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
   Spinner,
   Tabs,
   TabsContent,
@@ -41,8 +44,6 @@ import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
-import {RailHeader} from './ui/Rail.js'
-import {Sidebar, SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
@@ -116,7 +117,7 @@ export function EntrySidebar({
   const hasPreview = !isMediaFile && !isMediaLibrary
   const allowedTabs = entrySidebarTabs(type)
   return (
-    <Sidebar>
+    <Sidebar side="right">
       <Tabs
         className={styles.EntrySidebar.tabs()}
         value={selectedTab}
@@ -125,7 +126,7 @@ export function EntrySidebar({
           if (allowedTabs.includes(next)) setSelectedTab(next)
         }}
       >
-        <RailHeader className={styles.EntrySidebar.header()}>
+        <SidebarHeader>
           <TabsList aria-label="Entry sidebar">
             {hasPreview && <TabsTrigger value="preview">Preview</TabsTrigger>}
             {!isMediaFile && <TabsTrigger value="history">History</TabsTrigger>}
@@ -134,8 +135,8 @@ export function EntrySidebar({
           {onOpenChange && (
             <EntrySidebarToggle isOpen={true} onOpenChange={onOpenChange} />
           )}
-        </RailHeader>
-        <SidebarBody className={styles.EntrySidebar.body()}>
+        </SidebarHeader>
+        <SidebarContent className={styles.EntrySidebar.body()}>
           {hasPreview && (
             <TabsContent
               value="preview"
@@ -162,7 +163,7 @@ export function EntrySidebar({
           >
             <EntryReferences entry={entry} localeData={localeData} />
           </TabsContent>
-        </SidebarBody>
+        </SidebarContent>
       </Tabs>
     </Sidebar>
   )

@@ -1,26 +1,20 @@
 .AppShell {
   display: flex;
-  justify-content: center;
-  height: 100%;
-  background: var(--alinea-backdrop);
-  padding: 8px;
-}
-
-.AppShellInner {
-  display: flex;
   gap: 8px;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  padding: 8px;
+  background: var(--alinea-backdrop);
 }
 
 .AppShellContent {
   position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  height: 100%;
-  width: 100%;
   display: flex;
+  width: 100%;
   min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
   box-shadow:
     lch(0 0 0 / 0.02) 0px 3px 6px -2px,
     lch(0 0 0 / 0.04) 0px 1px 1px;
@@ -28,12 +22,9 @@
 
 @media (max-width: 768px) {
   .AppShell {
-    padding: 0;
-  }
-
-  .AppShellInner {
     flex-direction: column;
     gap: 0;
+    padding: 0;
   }
 
   .AppShellContent {

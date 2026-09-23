@@ -1,4 +1,4 @@
-import {Spinner} from '#/components.js'
+import {Page as PageLayout, Spinner} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -28,7 +28,6 @@ import {entryPage} from './app/pages/EntryPage.js'
 import {splashPage} from './app/pages/SplashPage.js'
 import {MissingRoot, rootPage} from './app/pages/RootPage.js'
 import {usersPage} from './app/pages/UsersPage.js'
-import {Rail} from './app/ui/Rail.js'
 import {activityAtom, activityPendingAtom} from './atoms/activity.js'
 import {authAtom} from './atoms/auth.js'
 import {themeAtom} from './atoms/dashboard.js'
@@ -236,11 +235,11 @@ function DashboardApp(props: AppProps): ReactNode {
 
 function AppLoading() {
   return (
-    <Rail main className={styles.AppLoading()}>
+    <PageLayout className={styles.AppLoading()}>
       <div className={styles.AppLoading.progress()}>
         <Spinner aria-label="Loading dashboard" />
       </div>
-    </Rail>
+    </PageLayout>
   )
 }
 

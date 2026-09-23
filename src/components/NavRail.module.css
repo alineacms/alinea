@@ -1,0 +1,132 @@
+.NavRail {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 16px;
+  width: 32px;
+  height: 100%;
+  padding: 10px 0;
+}
+
+.NavRailHeader {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.NavRailContent,
+.NavRailFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 0;
+}
+
+.NavRailFooter {
+  margin-top: auto;
+}
+
+.NavRailItem {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--alinea-fg);
+  font: inherit;
+  text-decoration: none;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  transition: var(--alinea-transition);
+  transition-property: background-color, color, box-shadow, opacity;
+
+  @media (hover: hover) {
+    &:hover {
+      background: color-mix(in oklab, var(--alinea-fg) 10%, transparent);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: 2px;
+  }
+
+  &[aria-current='page'] {
+    background: var(--alinea-bg);
+    box-shadow: var(--alinea-shadow-raised);
+  }
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.NavRailItem-icon {
+  display: block;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.NavRailItem-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--alinea-primary);
+  color: var(--alinea-primary-fg);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+
+  &[data-dot] {
+    top: 2px;
+    right: 2px;
+    min-width: 8px;
+    height: 8px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .NavRail {
+    flex-direction: row;
+    width: 100%;
+    height: 48px;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .NavRailContent {
+    flex: 1;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: auto;
+    overflow-x: auto;
+  }
+
+  .NavRailFooter {
+    flex-direction: row;
+    width: auto;
+    margin-top: 0;
+  }
+}

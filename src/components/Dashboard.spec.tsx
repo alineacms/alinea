@@ -39,3 +39,35 @@ test('dashboard composition', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Cancel'}).click()
   await expect(page.getByRole('dialog')).toBeHidden()
 })
+
+test('dashboard composition shell', async ({mount, page}) => {
+  await page.setViewportSize({width: 1440, height: 900})
+  await mount(<Composition />)
+  const rail = page.getByRole('complementary', {name: 'Roots'})
+  await expect(rail.getByRole('button', {name: 'Pages'})).toHaveAttribute(
+    'aria-current',
+    'page'
+  )
+  const sidebar = page.locator('[data-slot="sidebar"][data-side="left"]')
+  const width = () =>
+    sidebar.evaluate(element => element.getBoundingClientRect().width)
+  await expect.poll(width).toBe(280)
+  const handle = page.locator('[data-slot="resizable-handle"]').first()
+  const bounds = await handle.boundingBox()
+  const x = bounds!.x + bounds!.width / 2
+  const y = bounds!.y + bounds!.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x + 60, y, {steps: 8})
+  await page.mouse.up()
+  await expect.poll(width).toBe(340)
+
+  // The entry sidebar can be closed and reopened
+  const aside = page.locator('[data-slot="sidebar"][data-side="right"]')
+  await expect(aside).toBeVisible()
+  await page.getByRole('button', {name: 'Close sidebar'}).click()
+  await expect(aside).toHaveCount(0)
+  await page.getByRole('button', {name: 'Open sidebar'}).click()
+  await expect(aside).toBeVisible()
+  await expect.poll(width).toBe(340)
+})

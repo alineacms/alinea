@@ -1,6 +1,8 @@
 import {
   Button,
   Icon,
+  Page as PageLayout,
+  PageContent,
   Surface,
   Tooltip,
   TooltipContent,
@@ -60,7 +62,6 @@ import {
   DashboardModalDialog,
   DashboardModalFooter
 } from './../ui/DashboardModal.js'
-import {Rail, RailBody, RailContent} from './../ui/Rail.js'
 import css from './EntryPage.module.css'
 
 const styles = styler(css)
@@ -160,8 +161,8 @@ export function NotFoundPanel({
   onAction
 }: NotFoundPanelProps) {
   return (
-    <Rail main>
-      <RailBody className={styles.MissingEntry()}>
+    <PageLayout>
+      <PageContent className={styles.MissingEntry()}>
         <Surface className={styles.MissingEntry.card()}>
           <div className={styles.MissingEntry.icon()}>
             <Icon icon={IcBaselineErrorOutline} />
@@ -176,8 +177,8 @@ export function NotFoundPanel({
             <Button onClick={onAction}>{actionLabel}</Button>
           )}
         </Surface>
-      </RailBody>
-    </Rail>
+      </PageContent>
+    </PageLayout>
   )
 }
 
@@ -249,7 +250,7 @@ function EntryOverview({
   const policy = useAtomValueRaw(policyAtom)
   const parentId = selectedEntry.parentId
   return (
-    <Rail main>
+    <PageLayout>
       <Explorer
         controls={
           <div className={styles.EntryOverview.mobileActions()}>
@@ -276,7 +277,7 @@ function EntryOverview({
         }}
         titleControls={<EntryViewToggle entry={entry} page={page} />}
       />
-    </Rail>
+    </PageLayout>
   )
 }
 
@@ -358,8 +359,12 @@ function EntryEditorContent({
 
   let editorBody = (
     <>
-      <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
-        <RailContent className={styles.EntryEditor.fields()}>
+      <PageContent
+        ref={editorBodyRef}
+        contained
+        className={styles.EntryEditor.body()}
+      >
+        <div className={styles.EntryEditor.fields()}>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
               <EntryTranslationBanner
@@ -376,22 +381,22 @@ function EntryEditorContent({
           <NodeEditor node={node} type={type.type}>
             <EntryFields />
           </NodeEditor>
-        </RailContent>
-      </RailBody>
+        </div>
+      </PageContent>
     </>
   )
 
   if (isMediaFile) {
     editorBody = (
       <>
-        <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
+        <PageContent ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
             <FileEditor
               parentPaths={parentPaths}
               workspace={selectedEntry.workspace}
             />
           </NodeEditor>
-        </RailBody>
+        </PageContent>
       </>
     )
   }
@@ -410,7 +415,7 @@ function EntryEditorContent({
   }
 
   const mainEditor = (
-    <Rail main>
+    <PageLayout>
       <EntryHeader
         controls={
           hasChildren || defaultView === 'overview' ? (
@@ -429,7 +434,7 @@ function EntryEditorContent({
       {editorBody}
 
       <div id="alinea-toolbar" className={styles.EntryEditor.toolbar()} />
-    </Rail>
+    </PageLayout>
   )
 
   return (

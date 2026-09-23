@@ -1,8 +1,7 @@
-import {Button, Surface} from '#/components.js'
+import {AppShell, AppShellContent, Button, Surface} from '#/components.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
 import {useSetAtom} from 'jotai'
-import {AppShell, AppShellContent, AppShellInner} from './AppShell.js'
 import css from './AccessDenied.module.css'
 
 const styles = styler(css)
@@ -32,25 +31,23 @@ export function AccessDenied({canManageMembers, scope}: AccessDeniedProps) {
   const {title, message} = copy[scope]
   return (
     <AppShell>
-      <AppShellInner>
-        <AppShellContent>
-          <div className={styles.AccessDenied()}>
-            <Surface className={styles.AccessDenied.card()}>
-              <h1 className={styles.AccessDenied.title()}>{title}</h1>
-              <p className={styles.AccessDenied.message()}>{message}</p>
-              {canManageMembers && (
-                <Button
-                  variant="ghost"
-                  color="primary"
-                  onClick={() => setRoute({page: 'users'})}
-                >
-                  Manage users
-                </Button>
-              )}
-            </Surface>
-          </div>
-        </AppShellContent>
-      </AppShellInner>
+      <AppShellContent>
+        <div className={styles.AccessDenied()}>
+          <Surface className={styles.AccessDenied.card()}>
+            <h1 className={styles.AccessDenied.title()}>{title}</h1>
+            <p className={styles.AccessDenied.message()}>{message}</p>
+            {canManageMembers && (
+              <Button
+                variant="ghost"
+                color="primary"
+                onClick={() => setRoute({page: 'users'})}
+              >
+                Manage users
+              </Button>
+            )}
+          </Surface>
+        </div>
+      </AppShellContent>
     </AppShell>
   )
 }

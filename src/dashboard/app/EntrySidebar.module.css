@@ -3,12 +3,6 @@
   min-height: 0;
 }
 
-.EntrySidebar-header {
-  height: 48px;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .EntrySidebar-body {
   flex: 1;
   min-height: 0;

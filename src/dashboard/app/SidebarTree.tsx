@@ -1,6 +1,7 @@
 import {
   Button,
   Icon,
+  SidebarContent,
   Tree,
   TreeItem,
   type DragMoveEvent,
@@ -35,7 +36,6 @@ import {
 } from '../icons.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import css from './SidebarTree.module.css'
-import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
@@ -274,7 +274,7 @@ export const SidebarTree = memo(function SidebarTree({
   }
 
   return (
-    <SidebarBody>
+    <SidebarContent>
       <div className={styles.SidebarTree.tree()}>
         <div className={styles.SidebarTree.root()}>
           <div
@@ -364,7 +364,7 @@ export const SidebarTree = memo(function SidebarTree({
           </Tree>
         </div>
       </div>
-    </SidebarBody>
+    </SidebarContent>
   )
 })
 
@@ -418,7 +418,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   }
 
   return (
-    <SidebarBody>
+    <SidebarContent>
       <div className={styles.SidebarTree.tree()}>
         <div className={styles.SidebarTree.root()}>
           <div
@@ -476,6 +476,6 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
           </Tree>
         </div>
       </div>
-    </SidebarBody>
+    </SidebarContent>
   )
 })

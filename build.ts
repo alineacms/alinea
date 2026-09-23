@@ -145,11 +145,12 @@ const bundleTs: Plugin = {
   }
 }
 
-// Public entry points must not expose react-aria in their types: consumers
-// do not have it installed and it stays an implementation detail we bundle.
+// Public entry points must not expose react-aria or allotment in their types:
+// consumers do not have them installed and they stay implementation details
+// we bundle.
 const publicTypeEntries = ['components']
 const internalTypePackages =
-  /^(react-aria-components|react-aria|react-stately|@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/)/
+  /^(react-aria-components|react-aria|react-stately|allotment|@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/)/
 
 function findInternalTypeImports(root: string): Array<string> {
   const violations: Array<string> = []

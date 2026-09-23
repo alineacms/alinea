@@ -7,6 +7,8 @@ import {
   DropdownMenuTrigger,
   FileTrigger,
   type Key,
+  PageContent,
+  PageHeader,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -58,7 +60,6 @@ import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
-import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -866,7 +867,7 @@ export function ExplorerHeader({
   titleControls
 }: ExplorerHeaderProps) {
   return (
-    <RailHeader className={styles.ExplorerHeader({navigation: navigate})}>
+    <PageHeader className={styles.ExplorerHeader({navigation: navigate})}>
       <div className={styles.ExplorerHeader.content()}>
         <div className={styles.ExplorerHeader.primary()}>
           {!navigate && (
@@ -912,7 +913,7 @@ export function ExplorerHeader({
           </div>
         )}
       </div>
-    </RailHeader>
+    </PageHeader>
   )
 }
 
@@ -923,7 +924,7 @@ export function ExplorerBody({
   page
 }: ExplorerBodyProps) {
   return (
-    <RailBody>
+    <PageContent>
       <div className={styles.Explorer.viewport()}>
         <ExplorerList
           compactTable={compactTable}
@@ -932,7 +933,7 @@ export function ExplorerBody({
           page={page}
         />
       </div>
-    </RailBody>
+    </PageContent>
   )
 }
 
