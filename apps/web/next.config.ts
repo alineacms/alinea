@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
         destination: '/llms-full.txt',
         permanent: true
       },
+      {
+        source: '/roadmap',
+        destination: 'https://github.com/alineacms/alinea/issues',
+        permanent: false
+      },
       ...docsRedirects.map(([source, destination]) => ({
         source,
         destination,

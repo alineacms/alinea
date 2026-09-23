@@ -6,7 +6,6 @@ const pages = Config.root('Pages', {
   contains: ['Page', 'Home', 'Landing'],
   children: {
     index: Config.page({type: schema.Home}),
-    roadmap: Config.page({type: schema.Page}),
     docs: Config.page({type: schema.Docs})
   }
 })
