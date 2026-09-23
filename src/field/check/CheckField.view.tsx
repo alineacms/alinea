@@ -24,11 +24,12 @@ export function CheckFieldView({field}: CheckFieldViewProps) {
     >
       <div className={styles.checkline()}>
         <Checkbox
-          isSelected={Boolean(value)}
-          isDisabled={options.readOnly}
-          onChange={setValue}
-          label={options.description ?? options.label}
-        />
+          checked={Boolean(value)}
+          disabled={options.readOnly}
+          onCheckedChange={setValue}
+        >
+          {options.description ?? options.label}
+        </Checkbox>
         {!options.description && (
           <>
             {options.required && (

@@ -1,34 +1,54 @@
 import styler from '@alinea/styler'
-import {
-  Switch as AriaSwitch,
-  type SwitchProps as AriaSwitchProps
-} from 'react-aria-components'
+import type {ReactNode, Ref} from 'react'
+import {Switch as SwitchPrimitive} from 'react-aria-components'
 import css from './Switch.module.css'
+import type {AriaProps, DataProps, StyleProps} from './types.js'
 
 const styles = styler(css)
 
-export interface SwitchProps extends Omit<AriaSwitchProps, 'children'> {
-  children: React.ReactNode
+export interface SwitchProps extends StyleProps, AriaProps, DataProps {
+  checked?: boolean
+  defaultChecked?: boolean
+  onCheckedChange?: (checked: boolean) => void
+  disabled?: boolean
+  readOnly?: boolean
+  name?: string
+  value?: string
+  autoFocus?: boolean
+  ref?: Ref<HTMLLabelElement>
+  /** The label */
+  children?: ReactNode
 }
 
-export function Switch({children, ...props}: SwitchProps) {
-  const {className, ...rest} = props
+export function Switch({
+  checked,
+  defaultChecked,
+  onCheckedChange,
+  disabled,
+  readOnly,
+  className,
+  children,
+  ...props
+}: SwitchProps) {
   return (
-    <AriaSwitch
-      {...rest}
-      className={renderProps =>
-        styles.Switch(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
+    <SwitchPrimitive
+      data-slot="switch"
+      {...props}
+      className={styles.Switch(styler.merge({className}))}
+      isSelected={checked}
+      defaultSelected={defaultChecked}
+      onChange={onCheckedChange}
+      isDisabled={disabled}
+      isReadOnly={readOnly}
     >
-      <div className={styles.Switch.track()} />
-      {children}
-    </AriaSwitch>
+      <span data-slot="switch-track" className={styles.Switch.track()}>
+        <span data-slot="switch-thumb" className={styles.Switch.thumb()} />
+      </span>
+      {children && (
+        <span data-slot="switch-label" className={styles.Switch.label()}>
+          {children}
+        </span>
+      )}
+    </SwitchPrimitive>
   )
 }

@@ -1,35 +1,77 @@
 import styler from '@alinea/styler'
-import type {PropsWithChildren} from 'react'
-import {
-  CheckboxGroup as CheckboxGroupPrimitive,
-  type CheckboxGroupProps as CheckboxPrimitiveGroupProps
-} from 'react-aria-components'
+import type {ReactNode} from 'react'
+import {CheckboxGroup as CheckboxGroupPrimitive} from 'react-aria-components'
 import css from './CheckboxGroup.module.css'
-import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Field} from './Field.js'
+import type {
+  AriaProps,
+  DataProps,
+  FieldSharedProps,
+  Orientation,
+  StyleProps
+} from './types.js'
 
 const styles = styler(css)
 
 export interface CheckboxGroupProps
-  extends Omit<CheckboxPrimitiveGroupProps, 'children'>, LabelSharedProps {}
+  extends FieldSharedProps, StyleProps, AriaProps, DataProps {
+  value?: Array<string>
+  defaultValue?: Array<string>
+  onValueChange?: (value: Array<string>) => void
+  orientation?: Orientation
+  name?: string
+  /** `Checkbox` elements, each with a `value` */
+  children?: ReactNode
+}
 
 export function CheckboxGroup({
-  children,
+  label,
+  description,
+  error,
+  required,
+  disabled,
+  readOnly,
+  icon,
+  shared,
+  value,
+  defaultValue,
+  onValueChange,
+  orientation = 'vertical',
   className,
+  children,
   ...props
-}: PropsWithChildren<CheckboxGroupProps>) {
+}: CheckboxGroupProps) {
   return (
-    <CheckboxGroupPrimitive {...props}>
-      <Label {...labelProps(props)}>
+    <CheckboxGroupPrimitive
+      data-slot="checkbox-group"
+      {...props}
+      className={styles.CheckboxGroup(styler.merge({className}))}
+      value={value}
+      defaultValue={defaultValue}
+      onChange={onValueChange}
+      isRequired={required}
+      isDisabled={disabled}
+      isReadOnly={readOnly}
+      isInvalid={error ? true : undefined}
+    >
+      <Field
+        label={label}
+        description={description}
+        error={error}
+        required={required}
+        disabled={disabled}
+        readOnly={readOnly}
+        icon={icon}
+        shared={shared}
+      >
         <div
-          className={styles.CheckboxGroup(
-            styler.merge({
-              className: typeof className === 'string' ? className : undefined
-            })
-          )}
+          data-slot="checkbox-group-items"
+          data-orientation={orientation}
+          className={styles.CheckboxGroup.items()}
         >
           {children}
         </div>
-      </Label>
+      </Field>
     </CheckboxGroupPrimitive>
   )
 }

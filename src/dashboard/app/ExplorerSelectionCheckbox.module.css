@@ -1,0 +1,52 @@
+.ExplorerSelectionCheckbox {
+  display: flex;
+  cursor: pointer;
+  forced-color-adjust: none;
+
+  &:has(:disabled) {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.ExplorerSelectionCheckbox-box {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 4px;
+  background: var(--alinea-input);
+  transition: var(--alinea-transition);
+  transition-property: background, border-color, box-shadow;
+
+  .ExplorerSelectionCheckbox:hover & {
+    border-color: var(--alinea-border-hover);
+    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+  }
+
+  .ExplorerSelectionCheckbox:has(:focus-visible) & {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: 2px;
+  }
+
+  .ExplorerSelectionCheckbox:has(:checked) & {
+    border-color: var(--alinea-primary);
+    background: var(--alinea-primary);
+  }
+}
+
+.ExplorerSelectionCheckbox-mark {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: var(--alinea-primary-fg);
+  stroke-width: 3px;
+  opacity: 0;
+
+  .ExplorerSelectionCheckbox:has(:checked) & {
+    opacity: 1;
+  }
+}

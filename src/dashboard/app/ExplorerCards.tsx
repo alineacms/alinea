@@ -1,4 +1,4 @@
-import {Checkbox, Icon, Surface} from '#/components.js'
+import {Icon, Surface} from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
@@ -28,6 +28,7 @@ import type {
   ExplorerReadyPage
 } from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
+import {ExplorerSelectionCheckbox} from './ExplorerSelectionCheckbox.js'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 
 const styles = styler(css)
@@ -239,10 +240,9 @@ interface ExplorerCardCheckboxProps {
 
 function ExplorerCardCheckbox({label}: ExplorerCardCheckboxProps) {
   return (
-    <Checkbox
-      slot="selection"
+    <ExplorerSelectionCheckbox
       className={styles.ExplorerCards.item.checkbox()}
-      aria-label={`Select ${label}`}
+      label={label}
     />
   )
 }

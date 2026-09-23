@@ -1,4 +1,4 @@
-import {Checkbox, FoldIcon, Icon, Surface} from '#/components.js'
+import {FoldIcon, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
@@ -25,6 +25,7 @@ import type {
 import {dashboardEntryOverviewColumnCount} from '../atoms/explorer.js'
 import {LucideFile, LucideFolder} from '../icons.js'
 import {CompactField, compactFieldText} from './CompactField.js'
+import {ExplorerSelectionCheckbox} from './ExplorerSelectionCheckbox.js'
 import css from './ExplorerTable.module.css'
 
 const styles = styler(css)
@@ -214,10 +215,9 @@ function ExplorerTableCell({
     return (
       <div className={styles.ExplorerTable.cell.selection()} role="gridcell">
         {isSelectable && (
-          <Checkbox
-            slot="selection"
+          <ExplorerSelectionCheckbox
             className={styles.ExplorerTable.checkbox()}
-            aria-label={`Select ${label}`}
+            label={label}
           />
         )}
       </div>
