@@ -11,9 +11,25 @@ async function generatedDatabasePath(): Promise<string> {
   return fileURLToPath(database)
 }
 
+/**
+ * One store per config: the CMS and a handler created from it share one
+ * overlay, one sync and one preview cache. Queries compile against the
+ * config's own types, so a copy of the config loaded by another bundle
+ * gets its own store.
+ */
+const stores = new WeakMap<Config, ReturnType<typeof createGeneratedDatabase>>()
+
 /** Open the traced generated file through the native SQLite driver. */
-export async function generatedDatabase(config: Config) {
-  const path = await generatedDatabasePath()
-  const db = await runtimeDatabase({path, readonly: true})
-  return createGeneratedDatabase(config, db)
+export function generatedDatabase(config: Config) {
+  let store = stores.get(config)
+  if (!store) {
+    store = generatedDatabasePath()
+      .then(path => runtimeDatabase({path, readonly: true}))
+      .then(db => createGeneratedDatabase(config, db))
+    stores.set(config, store)
+    store.catch(() => {
+      if (stores.get(config) === store) stores.delete(config)
+    })
+  }
+  return store
 }

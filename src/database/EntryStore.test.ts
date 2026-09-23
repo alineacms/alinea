@@ -81,8 +81,18 @@ test('entry store requests are isolated until written', async () => {
   }
 })
 
-test('entry store caches preview overlays per payload', async () => {
-  const {sqlite, store} = await createStore()
+async function previewStore() {
+  const created = await createStore()
+  const {sqlite, store} = created
+  await store.mutate(
+    ['page', 'other', 'third'].map(id => ({
+      op: 'create' as const,
+      id,
+      type: 'Page',
+      locale: null,
+      data: {title: 'Published'}
+    }))
+  )
   const overlayTables = () =>
     sqlite
       .query<{name: string}, []>(
@@ -92,64 +102,193 @@ test('entry store caches preview overlays per payload', async () => {
       )
       .all()
       .map(row => row.name)
-  try {
-    await store.mutate([
-      {
-        op: 'create',
-        id: 'page',
-        type: 'Page',
-        locale: null,
-        data: {title: 'Published'}
-      }
-    ])
-    const entry = await store.get({id: 'page', select: Entry})
+  async function preview(id: string, title: string, path?: string) {
+    const entry = await store.get({id, select: Entry})
     const {rowHash: _rowHash, fileHash: _fileHash, ...base} = entry
-    const preview = (title: string) =>
-      createEntryRow(
-        config,
-        {...base, title, data: {...entry.data, title}},
-        entry.status
-      )
-    const title = async (previewed: Entry) =>
-      store.get({
-        id: 'page',
-        select: Entry.title,
-        preview: {entry: previewed}
-      })
-    const first = await preview('First')
-    // Concurrent queries of one render share one overlay.
-    expect(await Promise.all([title(first), title(first)])).toEqual([
-      'First',
-      'First'
-    ])
-    expect(await title(first)).toBe('First')
-    expect(overlayTables()).toEqual(['alinea_overlay_1_entries'])
-    expect(await store.get({id: 'page', select: Entry.title})).toBe('Published')
+    const moved = path && {
+      path,
+      url: `/${path}`,
+      filePath: entry.filePath.replace(`${entry.path}.json`, `${path}.json`)
+    }
+    return createEntryRow(
+      config,
+      {...base, ...moved, title, data: {...entry.data, title, path}},
+      entry.status
+    )
+  }
+  const rows = (target: EntryStore, previewed?: Entry) =>
+    target.find({
+      status: 'all',
+      select: {
+        id: Entry.id,
+        path: Entry.path,
+        filePath: Entry.filePath,
+        title: Entry.title
+      },
+      preview: previewed && {entry: previewed}
+    })
+  async function titles(previewed?: Entry) {
+    const found = await store.find({
+      select: {id: Entry.id, title: Entry.title},
+      preview: previewed && {entry: previewed}
+    })
+    return Object.fromEntries(found.map(row => [row.id, row.title]))
+  }
+  return {...created, overlayTables, preview, rows, titles}
+}
 
-    expect(await title(await preview('Second'))).toBe('Second')
-    expect(await title(await preview('Third'))).toBe('Third')
-    expect(overlayTables()).toEqual([
-      'alinea_overlay_2_entries',
-      'alinea_overlay_3_entries'
+test('concurrent previews of different entries share one overlay', async () => {
+  const {sqlite, store, overlayTables, preview, titles} = await previewStore()
+  try {
+    const first = await preview('page', 'First')
+    const second = await preview('other', 'Second')
+    const firstTitles = {page: 'First', other: 'Published', third: 'Published'}
+    const secondTitles = {
+      page: 'Published',
+      other: 'Second',
+      third: 'Published'
+    }
+    // Two editors render at once: every query sees its own payload only.
+    const results = await Promise.all(
+      [first, second, first, second, first, second].map(titles)
+    )
+    expect(results).toEqual([
+      firstTitles,
+      secondTitles,
+      firstTitles,
+      secondTitles,
+      firstTitles,
+      secondTitles
     ])
-    // A new store revision replaces the overlays of the previous one.
+    expect(overlayTables()).toEqual(['alinea_overlay_1_entries'])
+    expect(await titles()).toEqual({
+      page: 'Published',
+      other: 'Published',
+      third: 'Published'
+    })
+    await store.close()
+    const tempTables = sqlite
+      .query(`select name from sqlite_temp_master where type = 'table'`)
+      .all()
+    expect(tempTables).toEqual([])
+  } finally {
+    sqlite.close()
+  }
+})
+
+test('switching previews restores the previously previewed entry', async () => {
+  const {sqlite, store, overlayTables, preview, rows} = await previewStore()
+  try {
+    const payloads = [
+      await preview('page', 'First'),
+      await preview('other', 'Other'),
+      await preview('page', 'Second'),
+      await preview('third', 'Third')
+    ]
+    for (const previewed of payloads)
+      expect(await rows(store, previewed)).toEqual(
+        await referenceRows(store, previewed, rows)
+      )
+    const published = await rows(store)
+    const unchanged = (await rows(store, payloads[3])).filter(
+      row => row.id !== 'third'
+    )
+    expect(unchanged).toEqual(published.filter(row => row.id !== 'third'))
+    expect(overlayTables()).toHaveLength(1)
+  } finally {
+    sqlite.close()
+  }
+})
+
+test('the preview overlay follows syncs of the store', async () => {
+  const {sqlite, store, overlayTables, preview, titles} = await previewStore()
+  try {
+    const first = await preview('page', 'First')
+    expect(await titles(first)).toEqual({
+      page: 'First',
+      other: 'Published',
+      third: 'Published'
+    })
     await store.mutate([
       {
         op: 'update',
-        id: 'page',
+        id: 'other',
         locale: null,
         status: 'published',
         set: {title: 'Updated'}
       }
     ])
-    expect(await title(await preview('Third'))).toBe('Third')
-    expect(overlayTables()).toEqual(['alinea_overlay_4_entries'])
-    await store.close()
-    expect(overlayTables()).toEqual([])
+    const filePath = await store.get({id: 'third', select: Entry.filePath})
+    const tx = await transaction(store.source)
+    const removed = await tx.remove(filePath).compile()
+    await store.source.applyChanges({
+      fromSha: removed.from.sha,
+      changes: removed.changes
+    })
+    await store.sync()
+    expect(await titles(first)).toEqual({page: 'First', other: 'Updated'})
+    expect(overlayTables()).toEqual(['alinea_overlay_1_entries'])
   } finally {
     sqlite.close()
   }
 })
+
+test('previews switch over a store sourced from its own database', async () => {
+  const {sqlite, store, preview} = await previewStore()
+  // Like a generated database: the source reads the rows being previewed.
+  const layer = await store.database.createOverlay()
+  const generated = new EntryStore(config, layer.database, layer.source)
+  const title = (previewed: Entry) =>
+    generated.get({
+      id: previewed.id,
+      select: Entry.title,
+      preview: {entry: previewed}
+    })
+  try {
+    const first = await preview('page', 'First')
+    const other = await preview('other', 'Other')
+    for (const previewed of [first, other, first, other])
+      expect(await title(previewed)).toBe(previewed.title)
+  } finally {
+    await generated.close()
+    await layer.close()
+    sqlite.close()
+  }
+})
+
+test('previews moving an entry match fresh overlays', async () => {
+  const {sqlite, store, overlayTables, preview, rows} = await previewStore()
+  try {
+    const payloads = [
+      await preview('page', 'First'),
+      await preview('page', 'Moved', 'moved'),
+      await preview('page', 'Restored'),
+      await preview('other', 'Other')
+    ]
+    expect(payloads[1].filePath).not.toBe(payloads[0].filePath)
+    for (const previewed of payloads)
+      expect(await rows(store, previewed)).toEqual(
+        await referenceRows(store, previewed, rows)
+      )
+    expect(overlayTables()).toHaveLength(1)
+  } finally {
+    sqlite.close()
+  }
+})
+
+/** Rows of a preview through an overlay created for it alone. */
+async function referenceRows<Row>(
+  store: EntryStore,
+  previewed: Entry,
+  rows: (target: EntryStore, previewed?: Entry) => Promise<Row>
+): Promise<Row> {
+  const reference = new EntryStore(config, store.database, store.source)
+  try {
+    return await rows(reference, previewed)
+  } finally {
+    await reference.close()
+  }
+}
 
 test('entry store materializes configured seeds in every locale', async () => {
   const Seeded = ConfigBuilder.document('Seeded', {fields: {}})
