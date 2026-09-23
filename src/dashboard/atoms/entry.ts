@@ -497,6 +497,8 @@ export class EntryLocaleAtoms {
       type,
       id: this.entry.id,
       parentId: dataState.parentId,
+      workspace: dataState.workspace,
+      root: dataState.root,
       locale: this.requestedLocale,
       status: config.enableDrafts ? 'draft' : 'published',
       set: data,
