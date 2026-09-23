@@ -1,0 +1,45 @@
+.Field {
+  display: block;
+}
+
+.FieldHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding-bottom: 8px;
+  line-height: 1;
+}
+
+.FieldHeader-icon {
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+}
+
+.FieldLabel {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  transition: color var(--alinea-transition);
+}
+
+.FieldLabel-required {
+  color: var(--alinea-danger-subtle-fg);
+}
+
+.FieldDescription {
+  display: block;
+  max-width: 100%;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.FieldError {
+  padding-top: 4px;
+  color: var(--alinea-danger-subtle-fg);
+  font-size: var(--alinea-font-size-base);
+}

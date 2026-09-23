@@ -1,4 +1,10 @@
-import type {ComponentType, CSSProperties, SVGProps} from 'react'
+import type {
+  ComponentType,
+  CSSProperties,
+  ReactElement,
+  ReactNode,
+  SVGProps
+} from 'react'
 
 export type Key = string | number
 
@@ -35,4 +41,39 @@ export interface PositionProps {
 
 export interface DataProps {
   [attribute: `data-${string}`]: string | number | boolean | undefined
+}
+
+export type Orientation = 'horizontal' | 'vertical'
+
+export type SelectionMode = 'none' | 'single' | 'multiple'
+
+/** Either every item, or the set of selected keys */
+export type Selection = 'all' | ReadonlySet<Key>
+
+export interface SelectionProps {
+  selectionMode?: SelectionMode
+  selectedKeys?: Selection
+  defaultSelectedKeys?: Selection
+  onSelectionChange?: (keys: Selection) => void
+  disabledKeys?: Iterable<Key>
+}
+
+export type SortDirection = 'asc' | 'desc'
+
+export interface SortDescriptor {
+  column: Key
+  direction: SortDirection
+}
+
+/** Label, help text and validation state shared by every form control */
+export interface FieldSharedProps {
+  label?: ReactNode
+  description?: ReactNode
+  error?: ReactNode
+  required?: boolean
+  disabled?: boolean
+  readOnly?: boolean
+  icon?: IconType | ReactElement
+  /** Marks the field as shared between translations */
+  shared?: boolean
 }
