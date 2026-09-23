@@ -23,36 +23,27 @@ import {sqliteBatchSize} from './sync/SyncQueries.js'
 
 const defaultConfigFingerprint = 'runtime'
 
-/** A queryable entry database owning its SQLite connections. */
+/** A queryable entry database owning its SQLite connection. */
 export class EntryDatabase extends EntryLayer {
   #db: Database
-  #syncDb: Database
-  #contextSyncer: EntrySyncer
-  #ownedSyncer?: EntrySyncer
+  #syncer: EntrySyncer
 
   constructor(
     config: Config,
     db: Database,
     options: EntryDatabaseOptions = {}
   ) {
-    const syncDb = options.syncDatabase ?? db
     const syncer = new EntrySyncer(config, db)
-    const ownedSyncer =
-      syncDb === db ? undefined : new EntrySyncer(config, syncDb)
     super(config, options, {
       db,
-      syncDb,
-      syncer: ownedSyncer ?? syncer,
-      context: {nextOverlayId: 1, queue: new TaskQueue(), syncer},
+      queue: new TaskQueue(),
+      syncer,
       target: EntrySyncRoot,
       searchName: EntrySearchName,
-      searchDirty: options.searchReady ? false : 'unknown',
-      transactional: false
+      searchDirty: 'unknown'
     })
     this.#db = db
-    this.#syncDb = syncDb
-    this.#contextSyncer = syncer
-    this.#ownedSyncer = ownedSyncer
+    this.#syncer = syncer
   }
 
   static async createSchema(
@@ -180,9 +171,7 @@ export class EntryDatabase extends EntryLayer {
   }
 
   protected async releaseLayer(): Promise<void> {
-    await this.#contextSyncer.close()
-    if (this.#ownedSyncer) await this.#ownedSyncer.close()
-    if (this.#syncDb !== this.#db) await this.#syncDb.close()
+    await this.#syncer.close()
     await this.#db.close()
   }
 }

@@ -19,8 +19,7 @@ export function entryReadTarget(target: EntryIndexTarget): EntryIndexTarget {
  * reads its parent until the first write copies the parent's rows into a
  * temporary table of its own, which from then on no longer follows the parent.
  */
-export class EntryView implements AsyncDisposable {
-  readonly name: string
+export class EntryView {
   readonly entries: EntryIndexTarget
   readonly searchName: string
   readonly state: Table<typeof DatabaseStateColumns>
@@ -32,7 +31,6 @@ export class EntryView implements AsyncDisposable {
 
   private constructor(db: Database, name: string, parent: EntryIndexTarget) {
     this.#db = db
-    this.name = name
     this.#parent = parent
     this.entries = entryIndexTable(`alinea_${name}_entries`, true)
     this.searchName = `alinea_${name}_search`
@@ -100,9 +98,5 @@ export class EntryView implements AsyncDisposable {
       sql`drop table if exists ${sql.identifier(this.searchName)}`
     )
     await this.#db.drop(this.entries, this.state)
-  }
-
-  [Symbol.asyncDispose](): Promise<void> {
-    return this.close()
   }
 }

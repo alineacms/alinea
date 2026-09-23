@@ -1,6 +1,5 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
-import {Field as CoreField} from '#/core/Field.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {transaction} from '#/core/source/Source.js'
@@ -374,97 +373,6 @@ test('an unchanged overlay reuses the prepared base search index', async () => {
   expect(temporarySearch).toBeNull()
   await overlay.close()
   await base.close()
-})
-
-test('linked queries retain one snapshot while sync commits separately', async () => {
-  const projectionStarted = Promise.withResolvers<void>()
-  const resumeProjection = Promise.withResolvers<void>()
-  const delayedLink = new CoreField({
-    options: {label: 'Delayed link'},
-    view: 'DelayedLink',
-    async queryValue(value: string, loader) {
-      projectionStarted.resolve()
-      await resumeProjection.promise
-      const [title] = await loader.resolveLinks(Entry.title, [value])
-      return title
-    }
-  })
-  const Page = ConfigBuilder.document('Page', {
-    fields: {delayedLink, title: Field.text('Title')}
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const source = new MemorySource()
-  const encode = (id: string, index: string, title: string, link?: string) =>
-    new TextEncoder().encode(
-      JSON.stringify({
-        _id: id,
-        _type: 'Page',
-        _index: index,
-        title,
-        ...(link ? {delayedLink: link} : {})
-      })
-    )
-  const initial = await transaction(source)
-  const initialChange = await initial
-    .add('pages/source.json', encode('source', 'a', 'Source', 'target'))
-    .add('pages/target.json', encode('target', 'b', 'Before'))
-    .compile()
-  await source.applyChanges({
-    fromSha: initialChange.from.sha,
-    changes: initialChange.changes
-  })
-
-  const directory = await mkdtemp(join(tmpdir(), 'alinea-entry-database-'))
-  const file = join(directory, 'entries.sqlite')
-  const readSqlite = new Database(file, {create: true})
-  const syncSqlite = new Database(file)
-  readSqlite.exec('pragma journal_mode = wal; pragma busy_timeout = 5000;')
-  syncSqlite.exec('pragma journal_mode = wal; pragma busy_timeout = 5000;')
-  const readDatabase = connect(readSqlite)
-  const syncDatabase = connect(syncSqlite)
-  await EntryDatabase.createSchema(readDatabase, 'empty')
-  const database = new EntryDatabase(config, readDatabase, {syncDatabase})
-  try {
-    await database.syncWith(source)
-    const pendingQuery = database.resolve({
-      id: 'source',
-      get: true,
-      select: Page.delayedLink
-    })
-    await projectionStarted.promise
-
-    const update = await transaction(source)
-    const updateChange = await update
-      .add('pages/target.json', encode('target', 'b', 'After'))
-      .compile()
-    await source.applyChanges({
-      fromSha: updateChange.from.sha,
-      changes: updateChange.changes
-    })
-    await database.syncWith(source)
-    resumeProjection.resolve()
-
-    expect(await pendingQuery).toBe('Before')
-    expect(
-      await database.resolve({
-        id: 'source',
-        get: true,
-        select: Page.delayedLink
-      })
-    ).toBe('After')
-  } finally {
-    resumeProjection.resolve()
-    await database.close()
-    await rm(directory, {recursive: true, force: true})
-  }
 })
 
 test('database mutations use one write transaction and commit one final tree', async () => {

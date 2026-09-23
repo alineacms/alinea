@@ -24,17 +24,12 @@ import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {EntryDatabase} from './EntryDatabase.js'
-import type {
-  EntryChangeListener,
-  EntryDatabaseOptions,
-  EntryLayer,
-  EntryOverlay
-} from './EntryLayer.js'
+import type {EntryChangeListener, EntryLayer} from './EntryLayer.js'
 import {wasmDatabase} from './driver/WasmDatabase.js'
 import {DatabaseSource} from './DatabaseSource.js'
 
 interface PreviewOverlay {
-  database: EntryOverlay
+  database: EntryLayer
   /** The store revision, source tree and entry payload the overlay shows. */
   applied: string
 }
@@ -77,15 +72,11 @@ export class EntryStore
     this.#close = options.close
   }
 
-  static async memory(
-    config: Config,
-    source: Source,
-    options: EntryDatabaseOptions = {}
-  ): Promise<EntryStore> {
+  static async memory(config: Config, source: Source): Promise<EntryStore> {
     const db = await wasmDatabase()
     try {
       await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
-      const database = new EntryDatabase(config, db, options)
+      const database = new EntryDatabase(config, db)
       return new EntryStore(config, database, source, {ownsDatabase: true})
     } catch (error) {
       await db.close()
@@ -101,21 +92,13 @@ export class EntryStore
     return this.database.includedAtBuild(filePath)
   }
 
-  resolve<Query extends GraphQuery>(
-    query: Query
-  ): Promise<AnyQueryResult<Query>> {
-    if (query.preview && 'entry' in query.preview)
-      return this.#resolvePreview(query)
-    return this.database.resolve(query)
-  }
-
   /**
    * Preview queries share a single overlay, which each query first brings to
    * its own payload over the current store revision. The overlay diffs from
    * the tree it shows, so a switch restores the previously previewed entry and
    * follows store syncs without copying the entries again.
    */
-  #resolvePreview<Query extends GraphQuery>(
+  resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     const {preview, ...withoutPreview} = query
@@ -247,27 +230,23 @@ export class EntryStore
       const source = await OverlaySource.create(this.source)
       const localTree = await source.getTree()
       const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
-      if (remoteTree) {
-        const knownRemote = sourceAtTree(remote, remoteTree)
-        const database = await this.database.overlay(knownRemote)
-        try {
+      const database = await this.database.overlay(
+        remoteTree ? sourceAtTree(remote, remoteTree) : source
+      )
+      try {
+        if (remoteTree)
           await source.applyChangesFrom(
             new DatabaseSource(database),
             localTree.diff(remoteTree),
             remoteTree
           )
-          return new EntryStore(this.config, database, source, {
-            ownsDatabase: true
-          })
-        } catch (error) {
-          await database.close()
-          throw error
-        }
+        return new EntryStore(this.config, database, source, {
+          ownsDatabase: true
+        })
+      } catch (error) {
+        await database.close()
+        throw error
       }
-      const database = await this.database.overlay(source)
-      return new EntryStore(this.config, database, source, {
-        ownsDatabase: true
-      })
     })
   }
 

@@ -16,7 +16,7 @@ import {
   type RemoteSource,
   type Source
 } from '#/core/source/Source.js'
-import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {TaskQueue} from '#/core/util/Async.js'
 import {eq, inArray, sql, type Database} from 'rado'
@@ -47,21 +47,15 @@ import {
 const searchRebuildThreshold = 2000
 /** Temporary table holding the source payloads while a reindex runs. */
 const reindexBlobsName = 'alinea_reindex_blobs'
-
-/** Shared, connection-scoped state of one queryable layer of the entry index. */
-export interface EntryLayerContext {
-  nextOverlayId: number
-  queue: TaskQueue
-  syncer: EntrySyncer
-}
+/** Overlay tables are temporary, so their names are unique per connection. */
+const overlayIds = new WeakMap<Database, number>()
 
 export interface EntryLayerState {
   /** Read connection, or the write transaction of a working layer. */
   db: Database
-  /** Connection used to synchronize and apply, usually the read connection. */
-  syncDb: Database
+  /** Serializes every task on the connection, shared by its overlays. */
+  queue: TaskQueue
   syncer: EntrySyncer
-  context: EntryLayerContext
   target: EntrySyncTarget
   /** The copy-on-write table behind an overlay's target. */
   view?: EntryView
@@ -76,22 +70,11 @@ export interface EntryLayerState {
    * search revision is compared with the database revision. */
   searchDirty: boolean | 'unknown'
   /** The connection is already inside a transaction: never open nested ones. */
-  transactional: boolean
-}
-
-interface StoredState {
-  revision: string
-  tree: Tree | null
+  transactional?: boolean
 }
 
 export interface EntryDatabaseOptions {
-  /** Prepare a complete search plan under the connection's statement queue. */
-  search?(input: GraphQuery['search']): Promise<SearchQuery | undefined>
   includedAtBuild?(filePath: string): boolean | Promise<boolean>
-  /** The bundled database already contains its complete FTS5 corpus. */
-  searchReady?: boolean
-  /** A second connection to the same SQLite database, used for synchronization. */
-  syncDatabase?: Database
 }
 
 export interface EntryApplyOptions {
@@ -112,19 +95,18 @@ export interface EntryApplyResult extends EntrySyncResult {
 }
 
 export interface EntryDatabaseOverlay extends AsyncDisposable {
-  database: EntryOverlay
+  database: EntryLayer
   source: OverlaySource
   close(): Promise<void>
 }
 
 /** One queryable layer of the entry index: a database or a view over one. */
-export abstract class EntryLayer extends Graph implements AsyncDisposable {
+export class EntryLayer extends Graph implements AsyncDisposable {
   #config: Config
   #options: EntryDatabaseOptions
   #db: Database
-  #syncDb: Database
+  #queue: TaskQueue
   #syncer: EntrySyncer
-  #context: EntryLayerContext
   #target: EntrySyncTarget
   #view?: EntryView
   #parent?: EntryLayer
@@ -149,9 +131,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#config = config
     this.#options = options
     this.#db = state.db
-    this.#syncDb = state.syncDb
+    this.#queue = state.queue
     this.#syncer = state.syncer
-    this.#context = state.context
     this.#target = state.target
     this.#view = state.view
     this.#parent = state.parent
@@ -160,7 +141,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#searchName = state.searchName
     this.#ownSearchName = state.ownSearchName
     this.#searchDirty = state.searchDirty
-    this.#transactional = state.transactional
+    this.#transactional = state.transactional ?? false
   }
 
   /** Where reads go: the parent's table while the overlay is unwritten. */
@@ -189,27 +170,43 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     if (this.#closed) throw new Error('EntryDatabase is closed')
   }
 
-  /** Synchronize a source through this layer's single prepared syncer. */
+  /**
+   * Synchronize a source through this layer's single prepared syncer, without
+   * keeping an in-memory copy of its entries.
+   */
   async syncWith(
     source: RemoteSource,
     options?: SyncOptions
   ): Promise<EntrySyncResult> {
     this.#assertOpen()
-    const validate = options?.validate ?? true
     return this.#syncQueue.run(async () => {
-      const current = await this.#onSyncConnection(async () => {
-        await this.#resolveSearchState(this.#syncDb)
-        return this.#getRevision(this.#syncDb)
+      const current = await this.#queue.run(async () => {
+        await this.#resolveSearchState(this.#db)
+        return this.#getRevision(this.#db)
       })
       const tree = await source.getTreeIfDifferent(current)
       if (!tree) return {revision: current, changedEntryIds: []}
-      const changedEntryIds = await this.#syncSource(
-        source,
-        tree,
-        current,
-        validate
-      )
-      return {revision: tree.sha, changedEntryIds}
+      this.#initialTree ??= tree
+      const changedEntryIds = await this.#queue.run(async () => {
+        await this.#view?.diverge()
+        const changed = await this.#syncer.sync(
+          this.#target,
+          source,
+          tree,
+          current,
+          {
+            previousTree: this.#tree,
+            withinTransaction: this.#transactional,
+            validate: options?.validate ?? true
+          }
+        )
+        this.#tree = tree
+        await this.#refreshSearch(this.#db, changed)
+        return changed
+      })
+      const change = {revision: tree.sha, changedEntryIds}
+      this.#emitChange(change)
+      return change
     })
   }
 
@@ -217,34 +214,29 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
    * Adopt another config and derive every entry again from the payloads this
    * layer stores. The rows of the previous config are replaced within one
    * transaction, so reads keep answering from them until the replacement is
-   * committed. Only a root
-   * layer without overlays can be reindexed.
+   * committed. Only a layer without overlays can be reindexed.
    */
   protected async reindexEntries(
     config: Config,
     reset?: (tx: Database) => Promise<void>
   ): Promise<EntrySyncResult> {
     this.#assertOpen()
-    if (this.#ownSearchName)
-      throw new Error('Cannot reindex an overlay, reindex its base instead')
     if (this.#children.size)
       throw new Error('Cannot reindex an entry database with active overlays')
     return this.#syncQueue.run(async () => {
       this.#config = config
       await this.#syncer.reconfigure(config)
-      if (this.#context.syncer !== this.#syncer)
-        await this.#context.syncer.reconfigure(config)
       const state = this.#target.state
       const entries = this.#target.entries
       const blobs = sql.identifier(reindexBlobsName)
       const encoder = new TextEncoder()
-      const result = await this.#onSyncConnection(async () => {
+      const result = await this.#queue.run(async () => {
         // Read outside the transaction: queries on the connection itself would
         // wait for the transaction to finish.
         const {tree} = await this.#readTreeState()
         if (!tree)
           throw new Error('Cannot reindex a database without a source tree')
-        return this.#syncDb.transaction(
+        return this.#db.transaction(
           async tx => {
             // The stored payloads are the exact source files of the recorded
             // tree, so they feed the sync back in without an external source.
@@ -329,33 +321,25 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   ): Promise<EntryApplyResult> {
     const from = await options.source.getTree()
     const view = this.#view
-    if (view) await this.#onSyncConnection(() => view.diverge())
-    const applied = await this.#syncDb.transaction(
+    if (view) await this.#queue.run(() => view.diverge())
+    const applied = await this.#db.transaction(
       async tx => {
         const revision = await this.#getRevision(tx)
         if (revision !== from.sha)
           throw new ShaMismatchError(revision, from.sha)
         await this.#resolveSearchState(tx)
         const workingSource = new OverlaySource(options.source, from)
-        const workingLayer = new EntryWorkingLayer(
-          this.#config,
-          this.#options,
-          {
-            db: tx,
-            syncDb: tx,
-            syncer: this.#syncer,
-            context: {
-              nextOverlayId: this.#context.nextOverlayId,
-              queue: new TaskQueue(),
-              syncer: this.#syncer
-            },
-            target: this.#target,
-            tree: from,
-            searchName: this.#searchName,
-            searchDirty: this.#searchDirty,
-            transactional: true
-          }
-        )
+        // The working copy of this layer inside the write transaction.
+        const workingLayer = new EntryLayer(this.#config, this.#options, {
+          db: tx,
+          queue: new TaskQueue(),
+          syncer: this.#syncer,
+          target: this.#target,
+          tree: from,
+          searchName: this.#searchName,
+          searchDirty: this.#searchDirty,
+          transactional: true
+        })
         const transaction = new EntryTransaction(
           workingLayer,
           workingSource,
@@ -381,8 +365,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       {async: true}
     )
     this.#tree = applied.tree
-    await this.#onSyncConnection(() =>
-      this.#refreshSearch(this.#syncDb, applied.result.changedEntryIds)
+    await this.#queue.run(() =>
+      this.#refreshSearch(this.#db, applied.result.changedEntryIds)
     )
     this.#emitChange(applied.result)
     return applied.result
@@ -394,7 +378,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       throw new Error('Cannot close an entry database with active overlays')
     this.#closed = true
     await this.#syncQueue.drain()
-    await this.#withReadConnection(async () => {
+    await this.#queue.run(async () => {
       if (this.#view) {
         await this.#syncer.release(this.#target)
         await this.#view.close()
@@ -412,11 +396,11 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 
   getRevision(): Promise<string> {
-    return this.#withReadConnection(() => this.#getRevision(this.#db))
+    return this.#queue.run(() => this.#getRevision(this.#db))
   }
 
   async getTree(): Promise<ReadonlyTree> {
-    const state = await this.#withReadConnection(() => this.#readTreeState())
+    const state = await this.#queue.run(() => this.#readTreeState())
     if (!state.tree)
       throw new Error(`Database revision ${state.revision} has no source tree`)
     return state.tree
@@ -427,9 +411,15 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       const revision = await this.#getRevision(this.#db)
       if (this.#tree.sha === revision) return {revision, tree: this.#tree}
     }
-    const state = await this.#getState(this.#db)
-    this.#tree = state.tree ? new ReadonlyTree(state.tree) : undefined
-    return {revision: state.revision, tree: this.#tree}
+    const state = this.#target.state
+    const row = await this.#db
+      .select({revision: state.revision, tree: state.tree})
+      .from(state)
+      .where(eq(state.id, 1))
+      .get()
+    if (row == null) throw new Error('Missing database state')
+    this.#tree = row.tree ? new ReadonlyTree(row.tree) : undefined
+    return {revision: row.revision, tree: this.#tree}
   }
 
   async *getBlobs(
@@ -442,7 +432,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       if (options.signal?.aborted)
         throw options.signal.reason ?? new Error('Blob transfer aborted')
       const target = this.#readTarget
-      const rows = await this.#withReadConnection(async () => {
+      const rows = await this.#queue.run(async () => {
         // Find blobs by their indexed file path: no index covers the hash
         const {tree} = await this.#readTreeState()
         const paths = batch.flatMap(sha => tree?.pathOf(sha) ?? [])
@@ -471,47 +461,6 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       .get()
     if (revision == null) throw new Error('Missing database revision')
     return revision
-  }
-
-  async #getState(db: Database): Promise<StoredState> {
-    const state = this.#target.state
-    const result = await db
-      .select({revision: state.revision, tree: state.tree})
-      .from(state)
-      .where(eq(state.id, 1))
-      .get()
-    if (result == null) throw new Error('Missing database state')
-    return result
-  }
-
-  /** Apply one source tree without keeping an in-memory copy of its entries. */
-  async #syncSource(
-    source: RemoteSource,
-    tree: ReadonlyTree,
-    fromRevision: string,
-    validate: boolean
-  ): Promise<Array<string>> {
-    this.#initialTree ??= tree
-    let changedEntryIds = Array<string>()
-    const sync = async () => {
-      await this.#view?.diverge()
-      changedEntryIds = await this.#syncer.sync(
-        this.#target,
-        source,
-        tree,
-        fromRevision,
-        {
-          previousTree: this.#tree,
-          withinTransaction: this.#transactional,
-          validate
-        }
-      )
-      this.#tree = tree
-      await this.#refreshSearch(this.#syncDb, changedEntryIds)
-    }
-    await this.#onSyncConnection(sync)
-    this.#emitChange({revision: tree.sha, changedEntryIds})
-    return changedEntryIds
   }
 
   /**
@@ -567,48 +516,39 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 
   async prepareSearch(): Promise<void> {
-    await this.#withReadConnection(() => this.#ensureSearch(this.#db))
-  }
-
-  #withReadConnection<T>(run: () => Promise<T>): Promise<T> {
-    return this.#context.queue.run(run)
-  }
-
-  /** Serialize with the read connection only when both share one connection. */
-  #onSyncConnection<T>(run: () => Promise<T>): Promise<T> {
-    return this.#syncDb === this.#db ? this.#withReadConnection(run) : run()
+    await this.#queue.run(() => this.#ensureSearch(this.#db))
   }
 
   /** Run a task serialized with every other read on this connection. */
   protected withReadConnection<T>(run: () => Promise<T>): Promise<T> {
-    return this.#withReadConnection(run)
+    return this.#queue.run(run)
   }
 
   /** Create and synchronize a copy-on-write layer over this one. */
-  async overlay(source: RemoteSource): Promise<EntryOverlay> {
+  async overlay(source: RemoteSource): Promise<EntryLayer> {
     this.#assertOpen()
-    const name = `overlay_${this.#context.nextOverlayId++}`
-    let child: EntryOverlay | undefined
+    const id = (overlayIds.get(this.#db) ?? 0) + 1
+    overlayIds.set(this.#db, id)
+    const name = `overlay_${id}`
+    let child: EntryLayer | undefined
     try {
-      const {revision, tree} = await this.#withReadConnection(async () => {
+      const {revision, tree} = await this.#queue.run(async () => {
         await this.#resolveSearchState(this.#db)
         return this.#readTreeState()
       })
-      const view = await this.#withReadConnection(() =>
+      const view = await this.#queue.run(() =>
         EntryView.create(this.#db, name, this.#target.entries, revision)
       )
-      child = new EntryOverlay(this.#config, this.#options, {
+      child = new EntryLayer(this.#config, this.#options, {
         db: this.#db,
-        syncDb: this.#db,
-        syncer: this.#context.syncer,
-        context: this.#context,
+        queue: this.#queue,
+        syncer: this.#syncer,
         target: {entries: view.entries, state: view.state, recordsTree: false},
         tree,
         initialTree: this.#initialTree,
         searchName: this.#searchDirty ? view.searchName : this.#searchName,
         ownSearchName: view.searchName,
         searchDirty: this.#searchDirty,
-        transactional: false,
         view,
         parent: this
       })
@@ -637,7 +577,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     this.#assertOpen()
-    return this.#withReadConnection(() => {
+    return this.#queue.run(() => {
       if (this.#transactional)
         return this.#resolve(query, this.#db) as Promise<AnyQueryResult<Query>>
       return this.#db.transaction(tx => this.#resolve(query, tx), {
@@ -653,8 +593,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       database,
       entries: this.#readTarget,
       searchName: this.#searchName,
-      search:
-        this.#options.search ?? (input => this.#searchPlan(database, input)),
+      search: input => this.#searchPlan(database, input),
       prepareSearch: () => this.#ensureSearch(database),
       includedAtBuild: filePath =>
         this.#options.includedAtBuild?.(filePath) ?? false
@@ -666,7 +605,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     query: EntryReferenceQuery
   ): Promise<EntryReferenceResult> {
     this.#assertOpen()
-    return this.#withReadConnection(() =>
+    return this.#queue.run(() =>
       this.#db.transaction(
         tx => queryEntryReferences(this.#config, tx, this.#readTarget, query),
         {
@@ -725,9 +664,3 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     return () => this.#changeListeners.delete(listener)
   }
 }
-
-/** A named copy-on-write layer over the layer it was created from. */
-export class EntryOverlay extends EntryLayer {}
-
-/** The working copy of a layer inside its own write transaction. */
-class EntryWorkingLayer extends EntryLayer {}

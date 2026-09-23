@@ -36,7 +36,7 @@ export interface EntrySyncOptions {
 }
 
 /** Prepared, serialized source synchronization for one database connection. */
-export class EntrySyncer implements AsyncDisposable {
+export class EntrySyncer {
   #db: Database
   #config: Config
   #queries = new Map<EntrySyncTarget, Promise<SyncQueries>>()
@@ -151,9 +151,5 @@ export class EntrySyncer implements AsyncDisposable {
     await Promise.all(
       queries.map(async statements => (await statements).free())
     )
-  }
-
-  [Symbol.asyncDispose](): Promise<void> {
-    return this.close()
   }
 }
