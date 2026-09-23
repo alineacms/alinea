@@ -35,18 +35,20 @@
       content: '';
       position: absolute;
       inset: 0;
+      // A scrim that darkens where the copy sits (bottom left), easing out
+      // so the rest of the photo keeps its own light
       background:
-        linear-gradient(
-          to right,
-          rgb(24 18 13 / 0.55) 0%,
-          rgb(24 18 13 / 0.25) 45%,
-          rgb(24 18 13 / 0) 75%
+        radial-gradient(
+          ellipse 100% 90% at 0% 100%,
+          rgb(24 18 13 / 0.62) 0%,
+          rgb(24 18 13 / 0.38) 45%,
+          rgb(24 18 13 / 0) 100%
         ),
         linear-gradient(
           to top,
-          rgb(24 18 13 / 0.55) 0%,
-          rgb(24 18 13 / 0.1) 50%,
-          rgb(24 18 13 / 0) 100%
+          rgb(24 18 13 / 0.45) 0%,
+          rgb(24 18 13 / 0.12) 45%,
+          rgb(24 18 13 / 0) 70%
         );
     }
   }
@@ -128,7 +130,7 @@
   white-space: pre-line;
 
   .DemoHero.is-overlay & {
-    text-shadow: 0 1px 24px rgb(0 0 0 / 0.12);
+    text-shadow: 0 1px 30px rgb(24 18 13 / 0.3);
   }
 
   .DemoHero.is-split & {

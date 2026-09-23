@@ -1,6 +1,6 @@
 .DemoFooter {
   margin-top: auto;
-  padding: 56px var(--demo-gutter) 28px;
+  padding: 56px 0 28px;
   background: var(--demo-dark);
   color: var(--demo-dark-ink);
 }
@@ -10,6 +10,7 @@
   gap: 32px;
   max-width: var(--demo-max);
   margin: 0 auto;
+  padding: 0 var(--demo-gutter);
 
   @container demo-site (min-width: 760px) {
     grid-template-columns: 2fr 1fr 1fr;
@@ -50,6 +51,11 @@
 .DemoFooter-note {
   max-width: var(--demo-max);
   margin: 48px auto 0;
+  padding: 0 var(--demo-gutter);
+}
+
+.DemoFooter-note-text {
+  margin: 0;
   padding-top: 20px;
   border-top: 1px solid
     color-mix(in srgb, var(--demo-dark-ink) 14%, transparent);

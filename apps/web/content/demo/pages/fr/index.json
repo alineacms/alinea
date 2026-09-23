@@ -2,7 +2,6 @@
   "_id": "3JjYg2xcgCGTqmAoAf36mA6hWqR",
   "_type": "DemoHome",
   "_index": "a0",
-  "_root": "pages",
   "title": "Accueil",
   "blocks": [
     {
@@ -14,11 +13,11 @@
       "title": "Des meubles faits lentement,\npour vivre avec eux longtemps",
       "text": "Chêne massif, noyer et lin belge, façonnés à la main dans notre atelier de Gand. Des pièces qui s'embellissent à chaque année d'usage.",
       "image": {
-        "_id": "3JjYg10ygUNNkgGEx2ck1NIQeFa",
+        "_id": "3JjdBMJxj0SfNOLmzFHfSnMMvcX",
         "_type": "image",
-        "_entry": "3JjYfnfrYyPLNqfGmo8Xulwojwy"
+        "_entry": "3Jjd4WAftvvGN25FuX4VRPtb0nK"
       },
-      "credit": "Photo by Spacejoy on Unsplash",
+      "credit": "Photo by Daniel Chen on Unsplash",
       "link": {
         "_id": "3JjYfxcSci7Adx8M0rk2GSP99aJ",
         "_type": "entry",
@@ -39,26 +38,26 @@
       },
       "products": [
         {
-          "_id": "3JjYfvqRVuiHEqWH1F886T7PT0G",
           "_index": "a0",
+          "_id": "3JjYfvqRVuiHEqWH1F886T7PT0G",
           "_type": "entry",
           "_entry": "3JjYg1RR8ghz3NENJTrtX2QiHgP"
         },
         {
-          "_id": "3JjYg2O5Lk7YbvDTrKnFhtcJCQ9",
           "_index": "a1",
+          "_id": "3JjYg2O5Lk7YbvDTrKnFhtcJCQ9",
           "_type": "entry",
           "_entry": "3JjYfzPTVtmPWs2O84iAvy3gHyO"
         },
         {
-          "_id": "3JjYfwzy3ZAM70ntp9zCk6GduDD",
           "_index": "a2",
+          "_id": "3JjYfwzy3ZAM70ntp9zCk6GduDD",
           "_type": "entry",
           "_entry": "3JjYfyz12LRO4vdvD9NV5MnQVa4"
         },
         {
-          "_id": "3JjYfyKQRgyjiqsGNZDCwWh70CK",
           "_index": "a3",
+          "_id": "3JjYfyKQRgyjiqsGNZDCwWh70CK",
           "_type": "entry",
           "_entry": "3JjYfyD46Nvf6MOAzgsUIcVYJWw"
         }
@@ -112,20 +111,20 @@
       "text": "Des meubles pensés pour aller ensemble, du premier café du matin au dernier chapitre du soir.",
       "collections": [
         {
-          "_id": "3JjYfx3wwgowWOhHTTX73cKZYZd",
           "_index": "a0",
+          "_id": "3JjYfx3wwgowWOhHTTX73cKZYZd",
           "_type": "entry",
           "_entry": "3JjYg0OXixCbaQ50E6n7PRCP0Vq"
         },
         {
-          "_id": "3JjYg1hTrVEK8IdmfsTC9YgvNnU",
           "_index": "a1",
+          "_id": "3JjYg1hTrVEK8IdmfsTC9YgvNnU",
           "_type": "entry",
           "_entry": "3JjYfwkDH6zRr6exXS99ijOXLx8"
         },
         {
-          "_id": "3JjYfywqXBXIFkCsqzi5wr1BV2L",
           "_index": "a2",
+          "_id": "3JjYfywqXBXIFkCsqzi5wr1BV2L",
           "_type": "entry",
           "_entry": "3JjYfvpACmkJtArSZFCJX4YPI5j"
         }
@@ -170,6 +169,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790178273,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790178273,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

@@ -48,7 +48,9 @@ export function DemoFooter({
           ))}
         </nav>
       </div>
-      <p className={styles.DemoFooter.note()}>{t.footerNote}</p>
+      <div className={styles.DemoFooter.note()}>
+        <p className={styles.DemoFooter.note.text()}>{t.footerNote}</p>
+      </div>
     </footer>
   )
 }

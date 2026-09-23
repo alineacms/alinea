@@ -35,8 +35,17 @@ interface RenderDashboardProps {
   init: ReturnType<typeof setup>
 }
 
+/**
+ * `/demo?screenshot` hides demo-only chrome, such as the reset pill, so
+ * captures only show the dashboard itself
+ */
+function isScreenshot() {
+  return new URLSearchParams(window.location.search).has('screenshot')
+}
+
 function RenderDashboard({init}: RenderDashboardProps) {
   const {config, client, db, events} = use(init)
+  const screenshot = useMemo(isScreenshot, [])
   async function reset() {
     await client.reset()
     // Reload without the hash, entries created in this session are gone
@@ -53,7 +62,7 @@ function RenderDashboard({init}: RenderDashboardProps) {
         views={defaultViews}
         user={demoUser}
       />
-      <DemoReset onReset={reset} />
+      {!screenshot && <DemoReset onReset={reset} />}
     </>
   )
 }

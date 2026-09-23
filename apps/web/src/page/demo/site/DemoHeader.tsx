@@ -3,6 +3,7 @@ import type {DemoLayoutData} from '../demoData'
 import {demoLocaleLabels, demoStrings} from '../demoStrings'
 import {demoBrand} from '../demoWorkspace'
 import css from './DemoHeader.module.scss'
+import {DemoHeaderNav} from './DemoHeaderNav'
 
 const styles = styler(css)
 
@@ -30,7 +31,7 @@ export function DemoHeader({
             demoBrand
           )}
         </a>
-        <nav className={styles.DemoHeader.nav()} aria-label={t.menu}>
+        <DemoHeaderNav className={styles.DemoHeader.nav()} label={t.menu}>
           {nav.map(item => (
             <a
               key={item.id}
@@ -41,7 +42,7 @@ export function DemoHeader({
               {item.title}
             </a>
           ))}
-        </nav>
+        </DemoHeaderNav>
         <nav className={styles.DemoHeader.locales()} aria-label={t.languages}>
           {translations.map(translation => (
             <a

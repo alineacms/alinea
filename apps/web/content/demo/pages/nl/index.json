@@ -2,7 +2,6 @@
   "_id": "3JjYg2xcgCGTqmAoAf36mA6hWqR",
   "_type": "DemoHome",
   "_index": "a0",
-  "_root": "pages",
   "title": "Home",
   "blocks": [
     {
@@ -14,11 +13,11 @@
       "title": "Meubels die traag gemaakt worden,\nom decennia mee te leven",
       "text": "Massief eiken, notelaar en Belgisch linnen, met de hand gemaakt in ons atelier in Gent. Stukken die met elk jaar gebruik mooier worden.",
       "image": {
-        "_id": "3JjYfzWbmn2Pszom5QncK9XW9XG",
+        "_id": "3JjdBLXoblNpvz7Zt410bvb6pdt",
         "_type": "image",
-        "_entry": "3JjYfnfrYyPLNqfGmo8Xulwojwy"
+        "_entry": "3Jjd4WAftvvGN25FuX4VRPtb0nK"
       },
-      "credit": "Photo by Spacejoy on Unsplash",
+      "credit": "Photo by Daniel Chen on Unsplash",
       "link": {
         "_id": "3JjYfvetVTghAE86LjiSyaNGMsH",
         "_type": "entry",
@@ -39,26 +38,26 @@
       },
       "products": [
         {
-          "_id": "3JjYg2eUigYv4FDv8igYKKsFnjB",
           "_index": "a0",
+          "_id": "3JjYg2eUigYv4FDv8igYKKsFnjB",
           "_type": "entry",
           "_entry": "3JjYg1RR8ghz3NENJTrtX2QiHgP"
         },
         {
-          "_id": "3JjYg1R6owSI6uMv0toHOrOEjxV",
           "_index": "a1",
+          "_id": "3JjYg1R6owSI6uMv0toHOrOEjxV",
           "_type": "entry",
           "_entry": "3JjYfzPTVtmPWs2O84iAvy3gHyO"
         },
         {
-          "_id": "3JjYfy6pBay3hezKyv4SMWdQh0W",
           "_index": "a2",
+          "_id": "3JjYfy6pBay3hezKyv4SMWdQh0W",
           "_type": "entry",
           "_entry": "3JjYfyz12LRO4vdvD9NV5MnQVa4"
         },
         {
-          "_id": "3JjYfwKw6ivELvrBAqQBfLfe5fa",
           "_index": "a3",
+          "_id": "3JjYfwKw6ivELvrBAqQBfLfe5fa",
           "_type": "entry",
           "_entry": "3JjYfyD46Nvf6MOAzgsUIcVYJWw"
         }
@@ -112,20 +111,20 @@
       "text": "Stukken die bij elkaar passen, van de eerste koffie van de dag tot het laatste hoofdstuk 's avonds.",
       "collections": [
         {
-          "_id": "3JjYg0bcPUznMXvChXoPHrATs2r",
           "_index": "a0",
+          "_id": "3JjYg0bcPUznMXvChXoPHrATs2r",
           "_type": "entry",
           "_entry": "3JjYg0OXixCbaQ50E6n7PRCP0Vq"
         },
         {
-          "_id": "3JjYfw3fd5VZQkWcRvwtL9gTGUb",
           "_index": "a1",
+          "_id": "3JjYfw3fd5VZQkWcRvwtL9gTGUb",
           "_type": "entry",
           "_entry": "3JjYfwkDH6zRr6exXS99ijOXLx8"
         },
         {
-          "_id": "3JjYg1JNocB9GAuBjMXwJJTN7gh",
           "_index": "a2",
+          "_id": "3JjYg1JNocB9GAuBjMXwJJTN7gh",
           "_type": "entry",
           "_entry": "3JjYfvpACmkJtArSZFCJX4YPI5j"
         }
@@ -170,6 +169,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790178273,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790178273,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

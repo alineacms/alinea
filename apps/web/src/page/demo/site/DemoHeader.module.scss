@@ -43,20 +43,71 @@
   font-style: italic;
 }
 
+// Below the wide layout the links scroll sideways. The edges fade out to
+// show there is more, driven by the scroll position where supported so the
+// first and last link are fully visible once scrolled to.
+@property --demo-nav-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --demo-nav-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 32px;
+}
+
+@keyframes DemoHeader-nav-fade {
+  0% {
+    --demo-nav-fade-start: 0px;
+    --demo-nav-fade-end: 32px;
+  }
+  10%,
+  90% {
+    --demo-nav-fade-start: 32px;
+    --demo-nav-fade-end: 32px;
+  }
+  100% {
+    --demo-nav-fade-start: 32px;
+    --demo-nav-fade-end: 0px;
+  }
+}
+
 .DemoHeader-nav {
   grid-area: nav;
   display: flex;
-  gap: 22px;
+  gap: 20px;
   margin: 0 calc(var(--demo-gutter) * -1);
   padding: 10px var(--demo-gutter) 12px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--demo-nav-fade-start),
+    #000 calc(100% - var(--demo-nav-fade-end)),
+    transparent
+  );
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    animation: DemoHeader-nav-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
 
   @container demo-site (min-width: 760px) {
     justify-content: center;
     gap: 32px;
     margin: 0;
     padding: 0;
+    overflow: visible;
+    mask-image: none;
+    animation: none;
   }
 }
 
