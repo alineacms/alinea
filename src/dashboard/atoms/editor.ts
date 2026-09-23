@@ -175,9 +175,9 @@ class EntryEditorField implements EditorField {
     }
     if (options.validate) {
       const result = options.validate(value)
-      if (typeof result === 'boolean')
-        return result ? 'Field is invalid' : undefined
-      return result
+      // Returning true means valid, false shows a generic message
+      if (result === false) return 'Field is invalid'
+      if (typeof result === 'string') return result
     }
     if (options.required) {
       if (value === undefined || value === null) return 'Field is required'
