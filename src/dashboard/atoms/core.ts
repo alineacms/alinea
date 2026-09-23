@@ -1,6 +1,7 @@
 import {Config} from '#/core/Config.js'
 import {LocalConnection} from '#/core/Connection.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {User} from '#/core/User.js'
 import {atom, useStore} from 'jotai'
 import {ComponentType} from 'react'
 import {AppProps} from '../App.js'
@@ -13,6 +14,8 @@ export const clientAtom = requiredAtom<LocalConnection>('client')
 export const viewsAtom = atom<Record<string, ComponentType>>({})
 export const localAtom = requiredAtom<boolean>('local')
 export const alineaDevAtom = requiredAtom<boolean>('alineaDev')
+/** The signed in user of a dashboard that runs without authentication */
+export const localUserAtom = atom<User | undefined>(undefined)
 
 export function useInitAtoms(props: AppProps) {
   const store = useStore()
@@ -23,4 +26,5 @@ export function useInitAtoms(props: AppProps) {
   store.set(viewsAtom, props.views)
   store.set(localAtom, Boolean(props.local))
   store.set(alineaDevAtom, Boolean(props.alineaDev))
+  store.set(localUserAtom, props.user)
 }

@@ -6,7 +6,7 @@ import {Config} from '#/index.js'
 import {expect, test} from 'bun:test'
 import {createStore} from 'jotai'
 import {authAtom, setUserRolesAtom} from './auth.js'
-import {alineaDevAtom, clientAtom, localAtom} from './core.js'
+import {alineaDevAtom, clientAtom, localAtom, localUserAtom} from './core.js'
 
 test('preserves an authenticated user in local mode', async () => {
   const store = createStore()
@@ -24,6 +24,16 @@ test('preserves an authenticated user in local mode', async () => {
     status: 'authenticated',
     user: {...localUser, roles: ['editor', 'custom-role']}
   })
+})
+
+test('signs in the provided user in local mode', () => {
+  const store = createStore()
+  const user = {sub: 'demo', name: 'Demo user', roles: ['admin']}
+  store.set(alineaDevAtom, false)
+  store.set(localAtom, true)
+  store.set(localUserAtom, user)
+
+  expect(store.get(authAtom)).toEqual({status: 'authenticated', user})
 })
 
 test('continues from a missing API key to cloud setup', async () => {

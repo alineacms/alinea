@@ -2,6 +2,7 @@ import {Page as PageLayout, Spinner} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {User} from '#/core/User.js'
 import {styler} from '@alinea/styler'
 import {
   atom,
@@ -52,6 +53,8 @@ export interface AppProps {
   views: Record<string, ComponentType>
   local?: boolean
   alineaDev?: boolean
+  /** The user shown as signed in when the dashboard runs locally */
+  user?: User
 }
 
 export const appAtom = atomWithPending(
