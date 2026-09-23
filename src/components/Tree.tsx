@@ -10,7 +10,7 @@ import {
   type TreeItemContentRenderProps,
   type TreeProps as AriaTreeProps
 } from 'react-aria-components'
-import {Checkbox} from './Checkbox.js'
+import {SelectionCheckbox} from './internal/SelectionCheckbox.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon, type IconProps} from './Icon.js'
 import css from './Tree.module.css'
@@ -61,7 +61,7 @@ export const TreeItemContent = memo(function TreeItemContent({
       }: TreeItemContentRenderProps) => (
         <>
           {selectionBehavior === 'toggle' && selectionMode !== 'none' && (
-            <Checkbox slot="selection" />
+            <SelectionCheckbox />
           )}
           <div className={styles.TreeItem.controls()}>
             {allowsDragging && !disableDragging && (

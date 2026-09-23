@@ -22,7 +22,7 @@ import {
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowUp
 } from '../dashboard/icons.js'
-import {Checkbox} from './Checkbox.js'
+import {SelectionCheckbox} from './internal/SelectionCheckbox.js'
 import {Surface} from './Surface.js'
 import css from './Table.module.css'
 
@@ -65,7 +65,7 @@ export function TableHeader<T extends object>({
     <TableHeaderPrimitive className={styles.TableHeader()}>
       {selectionMode === 'multiple' && (
         <Column>
-          <Checkbox slot="selection" />
+          <SelectionCheckbox />
         </Column>
       )}
       <Collection items={columns}>{children}</Collection>
@@ -139,7 +139,7 @@ export function Row<T extends object>({
     >
       {selectionMode === 'multiple' && (
         <Cell>
-          <Checkbox slot="selection" />
+          <SelectionCheckbox />
         </Cell>
       )}
       <Collection items={columns}>{children}</Collection>
