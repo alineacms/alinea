@@ -4,10 +4,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "./bin/alinea dev -- next dev",
-    "build": "./bin/alinea build -- next build",
+    "dev": "next dev",
+    "build": "bun run --cwd ../.. build && node ../../dist/cli.js build -- next build",
     "start": "next start",
-    "postinstall": "node scripts/fix-alinea-link.mjs",
     "step1:dev": "bun run --cwd tutorial-sites/step1 dev",
     "step2:dev": "bun run --cwd tutorial-sites/step2 dev",
     "step3:dev": "bun run --cwd tutorial-sites/step3 dev",
