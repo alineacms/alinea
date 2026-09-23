@@ -1,4 +1,5 @@
 import {suite} from '@alinea/suite'
+import {HttpError} from '../HttpError.js'
 import {diff} from '../source/Source.js'
 import {FSSource} from './FSSource.js'
 import {GithubSource, normalizeGithubSourceOptions} from './GithubSource.js'
@@ -50,25 +51,58 @@ test('uses etags for conditional sha requests', async () => {
   globalThis.fetch = mockFetch
 
   try {
-    const source = new GithubSource({
-      owner: 'owner',
-      repo: 'repo',
-      branch: 'main',
-      authToken: 'token',
-      rootDir: '',
-      contentDir: 'content'
-    })
+    // Backends create a source per request, so the etag must outlive it
+    const source = () =>
+      new GithubSource({
+        owner: 'owner',
+        repo: 'etag-repo',
+        branch: 'main',
+        authToken: 'token',
+        rootDir: '',
+        contentDir: 'content'
+      })
 
-    test.is(await source.shaAt('main'), 'first-sha')
-    test.is(await source.shaAt('main'), 'first-sha')
-    test.is(await source.shaAt('main'), 'second-sha')
-    test.is(await source.shaAt('main'), 'second-sha')
+    test.is(await source().shaAt('main'), 'first-sha')
+    test.is(await source().shaAt('main'), 'first-sha')
+    test.is(await source().shaAt('main'), 'second-sha')
+    test.is(await source().shaAt('main'), 'second-sha')
     test.equal(ifNoneMatch, [
       null,
       '"first-etag"',
       '"first-etag"',
       '"second-etag"'
     ])
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('reports why GitHub refused a request', async () => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async (): Promise<Response> =>
+      Response.json(
+        {message: 'Resource not accessible by personal access token'},
+        {status: 403, statusText: 'Forbidden'}
+      ),
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const source = new GithubSource({
+      owner: 'owner',
+      repo: 'forbidden-repo',
+      branch: 'main',
+      authToken: 'token',
+      rootDir: '',
+      contentDir: 'content'
+    })
+    const error = await source.shaAt('main').catch(error => error)
+    test.ok(error instanceof HttpError)
+    test.is(error.code, 403)
+    test.is(
+      error.message,
+      'Failed to get parent: 403 Resource not accessible by personal access token'
+    )
   } finally {
     globalThis.fetch = originalFetch
   }
