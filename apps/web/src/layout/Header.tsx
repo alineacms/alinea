@@ -1,18 +1,16 @@
-import styler, {type Styler} from '@alinea/styler'
+import styler from '@alinea/styler'
 import type {Link as AnyLink} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
-import {HStack} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
-import {IcRoundHamburger, MdiGithub, MdiTwitterCircle} from '@/icons'
 import {cms} from '@/cms'
+import {IcRoundHamburger} from '@/icons'
 import {Home} from '../schema/Home'
 import {Logo} from './branding/Logo'
 import {HeaderRoot, MobileMenu, SearchButton} from './Header.client'
 import css from './Header.module.scss'
 import {Link} from './nav/Link'
 import {NavTree} from './nav/NavTree'
-import {PageContainer} from './Page'
 
 const styles = styler(css)
 
@@ -32,18 +30,16 @@ export async function Header() {
       />
       <MobileMenu className={styles.mobilemenu()}>
         <div className={styles.mobilemenu.container()}>
-          <PageContainer className={styles.mobilemenu.top()}>
+          <div className={styles.mobilemenu.top()}>
             <Menu links={links} />
-          </PageContainer>
+          </div>
           <div className={styles.mobilemenu.nav()}>
             <MobileNav />
           </div>
         </div>
       </MobileMenu>
       <HeaderRoot>
-        <PageContainer style={{height: '100%'}}>
-          <Menu links={links} />
-        </PageContainer>
+        <Menu links={links} />
       </HeaderRoot>
     </>
   )
@@ -62,8 +58,14 @@ async function MobileNav() {
   })
   const tree = [
     {id: 'home', url: '/', title: 'Home'},
-    {id: 'roadmap', url: '/roadmap', title: 'Roadmap'},
     {id: 'blog', url: '/blog', title: 'Blog'},
+    {id: 'changelog', url: '/changelog', title: 'Changelog'},
+    {id: 'cloud', url: '/cloud', title: 'Cloud'},
+    {
+      id: 'github',
+      url: 'https://github.com/alineacms/alinea',
+      title: 'GitHub'
+    },
     ...docs.map(page => {
       if (page.parent) return page
       return {...page, parent: 'docs'}
@@ -79,91 +81,55 @@ interface MenuProps {
 
 function Menu({links}: MenuProps) {
   return (
-    <HStack center gap={20} className={styles.root.inner()}>
-      <Link href="/" className={styles.root.logo()} title="Alinea CMS">
-        <Logo />
+    <div className={styles.menu()}>
+      <Link href="/" className={styles.menu.logo()} title="Alinea CMS">
+        <Logo className={styles.menu.logo.mark()} />
       </Link>
-      <HStack as="nav" center className={styles.root.nav()}>
-        <HeaderLinks links={links} style={styles.root.nav.link} />
-      </HStack>
-      <HStack gap={12} center className={styles.root.extra()}>
+      <nav className={styles.menu.nav()}>
+        {links?.map(link => {
+          return (
+            <Link
+              href={link.href}
+              key={link._id}
+              className={styles.menu.nav.link()}
+              activeFor={link.fields.active || undefined}
+            >
+              {link.fields.label || link.title}
+            </Link>
+          )
+        })}
+      </nav>
+      <div className={styles.menu.extra()}>
         <SearchButton>
           <button
             type="button"
-            className={styles.root.social('search')}
+            className={styles.menu.search()}
             title="Search"
+            aria-label="Search"
           >
-            <IcRoundSearch className={styles.root.social.icon()} />
+            <IcRoundSearch className={styles.menu.search.icon()} />
           </button>
         </SearchButton>
         <a
           href="https://github.com/alineacms/alinea"
           target="_blank"
           rel="noopener"
-          title="GitHub"
-          className={styles.root.social()}
+          className={styles.menu.github()}
         >
-          <MdiGithub className={styles.root.social.icon()} />
+          GitHub
         </a>
-        <a
-          href="https://twitter.com/alineacms"
-          target="_blank"
-          rel="noopener"
-          title="X (Twitter)"
-          className={styles.root.social()}
+        <Link href="/docs/getting-started" className={styles.menu.cta()}>
+          Get started
+        </Link>
+        <label
+          htmlFor="mobilemenu"
+          className={styles.menu.mobileButton()}
+          aria-label="Toggle menu"
         >
-          <MdiTwitterCircle className={styles.root.social.icon()} />
-        </a>
-        <a
-          href="https://www.alinea.cloud/app"
-          target="_blank"
-          rel="noopener"
-          title="Alinea Cloud"
-          className={styles.root.dashboard()}
-        >
-          Dashboard
-        </a>
-        <label htmlFor="mobilemenu" className={styles.root.mobileButton()}>
-          <IcRoundHamburger className={styles.root.mobileButton.hamburger()} />
-          <IcRoundClose className={styles.root.mobileButton.close()} />
+          <IcRoundHamburger className={styles.menu.mobileButton.hamburger()} />
+          <IcRoundClose className={styles.menu.mobileButton.close()} />
         </label>
-      </HStack>
-    </HStack>
-  )
-}
-
-interface HeaderLinksProps {
-  links: Array<HeaderLink>
-  style: Styler
-}
-
-function HeaderLinks({links, style}: HeaderLinksProps) {
-  return (
-    <>
-      {links?.map(link => {
-        return (
-          <Link
-            href={link.href}
-            key={link._id}
-            className={style()}
-            activeFor={link.fields.active}
-          >
-            {link.fields.label || link.title}
-          </Link>
-        )
-      })}
-      <Link href="/changelog" className={style()}>
-        Changelog
-      </Link>
-      <SearchButton>
-        <button
-          type="button"
-          className={styles.root.nav.link({search: true})}
-          title="Search"
-        >
-          <IcRoundSearch />
-        </button>
-      </SearchButton>
-    </>
+      </div>
+    </div>
   )
 }

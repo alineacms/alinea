@@ -1,11 +1,12 @@
 'use client'
 
-import {default as NextLink, LinkProps as NextLinkProps} from 'next/link'
+import {default as NextLink, type LinkProps as NextLinkProps} from 'next/link'
 import {usePathname} from 'next/navigation'
-import {AnchorHTMLAttributes, PropsWithChildren, useMemo} from 'react'
+import {type AnchorHTMLAttributes, type PropsWithChildren, useMemo} from 'react'
 
 export interface LinkProps
-  extends PropsWithChildren<NextLinkProps>,
+  extends
+    PropsWithChildren<NextLinkProps>,
     Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof NextLinkProps> {
   href: string
   activeFor?: string
@@ -17,7 +18,9 @@ export function Link({activeFor, ...props}: LinkProps) {
     return new URL(props.href, 'http://localhost').pathname
   }, [props.href])
   const isCurrent = currentPathname.startsWith(activeFor || linkPathname)
-  const isCurrentPage = currentPathname === linkPathname
+  // Links to a section of a page (eg. /#features) do not mark the page current
+  const isSectionLink = props.href.includes('#')
+  const isCurrentPage = !isSectionLink && currentPathname === linkPathname
   const current = isCurrentPage ? 'page' : isCurrent ? 'true' : undefined
   return <NextLink aria-current={current} {...props} />
 }

@@ -421,12 +421,14 @@
       "active": ""
     },
     {
-      "_id": "2a7ftRO1unpBDnfvXtgJUBIBwNr",
+      "_id": "3BGbaRuOMqSaYmm9OviGcUyJdKm",
       "_index": "a1",
-      "_type": "entry",
-      "_entry": "CC8aJ6-2U3s31micAzTLU",
-      "label": "Roadmap",
-      "active": ""
+      "_type": "url",
+      "_url": "/#features",
+      "_title": "Features",
+      "_target": "_self",
+      "label": "Features",
+      "active": "/#features"
     },
     {
       "_id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
@@ -435,6 +437,26 @@
       "_entry": "gx3H52whBKO_DdfcMNI3I",
       "label": "Blog",
       "active": ""
+    },
+    {
+      "_id": "3Bx7wXv1f67Hf6ilE7CZO15J2iU",
+      "_index": "a3",
+      "_type": "url",
+      "_url": "/changelog",
+      "_title": "Changelog",
+      "_target": "_self",
+      "label": "Changelog",
+      "active": ""
+    },
+    {
+      "_id": "3BCSsmQlw05W5vEN7Ya8vveSYfh",
+      "_index": "a4",
+      "_type": "url",
+      "_url": "/cloud",
+      "_title": "Cloud",
+      "_target": "_self",
+      "label": "Cloud",
+      "active": ""
     }
   ],
   "footer": [
@@ -442,14 +464,16 @@
       "_id": "2ANVIUDmjNddF0QO8aB0gwXcRq8",
       "_index": "a0",
       "_type": "Section",
-      "label": "Developer",
+      "label": "Product",
       "links": [
         {
-          "_id": "2a7fvVi9M7zcX2wx3IJfYBrCqeC",
+          "_id": "3ByFwr5WFzimkKrLFQ3ockmEj6v",
           "_index": "a0",
-          "_type": "entry",
-          "_entry": "docs",
-          "label": ""
+          "_type": "url",
+          "_url": "/#features",
+          "_title": "Features",
+          "_target": "_self",
+          "label": "Features"
         },
         {
           "_id": "2zjF046cGtCTwPONsqQAFfm5UWL",
@@ -459,6 +483,104 @@
           "_title": "Demo",
           "_target": "_blank",
           "label": "Demo"
+        },
+        {
+          "_id": "3BSjAiZwDyfTJwHRUifKBqCaHdf",
+          "_index": "a2",
+          "_type": "url",
+          "_url": "/cloud",
+          "_title": "Alinea Cloud",
+          "_target": "_self",
+          "label": "Alinea Cloud"
+        },
+        {
+          "_id": "3B5aXytNp56llhPpBOLQMLcwkXG",
+          "_index": "a3",
+          "_type": "url",
+          "_url": "/changelog",
+          "_title": "Changelog",
+          "_target": "_self",
+          "label": "Changelog"
+        },
+        {
+          "_id": "3Bl3ucZp4CAZI99C93cGsTVqZp2",
+          "_index": "a4",
+          "_type": "url",
+          "_url": "https://github.com/alineacms/alinea/issues",
+          "_title": "Roadmap",
+          "_target": "_blank",
+          "label": "Roadmap"
+        }
+      ]
+    },
+    {
+      "_id": "3BcI3bCIgmDfj4fvjtBUvPnN5RJ",
+      "_index": "a1",
+      "_type": "Section",
+      "label": "Docs",
+      "links": [
+        {
+          "_id": "3BidRYTjiwb2wTSTcJge5nGoU6G",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+          "label": "Quickstart"
+        },
+        {
+          "_id": "3B6nsJ7VLnt9rgt9q4kwSZHtp7y",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "3AONCC6cssRWNTfGBx86XSB2Exn",
+          "label": "Tutorial"
+        },
+        {
+          "_id": "3Bomn0yaZHAaGUoBx2m1OjlNTQZ",
+          "_index": "a2",
+          "_type": "entry",
+          "_entry": "2_c6AYBTy7svnFJMvOB0n",
+          "label": "Reference"
+        },
+        {
+          "_id": "3BJExs568RulpTTni1iUnhucLLp",
+          "_index": "a3",
+          "_type": "url",
+          "_url": "/docs/upgrading",
+          "_title": "Upgrading from 1.x",
+          "_target": "_self",
+          "label": "Upgrading from 1.x"
+        }
+      ]
+    },
+    {
+      "_id": "3BkzlgmmPlNEaUGPQWr5LBrfMQL",
+      "_index": "a2",
+      "_type": "Section",
+      "label": "Community",
+      "links": [
+        {
+          "_id": "3BmoueXPWblkJAxL0ilgKdDU8H2",
+          "_index": "a0",
+          "_type": "url",
+          "_url": "https://github.com/alineacms/alinea",
+          "_title": "GitHub",
+          "_target": "_blank",
+          "label": "GitHub"
+        },
+        {
+          "_id": "3BAk8badF9pnlqIufFEtNafJfPg",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "gx3H52whBKO_DdfcMNI3I",
+          "label": "Blog"
+        },
+        {
+          "_id": "3B1bbvGNRxhglTTmBPsEki4xjNu",
+          "_index": "a2",
+          "_type": "url",
+          "_url": "https://x.com/alineacms",
+          "_title": "X",
+          "_target": "_blank",
+          "label": "X"
         }
       ]
     }

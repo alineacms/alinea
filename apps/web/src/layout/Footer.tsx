@@ -1,88 +1,64 @@
-'use client'
-
 import styler from '@alinea/styler'
-import {IcOutlineDarkMode, IcOutlineLightMode, IcSharpBrightnessMedium} from '@/icons'
-import {HStack, VStack} from 'alinea/ui/Stack'
-import {Stack} from '@/layout/Stack'
 import Link from 'next/link'
-import {Newsletter} from './engage/Newsletter'
+import {cms} from '@/cms'
+import {Home} from '@/schema/Home'
+import {Logo} from './branding/Logo'
 import css from './Footer.module.scss'
-import {PageContainer, type PageTheme} from './Page'
-import {WebTypo} from './WebTypo'
 
 const styles = styler(css)
 
-export interface FooterProps {
-  theme: PageTheme
-  setTheme: (theme: PageTheme) => void
-}
-
-const themeIcons = {
-  system: IcSharpBrightnessMedium,
-  dark: IcOutlineDarkMode,
-  light: IcOutlineLightMode
-}
-
-export function Footer() {
-  const theme = 'system'
-  const ThemeIcon = themeIcons[theme]
-  function handleThemeToggle() {
-    /*setTheme(
-      theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system'
-    )*/
-  }
+export async function Footer() {
+  const sections = await cms.get({
+    type: Home,
+    select: Home.footer
+  })
   return (
     <footer className={styles.root()}>
-      <PageContainer>
-        <HStack wrap center gap={30} align="flex-start">
-          <Stack.Left>
-            <VStack gap={15}>
-              <WebTypo.H4>Developer</WebTypo.H4>
-              <VStack gap={10} as="nav">
-                <div>
-                  <Link href="/docs" className={styles.root.link()}>
-                    Docs
-                  </Link>
-                </div>
-                <div>
-                  <Link href="/changelog" className={styles.root.link()}>
-                    Changelog
-                  </Link>
-                </div>
-                <div>
-                  <Link href="/playground" className={styles.root.link()}>
-                    Playground
-                  </Link>
-                </div>
-                <div>
-                  <a
-                    className={styles.root.link()}
-                    href="https://github.com/alineacms/alinea"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    Source
-                  </a>
-                </div>
-              </VStack>
-            </VStack>
-          </Stack.Left>
-
-          {/*<HStack
-            center
-            gap={8}
-            as="button"
-            type="button"
-            onClick={handleThemeToggle}
-            className={styles.root.theme()}
-          >
-            <ThemeIcon />
-            <span>{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
-          </HStack>*/}
-
-          <Newsletter />
-        </HStack>
-      </PageContainer>
+      <div className={styles.root.inner()}>
+        <div className={styles.root.top()}>
+          <div className={styles.root.about()}>
+            <Link href="/" className={styles.root.logo()} title="Alinea CMS">
+              <Logo className={styles.root.logo.mark()} />
+            </Link>
+            <p className={styles.root.description()}>
+              The git-based CMS for Next.js. Open source and MIT licensed.
+            </p>
+          </div>
+          <div className={styles.root.columns()}>
+            {sections?.map(section => {
+              return (
+                <nav
+                  key={section._id}
+                  className={styles.root.column()}
+                  aria-label={section.label}
+                >
+                  <span className={styles.root.column.title()}>
+                    {section.label}
+                  </span>
+                  {section.links?.map(link => {
+                    const target = 'target' in link ? link.target : undefined
+                    return (
+                      <Link
+                        key={link._id}
+                        href={link.href}
+                        target={target || undefined}
+                        rel={target === '_blank' ? 'noopener' : undefined}
+                        className={styles.root.column.link()}
+                      >
+                        {link.fields.label || link.title}
+                      </Link>
+                    )
+                  })}
+                </nav>
+              )
+            })}
+          </div>
+        </div>
+        <div className={styles.root.bottom()}>
+          <span>MIT licensed</span>
+          <span>Part of the Vercel Open Source Program</span>
+        </div>
+      </div>
     </footer>
   )
 }

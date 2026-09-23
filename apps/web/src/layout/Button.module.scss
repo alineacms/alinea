@@ -1,17 +1,45 @@
 .root {
-  font: inherit;
-  color: var(--web-accent-foreground);
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   vertical-align: top;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 50px;
+  padding: 14px 23px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-family: var(--web-body-font);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--web-accent-foreground);
   background-color: var(--web-accent);
-  transition: 0.25s ease-out;
+  white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
+  transition:
+    background-color 0.2s ease-out,
+    border-color 0.2s ease-out,
+    color 0.2s ease-out;
 
-  &:hover {
-    background-color: var(--web-accent-light);
+  &:is(:hover, :focus-visible) {
+    color: var(--web-accent-foreground);
+    background-color: var(--web-accent-strong);
+  }
+
+  &.is-secondary {
+    color: var(--web-foreground);
+    background-color: var(--web-surface);
+    border-color: var(--web-outline);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-foreground);
+      background-color: var(--web-surface);
+      border-color: var(--web-foreground-muted);
+    }
+  }
+
+  &-label {
+    display: block;
   }
 }

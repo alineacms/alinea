@@ -2,23 +2,113 @@
 
 .root {
   position: relative;
-  padding: 30px 0;
-  //border-top: 1px solid hsla(var(--web-negative-hsl), 0.09);
+  padding: 72px 0 48px;
+  border-top: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  color: var(--web-foreground);
 
-  @include ml {
-    padding: 60px 0;
+  @include sm {
+    padding: 40px 0;
   }
 
-  &-theme {
-    font-size: 12px;
-    margin-left: auto;
+  &-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    width: 100%;
+    max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
+    margin-inline: auto;
+    padding-inline: var(--web-gutter);
+
+    @include sm {
+      gap: 32px;
+    }
   }
 
-  &-link {
-    display: inline-block;
-    text-decoration: none;
-    &:hover {
-      text-decoration: underline;
+  &-top {
+    display: flex;
+    gap: 48px;
+
+    @include sm {
+      flex-direction: column;
+      gap: 32px;
+    }
+  }
+
+  &-about {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 360px;
+    flex-shrink: 0;
+
+    @include sm {
+      width: auto;
+    }
+  }
+
+  &-logo {
+    display: flex;
+    align-self: flex-start;
+    color: var(--web-foreground);
+
+    &-mark {
+      width: 90px;
+    }
+  }
+
+  &-description {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--web-foreground-faded);
+  }
+
+  &-columns {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+    font-size: 15px;
+
+    @include s {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 12px;
+    }
+  }
+
+  &-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    &-title {
+      font-weight: 600;
+    }
+
+    &-link {
+      color: var(--web-foreground-faded);
+      transition: color 0.2s ease-out;
+
+      &:is(:hover, :focus-visible) {
+        color: var(--web-foreground);
+      }
+    }
+  }
+
+  &-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--web-outline);
+    font-size: 14px;
+    color: var(--web-foreground-muted);
+
+    @include sm {
+      font-size: 13px;
     }
   }
 }

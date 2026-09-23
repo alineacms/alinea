@@ -1,0 +1,20 @@
+@use '@/style' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: 100%;
+  max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
+  margin-inline: auto;
+  padding-inline: var(--web-gutter);
+  padding-top: var(--web-section-gap);
+
+  @include sm {
+    gap: 24px;
+  }
+
+  &.is-flush {
+    padding-top: 0;
+  }
+}

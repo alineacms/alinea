@@ -2,21 +2,32 @@
 
 @mixin light-theme {
   color-scheme: light;
-  --web-accent-hsl: 230, 77%, 60%;
-  --web-accent: #3f61e8;
-  --web-accent-light: hsl(230, 77%, 65%);
-  --web-accent-foreground: white;
-  --web-background: #f8f8f8;
-  --web-background-variant: white;
   --web-foreground: #171a42;
-  --web-foreground-faded: #5c5e70;
-  --web-selected: #ebedf9;
-  --web-selected-foreground: hsl(230, 77%, 60%);
-  --web-highlight: #ebeff1;
-  --web-header-background-hsl: 210, 50%, 98%;
+  --web-foreground-faded: #555a78;
+  --web-foreground-muted: #7c80a0;
+  --web-background: #f7f7fa;
+  --web-surface: #ffffff;
+  --web-outline: #e8e9f2;
+  --web-accent: #3f61e8;
+  --web-accent-strong: #2c47c0;
+  --web-accent-soft: #eef0fd;
+  --web-accent-foreground: #ffffff;
+  --web-code-background: #14173a;
+  --web-positive: #007a55;
+  --web-positive-soft: #ecfdf5;
+  --web-neutral-soft: #f1f2f7;
+  --web-command-background: #eaecf7;
+
+  // Legacy tokens, kept for pages that have not been restyled yet
+  --web-accent-hsl: 230, 77%, 60%;
+  --web-accent-light: hsl(230, 77%, 65%);
+  --web-background-variant: var(--web-surface);
+  --web-selected: var(--web-accent-soft);
+  --web-selected-foreground: var(--web-accent);
+  --web-highlight: #ebecf3;
+  --web-header-background-hsl: 240, 23%, 97%;
   --web-header-background: hsl(var(--web-header-background-hsl));
-  --web-negative-hsl: 215, 17%, 14%;
-  --web-outline: #ecebeb;
+  --web-negative-hsl: 235, 48%, 17%;
   --web-section1-background: #f1f3fd;
   --web-code-inline-background: #eff0f9;
   --web-code-inline-foreground: #1e232a;
@@ -24,32 +35,54 @@
 
 @mixin dark-theme {
   color-scheme: dark;
-  --web-accent-hsl: 230, 77%, 60%;
-  --web-accent: hsl(230, 100%, 67%);
-  --web-accent-light: hsl(230, 77%, 65%);
-  --web-accent-foreground: white;
-  --web-background: #1e232a;
-  --web-background-variant: hsl(198, 27%, 10%);
-  --web-foreground: white;
-  --web-foreground-faded: #eee;
-  --web-selected: hsl(230, 17%, 25%);
-  --web-selected-foreground: white;
-  --web-highlight: #3b4358;
-  --web-header-background-hsl: 198, 27%, 10%;
+  --web-foreground: #ffffff;
+  --web-foreground-faded: #c9ceee;
+  --web-foreground-muted: #8f96c4;
+  --web-background: #0d1030;
+  --web-surface: #161b4a;
+  --web-outline: #262c63;
+  --web-accent: #8b9cff;
+  --web-accent-strong: #aab6ff;
+  --web-accent-soft: rgba(139, 156, 255, 0.14);
+  --web-accent-foreground: #0d1030;
+  --web-code-background: #14173a;
+  --web-positive: #34d399;
+  --web-positive-soft: rgba(52, 211, 153, 0.14);
+  --web-neutral-soft: rgba(255, 255, 255, 0.08);
+  --web-command-background: #1d2358;
+
+  // Legacy tokens, kept for pages that have not been restyled yet
+  --web-accent-hsl: 230, 100%, 77%;
+  --web-accent-light: #aab6ff;
+  --web-background-variant: var(--web-surface);
+  --web-selected: #232a66;
+  --web-selected-foreground: #ffffff;
+  --web-highlight: #1e2458;
+  --web-header-background-hsl: 234, 57%, 12%;
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 0, 0%, 100%;
-  --web-outline: #424242;
-  --web-code-inline-background: #4d5268;
+  --web-section1-background: var(--web-surface);
+  --web-code-inline-background: var(--web-outline);
   --web-code-inline-foreground: #ffffff;
-  --web-section1-background: #302f34;
 }
 
 :root {
   --web-title-font: 'Poppins', sans-serif;
-  --web-header-height: 120px;
-  --web-code-background: #0a2540;
+  --web-body-font: 'Instrument Sans', sans-serif;
+  --web-mono-font: 'JetBrains Mono', monospace;
+  --web-header-height: 100px;
+  --web-gutter: 80px;
+  --web-content-width: 1280px;
+  --web-section-gap: 128px;
   --web-code-highlight: var(--web-accent);
   --web-code-foreground: #fbfbfe;
+
+  // Inverted palette used by the /cloud landing
+  --web-cloud-background: #0d1030;
+  --web-cloud-surface: #161b4a;
+  --web-cloud-outline: #262c63;
+  --web-cloud-accent: #aab6ff;
+  --web-cloud-foreground-faded: #c9ceee;
 
   @include dark-theme;
 
@@ -58,7 +91,13 @@
   }
 
   @include sm {
-    --web-header-height: 60px;
+    --web-header-height: 76px;
+    --web-gutter: 40px;
+    --web-section-gap: 72px;
+  }
+
+  @include s {
+    --web-gutter: 20px;
   }
 }
 
@@ -88,8 +127,9 @@ html {
 body {
   color: var(--web-foreground);
   background: var(--web-background);
-  font-size: 15px;
-  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  font-family: var(--web-body-font);
 }
 
 svg,
@@ -112,10 +152,46 @@ button {
 
 @font-face {
   font-family: 'Poppins';
-  font-style: bold;
+  font-style: normal;
   font-display: block;
   font-weight: 500;
   src: url('../../../node_modules/@fontsource/poppins/files/poppins-latin-500-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('../../../node_modules/@fontsource/poppins/files/poppins-latin-600-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url('../../../node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-400-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: block;
+  font-weight: 500;
+  src: url('../../../node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('../../../node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-600-normal.woff2')
     format('woff2');
 }
 
