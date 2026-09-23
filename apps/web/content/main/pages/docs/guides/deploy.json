@@ -30,22 +30,21 @@
             {
               "_type": "link",
               "_id": "2YlC927lwX5hfm2G9JHx9j3yRux",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
               "_link": "entry",
-              "title": ""
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
             }
           ]
         },
         {
           "_type": "text",
-          "text": " to inform Alinea where to generate the admin dashboard."
+          "text": " to inform Alinea where the handler lives and on which path the admin dashboard is served."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
-      "code": "export const cms = createCMS({\n  // ...\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html'\n})",
+      "code": "export const cms = createCMS({\n  // ...\n  handlerUrl: '/api/cms',\n  adminPath: '/admin'\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -56,7 +55,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "While building your project, an admin folder will be created together with the `dashboardFile` as defined within your "
+          "text": "While building your project (`alinea build`), the dashboard is generated in your public folder: an `admin.html` file and an `admin` folder with its assets, named after the `adminPath` defined within your "
         },
         {
           "_type": "text",
@@ -72,7 +71,7 @@
         },
         {
           "_type": "text",
-          "text": ". Exclude the admin path and the staticFile from git by adding them to your `.gitignore` file:"
+          "text": ". Exclude them from git by adding them to your `.gitignore` file:"
         }
       ]
     },
@@ -89,7 +88,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Deploy your code and follow the instructions on `/admin.html` to configure your backend."
+          "text": "Make sure your Next.js config is wrapped with `withAlinea` from `alinea/next`, which serves the generated dashboard on `/admin`. Deploy your code and follow the instructions on `/admin` to configure your backend."
         }
       ]
     }
@@ -102,6 +101,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790188799,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790188799,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

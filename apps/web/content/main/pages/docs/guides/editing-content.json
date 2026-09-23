@@ -23,7 +23,8 @@
           "_type": "text",
           "text": "Creating Entries"
         }
-      ]
+      ],
+      "_anchor": "creating-entries"
     },
     {
       "_type": "paragraph",
@@ -38,7 +39,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2bww0XuSHzm0f72kxNM5cQlVLvI",
-      "code": "import {Edit} from 'alinea'\n\n// Start a transaction to create a new entry of type BlogPost\nconst post = Edit.create({\n  type: BlogPost,\n  set: {\n    title: 'A new blog post',\n    body: 'Hello world'\n  }\n})\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${post.id}`)\n\n// Save the changes\nawait cms.commit(post)",
+      "code": "import {Edit} from 'alinea'\n\n// Start a transaction to create a new entry of type BlogPost\nconst post = Edit.create({\n  type: BlogPost,\n  set: {\n    title: 'A new blog post',\n    body: 'Hello world'\n  }\n})\n\n// The new entry ID can be read before committing\nconsole.log(`Creating post with id: ${post.id}`)\n\n// Save the changes\nawait cms.commit(post)",
       "fileName": "",
       "language": ""
     },
@@ -50,7 +51,8 @@
           "_type": "text",
           "text": "Creating children"
         }
-      ]
+      ],
+      "_anchor": "creating-children"
     },
     {
       "_type": "paragraph",
@@ -58,7 +60,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Set the `_parentId` property to nest children under a parent."
+          "text": "Set the `parentId` property to nest children under a parent."
         }
       ]
     },
@@ -77,7 +79,8 @@
           "_type": "text",
           "text": "Update Fields"
         }
-      ]
+      ],
+      "_anchor": "update-fields"
     },
     {
       "_type": "paragraph",
@@ -104,7 +107,8 @@
           "_type": "text",
           "text": "Constructing field values"
         }
-      ]
+      ],
+      "_anchor": "constructing-field-values"
     },
     {
       "_type": "paragraph",
@@ -119,7 +123,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2c4t1IBcmwpjaS3YqNaJQxRpWss",
-      "code": "const richTextField = richText('Item body text');\nconst listField = list('My list field', {\n  schema: {\n    Text: type('Text', {\n      title: text('Item title'),\n      text: richText,\n    })\n  }\n})\nconst rowText = Edit.richText(richTextField)\n  .addHtml(`\n    <h1>Main heading</h1>\n    <p>A rich text value parsed from HTML.</p>\n  `)\n  .value()\nconst listValue = Edit.list(listField)\n  .add('Text', {\n    title: 'The row title',\n    text: rowText,\n  })\n  .value()\nconst update = Edit.update({\n  id: entryId,\n  type: TypeWithList,\n  set: {list: listValue}\n})",
+      "code": "import {Config, Edit, Field} from 'alinea'\n\nconst richTextField = Field.richText('Item body text')\nconst listField = Field.list('My list field', {\n  schema: {\n    Text: Config.type('Text', {\n      fields: {\n        title: Field.text('Item title'),\n        text: richTextField\n      }\n    })\n  }\n})\nconst rowText = Edit.richText(richTextField)\n  .addHtml(`\n    <h1>Main heading</h1>\n    <p>A rich text value parsed from HTML.</p>\n  `)\n  .value()\nconst listValue = Edit.list(listField)\n  .add('Text', {\n    title: 'The row title',\n    text: rowText,\n  })\n  .value()\nconst update = Edit.update({\n  id: entryId,\n  type: TypeWithList,\n  set: {list: listValue}\n})",
       "fileName": "",
       "language": ""
     },
@@ -131,7 +135,8 @@
           "_type": "text",
           "text": "File uploads"
         }
-      ]
+      ],
+      "_anchor": "file-uploads"
     },
     {
       "_type": "paragraph",
@@ -146,7 +151,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2bx3SNjDfXQsRSkJYEUX5GY3qg9",
-      "code": "import {Edit} from 'alinea'\n\nconst file = new File(['content'], 'test.txt')\nconst upload = Edit.upload({file})\n\n// The new entry ID can be read before comitting\nconsole.log(`Creating post with id: ${upload.id}`)\n\n// Upload file and save file metadata\nawait cms.commit(upload)",
+      "code": "import {Edit} from 'alinea'\n\nconst file = new File(['content'], 'test.txt')\nconst upload = Edit.upload({file})\n\n// The new entry ID can be read before committing\nconsole.log(`Uploading file with id: ${upload.id}`)\n\n// Upload file and save file metadata\nawait cms.commit(upload)",
       "fileName": "",
       "language": ""
     },
@@ -158,7 +163,8 @@
           "_type": "text",
           "text": "Creating image previews"
         }
-      ]
+      ],
+      "_anchor": "creating-image-previews"
     },
     {
       "_type": "paragraph",
@@ -186,6 +192,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790188838,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790188838,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

@@ -30,7 +30,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "heading",
@@ -40,7 +41,8 @@
           "_type": "text",
           "text": "`condition`"
         }
-      ]
+      ],
+      "_anchor": "condition"
     },
     {
       "_type": "paragraph",
@@ -52,14 +54,13 @@
         },
         {
           "_type": "text",
-          "text": "querying content",
+          "text": "filtering",
           "marks": [
             {
               "_type": "link",
-              "_id": "2aiNCLRQGpHXGPYZuNFjIInGujs",
-              "_link": "url",
-              "href": "/docs/query#querying-specific-pages",
-              "target": "_self"
+              "_id": "3JjzBZtSiXNhy68eXqXZw2kWLoh",
+              "_link": "entry",
+              "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
             }
           ]
         },
@@ -123,7 +124,8 @@
           "_type": "text",
           "text": "`defaultView`"
         }
-      ]
+      ],
+      "_anchor": "defaultview"
     },
     {
       "_type": "paragraph",
@@ -143,7 +145,8 @@
           "_type": "text",
           "text": "`inline`"
         }
-      ]
+      ],
+      "_anchor": "inline"
     },
     {
       "_type": "paragraph",
@@ -163,7 +166,8 @@
           "_type": "text",
           "text": "`location`"
         }
-      ]
+      ],
+      "_anchor": "location"
     },
     {
       "_type": "paragraph",
@@ -171,7 +175,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Defines the location (workspace and root) where the explorer will be located."
+          "text": "Defines the location (workspace and root) in which the entry picker opens."
         }
       ]
     },
@@ -190,7 +194,8 @@
           "_type": "text",
           "text": "`pickChildren`"
         }
-      ]
+      ],
+      "_anchor": "pickchildren"
     },
     {
       "_type": "paragraph",
@@ -217,7 +222,8 @@
           "_type": "text",
           "text": "`max`"
         }
-      ]
+      ],
+      "_anchor": "max"
     },
     {
       "_type": "paragraph",
@@ -244,6 +250,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189130,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189130,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

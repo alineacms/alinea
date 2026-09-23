@@ -21,6 +21,7 @@
       "image": {
         "_id": "3B4crO98ByKupE3sYenv0maaC3A",
         "_type": "image",
+        "_index": "",
         "_entry": "3B4crJPW80hyfXZHjdAlW95AbnW"
       }
     },
@@ -68,8 +69,25 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONC7x8fNldabo2MZApzs6EbcP",
-      "code": "import {Config, Field} from 'alinea'\nimport {GalleryBlock} from '@/blocks/gallery/GalleryBlock.schema'\nimport {ImageBlock} from '@/blocks/image/ImageBlock.schema'\nimport {TextBlock} from '@/blocks/text/TextBlock.schema'\n\nexport const Page = Config.document('Page', {\n  contains: ['Page'],\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    path: Field.path('Path', {required: true, width: 0.5}),\n    blocks: Field.list('Blocks', {\n      schema: {\n        TextBlock,\n        ImageBlock,\n        GalleryBlock\n      }\n    })\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\nimport {ImageBlock} from '@/blocks/image/ImageBlock.schema'\nimport {TextBlock} from '@/blocks/text/TextBlock.schema'\nimport {WeatherBlock} from '@/blocks/weather/WeatherBlock.schema'\n\nexport const Page = Config.document('Page', {\n  contains: ['Page'],\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    path: Field.path('Path', {required: true, width: 0.5}),\n    blocks: Field.list('Blocks', {\n      schema: {\n        TextBlock,\n        ImageBlock,\n        WeatherBlock\n      }\n    })\n  }\n})",
       "fileName": "entries/page/Page.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render regular pages with a PageView component that maps each block to its view, just like the landing page did in step 2."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjypscAoVS5mJ2rmOcLZCFsMEn",
+      "code": "import type {Infer} from 'alinea'\nimport {ImageBlockView} from '@/blocks/image/ImageBlock'\nimport {TextBlockView} from '@/blocks/text/TextBlock'\nimport {WeatherBlockView} from '@/blocks/weather/WeatherBlock'\nimport {Page} from './Page.schema'\n\ntype PageData = Infer.Entry<typeof Page>\n\nexport function PageView({page}: {page: PageData}) {\n  return (\n    <main>\n      <h1>{page.title}</h1>\n      {page.blocks.map(block => {\n        if (block._type === 'TextBlock') return <TextBlockView key={block._id} block={block} />\n        if (block._type === 'ImageBlock') return <ImageBlockView key={block._id} block={block} />\n        if (block._type === 'WeatherBlock') return <WeatherBlockView key={block._id} block={block} />\n        return null\n      })}\n    </main>\n  )\n}",
+      "fileName": "entries/page/Page.tsx",
       "language": "tsx",
       "compact": false
     },
@@ -86,7 +104,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3Bstep5CmsSnippet0000000001",
-      "code": "import {Blog} from '@/entries/blog/Blog.schema'\nimport {Page} from '@/entries/page/Page.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    Page,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog'],\n          children: {\n            blog: Config.page({\n              type: Blog,\n              fields: {title: 'Blog', path: 'blog', intro: 'Latest posts'}\n            })\n          }\n        }),\n        settings: Config.root('Settings', {\n          contains: ['SiteLayout']\n        })\n      }\n    })\n  }\n})",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {Blog} from '@/entries/blog/Blog.schema'\nimport {Page} from '@/entries/page/Page.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    Page,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog'],\n          children: {\n            blog: Config.page({\n              type: Blog,\n              fields: {title: 'Blog', path: 'blog', intro: 'Latest posts'}\n            })\n          }\n        })\n        // The settings and media roots stay the same as in step 3\n      }\n    })\n  }\n  // baseUrl, handlerUrl, adminPath and preview stay the same as in step 3\n})",
       "fileName": "cms.tsx",
       "language": "tsx",
       "compact": false
@@ -104,7 +122,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONC8Rcye6z7EGBmQ3AbwCi67i",
-      "code": "import type {Infer} from 'alinea'\nimport {Entry} from 'alinea/core/Entry'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport {cms} from '@/cms'\nimport {BlogView} from '@/entries/blog/Blog'\nimport {PageView} from '@/entries/page/Page'\nimport {Page} from '@/entries/page/Page.schema'\nimport {PostView} from '@/entries/post/Post'\n\ninterface RouteProps {\n  params: Promise<{slug?: Array<string>}>\n}\n\nexport async function generateStaticParams() {\n  const urls = await cms.find({\n    root: cms.workspaces.main.pages,\n    select: Entry.url\n  })\n\n  return urls.map(url => ({slug: url === '/' ? [] : url.slice(1).split('/')}))\n}\n\nexport async function generateMetadata({\n  params\n}: RouteProps): Promise<Metadata> {\n  const {slug = []} = await params\n  const url = slug.length > 0 ? `/${slug.join('/')}` : '/'\n  const page = await cms.get({\n    url,\n    include: {\n      title: Entry.title,\n      metadata: Page.metadata // We will introduce Entry.metadata shortly, for now use Page or any other document type\n    }\n  })\n  if (!page) return {}\n\n  return {\n    title: page.metadata?.title || page.title,\n    description: page.metadata?.description,\n    openGraph: {\n      title:\n        page.metadata?.openGraph?.title || page.metadata?.title || page.title,\n      description:\n        page.metadata?.openGraph?.description || page.metadata?.description,\n      images: page.metadata?.openGraph?.image\n        ? [page.metadata.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n\nexport default async function CatchAllPage({params}: RouteProps) {\n  const {slug = []} = await params\n  const url = slug.length > 0 ? `/${slug.join('/')}` : '/'\n  const page = await cms.get({url})\n\n  if (!page) notFound()\n\n  if (page._type === 'Blog') {\n    return <BlogView />\n  }\n\n  if (page._type === 'Post') {\n    const postSlug = slug[slug.length - 1]\n    if (!postSlug) notFound()\n    return <PostView slug={postSlug} />\n  }\n\n  const regularPage = await cms.get({url, type: Page})\n  if (!regularPage) notFound()\n  return <PageView page={regularPage} />\n}\n",
+      "code": "import {Query} from 'alinea'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport {cms} from '@/cms'\nimport {BlogView} from '@/entries/blog/Blog'\nimport {PageView} from '@/entries/page/Page'\nimport {Page} from '@/entries/page/Page.schema'\nimport {PostView} from '@/entries/post/Post'\n\ninterface RouteProps {\n  params: Promise<{slug?: Array<string>}>\n}\n\nexport async function generateStaticParams() {\n  const urls = await cms.find({\n    root: cms.workspaces.main.pages,\n    select: Query.url\n  })\n\n  return urls.map(url => ({slug: url === '/' ? [] : url.slice(1).split('/')}))\n}\n\nexport async function generateMetadata({\n  params\n}: RouteProps): Promise<Metadata> {\n  const {slug = []} = await params\n  const url = slug.length > 0 ? `/${slug.join('/')}` : '/'\n  const page = await cms.first({\n    url,\n    include: {\n      title: Query.title,\n      metadata: Page.metadata // Every document type has the same metadata field, so Page.metadata works for all of them\n    }\n  })\n  if (!page) return {}\n\n  return {\n    title: page.metadata?.title || page.title,\n    description: page.metadata?.description,\n    openGraph: {\n      title:\n        page.metadata?.openGraph?.title || page.metadata?.title || page.title,\n      description:\n        page.metadata?.openGraph?.description || page.metadata?.description,\n      images: page.metadata?.openGraph?.image\n        ? [page.metadata.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n\nexport default async function CatchAllPage({params}: RouteProps) {\n  const {slug = []} = await params\n  const url = slug.length > 0 ? `/${slug.join('/')}` : '/'\n  const page = await cms.first({url})\n\n  if (!page) notFound()\n\n  if (page._type === 'Blog') {\n    return <BlogView />\n  }\n\n  if (page._type === 'Post') {\n    const postSlug = slug[slug.length - 1]\n    if (!postSlug) notFound()\n    return <PostView slug={postSlug} />\n  }\n\n  const regularPage = await cms.first({url, type: Page})\n  if (!regularPage) notFound()\n  return <PageView page={regularPage} />\n}\n",
       "fileName": "app/[[...slug]]/page.tsx",
       "language": "tsx",
       "compact": false
@@ -173,9 +191,6 @@
       ]
     },
     {
-      "_type": "paragraph"
-    },
-    {
       "_type": "NoticeBlock",
       "_id": "3B72DbWneK0XlgueBQ4msd0U0a6",
       "level": "warning",
@@ -199,6 +214,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790188957,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790188957,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

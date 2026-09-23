@@ -20,6 +20,7 @@
       "image": {
         "_id": "3Anq6t99XZhoTpgwt43afQsUmfk",
         "_type": "image",
+        "_index": "",
         "_entry": "3Anq0ll2U8o6fYfLX2n5OknthUJ"
       }
     },
@@ -65,14 +66,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Then we set up the Page-component itself. We define this as a server component and make it responsible for fetching the required data from the CMS. Notice we defined the LandingPage schema as a document, which means it automatically receives various metadata fields. We fetch this from the CMS to properly implement a generateMetadata function."
+          "text": "Then we set up the Page-component itself. We define this as a server component and make it responsible for fetching the required data from the CMS. Notice we defined the LandingPage schema as a document, which means it automatically receives various metadata fields. We fetch this from the CMS to properly implement a generateMetadata function. We query with `cms.first`, which returns `null` when no entry matches (`cms.get` throws instead), so a missing page renders the Next.js 404 page."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AOUDOgAFF32REsMW4F1kxhQqG3",
-      "code": "import type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport {cms} from '@/cms'\nimport {LandingPage} from './LandingPage.schema'\n\nexport async function LandingPageView() {\n  const page = await cms.get({url: '/', type: LandingPage})\n  if (!page) notFound()\n\n  return (\n    <main>\n      <h1>{page.title}</h1>\n    </main>\n  )\n}\n\nexport async function generateMetadata(): Promise<Metadata> {\n  const page = await cms.get({url: '/', type: LandingPage})\n  if (!page) return {}\n\n  return {\n    title: page.metadata.title || page.title,\n    description: page.metadata?.description,\n    openGraph: {\n      title: page.metadata.openGraph.title || page.metadata.title || page.title,\n      description: page.metadata.openGraph.description || page.metadata?.description,\n      images: page.metadata?.openGraph.image\n        ? [page.metadata?.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n",
+      "code": "import type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport {cms} from '@/cms'\nimport {LandingPage} from './LandingPage.schema'\n\nexport async function LandingPageView() {\n  const page = await cms.first({url: '/', type: LandingPage})\n  if (!page) notFound()\n\n  return (\n    <main>\n      <h1>{page.title}</h1>\n    </main>\n  )\n}\n\nexport async function generateMetadata(): Promise<Metadata> {\n  const page = await cms.first({url: '/', type: LandingPage})\n  if (!page) return {}\n\n  return {\n    title: page.metadata.title || page.title,\n    description: page.metadata?.description,\n    openGraph: {\n      title: page.metadata.openGraph.title || page.metadata.title || page.title,\n      description: page.metadata.openGraph.description || page.metadata?.description,\n      images: page.metadata?.openGraph.image\n        ? [page.metadata?.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n",
       "fileName": "entries/landing/LandingPage.tsx",
       "language": "tsx",
       "compact": false
@@ -90,9 +91,42 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONCAa2Rl2v6v1rbhieBd2wvdb",
-      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome',\n                path: ''\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000'\n  },\n  handlerUrl: '/api/cms',\n  dashboardFile: 'admin.html',\n  preview: true\n})",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome',\n                path: ''\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
       "fileName": "cms.tsx",
       "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wrap your Next.js config with `withAlinea` so the dashboard is served on `/admin`. The handler route for `/api/cms` (`app/(alinea)/api/cms/route.ts`) is generated by `alinea init`, see the "
+        },
+        {
+          "_type": "text",
+          "text": "quickstart",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jjye0AkAdfGks1l9ofMLpMqAJ3",
+              "_link": "entry",
+              "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jjye2FSzyfM3XNzIeAPLNlGnt7",
+      "code": "import {withAlinea} from 'alinea/next'\nimport type {NextConfig} from 'next'\n\nconst nextConfig: NextConfig = {}\n\nexport default withAlinea(nextConfig)",
+      "fileName": "next.config.ts",
+      "language": "ts",
       "compact": false
     },
     {
@@ -191,6 +225,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790188863,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790188880,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

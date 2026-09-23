@@ -24,7 +24,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "3AqE1eqF275ThdZFB2hkVfnCENY",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Contentpage'\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      required: true, width: 0.5\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Contentpage',\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      required: true, width: 0.5\n    })\n  }\n})"
     },
     {
       "_type": "heading",
@@ -34,7 +34,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "heading",
@@ -44,7 +45,8 @@
           "_type": "text",
           "text": "`from`"
         }
-      ]
+      ],
+      "_anchor": "from"
     },
     {
       "_type": "paragraph",
@@ -66,7 +68,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "3AqJkxkiOnV85ps3rkkyVdGkscQ",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (from)', {\n  fields: {\n    anchorId: Field.text('anchorId', {\n      initialValue: 'Anchord ID'\n      required: true, width: 0.5,\n    }),\n    pathFrom: Field.path('Path from anchorId)', {\n      from: 'anchorId',\n      required: true, width: 0.5\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (from)', {\n  fields: {\n    anchorId: Field.text('anchorId', {\n      initialValue: 'Anchord ID',\n      required: true, width: 0.5,\n    }),\n    pathFrom: Field.path('Path from anchorId)', {\n      from: 'anchorId',\n      required: true, width: 0.5\n    })\n  }\n})"
     },
     {
       "_type": "heading",
@@ -76,7 +78,8 @@
           "_type": "text",
           "text": "`initialValue`"
         }
-      ]
+      ],
+      "_anchor": "initialvalue"
     },
     {
       "_type": "paragraph",
@@ -108,6 +111,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189131,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189131,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

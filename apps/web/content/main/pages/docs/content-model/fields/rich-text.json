@@ -11,14 +11,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Rich text can contain text marks like bold, italics or underline. Content can be structured using headings. It can even contain other types as blocks that can be moved around freely."
+          "text": "Rich text can contain text marks like bold, italics or links. Content can be structured using headings. It can even contain other types as blocks that can be moved around freely."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "268iODr7pOAG2BeDXXfDEvDZYfr",
-      "code": "import {Field} from 'alinea'\n\nField.richText('Rich Text')\nField.richText('Extended with inline schema(s)', {\n  schema: {\n    ImageBlock\n  }\n})\nconst ImageBlock = Config.type('Image', {\n  fields: {image: Field.image('Image', {inline: true})}\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nconst ImageBlock = Config.type('Image', {\n  fields: {image: Field.image('Image', {inline: true})}\n})\n\nField.richText('Rich Text')\nField.richText('Extended with inline schema(s)', {\n  schema: {\n    ImageBlock\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -36,7 +36,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "heading",
@@ -46,7 +47,8 @@
           "_type": "text",
           "text": "`schema`"
         }
-      ]
+      ],
+      "_anchor": "schema"
     },
     {
       "_type": "paragraph",
@@ -66,7 +68,8 @@
           "_type": "text",
           "text": "`searchable`"
         }
-      ]
+      ],
+      "_anchor": "searchable"
     },
     {
       "_type": "paragraph",
@@ -86,7 +89,8 @@
           "_type": "text",
           "text": "`enableTables`"
         }
-      ]
+      ],
+      "_anchor": "enabletables"
     },
     {
       "_type": "paragraph",
@@ -106,7 +110,8 @@
           "_type": "text",
           "text": "Rendering rich text"
         }
-      ]
+      ],
+      "_anchor": "rendering-rich-text"
     },
     {
       "_type": "paragraph",
@@ -124,19 +129,19 @@
       "variants": [
         {
           "_id": "pZZfVGHe4bIZGFtii-8zR",
-          "_index": "a0",
+          "_index": "",
           "_type": "Variant",
           "name": "JSON",
           "language": "tsx",
-          "code": "[\n  {\n    \"_type\": \"heading\",\n    \"level\": 1,\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"Hello world\"\n      }\n    ]\n  },\n  {\n    \"_type\": \"paragraph\",\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"A paragraph follows\"\n      }\n    ]\n  }\n]"
+          "code": "[\n  {\n    \"_type\": \"heading\",\n    \"level\": 1,\n    \"content\": [\n      {\n        \"_type\": \"text\",\n        \"text\": \"Hello world\"\n      }\n    ]\n  },\n  {\n    \"_type\": \"paragraph\",\n    \"content\": [\n      {\n        \"_type\": \"text\",\n        \"text\": \"A paragraph follows\"\n      }\n    ]\n  }\n]"
         },
         {
           "_id": "jKrgWIwJaQMb-XL58ZPcv",
-          "_index": "a1",
+          "_index": "",
           "_type": "Variant",
           "name": "Types",
           "language": "tsx",
-          "code": "type TextDoc = Array<TextNode>\n\ntype TextNode = \n  | {\n    _type: 'text'\n    text?: string\n    marks?: Array<{\n      type: string\n      attrs?: Record<string, string>\n    }>\n  }\n  | {\n    _type: string\n    content?: TextDoc\n    [key: string]: any\n  }"
+          "code": "type TextDoc = Array<TextNode | ElementNode | BlockNode>\n\n// Text, optionally with marks such as bold, italic or link\ninterface TextNode {\n  _type: 'text'\n  text?: string\n  marks?: Array<{_type: string; [attr: string]: string | undefined}>\n}\n\n// Elements such as paragraph, heading or bulletList\ninterface ElementNode {\n  _type: string\n  content?: TextDoc\n  [attr: string]: unknown\n}\n\n// Blocks from the schema option, e.g. an ImageBlock\ninterface BlockNode {\n  _id: string\n  _type: string\n  [field: string]: unknown\n}"
         }
       ]
     },
@@ -153,7 +158,7 @@
     {
       "_type": "CodeBlock",
       "_id": "hOgtsNKgH3pWurn4Mb-td",
-      "code": "import {RichText} from 'alinea/ui'\n\n<RichText\n  doc={richTextValue}\n\n  // Everything below is optional\n\n  // Render plain text with a custom component\n  text={TextComponent}\n\n  // Attach a custom classname to paragraphs\n  p={<p className=\"my-p\" />}\n\n  // Use a custom component for h1 headings\n  h1={MyH1Heading}\n  \n  // Use a custom component for links\n  a={LinkComponent}\n\n  // Attach classes to list items\n  ul={<ul className=\"my-list\" />}\n  ol={<ol className=\"my-ordered-list\" />}\n  li={<li className=\"my-list-item\" />}\n\n  // More options\n  // b={<b />}\n  // i={<i />}\n  // u={<u />}\n  // hr={<hr />}\n  // br={<br />}\n  // small={<small />}\n  // blockquote={<blockquote />}\n/>",
+      "code": "import {RichText} from 'alinea/ui'\n\n<RichText\n  doc={richTextValue}\n\n  // Everything below is optional\n\n  // Render plain text with a custom component\n  text={TextComponent}\n\n  // Attach a custom classname to paragraphs\n  p={<p className=\"my-p\" />}\n\n  // Use a custom component for h1 headings\n  h1={MyH1Heading}\n  \n  // Use a custom component for links\n  a={LinkComponent}\n\n  // Attach classes to list items\n  ul={<ul className=\"my-list\" />}\n  ol={<ol className=\"my-ordered-list\" />}\n  li={<li className=\"my-list-item\" />}\n\n  // More options\n  // b={<b />}\n  // i={<i />}\n  // sub={<sub />}\n  // sup={<sup />}\n  // hr={<hr />}\n  // br={<br />}\n  // small={<small />}\n  // blockquote={<blockquote />}\n/>",
       "fileName": "",
       "language": "",
       "compact": false
@@ -171,7 +176,7 @@
     {
       "_type": "CodeBlock",
       "_id": "aQam3FUTLfN1uYyFFSiZk",
-      "code": "import {RichText} from 'alinea/ui'\nimport {MyBlock} from './MyBlock'\nimport {MyBlockSchema} from './MyBlock.schema'\n\nconst MyBlockSchema = alinea.type('Custom block', {\n  property: alinea.text('Property')\n})\n\nfunction MyBlock({property}) {\n  return <span>{property}</span>\n}\n\n// Add to config\nalinea.richText('My rich text field', {\n  schema: alinea.schema({\n    MyBlock: MyBlockSchema\n  })\n})\n\n// Render in page views\n<RichText\n  doc={richTextValue}\n\n  // Render instances of my custom block with the MyBlock view\n  MyBlock={MyBlock}\n/>",
+      "code": "import {Config, Field} from 'alinea'\nimport {RichText} from 'alinea/ui'\n\nconst MyBlockSchema = Config.type('Custom block', {\n  fields: {\n    property: Field.text('Property')\n  }\n})\n\nfunction MyBlock({property}: {property: string}) {\n  return <span>{property}</span>\n}\n\n// Add to config\nField.richText('My rich text field', {\n  schema: {\n    MyBlock: MyBlockSchema\n  }\n})\n\n// Render in page views\n<RichText\n  doc={richTextValue}\n\n  // Render instances of my custom block with the MyBlock view\n  MyBlock={MyBlock}\n/>",
       "fileName": "",
       "language": "",
       "compact": false
@@ -210,6 +215,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189131,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189131,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

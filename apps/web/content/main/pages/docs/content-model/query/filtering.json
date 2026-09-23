@@ -22,9 +22,6 @@
       "language": ""
     },
     {
-      "_type": "paragraph"
-    },
-    {
       "_type": "heading",
       "level": 3,
       "content": [
@@ -32,7 +29,8 @@
           "_type": "text",
           "text": "Comparison Operators"
         }
-      ]
+      ],
+      "_anchor": "comparison-operators"
     },
     {
       "_type": "paragraph",
@@ -48,7 +46,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "is / isNot ",
+          "text": "is / isNot",
           "marks": [
             {
               "_type": "bold"
@@ -57,14 +55,14 @@
         },
         {
           "_type": "text",
-          "text": "(Equality)"
+          "text": " (Equality)"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AiGTCJ6ho0ize2JfBBI4sKDZ21",
-      "code": "filter: {status:{is: 'published'}}\nfilter: {type: {isNot: 'feature'}}}",
+      "code": "filter: {author: {is: 'alinea'}}\nfilter: {category: {isNot: 'news'}}",
       "fileName": "",
       "language": ""
     },
@@ -73,7 +71,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "in / notIn ",
+          "text": "in / notIn",
           "marks": [
             {
               "_type": "bold"
@@ -82,14 +80,14 @@
         },
         {
           "_type": "text",
-          "text": "(List matching)"
+          "text": " (List matching)"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AiGWGP5xi7cn8a8YbnxL11EKBH",
-      "code": "filter: {category: {in: ['news', 'tech']}}\nfilter: {tags: {notIn: ['draft', 'internal']}}",
+      "code": "filter: {category: {in: ['news', 'tech']}}\nfilter: {author: {notIn: ['bot', 'guest']}}",
       "fileName": "",
       "language": ""
     },
@@ -98,7 +96,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "gt / gte ",
+          "text": "gt / gte",
           "marks": [
             {
               "_type": "bold"
@@ -107,7 +105,7 @@
         },
         {
           "_type": "text",
-          "text": "(Greater than (or equal))"
+          "text": " (Greater than (or equal))"
         }
       ]
     },
@@ -123,7 +121,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "lt / lte ",
+          "text": "lt / lte",
           "marks": [
             {
               "_type": "bold"
@@ -132,7 +130,7 @@
         },
         {
           "_type": "text",
-          "text": "(Less than (or equal))"
+          "text": " (Less than (or equal))"
         }
       ]
     },
@@ -173,7 +171,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "or ",
+          "text": "or",
           "marks": [
             {
               "_type": "bold"
@@ -182,7 +180,7 @@
         },
         {
           "_type": "text",
-          "text": "(Logical OR)"
+          "text": " (Logical OR)"
         }
       ]
     },
@@ -201,7 +199,8 @@
           "_type": "text",
           "text": "Example"
         }
-      ]
+      ],
+      "_anchor": "example"
     },
     {
       "_type": "paragraph",
@@ -215,7 +214,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AZJubgfIQG4gYAhR3BCatZf6lz",
-      "code": "const today = new Date().toISOString()\n\n// Getting the posts published in 2023\nawait cms.find({\n  type: BlogPostSchema,\n  \n  filter: {\n    author: 'alinea',\n    publishedDate: {\n      lt: '2024-01-01',\n      gte: '2023-01-01'\n    }\n  }\n})\n\n// Getting future events\nawait cms.find({\n  type: Event,\n\n  filter: {\n    date: {gte: today}\n  }\n})",
+      "code": "const today = new Date().toISOString().split('T')[0]\n\n// Getting the posts published in 2023\nawait cms.find({\n  type: BlogPostSchema,\n  \n  filter: {\n    author: 'alinea',\n    publishedDate: {\n      lt: '2024-01-01',\n      gte: '2023-01-01'\n    }\n  }\n})\n\n// Getting future events\nawait cms.find({\n  type: Event,\n\n  filter: {\n    date: {gte: today}\n  }\n})",
       "fileName": "",
       "language": ""
     }
@@ -227,6 +226,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189232,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189232,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

@@ -26,7 +26,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "MOMpcuuHwKl-kSmmbcKgx",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type(\"List field\", {\n  fields: {\n    list: Field.list(\"List\", {\n      schema: {\n        Item: Config.type(\"Item\", {\n          fields: {\n            title: Field.text(\"Title\"),\n            text: Field.richText(\"Text\"),\n          }\n        })\n      }\n    })\n    listMixed: Field.list(\"List mixed\", {\n      schema: {\n        Text: Config.type(\"Text\", {\n          fields: {\n            title: Field.text(\"Title\"),\n            text: Field.richText(\"Text\"),\n          }\n        })\n        Image: Config.type(\"Image\", {\n          fields: {\n            image: Field.image(\"Image\")\n          }\n        })\n      }\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type(\"List field\", {\n  fields: {\n    list: Field.list(\"List\", {\n      schema: {\n        Item: Config.type(\"Item\", {\n          fields: {\n            title: Field.text(\"Title\"),\n            text: Field.richText(\"Text\"),\n          }\n        })\n      }\n    }),\n    listMixed: Field.list(\"List mixed\", {\n      schema: {\n        Text: Config.type(\"Text\", {\n          fields: {\n            title: Field.text(\"Title\"),\n            text: Field.richText(\"Text\"),\n          }\n        }),\n        Image: Config.type(\"Image\", {\n          fields: {\n            image: Field.image(\"Image\")\n          }\n        })\n      }\n    })\n  }\n})"
     }
   ],
   "metadata": {
@@ -36,6 +36,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189130,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189130,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

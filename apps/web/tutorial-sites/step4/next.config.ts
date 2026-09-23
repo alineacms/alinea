@@ -1,3 +1,4 @@
+import {withAlinea} from 'alinea/next'
 import type {NextConfig} from 'next'
 
 const nextConfig: NextConfig = {
@@ -6,4 +7,4 @@ const nextConfig: NextConfig = {
   }
 }
 
-export default nextConfig
+export default withAlinea(nextConfig)

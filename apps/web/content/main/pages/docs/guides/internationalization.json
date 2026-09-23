@@ -10,7 +10,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alinea is built with internalization in mind. It's possible to make content available in more than one language or region. To get started configure the `i18n` on a "
+          "text": "Alinea is built with internationalization in mind. It's possible to make content available in more than one language or region. To get started configure the `i18n` on a "
         },
         {
           "_type": "text",
@@ -52,11 +52,13 @@
       "image": {
         "_id": "3Jjfk8zpnBmHrQ8BI6RSFLzJq2N",
         "_type": "image",
+        "_index": "",
         "_entry": "3Jjeyr3NGyStGEZtrtcB1cooDBD"
       },
       "darkImage": {
         "_id": "3JjfkArJ3HAoUEMu5nxN0tyHniM",
         "_type": "image",
+        "_index": "",
         "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
       },
       "caption": "The Dutch translation of a product. Shared fields are the same in every language, the badge switches between locales."
@@ -76,7 +78,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790179537,
+    "updatedAt": 1790188824,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

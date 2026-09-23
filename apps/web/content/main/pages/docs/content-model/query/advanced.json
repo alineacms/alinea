@@ -13,7 +13,8 @@
           "_type": "text",
           "text": "Complex Relations"
         }
-      ]
+      ],
+      "_anchor": "complex-relations"
     },
     {
       "_type": "paragraph",
@@ -32,9 +33,6 @@
       "language": ""
     },
     {
-      "_type": "paragraph"
-    },
-    {
       "_type": "heading",
       "level": 2,
       "content": [
@@ -42,7 +40,8 @@
           "_type": "text",
           "text": "Query Logic"
         }
-      ]
+      ],
+      "_anchor": "query-logic"
     },
     {
       "_type": "heading",
@@ -52,21 +51,22 @@
           "_type": "text",
           "text": "OR Logic"
         }
-      ]
+      ],
+      "_anchor": "or-logic"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "By default, providing an array of values to a filter field or using the {in: [...]} operator will apply OR logic. This means the query will return any entry that matches at least one of the specified criteria. It is the most efficient way to broaden your search across multiple possible values, such as categories or tags."
+          "text": "Using the `{in: [...]}` operator on a filter field will apply OR logic. This means the query will return any entry that matches at least one of the specified criteria. It is the most efficient way to broaden your search across multiple possible values, such as categories or tags."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AZrw7kzKzdBiOhvT2qozwEV7kl",
-      "code": "await cms.find({\n  type: ChildSchema,\n  filter: {\n    category: {in: ['abc', 'def']}\n  }\n})",
+      "code": "await cms.find({\n  type: BlogPostSchema,\n  filter: {\n    category: {in: ['abc', 'def']}\n  }\n})",
       "fileName": "",
       "language": ""
     },
@@ -94,7 +94,8 @@
           "_type": "text",
           "text": "AND Logic"
         }
-      ]
+      ],
+      "_anchor": "and-logic"
     },
     {
       "_type": "paragraph",
@@ -120,7 +121,8 @@
           "_type": "text",
           "text": "Global Search"
         }
-      ]
+      ],
+      "_anchor": "global-search"
     },
     {
       "_type": "paragraph",
@@ -134,7 +136,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AZMTVraRggRKFpls9fimCdP3hN",
-      "code": "await cms.find({\n  type: BlogPostSchema,\n  search: 'querying',\n})\n\n//You can also pass an array into the search, it then works like a logical OR\nawait cms.first({\n  type: BlogPostSchema,\n  search: ['cats', 'dogs'], // This will return all blogposts containing cats or dogs\n})\n",
+      "code": "await cms.find({\n  type: BlogPostSchema,\n  search: 'querying',\n})\n\n// You can also pass an array of terms, every term has to match\nawait cms.find({\n  type: BlogPostSchema,\n  search: ['cats', 'dogs'], // This will return all blogposts containing both cats and dogs\n})\n",
       "fileName": "",
       "language": ""
     }
@@ -146,6 +148,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189231,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189231,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

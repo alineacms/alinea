@@ -13,7 +13,8 @@
           "_type": "text",
           "text": "Example Schemas"
         }
-      ]
+      ],
+      "_anchor": "example-schemas"
     },
     {
       "_type": "CodeBlock",
@@ -25,7 +26,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AhnTuJFyW8ORgV22kLJHls6ymX",
-      "code": "export const BlogPostSchema = Config.document('Blog Post', {\n  fields: {\n    path: Field.path('Path'),\n    title: Field.text('Title'),\n    description: Field.text('Description'),\n    publishedDate: Field.date('Published Date'),\n    // Used for the \"Related Content\" example\n    tags: Field.list('Tags', {\n      schema: Field.text('Tag')\n    })\n  }\n})",
+      "code": "export const BlogPostSchema = Config.document('Blog Post', {\n  fields: {\n    path: Field.path('Path'),\n    title: Field.text('Title'),\n    description: Field.text('Description'),\n    author: Field.text('Author'),\n    category: Field.text('Category'),\n    publishedDate: Field.date('Published Date'),\n    tags: Field.list('Tags', {\n      schema: {\n        Tag: Config.type('Tag', {\n          fields: {name: Field.text('Name')}\n        })\n      }\n    })\n  }\n})",
       "fileName": "",
       "language": ""
     },
@@ -37,7 +38,8 @@
           "_type": "text",
           "text": "Recent Content & Pagination"
         }
-      ]
+      ],
+      "_anchor": "recent-content-pagination"
     },
     {
       "_type": "paragraph",
@@ -51,7 +53,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AZuCIlq3RXaKdbztvaz5rVCIsA",
-      "code": "const pageLength = 10\nconst pageIndex = 0 // Start at the first page\n\nawait cms.find({\n  type: BlogPost,\n  // Sort by date to get the newest items first\n  orderBy: { \n    desc: BlogPost.publishedDate \n  },\n  // Calculate offset based on the current page\n  skip: pageIndex * pageLength,\n  take: pageLength\n})",
+      "code": "const pageLength = 10\nconst pageIndex = 0 // Start at the first page\n\nawait cms.find({\n  type: BlogPostSchema,\n  // Sort by date to get the newest items first\n  orderBy: { \n    desc: BlogPostSchema.publishedDate \n  },\n  // Calculate offset based on the current page\n  skip: pageIndex * pageLength,\n  take: pageLength\n})",
       "fileName": "",
       "language": ""
     },
@@ -61,9 +63,10 @@
       "content": [
         {
           "_type": "text",
-          "text": "Filtering by Linked References "
+          "text": "Filtering by Linked References"
         }
-      ]
+      ],
+      "_anchor": "filtering-by-linked-references"
     },
     {
       "_type": "heading",
@@ -73,7 +76,8 @@
           "_type": "text",
           "text": "OR Logic"
         }
-      ]
+      ],
+      "_anchor": "or-logic"
     },
     {
       "_type": "paragraph",
@@ -99,7 +103,8 @@
           "_type": "text",
           "text": "AND Logic"
         }
-      ]
+      ],
+      "_anchor": "and-logic"
     },
     {
       "_type": "paragraph",
@@ -141,6 +146,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189232,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189232,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

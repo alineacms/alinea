@@ -18,10 +18,83 @@
     {
       "_type": "CodeBlock",
       "_id": "2a4tC7lBmNMZUuJDec7zsG4st62",
-      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://alineacms.com'\n  },\n  enableDrafts: true,\n  preview: true,\n  schema: {...},\n  workspaces: {...}\n})",
+      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  schema: {...},\n  workspaces: {...},\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  enableDrafts: true,\n  preview: true\n})",
       "fileName": "cms.ts",
-      "language": "",
+      "language": "tsx",
       "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`schema`"
+        }
+      ],
+      "_anchor": "schema"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Describe the structure of your content using a "
+        },
+        {
+          "_type": "text",
+          "text": "collection of Types",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
+              "_link": "entry",
+              "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Required."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`workspaces`"
+        }
+      ],
+      "_anchor": "workspaces"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content can be bundled in separate "
+        },
+        {
+          "_type": "text",
+          "text": "Workspaces",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
+              "_link": "entry",
+              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Defining at least one is required."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -31,15 +104,55 @@
           "_type": "text",
           "text": "`baseUrl`"
         }
-      ]
+      ],
+      "_anchor": "baseurl"
     },
     {
       "_type": "paragraph",
-      "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "The URL of the frontend where Alinea is used."
+          "text": "The URL of the website where Alinea is used, either a single string or one per environment (`development` and `production`, picked by `NODE_ENV`). A value without a protocol gets `https://`. The production URL is required for a deployed site: the handler URL is resolved against it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`handlerUrl`"
+        }
+      ],
+      "_anchor": "handlerurl"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The URL of the API route that serves the dashboard's requests, the route that exports `createHandler` from `alinea/next`. Required. `alinea init` sets it to `/api/cms` and creates the route in `app/(alinea)/api/cms/route.ts`. A relative URL is resolved against `baseUrl`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`adminPath`"
+        }
+      ],
+      "_anchor": "adminpath"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The path where the dashboard is served on your site, defaults to `/admin`. During development `withAlinea` forwards this path to the local dashboard of `alinea dev`, in production `alinea build` writes the dashboard to `public/admin.html` (named after the path) and `withAlinea` serves it from there. It can't be the root path `/`. This replaces the `dashboardFile` option of Alinea 1.x, which is deprecated."
         }
       ]
     },
@@ -51,7 +164,8 @@
           "_type": "text",
           "text": "`enableDrafts`"
         }
-      ]
+      ],
+      "_anchor": "enabledrafts"
     },
     {
       "_type": "paragraph",
@@ -71,7 +185,8 @@
           "_type": "text",
           "text": "`preview`"
         }
-      ]
+      ],
+      "_anchor": "preview"
     },
     {
       "_type": "paragraph",
@@ -79,44 +194,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Display an iframe with live previews on the side of the editor."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`schema`"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Describe the structure of your content using a "
+          "text": "Set to `true` to display an iframe with "
         },
         {
           "_type": "text",
-          "text": "collection of Types",
+          "text": "live previews",
           "marks": [
             {
               "_type": "link",
-              "_id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
-              "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+              "_id": "3JjypBvxQ7B90PqTq2hAlkJYWhH",
               "_link": "entry",
-              "title": ""
+              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
             }
           ]
         },
         {
           "_type": "text",
-          "text": "."
+          "text": " on the side of the editor."
         }
       ]
     },
@@ -126,9 +220,10 @@
       "content": [
         {
           "_type": "text",
-          "text": "`workspaces`"
+          "text": "`roles`"
         }
-      ]
+      ],
+      "_anchor": "roles"
     },
     {
       "_type": "paragraph",
@@ -136,24 +231,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Content can be bundled in separate "
+          "text": "Custom roles with permission policies, see "
         },
         {
           "_type": "text",
-          "text": "Workspaces",
+          "text": "Roles and permissions",
           "marks": [
             {
               "_type": "link",
-              "_id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
-              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+              "_id": "3JjypA5bA8uqLK8XSUyeAoFSIOr",
               "_link": "entry",
-              "title": ""
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
             }
           ]
         },
         {
           "_type": "text",
-          "text": ". Defining at least one is required."
+          "text": ". An `admin` role is always available."
         }
       ]
     },
@@ -163,17 +257,77 @@
       "content": [
         {
           "_type": "text",
-          "text": "`syncInterval` "
+          "text": "`syncInterval`"
+        }
+      ],
+      "_anchor": "syncinterval"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content is refreshed when the site notices the repository changed. As a fallback the site also syncs at most once per interval, in seconds, defaults to 60. `0` syncs on every request."
         }
       ]
     },
     {
-      "_type": "paragraph",
-      "textAlign": "left",
+      "_type": "heading",
+      "level": 3,
       "content": [
         {
           "_type": "text",
-          "text": "Optionally set the interval in seconds at which the frontend will poll for updates."
+          "text": "`maxUploadSize`"
+        }
+      ],
+      "_anchor": "maxuploadsize"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The maximum size of an uploaded file, in bytes. Larger uploads are refused."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`publicDir`"
+        }
+      ],
+      "_anchor": "publicdir"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The folder your site serves static files from, defaults to `public`. Media stored inside it get public URLs."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`tracer`"
+        }
+      ],
+      "_anchor": "tracer"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An optional function to instrument Alinea operations, for example with OpenTelemetry spans. It is called as `tracer(name, run)` and must return the result of `run()`."
         }
       ]
     },
@@ -185,7 +339,8 @@
           "_type": "text",
           "text": "Good to know"
         }
-      ]
+      ],
+      "_anchor": "good-to-know"
     },
     {
       "_type": "heading",
@@ -195,7 +350,8 @@
           "_type": "text",
           "text": "Dealing with errors"
         }
-      ]
+      ],
+      "_anchor": "dealing-with-errors"
     },
     {
       "_type": "paragraph",
@@ -245,7 +401,7 @@
       "_id": "2bRQUBTqZ510BRTvtbDs333cnoR",
       "code": "{\n  \"scripts\": {\n    \"dev\": \"NODE_OPTIONS=--enable-source-maps alinea dev -- next dev\",\n    \"build\": \"NODE_OPTIONS=--enable-source-maps alinea build -- next build\"\n  }\n}",
       "fileName": "",
-      "language": "tsx"
+      "language": "json"
     },
     {
       "_type": "NoticeBlock",
@@ -254,7 +410,6 @@
       "body": [
         {
           "_type": "paragraph",
-          "textAlign": "left",
           "content": [
             {
               "_type": "text",
@@ -266,10 +421,9 @@
               "marks": [
                 {
                   "_type": "link",
-                  "_id": "2bRQg3uk3C0YltnrWPpj2ROCT7p",
+                  "_id": "3JjypE032ZsmdNcMUIyalgHmMMT",
                   "_link": "url",
-                  "href": "https://www.npmjs.com/package/cross-env",
-                  "target": "_blank"
+                  "href": "https://www.npmjs.com/package/cross-env"
                 }
               ]
             },
@@ -306,6 +460,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790188952,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790188960,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

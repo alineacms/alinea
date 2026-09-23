@@ -2,8 +2,6 @@
   "_id": "2aB45fUcIgu0Wx0NMULlU8VH7KK",
   "_type": "Doc",
   "_index": "Zx",
-  "_i18nId": "2aB45fUcIgu0Wx0NMULlU8VH7KK",
-  "_root": "pages",
   "title": "Media",
   "navigationTitle": "",
   "body": [
@@ -20,7 +18,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2aB4BmlaljcbjYyF3KAxVvZgLhW",
-      "code": "import {Config} from 'alinea'\n\nConfig.workspace('Main workspace', {\n  roots: {\n    // ...\n    media: Config.media()\n  }\n})",
+      "code": "import {Config} from 'alinea'\n\nConfig.workspace('Main workspace', {\n  source: 'content',\n  mediaDir: 'public',\n  roots: {\n    // ...\n    media: Config.media()\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -33,7 +31,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "paragraph",
@@ -50,9 +49,8 @@
             {
               "_type": "link",
               "_id": "2aAy4B81RXHCA8y06tSaep6CBen",
-              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
               "_link": "entry",
-              "title": ""
+              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl"
             }
           ]
         },
@@ -70,6 +68,16 @@
       "title": "",
       "image": {},
       "description": ""
+    },
+    "createdAt": 1790189231,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189231,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

@@ -31,7 +31,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "paragraph",
@@ -48,9 +49,8 @@
             {
               "_type": "link",
               "_id": "2aAy4B81RXHCA8y06tSaep6CBen",
-              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
               "_link": "entry",
-              "title": ""
+              "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl"
             }
           ]
         },
@@ -68,7 +68,8 @@
           "_type": "text",
           "text": "`i18n`"
         }
-      ]
+      ],
+      "_anchor": "i18n"
     },
     {
       "_type": "paragraph",
@@ -96,7 +97,8 @@
           "_type": "text",
           "text": "`icon`"
         }
-      ]
+      ],
+      "_anchor": "icon"
     },
     {
       "_type": "paragraph",
@@ -148,7 +150,8 @@
           "_type": "text",
           "text": "`preview`"
         }
-      ]
+      ],
+      "_anchor": "preview"
     },
     {
       "_type": "paragraph",
@@ -168,7 +171,8 @@
           "_type": "text",
           "text": "`contains`"
         }
-      ]
+      ],
+      "_anchor": "contains"
     },
     {
       "_type": "paragraph",
@@ -183,7 +187,7 @@
     {
       "_type": "CodeBlock",
       "_id": "28hlDtsmVPBtekQz2fiKZiQ0l7R",
-      "code": "// only entries of type Page can be created at the top of the tree\ncontains: ['GenericPage']",
+      "code": "// only entries of type GenericPage can be created at the top of the tree\ncontains: ['GenericPage']",
       "fileName": "",
       "language": "",
       "compact": false
@@ -196,7 +200,8 @@
           "_type": "text",
           "text": "`children`"
         }
-      ]
+      ],
+      "_anchor": "children"
     },
     {
       "_type": "paragraph",
@@ -210,7 +215,7 @@
         },
         {
           "_type": "text",
-          "text": "The first object sets the path field. To create an empty path (for a homepage), set the path to index."
+          "text": "Each key sets the path of the seeded entry. To create an empty path (for a homepage), use the key `index`."
         }
       ]
     },
@@ -229,6 +234,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189231,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189231,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

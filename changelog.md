@@ -1,5 +1,59 @@
 # Changelog
 
+## [2.0.0]
+- Rebuild the dashboard on React Aria Components, with keyboard navigation,
+  focus management and screen reader support throughout, a new theme with dark
+  mode, a responsive layout, entry history and a references panel that shows
+  which entries link to the current one.
+- Add `alinea/components`, the public component library the dashboard is built
+  from, to build custom fields and views. Dashboard icons are available from
+  `alinea/dashboard/icons`.
+- Add `Field.localiser` to keep every locale of a value in a single field, with
+  fallbacks.
+- Record URL aliases in the metadata field when an entry's URL changes, and
+  resolve them in queries (`alias` filter, `Query.aliases`). The metadata field
+  also stores `createdAt`, `createdBy`, `updatedAt` and `updatedBy`.
+- Add `beforeCommit` and `afterCommit` handler hooks to rewrite changes before
+  they are committed, or to revalidate, notify and deploy after.
+- Publish instantly: deployed sites sync new content as soon as it is committed,
+  driven by the repository sha. `syncInterval` is now a fallback, defaulting to
+  60 seconds.
+- Add an MCP server to `alinea dev` (`http://localhost:4500/mcp`) so coding
+  agents can read the schema and create, edit, publish, move and delete entries
+  and upload media through the dashboard's save path.
+- Bundle a SQLite content database with full text fuzzy search.
+- Add the `adminPath`, `maxUploadSize` and `tracer` config options, and a
+  workspace `mediaUrl` option.
+- Add `Field.select.multiple`, `min` and `max` for lists, images and link
+  options in rich text, rich text anchors, link anchors and suffixes, and
+  `allowDuplicates` for links.
+- Add a composable backend in `alinea/backend` (`createBackend`, `auth`,
+  `database`, `github`, `uploads`) with S3 and Supabase uploads and user
+  management.
+- Require Node.js 24 or higher and React 19.
+- Require `handlerUrl` in the config. `dashboardFile` is deprecated in favor of
+  `adminPath`.
+- Serve media files through `${adminPath}/file/...` on the site: image and file
+  links now return that URL instead of the stored location.
+- Change `Config.media()` to take root options, children move to `children`.
+- Remove the options of `Field.metadata()` and the `step` option of
+  `Field.time()`.
+- Move the rich text editor to Tiptap 3. `extensions` is now a function that
+  receives the default extensions, `defaultToolbar` takes an options object.
+- Change `Edit.move` to `{id, target, dropPosition}`.
+- Remove the `remote` handler option and the unused entry hooks. OAuth2 backends
+  require `validateClaims`. Drafts are no longer stored in the database.
+- Remove the components from `alinea/ui` except `RichText`, and the form atoms
+  from `alinea/dashboard`. The `useField` hooks are deprecated.
+- Fix read-only roles for nested fields and upload permissions in nested media
+  folders.
+- Fix the locale of translations created in another root.
+- Fix bundled content being served stale right after a cold start.
+- Verify signed Alinea Cloud handshake requests and pin preview messages to the
+  dashboard origin.
+- Fix rich text parsing of marks around images and keep `data-` attributes on
+  rich text nodes.
+
 ## [1.7.0]
 - Add user roles and permission policies. Permissions can now be scoped by
   workspace, root, type, field, entry id and locale, and cover actions such as

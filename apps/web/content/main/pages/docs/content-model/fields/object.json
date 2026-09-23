@@ -11,14 +11,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "An object field groups multiple fields together. The fields are defined using the type function."
+          "text": "An object field groups multiple fields together. The fields are defined in its `fields` option."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
-      "code": "import {Config, Field} from 'alinea'\n\nField.object('Address', {\n  fields: {\n    street: Field.text('Street'),\n    zip: Field.text('Zip code', {width: 0.5}),\n    city: Field.text('City', {width: 0.5})\n  })\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nField.object('Address', {\n  fields: {\n    street: Field.text('Street'),\n    zip: Field.text('Zip code', {width: 0.5}),\n    city: Field.text('City', {width: 0.5})\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -37,6 +37,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189130,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189130,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

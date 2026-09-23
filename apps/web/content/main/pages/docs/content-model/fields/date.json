@@ -48,7 +48,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "heading",
@@ -63,7 +64,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_anchor": "initialvalue"
     },
     {
       "_type": "paragraph",
@@ -78,7 +80,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AqgFyQjZ6mumpYHEsTjtqcC3hm",
-      "code": "const today = new Date().toISOString().split('T')[0];\nField.date('Date (initialValue: today)')",
+      "code": "import {Field} from 'alinea'\n\nconst today = new Date().toISOString().split('T')[0]\nField.date('Date (initialValue: today)', {initialValue: today})",
       "fileName": "",
       "language": ""
     },
@@ -95,6 +97,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189130,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189130,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

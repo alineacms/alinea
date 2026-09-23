@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Add Alinea to a Next.js project in five steps. Prefer to let your coding agent do the work? Paste this prompt into Claude Code, Cursor or Codex and it follows the "
+          "text": "Add Alinea to a Next.js project in a few steps. Prefer to let your coding agent do the work? Paste this prompt into Claude Code, Cursor or Codex and it follows the "
         },
         {
           "_type": "text",
@@ -44,7 +44,8 @@
           "_type": "text",
           "text": "1. Setup Next.js"
         }
-      ]
+      ],
+      "_anchor": "1-setup-next-js"
     },
     {
       "_type": "paragraph",
@@ -52,7 +53,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Get started by creating a new Next.js project. The following will setup a project in your chosen directory. If you'd like to add Alinea to an existing project, skip this step and continue with step 2."
+          "text": "Get started by creating a new Next.js project. The following will setup a project in your chosen directory. If you'd like to add Alinea to an existing project, skip this step and continue with step 2. Alinea's Next.js integration uses the App Router and requires Node.js 24 or higher and React 19."
         }
       ]
     },
@@ -71,7 +72,6 @@
       "body": [
         {
           "_type": "paragraph",
-          "textAlign": "left",
           "content": [
             {
               "_type": "text",
@@ -83,11 +83,9 @@
               "marks": [
                 {
                   "_type": "link",
-                  "_id": "2YXKczB3joyKzGfrzWgivPA8N0K",
+                  "_id": "3Jjz4I59ZsA5VUQkeOR2NhEtlKD",
                   "_link": "url",
-                  "href": "https://nextjs.org/docs/getting-started/installation",
-                  "target": "_blank",
-                  "title": ""
+                  "href": "https://nextjs.org/docs/getting-started/installation"
                 }
               ]
             }
@@ -103,7 +101,8 @@
           "_type": "text",
           "text": "2. Install Alinea"
         }
-      ]
+      ],
+      "_anchor": "2-install-alinea"
     },
     {
       "_type": "paragraph",
@@ -121,7 +120,7 @@
       "variants": [
         {
           "_id": "2Ycqwgl3s7szk2B92gnXY5unG3Q",
-          "_index": "a0",
+          "_index": "",
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
@@ -129,7 +128,7 @@
         },
         {
           "_id": "2YcqyQsBjtLQbXB3v9l7AtdcH3U",
-          "_index": "a1",
+          "_index": "",
           "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
@@ -137,15 +136,15 @@
         },
         {
           "_id": "2YcqzHpnfHK43fhtMEY6r7Wrpf1",
-          "_index": "a2",
+          "_index": "",
           "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
-          "code": "pnpm install alinea"
+          "code": "pnpm add alinea"
         },
         {
           "_id": "2nvByMUmxNTiXafJjyx1NimzTVv",
-          "_index": "a3",
+          "_index": "",
           "_type": "Variant",
           "name": "bun",
           "language": "shellscript",
@@ -161,7 +160,8 @@
           "_type": "text",
           "text": "3. Initialize the project"
         }
-      ]
+      ],
+      "_anchor": "3-initialize-the-project"
     },
     {
       "_type": "paragraph",
@@ -178,9 +178,8 @@
             {
               "_type": "link",
               "_id": "2a4tfP6guQMwWKKRhiN0Nb5JeQN",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
               "_link": "entry",
-              "title": ""
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
             }
           ]
         },
@@ -196,7 +195,7 @@
       "variants": [
         {
           "_id": "2YcrGaP9oBJwHo8pWmHLU7blTfN",
-          "_index": "a0",
+          "_index": "",
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
@@ -204,7 +203,7 @@
         },
         {
           "_id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
-          "_index": "a1",
+          "_index": "",
           "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
@@ -212,7 +211,7 @@
         },
         {
           "_id": "2YcrJEDLa8oWOLJSSjsstOKg4Sl",
-          "_index": "a2",
+          "_index": "",
           "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
@@ -220,11 +219,81 @@
         },
         {
           "_id": "2nvC5Pfk9WeObDYgbSL8GkJ0OZu",
-          "_index": "a3",
+          "_index": "",
           "_type": "Variant",
           "name": "bun",
           "language": "shellscript",
           "code": "bun alinea init"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a Next.js project `alinea init` sets up everything the dashboard needs:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`cms.ts` (in `src/` if your project has a `src` directory) holds your schema, workspaces and settings such as `baseUrl`, `handlerUrl: '/api/cms'` and `adminPath: '/admin'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`app/(alinea)/api/cms/route.ts` is the API route the dashboard talks to. It passes your `cms` to `createHandler` from `alinea/next`. It imports `@/cms`, so check that the `@/*` path alias in `tsconfig.json` points to the folder that holds `cms.ts`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`content/pages/welcome.json` is a first entry, and `content/media` holds uploaded files."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The `dev` and `build` scripts in `package.json` are rewritten to run through Alinea: `next dev` becomes `alinea dev -- next dev` and `next build` becomes `alinea build -- next build`."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -236,7 +305,8 @@
           "_type": "text",
           "text": "4. Adjust Next.js config"
         }
-      ]
+      ],
+      "_anchor": "4-adjust-next-js-config"
     },
     {
       "_type": "paragraph",
@@ -244,7 +314,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "To work around a few Next.js quirks some config changes are needed. Alinea exports a function to do this for you:"
+          "text": "Wrap your Next.js config with `withAlinea`. It serves the dashboard on your site at `adminPath`, forwards media file requests, and keeps the generated content package out of the server bundle:"
         }
       ]
     },
@@ -254,19 +324,19 @@
       "variants": [
         {
           "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
-          "_index": "Zz",
+          "_index": "",
           "_type": "Variant",
           "name": "next.config.ts",
           "language": "tsx",
-          "code": "import {withAlinea} from 'alinea/next'\n\nconst nextConfig = {...}\n\nexport default withAlinea(nextConfig)"
+          "code": "import {withAlinea} from 'alinea/next'\nimport type {NextConfig} from 'next'\n\nconst nextConfig: NextConfig = {\n  // Your Next.js options\n}\n\nexport default withAlinea(nextConfig)"
         },
         {
           "_id": "2bRC6k9IXwZsgnaBLqqWcybH8H9",
-          "_index": "a0",
+          "_index": "",
           "_type": "Variant",
           "name": "next.config.js",
           "language": "tsx",
-          "code": "const {withAlinea} = require('alinea/next')\n\nconst nextConfig = {...}\n\nmodule.exports = withAlinea(nextConfig)"
+          "code": "const {withAlinea} = require('alinea/next')\n\nconst nextConfig = {\n  // Your Next.js options\n}\n\nmodule.exports = withAlinea(nextConfig)"
         }
       ]
     },
@@ -276,9 +346,10 @@
       "content": [
         {
           "_type": "text",
-          "text": "5. Access the dashboard"
+          "text": "5. Start the dev server"
         }
-      ]
+      ],
+      "_anchor": "5-start-the-dev-server"
     },
     {
       "_type": "paragraph",
@@ -286,14 +357,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Congratulations, Alinea is now ready to boot!"
-        },
-        {
-          "_type": "hardBreak"
-        },
-        {
-          "_type": "text",
-          "text": "Have a look around in the dashboard by running:"
+          "text": "Congratulations, Alinea is now ready to boot! Start your dev script:"
         }
       ]
     },
@@ -303,35 +367,276 @@
       "variants": [
         {
           "_id": "2YcspJhldAQ2xaUIDqKHbWHrtSz",
-          "_index": "a0",
+          "_index": "",
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
-          "code": "npx alinea dev"
+          "code": "npm run dev"
         },
         {
           "_id": "2YcsqDyTPJFoUeSjn6ZYJpcdWix",
-          "_index": "a1",
+          "_index": "",
           "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
-          "code": "yarn alinea dev"
+          "code": "yarn dev"
         },
         {
           "_id": "2YcsrOH1ImdTgzQ3C4nWULoN0lQ",
-          "_index": "a2",
+          "_index": "",
           "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
-          "code": "pnpm alinea dev"
+          "code": "pnpm dev"
         },
         {
           "_id": "2nvS0mDMAOjffEPMa3RJpL5rzUe",
-          "_index": "a3",
+          "_index": "",
           "_type": "Variant",
           "name": "bun",
           "language": "shellscript",
-          "code": "bun alinea dev"
+          "code": "bun run dev"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The script runs `alinea dev -- next dev`: Alinea compiles `cms.ts`, starts its local server and then starts `next dev` with the settings `withAlinea` needs. Open the dashboard at "
+        },
+        {
+          "_type": "text",
+          "text": "http://localhost:3000/admin",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jjz4GXy0GxtLxteCks98rK6KMO",
+              "_link": "url",
+              "href": "http://localhost:3000/admin"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and have a look around."
+        }
+      ]
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3Jjz4GWS3PoZ6pwb4ypMLrws6Yi",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Running `npx alinea dev` on its own only starts the local dashboard on http://localhost:4500, not your site. Keep the `alinea dev -- next dev` form in your dev script so both run together and the dashboard is served from your Next.js app. The same goes for `alinea build -- next build`, which generates your content before the site is built."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "6. Enable live previews"
+        }
+      ],
+      "_anchor": "6-enable-live-previews"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To see the page you are editing next to the editor, set `preview: true` in `cms.ts` (`alinea init` leaves it commented out) and render the preview component in your root layout:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jjz4JFngpAsuuqaXtRx4G9eQbm",
+      "code": "import {cms} from '@/cms'\n\nexport default function RootLayout({children}: {children: React.ReactNode}) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
+      "fileName": "app/layout.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `widget` prop adds a small toolbar to your pages to switch to the dashboard, read more in "
+        },
+        {
+          "_type": "text",
+          "text": "Live previews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jjz4FSC8LV54BCrbC3UgOCAUhg",
+              "_link": "entry",
+              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Next steps"
+        }
+      ],
+      "_anchor": "next-steps"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Define your content types in the "
+                },
+                {
+                  "_type": "text",
+                  "text": "schema",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jjz4LHdmycZnZdR3Eqs5ea1Bv5",
+                      "_link": "entry",
+                      "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and pick "
+                },
+                {
+                  "_type": "text",
+                  "text": "fields",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jjz4JwHPFHqJJMuttpgyLkvNCZ",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Render content in your pages with "
+                },
+                {
+                  "_type": "text",
+                  "text": "queries",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jjz4HQuY5Z8xw6QmR3bcekQ4eP",
+                      "_link": "entry",
+                      "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Follow the "
+                },
+                {
+                  "_type": "text",
+                  "text": "tutorial",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jjz4KJD4dJIw6rrKXrCpMeJtnj",
+                      "_link": "entry",
+                      "_entry": "3AONCC6cssRWNTfGBx86XSB2Exn"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " to build a complete site."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Deploy",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jjz4L9hnUYxi7JfVufEgK9Rx2u",
+                      "_link": "entry",
+                      "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " your site with a backend for publishing."
+                }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -344,6 +649,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189071,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189083,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

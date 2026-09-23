@@ -2,17 +2,33 @@
   "_id": "m5KGP-I5smg2S8o4A-j15",
   "_type": "Doc",
   "_index": "a1",
-  "_i18nId": "m5KGP-I5smg2S8o4A-j15",
-  "_root": "pages",
   "title": "CLI",
   "body": [
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `alinea` command line tool generates your content cache and runs the local dashboard. Run it through your package manager, for example `npx alinea dev` or `pnpm alinea dev`."
+        }
+      ]
+    },
+    {
       "_type": "CodeBlock",
       "_id": "-DXbyOqvbfbUVwbH8CNuJ",
-      "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Copy a sample config file to the current directory\n  dev      Start development dashboard\n  build    Generate content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea build --help\n  $ alinea init --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message",
+      "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Initialize a new Alinea project in the current directory\n  dev      Start a development dashboard\n  build    Generate types and content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea init --help\n  $ alinea dev --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message",
       "fileName": "",
-      "language": "",
+      "language": "shellscript",
       "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The CLI requires Node.js 24 or higher (or Bun), and React 19 in the project. It loads environment variables from a `.env.local` or `.env` file in the project directory or one of its parents; variables already set in the environment take precedence."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -22,7 +38,8 @@
           "_type": "text",
           "text": "Commands"
         }
-      ]
+      ],
+      "_anchor": "commands"
     },
     {
       "_type": "heading",
@@ -32,7 +49,8 @@
           "_type": "text",
           "text": "alinea init"
         }
-      ]
+      ],
+      "_anchor": "alinea-init"
     },
     {
       "_type": "paragraph",
@@ -40,7 +58,84 @@
       "content": [
         {
           "_type": "text",
-          "text": "Creates an example config file. Run once during setup."
+          "text": "Sets up Alinea in the current directory. Run once during setup, see the "
+        },
+        {
+          "_type": "text",
+          "text": "Quickstart",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyxpTgADosn3KPmIrbLOwtqMA",
+              "_link": "entry",
+              "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". It fails when a config file already exists."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Creates `cms.ts` (in `src/` when the project has a `src` directory) with an example schema and workspace."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Creates a first entry in `content/pages/welcome.json` and a `content/media` folder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Prefixes the `dev` and `build` scripts in `package.json` with `alinea dev --` and `alinea build --`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "In a Next.js project (`next` in `dependencies`), creates the API route `app/(alinea)/api/cms/route.ts`."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -52,7 +147,8 @@
           "_type": "text",
           "text": "alinea dev"
         }
-      ]
+      ],
+      "_anchor": "alinea-dev"
     },
     {
       "_type": "paragraph",
@@ -60,25 +156,111 @@
       "content": [
         {
           "_type": "text",
-          "text": "Starts a development server to display the alinea dashboard. It can be prepended to another development command to run it in parallel."
+          "text": "Starts the local dashboard, by default on http://localhost:4500, moving to the next free port when that one is taken. It watches your config and content: changes to `cms.ts` are recompiled and the dashboard reloads. It also serves the "
+        },
+        {
+          "_type": "text",
+          "text": "MCP server",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jjyxi4Wru95997LwWNQTCgI3e0",
+              "_link": "entry",
+              "_entry": "3JjyQUq7OEXLa3wIwCkEgiRasxN"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for coding agents at `/mcp` on the same port."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass another command after `--` to run it alongside the dashboard. It is started once the config is compiled and receives the environment variables `withAlinea` needs to serve the dashboard on your site's `adminPath`:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "XeX5lTJqsjNbbd4OwYOzD",
-      "code": "// Example: start the dashboard and next development server\nalinea dev -- next dev",
+      "code": "# Start the dashboard and the Next.js development server\nalinea dev -- next dev",
       "fileName": "",
-      "language": "",
+      "language": "shellscript",
       "compact": false
     },
     {
       "_type": "CodeBlock",
       "_id": "P1sIdtOUVmGJBcPNDrfmU",
-      "code": "Options\n  -p, --port      Port to listen on\n  --production    Use production backend",
+      "code": "Aliases\n  $ alinea serve\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  -p, --port      Port to listen on\n  -b, --base      Base URL for previews\n  --production    Use production backend\n  --dev           Watch alinea sources",
       "fileName": "",
-      "language": "",
+      "language": "shellscript",
       "compact": false
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--config`: the config file, relative to the project directory. Without it Alinea looks for `cms.ts`, `cms.tsx`, `cms.js` or `cms.jsx` in the project directory and its `src` folder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--dir`: the project directory, defaults to the current directory."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--port`: the port of the local dashboard and MCP server, defaults to 4500."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--dev` is only used when working on Alinea itself."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -88,7 +270,8 @@
           "_type": "text",
           "text": "alinea build"
         }
-      ]
+      ],
+      "_anchor": "alinea-build"
     },
     {
       "_type": "paragraph",
@@ -96,17 +279,34 @@
       "content": [
         {
           "_type": "text",
-          "text": "The build command indexes content and generates the `@alinea/generated` package. It's recommended to run it as part of the build step in your project."
+          "text": "Indexes your content and generates the `@alinea/generated` package your site reads its content from, and writes the dashboard to your public folder (`public/admin.html` for the default `adminPath`). Run it as part of your build step: pass your own build command after `--` and it runs once the content is generated."
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "KipDFk3xI6h94TjE3Mhc_",
-      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"cms.ts\"\n  --fix           Any missing or incorrect properties will be overwritten by their default",
+      "_id": "3JjyxlNgkdw8eF7s9Tw1Xzb8LTD",
+      "code": "# Generate content, then build the Next.js site\nalinea build -- next build",
       "fileName": "",
-      "language": "",
+      "language": "shellscript",
       "compact": false
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "KipDFk3xI6h94TjE3Mhc_",
+      "code": "Aliases\n  $ alinea generate\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  -w, --watch     Watch for changes to source files\n  --fix           Any missing or incorrect properties will be overwritten by their default",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and exits."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -116,6 +316,16 @@
       "title": "",
       "image": {},
       "description": ""
+    },
+    "createdAt": 1790189019,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189019,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

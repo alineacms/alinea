@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "This guide walks through moving an existing Alinea 1.x project to 2.0."
+          "text": "This guide walks through moving an existing Alinea 1.7 project to 2.0. Your content files don't need a migration and the query API is unchanged. Most projects only need new runtime versions, one config option and a look at their media URLs. The dashboard was rebuilt, so custom dashboard code needs the most attention."
         }
       ]
     },
@@ -21,17 +21,167 @@
       "content": [
         {
           "_type": "text",
-          "text": "Breaking changes"
+          "text": "Checklist"
         }
-      ]
+      ],
+      "_anchor": "checklist"
     },
     {
-      "_type": "paragraph",
-      "textAlign": "left",
+      "_type": "orderedList",
       "content": [
         {
-          "_type": "text",
-          "text": "[To be written]"
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Run Node.js 24 or higher, locally, in CI and wherever your site runs, and use React 19."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Update the package: `npm install alinea@latest` (or `pnpm add`, `yarn add`, `bun add`)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Add `handlerUrl` to your config, it is now required. Replace `dashboardFile` with `adminPath`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Make sure your Next.js config is wrapped in `withAlinea` and your scripts run `alinea dev -- next dev` and `alinea build -- next build`: media URLs are now served through your site."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Move children of `Config.media(...)` into its `children` option."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Remove the options of `Field.metadata(...)` and the `step` option of `Field.time`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Rich text: pass `extensions` as a function and upgrade custom extensions to Tiptap 3."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Handler: replace `remote` with `backend`, and move entry hooks to `beforeCommit` / `afterCommit`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Self-hosted OAuth2: provide `validateClaims`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Custom field views and dashboard code: replace imports from `alinea/ui` and `alinea/dashboard` internals with `alinea/components`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Run `alinea build`, open the dashboard and save an entry to review the diff."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -41,7 +191,27 @@
       "content": [
         {
           "_type": "text",
-          "text": "Dashboard"
+          "text": "Runtime requirements"
+        }
+      ],
+      "_anchor": "runtime-requirements"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Node.js 24 or higher.",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " The CLI exits with \"Alinea requires Node version 24 or higher\" on older versions. The bundled content database is opened with Node's built-in `node:sqlite` (or `bun:sqlite` under Bun), so the runtime that serves your site needs Node 24 too, not only the machine that builds it."
         }
       ]
     },
@@ -51,7 +221,261 @@
       "content": [
         {
           "_type": "text",
-          "text": "[To be written]"
+          "text": "React 19.",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " `react` and `react-dom` 19 are now peer dependencies and the CLI checks for them. In practice that means Next.js 15 or newer."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "No Edge runtime for the handler.",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " `createHandler` throws when it runs on the Edge runtime. Keep your Alinea API route on the default Node.js runtime."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Configuration"
+        }
+      ],
+      "_anchor": "configuration"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "handlerUrl is required"
+        }
+      ],
+      "_anchor": "handlerurl-is-required"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea 1.7 assumed `/api/cms` when `handlerUrl` was missing. Alinea 2.0 throws `Missing handlerUrl in Alinea config` from `alinea dev`, `alinea build` and your site. Set it to the route that exports `createHandler`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjzsQhB485rafoVFhOnTVSr1hR",
+      "code": "// 1.7\nexport const cms = createCMS({\n  schema,\n  workspaces,\n  baseUrl,\n  dashboardFile: 'admin.html'\n})\n\n// 2.0\nexport const cms = createCMS({\n  schema,\n  workspaces,\n  baseUrl,\n  handlerUrl: '/api/cms',\n  adminPath: '/admin'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The handler now matches its path exactly, so requests have to use the configured URL (a trailing slash no longer matches)."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "dashboardFile is replaced by adminPath"
+        }
+      ],
+      "_anchor": "dashboardfile-is-replaced-by-adminpath"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`adminPath` is the path the dashboard is served on, `/admin` by default. `alinea build` writes the dashboard to `public/admin.html` and `withAlinea` serves it at `/admin`. `dashboardFile` still works when `adminPath` isn't set, but it is deprecated. See "
+        },
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsV4oYg9JNwX7oUEQkgn9uZ5",
+              "_link": "entry",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for the new `maxUploadSize` and `tracer` options."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "syncInterval is a fallback"
+        }
+      ],
+      "_anchor": "syncinterval-is-a-fallback"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deployed sites now check whether the content in the repository changed (by its commit sha) and sync right away when it did, which is what makes "
+        },
+        {
+          "_type": "text",
+          "text": "instant publishing",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsTsN1p0UJjhb34UsFaY73cn",
+              "_link": "entry",
+              "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " work. `syncInterval` from your config is used as the fallback interval and defaults to 60 seconds. `0` syncs on every query, and passing `disableSync: true` to a query turns syncing off for it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media URLs"
+        }
+      ],
+      "_anchor": "media-urls"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Image and file links now point to a route on your site instead of the file in `public/`. The `src` of an image link and the `url`/`href` of a file link used to be the stored location, such as `/media/landscape.2V4c….jpg`. In 2.0 they are the media entry's url: `/admin/file/landscape.jpg?v=…`, below your `adminPath`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`withAlinea` rewrites `${adminPath}/file/*` to your handler, which looks up the file and serves it. It also adds an `images.localPatterns` entry so `next/image` accepts these URLs. When a file is moved or renamed, its old URL keeps working through an alias."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "What to check:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Your Next.js config is wrapped in `withAlinea` and your scripts run through `alinea dev --` and `alinea build --`, which pass it the `adminPath` and `handlerUrl`. Without them media URLs return 404."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Media requests now reach your handler route. A static export without the handler can't serve them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "If you defined `images.localPatterns` or `remotePatterns` yourself, check that the admin file route is still allowed. The `uploads.alinea.cloud` remote pattern is no longer added."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Don't change the `mediaDir` of an existing workspace: stored locations are relative to it. New projects default to `public/media`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A workspace can set `mediaUrl` to add a prefix to its media URLs, which helps when several workspaces have files with the same name."
         }
       ]
     },
@@ -63,15 +487,249 @@
           "_type": "text",
           "text": "Content and schema"
         }
+      ],
+      "_anchor": "content-and-schema"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content files don't change format: entries, rich text, links and list rows written by 1.7 are read as they are. New properties are added when an entry is saved again (see below)."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Config.media takes options"
+        }
+      ],
+      "_anchor": "config-media-takes-options"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The media root now takes the same options as other roots. Children move to `children`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjzsUnJM28ptOkM9glBakiRi47",
+      "code": "// 1.7\nmedia: Config.media({uploads: Config.page(...)})\n\n// 2.0\nmedia: Config.media({children: {uploads: Config.page(...)}})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A 1.7 call with children is silently read as options, so its children disappear. The media root also accepts `i18n`, which translates the alt text of media files."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Field.metadata has no options"
+        }
+      ],
+      "_anchor": "field-metadata-has-no-options"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.metadata(label)` no longer takes `inferTitleFrom`, `inferDescriptionFrom` or `inferImageFrom`. The metadata field now also stores the URL aliases of the entry and audit fields: `createdAt`, `createdBy`, `updatedAt` and `updatedBy`, with the name and email of the editor. They are filled in when an entry is saved. Keep that in mind for public repositories. The description is limited to 160 characters."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Other field changes"
+        }
+      ],
+      "_anchor": "other-field-changes"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.time` no longer has a `step` option."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.file` pickers now also show images."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.entry.multiple` no longer allows the same entry twice by default, pass `allowDuplicates: true` to keep the 1.7 behaviour."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Date fields are displayed as day-month-year in the dashboard. The stored value is still an ISO date."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Trackers from `Config.track.options` must return their value synchronously, and `Config.track.value` was removed."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rich text extensions and toolbars"
+        }
+      ],
+      "_anchor": "rich-text-extensions-and-toolbars"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The rich text editor moved to Tiptap 3, so custom extensions must be Tiptap 3 compatible. `extensions` is now a function that receives the default extensions, instead of an object that replaced them:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjzsSPjTNDVD1JjrCtgDfmtxPj",
+      "code": "// 1.7\nField.richText('Body', {\n  extensions: {...myExtensions}\n})\n\n// 2.0\nField.richText('Body', {\n  extensions: defaults => ({...defaults, ...myExtensions})\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`defaultToolbar(enableTables)` became `defaultToolbar({enableTables, enableImages})`, and toolbar button icons are components (or elements) instead of nodes."
+        }
       ]
     },
     {
       "_type": "paragraph",
-      "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "[To be written]"
+          "text": "The `RichText` renderer from `alinea/ui` always renders tables with a `<tbody>`, and the `tbody` view override is gone."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Edit.move"
+        }
+      ],
+      "_anchor": "edit-move"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjzsNjOsilMQG049T30ODdeLi5",
+      "code": "// 1.7\nEdit.move({id, after: siblingId})\n\n// 2.0\nEdit.move({id, target: siblingId, dropPosition: 'after'})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`dropPosition` is `'after'`, `'before'` or `'on'` (move into the target), and `targetType: 'root'` moves an entry to the top of a root."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "What changes when you save"
+        }
+      ],
+      "_anchor": "what-changes-when-you-save"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The first save of an entry in 2.0 can produce a larger diff than you expect: missing field defaults are filled in (also in list rows), the metadata audit fields are added and media files gain an `alt` field. To normalize all files at once instead of entry by entry, run `alinea build --fix` and commit the result."
         }
       ]
     },
@@ -81,9 +739,172 @@
       "content": [
         {
           "_type": "text",
-          "text": "Deploying"
+          "text": "Handler and backend"
+        }
+      ],
+      "_anchor": "handler-and-backend"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Commit hooks replace entry hooks"
+        }
+      ],
+      "_anchor": "commit-hooks-replace-entry-hooks"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `beforeCreate`, `afterUpdate`, … hooks of 1.7 were declared but never called. They are replaced by two hooks that run for every commit, whatever it contains:"
         }
       ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjzsNtVY9qTKWUAuUkMpUfP9fx",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidatePath} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({sha}) {\n    revalidatePath('/', 'layout')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Errors thrown in `afterCommit` are logged and don't fail the commit. See "
+        },
+        {
+          "_type": "text",
+          "text": "Instant publishing",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsQpu63FlEWbBlUyELyx3cd4",
+              "_link": "entry",
+              "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "remote is replaced by backend"
+        }
+      ],
+      "_anchor": "remote-is-replaced-by-backend"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `remote` option of `createHandler` was removed. Pass a `backend`: the options object from 1.7 (`database`, `auth`, `oauth2`, `github`) still works unchanged, and it now also takes `uploads: {s3}`. You can also compose a backend from parts exported by the new `alinea/backend` entry, which replaces deep imports such as `alinea/backend/api/CreateBackend`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjzsQVqXygLTUUhoJiS6GUGKUE",
+      "code": "import {auth, createBackend, database, github, uploads} from 'alinea/backend'\n\nconst backend = createBackend(\n  database({driver: '@vercel/postgres', client: db}),\n  auth.basic(\n    (username, password) =>\n      username === process.env.ALINEA_USERNAME &&\n      password === process.env.ALINEA_PASSWORD\n  ),\n  github({/* the github options from 1.7 */}),\n  uploads.s3({/* bucket and credentials */})\n)\n\nconst handler = createHandler({cms, backend})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Self-hosted backends"
+        }
+      ],
+      "_anchor": "self-hosted-backends"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "OAuth2: `validateClaims` is now required, the backend refuses to start without it. Check at least the issuer and audience of the token there."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "GitHub: the `author` option was removed. Commits get a `Co-authored-by` trailer for the signed-in editor instead."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Custom auth implementations: `authenticate` receives a second `options` argument."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Database: new `alinea_user` and `alinea_user_role` tables are created automatically on first use (on Postgres with row level security enabled). Drafts are no longer stored in the database, the 1.7 `alinea_draft` table is not used anymore."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Dashboard"
+        }
+      ],
+      "_anchor": "dashboard"
     },
     {
       "_type": "paragraph",
@@ -91,18 +912,225 @@
       "content": [
         {
           "_type": "text",
-          "text": "[To be written]"
+          "text": "The dashboard was rebuilt on React Aria Components. Nothing changes for editors beyond a new interface, but code that extends the dashboard needs updating."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Components"
+        }
+      ],
+      "_anchor": "components"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea/ui` now only exports the `RichText` renderer (and the deprecated `HStack`/`VStack` and `imageBlurUrl`). Its `Button`, `Chip`, `Icon`, `Loader`, `Typo` and other components were removed, as were the files behind deep imports like `alinea/ui/Button`. Use the public component library instead, it is what the dashboard itself is built from:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjzsOn03s3kBNBqQulc285pbtH",
+      "code": "// 1.7\nimport {Button, Loader} from 'alinea/ui'\n\n// 2.0\nimport {Button, Spinner} from 'alinea/components'",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "See "
+        },
+        {
+          "_type": "text",
+          "text": "Components",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsPL3b1BmGUjUGX5UzyOj1Vw",
+              "_link": "entry",
+              "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Dashboard icons are available from `alinea/dashboard/icons`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Custom field views"
+        }
+      ],
+      "_anchor": "custom-field-views"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Field views are still referenced by path (`view: '@/fields/Range.view'`) or passed as a component. From `alinea/dashboard`, `useField` and its related hooks still work but are deprecated. `InputLabel` is now an alias of the `Field` component: it takes `label`, `description`, `error`, `required`, `disabled`, `readOnly`, `icon` and `shared`. Its 1.7 props `help`, `width`, `inline`, `size` and the fold props are gone, so help text passed through `{...options}` is no longer shown: pass it as `description`. The form atoms (`useForm`, `FormProvider`, `FormRow` and so on) were removed from `alinea/dashboard`. See "
+        },
+        {
+          "_type": "text",
+          "text": "Custom fields",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsQubuLs3EgtgcBAqRMsBjAM",
+              "_link": "entry",
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for a complete example."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Custom type views"
+        }
+      ],
+      "_anchor": "custom-type-views"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A type's `view` now only receives `{type}`, the `editor` prop of 1.7 is gone. `summaryRow` and `summaryThumb` views are no longer rendered, and a custom `auth` view in the config is not used: the dashboard always renders its own sign-in."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Other removed entry points"
+        }
+      ],
+      "_anchor": "other-removed-entry-points"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea/yjs`, `alinea/cloud/view/CloudAuth`, `alinea/picker/entry/EntryPicker` and `alinea/picker/url/UrlPicker` no longer exist. Code that subclassed fields relied on the removed shape system (`alinea/core/Shape`, `Field.shape`, `Type.shape`): the field constructors no longer take a shape, and `postProcess` became `queryValue`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "After upgrading"
+        }
+      ],
+      "_anchor": "after-upgrading"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Run your build and open the dashboard. Things to try: an image renders on your site through `/admin/file/...`, publishing an entry updates the site, and custom fields still render. Then have a look at what's new in 2.0: "
+        },
+        {
+          "_type": "text",
+          "text": "Field.localiser",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsUftBEzmHjkVn8qQarGTfN7",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for per-field translations, URL aliases and backlinks, "
+        },
+        {
+          "_type": "text",
+          "text": "instant publishing",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsRpyYxXDBwrJcDWzKYXPor3",
+              "_link": "entry",
+              "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and the "
+        },
+        {
+          "_type": "text",
+          "text": "MCP server",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjzsRBzaEpylZEIWm9RjFYu2o5",
+              "_link": "entry",
+              "_entry": "3JjyQUq7OEXLa3wIwCkEgiRasxN"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for coding agents."
         }
       ]
     }
   ],
   "metadata": {
     "title": "",
-    "description": "",
+    "description": "Move an Alinea 1.7 project to 2.0: runtime requirements, config changes, media URLs, schema and handler changes and the rebuilt dashboard.",
     "openGraph": {
       "title": "",
       "image": {},
       "description": ""
+    },
+    "createdAt": 1790189471,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189471,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

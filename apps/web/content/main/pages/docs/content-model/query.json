@@ -13,7 +13,8 @@
           "_type": "text",
           "text": "Setup"
         }
-      ]
+      ],
+      "_anchor": "setup"
     },
     {
       "_type": "paragraph",
@@ -27,7 +28,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AZD4qVCNAQAqmAaVEtnFzxdUlU",
-      "code": "import {cms} from '@/cms'\n\nexport default async function HomePage() {\n  const homePage = await cms.get({type: HomePage})\n  return <h1>{homePage.title}</h1>\n}",
+      "code": "import {cms} from '@/cms'\nimport {HomePage} from '@/schema'\n\nexport default async function Page() {\n  const homePage = await cms.get({type: HomePage})\n  return <h1>{homePage.title}</h1>\n}",
       "fileName": "",
       "language": ""
     },
@@ -39,7 +40,8 @@
           "_type": "text",
           "text": "Methods"
         }
-      ]
+      ],
+      "_anchor": "methods"
     },
     {
       "_type": "paragraph",
@@ -53,7 +55,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AZmHwGgMIvbj496GIZA4l3v5VV",
-      "code": "// Always returns an array\nawait cms.find() \n\n// Returns the first result or null\nawait cms.first() \n// Returns only one result or throws an exception\nawait cms.get() \n\n// Returns the number of results\nawait cms.count() ",
+      "code": "// Always returns an array\nawait cms.find(query)\n\n// Returns the first result or null\nawait cms.first(query)\n// Returns the first result or throws an error if nothing matches\nawait cms.get(query)\n\n// Returns the number of results\nawait cms.count(query)",
       "fileName": "",
       "language": ""
     },
@@ -65,7 +67,8 @@
           "_type": "text",
           "text": "The Query object"
         }
-      ]
+      ],
+      "_anchor": "the-query-object"
     },
     {
       "_type": "paragraph",
@@ -84,7 +87,8 @@
           "_type": "text",
           "text": "Referencing standard fields:"
         }
-      ]
+      ],
+      "_anchor": "referencing-standard-fields"
     },
     {
       "_type": "CodeBlock",
@@ -101,16 +105,18 @@
           "_type": "text",
           "text": "Defining relationships:"
         }
-      ]
+      ],
+      "_anchor": "defining-relationships"
     },
     {
       "_type": "ChapterLinkBlock",
       "_id": "3AhoE9GQNpABnNOSqLZNeJSa8y4",
       "link": {
+        "description": "Read about it in this chapter",
         "_id": "3AhoG5B1DTrwIsYLy7kSkIPEKlB",
         "_type": "entry",
-        "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ",
-        "description": "Read about it in this chapter"
+        "_index": "",
+        "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ"
       }
     }
   ],
@@ -121,6 +127,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189231,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189231,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

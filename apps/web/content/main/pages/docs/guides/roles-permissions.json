@@ -20,17 +20,16 @@
       "image": {
         "_id": "3Jjg46elZbWsbEunGMdjKi7L7Nx",
         "_type": "image",
+        "_index": "",
         "_entry": "3Jjg25g3yx9TK9S96LEVcsIMsXg"
       },
       "darkImage": {
         "_id": "3Jjg45NAYthflNPc3o0tAbkMwFe",
         "_type": "image",
+        "_index": "",
         "_entry": "3Jjg22DCeoJV5TIl5n8Lsa8x1oe"
       },
       "caption": "The users screen of the demo, with a role for each user: Admin, Editor, Translator and Viewer."
-    },
-    {
-      "_type": "paragraph"
     },
     {
       "_type": "heading",
@@ -89,7 +88,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Note: ",
+              "text": "Note:",
               "marks": [
                 {
                   "_type": "bold"
@@ -98,7 +97,7 @@
             },
             {
               "_type": "text",
-              "text": "A deny rule is absolute and propagates downstream without exception. Once an action is denied at a higher level, it becomes \"locked\" for all child entries and cannot be overridden by an allow rule or contained by grant: 'explicit' further down the stream. Always apply deny restrictions at the most specific level possible to avoid unintentionally locking out sub-sections."
+              "text": " A deny rule is absolute and propagates downstream without exception. Once an action is denied at a higher level, it becomes \"locked\" for all child entries and cannot be overridden by an allow rule or contained by grant: 'explicit' further down the stream. Always apply deny restrictions at the most specific level possible to avoid unintentionally locking out sub-sections."
             }
           ]
         }
@@ -338,14 +337,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "The grant property specifically modifies how allow rules are applied across the content tree. By default, permissions use grant: 'implicit', meaning access trickles down to all children."
+          "text": "The grant property specifically modifies how allow rules are applied across the content tree. By default, permissions use grant: 'inherit', meaning access trickles down to all children."
         }
       ]
     },
     {
       "_id": "3AiCX7aXzZVdWeDiGhngdzch2ny",
       "_type": "CodeBlock",
-      "code": "// (Default) Permissions automatically trickle down to all child entries and sub-pages.\ngrant: 'implicit' \n// Permissions only apply to the specific entry or level defined. \n// Access to children must be granted separately.\ngrant: 'explicit' ",
+      "code": "// (Default) Permissions automatically trickle down to all child entries and sub-pages.\ngrant: 'inherit'\n// Permissions only apply to the specific entry or level defined. \n// Access to children must be granted separately.\ngrant: 'explicit' ",
       "fileName": "",
       "language": ""
     },
@@ -480,7 +479,7 @@
     {
       "_id": "3Ai34341S0rJQ1xXiauCpkPo35K",
       "_type": "CodeBlock",
-      "code": "bikeBrandId = '2o7I2ig8ry0ci1e0hZ5k1kKK3Qx'\n\n// Use querying to show only specific products\nconst bikeBrandModerator = Config.role('Bike Brand Moderator', {\n  async permissions(policy, graph) {\n    const bikes = await graph.find({\n      type: ProductSchema,\n      filter: {\n        brand: {\n          has: {_entry: bikeBrandId}\n        }\n      }\n    })\n    policy.set({\n      workspace: cms.workspaces.main,\n      allow: {read: true},\n      grant: 'explicit'\n    },\n    {\n    root: cms.workspaces.main.products,\n      allow: {read: true},\n      grant: 'explicit'\n    })\n    for (const bike of bikes) {\n      policy.set({\n        id: bike._id,\n        allow: {read: true, update: true}\n      })\n    }\n  }\n})",
+      "code": "const bikeBrandId = '2o7I2ig8ry0ci1e0hZ5k1kKK3Qx'\n\n// Use querying to show only specific products\nconst bikeBrandModerator = Config.role('Bike Brand Moderator', {\n  async permissions(policy, graph) {\n    const bikes = await graph.find({\n      type: ProductSchema,\n      filter: {\n        brand: {\n          has: {_entry: bikeBrandId}\n        }\n      }\n    })\n    policy.set({\n      workspace: cms.workspaces.main,\n      allow: {read: true},\n      grant: 'explicit'\n    },\n    {\n      root: cms.workspaces.main.products,\n      allow: {read: true},\n      grant: 'explicit'\n    })\n    for (const bike of bikes) {\n      policy.set({\n        id: bike._id,\n        allow: {read: true, update: true}\n      })\n    }\n  }\n})",
       "fileName": "",
       "language": ""
     }
@@ -499,7 +498,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790179696,
+    "updatedAt": 1790188824,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

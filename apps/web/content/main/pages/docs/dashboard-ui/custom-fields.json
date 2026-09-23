@@ -23,7 +23,8 @@
           "_type": "text",
           "text": "Range field example"
         }
-      ]
+      ],
+      "_anchor": "range-field-example"
     },
     {
       "_type": "paragraph",
@@ -38,7 +39,7 @@
     {
       "_type": "CodeBlock",
       "_id": "tjXTNIX1E2w3fts1zXG9Z",
-      "code": "import {Field} from 'alinea'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // Point this\n    view: '@/fields/RangeField.view'\n  })\n}",
+      "code": "import {Field} from 'alinea'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // Points to the module that renders the field, its default export is used\n    // (append #ExportName to use a named export instead)\n    view: '@/fields/Range.view'\n  })\n}",
       "fileName": "fields/Range.ts",
       "language": "",
       "compact": false
@@ -63,7 +64,7 @@
     {
       "_type": "CodeBlock",
       "_id": "WnK5Nlvq82spn6R62dTQe",
-      "code": "import {Config} from 'alinea'\nimport {range} from './RangeField'\n\nConfig.type('My type', {\n  fields: {\n    // ...\n    myRangeField: range('A range field', {\n      min: 0, \n      max: 20\n    })\n  }\n})",
+      "code": "import {Config} from 'alinea'\nimport {range} from '@/fields/Range'\n\nConfig.type('My type', {\n  fields: {\n    // ...\n    myRangeField: range('A range field', {\n      min: 0, \n      max: 20\n    })\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -71,7 +72,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "yhfKjT9ITmHHD0N5JRU4G",
-      "code": "import {Field, Config} from 'alinea'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // Point this\n    view({field}) {\n      const {value, mutator, options} = useField(field)\n      const {min = 0, max = 10} = options\n      return (\n        <InputLabel {...options}>\n          <input \n            type=\"range\" \n            min={min} max={max} \n            value={value} \n            onChange={e => mutator(Number(e.target.value))} \n          />\n        </InputLabel>\n      )\n    }\n  })\n}\n\nexport default Config.type('Custom fields', {\n  fields: {\n    range: range('A range field', {min: 0, max: 20})\n  }\n})"
+      "code": "import {Field, Config} from 'alinea'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // The view can also be inlined as a component\n    view({field}) {\n      const {value, mutator, options} = useField(field)\n      const {min = 0, max = 10} = options\n      return (\n        <InputLabel {...options}>\n          <input \n            type=\"range\" \n            min={min} max={max} \n            value={value} \n            onChange={e => mutator(Number(e.target.value))} \n          />\n        </InputLabel>\n      )\n    }\n  })\n}\n\nexport default Config.type('Custom fields', {\n  fields: {\n    range: range('A range field', {min: 0, max: 20})\n  }\n})"
     }
   ],
   "metadata": {
@@ -82,6 +83,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790188849,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790188849,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

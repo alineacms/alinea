@@ -2,8 +2,6 @@
   "_id": "c1qjY2L4hq8JWfscRb_dD",
   "_type": "Doc",
   "_index": "ZoV",
-  "_i18nId": "c1qjY2L4hq8JWfscRb_dD",
-  "_root": "pages",
   "title": "Alinea Cloud",
   "body": [
     {
@@ -33,15 +31,14 @@
             {
               "_type": "link",
               "_id": "2YlEhUcMm8GgmJorhjRWUVpZ6TI",
-              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
               "_link": "entry",
-              "title": ""
+              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml"
             }
           ]
         },
         {
           "_type": "text",
-          "text": " you can follow the instructions by navigating to your admin dashboard (/admin.html)."
+          "text": " you can follow the instructions by navigating to your admin dashboard (`/admin` by default, see `adminPath`)."
         }
       ]
     }
@@ -53,6 +50,16 @@
       "title": "",
       "image": {},
       "description": ""
+    },
+    "createdAt": 1790188788,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790188788,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

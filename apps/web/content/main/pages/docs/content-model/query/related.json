@@ -13,7 +13,8 @@
           "_type": "text",
           "text": "Relational Querying"
         }
-      ]
+      ],
+      "_anchor": "relational-querying"
     },
     {
       "_type": "paragraph",
@@ -27,7 +28,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AZDfgNuyvDrRCXueFTIRZNyt0k",
-      "code": "await cms.first({\n  type: DocsSchema,\n  include: {\n    parents: Query.parents({\n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    }),  \n    children: Query.children({\n      type: Doc, \n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    }),\n    siblings: Query.siblings({\n      type: Docs, \n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    })\n  }\n})",
+      "code": "await cms.first({\n  type: DocsSchema,\n  include: {\n    parents: Query.parents({\n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    }),  \n    children: Query.children({\n      type: DocSchema, \n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    }),\n    siblings: Query.siblings({\n      type: DocsSchema, \n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    })\n  }\n})",
       "fileName": "",
       "language": ""
     },
@@ -39,7 +40,8 @@
           "_type": "text",
           "text": "Sequential Navigation"
         }
-      ]
+      ],
+      "_anchor": "sequential-navigation"
     },
     {
       "_type": "paragraph",
@@ -65,7 +67,8 @@
           "_type": "text",
           "text": "Translations"
         }
-      ]
+      ],
+      "_anchor": "translations"
     },
     {
       "_type": "paragraph",
@@ -91,6 +94,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189232,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189232,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

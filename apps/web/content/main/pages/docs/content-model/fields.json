@@ -20,9 +20,8 @@
             {
               "_type": "link",
               "_id": "2YklnbZpfpvE0AR4C7PRVp22UEX",
-              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
               "_link": "entry",
-              "title": ""
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd"
             }
           ]
         },
@@ -35,7 +34,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "2YklqLFpIIeyPugEBoAD6iZSvtr",
-      "code": "import {Config, Field} from 'alinea'\nimport {FieldOptions, ScalarField, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default Config.type('Kitchen sink', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Basic fields', {\n        fields: {\n          title: Field.text('Text field'),\n          path: Field.path('Path field', {\n            help: 'Creates a slug of the value of another field'\n          }),\n          richText: Field.richText('Rich text field'),\n          select: Field.select('Select field', {\n            options: {\n              a: 'Option a',\n              b: 'Option b'\n            }\n          }),\n          number: Field.number('Number field', {\n            minValue: 0,\n            maxValue: 10\n          }),\n          check: Field.check('Check field', {label: 'Check me please'}),\n          date: Field.date('Date field'),\n          code: Field.code('Code field')\n        }\n      }),\n      Field.tab('Link fields', {\n        fields: {\n          externalLink: Field.url('External link'),\n          entry: Field.entry('Internal link'),\n          linkMultiple: Field.link.multiple('Mixed links, multiple'),\n          image: Field.entry('Image link'),\n          file: Field.entry('File link')\n        }\n      }),\n\n      Field.tab('List fields', {\n        fields: {\n          list: Field.list('My list field', {\n            schema: {\n              Text: Config.type('Text', {\n                fields: {\n                  title: Field.text('Item title'),\n                  text: Field.richText('Item body text')\n                }\n              }),\n              Image: Config.type('Image', {\n                fields: {\n                  image: Field.image('Image')\n                }\n              })\n            }\n          })  \n        }\n      }),\n      Field.tab('Inline fields', {\n        fields: {\n          street: Field.text('Street', {width: 0.6, inline: true, multiline: true}),\n          streetNr: Field.text('Number', {width: 0.2, inline: true}),\n          box: Field.text('Box', {width: 0.2, inline: true}),\n          zip: Field.text('Zipcode', {width: 0.2, inline: true}),\n          city: Field.text('City', {width: 0.4, inline: true}),\n          country: Field.text('Country', {\n            width: 0.4,\n            inline: true\n          })\n        }\n      }),\n      Field.tab('Custom fields', {\n        fields: {\n          range: range('Range field')  \n        }\n      })\n    )\n  }\n})\n"
+      "code": "import {Config, Field} from 'alinea'\nimport {FieldOptions, ScalarField, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default Config.type('Kitchen sink', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Basic fields', {\n        fields: {\n          title: Field.text('Text field'),\n          path: Field.path('Path field', {\n            help: 'Creates a slug of the value of another field'\n          }),\n          richText: Field.richText('Rich text field'),\n          select: Field.select('Select field', {\n            options: {\n              a: 'Option a',\n              b: 'Option b'\n            }\n          }),\n          number: Field.number('Number field', {\n            minValue: 0,\n            maxValue: 10\n          }),\n          check: Field.check('Check field', {description: 'Check me please'}),\n          date: Field.date('Date field'),\n          code: Field.code('Code field')\n        }\n      }),\n      Field.tab('Link fields', {\n        fields: {\n          externalLink: Field.url('External link'),\n          entry: Field.entry('Internal link'),\n          linkMultiple: Field.link.multiple('Mixed links, multiple'),\n          image: Field.image('Image link'),\n          file: Field.file('File link')\n        }\n      }),\n\n      Field.tab('List fields', {\n        fields: {\n          list: Field.list('My list field', {\n            schema: {\n              Text: Config.type('Text', {\n                fields: {\n                  title: Field.text('Item title'),\n                  text: Field.richText('Item body text')\n                }\n              }),\n              Image: Config.type('Image', {\n                fields: {\n                  image: Field.image('Image')\n                }\n              })\n            }\n          })  \n        }\n      }),\n      Field.tab('Inline fields', {\n        fields: {\n          street: Field.text('Street', {width: 0.6, inline: true, multiline: true}),\n          streetNr: Field.text('Number', {width: 0.2, inline: true}),\n          box: Field.text('Box', {width: 0.2, inline: true}),\n          zip: Field.text('Zipcode', {width: 0.2, inline: true}),\n          city: Field.text('City', {width: 0.4, inline: true}),\n          country: Field.text('Country', {\n            width: 0.4,\n            inline: true\n          })\n        }\n      }),\n      Field.tab('Custom fields', {\n        fields: {\n          range: range('Range field')  \n        }\n      })\n    )\n  }\n})\n"
     },
     {
       "_type": "heading",
@@ -45,7 +44,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "paragraph",
@@ -65,7 +65,8 @@
           "_type": "text",
           "text": "`initialValue`"
         }
-      ]
+      ],
+      "_anchor": "initialvalue"
     },
     {
       "_type": "paragraph",
@@ -85,7 +86,8 @@
           "_type": "text",
           "text": "`hidden`"
         }
-      ]
+      ],
+      "_anchor": "hidden"
     },
     {
       "_type": "paragraph",
@@ -105,7 +107,8 @@
           "_type": "text",
           "text": "`readOnly`"
         }
-      ]
+      ],
+      "_anchor": "readonly"
     },
     {
       "_type": "paragraph",
@@ -125,7 +128,8 @@
           "_type": "text",
           "text": "`help`"
         }
-      ]
+      ],
+      "_anchor": "help"
     },
     {
       "_type": "paragraph",
@@ -145,7 +149,8 @@
           "_type": "text",
           "text": "`inline`"
         }
-      ]
+      ],
+      "_anchor": "inline"
     },
     {
       "_type": "paragraph",
@@ -165,7 +170,8 @@
           "_type": "text",
           "text": "`width`"
         }
-      ]
+      ],
+      "_anchor": "width"
     },
     {
       "_type": "paragraph",
@@ -185,7 +191,8 @@
           "_type": "text",
           "text": "`shared`"
         }
-      ]
+      ],
+      "_anchor": "shared"
     },
     {
       "_type": "paragraph",
@@ -228,7 +235,8 @@
           "_type": "text",
           "text": "`required`"
         }
-      ]
+      ],
+      "_anchor": "required"
     },
     {
       "_type": "paragraph",
@@ -248,7 +256,8 @@
           "_type": "text",
           "text": "`validate`"
         }
-      ]
+      ],
+      "_anchor": "validate"
     },
     {
       "_type": "paragraph",
@@ -256,7 +265,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The `validate` option can be used to validate the field value using a custom function. The function should return `true` if the value is valid, `false` if it is not valid and a string if it is not valid and a message should be shown to the user."
+          "text": "The `validate` option can be used to validate the field value using a custom function. Return a string to show it as the validation message, or return nothing (`undefined`) when the value is valid."
         }
       ]
     },
@@ -275,7 +284,8 @@
           "_type": "text",
           "text": "Conditional configuration"
         }
-      ]
+      ],
+      "_anchor": "conditional-configuration"
     },
     {
       "_type": "paragraph",
@@ -311,7 +321,8 @@
           "_type": "text",
           "text": "Example"
         }
-      ]
+      ],
+      "_anchor": "example"
     },
     {
       "_type": "CodeBlock",
@@ -334,6 +345,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189129,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189129,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

@@ -552,7 +552,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "The tools are `describe_schema`, `find_entries`, `get_entry`, `create_entry`, `update_entry`, `delete_entry`, `publish_entry`, `archive_entry`, `move_entry`, `upload_file` and `find_references`. Call `describe_schema` first. If the MCP server cannot be connected, edit the content JSON files following "
+          "text": "The tools are `describe_schema`, `find_entries`, `get_entry`, `create_entry`, `update_entry`, `delete_entry`, `publish_entry`, `archive_entry`, `move_entry`, `upload_file` and `find_references`. Call `describe_schema` first. The "
+        },
+        {
+          "_type": "text",
+          "text": "MCP server",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyfL3WX7Gull7LOmmjP7oSYOm",
+              "_link": "url",
+              "href": "https://alineacms.com/docs/mcp"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " page describes every tool, its parameters and the value formats it accepts. If the MCP server cannot be connected, edit the content JSON files following "
         },
         {
           "_type": "text",
@@ -971,11 +987,33 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Working with AI agents and the MCP server",
+                  "text": "MCP server",
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "3JjtWrHb93LGCV9OcyvynorODWU",
+                      "_id": "3JjyfGdXwemMOJgWdNmUMiVhkra",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/mcp"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Working with AI agents",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWtvRmGtjcuUl8oebOyOsh7k",
                       "_link": "url",
                       "href": "https://alineacms.com/docs/ai-agents"
                     }
@@ -1046,7 +1084,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790186437,
+    "updatedAt": 1790188873,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

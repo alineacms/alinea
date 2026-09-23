@@ -32,38 +32,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "While `alinea dev` runs, it also serves a Model Context Protocol (MCP) server next to the local dashboard. Coding agents such as Claude Code, Cursor or Codex use it to read the schema and to create, edit, publish and delete entries through the same write path as the dashboard. Internal fields such as `_id`, `_index`, list row ids, rich text nodes, link objects and media metadata are filled in for them, so the result is always valid and an open dashboard updates live. Prefer it over editing JSON files by hand, the rules further down this page remain the reference for manual edits."
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "The MCP server only exists during `alinea dev`: it is not part of `alinea build` or your deployed handler, and it only accepts requests from localhost. Its url is printed when the dev server starts (`MCP server: http://localhost:4500/mcp`), the port moves to 4501 and up when 4500 is taken."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Setup"
-        }
-      ],
-      "_anchor": "setup"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Add the server to Claude Code:"
+          "text": "While `alinea dev` runs it also serves an MCP server that coding agents such as Claude Code, Cursor or Codex use to read the schema and to create, edit, publish and delete entries through the same save path as the dashboard. It fills in internal fields such as `_id`, `_index`, list row ids, rich text nodes, link objects and media metadata, so the result is always valid and an open dashboard updates live. Connect your agent to it with:"
         }
       ]
     },
@@ -81,186 +50,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Or share it with your team in a project `.mcp.json` file:"
-        }
-      ]
-    },
-    {
-      "_id": "3JjZbUNoME5HzQuHJcAlFk43rV9",
-      "_type": "CodeBlock",
-      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
-      "fileName": "",
-      "language": "json",
-      "compact": false
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "Prefer it over editing JSON files by hand. The "
+        },
         {
           "_type": "text",
-          "text": "Cursor reads the same configuration from `.cursor/mcp.json`, where the `url` alone is enough. Start `alinea dev` (or your dev script that runs it) before the agent connects."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
+          "text": "MCP server",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jjya3vj0dLOjs3qoc3u5u2RVSD",
+              "_link": "entry",
+              "_entry": "3JjyQUq7OEXLa3wIwCkEgiRasxN"
+            }
+          ]
+        },
         {
           "_type": "text",
-          "text": "Tools"
-        }
-      ],
-      "_anchor": "tools"
-    },
-    {
-      "_type": "bulletList",
-      "content": [
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`describe_schema`: workspaces, roots, locales, types, fields and how to write a value for every field kind. Agents start with `detail: \"summary\"` for an overview, then describe each type they will write by passing `type`."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`find_entries`: list entries by workspace, root, type, parent, locale, status or search terms, in the order of the content tree."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`get_entry`: read an entry by id or url, rich text is returned as Markdown. Without a locale it returns the root's default locale and lists the other translations."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`create_entry`: create an entry, or a translation with `translationOf`. Rich text accepts Markdown, links accept entry ids and list rows need no ids."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`update_entry`: change some fields of an entry, published or as a draft. Only what is passed changes: object fields merge, list rows with the `_id` of an existing row merge into that row, and a list can be patched with operations instead of being sent again."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`find_references`: list the entries linking to an entry, with the field holding each link, and the entries it links to."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`delete_entry`, `publish_entry`, `archive_entry` and `move_entry`: remove entries, change their status or move them in the content tree. `delete_entry` refuses to delete an entry that other entries link to unless `force: true` is passed."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`upload_file`: add a local file or a downloaded url to the media library, with its alt text and focus point, image dimensions and previews computed. It returns the id to use in image and file fields. Pass `replace` with the id of a media entry to swap its file: the entry keeps its id, so every link to it keeps working, and the old file is removed."
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "List operations change rows by their `_id` and leave the others as they are:"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3Jjwoz42g74hv4uOZjVAHSBDmvP",
-      "code": "{\n  \"id\": \"<entry id>\",\n  \"data\": {\n    \"sections\": {\n      \"update\": [{\"_id\": \"<row id>\", \"title\": \"New title\"}],\n      \"insert\": [{\"row\": {\"_type\": \"Cta\", \"title\": \"Get started\"}, \"after\": \"<row id>\"}],\n      \"remove\": [\"<row id>\"]\n    }\n  }\n}",
-      "fileName": "",
-      "language": "json"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Entries are published by default, pass `publish: false` to save a draft when drafts are enabled. Validation errors name the field path and the expected value, so the agent can correct its input and retry."
+          "text": " page covers the setup for other agents, every tool and the value formats. The rules on the rest of this page remain the reference for manual edits."
         }
       ]
     },
@@ -297,7 +103,23 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "The Alinea full-llms.txt file holds all documentation (including this playbook section). Use this as primary source of truth."
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "llms-full.txt",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jjya1DYdtNUrMWzhazlDcmUf9L",
+                      "_link": "url",
+                      "href": "https://alineacms.com/llms-full.txt"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " file holds all documentation (including this playbook). Use this as primary source of truth."
                 }
               ]
             }
@@ -377,7 +199,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "The source code of the alinea documentation website is also publicly available on https://github.com/alineacms/alineacms.com. The documentation website is itself created with Alinea + Next.js and can serve as a useful example."
+                  "text": "The source code of the Alinea website is publicly available in the `apps/web` directory of https://github.com/alineacms/alinea. The website, including these docs, is itself built with Alinea and Next.js and can serve as a useful example."
                 }
               ]
             }
@@ -518,6 +340,34 @@
                 {
                   "_type": "text",
                   "text": "`_seeded`: only for entries that correspond to seeded config pages (`Config.page(...)`). Keep path stable."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The file name is the entry's path (url slug): `docs/reference/cli.json` has path `cli`. Published entry files don't store a `path` field, draft files (`*.draft.json`) do."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Translations of an entry share the same `_id`, one file per locale folder."
                 }
               ]
             }
@@ -735,7 +585,7 @@
     {
       "_id": "3AQhEEidv1VGL0XMoV3RkckFfso",
       "_type": "CodeBlock",
-      "code": "// Example workspace layout in this repository\ncontent/\n  main/\n    pages/\n      docs.json\n      docs/\n        reference/\n          cli.json\n    media/\n      screenshot.json\n  demo/\n    pages/\n      index.json\n      recipes/\n        chocolate-chip.json\n    media/\n      ...\n\n// Workspace key -> source\nmain -> content/main\ndemo -> content/demo\n\n// Root key -> folder under each workspace source\npages -> <workspace>/pages\nmedia -> <workspace>/media",
+      "code": "// Example workspace layout in this repository\ncontent/\n  main/\n    pages/\n      docs.json\n      docs/\n        reference/\n          cli.json\n    media/\n      dashboard.json\n  demo/\n    pages/\n      en/\n        index.json\n        products.json\n        products/\n          otto-stool.json\n      nl/\n        ...\n    authors/\n      maya-janssens.json\n    media/\n      ...\n\n// Workspace key -> source\nmain -> content/main\ndemo -> content/demo\n\n// Root key -> folder under each workspace source\npages -> <workspace>/pages\nmedia -> <workspace>/media\n\n// A translated root has a folder per locale\ndemo pages (en, nl, fr) -> content/demo/pages/en, content/demo/pages/nl, ...",
       "fileName": "",
       "language": "text",
       "compact": false
@@ -829,7 +679,7 @@
     {
       "_id": "3AQhEAc2JMSPC3IotHJuc9aZYF9",
       "_type": "CodeBlock",
-      "code": "# Normalize metadata via Alinea fix path\nalinea build --fix\n\n# In this repository\nbun run build -- --fix\n\n# Final validation\nbun run build",
+      "code": "# Fill in missing or incorrect properties with their defaults\nnpx alinea build --fix\n\n# Final validation: your build script runs alinea build before next build\nnpm run build",
       "fileName": "",
       "language": "shellscript",
       "compact": false
@@ -859,7 +709,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790187962,
+    "updatedAt": 1790188856,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

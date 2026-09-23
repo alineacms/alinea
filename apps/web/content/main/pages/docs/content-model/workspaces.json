@@ -31,7 +31,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "paragraph",
@@ -48,9 +49,8 @@
             {
               "_type": "link",
               "_id": "2aB37bqwCoFd6oFLcZmHCOgUcSJ",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
               "_link": "entry",
-              "title": ""
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
             }
           ]
         },
@@ -68,7 +68,8 @@
           "_type": "text",
           "text": "`color`"
         }
-      ]
+      ],
+      "_anchor": "color"
     },
     {
       "_type": "paragraph",
@@ -76,7 +77,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Pick a theme color this workspace."
+          "text": "Pick a theme color for this workspace. If omitted a color is derived from the workspace label."
         }
       ]
     },
@@ -88,7 +89,8 @@
           "_type": "text",
           "text": "`source`"
         }
-      ]
+      ],
+      "_anchor": "source"
     },
     {
       "_type": "paragraph",
@@ -101,6 +103,14 @@
       ]
     },
     {
+      "_type": "CodeBlock",
+      "_id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
+      "code": "// content is stored in the `content` directory\nsource: './content'",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
       "_type": "heading",
       "level": 3,
       "content": [
@@ -108,7 +118,8 @@
           "_type": "text",
           "text": "`roots`"
         }
-      ]
+      ],
+      "_anchor": "roots"
     },
     {
       "_type": "paragraph",
@@ -137,14 +148,6 @@
       ]
     },
     {
-      "_type": "CodeBlock",
-      "_id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
-      "code": "// content is stored in the `content` directory\nsource: './content'",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
       "_type": "heading",
       "level": 3,
       "content": [
@@ -152,7 +155,8 @@
           "_type": "text",
           "text": "`mediaDir`"
         }
-      ]
+      ],
+      "_anchor": "mediadir"
     },
     {
       "_type": "paragraph",
@@ -180,6 +184,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790189230,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189230,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

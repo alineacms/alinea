@@ -21,11 +21,13 @@
       "image": {
         "_id": "3JjflRflm91E2wRpkpdzWTYGn3F",
         "_type": "image",
+        "_index": "",
         "_entry": "3JjekoQez3OJmuOiJSZ37tE5JDo"
       },
       "darkImage": {
         "_id": "3JjflOMFNob3ZlaVosZsxIXTaNF",
         "_type": "image",
+        "_index": "",
         "_entry": "3JjeksPO46LakWub1Kw2JxvvpGV"
       },
       "caption": "Editing a product in the Oak & Loom demo, with the page previewed live beside the form."
@@ -45,9 +47,8 @@
             {
               "_type": "link",
               "_id": "2YlC927lwX5hfm2G9JHx9j3yRux",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
               "_link": "entry",
-              "title": ""
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
             }
           ]
         },
@@ -78,7 +79,7 @@
     {
       "_id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
       "_type": "CodeBlock",
-      "code": "import {cms} from '@/cms'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews widget />\n    </>\n  )\n}",
+      "code": "import {cms} from '@/cms'\nimport type {PropsWithChildren} from 'react'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews widget />\n    </>\n  )\n}",
       "fileName": "app/layout.tsx",
       "language": "",
       "compact": false
@@ -109,7 +110,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790179547,
+    "updatedAt": 1790188824,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

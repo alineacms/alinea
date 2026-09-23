@@ -46,7 +46,8 @@
           "_type": "text",
           "text": "Configuration"
         }
-      ]
+      ],
+      "_anchor": "configuration"
     },
     {
       "_type": "paragraph",
@@ -63,9 +64,8 @@
             {
               "_type": "link",
               "_id": "2aAxVMSAONngMXzsR2poLuRALIY",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
               "_link": "entry",
-              "title": ""
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
             }
           ]
         },
@@ -83,7 +83,8 @@
           "_type": "text",
           "text": "Example schema"
         }
-      ]
+      ],
+      "_anchor": "example-schema"
     },
     {
       "_type": "paragraph",
@@ -98,7 +99,7 @@
     {
       "_type": "CodeBlock",
       "_id": "286gbW4zHgdrAHcGBLGRtixZguV",
-      "code": "import {Config, Field} from 'alinea'\n\nConfig.schema({\n  types: {\n    BlogOverview: Config.document('Blog overview', {\n      contains: ['BlogPost']\n    }),\n    BlogPost: Config.document('Blog post', {\n      fields: {\n        publishDate: Field.date('Publish date'),\n        body: Field.richText('Body')\n      }\n    })\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nConfig.schema({\n  types: {\n    BlogOverview: Config.document('Blog overview', {\n      contains: ['BlogPost'],\n      fields: {}\n    }),\n    BlogPost: Config.document('Blog post', {\n      fields: {\n        publishDate: Field.date('Publish date'),\n        body: Field.richText('Body')\n      }\n    })\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -111,6 +112,16 @@
       "title": "",
       "image": {},
       "description": ""
+    },
+    "createdAt": 1790189049,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790189049,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }
