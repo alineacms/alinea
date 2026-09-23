@@ -97,16 +97,18 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
             </div>
           )}
         </header>
-        <Section flush className={styles.root.cover()}>
-          <BlogCover
-            className={styles.root.cover.figure()}
-            cover={page.cover}
-            text={page.coverText}
-            size="post"
-            sizes="(max-width: 1440px) 100vw, 1280px"
-            priority
-          />
-        </Section>
+        {(page.cover?.src || page.coverText) && (
+          <Section flush className={styles.root.cover()}>
+            <BlogCover
+              className={styles.root.cover.figure()}
+              cover={page.cover}
+              text={page.coverText}
+              size="post"
+              sizes="(max-width: 1440px) 100vw, 1280px"
+              priority
+            />
+          </Section>
+        )}
         <div className={styles.root.content()}>
           <BlogPostBody body={page.body} />
           {author && (
