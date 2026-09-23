@@ -1,0 +1,71 @@
+/*
+  Example themes: each one only sets the theme inputs from src/theme.css.
+  The story applies them to the document element, next to data-alinea-theme.
+*/
+.ThemingStory {
+  height: 100vh;
+  background: var(--alinea-backdrop);
+  color: var(--alinea-fg);
+  font-family: var(--alinea-font);
+}
+
+.ThemingStory-slate {
+  --alinea-radius: 6px;
+  --alinea-backdrop: light-dark(#f4f4f5, #09090b);
+  --alinea-bg: light-dark(#ffffff, #18181b);
+  --alinea-fg: light-dark(#27272a, #e4e4e7);
+  --alinea-border: light-dark(#e4e4e7, #27272a);
+  --alinea-primary: light-dark(#18181b, #fafafa);
+  --alinea-primary-fg: light-dark(#fafafa, #18181b);
+  --alinea-ring: light-dark(#71717a, #a1a1aa);
+}
+
+.ThemingStory-forest {
+  --alinea-radius: 10px;
+  --alinea-backdrop: light-dark(#eef2ec, #0e1511);
+  --alinea-bg: light-dark(#fbfcf8, #162019);
+  --alinea-fg: light-dark(#2b3a30, #dbe6dc);
+  --alinea-border: light-dark(#d9e2d4, #26342a);
+  --alinea-primary: light-dark(#2f6b45, #5fbf82);
+  --alinea-primary-fg: light-dark(#f4fbf5, #0c1a11);
+  --alinea-ring: #4f9d6c;
+}
+
+.ThemingStory-rose {
+  --alinea-radius: 14px;
+  --alinea-font: ui-rounded, 'Inter', sans-serif;
+  --alinea-backdrop: light-dark(#fbf1f4, #1a1015);
+  --alinea-bg: light-dark(#fffafb, #24161d);
+  --alinea-fg: light-dark(#4a2a37, #f1dce4);
+  --alinea-border: light-dark(#f1d9e1, #3a2530);
+  --alinea-primary: light-dark(#c2366b, #f07aa6);
+  --alinea-primary-fg: light-dark(#fff6f9, #2a0f1b);
+  --alinea-ring: #e0558b;
+}
+
+.ThemingStory-contrast {
+  --alinea-radius: 2px;
+  --alinea-backdrop: light-dark(#ffffff, #000000);
+  --alinea-bg: light-dark(#ffffff, #000000);
+  --alinea-fg: light-dark(#000000, #ffffff);
+  --alinea-border: light-dark(#000000, #ffffff);
+  --alinea-primary: light-dark(#0038b8, #7fb0ff);
+  --alinea-primary-fg: light-dark(#ffffff, #000000);
+  --alinea-danger: light-dark(#b00020, #ff6b81);
+  --alinea-ring: light-dark(#000000, #ffffff);
+}
+
+.ThemingStory-controls {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius-lg);
+  background: var(--alinea-bg);
+  box-shadow: var(--alinea-shadow-modal);
+}
