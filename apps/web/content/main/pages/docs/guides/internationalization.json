@@ -10,39 +10,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alinea is built with internationalization in mind. It's possible to make content available in more than one language or region. To get started configure the `i18n` on a "
+          "text": "Alinea translates content per root: every entry in a translated root has a version per locale, each with its own fields, path and URL. For a few values that should be edited side by side for all languages, use a localised field instead (see "
         },
         {
           "_type": "text",
-          "text": "Root",
+          "text": "Localised fields",
           "marks": [
             {
               "_type": "link",
-              "_id": "XHuywJ5Fm6kEPueYKwPkt",
-              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
-              "_link": "entry"
+              "_id": "3JkF0gKyWmDN803rYs32kBNBBX7",
+              "_link": "url",
+              "href": "#localised-fields"
             }
           ]
         },
         {
           "_type": "text",
-          "text": " in your schema. It requires a list of supported locales. Any entry created within this root can then be translated to the other languages. The url of these entries will have the locale prepended (this behaviour can be configured, see the `entryUrl` property when creating a "
-        },
-        {
-          "_type": "text",
-          "text": "Type",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "sQuOh2rPighhFO4a3-Q0e",
-              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
-              "_link": "entry"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": ")."
+          "text": " below)."
         }
       ]
     },
@@ -60,6 +44,408 @@
         "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
       },
       "caption": "The Dutch translation of a product. Shared fields are the same in every language, the badge switches between locales."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Translate a root"
+        }
+      ],
+      "_anchor": "translate-a-root"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add `i18n` with the list of locales to a "
+        },
+        {
+          "_type": "text",
+          "text": "Root",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "XHuywJ5Fm6kEPueYKwPkt",
+              "_link": "entry",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". The first locale is the default: new entries start in it."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0jkxm1OuB13MTExiM7O3Pf9",
+      "code": "import {Config} from 'alinea'\n\nConfig.root('Pages', {\n  i18n: {\n    locales: ['en', 'fr', 'nl']\n  },\n  contains: ['Page', 'Blog']\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every locale gets its own folder, so translations of an entry are separate files that share one entry id:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0gLZAQgoOpoy0999vutAYpy",
+      "code": "content/pages/en/about.json\ncontent/pages/fr/a-propos.json\ncontent/pages/nl/over-ons.json",
+      "fileName": "",
+      "language": "text"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each translation has its own path, so the URLs above are `/en/about`, `/fr/a-propos` and `/nl/over-ons`. By default an entry's URL is the locale followed by the paths of its parents and its own path, and `index` entries are left out: the home page of the French site is `/fr`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Roots without `i18n` hold content that is the same in every language, such as authors or settings. Entries in one workspace can mix both kinds."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Translate in the dashboard"
+        }
+      ],
+      "_anchor": "translate-in-the-dashboard"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Translated roots show a language menu in the dashboard. When you open an entry in a locale it doesn't exist in yet, the dashboard offers to create the translation, empty or copied from an existing translation. A translation can only be created once its parent entry exists in that locale."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Mark fields that should be identical in every language with `shared: true`, for example images, prices or dates. Editors see them with a shared badge, and saving the entry writes the value to every translation. Only fields of the entry type itself can be shared, not fields inside list rows or objects."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0hPTTqmhECpWhpUa1LylfCg",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    description: Field.richText('Description'),\n    price: Field.number('Price', {shared: true}),\n    gallery: Field.image.multiple('Gallery', {shared: true})\n  }\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query translated content"
+        }
+      ],
+      "_anchor": "query-translated-content"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass `locale` to get the entries of one language. Without it, a query returns every translation."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0ctpEn0E2yIhytHVdhKc5tD",
+      "code": "const posts = await cms.find({\n  type: BlogPost,\n  locale: 'fr'\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Links follow the locale of the entry they are stored on: an entry link on the French page resolves to the French translation of the linked entry, or to the linked entry itself when it lives in a root without `i18n`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Query.translations` selects the other translations of an entry. Add `includeSelf: true` to include the current one. That is all you need for a language switcher and for `hreflang` alternates."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Routing in Next.js"
+        }
+      ],
+      "_anchor": "routing-in-next-js"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Put your pages below a `[locale]` segment and look entries up by their full URL:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0fBeyJLoZm8WqadIm9o3Tuq",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\n\ninterface PageProps {\n  params: Promise<{locale: string; slug?: Array<string>}>\n}\n\nfunction fetchPage(locale: string, slug: Array<string>) {\n  return cms.first({\n    root: cms.workspaces.main.pages,\n    locale,\n    url: `/${[locale, ...slug].join('/')}`,\n    select: {\n      title: Query.title,\n      translations: Query.translations({\n        includeSelf: true,\n        select: {locale: Query.locale, url: Query.url}\n      })\n    }\n  })\n}\n\nexport async function generateStaticParams() {\n  const pages = await cms.find({\n    root: cms.workspaces.main.pages,\n    select: {locale: Query.locale, url: Query.url}\n  })\n  return pages.map(({locale, url}) => ({\n    locale: locale!,\n    slug: url.split('/').filter(Boolean).slice(1)\n  }))\n}\n\nexport async function generateMetadata({params}: PageProps): Promise<Metadata> {\n  const {locale, slug = []} = await params\n  const page = await fetchPage(locale, slug)\n  if (!page) return {}\n  return {\n    title: page.title,\n    alternates: {\n      languages: Object.fromEntries(\n        page.translations.map(t => [t.locale!, t.url])\n      )\n    }\n  }\n}\n\nexport default async function Page({params}: PageProps) {\n  const {locale, slug = []} = await params\n  const page = await fetchPage(locale, slug)\n  if (!page) notFound()\n  return (\n    <main>\n      <nav>\n        {page.translations.map(t => (\n          <a key={t.locale} href={t.url} hrefLang={t.locale!}>\n            {t.locale}\n          </a>\n        ))}\n      </nav>\n      <h1>{page.title}</h1>\n    </main>\n  )\n}",
+      "fileName": "app/[locale]/[[...slug]]/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The same `Query.translations` selection gives you the `alternates.languages` of each URL in `app/sitemap.ts`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Change the URL structure"
+        }
+      ],
+      "_anchor": "change-the-url-structure"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set `entryUrl` on a "
+        },
+        {
+          "_type": "text",
+          "text": "Type",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "sQuOh2rPighhFO4a3-Q0e",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to change its URLs. It receives the locale, the paths and the `defaultUrl` described above. This one leaves the prefix out for English:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0ihZ5c4kO0YHdxcS0zuuBtK",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Page = Config.document('Page', {\n  entryUrl: ({locale, defaultUrl}) =>\n    locale === 'en' ? defaultUrl.replace(/^\\/en(?=\\/|$)/, '') || '/' : defaultUrl,\n  fields: {\n    body: Field.richText('Body')\n  }\n})",
+      "fileName": "schema/Page.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`entryUrl` is set per type, so share the function between the types of a translated root. Your routes have to match: here English pages are served without a `[locale]` segment, for example by rewriting them in middleware."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Localised fields"
+        }
+      ],
+      "_anchor": "localised-fields"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.localiser` wraps a field so that it stores a value for every locale in one entry. Editors fill in all languages next to each other. Queries return the plain value for the locale of the entry you query, so the result has the type of the wrapped field."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0d06QorcEPZBk69ZRXOj4U0",
+      "code": "import {Config, Field} from 'alinea'\n\nconst localise = Field.localiser({\n  locales: ['en', 'fr', 'nl'],\n  // Used when the requested locale has no value\n  fallback: locale => (locale === 'en' ? [] : ['en'])\n})\n\nexport const Product = Config.document('Product', {\n  fields: {\n    description: Field.richText('Description'),\n    badge: localise(Field.text('Badge', {shared: true}))\n  }\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The stored value is an object keyed by locale, such as `{\"en\": \"New\", \"fr\": \"Nouveau\", \"nl\": \"Nieuw\"}`. Combined with `shared: true`, as above, short labels are managed in one place while the rest of the entry is translated per locale."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locales`: the locales to store, at least one."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fallback`: returns the locales to try, in order, when the value for the requested locale is empty (missing, `null` or `\"\"`)."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An entry without a locale, in a root without `i18n`, always gets the value of the first locale. Localised fields also work inside objects, list rows and rich text blocks."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media"
+        }
+      ],
+      "_anchor": "media"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media files are shared between languages. Their alt text can be translated: add `i18n` to the media root with `Config.media({i18n: {locales: ['en', 'fr', 'nl']}})`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Locale folders and default URLs use lowercase: `en-US` is stored in `en-us` and served on `/en-us`. The `locale` of a query is matched case-insensitively."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Adding a locale to `locales` doesn't create content: editors translate entries when they need them, starting from the parents."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`cms.first({url})` needs the full URL including the locale prefix, which also makes it unique across languages."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "metadata": {
@@ -76,7 +462,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188824,
+    "updatedAt": 1790196936,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

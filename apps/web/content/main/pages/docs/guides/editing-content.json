@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Your CMS instance has methods to create and update content. During development these will update the file system directly, while in production the changes will result in a new git commit."
+          "text": "Your `cms` instance can create, update, publish and delete entries from code, for example to import content from another system or to seed a new project. Changes go through your handler, like saves in the dashboard: during development they are written to your content files."
         }
       ]
     },
@@ -21,7 +21,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Creating Entries"
+          "text": "Run a script"
         }
       ],
       "_anchor": "creating-entries"
@@ -32,27 +32,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "New Entries can be created using the `create` function."
+          "text": "Scripts that edit content need a running dashboard to send their changes to. Run them as the command of `alinea dev`, which starts the dashboard, runs your script with the right environment and stops when the script exits:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "2bww0XuSHzm0f72kxNM5cQlVLvI",
-      "code": "import {Edit} from 'alinea'\n\n// Start a transaction to create a new entry of type BlogPost\nconst post = Edit.create({\n  type: BlogPost,\n  set: {\n    title: 'A new blog post',\n    body: 'Hello world'\n  }\n})\n\n// The new entry ID can be read before committing\nconsole.log(`Creating post with id: ${post.id}`)\n\n// Save the changes\nawait cms.commit(post)",
+      "_id": "3JkF0h30MkBRMjSDUhAegZOMNUL",
+      "code": "npx alinea dev -- npx tsx scripts/import.ts",
       "fileName": "",
-      "language": ""
+      "language": "shellscript"
     },
     {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Creating children"
-        }
-      ],
-      "_anchor": "creating-children"
+      "_type": "CodeBlock",
+      "_id": "3JkF0eWwEs3RGRlxEHyydHRU7a0",
+      "code": "import {cms} from '../cms'\nimport {BlogPost} from '../schema/BlogPost'\n\nconst post = await cms.create({\n  type: BlogPost,\n  set: {title: 'Hello world', intro: 'My first post'}\n})\n\nconsole.log(`Created ${post._url}`)",
+      "fileName": "scripts/import.ts",
+      "language": "tsx"
     },
     {
       "_type": "paragraph",
@@ -60,16 +56,53 @@
       "content": [
         {
           "_type": "text",
-          "text": "Set the `parentId` property to nest children under a parent."
+          "text": "tsx",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0fFNjRNGs35moexsb2b6EsV",
+              "_link": "url",
+              "href": "https://tsx.is"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " runs the TypeScript file and resolves the path aliases of your `tsconfig.json`. With Bun, run `bun alinea dev -- bun scripts/import.ts`. The script writes to your content files like an editor would: review the result with `git diff` and commit it."
         }
       ]
     },
     {
-      "_type": "CodeBlock",
-      "_id": "2c4tj6ItJDix4tpGojE9LGn0fTo",
-      "code": "import {Edit} from 'alinea'\n\nconst blog = Edit.create({\n  type: Blog,\n  set: {title: 'Blog'}\n})\nawait cms.commit(blog)\n\nconst posts = postData.map(data =>\n  Edit.create({\n    type: BlogPost,\n    parentId: blog.id, \n    set: {\n      title: data.title\n    }\n  })\n)\nawait cms.commit(...posts)",
-      "fileName": "",
-      "language": ""
+      "_type": "NoticeBlock",
+      "_id": "3JkF0gbQtLtlY6UHOiUkIwwGn3t",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "In production your handler only accepts changes from users signed in to the dashboard, so `cms.create` and friends fail in a deployed site unless the request comes from a signed-in editor. Run imports locally and push the result, or have a coding agent do the work through the "
+            },
+            {
+              "_type": "text",
+              "text": "MCP server",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "3JkF0jj7IRxj45os5m4fAyuSKhr",
+                  "_link": "entry",
+                  "_entry": "3JjyQUq7OEXLa3wIwCkEgiRasxN"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": "."
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -77,35 +110,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Update Fields"
-        }
-      ],
-      "_anchor": "update-fields"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Entry fields can be edited using the `update` function. Optionally pass the entry Type if you want to update its fields."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2bx3AJ8D93WgmthX8tiEqZura9X",
-      "code": "import {Edit} from 'alinea'\n\n// Select the first blog post\nconst post = await cms.get({\n  type: BlogPost\n})\n\n// Edit a field and save\nconst update = Edit.update({\n  id: post._id,\n  type: BlogPost,\n  set: {\n    body: 'New body text'\n  }\n})\n\nawait cms.commit(update)",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Constructing field values"
+          "text": "Create entries"
         }
       ],
       "_anchor": "constructing-field-values"
@@ -116,16 +121,133 @@
       "content": [
         {
           "_type": "text",
-          "text": "Some fields contain values that are more complex than a string. The Edit namespace contains helper functions to construct these. In this example we construct the value of a List Field."
+          "text": "`cms.create` creates an entry, saves it and returns it with all its fields:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "2c4t1IBcmwpjaS3YqNaJQxRpWss",
-      "code": "import {Config, Edit, Field} from 'alinea'\n\nconst richTextField = Field.richText('Item body text')\nconst listField = Field.list('My list field', {\n  schema: {\n    Text: Config.type('Text', {\n      fields: {\n        title: Field.text('Item title'),\n        text: richTextField\n      }\n    })\n  }\n})\nconst rowText = Edit.richText(richTextField)\n  .addHtml(`\n    <h1>Main heading</h1>\n    <p>A rich text value parsed from HTML.</p>\n  `)\n  .value()\nconst listValue = Edit.list(listField)\n  .add('Text', {\n    title: 'The row title',\n    text: rowText,\n  })\n  .value()\nconst update = Edit.update({\n  id: entryId,\n  type: TypeWithList,\n  set: {list: listValue}\n})",
+      "_id": "3JkF0ilwuxDWik3ScZ40GzAhgZX",
+      "code": "const post = await cms.create({\n  type: BlogPost,\n  root: 'pages',\n  locale: 'en',\n  set: {title: 'Hello world', intro: 'My first post'}\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type`: the type of the new entry. Required."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`set`: the field values. `title` is required, `path` is derived from it when you leave it out and gets a numeric suffix when a sibling already uses it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace`, `root`: where to create the entry, defaults to the first workspace and its first root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`parentId`: create the entry as a child of another entry. Pass `root` (and `workspace`) as well when the parent is not in the default root: they are not taken from the parent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: required in translated roots, one of the root's locales. Creating an entry with an existing `id` and a new locale adds a translation."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`status`: `'published'` (default), `'draft'` or `'archived'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`insertOrder`: `'last'` (default) or `'first'` among its siblings."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`id`: use your own id instead of a generated one."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -133,7 +255,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "File uploads"
+          "text": "Update entries"
         }
       ],
       "_anchor": "file-uploads"
@@ -144,27 +266,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "Files can be uploaded using the upload function."
+          "text": "`cms.update` changes fields of an existing entry and returns the updated entry. Only the fields in `set` change, each one is replaced as a whole:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "2bx3SNjDfXQsRSkJYEUX5GY3qg9",
-      "code": "import {Edit} from 'alinea'\n\nconst file = new File(['content'], 'test.txt')\nconst upload = Edit.upload({file})\n\n// The new entry ID can be read before committing\nconsole.log(`Uploading file with id: ${upload.id}`)\n\n// Upload file and save file metadata\nawait cms.commit(upload)",
+      "_id": "3JkF0iaBz3pjvM0qUqZlSEsXJSU",
+      "code": "await cms.update({\n  type: BlogPost,\n  id: post._id,\n  locale: 'en',\n  set: {intro: 'An updated intro'}\n})",
       "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Creating image previews"
-        }
-      ],
-      "_anchor": "creating-image-previews"
+      "language": "tsx"
     },
     {
       "_type": "paragraph",
@@ -172,16 +283,388 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alinea can create all the metadata for images (such as previews) by passing a `createPreview` function. On the server this will use the `sharp` package to read image data. The package will need to be installed separately."
+          "text": "`update` edits the published version unless you pass `status: 'draft'` or `'archived'`. In a translated root, pass the `locale` of the translation to edit: it defaults to `null`, the locale of untranslated entries."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Commit several changes at once"
+        }
+      ],
+      "_anchor": "commit-several-changes-at-once"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `Edit` namespace builds operations without running them. Pass any number of them to `cms.commit` to save them together, in one commit. An operation knows the id of its entry before it is committed, so you can link or nest entries you create in the same commit:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2c4tj6ItJDix4tpGojE9LGn0fTo",
+      "code": "import {Edit} from 'alinea'\n\nconst blog = Edit.create({\n  type: Blog,\n  root: 'pages',\n  set: {title: 'Blog'}\n})\n\nconst posts = postData.map(data =>\n  Edit.create({\n    type: BlogPost,\n    root: 'pages',\n    parentId: blog.id,\n    set: {title: data.title}\n  })\n)\n\nawait cms.commit(blog, ...posts)",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The operations:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.create(query)` and `Edit.update(query)`: take the same options as `cms.create` and `cms.update`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.publish({id, status, locale})`: publish the `'draft'` or `'archived'` version of an entry."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.archive({id, locale})`: archive the published version."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.move({id, target, dropPosition})`: move an entry `'before'` or `'after'` a sibling, or `'on'` another entry to make it a child. Add `targetType: 'root'` to move it to the top level of a root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.remove(...ids)`: delete entries with all their translations and children. Seeded entries can't be removed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.upload(query)`: upload a file, see below."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`cms` has a method for each of them that commits right away: `cms.publish`, `cms.archive`, `cms.move`, `cms.remove`, `cms.upload`, plus `cms.unpublish` and `cms.discard` (remove the draft or archived version of an entry)."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Build field values"
+        }
+      ],
+      "_anchor": "build-field-values"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most fields store plain values. Rich text, lists and links store structured JSON with ids and ordering keys. The `Edit` helpers build those values for you:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2c4t1IBcmwpjaS3YqNaJQxRpWss",
+      "code": "import {Config, Edit, Field} from 'alinea'\n\nconst body = Field.richText('Body')\nconst sections = Field.list('Sections', {\n  schema: {\n    Text: Config.type('Text', {\n      fields: {\n        title: Field.text('Title'),\n        text: body\n      }\n    })\n  }\n})\n\nconst text = Edit.richText(body)\n  .addHtml('<h2>Main heading</h2><p>Parsed from <strong>HTML</strong>.</p>')\n  .value()\n\nconst rows = Edit.list(sections)\n  .add('Text', {title: 'The row title', text})\n  .value()\n\nconst author = Edit.link(BlogPost.author).addEntry(authorId).value()",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.richText(field)`: `add(type, block)` appends a rich text block, `addHtml(html)` parses HTML into rich text, `value()` returns the result."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.list(field)`: `add(type, row)` appends a row, `insertAt(index, type, row)` and `removeAt(index)` edit an existing list passed as second argument."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Edit.link(field)`: `addEntry(id)`, `addImage(id)`, `addFile(id)` or `addUrl({url, title, target})`. `Edit.links(field)` does the same for fields with multiple links."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Upload files"
+        }
+      ],
+      "_anchor": "upload-files"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`cms.upload` uploads a file to the media library and returns the new media file entry. Use the id to link the file from an image or file field:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2bxKAtZiQcruhSmRPO9PldQZ3mR",
-      "code": "import {Edit} from 'alinea'\nimport {createPreview} from 'alinea/core/media/CreatePreview'\nimport fs from 'node:fs'\n\nconst file = new File([\n  fs.readFileSync('./test.png')\n], 'test.png')\nconst upload = Edit.upload({\n  file, createPreview\n})\nawait cms.commit(upload)",
+      "code": "import {Edit} from 'alinea'\nimport {createPreview} from 'alinea/core/media/CreatePreview'\nimport {readFile} from 'node:fs/promises'\n\nconst file = new File([await readFile('./photo.jpg')], 'photo.jpg', {\n  type: 'image/jpeg'\n})\nconst image = await cms.upload({file, createPreview})\n\nawait cms.update({\n  type: Page,\n  id: pageId,\n  set: {hero: Edit.link(Page.hero).addImage(image._id).value()}\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`file`: a `File`, or a `[name, bytes]` tuple."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace`, `root`, `parentId`: where to store it, defaults to the media root of the first workspace. Pass the id of a media folder as `parentId` to upload into it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`createPreview`: pass it for images to store their dimensions, average color, focus point and a small preview. It uses the `sharp` package on the server, which you need to install yourself."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`replaceId`: replace the file of an existing media entry."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Uploads count against the `maxUploadSize` of your config."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Every commit is checked against the roles of the user who makes it, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Roles and permissions",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0eEgPqgQQoTRJPUp6jmqUla",
+                      "_link": "entry",
+                      "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ". In development that is the local admin."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Validation from your schema (`required`, `validate`) runs in the dashboard, not on `cms.create` or `cms.update`: check your data before you commit it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "To normalize content files after bulk edits, run `alinea build --fix`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "metadata": {
@@ -198,7 +681,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188838,
+    "updatedAt": 1790196937,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

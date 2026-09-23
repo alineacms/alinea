@@ -11,22 +11,37 @@
       "content": [
         {
           "_type": "text",
-          "text": "A text field is used to input textual data."
+          "text": "A text field holds a plain string: a name, a short description, a label. Use "
+        },
+        {
+          "_type": "text",
+          "text": "rich text",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF03TwTrc6s3idLb7D1NZIZ1f",
+              "_link": "entry",
+              "_entry": "268hjH2OU9fiReg61Wov1SRbPD5"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " when editors need formatting or links."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
-      "code": "import {Field} from 'alinea'\n\nField.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
+      "code": "import {Field} from 'alinea'\n\nField.text('Summary', {\n  help: 'Shown on overview pages',\n  multiline: true,\n  searchable: true\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "kLT1p_gpGFN1L9rIy9e5E",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Text field', {\n  fields: {\n    text: Field.text('My text field', {\n      help: 'This is an example field',\n      multiline: true,\n      initialValue: 'A text value'\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Text field', {\n  fields: {\n    title: Field.text('Title', {width: 0.5}),\n    email: Field.text('Email', {type: 'email', width: 0.5}),\n    summary: Field.text('Summary', {\n      help: 'Shown on overview pages',\n      multiline: true,\n      initialValue: 'A text value'\n    }),\n    city: Field.text('City', {inline: true})\n  }\n})"
     },
     {
       "_type": "heading",
@@ -34,17 +49,150 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration"
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`multiline`: allow line breaks, the field is shown as a text area. Default `false`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`placeholder`: a short hint shown while the field is empty."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type`: the input type, one of `'text'` (default), `'email'`, `'tel'` or `'url'`. It changes the keyboard on mobile devices and is ignored for multiline fields. It doesn't validate the value, use `validate` for that."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`searchable`: add the value to the search index, so `search` queries also match on it. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Search",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF01cS2SgrHQg3vzSCOK0UDvk",
+                      "_link": "entry",
+                      "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`autoFocus`: focus the input when the entry opens."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF04pRfdc9JGfTDA1YNYEC10t",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`searchable`"
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The field stores a string and queries return it as is. New entries start with an empty string (`''`), not `undefined`, unless you set an `initialValue`. Line breaks in a multiline field are stored as `\\n`: render them with `white-space: pre-line` or split on them."
         }
       ]
     },
@@ -54,27 +202,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Index the content of this field so it can be found in a search query."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`autoFocus`"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Focus this input automatically"
+          "text": "Single-line text fields are shown as a column when an entry's children are listed in the dashboard's overview."
         }
       ]
     }
@@ -87,6 +215,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

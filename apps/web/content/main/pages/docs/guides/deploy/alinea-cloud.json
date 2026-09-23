@@ -10,35 +10,268 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alinea.cloud",
+          "text": "Alinea Cloud",
           "marks": [
             {
               "_type": "link",
-              "_id": "4RHJhMZXGQ13vbHvC7egE",
-              "href": "https://www.alinea.cloud",
-              "target": "_blank"
+              "_id": "3JkF1lPXbCQrPyBIevSSZp91utX",
+              "_link": "url",
+              "href": "https://www.alinea.cloud"
             }
           ]
         },
         {
           "_type": "text",
-          "text": " provides a cloud service to set up a backend in a few clicks. It takes care of authentication, inviting other users to collaborate, and pushing changes to your git repository. After "
+          "text": " is a hosted backend for your handler. It signs editors in, lets you invite users and give them roles, stores uploads and commits changes to your git repository. You don't need a database or auth provider of your own."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Connect your site"
+        }
+      ],
+      "_anchor": "connect-your-site"
+    },
+    {
+      "_type": "orderedList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Prepare and deploy your site",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "2YlEhUcMm8GgmJorhjRWUVpZ6TI",
+                      "_link": "entry",
+                      "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " with a handler that has no `backend` option: `createHandler({cms})`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Open the dashboard on your deployed site (`/admin`, or your `adminPath`). It shows "
+                },
+                {
+                  "_type": "text",
+                  "text": "Ready to deploy?",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " because no backend is configured yet."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Choose "
+                },
+                {
+                  "_type": "text",
+                  "text": "Continue with alinea.cloud",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and follow the setup on Alinea Cloud. It gives you an API key for your site."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Add the key to your hosting environment as `ALINEA_API_KEY` and redeploy."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea Cloud then verifies the connection with a handshake request to your handler. From there on editors sign in on `/admin` with their Alinea Cloud account."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1rvAX5Jxz0eXBCIZ6qxrnTD",
+      "code": "ALINEA_API_KEY=alineapk_...",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Users and roles"
+        }
+      ],
+      "_anchor": "users-and-roles"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Invite editors from Alinea Cloud. During the handshake your handler reports the "
         },
         {
           "_type": "text",
-          "text": "exporting the handler and static files",
+          "text": "roles",
           "marks": [
             {
               "_type": "link",
-              "_id": "2YlEhUcMm8GgmJorhjRWUVpZ6TI",
+              "_id": "3JkF1rnWkSTtL6J9k7VfgF5kyAS",
               "_link": "entry",
-              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml"
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
             }
           ]
         },
         {
           "_type": "text",
-          "text": " you can follow the instructions by navigating to your admin dashboard (`/admin` by default, see `adminPath`)."
+          "text": " defined in your config, with their labels and descriptions, so you can assign them to users there. The "
+        },
+        {
+          "_type": "text",
+          "text": "Manage users",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " screen of the self-hosted dashboard isn't used with Alinea Cloud."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`ALINEA_API_KEY` identifies your site, keep it secret. Without it the dashboard keeps showing the setup screen."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Your content stays in your repository. Alinea Cloud commits to it for you, so you can move to a "
+                },
+                {
+                  "_type": "text",
+                  "text": "self-hosted backend",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF1n3r9PPPC47T37uQeVlocMn",
+                      "_link": "entry",
+                      "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " later without migrating content."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Local development doesn't use Alinea Cloud: `alinea dev` saves to your local files."
+                }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -56,7 +289,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188788,
+    "updatedAt": 1790196946,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

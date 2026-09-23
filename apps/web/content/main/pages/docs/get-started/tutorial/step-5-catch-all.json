@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "In this step we replace dedicated routes with one catch-all route, which gives full freedom to content editors to create and maintain their own content structures. All pages are served via one route."
+          "text": "So far every page type has its own route in `app/`. That works while the site structure is fixed, but editors can't add an About page with Team and History pages below it without a developer adding routes. In this step one catch-all route renders every entry in the Pages root, whatever its URL."
         }
       ]
     },
@@ -30,7 +30,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "We keep the Blog/Post setup from the previous step and add recursive Page entries for regular pages. We get rid of the current page.tsx routes for the landing page, the blog and invidivual posts and replace them all with one new route."
+          "text": "The Blog and Post types stay as they are. A new `Page` type takes over from the landing page, and `app/[[...slug]]/page.tsx` replaces `app/page.tsx`, `app/blog/page.tsx` and `app/blog/[slug]/page.tsx`."
         }
       ]
     },
@@ -43,25 +43,23 @@
       "compact": false
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "A page type that nests"
+        }
+      ],
+      "_anchor": "a-page-type-that-nests"
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Define a recursive Page entry type so editors can freely nest regular pages under one another, such as an About page with Team and History underneath it. You can define which page types can be nested by using the "
-        },
-        {
-          "_type": "text",
-          "text": "contains",
-          "marks": [
-            {
-              "_type": "italic"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " property."
+          "text": "`Page` has the same blocks as the landing page and an editable path. `contains: ['Page']` lets editors create pages below pages, to any depth. The URL of a nested page is built from the paths of its parents: `/about/team`."
         }
       ]
     },
@@ -78,7 +76,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Render regular pages with a PageView component that maps each block to its view, just like the landing page did in step 2."
+          "text": "`PageView` receives the entry as a prop and maps each block to its view, like the landing page did in step 2."
         }
       ]
     },
@@ -91,22 +89,44 @@
       "compact": false
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Register the type"
+        }
+      ],
+      "_anchor": "register-the-type"
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Make sure to register this new type in cms.tsx. Regular pages can then be created freely in the Pages tree. We did opt to also go for one shared generateMetadata function, since all pages share the same metadata fields. In a real applications you might want to define different logic per page type, do define custom fallback metadata depending on the type of page."
+          "text": "Replace `LandingPage` with `Page` in the schema and in the Pages root. The root no longer seeds a homepage: editors create it as a page with the path `index`, which resolves to `/`. If you followed the previous steps, your content still has the old landing page in `content/pages/index.json`, with a type that no longer exists: delete that file, then create the homepage in the dashboard."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3Bstep5CmsSnippet0000000001",
-      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {Blog} from '@/entries/blog/Blog.schema'\nimport {Page} from '@/entries/page/Page.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    Page,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog'],\n          children: {\n            blog: Config.page({\n              type: Blog,\n              fields: {title: 'Blog', path: 'blog', intro: 'Latest posts'}\n            })\n          }\n        })\n        // The settings and media roots stay the same as in step 3\n      }\n    })\n  }\n  // baseUrl, handlerUrl, adminPath and preview stay the same as in step 3\n})",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {Blog} from '@/entries/blog/Blog.schema'\nimport {Page} from '@/entries/page/Page.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    Page,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog'],\n          children: {\n            blog: Config.page({\n              type: Blog,\n              fields: {title: 'Blog', intro: 'Latest posts'}\n            })\n          }\n        })\n        // The settings and media roots stay the same as in step 3\n      }\n    })\n  }\n  // baseUrl, handlerUrl, adminPath and preview stay the same as in step 3\n})",
       "fileName": "cms.tsx",
       "language": "tsx",
       "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "The catch-all route"
+        }
+      ],
+      "_anchor": "the-catch-all-route"
     },
     {
       "_type": "paragraph",
@@ -114,7 +134,40 @@
       "content": [
         {
           "_type": "text",
-          "text": "Use a catch-all route that resolves the URL from slug segments and branches on page._type. Page rendering stay inside their own server components, which nicely isolates functionality per page type. This one route replaces app/page.tsx, app/blog/page.tsx, and app/blog/[slug]/page.tsx."
+          "text": "The optional catch-all segment `[[...slug]]` also matches `/`, with no segments. The route joins the segments into a URL, looks up the entry with `cms.first({url})` and branches on its `_type`, so each page type keeps rendering in its own component."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`generateStaticParams` lists the URL of every entry in the Pages root, so all pages are prerendered."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`generateMetadata` is shared by all types. Every document has the same `metadata` field, so `Page.metadata` selects it for blogs and posts too. Split it per type when types need different fallbacks, as the blog did in step 4."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -136,7 +189,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Upon completion of these steps, your website should be extended with these features:"
+              "text": "Check that:"
             }
           ]
         },
@@ -151,7 +204,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "A single catch-all route resolves all page URLs in the Pages root, including nested regular pages."
+                      "text": "You can create a page, add pages below it and open them at their nested URL, such as `/about/team`."
                     }
                   ]
                 }
@@ -165,7 +218,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Regular pages are modeled with recursive Page entries, for example an \"About\"-page with Team and History underneath it."
+                      "text": "A page with the path `index` renders at `/`."
                     }
                   ]
                 }
@@ -179,7 +232,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "The Blog/Post flow from step 4 still works, including post navigation and the back-to-blog CTA."
+                      "text": "The blog and its posts still work at the same URLs, including the previous/next links."
                     }
                   ]
                 }
@@ -199,7 +252,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "It's worth mentioning that a catch-all route is not always the preferred way of working. It improves the flexibility of your website but it makes it impossible for Next.js to have a per-page javascript-bundle, so it might make the initial page loads of your website a bit heavier. Go for the solution that best fits your specific needs."
+              "text": "A catch-all route isn't always the best choice. All page types now share one route, so client components used by any of them end up in the JavaScript that route loads, and route-level settings such as `revalidate` apply to every page. Dedicated routes, as in step 4, keep those separate. Many sites combine both: fixed routes for sections with their own layout and a catch-all for the rest."
             }
           ]
         }
@@ -219,7 +272,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188957,
+    "updatedAt": 1790195602,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

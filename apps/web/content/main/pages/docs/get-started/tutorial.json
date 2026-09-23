@@ -11,7 +11,178 @@
       "content": [
         {
           "_type": "text",
-          "text": "This tutorial is an opinionated, Next.js-first setup for building a real website with Alinea. It starts with one fixed homepage entry and grows into blocks, shared layout content, a blog, and finally a catch-all route."
+          "text": "Build a small but complete Next.js website with Alinea, one feature at a time. Each step adds to the code of the previous one and ends with a list of things you can check in the browser and the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "orderedList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Landing page",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkCIs1Y6LDLL0oh5eXUkqLIwbA",
+                      "_link": "entry",
+                      "_entry": "3AONC8bWerkI4aXNcgz4fOm5Mxe"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": one fixed homepage entry with a title and SEO metadata, and live previews."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Content blocks",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkCIxIdYXQnFJ1YyPF32VBU3XH",
+                      "_link": "entry",
+                      "_entry": "3AONCBGWB01JivtUHVnGHF3ICYf"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a list of text, image and weather blocks that editors arrange freely."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Shared root",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkCItprVqp4JFKLno5kuSd0swK",
+                      "_link": "entry",
+                      "_entry": "3AONCCkqtmD6746UsDgQ826GDp8"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a settings root with the header and footer text used on every page."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Blog",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkCIt3lrqX9YhtbkROHSkuYZvy",
+                      "_link": "entry",
+                      "_entry": "3AONC9h7c2NnMtmorYnCBd19LjN"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a blog overview with nested posts, dedicated routes and previous/next links."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Catch-all route",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkCItexoUkgbJBdiwlCFWQgi7P",
+                      "_link": "entry",
+                      "_entry": "3AONCEKYoMQiZ5HZWNKbMB8oVUT"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": one route that renders every page, so editors can build their own page tree."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Before you start"
+        }
+      ],
+      "_anchor": "before-you-start"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set up a Next.js project with Alinea by following the "
+        },
+        {
+          "_type": "text",
+          "text": "Quickstart",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkCIx9AHRl4kCgRMtCh2BCq2PT",
+              "_link": "entry",
+              "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": `alinea init` gives you the API route, the `dev` and `build` scripts and a `cms.ts` file that you replace in step 1. The tutorial uses the App Router, TypeScript and Next.js 16."
         }
       ]
     },
@@ -23,32 +194,80 @@
           "_type": "text",
           "text": "Conventions used in every step"
         }
-      ]
+      ],
+      "_anchor": "conventions-used-in-every-step"
     },
     {
-      "_type": "paragraph",
-      "textAlign": "left",
+      "_type": "bulletList",
       "content": [
         {
-          "_type": "text",
-          "text": "Each page type and block type lives in its own folder with a server component and schema file. We found that this is the most convenient structure for readability and maintenance. Every page/block is responsible for collecting additional data/content when necessary. You can turn each server component into "
-        },
-        {
-          "_type": "text",
-          "text": "cache components",
-          "marks": [
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "link",
-              "_id": "3AR0sSBtNppAOz9pfiIk8ZrUQCO",
-              "_link": "url",
-              "href": "https://nextjs.org/docs/app/getting-started/cache-components",
-              "target": "_blank"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "One folder per page type and block type.",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " Each folder holds a schema file (`LandingPage.schema.tsx`) and a server component that renders it (`LandingPage.tsx`). Page types live in `entries/`, block types in `blocks/`."
+                }
+              ]
             }
           ]
         },
         {
-          "_type": "text",
-          "text": " when you see fit, giving you a lot of flexibility with maximum performance. Step 4 demonstrates this with a server-rendered blog post page that fetches sibling posts for Next/Previous navigation."
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Components fetch their own data.",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " Every page component queries the entry it renders and exports its own `generateMetadata`. The files in `app/` stay thin and only pass route parameters along."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The config is `cms.tsx` in the project root",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", and the `@/*` path alias in `tsconfig.json` points to the root, so imports read `@/cms` and `@/entries/...`. If your project keeps its code in `src/`, put these folders there instead."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -58,7 +277,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Continue with the five steps in this section."
+          "text": "Because each component loads its own data, you can make any of them a "
+        },
+        {
+          "_type": "text",
+          "text": "cached component",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3AR0sSBtNppAOz9pfiIk8ZrUQCO",
+              "_link": "url",
+              "href": "https://nextjs.org/docs/app/getting-started/cache-components"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " when it fits. Step 2 does this for a block that calls a weather API."
         }
       ]
     }
@@ -70,6 +305,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790195601,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790195601,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

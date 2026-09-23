@@ -11,11 +11,27 @@
       "content": [
         {
           "_type": "text",
-          "text": "Fields make data editable. Alinea ships with a lot of field types but can easily be expanded with "
+          "text": "Fields make data editable. Every field is created with a `Field` function that takes a label and an options object, and is added to the `fields` of a "
         },
         {
           "_type": "text",
-          "text": "custom fields",
+          "text": "Type",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2afa4s8NMzAW23BBRN7R7TZzpE2",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " under the name its value is stored as. The example below shows most field types, try them in the preview. If none fits, you can write a "
+        },
+        {
+          "_type": "text",
+          "text": "custom field",
           "marks": [
             {
               "_type": "link",
@@ -34,7 +50,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "2YklqLFpIIeyPugEBoAD6iZSvtr",
-      "code": "import {Config, Field} from 'alinea'\nimport {FieldOptions, ScalarField, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default Config.type('Kitchen sink', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Basic fields', {\n        fields: {\n          title: Field.text('Text field'),\n          path: Field.path('Path field', {\n            help: 'Creates a slug of the value of another field'\n          }),\n          richText: Field.richText('Rich text field'),\n          select: Field.select('Select field', {\n            options: {\n              a: 'Option a',\n              b: 'Option b'\n            }\n          }),\n          number: Field.number('Number field', {\n            minValue: 0,\n            maxValue: 10\n          }),\n          check: Field.check('Check field', {description: 'Check me please'}),\n          date: Field.date('Date field'),\n          code: Field.code('Code field')\n        }\n      }),\n      Field.tab('Link fields', {\n        fields: {\n          externalLink: Field.url('External link'),\n          entry: Field.entry('Internal link'),\n          linkMultiple: Field.link.multiple('Mixed links, multiple'),\n          image: Field.image('Image link'),\n          file: Field.file('File link')\n        }\n      }),\n\n      Field.tab('List fields', {\n        fields: {\n          list: Field.list('My list field', {\n            schema: {\n              Text: Config.type('Text', {\n                fields: {\n                  title: Field.text('Item title'),\n                  text: Field.richText('Item body text')\n                }\n              }),\n              Image: Config.type('Image', {\n                fields: {\n                  image: Field.image('Image')\n                }\n              })\n            }\n          })  \n        }\n      }),\n      Field.tab('Inline fields', {\n        fields: {\n          street: Field.text('Street', {width: 0.6, inline: true, multiline: true}),\n          streetNr: Field.text('Number', {width: 0.2, inline: true}),\n          box: Field.text('Box', {width: 0.2, inline: true}),\n          zip: Field.text('Zipcode', {width: 0.2, inline: true}),\n          city: Field.text('City', {width: 0.4, inline: true}),\n          country: Field.text('Country', {\n            width: 0.4,\n            inline: true\n          })\n        }\n      }),\n      Field.tab('Custom fields', {\n        fields: {\n          range: range('Range field')  \n        }\n      })\n    )\n  }\n})\n"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Kitchen sink', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Basic fields', {\n        fields: {\n          title: Field.text('Text field'),\n          path: Field.path('Path field', {\n            help: 'Creates a slug of the value of another field'\n          }),\n          richText: Field.richText('Rich text field'),\n          select: Field.select('Select field', {\n            options: {\n              a: 'Option a',\n              b: 'Option b'\n            }\n          }),\n          number: Field.number('Number field', {\n            minValue: 0,\n            maxValue: 10\n          }),\n          check: Field.check('Check field', {description: 'Check me please'}),\n          date: Field.date('Date field', {width: 0.5}),\n          time: Field.time('Time field', {width: 0.5}),\n          code: Field.code('Code field')\n        }\n      }),\n      Field.tab('Link fields', {\n        fields: {\n          externalLink: Field.url('External link'),\n          entry: Field.entry('Internal link'),\n          linkMultiple: Field.link.multiple('Mixed links, multiple'),\n          image: Field.image('Image link'),\n          file: Field.file('File link')\n        }\n      }),\n      Field.tab('List fields', {\n        fields: {\n          list: Field.list('My list field', {\n            schema: {\n              Text: Config.type('Text', {\n                fields: {\n                  title: Field.text('Item title'),\n                  text: Field.richText('Item body text')\n                }\n              }),\n              Image: Config.type('Image', {\n                fields: {\n                  image: Field.image('Image')\n                }\n              })\n            }\n          })\n        }\n      }),\n      Field.tab('Inline fields', {\n        fields: {\n          street: Field.text('Street', {width: 0.6, inline: true}),\n          streetNr: Field.text('Number', {width: 0.2, inline: true}),\n          box: Field.text('Box', {width: 0.2, inline: true}),\n          zip: Field.text('Zipcode', {width: 0.2, inline: true}),\n          city: Field.text('City', {width: 0.4, inline: true}),\n          country: Field.text('Country', {width: 0.4, inline: true})\n        }\n      })\n    )\n  }\n})\n"
     },
     {
       "_type": "heading",
@@ -42,10 +58,361 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration"
+          "text": "Field types"
         }
       ],
       "_anchor": "configuration"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Text",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzt0NTu48YynmkxSNSgDELcP",
+                      "_link": "entry",
+                      "_entry": "24yE3ttFwpZGiAOJWRTGvP9kK1R"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a single or multiline string."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Rich text",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzwlTbkCIH7DfwvAV7nCOaE6",
+                      "_link": "entry",
+                      "_entry": "268hjH2OU9fiReg61Wov1SRbPD5"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": formatted text with headings, links, tables and embedded blocks."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Path",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEztSdfeFgoXYJH0kEX9robn8",
+                      "_link": "entry",
+                      "_entry": "3AqAuDemLSXB8bacaKLETokTqRQ"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the url segment of an entry, generated from the title."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Select",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzyddqAy25YYBgrKO0jJtP4a",
+                      "_link": "entry",
+                      "_entry": "268hmvl73nDMrfPTEpVq3AB5B3L"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": one or more keys from a fixed set of options."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Number",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzz2o2onQUXASgzLdwh4zkbP",
+                      "_link": "entry",
+                      "_entry": "GyPkhJLrxgmfXYtYFOq9x"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", "
+                },
+                {
+                  "_type": "text",
+                  "text": "Check",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzyrPvSQEZgF1D2bPRvxX5cn",
+                      "_link": "entry",
+                      "_entry": "28htwzY7qMeaV15j276Myvpek8y"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", "
+                },
+                {
+                  "_type": "text",
+                  "text": "Date and time",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzsB7dtqnqw6L4q33SYwSfvm",
+                      "_link": "entry",
+                      "_entry": "A4UA9D0tJn2aanMDjODOj"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and "
+                },
+                {
+                  "_type": "text",
+                  "text": "Code",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzsRrMrEPeQTdK6cLv17nR3u",
+                      "_link": "entry",
+                      "_entry": "BUQj_NQqEq7YYO1nevx1o"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " for plain values."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Link",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzu1DCdia7ZZx3w6vkWV3cdI",
+                      "_link": "entry",
+                      "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", "
+                },
+                {
+                  "_type": "text",
+                  "text": "Entry",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzxqipEZTqkzYYq7rn1cWR0Z",
+                      "_link": "entry",
+                      "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", "
+                },
+                {
+                  "_type": "text",
+                  "text": "Url",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzyK9IryBYBm3huobcxK3saq",
+                      "_link": "entry",
+                      "_entry": "2aiM9Z6hrhingqGxBX6GGKEVBAh"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", "
+                },
+                {
+                  "_type": "text",
+                  "text": "Image",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzwUVhthK4K7iI6410wiDvFh",
+                      "_link": "entry",
+                      "_entry": "Xu4-sW6S0ynehY5zKR1VZ"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and "
+                },
+                {
+                  "_type": "text",
+                  "text": "File",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzuzNWBZsRiWmZofE0oHVVck",
+                      "_link": "entry",
+                      "_entry": "tlhZ01MHUjv3Od172Ew6w"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": references to other entries, uploads or external urls, resolved when you query them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "List",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzwDoXtXbdSybsiux55fqjig",
+                      "_link": "entry",
+                      "_entry": "268hhWIV6twxD4PMp03isLY6Pac"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": an ordered list of blocks, each with its own type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Object",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzuviSVyb5R6U0dqnyCh8nVI",
+                      "_link": "entry",
+                      "_entry": "290i4FnT1HBujZ2qoNZPm4EX69B"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a group of fields stored as one value."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Tabs",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzwGqK7k2dZ6bHagupIDzfBC",
+                      "_link": "entry",
+                      "_entry": "268hnUNLntD1TbeY1WPh34VFVcM"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": lay out fields on tabs, without storing anything themselves."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "paragraph",
@@ -53,17 +420,33 @@
       "content": [
         {
           "_type": "text",
-          "text": "While every field will have unique properties, there are a few properties that are generally available."
+          "text": "`Field.json` stores any JSON value in a plain JSON editor, and `Field.localiser` keeps every translation of a value in one field, see "
+        },
+        {
+          "_type": "text",
+          "text": "Internationalization",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2arLk4c7vuXfH8Dc7SCITAOiy3R",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
         }
       ]
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`initialValue`"
+          "text": "Common options"
         }
       ],
       "_anchor": "initialvalue"
@@ -74,207 +457,225 @@
       "content": [
         {
           "_type": "text",
-          "text": "Prefill the fields value."
+          "text": "Most fields accept these options next to their own. The field pages list the exceptions."
         }
       ]
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "bulletList",
       "content": [
         {
-          "_type": "text",
-          "text": "`hidden`"
-        }
-      ],
-      "_anchor": "hidden"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Hide this field in the dashboard but keep its value intact."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`readOnly`"
-        }
-      ],
-      "_anchor": "readonly"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Mark field data as read-only."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`help`"
-        }
-      ],
-      "_anchor": "help"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Display a help text next to the fields label."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`inline`"
-        }
-      ],
-      "_anchor": "inline"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Show a minimal version of the field. In most cases this will mean the input label will be hidden, and the label will show up as a placeholder instead."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`width`"
-        }
-      ],
-      "_anchor": "width"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Setting a width value will scale the fields width down, use a number between 0 and 1. This allows you to compose the dashboard UI better based on the content of the fields."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`shared`"
-        }
-      ],
-      "_anchor": "shared"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Fields can be persisted over all languages if your content is "
-        },
-        {
-          "_type": "text",
-          "text": "localised",
-          "marks": [
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "link",
-              "_id": "2arLk4c7vuXfH8Dc7SCITAOiy3R",
-              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn",
-              "_link": "entry"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`help`: instructions shown below the label. Plain text or a React node."
+                }
+              ]
             }
           ]
         },
         {
-          "_type": "text",
-          "text": " by setting the `shared` option to `true`. When the entry is published the field data is copied to other locales. This is currently only supported on the root level, not on nested fields."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2arMRXdHMiPwRAv9LYGf8LF4HQW",
-      "code": "import {Config, Field} from 'alinea'\n\nconst Type = Config.type('Persist', {\n  fields: {\n    // Persist field data over all locales\n    sharedField: Field.text('Shared text', {shared: true})\n  }\n})",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`width`: a number between 0 and 1 to make the field take part of a row, `0.5` puts two fields side by side."
+                }
+              ]
+            }
+          ]
+        },
         {
-          "_type": "text",
-          "text": "`required`"
-        }
-      ],
-      "_anchor": "required"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`inline`: a compact version of the field: the label is hidden and used as placeholder where the input allows it."
+                }
+              ]
+            }
+          ]
+        },
         {
-          "_type": "text",
-          "text": "The `required` option will make sure the field value is not empty when saving when set to `true`."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`initialValue`: the value of the field when an entry or list row is created."
+                }
+              ]
+            }
+          ]
+        },
         {
-          "_type": "text",
-          "text": "`validate`"
-        }
-      ],
-      "_anchor": "validate"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`required`: the field must have a value. Empty strings, `null` and empty lists count as missing."
+                }
+              ]
+            }
+          ]
+        },
         {
-          "_type": "text",
-          "text": "The `validate` option can be used to validate the field value using a custom function. Return a string to show it as the validation message, or return nothing (`undefined`) when the value is valid."
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`validate`: a function that receives the value and returns an error message to show, `false` for a generic \"Field is invalid\", or `true`/`undefined` when the value is fine."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`readOnly`: show the value but don't allow editing."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`hidden`: don't show the field in the dashboard. Its value is kept and can still be queried or set with a "
+                },
+                {
+                  "_type": "text",
+                  "text": "conditional option",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzwlECT7RIN54SAjGZp7dzZ8",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`shared`: in a translated root, keep the same value in every locale, see below."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2bOzOm5x9az8v36Esr3rHzjSmKT",
-      "code": "import {Config, Field} from 'alinea'\n\nField.text('Hello field', {\n  help: 'This field only accepts \"hello\" as a value',\n  validate(value) {\n    if (value !== 'hello') return 'Only \"hello\" is allowed!'\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\nField.text('Discount code', {\n  help: 'Uppercase letters and digits only',\n  width: 0.5,\n  required: true,\n  validate(value) {\n    if (!/^[A-Z0-9]*$/.test(value)) return 'Use uppercase letters and digits'\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Required fields and validation messages are shown on the field while an editor works on the entry."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Shared fields"
+        }
+      ],
+      "_anchor": "example"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a root with "
+        },
+        {
+          "_type": "text",
+          "text": "i18n",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEztdvurPKs5BLo5ypyRIIQVW",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", set `shared: true` on fields that should be the same in every language, such as a price, a date or a product image. When the entry is published, its shared values are copied to the other translations, and new translations start with them."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2arMRXdHMiPwRAv9LYGf8LF4HQW",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    // Translated per locale\n    description: Field.richText('Description'),\n    // The same in every locale\n    price: Field.number('Price', {shared: true}),\n    image: Field.image('Image', {shared: true})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`shared` only works on fields at the top level of a type, not on fields inside an object, list or rich text block. It isn't supported on path fields. To translate a single value while sharing the rest of an entry, use `Field.localiser` instead."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -282,59 +683,108 @@
       "content": [
         {
           "_type": "text",
-          "text": "Conditional configuration"
+          "text": "Conditional options"
         }
       ],
-      "_anchor": "conditional-configuration"
+      "_anchor": "conditional-options"
     },
     {
       "_type": "paragraph",
-      "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "All field configuration can be adjusted based on the value of other fields. After defining fields in a "
+          "text": "Options can depend on the values of other fields. Wrap a field in `Config.track.options` with a function that reads values through `get` and returns the options to change. It runs again whenever a value it reads changes, and has to return synchronously."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2afaVBuZZzzvIuZ6Zk5btTJfhTq",
+      "code": "import {Config, Field} from 'alinea'\n\nconst linkType = Field.select('Link to', {\n  initialValue: 'page',\n  options: {page: 'A page', external: 'An external url'}\n})\n\nexport const CallToAction = Config.type('Call to action', {\n  fields: {\n    label: Field.text('Label'),\n    linkType,\n    page: Config.track.options(Field.entry('Page'), get => ({\n      hidden: get(linkType) !== 'page'\n    })),\n    url: Config.track.options(Field.url('Url'), get => ({\n      hidden: get(linkType) !== 'external'\n    }))\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`get` reads fields of the entry being edited, including top-level fields from inside a list row. Hidden fields keep their value, so check the controlling field when you render the entry too."
+        }
+      ]
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "2afb22WA7fkOOxeH0rRyxzaee9S",
+      "code": "import {Config, Field} from 'alinea'\n\nconst Example = Config.type('Conditional example', {\n  fields: {\n    textField: Field.text('Text field'),\n    readOnly: Field.check('Make read-only'),\n    hidden: Field.check('Hide field')\n  }\n})\n\nConfig.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly,\n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Layout"
+        }
+      ],
+      "_anchor": "layout"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Fields appear in the order you define them. Besides `width` and "
         },
         {
           "_type": "text",
-          "text": "Type",
+          "text": "tabs",
           "marks": [
             {
               "_type": "link",
-              "_id": "2afa4s8NMzAW23BBRN7R7TZzpE2",
-              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
-              "_link": "entry"
+              "_id": "3JkEzxrclOJ26Kyq1SOJnHDcLpE",
+              "_link": "entry",
+              "_entry": "268hnUNLntD1TbeY1WPh34VFVcM"
             }
           ]
         },
         {
           "_type": "text",
-          "text": " a tracker function can be set up. The tracker function takes a reference to a field and a subscription function. In the subscription function field values can be retrieved and new options returned. "
+          "text": ", `Field.view` places a React element between fields, such as a divider or a note for editors. Spread it into `fields` like tabs:"
         }
       ]
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "CodeBlock",
+      "_id": "3JkEzulQJQ3a3XinDkE9DkzCzpj",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Settings = Config.type('Settings', {\n  fields: {\n    title: Field.text('Site name'),\n    ...Field.view(<hr />),\n    analyticsId: Field.text('Analytics id', {help: 'Leave empty to disable'})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Example"
+          "text": "To hide or lock fields for some editors, set field permissions on a role, see "
+        },
+        {
+          "_type": "text",
+          "text": "Roles and permissions",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzyDSUWpiVdsnGfd6eV0QmtG",
+              "_link": "entry",
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
         }
-      ],
-      "_anchor": "example"
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2afaVBuZZzzvIuZ6Zk5btTJfhTq",
-      "code": "import {Config, Field} from 'alinea'\n\nconst Example = Config.type('Conditional example', {\n  fields: {\n    textField: Field.text('Text field'),\n    readOnly: Field.check('Make read-only'),\n    hidden: Field.check('Hide field')\n  }\n})\n\nConfig.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "ExampleBlock",
-      "_id": "2afb22WA7fkOOxeH0rRyxzaee9S",
-      "code": "import {Config, Field} from 'alinea'\n\nconst Example = Config.type('Conditional example', {\n  fields: {\n    textField: Field.text('Text field'),\n    readOnly: Field.check('Make read-only'),\n    hidden: Field.check('Hide field')\n  }\n})\n\nConfig.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
+      ]
     }
   ],
   "metadata": {
@@ -351,7 +801,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189129,
+    "updatedAt": 1790196930,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

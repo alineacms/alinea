@@ -11,21 +11,37 @@
       "content": [
         {
           "_type": "text",
-          "text": "The Url field can be used to link to an external resource."
+          "text": "A url field holds a link to an external resource: a website, a `mailto:` or `tel:` link, a social profile. Editors enter the url, an optional title and whether it opens in a new tab. For links that can also point to pages in the CMS, use the "
+        },
+        {
+          "_type": "text",
+          "text": "Link field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF05zhmkWFw49iJ7CYEcptjhV",
+              "_link": "entry",
+              "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2aiMCRN0CLmhmeDTiClxqD0dIxf",
-      "code": "import {Field} from 'alinea'\n\nField.url('Single URL link')\n\nField.url.multiple('Multiple URL links')",
+      "code": "import {Field} from 'alinea'\n\nField.url('Website')\n\nField.url.multiple('Social profiles', {max: 5})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "2aiMFdnqKQucL7haTVJQfqtcsVs",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Url field', {\n  fields: {\n    url: Field.url('Single URL link'),\n    urlMultiple: Field.url.multiple('Multiple URL links')\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Url field', {\n  fields: {\n    url: Field.url('Website'),\n    urlMultiple: Field.url.multiple('Social profiles', {max: 5})\n  }\n})"
     },
     {
       "_type": "heading",
@@ -34,10 +50,69 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration",
-          "marks": [
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "bold"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: extra fields stored on each link, such as a label or an icon choice. Pass an object of fields or a type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`max` (multiple only): the maximum number of links."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzzz6Kus6svHbw2ACdCpLxkc",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
             }
           ]
         }
@@ -46,18 +121,14 @@
     {
       "_type": "heading",
       "textAlign": "start",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`max`",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
+          "text": "Value"
         }
-      ]
+      ],
+      "_anchor": "value"
     },
     {
       "_type": "paragraph",
@@ -65,7 +136,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Limit the amount of rows in case of multiple links."
+          "text": "Each link is resolved to `{href, title, target, fields}`: `href` holds the url as entered, `target` is `'_blank'` when the editor chose a new tab and `'_self'` otherwise, and `fields` holds your extra fields. A single url field is `null` while it's empty, a multiple one is an array."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF02uI4lTKh0KHad2EvPUy50a",
+      "code": "import type {UrlLink} from 'alinea'\n\nexport function ExternalLink({link}: {link: UrlLink | null}) {\n  if (!link?.href) return null\n  return (\n    <a\n      href={link.href}\n      target={link.target || undefined}\n      rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}\n    >\n      {link.title || link.href}\n    </a>\n  )\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The picker only checks that the url can be parsed, so relative urls such as `/contact` are accepted too. Add a `validate` function if you need a specific format, for example urls that start with `https://`."
         }
       ]
     }
@@ -78,6 +165,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

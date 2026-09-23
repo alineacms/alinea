@@ -11,22 +11,37 @@
       "content": [
         {
           "_type": "text",
-          "text": "The image field can be used to select an image."
+          "text": "An image field links to an image in the "
+        },
+        {
+          "_type": "text",
+          "text": "media library",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzwRec2EJskObMJfI4yPaDs3",
+              "_link": "entry",
+              "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Queries return everything you need to render it well: the url, dimensions, alt text, the focal point the editor set and a tiny placeholder to show while it loads."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "YCDn4dBOi-_bHy32PAqzU",
-      "code": "import {Field} from 'alinea'\n\nField.image('Single image link')\n\nField.image.multiple('Multiple image links')",
+      "code": "import {Field} from 'alinea'\n\nField.image('Cover image')\n\nField.image.multiple('Gallery')",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "D6afYJyRzrcvfZy1mTq5L",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Image field', {\n  fields: {\n    image: Field.image('Single image link'),\n    imageMultiple: Field.image.multiple('Multiple image links')\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Image field', {\n  fields: {\n    image: Field.image('Cover image'),\n    imageMultiple: Field.image.multiple('Gallery')\n  }\n})"
     },
     {
       "_type": "heading",
@@ -35,26 +50,113 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
+          "text": "Options"
         }
-      ]
+      ],
+      "_anchor": "options"
     },
     {
-      "_type": "heading",
-      "textAlign": "start",
-      "level": 3,
+      "_type": "bulletList",
       "content": [
         {
-          "_type": "text",
-          "text": "`max`",
-          "marks": [
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "bold"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: extra fields stored on each image, such as a caption or a credit."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`max` (multiple only): the maximum number of images."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`location` and `limitLocations`: open the picker in, or limit it to, specific media roots or folders, like the "
+                },
+                {
+                  "_type": "text",
+                  "text": "Entry field",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzvgFiQAyiyBca8aHOa66CGz",
+                      "_link": "entry",
+                      "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`defaultView`: show the picker as `'thumb'` (default) or `'row'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzuL5BjjAOoGrEZE5QBOhKmC",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
             }
           ]
         }
@@ -66,17 +168,146 @@
       "content": [
         {
           "_type": "text",
-          "text": "Limit the amount of rows in case of multiple links."
+          "text": "The picker only offers images: files with an extension such as `.jpg`, `.png`, `.webp`, `.gif`, `.avif` or `.svg`."
         }
       ]
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`fields`"
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each image is resolved to an `ImageLink`:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`src`: the url of the image on your site, such as `/admin/file/landscape.jpg?v=3f2a…`. It's served through your Alinea handler, and the `v` parameter changes when the file is replaced, so caches never serve an outdated copy."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`width` and `height`: the dimensions in pixels."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alt`: the alt text editors enter in the media library, in the locale of the entry you queried when the media root is "
+                },
+                {
+                  "_type": "text",
+                  "text": "translated",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzt4sao78axU2LwzXUBdmUUe",
+                      "_link": "entry",
+                      "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`focus`: the focal point as `{x, y}`, each between 0 and 1. Use it as `object-position` when you crop the image."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`thumbHash` and `averageColor`: a compact placeholder and the average color (`'#aabbcc'`) to show while the image loads."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`title`, `extension`, `size` (bytes) and `hash`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: the values of your extra fields."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -85,16 +316,72 @@
       "content": [
         {
           "_type": "text",
-          "text": "Defines nested sub-fields for the original object, allowing you to attach additional structured data."
+          "text": "A single image field is `null` while it's empty, a multiple one is an array."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rendering with next/image"
+        }
+      ],
+      "_anchor": "rendering-with-next-image"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`withAlinea` allows the image urls in your Next.js image config, so you can pass them to `next/image` directly. `imageBlurUrl` from `alinea/ui` turns the thumbhash into a data url for the blur placeholder:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzz8NvCCTuwiOq5LLrzFVZka",
+      "code": "import type {ImageLink} from 'alinea'\nimport {imageBlurUrl} from 'alinea/ui'\nimport Image from 'next/image'\n\ninterface CmsImageProps {\n  image: ImageLink | null\n  sizes?: string\n}\n\nexport function CmsImage({image, sizes}: CmsImageProps) {\n  if (!image?.src) return null\n  const blurDataURL = imageBlurUrl(image) || undefined\n  return (\n    <Image\n      src={image.src}\n      width={image.width}\n      height={image.height}\n      alt={image.alt ?? ''}\n      sizes={sizes}\n      placeholder={blurDataURL ? 'blur' : 'empty'}\n      blurDataURL={blurDataURL}\n      style={{\n        objectFit: 'cover',\n        objectPosition: image.focus\n          ? `${image.focus.x * 100}% ${image.focus.y * 100}%`\n          : undefined\n      }}\n    />\n  )\n}",
+      "fileName": "components/CmsImage.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alt text and captions"
+        }
+      ],
+      "_anchor": "alt-text-and-captions"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alt text belongs to the image and is edited once, in the media library. When the same image needs a different description or a caption in a specific place, add it as an extra field:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "31pPLpkxeStQvJH5kAmOJDPxzC0",
-      "code": "import {Config, Field} from 'alinea'\n\nField.image('Image', {\n  fields: {alt: Field.text('Alt text')}\n})",
+      "code": "import {Field} from 'alinea'\n\nField.image('Image', {\n  fields: {\n    caption: Field.text('Caption'),\n    credit: Field.text('Credit', {width: 0.5})\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Then render `image.fields.caption` below the image."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -104,6 +391,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

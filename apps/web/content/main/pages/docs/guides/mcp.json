@@ -206,7 +206,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The server listens on the port of the local dashboard, 4500 by default. When 4500 is taken the dev server moves to 4501 and up, and the printed url changes with it. Pin the port with `alinea dev --port 4500` (or `-p`) if your agent configuration should always match. The endpoint speaks the Streamable HTTP transport: it answers JSON-RPC messages sent with `POST` and does not keep sessions."
+          "text": "The server listens on the port of the local dashboard, 4500 by default. When 4500 is taken the dev server moves to 4501 and up, and the printed url changes with it. `alinea dev --port 4600` (or `-p`) changes the port it starts from, but it still moves up when that port is taken, so check the banner when the tools don't connect. The endpoint speaks the Streamable HTTP transport: it answers JSON-RPC messages sent with `POST` and does not keep sessions."
         }
       ]
     },
@@ -2294,7 +2294,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188856,
+    "updatedAt": 1790197021,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -11,17 +11,53 @@
       "content": [
         {
           "_type": "text",
-          "text": "All configuration can be managed from the `cms.ts` file. This file is created in the project root (or your `src` folder if it exists) during `alinea init`."
+          "text": "All configuration lives in `cms.ts`, which exports the `cms` instance your pages query and the handler serves. `alinea init` creates it in the project root, or in `src/` when that folder exists. Alinea also finds it as `cms.tsx`, `cms.js` or `cms.jsx`; pass `--config` to the "
+        },
+        {
+          "_type": "text",
+          "text": "CLI",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2bRPphjzKp0th73W5AIX4MbwCAC",
+              "_link": "entry",
+              "_entry": "m5KGP-I5smg2S8o4A-j15"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to use another location."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2a4tC7lBmNMZUuJDec7zsG4st62",
-      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  schema: {...},\n  workspaces: {...},\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  enableDrafts: true,\n  preview: true\n})",
+      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nconst Page = Config.document('Page', {\n  fields: {\n    body: Field.richText('Body')\n  }\n})\n\nexport const cms = createCMS({\n  schema: {Page},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {contains: ['Page']}),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true,\n  enableDrafts: true\n})",
       "fileName": "cms.ts",
       "language": "tsx",
       "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Import `createCMS` from `alinea/next` in a Next.js project. It accepts the options below and returns the `cms` object with the query methods (`find`, `first`, `get`, `count`), `cms.previews` and `cms.workspaces`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Required options"
+        }
+      ],
+      "_anchor": "required-options"
     },
     {
       "_type": "heading",
@@ -40,11 +76,11 @@
       "content": [
         {
           "_type": "text",
-          "text": "Describe the structure of your content using a "
+          "text": "An object of all your types, keyed by name: `{Page, BlogPost}`. The key is the type name stored in content files and used in `contains` and `_type`, so don't rename it once content exists. See "
         },
         {
           "_type": "text",
-          "text": "collection of Types",
+          "text": "Schema",
           "marks": [
             {
               "_type": "link",
@@ -56,7 +92,7 @@
         },
         {
           "_type": "text",
-          "text": ". Required."
+          "text": "."
         }
       ]
     },
@@ -76,11 +112,11 @@
       "content": [
         {
           "_type": "text",
-          "text": "Content can be bundled in separate "
+          "text": "An object of "
         },
         {
           "_type": "text",
-          "text": "Workspaces",
+          "text": "workspaces",
           "marks": [
             {
               "_type": "link",
@@ -92,27 +128,7 @@
         },
         {
           "_type": "text",
-          "text": ". Defining at least one is required."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`baseUrl`"
-        }
-      ],
-      "_anchor": "baseurl"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "The URL of the website where Alinea is used, either a single string or one per environment (`development` and `production`, picked by `NODE_ENV`). A value without a protocol gets `https://`. The production URL is required for a deployed site: the handler URL is resolved against it."
+          "text": ", at least one. Keys may only use `a-z`, `A-Z`, `0-9` and `_`. With more than one workspace, each `source` folder must be named after its key and all of them must sit in the same parent folder."
         }
       ]
     },
@@ -132,9 +148,98 @@
       "content": [
         {
           "_type": "text",
-          "text": "The URL of the API route that serves the dashboard's requests, the route that exports `createHandler` from `alinea/next`. Required. `alinea init` sets it to `/api/cms` and creates the route in `app/(alinea)/api/cms/route.ts`. A relative URL is resolved against `baseUrl`."
+          "text": "The URL of the API route that serves the dashboard and media files: the route that exports `createHandler` from `alinea/next`. `alinea init` sets it to `/api/cms` and creates `app/(alinea)/api/cms/route.ts`. A relative URL is resolved against `baseUrl`. Without it `alinea dev`, `alinea build` and your site throw `Missing handlerUrl in Alinea config`."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`baseUrl`"
+        }
+      ],
+      "_anchor": "baseurl"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The URL of your website, either one string or one per environment: `{development, production}`, picked by `NODE_ENV`. A value without a protocol gets `https://`."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alinea build` exits with `No baseUrl was set for the production build` when there is no production URL."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "In production your site reaches the handler at `handlerUrl` resolved against this URL, to check for new content. That includes `next start` on your machine, which talks to the production URL."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most projects read the production URL from an environment variable, see "
+        },
+        {
+          "_type": "text",
+          "text": "Environment variables",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkBBqZ0RopEe3YR2clripNOAub",
+              "_link": "url",
+              "href": "#environment-variables"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " below."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Dashboard options"
+        }
+      ],
+      "_anchor": "dashboard-options"
     },
     {
       "_type": "heading",
@@ -152,7 +257,43 @@
       "content": [
         {
           "_type": "text",
-          "text": "The path where the dashboard is served on your site, defaults to `/admin`. During development `withAlinea` forwards this path to the local dashboard of `alinea dev`, in production `alinea build` writes the dashboard to `public/admin.html` (named after the path) and `withAlinea` serves it from there. It can't be the root path `/`. This replaces the `dashboardFile` option of Alinea 1.x, which is deprecated."
+          "text": "The path the dashboard is served on, defaults to `/admin`. During development `withAlinea` forwards it to the local dashboard of `alinea dev`; `alinea build` writes the dashboard to `public/admin.html` plus a `public/admin/` folder of assets (named after the path), and `withAlinea` serves it from there. Media URLs live below it as well: `/admin/file/...`. It can't be `/`. It replaces the deprecated `dashboardFile` option of 1.x."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`preview`"
+        }
+      ],
+      "_anchor": "preview"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Shows a preview next to the editor. `true` loads your site in an iframe and updates it while editors type, see "
+        },
+        {
+          "_type": "text",
+          "text": "Live previews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjypBvxQ7B90PqTq2hAlkJYWhH",
+              "_link": "entry",
+              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". You can also pass a React component that receives `{entry}` and renders the preview itself. Workspaces, roots and types accept the same `preview` option, the most specific one wins: `preview: false` on a type hides the preview for entries without a page, such as site settings."
         }
       ]
     },
@@ -173,44 +314,110 @@
       "content": [
         {
           "_type": "text",
-          "text": "Allows content editors to save and preview unpublished changes before publishing. "
+          "text": "Off by default: every save in the dashboard publishes right away. With `enableDrafts: true`:"
         }
       ]
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "bulletList",
       "content": [
         {
-          "_type": "text",
-          "text": "`preview`"
-        }
-      ],
-      "_anchor": "preview"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Set to `true` to display an iframe with "
-        },
-        {
-          "_type": "text",
-          "text": "live previews",
-          "marks": [
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "link",
-              "_id": "3JjypBvxQ7B90PqTq2hAlkJYWhH",
-              "_link": "entry",
-              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Editors get a separate "
+                },
+                {
+                  "_type": "text",
+                  "text": "Save draft",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " action next to "
+                },
+                {
+                  "_type": "text",
+                  "text": "Publish",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", and new entries start as drafts."
+                }
+              ]
             }
           ]
         },
         {
-          "_type": "text",
-          "text": " on the side of the editor."
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Published entries can be unpublished again."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The published version stays live until the draft is published."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "MCP server",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkBBlK85abHv9fK3A6wmU1nggn",
+                      "_link": "entry",
+                      "_entry": "3JjyQUq7OEXLa3wIwCkEgiRasxN"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " accepts `publish: false` to save drafts."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -247,27 +454,7 @@
         },
         {
           "_type": "text",
-          "text": ". An `admin` role is always available."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`syncInterval`"
-        }
-      ],
-      "_anchor": "syncinterval"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Content is refreshed when the site notices the repository changed. As a fallback the site also syncs at most once per interval, in seconds, defaults to 60. `0` syncs on every request."
+          "text": ". An `admin` role is always added."
         }
       ]
     },
@@ -287,7 +474,96 @@
       "content": [
         {
           "_type": "text",
-          "text": "The maximum size of an uploaded file, in bytes. Larger uploads are refused."
+          "text": "The maximum size of an uploaded file, in bytes, for example `20 * 1024 * 1024` for 20 MB. Larger uploads are refused with an error that names the limit. No limit by default."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content delivery options"
+        }
+      ],
+      "_anchor": "content-delivery-options"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`syncInterval`"
+        }
+      ],
+      "_anchor": "syncinterval"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "How your deployed site keeps its content fresh. The site checks the content revision of the repository and syncs right away when it changed; `syncInterval` is the fallback interval in seconds when that revision can't be determined. Defaults to `60`."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`0` syncs on every query."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Infinity` never syncs: the site only serves the content it was built with, and new content goes live with the next deploy."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A single query can override it with `syncInterval`, or skip syncing with `disableSync: true`. See "
+        },
+        {
+          "_type": "text",
+          "text": "Instant publishing",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkBBlVr9jEUT5DOeAvaQzT4cFU",
+              "_link": "entry",
+              "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
         }
       ]
     },
@@ -307,7 +583,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The folder your site serves static files from, defaults to `public`. Media stored inside it get public URLs."
+          "text": "The folder your site serves static files from, defaults to `public`. `alinea build` writes the dashboard into it, and media files stored inside it (the workspace `mediaDir`) are served from there."
         }
       ]
     },
@@ -327,9 +603,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "An optional function to instrument Alinea operations, for example with OpenTelemetry spans. It is called as `tracer(name, run)` and must return the result of `run()`."
+          "text": "A function to instrument Alinea operations, for example with OpenTelemetry spans. It is called as `tracer(name, run)` and must return the result of `run()`. Errors thrown by the tracer itself are ignored, the operation still runs."
         }
       ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkCfgTracer000000000000001",
+      "code": "import {trace} from '@opentelemetry/api'\n\nconst tracer = trace.getTracer('alinea')\n\nexport const cms = createCMS({\n  // ...\n  tracer(name, run) {\n    return tracer.startActiveSpan(name, async span => {\n      try {\n        return await run()\n      } finally {\n        span.end()\n      }\n    })\n  }\n})",
+      "fileName": "cms.ts",
+      "language": "ts"
     },
     {
       "_type": "heading",
@@ -348,6 +631,71 @@
       "content": [
         {
           "_type": "text",
+          "text": "Environment variables"
+        }
+      ],
+      "_anchor": "environment-variables"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`cms.ts` runs on the server and in the dashboard, which runs in the browser. In the dashboard only variables that start with `NEXT_PUBLIC_` or `PUBLIC_` are defined; other `process.env` values are `undefined` there and log a warning. Use a public variable for anything the config needs, such as the production URL, and keep secrets in the handler route instead."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The CLI reads `.env.local`, or `.env` when there is no `.env.local`, from the project folder or the nearest parent folder that has one. Variables already set in the environment win."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Splitting up the config"
+        }
+      ],
+      "_anchor": "splitting-up-the-config"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Nothing requires one big file. Most projects keep each type in its own file and import them into `cms.ts`, for example `schema/Page.ts` or one folder per page type with its view component next to it, as the "
+        },
+        {
+          "_type": "text",
+          "text": "tutorial",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkBBnleUlOEPaz6kBk2cEcDRci",
+              "_link": "entry",
+              "_entry": "3AONCC6cssRWNTfGBx86XSB2Exn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " does. The config file itself only has to export `cms` as a named export, a default export is refused with `No export named cms found`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
           "text": "Dealing with errors"
         }
       ],
@@ -359,23 +707,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Your config file is read and executed during the `alinea dev` and `alinea build` "
-        },
-        {
-          "_type": "text",
-          "text": "CLI",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "2bRPphjzKp0th73W5AIX4MbwCAC",
-              "_entry": "m5KGP-I5smg2S8o4A-j15",
-              "_link": "entry"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " commands. If anything goes wrong, you might see an error such as:"
+          "text": "Your config file is compiled and executed by `alinea dev` and `alinea build`. An error thrown while loading it points to the compiled file:"
         }
       ]
     },
@@ -392,7 +724,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "To debug these situations Alinea compiles your config file with an included source map. To enable node to read the source map and report correct positions you can enable the Node.js `--enable-source-maps` flag. You can add it to the scripts in package.json:"
+          "text": "Alinea compiles your config with a source map. Enable Node's `--enable-source-maps` flag in your scripts to get positions in your own files:"
         }
       ]
     },
@@ -441,7 +773,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The error will now point to the right file:"
+          "text": "The error now points to the right file:"
         }
       ]
     },
@@ -466,7 +798,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188960,
+    "updatedAt": 1790195051,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

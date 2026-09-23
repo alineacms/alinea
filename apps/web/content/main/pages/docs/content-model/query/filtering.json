@@ -10,24 +10,40 @@
       "content": [
         {
           "_type": "text",
-          "text": "Use the filter property when you need to narrow down your results based on dynamic criteria or specific field values. While Structural Querying defines where or what you are looking for, Filtering allows you to search based on content, such as authors, dates, or full-text search terms."
+          "text": "Use `filter` to match entries on the values of their fields, and `search` to find entries by the words they contain. Both combine with the "
+        },
+        {
+          "_type": "text",
+          "text": "structural options",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF01SK8wNLGcIj0TFTZ3j1utJ",
+              "_link": "entry",
+              "_entry": "3AUAiIoQhl86EKefhuhZ6EThETv"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " such as `type` and `locale`."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AZJy2rJ8r5CixcuVPVoLZJfkR2",
-      "code": "await cms.first({\n  type: BlogPostSchema,\n  // Filter using search terms\n  search: 'querying',\n  // Filter by fields\n  // This filters the blogposts with author 'alinea'\n  filter: {\n    author: 'alinea'\n  }\n})",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\nconst featured = await cms.find({\n  type: BlogPost,\n  filter: {\n    featured: true,\n    publishDate: {gte: '2026-01-01'}\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "Comparison Operators"
+          "text": "Filter keys"
         }
       ],
       "_anchor": "comparison-operators"
@@ -37,7 +53,40 @@
       "content": [
         {
           "_type": "text",
-          "text": "When filtering, you can use these operators to create precise conditions. They are especially useful for dates, numbers, and strings."
+          "text": "A filter is an object with a condition per key. The keys are:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "the fields of the queried `type`, such as `featured` or `publishDate`. TypeScript checks them when you pass a `type`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "the entry's own properties with an underscore: `_id`, `_type`, `_parentId`, `_path`, `_url`, `_status`, `_locale`, `_workspace`, `_root`, `_index`, `_createdAt` and `_updatedAt`."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -46,158 +95,17 @@
       "content": [
         {
           "_type": "text",
-          "text": "is / isNot",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " (Equality)"
+          "text": "Every key has to match, so several keys in one filter mean \"and\"."
         }
       ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AiGTCJ6ho0ize2JfBBI4sKDZ21",
-      "code": "filter: {author: {is: 'alinea'}}\nfilter: {category: {isNot: 'news'}}",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "in / notIn",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " (List matching)"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AiGWGP5xi7cn8a8YbnxL11EKBH",
-      "code": "filter: {category: {in: ['news', 'tech']}}\nfilter: {author: {notIn: ['bot', 'guest']}}",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "gt / gte",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " (Greater than (or equal))"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AiGWSTlVJRDX90996yGjaLxDC9",
-      "code": "filter: {price: {gt: 100}}\nfilter: {publishedDate: {gte: '2024-01-01'}}",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "lt / lte",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " (Less than (or equal))"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AiGWrdA2yRYe3v2bjuQ3RKy9HK",
-      "code": "filter: {stock: {lt: 10}}\nfilter: {date: {lte: today}}",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "startsWith",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " (String matching)"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AiGX4NiDAmqDMML2r66DLtkOLT",
-      "code": "filter: {title: {startsWith: 'Alinea'}}",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "or",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " (Logical OR)"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AiGXV2EbrbvNNaFAWaSEACuP1j",
-      "code": "filter: {or: [{category: 'blog'}, {featured: true}]}",
-      "fileName": "",
-      "language": ""
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "Example"
+          "text": "Operators"
         }
       ],
       "_anchor": "example"
@@ -207,16 +115,481 @@
       "content": [
         {
           "_type": "text",
-          "text": "Let's take using a date as a filter for example as this lets us show quite a few of your options."
+          "text": "A plain value checks for equality. For anything else, pass an object with one or more operators:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`is` / `isNot`: equal or not equal. `{category: 'news'}` is short for `{category: {is: 'news'}}`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`in` / `notIn`: the value is one of (or none of) a list."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`gt`, `gte`, `lt`, `lte`: greater than, greater or equal, less than, less or equal. Numbers compare as numbers, text compares alphabetically, which works for ISO dates such as `'2026-09-23'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`startsWith`: text that starts with a prefix. It's case-sensitive."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`or`: any of several conditions on the same value."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Operators in one object must all match:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGWSTlVJRDX90996yGjaLxDC9",
+      "code": "import {cms} from '@/cms'\nimport {Event} from '@/schema'\n\n// Events in 2026 that cost less than 20, or have no price set\nconst events = await cms.find({\n  type: Event,\n  filter: {\n    date: {gte: '2026-01-01', lt: '2027-01-01'},\n    price: {or: [{lt: 20}, null]}\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Missing values"
+        }
+      ],
+      "_anchor": "missing-values"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries that never got a value for a field, and entries created before you added it, have no value rather than an empty one:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`null` matches missing values and `null`: `{cover: null}` finds posts without a cover image."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`isNot`, `notIn` and the comparisons never match a missing value. `{featured: {isNot: true}}` skips entries where `featured` was never set; use `{featured: {in: [false, null]}}` to include them."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Objects and lists"
+        }
+      ],
+      "_anchor": "objects-and-lists"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Some fields store an object or an array. Filter inside them with:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`has`: a filter on the keys of an object, for "
+                },
+                {
+                  "_type": "text",
+                  "text": "object fields",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzzbsZ1ehKTLfCCXvBLoiOBB",
+                      "_link": "entry",
+                      "_entry": "290i4FnT1HBujZ2qoNZPm4EX69B"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and single links."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`includes`: at least one item of an array matches. Pass a value for arrays of plain values, such as a multiple "
+                },
+                {
+                  "_type": "text",
+                  "text": "select",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzzyXzFPSqMBNHKsrAlfTrdG",
+                      "_link": "entry",
+                      "_entry": "268hmvl73nDMrfPTEpVq3AB5B3L"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", or a filter for arrays of objects, such as "
+                },
+                {
+                  "_type": "text",
+                  "text": "lists",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF04hCCIV8Pnko3XS8H9U8e9E",
+                      "_link": "entry",
+                      "_entry": "268hhWIV6twxD4PMp03isLY6Pac"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and multiple links."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGWGP5xi7cn8a8YbnxL11EKBH",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\nconst authorId = '2g8FtRVKqrzBhqNzjRvCTJlTWkn'\nconst categoryIds = ['2g8Fu0PUfDUNMH4KNvqHYCcRCyX', '2g8Fu4lyGY6m5sN4YhAp8ag0WcY']\n\n// Posts by one author: a single entry link stores {_entry: id}\nawait cms.find({type: BlogPost, filter: {author: {has: {_entry: authorId}}}})\n\n// Posts in any of these categories\nawait cms.find({\n  type: BlogPost,\n  filter: {categories: {includes: {_entry: {in: categoryIds}}}}\n})\n\n// Posts tagged \"release\"\nawait cms.find({type: BlogPost, filter: {tags: {includes: 'release'}}})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Links store the id of their target in `_entry`, which is why link filters look like this. See "
+        },
+        {
+          "_type": "text",
+          "text": "Related content",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzzvPTLsyGYyG5AbNbxxSvjS",
+              "_link": "entry",
+              "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for more patterns."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "and / or"
+        }
+      ],
+      "_anchor": "and-or"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To combine whole filters, use `and` or `or` with an array of filters. They must be the only key of their object:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGXV2EbrbvNNaFAWaSEACuP1j",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\n// Featured, or tagged as a release\nawait cms.find({\n  type: BlogPost,\n  filter: {or: [{featured: true}, {tags: {includes: 'release'}}]}\n})\n\n// Posts in every one of these categories\nconst categoryIds = ['2g8Fu0PUfDUNMH4KNvqHYCcRCyX', '2g8Fu4lyGY6m5sN4YhAp8ag0WcY']\nawait cms.find({\n  type: BlogPost,\n  filter: {\n    and: categoryIds.map(id => ({categories: {includes: {_entry: id}}}))\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Filter keys with an `undefined` value are skipped, and so are `undefined` items in `and` and `or`. That makes optional filters easy:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AZJubgfIQG4gYAhR3BCatZf6lz",
-      "code": "const today = new Date().toISOString().split('T')[0]\n\n// Getting the posts published in 2023\nawait cms.find({\n  type: BlogPostSchema,\n  \n  filter: {\n    author: 'alinea',\n    publishedDate: {\n      lt: '2024-01-01',\n      gte: '2023-01-01'\n    }\n  }\n})\n\n// Getting future events\nawait cms.find({\n  type: Event,\n\n  filter: {\n    date: {gte: today}\n  }\n})",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\nexport async function listPosts(tag?: 'news' | 'release', from?: string) {\n  return cms.find({\n    type: BlogPost,\n    filter: {\n      tags: tag ? {includes: tag} : undefined,\n      publishDate: from ? {gte: from} : undefined\n    }\n  })\n}",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Search"
+        }
+      ],
+      "_anchor": "search"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`search` finds entries by words. Pass a string or an array of words:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGTCJ6ho0ize2JfBBI4sKDZ21",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nexport async function searchSite(terms: string, locale: string) {\n  return cms.find({\n    search: terms,\n    locale,\n    take: 20,\n    select: {\n      title: Query.title,\n      url: Query.url,\n      snippet: Query.snippet('<mark>', '</mark>', '…', 24)\n    }\n  })\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "How it matches:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The input is split into words, and an entry must match every word."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Words match as prefixes, so `alin` finds \"Alinea\"."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Small typos are tolerated: one wrong letter for words of 5 to 14 characters, more for longer words. Case and accents don't matter."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Entry titles are always searched. Other fields only when you mark them `searchable: true`: "
+                },
+                {
+                  "_type": "text",
+                  "text": "text",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF05ZgxwY450h6Y1PdnLrNIUz",
+                      "_link": "entry",
+                      "_entry": "24yE3ttFwpZGiAOJWRTGvP9kK1R"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and "
+                },
+                {
+                  "_type": "text",
+                  "text": "rich text",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF047y8u2o6Ja7ZIh6slcCTSK",
+                      "_link": "entry",
+                      "_entry": "268hjH2OU9fiReg61Wov1SRbPD5"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " fields support it, also inside lists, objects and rich text blocks."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Results are ordered by relevance: entries whose title starts with the first word come first, and title matches weigh more than body matches. Add an `orderBy` to sort differently."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Query.snippet(start, end, cutOff, limit)` returns a short excerpt of the searchable text around the matches, with matches wrapped in `start` and `end`. The defaults are `'<mark>'`, `'</mark>'`, `'...'` and 64, and `limit` (the length in words) can be at most 64. It can only be used together with `search`. The excerpt is plain text from your content: escape it, or render the markers yourself instead of using `dangerouslySetInnerHTML`."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -232,7 +605,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189232,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

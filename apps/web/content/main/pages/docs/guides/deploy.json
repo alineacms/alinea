@@ -11,9 +11,63 @@
       "content": [
         {
           "_type": "text",
-          "text": "Once you're ready to deploy to production it's time to hook up Alinea to a backend. The Alinea handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
+          "text": "Deploying an Alinea site means deploying your Next.js app. In production the dashboard is served by your site on `/admin`, and your handler route saves the editors' changes as commits to your git repository. To do that it needs a backend that signs users in and talks to your repository: "
+        },
+        {
+          "_type": "text",
+          "text": "Alinea Cloud",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1r7nnTva2UpULvoNCkcsLLt",
+              "_link": "entry",
+              "_entry": "c1qjY2L4hq8JWfscRb_dD"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " or "
+        },
+        {
+          "_type": "text",
+          "text": "your own",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1mPLVsh2IT1e6bucQSjdKMl",
+              "_link": "entry",
+              "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Prepare your project"
+        }
+      ],
+      "_anchor": "prepare-your-project"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Config"
+        }
+      ],
+      "_anchor": "config"
     },
     {
       "_type": "paragraph",
@@ -21,7 +75,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Update your "
+          "text": "Tell Alinea where your site lives, where the handler is and on which path the dashboard is served, in your "
         },
         {
           "_type": "text",
@@ -37,16 +91,16 @@
         },
         {
           "_type": "text",
-          "text": " to inform Alinea where the handler lives and on which path the admin dashboard is served."
+          "text": ":"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
-      "code": "export const cms = createCMS({\n  // ...\n  handlerUrl: '/api/cms',\n  adminPath: '/admin'\n})",
-      "fileName": "",
-      "language": "",
+      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx",
       "compact": false
     },
     {
@@ -55,23 +109,60 @@
       "content": [
         {
           "_type": "text",
-          "text": "While building your project (`alinea build`), the dashboard is generated in your public folder: an `admin.html` file and an `admin` folder with its assets, named after the `adminPath` defined within your "
-        },
+          "text": "`baseUrl.production` is required: the handler URL is resolved against it. Your config is also bundled into the dashboard, where only environment variables starting with `NEXT_PUBLIC_` or `PUBLIC_` exist. Use one of those if you read the URL from the environment, for example `production: process.env.NEXT_PUBLIC_SITE_URL`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
         {
           "_type": "text",
-          "text": "CMS config",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "2eM1iHgXBo49fVD4NaBDbLI7XpI",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-              "_link": "entry"
-            }
-          ]
-        },
+          "text": "Build scripts"
+        }
+      ],
+      "_anchor": "build-scripts"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "_type": "text",
-          "text": ". Exclude them from git by adding them to your `.gitignore` file:"
+          "text": "Run Next.js through the Alinea CLI. `alinea build` bundles your content, generates the dashboard and then runs the command after `--`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1lXxItNfgDiKYvIlkabtjbu",
+      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea dev -- next dev\",\n    \"build\": \"alinea build -- next build\",\n    \"start\": \"next start\"\n  }\n}",
+      "fileName": "package.json",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wrap your Next.js config in `withAlinea` from `alinea/next`. It serves the dashboard on `adminPath`, routes media URLs (`/admin/file/...`) to your handler and allows them in `next/image`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1r3TiOnjoSX7uCyFlp81Dob",
+      "code": "import {withAlinea} from 'alinea/next'\n\nexport default withAlinea({\n  // your Next.js config\n})",
+      "fileName": "next.config.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The build writes the dashboard to your public folder: an `admin.html` file and an `admin` folder with its assets, named after `adminPath`. They are generated on every build, so leave them out of git:"
         }
       ]
     },
@@ -80,17 +171,242 @@
       "_id": "2eM0q5z6cky9xrlPsHoH5ltj1A6",
       "code": "/public/admin*",
       "fileName": ".gitignore",
-      "language": ""
+      "language": "text"
     },
     {
-      "_type": "paragraph",
-      "textAlign": "left",
+      "_type": "heading",
+      "level": 3,
       "content": [
         {
           "_type": "text",
-          "text": "Make sure your Next.js config is wrapped with `withAlinea` from `alinea/next`, which serves the generated dashboard on `/admin`. Deploy your code and follow the instructions on `/admin` to configure your backend."
+          "text": "The handler route"
+        }
+      ],
+      "_anchor": "the-handler-route"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The route you created with `alinea init` handles every request of the dashboard:"
         }
       ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1rIUeY1i6uvhRoDhIEQmyCg",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without a `backend` option the handler connects to Alinea Cloud. Pass `backend` to "
+        },
+        {
+          "_type": "text",
+          "text": "host it yourself",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1rjlrxE2zflfbm3fdizSUyQ",
+              "_link": "entry",
+              "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Use the `afterCommit` hook to revalidate pages after editors publish, see "
+        },
+        {
+          "_type": "text",
+          "text": "Instant publishing",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1meS2ymkPkPGboBxhScBPGH",
+              "_link": "entry",
+              "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Hosting requirements"
+        }
+      ],
+      "_anchor": "hosting-requirements"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Node.js 24 or higher",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " where your site runs, not only where it builds: the bundled content database is opened with Node's built-in SQLite."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The Node.js runtime",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " for the handler route. The handler refuses to run on the Edge runtime."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Server rendering.",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " The handler is an API route, so a static export (`output: 'export'`) can't run the dashboard or serve media."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deploy"
+        }
+      ],
+      "_anchor": "deploy"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Push your code and deploy it as usual. Then open `/admin` on your deployed site:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Without a backend, the dashboard walks you through connecting the site to Alinea Cloud."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "With a self-hosted backend, editors sign in with the method you configured."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "After the first publish, check that the change shows up on your site and that a commit appeared in your repository."
+        }
+      ]
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3JkF1qrP1ACUJVy6B23JU2PwROo",
+      "link": {
+        "description": "Connect your site to a hosted backend in a few clicks.",
+        "_id": "3JkF1qCQi9hbfsJFmyLcBFGWOGR",
+        "_type": "entry",
+        "_entry": "c1qjY2L4hq8JWfscRb_dD"
+      }
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3JkF1kRE16UIxZ5k3hNSJglMxbV",
+      "link": {
+        "description": "Run the backend yourself with your own database, auth and storage.",
+        "_id": "3JkF1kJJ7wevHoteXitJc9DDwNv",
+        "_type": "entry",
+        "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+      }
     }
   ],
   "metadata": {
@@ -107,7 +423,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188799,
+    "updatedAt": 1790196945,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

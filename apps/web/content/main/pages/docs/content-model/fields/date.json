@@ -11,29 +11,21 @@
       "content": [
         {
           "_type": "text",
-          "text": "A date field is used to input a date."
-        },
-        {
-          "_type": "hardBreak"
-        },
-        {
-          "_type": "text",
-          "text": "A time field is used to input a time."
+          "text": "`Field.date` holds a calendar date and `Field.time` a time of day. Both store plain strings without a timezone, which makes them easy to compare, filter and sort."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "utmfOtYpwki29ZXEW5QPX",
-      "code": "import {Field} from 'alinea'\n\nField.date('Date field')\nField.time('Time field')",
+      "code": "import {Field} from 'alinea'\n\nField.date('Publish date')\nField.time('Start time', {minValue: '08:00', maxValue: '18:00'})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "RHKsNdTj50LX0TFLU2_QH",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Date/time field', {\n  fields: {\n    date: Field.date('Date field'),\n    time: Field.time('Time field')\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Date/time field', {\n  fields: {\n    date: Field.date('Date', {width: 0.5}),\n    time: Field.time('Start time', {\n      width: 0.5,\n      minValue: '08:00',\n      maxValue: '18:00'\n    })\n  }\n})"
     },
     {
       "_type": "heading",
@@ -41,31 +33,117 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
+          "text": "Options"
         }
       ],
       "_anchor": "configuration"
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "bulletList",
       "content": [
         {
-          "_type": "text",
-          "text": "`initialValue`",
-          "marks": [
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "bold"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`minValue` and `maxValue` (time only): the earliest and latest time an editor can enter, as `HH:mm`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzvN8XkIW3F57wNYxghjbj6X",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
             }
           ]
         }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
       ],
       "_anchor": "initialvalue"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A date is stored as an ISO date string, `'2026-09-23'`. The dashboard shows it in day-month-year order."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A time is stored as `'HH:mm'` on a 24-hour clock, `'14:30'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Both are empty until an editor picks a value, unless you set an `initialValue`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "paragraph",
@@ -73,21 +151,100 @@
       "content": [
         {
           "_type": "text",
-          "text": "Prefills the field’s value. For example, you can prefill it with today’s date."
+          "text": "Because the format sorts alphabetically in date order, you can filter and sort on these fields directly:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzuxHM4h2BFaJI4m6ZOY6Ukz",
+      "code": "import {cms} from '@/cms'\nimport {Event} from '@/schema'\n\nconst today = new Date().toISOString().slice(0, 10)\n\nconst upcoming = await cms.find({\n  type: Event,\n  filter: {date: {gte: today}},\n  orderBy: {asc: Event.date}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Default to today"
+        }
+      ],
+      "_anchor": "default-to-today"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`initialValue` takes a fixed string. Compute today's date in your config: it's evaluated when the dashboard loads, so new entries get the date the editor opened the dashboard."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AqgFyQjZ6mumpYHEsTjtqcC3hm",
-      "code": "import {Field} from 'alinea'\n\nconst today = new Date().toISOString().split('T')[0]\nField.date('Date (initialValue: today)', {initialValue: today})",
+      "code": "import {Field} from 'alinea'\n\nconst today = new Date().toISOString().slice(0, 10)\nField.date('Publish date', {initialValue: today})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "3AqgIWUxshIAbuao0ObLey8g60Q",
-      "code": "import {Config, Field} from 'alinea'\n\nconst today = new Date().toISOString().split('T')[0];\n\nexport default Config.type('Date (initialValue)', {\n  fields: {\n    date: Field.date('Date (initialValue: today)', {initialValue: today}),\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nconst today = new Date().toISOString().slice(0, 10)\n\nexport default Config.type('Date (initialValue)', {\n  fields: {\n    date: Field.date('Publish date', {initialValue: today})\n  }\n})"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "If the creation date matters, entries made with "
+        },
+        {
+          "_type": "text",
+          "text": "`Config.document`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzx5xoMmwyVKtPgL4rpNBik8",
+              "_link": "entry",
+              "_entry": "2aAyRD3ixey0IqznGhiPUjTd5Vp"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " already record it: query `Query.createdAt`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Formatting"
+        }
+      ],
+      "_anchor": "formatting"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`new Date('2026-09-23')` is midnight UTC, which is still the previous day in timezones west of UTC. Format stored dates in UTC to show the date the editor picked:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzrO6OPxdeHTE1GcBXTixLHO",
+      "code": "export function formatDate(date: string, locale = 'en-US') {\n  return new Date(date).toLocaleDateString(locale, {\n    dateStyle: 'long',\n    timeZone: 'UTC'\n  })\n}",
+      "fileName": "",
+      "language": "tsx"
     }
   ],
   "metadata": {
@@ -103,7 +260,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189130,
+    "updatedAt": 1790196930,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

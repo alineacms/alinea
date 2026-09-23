@@ -11,17 +11,32 @@
       "content": [
         {
           "_type": "text",
-          "text": "Workspaces allow you to structure content into logical categories. For example it is possible to power multiple websites with a single CMS dashboard by using a workspace per website. Editors can easily switch workspaces in the dashboard."
+          "text": "A workspace is a separate set of content with its own content directory and "
+        },
+        {
+          "_type": "text",
+          "text": "roots",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2c5D0rdh3wpYg35vLkio0mOCncI",
+              "_link": "entry",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Most sites need one. Add more to manage several websites, or clearly separate areas such as a website and an app, from one dashboard: editors switch between them in the sidebar."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
-      "code": "import {Config} from 'alinea'\n\nConfig.workspace('Main workspace', {\n  color: '#3F61E8',\n  source: 'content',\n  mediaDir: 'public',\n  roots: {\n    // Website pages can be managed within this Root\n    pages: Config.root('Pages'),\n    // Image and file uploads will end up here\n    media: Config.media()\n  }\n})",
-      "fileName": "",
-      "language": "",
-      "compact": false
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport * as schema from './schema'\n\nexport const cms = createCMS({\n  schema,\n  workspaces: {\n    main: Config.workspace('My site', {\n      source: 'content',\n      mediaDir: 'public/media',\n      color: '#3F61E8',\n      roots: {\n        // Website pages\n        pages: Config.root('Pages', {contains: ['Page', 'Blog']}),\n        // Uploaded images and files\n        media: Config.media()\n      }\n    })\n  },\n  handlerUrl: '/api/cms'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
     },
     {
       "_type": "heading",
@@ -29,7 +44,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration"
+          "text": "Options"
         }
       ],
       "_anchor": "configuration"
@@ -40,36 +55,176 @@
       "content": [
         {
           "_type": "text",
-          "text": "Workspaces should be defined in your "
-        },
+          "text": "`Config.workspace(label, options)` takes the label shown in the dashboard and:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
         {
-          "_type": "text",
-          "text": "CMS config",
-          "marks": [
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "link",
-              "_id": "2aB37bqwCoFd6oFLcZmHCOgUcSJ",
-              "_link": "entry",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`source` (required): the directory, relative to your project, where the workspace's content files are stored."
+                }
+              ]
             }
           ]
         },
         {
-          "_type": "text",
-          "text": "."
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`roots` (required): the "
+                },
+                {
+                  "_type": "text",
+                  "text": "roots",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0BSphtZqgB7ffoAAgQUXbsA",
+                      "_link": "entry",
+                      "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " of the workspace, keyed by name. Add a "
+                },
+                {
+                  "_type": "text",
+                  "text": "media root",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0B4acu8fhJpceN9DPB4sSwp",
+                      "_link": "entry",
+                      "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " to allow uploads."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`mediaDir`: the directory where uploaded files are stored, such as `public/media`. Keep it inside your public folder (`public`, or the "
+                },
+                {
+                  "_type": "text",
+                  "text": "`publicDir`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "2aB37bqwCoFd6oFLcZmHCOgUcSJ",
+                      "_link": "entry",
+                      "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " you configured): media urls point to `/admin/file/...`, and the handler serves them from the public copy of the file."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`mediaUrl`: a prefix for the workspace's media urls, for example `'shop'` gives `/admin/file/shop/logo.png`. Useful when several workspaces have files with the same name."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`color`: the accent color of the workspace in the dashboard. By default a color is derived from the label."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`icon`: a React component shown next to the workspace name."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`preview`: turn "
+                },
+                {
+                  "_type": "text",
+                  "text": "live previews",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF091B7u5zsgriMZbKmvb5d8o",
+                      "_link": "entry",
+                      "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " on or off for everything in this workspace, or pass a component that renders the preview."
+                }
+              ]
+            }
+          ]
         }
       ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`color`"
-        }
-      ],
-      "_anchor": "color"
     },
     {
       "_type": "paragraph",
@@ -77,20 +232,9 @@
       "content": [
         {
           "_type": "text",
-          "text": "Pick a theme color for this workspace. If omitted a color is derived from the workspace label."
+          "text": "The key of a workspace (`main`) is its name in content and queries. Like type names, it has to start with a letter and contain only letters, digits and underscores."
         }
       ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`source`"
-        }
-      ],
-      "_anchor": "source"
     },
     {
       "_type": "paragraph",
@@ -98,25 +242,17 @@
       "content": [
         {
           "_type": "text",
-          "text": "A directory in which published content is stored."
+          "text": "Don't change the `mediaDir` of a workspace that already has uploads: media entries store the location of their file relative to it."
         }
       ]
     },
     {
-      "_type": "CodeBlock",
-      "_id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
-      "code": "// content is stored in the `content` directory\nsource: './content'",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`roots`"
+          "text": "Several workspaces"
         }
       ],
       "_anchor": "roots"
@@ -127,17 +263,33 @@
       "content": [
         {
           "_type": "text",
-          "text": "An object containing "
+          "text": "With more than one workspace, every `source` directory must be named after its workspace key, and they must all be in the same parent directory:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF09EOTeyQRa04TVx8zbiVODE",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport * as schema from './schema'\n\nexport const cms = createCMS({\n  schema,\n  workspaces: {\n    main: Config.workspace('Website', {\n      source: 'content/main',\n      mediaDir: 'public/media/main',\n      roots: {\n        pages: Config.root('Pages'),\n        media: Config.media()\n      }\n    }),\n    docs: Config.workspace('Documentation', {\n      source: 'content/docs',\n      mediaDir: 'public/media/docs',\n      roots: {\n        pages: Config.root('Pages'),\n        media: Config.media()\n      }\n    })\n  },\n  handlerUrl: '/api/cms'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "All workspaces share the schema. Limit which types can be created where with the `contains` option of each root, and which editors can access a workspace with "
         },
         {
           "_type": "text",
-          "text": "Roots",
+          "text": "roles",
           "marks": [
             {
               "_type": "link",
-              "_id": "2c5D0rdh3wpYg35vLkio0mOCncI",
-              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
-              "_link": "entry"
+              "_id": "3JkF089Q2j6tihBD5uR5VOy38Pr",
+              "_link": "entry",
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
             }
           ]
         },
@@ -148,33 +300,81 @@
       ]
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "`mediaDir`"
+          "text": "Entry urls don't include the workspace, so give each workspace its own routes, or use "
+        },
+        {
+          "_type": "text",
+          "text": "`entryUrl`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF07IEXGWIWrOKSdA4TJLpg9d",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to add a prefix."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Querying a workspace"
         }
       ],
-      "_anchor": "mediadir"
+      "_anchor": "querying-a-workspace"
     },
     {
       "_type": "paragraph",
-      "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "A directory in which uploaded files are placed. In case you're using Alinea to manage web content this will often point to a directory that is made publicly available so an url can be created to download or display the file."
+          "text": "Workspaces and roots are available on your CMS instance, so you can scope queries without repeating names:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "28hgYn07WY7s77bPgYhtBluKjAT",
-      "code": "// uploaded files are placed in the `public` folder\nmediaDir: './public'",
+      "_id": "3JkF0BX4ZgGbFwzckHQBaTflFIK",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nconst pages = await cms.find({\n  workspace: cms.workspaces.main,\n  select: {title: Query.title, url: Query.url}\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass a root such as `cms.workspaces.main.pages` to `root` or `location` to narrow it down further, see "
+        },
+        {
+          "_type": "text",
+          "text": "Querying",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF08QjT8LsuCsSHrHbjGjP1Bd",
+              "_link": "entry",
+              "_entry": "3AUAiIoQhl86EKefhuhZ6EThETv"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -190,7 +390,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189230,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

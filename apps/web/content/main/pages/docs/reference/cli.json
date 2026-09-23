@@ -26,7 +26,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The CLI requires Node.js 24 or higher (or Bun), and React 19 in the project. It loads environment variables from a `.env.local` or `.env` file in the project directory or one of its parents; variables already set in the environment take precedence."
+          "text": "The CLI requires Node.js 24 or higher (or Bun), and React 19 in the project. It loads environment variables from `.env.local`, or from `.env` when there is no `.env.local`, looking in the project directory and then its parents. Variables already set in the environment take precedence."
         }
       ]
     },
@@ -181,6 +181,15 @@
       "content": [
         {
           "_type": "text",
+          "text": "There is no login during development: you are signed in as the name and email of your git config, and edits are written straight to the JSON files in your content folder, ready to review and commit."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
           "text": "Pass another command after `--` to run it alongside the dashboard. It is started once the config is compiled and receives the environment variables `withAlinea` needs to serve the dashboard on your site's `adminPath`:"
         }
       ]
@@ -254,6 +263,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`--production`: runs the local dashboard with `NODE_ENV=production`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`--dev` is only used when working on Alinea itself."
                 }
               ]
@@ -279,7 +302,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Indexes your content and generates the `@alinea/generated` package your site reads its content from, and writes the dashboard to your public folder (`public/admin.html` for the default `adminPath`). Run it as part of your build step: pass your own build command after `--` and it runs once the content is generated."
+          "text": "Indexes your content into the `@alinea/generated` package your site reads its content from, and writes the dashboard to your public folder: `public/admin.html` and a `public/admin/` asset folder for the default `adminPath`. Add `/public/admin*` to `.gitignore`. Pass your own build command after `--` and it runs once the content is generated; `alinea build` exits with that command's exit code, so a failing `next build` fails your CI."
         }
       ]
     },
@@ -304,7 +327,68 @@
       "content": [
         {
           "_type": "text",
-          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and exits."
+          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and exits without running the command after `--`. Commit the result."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The build stops with an error when the config can't be loaded, when `handlerUrl` is missing or when `baseUrl` has no production URL, see "
+        },
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkBBnIVQf1VsD7StpIq677yFdr",
+              "_link": "entry",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deploying"
+        }
+      ],
+      "_anchor": "deploying"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Make sure your hosting platform runs the `build` script from `package.json`, not `next build` directly. `withAlinea` gets the `adminPath` and `handlerUrl` from the CLI; when Next.js runs without it, it logs `Alinea dashboard settings were not provided; dashboard routing is disabled` and neither the dashboard nor media URLs are served. The same goes for development: run `alinea dev -- next dev`, not `next dev` on its own. See "
+        },
+        {
+          "_type": "text",
+          "text": "Deploy",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkBBk1arF1R96K0u1UTOcmzW8B",
+              "_link": "entry",
+              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for setting up a backend."
         }
       ]
     }
@@ -322,7 +406,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189019,
+    "updatedAt": 1790195051,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "You can set up a live preview of your website inside the dashboard."
+          "text": "Live previews show the page you are editing next to the form in the dashboard. The page updates as the editor types, before anything is saved or published."
         }
       ]
     },
@@ -31,12 +31,23 @@
       "caption": "Editing a product in the Oak & Loom demo, with the page previewed live beside the form."
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set up"
+        }
+      ],
+      "_anchor": "set-up"
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Update your "
+          "text": "Turn on previews in your "
         },
         {
           "_type": "text",
@@ -52,16 +63,16 @@
         },
         {
           "_type": "text",
-          "text": " to enable live previews:"
+          "text": ". The dashboard loads your site from `baseUrl`, so set the URL for every environment you edit in:"
         }
       ]
     },
     {
       "_id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
       "_type": "CodeBlock",
-      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  baseUrl: {\n    // Point this url to your Next.js website\n    development: 'http://localhost:3000'\n  },\n  preview: true\n})",
+      "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  preview: true\n})",
       "fileName": "cms.ts",
-      "language": "",
+      "language": "tsx",
       "compact": false
     },
     {
@@ -70,16 +81,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "Include the preview widget (`<cms.previews />`) in your root layout:"
+          "text": "Then render `<cms.previews />` in your root layout:"
         }
       ]
     },
     {
       "_id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
       "_type": "CodeBlock",
-      "code": "import {cms} from '@/cms'\nimport type {PropsWithChildren} from 'react'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews widget />\n    </>\n  )\n}",
+      "code": "import {cms} from '@/cms'\nimport type {PropsWithChildren} from 'react'\n\nexport default function RootLayout({children}: PropsWithChildren) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
       "fileName": "app/layout.tsx",
-      "language": "",
+      "language": "tsx",
       "compact": false
     },
     {
@@ -88,9 +99,353 @@
       "content": [
         {
           "_type": "text",
-          "text": "This will enable a little widget at the bottom of the page that confirms to the editor they're looking at a preview of the page. If you don't want a preview widget but do want live previews, remove the `widget` prop."
+          "text": "Open an entry in the dashboard and the preview panel shows its page. `cms.previews` renders nothing unless the page is being previewed, so it is safe to leave in your production layout."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "How it works"
+        }
+      ],
+      "_anchor": "how-it-works"
+    },
+    {
+      "_type": "orderedList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The dashboard asks your handler for a short-lived preview token and loads `/api/cms?preview=<token>&returnTo=<entry url>` in the preview panel."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The handler checks the token, turns on Next.js "
+                },
+                {
+                  "_type": "text",
+                  "text": "draft mode",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkCJLIKwITgiApVrM5Y76puRsf",
+                      "_link": "url",
+                      "href": "https://nextjs.org/docs/app/guides/draft-mode"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and redirects to the entry's URL."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "On every edit the dashboard sends the unsaved entry to the page. `cms.previews` stores it in a cookie and refreshes the route, so your server components render again with the edited content."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "While draft mode is on, queries use `status: 'preferDraft'`, so saved drafts show instead of the published version. Pass `status` to a query yourself to override this."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The panel loads the entry's `url`: by default the locale, the parent paths and the entry's own path, like `/en/blog/my-post`. If your routes differ, set `entryUrl` on the "
+        },
+        {
+          "_type": "text",
+          "text": "Type",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkCJJaDPG6Cn7Pu2cn0ETrMapr",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " so the preview (and `Query.url`) point to the right page."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "The preview widget"
+        }
+      ],
+      "_anchor": "the-preview-widget"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`<cms.previews widget />` adds a small floating toolbar to previewed pages. It shows whether the page is connected to the dashboard and has buttons to open the dashboard and to edit the current page. Leave out `widget` to get live previews without the toolbar."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The props of `cms.previews`:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`widget`: show the floating toolbar, off by default."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace`, `root`: the workspace and root the edit button looks in when it finds the entry by the current URL. Set them when several workspaces or roots can contain the same URL, for example in a layout per site."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Choose which entries have a preview"
+        }
+      ],
+      "_anchor": "choose-which-entries-have-a-preview"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`preview` can be set on the config, a workspace, a root or a type. The most specific setting wins: type, then root, then workspace, then config. Turn it off for entries that have no page of their own, such as settings:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkCJKnA3ss1GwTDc8sqHpwCmxr",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Settings = Config.document('Settings', {\n  preview: false,\n  fields: {\n    siteName: Field.text('Site name')\n  }\n})",
+      "fileName": "schema/Settings.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media files never show a preview."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Preview entries without a page"
+        }
+      ],
+      "_anchor": "preview-entries-without-a-page"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content that is only used inside other pages, such as reusable snippets, has no URL of its own to preview. Give its type an `entryUrl` that points to a route you only use for previews:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkCJHOtW7me2ZhX1T8JD8wLq2x",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Snippet = Config.document('Snippet', {\n  entryUrl: ({path}) => `/preview/snippets/${path}`,\n  fields: {\n    body: Field.richText('Body')\n  }\n})",
+      "fileName": "schema/Snippet.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkCJLE7Xqp6hs3JIuMckorTAFg",
+      "code": "import {cms} from '@/cms'\nimport {Snippet} from '@/schema/Snippet'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\n\ninterface SnippetPreviewProps {\n  params: Promise<{slug: string}>\n}\n\nexport const metadata: Metadata = {robots: {index: false}}\n\nexport default async function SnippetPreview({params}: SnippetPreviewProps) {\n  const {slug} = await params\n  const snippet = await cms.first({\n    type: Snippet,\n    url: `/preview/snippets/${slug}`\n  })\n  if (!snippet) notFound()\n  return <main>{/* render the snippet like it appears on your pages */}</main>\n}",
+      "fileName": "app/preview/snippets/[slug]/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render a preview component"
+        }
+      ],
+      "_anchor": "render-a-preview-component"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Instead of `true`, `preview` accepts a React component. The dashboard renders it in the preview panel instead of loading your site, and passes the entry with its current, unsaved field values in `entry.data`. Values are in their stored form: links are not resolved."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkCJIwrFLoJNXKILlwqkHOcVEj",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Announcement = Config.document('Announcement', {\n  preview({entry}) {\n    const {message} = entry.data as {message?: string}\n    return <div style={{padding: 16}}>{message || entry.title}</div>\n  },\n  fields: {\n    message: Field.text('Message')\n  }\n})",
+      "fileName": "schema/Announcement.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The component is part of your schema, which your site imports too. Keep it small and free of server-only imports."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The metadata field shows a search and social preview built from the `<title>`, description and Open Graph tags the previewed page renders. Render them with `generateMetadata` to fill it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Previews need your handler: in production the dashboard is served from your own site, so the preview panel and your pages share the same origin."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Pages render dynamically in draft mode. Statically generated pages still serve their built version to visitors."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3JkCJJ5bBPPDHD2MqEU6HAqhVNK",
+      "link": {
+        "description": "Serve published content without waiting for a rebuild.",
+        "_id": "3JkCJHvjFT5alOiFimiG2G2ylVQ",
+        "_type": "entry",
+        "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+      }
     }
   ],
   "metadata": {
@@ -108,7 +463,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188824,
+    "updatedAt": 1790195604,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

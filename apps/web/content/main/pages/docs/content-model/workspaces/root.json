@@ -11,40 +11,11 @@
       "content": [
         {
           "_type": "text",
-          "text": "Roots help you organize content hierarchically in a tree. Pages can have subpages, subpages can have sub-subpages and so on. This hierarchy starts at a `Root`."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "28hkhm5hPbTobb7YrlwX7qCuNJE",
-      "code": "import {Config} from 'alinea'\n\nConfig.root('Pages', {\n  i18n: {\n    locales: ['en', 'fr', 'nl']\n  },\n  preview: true,\n  contains: ['HomePage', 'GenericPage'],\n  children: {\n    index: Config.page({\n      type: HomePage,\n      fields: {title: 'Home'}\n    }),\n    'about-us': Config.page({\n      type: GenericPage,\n      fields: {title: 'About us'}\n    })\n  }\n})",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Configuration"
-        }
-      ],
-      "_anchor": "configuration"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Roots should be defined within a "
+          "text": "A root is a top-level section of a "
         },
         {
           "_type": "text",
-          "text": "Workspace",
+          "text": "workspace",
           "marks": [
             {
               "_type": "link",
@@ -56,20 +27,43 @@
         },
         {
           "_type": "text",
+          "text": ", shown in the dashboard sidebar with its own tree of entries. Entries can have children, those children can have children, and so on. Use separate roots for content that's managed differently: pages, reusable settings, a collection of authors, "
+        },
+        {
+          "_type": "text",
+          "text": "media",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0CewDHLwA63kA8T8Jgo86cD",
+              "_link": "entry",
+              "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+            }
+          ]
+        },
+        {
+          "_type": "text",
           "text": "."
         }
       ]
     },
     {
+      "_type": "CodeBlock",
+      "_id": "28hkhm5hPbTobb7YrlwX7qCuNJE",
+      "code": "import {Config} from 'alinea'\nimport {Home, Settings} from './schema'\n\nexport const pages = Config.root('Pages', {\n  contains: ['Page', 'Blog'],\n  i18n: {locales: ['en', 'fr']},\n  children: {\n    index: Config.page({type: Home, fields: {title: 'Home'}})\n  }\n})\n\nexport const settings = Config.root('Settings', {\n  contains: [],\n  children: {\n    settings: Config.page({type: Settings, fields: {title: 'Site settings'}})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`i18n`"
+          "text": "Options"
         }
       ],
-      "_anchor": "i18n"
+      "_anchor": "configuration"
     },
     {
       "_type": "paragraph",
@@ -77,25 +71,162 @@
       "content": [
         {
           "_type": "text",
-          "text": "An object with internationalization configuration. Locales is an array of strings, containing locales described by a key that will, by default, show up in the url structure as well."
+          "text": "`Config.root(label, options)` takes the label shown in the sidebar and:"
         }
       ]
     },
     {
-      "_type": "CodeBlock",
-      "_id": "28hlSdI7ooykir1ldfHW4lLtIUL",
-      "code": "i18n: {\n  locales: ['en', 'fr', 'nl']\n}",
-      "fileName": "",
-      "language": "",
-      "compact": false
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`contains`: the types that can be created at the top level of the root. Entries below them follow the `contains` of their parent's type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`children`: entries that always exist in this root, see \"Seeded entries\" below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`i18n`: make the root translatable with `{locales: ['en', 'fr']}`. The first locale is the default in the dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`orderChildrenBy`: sort the top-level entries in the sidebar by one or more fields, like the "
+                },
+                {
+                  "_type": "text",
+                  "text": "type option",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0DMUEAMJ6xasCmqDzthWMDZ",
+                      "_link": "entry",
+                      "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`icon`: a React component shown next to the root in the sidebar."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`preview`: turn "
+                },
+                {
+                  "_type": "text",
+                  "text": "live previews",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF07Q9rht1jcEIv8sHU6jNfsl",
+                      "_link": "entry",
+                      "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " on or off for entries in this root, or pass a component that renders the preview. A type's own `preview` takes precedence."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`view`: a React component, or a path to one, that replaces the dashboard view of the root."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "paragraph",
+      "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "`icon`"
+          "text": "The key of a root (`pages`) is its name in content files and queries. It must start with a letter and contain only letters, digits and underscores. The first root of a workspace is the one the dashboard opens by default."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Seeded entries"
         }
       ],
       "_anchor": "icon"
@@ -106,125 +237,160 @@
       "content": [
         {
           "_type": "text",
-          "text": "An icon can be used to label a root in the sidebar. Icons are implemented as a React component. You can find icons on "
-        },
-        {
-          "_type": "text",
-          "text": "Icones",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "qvoK8kMv_e7gV6hhapAn5",
-              "href": "https://icones.js.org",
-              "target": "_blank"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " or install a package such as "
-        },
-        {
-          "_type": "text",
-          "text": "react-icons",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "toXRTK13MpBaa1ijN3COj",
-              "href": "https://react-icons.github.io/react-icons",
-              "target": "_blank"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": "."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`preview`"
-        }
-      ],
-      "_anchor": "preview"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Display an iframe with live previews on the side of the editor."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`contains`"
-        }
-      ],
-      "_anchor": "contains"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "An array of strings containing the names of types that can be created at the root."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "28hlDtsmVPBtekQz2fiKZiQ0l7R",
-      "code": "// only entries of type GenericPage can be created at the top of the tree\ncontains: ['GenericPage']",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`children`"
-        }
-      ],
-      "_anchor": "children"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Defines child entries that can be automatically seeded with predefined types and fields."
-        },
-        {
-          "_type": "hardBreak"
-        },
-        {
-          "_type": "text",
-          "text": "Each key sets the path of the seeded entry. To create an empty path (for a homepage), use the key `index`."
+          "text": "`children` creates entries from your config. Alinea adds them when it finds them missing, in every locale of the root, and editors can't move or delete them. That's the way to make sure a home page, a settings entry or a fixed overview page always exists:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "31oh5TTOSV8jhAcaCclyqZinL3t",
-      "code": "children: {\n  index: Config.page({\n    type: HomePage,\n    fields: {title: 'Home'}\n  })\n}",
+      "code": "import {Config} from 'alinea'\nimport {Blog, Home} from './schema'\n\nexport const pages = Config.root('Pages', {\n  contains: ['Page'],\n  children: {\n    // The key is the path: \"index\" becomes the home page at /\n    index: Config.page({type: Home, fields: {title: 'Home'}}),\n    blog: Config.page({type: Blog, fields: {title: 'Blog'}})\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.page` takes:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type` (required): the type of the entry. It must be in your schema."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: default field values. They apply until an editor saves the entry. Without a `title`, the key is used."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`children`: seeded entries below this one, in the same form."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To query a seeded settings entry, filter by its type: `cms.get({type: Settings})`. If you created the entry by hand before seeding it, Alinea adopts the existing file with the same path."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Translations"
+        }
+      ],
+      "_anchor": "translations"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With `i18n`, editors can translate every entry of the root into each locale, and each translation is a separate version with its own path and content. Urls start with the locale (`/en/about`, `/fr/about`), and content files are stored in a folder per locale (`content/pages/en/about.json`). Query a translation with the `locale` option, or all of them with `Query.translations`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Leave `i18n` out of roots that aren't translated, such as a list of authors. See "
+        },
+        {
+          "_type": "text",
+          "text": "Internationalization",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0EWFJRryqiC8a7dgnZ6Cq40",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for translating pages, per-field translations and dropping the locale from urls."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "28hlSdI7ooykir1ldfHW4lLtIUL",
+      "code": "import {Config} from 'alinea'\n\nexport const pages = Config.root('Pages', {\n  contains: ['Page'],\n  i18n: {locales: ['en', 'fr', 'nl']}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Roots in queries"
+        }
+      ],
+      "_anchor": "roots-in-queries"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Roots are available on the CMS instance under their workspace, `cms.workspaces.main.pages`, and can be passed to the `root` or `location` query options:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0E21M7YvwiZIHpXZPcLQ1Oe",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nconst navigation = await cms.find({\n  root: cms.workspaces.main.pages,\n  locale: 'en',\n  level: 0,\n  select: {title: Query.title, url: Query.url}\n})",
+      "fileName": "",
+      "language": "tsx"
     }
   ],
   "metadata": {
@@ -240,7 +406,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189231,
+    "updatedAt": 1790196933,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

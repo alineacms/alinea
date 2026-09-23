@@ -11,22 +11,175 @@
       "content": [
         {
           "_type": "text",
-          "text": "Tabs help you structure the input fields in the admin panel. Tabs do not hold data, but can declare underlying fields which do (or hold more tabs). "
+          "text": "Tabs split a long form into sections. They only change the layout in the dashboard: the fields on a tab are stored on the entry as if they were defined without tabs, so moving a field to another tab doesn't change your content or queries."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "268hspT1GDy0ag8lya8m9dObKhX",
-      "code": "import {Field} from 'alinea'\n\nField.tabs(\n  Field.tab('Tab A', {\n    fields: {\n      // ... fields\n    }\n  }),\n  Field.tab('Tab B', {\n    fields: {\n      // ... fields\n    }\n  })\n)",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Content', {\n        fields: {\n          intro: Field.text('Intro', {multiline: true}),\n          body: Field.richText('Body')\n        }\n      }),\n      Field.tab('Pricing', {\n        fields: {\n          price: Field.number('Price', {width: 0.5}),\n          currency: Field.select('Currency', {\n            width: 0.5,\n            initialValue: 'eur',\n            options: {eur: 'EUR', usd: 'USD'}\n          })\n        }\n      })\n    )\n  }\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "2YkqykVitVKoLg9NLRTwjLvsccv",
       "code": "import {Config, Field} from \"alinea\"\n\nexport default Config.type(\"Tabs field\", {\n  fields: {\n    ...Field.tabs(\n      Field.tab(\"Tab A\", {\n        fields: {\n          fieldA: Field.text(\"Field in Tab A\")\n        }\n      }),\n      Field.tab(\"Tab B\", {\n        fields: {\n          fieldB: Field.text(\"Field in Tab B\")\n        }\n      })\n    )\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Usage"
+        }
+      ],
+      "_anchor": "usage"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.tabs(...tabs)` groups tabs. Spread its result into `fields`, because it adds the fields of every tab to the type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.tab(label, {fields, icon})` defines one tab. `icon` is an optional React component shown before the label."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Fields before or after the tabs are shown above or below them, on every tab."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Field names must be unique across all tabs of a type: they end up side by side in the same entry."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Tabs work in list rows and blocks too, and a tab can contain another set of tabs."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With "
+        },
+        {
+          "_type": "text",
+          "text": "`Config.document`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF04xI5ObShGU98zUd4BBGahX",
+              "_link": "entry",
+              "_entry": "2aAyRD3ixey0IqznGhiPUjTd5Vp"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", your fields already sit on a \"Document\" tab next to \"Metadata\". Tabs you add there appear inside the Document tab."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Reusing tabs"
+        }
+      ],
+      "_anchor": "reusing-tabs"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Because `Field.tab` returns a type, a common set of fields can be shared as a function that creates a new tab each time (fields "
+        },
+        {
+          "_type": "text",
+          "text": "must be unique",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF03dNoUThvW0nWXKrmgXjZIs",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", so don't share one instance):"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF02genYh2Nc0tPOtPvpgYzSZ",
+      "code": "import {Config, Field} from 'alinea'\n\nfunction settingsTab() {\n  return Field.tab('Settings', {\n    fields: {\n      hideFromNavigation: Field.check('Hide from navigation'),\n      noIndex: Field.check('Hide from search engines')\n    }\n  })\n}\n\nexport const Page = Config.document('Page', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Content', {fields: {body: Field.richText('Body')}}),\n      settingsTab()\n    )\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
     }
   ],
   "metadata": {
@@ -37,6 +190,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

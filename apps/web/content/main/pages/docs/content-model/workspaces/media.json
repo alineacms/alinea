@@ -11,40 +11,11 @@
       "content": [
         {
           "_type": "text",
-          "text": "To manage uploads a Media Root is added to a Workspace. Multiple Media Roots are supported but uploads will default to the first Media Root found."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2aB4BmlaljcbjYyF3KAxVvZgLhW",
-      "code": "import {Config} from 'alinea'\n\nConfig.workspace('Main workspace', {\n  source: 'content',\n  mediaDir: 'public',\n  roots: {\n    // ...\n    media: Config.media()\n  }\n})",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Configuration"
-        }
-      ],
-      "_anchor": "configuration"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Media Roots should be defined within a "
+          "text": "A media root holds the images and files editors upload. Add one to a "
         },
         {
           "_type": "text",
-          "text": "Workspace",
+          "text": "workspace",
           "marks": [
             {
               "_type": "link",
@@ -56,7 +27,331 @@
         },
         {
           "_type": "text",
-          "text": "."
+          "text": " with `Config.media()` and set the workspace's `mediaDir` to the folder the files are written to. Link to uploads with the "
+        },
+        {
+          "_type": "text",
+          "text": "Image",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0BPKV5b3VAoiTnAnsxh58Xi",
+              "_link": "entry",
+              "_entry": "Xu4-sW6S0ynehY5zKR1VZ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", "
+        },
+        {
+          "_type": "text",
+          "text": "File",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF08RmGMh0aUQ7lI8Gm20TX78",
+              "_link": "entry",
+              "_entry": "tlhZ01MHUjv3Od172Ew6w"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and "
+        },
+        {
+          "_type": "text",
+          "text": "Link",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF08zJLB1ot2n8cdr9uqVtLzp",
+              "_link": "entry",
+              "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " fields."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2aB4BmlaljcbjYyF3KAxVvZgLhW",
+      "code": "import {Config} from 'alinea'\n\nexport const main = Config.workspace('My site', {\n  source: 'content',\n  mediaDir: 'public/media',\n  roots: {\n    pages: Config.root('Pages'),\n    media: Config.media()\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors upload files in the media root of the dashboard and organize them in folders."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "What's stored"
+        }
+      ],
+      "_anchor": "whats-stored"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every upload is saved in two places:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The file itself goes to `mediaDir`, named after the original file plus the id of its entry: `public/media/landscape.2V4c3kRS.jpg`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A media entry is stored with your content, in the media root: `content/media/landscape.json`. It holds the title, the file location, the extension and size, a content hash and, for images, the width and height, the average color, a thumbhash placeholder, the focal point and the alt text."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Folders are entries too. Links store the id of the media entry, so moving or renaming a file in the dashboard doesn't break them."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Urls"
+        }
+      ],
+      "_anchor": "urls"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Your site serves uploads at `/admin/file/<folders>/<name>.<extension>`, below the `adminPath` of your config. `withAlinea` forwards those requests to your Alinea handler, which serves the public copy of the file. When a file is moved or renamed, its old url keeps working. Set `mediaUrl` on the workspace to add a prefix, for example when two workspaces could have files with the same name."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "So keep `mediaDir` inside your public folder, and don't change it once there are uploads: entries store file locations relative to it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.media(options)` takes the same options as "
+        },
+        {
+          "_type": "text",
+          "text": "`Config.root`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0CHOgF4k0wzcKLO1ub2XWH8",
+              "_link": "entry",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", with media-specific behaviour:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`i18n`: translate the alt text of files. Files themselves aren't localised: every locale uses the same file, and editors enter an alt text per locale. Image links return the alt text in the locale of the entry you queried. Add a `fallback` function to choose which locales to try when a translation is missing: `fallback: locale => ['en']`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`children`: folders that always exist."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`icon`, `orderChildrenBy` and `view`, as for other roots."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The label of a media root is always \"Media\". A workspace can have several media roots; uploads that don't target a specific folder go to the first one."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Limits and production"
+        }
+      ],
+      "_anchor": "limits-and-production"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Set `maxUploadSize` in your "
+                },
+                {
+                  "_type": "text",
+                  "text": "config",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0Cz04DRhmdKFUl8inbs4ovZ",
+                      "_link": "entry",
+                      "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " (in bytes) to refuse larger uploads."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Committing uploads to Git works well for images and documents, less so for large videos. When you deploy with your own backend, uploads can go to S3-compatible storage instead, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Self-hosted",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF07GARQwQU3N88zK66n8WCY5",
+                      "_link": "entry",
+                      "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -74,7 +369,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189231,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

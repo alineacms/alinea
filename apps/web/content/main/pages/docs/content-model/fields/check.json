@@ -11,22 +11,110 @@
       "content": [
         {
           "_type": "text",
-          "text": "A check field is used to input boolean data."
+          "text": "A check field is a checkbox that stores `true` or `false`, for settings such as \"Featured\" or \"Hide from navigation\"."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "28hu0MbpUcAOhWTWi954kRRNHcM",
-      "code": "import {Field} from 'alinea'\n\nField.check('Checkbox without label')\nField.check('Label ipsum dolor sit amet', {\n  description: 'Checkbox with label & description'\n})",
+      "code": "import {Field} from 'alinea'\n\n// The label is shown next to the checkbox\nField.check('Featured')\n\n// With a description, the label becomes a field label above it\nField.check('Navigation', {\n  description: 'Hide this page from the menu'\n})",
       "fileName": "",
-      "language": "",
-      "compact": true
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "2LfI_a2TA_L7QW2kK-nDa",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Check field', {\n  fields: {\n    check: Field.check('Checkbox without label'),\n    checkDescription: Field.check('Label ipsum dolor sit amet', {\n      description: 'Checkbox with label & description'\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Check field', {\n  fields: {\n    featured: Field.check('Featured'),\n    hideFromNavigation: Field.check('Navigation', {\n      description: 'Hide this page from the menu'\n    })\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`description`: text next to the checkbox. When set, the label is shown above the checkbox as a regular field label."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkExoY4vRiZOAeM86rICh05EqL",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A boolean. Without an `initialValue`, the value stays unset until an editor ticks the box, so compare with `true` (or use `Boolean(value)`) rather than checking for `false`. The same goes for filters: `{featured: true}` finds featured entries, but `{featured: false}` and `{featured: {isNot: true}}` skip entries where the value was never set. Use `{featured: {in: [false, null]}}` to find everything that isn't featured."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set `initialValue: true` for options that should be on by default."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -36,6 +124,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196913,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196913,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

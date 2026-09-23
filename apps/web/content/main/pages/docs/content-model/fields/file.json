@@ -11,22 +11,53 @@
       "content": [
         {
           "_type": "text",
-          "text": "The file field can be used to link to a file."
+          "text": "A file field links to a file in the "
+        },
+        {
+          "_type": "text",
+          "text": "media library",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzxRw2QXP4oCNRMmo5u9QbYO",
+              "_link": "entry",
+              "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": a PDF brochure, a price list, a download. Editors pick it from the files uploaded to the media library. For images you want to display, use the "
+        },
+        {
+          "_type": "text",
+          "text": "Image field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzrXfVdG22C9fXxpwPqfaRrH",
+              "_link": "entry",
+              "_entry": "Xu4-sW6S0ynehY5zKR1VZ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": it returns dimensions and a blur placeholder too."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "tYljidhFDZXvLGHPdOUyj",
-      "code": "import {Field} from 'alinea'\n\nField.file('Single file link')\n\nField.file.multiple('Multiple file links')",
+      "code": "import {Field} from 'alinea'\n\nField.file('Brochure')\n\nField.file.multiple('Downloads', {max: 10})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "2Yks376YZg3E6MZZHv9KcuYgQos",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('File field', {\n  fields: {\n    file: Field.file('Single file link'),\n    fileMultiple: Field.file.multiple('Multiple file links')\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('File field', {\n  fields: {\n    file: Field.file('Brochure'),\n    fileMultiple: Field.file.multiple('Downloads', {\n      fields: {label: Field.text('Label')}\n    })\n  }\n})"
     },
     {
       "_type": "heading",
@@ -35,26 +66,113 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
+          "text": "Options"
         }
-      ]
+      ],
+      "_anchor": "options"
     },
     {
-      "_type": "heading",
-      "textAlign": "start",
-      "level": 3,
+      "_type": "bulletList",
       "content": [
         {
-          "_type": "text",
-          "text": "`max`",
-          "marks": [
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "bold"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: extra fields stored on each link, such as a label or description."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`max` (multiple only): the maximum number of files."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`location` and `limitLocations`: open the picker in, or limit it to, specific media roots or folders, like the "
+                },
+                {
+                  "_type": "text",
+                  "text": "Entry field",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzs8UVRaoZWef26TLx786lzZ",
+                      "_link": "entry",
+                      "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`defaultView`: show the picker as `'thumb'` (default) or `'row'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzz0rP8VkYmmtpJf4oE1TgzU",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
             }
           ]
         }
@@ -66,9 +184,120 @@
       "content": [
         {
           "_type": "text",
-          "text": "Limit the amount of rows in case of multiple links."
+          "text": "The picker offers every file in the media library, images included."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each file is resolved to:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`href`: the url of the file on your site, such as `/admin/file/brochure.pdf`. It's served through your Alinea handler and keeps working when the file is moved or renamed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`title`: the file's title in the media library."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`extension`: the file extension including the dot, `'.pdf'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`size`: the size in bytes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: the values of your extra fields."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A single file field is `null` while it's empty, a multiple one is an array."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzs9QiiVF7eaJ5aHjm9XJdJP",
+      "code": "import type {FileLink} from 'alinea'\n\nexport function Download({file}: {file: FileLink | null}) {\n  if (!file?.href) return null\n  const kb = Math.round(file.size / 1024)\n  return (\n    <a href={file.href} download>\n      {file.title} ({file.extension.slice(1).toUpperCase()}, {kb} KB)\n    </a>\n  )\n}",
+      "fileName": "",
+      "language": "tsx"
     }
   ],
   "metadata": {
@@ -79,6 +308,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

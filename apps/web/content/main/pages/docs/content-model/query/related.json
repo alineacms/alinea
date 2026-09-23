@@ -6,31 +6,29 @@
   "navigationTitle": "",
   "body": [
     {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Relational Querying"
-        }
-      ],
-      "_anchor": "relational-querying"
-    },
-    {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "As mentioned previously, you can use include to fetch related 'edges' of a queried item. Instead of manually storing IDs and performing multiple round-trips, Alinea provides built-in relational querying for a more seamless developer experience."
+          "text": "A single query can also fetch entries related to the ones it finds: their parents, children and siblings, their translations, and the entries they link to. Put a relation in `select` (or in `include` when you don't select), and it's resolved in the same query."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AZDfgNuyvDrRCXueFTIRZNyt0k",
-      "code": "await cms.first({\n  type: DocsSchema,\n  include: {\n    parents: Query.parents({\n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    }),  \n    children: Query.children({\n      type: DocSchema, \n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    }),\n    siblings: Query.siblings({\n      type: DocsSchema, \n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    })\n  }\n})",
+      "code": "import {cms} from '@/cms'\nimport {Blog, BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst blog = await cms.get({\n  type: Blog,\n  locale: 'en',\n  select: {\n    title: Query.title,\n    posts: Query.children({\n      type: BlogPost,\n      select: {title: Query.title, url: Query.url, date: BlogPost.publishDate},\n      orderBy: {desc: BlogPost.publishDate},\n      take: 5\n    })\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every relation takes the same options as a query, such as `type`, `filter`, `select`, `orderBy`, `skip` and `take`. `parent`, `previous` and `next` return a single entry, the others a list. Relations can be nested, for example children with their own children."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -38,26 +36,124 @@
       "content": [
         {
           "_type": "text",
-          "text": "Sequential Navigation"
+          "text": "Tree relations"
         }
       ],
-      "_anchor": "sequential-navigation"
+      "_anchor": "translations"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Query.parent(...)`: the parent entry, or nothing for entries at the top of a root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Query.parents(...)`: all ancestors, starting at the top of the root. Pass `depth` to get only the nearest ones: `depth: 1` is the parent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Query.children(...)`: the direct children. Pass `depth` to include deeper descendants too, returned as one flat list."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Query.siblings(...)`: the other children of the same parent. Add `includeSelf: true` to include the entry itself."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Query.previous(...)` and `Query.next(...)`: the sibling right before or after the entry, in sidebar order, or nothing at the ends."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Query.translations(...)`: the same entry in the other locales of the root. Add `includeSelf: true` to include the current locale, listed first."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "You can also leverage previous and next helpers for sequential navigation, ideal for building components like the pagination links at the bottom of this page."
+          "text": "Tree relations stay in the locale of the entry they start from (except translations, of course) and use the status of the outer query."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AZG9A84rsohhbr2FBWChmX75ey",
-      "code": "await cms.first({\n  type: DocSchema,\n  \n  include: {   \n    previous: Query.previous({\n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    }),\n    next: Query.next({\n      select: {\n        url: Query.url, \n        title: Query.title\n      }\n    })\n  }\n})",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nexport async function postPage(url: string) {\n  return cms.first({\n    type: BlogPost,\n    url,\n    select: {\n      title: Query.title,\n      body: BlogPost.body,\n      // Breadcrumbs, from the top of the root down\n      breadcrumbs: Query.parents({\n        select: {title: Query.title, url: Query.url}\n      }),\n      // Pagination at the bottom of the post\n      previous: Query.previous({\n        type: BlogPost,\n        select: {title: Query.title, url: Query.url}\n      }),\n      next: Query.next({\n        type: BlogPost,\n        select: {title: Query.title, url: Query.url}\n      }),\n      // A language switcher\n      translations: Query.translations({\n        select: {locale: Query.locale, url: Query.url}\n      })\n    }\n  })\n}",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`siblings`, `previous` and `next` only find entries that share a parent. Entries at the top level of a root don't have siblings in this sense: query them with `level: 0` instead."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -65,26 +161,196 @@
       "content": [
         {
           "_type": "text",
-          "text": "Translations"
+          "text": "Linked entries"
         }
       ],
-      "_anchor": "translations"
+      "_anchor": "linked-entries"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Fetches translations of the current entry by locale."
+          "text": "Entry",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF05qTZieDBu1znYcV5ymelF5",
+              "_link": "entry",
+              "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", "
+        },
+        {
+          "_type": "text",
+          "text": "Link",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF06ndyOvGAEhnyJXhUh2OIOs",
+              "_link": "entry",
+              "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", "
+        },
+        {
+          "_type": "text",
+          "text": "Image",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF03ljHTuTCqMJYPqUNFoTGk1",
+              "_link": "entry",
+              "_entry": "Xu4-sW6S0ynehY5zKR1VZ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and "
+        },
+        {
+          "_type": "text",
+          "text": "File",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF03IWkghDFdk3X2W84dLKhTl",
+              "_link": "entry",
+              "_entry": "tlhZ01MHUjv3Od172Ew6w"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " fields return the basics of what they link to. To get other fields of the linked entries, query through the field:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "a single link field has `.first(query)`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "a multiple link field has `.find(query)`, `.first(query)` and `.count(query)`. Results keep the order the editor gave the links."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AhmNQsSi13caMLpuBk49bSIk2Y",
-      "code": "await cms.first({\n  type: DocSchema,\n  \n  include: {   \n    translations: Query.translations({\n      select: {locale: Query.locale, url: Query.url}\n    })\n  }\n})",
+      "code": "import {cms} from '@/cms'\nimport {Author, BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst post = await cms.get({\n  type: BlogPost,\n  path: 'hello-world',\n  select: {\n    title: Query.title,\n    author: BlogPost.author.first({\n      select: {name: Query.title, bio: Author.bio, avatar: Author.avatar}\n    }),\n    categories: BlogPost.categories.find({\n      select: {title: Query.title, url: Query.url}\n    })\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Linked entries are looked up in the locale of the entry you queried, falling back to entries without a locale, so a link to an untranslated author keeps working from every translation of a post."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "The other direction"
+        }
+      ],
+      "_anchor": "the-other-direction"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Links are stored on the entry that links, so \"all posts by this author\" is a filter on the posts. Filter on the id of the target, stored as `_entry`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF02Iepon3xd2vXVF2GvlX69B",
+      "code": "import {cms} from '@/cms'\nimport {Author, BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nexport async function authorPage(path: string) {\n  const author = await cms.get({\n    type: Author,\n    path,\n    select: {id: Query.id, name: Query.title, bio: Author.bio}\n  })\n  const posts = await cms.find({\n    type: BlogPost,\n    // Single link: has, multiple links: includes\n    filter: {author: {has: {_entry: author.id}}},\n    select: {title: Query.title, url: Query.url},\n    orderBy: {desc: BlogPost.publishDate}\n  })\n  return {author, posts}\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For multiple links, such as categories, use `{categories: {includes: {_entry: id}}}`. More combinations are in "
+        },
+        {
+          "_type": "text",
+          "text": "Filtering",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzzRgFhRnrH2po9iiOOCbHK2",
+              "_link": "entry",
+              "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and the "
+        },
+        {
+          "_type": "text",
+          "text": "examples",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF06qrh4BsaFOsWUfJ3fYCyLT",
+              "_link": "entry",
+              "_entry": "3AZY63OxjiPWzVM4siKRVbqLNF1"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -100,7 +366,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189232,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

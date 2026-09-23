@@ -587,7 +587,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`Field.entry.multiple` no longer allows the same entry twice by default, pass `allowDuplicates: true` to keep the 1.7 behaviour."
+                  "text": "`Field.entry.multiple` no longer allows the same entry twice by default, pass `allowDuplicates: true` to keep the 1.7 behavior."
                 }
               ]
             }
@@ -1109,7 +1109,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189471,
+    "updatedAt": 1790195602,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -6,88 +6,240 @@
   "navigationTitle": "",
   "body": [
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most queries start by saying which entries you want: of a type, at a url, in a root, in a locale. Then you choose what to get back and in which order. This page covers both; to match on field values see "
+        },
+        {
+          "_type": "text",
+          "text": "Filtering",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF080n4jDnn33GYjN3tUysegc",
+              "_link": "entry",
+              "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AUGWShqMFRj0JtbCa7Y1cXW15m",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst posts = await cms.find({\n  type: BlogPost,\n  root: cms.workspaces.main.pages,\n  locale: 'en',\n  select: {title: Query.title, url: Query.url},\n  orderBy: {desc: BlogPost.publishDate},\n  take: 10\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "Structural Querying"
-        }
-      ],
-      "_anchor": "structural-querying"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Use top-level properties to define the scope of your query. This allows you to retrieve entries based on their structural identity such as content type, unique ID or their specific location in the project tree."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "1. Using default fields"
-        }
-      ],
-      "_anchor": "1-using-default-fields"
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AUGWShqMFRj0JtbCa7Y1cXW15m",
-      "code": "const pageIds = ['abc123', 'def456', 'ghi789']\nawait cms.first({\n  // Filter by the schema.\n  type: BlogPostSchema,\n\n  // When you know the unique id\n  id: pageId,\n  // You can also use operations in these fields\n  // id: {in: pageIds},\n  // id: {notIn: pageIds},\n\n  // Using the path (e.g. querying).\n  path: pagePath,\n\n  // Using the url (e.g. /docs/query)\n  url: pageUrl,\n  // But sometimes you only need the URL to start with a certain prefix\n  // instead of using javascript string manipulation you can use the startsWith field\n  // url: {startsWith: '/docs/'},\n\n  // Using the parents id\n  parentId: pageParentId  \n})",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "ChapterLinkBlock",
-      "_id": "3AiIemW7gjzBxUD3rV1fFXMpMAA",
-      "link": {
-        "description": "More information about possible operations",
-        "_id": "3AiIggdFaryr3icK8IOcTUVjp0B",
-        "_type": "entry",
-        "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
-      }
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "2. Using the location in the tree structure"
+          "text": "Selecting entries"
         }
       ],
       "_anchor": "2-using-the-location-in-the-tree-structure"
     },
     {
-      "_type": "CodeBlock",
-      "_id": "3AUGagq5lVCSs24yNtognDcd4W1",
-      "code": "await cms.first({\n  // e.g. cms.workspaces.main\n  workspace,\n  // e.g. cms.workspaces.main.pages\n  root,\n  // Level: 0 = entries at the top of a root, 1 = their children, 2 = grandchildren, ...\n  level,\n\n  // For Location you can use a Root, Workspace or a Page as input.\n  // e.g. cms.workspaces.main | cms.workspaces.main.pages\n  location\n})",
-      "fileName": "",
-      "language": ""
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type`: a type, or an array of types to match any of them: `type: [Page, BlogPost]`. It also narrows the result type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`id`: the entry id."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`url`: the entry's url, for example `'/blog/hello-world'`. Handy in a catch-all route."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`path`: the entry's path, the last segment of its url."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`parentId`: the id of the parent entry. `null` matches entries at the top of a root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`level`: the depth in the tree. `0` is the top of a root, `1` their children, and so on."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace` and `root`: a name, or the object from your CMS instance: `cms.workspaces.main`, `cms.workspaces.main.pages`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`location`: a workspace, a root or a seeded page. With a seeded page, such as `cms.workspaces.main.pages.blog`, it matches the entries below it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alias`: a previous url stored in the entry's "
+                },
+                {
+                  "_type": "text",
+                  "text": "metadata aliases",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF07uhc2wuhIaoGH2HNxeSGGg",
+                      "_link": "entry",
+                      "_entry": "2aAyRD3ixey0IqznGhiPUjTd5Vp"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", to redirect old urls."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`createdAt` and `updatedAt`: the audit timestamps of documents, in Unix seconds."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "3. Miscellaneous"
+          "text": "`id`, `url`, `path`, `parentId`, `level`, `alias`, `createdAt`, `updatedAt`, `workspace` and `root` take a value or a condition with the "
+        },
+        {
+          "_type": "text",
+          "text": "operators",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0Dw9JGw4hDvw6ZxgLzHGKax",
+              "_link": "entry",
+              "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " from filters:"
         }
-      ],
-      "_anchor": "3-miscellaneous"
+      ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3AUCfiqN9GE7kQlDsH3ROyTduA6",
-      "code": "await cms.first({\n  // This can be: 'published', 'draft', 'archived', 'preferDraft', 'preferPublished', 'all' \n  status: 'published',\n  // Look for result with the exact locale.\n  locale: pageLocale,\n  // Look for a result with the locale, but ignore when there are no exact matches\n  preferredLocale: pageLocale \n})",
+      "_id": "3AUGagq5lVCSs24yNtognDcd4W1",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\n// Several ids\nawait cms.find({id: {in: ['2g8FtR', '2g8FtS']}})\n\n// Everything below /docs\nawait cms.find({url: {startsWith: '/docs/'}})\n\n// Top-level entries of a root, for a main menu\nawait cms.find({\n  root: cms.workspaces.main.pages,\n  level: 0,\n  select: {title: Query.title, url: Query.url}\n})\n\n// Entries below a seeded page\nawait cms.find({location: cms.workspaces.main.pages.blog})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "heading",
@@ -95,55 +247,363 @@
       "content": [
         {
           "_type": "text",
-          "text": "Output control"
+          "text": "Locales"
         }
       ],
-      "_anchor": "output-control"
+      "_anchor": "1-data"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Once you've filtered the results, you can manipulate the output. This can be done in two ways:"
+          "text": "In a root with "
+        },
+        {
+          "_type": "text",
+          "text": "i18n",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF07mpIERMzbfT9aCc7ALEXoz",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", every translation is a separate entry version. Without a `locale`, a query matches all of them, so `find` returns an entry once per language and `first` returns whichever comes first."
         }
       ]
     },
     {
-      "_type": "heading",
-      "level": 3,
+      "_type": "bulletList",
       "content": [
         {
-          "_type": "text",
-          "text": "1. Data"
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: only entries in this locale (compared case-insensitively). `null` matches entries in roots without i18n."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`preferredLocale`: entries in this locale plus entries without a locale. Use it when a query spans translated and untranslated roots."
+                }
+              ]
+            }
+          ]
         }
-      ],
-      "_anchor": "1-data"
+      ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3AZ7EzV3Q9XTl29dMU5c2YTJd3B",
-      "code": "await cms.first({\n  // Return everything from the related type\n  type: BlogPostSchema,\n  id: BlogPostId\n})\n\nawait cms.first({\n  id: BlogPostId,\n  // Only return the selected fields (similar to SQL's SELECT)  \n  select: {\n    title: Query.title,\n    description: BlogPostSchema.description\n  }\n})\n\nawait cms.first({\n  id: BlogPostId,\n  select: {\n    title: Query.title\n  },\n  // Use include to return extra fields that are not in the queried entry's schema\n  include: {\n    parent: Query.parent({\n      select: {\n        url: Query.url,\n        title: Query.title\n      }\n    })\n  }\n})",
+      "_id": "3AUCfiqN9GE7kQlDsH3ROyTduA6",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nexport async function pageByUrl(locale: string, slug: Array<string>) {\n  return cms.first({\n    locale,\n    url: `/${[locale, ...slug].join('/')}`,\n    select: {title: Query.title, type: Query.type}\n  })\n}",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "2. Sorting"
+          "text": "Status"
         }
       ],
       "_anchor": "2-sorting"
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`status` chooses between published, draft and archived versions:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'published'` (default): only published entries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'draft'` or `'archived'`: only drafts, or only archived entries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'preferDraft'`: one version per entry: the draft if there is one, then the published version, then the archived one. This is the default in Next.js draft mode."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'preferPublished'`: one version per entry: the published one if there is one, then the archived one, then the draft."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'all'`: every version, so an entry can appear more than once."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Relations inside the query use the same status."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Choosing what to return"
+        }
+      ],
+      "_anchor": "choosing-what-to-return"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`select`: the fields and properties to return, in any shape. A single expression, such as `select: Query.url`, returns plain values. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "What a query returns",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF07drAxxIOHDjaw9uFOA6bGJ",
+                      "_link": "entry",
+                      "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`include`: extra values to add to the full entry, typically "
+                },
+                {
+                  "_type": "text",
+                  "text": "related entries",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0BoA7QMg7XMveKnaxe6dPXv",
+                      "_link": "entry",
+                      "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ". It only applies when there's no `select`; with a `select`, put everything in the select."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZ7EzV3Q9XTl29dMU5c2YTJd3B",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\n// All fields of the post, plus its parent\nconst post = await cms.get({\n  type: BlogPost,\n  path: 'hello-world',\n  include: {\n    blog: Query.parent({select: {title: Query.title, url: Query.url}})\n  }\n})\n\n// Only what the card needs\nconst card = await cms.get({\n  type: BlogPost,\n  path: 'hello-world',\n  select: {\n    title: Query.title,\n    intro: BlogPost.intro,\n    blog: Query.parent({select: {title: Query.title, url: Query.url}})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sorting and pagination"
+        }
+      ],
+      "_anchor": "sorting-and-pagination"
+    },
+    {
       "_type": "CodeBlock",
       "_id": "3AZ7FHNFDpM4QIZoFih9yczK96Q",
-      "code": "await cms.find({\n  type: BlogPostSchema,\n  select: {\n    id: Query.id,\n    title: Query.title\n  },\n  orderBy: [\n    // Use desc or asc to sort by a specific field.\n    {desc: BlogPostSchema.publishedDate},\n    // Posts with the same date are sorted in alphabetical order\n    {asc: BlogPostSchema.title}\n  ],\n  // Group results by 1 or more categories\n  groupBy: BlogPostSchema.category,\n\n  //skip the first 10 results and return a max of 20\n  skip: 10,\n  take: 20\n})",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst page = 2\nconst perPage = 10\n\nconst posts = await cms.find({\n  type: BlogPost,\n  select: {title: Query.title, url: Query.url},\n  orderBy: [\n    // Newest first\n    {desc: BlogPost.publishDate},\n    // Same date: alphabetical\n    {asc: Query.title}\n  ],\n  skip: (page - 1) * perPage,\n  take: perPage\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`orderBy`: one `{asc: ...}` or `{desc: ...}`, or an array to break ties. Pass a field or a `Query` property. Text is compared case-insensitively unless you add `caseSensitive: true`, and entries without a value come last in both directions."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Without `orderBy`, entries come in their stored order: the order of siblings in the sidebar. Queries with `search` are ordered by relevance."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`skip` and `take`: skip a number of results and return at most `take`. Both must be whole numbers of 0 or more. For the total, run `cms.count` with the same options but without `skip` and `take`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "One entry per value"
+        }
+      ],
+      "_anchor": "one-entry-per-value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`groupBy` keeps one entry for every distinct value of a field or property: the first match in stored order, or the most relevant one when searching. Sorting and pagination apply afterwards, to the remaining entries."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF092GUc3PSk4Y3447aAXVOXM",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\n// The first post of every blog\nconst firstPosts = await cms.find({\n  type: BlogPost,\n  groupBy: Query.parentId,\n  select: {title: Query.title, url: Query.url}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`groupBy` takes a single field. Because the entry for each value is picked before sorting, it can't give you \"the newest post per blog\", and it doesn't return lists of entries per value: for those, query the entries and group them in your own code. Group on plain values such as text, select or date fields; link fields store a unique id per link, so they don't group."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -159,7 +619,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189232,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -11,17 +11,17 @@
       "content": [
         {
           "_type": "text",
-          "text": "The link field can be used to create one or multiple references to other entries or external resources (like a webpage or an email address). By default, the user can choose between internal pages, external urls or uploaded files. If you want to limit to selection to just one of those options it's possible to declare the field as either an "
+          "text": "A link field lets editors link to a page in the CMS, an external url or an uploaded file, whichever they need. Use it for buttons and calls to action. When a link can only be one kind, use the "
         },
         {
           "_type": "text",
-          "text": "Entry field",
+          "text": "Entry",
           "marks": [
             {
               "_type": "link",
               "_id": "2aiM1Ghv4EPsnyCwFTBaljNTqhe",
-              "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
-              "_link": "entry"
+              "_link": "entry",
+              "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
             }
           ]
         },
@@ -31,13 +31,13 @@
         },
         {
           "_type": "text",
-          "text": "Url field",
+          "text": "Url",
           "marks": [
             {
               "_type": "link",
               "_id": "2aiNTO1P2dBKjx6oBxmdnwk7vuB",
-              "_entry": "2aiM9Z6hrhingqGxBX6GGKEVBAh",
-              "_link": "entry"
+              "_link": "entry",
+              "_entry": "2aiM9Z6hrhingqGxBX6GGKEVBAh"
             }
           ]
         },
@@ -47,50 +47,49 @@
         },
         {
           "_type": "text",
-          "text": "File field",
+          "text": "File",
           "marks": [
             {
               "_type": "link",
               "_id": "2aiM4jKizlp5cMp5nIZg1aG5zfw",
-              "_entry": "tlhZ01MHUjv3Od172Ew6w",
-              "_link": "entry"
+              "_link": "entry",
+              "_entry": "tlhZ01MHUjv3Od172Ew6w"
             }
           ]
         },
         {
           "_type": "text",
-          "text": ", or "
+          "text": " or "
         },
         {
           "_type": "text",
-          "text": "Image field",
+          "text": "Image",
           "marks": [
             {
               "_type": "link",
               "_id": "2aiM5hmOU6jSqFdf9wHRoZw21TE",
-              "_entry": "Xu4-sW6S0ynehY5zKR1VZ",
-              "_link": "entry"
+              "_link": "entry",
+              "_entry": "Xu4-sW6S0ynehY5zKR1VZ"
             }
           ]
         },
         {
           "_type": "text",
-          "text": "."
+          "text": " field instead: they have a simpler picker and a narrower type."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "268j43D4sYTv9i4LXKv8Isvwlzi",
-      "code": "import {Field} from 'alinea'\n\nField.link('Single link')\n\nField.link.multiple('Multiple links')",
+      "code": "import {Field} from 'alinea'\n\nField.link('Button link')\n\nField.link.multiple('Related links', {max: 5})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "7JteCOtZTREVRHMMcZqMR",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Link field', {\n  fields: {\n    link: Field.link('Single link'),\n    linkMultiple: Field.link.multiple('Multiple links')\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Link field', {\n  fields: {\n    link: Field.link('Single link'),\n    linkMultiple: Field.link.multiple('Multiple links'),\n    linkWithLabel: Field.link('Link with label', {\n      fields: {label: Field.text('Label')}\n    })\n  }\n})"
     },
     {
       "_type": "heading",
@@ -99,10 +98,113 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration",
-          "marks": [
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "bold"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: extra fields stored on each link, such as a label or an \"open in new tab\" toggle. Pass an object of fields or a type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`max` (multiple only): the maximum number of links."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`allowDuplicates` (multiple only): allow the same link more than once. Default `true` for `Field.link.multiple`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`condition`, `location`, `limitLocations` and `pickChildren`: limit which entries the page picker offers, see the "
+                },
+                {
+                  "_type": "text",
+                  "text": "Entry field",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzvUcIclqnw76XYytx5nxehR",
+                      "_link": "entry",
+                      "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzt9ey24JIfnAYEIT2zumAgF",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
             }
           ]
         }
@@ -111,14 +213,67 @@
     {
       "_type": "heading",
       "textAlign": "start",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`max`",
-          "marks": [
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When you query a link field, every link is resolved to what you need to render it. Check `_type` to see which kind it is:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "bold"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'entry'`: a page. `href` and `url` hold its current url (so the link survives moves and renames), plus `title`, `path`, `entryId` and `entryType`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'url'`: an external link with the `href`, `title` and `target` (`'_blank'` or `'_self'`) the editor entered."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'file'`: an uploaded file with its `href`, `title`, `extension` and `size` in bytes."
+                }
+              ]
             }
           ]
         }
@@ -130,36 +285,68 @@
       "content": [
         {
           "_type": "text",
-          "text": "Limit the amount of rows in case of multiple links."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`fields`"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "start",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Defines nested sub-fields for the original object, allowing you to attach additional structured data."
+          "text": "The values of the extra `fields` are on `link.fields`. A single link is `null` while it's empty, a multiple link field is an array."
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "2bLjsYUBGxzkuxwV3LJNOBMsarU",
-      "code": "import {Config, Field} from 'alinea'\n\nField.link('Link', {\n  fields: {label: Field.text('Link label')}\n})",
+      "_id": "3JkEzvzsEvwi1guW6TwL5O9kq17",
+      "code": "import type {Link as LinkValue} from 'alinea'\nimport Link from 'next/link'\n\ninterface ButtonProps {\n  link: LinkValue<{label: string}> | null\n}\n\nexport function Button({link}: ButtonProps) {\n  if (!link?.href) return null\n  const label = link.fields.label || link.title\n  if (link._type === 'url')\n    return (\n      <a href={link.href} target={link.target || undefined}>\n        {label}\n      </a>\n    )\n  return <Link href={link.href}>{label}</Link>\n}",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Links to entries that were deleted, or that aren't published, are dropped from multiple link fields. A single link to such an entry keeps its stored reference but has no `href`, so always check `href` before rendering."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Extra fields"
+        }
+      ],
+      "_anchor": "extra-fields"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bLjsYUBGxzkuxwV3LJNOBMsarU",
+      "code": "import {Field} from 'alinea'\n\nField.link('Call to action', {\n  fields: {\n    label: Field.text('Label', {width: 0.5}),\n    style: Field.select('Style', {\n      width: 0.5,\n      initialValue: 'primary',\n      options: {primary: 'Primary', secondary: 'Secondary'}\n    })\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors fill in these fields in the link's row after picking the target. `LinkValue<{label: string}>` in the example above types them; see "
+        },
+        {
+          "_type": "text",
+          "text": "Infer",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzvcaZSOV8Rq7fvkQEyLHgBh",
+              "_link": "entry",
+              "_entry": "PzbIyWahkBmKgPac_X7FY"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to derive the type from the fields instead."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -169,6 +356,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

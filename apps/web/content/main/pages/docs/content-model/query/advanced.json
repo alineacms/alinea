@@ -6,31 +6,49 @@
   "navigationTitle": "",
   "body": [
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Patterns for larger sites: nesting relations, querying several types at once, reusing parts of queries and controlling how fresh the content is."
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "Complex Relations"
+          "text": "Nested relations"
         }
       ],
-      "_anchor": "complex-relations"
+      "_anchor": "query-logic"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "When fetching data, you will eventually need information from a linked entry. Instead of performing multiple fetches, Alinea allows you to nest these requests within a single call."
+          "text": "Relations can contain relations. The whole query, however deep, is resolved at once, so a navigation tree or a page with its linked content takes one call:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AZYDtQEiQ9fIN2ZH6WUzfvjxnU",
-      "code": "await cms.first({\n  locale,\n  url,\n  type: ParentSchema,\n  select: {\n    ...ParentSchema,\n    // Use filters from another schema to retrieve related data\n    filters: ChildSchema.filters.find({\n      select: {\n        id: Query.id,\n        title: Query.title,\n        // Fetch multiple levels of nested relations in a single, optimized query\n        filterItems: Query.children({\n          select: {\n          id: Query.id,\n          title: Query.title\n          }\n        })\n      }\n    })\n  }\n})",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nconst menu = await cms.find({\n  root: cms.workspaces.main.pages,\n  locale: 'en',\n  level: 0,\n  select: {\n    title: Query.title,\n    url: Query.url,\n    children: Query.children({\n      select: {\n        title: Query.title,\n        url: Query.url,\n        children: Query.children({\n          select: {title: Query.title, url: Query.url}\n        })\n      }\n    })\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Relations work inside link queries too, for example the url of each linked category's parent: `BlogPost.categories.find({select: {title: Query.title, parent: Query.parent({select: {url: Query.url}})}})`."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -38,61 +56,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Query Logic"
-        }
-      ],
-      "_anchor": "query-logic"
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "OR Logic"
-        }
-      ],
-      "_anchor": "or-logic"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Using the `{in: [...]}` operator on a filter field will apply OR logic. This means the query will return any entry that matches at least one of the specified criteria. It is the most efficient way to broaden your search across multiple possible values, such as categories or tags."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AZrw7kzKzdBiOhvT2qozwEV7kl",
-      "code": "await cms.find({\n  type: BlogPostSchema,\n  filter: {\n    category: {in: ['abc', 'def']}\n  }\n})",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "For more complex scenarios, such as combining filters across different fields use the explicit or operator. This allows you to group multiple distinct conditions where only one needs to be true for an entry to be included."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AZsa6F0PPDaxiAkihTLF1Unc7v",
-      "code": "await cms.find({\n  type: BlogPostSchema,\n  filter: {\n    or: [\n      {author: 'alinea'},\n      {category: 'news'}\n    ]\n  }\n})",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "AND Logic"
+          "text": "Several types at once"
         }
       ],
       "_anchor": "and-logic"
@@ -102,16 +66,25 @@
       "content": [
         {
           "_type": "text",
-          "text": "Use AND logic when an entry must strictly satisfy multiple conditions simultaneously. In Alinea, this is achieved by using the and operator, which requires every filter within its scope to be true for an entry to be included in the results. This is particularly useful for complex cross-referencing where a partial match is not enough."
+          "text": "Pass an array to `type` to match any of them. Select the properties they share, and `Query.type` to tell them apart:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3AZs3iwwE6V75J5GHAMuKoABQAo",
-      "code": "await cms.find({\n  type: ChildSchema,\n  filter: {\n    // Use .map to create a filter condition for each ID\n    and: ['abc', 'def'].map(id => ({\n      filters: {includes: { _entry: id }}\n    }))\n  }\n})",
+      "_id": "3AZrw7kzKzdBiOhvT2qozwEV7kl",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost, Event} from '@/schema'\nimport {Query} from 'alinea'\n\nconst latest = await cms.find({\n  type: [BlogPost, Event],\n  select: {type: Query.type, title: Query.title, url: Query.url},\n  orderBy: {desc: Query.createdAt},\n  take: 10\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without a `select`, each result has the fields of its own type, and the result type is a union of the types."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -119,26 +92,236 @@
       "content": [
         {
           "_type": "text",
-          "text": "Global Search"
+          "text": "Reusing selections"
         }
       ],
-      "_anchor": "global-search"
+      "_anchor": "reusing-selections"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Alinea also provides a global search property. This allows you to perform broad queries across your content without targeting specific structural properties or nested filters."
+          "text": "Selections are plain objects, so you can define them once and share them between queries. TypeScript infers the result from wherever you use them:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3AZMTVraRggRKFpls9fimCdP3hN",
-      "code": "await cms.find({\n  type: BlogPostSchema,\n  search: 'querying',\n})\n\n// You can also pass an array of terms, every term has to match\nawait cms.find({\n  type: BlogPostSchema,\n  search: ['cats', 'dogs'], // This will return all blogposts containing both cats and dogs\n})\n",
+      "_id": "3AZsa6F0PPDaxiAkihTLF1Unc7v",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\n// Everything a post card needs\nexport const postCard = {\n  title: Query.title,\n  url: Query.url,\n  date: BlogPost.publishDate,\n  cover: BlogPost.cover\n}\n\nexport type PostCard = Awaited<ReturnType<typeof latestPosts>>[number]\n\nexport function latestPosts(take = 3) {\n  return cms.find({\n    type: BlogPost,\n    select: postCard,\n    orderBy: {desc: BlogPost.publishDate},\n    take\n  })\n}\n\nexport function featuredPosts() {\n  return cms.find({\n    type: BlogPost,\n    filter: {featured: true},\n    select: {...postCard, intro: BlogPost.intro}\n  })\n}",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Freshness"
+        }
+      ],
+      "_anchor": "freshness"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deployed sites keep their copy of the content in sync with the repository: a query first checks whether the content changed and syncs when it did, see "
+        },
+        {
+          "_type": "text",
+          "text": "Instant publishing",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF01Yu8GQAqPhm6XVZ9fTsF1Q",
+              "_link": "entry",
+              "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". As a fallback it also syncs at most once per `syncInterval` seconds from your "
+        },
+        {
+          "_type": "text",
+          "text": "config",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF049XYrSYfBjMGv0vbXDYrWI",
+              "_link": "entry",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", 60 by default. Two query options change this per query:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`syncInterval`: the fallback interval for this query, in seconds. `0` syncs every time."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`disableSync: true`: read the local copy as it is, without checking for changes. Use it for queries that run very often and can be a little behind, such as search suggestions."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZs3iwwE6V75J5GHAMuKoABQAo",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\n\nexport function suggest(term: string) {\n  return cms.find({\n    search: term,\n    disableSync: true,\n    take: 5,\n    select: {title: Query.title, url: Query.url}\n  })\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Previews"
+        }
+      ],
+      "_anchor": "previews"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `preview` option carries the unsaved changes an editor is previewing. Alinea sets it for you when Next.js draft mode is on, so you don't pass it yourself: the same queries render published content for visitors and drafts in the "
+        },
+        {
+          "_type": "text",
+          "text": "live preview",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF02wexiRBziqPfqAHhIkNYkW",
+              "_link": "entry",
+              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Performance tips"
+        }
+      ],
+      "_anchor": "performance-tips"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Select only what a page needs. Rich text and list fields can be large, and everything you return from a server component to a client component is serialized."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Count with `cms.count` instead of fetching entries and taking the length."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Put related data in the same query instead of looping over results and querying for each of them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Search queries use a full text index that's built the first time you search, so the first search after a deploy can take a little longer."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3AiIemW7gjzBxUD3rV1fFXMpMAA",
+      "link": {
+        "description": "Complete queries for common pages: listings, detail pages, search and more",
+        "_id": "3AiIggdFaryr3icK8IOcTUVjp0B",
+        "_type": "entry",
+        "_entry": "3AZY63OxjiPWzVM4siKRVbqLNF1"
+      }
     }
   ],
   "metadata": {
@@ -154,7 +337,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189231,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

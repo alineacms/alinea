@@ -11,22 +11,221 @@
       "content": [
         {
           "_type": "text",
-          "text": "A select field limits data to a specific set of options."
+          "text": "A select field lets editors pick from a fixed set of options. It stores the key of the chosen option, so you can rename labels without touching content. Use `Field.select.multiple` to allow picking several."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "268iVJXDY23EWvw51STlvnDU0eR",
-      "code": "import {Field} from 'alinea'\n\nField.select('My select field', {\n  options: {\n    a: 'Option a',\n    b: 'Option b'\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\nField.select('Category', {\n  options: {\n    news: 'News',\n    release: 'Release notes',\n    tutorial: 'Tutorial'\n  }\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "2Yl56dl7ynjRy9stWye5pCVTwLH",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Select field', {\n  fields: {\n    select: Field.select('My select field', {\n      options: {\n        a: 'Option a',\n        b: 'Option b'\n      }\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Select field', {\n  fields: {\n    category: Field.select('Category', {\n      options: {\n        news: 'News',\n        release: 'Release notes',\n        tutorial: 'Tutorial'\n      }\n    }),\n    alignment: Field.select('Alignment', {\n      initialValue: 'left',\n      options: {\n        left: 'Left',\n        center: 'Center',\n        right: 'Right'\n      }\n    }),\n    tags: Field.select.multiple('Tags', {\n      options: {\n        design: 'Design',\n        development: 'Development',\n        marketing: 'Marketing'\n      }\n    })\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`options` (required): an object of option keys and their labels, shown in this order."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`placeholder`: text shown while nothing is selected, for example \"Choose a category\"."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`initialValue`: the key selected for new entries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF00HqO6ywYZQbrdBFTkRFwxv",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.select` stores the selected key, or `null` when nothing is selected. The TypeScript type is the union of your keys (`'news' | 'release' | 'tutorial'`), plus `null` when there's no `initialValue`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.select.multiple` stores an array of keys, `[]` by default."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Labels aren't stored. Keep the options in a constant if you need them on your site too, and don't rename keys that are in use: entries keep the old key."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF00ADDg7u4ZZWpHxbk8hm3pS",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const categories = {\n  news: 'News',\n  release: 'Release notes',\n  tutorial: 'Tutorial'\n}\n\nexport const Post = Config.document('Post', {\n  fields: {\n    category: Field.select('Category', {options: categories}),\n    tags: Field.select.multiple('Tags', {\n      options: {design: 'Design', development: 'Development'}\n    })\n  }\n})\n\nexport function categoryLabel(key: keyof typeof categories | null) {\n  return key ? categories[key] : ''\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Filtering"
+        }
+      ],
+      "_anchor": "filtering"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Filter on the key. For multiple selects, use `includes`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzzfwuBgpeCRGJ354MgnLsT1",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\nconst releases = await cms.find({\n  type: BlogPost,\n  filter: {tags: {includes: 'release'}}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "See "
+        },
+        {
+          "_type": "text",
+          "text": "Filtering",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF01XyBNHd4Wht1dWKhswHVEA",
+              "_link": "entry",
+              "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for all operators."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -37,6 +236,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

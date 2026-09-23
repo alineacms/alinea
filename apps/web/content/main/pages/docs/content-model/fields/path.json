@@ -10,21 +10,47 @@
       "content": [
         {
           "_type": "text",
-          "text": "A path field is used to generate a slug based on another field - by default, the title field."
+          "text": "A path field holds the url segment of an entry, its slug. It fills itself with a slug of the title while it's empty, and editors can change it. "
+        },
+        {
+          "_type": "text",
+          "text": "`Config.document`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzrPWvVETZ7lWgMSYdG0ymOs",
+              "_link": "entry",
+              "_entry": "2aAyRD3ixey0IqznGhiPUjTd5Vp"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " adds one for you; add it yourself to types made with `Config.type` that need a url."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AqDnESNO6mPvuma6nNlrSmOTef",
-      "code": "import {Field} from 'alinea'\n\nField.text('Title', {required: true, width: 0.5}),\nField.path('Path', {required: true, width: 0.5})",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Author = Config.type('Author', {\n  fields: {\n    title: Field.text('Name', {required: true, width: 0.5}),\n    path: Field.path('Path', {required: true, width: 0.5})\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "3AqE1eqF275ThdZFB2hkVfnCENY",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Contentpage',\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      required: true, width: 0.5\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'My first post',\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      required: true, width: 0.5\n    })\n  }\n})"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The path of an entry is stored in the field named `path`: Alinea reads it to name the entry's file and build its url."
+        }
+      ]
     },
     {
       "_type": "heading",
@@ -32,21 +58,131 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration"
+          "text": "Options"
         }
       ],
-      "_anchor": "configuration"
+      "_anchor": "initialvalue"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`from`: the name of the text field, next to the path field, whose slug is suggested while the path is empty. Defaults to `'title'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEztcg2HctFT7Zom2HvY5bDAM",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly` and `hidden`. `shared` is not supported: every translation has its own path, so urls can be translated."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`from`"
+          "text": "How entry paths are generated"
         }
       ],
-      "_anchor": "from"
+      "_anchor": "how-entry-paths-are-generated"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "When an entry is created, the slug of its title is saved as its path."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "After that the path no longer follows the title, so fixing a typo in a title doesn't change a published url. Editors change the path by hand when they want a new url."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Slugs are lowercase. Accents are removed from Latin letters, letters and digits of other scripts are kept, apostrophes are dropped and everything else becomes a dash: `\"L'été à Paris!\"` becomes `lete-a-paris`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Paths are unique among siblings. When a sibling already uses a path, a number is added: `about`, `about-1`, `about-2`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "_type": "paragraph",
@@ -54,54 +190,127 @@
       "content": [
         {
           "_type": "text",
-          "text": "Automatically generate (slugify) the path from another field."
+          "text": "When the path of a published entry changes, its file and the folder with its children are renamed and its url changes, for its children too. Documents keep the old url in their "
+        },
+        {
+          "_type": "text",
+          "text": "metadata aliases",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzsgz0vNQuwskbLbdg8rmX32",
+              "_link": "entry",
+              "_entry": "2aAyRD3ixey0IqznGhiPUjTd5Vp"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " so you can redirect it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Slugs for other fields"
+        }
+      ],
+      "_anchor": "slugs-for-other-fields"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A path field also works as a slug input elsewhere, for example an anchor for a section in a list. Point `from` at the field to suggest a slug from:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AqJiS32IeCy9SQk3LWIb6iIXjy",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (from)', {\n  fields: {\n    anchorId: Field.text('anchorId', {\n      initialValue: 'Anchord ID',\n      required: true, width: 0.5\n    }),\n    pathFrom: Field.path('Path from anchorId)', {\n      from: 'anchorId',\n      required: true, width: 0.5\n    })\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Section = Config.type('Section', {\n  fields: {\n    heading: Field.text('Heading', {width: 0.5}),\n    anchor: Field.path('Anchor', {from: 'heading', width: 0.5})\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "3AqJkxkiOnV85ps3rkkyVdGkscQ",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (from)', {\n  fields: {\n    anchorId: Field.text('anchorId', {\n      initialValue: 'Anchord ID',\n      required: true, width: 0.5,\n    }),\n    pathFrom: Field.path('Path from anchorId)', {\n      from: 'anchorId',\n      required: true, width: 0.5\n    })\n  }\n})"
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`initialValue`"
-        }
-      ],
-      "_anchor": "initialvalue"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (from)', {\n  fields: {\n    heading: Field.text('Heading', {\n      initialValue: 'Opening hours',\n      width: 0.5\n    }),\n    anchor: Field.path('Anchor', {\n      from: 'heading',\n      width: 0.5\n    })\n  }\n})"
     },
     {
       "_type": "paragraph",
-      "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Prefills the path value. This is useful for cases like setting the homepage path."
+          "text": "The suggestion is only displayed: such a field stays empty until an editor types in it, so fall back to the heading when you render it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "A fixed path for the home page"
+        }
+      ],
+      "_anchor": "a-fixed-path-for-the-home-page"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A path of `index` is left out of the url, so an `index` entry at the top of a root is served on `/`. Seed the home page from the root's "
+        },
+        {
+          "_type": "text",
+          "text": "`children`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEztWdzC5bHyNoAGxB7yEzx3W",
+              "_link": "entry",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " with the key `index`, and make its path read-only so editors can't move it:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AqKGCP7GeVhDbB2mDKPSCUIC2q",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (homepage)', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Homepage',\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      initialValue: 'index',\n      hidden: false,\n      readOnly: true,\n      required: true, width: 0.5\n    })\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Home = Config.document('Home', {\n  fields: {\n    path: Field.path('Path', {readOnly: true, width: 0.5})\n  }\n})\n\nexport const pages = Config.root('Pages', {\n  contains: ['Page'],\n  children: {\n    index: Config.page({type: Home, fields: {title: 'Home'}})\n  }\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
-      "_type": "ExampleBlock",
-      "_id": "3AqKRFn20Kdo8hS9Wzbzmu5uZvi",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (homepage)', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Homepage',\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      initialValue: 'index',\n      hidden: false,\n      readOnly: true,\n      required: true, width: 0.5\n    })\n  }\n})"
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Seeded entries are created automatically and can't be moved or deleted in the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries created in the dashboard always start with the slug of their title as path, an `initialValue` on the path field isn't used for them."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -117,7 +326,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189131,
+    "updatedAt": 1790196931,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

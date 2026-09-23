@@ -10,7 +10,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "We're going to work towards setting up a welcome page, served on the root domain of the website. This page will simply print the title of the page, which can be adjusted in the CMS."
+          "text": "Start with a homepage served at `/` that shows a title editors can change in the dashboard, with SEO metadata and a live preview."
         }
       ]
     },
@@ -29,17 +29,28 @@
       "content": [
         {
           "_type": "text",
-          "text": "We recommend creating a single component file for every page. In this case we call it LandingPage.tsx. This React component will be accompagnied by a schema file, which defines the fields of this page."
+          "text": "The landing page gets its own folder with two files: `LandingPage.schema.tsx` defines the fields editors fill in, `LandingPage.tsx` renders them."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AONylaqcfOBvfq6SBaJh9zwYEP",
-      "code": "app/\n╰ page.tsx\n╰ layout.tsx\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\ncms.tsx",
+      "code": "app/\n├ page.tsx\n╰ layout.tsx\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\ncms.tsx",
       "fileName": "project structure",
       "language": "",
       "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Define the schema"
+        }
+      ],
+      "_anchor": "define-the-schema"
     },
     {
       "_type": "paragraph",
@@ -47,7 +58,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "We start by defining the landing entry schema in its own file. Its path is fixed to an empty string and made read only so it always resolves to /."
+          "text": "`Config.document` creates a type for entries that have a page of their own. It adds a `title` field, a `path` field and a Metadata tab with SEO fields to every document. Here we redefine `path` to make it read-only with an empty initial value, so a landing page created in the dashboard always resolves to `/`."
         }
       ]
     },
@@ -60,12 +71,32 @@
       "compact": false
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render the page"
+        }
+      ],
+      "_anchor": "render-the-page"
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Then we set up the Page-component itself. We define this as a server component and make it responsible for fetching the required data from the CMS. Notice we defined the LandingPage schema as a document, which means it automatically receives various metadata fields. We fetch this from the CMS to properly implement a generateMetadata function. We query with `cms.first`, which returns `null` when no entry matches (`cms.get` throws instead), so a missing page renders the Next.js 404 page."
+          "text": "The view is an async server component that queries its own entry. `cms.first` returns the first entry that matches, or `null` when there is none, so a missing page renders the Next.js 404 page. (`cms.get` throws instead, which suits entries that must exist.) Passing `type: LandingPage` both filters on the type and types the result."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The same file exports `generateMetadata`, which reads the fields of the Metadata tab and falls back to the title."
         }
       ]
     },
@@ -78,19 +109,39 @@
       "compact": false
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Register the type"
+        }
+      ],
+      "_anchor": "register-the-type"
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Register the landing schema in the cms.tsx and (optionally) seed the initial homepage entry."
+          "text": "Replace the generated config with this `cms.tsx`. The type goes in `schema`, and the Pages root lists it in `contains` so editors can create landing pages there."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.page` seeds an entry: Alinea creates it in your content folder when it doesn't exist yet, and editors can't delete it from the dashboard. The key becomes the entry's path, and `index` is a special path that resolves to the parent's URL, `/` in this case. Seeding is optional, editors can also create the page themselves."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AONCAa2Rl2v6v1rbhieBd2wvdb",
-      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome',\n                path: ''\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
       "fileName": "cms.tsx",
       "language": "tsx",
       "compact": false
@@ -100,11 +151,47 @@
       "content": [
         {
           "_type": "text",
-          "text": "Wrap your Next.js config with `withAlinea` so the dashboard is served on `/admin`. The handler route for `/api/cms` (`app/(alinea)/api/cms/route.ts`) is generated by `alinea init`, see the "
+          "text": "Set `baseUrl.production` to the URL your site will be deployed at: `alinea build` refuses to run without it. See "
         },
         {
           "_type": "text",
-          "text": "quickstart",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkCIqkrcvpMFtpgFM7H593i1wp",
+              "_link": "entry",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for all options."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wire up Next.js"
+        }
+      ],
+      "_anchor": "wire-up-next-js"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wrap your Next.js config with `withAlinea` so the dashboard is served on `/admin`. The API route for `/api/cms` (`app/(alinea)/api/cms/route.ts`) was created by `alinea init`, see the "
+        },
+        {
+          "_type": "text",
+          "text": "Quickstart",
           "marks": [
             {
               "_type": "link",
@@ -134,7 +221,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Finally, we implement the page.tsx and layout.tsx files in our app folder to fully wire this site up like a standard Next.js project. Notice we added the previews widget to the root layout, this will activate live previews for content editors."
+          "text": "The route file only renders the view and re-exports its metadata:"
         }
       ]
     },
@@ -147,9 +234,18 @@
       "compact": false
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render `cms.previews` in the root layout. It enables live previews in the dashboard, and the `widget` prop adds a small toolbar to your pages to switch to the dashboard."
+        }
+      ]
+    },
+    {
       "_type": "CodeBlock",
       "_id": "3AnwTjJc907Wdxzne9oVGaVjCny",
-      "code": "import type {Metadata} from 'next'\nimport {cms} from '@/cms'\n\nexport default function RootLayout({children}: {children: React.ReactNode}) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
+      "code": "import {cms} from '@/cms'\n\nexport default function RootLayout({children}: {children: React.ReactNode}) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
       "fileName": "app/layout.tsx",
       "language": "tsx"
     },
@@ -163,7 +259,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Upon completion of these steps, you should have a minimal working website with these verifiable features:"
+              "text": "Run `npm run dev` and check that:"
             }
           ]
         },
@@ -178,7 +274,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Upon starting your CMS, a single page entry representing your landing page is present."
+                      "text": "The Pages root in the dashboard at `/admin` contains one landing page entry."
                     }
                   ]
                 }
@@ -192,7 +288,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Live previews are enabled, when editing the title of your landing page the previewed page should reflect these any changes."
+                      "text": "Editing the title updates the preview next to the editor while you type."
                     }
                   ]
                 }
@@ -206,7 +302,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Wired up metadata: try navigating to the metadata tab and adjusting any of the content. "
+                      "text": "Values you enter in the Metadata tab show up in the page's `<title>` and meta tags."
                     }
                   ]
                 }
@@ -230,7 +326,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188880,
+    "updatedAt": 1790195601,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

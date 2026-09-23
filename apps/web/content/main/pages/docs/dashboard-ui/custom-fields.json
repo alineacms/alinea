@@ -11,7 +11,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "It's possible to create custom fields. A field needs a constructor function that users call to create instances of it in their configuration. "
+          "text": "When the built-in "
+        },
+        {
+          "_type": "text",
+          "text": "fields",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1miyNvtBPuhbogOE0cOJiiR",
+              "_link": "entry",
+              "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " don't fit your content, create your own. A custom field has two parts: a constructor function that you call in your schema, and a React component that renders the field in the dashboard."
         }
       ]
     },
@@ -21,7 +37,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Range field example"
+          "text": "Create a field"
         }
       ],
       "_anchor": "range-field-example"
@@ -32,24 +48,17 @@
       "content": [
         {
           "_type": "text",
-          "text": "Let's create a custom field to demonstrate."
+          "text": "The constructor describes the value the field stores and its options, and points to the component that renders it:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "tjXTNIX1E2w3fts1zXG9Z",
-      "code": "import {Field} from 'alinea'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // Points to the module that renders the field, its default export is used\n    // (append #ExportName to use a named export instead)\n    view: '@/fields/Range.view'\n  })\n}",
+      "code": "import {Field} from 'alinea'\n\nexport type RangeField = Field.Create<\n  number,\n  {min?: number; max?: number; help?: string}\n>\n\nexport function range(\n  label: string,\n  options: Field.Options<RangeField> = {}\n): RangeField {\n  return Field.create({\n    label,\n    options,\n    // The module that renders the field, its default export is used\n    view: '@/fields/Range.view'\n  })\n}",
       "fileName": "fields/Range.ts",
-      "language": "",
+      "language": "tsx",
       "compact": false
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2nv09c35sDr2QrQy3epoEKPrlWj",
-      "code": "import {InputLabel, useField} from 'alinea/dashboard'\nimport {RangeField} from './Range'\n\ninterface RangeViewProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useField hook to receive the\n// current value and a method to update it.\nexport default function RangeView({field}: RangeViewProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}",
-      "fileName": "fields/Range.view.tsx",
-      "language": ""
     },
     {
       "_type": "paragraph",
@@ -57,22 +66,552 @@
       "content": [
         {
           "_type": "text",
-          "text": "To use the field in your types later call the constructor function:"
+          "text": "`Field.Create<Value, Options>` is the type of a field that stores `Value` (anything JSON can hold) and accepts your `Options` next to the standard ones: `initialValue`, `required`, `readOnly`, `hidden`, `shared` and `validate`. Queries return the stored value as it is."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.create` takes:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`label`: the label of the field."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`options`: the options passed to your constructor."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`view`: the component that renders the field, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Point to the view",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF1ls4fb2nNpOqdyroIGh2tpO",
+                      "_link": "url",
+                      "href": "#point-to-the-view"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`defaultValue`: a function returning the value of new entries, when the field has no `initialValue`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`searchableText`: a function returning the text of a value to include in the dashboard search."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render the field"
+        }
+      ],
+      "_anchor": "render-the-field"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The view receives the field as its `field` prop. Hooks from `alinea/dashboard/hooks` read and write its value, and `Field` from `alinea/components` renders the label, help text and error like the built-in fields do:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2nv09c35sDr2QrQy3epoEKPrlWj",
+      "code": "import {Field} from 'alinea/components'\nimport {\n  useField,\n  useFieldError,\n  useFieldOptions\n} from 'alinea/dashboard/hooks'\nimport {useId} from 'react'\nimport type {RangeField} from './Range'\n\ninterface RangeViewProps {\n  field: RangeField\n}\n\nexport default function RangeView({field}: RangeViewProps) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  const error = useFieldError(field)\n  const id = useId()\n  const {min = 0, max = 10} = options\n  return (\n    <Field\n      htmlFor={id}\n      label={options.label}\n      description={options.help}\n      error={error}\n      required={options.required}\n      readOnly={options.readOnly}\n      shared={options.shared}\n    >\n      <input\n        id={id}\n        type=\"range\"\n        min={min}\n        max={max}\n        value={value ?? min}\n        disabled={options.readOnly}\n        onChange={event => setValue(Number(event.target.value))}\n      />\n    </Field>\n  )\n}",
+      "fileName": "fields/Range.view.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use the field in a type like any other:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "WnK5Nlvq82spn6R62dTQe",
-      "code": "import {Config} from 'alinea'\nimport {range} from '@/fields/Range'\n\nConfig.type('My type', {\n  fields: {\n    // ...\n    myRangeField: range('A range field', {\n      min: 0, \n      max: 20\n    })\n  }\n})",
-      "fileName": "",
-      "language": "",
+      "code": "import {Config} from 'alinea'\nimport {range} from '@/fields/Range'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    rating: range('Rating', {min: 1, max: 5, help: 'From 1 to 5'})\n  }\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx",
       "compact": false
     },
     {
-      "_type": "ExampleBlock",
-      "_id": "yhfKjT9ITmHHD0N5JRU4G",
-      "code": "import {Field, Config} from 'alinea'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\nexport type RangeField = Field.Create<number, {\n  min?: number\n  max?: number\n}>\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: Field.Options<RangeField> = {}): RangeField {\n  return Field.create({\n    label,\n    options,\n    // The view can also be inlined as a component\n    view({field}) {\n      const {value, mutator, options} = useField(field)\n      const {min = 0, max = 10} = options\n      return (\n        <InputLabel {...options}>\n          <input \n            type=\"range\" \n            min={min} max={max} \n            value={value} \n            onChange={e => mutator(Number(e.target.value))} \n          />\n        </InputLabel>\n      )\n    }\n  })\n}\n\nexport default Config.type('Custom fields', {\n  fields: {\n    range: range('A range field', {min: 0, max: 20})\n  }\n})"
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`useFieldOptions` returns the options with the dashboard's state applied: `readOnly` is also `true` when the user's "
+        },
+        {
+          "_type": "text",
+          "text": "role",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1re4uJUymfZmO3VpGErxuFx",
+              "_link": "entry",
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " can't edit the field or the entry is not editable, so respect it in your view."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Point to the view"
+        }
+      ],
+      "_anchor": "point-to-the-view"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`view` is usually a module path, resolved from your project root with the path aliases of your `tsconfig.json`. The default export is used, append `#Name` for a named export: `'@/fields/Priority.view#PriorityView'`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A path keeps dashboard code out of your site: your schema is imported by your pages and server components, and the view is only loaded by the dashboard. You can pass a component instead (`view: RangeView`), but then the component and the dashboard hooks it imports end up everywhere your schema is imported, including server components where they can't run. Use a path unless the field is only used in scripts."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Build views with the dashboard components"
+        }
+      ],
+      "_anchor": "build-views-with-the-dashboard-components"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The form controls in "
+        },
+        {
+          "_type": "text",
+          "text": "`alinea/components`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1pu8dF8kbtrohWXeShFKNA3",
+              "_link": "entry",
+              "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " take the same `label`, `description`, `error`, `required`, `readOnly` and `shared` props and render their own `Field` chrome, so a field built on one of them looks native:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1q6ppRJDRfbk9g75cYeO2o8",
+      "code": "import {Select, SelectItem} from 'alinea/components'\nimport {\n  useField,\n  useFieldError,\n  useFieldOptions\n} from 'alinea/dashboard/hooks'\nimport type {Priority, PriorityField} from './Priority'\n\ninterface PriorityViewProps {\n  field: PriorityField\n}\n\nexport function PriorityView({field}: PriorityViewProps) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  const error = useFieldError(field)\n  return (\n    <Select\n      label={options.label}\n      value={value}\n      onValueChange={next => setValue((next ?? 'normal') as Priority)}\n      error={error}\n      required={options.required}\n      readOnly={options.readOnly}\n      shared={options.shared}\n    >\n      <SelectItem value=\"low\">Low</SelectItem>\n      <SelectItem value=\"normal\">Normal</SelectItem>\n      <SelectItem value=\"high\">High</SelectItem>\n    </Select>\n  )\n}",
+      "fileName": "fields/Priority.view.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1kXXycVQzSsCD7h90w9sIha",
+      "code": "import {Field} from 'alinea'\n\nexport type Priority = 'low' | 'normal' | 'high'\nexport type PriorityField = Field.Create<Priority>\n\nexport function priority(\n  label: string,\n  options: Field.Options<PriorityField> = {}\n): PriorityField {\n  return Field.create({\n    label,\n    options,\n    defaultValue: (): Priority => 'normal',\n    view: '@/fields/Priority.view#PriorityView'\n  })\n}",
+      "fileName": "fields/Priority.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Hooks"
+        }
+      ],
+      "_anchor": "hooks"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea/dashboard/hooks` works in field views and in other components the dashboard renders:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useField(field)`: the stored value and a setter, like `useState`. The setter also accepts an updater function."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useFieldValue(field)`, `useFieldSetter(field)`: only the value, or only the setter."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useFieldOptions(field)`: the field's options, including `label` and the resolved `readOnly` and `hidden`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useFieldError(field)`: the validation message from `required` or `validate`, if any."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useSiblingFieldValue(key)`: the value of another field in the same entry, list row or object, by its key."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useEntry()`: the entry being edited, with its `title`, `url`, `locale`, `status` and the stored `data`. `null` outside an entry."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useGraph()`: query content from the dashboard with the same API as `cms`, for example to list entries in a picker."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useUser()`, `usePolicy()`: the signed-in user and their "
+                },
+                {
+                  "_type": "text",
+                  "text": "permissions",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF1nH7ADvUy3oZPXAD0sYiaH2",
+                      "_link": "entry",
+                      "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Show a component between fields"
+        }
+      ],
+      "_anchor": "show-a-component-between-fields"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.view` adds a component to a type that doesn't store a value, for example to show instructions or information derived from the entry. Spread it into `fields`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1mbQqZEHsdWDbBd4B9XA6VM",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    title: Field.text('Title'),\n    ...Field.view('@/fields/ProductUrls.view#ProductUrls')\n  }\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF1qRklf6emNbglBotdOHkqUs",
+      "code": "import {Field, Link} from 'alinea/components'\nimport {useEntry} from 'alinea/dashboard/hooks'\n\nexport function ProductUrls() {\n  const entry = useEntry()\n  if (!entry) return null\n  return (\n    <Field label=\"Public URL\" description=\"Where this product is published\">\n      <Link href={entry.url} target=\"_blank\">\n        {entry.url}\n      </Link>\n    </Field>\n  )\n}",
+      "fileName": "fields/ProductUrls.view.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Upgrading from Alinea 1.x"
+        }
+      ],
+      "_anchor": "upgrading-from-alinea-1-x"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Field views from 1.x keep working, with deprecated APIs:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useField` from `alinea/dashboard` returns `{value, mutator, options, label, error}`. Replace it with the tuple `useField` from `alinea/dashboard/hooks` and the separate `useFieldOptions` and `useFieldError`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`InputLabel` from `alinea/dashboard` is now the `Field` component. It no longer shows `help` from `{...options}`: pass the help text as `description`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Components from `alinea/ui` were removed. Use "
+                },
+                {
+                  "_type": "text",
+                  "text": "`alinea/components`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF1qqUQBniKgWywM1WBwS7sd2",
+                      "_link": "entry",
+                      "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "See "
+        },
+        {
+          "_type": "text",
+          "text": "Upgrading from 1.x",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1mG18vphga074dYdU9Bb3KS",
+              "_link": "entry",
+              "_entry": "3JjNWipmERvnXDeWpUbqsCO0MTL"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for the other dashboard changes."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -89,7 +628,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188849,
+    "updatedAt": 1790196946,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

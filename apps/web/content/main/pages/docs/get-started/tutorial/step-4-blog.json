@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "In this step we keep the landing page, blocks, and shared settings root from step 3, then add a dedicated blog section. The blog overview is fixed to /blog and contains nested post pages with editable slugs."
+          "text": "Add a blog: an overview page at `/blog` that lists its posts, and a page per post at `/blog/<slug>` with links to the previous and next post. Posts are child entries of the blog overview, so editors create them in the content tree under Blog, and their URL follows from that: a post with path `hello-world` is at `/blog/hello-world`."
         }
       ]
     },
@@ -42,12 +42,23 @@
       "compact": false
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "The blog overview"
+        }
+      ],
+      "_anchor": "the-blog-overview"
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Start by defining the blog overview entry schema."
+          "text": "The `Blog` type is a document with a fixed, read-only path. `contains: ['Post']` allows posts as its children, and only posts."
         }
       ]
     },
@@ -65,7 +76,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Then implement the blog overview server component. It fetches the blog entry and its direct post children in one query, and exposes generateMetadata."
+          "text": "The overview fetches the blog entry and its posts in one query. `select` picks the fields to return, and `Query.children` adds a subquery for the direct children of the entry, here filtered to posts. Children come back in the order editors arranged them in the content tree."
         }
       ]
     },
@@ -78,12 +89,23 @@
       "compact": false
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Blog posts"
+        }
+      ],
+      "_anchor": "blog-posts"
+    },
+    {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "Define the post entry schema in its own folder."
+          "text": "Posts have an editable path, which is the slug in the URL. The dashboard fills it in from the title as you type."
         }
       ]
     },
@@ -101,7 +123,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Implement the post detail server component with previous/next sibling navigation and a post metadata helper."
+          "text": "The post view finds the post by URL, then loads the posts under the blog to link to the previous and next one. `cms.find` returns an array, in content tree order. The metadata helper falls back from the Metadata tab to the excerpt and then to the text of the body."
         }
       ]
     },
@@ -119,17 +141,27 @@
       "content": [
         {
           "_type": "text",
-          "text": "Register Blog and Post in cms.tsx and seed the fixed /blog overview page under the Pages root."
+          "text": "Loading all posts is fine for a small blog. For a long list you can select the neighbors in the same query as the post instead: `Query.previous` and `Query.next` return the sibling before and after the entry in content tree order, or `null`."
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3AONC7OGaXa2S1uEHArBC9wRAyw",
-      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {Blog} from '@/entries/blog/Blog.schema'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    LandingPage,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage', 'Blog'],\n          children: {\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome',\n                path: ''\n              }\n            }),\n            blog: Config.page({\n              type: Blog,\n              fields: {\n                title: 'Blog',\n                path: 'blog',\n                intro: 'Latest posts'\n              }\n            })\n          }\n        })\n        // The settings and media roots stay the same as in step 3\n      }\n    })\n  }\n  // baseUrl, handlerUrl, adminPath and preview stay the same as in step 3\n})",
-      "fileName": "cms.tsx",
-      "language": "tsx",
-      "compact": false
+      "_id": "3JkCIvvc2IKXxoVFmFvXYu4w7qO",
+      "code": "const post = await cms.first({\n  url: `/blog/${slug}`,\n  type: Post,\n  include: {\n    previous: Query.previous({select: {title: Query.title, url: Query.url}}),\n    next: Query.next({select: {title: Query.title, url: Query.url}})\n  }\n})",
+      "fileName": "entries/post/Post.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Register the types"
+        }
+      ],
+      "_anchor": "register-the-types"
     },
     {
       "_type": "paragraph",
@@ -137,7 +169,35 @@
       "content": [
         {
           "_type": "text",
-          "text": "Add dedicated Next.js routes for /blog and /blog/[slug]. Keep these routes thin and delegate rendering + metadata to entry components."
+          "text": "Add both types to the schema. The Pages root accepts `Blog`, but not `Post`: posts can only be created under the blog. The blog overview is seeded, so `/blog` exists right away."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONC7OGaXa2S1uEHArBC9wRAyw",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {Blog} from '@/entries/blog/Blog.schema'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    LandingPage,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage', 'Blog'],\n          children: {\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            }),\n            blog: Config.page({\n              type: Blog,\n              fields: {\n                title: 'Blog',\n                intro: 'Latest posts'\n              }\n            })\n          }\n        })\n        // The settings and media roots stay the same as in step 3\n      }\n    })\n  }\n  // baseUrl, handlerUrl, adminPath and preview stay the same as in step 3\n})",
+      "fileName": "cms.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add the routes"
+        }
+      ],
+      "_anchor": "add-the-routes"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add routes for `/blog` and `/blog/[slug]`. They stay thin and pass the slug to the entry components. `generateStaticParams` selects only the path of every post, so Next.js prerenders all posts at build time."
         }
       ]
     },
@@ -167,7 +227,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "Upon completion of these steps, your website should be extended with these features:"
+              "text": "Check that:"
             }
           ]
         },
@@ -182,7 +242,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "The landing page from step 3 keeps working with text, image, and weather blocks."
+                      "text": "The Pages root contains a Blog entry, and `/blog` lists the posts you create under it."
                     }
                   ]
                 }
@@ -196,7 +256,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "A fixed /blog overview page is seeded and available right away."
+                      "text": "Dragging posts in the content tree changes their order on `/blog` and in the previous/next links."
                     }
                   ]
                 }
@@ -210,7 +270,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Individual blog post pages support previous/next navigation between sibling posts."
+                      "text": "Each post page has its own title and description in the page metadata."
                     }
                   ]
                 }
@@ -224,7 +284,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Metadata generation is implemented for the blog listing and post detail routes."
+                      "text": "The landing page and the shared header and footer from step 3 still work."
                     }
                   ]
                 }
@@ -248,7 +308,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188928,
+    "updatedAt": 1790195602,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

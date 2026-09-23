@@ -11,22 +11,155 @@
       "content": [
         {
           "_type": "text",
-          "text": "An object field groups multiple fields together. The fields are defined in its `fields` option."
+          "text": "An object field groups fields and stores their values together as one object. Use it for data that belongs together, like an address or a call to action, and to reuse such a group in several types."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
-      "code": "import {Config, Field} from 'alinea'\n\nField.object('Address', {\n  fields: {\n    street: Field.text('Street'),\n    zip: Field.text('Zip code', {width: 0.5}),\n    city: Field.text('City', {width: 0.5})\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\nField.object('Address', {\n  fields: {\n    street: Field.text('Street'),\n    zip: Field.text('Zip code', {width: 0.5}),\n    city: Field.text('City', {width: 0.5})\n  }\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "gwFTx1qVSxQvMi_joKo4Q",
       "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Object field', {\n  fields: {\n    object: Field.object('Address', {\n      fields: {\n        street: Field.text('Street'),\n        zip: Field.text('Zip code', {width: 0.5}),\n        city: Field.text('City', {width: 0.5})\n      }\n    })\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields` (required): the fields of the object, keyed by name. Any field type works, including lists and other objects."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzvXcvDyjl8R9Nsqlgtsiqai",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An object with a key per field: `{street: '', zip: '', city: ''}`. New entries start with the initial values of the inner fields. Link and image fields inside the object are resolved when you query it, just like at the top level."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Querying"
+        }
+      ],
+      "_anchor": "querying"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Select and sort on the object as a whole: the inner fields aren't registered in the schema, so `Venue.address.city` can't be used in `select` or `orderBy`. To filter on an inner value, use `has`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzz3GrIZocFhTXS0PMzYJzQ9",
+      "code": "import {cms} from '@/cms'\nimport {Config, Field} from 'alinea'\n\nexport const Venue = Config.document('Venue', {\n  fields: {\n    address: Field.object('Address', {\n      fields: {\n        street: Field.text('Street'),\n        city: Field.text('City')\n      }\n    })\n  }\n})\n\nconst venuesInGhent = await cms.find({\n  type: Venue,\n  filter: {address: {has: {city: 'Ghent'}}},\n  select: {address: Venue.address}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Reusing a group of fields"
+        }
+      ],
+      "_anchor": "reusing-a-group-of-fields"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Like any field, an object instance can only be used once. Wrap it in a function to add the same group to several types:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzryXSu1mtKphjaCp1RfLVrw",
+      "code": "import {Config, Field} from 'alinea'\n\nfunction cta(label: string) {\n  return Field.object(label, {\n    fields: {\n      label: Field.text('Label', {width: 0.5}),\n      link: Field.link('Link', {width: 0.5})\n    }\n  })\n}\n\nexport const Hero = Config.type('Hero', {\n  fields: {\n    title: Field.text('Title'),\n    primary: cta('Primary button'),\n    secondary: cta('Secondary button')\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
     }
   ],
   "metadata": {
@@ -43,7 +176,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189130,
+    "updatedAt": 1790196931,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

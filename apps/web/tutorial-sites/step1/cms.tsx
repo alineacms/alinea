@@ -16,8 +16,7 @@ export const cms = createCMS({
             index: Config.page({
               type: LandingPage,
               fields: {
-                title: 'Welcome',
-                path: ''
+                title: 'Welcome'
               }
             })
           }
@@ -27,7 +26,8 @@ export const cms = createCMS({
     })
   },
   baseUrl: {
-    development: 'http://localhost:3101'
+    development: 'http://localhost:3101',
+    production: 'https://example.com'
   },
   handlerUrl: '/api/cms',
   adminPath: '/admin',

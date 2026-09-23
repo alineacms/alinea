@@ -11,17 +11,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "Rich text can contain text marks like bold, italics or links. Content can be structured using headings. It can even contain other types as blocks that can be moved around freely."
+          "text": "A rich text field holds formatted text: headings, paragraphs, lists, links, quotes and optionally tables and images. Add a `schema` to let editors place your own blocks, such as a call to action or a video, between paragraphs. Render the value with the `RichText` component."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "268iODr7pOAG2BeDXXfDEvDZYfr",
-      "code": "import {Config, Field} from 'alinea'\n\nconst ImageBlock = Config.type('Image', {\n  fields: {image: Field.image('Image', {inline: true})}\n})\n\nField.richText('Rich Text')\nField.richText('Extended with inline schema(s)', {\n  schema: {\n    ImageBlock\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nconst CallToAction = Config.type('Call to action', {\n  fields: {\n    label: Field.text('Label'),\n    link: Field.link('Link')\n  }\n})\n\nexport const Article = Config.document('Article', {\n  fields: {\n    body: Field.richText('Body', {\n      searchable: true,\n      enableTables: true,\n      schema: {CallToAction}\n    })\n  }\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
@@ -34,18 +33,213 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration"
+          "text": "Options"
         }
       ],
       "_anchor": "configuration"
     },
     {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`schema`: block types editors can insert between text, keyed by name. Block names must start with an uppercase letter."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`enableTables`: allow inserting and editing tables. Default `false`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`enableImages`: allow inserting images from the media library inline. Default `false`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`searchable`: add the text to the search index, together with searchable fields inside its blocks, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Search",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF01icmFrS182ut3H4WmkS2qd",
+                      "_link": "entry",
+                      "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`placeholder`: text shown while the editor is empty."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`link`: limit which entries the link picker offers, with the same `condition`, `location`, `pickChildren` and `limitLocations` options as the "
+                },
+                {
+                  "_type": "text",
+                  "text": "Entry field",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF04NOWTQaYh9YHHx6uxDNRa6",
+                      "_link": "entry",
+                      "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`toolbar`: choose the toolbar buttons, see below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`extensions`: a function that receives the default "
+                },
+                {
+                  "_type": "text",
+                  "text": "Tiptap",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF02oL0fRvAtP0JiFndbiWVw7",
+                      "_link": "url",
+                      "href": "https://tiptap.dev"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " extensions and returns the ones to use."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF03XAQ7S0W3O2vHFsEc9iyTG",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`schema`"
+          "text": "Value"
         }
       ],
       "_anchor": "schema"
@@ -56,70 +250,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Allow Types of this Schema to be created between text fragments."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`searchable`"
-        }
-      ],
-      "_anchor": "searchable"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Index the content of this field so it can be found in a search query."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`enableTables`"
-        }
-      ],
-      "_anchor": "enabletables"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Allow tables to be inserted in this field."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Rendering rich text"
-        }
-      ],
-      "_anchor": "rendering-rich-text"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Rich text values are encoded in an array."
+          "text": "The value is an array of nodes. Text nodes carry marks such as bold or links, element nodes have a lowercase `_type` and their own `content`, and blocks from the `schema` have their type name and `_id` plus the values of their fields."
         }
       ]
     },
@@ -151,17 +282,20 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alinea provides a React component to render this array in your app. By default it will use plain tags such as h1, h2, p, ul, li, etc. to represent the text. Any of these can be customized by either passing a React component or a vnode, of which we'll copy the type and props."
+          "text": "When you query the field, links to entries and files get an up-to-date `href` (so they keep working when the target moves), inline images get their `src` and alt text, and link and image fields inside blocks are resolved like everywhere else. Queries return the value as `TextDoc`, import that type from `alinea` to type your props."
         }
       ]
     },
     {
-      "_type": "CodeBlock",
-      "_id": "hOgtsNKgH3pWurn4Mb-td",
-      "code": "import {RichText} from 'alinea/ui'\n\n<RichText\n  doc={richTextValue}\n\n  // Everything below is optional\n\n  // Render plain text with a custom component\n  text={TextComponent}\n\n  // Attach a custom classname to paragraphs\n  p={<p className=\"my-p\" />}\n\n  // Use a custom component for h1 headings\n  h1={MyH1Heading}\n  \n  // Use a custom component for links\n  a={LinkComponent}\n\n  // Attach classes to list items\n  ul={<ul className=\"my-list\" />}\n  ol={<ol className=\"my-ordered-list\" />}\n  li={<li className=\"my-list-item\" />}\n\n  // More options\n  // b={<b />}\n  // i={<i />}\n  // sub={<sub />}\n  // sup={<sup />}\n  // hr={<hr />}\n  // br={<br />}\n  // small={<small />}\n  // blockquote={<blockquote />}\n/>",
-      "fileName": "",
-      "language": "",
-      "compact": false
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rendering"
+        }
+      ],
+      "_anchor": "rendering"
     },
     {
       "_type": "paragraph",
@@ -169,41 +303,122 @@
       "content": [
         {
           "_type": "text",
-          "text": "The same principle is applied for custom blocks."
+          "text": "The `RichText` component from `alinea/ui` renders the value with plain HTML tags: `h1`–`h6`, `p`, `ul`, `ol`, `li`, `a`, `b`, `i`, `blockquote`, `table` and so on. Pass a tag name as a prop to change how that tag renders: a React element to add props such as a class name, or a component to take over completely."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "hOgtsNKgH3pWurn4Mb-td",
+      "code": "import type {TextDoc} from 'alinea'\nimport {RichText} from 'alinea/ui'\nimport Link from 'next/link'\nimport type {ComponentProps} from 'react'\n\nfunction TextLink({href = '', ...props}: ComponentProps<'a'>) {\n  return <Link href={href} {...props} />\n}\n\nfunction Heading2(props: ComponentProps<'h2'>) {\n  return <h2 className=\"prose-h2\" {...props} />\n}\n\nexport function Prose({doc}: {doc: TextDoc}) {\n  return (\n    <RichText\n      doc={doc}\n      // Add a class to every paragraph\n      p={<p className=\"prose-p\" />}\n      // Render h2 headings with your own component\n      h2={Heading2}\n      // Route links through next/link\n      a={TextLink}\n    />\n  )\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The overridable tags are `h1`–`h6`, `p`, `b`, `i`, `ul`, `ol`, `li`, `blockquote`, `hr`, `img`, `br`, `small`, `sub`, `sup`, `a`, `table`, `tr`, `td` and `th`. Pass `text` to wrap every piece of text in a component. Headings get an `id` (the anchor an editor set, or a slug of the heading text), so you can link to sections."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Blocks"
+        }
+      ],
+      "_anchor": "blocks"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Blocks are rendered only when you pass a component for their type name. The component receives the block's fields as props:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "aQam3FUTLfN1uYyFFSiZk",
-      "code": "import {Config, Field} from 'alinea'\nimport {RichText} from 'alinea/ui'\n\nconst MyBlockSchema = Config.type('Custom block', {\n  fields: {\n    property: Field.text('Property')\n  }\n})\n\nfunction MyBlock({property}: {property: string}) {\n  return <span>{property}</span>\n}\n\n// Add to config\nField.richText('My rich text field', {\n  schema: {\n    MyBlock: MyBlockSchema\n  }\n})\n\n// Render in page views\n<RichText\n  doc={richTextValue}\n\n  // Render instances of my custom block with the MyBlock view\n  MyBlock={MyBlock}\n/>",
+      "code": "import {Config, Field, type Infer, type TextDoc} from 'alinea'\nimport {RichText} from 'alinea/ui'\n\nconst Quote = Config.type('Quote', {\n  fields: {\n    text: Field.text('Text', {multiline: true}),\n    author: Field.text('Author')\n  }\n})\n\nconst blocks = {Quote}\n\nexport const Article = Config.document('Article', {\n  fields: {\n    body: Field.richText('Body', {schema: blocks})\n  }\n})\n\nfunction QuoteView({text, author}: Infer<typeof Quote>) {\n  return (\n    <figure>\n      <blockquote>{text}</blockquote>\n      <figcaption>{author}</figcaption>\n    </figure>\n  )\n}\n\nexport function Body({doc}: {doc: TextDoc}) {\n  return <RichText<typeof blocks> doc={doc} Quote={QuoteView} />\n}",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "If you need the HTML as string output and not as a component, you can convert the component as follows:"
+          "text": "Pass the blocks schema as type argument (`RichText<typeof blocks>`) so TypeScript checks the props of your block components."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "HTML strings"
+        }
+      ],
+      "_anchor": "html-strings"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To get HTML instead of React elements, for example for an RSS feed, render the component to a string. Import `react-dom/server` dynamically: Next.js refuses static imports of it in the app router."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2zuFDW5eMhiuJJp7E4koNWCXyJt",
-      "code": "import {RichText} from 'alinea/ui'\nconst {renderToString} = await import('react-dom/server')\n\nconst html = renderToString(<RichText doc={richTextValue} />)",
+      "code": "import type {TextDoc} from 'alinea'\nimport {RichText} from 'alinea/ui'\n\nexport async function toHtml(doc: TextDoc) {\n  const {renderToString} = await import('react-dom/server')\n  return renderToString(<RichText doc={doc} />)\n}",
       "fileName": "",
-      "language": "typescript",
-      "compact": false
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Toolbar"
+        }
+      ],
+      "_anchor": "toolbar"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Note the dynamic import of react-dom/server. This is necessary to avoid warnings from Next.js for using server imports."
+          "text": "By default the toolbar has heading styles, formatting, alignment, lists, links, anchors, quotes and a horizontal rule, plus tables and images when you enable them. Build your own from the presets in `alinea/field/richtext/Toolbar`: each is a group of buttons, and groups can be picked apart."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF00mGOWe6NG6j3UltqD3cJr8",
+      "code": "import {Field} from 'alinea'\nimport {formatting, links, lists} from 'alinea/field/richtext/Toolbar'\n\nconst {bold, italic, clear} = formatting.group\n\n// A small editor for short texts: no headings, tables or images\nexport const summary = Field.richText('Summary', {\n  toolbar: {\n    formatting: {group: {bold, italic, clear}},\n    lists,\n    links\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The presets are `headings`, `formatting`, `alignment`, `lists`, `links`, `anchors`, `images`, `tables`, `quotes` and `inserts`. `defaultToolbar({enableTables, enableImages})` returns the default layout, so you can extend it. The toolbar only controls buttons: pasted content can still contain other formatting, so trim the `extensions` too if an editor must not produce it."
         }
       ]
     }
@@ -221,7 +436,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189131,
+    "updatedAt": 1790196931,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

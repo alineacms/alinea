@@ -1,4 +1,3 @@
-import type {Metadata} from 'next'
 import {cms} from '@/cms'
 
 export default function RootLayout({children}: {children: React.ReactNode}) {

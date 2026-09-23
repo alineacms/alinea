@@ -2,8 +2,6 @@
   "_id": "2aAyRD3ixey0IqznGhiPUjTd5Vp",
   "_type": "Doc",
   "_index": "Zy",
-  "_i18nId": "2aAyRD3ixey0IqznGhiPUjTd5Vp",
-  "_root": "pages",
   "title": "Document",
   "navigationTitle": "",
   "body": [
@@ -13,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Use the `document` utility function to create a "
+          "text": "`Config.document` creates a "
         },
         {
           "_type": "text",
@@ -22,17 +20,34 @@
             {
               "_type": "link",
               "_id": "2aB4jp089wI4K3VnNePMDLM7kvo",
-              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
               "_link": "entry",
-              "title": ""
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
             }
           ]
         },
         {
           "_type": "text",
-          "text": " with the following preconfigured fields:"
+          "text": " for pages: it adds a title, a path and a metadata field to the fields you define. Use it for anything that gets its own url; use `Config.type` for entries that don't, such as settings or blocks."
         }
       ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2aB4qCnskaV2qenr0eibzXhpjU4",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Page = Config.document('Page', {\n  fields: {\n    intro: Field.text('Intro', {multiline: true}),\n    body: Field.richText('Body')\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Included fields"
+        }
+      ],
+      "_anchor": "included-fields"
     },
     {
       "_type": "bulletList",
@@ -42,16 +57,26 @@
           "content": [
             {
               "_type": "paragraph",
-              "textAlign": "left",
               "content": [
                 {
                   "_type": "text",
-                  "text": "`title`",
+                  "text": "`title`: a required "
+                },
+                {
+                  "_type": "text",
+                  "text": "text field",
                   "marks": [
                     {
-                      "_type": "bold"
+                      "_type": "link",
+                      "_id": "3JkF07jOpi0s0vGZu49CLOI4vYo",
+                      "_link": "entry",
+                      "_entry": "24yE3ttFwpZGiAOJWRTGvP9kK1R"
                     }
                   ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", shown in the sidebar and returned as `Query.title`."
                 }
               ]
             }
@@ -62,16 +87,26 @@
           "content": [
             {
               "_type": "paragraph",
-              "textAlign": "left",
               "content": [
                 {
                   "_type": "text",
-                  "text": "`path`",
+                  "text": "`path`: a required "
+                },
+                {
+                  "_type": "text",
+                  "text": "path field",
                   "marks": [
                     {
-                      "_type": "bold"
+                      "_type": "link",
+                      "_id": "3JkF0DwmEwT0A2ucpz5qwKYsrXJ",
+                      "_link": "entry",
+                      "_entry": "3AqAuDemLSXB8bacaKLETokTqRQ"
                     }
                   ]
+                },
+                {
+                  "_type": "text",
+                  "text": " that slugifies the title as you type. It's the last segment of the entry's url."
                 }
               ]
             }
@@ -82,38 +117,14 @@
           "content": [
             {
               "_type": "paragraph",
-              "textAlign": "left",
               "content": [
                 {
                   "_type": "text",
-                  "text": "`metadata`",
-                  "marks": [
-                    {
-                      "_type": "bold"
-                    }
-                  ]
+                  "text": "`metadata`: SEO and sharing data, on a separate \"Metadata\" tab. It holds `title`, `description` (at most 160 characters), `openGraph` (`image`, `title`, `description`) and the entry's url `aliases`."
                 }
               ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "2aB4qCnskaV2qenr0eibzXhpjU4",
-      "code": "import {Config} from 'alinea'\n\nConfig.document('Web page', {\n  fields: {\n    // Extra fields\n  }\n})",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Configuration"
         }
       ]
     },
@@ -123,24 +134,136 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration options are the same as for a "
+          "text": "The dashboard shows `title`, `path` and your own fields on a \"Document\" tab, and the metadata on a \"Metadata\" tab."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The metadata field also keeps an audit trail: `createdAt` and `createdBy` are set when the entry is created, `updatedAt` and `updatedBy` on every save. Timestamps are Unix timestamps in seconds, the users are the editor's name and email. When an entry is published on a new url, its previous url is added to `aliases`. These values are written to the content files, so keep in mind that editor emails end up in your repository."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.document` takes the same options as "
         },
         {
           "_type": "text",
-          "text": "Type",
+          "text": "`Config.type`",
           "marks": [
             {
               "_type": "link",
               "_id": "2aB54j0l7HKydQyHuW0YlqGnlpZ",
-              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
               "_link": "entry",
-              "title": ""
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
             }
           ]
         },
         {
           "_type": "text",
-          "text": "."
+          "text": ": `contains`, `orderChildrenBy`, `entryUrl`, `icon` and so on. To change a built-in field, define it in `fields` under the same name. A home page, for example, often gets a read-only path (see "
+        },
+        {
+          "_type": "text",
+          "text": "a fixed path for the home page",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0Aqzq2wAKT8VGuphjLUp4S9",
+              "_link": "entry",
+              "_entry": "3AqAuDemLSXB8bacaKLETokTqRQ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "):"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0977bmJVvtgw19gIQ9VkH1d",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Home = Config.document('Home', {\n  fields: {\n    path: Field.path('Path', {readOnly: true, width: 0.5})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Using the metadata"
+        }
+      ],
+      "_anchor": "using-the-metadata"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Select the metadata field in the query for a page and map it to your framework's head tags. With the Next.js App Router:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0CEqlyi37ExpeKivm6bOc27",
+      "code": "import {cms} from '@/cms'\nimport {Page} from '@/schema'\nimport {Query} from 'alinea'\nimport type {Metadata} from 'next'\n\ninterface PageProps {\n  params: Promise<{slug?: Array<string>}>\n}\n\nexport async function generateMetadata({params}: PageProps): Promise<Metadata> {\n  const {slug = []} = await params\n  const page = await cms.first({\n    type: Page,\n    url: `/${slug.join('/')}`,\n    select: {title: Query.title, metadata: Page.metadata}\n  })\n  if (!page) return {}\n  const {metadata} = page\n  return {\n    title: metadata.title || page.title,\n    description: metadata.description,\n    openGraph: {\n      title: metadata.openGraph.title || metadata.title || page.title,\n      description: metadata.openGraph.description || metadata.description,\n      images: metadata.openGraph.image?.src\n    }\n  }\n}",
+      "fileName": "app/[[...slug]]/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Image urls are relative to your site (`/admin/file/...`), so set "
+        },
+        {
+          "_type": "text",
+          "text": "`metadataBase`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0Bp9FloWKgzOv9oyyjp31EW",
+              "_link": "url",
+              "href": "https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " in your root layout to get absolute Open Graph urls."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Query.createdAt` and `Query.updatedAt` read the audit timestamps directly, for example to sort by the most recently created entries: `orderBy: {desc: Query.createdAt}`."
         }
       ]
     }
@@ -152,6 +275,16 @@
       "title": "",
       "image": {},
       "description": ""
+    },
+    "createdAt": 1790196932,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196932,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

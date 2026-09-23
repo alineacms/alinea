@@ -11,7 +11,291 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alinea generates files on your file system in a few places. "
+          "text": "Your content model lives in code, in the config you pass to `createCMS`: a schema of types and their fields, and workspaces with roots that decide where entries can be created. Editors fill it in through the dashboard, and every entry is saved as a JSON file in your repository."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF03Y2FOI91udf4Du6pXiQ3Zp",
+      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nconst Page = Config.document('Page', {\n  fields: {\n    body: Field.richText('Body')\n  }\n})\n\nconst Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {}\n})\n\nconst BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date'),\n    cover: Field.image('Cover image'),\n    body: Field.richText('Body')\n  }\n})\n\nexport const cms = createCMS({\n  schema: {Page, Blog, BlogPost},\n  workspaces: {\n    main: Config.workspace('My site', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {contains: ['Page', 'Blog']}),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "The building blocks"
+        }
+      ],
+      "_anchor": "the-building-blocks"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Types",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    },
+                    {
+                      "_type": "link",
+                      "_id": "3JkF00Pbt5W3S1HbKbr8CURJrCi",
+                      "_link": "entry",
+                      "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " describe one kind of entry, such as a page or a blog post, with its fields and dashboard settings. "
+                },
+                {
+                  "_type": "text",
+                  "text": "Documents",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF03LmKryvXiQMoe6J3qaubSj",
+                      "_link": "entry",
+                      "_entry": "2aAyRD3ixey0IqznGhiPUjTd5Vp"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " are types with a title, path and SEO metadata built in."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The ",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "schema",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    },
+                    {
+                      "_type": "link",
+                      "_id": "3JkF02uzmAvHJDIDGKEaMmDw3Z4",
+                      "_link": "entry",
+                      "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " lists every type by name. The name (`BlogPost`) is what gets stored in content files and what you refer to in `contains`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Fields",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    },
+                    {
+                      "_type": "link",
+                      "_id": "3JkF01fAvLRzIa28uqk4QNmHKve",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " hold the data: text, rich text, links, images, lists of blocks and more."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Workspaces",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    },
+                    {
+                      "_type": "link",
+                      "_id": "3JkF01pTglP5m2TgjEJJ6gf1Mp2",
+                      "_link": "entry",
+                      "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " group content, for example one per website, each with its own content directory."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Roots",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    },
+                    {
+                      "_type": "link",
+                      "_id": "3JkF04tPIgMyn4pkDi6dgEo8M8u",
+                      "_link": "entry",
+                      "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " are the top-level sections of a workspace's content tree, like \"Pages\" or \"Settings\". Entries nest below them, and a root can be translated."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Media",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    },
+                    {
+                      "_type": "link",
+                      "_id": "3JkF02IMaqaIfPTUpMECOlN4Qxy",
+                      "_link": "entry",
+                      "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " roots hold uploaded images and files."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Once content is saved you read it back with "
+        },
+        {
+          "_type": "text",
+          "text": "queries",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF02gVOEFZ6bUFCrQWEeDQi5j",
+              "_link": "entry",
+              "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", which are typed from the same schema."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Where content is stored"
+        }
+      ],
+      "_anchor": "where-content-is-stored"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every entry is a JSON file in the workspace's `source` directory. The folder structure follows the content tree: a root is a folder, an entry is a file named after its path, and the children of an entry live in a folder with the same name."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF01OA4iy44WKwKqEMREeJPN2",
+      "code": "content\n├ pages               // the \"pages\" root\n│ ├ index.json        // entry with path \"index\", url \"/\"\n│ ├ blog.json         // url \"/blog\"\n│ ╰ blog              // children of blog.json\n│   ├ hello-world.json\n│   ╰ hello-world.draft.json\n╰ media               // the media root\n  ├ landscape.json    // metadata of an uploaded file\n  ╰ documents.json    // a media folder\n\npublic/media          // mediaDir: the uploaded files themselves\n╰ landscape.2V4c3kRS.jpg",
+      "fileName": "",
+      "language": "tsx",
+      "compact": true
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A few details that are good to know:"
         }
       ]
     },
@@ -23,27 +307,40 @@
           "content": [
             {
               "_type": "paragraph",
-              "textAlign": "left",
               "content": [
                 {
                   "_type": "text",
-                  "text": "Content is published into a directory as JSON files. Note that "
+                  "text": "Drafts and archived versions sit next to the published file as `<path>.draft.json` and `<path>.archived.json`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "In a root with "
                 },
                 {
                   "_type": "text",
-                  "text": "we're considering",
+                  "text": "i18n",
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "auApxINUu9KWCeMkWjA6S",
-                      "href": "https://github.com/alineacms/alinea/issues/10",
-                      "target": "_blank"
+                      "_id": "3JkF04JhVmgNXJ1PtW7pvUSG85M",
+                      "_link": "entry",
+                      "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
                     }
                   ]
                 },
                 {
                   "_type": "text",
-                  "text": " making these files more human editable in the future too."
+                  "text": " each locale gets its own folder: `content/pages/en/...`, `content/pages/fr/...`."
                 }
               ]
             }
@@ -54,11 +351,10 @@
           "content": [
             {
               "_type": "paragraph",
-              "textAlign": "left",
               "content": [
                 {
                   "_type": "text",
-                  "text": "Media files are published in two places: a JSON file with metadata is placed with the content and the file itself is placed in a separate directory, typically `./public`."
+                  "text": "With more than one workspace, each `source` directory must be named after its workspace key and share the same parent folder, for example `content/main` and `content/blog`."
                 }
               ]
             }
@@ -69,11 +365,10 @@
           "content": [
             {
               "_type": "paragraph",
-              "textAlign": "left",
               "content": [
                 {
                   "_type": "text",
-                  "text": "A supporting Javascript library is generated inside the `@alinea/generated` package."
+                  "text": "An entry file holds the field values plus a few internal properties such as `_id`, `_type` and `_index` (its position among its siblings). The path isn't stored separately: it's the file name."
                 }
               ]
             }
@@ -82,12 +377,13 @@
       ]
     },
     {
-      "_type": "CodeBlock",
-      "_id": "2Yl96Yghl2sIFoaL6JTF1bQCpAO",
-      "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ pages // pages root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.json\n  ╰ file.json\n\n// A folder which is publicly available\npublic\n├ image.XYZ.png\n╰ file.XYZ.pdf\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/generated\nnode_modules/@alinea/generated\n├ ...\n├ config.js\n╰ source.js",
-      "fileName": "",
-      "language": "",
-      "compact": true
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Because content is plain files, it's versioned, reviewed and deployed with your code. `alinea dev` and `alinea build` compile your config and index the content into the `@alinea/generated` package in `node_modules`, which your site queries at runtime. That package is regenerated on every run, so don't edit or commit it."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -98,6 +394,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

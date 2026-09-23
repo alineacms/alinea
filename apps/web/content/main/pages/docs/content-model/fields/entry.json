@@ -11,16 +11,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "The entry field can be used to link to an internal page."
+          "text": "An entry field links to other entries in the CMS: the author of a post, related articles, the categories of a product. Editors pick entries in a dialog, and you can limit what they can choose."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2aiLnCCudPz6D0aNgADlzuObGEs",
-      "code": "import {Field} from 'alinea'\n\nField.entry('Single entry link')\n\nField.entry.multiple('Multiple entry links')",
+      "code": "import {Field} from 'alinea'\n\nField.entry('Author', {\n  condition: {_type: 'Author'}\n})\n\nField.entry.multiple('Related posts', {\n  condition: {_type: 'BlogPost'},\n  max: 3\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "heading",
@@ -28,18 +28,197 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration"
+          "text": "Options"
         }
       ],
       "_anchor": "configuration"
     },
     {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`condition`: only offer entries that match this "
+                },
+                {
+                  "_type": "text",
+                  "text": "filter",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjzBZtSiXNhy68eXqXZw2kWLoh",
+                      "_link": "entry",
+                      "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ". The picker then shows all matches in one flat list, across locations. Can be a function, see below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`location`: the workspace and root (and optionally `parentId` and `locale`) the picker opens in, for example `{workspace: 'main', root: 'pages'}`. Can be a function."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`limitLocations`: an array of `{workspace, root}` locations editors can browse. Others are hidden in the picker."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`pickChildren`: offer only the direct children of the entry being edited, in a flat list."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`defaultView`: show the picker's results as `'row'` (default) or `'thumb'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: extra fields stored on each link, like the "
+                },
+                {
+                  "_type": "text",
+                  "text": "Link field",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzxMQjhNZKS6Ib7AMo4iv5mu",
+                      "_link": "entry",
+                      "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`max` (multiple only): the maximum number of entries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`allowDuplicates` (multiple only): allow the same entry more than once. Default `false`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzxgKUmtPAx72bWTSOmqRkhb",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`condition`"
+          "text": "Conditions"
         }
       ],
       "_anchor": "condition"
@@ -50,15 +229,15 @@
       "content": [
         {
           "_type": "text",
-          "text": "Limit the pages shown in the explorer to this condition. Conditions can be built using fields in the same way as described in the "
+          "text": "A condition is a "
         },
         {
           "_type": "text",
-          "text": "filtering",
+          "text": "filter",
           "marks": [
             {
               "_type": "link",
-              "_id": "3JjzBZtSiXNhy68eXqXZw2kWLoh",
+              "_id": "3JkEzyl7hI0WURlYFoOKFeecITm",
               "_link": "entry",
               "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
             }
@@ -66,63 +245,24 @@
         },
         {
           "_type": "text",
-          "text": " chapter."
-        }
-      ]
-    },
-    {
-      "_type": "blockquote",
-      "content": [
-        {
-          "_type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "_type": "text",
-              "text": "`_status`: \"archived\" | \"draft\" | \"published\""
-            },
-            {
-              "_type": "hardBreak"
-            },
-            {
-              "_type": "text",
-              "text": "Filter entries by publication status."
-            }
-          ]
-        },
-        {
-          "_type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "_type": "text",
-              "text": "`_type`"
-            },
-            {
-              "_type": "hardBreak"
-            },
-            {
-              "_type": "text",
-              "text": "Filter entries by content type."
-            }
-          ]
+          "text": " on the entries that can be picked, written with the `_` prefixed entry properties: `_type`, `_workspace`, `_root`, `_parentId`, `_status`, `_locale`, `_path` and `_url`. All operators work, such as `in` and `startsWith`:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2aiNY0EOVAiPH085iK0NelgMfhO",
-      "code": "import {Field} from 'alinea'\n\nField.entry('Link to author', {\n  condition: {\n    _type: 'Author'\n  }\n})\n\nField.entry('Link to author or writer', {\n  condition: {\n    _type: {\n      in: ['Author', 'Writer']\n    }\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\n// One type\nField.entry('Author', {condition: {_type: 'Author'}})\n\n// Several types\nField.entry('Parent page', {\n  condition: {_type: {in: ['Page', 'Blog']}}\n})\n\n// Only posts below /blog in the pages root\nField.entry.multiple('Highlights', {\n  condition: {_type: 'BlogPost', _root: 'pages', _url: {startsWith: '/blog/'}}\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`defaultView`"
+          "text": "Dynamic options"
         }
       ],
       "_anchor": "defaultview"
@@ -133,66 +273,24 @@
       "content": [
         {
           "_type": "text",
-          "text": "Preset the UI to show rows or thumbnails (possible values: \"row\", \"thumb\")"
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`inline`"
-        }
-      ],
-      "_anchor": "inline"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Show a minimal version of the field. The field label is hidden."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "`location`"
-        }
-      ],
-      "_anchor": "location"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Defines the location (workspace and root) in which the entry picker opens."
+          "text": "`condition` and `location` also accept a function. It receives the entry being edited (`id`, `type`, `workspace`, `root`, `parentId` and `locale`) and a `graph` to run queries with, and can be async. That's useful when the same type lives in several workspaces:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "31uIXMVpPme7rebYzsJ4FOz59oH",
-      "code": "import {Field} from 'alinea'\n\nField.entry('Link to author', {\n  location: {\n    root: 'pages',\n    workspace: 'main'\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\nField.entry('Author', {\n  // Open the picker in the authors root of the workspace being edited\n  location: ({entry}) => ({workspace: entry.workspace, root: 'authors'}),\n  // And only offer authors from that workspace\n  condition: ({entry}) => ({_type: 'Author', _workspace: entry.workspace})\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`pickChildren`"
+          "text": "Picking children"
         }
       ],
       "_anchor": "pickchildren"
@@ -203,24 +301,24 @@
       "content": [
         {
           "_type": "text",
-          "text": "Choose from a flat list of direct children of the currently edited entry."
+          "text": "With `pickChildren` the picker lists the children of the entry being edited, for example to choose a featured item among the entries of a collection:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3F2KF8Sa4vaurAfq6kaysKq1Und",
-      "code": "import {Field} from 'alinea'\n\nField.entry('Author of this book', {\n  condition: {\n    _type: 'Author'\n  },\n  pickChildren: true\n})",
+      "code": "import {Field} from 'alinea'\n\nField.entry('Featured book', {\n  condition: {_type: 'Book'},\n  pickChildren: true\n})",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`max`"
+          "text": "Value"
         }
       ],
       "_anchor": "max"
@@ -231,16 +329,77 @@
       "content": [
         {
           "_type": "text",
-          "text": "Limit the amount of rows in case of multiple links."
+          "text": "When you query an entry field, each link is resolved to the target's current data: `entryId`, `entryType`, `title`, `path`, and its `url` (also as `href`), with the values of any extra `fields` on `link.fields`. A single entry field is `null` while it's empty, a multiple one is an array."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Targets are looked up in the locale of the entry you queried (or entries without a locale) and with the same status. Links to entries that were deleted or aren't published are dropped from multiple fields; a single link to one has no `url`."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3F2GKxhpocJf8ZPxaLD6HBOUXot",
-      "code": "import {Field} from 'alinea'\n\nField.entry.multiple('Select up to 3 authors', {\n  max: 3\n})",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\nconst post = await cms.get({type: BlogPost, path: 'hello-world'})\npost.author?.title // \"Jane Doe\"\npost.author?.url // \"/authors/jane-doe\"\npost.categories.map(category => category.title)",
       "fileName": "",
-      "language": ""
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Querying fields of the linked entries"
+        }
+      ],
+      "_anchor": "querying-fields-of-the-linked-entries"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The resolved link only holds the basics. To get other fields of the target, query through the field: `.first()` on a single entry field, `.find()`, `.first()` or `.count()` on a multiple one. They take the same options as a query, including `select`, `filter` and `orderBy`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzrTx9srVGZ0n2rKj0jfkykH",
+      "code": "import {cms} from '@/cms'\nimport {Author, BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst post = await cms.get({\n  type: BlogPost,\n  path: 'hello-world',\n  select: {\n    title: Query.title,\n    author: BlogPost.author.first({\n      select: {name: Query.title, avatar: Author.avatar, bio: Author.bio}\n    }),\n    categories: BlogPost.categories.find({\n      select: {title: Query.title, url: Query.url},\n      orderBy: {asc: Query.title}\n    })\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To go the other way, from an author to their posts, filter on the field. See "
+        },
+        {
+          "_type": "text",
+          "text": "Related content",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzucxpYeeQFnmIrqzDJIv8Uz",
+              "_link": "entry",
+              "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -256,7 +415,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189130,
+    "updatedAt": 1790196930,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

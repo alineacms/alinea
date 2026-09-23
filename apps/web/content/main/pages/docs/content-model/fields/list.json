@@ -11,22 +11,353 @@
       "content": [
         {
           "_type": "text",
-          "text": "A list field contains blocks of fields. Every block is configured using a specific type. These can be created using the schema and type functions as seen before."
+          "text": "A list field holds an ordered list of rows, and every row has one of the types in its `schema`. Editors add, reorder and remove rows. Lists are how you build pages out of blocks: a hero, a text section, a gallery, in any order."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "268j9BBXf8jwwZ427XxBT2O0snb",
-      "code": "import {Config, Field} from 'alinea'\n\nField.list('List', {\n  schema: {\n    Item: Config.type('Item', {\n      fields: {\n        title: Field.text('Title'),\n        text: Field.richText('Text')\n      }\n    })\n  }\n})\n\nField.list('List mixed', {\n  schema: {\n    Text: Config.type('Text', {\n      fields: {\n        title: Field.text('Item title'),\n        text: Field.richText('Item body text')\n      }\n    }),\n    Image: Config.type('Image', {\n      fields: {\n        image: Field.image('Image')\n      }\n    })\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nconst TextBlock = Config.type('Text', {\n  fields: {\n    title: Field.text('Title'),\n    text: Field.richText('Text')\n  }\n})\n\nconst ImageBlock = Config.type('Image', {\n  fields: {\n    image: Field.image('Image'),\n    caption: Field.text('Caption')\n  }\n})\n\nexport const Page = Config.document('Page', {\n  fields: {\n    blocks: Field.list('Blocks', {\n      schema: {TextBlock, ImageBlock}\n    })\n  }\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "MOMpcuuHwKl-kSmmbcKgx",
       "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type(\"List field\", {\n  fields: {\n    list: Field.list(\"List\", {\n      schema: {\n        Item: Config.type(\"Item\", {\n          fields: {\n            title: Field.text(\"Title\"),\n            text: Field.richText(\"Text\"),\n          }\n        })\n      }\n    }),\n    listMixed: Field.list(\"List mixed\", {\n      schema: {\n        Text: Config.type(\"Text\", {\n          fields: {\n            title: Field.text(\"Title\"),\n            text: Field.richText(\"Text\"),\n          }\n        }),\n        Image: Config.type(\"Image\", {\n          fields: {\n            image: Field.image(\"Image\")\n          }\n        })\n      }\n    })\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`schema` (required): the row types, keyed by name. The key is stored in each row's `_type`, so renaming it orphans existing rows."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`min`: mark the field as invalid while it has fewer rows."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`max`: hide the add buttons once the list has this many rows, and mark the field as invalid when it has more."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`initialValue`: rows to start with, without `_id` or `_index`: they're generated."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`validate`: receives the rows, including their `_id` and `_type`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzwEnpOcGdL3YYl5C0z8ruD1",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `required`, `readOnly` and `hidden`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Row types are ordinary "
+        },
+        {
+          "_type": "text",
+          "text": "Types",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzwNzTRtwVEKm1fOyDNeKk8b",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": they can have tabs, an `icon` that is shown in the add menu and nested lists. They don't need a title or path and don't have to be in the schema."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The value is an array of rows. Next to its fields, every row has:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_type`: the key of its type in `schema`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_id`: a unique id, handy as React `key`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_index`: a sort key. Rows are already sorted when you get them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_label` and `_anchor`: optional. Editors can give a row a custom label (shown in the dashboard) and an anchor, so links can point to that row (`/page#anchor`). Anchors are unique within an entry."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When you query a list, link and image fields inside rows are resolved like fields at the top level."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rendering"
+        }
+      ],
+      "_anchor": "rendering"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Switch on `_type` to render each row. `Infer` turns the list's schema into a union type, so TypeScript knows the fields of every branch:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzt1Fn471ipA48kRxhWWmHF7",
+      "code": "import {Config, Field, type Infer} from 'alinea'\n\nconst TextBlock = Config.type('Text', {\n  fields: {text: Field.text('Text', {multiline: true})}\n})\n\nconst ImageBlock = Config.type('Image', {\n  fields: {image: Field.image('Image')}\n})\n\nexport const blocks = {TextBlock, ImageBlock}\n\nexport const Page = Config.document('Page', {\n  fields: {blocks: Field.list('Blocks', {schema: blocks})}\n})\n\ntype Block = Infer<typeof Page>['blocks'][number]\n\nexport function Blocks({blocks}: {blocks: Array<Block>}) {\n  return blocks.map(block => {\n    switch (block._type) {\n      case 'TextBlock':\n        return <p key={block._id} id={block._anchor}>{block.text}</p>\n      case 'ImageBlock':\n        return <img key={block._id} src={block.image.src} alt={block.image.alt} />\n    }\n  })\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Different pages often allow different blocks. Keep block types in shared modules and compose a `schema` per page type, instead of one list that allows everything everywhere."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Types used in a list are registered by the list, not by the schema. The same type object can be used in several lists."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Filter entries on list contents with "
+                },
+                {
+                  "_type": "text",
+                  "text": "`includes`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzvzVZWqZ37YM9xuX85mOGou",
+                      "_link": "entry",
+                      "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", for example all pages that contain a video block: `filter: {blocks: {includes: {_type: 'VideoBlock'}}}`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "metadata": {
@@ -42,7 +373,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189130,
+    "updatedAt": 1790196931,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

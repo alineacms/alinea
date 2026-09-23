@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A schema is a collection of "
+          "text": "The schema is an object that maps names to "
         },
         {
           "_type": "text",
@@ -26,83 +26,227 @@
         },
         {
           "_type": "text",
-          "text": "."
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
-      "code": "import {Config} from 'alinea'\n\nConfig.schema({\n  types: {\n    TypeA, TypeB, TypeC\n  }\n})",
-      "fileName": "",
-      "language": "",
-      "compact": false
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Configuration"
-        }
-      ],
-      "_anchor": "configuration"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Your Schema should be defined in the "
-        },
-        {
-          "_type": "text",
-          "text": "CMS config",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "2aAxVMSAONngMXzsR2poLuRALIY",
-              "_link": "entry",
-              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": ". There are currently no configuration options for it."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Example schema"
-        }
-      ],
-      "_anchor": "example-schema"
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "_type": "text",
-          "text": "The Schema below is a minimal example of a blog setup. It holds two types: `BlogOverview` and `BlogPost`. The overview type corresponds to a page that lists the posts. To achieve that it is configured as a container which can hold blog posts as children."
+          "text": ". Pass it to `createCMS` as the `schema` option: every type an editor can create as an entry has to be listed here."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "286gbW4zHgdrAHcGBLGRtixZguV",
-      "code": "import {Config, Field} from 'alinea'\n\nConfig.schema({\n  types: {\n    BlogOverview: Config.document('Blog overview', {\n      contains: ['BlogPost'],\n      fields: {}\n    }),\n    BlogPost: Config.document('Blog post', {\n      fields: {\n        publishDate: Field.date('Publish date'),\n        body: Field.richText('Body')\n      }\n    })\n  }\n})",
-      "fileName": "",
-      "language": "",
-      "compact": false
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {}\n})\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date'),\n    body: Field.richText('Body')\n  }\n})",
+      "fileName": "schema.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF07RfPQn4KnvSoB9USyM8lwg",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport * as schema from './schema'\n\nexport const cms = createCMS({\n  schema,\n  workspaces: {\n    main: Config.workspace('Blog', {\n      source: 'content',\n      roots: {pages: Config.root('Pages', {contains: ['Blog']})}\n    })\n  },\n  handlerUrl: '/api/cms'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In this example `Blog` is a container that accepts `BlogPost` children, so editors create an overview page and add posts below it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Type names"
+        }
+      ],
+      "_anchor": "type-names"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The key of a type in the schema is its name. It's written to the `_type` property of every entry file and it's the name you use in `contains`, in link conditions (`{_type: 'BlogPost'}`) and in query results (`Query.type`). The label you pass to `Config.document` or `Config.type` is only shown in the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Names must start with a letter and contain only letters, digits and underscores. `Entry`, `MediaFile` and `MediaLibrary` are reserved: Alinea adds the last two for uploads and media folders."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Renaming a key renames the type: existing entries that still carry the old name fail to load with \"has an unknown type\". Rename the `_type` in those files at the same time."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Every name used in `contains` must exist in the schema, otherwise `alinea dev` stops with an error that names the missing type."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Organizing a larger schema"
+        }
+      ],
+      "_anchor": "organizing-a-larger-schema"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Exporting every type from one module and importing it with `import * as schema` keeps the config short. In larger projects it's common to keep each type next to the component that renders it and collect them in one place:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0CX8cP0VjdzvXwccbqconrC",
+      "code": "export {Article} from './pages/article/Article.schema'\nexport {Home} from './pages/home/Home.schema'\nexport {Settings} from './pages/settings/Settings.schema'",
+      "fileName": "schema.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Types that are only used as blocks inside a "
+        },
+        {
+          "_type": "text",
+          "text": "List",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0CriMhyGYEwhmHeMPEXN32F",
+              "_link": "entry",
+              "_entry": "268hhWIV6twxD4PMp03isLY6Pac"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " or "
+        },
+        {
+          "_type": "text",
+          "text": "Rich text",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF07cL9lKQqt0ZLKaeT4JuE3D",
+              "_link": "entry",
+              "_entry": "268hjH2OU9fiReg61Wov1SRbPD5"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " field don't need to be in the schema: they're registered by the field that uses them."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A type can appear only once in the schema, and a field instance can belong to only one type. Registering either twice throws \"is already in use\", see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Fields must be unique",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0A7ufTZEvhiL2P7zJx4V4MT",
+                      "_link": "entry",
+                      "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Config.schema({types: {...}})` is available as a helper, but it returns the types object as is: a plain object works the same."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "metadata": {
@@ -118,7 +262,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189049,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

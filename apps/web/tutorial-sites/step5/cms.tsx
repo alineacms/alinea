@@ -25,7 +25,6 @@ export const cms = createCMS({
               type: Blog,
               fields: {
                 title: 'Blog',
-                path: 'blog',
                 intro: 'Latest posts'
               }
             })
@@ -39,7 +38,6 @@ export const cms = createCMS({
               type: SiteLayout,
               fields: {
                 title: 'Global settings',
-                path: 'settings',
                 headerText: 'My website',
                 footerText: 'Copyright 2026'
               }
@@ -51,7 +49,8 @@ export const cms = createCMS({
     })
   },
   baseUrl: {
-    development: 'http://localhost:3105'
+    development: 'http://localhost:3105',
+    production: 'https://example.com'
   },
   handlerUrl: '/api/cms',
   adminPath: '/admin',

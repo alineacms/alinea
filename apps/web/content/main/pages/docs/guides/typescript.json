@@ -11,33 +11,230 @@
       "content": [
         {
           "_type": "text",
-          "text": "The type of a content "
-        },
+          "text": "Alinea infers TypeScript types from your schema, so there are no types to generate or keep in sync. Query results are typed automatically, and `Infer` gives you the types to use in your components."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
         {
           "_type": "text",
-          "text": "Type",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "2Yl9ynH58z4tA5NUrpzBQbDeJ4r",
-              "_link": "entry",
-              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
-            }
-          ]
-        },
+          "text": "Query results"
+        }
+      ],
+      "_anchor": "query-results"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
         {
           "_type": "text",
-          "text": " can be inferred."
+          "text": "The result of a query follows from its `type` and `select`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0ewyjHEeKRWWUwVYYoimQWt",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema/BlogPost'\nimport {Query} from 'alinea'\n\nconst posts = await cms.find({\n  type: BlogPost,\n  select: {\n    title: Query.title,\n    url: Query.url,\n    publishDate: BlogPost.publishDate\n  }\n})\n// Array<{title: string, url: string, publishDate: string}>",
+      "fileName": "app/blog/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without `select` you get all fields of the type plus the entry fields: `_id`, `_type`, `_url`, `_locale`, `_parentId` and so on."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To pass a result to a component, derive its type from the function that fetches it:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0iBxvw87i7pWo8QhlAhPTpu",
+      "code": "async function fetchPosts() {\n  return cms.find({\n    type: BlogPost,\n    select: {title: Query.title, url: Query.url}\n  })\n}\n\ntype PostSummary = Awaited<ReturnType<typeof fetchPosts>>[number]",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Infer types from the schema"
+        }
+      ],
+      "_anchor": "infer-types-from-the-schema"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Infer` turns a type, a list schema or a field into the shape queries return:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "x22_stOQkju1mt4F41ffb",
-      "code": "import {Infer, Config, Field} from 'alinea'\n\nconst schema = {\n  BlogOverview: Config.document('Blog overview', {\n    contains: ['BlogPost'],\n    fields: {}\n  }),\n  BlogPost: Config.document('Blog post', {\n    fields: {\n      publishDate: Field.date('Publish date'),\n      body: Field.richText('Body')\n    }\n  })\n}\n\ntype BlogOverview = Infer<typeof schema.BlogOverview>\ntype BlogPost = Infer<typeof schema.BlogPost>",
-      "fileName": "",
-      "language": "",
+      "code": "import {Config, Field, type Infer} from 'alinea'\n\nexport const TextBlock = Config.type('Text', {\n  fields: {\n    body: Field.richText('Body')\n  }\n})\n\nexport const ImageBlock = Config.type('Image', {\n  fields: {\n    image: Field.image('Image')\n  }\n})\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date'),\n    author: Field.entry('Author'),\n    blocks: Field.list('Blocks', {\n      schema: {Text: TextBlock, Image: ImageBlock}\n    })\n  }\n})\n\n// The fields of a blog post, as a query returns them\nexport type BlogPost = Infer<typeof BlogPost>\n// The same, plus the entry fields (_id, _type, _url, ...)\nexport type BlogPostEntry = Infer.Entry<typeof BlogPost>\n// A row of the list field, with _id, _index and _type\nexport type TextBlock = Infer.ListItem<typeof TextBlock, 'Text'>\n// The value of one field\nexport type Blocks = BlogPost['blocks']",
+      "fileName": "schema/BlogPost.ts",
+      "language": "tsx",
       "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Giving the type and the constant the same name, as above, lets you import both with one name: `BlogPost` is the schema in queries and the inferred type in annotations."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Infer<T>`: the query value of a type, a field or a list schema (`{Text: TextBlock, ...}`, which becomes a union of rows)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Infer.Entry<T, Name>`: `Infer<T>` plus the entry fields. Pass the type name to narrow `_type`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Infer.ListItem<T, Name>`: `Infer<T>` plus the list row fields `_id`, `_index` and `_type`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Infer.Stored<T>`: the stored value, before links are resolved. This is what `Edit.create`, `Edit.update` and custom field views work with."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Narrow list rows by `_type`"
+        }
+      ],
+      "_anchor": "narrow-list-rows-by-type"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "List rows carry their type name in `_type`, so a `switch` narrows each row to its own fields:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0i98Vnf1buUYKGCKsEUlsM9",
+      "code": "import type {Blocks} from '@/schema/BlogPost'\n\nexport function BlocksView({blocks}: {blocks: Blocks}) {\n  return (\n    <>\n      {blocks.map(block => {\n        switch (block._type) {\n          case 'Text':\n            return <TextBlockView key={block._id} block={block} />\n          case 'Image':\n            return <img key={block._id} src={block.image?.src} alt=\"\" />\n        }\n      })}\n    </>\n  )\n}",
+      "fileName": "components/Blocks.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Types describe your current schema. Content files written before you added a field don't have it yet: `alinea build --fix` fills in the defaults of missing fields in every file."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Infer types from the schema constants you query with. Types written by hand drift from the schema without the compiler noticing."
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "metadata": {
@@ -53,7 +250,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188824,
+    "updatedAt": 1790196937,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

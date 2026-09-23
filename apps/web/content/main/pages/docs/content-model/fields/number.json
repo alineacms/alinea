@@ -11,22 +11,21 @@
       "content": [
         {
           "_type": "text",
-          "text": "A number field is used to input numeric data."
+          "text": "A number field holds a number: a price, a quantity, a percentage. It has increment and decrement buttons and keeps the value between the bounds you set."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "g4S5QLIWCAxleuIDzwNpk",
-      "code": "import {Field} from 'alinea'\n\nField.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})",
+      "code": "import {Field} from 'alinea'\n\nField.number('Quantity', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "MFfouC0Ou_IJ8GmSx0nRK",
-      "code": "import {Field} from 'alinea'\n\nexport default Field.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})"
+      "code": "import {Field} from 'alinea'\n\nexport default Field.number('Quantity', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})"
     },
     {
       "_type": "heading",
@@ -35,10 +34,83 @@
       "content": [
         {
           "_type": "text",
-          "text": "Configuration",
-          "marks": [
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
             {
-              "_type": "bold"
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`minValue` and `maxValue`: the allowed range. Values outside it are clamped when the editor leaves the field."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`step`: the amount the buttons and arrow keys add or subtract. Default `1`. Typed values snap to a multiple of the step too, so set a smaller step for decimals."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`placeholder`: text shown while the field is empty."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzy9LkpKoBYfPcNEIxIV57pA",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
             }
           ]
         }
@@ -46,18 +118,14 @@
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "`step`",
-          "marks": [
-            {
-              "_type": "bold"
-            }
-          ]
+          "text": "Value"
         }
-      ]
+      ],
+      "_anchor": "value"
     },
     {
       "_type": "paragraph",
@@ -65,29 +133,41 @@
       "content": [
         {
           "_type": "text",
-          "text": "Specifies the interval between legal numbers in the input field."
-        },
-        {
-          "_type": "hardBreak"
-        },
+          "text": "The field stores a number, or `null` when it's empty. Without an `initialValue` new entries have no value, so handle `null` when you render it, or set `required: true`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
         {
           "_type": "text",
-          "text": "Default is 1."
+          "text": "Decimals"
+        }
+      ],
+      "_anchor": "decimals"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With the default step of `1`, a typed `9.99` becomes `10`. Use a step that matches the precision you need:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "TgFnfhtgWoXxn8JNTvLeU",
-      "code": "import {Field} from 'alinea'\n\nField.number('My decimal number field', {\n  step: 0.01\n})",
+      "code": "import {Field} from 'alinea'\n\nField.number('Price', {\n  minValue: 0,\n  step: 0.01\n})",
       "fileName": "",
-      "language": "",
-      "compact": false
+      "language": "tsx"
     },
     {
       "_type": "ExampleBlock",
       "_id": "FTmS0mD2qcabtj5xwOI9D",
-      "code": "import {Field} from 'alinea'\n\nexport default Field.number('My decimal number field', {\n  help: 'You can increase or decrease the value by 0.01',\n  initialValue: 0.01,\n  step: 0.01\n})"
+      "code": "import {Field} from 'alinea'\n\nexport default Field.number('Price', {\n  help: 'The buttons change the value by 0.01',\n  initialValue: 9.99,\n  minValue: 0,\n  step: 0.01\n})"
     }
   ],
   "metadata": {
@@ -98,6 +178,16 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196931,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

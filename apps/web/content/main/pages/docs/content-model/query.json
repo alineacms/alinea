@@ -6,31 +6,36 @@
   "navigationTitle": "",
   "body": [
     {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Setup"
-        }
-      ],
-      "_anchor": "setup"
-    },
-    {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Once content has been saved in the CMS you'll want a way to retrieve it. Your CMS instance has methods to fetch specific entries or search through all content."
+          "text": "Read content with the methods on your CMS instance. Queries are plain objects, typed from your schema, and run on the server: in server components, route handlers, `generateMetadata` and `generateStaticParams`. They read from a local copy of your content that ships with your deploy and is kept in sync when the content changes, see "
+        },
+        {
+          "_type": "text",
+          "text": "Instant publishing",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF01VdTtXeplHv3uh0LQZ3jrO",
+              "_link": "entry",
+              "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AZD4qVCNAQAqmAaVEtnFzxdUlU",
-      "code": "import {cms} from '@/cms'\nimport {HomePage} from '@/schema'\n\nexport default async function Page() {\n  const homePage = await cms.get({type: HomePage})\n  return <h1>{homePage.title}</h1>\n}",
-      "fileName": "",
-      "language": ""
+      "code": "import {cms} from '@/cms'\nimport {HomePage} from '@/schema'\n\nexport default async function Page() {\n  const home = await cms.get({type: HomePage})\n  return <h1>{home.title}</h1>\n}",
+      "fileName": "app/page.tsx",
+      "language": "tsx"
     },
     {
       "_type": "heading",
@@ -44,20 +49,20 @@
       "_anchor": "methods"
     },
     {
+      "_type": "CodeBlock",
+      "_id": "3AZmHwGgMIvbj496GIZA4l3v5VV",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\n// All matches, as an array (possibly empty)\nconst posts = await cms.find({type: BlogPost})\n\n// The first match, or null\nconst latest = await cms.first({\n  type: BlogPost,\n  orderBy: {desc: BlogPost.publishDate}\n})\n\n// The first match, or throws \"Entry not found\"\nconst post = await cms.get({type: BlogPost, path: 'hello-world'})\n\n// The number of matches\nconst total = await cms.count({type: BlogPost})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "There are multiple ways to retrieve your data, which one you use depends on how you want to receive it."
+          "text": "Use `first` when a missing entry is a normal case, such as a url that may not exist (call `notFound()` when it returns `null`), and `get` for entries that must exist, like a seeded home page."
         }
       ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3AZmHwGgMIvbj496GIZA4l3v5VV",
-      "code": "// Always returns an array\nawait cms.find(query)\n\n// Returns the first result or null\nawait cms.first(query)\n// Returns the first result or throws an error if nothing matches\nawait cms.get(query)\n\n// Returns the number of results\nawait cms.count(query)",
-      "fileName": "",
-      "language": ""
     },
     {
       "_type": "heading",
@@ -65,57 +70,354 @@
       "content": [
         {
           "_type": "text",
-          "text": "The Query object"
+          "text": "What a query returns"
         }
       ],
-      "_anchor": "the-query-object"
+      "_anchor": "referencing-standard-fields"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "When querying items you will have to use the Query object for its two use cases:"
+          "text": "Without a `select`, you get the fields of the type you passed as `type`, plus the entry's own properties, prefixed with an underscore. A query without `type` returns only those properties."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF052vWihNYLqRHFsxmAcug33",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\nconst post = await cms.get({type: BlogPost, path: 'hello-world'})\npost.title // a field of the type\npost.publishDate // \"2026-09-23\"\npost.author // link fields are resolved: {title, url, ...} or null\npost._id // the entry id\npost._url // \"/blog/hello-world\"\npost._locale // \"en\", or null in roots without i18n",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The entry properties are `_id`, `_type`, `_index`, `_workspace`, `_root`, `_status`, `_parentId`, `_locale`, `_path`, `_url`, `_createdAt` and `_updatedAt`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With `select` you get exactly what you ask for, in the shape you ask for. Select fields through the type (`BlogPost.publishDate`) and entry properties through `Query`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzzFY1aqdUJDmvjRwyiT6oJt",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst cards = await cms.find({\n  type: BlogPost,\n  select: {\n    title: Query.title,\n    url: Query.url,\n    date: BlogPost.publishDate,\n    cover: BlogPost.cover\n  }\n})\n// Array<{title: string, url: string, date: string, cover: ImageLink | null}>\n\n// A single expression returns plain values\nconst urls = await cms.find({type: BlogPost, select: Query.url})\n// Array<string>",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Query` has `id`, `title`, `type`, `index`, `workspace`, `root`, `status`, `parentId`, `locale`, `path`, `url`, `aliases`, `createdAt` and `updatedAt`, plus the relation helpers such as `Query.children` described in "
+        },
+        {
+          "_type": "text",
+          "text": "Related content",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF031XHRuXYeFd6uZs7ovMbCJ",
+              "_link": "entry",
+              "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and `Query.snippet` for "
+        },
+        {
+          "_type": "text",
+          "text": "search results",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF01kq7sEuY5RavnU1zisPc07",
+              "_link": "entry",
+              "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Selecting only what a page needs keeps the data you pass to client components small, and TypeScript infers the result either way. To name the type of a result, use `Awaited<ReturnType<typeof yourQueryFunction>>`."
         }
       ]
     },
     {
       "_type": "heading",
-      "level": 3,
+      "level": 2,
       "content": [
         {
           "_type": "text",
-          "text": "Referencing standard fields:"
-        }
-      ],
-      "_anchor": "referencing-standard-fields"
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3Ahp3VtFjwf6fQxc1uZACtRlcVH",
-      "code": "Query.id                // The unique identifier of the entry.\nQuery.title             // The title of the entry.\nQuery.type              // The name of the entry's type (e.g., 'BlogPost').\nQuery.url               // The calculated public URL of the entry.\nQuery.path              // The path segment of the entry (e.g., 'my-post').\nQuery.parentId          // The ID of the parent entry.\nQuery.workspace         // The workspace the entry belongs to.\nQuery.root              // The root the entry belongs to.\nQuery.locale            // The locale code of the entry (e.g., 'en', 'fr').\nQuery.status            // The status of the entry (e.g., 'published').\nQuery.index             // The sort index of the entry within its parent.",
-      "fileName": "",
-      "language": ""
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Defining relationships:"
+          "text": "Query options"
         }
       ],
       "_anchor": "defining-relationships"
     },
     {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Which entries:",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `type`, `id`, `path`, `url`, `parentId`, `workspace`, `root`, `location`, `level`, `locale`, `status` and more, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Structural queries",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF03gQtMjCZyt2tszaClZRmfW",
+                      "_link": "entry",
+                      "_entry": "3AUAiIoQhl86EKefhuhZ6EThETv"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Matching content:",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `filter` on field values and `search` for full text, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Filtering",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzzEBT0WqtrNbBuxqP5bwnxo",
+                      "_link": "entry",
+                      "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Shape and order:",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `select`, `include`, `orderBy`, `groupBy`, `skip` and `take`, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Structural queries",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF01ER5DJVE1ay0txRHHEtstn",
+                      "_link": "entry",
+                      "_entry": "3AUAiIoQhl86EKefhuhZ6EThETv"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Related entries:",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " parents, children, siblings, translations and linked entries in the same query, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Related content",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzzvHFgKfVMzcjYKfIyrgnTg",
+                      "_link": "entry",
+                      "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options you pass as `undefined` are ignored, which makes it easy to build a query from optional parameters."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Drafts and previews"
+        }
+      ],
+      "_anchor": "drafts-and-previews"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Queries return published content by default. When Next.js draft mode is on, for example while an editor looks at a "
+        },
+        {
+          "_type": "text",
+          "text": "live preview",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF06hEFcI78QHjBp8tOZxJSZO",
+              "_link": "entry",
+              "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", Alinea switches to drafts where they exist and applies the unsaved changes of the preview, without any change to your queries. Pass `status` to override this."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Example schema"
+        }
+      ],
+      "_anchor": "example-schema"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The examples in this chapter use this schema:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF01KD57pzyIlT2QLP86dbXW0",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Author = Config.document('Author', {\n  fields: {\n    avatar: Field.image('Avatar'),\n    bio: Field.text('Bio', {multiline: true})\n  }\n})\n\nexport const Category = Config.document('Category', {fields: {}})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {}\n})\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date'),\n    intro: Field.text('Intro', {multiline: true, searchable: true}),\n    featured: Field.check('Featured'),\n    cover: Field.image('Cover image'),\n    author: Field.entry('Author', {condition: {_type: 'Author'}}),\n    categories: Field.entry.multiple('Categories', {\n      condition: {_type: 'Category'}\n    }),\n    tags: Field.select.multiple('Tags', {\n      options: {news: 'News', release: 'Release', tutorial: 'Tutorial'}\n    }),\n    body: Field.richText('Body', {searchable: true})\n  }\n})",
+      "fileName": "schema.ts",
+      "language": "tsx"
+    },
+    {
       "_type": "ChapterLinkBlock",
       "_id": "3AhoE9GQNpABnNOSqLZNeJSa8y4",
       "link": {
-        "description": "Read about it in this chapter",
+        "description": "Scope queries by type, location and locale, and shape the results",
         "_id": "3AhoG5B1DTrwIsYLy7kSkIPEKlB",
         "_type": "entry",
-        "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ"
+        "_entry": "3AUAiIoQhl86EKefhuhZ6EThETv"
       }
     }
   ],
@@ -132,7 +434,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790189231,
+    "updatedAt": 1790196932,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -11,7 +11,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "This page is the operational playbook for coding agents that need to create or update Alinea content JSON directly. It focuses on deterministic rules that match Alinea core behavior and this repository's content shapes."
+          "text": "Coding agents can change Alinea content in two ways: through the MCP server of `alinea dev`, or by writing the content JSON files themselves. This page is the playbook for both: connect the MCP server first, and use the rules below when an agent has to edit files by hand."
         }
       ]
     },
@@ -184,7 +184,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Consult schema implementations and concrete JSON fixtures/content in the target project (for example `content/main/**`, `content/demo/**`) to find helpful examples and try to following the same structure when suggesting changes. "
+                  "text": "Consult the schema and existing content files in the target project (for example `content/**`) for examples, and follow the same structure when suggesting changes."
                 }
               ]
             }
@@ -324,7 +324,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`_root`: required for root-level entries (entries without a parent). Value is the workspace root key, for example `pages` or `media`."
+                  "text": "`_root`: written on root-level entries (entries without a parent), include it when you create one. Value is the root key, for example `pages` or `media`."
                 }
               ]
             }
@@ -339,7 +339,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`_seeded`: only for entries that correspond to seeded config pages (`Config.page(...)`). Keep path stable."
+                  "text": "`_seeded`: only on entries created from a seeded page in the config (`Config.page(...)` in the `children` of a root or page). Keep the value unchanged."
                 }
               ]
             }
@@ -450,7 +450,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Rich text link mark shape is defined by `LinkMark` in `src/core/TextDoc.ts`: `_type: link`, `_id`, `_link` (`entry` | `file` | `url`), and optional `_entry`."
+          "text": "Rich text link mark shape is defined by `LinkMark` in `src/core/TextDoc.ts`: `_type: link`, `_id`, `_link` (`entry` | `file` | `url`), `_entry` for entry and file links, and `href`, `target` and `title` for URLs. Optional `_anchor` links to an anchor on the target page."
         }
       ]
     },
@@ -539,7 +539,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alinea rich text is a `TextDoc` array (`src/core/TextDoc.ts`). Common internal nodes used by this project include `heading`, `paragraph`, `text`, `bulletList`, `orderedList`, `listItem`, `hardBreak`, and block nodes like `CodeBlock`/`ImageBlock` with `_id`."
+          "text": "Alinea rich text is a `TextDoc` array (`src/core/TextDoc.ts`). Common nodes are `heading`, `paragraph`, `text`, `bulletList`, `orderedList`, `listItem` and `hardBreak`. Blocks defined in the field's `schema` appear as nodes with the block's type name as `_type` (for example `CodeBlock`) and an `_id`."
         }
       ]
     },
@@ -585,7 +585,7 @@
     {
       "_id": "3AQhEEidv1VGL0XMoV3RkckFfso",
       "_type": "CodeBlock",
-      "code": "// Example workspace layout in this repository\ncontent/\n  main/\n    pages/\n      docs.json\n      docs/\n        reference/\n          cli.json\n    media/\n      dashboard.json\n  demo/\n    pages/\n      en/\n        index.json\n        products.json\n        products/\n          otto-stool.json\n      nl/\n        ...\n    authors/\n      maya-janssens.json\n    media/\n      ...\n\n// Workspace key -> source\nmain -> content/main\ndemo -> content/demo\n\n// Root key -> folder under each workspace source\npages -> <workspace>/pages\nmedia -> <workspace>/media\n\n// A translated root has a folder per locale\ndemo pages (en, nl, fr) -> content/demo/pages/en, content/demo/pages/nl, ...",
+      "code": "// Example: the content of the Alinea website\ncontent/\n  main/\n    pages/\n      docs.json\n      docs/\n        reference/\n          cli.json\n    media/\n      dashboard.json\n  demo/\n    pages/\n      en/\n        index.json\n        products.json\n        products/\n          otto-stool.json\n      nl/\n        ...\n    authors/\n      maya-janssens.json\n    media/\n      ...\n\n// Workspace key -> source\nmain -> content/main\ndemo -> content/demo\n\n// Root key -> folder under each workspace source\npages -> <workspace>/pages\nmedia -> <workspace>/media\n\n// A translated root has a folder per locale\ndemo pages (en, nl, fr) -> content/demo/pages/en, content/demo/pages/nl, ...",
       "fileName": "",
       "language": "text",
       "compact": false
@@ -709,7 +709,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188856,
+    "updatedAt": 1790197021,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

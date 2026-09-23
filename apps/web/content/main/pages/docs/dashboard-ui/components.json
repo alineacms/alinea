@@ -11,7 +11,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "The dashboard is built from a set of React components, and they are exported from `alinea/components`. Use them in custom fields and views so your additions look and behave like the rest of the dashboard."
+          "text": "The dashboard is built from a library of React components, exported from `alinea/components`. Use them in "
+        },
+        {
+          "_type": "text",
+          "text": "custom fields",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1t8kNJcObY01nLImXnSFh9T",
+              "_link": "entry",
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", `Field.view` sections and custom entry or root views, so your additions look and behave like the rest of the dashboard, in light and dark mode."
         }
       ]
     },
@@ -31,27 +47,899 @@
       "caption": "A stock overview panel in the demo, a custom view built with alinea/components."
     },
     {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Usage"
+        }
+      ],
+      "_anchor": "usage"
+    },
+    {
       "_id": "3JjNWim7SkrxztPeoQ9o58qXo6U",
       "_type": "CodeBlock",
-      "code": "import {Button, Tabs, TextField} from 'alinea/components'",
-      "fileName": "CustomField.tsx",
-      "language": "",
+      "code": "import {Select, SelectItem} from 'alinea/components'\nimport {useField, useFieldOptions} from 'alinea/dashboard/hooks'\nimport type {Priority, PriorityField} from './Priority'\n\nexport function PriorityView({field}: {field: PriorityField}) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  return (\n    <Select\n      label={options.label}\n      value={value}\n      onValueChange={next => setValue((next ?? 'normal') as Priority)}\n      readOnly={options.readOnly}\n    >\n      <SelectItem value=\"low\">Low</SelectItem>\n      <SelectItem value=\"normal\">Normal</SelectItem>\n      <SelectItem value=\"high\">High</SelectItem>\n    </Select>\n  )\n}",
+      "fileName": "fields/Priority.view.tsx",
+      "language": "tsx",
       "compact": false
     },
     {
-      "_id": "3JjNWj9XrL6wd9oiHsd5mHDRBSc",
-      "_type": "NoticeBlock",
-      "level": "info",
-      "body": [
+      "_type": "paragraph",
+      "content": [
         {
-          "_type": "paragraph",
-          "textAlign": "left",
-          "content": [
+          "_type": "text",
+          "text": "The components are styled by the dashboard's stylesheet and theme, so they are meant for code that runs inside the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Conventions"
+        }
+      ],
+      "_anchor": "conventions"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The API follows "
+        },
+        {
+          "_type": "text",
+          "text": "shadcn/ui",
+          "marks": [
             {
-              "_type": "text",
-              "text": "A visual catalog of every component will be added to this page later."
+              "_type": "link",
+              "_id": "3JkF1wiBg1h5NgzZRZ534TyY5Td",
+              "_link": "url",
+              "href": "https://ui.shadcn.com"
             }
           ]
+        },
+        {
+          "_type": "text",
+          "text": " and "
+        },
+        {
+          "_type": "text",
+          "text": "Radix",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1s8hG3VLMpCJ9ehOhvqGqik",
+              "_link": "url",
+              "href": "https://www.radix-ui.com"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", so the names will feel familiar:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Compound components are named after their parts: `Dialog`, `DialogTrigger`, `DialogContent`, `DialogTitle`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Controlled and uncontrolled state use the same prop names everywhere: `value`, `defaultValue` and `onValueChange`; `checked` and `onCheckedChange`; `open`, `defaultOpen` and `onOpenChange`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Form controls take `label`, `description`, `error`, `required`, `disabled`, `readOnly`, `icon` and `shared`, and render their label and messages with `Field`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Dates and times are ISO strings (`2026-09-23`, `14:30`). Collection keys are strings or numbers, and a selection is a `Set` of keys or `'all'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Every component accepts `className` and `style`. Each rendered part has a `data-slot` attribute (`data-slot=\"dialog-content\"`), and variants are exposed as `data-variant` and `data-size`, which gives your CSS stable hooks."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Colors, fonts and radii come from CSS variables such as `--alinea-fg`, `--alinea-bg`, `--alinea-border`, `--alinea-primary` and `--alinea-radius`. Use them in your own styles to follow the theme."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Components"
+        }
+      ],
+      "_anchor": "components"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Form controls"
+        }
+      ],
+      "_anchor": "form-controls"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field`, `FieldLabel`, `FieldDescription`, `FieldError`, `FieldSharedBadge`: the label, help text and error around a control. Use it to wrap your own inputs."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`TextField`: single or multiline text."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`NumberField`: numbers, with optional steppers and formatting."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`SearchField`: a search input."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Select`, `SelectItem`, `SelectGroup`, `SelectSeparator`: pick one option from a list."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`MultipleSelect`, `MultipleSelectItem`: pick several options."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`ComboBox`, `ComboBoxItem`: a text input with suggestions."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Checkbox`, `CheckboxGroup`, `RadioGroup`, `RadioGroupItem`, `Switch`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`DateField`, `DatePicker`, `DateRangePicker`, `TimeField`, `Calendar`, `RangeCalendar`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`ColorSwatch`, `ColorSwatchPicker`, `ColorSwatchPickerItem`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`TagGroup`, `Tag`: a list of tags, optionally selectable or removable."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`FileTrigger`, `DropZone`, `DropZoneTrigger`, `DropZoneDescription`: choose or drop files."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Buttons and toggles"
+        }
+      ],
+      "_anchor": "buttons-and-toggles"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Button`: `variant` (`solid`, `outline`, `ghost`), `color`, `size`, `icon`, `loading` and `asChild` to style a link as a button."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Toggle`, `ToggleGroup`, `ToggleGroupItem`: buttons that stay pressed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Toolbar`, `ToolbarGroup`, `ToolbarButton`, `ToolbarToggleGroup`, `ToolbarToggleItem`, `ToolbarSeparator`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Overlays and menus"
+        }
+      ],
+      "_anchor": "overlays-and-menus"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogClose`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Popover`, `PopoverTrigger`, `PopoverAnchor`, `PopoverContent`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`DropdownMenu` with its trigger, content, items, checkbox and radio items, groups, labels, separators, shortcuts and submenus."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Tooltip`, `TooltipTrigger`, `TooltipContent`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Command`, `CommandInput`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem`, `CommandSeparator`: a searchable command list."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Lists and data"
+        }
+      ],
+      "_anchor": "lists-and-data"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`List`, `ListItem`, `ListItemVisual`, `ListItemTitle`, `ListItemDescription`, `ListItemStatus`, `ListEmpty`, `ListLabel`, `ListError`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Table`, `TableRow`, `TableCell`, `TableThumbnail`, `TableTitle`: tables with sorting, selection and drag and drop."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Tree`, `TreeItem`: a tree like the dashboard's content tree."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`SortableList` and its parts: reorderable rows, like list fields."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`DataList`, `DataListItem`, `DataListLabel`, `DataListValue`: label and value pairs."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`ContentGrid`, `ContentGridItem`, `ContentCard`, `ContentCardSkeleton`: grids of entry cards."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`MediaPreview`: a preview of an image or file."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Layout"
+        }
+      ],
+      "_anchor": "layout"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Surface`, `SurfaceHeader`, `SurfaceContent`, `SurfaceRow`: a bordered panel."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Page`, `PageHeader`, `PageBack`, `PageTitle`, `PageActions`, `PageContent`, `PageFooter`: the layout of a dashboard page."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`AppShell`, `AppShellContent`, `Sidebar` and its parts, `NavRail` and its parts: the frame of the dashboard itself."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`PreviewFrame`, `PreviewToolbar`: the live preview panel."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Text and status"
+        }
+      ],
+      "_anchor": "text-and-status"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Heading`, `Text`, `Code`, `Kbd`, `Blockquote`, `Link`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Badge`: a small label, `status` colors it like an entry status (`published`, `draft`, `archived`, ...)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Alert`, `AlertTitle`, `AlertDescription`, `AlertActions`: a message box, with `default`, `warning` and `destructive` variants."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Empty`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyContent`: an empty state."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Spinner`, `Timestamp`, `Icon`, `FoldIcon`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Breadcrumb`, `BreadcrumbList`, `BreadcrumbItem`, `BreadcrumbLink`, `BreadcrumbPage`, `BreadcrumbSeparator`, `BreadcrumbEllipsis`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The props of every component are typed, so your editor shows what each one accepts. Types shared between components, such as `Selection`, `Key` and `IconType`, are exported as types from `alinea/components` too."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Icons"
+        }
+      ],
+      "_anchor": "icons"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Components with an `icon` prop take an icon component (any component that renders an `<svg>`, such as those from "
+        },
+        {
+          "_type": "text",
+          "text": "react-icons",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1t9BoVUIUdseAJR2qsl0pzs",
+              "_link": "url",
+              "href": "https://react-icons.github.io/react-icons"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " or copied from "
+        },
+        {
+          "_type": "text",
+          "text": "Icones",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF1tj4PgFZlquI43a2ClsY09y",
+              "_link": "url",
+              "href": "https://icones.js.org"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ") or an element. The icons of the dashboard itself are exported from `alinea/dashboard/icons`."
         }
       ]
     }
@@ -70,7 +958,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790179547,
+    "updatedAt": 1790196946,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
