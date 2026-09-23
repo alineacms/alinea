@@ -1,6 +1,6 @@
 .root {
-  margin: 24px 0;
-  border-radius: 12px;
+  border-radius: var(--web-docs-radius);
+  border: 1px solid var(--web-code-outline);
   background: var(--web-code-background);
   color: var(--web-code-foreground);
   overflow: hidden;
@@ -10,12 +10,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    height: 42px;
-    padding: 0 16px;
-    border-bottom: 1px solid var(--web-code-outline, #262a55);
-    font-family: var(--web-mono-font);
-    font-size: 12.5px;
-    color: var(--web-code-muted, #8d92b8);
+    height: var(--web-docs-code-bar);
+    padding: 0 16px 0 20px;
+    border-bottom: 1px solid var(--web-code-outline);
+    font: var(--web-docs-font-code-label);
+    color: var(--web-code-muted);
 
     &-label {
       min-width: 0;
@@ -28,16 +27,14 @@
   &-body {
     overflow-x: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--web-code-outline, #262a55) transparent;
+    scrollbar-color: var(--web-code-outline) transparent;
   }
 
   &-pre {
     width: max-content;
     min-width: 100%;
-    padding: 18px 20px;
-    font-family: var(--web-mono-font);
-    font-size: 14px;
-    line-height: 1.75;
+    padding: 16px 20px;
+    font: var(--web-docs-font-code);
   }
 
   &-code {
@@ -53,6 +50,6 @@
   }
 
   &.is-compact &-pre {
-    line-height: 1.45;
+    line-height: 1.5;
   }
 }

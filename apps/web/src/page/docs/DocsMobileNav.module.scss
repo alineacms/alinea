@@ -105,11 +105,9 @@
   }
 
   &-title {
-    font-size: 12px;
+    font: var(--web-docs-font-nav);
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--web-foreground-muted);
+    color: var(--web-foreground);
   }
 
   &-close {

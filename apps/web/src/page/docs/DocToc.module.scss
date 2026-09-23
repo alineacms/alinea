@@ -1,29 +1,24 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  font-size: 14px;
+  gap: 6px;
+  font: var(--web-docs-font-nav);
 }
 
 .title {
-  font-size: 12px;
+  padding-bottom: 2px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--web-foreground-muted);
+  color: var(--web-foreground);
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .link {
-  padding-left: 14px;
-  border-left: 2px solid transparent;
-  margin-left: -2px;
-  line-height: 1.4;
+  padding: 5px 0 5px 14px;
+  border-left: 2px solid var(--web-outline);
   color: var(--web-foreground-faded);
   transition:
     color 0.15s ease-out,
@@ -41,10 +36,8 @@
   }
 
   &.is-active {
-    padding-left: 12px;
-    margin-left: 0;
     border-left-color: var(--web-accent);
     color: var(--web-accent);
-    font-weight: 600;
+    font-weight: 500;
   }
 }

@@ -2,7 +2,7 @@ import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
 import {slugify} from 'alinea/core/util/Slugs'
 import NextLink from 'next/link'
-import type {HTMLProps} from 'react'
+import type {ComponentType, HTMLProps} from 'react'
 import {WebText} from '@/layout/WebText'
 import {ChapterLinkView} from '@/page/blocks/ChapterLinkView'
 import {CodeBlockView} from '@/page/blocks/CodeBlockView'
@@ -13,6 +13,7 @@ import {ImageBlockView} from '@/page/blocks/ImageBlockView'
 import {NoticeView} from '@/page/blocks/NoticeView'
 import type {bodyField} from '@/schema/fields/BodyField'
 import css from './DocBody.module.scss'
+import {DocInlineText} from './DocInlineText'
 
 const styles = styler(css)
 
@@ -89,6 +90,25 @@ function DocHeadingTag(Tag: 'h2' | 'h3' | 'h4') {
   }
 }
 
+/** Wraps a block view so the body flow owns the space around it */
+function docBlock<Props extends object>(View: ComponentType<Props>) {
+  return function DocBlock(props: Props) {
+    return (
+      <div className={styles.block()}>
+        <View {...props} />
+      </div>
+    )
+  }
+}
+
+const DocCodeBlock = docBlock(CodeBlockView)
+const DocCodeVariants = docBlock(CodeVariantsView)
+const DocExample = docBlock(ExampleBlockView)
+const DocChapterLink = docBlock(ChapterLinkView)
+const DocNotice = docBlock(NoticeView)
+const DocImage = docBlock(ImageBlockView)
+const DocCopyPrompt = docBlock(CopyPromptView)
+
 const DocH2 = DocHeadingTag('h2')
 const DocH3 = DocHeadingTag('h3')
 const DocH4 = DocHeadingTag('h4')
@@ -101,6 +121,7 @@ function DocText({doc}: DocTextProps) {
   return (
     <WebText
       doc={doc}
+      text={DocInlineText}
       p={<p className={styles.p()} />}
       h2={DocH2}
       h3={DocH3}
@@ -110,13 +131,13 @@ function DocText({doc}: DocTextProps) {
       ol={<ol className={styles.list('ordered')} />}
       li={<li className={styles.listItem()} />}
       blockquote={<blockquote className={styles.blockquote()} />}
-      CodeBlock={CodeBlockView}
-      CodeVariantsBlock={CodeVariantsView}
-      ExampleBlock={ExampleBlockView}
-      ChapterLinkBlock={ChapterLinkView}
-      NoticeBlock={NoticeView}
-      ImageBlock={ImageBlockView}
-      CopyPromptBlock={CopyPromptView}
+      CodeBlock={DocCodeBlock}
+      CodeVariantsBlock={DocCodeVariants}
+      ExampleBlock={DocExample}
+      ChapterLinkBlock={DocChapterLink}
+      NoticeBlock={DocNotice}
+      ImageBlock={DocImage}
+      CopyPromptBlock={DocCopyPrompt}
     />
   )
 }
@@ -126,7 +147,14 @@ export interface DocLeadProps {
 }
 
 export function DocLead({doc}: DocLeadProps) {
-  return <WebText doc={doc} p={<p className={styles.lead()} />} a={DocLink} />
+  return (
+    <WebText
+      doc={doc}
+      text={DocInlineText}
+      p={<p className={styles.lead()} />}
+      a={DocLink}
+    />
+  )
 }
 
 interface DocSection {

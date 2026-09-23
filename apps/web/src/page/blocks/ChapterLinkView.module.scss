@@ -3,9 +3,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin: 24px 0;
-  padding: 18px 20px;
-  border-radius: 14px;
+  padding: var(--web-docs-box-padding);
+  border-radius: var(--web-docs-radius);
   border: 1px solid var(--web-outline);
   background: var(--web-surface);
   color: var(--web-foreground);
@@ -20,9 +19,8 @@
   }
 
   &-title {
-    font-size: 16px;
+    font: var(--web-docs-font-compact);
     font-weight: 600;
-    line-height: 1.4;
   }
 
   &-icon {

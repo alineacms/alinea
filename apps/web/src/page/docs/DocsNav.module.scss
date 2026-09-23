@@ -1,7 +1,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .group {
@@ -10,12 +10,10 @@
   gap: 2px;
 
   &-title {
-    padding: 0 10px 8px;
-    font-size: 12px;
+    padding: 0 10px 6px;
+    font: var(--web-docs-font-nav);
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--web-foreground-muted);
+    color: var(--web-foreground);
   }
 }
 
@@ -28,10 +26,11 @@
 .link {
   flex-grow: 1;
   min-width: 0;
-  padding: 7px 10px;
+  // Rows keep one height, longer titles wrap and grow
+  min-height: var(--web-docs-nav-row);
+  padding: 6px 10px;
   border-radius: 8px;
-  font-size: 14.5px;
-  line-height: 1.35;
+  font: var(--web-docs-font-nav);
   color: var(--web-foreground-faded);
   transition:
     background 0.15s ease-out,
@@ -48,18 +47,12 @@
     outline-offset: -2px;
   }
 
-  &.is-nested {
-    font-size: 14px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-  }
-
   &.is-container {
     padding-right: 32px;
   }
 
   &.is-active {
-    font-weight: 600;
+    font-weight: 500;
     color: var(--web-accent-strong);
     background: var(--web-accent-soft);
   }
@@ -106,7 +99,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin: 2px 0 6px 14px;
+  margin: 2px 0 4px 14px;
   padding-left: 8px;
   border-left: 1px solid var(--web-outline);
 }

@@ -86,6 +86,46 @@
   --web-code-highlight: var(--web-accent);
   --web-code-foreground: #fbfbfe;
 
+  // Docs type scale, every text role on docs pages uses one of these
+  --web-docs-font-title: 600 40px/1.15 var(--web-title-font);
+  --web-docs-font-h2: 500 24px/1.35 var(--web-title-font);
+  --web-docs-font-h3: 500 19px/1.45 var(--web-title-font);
+  --web-docs-font-h4: 500 16px/1.5 var(--web-title-font);
+  --web-docs-font-lead: 400 18px/1.65 var(--web-body-font);
+  --web-docs-font-body: 400 16px/1.75 var(--web-body-font);
+  // Text in boxed blocks: notices, cards, prompts
+  --web-docs-font-compact: 400 15px/1.6 var(--web-body-font);
+  // Sidebar, table of contents, breadcrumbs, captions
+  --web-docs-font-nav: 400 14px/20px var(--web-body-font);
+  // Labels, legal
+  --web-docs-font-small: 400 13px/1.5 var(--web-body-font);
+  --web-docs-font-code: 400 14px/1.7 var(--web-mono-font);
+  // Code block file names and tabs
+  --web-docs-font-code-label: 400 12.5px/20px var(--web-mono-font);
+  --web-docs-tracking-title: -0.025em;
+  --web-docs-tracking-heading: -0.015em;
+
+  // Vertical rhythm, margins collapse so the larger side wins
+  --web-docs-space-flow: 20px;
+  --web-docs-space-block: 28px;
+  --web-docs-space-list: 8px;
+  --web-docs-space-h2: 48px;
+  --web-docs-space-h3: 36px;
+  --web-docs-space-h4: 28px;
+  --web-docs-space-h2-after: 16px;
+  --web-docs-space-h3-after: 12px;
+  --web-docs-space-h4-after: 8px;
+  --web-docs-space-header: 32px;
+  --web-docs-space-footer: 64px;
+
+  // Boxed blocks: code, notices, examples, prompts, links and cards
+  --web-docs-radius: 14px;
+  --web-docs-box-padding: 16px 20px;
+  --web-docs-code-bar: 44px;
+
+  // Navigation rows in the sidebar and the table of contents
+  --web-docs-nav-row: 32px;
+
   @include dark-theme;
 
   @media (prefers-color-scheme: light) {
@@ -96,6 +136,14 @@
     --web-header-height: 76px;
     --web-gutter: 40px;
     --web-section-gap: 72px;
+    --web-docs-font-title: 600 32px/1.2 var(--web-title-font);
+    --web-docs-font-h2: 500 22px/1.35 var(--web-title-font);
+    --web-docs-font-h3: 500 18px/1.45 var(--web-title-font);
+    --web-docs-font-lead: 400 17px/1.65 var(--web-body-font);
+    --web-docs-space-h2: 40px;
+    --web-docs-space-h3: 32px;
+    --web-docs-space-header: 28px;
+    --web-docs-space-footer: 56px;
   }
 
   @include s {

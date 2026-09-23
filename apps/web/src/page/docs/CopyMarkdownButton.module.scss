@@ -3,14 +3,14 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  padding: 8px 12px;
-  border-radius: 9px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
   border: 1px solid var(--web-outline);
   background: var(--web-surface);
   color: var(--web-foreground-faded);
-  font-size: 13.5px;
+  font: var(--web-docs-font-small);
   font-weight: 500;
-  line-height: 1.2;
   cursor: pointer;
   transition:
     border-color 0.15s ease-out,

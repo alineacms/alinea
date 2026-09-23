@@ -30,7 +30,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 
     @include s {
       flex-wrap: wrap;
@@ -40,35 +40,26 @@
   &-header {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    margin-bottom: 28px;
+    gap: 12px;
+    margin-bottom: var(--web-docs-space-header);
   }
 
   &-title {
-    font-family: var(--web-title-font);
-    font-weight: 600;
-    font-size: 48px;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
+    font: var(--web-docs-font-title);
+    letter-spacing: var(--web-docs-tracking-title);
     color: var(--web-foreground);
     overflow-wrap: break-word;
-
-    @include sm {
-      font-size: 36px;
-    }
   }
 
   &-section {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-top: 48px;
+    gap: var(--web-docs-space-h3-after);
+    margin-top: var(--web-docs-space-h2);
 
     &-title {
-      font-family: var(--web-title-font);
-      font-weight: 500;
-      font-size: 20px;
-      letter-spacing: -0.02em;
+      font: var(--web-docs-font-h3);
+      letter-spacing: var(--web-docs-tracking-heading);
       color: var(--web-foreground);
     }
 
@@ -87,13 +78,12 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 16px 18px;
-      border-radius: 14px;
+      padding: var(--web-docs-box-padding);
+      border-radius: var(--web-docs-radius);
       border: 1px solid var(--web-outline);
       color: var(--web-foreground);
-      font-size: 15px;
+      font: var(--web-docs-font-compact);
       font-weight: 600;
-      line-height: 1.35;
       transition:
         border-color 0.15s ease-out,
         color 0.15s ease-out;
