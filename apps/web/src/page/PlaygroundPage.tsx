@@ -1,4 +1,6 @@
 import {promises as fs} from 'node:fs'
+import {createRequire} from 'node:module'
+import path from 'node:path'
 import {Loader} from '@/layout/Loader'
 import type {Metadata, MetadataRoute, Viewport} from 'next'
 import {Suspense} from 'react'
@@ -20,8 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
   } as MetadataProps)
 }
 export default async function PlaygroundPage() {
+  // Resolve at runtime, alinea may be hoisted to the workspace root
+  const require = createRequire(path.join(process.cwd(), 'package.json'))
+  const alineaDir = path.dirname(require.resolve('alinea/package.json'))
   const declarations = await fs.readFile(
-    `${process.cwd()}/node_modules/alinea/dist/bundled.d.ts`,
+    path.join(alineaDir, 'dist/bundled.d.ts'),
     'utf8'
   )
   return (
