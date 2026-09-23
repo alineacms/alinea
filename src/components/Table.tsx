@@ -1,21 +1,12 @@
 import styler from '@alinea/styler'
-import type {PropsWithChildren} from 'react'
-import type {
-  CellProps,
-  ColumnProps,
-  RowProps,
-  TableBodyProps,
-  TableHeaderProps,
-  TableProps as TablePrimitiveProps
-} from 'react-aria-components'
+import type {ReactNode} from 'react'
 import {
-  Cell as CellPrimitive,
-  Collection,
-  Column as ColumnPrimitive,
-  Row as RowPrimitive,
-  TableBody as TableBodyPrimitive,
-  TableHeader as TableHeaderPrimitive,
-  Table as TablePrimitive,
+  Cell,
+  Column,
+  Row,
+  Table as AriaTable,
+  TableBody as AriaTableBody,
+  TableHeader as AriaTableHeader,
   useTableOptions
 } from 'react-aria-components'
 import {
@@ -25,144 +16,237 @@ import {
 import {SelectionCheckbox} from './internal/SelectionCheckbox.js'
 import {Surface} from './Surface.js'
 import css from './Table.module.css'
+import type {
+  AriaProps,
+  DataProps,
+  Key,
+  SelectionProps,
+  SortDescriptor,
+  StyleProps
+} from './types.js'
 
 const styles = styler(css)
 
-export type {
-  CellProps,
-  ColumnProps,
-  RowProps,
-  TableBodyProps
-} from 'react-aria-components'
-
-export interface TableProps extends TablePrimitiveProps {
+export interface TableProps
+  extends StyleProps, AriaProps, DataProps, SelectionProps {
+  sortDescriptor?: SortDescriptor
+  onSortChange?: (descriptor: SortDescriptor) => void
+  /** Called when a row is activated (clicked or Enter) */
+  onRowAction?: (key: Key) => void
+  /** Alternate row backgrounds */
   striped?: boolean
+  children: ReactNode
 }
 
-export function Table(props: TableProps) {
+export function Table({
+  className,
+  style,
+  striped,
+  selectionMode = 'none',
+  sortDescriptor,
+  onSortChange,
+  onRowAction,
+  children,
+  ...props
+}: TableProps) {
   return (
     <Surface
-      className={styles.Table(
-        styler.merge({
-          className:
-            typeof props.className === 'string' ? props.className : undefined
-        })
-      )}
-      data-striped={props.striped}
+      data-slot="table-container"
+      className={styles.Table(styler.merge({className}))}
+      style={style}
+      data-striped={striped || undefined}
     >
-      <TablePrimitive {...props} className={styles.Table.table()} />
+      <AriaTable
+        {...props}
+        data-slot="table"
+        className={styles.Table.table()}
+        selectionMode={selectionMode}
+        selectionBehavior={selectionMode === 'multiple' ? 'toggle' : 'replace'}
+        sortDescriptor={
+          sortDescriptor && {
+            column: sortDescriptor.column,
+            direction:
+              sortDescriptor.direction === 'asc' ? 'ascending' : 'descending'
+          }
+        }
+        onSortChange={
+          onSortChange &&
+          (descriptor =>
+            onSortChange({
+              column: descriptor.column,
+              direction: descriptor.direction === 'ascending' ? 'asc' : 'desc'
+            }))
+        }
+        onRowAction={onRowAction}
+      >
+        {children}
+      </AriaTable>
     </Surface>
   )
 }
 
-export function TableHeader<T extends object>({
-  columns,
-  children
-}: TableHeaderProps<T>) {
-  const {selectionMode} = useTableOptions()
+export interface TableHeaderProps extends StyleProps {
+  children: ReactNode
+}
 
+export function TableHeader({className, style, children}: TableHeaderProps) {
+  const {selectionMode} = useTableOptions()
   return (
-    <TableHeaderPrimitive className={styles.TableHeader()}>
+    <AriaTableHeader
+      data-slot="table-header"
+      className={styles.TableHeader(styler.merge({className}))}
+      style={style}
+    >
       {selectionMode === 'multiple' && (
-        <Column>
+        <Column
+          data-slot="table-head"
+          className={styles.TableHead({selection: true})}
+        >
           <SelectionCheckbox />
         </Column>
       )}
-      <Collection items={columns}>{children}</Collection>
-    </TableHeaderPrimitive>
+      {children}
+    </AriaTableHeader>
   )
 }
 
-export function Column(props: PropsWithChildren<ColumnProps>) {
-  const {className, ...rest} = props
+export interface TableHeadProps extends StyleProps {
+  /** Column key, used in `sortDescriptor` */
+  id?: Key
+  /** Clicking the header sorts by this column */
+  sortable?: boolean
+  /** Cells in this column label their row */
+  rowHeader?: boolean
+  width?: number | string
+  children: ReactNode
+}
+
+export function TableHead({
+  id,
+  sortable,
+  rowHeader,
+  width,
+  className,
+  style,
+  children
+}: TableHeadProps) {
   return (
-    <ColumnPrimitive
-      {...rest}
-      className={renderProps =>
-        styles.Column(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
+    <Column
+      id={id}
+      allowsSorting={sortable}
+      isRowHeader={rowHeader}
+      data-slot="table-head"
+      className={styles.TableHead(styler.merge({className}))}
+      style={width === undefined ? style : {width, ...style}}
     >
-      {({allowsSorting, sortDirection}) => {
-        if (!allowsSorting) return props.children
+      {({sortDirection}) => {
+        if (!sortable) return children
         return (
-          <div className={styles.Column.label()} data-sortable={allowsSorting}>
-            {props.children}
-            {allowsSorting && (
-              <span className={styles.Column.sortIndicator()}>
-                {sortDirection === 'ascending' ? (
-                  <IcRoundKeyboardArrowUp />
-                ) : (
-                  <IcRoundKeyboardArrowDown />
-                )}
-              </span>
-            )}
-          </div>
+          <span className={styles.TableHead.label()}>
+            {children}
+            <span
+              aria-hidden
+              data-slot="table-sort-indicator"
+              className={styles.TableHead.sortIndicator()}
+            >
+              {sortDirection === 'ascending' ? (
+                <IcRoundKeyboardArrowUp />
+              ) : (
+                <IcRoundKeyboardArrowDown />
+              )}
+            </span>
+          </span>
         )
       }}
-    </ColumnPrimitive>
+    </Column>
   )
 }
 
-export function TableBody<T extends object>(props: TableBodyProps<T>) {
-  return <TableBodyPrimitive<T> {...props} className={styles.TableBody()} />
+export interface TableBodyProps<T extends object> extends StyleProps {
+  /** Rows to render with the `children` function */
+  items?: Iterable<T>
+  renderEmptyState?: () => ReactNode
+  children: ReactNode | ((item: T) => ReactNode)
 }
 
-export function Row<T extends object>({
-  id,
-  columns,
-  children,
-  ...props
-}: RowProps<T>) {
-  const {selectionMode} = useTableOptions()
-  const {className, ...rest} = props
+export function TableBody<T extends object>({
+  items,
+  renderEmptyState,
+  className,
+  style,
+  children
+}: TableBodyProps<T>) {
   return (
-    <RowPrimitive
-      id={id}
-      {...rest}
-      className={renderProps =>
-        styles.Row(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
+    <AriaTableBody<T>
+      data-slot="table-body"
+      className={styles.TableBody(styler.merge({className}))}
+      style={style}
+      items={items}
+      renderEmptyState={
+        renderEmptyState
+          ? () => (
+              <div data-slot="table-empty" className={styles.TableBody.empty()}>
+                {renderEmptyState()}
+              </div>
+            )
+          : undefined
       }
     >
+      {children}
+    </AriaTableBody>
+  )
+}
+
+export interface TableRowProps extends StyleProps, DataProps {
+  id?: Key
+  children: ReactNode
+}
+
+export function TableRow({
+  id,
+  className,
+  style,
+  children,
+  ...props
+}: TableRowProps) {
+  const {selectionMode} = useTableOptions()
+  return (
+    <Row
+      {...props}
+      id={id}
+      data-slot="table-row"
+      className={styles.TableRow(styler.merge({className}))}
+      style={style}
+    >
       {selectionMode === 'multiple' && (
-        <Cell>
+        <Cell data-slot="table-cell" className={styles.TableCell()}>
           <SelectionCheckbox />
         </Cell>
       )}
-      <Collection items={columns}>{children}</Collection>
-    </RowPrimitive>
+      {children}
+    </Row>
   )
 }
 
-export function Cell(props: CellProps & {nowrap?: boolean}) {
-  const {className, nowrap, ...rest} = props
+export interface TableCellProps extends StyleProps {
+  /** Keep the content on a single line */
+  nowrap?: boolean
+  children?: ReactNode
+}
+
+export function TableCell({
+  nowrap,
+  className,
+  style,
+  children
+}: TableCellProps) {
   return (
-    <CellPrimitive
-      {...rest}
-      data-nowrap={nowrap}
-      className={renderProps =>
-        styles.Cell(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
+    <Cell
+      data-slot="table-cell"
+      className={styles.TableCell({nowrap}, styler.merge({className}))}
+      style={style}
+    >
+      {children}
+    </Cell>
   )
 }

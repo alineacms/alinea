@@ -5,12 +5,6 @@ import type {RootData, RootI18n} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
-import type {
-  DragItem,
-  DragTypes,
-  DropOperation,
-  DropTarget
-} from '@react-types/shared'
 import {
   createExplorerAtoms,
   type ExplorerAtoms
@@ -18,12 +12,7 @@ import {
 import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
-import type {
-  DroppableCollectionInsertDropEvent,
-  DroppableCollectionOnItemDropEvent,
-  DroppableCollectionReorderEvent,
-  Key
-} from 'react-aria-components'
+import type {DragMoveEvent, DropItemsEvent, Key} from '#/components.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
@@ -38,7 +27,6 @@ import {shaAtom} from './graph.js'
 import {pageAtom} from './nav.js'
 import {policyAtom} from './user.js'
 import {
-  acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
   dashboardEntryDragTypes,
   dispense
@@ -441,48 +429,31 @@ export class RootAtoms {
       : view
   })
   acceptedDragTypes = [...dashboardEntryDragTypes]
-  getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
-    return [...keys].map(dashboardEntryDragItem)
-  })
+  getItems = atom(
+    null,
+    (_get, _set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+      return [...keys].map(dashboardEntryDragItem)
+    }
+  )
   dragDisabled = atom(get => {
     const policy = get(policyAtom)
     const resource = {workspace: this.workspace, root: this.key}
     return !policy.canMove(resource) && !policy.canReorder(resource)
   })
-  getDropOperation = atom(
-    null,
-    (
-      _get,
-      _set,
-      _target: DropTarget,
-      types: DragTypes,
-      allowedOperations: Array<DropOperation>
-    ) => {
-      if (!acceptsDashboardEntryDrag(types)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    }
-  )
   onMove = atom(
     null,
-    async (
-      get,
-      _set,
-      event: DroppableCollectionReorderEvent,
-      tree: TreeAtoms
-    ) => {
+    async (get, _set, event: DragMoveEvent, tree: TreeAtoms) => {
       const graph = get(graphAtom)
       const policy = get(policyAtom)
-      const moveTarget = event.target.key ? String(event.target.key) : this.key
-      const targetType = event.target.key ? 'entry' : 'root'
+      const moveTarget = String(event.target.key)
+      const targetType = 'entry'
       const items = get(tree.items)
       for (const key of event.keys) {
         const id = String(key)
         const item = items.find(candidate => candidate.id === id)
         if (!item || item.dragDisabled) continue
         policy.assert(
-          event.target.dropPosition === 'on'
-            ? Permission.Move
-            : Permission.Reorder,
+          event.target.position === 'on' ? Permission.Move : Permission.Reorder,
           {
             workspace: this.workspace,
             root: this.key,
@@ -496,44 +467,27 @@ export class RootAtoms {
           id,
           target: moveTarget,
           targetType,
-          dropPosition: event.target.dropPosition
+          dropPosition: event.target.position
         })
       }
     }
   )
-  onDrop = atom(
-    null,
-    async (
-      get,
-      _set,
-      event:
-        | DroppableCollectionInsertDropEvent
-        | DroppableCollectionOnItemDropEvent
-    ) => {
-      const keys = new Set<Key>()
-      for (const item of event.items) {
-        if (item.kind !== 'text' || !item.types || !item.getText) continue
-        let id: string | null = null
-        if (item.types.has(dashboardEntryDragTypes[0]))
-          id = await item.getText(dashboardEntryDragTypes[0])
-        else if (item.types.has('text/plain'))
-          id = await item.getText('text/plain')
-        if (id) keys.add(id)
-      }
-      const graph = get(graphAtom)
-      const moveTarget = event.target.key ? String(event.target.key) : this.key
-      const targetType = event.target.key ? 'entry' : 'root'
-      for (const key of keys) {
-        const id = String(key)
-        await graph.move({
-          id,
-          target: moveTarget,
-          targetType,
-          dropPosition: event.target.dropPosition
-        })
-      }
+  onDrop = atom(null, async (get, _set, event: DropItemsEvent) => {
+    const keys = new Set<string>()
+    for (const item of event.items) {
+      const id = item[dashboardEntryDragTypes[0]] ?? item['text/plain']
+      if (id) keys.add(id)
     }
-  )
+    const graph = get(graphAtom)
+    for (const id of keys) {
+      await graph.move({
+        id,
+        target: String(event.target.key),
+        targetType: 'entry',
+        dropPosition: event.target.position
+      })
+    }
+  })
 }
 
 export const rootAtoms = dispense(

@@ -1,7 +1,5 @@
 import {
   Button,
-  Cell,
-  Column,
   Dialog,
   DialogTrigger,
   DropdownMenu,
@@ -12,11 +10,13 @@ import {
   MultipleSelect,
   MultipleSelectItem,
   ProgressCircle,
-  Row,
   SearchField,
   Table,
   TableBody,
+  TableCell,
+  TableHead,
   TableHeader,
+  TableRow,
   Tag,
   TextField
 } from '#/components.js'
@@ -291,12 +291,16 @@ interface UsersTableProps {
 function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
   return (
     <Table aria-label="Users" className={styles.UsersPage.table()}>
-      <TableHeader columns={userColumns}>
-        {column => (
-          <Column id={column.id} isRowHeader={column.isRowHeader}>
+      <TableHeader>
+        {userColumns.map(column => (
+          <TableHead
+            key={column.id}
+            id={column.id}
+            rowHeader={column.isRowHeader}
+          >
             {column.name}
-          </Column>
-        )}
+          </TableHead>
+        ))}
       </TableHeader>
       <TableBody
         items={users}
@@ -305,9 +309,9 @@ function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
         )}
       >
         {user => (
-          <Row id={user.email ?? user.sub} columns={userColumns}>
-            {column => (
-              <Cell>
+          <TableRow id={user.email ?? user.sub}>
+            {userColumns.map(column => (
+              <TableCell key={column.id}>
                 {renderUserCell(
                   user,
                   column.id,
@@ -315,9 +319,9 @@ function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
                   onEdit,
                   onDeactivate
                 )}
-              </Cell>
-            )}
-          </Row>
+              </TableCell>
+            ))}
+          </TableRow>
         )}
       </TableBody>
     </Table>

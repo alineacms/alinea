@@ -1,269 +1,193 @@
-import type {SelectionBehavior, SelectionMode} from '@react-types/shared'
-import {useAsyncList} from 'react-stately'
+import {useMemo, useState} from 'react'
 import {IcRoundDelete, IcRoundEdit} from '../dashboard/icons.js'
 import {Button} from './Button.js'
 import {Icon} from './Icon.js'
-import {Cell, Column, Row, Table, TableBody, TableHeader} from './Table.js'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from './Table.js'
+import type {Selection as SelectionKeys, SortDescriptor} from './types.js'
 
-const exampleStories = [
-  {label: 'Table - autowidth (custom style)', props: {style: {width: 'auto'}}},
-  {label: 'Table - overflow-x: auto (default)'},
-  {label: 'Table - striped', props: {striped: true}}
-]
-export const Example = () => (
-  <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
-    <Table>
-      {columns?.length > 0 && (
-        <TableHeader>
-          {columns.map(column => (
-            <Column isRowHeader key={column.id}>
-              {column.title}
-            </Column>
-          ))}
-        </TableHeader>
-      )}
-      <TableBody renderEmptyState={() => 'No rows found.'}>[]</TableBody>
-    </Table>
-    {exampleStories.map((item, index) => (
-      <div key={index} style={{width: '100%'}}>
-        <h3>{item.label}</h3>
-        <Table aria-label={item.label} {...item.props}>
-          {columns?.length > 0 && (
-            <TableHeader>
-              {columns.map(column => (
-                <Column isRowHeader key={column.id}>
-                  {column.title}
-                </Column>
-              ))}
-              {index > 0 &&
-                Array.from(Array(3)).map((_, i) => (
-                  <Column key={i}>Column</Column>
-                ))}
-            </TableHeader>
-          )}
-          <TableBody renderEmptyState={() => <p>No results found.</p>}>
-            {items?.length > 0 &&
-              items.map(item => (
-                <Row key={item.id}>
-                  <Cell nowrap>{item.name}</Cell>
-                  <Cell nowrap>{item.type}</Cell>
-                  <Cell nowrap>{item.date_modified}</Cell>
-                  {index > 0 &&
-                    Array.from(Array(3)).map((_, i) => (
-                      <Cell key={i} style={{minWidth: 200}}>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                      </Cell>
-                    ))}
-                </Row>
-              ))}
-          </TableBody>
-        </Table>
-      </div>
-    ))}
-  </div>
-)
-
-const selectionStories = [
-  {
-    label: 'Table - single selection',
-    props: {
-      selectionMode: 'single' as SelectionMode,
-      selectionBehavior: 'replace' as SelectionBehavior,
-      striped: true
-    }
-  },
-  {
-    label: 'Table - multiple selection',
-    props: {selectionMode: 'multiple' as SelectionMode, striped: true}
-  }
-]
-export const Selection = () => (
-  <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
-    {selectionStories.map((item, index) => (
-      <div key={index} style={{width: '100%'}}>
-        <h3>{item.label}</h3>
-        <Table aria-label={item.label} {...item.props}>
-          {columns?.length > 0 && (
-            <TableHeader>
-              {columns.map(column => (
-                <Column isRowHeader key={column.id}>
-                  {column.title}
-                </Column>
-              ))}
-              <Column>Actions</Column>
-              {Array.from(Array(10)).map((_, i) => (
-                <Column key={i}>Column</Column>
-              ))}
-            </TableHeader>
-          )}
-          <TableBody renderEmptyState={() => <p>No results found.</p>}>
-            {items?.length > 0 &&
-              items.map(item => (
-                <Row key={item.id}>
-                  <Cell nowrap>{item.name}</Cell>
-                  <Cell nowrap>{item.type}</Cell>
-                  <Cell nowrap>{item.date_modified}</Cell>
-                  <Cell nowrap>
-                    <Button
-                      type="button"
-                      size="icon-lg"
-                      variant="outline"
-                      style={{marginRight: 8}}
-                    >
-                      <Icon icon={IcRoundEdit} />
-                    </Button>
-                    <Button type="button" size="icon-lg" variant="outline">
-                      <Icon icon={IcRoundDelete} />
-                    </Button>
-                  </Cell>
-                  {Array.from(Array(10)).map((_, i) => (
-                    <Cell key={i} style={{minWidth: 200}}>
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    </Cell>
-                  ))}
-                </Row>
-              ))}
-          </TableBody>
-        </Table>
-      </div>
-    ))}
-  </div>
-)
-type TableItem = {
+interface FileItem {
   id: string
   name: string
   type: string
-  date_modified: string
+  modified: string
 }
 
-export const Sorting = () => {
-  const list = useAsyncList<TableItem>({
-    async load() {
-      return {items}
-    },
-    async sort({items, sortDescriptor}) {
-      return {
-        items: items.sort((a, b) => {
-          const first = a[sortDescriptor.column as keyof TableItem]
-          const second = b[sortDescriptor.column as keyof TableItem]
-          let cmp =
-            (Number.parseInt(first) || first) <
-            (Number.parseInt(second) || second)
-              ? -1
-              : 1
-          if (sortDescriptor.direction === 'descending') {
-            cmp *= -1
-          }
-          return cmp
-        })
-      }
-    }
-  })
+const columns = [
+  {id: 'name', title: 'Name'},
+  {id: 'type', title: 'Type'},
+  {id: 'modified', title: 'Date modified'}
+] as const
+
+const files: Array<FileItem> = [
+  {id: 'games', name: 'Games', type: 'File folder', modified: '2020-06-07'},
+  {
+    id: 'program-files',
+    name: 'Program Files',
+    type: 'File folder',
+    modified: '2021-04-07'
+  },
+  {id: 'bootmgr', name: 'bootmgr', type: 'System file', modified: '2010-11-20'},
+  {id: 'users', name: 'Users', type: 'File folder', modified: '2021-08-15'},
+  {
+    id: 'windows',
+    name: 'Windows',
+    type: 'Operating system',
+    modified: '2021-05-05'
+  }
+]
+
+function FileHeader() {
   return (
-    <Table
-      aria-label="Table"
-      sortDescriptor={list.sortDescriptor}
-      onSortChange={list.sort}
-      striped
-    >
-      {columns?.length > 0 && (
-        <TableHeader>
-          {columns.map(column => (
-            <Column id={column.id} isRowHeader allowsSorting key={column.id}>
-              {column.title}
-            </Column>
-          ))}
-        </TableHeader>
-      )}
-      <TableBody
-        items={list.items}
-        renderEmptyState={() => <p>No results found.</p>}
-      >
-        {item => (
-          <Row id={item.name} key={item.id}>
-            <Cell>{item.name}</Cell>
-            <Cell>{item.type}</Cell>
-            <Cell>{item.date_modified}</Cell>
-          </Row>
-        )}
+    <TableHeader>
+      {columns.map(column => (
+        <TableHead
+          key={column.id}
+          id={column.id}
+          rowHeader={column.id === 'name'}
+        >
+          {column.title}
+        </TableHead>
+      ))}
+    </TableHeader>
+  )
+}
+
+function renderFile(file: FileItem) {
+  return (
+    <TableRow id={file.id}>
+      <TableCell nowrap>{file.name}</TableCell>
+      <TableCell nowrap>{file.type}</TableCell>
+      <TableCell nowrap>{file.modified}</TableCell>
+    </TableRow>
+  )
+}
+
+export function Example() {
+  return (
+    <Table aria-label="Files">
+      <FileHeader />
+      <TableBody items={files}>{renderFile}</TableBody>
+    </Table>
+  )
+}
+
+export function Striped() {
+  return (
+    <Table aria-label="Files" striped>
+      <FileHeader />
+      <TableBody items={files}>{renderFile}</TableBody>
+    </Table>
+  )
+}
+
+export function Empty() {
+  return (
+    <Table aria-label="Files">
+      <FileHeader />
+      <TableBody renderEmptyState={() => 'No files found.'}>{[]}</TableBody>
+    </Table>
+  )
+}
+
+export function Static() {
+  return (
+    <Table aria-label="Actions" style={{width: 'auto'}}>
+      <TableHeader>
+        <TableHead rowHeader>Name</TableHead>
+        <TableHead width={120}>Actions</TableHead>
+      </TableHeader>
+      <TableBody>
+        <TableRow id="readme">
+          <TableCell>readme.md</TableCell>
+          <TableCell nowrap>
+            <Button size="icon" variant="ghost" aria-label="Edit">
+              <Icon icon={IcRoundEdit} />
+            </Button>
+            <Button size="icon" variant="ghost" aria-label="Delete">
+              <Icon icon={IcRoundDelete} />
+            </Button>
+          </TableCell>
+        </TableRow>
       </TableBody>
     </Table>
   )
 }
 
-const columns = [
-  {id: 'name', title: 'Name', allowSorting: true},
-  {id: 'type', title: 'Type', allowSorting: true},
-  {id: 'date_modified', title: 'Date Modified', allowSorting: true}
-]
+export function Selection() {
+  const [single, setSingle] = useState<SelectionKeys>(new Set(['games']))
+  const [multiple, setMultiple] = useState<SelectionKeys>(new Set())
+  const [action, setAction] = useState<string>()
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+      <Table
+        aria-label="Single selection"
+        selectionMode="single"
+        selectedKeys={single}
+        onSelectionChange={setSingle}
+        disabledKeys={['bootmgr']}
+      >
+        <FileHeader />
+        <TableBody items={files}>{renderFile}</TableBody>
+      </Table>
+      <Table
+        aria-label="Multiple selection"
+        selectionMode="multiple"
+        selectedKeys={multiple}
+        onSelectionChange={setMultiple}
+        onRowAction={key => setAction(String(key))}
+        striped
+      >
+        <FileHeader />
+        <TableBody items={files}>{renderFile}</TableBody>
+      </Table>
+      <output data-testid="selected">
+        {multiple === 'all' ? 'all' : [...multiple].join(',')}
+      </output>
+      <output data-testid="action">{action}</output>
+    </div>
+  )
+}
 
-const items = [
-  {id: 'games', name: 'Games', type: 'File folder', date_modified: '6/7/2020'},
-  {
-    id: 'program_files',
-    name: 'Program Files',
-    type: 'File folder',
-    date_modified: '4/7/2021'
-  },
-  {
-    id: 'bootmgr',
-    name: 'Bootmgr',
-    type: 'System file',
-    date_modified: '11/20/2010'
-  },
-  {
-    id: 'users',
-    name: 'Users',
-    type: 'File folder',
-    date_modified: '8/15/2021'
-  },
-  {
-    id: 'windows',
-    name: 'Windows',
-    type: 'Operating system',
-    date_modified: '5/5/2021'
-  },
-  {
-    id: 'documents',
-    name: 'Documents',
-    type: 'File folder',
-    date_modified: '9/12/2021'
-  }
-]
-
-const longitems = [
-  {
-    id: 'very_long_file_name_1',
-    name: 'This is a very long file name that exceeds normal length 1',
-    type: 'Text file',
-    date_modified: '1/1/2022'
-  },
-  {
-    id: 'very_long_file_name_2',
-    name: 'This is a very long file name that exceeds normal length 2',
-    type: 'Text file',
-    date_modified: '2/2/2022'
-  },
-  {
-    id: 'very_long_file_name_3',
-    name: 'This is a very long file name that exceeds normal length 3',
-    type: 'Text file',
-    date_modified: '3/3/2022'
-  },
-  {
-    id: 'very_long_file_name_4',
-    name: 'This is a very long file name that exceeds normal length 4',
-    type: 'Text file',
-    date_modified: '4/4/2022'
-  },
-  {
-    id: 'very_long_file_name_5',
-    name: 'This is a very long file name that exceeds normal length 5',
-    type: 'Text file',
-    date_modified: '5/5/2022'
-  }
-]
+export function Sorting() {
+  const [sort, setSort] = useState<SortDescriptor>({
+    column: 'name',
+    direction: 'asc'
+  })
+  const sorted = useMemo(() => {
+    const column = sort.column as keyof FileItem
+    const result = files.toSorted((a, b) => a[column].localeCompare(b[column]))
+    return sort.direction === 'asc' ? result : result.reverse()
+  }, [sort])
+  return (
+    <Table
+      aria-label="Sorted files"
+      sortDescriptor={sort}
+      onSortChange={setSort}
+    >
+      <TableHeader>
+        {columns.map(column => (
+          <TableHead
+            key={column.id}
+            id={column.id}
+            rowHeader={column.id === 'name'}
+            sortable
+          >
+            {column.title}
+          </TableHead>
+        ))}
+      </TableHeader>
+      <TableBody items={sorted}>{renderFile}</TableBody>
+    </Table>
+  )
+}
 
 export default {
-  title: 'Components / Table'
+  title: 'Pure components / Table'
 }
