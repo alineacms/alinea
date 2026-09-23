@@ -1,9 +1,10 @@
+import type {Field as FieldType} from '#/core/Field.js'
 import {Config, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
 import {type EditorNode, EntryEditor} from './editor.js'
 
-function fieldError(field: Field, initial: unknown) {
+function fieldError(field: FieldType, initial: unknown) {
   const values = atom<Record<string, unknown>>({value: initial})
   const node: EditorNode = {
     readOnly: false,

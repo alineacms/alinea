@@ -205,6 +205,23 @@
     },
     {
       "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The 'use cache' directive is not enabled in Next.js by default. Turn it on in next.config.ts:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jk3JxD8CvJacyN4dnwylZXmzXH",
+      "code": "import {withAlinea} from 'alinea/next'\nimport type {NextConfig} from 'next'\n\nconst nextConfig: NextConfig = {\n  experimental: {\n    useCache: true\n  }\n}\n\nexport default withAlinea(nextConfig)",
+      "fileName": "next.config.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
@@ -330,7 +347,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790188890,
+    "updatedAt": 1790191170,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
