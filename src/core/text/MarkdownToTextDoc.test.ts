@@ -69,9 +69,12 @@ test('nested marks and intraword underscores', () => {
   ])
 })
 
-test('inline code is kept as plain text', () => {
+test('inline code is kept as plain text with its backticks', () => {
   test.equal(markdownToTextDoc('Run `bun **test**` now'), [
-    paragraph(text('Run bun **test** now'))
+    paragraph(text('Run `bun **test**` now'))
+  ])
+  test.equal(markdownToTextDoc('A ``code with ` inside`` and \\` or ` alone'), [
+    paragraph(text('A ``code with ` inside`` and ` or ` alone'))
   ])
 })
 
@@ -291,15 +294,43 @@ test('round trips through TextDoc', () => {
     '---',
     '![Alt](entry:img1)',
     '| A | B |\n| --- | --- |\n| 1 | 2 |',
-    '```ts\nconst a = 1\n```'
+    '```ts id=c fileName=app.ts compact\nconst a = 1\n```'
   ].join('\n\n')
   const doc = markdownToTextDoc(markdown, {
-    codeBlock(code, language) {
-      return {_id: 'c', _type: 'CodeBlock', code, language}
+    codeBlock(code, language, attributes) {
+      return {
+        _type: 'CodeBlock',
+        _id: String(attributes.id),
+        code,
+        language,
+        fileName: attributes.fileName,
+        compact: attributes.compact === true
+      }
     },
     image(src, alt) {
       return {_type: 'image', _link: 'image', _entry: src.slice(6), alt}
     }
   })
   test.is(textDocToMarkdown(doc), markdown)
+})
+
+test('code block info strings hold attributes', () => {
+  const blocks: Array<unknown> = []
+  markdownToTextDoc(
+    '```tsx id=b1 fileName="my app.tsx" compact\nlet a\n```\n\n~~~ lines=3\nx\n~~~',
+    {
+      codeBlock(code, language, attributes) {
+        blocks.push({code, language, attributes})
+        return {_type: 'paragraph', content: []}
+      }
+    }
+  )
+  test.equal(blocks, [
+    {
+      code: 'let a',
+      language: 'tsx',
+      attributes: {id: 'b1', fileName: 'my app.tsx', compact: true}
+    },
+    {code: 'x', language: undefined, attributes: {lines: '3'}}
+  ])
 })

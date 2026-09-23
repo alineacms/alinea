@@ -22,7 +22,15 @@ export function createDevMcp(
   options: DevMcpOptions
 ): (request: Request) => Promise<Response> {
   const {config, db, rootDir, user, handleApi} = options
-  return function handleMcp(request) {
+  return async function handleMcp(request) {
+    // Files may have changed on disk since the watcher last synced (edited by
+    // hand, or by another process), read what is there now
+    if (request.method === 'POST')
+      await db.sync().catch(error => {
+        console.warn(
+          `Alinea MCP could not sync content from disk: ${error instanceof Error ? error.message : String(error)}`
+        )
+      })
     const graph = new McpGraph({
       config,
       db,
@@ -33,7 +41,7 @@ export function createDevMcp(
       name: 'alinea',
       title: 'Alinea CMS',
       version: pkg.version,
-      instructions: mcpInstructions,
+      instructions: mcpInstructions(rootDir),
       tools: createContentTools({config, graph, rootDir, user, createPreview})
     })
     return server.handle(request)

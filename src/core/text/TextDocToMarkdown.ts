@@ -12,7 +12,8 @@ export interface TextDocToMarkdownOptions {
   src?(node: Record<string, unknown>): string | undefined
   /**
    * Render a rich text block. Defaults to a fenced code block for blocks
-   * holding only `code` (and `language`) and a JSON fenced block with the
+   * holding `code` (and `language`) with other scalar fields in the info
+   * string (```ts id=abc fileName=app.ts), and a JSON fenced block with the
    * `alinea-block` info string for other blocks, which Markdown to TextDoc
    * turns back into the same block.
    */
@@ -25,7 +26,13 @@ export function textDocToMarkdown(
   options: TextDocToMarkdownOptions = {}
 ): string {
   if (!Array.isArray(doc)) return ''
-  return new MarkdownWriter(options).blocks(doc).join('\n\n')
+  const writer = new MarkdownWriter(options)
+  const result: Array<string> = []
+  for (const node of doc) {
+    const rendered = writer.topLevel(node)
+    if (rendered !== undefined) result.push(rendered)
+  }
+  return result.join('\n\n')
 }
 
 const htmlMarks: Record<string, string> = {
@@ -37,9 +44,24 @@ const htmlMarks: Record<string, string> = {
 
 class MarkdownWriter {
   #options: TextDocToMarkdownOptions
+  #escapeBackticks = true
 
   constructor(options: TextDocToMarkdownOptions) {
     this.#options = options
+  }
+
+  /**
+   * Inline code has no mark, backticks are plain text: code spans in text are
+   * written as they are and read back the same. Other backticks only need
+   * escaping when they could pair up, which takes two of them in a block.
+   */
+  topLevel(node: Node): string | undefined {
+    this.#escapeBackticks = backticks(node) > 1
+    try {
+      return this.block(node)
+    } finally {
+      this.#escapeBackticks = true
+    }
   }
 
   blocks(doc: TextDoc): Array<string> {
@@ -84,7 +106,7 @@ class MarkdownWriter {
           typeof record.title === 'string' && record.title
             ? ` "${record.title.replaceAll('"', '\\"')}"`
             : ''
-        return `![${escapeText(alt)}](${src}${title})`
+        return `![${this.escape(alt)}](${src}${title})`
       }
       case 'table':
         return this.table(content)
@@ -195,7 +217,7 @@ class MarkdownWriter {
   marked(node: TextNode): string {
     const text = node.text ?? ''
     if (!text) return ''
-    const escaped = escapeText(text)
+    const escaped = this.escape(text)
     const marks = (node.marks ?? []).filter(mark => mark._type !== 'link')
     if (marks.length === 0) return escaped
     // Keep surrounding whitespace outside of the delimiters
@@ -222,6 +244,60 @@ class MarkdownWriter {
     }
     return leading + inner + trailing
   }
+
+  escape(text: string): string {
+    const spans = codeSpans(text)
+    if (spans.length === 0) return escapeText(text, this.#escapeBackticks)
+    // Code spans are not parsed further, write them without escapes
+    const verbatim: Array<string> = []
+    let masked = ''
+    let last = 0
+    for (const [from, to] of spans) {
+      masked += `${text.slice(last, from)}\uE000${verbatim.length}\uE001`
+      verbatim.push(text.slice(from, to))
+      last = to
+    }
+    masked += text.slice(last)
+    return escapeText(masked, this.#escapeBackticks).replace(
+      /\uE000(\d+)\uE001/g,
+      (_, index) => verbatim[Number(index)]
+    )
+  }
+}
+
+/**
+ * The code spans Markdown to TextDoc finds in a text: a backtick run up to the
+ * next run of the same length. Spans holding characters that end a link label,
+ * a table cell or a line are left out, those are escaped instead.
+ */
+function codeSpans(text: string): Array<[from: number, to: number]> {
+  const spans: Array<[number, number]> = []
+  let index = text.indexOf('`')
+  while (index !== -1) {
+    let run = 1
+    while (text[index + run] === '`') run++
+    const close = text.indexOf('`'.repeat(run), index + run)
+    if (close === -1) {
+      index = text.indexOf('`', index + run)
+      continue
+    }
+    const end = close + run
+    if (!/[\n[\]|]/.test(text.slice(index, end))) spans.push([index, end])
+    index = text.indexOf('`', end)
+  }
+  return spans
+}
+
+function backticks(value: unknown): number {
+  if (Array.isArray(value))
+    return value.reduce((sum: number, item) => sum + backticks(item), 0)
+  if (!isRecord(value)) return 0
+  let count = 0
+  if (value._type === 'text' && typeof value.text === 'string')
+    count += value.text.split('`').length - 1
+  if (typeof value.alt === 'string') count += value.alt.split('`').length - 1
+  if (Array.isArray(value.content)) count += backticks(value.content)
+  return count
 }
 
 function isBlock(node: Node): boolean {
@@ -231,13 +307,34 @@ function isBlock(node: Node): boolean {
 
 function defaultBlock(block: Record<string, unknown>): string {
   const {_type, _id, code, language, ...rest} = block
-  const onlyCode =
+  const info: Array<string> = []
+  let asCode =
     typeof code === 'string' &&
-    (language === undefined || typeof language === 'string') &&
-    Object.values(rest).every(isEmptyValue)
-  if (onlyCode) {
-    const fence = code.includes('```') ? '~~~' : '```'
-    return `${fence}${language ?? ''}\n${code}\n${fence}`
+    (language === undefined ||
+      (typeof language === 'string' && /^[^\s="`]*$/.test(language)))
+  if (typeof language === 'string' && language) info.push(language)
+  if (typeof _id === 'string') {
+    if (/^[^\s"`]+$/.test(_id)) info.push(`id=${_id}`)
+    else asCode = false
+  }
+  for (const [key, value] of Object.entries(rest)) {
+    if (isEmptyValue(value)) continue
+    if (value === true) info.push(key)
+    else if (typeof value === 'number') info.push(`${key}=${value}`)
+    else if (typeof value === 'string' && /^[^\s"`]+$/.test(value))
+      info.push(`${key}=${value}`)
+    else if (typeof value === 'string' && !/["\n`]/.test(value))
+      info.push(`${key}="${value}"`)
+    else asCode = false
+  }
+  if (asCode) {
+    const source = code as string
+    const longest = Math.max(
+      0,
+      ...(source.match(/`+/g) ?? []).map(run => run.length)
+    )
+    const fence = '`'.repeat(Math.max(3, longest + 1))
+    return `${fence}${info.join(' ')}\n${source}\n${fence}`
   }
   return `\`\`\`${markdownBlockLanguage}\n${JSON.stringify(block, null, 2)}\n\`\`\``
 }
@@ -280,10 +377,21 @@ function prefixLines(text: string, prefix: string, emptyPrefix: string) {
     .join('\n')
 }
 
-function escapeText(text: string): string {
+/**
+ * Escape what would otherwise be read as Markdown. Backticks only when asked
+ * (see topLevel), `<` only where it could start an autolink or html mark.
+ */
+function escapeText(text: string, escapeBackticks: boolean): string {
   return (
     text
-      .replace(/[\\`*[\]<~]/g, char => `\\${char}`)
+      .replace(
+        escapeBackticks ? /[\\`*[\]~]/g : /[\\*[\]~]/g,
+        char => `\\${char}`
+      )
+      .replace(
+        /<(?=(?:https?|mailto):[^\s<>]+>|br\s*\/?>|(?:u|ins|sub|sup|small|b|strong|i|em|s|del)>)/gi,
+        '\\<'
+      )
       // Underscores inside words never start emphasis
       .replace(/(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])/gu, '\\_')
       .replace(/^([#>+-])(?=\s|$)/gm, '\\$1')

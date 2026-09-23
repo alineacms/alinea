@@ -118,5 +118,82 @@ test('renders code blocks as fences', () => {
   const doc: TextDoc = [
     {_type: 'CodeBlock', _id: 'c1', code: 'let a', language: 'ts', fileName: ''}
   ]
-  test.is(textDocToMarkdown(doc), '```ts\nlet a\n```')
+  test.is(textDocToMarkdown(doc), '```ts id=c1\nlet a\n```')
+})
+
+test('keeps other code block fields in the info string', () => {
+  const doc: TextDoc = [
+    {
+      _type: 'CodeBlock',
+      _id: 'c1',
+      code: 'let a = ```',
+      language: 'ts',
+      fileName: 'my app.ts',
+      compact: true
+    }
+  ]
+  test.is(
+    textDocToMarkdown(doc),
+    '````ts id=c1 fileName="my app.ts" compact\nlet a = ```\n````'
+  )
+  const nested: TextDoc = [
+    {_type: 'CodeBlock', _id: 'c2', code: 'x', meta: {a: 1}}
+  ]
+  test.ok(textDocToMarkdown(nested).startsWith('```alinea-block\n'))
+})
+
+test('writes code spans in text as they are', () => {
+  const doc: TextDoc = [
+    {
+      _type: 'paragraph',
+      content: [
+        {_type: 'text', text: 'Run `bun *test*` and ``a ` b``, then the ` key'}
+      ]
+    },
+    {
+      _type: 'paragraph',
+      content: [
+        {_type: 'text', text: 'Bold `x', marks: [{_type: 'bold'}]},
+        {_type: 'text', text: ' and y`'}
+      ]
+    },
+    {_type: 'paragraph', content: [{_type: 'text', text: 'A `[link]` span'}]}
+  ]
+  const markdown = textDocToMarkdown(doc)
+  test.is(
+    markdown,
+    [
+      'Run `bun *test*` and ``a ` b``, then the \\` key',
+      '**Bold \\`x** and y\\`',
+      'A \\`\\[link\\]\\` span'
+    ].join('\n\n')
+  )
+  test.equal(markdownToTextDoc(markdown), doc)
+})
+
+test('leaves backticks and angle brackets in prose alone', () => {
+  const doc: TextDoc = [
+    {
+      _type: 'paragraph',
+      content: [{_type: 'text', text: 'Use a <div> or the ` key, a < b'}]
+    },
+    {
+      _type: 'paragraph',
+      content: [{_type: 'text', text: 'Run `npm i` or <u>x</u>'}]
+    },
+    {
+      _type: 'paragraph',
+      content: [{_type: 'text', text: 'See <https://alinea.sh> and a<br>b'}]
+    }
+  ]
+  const markdown = textDocToMarkdown(doc)
+  test.is(
+    markdown,
+    [
+      'Use a <div> or the ` key, a < b',
+      'Run `npm i` or \\<u>x</u>',
+      'See \\<https://alinea.sh> and a\\<br>b'
+    ].join('\n\n')
+  )
+  test.equal(markdownToTextDoc(markdown), doc)
 })

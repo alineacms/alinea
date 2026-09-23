@@ -1,6 +1,9 @@
+import {existsSync} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {Config} from '#/core/Config.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {UploadOperation} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
@@ -8,7 +11,9 @@ import type {GraphQuery, Status} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
 import type {ImagePreviewDetails} from '#/core/media/CreatePreview.js'
 import {isImage} from '#/core/media/IsImage.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {Root} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {textDocToMarkdown} from '#/core/text/TextDocToMarkdown.js'
 import type {TextDoc} from '#/core/TextDoc.js'
@@ -17,7 +22,7 @@ import type {User} from '#/core/User.js'
 import {entries, isRecord, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Workspace} from '#/core/Workspace.js'
-import {EntryInput, mergeTypeData} from './McpInput.js'
+import {codeBlockMarkdown, EntryInput, placeNewFields} from './McpInput.js'
 import {type JsonSchema, type McpTool, McpToolError} from './McpServer.js'
 import {
   describeSchema,
@@ -31,25 +36,49 @@ export interface ContentToolsOptions {
   config: Config
   /** Reads and writes content, writes must take the dashboard's path */
   graph: WriteableGraph
-  /** The project directory, local files can only be uploaded from here */
+  /**
+   * The project directory (where `alinea dev` runs), relative upload paths
+   * resolve against it
+   */
   rootDir: string
+  /**
+   * Other directories local files may be uploaded from, defaults to the git
+   * repository enclosing the project
+   */
+  uploadRoots?: Array<string>
   /** The user recorded in metadata fields */
   user?: User
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
   fetch?: typeof globalThis.fetch
 }
 
-export const mcpInstructions = `Alinea is a git-based CMS: every entry is a JSON file in the project's content directory. Write content through these tools instead of editing the JSON files, they fill in internal fields (_id, _index, list row ids, rich text node shapes, media metadata) and the dashboard updates live.
+/** The git repository root enclosing a directory, if any */
+export function gitRoot(dir: string): string | undefined {
+  let current = path.resolve(dir)
+  while (true) {
+    if (existsSync(path.join(current, '.git'))) return current
+    const parent = path.dirname(current)
+    if (parent === current) return undefined
+    current = parent
+  }
+}
+
+export function mcpInstructions(rootDir: string): string {
+  return `Alinea is a git-based CMS: every entry is a JSON file in the project's content directory. Write content through these tools instead of editing the JSON files, they fill in internal fields (_id, _index, list row ids, rich text node shapes, media metadata) and the dashboard updates live.
+
+Project directory: ${rootDir} (relative upload_file paths resolve against it).
 
 Content model: workspaces contain roots (top-level sections, some translated into locales), roots contain entries in a tree. Every entry has a type which defines its fields; container types list which types they may contain. Media (images, files) live in a media root as MediaFile entries.
 
 Workflow:
-1. describe_schema once to learn the workspaces, roots, types and how to write each field kind (see valueFormats).
+1. describe_schema with detail: "summary" for the workspaces, roots, locales and types, then describe_schema with a type for the full fields, row/block types and value formats of each type you will write.
 2. find_entries / get_entry to locate content, parents and ids.
-3. create_entry / update_entry with data keyed by field. Rich text accepts Markdown; links accept entry ids; list rows need no _id/_index. Use upload_file first to get a media id for image or file fields.
+3. create_entry / update_entry with data keyed by field. Updates only change what you pass: object fields merge, list rows with an existing _id merge into that row, or patch a list with {update, insert, remove, order} (see valueFormats). Rich text accepts Markdown; links accept entry ids. Use upload_file first to get a media id for image or file fields, upload_file with replace swaps the file of an existing media entry.
 4. Entries are published by default. Pass publish: false to save a draft when drafts are enabled.
+5. find_references before deleting or renaming, delete_entry refuses to delete entries others link to unless forced.
 
 Errors name the offending field path and what is expected, fix the data and retry.`
+}
 
 const statusValues = [
   'preferDraft',
@@ -108,16 +137,82 @@ function fail(message: string): never {
   throw new McpToolError(message)
 }
 
+/** Media entry fields an upload computes from the file */
+const fileFields = new Set([
+  'location',
+  'previewUrl',
+  'extension',
+  'size',
+  'hash',
+  'width',
+  'height',
+  'averageColor',
+  'focus',
+  'thumbHash',
+  'preview'
+])
+
+function setField(
+  data: Record<string, unknown>,
+  key: string,
+  value: unknown,
+  after: string
+): Record<string, unknown> {
+  if (key in data || !(after in data)) return {...data, [key]: value}
+  const result: Record<string, unknown> = {}
+  for (const [name, current] of entries(data)) {
+    result[name] = current
+    if (name === after) result[key] = value
+  }
+  return result
+}
+
+/**
+ * The data of an uploaded media entry. Replacing a file keeps the fields of
+ * the existing entry (in their order) and its focus point, only the fields
+ * computed from the file change.
+ */
+function mediaData(
+  uploaded: Record<string, unknown>,
+  existing: Record<string, unknown> | undefined,
+  overrides: Record<string, unknown>
+): Record<string, unknown> {
+  let result: Record<string, unknown> = {...uploaded}
+  if (existing) {
+    result = {}
+    for (const [key, value] of entries(existing)) {
+      const keep = !fileFields.has(key) || (key === 'focus' && key in uploaded)
+      if (keep) result[key] = value
+      else if (key in uploaded) result[key] = uploaded[key]
+    }
+    for (const [key, value] of entries(uploaded))
+      if (!(key in result)) result[key] = value
+  }
+  for (const [key, value] of entries(overrides))
+    result = setField(result, key, value, key === 'alt' ? 'hash' : 'title')
+  return result
+}
+
 const localeSchema: JsonSchema = {
   type: 'string',
   description:
-    'Locale of the translation, for roots with i18n (see describe_schema). Defaults to the first locale of the root.'
+    "Locale of the translation, for roots with i18n (see describe_schema). Defaults to the root's default locale (the first of its locales)."
 }
 
 export function createContentTools(
   options: ContentToolsOptions
 ): Array<McpTool> {
-  const {config, graph, rootDir} = options
+  const {config, graph} = options
+  const rootDir = path.resolve(options.rootDir)
+  const repository = gitRoot(rootDir)
+  const uploadRoots = [
+    ...new Set([
+      rootDir,
+      ...(options.uploadRoots ?? (repository ? [repository] : [])).map(dir =>
+        path.resolve(dir)
+      )
+    ])
+  ]
   const schema = config.schema
   const typeNames = Schema.typeNames(schema)
 
@@ -263,7 +358,12 @@ export function createContentTools(
           if (!blockType || !isRecord(node)) return node
           return renderRichText(blockType, node) as unknown as typeof node
         })
-        return textDocToMarkdown(doc)
+        return textDocToMarkdown(doc, {
+          // Blocks are fenced code only when that converts back unchanged
+          block: node =>
+            codeBlockMarkdown(blocks, node) ??
+            `\`\`\`alinea-block\n${JSON.stringify(node, null, 2)}\n\`\`\``
+        })
       }
       case 'list': {
         if (!Array.isArray(value)) return value
@@ -331,11 +431,163 @@ export function createContentTools(
         )
       return match
     }
-    if (versions.length > 1)
-      fail(
-        `Entry "${id}" exists in several locales (${versions.map(v => v.locale).join(', ')}), pass a locale`
-      )
-    return versions[0]
+    return versions.length > 1 ? defaultVersion(versions) : versions[0]
+  }
+
+  /** The locales of a root in their configured order */
+  function rootLocales(workspace: string, root: string): Array<string> {
+    const rootConfig = Workspace.roots(config.workspaces[workspace] ?? {})[root]
+    return rootConfig ? [...(getRoot(rootConfig).i18n?.locales ?? [])] : []
+  }
+
+  /**
+   * Without a locale an entry is read in the root's default locale, or the
+   * first of the root's locales it is translated into.
+   */
+  function defaultVersion<Version extends EntrySummary>(
+    versions: Array<Version>
+  ): Version {
+    const [first] = versions
+    const rootConfig = Workspace.roots(config.workspaces[first.workspace])[
+      first.root
+    ]
+    const preferred = rootConfig ? Root.defaultLocale(rootConfig) : undefined
+    const order = rootLocales(first.workspace, first.root)
+    const rank = (locale: string | null) => {
+      if (locale === preferred) return -1
+      const index = locale ? order.indexOf(locale) : -1
+      return index === -1 ? order.length : index
+    }
+    return [...versions].sort((a, b) => rank(a.locale) - rank(b.locale))[0]
+  }
+
+  /**
+   * Entries linking to an entry, like the dashboard's references panel: the
+   * latest version of each source, with the field holding the link.
+   */
+  async function incomingReferences(id: string) {
+    const result = await graph.referencesTo({
+      targetId: id,
+      status: 'preferDraft'
+    })
+    const sourceIds = [
+      ...new Set(result.references.map(reference => reference.sourceId))
+    ]
+    const sources = sourceIds.length
+      ? ((await graph.find({
+          id: {in: sourceIds},
+          status: 'preferDraft',
+          select: {...summarySelection, parents: Entry.parents}
+        })) as Array<EntrySummary & {parents: Array<string>}>)
+      : []
+    const key = (id: string, locale: string | null) => `${id}\0${locale ?? ''}`
+    const byLocale = new Map(
+      sources.map(source => [key(source.id, source.locale), source])
+    )
+    const byId = new Map(sources.map(source => [source.id, source]))
+    return result.references.flatMap(reference => {
+      const source =
+        byLocale.get(key(reference.sourceId, reference.sourceLocale)) ??
+        byId.get(reference.sourceId)
+      if (!source) return []
+      return [
+        {
+          id: source.id,
+          title: source.title,
+          type: source.type,
+          url: source.url,
+          locale: source.locale,
+          workspace: source.workspace,
+          root: source.root,
+          field: reference.fieldPath,
+          ...(reference.fieldLabel ? {fieldLabel: reference.fieldLabel} : {}),
+          parents: source.parents
+        }
+      ]
+    })
+  }
+
+  /** Entries an entry links to, from the references in its fields */
+  async function outgoingReferences(entry: StoredEntry) {
+    const type = schema[entry.type]
+    if (!type) return []
+    const targets = Type.references(type, entry.data)
+    const ids = [...new Set(targets.map(target => target.targetId))]
+    const found = ids.length
+      ? ((await graph.find({
+          id: {in: ids},
+          status: 'preferDraft',
+          select: summarySelection
+        })) as Array<EntrySummary>)
+      : []
+    return targets.map(target => {
+      const versions = found.filter(version => version.id === target.targetId)
+      const match =
+        versions.find(version => version.locale === entry.locale) ??
+        (versions.length ? defaultVersion(versions) : undefined)
+      const link = {
+        field: target.fieldPath,
+        ...(target.fieldLabel ? {fieldLabel: target.fieldLabel} : {}),
+        ...(target.linkType ? {linkType: target.linkType} : {})
+      }
+      if (!match) return {id: target.targetId, missing: true, ...link}
+      return {
+        id: match.id,
+        title: match.title,
+        type: match.type,
+        url: match.url,
+        locale: match.locale,
+        ...link
+      }
+    })
+  }
+
+  /** Entries matching a query, parents before children, siblings by index */
+  async function inTreeOrder(
+    query: GraphQuery<undefined, Type | undefined, undefined>
+  ): Promise<Array<EntrySummary>> {
+    const found = (await graph.find({
+      ...query,
+      select: {...summarySelection, index: Entry.index, parents: Entry.parents}
+    })) as Array<EntrySummary & {index: string; parents: Array<string>}>
+    const ancestorIds = [...new Set(found.flatMap(entry => entry.parents))]
+    const ancestors = ancestorIds.length
+      ? ((await graph.find({
+          id: {in: ancestorIds},
+          status: 'all',
+          select: {id: Entry.id, index: Entry.index}
+        })) as Array<{id: string; index: string}>)
+      : []
+    const indexOf = new Map(ancestors.map(entry => [entry.id, entry.index]))
+    const workspaceOrder = keys(config.workspaces)
+    const position = (entry: (typeof found)[number]) => {
+      const roots = keys(Workspace.roots(config.workspaces[entry.workspace]))
+      const locales = rootLocales(entry.workspace, entry.root)
+      return {
+        prefix: [
+          workspaceOrder.indexOf(entry.workspace),
+          roots.indexOf(entry.root)
+        ],
+        path: [...entry.parents.map(id => indexOf.get(id) ?? ''), entry.index],
+        locale: entry.locale ? locales.indexOf(entry.locale) : -1
+      }
+    }
+    const positions = new Map(found.map(entry => [entry, position(entry)]))
+    const compare = (a: (typeof found)[number], b: (typeof found)[number]) => {
+      const pa = positions.get(a)!
+      const pb = positions.get(b)!
+      for (let i = 0; i < 2; i++)
+        if (pa.prefix[i] !== pb.prefix[i]) return pa.prefix[i] - pb.prefix[i]
+      const length = Math.min(pa.path.length, pb.path.length)
+      for (let i = 0; i < length; i++)
+        if (pa.path[i] !== pb.path[i]) return pa.path[i] < pb.path[i] ? -1 : 1
+      if (pa.path.length !== pb.path.length)
+        return pa.path.length - pb.path.length
+      return pa.locale - pb.locale
+    }
+    return found
+      .sort(compare)
+      .map(({index: _index, parents: _parents, ...entry}) => entry)
   }
 
   function summary(entry: EntrySummary & {filePath?: string}) {
@@ -348,13 +600,19 @@ export function createContentTools(
       name: 'describe_schema',
       title: 'Describe the content schema',
       description:
-        'Describe workspaces, roots (with locales, allowed types and seeded children), entry types and their fields (kind, label, options, nested list/rich text block types, allowed child types) plus how to write values for each field kind. Call this first. Pass `type` to describe a single type and the blocks it uses.',
+        'Describe workspaces, roots (with locales, allowed types and seeded children), entry types and their fields (kind, label, options, nested list/rich text block types, allowed child types) plus how to write values for each field kind. Start with detail: "summary" (types with field keys, kinds and labels), then pass `type` for the full description of each type you will write, with the blocks and field groups it uses and the value formats.',
       inputSchema: {
         type: 'object',
         properties: {
           type: {
             type: 'string',
             description: 'Name of a type to describe, eg "Page"'
+          },
+          detail: {
+            type: 'string',
+            enum: ['summary', 'full'],
+            description:
+              'summary: workspaces, roots, locales and types with field keys, kinds and labels only. full (default): every field option, block and value format'
           }
         },
         additionalProperties: false
@@ -363,14 +621,16 @@ export function createContentTools(
       async call(args) {
         const type = stringArg(args, 'type')
         if (type) typeOf(type)
-        return describeSchema({config, type})
+        const detail =
+          stringArg(args, 'detail') === 'summary' ? 'summary' : 'full'
+        return describeSchema({config, type, detail})
       }
     },
     {
       name: 'find_entries',
       title: 'Find entries',
       description:
-        'List entries matching filters, in tree order. Returns id, type, title, path, url, parentId, locale, status, workspace, root and childrenCount, plus the total number of matches.',
+        'List entries matching filters. Results are in tree order: by workspace and root, parents before their children, siblings in their sidebar order (with `search` they are ordered by relevance instead). Returns id, type, title, path, url, parentId, locale, status, workspace, root and childrenCount, plus the total number of matches.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -422,12 +682,14 @@ export function createContentTools(
         const limit = Math.min(Number(args.limit ?? 50), 200)
         const offset = Number(args.offset ?? 0)
         const total = (await graph.count(query)) as number
-        const found = (await graph.find({
-          ...query,
-          skip: offset,
-          take: limit,
-          select: summarySelection
-        })) as Array<EntrySummary>
+        const found = search
+          ? ((await graph.find({
+              ...query,
+              skip: offset,
+              take: limit,
+              select: summarySelection
+            })) as Array<EntrySummary>)
+          : (await inTreeOrder(query)).slice(offset, offset + limit)
         const counts = await childrenCounts(
           found.map(entry => entry.id),
           locale
@@ -495,10 +757,15 @@ export function createContentTools(
         const counts = await childrenCounts([entry.id], entry.locale)
         const mode = stringArg(args, 'richText') ?? 'markdown'
         const {filePath: _filePath, data, ...meta} = entry
+        const translated = new Set(versions.map(version => version.locale))
+        const otherLocales = rootLocales(entry.workspace, entry.root).filter(
+          other => other !== entry.locale && translated.has(other)
+        )
         const result: Record<string, unknown> = {
           ...meta,
           file: diskPath(entry),
           childrenCount: counts.get(entry.id) ?? 0,
+          ...(otherLocales.length ? {otherLocales} : {}),
           versions,
           data: type && mode === 'markdown' ? renderRichText(type, data) : data
         }
@@ -628,7 +895,7 @@ export function createContentTools(
               ? `Type "${typeName}" is not allowed in ${where}, allowed types: ${allowed.join(', ')}`
               : `No entries can be created in ${where}, it contains no types`
           )
-        const input = new EntryInput()
+        const input = new EntryInput({locale})
         const converted = input.typeData(type, data, '')
         await checkReferences(input)
         const merged = {...(base ?? Type.initialValue(type)), ...converted}
@@ -717,38 +984,58 @@ export function createContentTools(
                 `Media files only accept changes to: ${[...allowed].join(', ')}`
               )
         }
-        const input = new EntryInput()
-        const converted = input.typeData(type, args.data, '')
+        const input = new EntryInput({locale: current.locale})
+        // Given fields merge into the stored data, everything else is kept as
+        // is (no initial values are filled in, unlike on create)
+        const merged = placeNewFields(
+          type,
+          current.data,
+          input.typeData(type, args.data, '', current.data)
+        )
         await checkReferences(input)
         const publish = args.publish !== false
         const status = statusFor(publish, type)
-        const merged = mergeTypeData(type, current.data, converted)
-        const prepared = Type.beforeSave(
-          type,
-          Type.withInitialValue(type, merged),
-          {
-            action: publish ? 'publish' : 'update',
-            user: options.user,
-            now: new Date()
-          }
+        // Nothing to save: leave the file (and its audit metadata) alone
+        if (
+          JSON.stringify(merged) === JSON.stringify(current.data) &&
+          current.status === status
         )
-        const saved = (await graph.create({
-          type,
+          return {...summary(current), changed: [], note: 'No changes'}
+        const prepared = Type.beforeSave(type, merged, {
+          action: publish ? 'publish' : 'update',
+          user: options.user,
+          now: new Date()
+        })
+        // The mutation the dashboard's save sends (graph.create with
+        // overwrite), without re-initializing the values of every field
+        await graph.mutate([
+          {
+            op: 'create',
+            id,
+            locale: current.locale,
+            parentId: current.parentId,
+            workspace: current.workspace,
+            root: current.root,
+            type: current.type,
+            status,
+            overwrite: true,
+            data: prepared
+          }
+        ])
+        const saved = (await graph.get({
           id,
           locale: current.locale,
-          status,
-          set: prepared,
-          overwrite: true,
+          status: status === 'draft' ? 'preferDraft' : 'preferPublished',
           select: {...summarySelection, filePath: Entry.filePath}
         })) as EntrySummary & {filePath: string}
-        return {...summary(saved), changed: keys(converted)}
+        return {...summary(saved), changed: keys(args.data as object)}
       }
     },
     {
       name: 'delete_entry',
       title: 'Delete an entry',
       description:
-        'Delete an entry with its children (in all locales by default). Pass locale to delete one translation, or status "draft" to discard only the draft. Media files are removed from disk as well.',
+        'Delete an entry with its children (in all locales by default). Pass locale to delete one translation, or status "draft" to discard only the draft. Media files are removed from disk as well. Refuses to delete an entry other entries link to (see find_references) unless force is true.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -758,6 +1045,11 @@ export function createContentTools(
             type: 'string',
             enum: ['draft', 'published', 'archived'],
             description: 'Only delete this version'
+          },
+          force: {
+            type: 'boolean',
+            description:
+              'Delete even when other entries link to it, leaving those links broken'
           }
         },
         required: ['id'],
@@ -784,10 +1076,25 @@ export function createContentTools(
               ? `Entry "${id}" has no matching version, it has: ${versions.map(v => `${v.locale ?? ''} ${v.versionStatus}`.trim()).join(', ')}`
               : `Entry "${id}" not found`
           )
-        const references = await graph.referencesTo({
-          targetId: id,
-          status: 'all'
-        })
+        // Only removing every locale leaves links pointing nowhere
+        const removesEntry =
+          !status &&
+          versions.every(version => !locale || version.locale === locale)
+        const references = removesEntry
+          ? (await incomingReferences(id)).filter(
+              reference =>
+                reference.id !== id && !reference.parents.includes(id)
+            )
+          : []
+        if (references.length > 0 && args.force !== true)
+          fail(
+            `Entry "${id}" is linked from ${references.length} place(s), update those links first or pass force: true to delete anyway:\n${references
+              .map(
+                reference =>
+                  `- ${reference.title} (${reference.type}, id ${reference.id}${reference.locale ? `, ${reference.locale}` : ''}) field ${reference.field}`
+              )
+              .join('\n')}`
+          )
         await graph.mutate([
           {
             op: 'remove',
@@ -803,13 +1110,47 @@ export function createContentTools(
             locale: version.locale,
             status: version.versionStatus
           })),
-          ...(references.total
+          ...(references.length
             ? {
-                warning: `${references.total} reference(s) from other entries now point to a missing entry: ${[
-                  ...new Set(references.references.map(ref => ref.sourceId))
+                warning: `${references.length} reference(s) from other entries now point to a missing entry: ${[
+                  ...new Set(references.map(reference => reference.id))
                 ].join(', ')}`
               }
             : {})
+        }
+      }
+    },
+    {
+      name: 'find_references',
+      title: 'Find references',
+      description:
+        'List the entries linking to an entry (incoming: id, title, type, url, locale and the field path holding the link) and the entries it links to (outgoing). Check this before deleting, moving or replacing content.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: {type: 'string', description: 'Entry id'},
+          locale: {
+            type: 'string',
+            description:
+              'Translation whose outgoing links to list, defaults to the root default locale'
+          }
+        },
+        required: ['id'],
+        additionalProperties: false
+      },
+      annotations: {readOnlyHint: true, openWorldHint: false},
+      async call(args) {
+        const id = stringArg(args, 'id')!
+        const entry = await loadEntry(id, stringArg(args, 'locale'))
+        const incoming = (await incomingReferences(id)).map(
+          ({parents: _parents, ...reference}) => reference
+        )
+        return {
+          id,
+          title: entry.title,
+          locale: entry.locale,
+          incoming,
+          outgoing: await outgoingReferences(entry)
         }
       }
     },
@@ -993,24 +1334,46 @@ export function createContentTools(
       name: 'upload_file',
       title: 'Upload a file',
       description:
-        'Add an image or other file to a workspace media library, from a local path inside the project or an http(s) url. Image dimensions, average color, thumbhash and preview are computed. Returns the media entry id to use in image and file fields (or ![alt](entry:ID) in rich text).',
+        'Add an image or other file to a workspace media library, from a local path or an http(s) url. Image dimensions, average color, thumbhash and preview are computed. Pass `replace` with a media entry id to swap the file of an existing media entry: the id (and every link to it) stays, the file gets a new location and the old file is removed. Returns the media entry id to use in image and file fields (or ![alt](entry:ID) in rich text), its url and public url.',
       inputSchema: {
         type: 'object',
         properties: {
           path: {
             type: 'string',
-            description: 'Local file path, relative to the project directory'
+            description: `Local file path, relative to the project directory (${rootDir}), or absolute inside it or inside the enclosing git repository`
           },
           url: {type: 'string', description: 'http(s) url to download'},
           workspace: {type: 'string', description: 'Workspace name'},
           parentId: {
             type: 'string',
             description:
-              'Id of a media folder (MediaLibrary entry) to upload into'
+              'Id of a media folder (MediaLibrary entry) to upload into, its workspace is used'
+          },
+          replace: {
+            type: 'string',
+            description:
+              'Id of an existing media entry whose file to replace, its title, alt text and focus are kept unless given'
           },
           title: {
             type: 'string',
             description: 'Title of the media entry, defaults to the file name'
+          },
+          alt: {
+            description:
+              'Alt text of the image, a string or an object keyed by locale for translated media roots',
+            type: ['string', 'object'],
+            additionalProperties: {type: 'string'}
+          },
+          focus: {
+            type: 'object',
+            description:
+              'Focus point of the image, x and y from 0 (left/top) to 1 (right/bottom)',
+            properties: {
+              x: {type: 'number', minimum: 0, maximum: 1},
+              y: {type: 'number', minimum: 0, maximum: 1}
+            },
+            required: ['x', 'y'],
+            additionalProperties: false
           }
         },
         additionalProperties: false
@@ -1020,42 +1383,104 @@ export function createContentTools(
         const localPath = stringArg(args, 'path')
         const url = stringArg(args, 'url')
         if (Boolean(localPath) === Boolean(url)) fail('Pass either path or url')
-        const [workspace, workspaceConfig] = workspaceOf(
-          stringArg(args, 'workspace')
+        const replace = stringArg(args, 'replace')
+        const alt = args.alt
+        if (
+          alt !== undefined &&
+          typeof alt !== 'string' &&
+          !(
+            isRecord(alt) &&
+            Object.values(alt).every(v => typeof v === 'string')
+          )
         )
+          fail('alt: expected a string or an object of strings keyed by locale')
+        const focus = args.focus
+        if (
+          focus !== undefined &&
+          !(
+            isRecord(focus) &&
+            [focus.x, focus.y].every(
+              value => typeof value === 'number' && value >= 0 && value <= 1
+            )
+          )
+        )
+          fail('focus: expected {"x": number, "y": number} between 0 and 1')
+        let workspace: string
         let mediaRoot: string
-        try {
-          mediaRoot = Workspace.defaultMediaRoot(workspaceConfig)
-        } catch {
-          fail(`Workspace "${workspace}" has no media root`)
-        }
-        const parentId = stringArg(args, 'parentId') ?? null
-        if (parentId) {
-          const parent = (await graph.first({
-            id: parentId,
-            status: 'preferDraft',
-            select: summarySelection
-          })) as EntrySummary | null
-          if (!parent || parent.type !== typeNames.get(MediaLibrary))
+        let parentId: string | null = stringArg(args, 'parentId') ?? null
+        let existing:
+          | (EntrySummary & {data: Record<string, unknown>})
+          | undefined
+        if (replace) {
+          if (parentId) fail('Pass either parentId or replace')
+          existing =
+            ((await graph.first({
+              id: replace,
+              status: 'preferDraft',
+              select: {...summarySelection, data: Entry.data}
+            })) as (EntrySummary & {data: Record<string, unknown>}) | null) ??
+            undefined
+          if (!existing || existing.type !== typeNames.get(MediaFile))
+            fail(
+              `"${replace}" is not a media file entry, find it with find_entries type MediaFile`
+            )
+          const [name] = workspaceOf(
+            stringArg(args, 'workspace') ?? existing.workspace
+          )
+          if (name !== existing.workspace)
+            fail(
+              `Media entry "${replace}" is in workspace "${existing.workspace}"`
+            )
+          workspace = existing.workspace
+          mediaRoot = existing.root
+          parentId = existing.parentId
+        } else {
+          const parent = parentId
+            ? ((await graph.first({
+                id: parentId,
+                status: 'preferDraft',
+                select: summarySelection
+              })) as EntrySummary | null)
+            : undefined
+          if (
+            parentId &&
+            (!parent || parent.type !== typeNames.get(MediaLibrary))
+          )
             fail(`Parent "${parentId}" is not a media folder (MediaLibrary)`)
-          if (parent.workspace !== workspace)
+          const [name, workspaceConfig] = workspaceOf(
+            stringArg(args, 'workspace') ?? parent?.workspace
+          )
+          workspace = name
+          if (parent && parent.workspace !== workspace)
             fail(
               `Media folder "${parentId}" is in workspace "${parent.workspace}"`
             )
-          mediaRoot = parent.root
+          try {
+            mediaRoot =
+              parent?.root ?? Workspace.defaultMediaRoot(workspaceConfig)
+          } catch {
+            fail(`Workspace "${workspace}" has no media root`)
+          }
         }
         let bytes: Uint8Array
         let fileName: string
         let contentType = 'application/octet-stream'
         if (localPath) {
           const location = path.resolve(rootDir, localPath)
-          const relative = path.relative(rootDir, location)
-          if (relative.startsWith('..') || path.isAbsolute(relative))
-            fail(`"${localPath}" is outside the project directory`)
+          const allowed = uploadRoots.filter(dir => {
+            const relative = path.relative(dir, location)
+            return !relative.startsWith('..') && !path.isAbsolute(relative)
+          })
+          if (allowed.length === 0)
+            fail(
+              `"${localPath}" resolves to ${location}, which is outside the directories files can be uploaded from: ${uploadRoots.join(', ')}. Relative paths resolve against the project directory ${rootDir}`
+            )
           try {
             bytes = new Uint8Array(await fs.readFile(location))
-          } catch {
-            fail(`Could not read "${localPath}"`)
+          } catch (error) {
+            fail(
+              `Could not read ${location} (from "${localPath}"): ${error instanceof Error ? error.message : String(error)}`
+            )
           }
           fileName = path.basename(location)
         } else {
@@ -1084,7 +1509,11 @@ export function createContentTools(
           }
         }
         const extension = path.extname(fileName)
-        const title = stringArg(args, 'title')
+        const title =
+          stringArg(args, 'title') ??
+          (existing && typeof existing.data.title === 'string'
+            ? existing.data.title
+            : undefined)
         if (title) fileName = `${title}${extension}`
         const file = new File([bytes as BlobPart], fileName, {
           type: contentType
@@ -1098,15 +1527,31 @@ export function createContentTools(
             warning = `No image preview: ${error instanceof Error ? error.message : String(error)}`
           }
         }
-        const uploaded = (await graph.upload({
+        // The dashboard's upload (and replace) operation: it stores the file
+        // and creates the media entry in one commit
+        const operation = new UploadOperation({
           file,
           workspace,
           root: mediaRoot,
           parentId,
+          ...(replace ? {replaceId: replace} : {}),
           ...(preview ? {createPreview: async () => preview!} : {})
-        })) as Record<string, unknown>
+        })
+        const mutations = await operation.task(graph)
+        const withMetadata = mutations.map((mutation): Mutation => {
+          if (mutation.op !== 'create') return mutation
+          return {
+            ...mutation,
+            data: mediaData(mutation.data, existing?.data, {
+              ...(title ? {title} : {}),
+              ...(alt !== undefined ? {alt} : {}),
+              ...(focus !== undefined ? {focus} : {})
+            })
+          }
+        })
+        await graph.mutate(withMetadata)
         const media = (await graph.first({
-          id: uploaded._id as string,
+          id: operation.id,
           status: 'preferDraft',
           select: {
             ...summarySelection,
@@ -1118,15 +1563,40 @@ export function createContentTools(
           | null
         if (!media) fail('Upload finished but the media entry was not found')
         const {data} = media
+        const baseUrl = Config.baseUrl(config)
+        const absolute = (url: string | undefined) =>
+          url && baseUrl ? new URL(url, baseUrl).href : url
+        const location = typeof data.location === 'string' ? data.location : ''
+        const publicPath = MediaLocation.sourceUrl(config, workspace, location)
+        const previous =
+          existing && existing.data.location !== location
+            ? existing.data.location
+            : undefined
         return {
           id: media.id,
           title: media.title,
-          url: media.url,
+          url: absolute(media.url),
+          ...(publicPath ? {publicUrl: absolute(publicPath)} : {}),
           file: diskPath(media),
-          location: data.location,
+          location,
+          storedAt: MediaLocation.storagePath(config, workspace, location),
           extension: data.extension,
           size: data.size,
           ...(data.width ? {width: data.width, height: data.height} : {}),
+          ...(data.alt !== undefined ? {alt: data.alt} : {}),
+          ...(data.focus !== undefined ? {focus: data.focus} : {}),
+          ...(previous
+            ? {
+                replaced: {
+                  location: previous,
+                  removed: MediaLocation.storagePath(
+                    config,
+                    workspace,
+                    String(previous)
+                  )
+                }
+              }
+            : {}),
           ...(warning ? {warning} : {})
         }
       }

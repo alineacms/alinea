@@ -126,7 +126,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`describe_schema`: workspaces, roots, locales, types, fields and how to write a value for every field kind. Agents call this first."
+                  "text": "`describe_schema`: workspaces, roots, locales, types, fields and how to write a value for every field kind. Agents start with `detail: \"summary\"` for an overview, then describe each type they will write by passing `type`."
                 }
               ]
             }
@@ -141,7 +141,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`find_entries`: list entries by workspace, root, type, parent, locale, status or search terms."
+                  "text": "`find_entries`: list entries by workspace, root, type, parent, locale, status or search terms, in the order of the content tree."
                 }
               ]
             }
@@ -156,7 +156,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`get_entry`: read an entry by id or url, rich text is returned as Markdown."
+                  "text": "`get_entry`: read an entry by id or url, rich text is returned as Markdown. Without a locale it returns the root's default locale and lists the other translations."
                 }
               ]
             }
@@ -186,7 +186,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`update_entry`: change some fields of an entry, published or as a draft."
+                  "text": "`update_entry`: change some fields of an entry, published or as a draft. Only what is passed changes: object fields merge, list rows with the `_id` of an existing row merge into that row, and a list can be patched with operations instead of being sent again."
                 }
               ]
             }
@@ -201,7 +201,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`delete_entry`, `publish_entry`, `archive_entry` and `move_entry`: remove entries, change their status or move them in the content tree."
+                  "text": "`find_references`: list the entries linking to an entry, with the field holding each link, and the entries it links to."
                 }
               ]
             }
@@ -216,13 +216,43 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`upload_file`: add a local file or a downloaded url to the media library, with image dimensions and previews computed. It returns the id to use in image and file fields."
+                  "text": "`delete_entry`, `publish_entry`, `archive_entry` and `move_entry`: remove entries, change their status or move them in the content tree. `delete_entry` refuses to delete an entry that other entries link to unless `force: true` is passed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`upload_file`: add a local file or a downloaded url to the media library, with its alt text and focus point, image dimensions and previews computed. It returns the id to use in image and file fields. Pass `replace` with the id of a media entry to swap its file: the entry keeps its id, so every link to it keeps working, and the old file is removed."
                 }
               ]
             }
           ]
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "List operations change rows by their `_id` and leave the others as they are:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jjwoz42g74hv4uOZjVAHSBDmvP",
+      "code": "{\n  \"id\": \"<entry id>\",\n  \"data\": {\n    \"sections\": {\n      \"update\": [{\"_id\": \"<row id>\", \"title\": \"New title\"}],\n      \"insert\": [{\"row\": {\"_type\": \"Cta\", \"title\": \"Get started\"}, \"after\": \"<row id>\"}],\n      \"remove\": [\"<row id>\"]\n    }\n  }\n}",
+      "fileName": "",
+      "language": "json"
     },
     {
       "_type": "paragraph",
@@ -829,7 +859,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790176509,
+    "updatedAt": 1790187962,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -5,12 +5,23 @@ import {isRecord} from '../util/Objects.js'
 /** Fenced code blocks with this info string hold a rich text block as JSON */
 export const markdownBlockLanguage = 'alinea-block'
 
+/**
+ * Attributes of a fenced code block, from the words after its language:
+ * ```ts id=abc fileName="app.ts" compact holds {id: 'abc', fileName: 'app.ts',
+ * compact: true}
+ */
+export type CodeBlockAttributes = Record<string, string | true>
+
 export interface MarkdownToTextDocOptions {
   /**
    * Create the node for a fenced code block. Defaults to a paragraph holding
    * the code as plain text, since rich text has no built-in code block node.
    */
-  codeBlock?(code: string, language: string | undefined): Node
+  codeBlock?(
+    code: string,
+    language: string | undefined,
+    attributes: CodeBlockAttributes
+  ): Node
   /**
    * Create the mark for a link. Defaults to a url link mark. Return undefined
    * to render the link text without a link.
@@ -20,7 +31,8 @@ export interface MarkdownToTextDocOptions {
   image?(src: string, alt: string, title: string | undefined): Node | undefined
 }
 
-const fencePattern = /^ {0,3}(`{3,}|~{3,})\s*([^`\s]*)[^`]*$/
+const fencePattern = /^ {0,3}(`{3,}|~{3,})[ \t]*([^`]*?)[ \t]*$/
+const infoPattern = /([^\s=]+)=(?:"([^"]*)"|(\S*))|(\S+)/g
 const headingPattern = /^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$/
 const rulePattern = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
 const quotePattern = /^ {0,3}> ?(.*)$/
@@ -44,8 +56,8 @@ const htmlMarks: Record<string, string> = {
 
 /**
  * Convert Markdown (CommonMark subset plus GFM strikethrough and tables) to a
- * rich text document. Inline code has no mark in rich text and is kept as
- * plain text.
+ * rich text document. Inline code has no mark in rich text, a code span is
+ * kept as plain text with its backticks.
  */
 export function markdownToTextDoc(
   markdown: string,
@@ -89,7 +101,7 @@ class MarkdownParser {
           code.push(current)
           index++
         }
-        result.push(this.codeBlock(code.join('\n'), fence[2] || undefined))
+        result.push(this.codeBlock(code.join('\n'), fence[2]))
         continue
       }
       const heading = headingPattern.exec(line)
@@ -151,7 +163,8 @@ class MarkdownParser {
     )
   }
 
-  codeBlock(code: string, language: string | undefined): Node {
+  codeBlock(code: string, info: string): Node {
+    const {language, attributes} = parseInfo(info)
     if (language === markdownBlockLanguage) {
       try {
         const block: unknown = JSON.parse(code)
@@ -161,7 +174,8 @@ class MarkdownParser {
         // Fall through and keep the text
       }
     }
-    if (this.#options.codeBlock) return this.#options.codeBlock(code, language)
+    if (this.#options.codeBlock)
+      return this.#options.codeBlock(code, language, attributes)
     const content: TextDoc = []
     code.split('\n').forEach((line, index) => {
       if (index > 0) content.push({_type: 'hardBreak'})
@@ -292,6 +306,27 @@ class MarkdownParser {
   }
 }
 
+/** The language is the first word of the info string, attributes follow */
+function parseInfo(info: string): {
+  language: string | undefined
+  attributes: CodeBlockAttributes
+} {
+  let language: string | undefined
+  const attributes: CodeBlockAttributes = {}
+  let first = true
+  for (const match of info.matchAll(infoPattern)) {
+    const [, key, quoted, plain, word] = match
+    if (word !== undefined) {
+      if (first) language = word
+      else attributes[word] = true
+    } else {
+      attributes[key] = quoted ?? plain ?? ''
+    }
+    first = false
+  }
+  return {language, attributes}
+}
+
 function indentOf(line: string): number {
   return line.length - line.trimStart().length
 }
@@ -371,10 +406,9 @@ class InlineParser {
         const run = runLength(text, index, '`')
         const close = text.indexOf('`'.repeat(run), index + run)
         if (close !== -1 && close < to) {
-          let code = text.slice(index + run, close).replace(/\n/g, ' ')
-          if (code.startsWith(' ') && code.endsWith(' ') && code.trim())
-            code = code.slice(1, -1)
-          buffer += code
+          // Rich text has no inline code mark: the span stays literal text,
+          // backticks included, and its contents are not parsed further
+          buffer += text.slice(index, close + run).replace(/\n/g, ' ')
           index = close + run
           continue
         }
