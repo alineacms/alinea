@@ -13,7 +13,7 @@ test('labels the group and selects the default item', async ({mount, page}) => {
 
 test('changes the value by click and keyboard', async ({mount, page}) => {
   await mount(<Controlled />)
-  await page.getByRole('radio', {name: 'Orange'}).click()
+  await page.getByText('Orange', {exact: true}).click()
   await expect(page.getByTestId('state')).toHaveText('orange')
   await page.keyboard.press('ArrowDown')
   await expect(page.getByTestId('state')).toHaveText('grape')

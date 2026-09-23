@@ -25,7 +25,9 @@ test('renders default and indeterminate states', async ({mount, page}) => {
 
 test('disabled, read-only and invalid states', async ({mount, page}) => {
   await mount(<States />)
-  await expect(page.getByRole('checkbox', {name: 'Disabled'})).toBeDisabled()
+  await expect(
+    page.getByRole('checkbox', {name: 'Disabled', exact: true})
+  ).toBeDisabled()
   const invalid = page.getByRole('checkbox', {name: 'Invalid'})
   await expect(invalid).toHaveAttribute('aria-invalid', 'true')
   await expect(page.getByRole('alert')).toHaveText('You must accept the terms')

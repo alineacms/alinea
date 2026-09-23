@@ -13,9 +13,9 @@ test('labels the group and keeps the default value', async ({mount, page}) => {
 
 test('reports the selected values', async ({mount, page}) => {
   await mount(<Controlled />)
-  await page.getByRole('checkbox', {name: 'Orange'}).click()
+  await page.getByText('Orange', {exact: true}).click()
   await expect(page.getByTestId('state')).toHaveText('apple,orange')
-  await page.getByRole('checkbox', {name: 'Apple'}).click()
+  await page.getByText('Apple', {exact: true}).click()
   await expect(page.getByTestId('state')).toHaveText('orange')
 })
 
