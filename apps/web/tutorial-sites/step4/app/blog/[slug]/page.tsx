@@ -1,4 +1,4 @@
-import {Entry} from 'alinea/core/Entry'
+import {Query} from 'alinea'
 import type {Metadata} from 'next'
 import {cms} from '@/cms'
 import {generatePostMetadata, PostView} from '@/entries/post/Post'
@@ -11,7 +11,7 @@ interface PostRouteProps {
 export async function generateStaticParams() {
   const paths = await cms.find({
     type: Post,
-    select: Entry.path
+    select: Query.path
   })
 
   return paths.map(slug => ({slug}))

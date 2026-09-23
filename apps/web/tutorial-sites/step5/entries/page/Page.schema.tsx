@@ -1,7 +1,7 @@
 import {Config, Field} from 'alinea'
-import {GalleryBlock} from '@/blocks/gallery/GalleryBlock.schema'
 import {ImageBlock} from '@/blocks/image/ImageBlock.schema'
 import {TextBlock} from '@/blocks/text/TextBlock.schema'
+import {WeatherBlock} from '@/blocks/weather/WeatherBlock.schema'
 
 export const Page = Config.document('Page', {
   contains: ['Page'],
@@ -12,7 +12,7 @@ export const Page = Config.document('Page', {
       schema: {
         TextBlock,
         ImageBlock,
-        GalleryBlock
+        WeatherBlock
       }
     })
   }

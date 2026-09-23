@@ -4,7 +4,7 @@ import {cms} from '@/cms'
 import {LandingPage} from './LandingPage.schema'
 
 export async function LandingPageView() {
-  const page = await cms.get({url: '/', type: LandingPage})
+  const page = await cms.first({url: '/', type: LandingPage})
   if (!page) notFound()
 
   return (
@@ -15,7 +15,7 @@ export async function LandingPageView() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await cms.get({url: '/', type: LandingPage})
+  const page = await cms.first({url: '/', type: LandingPage})
   if (!page) return {}
 
   return {

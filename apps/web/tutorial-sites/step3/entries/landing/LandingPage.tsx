@@ -9,19 +9,16 @@ import {cms} from '@/cms'
 import {LandingPage} from './LandingPage.schema'
 
 export async function LandingPageView() {
-  const page = await cms.get({url: '/', type: LandingPage})
+  const page = await cms.first({url: '/', type: LandingPage})
   if (!page) notFound()
 
   return (
     <main>
       <h1>{page.title}</h1>
       {page.blocks.map(block => {
-        if (block._type === 'TextBlock')
-          return <TextBlockView key={block._id} block={block} />
-        if (block._type === 'ImageBlock')
-          return <ImageBlockView key={block._id} block={block} />
-        if (block._type === 'WeatherBlock')
-          return <WeatherBlockView key={block._id} block={block} />
+        if (block._type === 'TextBlock') return <TextBlockView key={block._id} block={block} />
+        if (block._type === 'ImageBlock') return <ImageBlockView key={block._id} block={block} />
+        if (block._type === 'WeatherBlock') return <WeatherBlockView key={block._id} block={block} />
         return null
       })}
     </main>
@@ -29,7 +26,7 @@ export async function LandingPageView() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await cms.get({url: '/', type: LandingPage})
+  const page = await cms.first({url: '/', type: LandingPage})
   if (!page) return {}
 
   let fallbackDescription = ''
@@ -45,8 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: page.metadata?.description || fallbackDescription,
     openGraph: {
       title: page.metadata.openGraph.title || page.metadata.title || page.title,
-      description:
-        page.metadata.openGraph.description || page.metadata?.description,
+      description: page.metadata.openGraph.description || page.metadata?.description,
       images: page.metadata?.openGraph.image
         ? [page.metadata?.openGraph.image.src]
         : undefined

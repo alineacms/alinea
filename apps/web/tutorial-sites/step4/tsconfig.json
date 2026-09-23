@@ -12,7 +12,7 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -23,7 +23,6 @@
     ],
     "target": "ES2017",
     "incremental": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"

@@ -1,5 +1,4 @@
 import {Query} from 'alinea'
-import {Entry} from 'alinea/core/Entry'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import Link from 'next/link'
@@ -10,7 +9,7 @@ import {Blog} from './Blog.schema'
 type PostLink = {id: string; title: string; url: string}
 
 export async function BlogView() {
-  const page = await cms.get({
+  const page = await cms.first({
     url: '/blog',
     type: Blog,
     select: {
@@ -19,9 +18,9 @@ export async function BlogView() {
       posts: Query.children({
         type: Post,
         select: {
-          id: Entry.id,
-          title: Entry.title,
-          url: Entry.url
+          id: Query.id,
+          title: Query.title,
+          url: Query.url
         }
       })
     }
@@ -44,7 +43,7 @@ export async function BlogView() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await cms.get({url: '/blog', type: Blog})
+  const page = await cms.first({url: '/blog', type: Blog})
   if (!page) return {}
 
   return {

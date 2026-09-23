@@ -12,6 +12,7 @@ export const cms = createCMS({
         pages: Config.root('Pages', {
           contains: ['LandingPage'],
           children: {
+            // Optionally seed this page, alternatively you can simply create the page from the CMS directly
             index: Config.page({
               type: LandingPage,
               fields: {

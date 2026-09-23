@@ -1,4 +1,4 @@
-import {Entry} from 'alinea/core/Entry'
+import {Query} from 'alinea'
 import {RichText} from 'alinea/ui'
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
@@ -8,19 +8,19 @@ import {Post} from './Post.schema'
 type PostLink = {id: string; title: string; url: string; path: string}
 
 export async function PostView({slug}: {slug: string}) {
-  const post = await cms.get({url: `/blog/${slug}`, type: Post})
+  const post = await cms.first({url: `/blog/${slug}`, type: Post})
   if (!post) notFound()
 
-  const blogPage = await cms.get({url: '/blog'})
+  const blogPage = await cms.first({url: '/blog'})
   if (!blogPage) notFound()
 
   const siblings = await cms.find({
     parentId: blogPage._id,
     select: {
-      id: Entry.id,
-      title: Entry.title,
-      url: Entry.url,
-      path: Entry.path
+      id: Query.id,
+      title: Query.title,
+      url: Query.url,
+      path: Query.path
     }
   })
 

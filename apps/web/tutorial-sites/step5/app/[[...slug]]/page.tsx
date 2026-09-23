@@ -1,6 +1,4 @@
-import type {Infer} from 'alinea'
-import {Entry} from 'alinea/core/Entry'
-import {metadata} from 'alinea/field'
+import {Query} from 'alinea'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {cms} from '@/cms'
@@ -16,7 +14,7 @@ interface RouteProps {
 export async function generateStaticParams() {
   const urls = await cms.find({
     root: cms.workspaces.main.pages,
-    select: Entry.url
+    select: Query.url
   })
 
   return urls.map(url => ({slug: url === '/' ? [] : url.slice(1).split('/')}))
@@ -27,11 +25,11 @@ export async function generateMetadata({
 }: RouteProps): Promise<Metadata> {
   const {slug = []} = await params
   const url = slug.length > 0 ? `/${slug.join('/')}` : '/'
-  const page = await cms.get({
+  const page = await cms.first({
     url,
     include: {
-      title: Entry.title,
-      metadata: Page.metadata // This is slightly hacky, but it will work for all document types
+      title: Query.title,
+      metadata: Page.metadata // Every document type has the same metadata field, so Page.metadata works for all of them
     }
   })
   if (!page) return {}
@@ -54,7 +52,7 @@ export async function generateMetadata({
 export default async function CatchAllPage({params}: RouteProps) {
   const {slug = []} = await params
   const url = slug.length > 0 ? `/${slug.join('/')}` : '/'
-  const page = await cms.get({url})
+  const page = await cms.first({url})
 
   if (!page) notFound()
 
@@ -68,7 +66,7 @@ export default async function CatchAllPage({params}: RouteProps) {
     return <PostView slug={postSlug} />
   }
 
-  const regularPage = await cms.get({url, type: Page})
+  const regularPage = await cms.first({url, type: Page})
   if (!regularPage) notFound()
   return <PageView page={regularPage} />
 }
