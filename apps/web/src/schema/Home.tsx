@@ -1,10 +1,6 @@
 import {Config, Field} from 'alinea'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
-import {CodeTextBlock} from './blocks/CodeTextBlock'
-import {FeaturesBlock} from './blocks/FeaturesBlock'
-import {ImageTextBlock} from './blocks/ImageTextBlock'
-import {QuickLinksBlock} from './blocks/QuickLinksBlock'
-import {TemplateBlock} from './blocks/TemplateBlock'
+import {sectionsField} from './sections/sections'
 
 export const Home = Config.document('Home', {
   fields: {
@@ -32,6 +28,10 @@ export const Home = Config.document('Home', {
                 fields: {
                   label: Field.text('Link label')
                 }
+              }),
+              command: Field.text('Command', {
+                initialValue: 'npx alinea init',
+                help: 'Install command shown next to the buttons'
               })
             }
           })
@@ -39,16 +39,7 @@ export const Home = Config.document('Home', {
       }),
       Field.tab('Body', {
         fields: {
-          body: Field.richText('Body', {
-            searchable: true,
-            schema: {
-              CodeTextBlock,
-              FeaturesBlock,
-              ImageTextBlock,
-              TemplateBlock,
-              QuickLinksBlock
-            }
-          })
+          sections: sectionsField()
         }
       }),
       Field.tab('Top navigation', {

@@ -1,0 +1,138 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+
+  &.is-image {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include sm {
+    border-radius: 22px;
+
+    &.is-image {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &-media {
+    position: relative;
+    min-height: 480px;
+    overflow: hidden;
+    background: var(--web-neutral-soft);
+
+    @include sm {
+      min-height: 0;
+      aspect-ratio: 4 / 3;
+    }
+  }
+
+  &.is-right &-media {
+    order: 2;
+
+    @include sm {
+      order: 0;
+    }
+  }
+
+  &-image {
+    object-fit: cover;
+    object-position: top left;
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    padding: 56px;
+
+    @include sm {
+      padding: 32px;
+    }
+
+    @include s {
+      padding: 24px 20px 28px;
+    }
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 40px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--web-foreground);
+
+    @include sm {
+      font-size: 30px;
+    }
+  }
+
+  &-description {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--web-foreground-faded);
+  }
+
+  &-link {
+    font-weight: 600;
+    color: var(--web-accent);
+  }
+
+  &-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &-check {
+    position: relative;
+    padding-left: 32px;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--web-foreground);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 20px;
+      height: 20px;
+      background: var(--web-accent);
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+    }
+  }
+
+  // Paragraphs inside list items take the list item styling
+  &-check &-text {
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  &-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 8px;
+  }
+}

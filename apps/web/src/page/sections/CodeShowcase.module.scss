@@ -1,0 +1,104 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 72px;
+  align-items: center;
+
+  @media (max-width: 1199.999px) {
+    gap: 48px;
+  }
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 48px;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--web-foreground);
+
+    @include sm {
+      font-size: 32px;
+      line-height: 1.1;
+    }
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--web-foreground-faded);
+
+    @include sm {
+      font-size: 17px;
+    }
+  }
+
+  &-code {
+    position: relative;
+    min-width: 0;
+
+    @include sm {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+
+  &-snippet {
+    box-shadow: 0 30px 80px
+      color-mix(in srgb, var(--web-code-background) 25%, transparent);
+  }
+
+  &-tooltip {
+    position: absolute;
+    left: 170px;
+    top: 138px;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    color: var(--web-foreground);
+    font-family: var(--web-mono-font);
+    font-size: 12.5px;
+    line-height: 1.6;
+    white-space: pre;
+    box-shadow: 0 16px 40px rgba(10, 12, 40, 0.35);
+
+    @include sm {
+      position: static;
+      align-self: flex-start;
+      max-width: 100%;
+      overflow-x: auto;
+      box-shadow: none;
+    }
+
+    &-line {
+      display: block;
+    }
+
+    &-keyword {
+      color: var(--web-accent);
+    }
+
+    &-type {
+      color: var(--web-positive);
+    }
+  }
+}

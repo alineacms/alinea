@@ -1,0 +1,100 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 32px;
+  border-radius: 22px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+
+  @include s {
+    padding: 24px 20px;
+  }
+
+  &.is-visual {
+    padding: 16px 16px 28px;
+  }
+
+  &-code {
+    height: 230px;
+  }
+
+  &-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &.is-visual &-body {
+    padding: 0 12px;
+  }
+
+  &-index {
+    align-self: flex-start;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--web-accent-soft);
+    color: var(--web-accent-strong);
+    font-family: var(--web-mono-font);
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+
+  &-number {
+    margin-bottom: 6px;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--web-accent);
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: var(--web-foreground);
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--web-foreground-faded);
+  }
+
+  &-chip {
+    display: block;
+    margin-top: 6px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-background);
+    font-family: var(--web-mono-font);
+    font-size: 13.5px;
+    color: var(--web-foreground);
+    overflow-x: auto;
+    white-space: nowrap;
+
+    &-key {
+      color: var(--web-accent);
+    }
+  }
+}

@@ -1,0 +1,23 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--web-accent);
+  text-decoration: none;
+  transition: color 0.2s ease-out;
+
+  &:is(:hover, :focus-visible) {
+    color: var(--web-accent-strong);
+  }
+
+  &-arrow {
+    transition: transform 0.2s ease-out;
+  }
+
+  &:is(:hover, :focus-visible) &-arrow {
+    transform: translateX(2px);
+  }
+}

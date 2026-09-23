@@ -4,8 +4,8 @@
   "_index": "Zx",
   "title": "Homepage",
   "hero": {
-    "headline": "Git-based CMS\nBuilt for Next.js",
-    "byline": "Open source headless CMS with minimal setup.\nFully typed content right in your repository.",
+    "headline": "Git-based CMS\nbuilt for Next.js",
+    "byline": "Open source headless CMS. Your content lives in your repository as fully typed files, and your editors get a fast dashboard they will actually like.",
     "button": {
       "_id": "30YJq6LMDGRTe9xpsVzIfGMjKrC",
       "_type": "entry",
@@ -18,94 +18,457 @@
       "_url": "https://alineacms.com/demo",
       "_title": "",
       "_target": "_blank",
-      "label": "Try a demo"
-    }
+      "label": "Try the demo"
+    },
+    "command": "npx alinea init"
   },
-  "body": [
+  "sections": [
     {
-      "_type": "FeaturesBlock",
-      "_id": "30YNsasXP9NIEdYEYlHqCndo1ze",
-      "items": [
+      "_id": "3JjOvjKqEzXrH6CzvYZZjYfLorK",
+      "_index": "a0",
+      "_type": "ProductShot"
+    },
+    {
+      "_id": "3JjOvjfZnce3zPbm7f5f9BQ9m5y",
+      "_index": "a1",
+      "_type": "Spotlight",
+      "heading": "Where Alinea shines",
+      "intro": "The things you won't find together in any other git-based CMS.",
+      "label": "Faster since 2.0",
+      "title": "Publish. It's live.\nNo build to wait for.",
+      "text": "Every publish is still a git commit, but your site doesn't wait for CI. It picks up the new content straight away. Skip builds for content-only commits and revalidate after each publish, and editors never wait on a deploy again.",
+      "checks": [
         {
-          "_id": "30YNslOjO09SbLEV1AaoVwENyfC",
+          "_id": "3JjOvlCbfqtfJRQgTSWPG7kkkgb",
           "_index": "a0",
-          "_type": "FeatureItem",
-          "icon": "IcRoundFastForward",
-          "title": "Minimal setup",
-          "description": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "Straightforward content modeling without dealing with databases and migrations."
-                }
-              ]
-            }
-          ]
+          "_type": "Item",
+          "text": "Content syncs to your running site on every commit"
         },
         {
-          "_id": "30YNsnYgc4ro26LXrUQwnQJEKbK",
+          "_id": "3JjOvpiuDNx3c5gLru8ss88irfa",
           "_index": "a1",
-          "_type": "FeatureItem",
-          "icon": "MdiSourceBranch",
-          "title": "Git based",
-          "description": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "Version controlled content in your repository. Easily branch and feature test content changes."
-                }
-              ]
-            }
-          ]
+          "_type": "Item",
+          "text": "Content-only commits can skip the rebuild entirely"
         },
         {
-          "_id": "30YNt0qo4xvhvDqL91JXKxYxaR6",
+          "_id": "3JjOvkoP5Rz7JVNyAyCcOhMYj9A",
           "_index": "a2",
-          "_type": "FeatureItem",
-          "icon": "MdiLanguageTypescript",
-          "title": "Fully typed",
-          "description": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "An optimized, type-safe experience for Typescript users without overcomplication."
-                }
-              ]
-            }
-          ]
+          "_type": "Item",
+          "text": "Code changes still deploy the way they always have"
+        }
+      ],
+      "link": {
+        "_id": "3JjOvnCmYnig88NF3H7WoQmudho",
+        "_type": "entry",
+        "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48",
+        "label": "Set up instant publishing"
+      },
+      "illustration": "publishFlow",
+      "snippets": [
+        {
+          "_id": "3JjOvnbefUdWN4SKN8ZENuootwH",
+          "_index": "a0",
+          "_type": "Snippet",
+          "filename": "vercel.json",
+          "code": "{\n  \"ignoreCommand\":\n    \"git diff --quiet HEAD^ HEAD\n     -- . ':!content'\"\n}"
+        },
+        {
+          "_id": "3JjOvl3GXWH6Oyiqh6c4peuKNKl",
+          "_index": "a1",
+          "_type": "Snippet",
+          "filename": "app/api/cms/route.ts",
+          "code": "createHandler({\n  cms,\n  afterCommit() {\n    revalidatePath('/', 'layout')\n  }\n})"
         }
       ]
     },
     {
-      "_type": "TemplateBlock",
-      "_id": "30aGHAsnfVeM1QVG7EszUkM2q55",
+      "_id": "3JjOvpnh6hmPMXLUeLPoYOTmaa3",
+      "_index": "a2",
+      "_type": "CardPair",
+      "attached": true,
+      "cards": [
+        {
+          "_id": "3JjOvpNLQs6sHnuJYfZTJRPPgEK",
+          "_index": "a0",
+          "_type": "CodeCard",
+          "title": "Live previews in one line",
+          "text": "Add one component to your layout and every page previews drafts as editors type. No per-component wiring, no preview routes, and server components render the draft on the server.",
+          "filename": "app/layout.tsx",
+          "code": "<body>\n  {children}\n  <cms.previews widget />\n</body>",
+          "chips": [
+            {
+              "_id": "3JjOvpJQSUSigJwgCM5J6iewTyQ",
+              "_index": "a0",
+              "_type": "Item",
+              "text": "React Server Components"
+            },
+            {
+              "_id": "3JjOviweowtnmb5YqBfdPVR26v1",
+              "_index": "a1",
+              "_type": "Item",
+              "text": "Your own routes and styles"
+            },
+            {
+              "_id": "3JjOvifeY2DZPbkHi0Rtbmyli5z",
+              "_index": "a2",
+              "_type": "Item",
+              "text": "Full-screen preview"
+            }
+          ]
+        },
+        {
+          "_id": "3JjOvqE93ec4cf6H1MzLTCwDqb5",
+          "_index": "a1",
+          "_type": "BarsCard",
+          "title": "A tiny footprint",
+          "text": "Alinea installs 4 packages. Other CMSs pull in hundreds, which means slower installs, bigger lockfiles and more to audit.",
+          "bars": [
+            {
+              "_id": "3JjOvkRHDxmSnS4HVC09CQgDtjD",
+              "_index": "a0",
+              "_type": "Bar",
+              "name": "Alinea",
+              "count": 4,
+              "size": "21 MB",
+              "highlight": true
+            },
+            {
+              "_id": "3JjOvlDRpPVXzCCBM28H60RR8ir",
+              "_index": "a1",
+              "_type": "Bar",
+              "name": "Keystatic",
+              "count": 206,
+              "size": "122 MB",
+              "highlight": false
+            },
+            {
+              "_id": "3JjOvpNGWHxWY1rVpDSnIVJYaZN",
+              "_index": "a2",
+              "_type": "Bar",
+              "name": "Payload",
+              "count": 260,
+              "size": "288 MB",
+              "highlight": false
+            },
+            {
+              "_id": "3JjOvooMPB9EVJKMmBSDjhzUjki",
+              "_index": "a3",
+              "_type": "Bar",
+              "name": "Decap",
+              "count": 523,
+              "size": "259 MB",
+              "highlight": false
+            },
+            {
+              "_id": "3JjOvmeoJn1hcUM1mwI4aimjaam",
+              "_index": "a4",
+              "_type": "Bar",
+              "name": "Sanity",
+              "count": 912,
+              "size": "504 MB",
+              "highlight": false
+            },
+            {
+              "_id": "3JjOvmwkAIWpxtm9KGmkDZ39CdL",
+              "_index": "a5",
+              "_type": "Bar",
+              "name": "TinaCMS",
+              "count": 954,
+              "size": "655 MB",
+              "highlight": false
+            }
+          ],
+          "footnote": "Packages and disk size of a clean npm install, excluding React and Next.js. Measured September 2026."
+        }
+      ]
+    },
+    {
+      "_id": "3JjOvpBS8UrfUJTzZjBaGOzAN9B",
+      "_index": "a3",
+      "_type": "FeatureGrid",
+      "title": "Rebuilt from the dashboard down",
+      "label": "New in 2.0",
+      "link": {
+        "_id": "3JjOvlfY4VngeP5sMzODVgQbMNP",
+        "_type": "url",
+        "_url": "/changelog",
+        "_title": "Full changelog",
+        "_target": "_self",
+        "label": "Full changelog"
+      },
+      "panel": true,
+      "items": [
+        {
+          "_id": "3JjOvnvK9XRwTsawyRdzLbZ9yo5",
+          "_index": "a0",
+          "_type": "Feature",
+          "icon": "StrokeAccessibility",
+          "tag": "Since 2.0",
+          "title": "An accessible dashboard",
+          "text": "Rebuilt on React Aria Components: keyboard navigation, focus management and screen reader support throughout."
+        },
+        {
+          "_id": "3JjOvkmcC5yUV3DmvbY58mCBD7u",
+          "_index": "a1",
+          "_type": "Feature",
+          "icon": "StrokeShieldCheck",
+          "tag": "Since 1.7",
+          "title": "Roles and permissions",
+          "text": "Decide who can create, edit, publish or upload, scoped by workspace, root, type, field, entry and locale."
+        },
+        {
+          "_id": "3JjOvoiAnzcMvCIBO6zZKNTABGL",
+          "_index": "a2",
+          "_type": "Feature",
+          "icon": "StrokeCode",
+          "tag": "Since 2.0",
+          "title": "Dashboard components",
+          "text": "Build custom views with the same accessible React components the dashboard is made of, from alinea/components."
+        },
+        {
+          "_id": "3JjOvokVrTZ2MOsYh300FtAvO0s",
+          "_index": "a3",
+          "_type": "Feature",
+          "icon": "StrokeGlobe",
+          "tag": "Since 2.0",
+          "title": "Per-field translations",
+          "text": "Field.localiser keeps every locale of a value in one field, with fallbacks, next to fully translated pages."
+        },
+        {
+          "_id": "3JjOvkXeanXOYct2uInKsrn0EAl",
+          "_index": "a4",
+          "_type": "Feature",
+          "icon": "StrokeLink",
+          "tag": "Since 2.0",
+          "title": "URL aliases and backlinks",
+          "text": "Renamed pages keep their old URLs for redirects, and every entry shows what links to it."
+        },
+        {
+          "_id": "3JjOvodD38gOiQ0SOFYo0dFpQ7r",
+          "_index": "a5",
+          "_type": "Feature",
+          "icon": "StrokeHook",
+          "tag": "Since 2.0",
+          "title": "Commit hooks",
+          "text": "Rewrite changes before they are committed, or revalidate, notify and deploy after."
+        }
+      ]
+    },
+    {
+      "_id": "3JjOvjPGqugZsMGrjVGWQAlzdzn",
+      "_index": "a4",
+      "_type": "FeatureGrid",
+      "title": "Everything else, done properly",
+      "description": "The basics every team needs, without a database to run or a vendor to depend on.",
+      "panel": false,
+      "anchor": "features",
+      "items": [
+        {
+          "_id": "3JjOvkCgyTL5I9glRPuKpVw3yba",
+          "_index": "a0",
+          "_type": "Feature",
+          "icon": "StrokeGitBranch",
+          "title": "Content in git",
+          "text": "Every entry is a JSON file in your repository. Review, branch and roll back content like code."
+        },
+        {
+          "_id": "3JjOvj7CkF401qmvapCGb6QnpT7",
+          "_index": "a1",
+          "_type": "Feature",
+          "icon": "StrokeCode",
+          "title": "Typed, no codegen",
+          "text": "Query types come straight from your schema. No generate step and no stale types."
+        },
+        {
+          "_id": "3JjOvoyw8BAP8YWYCF7RetVzO24",
+          "_index": "a2",
+          "_type": "Feature",
+          "icon": "StrokeSearch",
+          "title": "No database server",
+          "text": "Content is indexed in SQLite, bundled with your site. Fast, fuzzy search in the dashboard."
+        },
+        {
+          "_id": "3JjOvjYxCURFqClrTOHhUEkLI0R",
+          "_index": "a3",
+          "_type": "Feature",
+          "icon": "StrokeCloud",
+          "title": "Self-host or Cloud",
+          "text": "Run the backend on your own database with one of eight drivers, or let Alinea Cloud handle it."
+        },
+        {
+          "_id": "3JjOvpMPmso6UVnQET0aj6p7kMY",
+          "_index": "a4",
+          "_type": "Feature",
+          "icon": "StrokeSparkle",
+          "title": "Ready for coding agents",
+          "text": "llms-full.txt ships with the package, so AI agents know the full API."
+        },
+        {
+          "_id": "3JjOvmBACcRwGTTXJFajS8ABDII",
+          "_index": "a5",
+          "_type": "Feature",
+          "icon": "StrokeHeart",
+          "title": "Open source",
+          "text": "MIT licensed and part of the Vercel Open Source Program."
+        }
+      ]
+    },
+    {
+      "_id": "3JjOvigrbkK2yqPDnBI6BckX4j6",
+      "_index": "a5",
+      "_type": "Steps",
+      "title": "From schema to published page",
+      "description": "Three steps, all in your own repository. Nothing to migrate, nothing extra to host.",
+      "numbered": false,
+      "steps": [
+        {
+          "_id": "3JjOviany64uzGhFp7EyAi5ofDg",
+          "_index": "a0",
+          "_type": "Step",
+          "title": "Model your content",
+          "text": "Describe types and fields in TypeScript, right in your codebase. No migrations, no separate admin project.",
+          "visual": "code",
+          "code": "const BlogPost = Config.document(\n  'Blog post', {\n  fields: {\n    title: Field.text('Title'),\n    cover: Field.image('Cover'),\n    body: Field.richText('Body')\n  }\n})"
+        },
+        {
+          "_id": "3JjOvjP9nKZQ5eKy431R47SmrQg",
+          "_index": "a1",
+          "_type": "Step",
+          "title": "Edit in the dashboard",
+          "text": "Editors get a generated dashboard with drafts, previews and media. They never see a line of JSON.",
+          "visual": "editor",
+          "code": ""
+        },
+        {
+          "_id": "3JjOvoPCMP4XnpwPTgrTV5fwF6t",
+          "_index": "a2",
+          "_type": "Step",
+          "title": "Publish with git",
+          "text": "Publishing writes a commit to your repository, and your site deploys like any other change.",
+          "visual": "commits",
+          "code": ""
+        }
+      ]
+    },
+    {
+      "_id": "3JjOvkLgdFYZjdVjWQZFeQfEzEp",
+      "_index": "a6",
+      "_type": "CodeShowcase",
+      "title": "Typed from schema to page",
+      "text": "Query content from server components with an API that knows your schema. Your editor autocompletes every field, and the compiler catches the rest.",
+      "checks": [
+        {
+          "_id": "3JjOvjoNA3odbHiEHNllMGxRyLG",
+          "_index": "a0",
+          "_type": "Item",
+          "text": "Autocomplete for every field and type"
+        },
+        {
+          "_id": "3JjOvjjU0sltQWPVVxo8DsQNjLd",
+          "_index": "a1",
+          "_type": "Item",
+          "text": "Select exactly the shape your component needs"
+        },
+        {
+          "_id": "3JjOvmUGQhoM9UwmoesStzzpxkZ",
+          "_index": "a2",
+          "_type": "Item",
+          "text": "Follow links between entries in a single query"
+        }
+      ],
+      "link": {
+        "_id": "3JjOvmJtZUCM9MmqjPCT8cKzTvb",
+        "_type": "entry",
+        "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2",
+        "label": "Read the query docs"
+      },
+      "filename": "app/blog/[slug]/page.tsx",
+      "code": "export default async function Post({params}) {\n  const {slug} = await params\n  const post = await cms.get({\n    type: BlogPost,\n    url: `/blog/${slug}`,\n    select: {\n      title: BlogPost.title,\n      publishDate: BlogPost.publishDate,\n      body: BlogPost.body\n    }\n  })\n  return <Article {...post} />\n}",
+      "tooltip": "const post: {\n  title: string\n  publishDate: string\n  body: TextDoc\n}"
+    },
+    {
+      "_id": "3JjOvluOLIBS3yTe1KwrX2cR4eJ",
+      "_index": "a7",
+      "_type": "CompareCards",
+      "title": "Host it your way",
+      "description": "Alinea runs inside your Next.js app. Keep everything on your own infrastructure, or let Alinea Cloud take care of sign-in and publishing.",
+      "cards": [
+        {
+          "_id": "3JjOvooJfHNU03xyZ1cwKPYKNOo",
+          "_index": "a0",
+          "_type": "Card",
+          "title": "Self-host",
+          "badge": "Free, MIT licensed",
+          "tone": "default",
+          "text": "The dashboard ships with your app and deploys wherever Next.js runs. You stay in control of authentication and access.",
+          "checks": [
+            {
+              "_id": "3JjOvmyaGPhysoBy8AOOKLtsFaA",
+              "_index": "a0",
+              "_type": "Item",
+              "text": "Full control over data and access"
+            },
+            {
+              "_id": "3JjOviw1gnaPeEAFl7tvqgWWgLK",
+              "_index": "a1",
+              "_type": "Item",
+              "text": "Any host that runs Next.js"
+            }
+          ],
+          "code": "export default withAlinea(nextConfig)"
+        },
+        {
+          "_id": "3JjOvihhWk7UBtEeQ2kIEGbjdaK",
+          "_index": "a1",
+          "_type": "Card",
+          "title": "Alinea Cloud",
+          "badge": "Free while in beta",
+          "tone": "accent",
+          "text": "Connect your GitHub repository and invite editors. Cloud handles sign-in and commits published content back to your repository.",
+          "checks": [
+            {
+              "_id": "3JjOvqCfq0t0QxH1GwMYYeok4We",
+              "_index": "a0",
+              "_type": "Item",
+              "text": "Sign-in for editors, no auth to build"
+            },
+            {
+              "_id": "3JjOvjg9k2IteGUE53TncxgdGAk",
+              "_index": "a1",
+              "_type": "Item",
+              "text": "Publishing straight to GitHub"
+            }
+          ],
+          "code": "",
+          "link": {
+            "_id": "3JjOvpX3kQEANVGEra8eCAanWLt",
+            "_type": "url",
+            "_url": "/cloud",
+            "_title": "Learn about Alinea Cloud",
+            "_target": "_self",
+            "label": "Learn about Alinea Cloud"
+          }
+        }
+      ]
+    },
+    {
+      "_id": "3JjOvkduXgiMgyNoUaQc5VZoUfk",
+      "_index": "a8",
+      "_type": "Template",
       "image": {
         "_id": "30atwror7UlkraJ5B5gQCJmCRQx",
         "_type": "image",
         "_entry": "30atwo31g5bOSNAwqKd1h0H7kQR"
       },
       "imagePosition": "left",
-      "title": "Get started with a template",
+      "title": "Start from Vetra",
       "description": [
         {
           "_type": "paragraph",
           "content": [
             {
               "_type": "text",
-              "text": "Vetra is a ready-made template for Alinea built in Next.js."
-            },
-            {
-              "_type": "hardBreak"
-            },
-            {
-              "_type": "text",
-              "text": "Designed to help you get started quickly with a production ready CMS."
+              "text": "A ready-made Next.js template with a production-ready Alinea setup, so you can start from a working site."
             }
           ]
         },
@@ -120,7 +483,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Beautiful blog with archive"
+                      "text": "Blog with archive"
                     }
                   ]
                 }
@@ -134,7 +497,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Includes categories and authors"
+                      "text": "Categories and authors"
                     }
                   ]
                 }
@@ -163,7 +526,7 @@
         "_url": "https://github.com/alineacms/template-vetra",
         "_title": "",
         "_target": "_blank",
-        "label": "Check it out on GitHub"
+        "label": "View on GitHub"
       },
       "link": {
         "_id": "30aGqf7BZ19sUtALjUy0DTgcJNe",
@@ -175,240 +538,172 @@
       }
     },
     {
-      "_type": "ImageTextBlock",
-      "_id": "30b1NfG0dxg8h0oihthWoqfmYEb",
-      "image": {
-        "_id": "30d8LDWLgQ2PtElGkGlWLbxCAYM",
-        "_type": "image",
-        "_entry": "30d8L6eW48c6flEKTY16bifAaUz",
-        "alt": "Alinea dashboard screenshot"
-      },
-      "imagePosition": "right",
-      "title": "Organize content in a clear, hierarchical structure",
-      "description": [
+      "_id": "3JjOvpN8Qt6hAii3DsEqO3hGcYF",
+      "_index": "a9",
+      "_type": "Faq",
+      "title": "Questions, answered",
+      "text": [
         {
           "_type": "paragraph",
           "content": [
             {
               "_type": "text",
-              "text": "Editors can easily navigate, reorder, and manage pages in a way that makes sense for any project. Navigation stays simple, whether you’re editing in the dashboard or working with the API."
-            }
-          ]
-        }
-      ],
-      "button": {}
-    },
-    {
-      "_type": "CodeTextBlock",
-      "_id": "30b1MgT7V1SMQlSXIkvZ4CYslcm",
-      "code": "// Configure a CMS within minutes\n\nconst BlogPost = Config.document('Blog post', {\n  fields: {\n    title: Field.text('Title'),\n    body: Field.richText('Body text')\n  }\n})\n\nconst Blog = Config.document('Blog', {\n  contains: [BlogPost]\n})\n\nconst cms = createCMS({schema: {Blog, BlogPost}})",
-      "codePosition": "left",
-      "title": "Describe your schema in code, get back fully typed content",
-      "description": [
-        {
-          "_type": "paragraph",
-          "content": [
+              "text": "Can't find what you need? Ask on "
+            },
             {
               "_type": "text",
-              "text": "Define your content schema in code and get fully typed content instantly — no generation step needed. Skip the endless form clicks and manage structure with the same workflow: branch, test, and iterate in code."
-            }
-          ]
-        }
-      ],
-      "button": {}
-    },
-    {
-      "_type": "ImageTextBlock",
-      "_id": "30d8SOd8IKw1Z7HDzWE1iw3QwWw",
-      "image": {
-        "_id": "30d8aJObcp1hcTTpmrXhA7l25Z0",
-        "_type": "image",
-        "_entry": "30d8aGj8XsC9oUOSVKNlXMQd2Kl",
-        "alt": "Alinea content tree screenshot"
-      },
-      "imagePosition": "right",
-      "title": "Publish with control",
-      "description": [
-        {
-          "_type": "paragraph",
-          "content": [
+              "text": "GitHub",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "3JjOvpU5OJBR8TEbnKbEjPEJP1f",
+                  "_link": "url",
+                  "href": "https://github.com/alineacms/alinea",
+                  "target": "_blank"
+                }
+              ]
+            },
             {
               "_type": "text",
-              "text": "Work on content without publishing right away. Alinea makes it easy to manage drafts, archive old pages, and keep your workspace tidy. The workflow stays simple for everyday tasks, but gives you the structure and control needed for larger, more complex projects."
+              "text": "."
             }
           ]
         }
       ],
-      "button": {}
-    },
-    {
-      "_type": "CodeTextBlock",
-      "_id": "30d8eGs51u1DI2dyGhkISNe8KB6",
-      "code": "// Query content within React components\n\nconst blog = await cms.get({\n  type: Blog\n})\n\nconst posts = await cms.find({\n  type: BlogPost,\n  select: {title: BlogPost.title, body: BlogPost.body}\n  // ... filter, sort, paginate, order by, etc.\n})",
-      "codePosition": "left",
-      "title": "Content is local, versioned and deploys with your site",
-      "description": [
-        {
-          "_type": "paragraph",
-          "content": [
-            {
-              "_type": "text",
-              "text": "Access content through a developer-friendly query API. Because everything is bundled at build time, there is no need for runtime fetching or external requests."
-            }
-          ]
-        }
-      ],
-      "button": {}
-    },
-    {
-      "_type": "FeaturesBlock",
-      "_id": "30gpNz3rEan9j2XikqIfxKaghJn",
       "items": [
         {
-          "_id": "30gpOMpwGo5T4dhGMXcnXEXjBXb",
+          "_id": "3JjOvltLmmBeqJD2aBZX5OndETq",
           "_index": "a0",
-          "_type": "FeatureItem",
-          "icon": "ProiconsOpenSource",
-          "title": "Open source",
-          "description": [
+          "_type": "Question",
+          "question": "Do I need a database?",
+          "answer": [
             {
               "_type": "paragraph",
               "content": [
                 {
                   "_type": "text",
-                  "text": "Open source by design, Alinea gives you full control over your CMS. Use it, extend it, or contribute back."
+                  "text": "No. Content is stored as JSON files in your repository. Alinea builds an SQLite index from those files for querying and search, so there is no database server to run."
                 }
               ]
             }
           ]
         },
         {
-          "_id": "30gpONndCs15dGVedmdUgN2oCeC",
+          "_id": "3JjOvnlxcvQhbSinaRwFAsUjaWq",
           "_index": "a1",
-          "_type": "FeatureItem",
-          "icon": "RiFlashlightFill",
-          "title": "Live Previews",
-          "description": [
+          "_type": "Question",
+          "question": "Does it work with the App Router and server components?",
+          "answer": [
             {
               "_type": "paragraph",
               "content": [
                 {
                   "_type": "text",
-                  "text": "See exactly what content changes look like in real time. Preview updates instantly with full support for React Server Components."
+                  "text": "Yes. Alinea is built for the Next.js App Router. You query content directly in server components, and live previews render drafts on the server as editors type."
                 }
               ]
             }
           ]
         },
         {
-          "_id": "30gpOY2tbq8H85U71uAVyd1c7q6",
+          "_id": "3JjOvm2HtCy914r68xZnvq6HWJm",
           "_index": "a2",
-          "_type": "FeatureItem",
-          "icon": "IcBaselineDashboardCustomize",
-          "title": "Custom Fields",
-          "description": [
+          "_type": "Question",
+          "question": "Can I host it somewhere other than Vercel?",
+          "answer": [
             {
               "_type": "paragraph",
               "content": [
                 {
                   "_type": "text",
-                  "text": "Extend Alinea with your own fields. Create custom inputs with simple constructor functions. Tailored to exactly what your editors need."
+                  "text": "Yes. The dashboard ships with your Next.js app and deploys wherever Next.js runs. Run the backend yourself on your own database, or let Alinea Cloud handle sign-in and publishing."
                 }
               ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "_type": "QuickLinksBlock",
-      "_id": "30grXuuQKS10oF93NRo8yrkvEmY",
-      "items": [
-        {
-          "_id": "30grYHybqwyZ3rOkzWahWa9XssA",
-          "_index": "a0",
-          "_type": "Item",
-          "icon": "RiFlashlightFill",
-          "link": {
-            "_id": "30grfDuDyDZUsSF4v3HSZYUKmdK",
-            "_type": "entry",
-            "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q",
-            "label": ""
-          }
         },
         {
-          "_id": "30grYu1i5IqeEZD3Gi0zG3tLlkv",
-          "_index": "a1",
-          "_type": "Item",
-          "icon": "IcRoundPublish",
-          "link": {
-            "_id": "30grh4Imy07gkciS2N5xJm2DgyK",
-            "_type": "entry",
-            "_entry": "2YlP39QVFZOzf94YMwDVrzd4gNz",
-            "label": "Editorial workflow"
-          }
-        },
-        {
-          "_id": "30grZ56H732KEf0zVaScH4vGBkj",
-          "_index": "a2",
-          "_type": "Item",
-          "icon": "IcRoundInsertDriveFile",
-          "link": {
-            "_id": "30grjZHzxjHn0Gdo9ENlReoe5K2",
-            "_type": "entry",
-            "_entry": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
-            "label": "Query engine"
-          }
-        },
-        {
-          "_id": "30guDtAVNFcZ3mrNbIHXufTSunz",
+          "_id": "3JjOvmz78vH2AXc6hsmHiKbjrTD",
           "_index": "a3",
-          "_type": "Item",
-          "icon": "IcBaselineDashboardCustomize",
-          "link": {
-            "_id": "30guJ8pp1O7LHSzeSiTE1NHdq01",
-            "_type": "entry",
-            "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
-            "label": ""
-          }
+          "_type": "Question",
+          "question": "Do content edits trigger a rebuild?",
+          "answer": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "They do not have to. Every publish is a git commit and your site picks up the new content without waiting for a build. Content-only commits can skip the rebuild, and static pages can be revalidated after each publish. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "instant publishing",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjOvpHpGXnPSRNWodNCSUbs0KB",
+                      "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48",
+                      "_link": "entry"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
         },
         {
-          "_id": "30guDzlWnhXq1bxb5u07EdqG0WM",
+          "_id": "3JjOvomzUWgS8QJ1bdBAuX4XTkZ",
           "_index": "a4",
-          "_type": "Item",
-          "icon": "IcBaselineWorkspaces",
-          "link": {
-            "_id": "30guLkgd54TdG8LnH2YPU0p8zhv",
-            "_type": "entry",
-            "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-            "label": ""
-          }
-        },
-        {
-          "_id": "30guE4193sRTy0vaLra37vKoiup",
-          "_index": "a5",
-          "_type": "Item",
-          "icon": "PhGlobe",
-          "link": {
-            "_id": "30guMqWPuF2tnwc1y6EIKl08fuR",
-            "_type": "entry",
-            "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn",
-            "label": ""
-          }
-        },
-        {
-          "_id": "30guE7Wghz69C67KLQgv7u3Gd6A",
-          "_index": "a6",
-          "_type": "Item",
-          "icon": "IcBaselineCloudQueue",
-          "link": {
-            "_id": "30guP9TP51Efa5V7zRVoeEuzZsV",
-            "_type": "entry",
-            "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
-            "label": "Self-host or cloud host"
-          }
+          "_type": "Question",
+          "question": "How do I upgrade from 1.x?",
+          "answer": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Follow the "
+                },
+                {
+                  "_type": "text",
+                  "text": "upgrade guide",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjOvoqDMKszS97T7RP1qUkpU2N",
+                      "_entry": "3JjNWipmERvnXDeWpUbqsCO0MTL",
+                      "_link": "entry"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", which walks through moving an existing 1.x project to 2.0."
+                }
+              ]
+            }
+          ]
         }
       ]
+    },
+    {
+      "_id": "3JjOvq6ZDWzrcY3A9LRGgtGEf1F",
+      "_index": "aA",
+      "_type": "Cta",
+      "title": "Ship content with your code",
+      "text": "Add Alinea to a Next.js project in a few minutes. Open source and MIT licensed.",
+      "link": {
+        "_id": "3JjOvlEGOLsltuz3NqqmXa1UnKH",
+        "_type": "entry",
+        "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+        "label": "Get started"
+      },
+      "command": "npx alinea init",
+      "background": "gradient"
     }
   ],
   "links": [

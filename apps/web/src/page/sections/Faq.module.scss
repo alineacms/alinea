@@ -1,0 +1,140 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr);
+  gap: 80px;
+
+  @media (max-width: 1199.999px) {
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 56px;
+  }
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  &-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 48px;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--web-foreground);
+
+    @include sm {
+      font-size: 32px;
+      line-height: 1.1;
+    }
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--web-outline);
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--web-foreground-faded);
+
+  &.is-intro {
+    font-size: 18px;
+    line-height: 1.55;
+  }
+
+  &.is-answer {
+    max-width: 640px;
+    margin-top: 12px;
+    font-size: 16.5px;
+    line-height: 1.6;
+  }
+
+  &-paragraph {
+    margin: 0;
+  }
+
+  &-link {
+    font-weight: 600;
+    color: var(--web-accent);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent-strong);
+    }
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding-left: 20px;
+  }
+}
+
+.item {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--web-outline);
+
+  &-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    font-family: var(--web-title-font);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--web-foreground);
+    list-style: none;
+    cursor: pointer;
+
+    @include s {
+      font-size: 18px;
+    }
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--web-accent);
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
+  }
+
+  &-icon {
+    display: flex;
+    flex-shrink: 0;
+    font-size: 20px;
+    color: var(--web-foreground-muted);
+
+    &-minus {
+      display: none;
+    }
+  }
+
+  &[open] &-icon {
+    color: var(--web-accent);
+  }
+
+  &[open] &-icon-plus {
+    display: none;
+  }
+
+  &[open] &-icon-minus {
+    display: block;
+  }
+}

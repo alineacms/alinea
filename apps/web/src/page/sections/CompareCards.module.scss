@@ -1,0 +1,81 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 40px;
+  border-radius: 24px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+
+  @include sm {
+    padding: 32px;
+  }
+
+  @include s {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+
+  &.is-accent {
+    border-color: color-mix(in srgb, var(--web-accent) 18%, transparent);
+    background: var(--web-accent-soft);
+  }
+
+  &.is-outline {
+    background: transparent;
+  }
+
+  &-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--web-foreground);
+
+    @include s {
+      font-size: 24px;
+    }
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: var(--web-foreground-faded);
+  }
+
+  &-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: auto;
+  }
+
+  &-link {
+    align-self: flex-start;
+  }
+}

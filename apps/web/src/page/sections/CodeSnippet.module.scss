@@ -1,0 +1,67 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 14px;
+  background: var(--web-code-background);
+  color: var(--web-code-foreground);
+  overflow: hidden;
+
+  &-filename {
+    padding: 10px 16px;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--web-code-foreground) 12%, transparent);
+    font-family: var(--web-mono-font);
+    font-size: 12px;
+    line-height: 1.5;
+    color: color-mix(in srgb, var(--web-code-foreground) 55%, transparent);
+  }
+
+  &-code {
+    flex-grow: 1;
+    min-width: 0;
+    overflow: auto;
+    font-family: var(--web-mono-font);
+    font-size: 13.5px;
+    line-height: 1.75;
+
+    :global(.shiki) {
+      margin: 0;
+      padding: 16px;
+      background: transparent !important;
+      font: inherit;
+      white-space: pre;
+    }
+
+    :global(.shiki code) {
+      font: inherit;
+    }
+  }
+
+  &.is-small &-code {
+    font-size: 12.5px;
+    line-height: 1.7;
+
+    :global(.shiki) {
+      padding: 14px 16px;
+    }
+  }
+
+  &.is-large {
+    border-radius: 22px;
+  }
+
+  &.is-large &-filename {
+    padding: 16px 24px;
+    font-size: 13px;
+  }
+
+  &.is-large &-code {
+    font-size: 14px;
+    line-height: 1.8;
+
+    :global(.shiki) {
+      padding: 24px;
+    }
+  }
+}

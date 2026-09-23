@@ -1,0 +1,78 @@
+@use '@/style' as *;
+
+.root {
+  --web-shot-scale: 1;
+
+  position: relative;
+  z-index: 0;
+  height: 760px;
+  display: flex;
+  justify-content: center;
+  margin-top: 72px;
+  padding-top: 80px;
+  border-radius: 32px;
+  overflow: hidden;
+
+  @media (max-width: 1199.999px) {
+    --web-shot-scale: 0.85;
+
+    height: 660px;
+    padding-top: 64px;
+  }
+
+  @include m {
+    --web-shot-scale: 0.75;
+
+    height: 440px;
+    justify-content: flex-start;
+    margin-top: 48px;
+    padding: 40px 0 0 40px;
+    border-radius: 24px;
+  }
+
+  @include s {
+    --web-shot-scale: 0.6;
+
+    height: 320px;
+    justify-content: flex-start;
+    margin-top: 40px;
+    padding: 32px 0 0 20px;
+    border-radius: 24px;
+  }
+
+  &-background {
+    z-index: -1;
+    object-fit: cover;
+  }
+
+  &-shot {
+    flex-shrink: 0;
+    width: calc(960px * var(--web-shot-scale));
+    height: calc(600px * var(--web-shot-scale));
+    border-radius: calc(14px * var(--web-shot-scale));
+    box-shadow: 0 40px 100px rgba(16, 24, 90, 0.45);
+  }
+
+  &-dashboard {
+    transform: scale(var(--web-shot-scale));
+    transform-origin: top left;
+  }
+
+  &.is-image {
+    height: auto;
+    justify-content: center;
+    padding: 80px 40px;
+
+    @include sm {
+      padding: 32px 20px;
+    }
+  }
+
+  &-image {
+    width: 100%;
+    max-width: 960px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(16, 24, 90, 0.45);
+  }
+}
