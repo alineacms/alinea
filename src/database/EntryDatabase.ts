@@ -171,7 +171,11 @@ export class EntryDatabase extends EntryLayer {
     await this.prepareSearch()
     await this.withReadConnection(async () => {
       await this.#db.run(sql`pragma optimize`)
-      await this.#db.run(sql`vacuum`)
+      // Rewriting the whole file only pays off when it has pages to reclaim.
+      const free = await this.#db.get<{freelist_count: number}>(
+        sql`pragma freelist_count`
+      )
+      if (free?.freelist_count) await this.#db.run(sql`vacuum`)
     })
   }
 

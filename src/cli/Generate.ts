@@ -97,9 +97,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const builds = genEffect(builder, () => indexing?.return())
   let afterGenerateCalled = false
 
-  async function writeStore(db: DevDB) {
-    return db.finalize()
-  }
   // One database serves the whole session: a changed config derives the
   // entries again in place instead of closing and reopening the file.
   let db: DevDB | undefined
@@ -116,6 +113,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           process.exit(1)
         }
       }
+      // The dashboard bundles while the entries are indexed; a failure is
+      // reported when the build writes its files.
+      const dashboard =
+        cmd === 'build' && !afterGenerateCalled && generatePackage(context, cms)
+      if (dashboard) dashboard.catch(() => {})
       const databaseOptions = {
         config: cms.config,
         rootDir,
@@ -136,12 +138,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const current = db
       const write = async (recordCount: number) => {
         let dbSize = 0
-        if (cmd === 'build') {
-          ;[, dbSize] = await Promise.all([
-            generatePackage(context, cms),
-            writeStore(current)
-          ])
-        }
+        if (dashboard)
+          [, dbSize] = await Promise.all([dashboard, current.finalize()])
         let message = `${cmd} ${location} in `
         const duration = performance.now() - now
         if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
