@@ -3,7 +3,7 @@
   outline: none;
   forced-color-adjust: none;
   scrollbar-width: thin;
-  scrollbar-color: var(--alinea-border-hover) transparent;
+  scrollbar-color: var(--alinea-border-strong) transparent;
   flex: 1;
 
   &:focus-visible {
@@ -57,7 +57,7 @@
   min-width: 0;
   box-sizing: border-box;
   outline: none;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   user-select: none;
   -webkit-user-drag: element;
   touch-action: none;
@@ -155,11 +155,11 @@
   transition: background 200ms;
 
   &:hover {
-    background: var(--alinea-muted-hover);
+    background: color-mix(in oklab, var(--alinea-muted) 85%, var(--alinea-fg));
   }
 
   &:active {
-    background: var(--alinea-muted-pressed);
+    background: color-mix(in oklab, var(--alinea-muted) 75%, var(--alinea-fg));
   }
 
   &:focus-visible {

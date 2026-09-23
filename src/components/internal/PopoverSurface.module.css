@@ -12,8 +12,8 @@
   min-height: unset;
   max-height: inherit;
   padding: 4px;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   border: 1px solid var(--alinea-border);
   background-color: var(--alinea-input);
-  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--alinea-shadow-raised);
 }

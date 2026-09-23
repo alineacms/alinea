@@ -31,7 +31,7 @@
   height: 24px;
   padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   background: transparent;
   color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
@@ -71,7 +71,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   outline: 2px solid transparent;
   outline-offset: -2px;
   text-align: center;
@@ -130,8 +130,8 @@
 /* A range fills the days between its ends and rounds the week edges */
 .Calendar[data-range] .Calendar-day.is-selected {
   border-radius: 0;
-  background-color: var(--alinea-primary-overlay);
-  color: var(--alinea-primary);
+  background-color: var(--alinea-primary-subtle);
+  color: var(--alinea-primary-subtle-fg);
 
   &.is-rangeStart,
   &.is-rangeEnd {
@@ -141,13 +141,13 @@
 
   &.is-rangeStart,
   &.is-weekStart {
-    border-start-start-radius: 8px;
-    border-end-start-radius: 8px;
+    border-start-start-radius: var(--alinea-radius);
+    border-end-start-radius: var(--alinea-radius);
   }
 
   &.is-rangeEnd,
   &.is-weekEnd {
-    border-start-end-radius: 8px;
-    border-end-end-radius: 8px;
+    border-start-end-radius: var(--alinea-radius);
+    border-end-end-radius: var(--alinea-radius);
   }
 }

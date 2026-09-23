@@ -9,7 +9,7 @@
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background: var(--alinea-input);
   color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
@@ -19,22 +19,22 @@
   transition: var(--alinea-transition);
 
   &:hover {
-    border-color: var(--alinea-border-hover);
-    outline-color: var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    outline-color: var(--alinea-muted);
   }
 
   &:focus-within {
-    border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-primary-overlay);
+    border-color: var(--alinea-primary);
+    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &:has(.DateField-segment[aria-invalid='true']) {
-    border-color: var(--alinea-border-danger);
-    outline-color: var(--alinea-danger-overlay);
+    border-color: var(--alinea-danger);
+    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &[aria-disabled='true'] {
-    background-color: var(--alinea-input-disabled);
+    background-color: var(--alinea-bg-muted);
     opacity: 0.5;
     pointer-events: none;
   }
@@ -50,12 +50,12 @@
   transition: var(--alinea-transition);
 
   &.is-placeholder {
-    color: var(--alinea-fg-subtle);
+    color: var(--alinea-fg-muted);
   }
 
   &:focus {
-    border-radius: 4px;
-    background-color: var(--alinea-primary-overlay);
+    border-radius: var(--alinea-radius-sm);
+    background-color: var(--alinea-primary-subtle);
     color: var(--alinea-primary);
     outline: none;
   }

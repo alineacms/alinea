@@ -2,24 +2,22 @@
   Each color sets two values; every variant and state is derived from them:
   --alinea-button-accent     the fill of a solid button, the text of the others
   --alinea-button-accent-fg  the text on a solid fill
+  --alinea-button-bg holds the resting fill so hover can be mixed from it.
 */
 .Button {
   --alinea-button-accent: var(--alinea-fg);
   --alinea-button-accent-fg: var(--alinea-fg);
   --alinea-button-bg: var(--alinea-muted);
-  --alinea-button-fg: var(--alinea-button-accent-fg);
-  --alinea-button-border: transparent;
-  --alinea-button-hover: color-mix(in oklab, var(--alinea-button-bg), var(--alinea-fg) 8%);
 
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 30px;
   padding: 3px 8px;
-  border: 1px solid var(--alinea-button-border);
-  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--alinea-radius);
   background: var(--alinea-button-bg);
-  color: var(--alinea-button-fg);
+  color: var(--alinea-button-accent-fg);
   font: inherit;
   font-size: var(--alinea-font-size-base);
   font-weight: 600;
@@ -36,7 +34,7 @@
 
   @media (hover: hover) {
     &:hover {
-      background: var(--alinea-button-hover);
+      background: color-mix(in oklab, var(--alinea-button-bg), var(--alinea-fg) 8%);
     }
   }
 
@@ -80,20 +78,25 @@
 
   &[data-variant='outline'],
   &[data-variant='ghost'] {
-    --alinea-button-bg: transparent;
-    --alinea-button-fg: var(--alinea-button-accent);
-    --alinea-button-hover: color-mix(in oklab, var(--alinea-button-accent) 10%, transparent);
+    background: transparent;
+    color: var(--alinea-button-accent);
+
+    @media (hover: hover) {
+      &:hover {
+        background: color-mix(in oklab, var(--alinea-button-accent) 10%, transparent);
+      }
+    }
   }
 
   &[data-variant='outline'] {
-    --alinea-button-border: color-mix(in oklab, var(--alinea-button-accent) 30%, transparent);
+    border-color: color-mix(in oklab, var(--alinea-button-accent) 30%, transparent);
   }
 
-  &[data-active] {
-    --alinea-button-bg: var(--alinea-selected);
-    --alinea-button-fg: var(--alinea-selected-fg);
-    --alinea-button-border: transparent;
-    --alinea-button-hover: var(--alinea-selected);
+  &[data-active],
+  &[data-active]:hover {
+    border-color: transparent;
+    background: var(--alinea-selected);
+    color: var(--alinea-selected-fg);
   }
 
   &[data-size='sm'] {
@@ -127,7 +130,9 @@
 
   &[data-size='icon-lg'][aria-expanded='true'] {
     --alinea-button-bg: var(--alinea-selected);
-    --alinea-button-fg: var(--alinea-selected-fg);
+
+    background: var(--alinea-button-bg);
+    color: var(--alinea-selected-fg);
   }
 }
 

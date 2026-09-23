@@ -31,7 +31,7 @@
   overflow-y: auto;
   padding: 22px;
   border: 1px solid var(--alinea-border);
-  border-radius: 16px;
+  border-radius: var(--alinea-radius-xl);
   background: var(--alinea-overlay);
   box-shadow: var(--alinea-shadow-modal);
   color: var(--alinea-fg);

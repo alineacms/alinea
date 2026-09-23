@@ -1,6 +1,6 @@
 .Link {
   position: relative;
-  color: var(--alinea-link);
+  color: var(--alinea-primary-subtle-fg);
   font-size: var(--alinea-font-size-base);
   text-decoration: underline;
   text-decoration-color: transparent;
@@ -15,7 +15,7 @@
   }
 
   &:hover {
-    color: var(--alinea-link-hover);
+    color: var(--alinea-primary);
     text-decoration-color: currentColor;
 
     &[data-variant='underline'] {
@@ -24,7 +24,7 @@
   }
 
   &:active {
-    color: var(--alinea-link-pressed);
+    color: var(--alinea-primary);
   }
 
   &:focus-visible::after {
@@ -32,7 +32,7 @@
     position: absolute;
     inset: -3px -6px;
     border: 2px solid var(--alinea-ring);
-    border-radius: 8px;
+    border-radius: var(--alinea-radius);
   }
 
   &[aria-disabled='true'] {

@@ -25,7 +25,7 @@
 
   @media (hover: hover) {
     &:hover {
-      color: var(--alinea-fg-hover);
+      color: var(--alinea-fg-strong);
     }
   }
 

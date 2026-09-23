@@ -9,7 +9,7 @@
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background: var(--alinea-input);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
@@ -18,21 +18,21 @@
   transition: var(--alinea-transition);
 
   &:hover {
-    border-color: var(--alinea-border-hover);
+    border-color: var(--alinea-border-strong);
   }
 
   &:focus-within {
     border-color: var(--alinea-primary);
-    outline-color: var(--alinea-primary-overlay);
+    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &:has(.TimeField-segment[aria-invalid='true']) {
-    border-color: var(--alinea-border-danger);
-    outline-color: var(--alinea-danger-overlay);
+    border-color: var(--alinea-danger);
+    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &[aria-disabled='true'] {
-    background-color: var(--alinea-input-disabled);
+    background-color: var(--alinea-bg-muted);
     opacity: 0.5;
     pointer-events: none;
   }
@@ -40,7 +40,7 @@
 
 .TimeField-segment {
   padding: 4px;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   color: var(--alinea-fg);
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -50,12 +50,12 @@
   }
 
   &.is-placeholder {
-    color: var(--alinea-fg-subtle);
+    color: var(--alinea-fg-muted);
     font-style: italic;
   }
 
   &[aria-invalid='true'] {
-    color: var(--alinea-border-danger);
+    color: var(--alinea-danger);
   }
 
   &:focus {
@@ -66,6 +66,6 @@
   }
 
   &[aria-invalid='true']:focus {
-    background: var(--alinea-danger-strong);
+    background: var(--alinea-danger);
   }
 }

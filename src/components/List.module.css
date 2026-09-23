@@ -25,17 +25,13 @@
   text-align: left;
 }
 
-.ListItem-header[data-action][data-focus-visible] {
+.ListItem-header[data-action]:focus-visible {
   outline-offset: -2px;
 }
 
 .ListItem[data-selected] {
   background: var(--alinea-muted);
   color: var(--alinea-fg);
-}
-
-.ListItem[data-selected] .ListItem-header[data-action] {
-  --alinea-button-hovered: var(--alinea-muted-hover);
 }
 
 .ListItem[data-selected] .ListItemVisual {
@@ -76,7 +72,7 @@
 .ListItemVisual {
   align-items: center;
   background: var(--alinea-bg-muted);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   color: var(--alinea-fg-muted);
   display: inline-flex;
   flex: 0 0 auto;
@@ -114,13 +110,11 @@
 }
 
 .ListItemStatus {
-  --alinea-list-status-color: var(--alinea-fg-subtle);
-
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: var(--alinea-list-status-color);
+  color: var(--alinea-fg-muted);
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
@@ -130,24 +124,24 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--alinea-list-status-color);
+  background: currentColor;
   content: '';
 }
 
 .ListItemStatus[data-tone='accent'] {
-  --alinea-list-status-color: var(--alinea-primary-subtle-fg);
+  color: var(--alinea-primary-subtle-fg);
 }
 
 .ListItemStatus[data-tone='positive'] {
-  --alinea-list-status-color: var(--alinea-status-published-fg);
+  color: var(--alinea-success-subtle-fg);
 }
 
 .ListItemStatus[data-tone='warning'] {
-  --alinea-list-status-color: var(--alinea-warning-subtle-fg);
+  color: var(--alinea-warning-subtle-fg);
 }
 
 .ListItemStatus[data-tone='danger'] {
-  --alinea-list-status-color: var(--alinea-danger-subtle-fg);
+  color: var(--alinea-danger-subtle-fg);
 }
 
 .ListEmpty {
@@ -213,8 +207,8 @@
   transition: color var(--alinea-transition);
 }
 
-.ListLabel .ListLabel-toggle[data-hovered],
-.ListLabel .ListLabel-toggle[data-pressed],
+.ListLabel .ListLabel-toggle:hover,
+.ListLabel .ListLabel-toggle:active,
 .ListLabel .ListLabel-toggle[data-active] {
   background: transparent;
 }
@@ -288,7 +282,7 @@
   max-width: calc(100% - 20px);
   height: 6px;
   background: var(--alinea-primary);
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   transform: translate(-50%, -50%);
 }
 
@@ -334,7 +328,7 @@
   top: 50%;
   width: 30px;
   height: 4px;
-  background: light-dark(var(--alinea-gray-300), var(--alinea-gray-400));
+  background: var(--alinea-fg-disabled);
   border-radius: 999px;
   transform: translate(-50%, -50%);
 }
@@ -346,7 +340,7 @@
 
 .ListRowDragHandle:focus-visible::before {
   background: var(--alinea-primary);
-  outline: 2px solid var(--alinea-primary-overlay);
+  outline: 2px solid color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   outline-offset: 2px;
 }
 
@@ -412,8 +406,8 @@
   color: var(--alinea-fg-muted);
 }
 
-.ListRowFoldButton[data-hovered],
-.ListRowFoldButton[data-pressed],
+.ListRowFoldButton:hover,
+.ListRowFoldButton:active,
 .ListRowFoldButton[data-active] {
   color: var(--alinea-fg);
 }
@@ -456,15 +450,15 @@
   align-items: center;
   gap: 10px;
   border: 1px solid color-mix(in srgb, var(--alinea-border) 70%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--alinea-bg) 94%, white);
-  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-overlay);
+  box-shadow: var(--alinea-shadow-raised);
 }
 
 .ListDragPreview-icon {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;

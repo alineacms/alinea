@@ -22,7 +22,7 @@
   color: inherit;
   font: inherit;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   outline: none;
   cursor: pointer;
   transition: color var(--alinea-transition);

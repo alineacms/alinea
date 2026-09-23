@@ -35,7 +35,7 @@
     z-index: 10;
     pointer-events: none;
     background: color-mix(in srgb, var(--alinea-bg) 74%, transparent);
-    outline: 2px dashed var(--alinea-blue-600);
+    outline: 2px dashed var(--alinea-primary);
     outline-offset: -10px;
   }
 }
@@ -108,7 +108,7 @@
   margin: 0 -4px;
   padding: 2px 4px;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   background: none;
   color: inherit;
   font: inherit;
@@ -153,7 +153,7 @@
   }
 
   &[aria-selected='true'] {
-    background: color-mix(in srgb, var(--alinea-blue-600) 9%, var(--alinea-bg));
+    background: var(--alinea-selected);
   }
 
   /* Rows that cannot be selected */
@@ -283,7 +283,7 @@
 .TableThumbnail-image {
   height: calc(var(--alinea-table-row-height) - 13px);
   aspect-ratio: 3 / 2;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   background: var(--alinea-muted);
   object-fit: cover;
 }

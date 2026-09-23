@@ -7,35 +7,35 @@
   display: flex;
   position: relative;
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background-color: var(--alinea-input);
   transition: var(--alinea-transition);
   transition-property: border-color, box-shadow, opacity;
 
   &:hover {
-    border-color: var(--alinea-border-hover);
-    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    box-shadow: 0 0 0 3px var(--alinea-muted);
   }
 
   &:focus-within {
-    border-color: var(--alinea-border-accent);
-    box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    border-color: var(--alinea-primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &:has(.NumberFieldInput[aria-invalid='true']) {
-    border-color: var(--alinea-border-danger);
-    box-shadow: 0 0 0 3px var(--alinea-danger-overlay);
+    border-color: var(--alinea-danger);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &:has(.NumberFieldInput:disabled) {
     pointer-events: none;
-    background-color: var(--alinea-input-disabled);
+    background-color: var(--alinea-bg-muted);
     opacity: 0.5;
   }
 
   &:has(.NumberFieldInput[readonly]) {
     pointer-events: none;
-    background-color: var(--alinea-input-disabled);
+    background-color: var(--alinea-bg-muted);
   }
 }
 
@@ -54,7 +54,7 @@
   text-align: left;
 
   &::placeholder {
-    color: var(--alinea-input-placeholder);
+    color: var(--alinea-fg-disabled);
   }
 
   &[readonly] {
@@ -66,7 +66,7 @@
   display: flex;
   flex-direction: column;
   border-left: 1px solid var(--alinea-border);
-  border-radius: 0 7px 7px 0;
+  border-radius: 0 calc(var(--alinea-radius) - 1px) calc(var(--alinea-radius) - 1px) 0;
   overflow: hidden;
 }
 
@@ -87,7 +87,7 @@
 
   &:hover {
     background-color: color-mix(in oklab, var(--alinea-fg) 8%, transparent);
-    color: var(--alinea-primary-icon);
+    color: var(--alinea-primary-subtle-fg);
   }
 
   &:active {

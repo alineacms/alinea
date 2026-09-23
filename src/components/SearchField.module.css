@@ -8,31 +8,31 @@
   height: 32px;
   overflow: hidden;
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   outline: 3px solid transparent;
   background-color: var(--alinea-input);
   transition: var(--alinea-transition);
   transition-property: border-color, outline-color, opacity;
 
   &:hover {
-    border-color: var(--alinea-border-hover);
-    outline-color: var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    outline-color: var(--alinea-muted);
   }
 
   &:focus-within {
-    border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-primary-overlay);
+    border-color: var(--alinea-primary);
+    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &:has(.SearchFieldInput[aria-invalid='true']) {
-    border-color: var(--alinea-border-danger);
-    outline-color: var(--alinea-danger-overlay);
+    border-color: var(--alinea-danger);
+    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &:has(.SearchFieldInput:disabled),
   &:has(.SearchFieldInput[readonly]) {
     pointer-events: none;
-    background-color: var(--alinea-input-disabled);
+    background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-disabled);
   }
 
@@ -47,14 +47,14 @@
   height: 20px;
   margin-left: 8px;
   margin-right: -4px;
-  color: var(--alinea-fg-subtle);
+  color: var(--alinea-fg-muted);
   font-size: 20px;
 }
 
 .SearchFieldSpinner {
   flex: 0 0 auto;
   margin-left: 2px;
-  color: var(--alinea-fg-subtle);
+  color: var(--alinea-fg-muted);
 }
 
 .SearchFieldInput {
@@ -69,7 +69,7 @@
   line-height: 1.5;
 
   &::placeholder {
-    color: var(--alinea-input-placeholder);
+    color: var(--alinea-fg-disabled);
   }
 
   &::-webkit-search-cancel-button,

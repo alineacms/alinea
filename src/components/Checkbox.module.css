@@ -27,14 +27,14 @@
   width: 16px;
   height: 16px;
   border: 1px solid var(--alinea-border);
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   background: var(--alinea-input);
   transition: var(--alinea-transition);
   transition-property: background, border-color, box-shadow;
 
   .Checkbox:hover & {
-    border-color: var(--alinea-border-hover);
-    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    box-shadow: 0 0 0 3px var(--alinea-muted);
   }
 
   .Checkbox:has(:focus-visible) & {
@@ -50,16 +50,16 @@
 
   .Checkbox:hover:has(:checked) &,
   .Checkbox:hover:has(:indeterminate) & {
-    box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   .Checkbox:has([aria-invalid='true']) & {
-    border-color: var(--alinea-border-danger);
+    border-color: var(--alinea-danger);
   }
 
   .Checkbox:has([aria-invalid='true']:checked) &,
   .Checkbox:has([aria-invalid='true']:indeterminate) & {
-    background: var(--alinea-border-danger);
+    background: var(--alinea-danger);
   }
 
   .Checkbox:has([aria-readonly='true']) & {

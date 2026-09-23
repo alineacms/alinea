@@ -1,4 +1,4 @@
-/* Mirrors the dashboard explorer cards */
+/* Mirrors the dashboard explorer cards, the body shows the grid item's fill */
 .ContentCard {
   display: flex;
   flex: 1;
@@ -26,24 +26,20 @@
   color: color-mix(in srgb, var(--alinea-fg) 74%, transparent);
 
   .ContentCard:not([data-variant='media']) & {
-    background: var(--alinea-dashboard-explorer-card-top-background);
-    box-shadow: inset 0 -1px var(--alinea-dashboard-explorer-card-divider);
+    background: var(--alinea-bg-muted);
+    box-shadow: inset 0 -1px var(--alinea-border);
   }
 
   /* Selected cards tint their top */
   [aria-selected='true'] .ContentCard:not([data-variant='media']) & {
-    background: color-mix(
-      in srgb,
-      var(--alinea-dashboard-explorer-card-top-background) 72%,
-      var(--alinea-blue-600)
-    );
+    background: color-mix(in oklab, var(--alinea-bg-muted) 72%, var(--alinea-primary));
   }
 
   .ContentCard[data-variant='media'] &:not(:has(.ContentCard-image)) {
     background-image: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--alinea-dashboard-explorer-card-footer-background) 18%, transparent),
-      color-mix(in srgb, var(--alinea-dashboard-explorer-card-divider) 24%, transparent)
+      color-mix(in srgb, var(--alinea-bg) 18%, transparent),
+      color-mix(in srgb, var(--alinea-border) 24%, transparent)
     );
   }
 }
@@ -59,8 +55,20 @@
     0px 0px,
     0.625rem 0.625rem;
   background-image:
-    linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee 100%),
-    linear-gradient(45deg, #eee 25%, #fff 25% 75%, #eee 75% 100%);
+    linear-gradient(
+      45deg,
+      var(--alinea-muted) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--alinea-muted) 75%,
+      var(--alinea-muted) 100%
+    ),
+    linear-gradient(
+      45deg,
+      var(--alinea-muted) 25%,
+      var(--alinea-bg) 25% 75%,
+      var(--alinea-muted) 75% 100%
+    );
 }
 
 .ContentCard-icon {
@@ -83,8 +91,6 @@
   min-width: 0;
   padding: 10px 12px 11px;
   overflow: hidden;
-  background: var(--alinea-dashboard-explorer-card-footer-background);
-  border-radius: 0 0 var(--alinea-elevation-radius) var(--alinea-elevation-radius);
 
   .ContentCard.is-breadcrumbs & {
     gap: 2px;
@@ -147,7 +153,7 @@
 .ContentCard-skeleton {
   width: 42%;
   height: 10px;
-  border-radius: 3px;
+  border-radius: var(--alinea-radius-sm);
   background: color-mix(in srgb, var(--alinea-fg-muted) 18%, transparent);
   animation: ContentCard-pulse 1100ms ease-in-out infinite;
 
@@ -159,7 +165,7 @@
     flex-shrink: 0;
     width: 48px;
     height: 48px;
-    border-radius: 8px;
+    border-radius: var(--alinea-radius);
   }
 }
 

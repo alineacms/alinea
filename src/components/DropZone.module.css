@@ -7,20 +7,20 @@
   margin-inline: auto;
   padding: 24px;
   border: 2px dashed var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   outline: none;
   color: var(--alinea-fg);
   transition: var(--alinea-transition);
   transition-property: background-color, border-color, box-shadow, opacity;
 
   &:has(:focus-visible) {
-    box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[data-drag-over] {
     border-color: var(--alinea-primary);
-    background-color: var(--alinea-primary-overlay);
-    box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    background-color: var(--alinea-primary-subtle);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[data-disabled] {

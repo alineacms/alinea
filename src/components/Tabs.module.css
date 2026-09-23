@@ -43,14 +43,14 @@
     align-items: center;
     gap: 2px;
     padding: 3px;
-    border-radius: 10px;
+    border-radius: calc(var(--alinea-radius) + 2px);
     background-color: var(--alinea-overlay);
   }
 
   .Tabs[data-variant='enclosed'] & {
     gap: 4px;
     padding: 4px;
-    border-radius: 8px;
+    border-radius: var(--alinea-radius);
     background-color: var(--alinea-muted);
   }
 }
@@ -62,8 +62,8 @@
   justify-content: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 4px;
-  color: var(--alinea-fg-subtle);
+  border-radius: var(--alinea-radius-sm);
+  color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
   line-height: 1.25rem;
   forced-color-adjust: none;
@@ -75,7 +75,7 @@
 
   &:hover,
   &:focus-visible {
-    color: var(--alinea-fg-hover);
+    color: var(--alinea-fg-strong);
   }
 
   &:focus-visible {
@@ -112,12 +112,12 @@
 
   .Tabs[data-variant='subtle'] & {
     padding: 6px 11px;
-    border-radius: 7px;
+    border-radius: calc(var(--alinea-radius) - 1px);
 
     &:hover,
     &:focus-visible {
       color: var(--alinea-fg);
-      background-color: var(--alinea-overlay-hover);
+      background-color: var(--alinea-bg-muted);
     }
 
     &[aria-selected='true'] {
@@ -128,11 +128,11 @@
 
   .Tabs[data-variant='enclosed'] & {
     padding: 8px 12px;
-    border-radius: 8px;
+    border-radius: var(--alinea-radius);
 
     &:hover,
     &:focus-visible {
-      background-color: var(--alinea-muted-hover);
+      background-color: color-mix(in oklab, var(--alinea-muted) 85%, var(--alinea-fg));
     }
 
     &[aria-selected='true'] {
@@ -143,7 +143,7 @@
 }
 
 .TabsContent {
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   outline: none;
 
   &:focus-visible {

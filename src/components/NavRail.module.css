@@ -42,7 +42,7 @@
   height: 2rem;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: 0.5rem;
+  border-radius: var(--alinea-radius);
   background: transparent;
   color: var(--alinea-fg);
   font: inherit;
@@ -91,7 +91,7 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--alinea-primary);
   color: var(--alinea-primary-fg);
   font-size: 10px;

@@ -7,9 +7,9 @@
   min-height: 26px;
   padding: 2px 6px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background: transparent;
-  color: var(--alinea-fg-subtle);
+  color: var(--alinea-fg-muted);
   font: inherit;
   font-size: var(--alinea-font-size-base);
   font-weight: 550;
@@ -24,7 +24,7 @@
   @media (hover: hover) {
     &:hover {
       color: var(--alinea-fg);
-      background-color: var(--alinea-muted-hover);
+      background-color: color-mix(in oklab, var(--alinea-muted) 85%, var(--alinea-fg));
     }
   }
 
@@ -52,7 +52,7 @@
 
   &[data-size='sm'] {
     padding: 2px 6px;
-    border-radius: 6px;
+    border-radius: calc(var(--alinea-radius) - 2px);
     font-size: 12px;
   }
 

@@ -38,8 +38,8 @@
 }
 
 .SmallLists-visual {
-  color: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
-  background: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
+  color: var(--alinea-fg);
+  background: var(--alinea-muted);
 }
 
 .SmallLists-error {

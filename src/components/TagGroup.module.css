@@ -22,7 +22,7 @@
   display: flex;
   align-items: center;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--alinea-radius-sm);
   background: var(--alinea-primary-subtle);
   color: var(--alinea-primary-subtle-fg);
   font-size: var(--alinea-font-size-base);
@@ -50,7 +50,7 @@
   }
 
   &[aria-selected]:hover {
-    border-color: var(--alinea-border-hover);
+    border-color: var(--alinea-border-strong);
   }
 
   &[aria-selected='true'] {
@@ -84,7 +84,7 @@
   transition: color 200ms;
 
   &:hover {
-    color: var(--alinea-fg-hover);
+    color: var(--alinea-fg-strong);
   }
 
   .Tag[aria-selected='true'] & {

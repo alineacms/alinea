@@ -12,7 +12,7 @@
   padding-right: 8px;
   border: 1px solid var(--alinea-border);
   outline: 3px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   color: var(--alinea-fg);
@@ -20,19 +20,19 @@
   transition: var(--alinea-transition);
 
   &:hover {
-    border-color: var(--alinea-border-hover);
-    outline-color: var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    outline-color: var(--alinea-muted);
   }
 
   &:focus-within,
   &:has(.ComboBoxTrigger-input[aria-expanded='true']) {
-    border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-primary-overlay);
+    border-color: var(--alinea-primary);
+    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[data-invalid] {
-    border-color: var(--alinea-border-danger);
-    outline-color: var(--alinea-danger-overlay);
+    border-color: var(--alinea-danger);
+    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &:has(.ComboBoxTrigger-input:disabled) {
@@ -53,7 +53,7 @@
   font: inherit;
 
   &::placeholder {
-    color: var(--alinea-fg-subtle);
+    color: var(--alinea-fg-muted);
   }
 }
 
@@ -93,7 +93,7 @@
 
   &:focus-visible::after {
     background-color: transparent;
-    border-color: var(--alinea-border-accent);
+    border-color: var(--alinea-primary);
     opacity: 1;
   }
 }

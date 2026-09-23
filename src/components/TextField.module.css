@@ -13,7 +13,7 @@
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   outline: 3px solid transparent;
   background-color: var(--alinea-input);
   color: var(--alinea-fg);
@@ -24,28 +24,28 @@
   transition-property: border-color, outline-color, opacity;
 
   &::placeholder {
-    color: var(--alinea-input-placeholder);
+    color: var(--alinea-fg-disabled);
   }
 
   &:hover {
-    border-color: var(--alinea-border-hover);
-    outline-color: var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    outline-color: var(--alinea-muted);
   }
 
   &:focus {
-    border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-primary-overlay);
+    border-color: var(--alinea-primary);
+    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[aria-invalid='true'] {
-    border-color: var(--alinea-border-danger);
-    outline-color: var(--alinea-danger-overlay);
+    border-color: var(--alinea-danger);
+    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &:disabled,
   &[readonly] {
     pointer-events: none;
-    background-color: var(--alinea-input-disabled);
+    background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-disabled);
   }
 

@@ -52,12 +52,12 @@
   transition-property: border-color, border-width, box-shadow;
 
   .RadioGroupItem:hover & {
-    border-color: var(--alinea-border-hover);
-    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+    border-color: var(--alinea-border-strong);
+    box-shadow: 0 0 0 3px var(--alinea-muted);
   }
 
   .RadioGroupItem:active & {
-    border-color: var(--alinea-border-pressed);
+    border-color: var(--alinea-border-strong);
   }
 
   .RadioGroupItem:has(:checked) & {
@@ -66,11 +66,11 @@
   }
 
   .RadioGroupItem:hover:has(:checked) & {
-    box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   .RadioGroupItem:active:has(:checked) & {
-    border-color: var(--alinea-primary-pressed);
+    border-color: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
   }
 
   .RadioGroupItem:has(:focus-visible) & {
@@ -79,7 +79,7 @@
   }
 
   .RadioGroup[aria-invalid='true'] & {
-    border-color: var(--alinea-border-danger);
+    border-color: var(--alinea-danger);
   }
 }
 

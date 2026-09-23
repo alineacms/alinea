@@ -13,11 +13,11 @@
     height: 32px;
     padding: 2px;
     border: 1px solid var(--alinea-border);
-    border-radius: 8px;
+    border-radius: var(--alinea-radius);
     background-color: var(--alinea-bg);
 
     &[data-size='sm'] {
-      border-radius: 7px;
+      border-radius: calc(var(--alinea-radius) - 1px);
     }
 
     &[data-orientation='vertical'] {

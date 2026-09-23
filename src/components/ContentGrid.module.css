@@ -14,7 +14,7 @@
     z-index: 10;
     pointer-events: none;
     background: color-mix(in srgb, var(--alinea-bg) 74%, transparent);
-    outline: 2px dashed var(--alinea-blue-600);
+    outline: 2px dashed var(--alinea-primary);
     outline-offset: -10px;
   }
 
@@ -30,7 +30,7 @@
     color: var(--alinea-fg);
     background: var(--alinea-overlay);
     border: 1px solid var(--alinea-border);
-    border-radius: 8px;
+    border-radius: var(--alinea-radius);
     box-shadow: var(--alinea-shadow-raised);
     font-size: 13px;
     font-weight: 600;
@@ -62,7 +62,7 @@
 
   &.is-active {
     outline: 2px solid var(--alinea-ring);
-    border-radius: 8px;
+    border-radius: var(--alinea-radius);
   }
 }
 
@@ -71,18 +71,6 @@
   display: block;
   min-width: 0;
   outline: none;
-
-  &:hover {
-    --alinea-dashboard-explorer-card-footer-background: var(--alinea-bg-muted);
-  }
-
-  &[aria-selected='true'] {
-    --alinea-dashboard-explorer-card-footer-background: color-mix(
-      in srgb,
-      var(--alinea-blue-600) 9%,
-      var(--alinea-bg)
-    );
-  }
 
   &.is-dragging {
     opacity: 0.5;
@@ -119,15 +107,18 @@
   overflow: hidden;
   color: var(--alinea-fg);
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
-  background: var(--alinea-dashboard-explorer-card-background);
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-overlay);
   box-shadow: var(--alinea-shadow-raised);
   font-size: var(--alinea-font-size-base);
   cursor: pointer;
 
-  .ContentGridItem:hover &,
+  .ContentGridItem:hover & {
+    background: var(--alinea-bg-muted);
+  }
+
   .ContentGridItem[aria-selected='true'] & {
-    background: var(--alinea-dashboard-explorer-card-footer-background);
+    background: var(--alinea-selected);
   }
 
   .ContentGridItem:focus-visible & {

@@ -11,7 +11,7 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background: var(--alinea-primary);
   color: var(--alinea-primary-fg);
   font-weight: 700;
@@ -99,7 +99,7 @@
   display: grid;
   place-items: center;
   height: 280px;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background: linear-gradient(135deg, var(--alinea-muted), var(--alinea-bg-muted));
   color: var(--alinea-fg-muted);
 }
