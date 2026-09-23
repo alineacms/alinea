@@ -1,6 +1,6 @@
 'use client'
 
-import {Button, ProgressCircle, Surface} from '#/components.js'
+import {Button, Spinner, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {
   useContext,
@@ -78,8 +78,7 @@ export function DashboardModalDialog({
       data-loading={isLoading ? '' : undefined}
     >
       {isLoading ? (
-        <ProgressCircle
-          isIndeterminate
+        <Spinner
           aria-label={loadingLabel}
           className={styles.DashboardModalDialog.loader()}
         />

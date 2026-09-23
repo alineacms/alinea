@@ -1,4 +1,4 @@
-import {Button, List, ListEmpty, ProgressCircle} from '#/components.js'
+import {Button, List, ListEmpty, Spinner} from '#/components.js'
 import type {Preview} from '#/core/Preview.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
@@ -300,7 +300,7 @@ export function EntrySidebarBrowserPreview({
       <div className={styles.EntrySidebarPreview.browser()}>
         {((previewUrl && loading) || (!previewUrl && previewUrlPending)) && (
           <div className={styles.EntrySidebarPreview.loading()}>
-            <ProgressCircle isIndeterminate aria-label="Loading preview" />
+            <Spinner aria-label="Loading preview" />
           </div>
         )}
         {previewUrl ? (

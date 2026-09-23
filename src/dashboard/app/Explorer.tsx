@@ -47,6 +47,7 @@ import {
   IcRoundArrowUpward,
   IcRoundClose,
   IcRoundFilterList,
+  IcRoundSearch,
   IcRoundUploadFile
 } from '../icons.js'
 import {EditorBackButton} from './EditorBackButton.js'
@@ -214,11 +215,11 @@ export function ExplorerSearch({
       aria-label="Search"
       autoFocus={autoFocus}
       className={styles.Explorer.search()}
-      hasIcon
-      isPending={isPending || inputValue !== page.search}
+      icon={IcRoundSearch}
+      loading={isPending || inputValue !== page.search}
       placeholder="Search..."
       value={inputValue}
-      onChange={onSearchChange}
+      onValueChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
     />
   )

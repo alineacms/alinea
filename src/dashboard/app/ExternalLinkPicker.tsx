@@ -1,4 +1,4 @@
-import {Button, Checkbox, Label, TextField} from '#/components.js'
+import {Button, Checkbox, Field, TextField} from '#/components.js'
 import {useState, type FormEvent} from 'react'
 import {
   DashboardModal,
@@ -93,22 +93,21 @@ function ExternalLinkPickerDialog({
           <TextField
             label="URL"
             value={url}
-            onChange={setUrl}
-            errorMessage={urlError}
-            isInvalid={Boolean(urlError)}
-            isRequired
+            onValueChange={setUrl}
+            error={urlError}
+            required
           />
           <TextField
             label="Label"
             value={title}
-            onChange={setTitle}
-            isRequired
+            onValueChange={setTitle}
+            required
           />
-          <Label label="Target">
+          <Field label="Target">
             <Checkbox checked={openInNewTab} onCheckedChange={setOpenInNewTab}>
               Open link in new tab
             </Checkbox>
-          </Label>
+          </Field>
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
           <Button type="submit" color="primary">

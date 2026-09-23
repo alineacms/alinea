@@ -47,7 +47,8 @@ import {
   IcRoundClose,
   IcRoundFirstPage,
   IcRoundLastPage,
-  IcRoundMoreHoriz
+  IcRoundMoreHoriz,
+  IcRoundSearch
 } from '#/dashboard/icons.js'
 import {ListOptions} from '#/field/list.js'
 import {SlugField} from '#/field/path/SlugField.js'
@@ -498,7 +499,7 @@ function ListFieldInsertPanel({
           aria-label="Search types"
           autoFocus
           className={styles.ListFieldTypePicker.search()}
-          hasIcon
+          icon={IcRoundSearch}
           placeholder="Search types..."
         />
         <ListBox
@@ -836,8 +837,8 @@ function ListFieldRowHeader({
                   <TextField
                     label="Label"
                     autoFocus
-                    isDisabled={readOnly || isPreview}
-                    onChange={onCustomLabelChange}
+                    disabled={readOnly || isPreview}
+                    onValueChange={onCustomLabelChange}
                     value={customLabel}
                   />
                   <SlugField
@@ -1020,7 +1021,7 @@ function ListFieldTypePicker({
             aria-label="Search types"
             autoFocus
             className={styles.ListFieldTypePicker.search()}
-            hasIcon
+            icon={IcRoundSearch}
             placeholder="Search types..."
           />
           <ListBox

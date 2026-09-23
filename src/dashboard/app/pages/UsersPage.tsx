@@ -9,7 +9,7 @@ import {
   Icon,
   MultipleSelect,
   MultipleSelectItem,
-  ProgressCircle,
+  Spinner,
   SearchField,
   Table,
   TableBody,
@@ -27,7 +27,12 @@ import {useMemo, useState, type FormEvent} from 'react'
 import {useListData} from 'react-stately'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
-import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../../icons.js'
+import {
+  IcRoundAdd,
+  IcRoundArrowBack,
+  IcRoundMoreHoriz,
+  IcRoundSearch
+} from '../../icons.js'
 import {ActivityStatus} from '../ActivityStatus.js'
 import {AppShell, AppShellContent, AppShellInner} from '../AppShell.js'
 import {Badge} from '../Badge.js'
@@ -177,9 +182,9 @@ export function UsersPage() {
         <SearchField
           aria-label="Search users"
           placeholder="Search users"
-          hasIcon
+          icon={IcRoundSearch}
           value={query}
-          onChange={setQuery}
+          onValueChange={setQuery}
           className={styles.UsersPage.search()}
         />
         <Dialog>
@@ -275,7 +280,7 @@ interface UsersPageStatusProps {
 function UsersPageStatus({label, pending}: UsersPageStatusProps) {
   return (
     <div className={styles.UsersPage.status()}>
-      {pending && <ProgressCircle isIndeterminate aria-label={label} />}
+      {pending && <Spinner aria-label={label} />}
       <p className={styles.UsersPage.status.text()}>{label}</p>
     </div>
   )
@@ -532,24 +537,20 @@ function UserModal({user}: UserModalProps) {
               label="Email"
               type="email"
               value={email}
-              onChange={setEmail}
-              isRequired
-              isDisabled={isEditing}
+              onValueChange={setEmail}
+              required
+              disabled={isEditing}
               autoFocus={!isEditing}
-              inputProps={{
-                autoComplete: 'off',
-                'data-1p-ignore': 'true'
-              }}
+              autoComplete="off"
+              inputProps={{'data-1p-ignore': 'true'}}
             />
             <TextField
               label="Name"
               value={name}
-              onChange={setName}
+              onValueChange={setName}
               autoFocus={isEditing}
-              inputProps={{
-                autoComplete: 'off',
-                'data-1p-ignore': 'true'
-              }}
+              autoComplete="off"
+              inputProps={{'data-1p-ignore': 'true'}}
             />
             <MultipleSelect
               label="Roles"

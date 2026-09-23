@@ -197,6 +197,22 @@
   border: none;
 }
 
+.ListLabel-title {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  line-height: 1;
+}
+
+.ListLabel-title-text {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  transition: color var(--alinea-transition);
+}
+
 .ListLabel .ListLabel-toggle[data-hovered],
 .ListLabel .ListLabel-toggle[data-pressed],
 .ListLabel .ListLabel-toggle[data-active] {

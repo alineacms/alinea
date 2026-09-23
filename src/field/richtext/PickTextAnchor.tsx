@@ -102,7 +102,7 @@ function PickTextAnchorForm({picker}: PickTextAnchorProps) {
             description="Enter the anchor name"
             label="Anchor name"
             value={name}
-            onChange={setName}
+            onValueChange={setName}
           />
         </DashboardModalFormBody>
         <DashboardModalFormFooter>

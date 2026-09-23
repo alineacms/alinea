@@ -9,7 +9,7 @@ import {
   ListItemDescription,
   ListItemTitle,
   ListItemVisual,
-  ProgressCircle,
+  Spinner,
   Tab,
   TabList,
   TabPanel,
@@ -226,8 +226,7 @@ function EntrySidebarPreviousVersions({
   if (pending && history.length === 0)
     return (
       <div className={styles.EntrySidebar.loading()}>
-        <ProgressCircle
-          isIndeterminate
+        <Spinner
           aria-label="Loading previous versions"
         />
       </div>

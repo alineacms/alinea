@@ -1,4 +1,4 @@
-import {TextField as RacTextField} from '#/components.js'
+import {TextField as TextFieldInput} from '#/components.js'
 import {
   useField,
   useFieldError,
@@ -22,21 +22,20 @@ export const TextFieldView = memo(function TextFieldView({
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   return (
-    <RacTextField
+    <TextFieldInput
       autoFocus={options.autoFocus}
       description={options.help}
-      errorMessage={error}
-      isDisabled={options.readOnly}
+      error={error}
+      disabled={options.readOnly}
       label={options.inline ? undefined : options.label}
-      isRequired={options.required}
+      required={options.required}
       shared={options.shared}
       multiline={options.multiline}
       value={value}
-      onChange={value => {
+      onValueChange={value => {
         setValue(value)
         setFieldNode(value)
       }}
-      isInvalid={Boolean(error)}
       placeholder={
         options.placeholder ?? (options.inline ? options.label : undefined)
       }

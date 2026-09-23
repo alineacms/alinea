@@ -3,8 +3,8 @@ import {
   type ButtonProps,
   Dialog,
   DialogTrigger,
+  Field,
   Icon,
-  Label,
   List,
   ListCreateRow,
   ListDragPreview,
@@ -1026,9 +1026,9 @@ function EntryLinkSuffixField({
   return (
     <TextField
       description="E.g. ?s=search"
-      isDisabled={isDisabled}
+      disabled={isDisabled}
       label="URL suffix"
-      onChange={next => setSuffix(next || undefined)}
+      onValueChange={next => setSuffix(next || undefined)}
       value={suffix ?? ''}
     />
   )
@@ -1305,9 +1305,9 @@ function ResolvedLinkLabelField({
   return (
     <TextField
       autoFocus
-      isDisabled={isDisabled}
+      disabled={isDisabled}
       label="Label"
-      onChange={onChange}
+      onValueChange={onChange}
       value={customLabel ?? fallbackLabel}
     />
   )
@@ -1799,14 +1799,14 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
     </List>
   )
   return (
-    <Label
+    <Field
       description={options.help}
       label={options.inline ? undefined : options.label}
-      isRequired={options.required}
+      required={options.required}
       shared={options.shared}
     >
       {content}
-    </Label>
+    </Field>
   )
 }
 

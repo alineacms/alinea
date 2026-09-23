@@ -1,105 +1,65 @@
-import {I18nProvider} from 'react-aria-components'
+import {useState} from 'react'
 import {NumberField} from './NumberField.js'
 
-export const Basic = () => {
+const column = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 16,
+  maxWidth: 320,
+  padding: 24
+} as const
+
+export function Example() {
+  const [value, setValue] = useState<number | null>(3)
   return (
-    <I18nProvider locale="en-US">
-      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-        <NumberField label="Number of cookies" steppers={false} />
-        <NumberField label="Number of cookies (with steppers)" steppers />
-        <NumberField label="Number of cookies (disabled)" steppers isDisabled />
-
-        <NumberField
-          label="Age"
-          minValue={0}
-          maxValue={100}
-          description="Enter an age between 0 and 100."
-        />
-
-        <NumberField label="Temperature" minValue={-50} maxValue={50} />
-      </div>
-    </I18nProvider>
+    <div style={column}>
+      <NumberField
+        label="Cookies"
+        min={0}
+        max={10}
+        value={value}
+        onValueChange={setValue}
+      />
+      <output data-testid="cookies">{String(value)}</output>
+      <NumberField label="Without steppers" steppers={false} />
+      <NumberField
+        label="Step"
+        description="Moves in steps of 5."
+        step={5}
+        defaultValue={10}
+      />
+    </div>
   )
 }
 
-export const Currency = () => {
+export function Formatted() {
   return (
-    <I18nProvider locale="en-US">
-      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-        <NumberField
-          label="Transaction amount (€)"
-          defaultValue={45}
-          formatOptions={{
-            style: 'currency',
-            currency: 'EUR',
-            currencyDisplay: 'symbol'
-          }}
-        />
-
-        <NumberField
-          label="Amount (USD)"
-          formatOptions={{
-            style: 'currency',
-            currency: 'USD',
-            currencyDisplay: 'symbol'
-          }}
-        />
-
-        <NumberField
-          label="Cost (GBP)"
-          formatOptions={{
-            style: 'currency',
-            currency: 'GBP',
-            currencyDisplay: 'symbol'
-          }}
-        />
-      </div>
-    </I18nProvider>
+    <div style={column}>
+      <NumberField
+        label="Amount"
+        defaultValue={45}
+        formatOptions={{style: 'currency', currency: 'EUR'}}
+      />
+      <NumberField
+        label="Discount"
+        defaultValue={0.25}
+        step={0.01}
+        formatOptions={{style: 'percent'}}
+      />
+    </div>
   )
 }
 
-export const Percentages = () => {
+export function States() {
   return (
-    <I18nProvider locale="en-US">
-      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-        <NumberField
-          label="Discount (%)"
-          formatOptions={{
-            style: 'percent',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-          }}
-        />
-
-        <NumberField
-          label="Interest rate (%)"
-          formatOptions={{
-            style: 'percent',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }}
-        />
-      </div>
-    </I18nProvider>
-  )
-}
-
-export const Validation = () => {
-  return (
-    <I18nProvider locale="nl-BE">
-      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-        <NumberField
-          isInvalid
-          isRequired
-          label="Enter a value"
-          description="This field is required."
-          errorMessage="Field cannot be empty."
-        />
-      </div>
-    </I18nProvider>
+    <div style={column}>
+      <NumberField required label="Required" error="Field cannot be empty." />
+      <NumberField disabled label="Disabled" defaultValue={1} />
+      <NumberField readOnly label="Read-only" defaultValue={2} />
+    </div>
   )
 }
 
 export default {
-  title: 'Components / NumberField'
+  title: 'Pure components / NumberField'
 }

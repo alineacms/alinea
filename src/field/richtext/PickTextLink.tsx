@@ -277,7 +277,7 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
               description="Extra information that describes the link, shown on hover"
               label="Tooltip"
               value={title}
-              onChange={setTitle}
+              onValueChange={setTitle}
             />
           </div>
         </DashboardModalFormBody>

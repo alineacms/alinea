@@ -1,4 +1,4 @@
-import {Label} from '#/components.js'
+import {Field} from '#/components.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
 import type {Schema} from '#/core/Schema.js'
@@ -273,10 +273,10 @@ export function RichTextFieldView<Blocks extends Schema>({
     <>
       <PickTextLink picker={picker} linkOptions={options.link} />
       <PickTextAnchor picker={anchorPicker} />
-      <Label
+      <Field
         description={options.help}
-        errorMessage={error}
-        isRequired={!options.inline && options.required}
+        error={error}
+        required={!options.inline && options.required}
         label={options.inline ? undefined : options.label}
         shared={options.shared}
       >
@@ -316,7 +316,7 @@ export function RichTextFieldView<Blocks extends Schema>({
             />
           )}
         </div>
-      </Label>
+      </Field>
       {toolbarTarget &&
       editor &&
       activeEditor === editor &&

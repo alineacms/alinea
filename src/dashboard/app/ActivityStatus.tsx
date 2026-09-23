@@ -12,7 +12,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  ProgressCircle,
+  Spinner,
   type Side,
   Tooltip
 } from '#/components.js'
@@ -149,8 +149,7 @@ export function ActivityStatus({
             {children ? (
               <span className={styles.ActivityStatus.label()}>
                 {showSpinner ? (
-                  <ProgressCircle
-                    isIndeterminate
+                  <Spinner
                     aria-label={label}
                     className={styles.ActivityStatus.icon()}
                   />
@@ -168,8 +167,7 @@ export function ActivityStatus({
                 {children}
               </span>
             ) : showSpinner ? (
-              <ProgressCircle
-                isIndeterminate
+              <Spinner
                 aria-label={label}
                 className={styles.ActivityStatus.icon()}
               />
@@ -280,8 +278,7 @@ function ActivityItem({activity}: ActivityItemProps) {
       leading={
         <ListItemVisual>
           {showSpinner ? (
-            <ProgressCircle
-              isIndeterminate
+            <Spinner
               aria-label={displayedStatus}
               className={styles.ActivityStatus.icon()}
             />

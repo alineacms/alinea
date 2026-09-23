@@ -1,6 +1,6 @@
 'use client'
 
-import {ProgressCircle} from '#/components.js'
+import {Spinner} from '#/components.js'
 import styler from '@alinea/styler'
 import {Suspense, type ComponentProps, type PropsWithChildren} from 'react'
 import css from './ExplorerModal.module.css'
@@ -17,7 +17,7 @@ export function ExplorerModal(props: ComponentProps<'div'>) {
 export function ExplorerModalLoading() {
   return (
     <div className={styles.ExplorerModalLoading()}>
-      <ProgressCircle isIndeterminate aria-label="Loading explorer" />
+      <Spinner aria-label="Loading explorer" />
     </div>
   )
 }

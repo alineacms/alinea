@@ -1,6 +1,6 @@
 import {
   Button,
-  Label,
+  Field,
   Select,
   SelectItem,
   TextField,
@@ -235,9 +235,9 @@ function CreateEntryForm() {
           <TextField
             autoFocus
             value={title}
-            onChange={setTitle}
+            onValueChange={setTitle}
             label="Title"
-            isRequired
+            required
           />
 
           <Select
@@ -266,7 +266,7 @@ function CreateEntryForm() {
               <NodeEditor node={parent.node} type={parent.type} />
             </div>
             {showInsertOrder && (
-              <Label
+              <Field
                 label="Insert"
                 className={styles.CreateEntry.insertOrder()}
               >
@@ -287,7 +287,7 @@ function CreateEntryForm() {
                     <IcRoundLastPage data-slot="icon" /> Last
                   </ToggleButton>
                 </ToggleButtonGroup>
-              </Label>
+              </Field>
             )}
           </div>
 

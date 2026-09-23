@@ -54,11 +54,7 @@ export function Field({
             </FieldLabel>
           )}
           {description && <FieldDescription>{description}</FieldDescription>}
-          {shared && (
-            <Badge icon={IcRoundPublic} size="small" title="Shared field">
-              Shared
-            </Badge>
-          )}
+          {shared && <FieldSharedBadge />}
         </div>
       )}
       {children}
@@ -117,5 +113,27 @@ export function FieldError({className, ...props}: FieldErrorProps) {
       {...props}
       className={styles.FieldError(styler.merge({className}))}
     />
+  )
+}
+
+export interface FieldSharedBadgeProps extends StyleProps {
+  children?: ReactNode
+}
+
+/** Marks a field as shared between translations */
+export function FieldSharedBadge({
+  children = 'Shared',
+  ...props
+}: FieldSharedBadgeProps) {
+  return (
+    <Badge
+      data-slot="field-shared-badge"
+      icon={IcRoundPublic}
+      size="small"
+      title="Shared field"
+      {...props}
+    >
+      {children}
+    </Badge>
   )
 }

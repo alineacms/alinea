@@ -76,9 +76,9 @@ function MediaAltTextField({
   return (
     <TextField
       description={options.help}
-      errorMessage={error}
-      isDisabled={options.readOnly}
-      isRequired={options.required}
+      error={error}
+      disabled={options.readOnly}
+      required={options.required}
       label={options.inline ? undefined : options.label}
       multiline={options.multiline}
       placeholder={
@@ -87,7 +87,7 @@ function MediaAltTextField({
       shared={options.shared}
       type={options.type}
       value={value}
-      onChange={onChange}
+      onValueChange={onChange}
     />
   )
 }

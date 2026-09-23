@@ -1,74 +1,133 @@
 import styler from '@alinea/styler'
+import type {FocusEvent, KeyboardEvent} from 'react'
 import {
   Button,
   Group,
   Input,
-  NumberField as NumberFieldPrimitive,
-  type NumberFieldProps as NumberFieldPrimitiveProps
+  NumberField as NumberFieldPrimitive
 } from 'react-aria-components'
 import {
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowUp
 } from '../dashboard/icons.js'
-import {Label, type LabelSharedProps, labelProps} from './Label.js'
+import {Field} from './Field.js'
 import css from './NumberField.module.css'
+import type {
+  AriaProps,
+  DataProps,
+  FieldSharedProps,
+  StyleProps
+} from './types.js'
 
 const styles = styler(css)
 
 export interface NumberFieldProps
-  extends Omit<NumberFieldPrimitiveProps, 'children'>, LabelSharedProps {
-  steppers?: boolean
+  extends FieldSharedProps, StyleProps, AriaProps, DataProps {
+  /** The number, or null when the field is empty */
+  value?: number | null
+  defaultValue?: number | null
+  onValueChange?: (value: number | null) => void
+  min?: number
+  max?: number
+  step?: number
+  formatOptions?: Intl.NumberFormatOptions
   placeholder?: string
+  /** Show increment and decrement buttons, defaults to true */
+  steppers?: boolean
+  name?: string
+  autoFocus?: boolean
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void
+  onFocus?: (event: FocusEvent<HTMLInputElement>) => void
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
+}
+
+function toInternal(value: number | null | undefined) {
+  if (value === undefined) return undefined
+  return value ?? Number.NaN
 }
 
 export function NumberField({
-  steppers = true,
+  label,
+  description,
+  error,
+  required,
+  disabled,
+  readOnly,
+  icon,
+  shared,
+  value,
+  defaultValue,
+  onValueChange,
+  min,
+  max,
   placeholder,
+  steppers = true,
+  onBlur,
+  onFocus,
+  onKeyDown,
+  className,
   ...props
 }: NumberFieldProps) {
   return (
     <NumberFieldPrimitive
+      data-slot="number-field"
       {...props}
-      className={styles.NumberField()}
-      data-invalid={props.errorMessage ? true : undefined}
+      value={toInternal(value)}
+      defaultValue={toInternal(defaultValue)}
+      onChange={next => onValueChange?.(Number.isNaN(next) ? null : next)}
+      minValue={min}
+      maxValue={max}
+      isRequired={required}
+      isDisabled={disabled}
+      isReadOnly={readOnly}
+      isInvalid={Boolean(error)}
+      className={styles.NumberField(styler.merge({className}))}
     >
-      <Label {...labelProps(props)}>
+      <Field
+        label={label}
+        description={description}
+        error={error}
+        required={required}
+        disabled={disabled}
+        readOnly={readOnly}
+        icon={icon}
+        shared={shared}
+      >
         <Group
-          className={styles.NumberField.wrapper(
-            styler.merge({
-              className:
-                typeof props.className === 'string'
-                  ? props.className
-                  : undefined
-            })
-          )}
-          data-invalid={props.errorMessage ? true : undefined}
-          data-steppers={steppers}
+          data-slot="number-field-group"
+          className={styles.NumberFieldGroup()}
         >
           <Input
-            className={styles.NumberField.input()}
+            data-slot="number-field-input"
+            className={styles.NumberFieldInput()}
             placeholder={placeholder}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            onKeyDown={onKeyDown}
           />
           {steppers && (
-            <div className={styles.NumberField.buttons()}>
+            <div
+              data-slot="number-field-steppers"
+              className={styles.NumberFieldSteppers()}
+            >
               <Button
-                className={styles.NumberField.button()}
-                data-slot="increment"
                 slot="increment"
+                data-slot="number-field-increment"
+                className={styles.NumberFieldStepper()}
               >
                 <IcRoundKeyboardArrowUp />
               </Button>
               <Button
-                className={styles.NumberField.button()}
-                data-slot="decrement"
                 slot="decrement"
+                data-slot="number-field-decrement"
+                className={styles.NumberFieldStepper()}
               >
                 <IcRoundKeyboardArrowDown />
               </Button>
             </div>
           )}
         </Group>
-      </Label>
+      </Field>
     </NumberFieldPrimitive>
   )
 }

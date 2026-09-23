@@ -1,0 +1,35 @@
+.Spinner {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 1;
+  font-size: 1rem;
+
+  &[data-size='sm'] {
+    font-size: 0.75rem;
+  }
+
+  &[data-size='lg'] {
+    font-size: 1.5rem;
+  }
+}
+
+.Spinner-icon {
+  width: 1em;
+  height: 1em;
+}
+
+.Spinner-indicator {
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset var(--alinea-transition);
+
+  .Spinner[data-indeterminate] & {
+    animation: Spinner-spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+@keyframes Spinner-spin {
+  to {
+    transform: rotate(270deg);
+  }
+}

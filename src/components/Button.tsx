@@ -4,7 +4,7 @@ import {Button as ButtonPrimitive} from 'react-aria-components'
 import css from './Button.module.css'
 import {Icon} from './Icon.js'
 import {Slot, type SlotProps} from './internal/Slot.js'
-import {ProgressCircle} from './ProgressCircle.js'
+import {Spinner} from './Spinner.js'
 import type {AriaProps, DataProps, IconType, StyleProps} from './types.js'
 
 const styles = styler(css)
@@ -78,7 +78,7 @@ export function Button({
       }
     >
       {loading ? (
-        <ProgressCircle isIndeterminate aria-label="Loading" />
+        <Spinner aria-label="Loading" />
       ) : (
         icon && <Icon icon={icon} className={styles.Button.icon()} />
       )}

@@ -1,4 +1,4 @@
-import {Button, Link, ProgressCircle, Surface} from '#/components.js'
+import {Button, Link, Spinner, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, type WritableAtom} from 'jotai'
 import type {ReactNode} from 'react'
@@ -84,7 +84,7 @@ function AuthViewLoader() {
     <div className={styles.AuthView()}>
       <div className={styles.AuthView.panel()}>
         <div className={styles.AuthView.loader()}>
-          <ProgressCircle isIndeterminate aria-label="Loading" />
+          <Spinner aria-label="Loading" />
         </div>
       </div>
     </div>

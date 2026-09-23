@@ -1,4 +1,4 @@
-import {ProgressCircle} from '#/components.js'
+import {Spinner} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -238,7 +238,7 @@ function AppLoading() {
   return (
     <Rail main className={styles.AppLoading()}>
       <div className={styles.AppLoading.progress()}>
-        <ProgressCircle isIndeterminate aria-label="Loading dashboard" />
+        <Spinner aria-label="Loading dashboard" />
       </div>
     </Rail>
   )
