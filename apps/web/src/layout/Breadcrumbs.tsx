@@ -1,40 +1,50 @@
 import styler from '@alinea/styler'
-import {HStack} from 'alinea/ui'
 import Link from 'next/link'
 import {Fragment} from 'react'
 import css from './Breadcrumbs.module.scss'
 
 const styles = styler(css)
 
-type Parent = {
+interface BreadcrumbsParent {
   id: string
   title: string
   url?: string
 }
 
-export type BreadcrumbsProps = {
-  parents: Array<Parent>
+export interface BreadcrumbsProps {
+  parents: Array<BreadcrumbsParent>
+  /** Title of the current page, rendered after the parents */
+  current?: string
   flat?: boolean
 }
 
-export function Breadcrumbs({parents, flat}: BreadcrumbsProps) {
+export function Breadcrumbs({parents, current, flat}: BreadcrumbsProps) {
   return (
-    <HStack gap={8} className={styles.root({flat})}>
+    <nav aria-label="Breadcrumb" className={styles.root({flat})}>
       {parents.map((parent, i) => {
-        const link = parent.url ? (
-          <Link href={parent.url}>{parent.title}</Link>
-        ) : (
-          <span>{parent.title}</span>
-        )
+        const isLast = !current && i === parents.length - 1
         return (
           <Fragment key={parent.id}>
-            {link}
-            {i !== parents.length - 1 && (
-              <span className={styles.root.separator()}>/</span>
+            {parent.url ? (
+              <Link href={parent.url} className={styles.root.link()}>
+                {parent.title}
+              </Link>
+            ) : (
+              <span className={styles.root.item()}>{parent.title}</span>
+            )}
+            {!isLast && (
+              <span className={styles.root.separator()} aria-hidden="true">
+                /
+              </span>
             )}
           </Fragment>
         )
       })}
-    </HStack>
+      {current && (
+        <span className={styles.root.current()} aria-current="page">
+          {current}
+        </span>
+      )}
+    </nav>
   )
 }

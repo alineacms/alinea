@@ -1,30 +1,24 @@
 'use client'
 
 import styler from '@alinea/styler'
-import {HStack} from 'alinea/ui'
 import {IcRoundKeyboardArrowDown, IcRoundKeyboardArrowRight} from '@/icons'
 import Link from 'next/link'
-import {useParams, usePathname} from 'next/navigation'
+import {usePathname} from 'next/navigation'
 import {type ComponentProps, useEffect, useMemo, useState} from 'react'
-import {getFramework} from './Frameworks'
 import css from './NavTree.module.scss'
 import {type Nav, type NavItem, nestNav} from './NestNav'
 
 const styles = styler(css)
 
-function useNavTree(nav: Nav) {
-  return useMemo(() => nestNav(nav), [nav])
-}
-
 interface MaybeLinkProps extends Omit<ComponentProps<typeof Link>, 'href'> {
   href?: string
 }
 
-function MaybeLink(props: MaybeLinkProps) {
-  if (!props.href) return props.children
+function MaybeLink({href, children, ...props}: MaybeLinkProps) {
+  if (!href) return <span className={props.className}>{children}</span>
   return (
-    <Link {...props} href={props.href!}>
-      {props.children}
+    <Link {...props} href={href}>
+      {children}
     </Link>
   )
 }
@@ -36,82 +30,56 @@ interface NavTreeItemProps {
 
 function NavTreeItem({level, page}: NavTreeItemProps) {
   const pathname = usePathname()
-  const framework = getFramework(useParams().framework as string)
   const [showChildren, setShowChildren] = useState<boolean | undefined>(
     undefined
   )
-  const url = page.url && framework.link(page.url)
-  const behavesAsNestedSection = page.url === '/docs/tutorial'
+  const url = page.url
   const isOpen = Boolean(
-    (level < 1 && !behavesAsNestedSection) ||
-    (showChildren ?? (url && pathname.startsWith(url)))
+    level < 2 || (showChildren ?? (url && pathname.startsWith(url)))
   )
-  const isContainer = page.children && page.children.length > 0
+  const isContainer = Boolean(page.children && page.children.length > 0)
   const isActive = pathname === url
+  const label = page.label || page.title
   useEffect(() => {
     setShowChildren(undefined)
   }, [pathname])
+  if (!isContainer)
+    return (
+      <MaybeLink href={url} className={styles.root.link({active: isActive})}>
+        <span className={styles.root.link.label()}>{label}</span>
+      </MaybeLink>
+    )
   return (
-    <>
-      {isContainer ? (
-        <div className={styles.root.sub()}>
-          <MaybeLink href={url}>
-            <HStack
-              center
-              gap={8}
-              className={styles.root.link({
-                active: isActive,
-                root: level === 0
-              })}
-            >
-              {(level > 0 || behavesAsNestedSection) &&
-                (isOpen ? (
-                  <IcRoundKeyboardArrowDown
-                    className={styles.root.link.icon()}
-                  />
-                ) : (
-                  <IcRoundKeyboardArrowRight
-                    className={styles.root.link.icon()}
-                  />
-                ))}
-              <span>{page.label || page.title}</span>
-            </HStack>
-          </MaybeLink>
-          {page.children && (
-            <NavTree nav={page.children} level={level + 1} open={isOpen} />
-          )}
-        </div>
-      ) : (
-        <div>
-          <MaybeLink
-            href={url}
-            className={styles.root.link({
-              active: isActive
-            })}
-          >
-            <HStack center gap={8}>
-              {/*level === 0 && (
-                  <IcRoundKeyboardArrowRight
-                    className={styles.root.link.icon()}
-                  />
-                )*/}
-              <span>{page.label || page.title}</span>
-            </HStack>
-          </MaybeLink>
-        </div>
-      )}
-    </>
+    <div className={styles.root.sub()}>
+      <MaybeLink
+        href={url}
+        className={styles.root.link({
+          active: isActive,
+          root: level === 0,
+          group: level === 1
+        })}
+      >
+        {level > 1 &&
+          (isOpen ? (
+            <IcRoundKeyboardArrowDown className={styles.root.link.icon()} />
+          ) : (
+            <IcRoundKeyboardArrowRight className={styles.root.link.icon()} />
+          ))}
+        <span className={styles.root.link.label()}>{label}</span>
+      </MaybeLink>
+      <NavTree nav={page.children!} level={level + 1} open={isOpen} />
+    </div>
   )
 }
 
-export type NavTreeProps = {
-  nav: Array<NavItem>
+export interface NavTreeProps {
+  nav: Nav
   level?: number
   open?: boolean
 }
 
 export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
-  const tree = useNavTree(nav)
+  const tree = useMemo(() => nestNav(nav), [nav])
   return (
     <div className={styles.root(`level-${level}`, {open})}>
       {tree.map(page => {

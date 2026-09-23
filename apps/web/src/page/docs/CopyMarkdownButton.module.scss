@@ -1,0 +1,28 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  color: var(--web-foreground-faded);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease-out,
+    color 0.15s ease-out;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--web-accent);
+    color: var(--web-foreground);
+  }
+
+  &-icon {
+    font-size: 14px;
+  }
+}

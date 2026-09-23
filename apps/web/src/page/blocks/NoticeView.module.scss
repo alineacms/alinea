@@ -1,17 +1,38 @@
 .root {
-  display: inline-block;
+  display: flex;
+  gap: 14px;
+  margin: 24px 0;
+  padding: 16px 18px;
   border-radius: 12px;
-  padding: 10px 16px;
-  line-height: 1.2;
-  font-size: 14px;
-  margin: 10px 0;
-  background: var(--web-background);
+  border: 1px solid color-mix(in srgb, var(--web-accent) 16%, transparent);
+  background: var(--web-accent-soft);
+  color: var(--web-foreground);
+  font-size: 15px;
+  line-height: 1.55;
+
+  &.is-warning {
+    border-color: var(--web-outline);
+    background: var(--web-neutral-soft);
+  }
 
   &-icon {
-    display: block;
-    font-size: 18px;
     flex-shrink: 0;
-    color: hsla(var(--web-negative-hsl), 0.4);
-    margin-top: 1px;
+    margin-top: 2px;
+    font-size: 18px;
+    color: var(--web-accent);
+  }
+
+  &.is-warning &-icon {
+    color: var(--web-foreground-faded);
+  }
+
+  &-body {
+    min-width: 0;
+  }
+
+  &-text {
+    & + & {
+      margin-top: 8px;
+    }
   }
 }

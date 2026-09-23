@@ -4,13 +4,13 @@ export const theme = {
   tokenColors: [
     {
       settings: {
-        foreground: '#D4D4D4'
+        foreground: '#e6e8f5'
       }
     },
     {
       scope: ['meta.embedded', 'source.groovy.embedded'],
       settings: {
-        foreground: '#D4D4D4'
+        foreground: '#e6e8f5'
       }
     },
     {
@@ -34,13 +34,13 @@ export const theme = {
     {
       scope: 'comment',
       settings: {
-        foreground: '#6A9955'
+        foreground: '#7c80a0'
       }
     },
     {
       scope: 'constant.language',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
@@ -51,31 +51,31 @@ export const theme = {
         'keyword.operator.minus.exponent'
       ],
       settings: {
-        foreground: '#b5cea8'
+        foreground: '#f2a58e'
       }
     },
     {
       scope: 'constant.regexp',
       settings: {
-        foreground: '#646695'
+        foreground: '#8d92b8'
       }
     },
     {
       scope: 'entity.name.tag',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'entity.name.tag.css',
       settings: {
-        foreground: '#d7ba7d'
+        foreground: '#f2c97d'
       }
     },
     {
       scope: 'entity.other.attribute-name',
       settings: {
-        foreground: '#9cdcfe'
+        foreground: '#e6e8f5'
       }
     },
     {
@@ -90,7 +90,7 @@ export const theme = {
         'entity.other.attribute-name.scss'
       ],
       settings: {
-        foreground: '#d7ba7d'
+        foreground: '#f2c97d'
       }
     },
     {
@@ -109,14 +109,14 @@ export const theme = {
       scope: 'markup.bold',
       settings: {
         fontStyle: 'bold',
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'markup.heading',
       settings: {
         fontStyle: 'bold',
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
@@ -134,116 +134,116 @@ export const theme = {
     {
       scope: 'markup.inserted',
       settings: {
-        foreground: '#b5cea8'
+        foreground: '#f2a58e'
       }
     },
     {
       scope: 'markup.deleted',
       settings: {
-        foreground: '#ce9178'
+        foreground: '#7fe0b8'
       }
     },
     {
       scope: 'markup.changed',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'punctuation.definition.quote.begin.markdown',
       settings: {
-        foreground: '#6A9955'
+        foreground: '#7c80a0'
       }
     },
     {
       scope: 'punctuation.definition.list.begin.markdown',
       settings: {
-        foreground: '#6796e6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'markup.inline.raw',
       settings: {
-        foreground: '#ce9178'
+        foreground: '#7fe0b8'
       }
     },
     {
       name: 'brackets of XML/HTML tags',
       scope: 'punctuation.definition.tag',
       settings: {
-        foreground: '#808080'
+        foreground: '#8d92b8'
       }
     },
     {
       scope: ['meta.preprocessor', 'entity.name.function.preprocessor'],
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'meta.preprocessor.string',
       settings: {
-        foreground: '#ce9178'
+        foreground: '#7fe0b8'
       }
     },
     {
       scope: 'meta.preprocessor.numeric',
       settings: {
-        foreground: '#b5cea8'
+        foreground: '#f2a58e'
       }
     },
     {
       scope: 'meta.structure.dictionary.key.python',
       settings: {
-        foreground: '#9cdcfe'
+        foreground: '#e6e8f5'
       }
     },
     {
       scope: 'meta.diff.header',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'storage',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'storage.type',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: ['storage.modifier', 'keyword.operator.noexcept'],
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: ['string', 'meta.embedded.assembly'],
       settings: {
-        foreground: '#ce9178'
+        foreground: '#7fe0b8'
       }
     },
     {
       scope: 'string.tag',
       settings: {
-        foreground: '#ce9178'
+        foreground: '#7fe0b8'
       }
     },
     {
       scope: 'string.value',
       settings: {
-        foreground: '#ce9178'
+        foreground: '#7fe0b8'
       }
     },
     {
       scope: 'string.regexp',
       settings: {
-        foreground: '#d16969'
+        foreground: '#f2a58e'
       }
     },
     {
@@ -254,14 +254,14 @@ export const theme = {
         'punctuation.section.embedded'
       ],
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       name: 'Reset JavaScript string interpolation expression',
       scope: ['meta.template.expression'],
       settings: {
-        foreground: '#d4d4d4'
+        foreground: '#e6e8f5'
       }
     },
     {
@@ -274,25 +274,25 @@ export const theme = {
         'source.coffee.embedded'
       ],
       settings: {
-        foreground: '#9cdcfe'
+        foreground: '#e6e8f5'
       }
     },
     {
       scope: 'keyword',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'keyword.control',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'keyword.operator',
       settings: {
-        foreground: '#d4d4d4'
+        foreground: '#e6e8f5'
       }
     },
     {
@@ -309,13 +309,13 @@ export const theme = {
         'keyword.operator.wordlike'
       ],
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'keyword.other.unit',
       settings: {
-        foreground: '#b5cea8'
+        foreground: '#f2a58e'
       }
     },
     {
@@ -324,19 +324,19 @@ export const theme = {
         'punctuation.section.embedded.end.php'
       ],
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'support.function.git-rebase',
       settings: {
-        foreground: '#9cdcfe'
+        foreground: '#e6e8f5'
       }
     },
     {
       scope: 'constant.sha.git-rebase',
       settings: {
-        foreground: '#b5cea8'
+        foreground: '#f2a58e'
       }
     },
     {
@@ -347,14 +347,14 @@ export const theme = {
         'storage.modifier.package.java'
       ],
       settings: {
-        foreground: '#d4d4d4'
+        foreground: '#e6e8f5'
       }
     },
     {
       name: 'this.self',
       scope: 'variable.language',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
@@ -367,7 +367,7 @@ export const theme = {
         'entity.name.operator.custom-literal'
       ],
       settings: {
-        foreground: '#DCDCAA'
+        foreground: '#f2c97d'
       }
     },
     {
@@ -407,7 +407,7 @@ export const theme = {
         'storage.type.primitive.groovy'
       ],
       settings: {
-        foreground: '#4EC9B0'
+        foreground: '#8fd3ff'
       }
     },
     {
@@ -421,7 +421,7 @@ export const theme = {
         'entity.other.inherited-class'
       ],
       settings: {
-        foreground: '#4EC9B0'
+        foreground: '#8fd3ff'
       }
     },
     {
@@ -435,7 +435,7 @@ export const theme = {
         'entity.name.operator'
       ],
       settings: {
-        foreground: '#C586C0'
+        foreground: '#9da3fa'
       }
     },
     {
@@ -448,21 +448,21 @@ export const theme = {
         'constant.other.placeholder'
       ],
       settings: {
-        foreground: '#9CDCFE'
+        foreground: '#e6e8f5'
       }
     },
     {
       name: 'Constants and enums',
       scope: ['variable.other.constant', 'variable.other.enummember'],
       settings: {
-        foreground: '#4FC1FF'
+        foreground: '#8fd3ff'
       }
     },
     {
       name: 'Object keys, TS grammar specific',
       scope: ['meta.object-literal.key'],
       settings: {
-        foreground: '#9CDCFE'
+        foreground: '#e6e8f5'
       }
     },
     {
@@ -477,7 +477,7 @@ export const theme = {
         'support.constant.color'
       ],
       settings: {
-        foreground: '#CE9178'
+        foreground: '#7fe0b8'
       }
     },
     {
@@ -492,7 +492,7 @@ export const theme = {
         'support.other.parenthesis.regexp'
       ],
       settings: {
-        foreground: '#CE9178'
+        foreground: '#7fe0b8'
       }
     },
     {
@@ -503,49 +503,49 @@ export const theme = {
         'constant.character.set.regexp'
       ],
       settings: {
-        foreground: '#d16969'
+        foreground: '#f2a58e'
       }
     },
     {
       scope: ['keyword.operator.or.regexp', 'keyword.control.anchor.regexp'],
       settings: {
-        foreground: '#DCDCAA'
+        foreground: '#f2c97d'
       }
     },
     {
       scope: 'keyword.operator.quantifier.regexp',
       settings: {
-        foreground: '#d7ba7d'
+        foreground: '#f2c97d'
       }
     },
     {
       scope: 'constant.character',
       settings: {
-        foreground: '#569cd6'
+        foreground: '#9da3fa'
       }
     },
     {
       scope: 'constant.character.escape',
       settings: {
-        foreground: '#d7ba7d'
+        foreground: '#f2c97d'
       }
     },
     {
       scope: 'entity.name.label',
       settings: {
-        foreground: '#C8C8C8'
+        foreground: '#e6e8f5'
       }
     }
   ],
   semanticTokenColors: {
-    newOperator: '#C586C0',
-    stringLiteral: '#ce9178',
-    customLiteral: '#DCDCAA',
-    numberLiteral: '#b5cea8'
+    newOperator: '#9da3fa',
+    stringLiteral: '#7fe0b8',
+    customLiteral: '#f2c97d',
+    numberLiteral: '#f2a58e'
   },
   colors: {
     'editor.background': '#1E1E1E',
-    'editor.foreground': '#D4D4D4',
+    'editor.foreground': '#e6e8f5',
     'editor.inactiveSelectionBackground': '#3A3D41',
     'editorIndentGuide.background': '#404040',
     'editorIndentGuide.activeBackground': '#707070',

@@ -1,0 +1,28 @@
+{
+  "_id": "3JjNWiXssRZ7RNTOwMYyxNANSyc",
+  "_type": "Docs",
+  "_index": "a0",
+  "title": "Get started",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Install Alinea in a Next.js project, build a first site with the tutorial, or upgrade an existing 1.x project."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

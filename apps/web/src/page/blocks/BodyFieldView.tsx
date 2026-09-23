@@ -7,7 +7,6 @@ import {ChapterLinkView} from './ChapterLinkView'
 import {CodeBlockView} from './CodeBlockView'
 import {CodeVariantsView} from './CodeVariantsView'
 import {ExampleBlockView} from './ExampleBlockView'
-import {FrameworkBlockView} from './FrameworkBlockView'
 import {ImageBlockView} from './ImageBlockView'
 import {NoticeView} from './NoticeView'
 import css from './TextFieldView.module.scss'
@@ -29,7 +28,6 @@ export function BodyFieldView({body}: BodyViewProps) {
       ChapterLinkBlock={ChapterLinkView}
       NoticeBlock={NoticeView}
       ImageBlock={ImageBlockView}
-      FrameworkBlock={FrameworkBlockView}
     />
   )
 }

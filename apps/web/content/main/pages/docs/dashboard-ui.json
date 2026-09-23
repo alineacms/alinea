@@ -1,0 +1,28 @@
+{
+  "_id": "3JjNWdmfVOoxpzb5HA2Xb3ktHvx",
+  "_type": "Docs",
+  "_index": "a3",
+  "title": "Dashboard UI",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Build custom fields and views that look and behave like the rest of the dashboard."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

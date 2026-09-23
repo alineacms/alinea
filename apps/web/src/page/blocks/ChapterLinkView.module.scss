@@ -1,27 +1,33 @@
 .root {
-  display: inline-block;
-  text-decoration: none;
-  color: inherit;
-  font: inherit;
-  border-radius: 12px;
-  padding: 10px 16px;
-  line-height: 1.2;
-  font-size: 14px;
-  //box-shadow: 0 1px 20px var(--web-outline);
-  background: var(--web-background);
-  margin-bottom: 18px;
-  margin-top: 12px;
-  margin-right: 22px;
-  margin-left: -6px;
-  transition: 0.25s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 24px 0;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  color: var(--web-foreground);
+  transition:
+    border-color 0.15s ease-out,
+    color 0.15s ease-out;
 
-  &:hover {
-    color: var(--web-accent);
-    background: var(--web-selected);
+  &:hover,
+  &:focus-visible {
+    border-color: var(--web-accent);
+    color: var(--web-accent-strong);
   }
 
   &-title {
+    font-size: 16px;
     font-weight: 600;
-    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  &-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    color: var(--web-accent);
   }
 }

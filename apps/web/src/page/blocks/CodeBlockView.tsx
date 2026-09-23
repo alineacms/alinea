@@ -1,14 +1,14 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {VStack} from 'alinea/ui'
-import {WebTypo} from '@/layout/WebTypo'
-//import {useClipboard} from 'use-clipboard-copy'
-//import MdiContentCopy from '../../icons/MdiContentCopy'
 import type {CodeBlock} from '@/schema/blocks/CodeBlock'
 import css from './CodeBlockView.module.scss'
+import {CodeCopyButton} from './code/CodeCopyButton'
 import {codeHighlighter} from './code/CodeHighlighter'
+import {withCodeClasses} from './code/CodeHtml'
 
 const styles = styler(css)
+
+const shellLanguages = new Set(['shellscript', 'shell', 'bash', 'sh'])
 
 export async function CodeBlockView({
   code,
@@ -18,19 +18,26 @@ export async function CodeBlockView({
 }: Infer<typeof CodeBlock>) {
   const {codeToHtml} = await codeHighlighter
   if (!code) return null
-  const html = codeToHtml(code, {
-    lang: language === 'shellscript' ? 'shellscript' : 'tsx'
-  })
+  const isShell = shellLanguages.has(language)
+  const html = withCodeClasses(
+    codeToHtml(code, {lang: isShell ? 'shellscript' : 'tsx'}),
+    {
+      pre: styles.root.pre(),
+      code: styles.root.code(),
+      line: styles.root.line({prompt: isShell})
+    }
+  )
+  const label = fileName || (isShell ? 'Terminal' : '')
   return (
-    <VStack gap={8} className={styles.root({compact})}>
-      {fileName && <div className={styles.root.fileName()}>{fileName}</div>}
-      <div style={{position: 'relative'}}>
-        <WebTypo.Monospace
-          as="div"
-          dangerouslySetInnerHTML={{__html: html}}
-          className={styles.root.code()}
-        />
+    <div className={styles.root({compact})}>
+      <div className={styles.root.bar()}>
+        <span className={styles.root.bar.label()}>{label}</span>
+        <CodeCopyButton code={code} />
       </div>
-    </VStack>
+      <div
+        className={styles.root.body()}
+        dangerouslySetInnerHTML={{__html: html}}
+      />
+    </div>
   )
 }

@@ -1,67 +1,77 @@
 .root {
-  margin: 20px 0 28px 0;
+  margin: 24px 0;
+  border-radius: 12px;
+  background: var(--web-code-background);
+  color: var(--web-code-foreground);
+  overflow: hidden;
+}
+
+.bar {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  //background: var(--web-code-highlight);
-  //color: var(--web-code-foreground);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 42px;
+  padding: 0 16px 0 4px;
+  border-bottom: 1px solid var(--web-code-outline, #262a55);
+  font-family: var(--web-mono-font);
+  font-size: 12.5px;
+  color: var(--web-code-muted, #8d92b8);
+}
 
-  &-triggers {
-    overflow: auto;
+.tabs {
+  display: flex;
+  align-self: stretch;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 12px;
+  font: inherit;
+  color: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease-out;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--web-code-foreground);
   }
 
-  &-trigger {
-    appearance: none;
-    background: transparent;
-    padding: 7.5px 10px;
-    font: inherit;
-    color: inherit;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 13.5px;
-    border-radius: 8px;
-
-    &:hover {
-      background: var(--web-highlight);
-    }
-
-    &.is-selected {
-      color: var(--web-accent);
-      background: var(--web-selected);
-    }
+  &.is-selected {
+    color: var(--web-code-foreground);
+    box-shadow: inset 0 -2px 0 var(--web-code-keyword, #9da3fa);
   }
+}
 
-  &-code {
-    > pre {
-      font-size: 14px;
-      padding: 22px 25px;
-      border-radius: 14px;
-      overflow: auto;
+.body {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--web-code-outline, #262a55) transparent;
+}
 
-      &::-webkit-scrollbar {
-        width: 4px;
-        height: 12px;
-      }
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      &::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.2);
-        border: 4px solid rgba(0, 0, 0, 0);
-        background-clip: padding-box;
-        border-radius: 10px;
-      }
-      &::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(0, 0, 0, 0.4);
-      }
-      &::-webkit-scrollbar-thumb:active {
-        background-color: rgba(0, 0, 0, 0.9);
-      }
+.pre {
+  width: max-content;
+  min-width: 100%;
+  padding: 18px 20px;
+  font-family: var(--web-mono-font);
+  font-size: 14px;
+  line-height: 1.75;
+}
 
-      > code {
-        font-family: 'JetBrains Mono', monospace;
-      }
-    }
+.code {
+  font-family: inherit;
+}
+
+.line {
+  &.is-prompt:not(:empty)::before {
+    content: '$ ';
+    color: var(--web-foreground-muted);
+    user-select: none;
   }
 }

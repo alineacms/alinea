@@ -1,20 +1,21 @@
-import {IcOutlineInfo} from '@/icons'
-import {WebText} from '@/layout/WebText'
-import {NoticeBlock} from '@/schema/blocks/NoticeBlock'
 import styler from '@alinea/styler'
-import {Infer} from 'alinea'
-import {HStack} from 'alinea/ui'
+import type {Infer} from 'alinea'
+import {WebText} from '@/layout/WebText'
+import {DocsIconInfo, DocsIconWarning} from '@/page/docs/DocsIcons'
+import type {NoticeBlock} from '@/schema/blocks/NoticeBlock'
 import css from './NoticeView.module.scss'
 
 const styles = styler(css)
 
 export function NoticeView({level, body}: Infer<typeof NoticeBlock>) {
+  const isWarning = level === 'warning'
+  const Icon = isWarning ? DocsIconWarning : DocsIconInfo
   return (
-    <div className={styles.root(level)}>
-      <HStack gap={10}>
-        <IcOutlineInfo className={styles.root.icon()} />
-        <WebText doc={body} />
-      </HStack>
-    </div>
+    <aside className={styles.root({warning: isWarning})}>
+      <Icon className={styles.root.icon()} />
+      <div className={styles.root.body()}>
+        <WebText doc={body} p={<p className={styles.root.text()} />} />
+      </div>
+    </aside>
   )
 }

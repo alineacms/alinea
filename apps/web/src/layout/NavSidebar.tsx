@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {PropsWithChildren} from 'react'
+import type {PropsWithChildren} from 'react'
 import css from './NavSidebar.module.scss'
 
 const styles = styler(css)
@@ -12,5 +12,9 @@ export function NavSidebar({
   children,
   fluid
 }: PropsWithChildren<NavSidebarProps>) {
-  return <aside className={styles.root({fluid})}>{children}</aside>
+  return (
+    <aside className={styles.root({fluid})}>
+      <div className={styles.root.inner()}>{children}</div>
+    </aside>
+  )
 }

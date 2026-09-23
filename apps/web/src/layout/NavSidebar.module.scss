@@ -1,37 +1,30 @@
 @use '@/style' as *;
 
 .root {
-  position: relative;
-  height: calc(100vh);
   position: sticky;
   top: 0;
-  overflow: auto;
   flex-shrink: 0;
+  align-self: flex-start;
   width: 300px;
-  padding: 18px 0;
-  margin-left: -6px;
-  padding-right: 25px;
-  //background: #f8f9fa;
-  // border-right: 1px solid hsla(var(--web-negative-hsl), 0.09);
-  display: flex;
-  flex-direction: column;
+  max-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--web-surface);
   @include scrollbar;
 
   &.is-fluid {
     width: auto;
   }
 
-  &:before {
-    //content: '';
-    position: absolute;
-    top: 0;
-    right: 100%;
-    width: 1800px;
-    height: 100%;
-    background: #f8f9fa;
+  &-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 32px 24px 32px 32px;
+    font-size: 14.5px;
   }
 
-  @media (max-width: 980px) {
+  @include sm {
     display: none;
   }
 }

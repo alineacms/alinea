@@ -1,0 +1,53 @@
+{
+  "_id": "3JjNWjycrc5b8HEqhLEx7vLGHqQ",
+  "_type": "Doc",
+  "_index": "a0",
+  "title": "Components",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The dashboard is built from a set of React components, and they are exported from `alinea/components`. Use them in custom fields and views so your additions look and behave like the rest of the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjNWim7SkrxztPeoQ9o58qXo6U",
+      "code": "import {Button, Tabs, TextField} from 'alinea/components'",
+      "fileName": "CustomField.tsx",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3JjNWj9XrL6wd9oiHsd5mHDRBSc",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "_type": "text",
+              "text": "A visual catalog of every component will be added to this page later."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

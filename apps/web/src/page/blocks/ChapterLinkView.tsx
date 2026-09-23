@@ -1,10 +1,8 @@
-import {Link} from '@/layout/nav/Link'
-import {ChapterLinkBlock} from '@/schema/blocks/ChapterLinkBlock'
 import styler from '@alinea/styler'
-import {Infer} from 'alinea'
-import {HStack} from 'alinea/ui'
-import {Stack} from '@/layout/Stack'
-import {IcRoundArrowForward} from '@/icons'
+import type {Infer} from 'alinea'
+import {Link} from '@/layout/nav/Link'
+import {DocsIconArrowRight} from '@/page/docs/DocsIcons'
+import type {ChapterLinkBlock} from '@/schema/blocks/ChapterLinkBlock'
 import css from './ChapterLinkView.module.scss'
 
 const styles = styler(css)
@@ -13,14 +11,10 @@ export function ChapterLinkView({link}: Infer<typeof ChapterLinkBlock>) {
   if (!link || !link.href) return null
   return (
     <Link href={link.href} className={styles.root()}>
-      <HStack center gap={8}>
-        <span className={styles.root.title()}>
-          {(link.fields.description || link.title) as string}
-        </span>
-        <Stack.Right>
-          <IcRoundArrowForward style={{display: 'block'}} />
-        </Stack.Right>
-      </HStack>
+      <span className={styles.root.title()}>
+        {(link.fields.description || link.title) as string}
+      </span>
+      <DocsIconArrowRight className={styles.root.icon()} />
     </Link>
   )
 }

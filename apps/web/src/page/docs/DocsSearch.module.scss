@@ -1,0 +1,39 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-background);
+  color: var(--web-foreground-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease-out;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--web-accent);
+  }
+
+  &-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+
+  &-label {
+    flex-grow: 1;
+    text-align: left;
+  }
+
+  &-shortcut {
+    padding: 1px 6px;
+    border-radius: 5px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    font-family: inherit;
+    font-size: 12px;
+  }
+}
