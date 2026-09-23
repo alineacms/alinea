@@ -18,7 +18,7 @@ import {
   IcRoundClose,
   IcRoundKeyboardArrowDown,
   IcRoundSearch
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'

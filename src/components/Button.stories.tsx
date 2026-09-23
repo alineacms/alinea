@@ -3,7 +3,7 @@ import {
   IcRoundArchive,
   IcRoundRefresh,
   IcRoundSearch
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 
 const variants: Array<NonNullable<ButtonProps['variant']>> = [

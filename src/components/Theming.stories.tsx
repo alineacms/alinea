@@ -4,7 +4,7 @@ import {
   IcOutlineDarkMode,
   IcOutlineLightMode,
   IcRoundDesktopWindows
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Composition} from './Dashboard.stories.js'
 import {Select, SelectItem} from './Select.js'
 import css from './Theming.stories.module.css'

@@ -19,7 +19,7 @@ import {
 import {
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowUp
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import css from './Table.module.css'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
@@ -212,7 +212,9 @@ export function Table<T extends object>({
     dropIndicatorSlot: 'table-drop-indicator',
     dropIndicatorClassName: active => styles.TableDropIndicator({active})
   })
-  const isEmpty = Array.from(items).length === 0
+  // Materialise once so one-shot iterables survive the emptiness check
+  const list = useMemo(() => Array.from(items), [items])
+  const isEmpty = list.length === 0
   return (
     <TableContext.Provider value={context}>
       <Surface
@@ -247,7 +249,7 @@ export function Table<T extends object>({
           <Tree
             {...props}
             key={dnd.key}
-            items={items}
+            items={list}
             dependencies={[context, ...dependencies]}
             selectionMode={selectionMode}
             selectionBehavior={selectionBehavior}

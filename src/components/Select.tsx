@@ -16,7 +16,7 @@ import {
   SelectValue,
   Separator
 } from 'react-aria-components'
-import {IcRoundClose, IcRoundKeyboardArrowDown} from '../dashboard/icons.js'
+import {IcRoundClose, IcRoundKeyboardArrowDown} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'

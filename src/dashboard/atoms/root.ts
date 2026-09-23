@@ -29,6 +29,7 @@ import {policyAtom} from './user.js'
 import {
   dashboardEntryDragItem,
   dashboardEntryDragTypes,
+  dashboardEntryDropIds,
   dispense
 } from './utils.js'
 
@@ -473,13 +474,8 @@ export class RootAtoms {
     }
   )
   onDrop = atom(null, async (get, _set, event: DropItemsEvent) => {
-    const keys = new Set<string>()
-    for (const item of event.items) {
-      const id = item[dashboardEntryDragTypes[0]] ?? item['text/plain']
-      if (id) keys.add(id)
-    }
     const graph = get(graphAtom)
-    for (const id of keys) {
+    for (const id of dashboardEntryDropIds(event.items)) {
       await graph.move({
         id,
         target: String(event.target.key),

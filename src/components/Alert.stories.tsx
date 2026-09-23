@@ -3,7 +3,7 @@ import {
   IcBaselineErrorOutline,
   IcRoundTranslate,
   IcRoundWarning
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Alert, AlertActions, AlertDescription, AlertTitle} from './Alert.js'
 import {Button} from './Button.js'
 import {Checkbox} from './Checkbox.js'

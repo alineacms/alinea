@@ -3,7 +3,7 @@ import {
   IcRoundBrightness2,
   IcRoundSearch,
   IcOutlineSettings
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Select, SelectGroup, SelectItem, SelectSeparator} from './Select.js'
 
 const software = [

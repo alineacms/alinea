@@ -3,7 +3,7 @@ import {
   IcRoundMoreHoriz,
   IcRoundRefresh,
   LucideFile
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {
@@ -428,6 +428,32 @@ export function RowActions() {
               aria-label={`Actions for ${member.name}`}
             />
           </TableCell>
+        </TableRow>
+      )}
+    </Table>
+  )
+}
+
+/** Items can be any iterable, such as the values of a map */
+export function IterableItems() {
+  const items = useMemo(
+    () => new Map(members.map(member => [member.id, member])).values(),
+    []
+  )
+  return (
+    <Table
+      aria-label="Members"
+      items={items}
+      columns={[
+        {id: 'name', header: 'Name', minWidth: 200},
+        {id: 'role', header: 'Role', minWidth: 160}
+      ]}
+      renderEmptyState={() => 'No members'}
+    >
+      {member => (
+        <TableRow id={member.id} textValue={member.name}>
+          <TableTitle title={member.name} />
+          <TableCell label="Role">{member.role}</TableCell>
         </TableRow>
       )}
     </Table>

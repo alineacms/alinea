@@ -13,7 +13,7 @@ import {
   Input,
   ListBox
 } from 'react-aria-components'
-import {IcRoundClose, IcRoundKeyboardArrowDown} from '../dashboard/icons.js'
+import {IcRoundClose, IcRoundKeyboardArrowDown} from '#/dashboard/icons.js'
 import css from './ComboBox.module.css'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'

@@ -49,6 +49,20 @@ test('picks files with the trigger', async ({mount, page}) => {
   ])
 })
 
+test('opens the file browser from the trigger', async ({mount, page}) => {
+  await mount(<Example />)
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', {name: 'Browse files'}).click()
+  const fileChooser = await chooser
+  expect(fileChooser.isMultiple()).toBe(true)
+  await fileChooser.setFiles({
+    name: 'picked.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('a')
+  })
+  await expect(page.getByTestId('files')).toHaveText('picked.txt')
+})
+
 test('receives dropped files', async ({mount, page}) => {
   await mount(<Example />)
   await dropFiles(page, [['dropped.pdf', 'application/pdf']])

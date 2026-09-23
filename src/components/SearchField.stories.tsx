@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundSearch} from '../dashboard/icons.js'
+import {IcRoundSearch} from '#/dashboard/icons.js'
 import {SearchField} from './SearchField.js'
 
 const column = {

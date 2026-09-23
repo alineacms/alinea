@@ -26,7 +26,6 @@ import {
   TableCell,
   TableRow,
   type TableColumn,
-  Tag,
   Text,
   TextField,
   useDialog

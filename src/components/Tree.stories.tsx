@@ -5,7 +5,7 @@ import {
   IcRoundEdit,
   IcRoundVisibility,
   IcRoundVisibilityOff
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Tree, TreeItem} from './Tree.js'
 import type {DropTarget, Key, Selection} from './types.js'
 

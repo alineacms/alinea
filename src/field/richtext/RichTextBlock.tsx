@@ -1,6 +1,5 @@
 import {
   Button,
-  Icon,
   SortableList,
   SortableListItemTitle,
   SortableListItem,

@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundDelete, IcRoundSave} from '../dashboard/icons.js'
+import {IcRoundDelete, IcRoundSave} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {Tooltip, TooltipContent, TooltipTrigger} from './Tooltip.js'
 

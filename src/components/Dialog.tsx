@@ -8,7 +8,7 @@ import {
   ModalOverlay,
   OverlayTriggerStateContext
 } from 'react-aria-components'
-import {IcRoundClose} from '../dashboard/icons.js'
+import {IcRoundClose} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 import css from './Dialog.module.css'
 import {Slot} from './internal/Slot.js'

@@ -69,8 +69,16 @@ export function TextField({
   style,
   ...props
 }: TextFieldProps) {
-  const [uncontrolled, setUncontrolled] = useState(defaultValue ?? '')
-  const current = value ?? uncontrolled
+  const controlled = value !== undefined
+  const [internal, setInternal] = useState(defaultValue ?? '')
+  const [wasControlled, setWasControlled] = useState(controlled)
+  if (wasControlled !== controlled) {
+    // Switching between controlled and uncontrolled starts from an empty
+    // value rather than text typed during an earlier uncontrolled phase
+    setWasControlled(controlled)
+    setInternal('')
+  }
+  const current = controlled ? value : internal
   const control = {
     placeholder,
     autoComplete,
@@ -86,7 +94,7 @@ export function TextField({
       {...props}
       value={current}
       onChange={next => {
-        if (value === undefined) setUncontrolled(next)
+        setInternal(next)
         onValueChange?.(next)
       }}
       type={multiline ? undefined : type}

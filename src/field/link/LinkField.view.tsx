@@ -92,31 +92,11 @@ type PickerType = 'entry' | 'url' | 'file' | 'image'
 type EntryPickerType = Exclude<PickerType, 'url'>
 const LINK_FIELD_ROW_DRAG_TYPE = 'application/x-alinea-link-field-row'
 
-interface LinkRowProps {
-  hasFields?: boolean
+interface LinkRowTextProps {
   node: ReactiveNode<LinkFieldRow>
 }
 
-function LinkRow({hasFields, node}: LinkRowProps) {
-  const type = useAtomValueRaw(node.field('_type')) as string | undefined
-  return (
-    <>
-      {type && type !== 'image' && (
-        <Icon
-          aria-hidden
-          className={styles.LinkFieldView.icon()}
-          icon={getLinkIcon(type)}
-        />
-      )}
-      {(type === 'entry' || type === 'image' || type === 'file') && (
-        <EntryRowLayer hasFields={hasFields} node={node} />
-      )}
-      {type === 'url' && <UrlRow node={node} />}
-    </>
-  )
-}
-
-function LinkRowText({node}: LinkRowProps) {
+function LinkRowText({node}: LinkRowTextProps) {
   const type = useAtomValueRaw(node.field('_type')) as string | undefined
   if (type === 'entry' || type === 'image' || type === 'file')
     return <EntryRowLayer node={node} textOnly />
@@ -1496,9 +1476,8 @@ function MultipleLinkRow({
   onToggleRow,
   value
 }: MultipleLinkRowProps) {
-  const [linksValue, setValue] = useField(field)
+  const [, setValue] = useField(field)
   const options = useFieldOptions(field)
-  const links = linksValue ?? []
   const type = getPickerType(value[Reference.type])
   const picker = options.pickers[type] as Picker<LinkFieldRow> | undefined
   const hasFields = Boolean(picker?.fields)

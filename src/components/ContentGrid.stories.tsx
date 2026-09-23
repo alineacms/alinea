@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcTwotoneDescription, IcTwotoneFolder} from '../dashboard/icons.js'
+import {IcTwotoneDescription, IcTwotoneFolder} from '#/dashboard/icons.js'
 import {ContentCard, ContentCardSkeleton} from './ContentCard.js'
 import {ContentGrid, ContentGridItem} from './ContentGrid.js'
 import type {Key, Selection} from './types.js'

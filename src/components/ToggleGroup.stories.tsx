@@ -6,7 +6,7 @@ import {
   IcRoundFormatBold,
   IcRoundFormatItalic,
   IcRoundStrikethroughS
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {ToggleGroup, ToggleGroupItem} from './ToggleGroup.js'
 
 export function Single() {

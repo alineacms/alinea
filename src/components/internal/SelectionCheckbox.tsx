@@ -18,7 +18,11 @@ export function SelectionCheckbox(props: SelectionCheckboxProps) {
       {...props}
       slot="selection"
       data-slot="selection-checkbox"
-      className={styles.SelectionCheckbox()}
+      // react-aria focuses the hidden input from script, so :focus-visible
+      // also matches after a pointer press; isFocusVisible follows the modality
+      className={({isFocusVisible}) =>
+        styles.SelectionCheckbox({focusVisible: isFocusVisible})
+      }
     >
       {({isIndeterminate}) => (
         <span

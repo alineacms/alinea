@@ -37,12 +37,7 @@
     box-shadow: 0 0 0 3px var(--alinea-muted);
   }
 
-  /*
-    react-aria focuses the visually hidden input from script, which makes
-    :focus-visible match after a pointer press as well. Its focus-visible
-    attribute follows the input modality instead.
-  */
-  .Checkbox[data-focus-visible] & {
+  .Checkbox.is-focusVisible & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

@@ -3,7 +3,7 @@ import {Fragment, type ReactNode} from 'react'
 import {
   IcRoundInsertDriveFile,
   IcRoundKeyboardArrowRight
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import css from './ContentCard.module.css'
 import {Icon} from './Icon.js'
 import type {IconType, StyleProps} from './types.js'

@@ -148,6 +148,18 @@ export function dashboardEntryDragItem(id: Key): Record<string, string> {
   }
 }
 
+/** Unique entry ids from the items dropped on an entry list */
+export function dashboardEntryDropIds(
+  items: Iterable<Record<string, string>>
+): Array<string> {
+  const ids = new Set<string>()
+  for (const item of items) {
+    const id = item[dashboardEntryDragType] ?? item['text/plain']
+    if (id) ids.add(id)
+  }
+  return [...ids]
+}
+
 export function uploadSizeError(
   file: File,
   maxUploadSize: number | undefined

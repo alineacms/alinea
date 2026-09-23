@@ -81,6 +81,38 @@ export function Removable() {
   )
 }
 
+/** Disabled and read-only groups keep their selection */
+export function States() {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <TagGroup
+        label="Disabled"
+        selectionMode="multiple"
+        defaultSelectedKeys={new Set(['mint'])}
+        disabled
+      >
+        {flavors.map(flavor => (
+          <Tag key={flavor.id} id={flavor.id}>
+            {flavor.name}
+          </Tag>
+        ))}
+      </TagGroup>
+      <TagGroup
+        label="Read-only"
+        selectionMode="multiple"
+        defaultSelectedKeys={new Set(['mint'])}
+        readOnly
+      >
+        {flavors.map(flavor => (
+          <Tag key={flavor.id} id={flavor.id}>
+            {flavor.name}
+          </Tag>
+        ))}
+      </TagGroup>
+    </div>
+  )
+}
+
 export default {
   title: 'Pure components / TagGroup'
 }

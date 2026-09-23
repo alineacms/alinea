@@ -170,30 +170,38 @@ export function ResizablePanelGroup({
   // Follow changes to the controlled size of panels
   useLayoutEffect(() => {
     const previous = sizes.current
-    const targets = new Map<number, number>()
-    const current = measure()
-    panels.forEach((panel, index) => {
+    const changed = panels.flatMap((panel, index) => {
       const {size, visible} = panel.props
       const key = String(panel.key)
       if (
-        size !== undefined &&
-        previous.has(key) &&
-        previous.get(key) !== size &&
-        visible !== false &&
-        current[index] !== size
+        size === undefined ||
+        visible === false ||
+        !previous.has(key) ||
+        previous.get(key) === size
       )
-        targets.set(index, size)
+        return []
+      return [{index, size}]
     })
     sizes.current = new Map(
       panels.map(panel => [String(panel.key), panel.props.size])
     )
+    // Only measure the panes once a controlled size actually changed
+    if (changed.length === 0) return
+    const current = measure()
+    const targets = new Map<number, number>()
+    for (const {index, size} of changed)
+      if (current[index] !== size) targets.set(index, size)
     if (targets.size > 0) resize(targets)
   })
 
-  // Allotment renders the dividers itself, mark them as our handles
+  // Allotment renders the dividers itself, mark them as our handles. New
+  // dividers are picked up by the observer below.
+  const handleLayout = handles
+    .map(handle => (handle.props.withHandle ? 'grip' : 'plain'))
+    .join()
   useLayoutEffect(() => {
     decorate()
-  })
+  }, [handleLayout])
   useEffect(() => {
     const container = root.current?.querySelector(
       ':scope > .split-view > .sash-container'

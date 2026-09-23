@@ -5,6 +5,7 @@ import {
   DragAndDrop,
   Empty,
   ExplorerStyle,
+  IterableItems,
   NestedRows,
   RowActions
 } from './Table.stories.js'
@@ -64,6 +65,14 @@ test('nested rows', async ({mount, page}) => {
 test('empty state', async ({mount, page}) => {
   await mount(<Empty />)
   await expect(page.getByText('No articles yet')).toBeVisible()
+})
+
+test('renders rows from a one-shot iterable', async ({mount, page}) => {
+  await mount(<IterableItems />)
+  await expect(
+    page.getByRole('treegrid', {name: 'Members'}).getByRole('row')
+  ).toHaveCount(2)
+  await expect(page.getByText('No members')).toHaveCount(0)
 })
 
 test('drags rows onto rows and marks row states', async ({mount, page}) => {

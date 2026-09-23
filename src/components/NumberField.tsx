@@ -9,7 +9,7 @@ import {
 import {
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowUp
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import css from './NumberField.module.css'
 import type {

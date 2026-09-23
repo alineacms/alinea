@@ -100,7 +100,14 @@ export function RadioGroupItem({
     <RadioPrimitive
       data-slot="radio-group-item"
       {...props}
-      className={styles.RadioGroupItem(styler.merge({className}))}
+      // react-aria focuses the hidden input from script, so :focus-visible
+      // also matches after a pointer press; isFocusVisible follows the modality
+      className={({isFocusVisible}) =>
+        styles.RadioGroupItem(
+          {focusVisible: isFocusVisible},
+          styler.merge({className})
+        )
+      }
       isDisabled={disabled}
     >
       <span
