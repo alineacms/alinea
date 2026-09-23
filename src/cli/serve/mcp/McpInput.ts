@@ -6,11 +6,8 @@ import {
 } from '#/core/text/MarkdownToTextDoc.js'
 import type {Mark, Node, TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
-import {
-  generateNKeysBetween,
-  isValidOrderKey
-} from '#/core/util/FractionalIndexing.js'
 import {entries, isRecord, keys} from '#/core/util/Objects.js'
+import {orderKey, withOrderKeys} from '#/core/util/OrderKeys.js'
 import {McpToolError} from './McpServer.js'
 import {
   fieldBlocks,
@@ -55,71 +52,6 @@ function rowId(row: unknown): string | undefined {
   return isRecord(row) && typeof row._id === 'string' && row._id
     ? row._id
     : undefined
-}
-
-function orderKey(value: unknown): string | undefined {
-  return typeof value === 'string' && isValidOrderKey(value) ? value : undefined
-}
-
-/** Positions of the longest run of strictly increasing keys */
-function increasingKeys(keys: Array<string | undefined>): Set<number> {
-  const length = keys.map(() => 0)
-  const previous = keys.map(() => -1)
-  let best = -1
-  keys.forEach((key, at) => {
-    if (key === undefined) return
-    length[at] = 1
-    for (let before = 0; before < at; before++) {
-      const candidate = keys[before]
-      if (
-        candidate !== undefined &&
-        candidate < key &&
-        length[before] + 1 > length[at]
-      ) {
-        length[at] = length[before] + 1
-        previous[at] = before
-      }
-    }
-    if (best === -1 || length[at] > length[best]) best = at
-  })
-  const keep = new Set<number>()
-  for (let at = best; at !== -1; at = previous[at]) keep.add(at)
-  return keep
-}
-
-/**
- * Give list rows an order key between their neighbours where they have none,
- * like the dashboard does for inserted and moved rows. Rows whose keys are in
- * order keep them. Rows without an `_index` property (content written by hand)
- * are left as they are.
- */
-function withOrderKeys(rows: Array<Row>): Array<Row> {
-  const indexed = rows.flatMap((row, at) => ('_index' in row ? [at] : []))
-  const keys = indexed.map(at => orderKey(rows[at]._index))
-  const keep = increasingKeys(keys)
-  if (keep.size === indexed.length) return rows
-  const result = [...rows]
-  let from = 0
-  while (from < indexed.length) {
-    if (keep.has(from)) {
-      from++
-      continue
-    }
-    let to = from
-    while (to < indexed.length && !keep.has(to)) to++
-    const generated = generateNKeysBetween(
-      from > 0 ? keys[from - 1]! : null,
-      to < indexed.length ? keys[to]! : null,
-      to - from
-    )
-    for (let at = from; at < to; at++)
-      result[indexed[at]] = {
-        ...rows[indexed[at]],
-        _index: generated[at - from]
-      }
-    from = to
-  }
-  return result
 }
 
 /** Rich text blocks by id, to convert a resent block against its stored value */

@@ -417,6 +417,15 @@ function createUrlLink(
   } satisfies LinkFieldRow
 }
 
+/**
+ * A single link is not a list row: it is stored without an `_index` order key,
+ * like links picked in 1.x were.
+ */
+function singleLink(link: LinkFieldRow): LinkFieldRow {
+  const {_index, ...value} = link
+  return value as LinkFieldRow
+}
+
 function initialFields(picker: Picker<LinkFieldRow>) {
   if (!picker.fields) return {}
   return Type.initialValue(picker.fields) as Record<string, unknown>
@@ -798,7 +807,7 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
           buttonSize="sm"
           className={styles.LinkFieldView.createButton()}
           key={type}
-          onPick={setValue}
+          onPick={link => setValue(singleLink(link))}
           picker={picker as Picker<LinkFieldRow>}
           type={type as PickerType}
           value={value?._type === type ? value : undefined}
@@ -1449,7 +1458,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
         <LinkPickerDialog
           isOpen={editOpen}
           onOpenChange={setEditOpen}
-          onPick={setValue}
+          onPick={link => setValue(singleLink(link))}
           picker={picker}
           type={type}
           value={value}

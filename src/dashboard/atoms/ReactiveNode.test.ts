@@ -175,3 +175,154 @@ test('applies functional updates when creating a missing field', () => {
 
   expect(store.get(article.value).metadata.description).toBe('Added')
 })
+
+interface Row {
+  _id: string
+  _type: string
+  _index: string
+  title?: string
+  items?: Array<Row>
+}
+
+function row(id: string, index = ''): Row {
+  return {_id: id, _type: 'Text', _index: index}
+}
+
+function listNode(keys: Array<string>) {
+  return new ReactiveNode<Array<Row>>(
+    keys.map((key, at) => row(String.fromCharCode(97 + at), key))
+  )
+}
+
+function orderOf(rows: Array<Row>) {
+  return rows.map(row => row._id).join('')
+}
+
+function expectOrdered(rows: Array<Row>) {
+  for (let at = 1; at < rows.length; at++)
+    expect(rows[at - 1]._index < rows[at]._index).toBeTrue()
+  for (const row of rows) expect(row._index).not.toBe('')
+}
+
+test('assigns an order key to pushed and inserted list rows', () => {
+  const store = createStore()
+  const list = listNode(['a0', 'a1', 'a2'])
+  store.set(list.push, row('end'))
+  store.set(list.insert, 0, row('start'))
+  store.set(list.insert, 2, row('middle'))
+  const rows = store.get(list.value)
+  expect(rows.map(row => row._id)).toEqual([
+    'start',
+    'a',
+    'middle',
+    'b',
+    'c',
+    'end'
+  ])
+  expectOrdered(rows)
+  expect(rows[1]._index).toBe('a0')
+  expect(rows[3]._index).toBe('a1')
+  expect(rows[4]._index).toBe('a2')
+  expect(store.get(list.isDirty)).toBeTrue()
+})
+
+test('assigns a fresh key to a cloned row carrying a copied key', () => {
+  const store = createStore()
+  const list = listNode(['a0', 'a1'])
+  const [first] = store.get(list.value)
+  store.set(list.insert, 1, {...first, _id: 'copy'})
+  const rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('acopyb')
+  expectOrdered(rows)
+  expect(rows[1]._index).not.toBe('a0')
+})
+
+test('gives a moved row a key between its new neighbours', () => {
+  const store = createStore()
+  const list = listNode(['a0', 'a1', 'a2', 'a3'])
+  store.set(list.move, 1, 2)
+  let rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('acbd')
+  expectOrdered(rows)
+  expect(
+    rows.map(row => row._index).filter(key => key !== rows[2]._index)
+  ).toEqual(['a0', 'a2', 'a3'])
+  store.set(list.move, 2, 1)
+  rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('abcd')
+  expectOrdered(rows)
+  store.set(list.move, 3, 0)
+  rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('dabc')
+  expectOrdered(rows)
+  expect(rows.slice(1).map(row => row._index)).toEqual(['a0', 'a1', 'a2'])
+  store.set(list.move, 0, 3)
+  rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('abcd')
+  expectOrdered(rows)
+  expect(rows.slice(0, 3).map(row => row._index)).toEqual(['a0', 'a1', 'a2'])
+})
+
+test('rekeys the moved row even in a list of two', () => {
+  const store = createStore()
+  const list = listNode(['a0', 'a1'])
+  store.set(list.move, 1, 0)
+  const rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('ba')
+  expect(rows[1]._index).toBe('a0')
+  expectOrdered(rows)
+})
+
+test('repairs missing keys around inserted rows', () => {
+  const store = createStore()
+  const list = listNode(['', '', ''])
+  store.set(list.insert, 1, row('new'))
+  const rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('anewbc')
+  expectOrdered(rows)
+})
+
+test('assigns keys to rows written as a whole list value', () => {
+  const store = createStore()
+  const list = listNode(['a0', 'a1'])
+  store.set(list.value, rows => [...rows, row('added')])
+  const rows = store.get(list.value)
+  expect(orderOf(rows)).toBe('abadded')
+  expectOrdered(rows)
+  expect(rows.slice(0, 2).map(row => row._index)).toEqual(['a0', 'a1'])
+})
+
+test('assigns keys in a list nested in a rich text block', () => {
+  const store = createStore()
+  const doc = new ReactiveNode<Array<Record<string, unknown>>>([
+    {_type: 'paragraph', content: [{_type: 'text', text: 'Hi'}]},
+    {_type: 'Block', _id: 'block', items: [row('a', 'a0'), row('b', 'a1')]}
+  ])
+  const [paragraph, block] = store.get(doc.nodes) as Array<ReactiveNode>
+  const items = (store.get(block.nodes) as Record<string, ReactiveNode>)
+    .items as ReactiveNode<Array<Row>>
+  store.set(items.insert, 1, row('new'))
+  store.set(items.move, 2, 0)
+  const rows = store.get(items.value)
+  expect(orderOf(rows)).toBe('banew')
+  expectOrdered(rows)
+  expect(rows[1]._index).toBe('a0')
+  // Rich text nodes carry no order key
+  store.set(doc.insert, 1, {_type: 'paragraph'})
+  store.set(doc.move, 0, 2)
+  expect(store.get(doc.value).map(node => Object.keys(node))).toEqual([
+    ['_type'],
+    ['_type', '_id', 'items'],
+    ['_type', 'content']
+  ])
+  expect(store.get(paragraph.value)).not.toHaveProperty('_index')
+})
+
+test('keeps persisted rows exactly as committed', () => {
+  const store = createStore()
+  const list = listNode(['a0'])
+  const saved = [row('x'), row('y')]
+  store.set(list.commit, saved)
+  expect(store.get(list.value)).toEqual(saved)
+  expect(store.get(list.isDirty)).toBeFalse()
+})
