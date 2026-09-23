@@ -3,7 +3,7 @@ import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
 import {versionedCacheName} from './Version.js'
-import {Config as ConfigBuilder} from '#/index.js'
+import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
@@ -244,3 +244,64 @@ function openCache(name: string): Promise<IDBDatabase> {
   request.onupgradeneeded = () => request.result.createObjectStore('database')
   return requestResult(request)
 }
+
+test('browser entry stores keep persisted content across dashboard builds', async () => {
+  const pages = (searchable: boolean) => {
+    const Page = ConfigBuilder.document('Page', {
+      fields: {
+        title: Field.text('Title'),
+        body: Field.text('Body', {searchable})
+      }
+    })
+    const config: Config = {
+      schema: {Page},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+        })
+      }
+    }
+    return config
+  }
+  const source = await createEntrySource(pages(false), [
+    {
+      id: 'page',
+      type: 'Page',
+      index: 'a',
+      data: {title: 'Page', body: 'needle'}
+    }
+  ])
+  const name = `alinea-browser-rebuild-${crypto.randomUUID()}`
+  const first = await BrowserEntryStore.open(pages(false), {
+    indexedDB,
+    name,
+    revision: 'build-1'
+  })
+  await first.syncWith(source)
+  expect(await first.find({search: 'needle', select: Entry.id})).toEqual([])
+  await first.close()
+
+  let requestedBlobs = 0
+  const getBlobs = source.getBlobs.bind(source)
+  source.getBlobs = async function* (shas, blobOptions) {
+    requestedBlobs += shas.length
+    yield* getBlobs(shas, blobOptions)
+  }
+  // The next build changes the config: the content is kept and derived again.
+  const next = await BrowserEntryStore.open(pages(true), {
+    indexedDB,
+    name,
+    revision: 'build-2'
+  })
+  try {
+    expect(await next.find({select: Entry.title})).toEqual(['Page'])
+    expect(await next.find({search: 'needle', select: Entry.id})).toEqual([
+      'page'
+    ])
+    await next.syncWith(source)
+    expect(requestedBlobs).toBe(0)
+  } finally {
+    await next.close()
+  }
+})

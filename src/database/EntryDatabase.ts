@@ -117,10 +117,9 @@ export class EntryDatabase extends EntryLayer {
    */
   reindex(
     config: Config,
-    source: RemoteSource,
     configFingerprint = defaultConfigFingerprint
   ): Promise<EntrySyncResult> {
-    return this.reindexEntries(config, source, async tx => {
+    return this.reindexEntries(config, async tx => {
       await tx
         .update(DatabaseMetadataTable)
         .set({configFingerprint})

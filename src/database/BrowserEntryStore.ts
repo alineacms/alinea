@@ -48,12 +48,17 @@ export class BrowserEntryStore extends EntryStore {
     const cacheName = versionedCacheName(options.name)
     const cache = await openCache(options.indexedDB, cacheName)
     const stored = await readDatabase(cache)
-    const data = stored?.revision === options.revision ? stored.data : undefined
+    const data = stored?.data
     let handle: WasmDatabaseHandle | undefined
     try {
       handle = await openWasmDatabase(data)
       await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
       const database = new EntryDatabase(config, handle.database)
+      // A file persisted by another dashboard build keeps its content and
+      // derives it again with this build's config, instead of syncing every
+      // entry from the remote into an empty database.
+      const reused = stored?.revision === options.revision
+      if (data && !reused) await database.reindex(config)
       return new BrowserEntryStore(
         config,
         database,
@@ -63,7 +68,7 @@ export class BrowserEntryStore extends EntryStore {
         options.name,
         cacheName,
         options.revision,
-        data ? await database.getRevision() : undefined
+        reused ? await database.getRevision() : undefined
       )
     } catch (error) {
       if (handle) await handle.database.close()

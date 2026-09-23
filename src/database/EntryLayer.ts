@@ -17,6 +17,7 @@ import {
   type Source
 } from '#/core/source/Source.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import {chunks} from '#/core/util/Arrays.js'
 import {TaskQueue} from '#/core/util/Async.js'
 import {eq, inArray, sql, type Database} from 'rado'
 import {DatabaseSource} from './DatabaseSource.js'
@@ -43,6 +44,8 @@ import {
 
 /** Above this many changed entries a full rebuild beats updating in place. */
 const searchRebuildThreshold = 2000
+/** Temporary table holding the source payloads while a reindex runs. */
+const reindexBlobsName = 'alinea_reindex_blobs'
 
 /** Shared, connection-scoped state of one queryable layer of the entry index. */
 export interface EntryLayerContext {
@@ -199,14 +202,14 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 
   /**
-   * Adopt another config and derive every entry again from the source. The
-   * rows of the previous config are replaced within one transaction, so reads
-   * keep answering from them until the replacement is committed. Only a root
+   * Adopt another config and derive every entry again from the payloads this
+   * layer stores. The rows of the previous config are replaced within one
+   * transaction, so reads keep answering from them until the replacement is
+   * committed. Only a root
    * layer without overlays can be reindexed.
    */
   protected async reindexEntries(
     config: Config,
-    source: RemoteSource,
     reset?: (tx: Database) => Promise<void>
   ): Promise<EntrySyncResult> {
     this.#assertOpen()
@@ -219,14 +222,26 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       await this.#syncer.reconfigure(config)
       if (this.#context.syncer !== this.#syncer)
         await this.#context.syncer.reconfigure(config)
-      const tree =
-        (await source.getTreeIfDifferent(ReadonlyTree.EMPTY.sha)) ??
-        ReadonlyTree.EMPTY
       const state = this.#target.state
-      const changedEntryIds = await this.#onSyncConnection(() =>
-        this.#syncDb.transaction(
+      const entries = this.#entryTarget
+      const blobs = sql.identifier(reindexBlobsName)
+      const encoder = new TextEncoder()
+      const result = await this.#onSyncConnection(async () => {
+        // Read outside the transaction: queries on the connection itself would
+        // wait for the transaction to finish.
+        const {tree} = await this.#readTreeState()
+        if (!tree)
+          throw new Error('Cannot reindex a database without a source tree')
+        return this.#syncDb.transaction(
           async tx => {
-            await tx.delete(this.#entryTarget)
+            // The stored payloads are the exact source files of the recorded
+            // tree, so they feed the sync back in without an external source.
+            await tx.run(sql`drop table if exists temp.${blobs}`)
+            await tx.run(sql`create temp table ${blobs} as
+              select ${entries.fileHash} as sha,
+                coalesce(${entries.payload}, ${entries.data}) as blob
+              from ${entries}`)
+            await tx.delete(entries)
             await tx
               .update(state)
               .set({
@@ -236,27 +251,54 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
               })
               .where(eq(state.id, 1))
             await reset?.(tx)
-            return this.#syncer.sync(
-              this.#target,
-              source,
-              tree,
-              ReadonlyTree.EMPTY.sha,
-              {
-                previousTree: ReadonlyTree.EMPTY,
-                withinTransaction: true,
-                validate: true
+            const snapshot: RemoteSource = {
+              async getTreeIfDifferent() {
+                return tree
+              },
+              async *getBlobs(shas) {
+                for (const batch of chunks(shas, 400)) {
+                  const rows = await tx.all<{sha: string; blob: string}>(
+                    sql`select sha, blob from temp.${blobs}
+                      where sha in (${sql.join(
+                        batch.map(sha => sql.value(sha)),
+                        sql`, `
+                      )})`
+                  )
+                  for (const row of rows)
+                    yield [row.sha, encoder.encode(row.blob)] as const
+                }
               }
-            )
+            }
+            try {
+              const changedEntryIds = await this.#syncer.sync(
+                this.#target,
+                snapshot,
+                tree,
+                ReadonlyTree.EMPTY.sha,
+                {
+                  previousTree: ReadonlyTree.EMPTY,
+                  withinTransaction: true,
+                  validate: true
+                }
+              )
+              return {revision: tree.sha, changedEntryIds, tree}
+            } finally {
+              await tx.run(sql`drop table if exists temp.${blobs}`)
+            }
           },
           {async: true}
         )
-      )
-      this.#tree = tree
+      })
+      this.#tree = result.tree
       // Searchable text depends on the config: build the index again on the
       // next search instead of updating rows in place.
       this.#searchDirty = true
-      this.#emitChange({revision: tree.sha, changedEntryIds})
-      return {revision: tree.sha, changedEntryIds}
+      const change = {
+        revision: result.revision,
+        changedEntryIds: result.changedEntryIds
+      }
+      this.#emitChange(change)
+      return change
     })
   }
 

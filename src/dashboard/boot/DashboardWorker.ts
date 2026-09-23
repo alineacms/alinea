@@ -333,6 +333,7 @@ export class DashboardWorker extends EventTarget {
   async load(revision: string, config: Config, client: LocalConnection) {
     if (this.#currentRevision === revision) return
     this.#currentRevision = revision
+    const hadPrevious = this.#localDB !== undefined
     const nextLoad = this.#localDB ? trigger<LoadedDashboard>() : this.#nextLoad
     this.#nextLoad = nextLoad
     this.#localDB = undefined
@@ -352,6 +353,14 @@ export class DashboardWorker extends EventTarget {
           // The replaced database finishes outstanding work before closing.
         })
       const cacheFailure = await this.#syncLocalIndex(db)
+      // A replacement without cached content syncs before it takes over, so
+      // the dashboard never swaps from a populated store to an empty one.
+      // This runs outside the shared remote slot: a sync of the superseded
+      // store may still hold it, and that one must not block the swap.
+      if (hadPrevious && (await db.source.getTree()).isEmpty)
+        await this.#syncWithClient(db, client).catch(() => {
+          // The page's own sync surfaces the failure once the store is live.
+        })
       this.#localDB = db
       this.#localClient = client
       nextLoad.resolve({db, client, cacheFailure})

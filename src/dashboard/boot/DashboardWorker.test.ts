@@ -10,6 +10,7 @@ import {syncWith} from '#/core/source/Source.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
+import {versionedCacheName} from '#/database/Version.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
 test('loads local state without starting a remote sync', async () => {
@@ -128,15 +129,20 @@ test('queues a separate sync when the revision changes', async () => {
   await firstSyncStarted
 
   await worker.load('second-revision', cms.config, secondClient)
+  // The replacement had no cached content, so the load synced it before it
+  // took over, outside the slot the held first sync still occupies.
+  expect(secondRemoteSyncs).toBe(1)
   const second = worker.sync()
 
-  expect(secondRemoteSyncs).toBe(0)
+  expect(secondRemoteSyncs).toBe(1)
 
   releaseFirstSync?.()
   await Promise.all([first, second])
 
   expect(firstRemoteSyncs).toBe(1)
-  expect(secondRemoteSyncs).toBe(1)
+  // The first sync found its store superseded once released and synced the
+  // replacement instead, on top of the load's sync and the queued one.
+  expect(secondRemoteSyncs).toBe(3)
 })
 
 test('waits for a new revision to finish loading before syncing it', async () => {
@@ -196,7 +202,9 @@ test('waits for a new revision to finish loading before syncing it', async () =>
   await sync
 
   expect(firstRemoteSyncs).toBe(0)
-  expect(secondRemoteSyncs).toBe(1)
+  // One sync prepared the empty replacement during the load, one answered
+  // the request queued behind it.
+  expect(secondRemoteSyncs).toBe(2)
 })
 
 test('keeps syncs bound to their load across a failed revision', async () => {
@@ -683,6 +691,67 @@ test('a sync queued on a superseded browser store syncs the replacement', async 
     const sha = await queued
     expect(sha).toBe(await worker.sha())
     expect(secondRemoteSyncs).toBeGreaterThanOrEqual(1)
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'indexedDB', previous)
+    else delete (globalThis as {indexedDB?: unknown}).indexedDB
+  }
+})
+
+test('a new dashboard build keeps the cached content and syncs an empty replacement first', async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'indexedDB')
+  Object.defineProperty(globalThis, 'indexedDB', {
+    value: indexedDB,
+    configurable: true,
+    writable: true
+  })
+  try {
+    const fixture = new FSSource('test/fixtures/demo')
+    const remoteDB = new LocalDB(cms.config, fixture)
+    await remoteDB.sync()
+    const baseClient = createTestConnection(remoteDB)
+    let remoteSyncs = 0
+    const client: LocalConnection = {
+      ...baseClient,
+      getTreeIfDifferent(sha) {
+        remoteSyncs += 1
+        return baseClient.getTreeIfDifferent(sha)
+      }
+    }
+    const worker = new DashboardWorker()
+    await worker.load('build-1', cms.config, client)
+    await worker.sync()
+    expect(remoteSyncs).toBe(1)
+    const query = {type: cms.schema.DemoRecipe, path: 'chocolate-chip'}
+
+    // The cached content carries over: no remote sync is needed to answer.
+    await worker.load('build-2', cms.config, client)
+    expect(remoteSyncs).toBe(1)
+    expect(await (await worker.db).get(query)).toMatchObject({
+      title: 'Chocolate chip'
+    })
+
+    // Without a cache the replacement syncs before it answers a query. The
+    // record is cleared rather than the database deleted, which would block
+    // on the store that still holds it open.
+    const cache = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(
+        versionedCacheName('alinea-entry-database')
+      )
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    await new Promise<void>((resolve, reject) => {
+      const transaction = cache.transaction('database', 'readwrite')
+      transaction.objectStore('database').delete('entries')
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+    })
+    cache.close()
+    await worker.load('build-3', cms.config, client)
+    expect(remoteSyncs).toBe(2)
+    expect(await (await worker.db).get(query)).toMatchObject({
+      title: 'Chocolate chip'
+    })
   } finally {
     if (previous) Object.defineProperty(globalThis, 'indexedDB', previous)
     else delete (globalThis as {indexedDB?: unknown}).indexedDB
