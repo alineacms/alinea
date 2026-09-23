@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import type {Metadata, MetadataRoute} from 'next'
-import {remark} from 'remark'
-import html from 'remark-html'
-import {PageContainer, PageContent} from '@/layout/Page'
+import {ChangelogNav} from '@/page/changelog/ChangelogNav'
+import {ChangelogReleaseRow} from '@/page/changelog/ChangelogReleaseRow'
+import {parseChangelog} from '@/page/changelog/parseChangelog'
 import {getMetadata, type MetadataProps} from '@/utils/metadata'
 import css from './ChangelogPage.module.scss'
 
@@ -13,11 +13,6 @@ export async function generateMetadata(): Promise<Metadata> {
     url: '/changelog',
     title: 'Changelog'
   } as MetadataProps)
-}
-
-async function markdownToHtml(markdown: string) {
-  const result = await remark().use(html).process(markdown)
-  return result.toString()
 }
 
 export const dynamic = 'force-static'
@@ -31,16 +26,36 @@ export default async function Changelog() {
       }
     }
   ).then(res => res.text())
-  const content = await markdownToHtml(doc)
+  const releases = parseChangelog(doc)
   return (
-    <PageContainer>
-      <PageContent>
-        <div
-          className={styles.root()}
-          dangerouslySetInnerHTML={{__html: content}}
-        />
-      </PageContent>
-    </PageContainer>
+    <div className={styles.root()}>
+      <header className={styles.header()}>
+        <div className={styles.header.intro()}>
+          <h1 className={styles.header.title()}>What's new</h1>
+          <p className={styles.header.description()}>
+            Every release, what changed and why it matters.
+          </p>
+        </div>
+        <a
+          href="https://github.com/alineacms/alinea/issues"
+          className={styles.header.roadmap()}
+        >
+          Roadmap on GitHub →
+        </a>
+      </header>
+      <div className={styles.layout()}>
+        <ChangelogNav releases={releases} />
+        <div className={styles.releases()}>
+          {releases.map((release, index) => (
+            <ChangelogReleaseRow
+              key={release.version}
+              release={release}
+              isLatest={index === 0}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 

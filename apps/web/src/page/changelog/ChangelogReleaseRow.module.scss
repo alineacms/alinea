@@ -1,0 +1,128 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 40px;
+  padding: 40px 0;
+  border-top: 1px solid var(--web-outline, #e3e5f0);
+  scroll-margin-top: calc(var(--web-header-height, 0px) + 24px);
+
+  &.is-latest {
+    padding-top: 0;
+    padding-bottom: 48px;
+    border-top: none;
+  }
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 32px 0;
+
+    &.is-latest {
+      padding-bottom: 32px;
+    }
+  }
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+
+  .root.is-latest & {
+    gap: 8px;
+  }
+
+  @include sm {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+
+    .root.is-latest & {
+      gap: 12px;
+    }
+  }
+
+  &-version {
+    margin: 0;
+    font-family: var(--web-title-font, Poppins, sans-serif);
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+
+    .root.is-latest & {
+      font-size: 26px;
+    }
+  }
+
+  &-date {
+    font-size: 14px;
+    color: var(--web-foreground-muted, #7c80a0);
+  }
+
+  &-latest {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--web-accent, #3f61e8);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+
+  &-label {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #f1f2f7;
+    color: #4a4d68;
+
+    &.is-new {
+      background: var(--web-accent-soft, #eef0fd);
+      color: var(--web-accent-strong, #2c47c0);
+    }
+
+    &.is-fixed {
+      background: var(--web-positive-soft, #ecfdf5);
+      color: var(--web-positive, #007a55);
+    }
+  }
+
+  &-list {
+    align-self: stretch;
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: color-mix(
+      in srgb,
+      var(--web-foreground, #171a42) 90%,
+      var(--web-background, #f7f7fa)
+    );
+
+    &-item {
+      padding-left: 4px;
+      min-width: 0;
+    }
+  }
+}
