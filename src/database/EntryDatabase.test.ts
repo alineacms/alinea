@@ -19,7 +19,7 @@ import {connect} from 'rado/driver/bun-sqlite'
 import {createGeneratedDatabase} from '#/backend/store/GeneratedDatabase.js'
 import {openWasmDatabase} from './driver/WasmDatabase.js'
 import {EntryDatabase} from './EntryDatabase.js'
-import {supportsJsonb} from './entry/EntryData.js'
+import {entryDataText, supportsJsonb} from './entry/EntryData.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
 
 function urlAlias(url: string) {
@@ -180,12 +180,15 @@ test('entry database returns source blobs by hash', async () => {
   )
   expect(await runtime.getTree()).toEqual(tree)
   const stored = await db
-    .select({data: EntryIndexTable.data, payload: EntryIndexTable.payload})
+    .select({
+      data: entryDataText(EntryIndexTable),
+      payload: EntryIndexTable.payload
+    })
     .from(EntryIndexTable)
     .get()
   expect(stored?.payload).toBeNull()
-  expect(stored!.data).toBe(
-    new TextDecoder().decode(expected.values().next().value!)
+  expect(JSON.parse(stored!.data)).toEqual(
+    JSON.parse(new TextDecoder().decode(expected.values().next().value!))
   )
   expect(await runtime.get({id: 'page', select: Entry.data})).toEqual({
     path: 'page',
@@ -1048,7 +1051,7 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
     db
       .select(sql<string>`typeof(${EntryIndexTable.data})`)
       .from(EntryIndexTable)
-  // The WASM build reads JSONB, Bun's SQLite (3.43) does not.
+  // Write JSONB with the WASM build, which always reads it.
   const handle = await openWasmDatabase()
   await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
   const written = new EntryDatabase(config, handle.database)
@@ -1065,18 +1068,25 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
     const version = await native.get<{version: string}>(
       sql`select sqlite_version() as version`
     )
-    expect(await supportsJsonb(native)).toBe(false)
-    await expect(createGeneratedDatabase(config, native)).rejects.toThrow(
-      `Alinea's generated database stores JSONB, which requires SQLite 3.45.0 or newer (found ${version?.version})`
-    )
+    // Bun bundles a SQLite that reads JSONB on Linux, not on macOS.
+    const readsJsonb = await supportsJsonb(native)
+    if (readsJsonb) {
+      const generated = await createGeneratedDatabase(config, native)
+      expect(await generated.find({select: Entry.title})).toEqual(['Page'])
+      await generated.close()
+    } else {
+      await expect(createGeneratedDatabase(config, native)).rejects.toThrow(
+        `Alinea's generated database stores JSONB, which requires SQLite 3.45.0 or newer (found ${version?.version})`
+      )
+    }
 
     const db = connect(new Database(file))
     await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
-    expect(await dataType(db)).toEqual([])
+    expect(await dataType(db)).toEqual(readsJsonb ? ['blob'] : [])
     const reopened = new EntryDatabase(config, db)
     await reopened.syncWith(source)
     expect(await reopened.find({select: Entry.title})).toEqual(['Page'])
-    expect(await dataType(db)).toEqual(['text'])
+    expect(await dataType(db)).toEqual([readsJsonb ? 'blob' : 'text'])
     await reopened.close()
   } finally {
     await rm(dir, {recursive: true, force: true})
