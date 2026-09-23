@@ -437,27 +437,28 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const encoder = new TextEncoder()
-    const found = new Set<string>()
-    for (let offset = 0; offset < shas.length; offset += 400) {
+    const requested = new Set(shas)
+    for (const batch of chunks(shas, 400)) {
       if (options.signal?.aborted)
         throw options.signal.reason ?? new Error('Blob transfer aborted')
-      const requested = shas.slice(offset, offset + 400)
       const target = this.#readTarget
-      const rows = await this.#withReadConnection(async () =>
-        this.#db
+      const rows = await this.#withReadConnection(async () => {
+        // Find blobs by their indexed file path: no index covers the hash
+        const {tree} = await this.#readTreeState()
+        const paths = batch.flatMap(sha => tree?.pathOf(sha) ?? [])
+        if (!paths.length) return []
+        return this.#db
           .select({
             sha: target.fileHash,
             payload: sql<string>`coalesce(${target.payload}, ${entryDataText(target)})`
           })
           .from(target)
-          .where(inArray(target.fileHash, requested))
+          .where(inArray(target.filePath, paths))
           .all()
-      )
-      for (const row of rows) {
-        if (found.has(row.sha)) continue
-        found.add(row.sha)
-        yield [row.sha, encoder.encode(row.payload)]
-      }
+      })
+      for (const row of rows)
+        if (requested.delete(row.sha))
+          yield [row.sha, encoder.encode(row.payload)]
     }
   }
 

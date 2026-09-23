@@ -35,10 +35,15 @@ export function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
 export function hexToBytes(hex: string): Uint8Array {
   if (hex.length % 2 !== 0) throw new Error('Invalid hex string')
   const bytes = new Uint8Array(hex.length / 2)
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = Number.parseInt(hex.slice(i, i + 2), 16)
-  }
+  for (let i = 0; i < bytes.length; i++)
+    bytes[i] = (nibble(hex, i * 2) << 4) | nibble(hex, i * 2 + 1)
   return bytes
+}
+
+/** The value of a hexadecimal digit: letters have bit 0x40 set. */
+function nibble(hex: string, index: number): number {
+  const code = hex.charCodeAt(index)
+  return (code & 0xf) + (code >> 6) * 9
 }
 
 const hexes = Array.from({length: 256}, (_, i) =>

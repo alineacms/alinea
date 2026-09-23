@@ -167,8 +167,8 @@ test('readonly helpers and changes', async () => {
   test.is(serialized.sha, 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   test.is(serialized.mode, '100644')
 
-  test.ok(readonly.shas.has(leaf.sha))
   test.ok(readonly.hasSha(leaf.sha))
+  test.is(readonly.pathOf(leaf.sha), 'root.txt')
   test.not.ok(readonly.hasSha('deadbeef'))
 
   const entries = readonly.entries
@@ -192,6 +192,7 @@ test('readonly helpers and changes', async () => {
     ]
   })
   test.ok(updated.has('new.txt'))
+  test.is(updated.get('nested'), readonly.get('nested'))
 })
 
 test('applyChanges sha mismatch', async () => {
