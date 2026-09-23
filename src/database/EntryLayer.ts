@@ -601,7 +601,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         syncDb: this.#db,
         syncer: this.#context.syncer,
         context: this.#context,
-        target: {entries: view.entries, state: view.state},
+        target: {entries: view.entries, state: view.state, recordsTree: false},
         tree,
         initialTree: this.#initialTree,
         searchName: this.#searchDirty ? view.searchName : this.#searchName,

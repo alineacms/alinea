@@ -3,124 +3,64 @@ import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
-import {inArray, or, type Database} from 'rado'
-import {
-  entryIndexRow,
-  type EntryIndexTarget,
-  type IndexedEntry
-} from '../entry/EntryTable.js'
+import {entryIndexRow, type IndexedEntry} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
-import {
-  insertEntryValues,
-  sqliteBatchSize,
-  SyncAffected,
-  SyncCascade,
-  writeValues,
-  type SyncQueries
-} from './SyncQueries.js'
+import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
 
 const changeBatchSize = 250
+
+/** What merging a source tree into the entry table changed. */
+export interface SyncChanges {
+  /** Entries with a version that was added, replaced or removed. */
+  touched: Set<string>
+  /** Versions written from their source file, with the url parsed from it. */
+  inserted: Set<string>
+  /** Entries with a touched version that has children: those inherit from it. */
+  parents: Set<string>
+  /** Child directories of removed or replaced versions that had children. */
+  childDirs: Set<string>
+  /** Entries whose child directory changed in the source tree. */
+  containers: Set<string>
+}
 
 interface FileRow {
   filePath: string
   fileHash: string
 }
 
-async function markAffected(
-  db: Database,
-  entries: EntryIndexTarget,
+/** Whether a directory hash stands for a directory with files. */
+export function hasChildren(childrenSha: string | null): boolean {
+  return Boolean(childrenSha) && childrenSha !== ReadonlyTree.EMPTY.sha
+}
+
+/** Delete the versions stored at these paths or under these version ids. */
+async function removeVersions(
+  queries: SyncQueries,
+  changes: SyncChanges,
   filePaths: ReadonlyArray<string>,
   versionIds: ReadonlyArray<string> = []
 ) {
-  if (!filePaths.length && !versionIds.length) return []
-  const existing = await db
-    .select({
-      id: entries.id,
-      filePath: entries.filePath,
-      childrenSha: entries.childrenSha
-    })
-    .from(entries)
-    .where(
-      or(
-        filePaths.length
-          ? inArray(entries.filePath, Array.from(filePaths))
-          : undefined,
-        versionIds.length
-          ? inArray(entries.versionId, Array.from(versionIds))
-          : undefined
-      )
-    )
-  await markRows(db, existing)
-  return existing
+  const params = {
+    filePaths: JSON.stringify(filePaths),
+    versionIds: JSON.stringify(versionIds)
+  }
+  const stored = await queries.storedFiles.all(params)
+  for (const row of stored) {
+    changes.touched.add(row.id)
+    if (!hasChildren(row.childrenSha)) continue
+    changes.parents.add(row.id)
+    changes.childDirs.add(row.childrenDir)
+  }
+  await queries.deleteFiles.run(params)
+  return stored
 }
 
-interface MarkableRow {
-  id: string
-  childrenSha?: string | null
-}
-
-/** Flag these entries as affected, and cascade into their children. */
-async function markRows(
-  db: Database,
-  rows: ReadonlyArray<MarkableRow>
-): Promise<void> {
-  await addIds(
-    db,
-    SyncAffected,
-    rows.map(row => row.id)
-  )
-  await addIds(
-    db,
-    SyncCascade,
-    rows.flatMap(row =>
-      row.childrenSha && row.childrenSha !== ReadonlyTree.EMPTY.sha
-        ? [row.id]
-        : []
-    )
-  )
-}
-
-async function addIds(
-  db: Database,
-  table: typeof SyncAffected | typeof SyncCascade,
-  ids: Iterable<string>
-): Promise<void> {
-  const unique = Array.from(new Set(ids))
-  if (!unique.length) return
-  const existing = await db
-    .select({id: table.id})
-    .from(table)
-    .where(inArray(table.id, unique))
-  const present = new Set(existing.map(row => row.id))
-  const missing = unique.filter(id => !present.has(id))
-  if (missing.length) await db.insert(table).values(missing.map(id => ({id})))
-}
-
-async function deleteFiles(
-  db: Database,
-  entries: EntryIndexTarget,
-  filePaths: ReadonlyArray<string>
-): Promise<void> {
-  if (!filePaths.length) return
-  const existing = await markAffected(db, entries, filePaths)
-  const found = new Set(existing.map(row => row.filePath))
-  for (const filePath of filePaths)
-    assert(found.has(filePath), `Missing version to delete: ${filePath}`)
-  await db
-    .delete(entries)
-    .where(inArray(entries.filePath, Array.from(filePaths)))
-}
-
-async function replaceFiles(
-  db: Database,
-  entries: EntryIndexTarget,
+async function parseFiles(
   config: Config,
   source: RemoteSource,
   tree: ReadonlyTree,
-  files: ReadonlyArray<FileRow>,
-  queries: SyncQueries
-): Promise<void> {
-  if (!files.length) return
+  files: ReadonlyArray<FileRow>
+) {
   const pathsByHash = new Map<string, Array<string>>()
   for (const file of files) {
     const paths = pathsByHash.get(file.fileHash) ?? []
@@ -140,132 +80,93 @@ async function replaceFiles(
   }
   for (const fileHash of pathsByHash.keys())
     assert(found.has(fileHash), `Source did not return blob ${fileHash}`)
-  const rows = parsedEntries.map(entry => ({
+  return parsedEntries.map(entry => ({
     ...entryIndexRow(entry),
     childrenSha: sourceDirectorySha(tree, entry.childrenDir)
   }))
-  const filePaths = rows.map(row => row.filePath)
-  const versionIds = rows.map(row => row.versionId)
-  const previous = await db
-    .select({
-      versionId: entries.versionId,
-      parentDir: entries.parentDir,
-      parentId: entries.parentId,
-      parents: entries.parents
-    })
-    .from(entries)
-    .where(
-      or(
-        inArray(entries.filePath, filePaths),
-        inArray(entries.versionId, versionIds)
-      )
-    )
-  const previousByVersion = new Map(previous.map(row => [row.versionId, row]))
-  for (const row of rows) {
-    const stored = previousByVersion.get(row.versionId)
-    if (!stored || stored.parentDir !== row.parentDir) continue
-    row.parentId = stored.parentId
-    row.parents = stored.parents
-  }
-  await markAffected(db, entries, filePaths, versionIds)
-  await db
-    .delete(entries)
-    .where(
-      or(
-        inArray(entries.filePath, filePaths),
-        inArray(entries.versionId, versionIds)
-      )
-    )
-  for (const row of rows) await queries.insertEntry.run(insertEntryValues(row))
-  await markRows(db, rows)
 }
 
+/** Record the source hash of every directory above a changed file. */
 async function updateDirectoryHashes(
-  db: Database,
-  entries: EntryIndexTarget,
-  tree: ReadonlyTree,
   queries: SyncQueries,
-  filePaths: ReadonlyArray<string>
+  tree: ReadonlyTree,
+  filePaths: ReadonlyArray<string>,
+  changes: SyncChanges
 ): Promise<void> {
-  const directories = new Set(
-    filePaths.flatMap(filePath => {
-      const result = Array<string>()
-      let slash = filePath.lastIndexOf('/')
-      while (slash !== -1) {
-        result.push(filePath.slice(0, slash))
-        slash = filePath.lastIndexOf('/', slash - 1)
-      }
-      return result
-    })
-  )
-  for (const paths of chunks(Array.from(directories), sqliteBatchSize)) {
-    const rows = await db
-      .select({
-        id: entries.id,
-        versionId: entries.versionId,
-        childrenDir: entries.childrenDir,
-        childrenSha: entries.childrenSha
-      })
-      .from(entries)
-      .where(inArray(entries.childrenDir, paths))
-    const changed = rows.filter(row => {
-      const childrenSha = sourceDirectorySha(tree, row.childrenDir)
-      return childrenSha !== row.childrenSha
-    })
-    if (!changed.length) continue
-    await addIds(
-      db,
-      SyncAffected,
-      changed.map(row => row.id)
-    )
-    await writeValues(
-      queries,
-      changed.map(row => ({
-        key: row.versionId,
-        value: sourceDirectorySha(tree, row.childrenDir)
-      })),
-      queries.updateChildrenSha
-    )
+  const directories = new Set<string>()
+  for (const filePath of filePaths) {
+    let slash = filePath.lastIndexOf('/')
+    while (slash !== -1) {
+      directories.add(filePath.slice(0, slash))
+      slash = filePath.lastIndexOf('/', slash - 1)
+    }
   }
+  if (!directories.size) return
+  const rows = await queries.directories.all({
+    dirs: JSON.stringify(Array.from(directories))
+  })
+  const changed = new Map<string, string>()
+  for (const row of rows) {
+    const childrenSha = sourceDirectorySha(tree, row.childrenDir)
+    if (childrenSha === row.childrenSha) continue
+    changes.containers.add(row.id)
+    changed.set(row.childrenDir, childrenSha)
+  }
+  for (const [dir, sha] of changed)
+    await queries.updateChildrenSha.run({dir, sha})
 }
 
+/** Write the files that differ between two source trees to the entry table. */
 export async function mergeTrees(
-  db: Database,
-  entries: EntryIndexTarget,
   config: Config,
   source: RemoteSource,
   previousTree: ReadonlyTree,
   tree: ReadonlyTree,
   queries: SyncQueries
-): Promise<void> {
-  const changes = previousTree.diff(tree).changes
-  for (const batch of chunks(changes, changeBatchSize)) {
-    await deleteFiles(
-      db,
-      entries,
-      batch.filter(change => change.op === 'delete').map(change => change.path)
+): Promise<SyncChanges> {
+  const changes: SyncChanges = {
+    touched: new Set(),
+    inserted: new Set(),
+    parents: new Set(),
+    childDirs: new Set(),
+    containers: new Set()
+  }
+  const diff = previousTree.diff(tree).changes
+  for (const batch of chunks(diff, changeBatchSize)) {
+    const deleted = batch.flatMap(change =>
+      change.op === 'delete' ? [change.path] : []
     )
-    await replaceFiles(
-      db,
-      entries,
-      config,
-      source,
-      tree,
-      batch.flatMap(change =>
-        change.op === 'add'
-          ? [{filePath: change.path, fileHash: change.sha}]
-          : []
-      ),
-      queries
+    if (deleted.length) {
+      const stored = await removeVersions(queries, changes, deleted)
+      const found = new Set(stored.map(row => row.filePath))
+      for (const filePath of deleted)
+        assert(found.has(filePath), `Missing version to delete: ${filePath}`)
+    }
+    const added = batch.flatMap(change =>
+      change.op === 'add' ? [{filePath: change.path, fileHash: change.sha}] : []
     )
+    if (!added.length) continue
+    const rows = await parseFiles(config, source, tree, added)
+    await removeVersions(
+      queries,
+      changes,
+      rows.map(row => row.filePath),
+      rows.map(row => row.versionId)
+    )
+    for (const row of rows) {
+      await queries.insertEntry.run(insertEntryValues(row))
+      changes.touched.add(row.id)
+      changes.inserted.add(row.versionId)
+      if (hasChildren(row.childrenSha)) changes.parents.add(row.id)
+    }
   }
   await updateDirectoryHashes(
-    db,
-    entries,
-    tree,
     queries,
-    changes.map(change => change.path)
+    tree,
+    diff.map(change => change.path),
+    changes
   )
+  return changes
 }
 
 function sourceDirectorySha(tree: ReadonlyTree, path: string): string {
