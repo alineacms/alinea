@@ -41,7 +41,10 @@ export function CompareCards({title, description, cards}: CompareCardsProps) {
                   )}
                 </div>
                 {card.text && <p className={styles.card.text()}>{card.text}</p>}
-                <CheckList items={card.checks} />
+                <CheckList
+                  items={card.checks}
+                  tone={tone === 'outline' ? 'muted' : 'accent'}
+                />
                 {(card.code || link) && (
                   <div className={styles.card.footer()}>
                     <CodeSnippet code={card.code} />

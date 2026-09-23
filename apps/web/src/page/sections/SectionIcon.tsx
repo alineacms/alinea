@@ -10,9 +10,13 @@ import {
   StrokeHistory,
   StrokeHook,
   StrokeLink,
+  StrokeLock,
+  StrokeMail,
+  StrokeFile,
   StrokeSearch,
   StrokeShieldCheck,
-  StrokeSparkle
+  StrokeSparkle,
+  StrokeUsers
 } from '@/icons'
 import type {IconName} from '@/schema/sections/options'
 
@@ -29,7 +33,11 @@ const icons: Record<IconName, ComponentType<SVGProps<SVGSVGElement>>> = {
   StrokeSparkle,
   StrokeHeart,
   StrokeCheck,
-  StrokeHistory
+  StrokeHistory,
+  StrokeUsers,
+  StrokeLock,
+  StrokeFile,
+  StrokeMail
 }
 
 export interface SectionIconProps extends Omit<

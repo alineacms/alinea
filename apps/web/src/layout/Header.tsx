@@ -16,7 +16,12 @@ const styles = styler(css)
 
 export type HeaderLink = AnyLink<{label: string; active: string}>
 
-export async function Header() {
+export interface HeaderProps {
+  /** Text shown next to the logo, eg. "Cloud" */
+  badge?: string
+}
+
+export async function Header({badge}: HeaderProps) {
   const links = await cms.get({
     type: Home,
     select: Home.links
@@ -31,7 +36,7 @@ export async function Header() {
       <MobileMenu className={styles.mobilemenu()}>
         <div className={styles.mobilemenu.container()}>
           <div className={styles.mobilemenu.top()}>
-            <Menu links={links} />
+            <Menu links={links} badge={badge} />
           </div>
           <div className={styles.mobilemenu.nav()}>
             <MobileNav />
@@ -39,7 +44,7 @@ export async function Header() {
         </div>
       </MobileMenu>
       <HeaderRoot>
-        <Menu links={links} />
+        <Menu links={links} badge={badge} />
       </HeaderRoot>
     </>
   )
@@ -77,13 +82,15 @@ async function MobileNav() {
 
 interface MenuProps {
   links: Array<HeaderLink>
+  badge?: string
 }
 
-function Menu({links}: MenuProps) {
+function Menu({links, badge}: MenuProps) {
   return (
     <div className={styles.menu()}>
       <Link href="/" className={styles.menu.logo()} title="Alinea CMS">
         <Logo className={styles.menu.logo.mark()} />
+        {badge && <span className={styles.menu.logo.badge()}>{badge}</span>}
       </Link>
       <nav className={styles.menu.nav()}>
         {links?.map(link => {
@@ -118,7 +125,7 @@ function Menu({links}: MenuProps) {
         >
           GitHub
         </a>
-        <Link href="/docs/getting-started" className={styles.menu.cta()}>
+        <Link href="/docs/quickstart" className={styles.menu.cta()}>
           Get started
         </Link>
         <label

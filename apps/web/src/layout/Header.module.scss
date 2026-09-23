@@ -25,6 +25,7 @@
   &-logo {
     display: flex;
     align-items: center;
+    gap: 10px;
     flex-shrink: 0;
     color: var(--web-foreground);
 
@@ -34,6 +35,16 @@
       @include sm {
         width: 80px;
       }
+    }
+
+    &-badge {
+      padding: 3px 9px;
+      border-radius: 7px;
+      background: color-mix(in srgb, var(--web-foreground) 14%, transparent);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
     }
   }
 

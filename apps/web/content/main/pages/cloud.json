@@ -1,0 +1,381 @@
+{
+  "_id": "3JjQ47w4RSpkZagPXP0UQM3uCHc",
+  "_type": "Landing",
+  "_index": "a2",
+  "_i18nId": "3JjQ47w4RSpkZagPXP0UQM3uCHc",
+  "_root": "pages",
+  "title": "Alinea Cloud",
+  "theme": "dark",
+  "badge": "Cloud",
+  "hero": {
+    "badge": "Free while in beta",
+    "headline": "Your CMS backend,\n*handled.*",
+    "text": "Alinea Cloud takes care of the parts git isn't built for: signing in your editors, keeping their drafts, and publishing their changes to your GitHub repository.",
+    "button": {
+      "_id": "3JjQ4CEpKOohXckkmKmjF2W8zMr",
+      "_type": "url",
+      "_url": "https://alinea.cloud",
+      "_title": "",
+      "_target": "_self",
+      "label": "Get started"
+    },
+    "link": {
+      "_id": "3JjQ46TJi5WuOAj1DvtDYbCyzhV",
+      "_type": "entry",
+      "_entry": "c1qjY2L4hq8JWfscRb_dD",
+      "label": "Read the docs"
+    }
+  },
+  "sections": [
+    {
+      "_id": "3JjQ45rhiqI3ZSCMm0z61emqlxQ",
+      "_index": "a0",
+      "_type": "FlowCards",
+      "items": [
+        {
+          "_id": "3JjQ4CJgWsTbWjHHfCyQITUJRZQ",
+          "_index": "a0",
+          "_type": "FlowCard",
+          "icon": "StrokeUsers",
+          "highlight": false,
+          "title": "Your editors",
+          "text": "Sign in to your dashboard with their Alinea Cloud account"
+        },
+        {
+          "_id": "3JjQ4AsToTU6BzYB8x2rJW1z2qt",
+          "_index": "a1",
+          "_type": "FlowCard",
+          "icon": "StrokeLock",
+          "highlight": true,
+          "title": "Alinea Cloud",
+          "text": "Checks who they are and what they may do, and keeps their drafts"
+        },
+        {
+          "_id": "3JjQ47AgZKxMC2TcAbweVtJWlJX",
+          "_index": "a2",
+          "_type": "FlowCard",
+          "icon": "StrokeGitBranch",
+          "highlight": false,
+          "title": "Your GitHub repo",
+          "text": "Publishing commits the content to your branch as JSON"
+        },
+        {
+          "_id": "3JjQ49YR1RAe8rBNSKTEe0qU7Mu",
+          "_index": "a3",
+          "_type": "FlowCard",
+          "icon": "StrokeGlobe",
+          "highlight": false,
+          "title": "Your site",
+          "text": "Picks up the new content, wherever you host it"
+        }
+      ],
+      "anchor": "how-it-works"
+    },
+    {
+      "_id": "3JjQ47Tnd7QEL9mklaoT6YXUqGf",
+      "_index": "a1",
+      "_type": "CompareCards",
+      "title": "",
+      "description": "",
+      "cards": [
+        {
+          "_id": "3JjQ4AytvTkTkyZIIUQPBsqUk7S",
+          "_index": "a0",
+          "_type": "Card",
+          "title": "What Cloud takes care of",
+          "badge": "",
+          "tone": "default",
+          "text": "",
+          "checks": [
+            {
+              "_id": "3JjQ46d36U2n6RruTqac3Kmo6d1",
+              "_index": "a0",
+              "_type": "Item",
+              "text": "Sign-in for everyone who edits content"
+            },
+            {
+              "_id": "3JjQ48CZOACaGjgYidq4gTxlhBk",
+              "_index": "a1",
+              "_type": "Item",
+              "text": "Drafts, kept out of your repository until published"
+            },
+            {
+              "_id": "3JjQ4BQuZ25Ab9tCvcWK8zABe8d",
+              "_index": "a2",
+              "_type": "Item",
+              "text": "Teams, invites and roles"
+            },
+            {
+              "_id": "3JjQ4Bt1Koe3hr3B4e3rFYb3jyE",
+              "_index": "a3",
+              "_type": "Item",
+              "text": "A push to your GitHub repository on every publish"
+            }
+          ],
+          "code": ""
+        },
+        {
+          "_id": "3JjQ4D8pjOLAZXziMgm5czfywho",
+          "_index": "a1",
+          "_type": "Card",
+          "title": "What stays yours",
+          "badge": "",
+          "tone": "outline",
+          "text": "",
+          "checks": [
+            {
+              "_id": "3JjQ46JLZc7KssmIXDE9GCuqQ4P",
+              "_index": "a0",
+              "_type": "Item",
+              "text": "Your content, in your own repository"
+            },
+            {
+              "_id": "3JjQ4A2b5gGcaxZDYfiA8O7BSxM",
+              "_index": "a1",
+              "_type": "Item",
+              "text": "Your website and dashboard, hosted by you"
+            },
+            {
+              "_id": "3JjQ4BzLMMTDTZMGcUXAE8wynSt",
+              "_index": "a2",
+              "_type": "Item",
+              "text": "Your schema and code"
+            },
+            {
+              "_id": "3JjQ49v0vuEZWFKIfsq9Ul1HOOn",
+              "_index": "a3",
+              "_type": "Item",
+              "text": "The option to run your own backend instead"
+            }
+          ],
+          "code": ""
+        }
+      ]
+    },
+    {
+      "_id": "3JjQ4B6umN9F0PutWz0pV1tuuHj",
+      "_index": "a2",
+      "_type": "FeatureGrid",
+      "title": "Everything you need to go live",
+      "description": "Modern CMS features with as little configuration as possible.",
+      "panel": false,
+      "anchor": "features",
+      "items": [
+        {
+          "_id": "3JjQ47DEoHkwcj8ZYycqPRoAVvj",
+          "_index": "a0",
+          "_type": "Feature",
+          "icon": "StrokeLock",
+          "title": "Authentication",
+          "text": "Editors sign in through Alinea Cloud to reach your dashboard. No login system to build."
+        },
+        {
+          "_id": "3JjQ4AyKdeBBem6OCdcVQbz3xqs",
+          "_index": "a1",
+          "_type": "Feature",
+          "icon": "StrokeFile",
+          "title": "Drafts",
+          "text": "Unpublished drafts are stored in Cloud, so they don't clutter your repository."
+        },
+        {
+          "_id": "3JjQ49J8p5lCeT6KisBt68OOMBn",
+          "_index": "a2",
+          "_type": "Feature",
+          "icon": "StrokeGitBranch",
+          "title": "Publishing",
+          "text": "Publishing in Alinea pushes the changes to your GitHub repository."
+        },
+        {
+          "_id": "3JjQ4AWOMfV05Vh7L5ZMcq3aMHB",
+          "_index": "a3",
+          "_type": "Feature",
+          "icon": "StrokeUsers",
+          "title": "Teams",
+          "text": "Group projects in teams to manage who has access to what."
+        },
+        {
+          "_id": "3JjQ4ALqH48ajq2C9LOl21ZEULm",
+          "_index": "a4",
+          "_type": "Feature",
+          "icon": "StrokeMail",
+          "title": "Invites",
+          "text": "Invite people from the dashboard and assign them a role."
+        },
+        {
+          "_id": "3JjQ470buTF3C4GbTWiiXmjfd65",
+          "_index": "a5",
+          "_type": "Feature",
+          "icon": "StrokeHistory",
+          "title": "History",
+          "text": "Review recent content changes in your projects."
+        }
+      ]
+    },
+    {
+      "_id": "3JjQ473wHnNlrIfsviBTcMW90yh",
+      "_index": "a3",
+      "_type": "Steps",
+      "title": "Set up in three steps",
+      "description": "Keep your existing Alinea project. Cloud connects to it through a single key.",
+      "numbered": true,
+      "steps": [
+        {
+          "_id": "3JjQ48Gzabs983Mg1HjcgJkfnR6",
+          "_index": "a0",
+          "_type": "Step",
+          "title": "Create a project",
+          "text": "Sign up, connect GitHub and choose the repository your content lives in.",
+          "visual": "none",
+          "code": ""
+        },
+        {
+          "_id": "3JjQ47KpEtMLA4SWnFtzw74zGre",
+          "_index": "a1",
+          "_type": "Step",
+          "title": "Add your API key",
+          "text": "Set one environment variable on your deployment.",
+          "visual": "none",
+          "code": "ALINEA_API_KEY=alineapk_…"
+        },
+        {
+          "_id": "3JjQ4CZFo63N39GyuFFEOz7i8Dr",
+          "_index": "a2",
+          "_type": "Step",
+          "title": "Invite your editors",
+          "text": "They sign in to your dashboard with their own account and start publishing.",
+          "visual": "none",
+          "code": ""
+        }
+      ]
+    },
+    {
+      "_id": "3JjQ46FPnhg4xjsz3V1fMQF4M78",
+      "_index": "a4",
+      "_type": "Callout",
+      "title": "Free while in beta",
+      "badge": "Beta",
+      "text": "Alinea Cloud is in beta, and every feature is free to use while it is. [Add what happens after the beta, and how much notice people get.]",
+      "link": {
+        "_id": "3JjQ45kzs1yMmEsGE5SwuRd24pO",
+        "_type": "url",
+        "_url": "https://alinea.cloud",
+        "_title": "",
+        "_target": "_self",
+        "label": "Get started"
+      }
+    },
+    {
+      "_id": "3JjQ4AShawp9alprkFd8nxR6PyM",
+      "_index": "a5",
+      "_type": "Faq",
+      "title": "Questions, answered",
+      "anchor": "faq",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Can't find the answer? Reach out to our "
+            },
+            {
+              "_type": "text",
+              "text": "support inbox",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "3JjQ47JeBokNkZxNQ6sQrn2CDJ8",
+                  "_link": "url",
+                  "href": "#"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": "."
+            }
+          ]
+        }
+      ],
+      "items": [
+        {
+          "_id": "3JjQ45v3rUvSr5OSg3CtPQ9R6ys",
+          "_index": "a0",
+          "_type": "Question",
+          "question": "Do I need Alinea Cloud to use Alinea?",
+          "answer": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "No. Alinea only needs a Node.js environment and a git repository. To invite other people you need somewhere to manage users, sign-in and drafts. You can run that yourself, or let Alinea Cloud handle it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_id": "3JjQ4A5V2Ue7eJCQw00hJVB3VAP",
+          "_index": "a1",
+          "_type": "Question",
+          "question": "Does Alinea Cloud host my website?",
+          "answer": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "No. Your website and dashboard stay hosted by you, wherever you deploy them today. Alinea Cloud only handles sign-in, drafts and publishing to your GitHub repository."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_id": "3JjQ4D4qIltbtj8wqxtv5o37aSe",
+          "_index": "a2",
+          "_type": "Question",
+          "question": "What will Alinea Cloud cost after the beta?",
+          "answer": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "[Add pricing after the beta, and how much notice people get.]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_id": "3JjQ4BfQj2tTgrs4170dL3bUzHY",
+          "_index": "a3",
+          "_type": "Question",
+          "question": "What happens to my content if I stop using it?",
+          "answer": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Your published content lives in your own repository, so it stays yours. You can switch to running your own backend instead at any time."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "Alinea Cloud is the hosted backend for Alinea: sign-in for your editors, drafts kept out of your repository, and publishing straight to your GitHub repo. Free while in beta.",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

@@ -36,6 +36,12 @@
   }
 
   &.is-outline {
+    border-style: dashed;
+    border-color: color-mix(
+      in srgb,
+      var(--web-outline) 70%,
+      var(--web-foreground-muted)
+    );
     background: transparent;
   }
 

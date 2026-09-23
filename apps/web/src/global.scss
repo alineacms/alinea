@@ -13,6 +13,10 @@
   --web-accent-soft: #eef0fd;
   --web-accent-foreground: #ffffff;
   --web-code-background: #14173a;
+  --web-code-outline: #262a55;
+  --web-code-muted: #8d92b8;
+  --web-code-keyword: #9da3fa;
+  --web-code-string: #7fe0b8;
   --web-positive: #007a55;
   --web-positive-soft: #ecfdf5;
   --web-neutral-soft: #f1f2f7;
@@ -45,7 +49,12 @@
   --web-accent-strong: #aab6ff;
   --web-accent-soft: rgba(139, 156, 255, 0.14);
   --web-accent-foreground: #0d1030;
-  --web-code-background: #14173a;
+  // Darker than the page background so code stands out on it and on surfaces
+  --web-code-background: #0a0c26;
+  --web-code-outline: #2e3570;
+  --web-code-muted: #8d92b8;
+  --web-code-keyword: #9da3fa;
+  --web-code-string: #7fe0b8;
   --web-positive: #34d399;
   --web-positive-soft: rgba(52, 211, 153, 0.14);
   --web-neutral-soft: rgba(255, 255, 255, 0.08);
@@ -76,13 +85,6 @@
   --web-section-gap: 128px;
   --web-code-highlight: var(--web-accent);
   --web-code-foreground: #fbfbfe;
-
-  // Inverted palette used by the /cloud landing
-  --web-cloud-background: #0d1030;
-  --web-cloud-surface: #161b4a;
-  --web-cloud-outline: #262c63;
-  --web-cloud-accent: #aab6ff;
-  --web-cloud-foreground-faded: #c9ceee;
 
   @include dark-theme;
 
@@ -122,6 +124,14 @@ html {
   &.is-dark {
     @include dark-theme;
   }
+}
+
+// Forces the dark palette, eg. on dark landing pages. Applied to the document
+// too, so the page background is dark edge to edge (also on overscroll) and
+// portals such as the search modal pick up the same tokens.
+.theme-dark,
+html:has(.theme-dark) {
+  @include dark-theme;
 }
 
 body {

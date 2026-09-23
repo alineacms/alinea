@@ -40,4 +40,8 @@
     height: 20px;
     margin-top: 1px;
   }
+
+  &.is-muted &-icon {
+    color: var(--web-foreground-muted);
+  }
 }

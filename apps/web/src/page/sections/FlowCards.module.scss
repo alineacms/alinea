@@ -1,0 +1,81 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 16px;
+  margin-top: 88px;
+
+  @include sm {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 56px;
+  }
+
+  @include s {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  color: var(--web-foreground);
+
+  &-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--web-accent-soft);
+    color: var(--web-accent);
+    font-size: 20px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 500;
+    font-size: 19px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--web-foreground-faded);
+  }
+
+  // Inverted: the card takes the foreground color as its background
+  &.is-highlight {
+    border-color: var(--web-foreground);
+    background: var(--web-foreground);
+    color: var(--web-background);
+  }
+
+  &.is-highlight &-icon {
+    background: color-mix(
+      in srgb,
+      var(--web-accent) 16%,
+      var(--web-foreground)
+    );
+    color: color-mix(in srgb, var(--web-accent) 70%, var(--web-background));
+  }
+
+  &.is-highlight &-text {
+    color: color-mix(in srgb, var(--web-background) 72%, transparent);
+  }
+}

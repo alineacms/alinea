@@ -1,10 +1,12 @@
 import {Field} from 'alinea'
+import {Callout} from './Callout'
 import {CardPair} from './CardPair'
 import {CodeShowcase} from './CodeShowcase'
 import {CompareCards} from './CompareCards'
 import {Cta} from './Cta'
 import {Faq} from './Faq'
 import {FeatureGrid} from './FeatureGrid'
+import {FlowCards} from './FlowCards'
 import {ProductShot} from './ProductShot'
 import {Spotlight} from './Spotlight'
 import {Steps} from './Steps'
@@ -21,7 +23,9 @@ export const sectionTypes = {
   CompareCards,
   Template,
   Faq,
-  Cta
+  Cta,
+  FlowCards,
+  Callout
 }
 
 export type SectionTypes = typeof sectionTypes

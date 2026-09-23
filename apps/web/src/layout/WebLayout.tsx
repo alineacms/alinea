@@ -19,15 +19,23 @@ export const viewport: Viewport = {
 
 export interface WebLayoutProps {
   footer?: boolean
+  /** Force a color theme, by default the system preference is followed */
+  theme?: 'light' | 'dark' | null
+  /** Text shown next to the logo in the header */
+  badge?: string | null
 }
 
 export default async function WebLayout({
   children,
-  footer = true
+  footer = true,
+  theme,
+  badge
 }: PropsWithChildren<WebLayoutProps>) {
+  // The global theme-dark class applies the dark palette, see global.scss
+  const themeClass = theme === 'dark' ? 'theme-dark' : undefined
   return (
-    <div className={styles.layout()}>
-      <Header />
+    <div className={styles.layout(styler.merge({className: themeClass}))}>
+      <Header badge={badge || undefined} />
       <div className={styles.layout.content()}>{children}</div>
       {footer && <Footer />}
       <cms.previews widget />
