@@ -32,14 +32,6 @@ import {
 } from '../dashboard/icons.js'
 import {AppShell, AppShellContent} from './AppShell.js'
 import {Badge} from './Badge.js'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from './Breadcrumbs.js'
 import {Button} from './Button.js'
 import {Checkbox} from './Checkbox.js'
 import {CheckboxGroup} from './CheckboxGroup.js'
@@ -91,25 +83,17 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger
 } from './DropdownMenu.js'
+import {Empty, EmptyDescription, EmptyHeader, EmptyTitle} from './Empty.js'
 import {Heading} from './Heading.js'
 import {Kbd} from './Kbd.js'
 import {
   List,
-  ListCreateRow,
-  ListDragPreview,
   ListItem,
   ListItemDescription,
   ListItemStatus,
   ListItemTitle,
   ListItemVisual,
-  ListLabel,
-  ListRow,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowHeader,
-  ListRowMeta
+  ListLabel
 } from './List.js'
 import {MultipleSelect, MultipleSelectItem} from './MultipleSelect.js'
 import {
@@ -120,7 +104,14 @@ import {
   NavRailItem
 } from './NavRail.js'
 import {NumberField} from './NumberField.js'
-import {Page, PageActions, PageContent, PageHeader} from './Page.js'
+import {
+  Page,
+  PageActions,
+  PageBack,
+  PageContent,
+  PageHeader,
+  PageTitle
+} from './Page.js'
 import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 import {RadioGroup, RadioGroupItem} from './RadioGroup.js'
 import {
@@ -140,12 +131,24 @@ import {
   SidebarHeader,
   SidebarInset
 } from './Sidebar.js'
+import {
+  SortableList,
+  SortableListAdd,
+  SortableListDragPreview,
+  SortableListHandle,
+  SortableListItem,
+  SortableListItemContent,
+  SortableListItemDescription,
+  SortableListItemHeader,
+  SortableListItemTitle
+} from './SortableList.js'
 import {Spinner} from './Spinner.js'
 import {Surface} from './Surface.js'
 import {Switch} from './Switch.js'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from './Tabs.js'
 import {Text} from './Text.js'
 import {TextField} from './TextField.js'
+import {Timestamp} from './Timestamp.js'
 import {Toggle} from './Toggle.js'
 import {ToggleGroup, ToggleGroupItem} from './ToggleGroup.js'
 import {Tree, TreeItem} from './Tree.js'
@@ -257,7 +260,9 @@ function RootRail() {
                     <Spinner size="sm" aria-label="Saving" />
                   </ListItemVisual>
                 }
-                trailing={<ListItemStatus tone="accent">Saving</ListItemStatus>}
+                trailing={
+                  <ListItemStatus color="primary">Saving</ListItemStatus>
+                }
               >
                 <ListItemTitle>Launching the new platform</ListItemTitle>
                 <ListItemDescription>Updated draft · 14:02</ListItemDescription>
@@ -512,77 +517,51 @@ function EditorHeader({
   dirty
 }: HeaderProps) {
   return (
-    <PageHeader
-      className={cx.DashboardStory.header()}
-      data-dirty={dirty || undefined}
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        icon={IcRoundArrowBack}
-        aria-label="Back"
-      />
-      <div className={cx.DashboardStory.header.title()}>
-        <Breadcrumb>
-          <BreadcrumbList className={cx.DashboardStory.header.breadcrumbs()}>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="#pages">Pages</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="#blog">Blog</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{page.path}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <Heading as="h1" size="sm" truncate>
-          {page.title}
-        </Heading>
-      </div>
+    <PageHeader size="lg">
+      <PageBack label="Back to Blog" />
+      <PageTitle>{page.title}</PageTitle>
+      <ToggleGroup
+        type="single"
+        value={view}
+        onValueChange={value => value && onViewChange(value)}
+        aria-label="View"
+      >
+        <ToggleGroupItem value="edit" icon={IcRoundEdit} aria-label="Edit" />
+        <ToggleGroupItem
+          value="overview"
+          icon={IcOutlineTableRows}
+          aria-label="Overview"
+        />
+      </ToggleGroup>
       <Badge status={page.status}>{page.status}</Badge>
       <Badge icon={LucideFile}>{page.type}</Badge>
-      <PageActions>
-        <ToggleGroup
-          type="single"
-          value={view}
-          onValueChange={value => value && onViewChange(value)}
-          aria-label="View"
-        >
-          <ToggleGroupItem value="edit" icon={IcRoundEdit} aria-label="Edit" />
-          <ToggleGroupItem
-            value="overview"
-            icon={IcOutlineTableRows}
-            aria-label="Overview"
-          />
-        </ToggleGroup>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            variant="ghost"
-            size="icon"
-            icon={IcRoundMoreHoriz}
-            aria-label="More actions"
-          />
-          <DropdownMenuContent aria-label="Actions" align="end">
-            <DropdownMenuGroup aria-label="Entry">
-              <DropdownMenuLabel>Entry</DropdownMenuLabel>
-              <DropdownMenuItem icon={IcBaselineContentCopy}>
-                Duplicate
-                <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem icon={IcRoundHistory}>
-                Show history
-              </DropdownMenuItem>
-              <DropdownMenuItem icon={IcRoundArchive}>Archive</DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem icon={IcRoundDelete} variant="destructive">
-              Delete
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          variant="ghost"
+          size="icon"
+          icon={IcRoundMoreHoriz}
+          aria-label="More actions"
+        />
+        <DropdownMenuContent aria-label="Actions" align="start">
+          <DropdownMenuGroup aria-label="Entry">
+            <DropdownMenuLabel>Entry</DropdownMenuLabel>
+            <DropdownMenuItem icon={IcBaselineContentCopy}>
+              Duplicate
+              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenuItem icon={IcRoundHistory}>
+              Show history
+            </DropdownMenuItem>
+            <DropdownMenuItem icon={IcRoundArchive}>Archive</DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem icon={IcRoundDelete} variant="destructive">
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <PageActions>
+        {dirty && <Button variant="ghost">Discard my changes</Button>}
         <Button variant="outline" disabled={!dirty}>
           Save draft
         </Button>
@@ -687,7 +666,7 @@ function EditorForm({page, onChange}: {page: StoryPage; onChange: () => void}) {
             <ListLabel expanded hasRows>
               Sections
             </ListLabel>
-            <List
+            <SortableList
               aria-label="Sections"
               onReorder={event => {
                 setSections(current => moveSections(current, event))
@@ -695,43 +674,45 @@ function EditorForm({page, onChange}: {page: StoryPage; onChange: () => void}) {
               }}
             >
               {sections.map((section, index) => (
-                <ListRow
+                <SortableListItem
                   key={section.id}
                   id={section.id}
-                  first={index === 0}
                   aria-label={section.label}
                   role="listitem"
                   dragPreview={
-                    <ListDragPreview icon={section.icon} label={section.type} />
+                    <SortableListDragPreview
+                      icon={section.icon}
+                      label={section.type}
+                    />
                   }
                 >
-                  <ListRowHeader first={index === 0} hasFold={false}>
-                    <ListRowDragHandle aria-label={`Drag ${section.label}`} />
-                    <ListRowDrag>
-                      <ListRowBadges>
-                        <Badge icon={section.icon} size="sm">
-                          {section.type}
-                        </Badge>
-                        <ListRowMeta>{section.label}</ListRowMeta>
-                      </ListRowBadges>
-                    </ListRowDrag>
-                  </ListRowHeader>
+                  <SortableListItemHeader>
+                    <SortableListHandle aria-label={`Drag ${section.label}`} />
+                    <SortableListItemTitle>
+                      <Badge icon={section.icon} size="sm">
+                        {section.type}
+                      </Badge>
+                      <SortableListItemDescription>
+                        {section.label}
+                      </SortableListItemDescription>
+                    </SortableListItemTitle>
+                  </SortableListItemHeader>
                   {index === 0 && (
-                    <ListRowBody>
+                    <SortableListItemContent>
                       <TextField
                         label="Heading"
                         defaultValue="A platform for every team"
                       />
-                    </ListRowBody>
+                    </SortableListItemContent>
                   )}
-                </ListRow>
+                </SortableListItem>
               ))}
-              <ListCreateRow>
+              <SortableListAdd>
                 <Button variant="ghost" size="sm" icon={IcRoundAdd}>
                   Add section
                 </Button>
-              </ListCreateRow>
-            </List>
+              </SortableListAdd>
+            </SortableList>
           </div>
           <Surface>
             <Collapsible>
@@ -835,7 +816,16 @@ function Overview({onOpen}: {onOpen: (key: Key) => void}) {
           selectedKeys={selected}
           onSelectionChange={setSelected}
           onRowAction={onOpen}
-          renderEmptyState={() => <Text color="muted">No pages found</Text>}
+          renderEmptyState={() => (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>No pages found</EmptyTitle>
+                <EmptyDescription>
+                  Pages you add to the blog show up here.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
         >
           {page => (
             <TableRow id={page.id} textValue={page.title}>
@@ -847,7 +837,9 @@ function Overview({onOpen}: {onOpen: (key: Key) => void}) {
                 </Badge>
               </TableCell>
               <TableCell>{page.author}</TableCell>
-              <TableCell>{page.updated}</TableCell>
+              <TableCell>
+                <Timestamp date={page.updated} format="date" />
+              </TableCell>
             </TableRow>
           )}
         </Table>
@@ -937,7 +929,10 @@ function EntryAside({page}: {page: StoryPage}) {
                 trailing={<Badge size="sm">Editing</Badge>}
               >
                 <ListItemTitle>Draft</ListItemTitle>
-                <ListItemDescription>Els · 2 minutes ago</ListItemDescription>
+                <ListItemDescription>
+                  Els ·{' '}
+                  <Timestamp date={Date.now() - 2 * 60_000} format="relative" />
+                </ListItemDescription>
               </ListItem>
               <ListItem
                 leading={
@@ -947,7 +942,10 @@ function EntryAside({page}: {page: StoryPage}) {
                 }
               >
                 <ListItemTitle>Published</ListItemTitle>
-                <ListItemDescription>Niels · yesterday</ListItemDescription>
+                <ListItemDescription>
+                  Niels ·{' '}
+                  <Timestamp date={Date.now() - 86_400_000} format="relative" />
+                </ListItemDescription>
               </ListItem>
             </List>
             <Collapsible>
@@ -971,7 +969,7 @@ function EntryAside({page}: {page: StoryPage}) {
                   </ListItemVisual>
                 }
                 trailing={
-                  <ListItemStatus tone="positive">Published</ListItemStatus>
+                  <ListItemStatus color="success">Published</ListItemStatus>
                 }
               >
                 <ListItemTitle>Home</ListItemTitle>
@@ -983,7 +981,9 @@ function EntryAside({page}: {page: StoryPage}) {
                     <IcRoundLanguage />
                   </ListItemVisual>
                 }
-                trailing={<ListItemStatus tone="warning">Draft</ListItemStatus>}
+                trailing={
+                  <ListItemStatus color="warning">Draft</ListItemStatus>
+                }
               >
                 <ListItemTitle>Newsletter september</ListItemTitle>
                 <ListItemDescription>

@@ -1,4 +1,15 @@
-import {Button, type DragDropProps, Icon, type Selection} from '#/components.js'
+import {
+  Button,
+  type DragDropProps,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  Icon,
+  type Selection
+} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
@@ -32,18 +43,20 @@ function EmptyResults({explorer, page, root}: EmptyResultsProps) {
     page.searchScope === 'workspace' &&
     (explorer.mode === 'search' || page.resultMode === 'matches')
   return (
-    <div className={styles.ExplorerList.empty()}>
-      <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
-      <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>
-          No results found
-        </div>
-        <div className={styles.ExplorerList.empty.text()}>
+    <Empty className={styles.ExplorerList.empty()}>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon icon={icon} />
+        </EmptyMedia>
+        <EmptyTitle>No results found</EmptyTitle>
+        <EmptyDescription>
           {canSearchAll
             ? 'Try different search terms or search all workspaces.'
             : 'Try different search terms.'}
-        </div>
-        {canSearchAll && (
+        </EmptyDescription>
+      </EmptyHeader>
+      {canSearchAll && (
+        <EmptyContent>
           <Button
             variant="ghost"
             color="primary"
@@ -53,23 +66,23 @@ function EmptyResults({explorer, page, root}: EmptyResultsProps) {
           >
             Try searching all workspaces
           </Button>
-        )}
-      </div>
-    </div>
+        </EmptyContent>
+      )}
+    </Empty>
   )
 }
 
 function SearchIdleState() {
   return (
-    <div className={styles.ExplorerList.empty()}>
-      <Icon icon={IcRoundSearch} className={styles.ExplorerList.empty.icon()} />
-      <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>Search</div>
-        <div className={styles.ExplorerList.empty.text()}>
-          Type to find a page.
-        </div>
-      </div>
-    </div>
+    <Empty className={styles.ExplorerList.empty()}>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon icon={IcRoundSearch} />
+        </EmptyMedia>
+        <EmptyTitle>Search</EmptyTitle>
+        <EmptyDescription>Type to find a page.</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   )
 }
 

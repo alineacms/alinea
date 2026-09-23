@@ -17,6 +17,14 @@
   overflow-y: hidden;
   border-bottom: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
+
+  &[data-size='lg'] {
+    min-height: 48px;
+  }
+}
+
+.PageBack {
+  flex-shrink: 0;
 }
 
 .PageTitle {

@@ -1,4 +1,15 @@
-import {Button, Link, Spinner, Surface} from '#/components.js'
+import {
+  Button,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  Icon,
+  Link,
+  Spinner
+} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, type WritableAtom} from 'jotai'
 import type {ReactNode} from 'react'
@@ -37,44 +48,49 @@ export function AuthView({auth: authState = authAtom}: AuthViewProps) {
 
   if (auth.status === 'missingHandler') {
     return (
-      <AuthViewFrame title="Ready to deploy?">
-        <p className={styles.AuthView.text()}>
-          Alinea requires a{' '}
+      <AuthViewFrame
+        title="Ready to deploy?"
+        description={
+          <>
+            Alinea requires a{' '}
+            <Link
+              className={styles.AuthView.link()}
+              href="https://alineacms.com/docs/deploy"
+              target="_blank"
+            >
+              handler
+            </Link>{' '}
+            to continue.
+          </>
+        }
+      />
+    )
+  }
+
+  return (
+    <AuthViewFrame
+      title="Ready to deploy?"
+      description={
+        <>
+          Alinea requires a backend to continue. You can{' '}
           <Link
             className={styles.AuthView.link()}
             href="https://alineacms.com/docs/deploy"
             target="_blank"
           >
-            handler
-          </Link>{' '}
-          to continue.
-        </p>
-      </AuthViewFrame>
-    )
-  }
-
-  return (
-    <AuthViewFrame title="Ready to deploy?">
-      <p className={styles.AuthView.text()}>
-        Alinea requires a backend to continue. You can{' '}
-        <Link
-          className={styles.AuthView.link()}
-          href="https://alineacms.com/docs/deploy"
-          target="_blank"
-        >
-          fully configure a custom backend
-        </Link>
-        , or get set up with alinea.cloud.
-      </p>
-      <div className={styles.AuthView.actionRow()}>
-        <Button
-          color="primary"
-          icon={IcRoundArrowForward}
-          onClick={() => setAuth({type: 'setupCloud'})}
-        >
-          Continue with alinea.cloud
-        </Button>
-      </div>
+            fully configure a custom backend
+          </Link>
+          , or get set up with alinea.cloud.
+        </>
+      }
+    >
+      <Button
+        color="primary"
+        icon={IcRoundArrowForward}
+        onClick={() => setAuth({type: 'setupCloud'})}
+      >
+        Continue with alinea.cloud
+      </Button>
     </AuthViewFrame>
   )
 }
@@ -93,22 +109,24 @@ function AuthViewLoader() {
 
 interface AuthViewFrameProps {
   title: string
-  children: ReactNode
+  description: ReactNode
+  children?: ReactNode
 }
 
-function AuthViewFrame({title, children}: AuthViewFrameProps) {
+function AuthViewFrame({title, description, children}: AuthViewFrameProps) {
   return (
     <div className={styles.AuthView()}>
       <div className={styles.AuthView.panel()}>
-        <Surface className={styles.AuthView.surface()}>
-          <div className={styles.AuthView.heading()}>
-            <span className={styles.AuthView.mark()}>
-              <IcRoundPublish />
-            </span>
-            <h1 className={styles.AuthView.title()}>{title}</h1>
-          </div>
-          {children}
-        </Surface>
+        <Empty variant="card">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className={styles.AuthView.mark()}>
+              <Icon icon={IcRoundPublish} />
+            </EmptyMedia>
+            <EmptyTitle as="h1">{title}</EmptyTitle>
+            <EmptyDescription>{description}</EmptyDescription>
+          </EmptyHeader>
+          {children && <EmptyContent>{children}</EmptyContent>}
+        </Empty>
       </div>
     </div>
   )

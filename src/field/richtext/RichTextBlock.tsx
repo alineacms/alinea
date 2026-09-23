@@ -1,15 +1,14 @@
 import {
   Button,
   Icon,
-  List,
-  ListRow,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowHeader,
-  ListRowSettings,
+  SortableList,
+  SortableListItemTitle,
+  SortableListItem,
+  SortableListItemActions,
+  SortableListItemContent,
+  SortableListHandle,
+  SortableListItemHeader,
+  SortableListItemSettings,
   Popover,
   PopoverContent,
   PopoverTrigger
@@ -57,16 +56,16 @@ export const RichTextBlock = memo(function RichTextBlock({
   }
 
   return (
-    <List
+    <SortableList
       className={styles.RichTextBlock()}
       data-depth="muted"
       data-read-only={readOnly || undefined}
       data-richtext-block="true"
     >
-      <ListRow role="listitem" tabIndex={0}>
-        <ListRowHeader data-richtext-block-header="true" expanded>
+      <SortableListItem role="listitem" tabIndex={0}>
+        <SortableListItemHeader data-richtext-block-header="true">
           {!readOnly && (
-            <ListRowDragHandle
+            <SortableListHandle
               aria-label={`Drag ${label} block`}
               className={styles.RichTextBlock.dragHandle()}
               data-richtext-drag-handle="true"
@@ -80,14 +79,12 @@ export const RichTextBlock = memo(function RichTextBlock({
               }}
             />
           )}
-          <ListRowDrag>
-            <ListRowBadges>
-              <Badge icon={typeIcon} size="sm">
-                {label}
-              </Badge>
-            </ListRowBadges>
-          </ListRowDrag>
-          <ListRowActions>
+          <SortableListItemTitle>
+            <Badge icon={typeIcon} size="sm">
+              {label}
+            </Badge>
+          </SortableListItemTitle>
+          <SortableListItemActions>
             <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
               <PopoverTrigger
                 variant="ghost"
@@ -100,7 +97,7 @@ export const RichTextBlock = memo(function RichTextBlock({
                 side="bottom"
                 align="end"
               >
-                <ListRowSettings actions>
+                <SortableListItemSettings variant="actions">
                   <Button
                     variant="ghost"
                     icon={IcBaselineContentCopy}
@@ -112,7 +109,7 @@ export const RichTextBlock = memo(function RichTextBlock({
                   >
                     Duplicate
                   </Button>
-                </ListRowSettings>
+                </SortableListItemSettings>
               </PopoverContent>
             </Popover>
             <Button
@@ -123,17 +120,17 @@ export const RichTextBlock = memo(function RichTextBlock({
               onClick={onDelete}
               size="icon-sm"
             />
-          </ListRowActions>
-        </ListRowHeader>
-        <ListRowBody data-richtext-block-editor="true">
+          </SortableListItemActions>
+        </SortableListItemHeader>
+        <SortableListItemContent data-richtext-block-editor="true">
           {readOnly ? (
             <ReadOnlyBlockEditor node={node} type={type} />
           ) : (
             <NodeEditor node={node} type={type} />
           )}
-        </ListRowBody>
-      </ListRow>
-    </List>
+        </SortableListItemContent>
+      </SortableListItem>
+    </SortableList>
   )
 })
 

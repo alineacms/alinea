@@ -14,6 +14,7 @@ import {
   PopoverTrigger,
   Spinner,
   type Side,
+  Timestamp,
   Tooltip,
   TooltipContent,
   TooltipTrigger
@@ -252,7 +253,7 @@ function ActivityItem({activity}: ActivityItemProps) {
           </p>
         )
       }
-      onPress={
+      onClick={
         target
           ? () =>
               setRoute({
@@ -277,7 +278,7 @@ function ActivityItem({activity}: ActivityItemProps) {
       }
       trailing={
         <ListItemStatus
-          tone={showSpinner ? 'accent' : activityStatusTone(activity.status)}
+          color={showSpinner ? 'primary' : activityStatusColor(activity.status)}
         >
           {displayedStatus}
         </ListItemStatus>
@@ -343,19 +344,19 @@ function activityStatusIcon(status: Activity['status']) {
   }
 }
 
-function activityStatusTone(status: Activity['status']) {
+function activityStatusColor(status: Activity['status']) {
   switch (status) {
     case 'running':
-      return 'accent' as const
+      return 'primary' as const
     case 'succeeded':
-      return 'positive' as const
+      return 'success' as const
     case 'failed':
-      return 'danger' as const
+      return 'destructive' as const
     case 'pending':
     case 'blocked':
       return 'warning' as const
     default:
-      return 'neutral' as const
+      return 'muted' as const
   }
 }
 
@@ -380,12 +381,15 @@ function formatActivityDescription(activity: Activity) {
       : activity.operations
           .map(operation => formatActivityOperation(operation, activity.status))
           .join(' · ')
-  const timestamp = activity.finishedAt ?? activity.startedAt
-  const time = new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-  return details ? `${details} · ${time}` : time
+  const time = (
+    <Timestamp date={activity.finishedAt ?? activity.startedAt} format="time" />
+  )
+  if (!details) return time
+  return (
+    <>
+      {details} · {time}
+    </>
+  )
 }
 
 function isFileActivity(activity: Activity) {

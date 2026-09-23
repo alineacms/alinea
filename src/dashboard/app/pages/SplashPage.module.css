@@ -217,11 +217,6 @@
   font-size: 11px;
 }
 
-.SplashPage-entry-time {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 .SplashPage-entry-content {
   display: flex;
   min-width: 0;

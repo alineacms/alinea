@@ -360,9 +360,9 @@ export interface TableRowProps extends DataProps {
   /**
    * Called on every click or tap of the row, next to its selection. Use it
    * instead of `onAction` to act on a single click with the `replace`
-   * selection behavior.
+   * selection behavior, where `onAction` needs a double click.
    */
-  onPress?: () => void
+  onClick?: () => void
   onDoubleClick?: () => void
   /** One cell per column, in column order */
   children: ReactNode
@@ -376,7 +376,7 @@ export function TableRow({
   selectable = true,
   highlighted,
   onAction,
-  onPress,
+  onClick,
   onDoubleClick,
   children,
   ...props
@@ -399,12 +399,12 @@ export function TableRow({
       data-unselectable={!selectable || undefined}
       data-highlighted={highlighted || undefined}
       onAction={onAction}
-      onPress={onPress}
+      onPress={onClick}
       onDoubleClick={onDoubleClick}
       className={({isDropTarget, isDragging}) =>
         styles.TableRow({
           highlighted,
-          static: !interactive && !onAction && !onPress && !onDoubleClick,
+          static: !interactive && !onAction && !onClick && !onDoubleClick,
           dropTarget: isDropTarget,
           dragging: isDragging
         })

@@ -28,7 +28,7 @@ export function Constraints() {
       defaultValue="2026-09-15"
       min="2026-09-10"
       max="2026-09-25"
-      isDateUnavailable={isWeekend}
+      disabledDates={isWeekend}
     />
   )
 }

@@ -6,20 +6,19 @@ import {
   type DragMoveEvent,
   Field,
   Icon,
-  List,
-  ListCreateRow,
-  ListDragPreview,
+  SortableList,
+  SortableListItemTitle,
+  SortableListAdd,
+  SortableListDragPreview,
   ListLabel,
-  ListRow,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowFoldButton,
-  ListRowFooter,
-  ListRowHeader,
-  ListRowSettings,
+  SortableListItem,
+  SortableListItemActions,
+  SortableListItemContent,
+  SortableListHandle,
+  SortableListItemToggle,
+  SortableListItemFooter,
+  SortableListItemHeader,
+  SortableListItemSettings,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -1386,33 +1385,27 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
       {imagePreviewEntryId && (
         <EntryLinkImagePreview entryId={imagePreviewEntryId} />
       )}
-      <ListRowDrag>
-        <ListRowBadges>
-          <LinkTypeBadge
-            className={styles.LinkFieldView.type()}
-            picker={picker}
-            type={type}
-            value={value}
-          />
-          <LinkMetaLabel
-            className={styles.LinkFieldView.metaLabel()}
-            node={node}
-            value={value}
-          />
-          <EntryAnchorBadge node={node} value={value} />
-        </ListRowBadges>
-      </ListRowDrag>
+      <SortableListItemTitle>
+        <LinkTypeBadge
+          className={styles.LinkFieldView.type()}
+          picker={picker}
+          type={type}
+          value={value}
+        />
+        <LinkMetaLabel
+          className={styles.LinkFieldView.metaLabel()}
+          node={node}
+          value={value}
+        />
+        <EntryAnchorBadge node={node} value={value} />
+      </SortableListItemTitle>
     </>
   )
 
   return (
     <>
-      <ListRow aria-label="Link item 1" first role="listitem">
-        <ListRowHeader
-          first
-          hasFold={false}
-          className={styles.LinkFieldView.inputHeader()}
-        >
+      <SortableListItem aria-label="Link item 1" role="listitem">
+        <SortableListItemHeader className={styles.LinkFieldView.inputHeader()}>
           {options.readOnly ? (
             rowContent
           ) : (
@@ -1426,7 +1419,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
             </Button>
           )}
           {!options.readOnly && (
-            <ListRowActions>
+            <SortableListItemActions>
               <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
                 <LinkSettingsButton />
                 <PopoverContent
@@ -1434,7 +1427,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                   side="bottom"
                   align="end"
                 >
-                  <ListRowSettings actions>
+                  <SortableListItemSettings variant="actions">
                     <LinkRowActions
                       closeActions={closeActions}
                       onEdit={() => setEditOpen(true)}
@@ -1442,13 +1435,13 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                       type={type}
                       value={value}
                     />
-                  </ListRowSettings>
+                  </SortableListItemSettings>
                   <hr className={styles.LinkFieldView.settingsSeparator()} />
-                  <ListRowSettings>
+                  <SortableListItemSettings>
                     <LinkLabelField node={node} value={value} />
                     <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField node={node} value={value} />
-                  </ListRowSettings>
+                  </SortableListItemSettings>
                 </PopoverContent>
               </Popover>
               <Button
@@ -1458,15 +1451,15 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 onClick={removeLink}
                 size="icon-sm"
               />
-            </ListRowActions>
+            </SortableListItemActions>
           )}
-        </ListRowHeader>
+        </SortableListItemHeader>
         {hasFields && (
-          <ListRowBody>
+          <SortableListItemContent>
             <LinkRowEditor node={node} picker={picker} />
-          </ListRowBody>
+          </SortableListItemContent>
         )}
-      </ListRow>
+      </SortableListItem>
       {picker && (
         <LinkPickerDialog
           isOpen={editOpen}
@@ -1520,47 +1513,44 @@ function MultipleLinkRow({
 
   return (
     <>
-      <ListRow
+      <SortableListItem
         aria-label={`Link item ${index + 1}`}
         dragPreview={
-          <ListDragPreview
+          <SortableListDragPreview
             icon={getLinkIcon(type)}
             label={<LinkRowText node={node} />}
           />
         }
-        first={index === 0}
         id={itemId}
         role="listitem"
       >
-        <ListRowHeader first={index === 0} hasFold={hasFields}>
+        <SortableListItemHeader>
           {!readOnly && (
-            <ListRowDragHandle aria-label={`Drag link item ${index + 1}`} />
+            <SortableListHandle aria-label={`Drag link item ${index + 1}`} />
           )}
           {imagePreviewEntryId && !hasFields && (
             <EntryLinkImagePreview entryId={imagePreviewEntryId} />
           )}
-          <ListRowDrag>
-            <ListRowBadges>
-              {hasFields && (
-                <ListRowFoldButton
-                  aria-label={expanded ? 'Collapse link' : 'Expand link'}
-                  expanded={expanded}
-                  onClick={() => onToggleRow(itemId)}
-                />
-              )}
-              {imagePreviewEntryId && hasFields && (
-                <EntryLinkImagePreview entryId={imagePreviewEntryId} />
-              )}
-              <LinkTypeBadge picker={picker} type={type} value={value} />
-              <LinkMetaLabel
-                className={styles.LinkFieldView.metaLabel()}
-                node={node}
-                value={value}
+          <SortableListItemTitle>
+            {hasFields && (
+              <SortableListItemToggle
+                aria-label={expanded ? 'Collapse link' : 'Expand link'}
+                expanded={expanded}
+                onClick={() => onToggleRow(itemId)}
               />
-              <EntryAnchorBadge node={node} value={value} />
-            </ListRowBadges>
-          </ListRowDrag>
-          <ListRowActions>
+            )}
+            {imagePreviewEntryId && hasFields && (
+              <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+            )}
+            <LinkTypeBadge picker={picker} type={type} value={value} />
+            <LinkMetaLabel
+              className={styles.LinkFieldView.metaLabel()}
+              node={node}
+              value={value}
+            />
+            <EntryAnchorBadge node={node} value={value} />
+          </SortableListItemTitle>
+          <SortableListItemActions>
             <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
               <LinkSettingsButton />
               <PopoverContent
@@ -1568,7 +1558,7 @@ function MultipleLinkRow({
                 side="bottom"
                 align="end"
               >
-                <ListRowSettings actions>
+                <SortableListItemSettings variant="actions">
                   <LinkRowActions
                     closeActions={closeActions}
                     isDisabled={readOnly}
@@ -1577,9 +1567,9 @@ function MultipleLinkRow({
                     type={type}
                     value={value}
                   />
-                </ListRowSettings>
+                </SortableListItemSettings>
                 <hr className={styles.LinkFieldView.settingsSeparator()} />
-                <ListRowSettings>
+                <SortableListItemSettings>
                   <LinkLabelField
                     isDisabled={readOnly}
                     node={node}
@@ -1595,7 +1585,7 @@ function MultipleLinkRow({
                     node={node}
                     value={value}
                   />
-                </ListRowSettings>
+                </SortableListItemSettings>
               </PopoverContent>
             </Popover>
             <Button
@@ -1606,23 +1596,23 @@ function MultipleLinkRow({
               onClick={removeLink}
               size="icon-sm"
             />
-          </ListRowActions>
-        </ListRowHeader>
+          </SortableListItemActions>
+        </SortableListItemHeader>
         {expanded && hasFields && (
-          <ListRowBody>
+          <SortableListItemContent>
             <LinkRowEditor node={node} picker={picker} />
-          </ListRowBody>
+          </SortableListItemContent>
         )}
         {!expanded && picker?.fields && (
-          <ListRowFooter>
+          <SortableListItemFooter>
             <CompactRecordFields
               fields={Type.fields(picker.fields)}
               layout="footer"
               value={value}
             />
-          </ListRowFooter>
+          </SortableListItemFooter>
         )}
-      </ListRow>
+      </SortableListItem>
       {picker && (
         <LinkPickerDialog
           isOpen={editOpen}
@@ -1657,7 +1647,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const hasRows = Boolean(selectedValue)
   const readOnly = Boolean(options.readOnly)
   const content = (hasRows || !readOnly) && (
-    <List aria-label={options.label || 'Link'}>
+    <SortableList aria-label={options.label || 'Link'}>
       {selectedValue && (
         <SingleLinkRow
           field={field}
@@ -1666,11 +1656,11 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         />
       )}
       {isEmpty && !readOnly && (
-        <ListCreateRow empty className={styles.LinkFieldView.inputHeader()}>
+        <SortableListAdd className={styles.LinkFieldView.inputHeader()}>
           <SingleLinkCreateActions field={field} />
-        </ListCreateRow>
+        </SortableListAdd>
       )}
-    </List>
+    </SortableList>
   )
   return (
     <Field
@@ -1750,7 +1740,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   }
 
   const content = (hasRows || !readOnly) && (
-    <List
+    <SortableList
       aria-label={options.label || 'Links'}
       dragType={LINK_FIELD_ROW_DRAG_TYPE}
       onReorder={readOnly ? undefined : moveRow}
@@ -1771,11 +1761,11 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         )
       })}
       {!readOnly && (
-        <ListCreateRow empty={!hasRows}>
+        <SortableListAdd>
           <MultipleLinkCreateActions field={field} />
-        </ListCreateRow>
+        </SortableListAdd>
       )}
-    </List>
+    </SortableList>
   )
 
   return (

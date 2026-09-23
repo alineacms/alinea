@@ -197,9 +197,9 @@ export interface ContentGridItemProps extends DataProps {
   /**
    * Called on every click or tap of the card, next to its selection. Use it
    * instead of `onAction` to act on a single click with the `replace`
-   * selection behavior.
+   * selection behavior, where `onAction` needs a double click.
    */
-  onPress?: () => void
+  onClick?: () => void
   onDoubleClick?: () => void
   /** The card contents, typically a ContentCard */
   children: ReactNode
@@ -210,7 +210,7 @@ export function ContentGridItem({
   textValue,
   selectable = true,
   onAction,
-  onPress,
+  onClick,
   onDoubleClick,
   children,
   ...props
@@ -225,7 +225,7 @@ export function ContentGridItem({
       isDisabled={!selectable}
       data-unselectable={!selectable || undefined}
       onAction={onAction}
-      onPress={onPress}
+      onPress={onClick}
       onDoubleClick={onDoubleClick}
       className={({isDropTarget, isDragging}) =>
         styles.ContentGridItem({dropTarget: isDropTarget, dragging: isDragging})

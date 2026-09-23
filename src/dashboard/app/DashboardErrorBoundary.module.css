@@ -5,40 +5,25 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: var(--alinea-bg);
-  color: var(--alinea-fg);
+  background: var(--alinea-bg-muted);
 }
 
-.DashboardErrorBoundary-card {
-  display: flex;
-  max-width: 520px;
-  flex-direction: column;
-  gap: 12px;
-  padding: 24px;
-}
-
-.DashboardErrorBoundary-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.DashboardErrorBoundary-title {
-  margin: 0;
-  font-size: 18px;
+.DashboardErrorBoundary-media {
+  color: var(--alinea-danger);
 }
 
 .DashboardErrorBoundary-message {
+  box-sizing: border-box;
+  width: 100%;
   max-height: 300px;
   margin: 0;
+  padding: 12px;
   overflow: auto;
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-bg-muted);
   color: var(--alinea-fg-muted);
   font-family: var(--alinea-mono-font);
   font-size: 0.9em;
+  text-align: left;
   white-space: pre-line;
-}
-
-.DashboardErrorBoundary-actions {
-  display: flex;
-  justify-content: flex-end;
 }

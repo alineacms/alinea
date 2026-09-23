@@ -191,7 +191,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       onAction={
         hasAction && explorer.mode !== 'search' ? performAction : undefined
       }
-      onPress={
+      onClick={
         hasAction && explorer.mode === 'search' ? performAction : undefined
       }
       onDoubleClick={hasChildren ? enterParent : undefined}

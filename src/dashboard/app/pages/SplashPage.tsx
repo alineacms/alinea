@@ -5,7 +5,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Icon,
-  Surface
+  Surface,
+  Timestamp
 } from '#/components.js'
 import {Entry, type EntryAuditUser} from '#/core/Entry.js'
 import {timestampFromId} from '#/core/Id.js'
@@ -36,18 +37,6 @@ const recentEntryCount = 3
 const recentCandidateWindowSize = recentEntryCount
 const visibleRootCount = 2
 const futureTimestampTolerance = 24 * 60 * 60 * 1000
-const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, {
-  numeric: 'auto',
-  style: 'narrow'
-})
-const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-  month: 'short'
-})
-const changedAtFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium',
-  timeStyle: 'short'
-})
 
 interface RecentEntryCandidate {
   actor?: string
@@ -396,13 +385,7 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
                     </span>
                   )}
                   {entry.actor && <span aria-hidden="true">·</span>}
-                  <time
-                    className={styles.SplashPage.entry.time()}
-                    dateTime={new Date(entry.changedAt).toISOString()}
-                    title={formatChangedAt(entry.changedAt)}
-                  >
-                    {formatRelativeTime(entry.changedAt)}
-                  </time>
+                  <Timestamp date={entry.changedAt} format="relative" />
                 </span>
               </span>
             </Button>
@@ -411,22 +394,4 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
       )}
     </Surface>
   )
-}
-
-function formatChangedAt(timestamp: number) {
-  return changedAtFormatter.format(timestamp)
-}
-
-function formatRelativeTime(timestamp: number) {
-  const seconds = Math.round((timestamp - Date.now()) / 1000)
-  if (Math.abs(seconds) < 60)
-    return relativeTimeFormatter.format(seconds, 'second')
-  const minutes = Math.round(seconds / 60)
-  if (Math.abs(minutes) < 60)
-    return relativeTimeFormatter.format(minutes, 'minute')
-  const hours = Math.round(minutes / 60)
-  if (Math.abs(hours) < 24) return relativeTimeFormatter.format(hours, 'hour')
-  const days = Math.round(hours / 24)
-  if (Math.abs(days) < 7) return relativeTimeFormatter.format(days, 'day')
-  return shortDateFormatter.format(timestamp)
 }

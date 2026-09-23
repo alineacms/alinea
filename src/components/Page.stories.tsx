@@ -1,8 +1,11 @@
-import {IcRoundMoreHoriz} from '../dashboard/icons.js'
+import {useState} from 'react'
+import {IcRoundEdit, IcRoundMoreHoriz, LucideFile} from '../dashboard/icons.js'
+import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {
   Page,
   PageActions,
+  PageBack,
   PageContent,
   PageFooter,
   PageHeader,
@@ -62,6 +65,26 @@ export function Example() {
           <Button color="primary">Save</Button>
         </PageFooter>
       </Page>
+    </div>
+  )
+}
+
+export function EditorHeader() {
+  const [log, setLog] = useState('')
+  return (
+    <div style={{margin: 24, border: '1px solid var(--alinea-border)'}}>
+      <PageHeader size="lg">
+        <PageBack label="Back to parent" onClick={() => setLog('back')} />
+        <PageTitle>Launching the new platform</PageTitle>
+        <Badge icon={IcRoundEdit} status="draft">
+          Draft
+        </Badge>
+        <Badge icon={LucideFile}>Article</Badge>
+        <PageActions>
+          <Button color="primary">Publish</Button>
+        </PageActions>
+      </PageHeader>
+      {log && <p style={{padding: 16}}>Pressed {log}</p>}
     </div>
   )
 }

@@ -108,12 +108,6 @@
   gap: 16px;
 }
 
-.UsersPage-form-error {
-  margin: 0;
-  color: var(--alinea-danger-subtle-fg);
-  font-size: 13px;
-}
-
 .UsersPage-confirmation {
   margin: 0;
   color: var(--alinea-fg);

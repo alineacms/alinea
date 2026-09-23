@@ -1,9 +1,14 @@
 import {
+  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  PageActions,
+  PageBack,
+  PageHeader,
+  PageTitle
 } from '#/components.js'
 import {
   EntryUrlConflictError,
@@ -38,8 +43,6 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {Badge} from '#/components.js'
-import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {
   entryHeaderActions,
@@ -425,82 +428,76 @@ export function EntryHeader({
     })
 
   return (
-    <header className={styles.EntryHeader({dirty: isDirty})}>
-      <div className={styles.EntryHeader.content()}>
-        <div className={styles.EntryHeader.main()}>
-          <EditorBackButton
-            label={parentId ? 'Back to parent entry' : 'Back to root'}
-            onPress={() =>
-              setRoute({
-                workspace,
-                root,
-                entry: parentId ?? undefined,
-                locale: route.locale
-              })
-            }
+    <PageHeader size="lg" className={styles.EntryHeader({dirty: isDirty})}>
+      <PageBack
+        label={parentId ? 'Back to parent entry' : 'Back to root'}
+        onClick={() =>
+          setRoute({
+            workspace,
+            root,
+            entry: parentId ?? undefined,
+            locale: route.locale
+          })
+        }
+      />
+      <PageTitle>{selectedEntry.title}</PageTitle>
+      {controls}
+      {showStatus && (
+        <Badge
+          className={styles.EntryHeader.status()}
+          icon={isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]}
+          status={isRevision ? undefined : badgeStatus[status]}
+        >
+          {isRevision ? 'Revision' : variantDescription[status]}
+        </Badge>
+      )}
+      <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
+        {typeData.label}
+      </Badge>
+      {!access.update && <ReadOnlyBadge />}
+      {menuItems.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            size="icon"
+            variant="ghost"
+            aria-label="More actions"
+            icon={IcRoundMoreHoriz}
+            disabled={isActionDisabled}
+            loading={isPending}
           />
-          <h1 className={styles.EntryHeader.title()}>{selectedEntry.title}</h1>
-          {controls}
-          {showStatus && (
-            <Badge
-              className={styles.EntryHeader.status()}
-              icon={
-                isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]
-              }
-              status={isRevision ? undefined : badgeStatus[status]}
-            >
-              {isRevision ? 'Revision' : variantDescription[status]}
-            </Badge>
-          )}
-          <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
-            {typeData.label}
-          </Badge>
-          {!access.update && <ReadOnlyBadge />}
-          {menuItems.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                size="icon"
-                variant="ghost"
-                aria-label="More actions"
-                icon={IcRoundMoreHoriz}
+          <DropdownMenuContent
+            aria-label="More actions"
+            side="bottom"
+            align="start"
+          >
+            {menuItems.map(item => (
+              <DropdownMenuItem
+                key={item.id}
+                icon={item.icon}
+                textValue={item.label}
                 disabled={isActionDisabled}
-                loading={isPending}
-              />
-              <DropdownMenuContent
-                aria-label="More actions"
-                side="bottom"
-                align="start"
+                onSelect={() => runAction(item.action)}
               >
-                {menuItems.map(item => (
-                  <DropdownMenuItem
-                    key={item.id}
-                    icon={item.icon}
-                    textValue={item.label}
-                    disabled={isActionDisabled}
-                    onSelect={() => runAction(item.action)}
-                  >
-                    {item.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-        <div className={styles.EntryHeader.actions()}>
-          {primaryAction}
-          {onSidebarOpenChange && !isSidebarOpen && (
-            <EntrySidebarToggle
-              className={styles.EntryHeader.sidebarToggle()}
-              isOpen={false}
-              onOpenChange={onSidebarOpenChange}
-            />
-          )}
-        </div>
-      </div>
+                {item.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      <PageActions className={styles.EntryHeader.actions()}>
+        {primaryAction}
+        {onSidebarOpenChange && !isSidebarOpen && (
+          <EntrySidebarToggle
+            className={styles.EntryHeader.sidebarToggle()}
+            isOpen={false}
+            onOpenChange={onSidebarOpenChange}
+          />
+        )}
+      </PageActions>
       <UrlConflictModal
         conflict={urlConflict}
         onClose={() => setUrlConflict(undefined)}
       />
-    </header>
+    </PageHeader>
   )
 }

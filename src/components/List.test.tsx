@@ -45,10 +45,10 @@ test('ListItem renders leading, trailing and inner content', () => {
 })
 
 test('ListItem renders its content as a button when it is actionable', () => {
-  const onPress = mock(() => undefined)
+  const onClick = mock(() => undefined)
   render(
     <List>
-      <ListItem onPress={onPress}>
+      <ListItem onClick={onClick}>
         <ListItemTitle>Open entry</ListItemTitle>
       </ListItem>
     </List>
@@ -56,7 +56,7 @@ test('ListItem renders its content as a button when it is actionable', () => {
 
   fireEvent.click(screen.getByRole('button', {name: 'Open entry'}))
 
-  expect(onPress).toHaveBeenCalledTimes(1)
+  expect(onClick).toHaveBeenCalledTimes(1)
 })
 
 test('ListEmpty describes an empty list', () => {

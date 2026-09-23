@@ -34,8 +34,8 @@ interface CalendarSharedProps extends StyleProps, AriaProps, DataProps {
   disabled?: boolean
   readOnly?: boolean
   autoFocus?: boolean
-  /** Marks dates that cannot be selected, receives `YYYY-MM-DD` */
-  isDateUnavailable?: (date: string) => boolean
+  /** Returns true for dates that cannot be selected, receives `YYYY-MM-DD` */
+  disabledDates?: (date: string) => boolean
 }
 
 export interface CalendarProps extends CalendarSharedProps {
@@ -112,7 +112,7 @@ function calendarProps({
   max,
   disabled,
   readOnly,
-  isDateUnavailable,
+  disabledDates,
   ...props
 }: Omit<CalendarSharedProps, 'className'>) {
   return {
@@ -122,8 +122,7 @@ function calendarProps({
     isDisabled: disabled,
     isReadOnly: readOnly,
     isDateUnavailable:
-      isDateUnavailable &&
-      ((date: DateValue) => isDateUnavailable(date.toString()))
+      disabledDates && ((date: DateValue) => disabledDates(date.toString()))
   }
 }
 

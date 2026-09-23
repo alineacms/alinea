@@ -1,9 +1,4 @@
-import {Button} from '#/components.js'
-import {styler} from '@alinea/styler'
-import {IcRoundArrowBack} from '../icons.js'
-import css from './EditorBackButton.module.css'
-
-const styles = styler(css)
+import {PageBack} from '#/components.js'
 
 export interface EditorBackButtonProps {
   label: string
@@ -11,14 +6,5 @@ export interface EditorBackButtonProps {
 }
 
 export function EditorBackButton({label, onPress}: EditorBackButtonProps) {
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className={styles.EditorBackButton()}
-      aria-label={label}
-      onClick={onPress}
-      icon={IcRoundArrowBack}
-    />
-  )
+  return <PageBack label={label} onClick={onPress} />
 }

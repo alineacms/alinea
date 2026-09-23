@@ -37,8 +37,8 @@ export interface DatePickerProps
   min?: string
   /** The latest selectable date, `YYYY-MM-DD` */
   max?: string
-  /** Marks dates that cannot be selected, receives `YYYY-MM-DD` */
-  isDateUnavailable?: (date: string) => boolean
+  /** Returns true for dates that cannot be selected, receives `YYYY-MM-DD` */
+  disabledDates?: (date: string) => boolean
   name?: string
   autoFocus?: boolean
 }
@@ -57,7 +57,7 @@ export function DatePicker({
   onValueChange,
   min,
   max,
-  isDateUnavailable,
+  disabledDates,
   className,
   locale,
   ...props
@@ -77,8 +77,7 @@ export function DatePicker({
         minValue={toCalendarDate(min)}
         maxValue={toCalendarDate(max)}
         isDateUnavailable={
-          isDateUnavailable &&
-          ((date: DateValue) => isDateUnavailable(date.toString()))
+          disabledDates && ((date: DateValue) => disabledDates(date.toString()))
         }
         isRequired={required}
         isDisabled={disabled}

@@ -1,7 +1,6 @@
 import styler from '@alinea/styler'
-import {type ComponentType, type ReactNode, useState} from 'react'
+import type {ComponentType, ReactNode} from 'react'
 import type {EntryStatus} from '#/core/Entry.js'
-import {Badge} from './Badge.js'
 import {
   IcOutlineDrafts,
   IcRoundArchive,
@@ -12,41 +11,22 @@ import {
   IcRoundImage,
   IcRoundInsertDriveFile,
   IcRoundLink,
-  IcRoundMoreHoriz,
-  IcRoundPanorama,
   IcRoundSync,
   IcOutlineSettings as IcRoundSettings
 } from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {
   List,
-  ListCreateRow,
-  ListDragPreview,
   ListEmpty,
-  ListError,
   ListItem,
   ListItemDescription,
   ListItemStatus,
   ListItemTitle,
-  ListItemVisual,
-  ListLabel,
-  ListRow,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowFoldButton,
-  ListRowFooter,
-  ListRowHeader,
-  ListRowMeta,
-  ListRowSettings
+  ListItemVisual
 } from './List.js'
 import css from './List.stories.module.css'
-import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 import {Surface, SurfaceContent} from './Surface.js'
 import {TextField} from './TextField.js'
-import type {DragMoveEvent} from './types.js'
 
 const styles = styler(css)
 
@@ -93,159 +73,6 @@ export function Basic() {
         <strong>About this workspace</strong>
       </ListItem>
     </List>
-  )
-}
-
-export function FieldRows() {
-  return (
-    <div style={{maxWidth: 720}}>
-      <ListLabel aria-label="Collapse all items" expanded hasRows shared>
-        Sections
-      </ListLabel>
-      <List data-depth="muted">
-        <ListRow aria-label="Hero item 1" first role="listitem">
-          <ListRowHeader expanded first>
-            <ListRowDrag>
-              <ListRowBadges>
-                <ListRowFoldButton
-                  aria-label="Collapse hero"
-                  expanded
-                  onClick={() => undefined}
-                />
-                <Badge icon={IcRoundPanorama} size="sm">
-                  Hero
-                </Badge>
-                <ListRowMeta>Landing page intro</ListRowMeta>
-                <Badge size="sm">#landing-page-intro</Badge>
-              </ListRowBadges>
-            </ListRowDrag>
-            <ListRowActions>
-              <Popover>
-                <PopoverTrigger
-                  variant="ghost"
-                  aria-label="Hero settings"
-                  icon={IcRoundMoreHoriz}
-                  size="icon-sm"
-                />
-                <PopoverContent side="bottom" align="end">
-                  <ListRowSettings>
-                    <TextField label="Label" value="Landing page intro" />
-                    <TextField label="Anchor" value="landing-page-intro" />
-                  </ListRowSettings>
-                </PopoverContent>
-              </Popover>
-            </ListRowActions>
-          </ListRowHeader>
-          <ListRowBody>
-            <TextField label="Heading" value="Build structured pages" />
-            <TextField
-              label="Body"
-              value="Compose reusable content sections with a list field."
-            />
-          </ListRowBody>
-        </ListRow>
-        <ListRow aria-label="Quote item 2" role="listitem">
-          <ListRowHeader>
-            <ListRowDrag>
-              <ListRowBadges>
-                <ListRowFoldButton
-                  aria-label="Expand quote"
-                  expanded={false}
-                  onClick={() => undefined}
-                />
-                <Badge size="sm">Quote</Badge>
-                <ListRowMeta>Editorial quote</ListRowMeta>
-              </ListRowBadges>
-            </ListRowDrag>
-            <ListRowActions>
-              <Button
-                variant="ghost"
-                aria-label="Quote settings"
-                icon={IcRoundMoreHoriz}
-                size="icon-sm"
-              />
-            </ListRowActions>
-          </ListRowHeader>
-          <ListRowFooter>
-            Quote: Content editing should stay close...
-          </ListRowFooter>
-        </ListRow>
-        <ListCreateRow>
-          <Button variant="ghost" size="sm">
-            Add Hero
-          </Button>
-          <Button variant="ghost" size="sm">
-            Add Quote
-          </Button>
-        </ListCreateRow>
-      </List>
-      <ListError>At least one section is required.</ListError>
-    </div>
-  )
-}
-
-export function DragPreview() {
-  return <ListDragPreview icon={IcRoundPanorama} label="Hero" />
-}
-
-interface ReorderRow {
-  id: string
-  label: string
-  icon: ComponentType
-}
-
-const reorderRows: Array<ReorderRow> = [
-  {id: 'hero', label: 'Hero', icon: IcRoundPanorama},
-  {id: 'text', label: 'Text', icon: IcRoundEdit},
-  {id: 'image', label: 'Image', icon: IcRoundImage},
-  {id: 'links', label: 'Links', icon: IcRoundLink}
-]
-
-function moveRows<T extends {id: string}>(
-  rows: Array<T>,
-  {keys, target}: DragMoveEvent
-): Array<T> {
-  const moved = rows.filter(row => keys.has(row.id))
-  const rest = rows.filter(row => !keys.has(row.id))
-  const index = rest.findIndex(row => row.id === target.key)
-  if (index === -1) return rows
-  rest.splice(target.position === 'before' ? index : index + 1, 0, ...moved)
-  return rest
-}
-
-export function Reorderable() {
-  const [rows, setRows] = useState(reorderRows)
-  return (
-    <div style={{maxWidth: 480}}>
-      <List
-        aria-label="Sections"
-        data-depth="muted"
-        onReorder={event => setRows(rows => moveRows(rows, event))}
-      >
-        {rows.map((row, index) => (
-          <ListRow
-            aria-label={row.label}
-            dragPreview={<ListDragPreview icon={row.icon} label={row.label} />}
-            first={index === 0}
-            id={row.id}
-            key={row.id}
-            role="listitem"
-          >
-            <ListRowHeader first={index === 0} hasFold={false}>
-              <ListRowDragHandle aria-label={`Drag ${row.label}`} />
-              <ListRowDrag>
-                <ListRowBadges>
-                  <Badge icon={row.icon} size="sm">
-                    {row.label}
-                  </Badge>
-                </ListRowBadges>
-              </ListRowDrag>
-            </ListRowHeader>
-          </ListRow>
-        ))}
-      </List>
-      <p data-testid="order">{rows.map(row => row.label).join(', ')}</p>
-    </div>
   )
 }
 
@@ -378,26 +205,26 @@ function queueStatusLabel(status: QueueExample['status']): string {
   }
 }
 
-function entryStatusTone(status: EntryStatus) {
+function entryStatusColor(status: EntryStatus) {
   switch (status) {
     case 'published':
-      return 'positive' as const
+      return 'success' as const
     case 'draft':
-      return 'accent' as const
+      return 'primary' as const
     case 'archived':
-      return 'neutral' as const
+      return 'muted' as const
   }
 }
 
-function queueStatusTone(status: QueueExample['status']) {
+function queueStatusColor(status: QueueExample['status']) {
   switch (status) {
     case 'syncing':
-      return 'accent' as const
+      return 'primary' as const
     case 'pending':
     case 'blocked':
       return 'warning' as const
     case 'failed':
-      return 'danger' as const
+      return 'destructive' as const
   }
 }
 
@@ -409,7 +236,7 @@ export function SmallLists() {
           {references.map(reference => (
             <ListItem
               key={`${reference.path}:${reference.locale}`}
-              onPress={() => undefined}
+              onClick={() => undefined}
               leading={
                 <ListItemVisual className={styles.SmallLists.visual()}>
                   <reference.icon data-slot="icon" />
@@ -418,7 +245,10 @@ export function SmallLists() {
               trailing={
                 <span className={styles.SmallLists.trailing()}>
                   {reference.statuses.map(status => (
-                    <ListItemStatus key={status} tone={entryStatusTone(status)}>
+                    <ListItemStatus
+                      key={status}
+                      color={entryStatusColor(status)}
+                    >
                       {statusLabel(status)}
                     </ListItemStatus>
                   ))}
@@ -439,14 +269,14 @@ export function SmallLists() {
           {history.map((revision, index) => (
             <ListItem
               key={`${revision.title}:${index}`}
-              onPress={() => undefined}
+              onClick={() => undefined}
               leading={
                 <ListItemVisual className={styles.SmallLists.visual()}>
                   <revision.icon data-slot="icon" />
                 </ListItemVisual>
               }
               trailing={
-                <ListItemStatus tone={entryStatusTone(revision.status)}>
+                <ListItemStatus color={entryStatusColor(revision.status)}>
                   {statusLabel(revision.status)}
                 </ListItemStatus>
               }
@@ -478,7 +308,7 @@ export function SmallLists() {
                 </ListItemVisual>
               }
               trailing={
-                <ListItemStatus tone={queueStatusTone(entry.status)}>
+                <ListItemStatus color={queueStatusColor(entry.status)}>
                   {queueStatusLabel(entry.status)}
                 </ListItemStatus>
               }

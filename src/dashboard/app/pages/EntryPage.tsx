@@ -1,9 +1,14 @@
 import {
   Button,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
   Icon,
   Page as PageLayout,
   PageContent,
-  Surface,
   Tooltip,
   TooltipContent,
   TooltipTrigger
@@ -163,20 +168,24 @@ export function NotFoundPanel({
   return (
     <PageLayout>
       <PageContent className={styles.MissingEntry()}>
-        <Surface className={styles.MissingEntry.card()}>
-          <div className={styles.MissingEntry.icon()}>
-            <Icon icon={IcBaselineErrorOutline} />
-          </div>
-          <h1 className={styles.MissingEntry.title()}>{title}</h1>
-          <p className={styles.MissingEntry.message()}>{message}</p>
-          <p className={styles.MissingEntry.message()}>
-            {requestedLabel}:{' '}
-            <code className={styles.MissingEntry.id()}>{requestedValue}</code>
-          </p>
+        <Empty variant="card">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className={styles.MissingEntry.media()}>
+              <Icon icon={IcBaselineErrorOutline} />
+            </EmptyMedia>
+            <EmptyTitle as="h1">{title}</EmptyTitle>
+            <EmptyDescription>{message}</EmptyDescription>
+            <EmptyDescription>
+              {requestedLabel}:{' '}
+              <code className={styles.MissingEntry.id()}>{requestedValue}</code>
+            </EmptyDescription>
+          </EmptyHeader>
           {onAction && actionLabel && (
-            <Button onClick={onAction}>{actionLabel}</Button>
+            <EmptyContent>
+              <Button onClick={onAction}>{actionLabel}</Button>
+            </EmptyContent>
           )}
-        </Surface>
+        </Empty>
       </PageContent>
     </PageLayout>
   )

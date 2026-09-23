@@ -16,7 +16,8 @@ import {
   Tabs,
   TabsContent,
   TabsList,
-  TabsTrigger
+  TabsTrigger,
+  Timestamp
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
@@ -290,7 +291,7 @@ function EntrySidebarStatusItem({
       icon={getVersionStatusIcon(rowStatus)}
       title={formatStatus(status)}
       meta={meta}
-      onPress={() => setSelectedVersion({type: 'status', status})}
+      onClick={() => setSelectedVersion({type: 'status', status})}
     >
       {isEditing && <Badge size="sm">Editing</Badge>}
     </EntrySidebarVersionRow>
@@ -319,9 +320,9 @@ function EntrySidebarRevisionItem({
       selected={selected}
       status={revisionKind.status}
       icon={revisionKind.icon}
-      title={formatTime(revision.createdAt)}
+      title={<Timestamp date={revision.createdAt} />}
       meta={revision.user?.name}
-      onPress={() =>
+      onClick={() =>
         setSelectedVersion({
           type: 'history',
           file: revision.file,
@@ -341,7 +342,7 @@ export interface EntrySidebarVersionRowProps {
   title: ReactNode
   meta: ReactNode
   children?: ReactNode
-  onPress?: () => void
+  onClick?: () => void
 }
 
 export function EntrySidebarVersionRow({
@@ -351,7 +352,7 @@ export function EntrySidebarVersionRow({
   title,
   meta,
   children,
-  onPress
+  onClick
 }: EntrySidebarVersionRowProps) {
   return (
     <ListItem
@@ -361,7 +362,7 @@ export function EntrySidebarVersionRow({
           <Icon data-slot="icon" icon={icon} />
         </ListItemVisual>
       }
-      onPress={onPress}
+      onClick={onClick}
       selected={selected}
       trailing={children}
     >
@@ -418,26 +419,20 @@ function formatStatus(status: EntryStatus) {
   return status[0].toUpperCase() + status.slice(1)
 }
 
-function formatTime(timestamp: number) {
-  const date = new Date(timestamp)
-  if (isNaN(date.getTime())) {
-    return 'Invalid Date'
-  }
-  const ddmmyyyy = date.toLocaleDateString('nl-BE')
-  const time = date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-  return `${ddmmyyyy} - ${time}`
-}
-
 function formatMetadata(metadata: unknown) {
   if (!isMetadata(metadata) || typeof metadata.updatedAt !== 'number') {
     return undefined
   }
-  const updatedAt = formatTime(metadata.updatedAt * 1000)
+  const updatedAt = (
+    <Timestamp date={metadata.updatedAt * 1000} format="relative" />
+  )
   const updatedBy = metadata.updatedBy.name
-  return updatedBy ? `${updatedBy} ${updatedAt}` : updatedAt
+  if (!updatedBy) return updatedAt
+  return (
+    <>
+      {updatedBy} · {updatedAt}
+    </>
+  )
 }
 
 function isMetadata(value: unknown): value is Metadata {

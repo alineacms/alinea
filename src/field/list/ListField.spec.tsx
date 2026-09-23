@@ -94,7 +94,9 @@ type Locator = ReturnType<MountResult['locator']>
 function rowNames(list: Locator) {
   return list.evaluate(element =>
     Array.from(
-      element.querySelectorAll(':scope > [data-slot="list-row-drop-target"]')
+      element.querySelectorAll(
+        ':scope > [data-slot="sortable-list-item-drop-target"]'
+      )
     ).map(row =>
       row.querySelector('[role="listitem"]')!.getAttribute('aria-label')
     )
@@ -151,7 +153,7 @@ test('keeps nested list drags inside their own list', async ({mount, page}) => {
   await expect(handle).not.toBeFocused()
   // Only the two nested rows are drop targets
   await expect(
-    page.locator('[data-slot="list-row-drop-target"][tabindex="-1"]')
+    page.locator('[data-slot="sortable-list-item-drop-target"][tabindex="-1"]')
   ).toHaveCount(2)
   await page.keyboard.press('Tab')
   await page.keyboard.press('Enter')

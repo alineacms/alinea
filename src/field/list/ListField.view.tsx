@@ -5,22 +5,21 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  ListRow as ComponentListRow,
+  SortableListItem,
   type DragMoveEvent,
-  List,
-  ListCreateRow,
-  ListDragPreview,
+  SortableList,
+  SortableListItemTitle,
+  SortableListAdd,
+  SortableListDragPreview,
   ListError,
   ListLabel,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowFoldButton,
-  ListRowHeader,
-  ListRowMeta,
-  ListRowSettings,
+  SortableListItemActions,
+  SortableListItemContent,
+  SortableListHandle,
+  SortableListItemToggle,
+  SortableListItemHeader,
+  SortableListItemDescription,
+  SortableListItemSettings,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -180,7 +179,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
   }
 
   const content = (hasRows || !readOnly) && (
-    <List
+    <SortableList
       aria-label={options.label || 'List items'}
       data-depth={depth % 2 === 0 ? 'muted' : 'base'}
       dragType={LIST_FIELD_ROW_DRAG_TYPE}
@@ -207,16 +206,16 @@ export function ListFieldView({field}: ListFieldViewProps) {
         />
       ))}
       {!readOnly && canCreate && (
-        <ListCreateRow empty={!hasRows}>
+        <SortableListAdd>
           <ListFieldCreateActions
             items={typeItems}
             pasted={pasted && options.schema[pasted._type] ? pasted : undefined}
             onPaste={row => pushRow(cloneRow(row))}
             onSelect={item => addRow(item.id, item.type)}
           />
-        </ListCreateRow>
+        </SortableListAdd>
       )}
-    </List>
+    </SortableList>
   )
 
   return (
@@ -490,10 +489,9 @@ function ListFieldRow({
   }
 
   return (
-    <ComponentListRow
+    <SortableListItem
       aria-label={`${label} item ${index + 1}`}
-      dragPreview={<ListDragPreview icon={typeIcon} label={label} />}
-      first={index === 0}
+      dragPreview={<SortableListDragPreview icon={typeIcon} label={label} />}
       id={itemId}
       role="listitem"
     >
@@ -521,11 +519,11 @@ function ListFieldRow({
         onToggle={() => onToggleRow(itemId)}
       />
       {expanded && (
-        <ListRowBody>
+        <SortableListItemContent>
           <NodeEditor node={row as ReactiveNode<object>} type={type} />
-        </ListRowBody>
+        </SortableListItemContent>
       )}
-    </ComponentListRow>
+    </SortableListItem>
   )
 }
 
@@ -594,24 +592,26 @@ function ListFieldRowHeader({
   }
 
   return (
-    <ListRowHeader className={className} expanded={expanded} first={isFirstRow}>
-      {!readOnly && <ListRowDragHandle aria-label={dragLabel} />}
-      <ListRowDrag>
-        <ListRowBadges>
-          <ListRowFoldButton
-            aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
-            expanded={expanded}
-            disabled={isPreview}
-            onClick={onToggle}
-          />
-          <Badge icon={typeIcon} size="sm">
-            {label}
-          </Badge>
-          {displayLabel && <ListRowMeta>{displayLabel}</ListRowMeta>}
-          {showAnchor && <Badge size="sm">#{displayAnchor}</Badge>}
-        </ListRowBadges>
-      </ListRowDrag>
-      <ListRowActions>
+    <SortableListItemHeader className={className}>
+      {!readOnly && <SortableListHandle aria-label={dragLabel} />}
+      <SortableListItemTitle>
+        <SortableListItemToggle
+          aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+          expanded={expanded}
+          disabled={isPreview}
+          onClick={onToggle}
+        />
+        <Badge icon={typeIcon} size="sm">
+          {label}
+        </Badge>
+        {displayLabel && (
+          <SortableListItemDescription>
+            {displayLabel}
+          </SortableListItemDescription>
+        )}
+        {showAnchor && <Badge size="sm">#{displayAnchor}</Badge>}
+      </SortableListItemTitle>
+      <SortableListItemActions>
         <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
           <PopoverTrigger
             variant="ghost"
@@ -646,7 +646,7 @@ function ListFieldRowHeader({
               />
             ) : (
               <>
-                <ListRowSettings>
+                <SortableListItemSettings>
                   <TextField
                     label="Label"
                     autoFocus
@@ -661,9 +661,9 @@ function ListFieldRowHeader({
                     onChange={onAnchorChange}
                     source={customLabel}
                   />
-                </ListRowSettings>
+                </SortableListItemSettings>
                 <hr className={styles.ListFieldRowHeader.separator()} />
-                <ListRowSettings actions>
+                <SortableListItemSettings variant="actions">
                   <Button
                     variant="ghost"
                     icon={IcBaselineContentCopy}
@@ -674,9 +674,9 @@ function ListFieldRowHeader({
                   >
                     Copy
                   </Button>
-                </ListRowSettings>
+                </SortableListItemSettings>
                 <hr className={styles.ListFieldRowHeader.separator()} />
-                <ListRowSettings actions>
+                <SortableListItemSettings variant="actions">
                   {!isFirstRow && (
                     <Button
                       variant="ghost"
@@ -729,7 +729,7 @@ function ListFieldRowHeader({
                       />
                     </>
                   )}
-                </ListRowSettings>
+                </SortableListItemSettings>
               </>
             )}
           </PopoverContent>
@@ -742,8 +742,8 @@ function ListFieldRowHeader({
           onClick={onDelete}
           size="icon-sm"
         />
-      </ListRowActions>
-    </ListRowHeader>
+      </SortableListItemActions>
+    </SortableListItemHeader>
   )
 }
 

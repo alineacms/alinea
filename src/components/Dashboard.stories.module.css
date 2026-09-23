@@ -21,28 +21,6 @@
   justify-content: center;
 }
 
-.DashboardStory-header {
-  min-height: 56px;
-
-  &[data-dirty] {
-    background: color-mix(in oklab, var(--alinea-warning) 8%, var(--alinea-bg));
-  }
-}
-
-.DashboardStory-header-title {
-  display: flex;
-  flex: 0 1 auto;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.DashboardStory-header-breadcrumbs {
-  flex-wrap: nowrap;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
 .DashboardStory-body {
   padding: 16px;
 }

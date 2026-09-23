@@ -51,6 +51,10 @@
     color: var(--alinea-warning-subtle-fg);
   }
 
+  &[data-color='success'] {
+    color: var(--alinea-success-subtle-fg);
+  }
+
   &[data-align='center'] {
     text-align: center;
   }

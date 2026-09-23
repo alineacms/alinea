@@ -1,0 +1,50 @@
+.DataList {
+  display: grid;
+  margin: 0;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.35;
+
+  &[data-orientation='horizontal'] {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px 24px;
+  }
+
+  &[data-orientation='vertical'] {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
+    gap: 16px 40px;
+  }
+}
+
+.DataListItem {
+  display: grid;
+  min-width: 0;
+
+  .DataList[data-orientation='horizontal'] & {
+    grid-column: span 2;
+    grid-template-columns: subgrid;
+    align-items: baseline;
+  }
+
+  .DataList[data-orientation='vertical'] & {
+    gap: 6px;
+    align-content: start;
+  }
+
+  .DataList[data-orientation='vertical'] &[data-full] {
+    grid-column: 1 / -1;
+  }
+}
+
+.DataListLabel {
+  min-width: 0;
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  font-weight: 500;
+}
+
+.DataListValue {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--alinea-fg);
+}

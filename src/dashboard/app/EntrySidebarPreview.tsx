@@ -1,4 +1,4 @@
-import {Button, List, ListEmpty, Spinner} from '#/components.js'
+import {List, ListEmpty, PreviewFrame, PreviewToolbar} from '#/components.js'
 import type {Preview} from '#/core/Preview.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
@@ -6,13 +6,7 @@ import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
 import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {
-  IcRoundArrowBack,
-  IcRoundArrowForward,
-  IcRoundOpenInNew,
-  IcRoundRefresh,
-  IcRoundVisibilityOff
-} from '../icons.js'
+import {IcRoundVisibilityOff} from '../icons.js'
 import css from './EntrySidebarPreview.module.css'
 
 const styles = styler(css)
@@ -84,63 +78,6 @@ function EntrySidebarPreviewMessage({
         </List>
       </div>
     </div>
-  )
-}
-
-interface EntrySidebarBrowserPreviewHeaderProps {
-  canOpenPreview: boolean
-  reloadLabel: string
-  onPrevious?: () => void
-  onNext?: () => void
-  onReload?: () => void
-  onOpen?: () => void
-}
-
-function EntrySidebarBrowserPreviewHeader({
-  canOpenPreview,
-  reloadLabel,
-  onPrevious,
-  onNext,
-  onReload,
-  onOpen
-}: EntrySidebarBrowserPreviewHeaderProps) {
-  return (
-    <header className={styles.EntrySidebarPreview.subheader()}>
-      <div className={styles.EntrySidebarPreview.controls()}>
-        <Button
-          variant="ghost"
-          size="icon"
-          icon={IcRoundArrowBack}
-          aria-label="Go back in preview"
-          disabled={!canOpenPreview}
-          onClick={onPrevious}
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          icon={IcRoundArrowForward}
-          aria-label="Go forward in preview"
-          disabled={!canOpenPreview}
-          onClick={onNext}
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          icon={IcRoundRefresh}
-          aria-label={reloadLabel}
-          disabled={!onReload}
-          onClick={onReload}
-        />
-      </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        icon={IcRoundOpenInNew}
-        aria-label="Open preview in new tab"
-        disabled={!canOpenPreview}
-        onClick={onOpen}
-      />
-    </header>
   )
 }
 
@@ -288,36 +225,24 @@ export function EntrySidebarBrowserPreview({
 
   return (
     <div className={styles.EntrySidebarPreview()}>
-      <EntrySidebarBrowserPreviewHeader
-        canOpenPreview={Boolean(previewUrl)}
-        reloadLabel={previewUrl ? 'Reload preview' : 'Retry preview'}
-        onPrevious={() => post(PreviewAction.Previous)}
-        onNext={() => post(PreviewAction.Next)}
+      <PreviewToolbar
+        labels={{reload: previewUrl ? 'Reload preview' : 'Retry preview'}}
+        onBack={previewUrl ? () => post(PreviewAction.Previous) : undefined}
+        onForward={previewUrl ? () => post(PreviewAction.Next) : undefined}
         onReload={reloadPreview}
-        onOpen={openPreview}
+        onOpen={previewUrl ? openPreview : undefined}
       />
-      <div className={styles.EntrySidebarPreview.browser()}>
-        {((previewUrl && loading) || (!previewUrl && previewUrlPending)) && (
-          <div className={styles.EntrySidebarPreview.loading()}>
-            <Spinner aria-label="Loading preview" />
-          </div>
-        )}
-        {previewUrl ? (
-          <iframe
-            key={`${previewUrl}:${frameVersion}`}
-            ref={iframe}
-            className={styles.EntrySidebarPreview.iframe()}
-            allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-            sandbox="allow-top-navigation allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
-            src={previewUrl}
-            onLoad={() => setLoading(false)}
-          />
-        ) : previewUrlPending ? null : (
-          <p className={styles.EntrySidebarPreview.browserMessage()}>
-            Preview is currently unavailable.
-          </p>
-        )}
-      </div>
+      <PreviewFrame
+        key={`${previewUrl}:${frameVersion}`}
+        ref={iframe}
+        title="Preview"
+        src={previewUrl}
+        loading={Boolean(previewUrl ? loading : previewUrlPending)}
+        unavailable="Preview is currently unavailable."
+        allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+        sandbox="allow-top-navigation allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
+        onLoad={() => setLoading(false)}
+      />
     </div>
   )
 }

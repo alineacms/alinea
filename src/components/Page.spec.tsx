@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example} from './Page.stories.js'
+import {EditorHeader, Example} from './Page.stories.js'
 
 test('renders a header, a scrolling contained body and a footer', async ({
   mount,
@@ -33,4 +33,15 @@ test('renders a header, a scrolling contained body and a footer', async ({
   await expect(footer).toBeInViewport()
   const bounds = await footer.boundingBox()
   expect(bounds!.height).toBe(56)
+})
+
+test('a large header with a back button', async ({mount, page}) => {
+  await mount(<EditorHeader />)
+  const header = page.locator('[data-slot="page-header"]')
+  await expect(header).toHaveAttribute('data-size', 'lg')
+  expect((await header.boundingBox())!.height).toBe(48)
+  const back = page.getByRole('button', {name: 'Back to parent'})
+  await expect(back).toHaveAttribute('data-slot', 'page-back')
+  await back.click()
+  await expect(page.getByText('Pressed back')).toBeVisible()
 })

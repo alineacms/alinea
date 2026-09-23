@@ -1,4 +1,6 @@
 import {
+  Alert,
+  AlertDescription,
   AppShell,
   AppShellContent,
   Button,
@@ -33,6 +35,7 @@ import {useMemo, useState, type FormEvent} from 'react'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
 import {
+  IcBaselineErrorOutline,
   IcRoundAdd,
   IcRoundArrowBack,
   IcRoundMoreHoriz,
@@ -427,9 +430,9 @@ function DeactivateUserModal({user}: DeactivateUserModalProps) {
             user account and role assignments.
           </p>
           {error && (
-            <p className={styles.UsersPage.form.error()} role="alert">
-              {error}
-            </p>
+            <Alert variant="destructive" icon={IcBaselineErrorOutline}>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
         </div>
       </DashboardModalContent>
@@ -544,9 +547,9 @@ function UserModal({user}: UserModalProps) {
               ))}
             </MultipleSelect>
             {error && (
-              <p className={styles.UsersPage.form.error()} role="alert">
-                {error}
-              </p>
+              <Alert variant="destructive" icon={IcBaselineErrorOutline}>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
           </div>
         </DashboardModalContent>

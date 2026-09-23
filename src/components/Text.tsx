@@ -11,7 +11,13 @@ export interface TextProps extends StyleProps, AriaProps, DataProps {
   as?: 'span' | 'p' | 'div' | 'label' | 'small' | 'strong' | 'em'
   size?: 'xs' | 'sm' | 'default' | 'lg'
   weight?: 'regular' | 'medium' | 'semibold' | 'bold'
-  color?: 'default' | 'muted' | 'primary' | 'destructive' | 'warning'
+  color?:
+    | 'default'
+    | 'muted'
+    | 'primary'
+    | 'destructive'
+    | 'warning'
+    | 'success'
   align?: 'start' | 'center' | 'end'
   truncate?: boolean
   asChild?: boolean

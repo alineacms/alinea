@@ -1,5 +1,10 @@
 import {type} from '#/config.js'
 import {
+  DataList,
+  DataListItem,
+  DataListLabel,
+  DataListValue,
+  Link,
   Surface,
   Tabs,
   TabsContent,
@@ -48,9 +53,9 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const height = useFieldValue(MediaFile.height)
   const preview = useFieldValue(MediaFile.preview)
   const thumbHash = useFieldValue(MediaFile.thumbHash)
-  const thumbBackground = useMemo(() => {
+  const placeholder = useMemo(() => {
     if (!thumbHash) return undefined
-    return `url(${thumbHashToDataURL(base64.parse(thumbHash))})`
+    return thumbHashToDataURL(base64.parse(thumbHash))
   }, [thumbHash])
   const [focusPoint = {x: 0.5, y: 0.5}] = useField(MediaFile.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
@@ -85,7 +90,7 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
               <FilePreview
                 liveUrl={liveUrl?.href}
                 preview={preview}
-                thumbBackground={thumbBackground}
+                placeholder={placeholder}
                 width={width}
                 height={height}
                 onHoverPointChange={setHoverPoint}
@@ -93,54 +98,38 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
             )}
             <div className={styles.FileEditor.content()}>
               <Surface variant="muted" className={styles.FileEditor.metadata()}>
-                <dl className={styles.FileEditor.metadata.grid()}>
-                  <div className={styles.FileEditor.metadata.item()}>
-                    <dt className={styles.FileEditor.metadata.term()}>
-                      Extension
-                    </dt>
-                    <dd className={styles.FileEditor.metadata.value()}>
-                      {extension}
-                    </dd>
-                  </div>
-                  <div className={styles.FileEditor.metadata.item()}>
-                    <dt className={styles.FileEditor.metadata.term()}>
-                      File size
-                    </dt>
-                    <dd className={styles.FileEditor.metadata.value()}>
-                      {prettyBytes(size)}
-                    </dd>
-                  </div>
-                  {isImage && (
-                    <div className={styles.FileEditor.metadata.item()}>
-                      <dt className={styles.FileEditor.metadata.term()}>
-                        Dimensions
-                      </dt>
-                      <dd className={styles.FileEditor.metadata.value()}>
+                <DataList orientation="vertical" aria-label="File details">
+                  <DataListItem>
+                    <DataListLabel>Extension</DataListLabel>
+                    <DataListValue>{extension}</DataListValue>
+                  </DataListItem>
+                  <DataListItem>
+                    <DataListLabel>File size</DataListLabel>
+                    <DataListValue>{prettyBytes(size)}</DataListValue>
+                  </DataListItem>
+                  {isImage && width && height ? (
+                    <DataListItem>
+                      <DataListLabel>Dimensions</DataListLabel>
+                      <DataListValue>
                         {width}px x {height}px
-                      </dd>
-                    </div>
-                  )}
+                      </DataListValue>
+                    </DataListItem>
+                  ) : null}
                   {liveUrl && (
-                    <div
-                      className={styles.FileEditor.metadata.item({full: true})}
-                    >
-                      <dt className={styles.FileEditor.metadata.term()}>URL</dt>
-                      <dd
-                        className={styles.FileEditor.metadata.value({
-                          link: true
-                        })}
-                      >
-                        <a
+                    <DataListItem full>
+                      <DataListLabel>URL</DataListLabel>
+                      <DataListValue>
+                        <Link
                           href={liveUrl.href}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
                           {displayedUrl}
-                        </a>
-                      </dd>
-                    </div>
+                        </Link>
+                      </DataListValue>
+                    </DataListItem>
                   )}
-                </dl>
+                </DataList>
               </Surface>
               {isImage && (
                 <div className={styles.FileEditor.focus()}>

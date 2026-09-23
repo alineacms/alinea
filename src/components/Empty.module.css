@@ -1,0 +1,80 @@
+.Empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 24px;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  text-align: center;
+  text-wrap: balance;
+
+  &[data-variant='card'] {
+    flex: 0 1 auto;
+    width: min(560px, 100%);
+    padding: 32px;
+    border-radius: var(--alinea-radius-lg);
+    background: var(--alinea-bg);
+    box-shadow: var(--alinea-shadow-raised);
+  }
+}
+
+.EmptyHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 400px;
+}
+
+.EmptyMedia {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  color: var(--alinea-fg-muted);
+  font-size: 40px;
+
+  /* Kept at class specificity, so a className can restyle the tile */
+  &:where([data-variant='icon']) {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--alinea-border);
+    border-radius: var(--alinea-radius-lg);
+    background: var(--alinea-bg-muted);
+    font-size: 24px;
+  }
+}
+
+.EmptyTitle {
+  margin: 0;
+  color: var(--alinea-fg-strong);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+
+  .Empty[data-variant='card'] & {
+    font-size: 1.125rem;
+  }
+}
+
+.EmptyDescription {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  line-height: 1.5;
+}
+
+.EmptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  min-width: 0;
+}
