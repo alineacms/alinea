@@ -292,7 +292,12 @@ export class EntryTransaction implements AsyncDisposable {
       if (from) {
         const typeInstance = config.schema[type]
         assert(typeInstance, `Type not found: ${type}`)
-        data = {...Type.sharedData(typeInstance, from.data), ...data}
+        // Fill in shared fields missing from data without moving its keys
+        const shared = Type.sharedData(typeInstance, from.data) ?? {}
+        const missing = entries(shared).filter(
+          ([key]) => data[key] === undefined
+        )
+        if (missing.length > 0) data = {...data, ...fromEntries(missing)}
       }
     }
     if (status === 'published')
@@ -907,7 +912,13 @@ export class EntryTransaction implements AsyncDisposable {
     const translations = (await this.#versions(id)).filter(
       entry => entry.locale !== locale
     )
-    for (const translation of translations)
+    for (const translation of translations) {
+      // Leave translations alone unless a shared value actually changed
+      const changed = entries(shared).some(
+        ([key, value]) =>
+          JSON.stringify(value) !== JSON.stringify(translation.data[key])
+      )
+      if (!changed) continue
       this.#addRecord(
         translation.filePath,
         createRecord(
@@ -922,6 +933,7 @@ export class EntryTransaction implements AsyncDisposable {
           translation.versionStatus
         )
       )
+    }
   }
 
   async #moveUrlAliasUpdates(

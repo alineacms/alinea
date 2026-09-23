@@ -223,6 +223,55 @@ test('cached trees follow revisions written by another database instance', async
   }
 })
 
+test('syncing after another instance moved the revision on', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const {source, store} = await createEntryStore(
+    {
+      schema: {Page},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+        })
+      }
+    },
+    [
+      {id: 'one', type: 'Page', index: 'a', data: {title: 'One'}},
+      {id: 'two', type: 'Page', index: 'b', data: {title: 'Two'}}
+    ]
+  )
+  await store.close()
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-tree-sync-'))
+  const remove = async (file: string) => {
+    const edit = await transaction(source)
+    const compiled = await edit.remove(file).compile()
+    await source.applyChanges({
+      fromSha: compiled.from.sha,
+      changes: compiled.changes
+    })
+  }
+  try {
+    using firstSqlite = new Database(join(directory, 'entries.sqlite'), {
+      create: true
+    })
+    using secondSqlite = new Database(join(directory, 'entries.sqlite'))
+    const db = connect(firstSqlite)
+    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    const first = new EntryDatabase(store.config, db)
+    const second = new EntryDatabase(store.config, connect(secondSqlite))
+    await second.syncWith(source)
+    await remove('pages/one.json')
+    await first.syncWith(source)
+    // The second instance still caches the first tree
+    await remove('pages/two.json')
+    const result = await second.syncWith(source)
+    expect(result.revision).toBe((await source.getTree()).sha)
+    expect(await second.count({})).toBe(0)
+  } finally {
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
 test('generated database overlays sync and query without copying the base', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {

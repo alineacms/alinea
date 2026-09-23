@@ -486,7 +486,11 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         tree,
         fromRevision,
         {
-          previousTree: this.#tree,
+          // Another instance on the same database file (the dev server and
+          // the site, or a restarted process) may have moved the revision on,
+          // then the stored tree is the one to diff against
+          previousTree:
+            this.#tree?.sha === fromRevision ? this.#tree : undefined,
           withinTransaction: this.#transactional,
           validate
         }

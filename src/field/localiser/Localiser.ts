@@ -126,7 +126,9 @@ export function localiser<const Locale extends string>({
           )
         },
         normalizeAnchors(value, context) {
-          const record = value ?? initialValue()
+          // Leave a missing value missing, anchors only live in stored values
+          if (value === undefined || value === null) return value
+          const record = value
           let next = record
           for (const locale of locales) {
             const before = record[locale]

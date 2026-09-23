@@ -269,7 +269,8 @@ export class UploadOperation extends Operation {
         data: {
           title,
           location: fileLocation,
-          previewUrl: info.previewUrl,
+          // Local uploads have no preview url, leave the empty value out
+          ...(info.previewUrl ? {previewUrl: info.previewUrl} : {}),
           extension,
           size: body.byteLength,
           hash,
