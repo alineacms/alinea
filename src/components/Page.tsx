@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {MouseEvent, ReactNode, Ref} from 'react'
-import {IcRoundArrowBack} from '../dashboard/icons.js'
+import {IcRoundArrowBack} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {Heading, type HeadingProps} from './Heading.js'
 import css from './Page.module.css'

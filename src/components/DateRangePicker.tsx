@@ -8,7 +8,7 @@ import {
   Dialog,
   Group
 } from 'react-aria-components'
-import {IcRoundDateRange} from '../dashboard/icons.js'
+import {IcRoundDateRange} from '#/dashboard/icons.js'
 import {RangeCalendar} from './Calendar.js'
 import {Locale} from './internal/Locale.js'
 import css from './DateRangePicker.module.css'

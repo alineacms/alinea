@@ -1,5 +1,5 @@
 import {useRef, useState} from 'react'
-import {IcRoundSearch} from '../dashboard/icons.js'
+import {IcRoundSearch} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {
   Popover,

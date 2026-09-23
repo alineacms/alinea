@@ -4,7 +4,7 @@ import {
   IcRoundSearch,
   LucideFile,
   LucideFolder
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {
   DropdownMenu,

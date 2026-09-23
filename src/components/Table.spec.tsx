@@ -1,10 +1,13 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
+  Compact,
   CustomRootView,
   DragAndDrop,
   Empty,
   ExplorerStyle,
-  NestedRows
+  IterableItems,
+  NestedRows,
+  RowActions
 } from './Table.stories.js'
 
 test('custom root view with thumbnails, custom columns and headers', async ({
@@ -64,6 +67,14 @@ test('empty state', async ({mount, page}) => {
   await expect(page.getByText('No articles yet')).toBeVisible()
 })
 
+test('renders rows from a one-shot iterable', async ({mount, page}) => {
+  await mount(<IterableItems />)
+  await expect(
+    page.getByRole('treegrid', {name: 'Members'}).getByRole('row')
+  ).toHaveCount(2)
+  await expect(page.getByText('No members')).toHaveCount(0)
+})
+
 test('drags rows onto rows and marks row states', async ({mount, page}) => {
   await mount(<DragAndDrop />)
   const table = page.getByRole('treegrid', {name: 'Pages'})
@@ -89,4 +100,46 @@ test('collapses columns on narrow screens', async ({mount, page}) => {
   await mount(<DragAndDrop />)
   const row = page.getByRole('row', {name: 'Home'})
   await expect(row.getByText('/', {exact: true})).toBeHidden()
+})
+
+test('rows fill their row height whatever the cells contain', async ({
+  mount,
+  page
+}) => {
+  const heights = async () =>
+    page
+      .getByRole('row')
+      .evaluateAll(rows =>
+        rows.map(row => Math.round(row.getBoundingClientRect().height))
+      )
+  const compact = await mount(<Compact />)
+  expect(new Set(await heights())).toEqual(new Set([44]))
+  await compact.unmount()
+  await mount(<CustomRootView />)
+  expect(new Set(await heights())).toEqual(new Set([64]))
+})
+
+test('selecting a row with the pointer shows no focus ring', async ({
+  mount,
+  page
+}) => {
+  await mount(<ExplorerStyle />)
+  const row = page.getByRole('row').first()
+  await row.hover()
+  const indicator = row.locator('[data-slot="selection-checkbox-indicator"]')
+  await indicator.click()
+  await expect(row.getByRole('checkbox')).toBeChecked()
+  await expect(indicator).toHaveCSS('outline-style', 'none')
+})
+
+test('narrow tables keep fixed columns in view', async ({mount, page}) => {
+  await page.setViewportSize({width: 390, height: 700})
+  await mount(<RowActions />)
+  const table = page.locator('[data-slot="table"]')
+  const action = page.getByRole('button', {name: 'Actions for Alice Editor'})
+  const tableBox = await table.boundingBox()
+  const actionBox = await action.boundingBox()
+  expect(actionBox!.x + actionBox!.width).toBeLessThanOrEqual(
+    tableBox!.x + tableBox!.width
+  )
 })

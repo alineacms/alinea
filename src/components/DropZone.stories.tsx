@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundUploadFile} from '../dashboard/icons.js'
+import {IcRoundUploadFile} from '#/dashboard/icons.js'
 import {DropZone, DropZoneDescription, DropZoneTrigger} from './DropZone.js'
 
 export function Example() {

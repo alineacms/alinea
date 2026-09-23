@@ -6,7 +6,7 @@ import {
   IcRoundFlashOn,
   IcRoundPublic,
   IcRoundVisibility
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Badge} from './Badge.js'
 
 const storyStyle: CSSProperties = {

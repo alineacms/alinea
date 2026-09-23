@@ -1,12 +1,12 @@
 import styler from '@alinea/styler'
-import {createContext, type ReactNode, useContext} from 'react'
+import {createContext, type ReactNode, useContext, useState} from 'react'
 import {
   Button as ButtonPrimitive,
   TagGroup as TagGroupPrimitive,
   TagList as TagListPrimitive,
   Tag as TagPrimitive
 } from 'react-aria-components'
-import {IcRoundClose} from '../dashboard/icons.js'
+import {IcRoundClose} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
 import css from './TagGroup.module.css'
@@ -15,6 +15,7 @@ import type {
   DataProps,
   FieldSharedProps,
   Key,
+  Selection,
   SelectionProps,
   StyleProps
 } from './types.js'
@@ -62,6 +63,12 @@ export function TagGroup({
   children,
   ...props
 }: TagGroupProps) {
+  const interactive = !disabled && !readOnly
+  // Selection is always controlled here so disabled and read-only groups can
+  // ignore changes, also when the caller does not control it
+  const [internal, setInternal] = useState<Selection>(
+    () => defaultSelectedKeys ?? new Set()
+  )
   return (
     <TagGroupPrimitive
       data-slot="tag-group"
@@ -70,11 +77,14 @@ export function TagGroup({
       data-readonly={readOnly || undefined}
       className={styles.TagGroup(styler.merge({className}))}
       selectionMode={selectionMode}
-      selectedKeys={selectedKeys}
-      defaultSelectedKeys={defaultSelectedKeys}
-      onSelectionChange={disabled || readOnly ? undefined : onSelectionChange}
+      selectedKeys={selectedKeys ?? internal}
+      onSelectionChange={keys => {
+        if (!interactive) return
+        setInternal(keys)
+        onSelectionChange?.(keys)
+      }}
       disabledKeys={disabledKeys}
-      onRemove={disabled || readOnly ? undefined : onRemove}
+      onRemove={interactive ? onRemove : undefined}
     >
       <Field
         label={label}

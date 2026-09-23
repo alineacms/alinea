@@ -37,7 +37,7 @@
     box-shadow: 0 0 0 3px var(--alinea-muted);
   }
 
-  .Checkbox:has(:focus-visible) & {
+  .Checkbox.is-focusVisible & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

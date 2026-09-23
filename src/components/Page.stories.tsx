@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundEdit, IcRoundMoreHoriz, LucideFile} from '../dashboard/icons.js'
+import {IcRoundEdit, IcRoundMoreHoriz, LucideFile} from '#/dashboard/icons.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {

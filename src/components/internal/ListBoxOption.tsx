@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import type {ReactElement, ReactNode} from 'react'
 import {ListBoxItem, Text} from 'react-aria-components'
-import {IcRoundCheck} from '../../dashboard/icons.js'
+import {IcRoundCheck} from '#/dashboard/icons.js'
 import {Icon} from '../Icon.js'
 import type {IconType} from '../types.js'
 import css from './ListBoxOption.module.css'

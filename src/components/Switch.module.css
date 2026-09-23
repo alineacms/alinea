@@ -42,7 +42,7 @@
     border-color: var(--alinea-border-strong);
   }
 
-  .Switch:has(:focus-visible) & {
+  .Switch.is-focusVisible & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

@@ -7,7 +7,7 @@ import {
   IcRoundImage,
   IcRoundLink,
   IcRoundPanorama
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {
   Command,
   CommandEmpty,

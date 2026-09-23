@@ -1,5 +1,9 @@
 import {useMemo, useState} from 'react'
-import {IcRoundRefresh, LucideFile} from '../dashboard/icons.js'
+import {
+  IcRoundMoreHoriz,
+  IcRoundRefresh,
+  LucideFile
+} from '#/dashboard/icons.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {
@@ -277,6 +281,28 @@ export function NestedRows() {
   )
 }
 
+/** Single line rows, like the dashboard's compact link picker */
+export function Compact() {
+  return (
+    <div style={{height: 260, width: 420, padding: 16}}>
+      <Table
+        aria-label="Pages"
+        items={folders}
+        columns={[{id: 'title', header: 'Title', width: '1fr'}]}
+        showHeader={false}
+        variant="plain"
+        selectionMode="single"
+      >
+        {folder => (
+          <TableRow id={folder.id} textValue={folder.title}>
+            <TableTitle icon={LucideFile} title={folder.title} />
+          </TableRow>
+        )}
+      </Table>
+    </div>
+  )
+}
+
 interface Page {
   id: string
   title: string
@@ -372,6 +398,65 @@ export function Empty() {
         )}
       </Table>
     </div>
+  )
+}
+
+const memberColumns: Array<TableColumn> = [
+  {id: 'name', header: 'Name', minWidth: 200},
+  {id: 'role', header: 'Role', minWidth: 160},
+  {id: 'actions', header: null, width: 52, align: 'end'}
+]
+
+const members = [
+  {id: 'alice', name: 'Alice Editor', role: 'Editor'},
+  {id: 'bob', name: 'Bob Reviewer', role: 'Reviewer'}
+]
+
+/** Columns with a minimum width next to a fixed row actions column */
+export function RowActions() {
+  return (
+    <Table aria-label="Members" items={members} columns={memberColumns}>
+      {member => (
+        <TableRow id={member.id} textValue={member.name}>
+          <TableCell>{member.name}</TableCell>
+          <TableCell>{member.role}</TableCell>
+          <TableCell align="end">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              icon={IcRoundMoreHoriz}
+              aria-label={`Actions for ${member.name}`}
+            />
+          </TableCell>
+        </TableRow>
+      )}
+    </Table>
+  )
+}
+
+/** Items can be any iterable, such as the values of a map */
+export function IterableItems() {
+  const items = useMemo(
+    () => new Map(members.map(member => [member.id, member])).values(),
+    []
+  )
+  return (
+    <Table
+      aria-label="Members"
+      items={items}
+      columns={[
+        {id: 'name', header: 'Name', minWidth: 200},
+        {id: 'role', header: 'Role', minWidth: 160}
+      ]}
+      renderEmptyState={() => 'No members'}
+    >
+      {member => (
+        <TableRow id={member.id} textValue={member.name}>
+          <TableTitle title={member.name} />
+          <TableCell label="Role">{member.role}</TableCell>
+        </TableRow>
+      )}
+    </Table>
   )
 }
 

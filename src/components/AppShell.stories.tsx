@@ -7,7 +7,7 @@ import {
   LucideImage,
   MaterialSymbolsRightPanelCloseRounded,
   MaterialSymbolsRightPanelOpenRounded
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {AppShell, AppShellContent} from './AppShell.js'
 import {Button} from './Button.js'
 import {NavRail, NavRailContent, NavRailFooter, NavRailItem} from './NavRail.js'

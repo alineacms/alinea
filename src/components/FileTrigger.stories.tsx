@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundUploadFile} from '../dashboard/icons.js'
+import {IcRoundUploadFile} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {FileTrigger} from './FileTrigger.js'
 

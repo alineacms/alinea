@@ -29,7 +29,7 @@ import {
   LucideImage,
   MaterialSymbolsRightPanelCloseRounded,
   MaterialSymbolsRightPanelOpenRounded
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {AppShell, AppShellContent} from './AppShell.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'

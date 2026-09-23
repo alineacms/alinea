@@ -6,7 +6,7 @@ import {
   IcRoundArrowForward,
   IcRoundOpenInNew,
   IcRoundRefresh
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import css from './PreviewFrame.module.css'
 import {Spinner} from './Spinner.js'

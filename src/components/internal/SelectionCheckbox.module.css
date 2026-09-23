@@ -26,7 +26,7 @@
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-fg) 8%, transparent);
   }
 
-  .SelectionCheckbox:has(:focus-visible) & {
+  .SelectionCheckbox.is-focusVisible & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

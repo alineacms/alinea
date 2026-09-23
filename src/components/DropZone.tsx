@@ -1,17 +1,12 @@
 import styler from '@alinea/styler'
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useRef,
-  useState
-} from 'react'
+import {createContext, type ReactNode, useContext, useState} from 'react'
 import {
   DropZone as DropZonePrimitive,
   isFileDropItem
 } from 'react-aria-components'
 import {Button, type ButtonProps} from './Button.js'
 import css from './DropZone.module.css'
+import {FileTrigger} from './FileTrigger.js'
 import type {AriaProps, DataProps, StyleProps} from './types.js'
 
 const styles = styler(css)
@@ -90,39 +85,21 @@ export function DropZone({
 export interface DropZoneTriggerProps extends Omit<ButtonProps, 'asChild'> {}
 
 /** A button that opens the file browser of the surrounding DropZone */
-export function DropZoneTrigger({
-  onClick,
-  disabled,
-  ...props
-}: DropZoneTriggerProps) {
+export function DropZoneTrigger({disabled, ...props}: DropZoneTriggerProps) {
   const context = useContext(DropZoneContext)
   if (!context) throw new Error('DropZoneTrigger must be used in a DropZone')
-  const input = useRef<HTMLInputElement>(null)
   return (
-    <>
+    <FileTrigger
+      accept={context.accept}
+      multiple={context.multiple}
+      onSelect={context.onDropFiles}
+    >
       <Button
         data-slot="drop-zone-trigger"
         {...props}
         disabled={disabled || context.disabled}
-        onClick={event => {
-          onClick?.(event)
-          if (!event.defaultPrevented) input.current?.click()
-        }}
       />
-      <input
-        ref={input}
-        type="file"
-        hidden
-        tabIndex={-1}
-        accept={context.accept?.join(',')}
-        multiple={context.multiple}
-        onChange={event => {
-          const files = Array.from(event.currentTarget.files ?? [])
-          event.currentTarget.value = ''
-          context.onDropFiles(files)
-        }}
-      />
-    </>
+    </FileTrigger>
   )
 }
 

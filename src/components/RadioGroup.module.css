@@ -73,7 +73,7 @@
     border-color: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
   }
 
-  .RadioGroupItem:has(:focus-visible) & {
+  .RadioGroupItem.is-focusVisible & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

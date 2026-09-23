@@ -10,7 +10,7 @@ import {
   Separator,
   SubmenuTrigger
 } from 'react-aria-components'
-import {IcRoundCheck, IcRoundKeyboardArrowRight} from '../dashboard/icons.js'
+import {IcRoundCheck, IcRoundKeyboardArrowRight} from '#/dashboard/icons.js'
 import css from './DropdownMenu.module.css'
 import {Icon} from './Icon.js'
 import {placement} from './internal/Placement.js'

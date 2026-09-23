@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, Removable, Selectable} from './TagGroup.stories.js'
+import {Example, Removable, Selectable, States} from './TagGroup.stories.js'
 
 test('renders variants and shapes', async ({mount, page}) => {
   await mount(<Example />)
@@ -37,4 +37,23 @@ test('removes tags', async ({mount, page}) => {
   await group.getByRole('row', {name: /Mint/}).getByRole('button').click()
   await expect(group.getByRole('row')).toHaveCount(3)
   await expect(group.getByRole('row', {name: /Mint/})).toHaveCount(0)
+})
+
+test('disabled and read-only groups keep their selection', async ({
+  mount,
+  page
+}) => {
+  await mount(<States />)
+  for (const name of ['Disabled', 'Read-only']) {
+    const group = page.getByRole('grid', {name})
+    const chocolate = group.getByRole('row', {name: 'Chocolate'})
+    const mint = group.getByRole('row', {name: 'Mint'})
+    await chocolate.click({force: true})
+    await chocolate.focus()
+    await page.keyboard.press('Space')
+    await mint.focus()
+    await page.keyboard.press('Space')
+    await expect(chocolate).toHaveAttribute('aria-selected', 'false')
+    await expect(mint).toHaveAttribute('aria-selected', 'true')
+  }
 })

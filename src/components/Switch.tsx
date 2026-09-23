@@ -34,7 +34,11 @@ export function Switch({
     <SwitchPrimitive
       data-slot="switch"
       {...props}
-      className={styles.Switch(styler.merge({className}))}
+      // react-aria focuses the hidden input from script, so :focus-visible
+      // also matches after a pointer press; isFocusVisible follows the modality
+      className={({isFocusVisible}) =>
+        styles.Switch({focusVisible: isFocusVisible}, styler.merge({className}))
+      }
       isSelected={checked}
       defaultSelected={defaultChecked}
       onChange={onCheckedChange}

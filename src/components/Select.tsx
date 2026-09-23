@@ -16,7 +16,7 @@ import {
   SelectValue,
   Separator
 } from 'react-aria-components'
-import {IcRoundClose, IcRoundKeyboardArrowDown} from '../dashboard/icons.js'
+import {IcRoundClose, IcRoundKeyboardArrowDown} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'
@@ -112,6 +112,7 @@ export function Select({
           data-slot="select-content"
           className={styles.SelectContent()}
           triggerRef={triggerRef}
+          matchTriggerWidth
         >
           <ListBox className={styles.SelectContent.list()}>{children}</ListBox>
         </PopoverSurface>

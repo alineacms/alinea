@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundDescription} from '../dashboard/icons.js'
+import {IcRoundDescription} from '#/dashboard/icons.js'
 import {TextField} from './TextField.js'
 
 const column = {

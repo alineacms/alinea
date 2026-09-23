@@ -132,6 +132,8 @@
   position: relative;
   box-sizing: border-box;
   min-width: 100%;
+  /* Fill the slot the virtualizer reserves, whatever the cells contain */
+  height: var(--alinea-table-row-height);
   background: var(--alinea-bg);
   outline: none;
   cursor: pointer;

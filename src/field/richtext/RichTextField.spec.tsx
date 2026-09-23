@@ -2,7 +2,6 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
-  RichTextInlineStory,
   RichTextImageDisabledStory,
   RichTextImageStory,
   RichTextImportedListStory,

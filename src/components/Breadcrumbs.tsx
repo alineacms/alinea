@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {MouseEvent, ReactNode} from 'react'
-import {IcRoundChevronRight, IcRoundMoreHoriz} from '../dashboard/icons.js'
+import {IcRoundChevronRight, IcRoundMoreHoriz} from '#/dashboard/icons.js'
 import css from './Breadcrumbs.module.css'
 import {Slot, type SlotProps} from './internal/Slot.js'
 import type {AriaProps, DataProps, StyleProps} from './types.js'

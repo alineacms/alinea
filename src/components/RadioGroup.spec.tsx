@@ -32,3 +32,18 @@ test('disabled, read-only and invalid groups', async ({mount, page}) => {
   await expect(invalid).toHaveAttribute('aria-invalid', 'true')
   await expect(page.getByRole('alert')).toHaveText('Pick one')
 })
+
+test('shows no focus ring when selected with the pointer', async ({
+  mount,
+  page
+}) => {
+  await mount(<Controlled />)
+  await page.getByText('Orange', {exact: true}).click()
+  const indicator = page
+    .locator('[data-slot="radio-group-item"]', {hasText: 'Orange'})
+    .locator('[data-slot="radio-group-indicator"]')
+  await expect(indicator).toHaveCSS('outline-style', 'none')
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.press('ArrowDown')
+  await expect(indicator).toHaveCSS('outline-style', 'solid')
+})

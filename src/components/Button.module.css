@@ -92,6 +92,11 @@
     border-color: color-mix(in oklab, var(--alinea-button-accent) 30%, transparent);
   }
 
+  /* A neutral outline matches the borders of inputs and toggle groups */
+  &[data-variant='outline'][data-color='neutral'] {
+    border-color: var(--alinea-border);
+  }
+
   &[data-active],
   &[data-active]:hover {
     border-color: transparent;
@@ -131,6 +136,7 @@
   &[data-size='icon-lg'][aria-expanded='true'] {
     --alinea-button-bg: var(--alinea-selected);
 
+    border-color: transparent;
     background: var(--alinea-button-bg);
     color: var(--alinea-selected-fg);
   }

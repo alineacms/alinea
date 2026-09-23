@@ -1,5 +1,6 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {Basic, Empty, Reorderable} from './SortableList.stories.js'
+import {ListLabel} from './List.js'
 
 test('reorders items by dragging the handle', async ({mount, page}) => {
   await mount(<Reorderable />)
@@ -131,4 +132,18 @@ test('drops the add row border in an empty list', async ({mount, page}) => {
   const add = page.locator('[data-slot="sortable-list-add"] > div')
   await expect(add).toHaveCSS('border-top-width', '0px')
   await expect(page.getByRole('button', {name: 'Add Hero'})).toBeVisible()
+})
+
+test('a list label without rows to fold keeps its full color', async ({
+  mount,
+  page
+}) => {
+  await mount(
+    <ListLabel aria-label="No list items to fold" expanded hasRows={false}>
+      Sections
+    </ListLabel>
+  )
+  const toggle = page.getByRole('button', {name: 'No list items to fold'})
+  await expect(toggle).toBeDisabled()
+  await expect(toggle).toHaveCSS('opacity', '1')
 })

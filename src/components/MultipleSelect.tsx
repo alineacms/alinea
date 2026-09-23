@@ -18,7 +18,7 @@ import {
   IcRoundClose,
   IcRoundKeyboardArrowDown,
   IcRoundSearch
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'
@@ -193,6 +193,7 @@ export function MultipleSelect({
           data-slot="multiple-select-content"
           className={styles.MultipleSelectContent()}
           triggerRef={triggerRef}
+          matchTriggerWidth
         >
           <Autocomplete filter={contains}>
             <SearchFieldPrimitive

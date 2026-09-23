@@ -50,6 +50,15 @@
     border-color: var(--alinea-border);
   }
 
+  /* The outline toggle group draws the frame around its items */
+  &[data-slot='toggle-group-item'][data-variant='outline'] {
+    border-color: transparent;
+
+    &[data-icon-only] {
+      min-width: 32px;
+    }
+  }
+
   &[data-size='sm'] {
     padding: 2px 6px;
     border-radius: calc(var(--alinea-radius) - 2px);

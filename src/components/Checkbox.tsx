@@ -43,7 +43,14 @@ export function Checkbox({
     <CheckboxPrimitive
       data-slot="checkbox"
       {...props}
-      className={styles.Checkbox(styler.merge({className}))}
+      // react-aria focuses the hidden input from script, so :focus-visible
+      // also matches after a pointer press; isFocusVisible follows the modality
+      className={({isFocusVisible}) =>
+        styles.Checkbox(
+          {focusVisible: isFocusVisible},
+          styler.merge({className})
+        )
+      }
       isSelected={checked === undefined ? undefined : checked === true}
       isIndeterminate={indeterminate}
       defaultSelected={defaultChecked}

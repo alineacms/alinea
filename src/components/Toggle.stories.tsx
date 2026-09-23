@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundFormatBold, IcRoundFormatItalic} from '../dashboard/icons.js'
+import {IcRoundFormatBold, IcRoundFormatItalic} from '#/dashboard/icons.js'
 import {Toggle} from './Toggle.js'
 
 export function Example() {

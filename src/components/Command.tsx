@@ -17,7 +17,7 @@ import {
   ListBoxSection,
   Separator
 } from 'react-aria-components'
-import {IcRoundSearch} from '../dashboard/icons.js'
+import {IcRoundSearch} from '#/dashboard/icons.js'
 import css from './Command.module.css'
 import {Icon} from './Icon.js'
 import {SearchField} from './SearchField.js'

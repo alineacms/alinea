@@ -9,7 +9,12 @@ const rootDir = resolve(fileURLToPath(new URL('..', import.meta.url)))
 export default defineConfig({
   testDir: rootDir,
   testMatch: ['src/**/*.spec.tsx', 'test/**/*.spec.tsx'],
-  testIgnore: ['**/private/**', '**/node_modules/**'],
+  testIgnore: [
+    '**/private/**',
+    '**/node_modules/**',
+    // Visual regression specs run with playwright.visual.config.ts
+    '**/test/visual/**'
+  ],
   workers: 3,
   use: {
     ctTemplateDir: '.',

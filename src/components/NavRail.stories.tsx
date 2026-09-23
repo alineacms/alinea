@@ -5,7 +5,7 @@ import {
   IcRoundCheck,
   LucideFile,
   LucideImage
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {
   NavRail,

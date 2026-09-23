@@ -5,7 +5,7 @@ import {
   Input,
   SearchField as SearchFieldPrimitive
 } from 'react-aria-components'
-import {IcRoundClose} from '../dashboard/icons.js'
+import {IcRoundClose} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
 import css from './SearchField.module.css'

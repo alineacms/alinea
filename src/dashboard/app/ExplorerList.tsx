@@ -19,7 +19,7 @@ import {
   type DashboardRoot,
   type ExplorerReadyPage
 } from '../atoms/explorer.js'
-import {dashboardEntryDragTypes} from '../atoms/utils.js'
+import {dashboardEntryDropIds} from '../atoms/utils.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -120,10 +120,11 @@ export function ExplorerList({
       return moveInto([...event.keys].map(String), event.target, page.locale)
     },
     onDropItems(event) {
-      const ids = event.items
-        .map(item => item[dashboardEntryDragTypes[0]] ?? item['text/plain'])
-        .filter(Boolean)
-      return moveInto(ids, event.target, page.locale)
+      return moveInto(
+        dashboardEntryDropIds(event.items),
+        event.target,
+        page.locale
+      )
     },
     onDropFiles: acceptsDrops
       ? async event => {

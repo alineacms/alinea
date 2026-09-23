@@ -4,6 +4,7 @@ import {
   SidebarContent,
   Tree,
   TreeItem,
+  type DragDropProps,
   type DragMoveEvent,
   type Selection
 } from '#/components.js'
@@ -170,7 +171,7 @@ function equalStringSets(left: Set<string>, right: Set<string>): boolean {
   )
 }
 
-const treeLayoutOptions = {rowHeight: 32}
+const treeRowHeight = 32
 
 function visibleRowIds(items: Array<RootTreeNode>): Array<string> {
   return items.flatMap(item => [item.id, ...visibleRowIds(item.children)])
@@ -202,18 +203,38 @@ function useScrollSelectedIntoView(
       const element = treeRef.current
       if (!element) return
       scrolledId.current = selectedId
-      const {rowHeight} = treeLayoutOptions
-      const top = rowIndex * rowHeight
+      const top = rowIndex * treeRowHeight
       // Leave partially visible rows alone so a click does not move the tree
       const isVisible =
-        top + rowHeight > element.scrollTop &&
+        top + treeRowHeight > element.scrollTop &&
         top < element.scrollTop + element.clientHeight
       if (isVisible) return
-      element.scrollTop = top - (element.clientHeight - rowHeight) / 2
+      element.scrollTop = top - (element.clientHeight - treeRowHeight) / 2
     })
     return () => cancelAnimationFrame(frame)
   }, [rowIndex, selectedId, treeRef])
   /* oxlint-enable react-you-might-not-need-an-effect/no-event-handler */
+}
+
+/** Drag entries within the tree and drop entries from elsewhere on it */
+function useRootTreeDragDrop(
+  root: RootAtoms,
+  tree: TreeAtoms,
+  disabled = false
+): DragDropProps {
+  const dragDisabled = useAtomValueRaw(root.dragDisabled)
+  const getItems = useSetAtom(root.getItems)
+  const drop = useSetAtom(root.onDrop)
+  const move = useSetAtom(root.onMove)
+  if (disabled || dragDisabled) return {}
+  const moveInTree = (event: DragMoveEvent) => move(event, tree)
+  return {
+    acceptedDragTypes: root.acceptedDragTypes,
+    getDragData: getItems,
+    onDropItems: drop,
+    onMove: moveInTree,
+    onReorder: moveInTree
+  }
 }
 
 export const SidebarTree = memo(function SidebarTree({
@@ -233,19 +254,7 @@ export const SidebarTree = memo(function SidebarTree({
   const setRoute = useSetAtom(routeAtom)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const [collapsed, setCollapsed] = useAtom(tree.collapsedKeys)
-  const dragDisabled = useAtomValueRaw(root.dragDisabled)
-  const getItems = useSetAtom(root.getItems)
-  const drop = useSetAtom(root.onDrop)
-  const move = useSetAtom(root.onMove)
-  const dragDrop = dragDisabled
-    ? {}
-    : {
-        acceptedDragTypes: root.acceptedDragTypes,
-        getDragData: getItems,
-        onDropItems: drop,
-        onMove: (event: DragMoveEvent) => move(event, tree),
-        onReorder: (event: DragMoveEvent) => move(event, tree)
-      }
+  const dragDrop = useRootTreeDragDrop(root, tree)
   function entryLink(entry: RootTreeItem): SidebarTreeLink {
     return {
       href: nav.entry(
@@ -322,7 +331,7 @@ export const SidebarTree = memo(function SidebarTree({
             items={snapshot.items}
             {...dragDrop}
             virtualized
-            rowHeight={treeLayoutOptions.rowHeight}
+            rowHeight={treeRowHeight}
             selectionMode="single"
             expandedKeys={snapshot.expandedKeys}
             onExpandedChange={keys => {
@@ -388,20 +397,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   const treeRef = useRef<HTMLDivElement>(null)
   useScrollSelectedIntoView(treeRef, snapshot)
   const selectedItem = useAtomValueRaw(tree.selectedItem)
-  const dragDisabled = useAtomValueRaw(root.dragDisabled)
-  const getItems = useSetAtom(root.getItems)
-  const drop = useSetAtom(root.onDrop)
-  const move = useSetAtom(root.onMove)
-  const dragDrop =
-    disableDragAndDrop || dragDisabled
-      ? {}
-      : {
-          acceptedDragTypes: root.acceptedDragTypes,
-          getDragData: getItems,
-          onDropItems: drop,
-          onMove: (event: DragMoveEvent) => move(event, tree),
-          onReorder: (event: DragMoveEvent) => move(event, tree)
-        }
+  const dragDrop = useRootTreeDragDrop(root, tree, disableDragAndDrop)
   function renderItem(item: RootTreeNode): ReactNode {
     const data = view.entries.get(item.id)
     if (!data) return null
@@ -452,7 +448,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
             items={snapshot.items}
             {...dragDrop}
             virtualized
-            rowHeight={treeLayoutOptions.rowHeight}
+            rowHeight={treeRowHeight}
             selectionMode="single"
             expandedKeys={snapshot.expandedKeys}
             onExpandedChange={keys => {

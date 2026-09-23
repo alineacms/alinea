@@ -45,3 +45,16 @@ test('default, disabled and invalid states', async ({mount, page}) => {
   ).toHaveCount(0)
   await expect(page.getByText('Select at least one fruit')).toBeVisible()
 })
+
+test('the list is as wide as the trigger', async ({mount, page}) => {
+  await mount(<Example />)
+  const trigger = page.locator('[data-slot="multiple-select-trigger"]')
+  await trigger.click()
+  const content = page.locator('[data-slot="multiple-select-content"]')
+  await expect(content).toBeVisible()
+  const triggerBox = await trigger.boundingBox()
+  const contentBox = await content.boundingBox()
+  expect(
+    Math.abs(contentBox!.width - Math.max(240, triggerBox!.width))
+  ).toBeLessThanOrEqual(1)
+})

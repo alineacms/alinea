@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {IcRoundDateRange} from '../dashboard/icons.js'
+import {IcRoundDateRange} from '#/dashboard/icons.js'
 import {DateField} from './DateField.js'
 
 export function Example() {

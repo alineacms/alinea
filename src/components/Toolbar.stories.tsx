@@ -7,7 +7,7 @@ import {
   IcRoundFormatItalic,
   IcRoundRedo,
   IcRoundUndo
-} from '../dashboard/icons.js'
+} from '#/dashboard/icons.js'
 import {
   DropdownMenu,
   DropdownMenuContent,
