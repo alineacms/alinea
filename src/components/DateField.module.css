@@ -1,57 +1,62 @@
 .DateField {
-  gap: 4px;
+  display: block;
+}
+
+.DateField-control {
   display: flex;
   align-items: center;
+  gap: 4px;
   width: 100%;
   padding: 8px 10px;
-  background: var(--alinea-input);
   border: 1px solid var(--alinea-border);
   border-radius: 8px;
-  outline: 3px solid transparent;
+  background: var(--alinea-input);
   color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   white-space: nowrap;
+  outline: 3px solid transparent;
   transition: var(--alinea-transition);
 
-  &[data-hovered] {
+  &:hover {
     border-color: var(--alinea-border-hover);
     outline-color: var(--alinea-ring-subtle);
   }
-  &[data-focus-within] {
+
+  &:focus-within {
     border-color: var(--alinea-border-accent);
     outline-color: var(--alinea-primary-overlay);
   }
-  &[data-invalid='true'] {
+
+  &:has(.DateField-segment[aria-invalid='true']) {
     border-color: var(--alinea-border-danger);
     outline-color: var(--alinea-danger-overlay);
   }
-  &[data-disabled] {
-    pointer-events: none;
+
+  &[aria-disabled='true'] {
     background-color: var(--alinea-input-disabled);
-    color: var(--alinea-fg-disabled);
     opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.DateField-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.DateField-segment {
+  padding-inline: 1px;
+  transition: var(--alinea-transition);
+
+  &.is-placeholder {
+    color: var(--alinea-fg-subtle);
   }
 
-  .DateField-input {
-    .DateField-input-segment {
-      padding-inline: 1px;
-      transition: var(--alinea-transition);
-
-      &[data-placeholder] {
-        color: var(--alinea-fg-subtle);
-      }
-
-      &[data-hovered] {
-        color: var(--alinea-fg);
-      }
-
-      &[data-focused] {
-        outline: none;
-        background-color: var(--alinea-primary-overlay);
-        border-radius: 4px;
-        color: var(--alinea-primary);
-      }
-    }
+  &:focus {
+    border-radius: 4px;
+    background-color: var(--alinea-primary-overlay);
+    color: var(--alinea-primary);
+    outline: none;
   }
 }

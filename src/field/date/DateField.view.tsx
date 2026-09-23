@@ -1,8 +1,6 @@
 import {DatePicker} from '#/components.js'
 import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {DateField} from '#/field/date.js'
-import {parseDate} from '@internationalized/date'
-import {useMemo} from 'react'
 import {I18nProvider} from 'react-aria-components'
 
 export interface DateFieldViewProps {
@@ -13,22 +11,19 @@ export function DateFieldView({field}: DateFieldViewProps) {
   const [value = '', setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
-  const parsedValue = useMemo(() => {
-    if (!value) return null
-    return parseDate(value)
-  }, [value])
-
+  // The public components take their locale from react-aria's I18nProvider,
+  // dates are always shown as day/month/year in the dashboard
   return (
     <I18nProvider locale="en-GB">
       <DatePicker
         description={options.help}
-        errorMessage={error}
-        isRequired={options.required}
-        isDisabled={options.readOnly}
+        error={error}
+        required={options.required}
+        disabled={options.readOnly}
         label={options.label}
         shared={options.shared}
-        onChange={next => setValue(next?.toString() || '')}
-        value={parsedValue}
+        onValueChange={next => setValue(next || '')}
+        value={value || null}
       />
     </I18nProvider>
   )

@@ -1,42 +1,33 @@
-import {endOfYear, getLocalTimeZone, today} from '@internationalized/date'
 import {useState} from 'react'
-import {I18nProvider} from 'react-aria-components'
 import {DatePicker} from './DatePicker.js'
 
-export const Example = () => {
-  const [error, setError] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(true)
-  }
-
+export function Example() {
   return (
-    <I18nProvider locale="en-UK">
-      <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
-        <DatePicker label="Default" />
-        <DatePicker
-          label="With Description"
-          description="Select a date for the event"
-        />
-        <DatePicker
-          label="minValue (today)"
-          minValue={today(getLocalTimeZone())}
-        />
-        <DatePicker
-          label="maxValue (endOfYear)"
-          maxValue={endOfYear(today(getLocalTimeZone()))}
-        />
-        <DatePicker
-          isRequired
-          isInvalid
-          label="With Error"
-          errorMessage="Date is required"
-        />
-        <DatePicker label="Disabled" isDisabled />
-      </div>
-    </I18nProvider>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
+      <DatePicker label="Default" />
+      <DatePicker
+        label="With description"
+        description="Select a date for the event"
+      />
+      <DatePicker
+        label="Only September 2026"
+        min="2026-09-01"
+        max="2026-09-30"
+      />
+      <DatePicker required label="With error" error="Date is required" />
+      <DatePicker label="Disabled" defaultValue="2026-09-23" disabled />
+    </div>
   )
 }
 
-export default {title: 'Components / DatePicker'}
+export function Controlled() {
+  const [value, setValue] = useState<string | null>('2026-09-23')
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <DatePicker label="Event date" value={value} onValueChange={setValue} />
+      <output data-testid="value">{String(value)}</output>
+    </div>
+  )
+}
+
+export default {title: 'Pure components / DatePicker'}
