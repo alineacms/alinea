@@ -1,0 +1,64 @@
+.DemoStores {
+  padding: clamp(56px, 9cqi, 120px) 0 0;
+}
+
+.DemoStores-grid {
+  display: grid;
+  gap: 48px;
+
+  @container demo-site (min-width: 760px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px;
+  }
+}
+
+.DemoStores-store {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.DemoStores-image {
+  margin-bottom: 8px;
+  border-radius: var(--demo-radius);
+}
+
+.DemoStores-heading {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.DemoStores-details {
+  display: grid;
+  gap: 16px;
+
+  @container demo-site (min-width: 420px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.DemoStores-detail {
+  margin: 0;
+  color: var(--demo-muted);
+  font-size: 15px;
+  white-space: pre-line;
+}
+
+.DemoStores-phone {
+  align-self: flex-start;
+  color: var(--demo-ink);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration-color: var(--demo-line);
+  text-underline-offset: 4px;
+}
+
+.DemoStores-note {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--demo-line);
+  font-size: 14px;
+}

@@ -1,0 +1,91 @@
+{
+  "_id": "3JjYfyD46Nvf6MOAzgsUIcVYJWw",
+  "_type": "DemoProduct",
+  "_index": "a4",
+  "title": "Linden Sideboard",
+  "tagline": "Gegroefde eiken deuren die het licht vangen",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "De deuren van Linden worden met de hand gegroefd op de freestafel, groef per groef. Naarmate het licht door de kamer beweegt, verschuift het oppervlak van zacht naar scherp."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Achter de deuren zitten verstelbare legplanken en achteraan een kabeldoorvoer, zodat hij even goed dienstdoet voor platen en een platenspeler als voor borden en glazen."
+        }
+      ]
+    }
+  ],
+  "care": "Afnemen met een zachte, vochtige doek en meteen droogwrijven. Een- of tweemaal per jaar opnieuw oliën met de meegeleverde onderhoudsset.",
+  "metadata": {
+    "title": "Linden Sideboard · Gegroefde eiken deuren die het licht vangen",
+    "description": "De deuren van Linden worden met de hand gegroefd op de freestafel, groef per groef. Naarmate het licht door de kamer beweegt, verschuift het oppervlak van ",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "Made to order",
+    "nl": "Op bestelling",
+    "fr": "Sur commande"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg0anrrkHU50dBtFyGser5Kn",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfprQ8y9noCkgL3QMj35Lw42"
+    }
+  ],
+  "price": 2890,
+  "leadTime": 12,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfxUBiyi2o0xgjNjyNcwaiRC",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oil",
+        "nl": "Naturel geolied",
+        "fr": "Huile naturelle"
+      },
+      "swatch": "#caa377",
+      "stock": 1,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfxXhsOUySLCAXL6BKBVLQCR",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Smoked oak",
+        "nl": "Gerookt eiken",
+        "fr": "Chêne fumé"
+      },
+      "swatch": "#6a4a33",
+      "stock": 0,
+      "surcharge": 300
+    }
+  ],
+  "material": "oak",
+  "designer": "Tom Verbeke",
+  "dimensions": {
+    "width": 180,
+    "depth": 45,
+    "height": 75,
+    "weight": 72
+  },
+  "related": []
+}

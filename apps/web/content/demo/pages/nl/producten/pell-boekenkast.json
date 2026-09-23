@@ -1,0 +1,98 @@
+{
+  "_id": "3JjYfvsYj0CE2WT29KwtYkIOFxg",
+  "_type": "DemoProduct",
+  "_index": "a8",
+  "title": "Pell Shelving",
+  "tagline": "Een open eiken boekenkast die met je meegroeit",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pell bestaat uit staanders en legplanken in massief eiken die zonder één enkele schroef in elkaar schuiven. Begin met één module en breid uit naarmate je verzameling boeken, platen en keramiek groeit."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "De planken zijn dik genoeg om de zwaarste kunstboeken te dragen zonder door te buigen."
+        }
+      ]
+    }
+  ],
+  "care": "Afnemen met een zachte, vochtige doek en meteen droogwrijven. Een- of tweemaal per jaar opnieuw oliën met de meegeleverde onderhoudsset.",
+  "metadata": {
+    "title": "Pell Shelving · Een open eiken boekenkast die met je meegroeit",
+    "description": "Pell bestaat uit staanders en legplanken in massief eiken die zonder één enkele schroef in elkaar schuiven. Begin met één module en breid uit naarmate je v",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfy0y3UMzL3RfCsboxOjB7yO",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYg3FuuheiHkpH5ixlBiSTEQh"
+    }
+  ],
+  "price": 1640,
+  "leadTime": 8,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfyjSs0RALRnd4PSVuqHO5eK",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oil",
+        "nl": "Naturel geolied",
+        "fr": "Huile naturelle"
+      },
+      "swatch": "#d1ae83",
+      "stock": 2,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfvg2kTAe5r2kOu8Tfu8EqGU",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "White oil",
+        "nl": "Wit geolied",
+        "fr": "Huile blanche"
+      },
+      "swatch": "#e6d8c3",
+      "stock": 0,
+      "surcharge": 0
+    }
+  ],
+  "material": "oak",
+  "designer": "Tom Verbeke",
+  "dimensions": {
+    "width": 120,
+    "depth": 35,
+    "height": 190,
+    "weight": 48
+  },
+  "related": [
+    {
+      "_id": "3JjYg0KwDiQM0mTiksmBKioqmB0",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfyZoRnF3wff9qLrMhgoeZGu"
+    }
+  ]
+}

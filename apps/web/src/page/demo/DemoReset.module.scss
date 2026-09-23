@@ -1,0 +1,24 @@
+.DemoReset {
+  position: fixed;
+  z-index: 10;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 32px);
+  padding: 3px 3px 3px 14px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 999px;
+  background: var(--alinea-overlay);
+  box-shadow: var(--alinea-shadow-tooltip);
+  color: var(--alinea-fg-muted);
+  font-family: var(--alinea-font);
+  font-size: var(--alinea-font-size-base);
+
+  &-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

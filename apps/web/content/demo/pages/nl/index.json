@@ -1,0 +1,175 @@
+{
+  "_id": "3JjYg2xcgCGTqmAoAf36mA6hWqR",
+  "_type": "DemoHome",
+  "_index": "a0",
+  "_root": "pages",
+  "title": "Home",
+  "blocks": [
+    {
+      "_id": "3JjYfyZtP1wnUx2kcu7YZi8topK",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Herfstcollectie 2026",
+      "layout": "overlay",
+      "title": "Meubels die traag gemaakt worden,\nom decennia mee te leven",
+      "text": "Massief eiken, notelaar en Belgisch linnen, met de hand gemaakt in ons atelier in Gent. Stukken die met elk jaar gebruik mooier worden.",
+      "image": {
+        "_id": "3JjYfzWbmn2Pszom5QncK9XW9XG",
+        "_type": "image",
+        "_entry": "3JjYfnfrYyPLNqfGmo8Xulwojwy"
+      },
+      "credit": "Photo by Spacejoy on Unsplash",
+      "link": {
+        "_id": "3JjYfvetVTghAE86LjiSyaNGMsH",
+        "_type": "entry",
+        "_entry": "3JjYfwD09WF5vKYfXObPiZGMUOI",
+        "label": "Ontdek de collectie"
+      }
+    },
+    {
+      "_id": "3JjYfzQUXjEAGgywze8oyZGmdQJ",
+      "_index": "a1",
+      "_type": "DemoFeaturedProductsBlock",
+      "title": "Nieuw uit het atelier",
+      "link": {
+        "_id": "3JjYg3FU9qWcEBKJF9yWhq9PS4m",
+        "_type": "entry",
+        "_entry": "3JjYfwD09WF5vKYfXObPiZGMUOI",
+        "label": "Alle stukken bekijken"
+      },
+      "products": [
+        {
+          "_id": "3JjYg2eUigYv4FDv8igYKKsFnjB",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "3JjYg1RR8ghz3NENJTrtX2QiHgP"
+        },
+        {
+          "_id": "3JjYg1R6owSI6uMv0toHOrOEjxV",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "3JjYfzPTVtmPWs2O84iAvy3gHyO"
+        },
+        {
+          "_id": "3JjYfy6pBay3hezKyv4SMWdQh0W",
+          "_index": "a2",
+          "_type": "entry",
+          "_entry": "3JjYfyz12LRO4vdvD9NV5MnQVa4"
+        },
+        {
+          "_id": "3JjYfwKw6ivELvrBAqQBfLfe5fa",
+          "_index": "a3",
+          "_type": "entry",
+          "_entry": "3JjYfyD46Nvf6MOAzgsUIcVYJWw"
+        }
+      ]
+    },
+    {
+      "_id": "3JjYfxnHv9uMszCMzXIM09Fzwj2",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Ons atelier",
+      "imagePosition": "left",
+      "title": "Elke verbinding met de hand gezaagd, gepast en geolied",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "We zijn een team van zeven makers in een voormalige textielfabriek in Gent. We werken met hout uit duurzaam beheerde bossen en maken elk stuk op bestelling, zodat er niets in een magazijn ligt te wachten."
+            }
+          ]
+        },
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Dat duurt langer. Wij vinden het de moeite waard."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfwjcGLHuXsJkZC6SRGTbnzR",
+        "_type": "image",
+        "_entry": "3JjYfsyCks2BAi4ccPyKgtCGGRb"
+      },
+      "credit": "Photo by Craft Kitties on Unsplash",
+      "link": {
+        "_id": "3JjYfyGCjiOTO5CBHpF0iHgJOEG",
+        "_type": "entry",
+        "_entry": "3JjYfy8P1cHTxmyI3jgaMrUQhMn",
+        "label": "Maak kennis met de makers"
+      }
+    },
+    {
+      "_id": "3JjYfzOfFYQ5APeurm2K65337Wr",
+      "_index": "a3",
+      "_type": "DemoCollectionGridBlock",
+      "title": "Per kamer",
+      "text": "Stukken die bij elkaar passen, van de eerste koffie van de dag tot het laatste hoofdstuk 's avonds.",
+      "collections": [
+        {
+          "_id": "3JjYg0bcPUznMXvChXoPHrATs2r",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "3JjYg0OXixCbaQ50E6n7PRCP0Vq"
+        },
+        {
+          "_id": "3JjYfw3fd5VZQkWcRvwtL9gTGUb",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "3JjYfwkDH6zRr6exXS99ijOXLx8"
+        },
+        {
+          "_id": "3JjYg1JNocB9GAuBjMXwJJTN7gh",
+          "_index": "a2",
+          "_type": "entry",
+          "_entry": "3JjYfvpACmkJtArSZFCJX4YPI5j"
+        }
+      ]
+    },
+    {
+      "_id": "3JjYfy2jPk47fnNtBNyne1K9dCC",
+      "_index": "a4",
+      "_type": "DemoQuoteBlock",
+      "quote": "De Ferris-tafel heeft bij ons thuis al drie jaar lang elke verjaardag, elke huiswerkavond en elk laat diner meegemaakt. Hij wordt er alleen maar mooier van.",
+      "author": "Sofie, Antwerpen",
+      "source": "Klant sinds 2023"
+    },
+    {
+      "_id": "3JjYg29eBRWU2Gg3Tm9aYyzbo4f",
+      "_index": "a5",
+      "_type": "DemoJournalTeaserBlock",
+      "title": "Uit het journaal",
+      "count": 3,
+      "link": {
+        "_id": "3JjYg21zXFfcLPZgsfhDVJOEesx",
+        "_type": "entry",
+        "_entry": "3JjYfyqstkl0nCFPN9GU7AEK4AS",
+        "label": "Lees het journaal"
+      }
+    },
+    {
+      "_id": "3JjYfztRjCDdEbLVs5in0VziM6n",
+      "_index": "a6",
+      "_type": "DemoNewsletterBlock",
+      "title": "Brieven uit het atelier",
+      "text": "Elk seizoen een korte brief: nieuwe stukken, opendeurdagen in het atelier en af en toe een verhaal over hout.",
+      "buttonLabel": "Inschrijven",
+      "note": "Geen spam. Uitschrijven kan altijd."
+    }
+  ],
+  "metadata": {
+    "title": "Handgemaakte eikenhouten meubels uit Gent",
+    "description": "Meubels in massief hout, verlichting en linnen, op bestelling gemaakt in ons atelier in Gent.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

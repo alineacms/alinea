@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@fontsource/instrument-sans": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.2.8",
     "@fontsource/inter": "^5.2.6",
     "@fontsource/jetbrains-mono": "5.0.1",
     "@fontsource/poppins": "^5.2.6",

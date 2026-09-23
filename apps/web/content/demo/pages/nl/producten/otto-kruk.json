@@ -1,0 +1,98 @@
+{
+  "_id": "3JjYfyc452e8aueFPS0SMYM90qi",
+  "_type": "DemoProduct",
+  "_index": "a6",
+  "title": "Otto Stool",
+  "tagline": "Massief notelaar, gemaakt van onze restjes",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Otto ontstond als manier om de resten van onze grotere stukken te gebruiken. De zitting wordt uit één blok gedraaid en de poten worden er dwars doorheen geklemd met een wig, voor een verbinding die alleen maar vaster wordt."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Gebruik hem als kruk, bijzettafel of plantentafeltje. De meeste mensen nemen er uiteindelijk twee."
+        }
+      ]
+    }
+  ],
+  "care": "Afnemen met een zachte, vochtige doek en meteen droogwrijven. Een- of tweemaal per jaar opnieuw oliën met de meegeleverde onderhoudsset.",
+  "metadata": {
+    "title": "Otto Stool · Massief notelaar, gemaakt van onze restjes",
+    "description": "Otto ontstond als manier om de resten van onze grotere stukken te gebruiken. De zitting wordt uit één blok gedraaid en de poten worden er dwars doorheen ge",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfxcGZCASwvT1JFYwiYdWjRy",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfs1Ul9duNpoBhhRqPJaNSES"
+    }
+  ],
+  "price": 310,
+  "leadTime": 4,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfvkcus2F5OLvAsjkgy9KwS9",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Oiled walnut",
+        "nl": "Geolied notelaar",
+        "fr": "Noyer huilé"
+      },
+      "swatch": "#5a3a26",
+      "stock": 7,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg2nUxbkaLRRd6NtZADmysVL",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Oiled oak",
+        "nl": "Geolied eiken",
+        "fr": "Chêne huilé"
+      },
+      "swatch": "#c8a171",
+      "stock": 5,
+      "surcharge": 0
+    }
+  ],
+  "material": "walnut",
+  "designer": "Tom Verbeke",
+  "dimensions": {
+    "width": 35,
+    "depth": 35,
+    "height": 46,
+    "weight": 4
+  },
+  "related": [
+    {
+      "_id": "3JjYfvhCRoSRlZTOPQdpPWN1WGg",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfvne5ZnEstnjwY8R7Xqm5Wy"
+    }
+  ]
+}

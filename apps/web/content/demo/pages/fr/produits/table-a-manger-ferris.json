@@ -1,0 +1,117 @@
+{
+  "_id": "3JjYg1RR8ghz3NENJTrtX2QiHgP",
+  "_type": "DemoProduct",
+  "_index": "a0",
+  "title": "Ferris Dining Table",
+  "tagline": "Une table en chêne massif pour les longs dîners",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Ferris est la table que nous avons construite pour la cuisine de notre propre atelier, et elle y est toujours. Le plateau est composé de larges planches de chêne massif, collées à la main pour que le fil du bois court d'un bout à l'autre."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Les pieds sont assemblés au cadre par tenons et mortaises : rien à resserrer, rien qui bouge. Six personnes s'y installent confortablement, huit les soirs de fête."
+        }
+      ]
+    }
+  ],
+  "care": "Essuyer avec un chiffon doux et humide, puis sécher aussitôt. Huiler à nouveau une à deux fois par an avec le kit d'entretien fourni.",
+  "metadata": {
+    "title": "Ferris Dining Table · Une table en chêne massif pour les longs dîners",
+    "description": "Ferris est la table que nous avons construite pour la cuisine de notre propre atelier, et elle y est toujours. Le plateau est composé de larges planches de",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "Bestseller",
+    "nl": "Bestseller",
+    "fr": "Best-seller"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfyM0nYVaofs4xXuP5uO4RcN",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYftqzSwf47KYcXstMr3MmJxo"
+    },
+    {
+      "_id": "3JjYfvWMUJAzS0mUUGUPNuEv9Ik",
+      "_index": "a1",
+      "_type": "image",
+      "_entry": "3JjYftknfCFWvObLFvrW7HbhEun"
+    }
+  ],
+  "price": 2450,
+  "leadTime": 8,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfvlWeREJSbyydHDVyu5OPD1",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oil",
+        "nl": "Naturel geolied",
+        "fr": "Huile naturelle"
+      },
+      "swatch": "#c9a57a",
+      "stock": 4,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg05V4co3ADKIdvOivufOVTB",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "White oil",
+        "nl": "Wit geolied",
+        "fr": "Huile blanche"
+      },
+      "swatch": "#e2d3bd",
+      "stock": 2,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg2k4Br8tVTvcWiFHJQzewYF",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Smoked oak",
+        "nl": "Gerookt eiken",
+        "fr": "Chêne fumé"
+      },
+      "swatch": "#6f4e37",
+      "stock": 0,
+      "surcharge": 250
+    }
+  ],
+  "material": "oak",
+  "designer": "Maya Janssens",
+  "dimensions": {
+    "width": 220,
+    "depth": 95,
+    "height": 75,
+    "weight": 68
+  },
+  "related": [
+    {
+      "_id": "3JjYg25LTRaMMoWPKElK32VASh2",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfxqJIBmzojJ0ZKFuR5tUVIA"
+    }
+  ]
+}

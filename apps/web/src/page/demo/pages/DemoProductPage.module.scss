@@ -1,0 +1,230 @@
+.DemoProductPage {
+  padding: clamp(20px, 4cqi, 56px) 0 clamp(64px, 10cqi, 140px);
+}
+
+.DemoProductPage-layout {
+  display: grid;
+  gap: 32px;
+
+  @container demo-site (min-width: 860px) {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(48px, 6cqi, 96px);
+  }
+}
+
+.DemoProductPage-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+
+  @container demo-site (min-width: 860px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+.DemoProductPage-gallery-main {
+  grid-column: 1 / -1;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--demo-radius);
+}
+
+.DemoProductPage-gallery-image {
+  border-radius: var(--demo-radius);
+
+  @container demo-site (max-width: 859px) {
+    aspect-ratio: 1 / 1 !important;
+  }
+}
+
+.DemoProductPage-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--demo-bg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.DemoProductPage-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  @container demo-site (min-width: 860px) {
+    position: sticky;
+    top: 110px;
+  }
+}
+
+.DemoProductPage-title {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(40px, 5cqi, 64px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.DemoProductPage-tagline {
+  margin: -8px 0 0;
+  color: var(--demo-muted);
+  font-size: 18px;
+}
+
+.DemoProductPage-price {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.DemoProductPage-finishes {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.DemoProductPage-label {
+  margin-bottom: 10px;
+  padding: 0;
+  color: var(--demo-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.DemoProductPage-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.DemoProductPage-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  border: 1px solid var(--demo-line);
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--demo-muted);
+  }
+
+  &:has(:checked) {
+    border-color: var(--demo-ink);
+    box-shadow: inset 0 0 0 1px var(--demo-ink);
+  }
+
+  &:has(:focus-visible) {
+    outline: 2px solid var(--demo-accent);
+    outline-offset: 2px;
+  }
+}
+
+.DemoProductPage-option-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.DemoProductPage-option-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+}
+
+.DemoProductPage-option-surcharge {
+  color: var(--demo-muted);
+  font-size: 12px;
+}
+
+.DemoProductPage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--demo-line);
+}
+
+.DemoProductPage-availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--demo-muted);
+  font-size: 13px;
+}
+
+.DemoProductPage-availability-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c28a3a;
+
+  .DemoProductPage-availability.is-inStock & {
+    background: #5d8a5a;
+  }
+}
+
+.DemoProductPage-details {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--demo-line);
+}
+
+.DemoProductPage-detail {
+  display: grid;
+  grid-template-columns: 9em 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--demo-line);
+  font-size: 14px;
+}
+
+.DemoProductPage-detail-label {
+  color: var(--demo-muted);
+}
+
+.DemoProductPage-detail-value {
+  margin: 0;
+}
+
+.DemoProductPage-care {
+  border-bottom: 1px solid var(--demo-line);
+  font-size: 14px;
+}
+
+.DemoProductPage-care-summary {
+  padding: 4px 0 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.DemoProductPage-care-text {
+  margin: 0 0 14px;
+  color: var(--demo-muted);
+}
+
+.DemoProductPage-section {
+  margin-top: clamp(64px, 10cqi, 128px);
+}
+
+.DemoProductPage-articles {
+  display: grid;
+  gap: 40px;
+}

@@ -1,0 +1,117 @@
+{
+  "_id": "3JjYfyvVP2Whv4D7Geo0qLGlo0S",
+  "_type": "DemoProduct",
+  "_index": "a3",
+  "title": "Nora Lounge Chair",
+  "tagline": "Un garnissage profond en lin sur une fine structure en chêne",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Nora est le fauteuil dans lequel on se laisse tomber en fin de journée. Les coussins, garnis de plumes et de mousse, sont recouverts d'un lin belge épais qui s'assouplit merveilleusement avec le temps."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Les housses sont amovibles et lavables, et la structure est en chêne massif, assemblée et finie dans notre atelier."
+        }
+      ]
+    }
+  ],
+  "care": "Aspirer régulièrement les coussins et les regonfler de temps en temps. Les housses se lavent à 30 degrés.",
+  "metadata": {
+    "title": "Nora Lounge Chair · Un garnissage profond en lin sur une fine structure en chêne",
+    "description": "Nora est le fauteuil dans lequel on se laisse tomber en fin de journée. Les coussins, garnis de plumes et de mousse, sont recouverts d'un lin belge épais q",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfxlkrmUy307P9RXGvE35POt",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfrJ58QJa9CNj5mH3F1WBZqt"
+    }
+  ],
+  "price": 1350,
+  "leadTime": 8,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYg352kG3LzBwJ6E499WHPMOi",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Oat linen",
+        "nl": "Haver linnen",
+        "fr": "Lin avoine"
+      },
+      "swatch": "#d9cdb8",
+      "stock": 6,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfwcN8X6h7gKdGeLJryuThU5",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Stone linen",
+        "nl": "Steen linnen",
+        "fr": "Lin pierre"
+      },
+      "swatch": "#a39e93",
+      "stock": 2,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfxqnBE9FXjVT332J4PDCLAa",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Moss linen",
+        "nl": "Mos linnen",
+        "fr": "Lin mousse"
+      },
+      "swatch": "#6b6f4f",
+      "stock": 0,
+      "surcharge": 80
+    }
+  ],
+  "material": "linen",
+  "designer": "Maya Janssens",
+  "dimensions": {
+    "width": 70,
+    "depth": 82,
+    "height": 88,
+    "weight": 14
+  },
+  "related": [
+    {
+      "_id": "3JjYfyfhNSYwZG2YSb5xq0yh4Gk",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfyZoRnF3wff9qLrMhgoeZGu"
+    },
+    {
+      "_id": "3JjYfxmBuLgcuSzClPykQWnK7eL",
+      "_index": "a1",
+      "_type": "entry",
+      "_entry": "3JjYfxcjviPGqfZ6hhunQLUSisy"
+    }
+  ]
+}

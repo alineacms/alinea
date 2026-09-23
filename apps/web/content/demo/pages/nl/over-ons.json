@@ -1,0 +1,108 @@
+{
+  "_id": "3JjYfy8P1cHTxmyI3jgaMrUQhMn",
+  "_type": "DemoPage",
+  "_index": "a4",
+  "_root": "pages",
+  "title": "Over ons",
+  "intro": "Een kleine meubelstudio in Gent die stukken maakt voor huizen waarin echt geleefd wordt.",
+  "blocks": [
+    {
+      "_id": "3JjYfxUnsca4YmefVMX0MZVxDxq",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Sinds 2014",
+      "layout": "split",
+      "title": "Wij nemen de lange weg",
+      "text": "Wat begon met één werkbank in een garage, is nu een atelier met zeven makers. De aanpak is dezelfde gebleven: goed hout, eerlijke verbindingen en geen haastwerk.",
+      "image": {
+        "_id": "3JjYg1s3vGANayA5VcXxHXQgXac",
+        "_type": "image",
+        "_entry": "3JjYfr7FCvc5P9ZTCmOgHBwJZaG"
+      },
+      "credit": "Photo by Adam Patterson on Unsplash"
+    },
+    {
+      "_id": "3JjYfwDbieGKENxF86B7md5U6sA",
+      "_index": "a1",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Materialen",
+      "imagePosition": "right",
+      "title": "Hout waarvan we het verhaal kennen",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Ons eiken- en notenhout komt van zagerijen in de Ardennen en Noord-Frankrijk waarmee we al jaren samenwerken. We kopen hele planken, laten ze maandenlang rusten en gebruiken de resten voor krukjes en kleine stukken."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfvdFVDqLUn1B41ItwyPsGmk",
+        "_type": "image",
+        "_entry": "3JjYfwTpBKMhQrRvsv5zqeyxE5n"
+      },
+      "credit": "Photo by The Cleveland Museum of Art on Unsplash"
+    },
+    {
+      "_id": "3JjYfybiM0fSNF0omgqwhlpl676",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Vakmanschap",
+      "imagePosition": "left",
+      "title": "Met de hand afgewerkt, levenslang hersteld",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Elk oppervlak wordt met de hand geschuurd en geolied: drie lagen, met telkens een dag rust ertussen. Moet er ooit iets aan gebeuren? Breng het terug. We herstellen alles wat we maken, zolang we bestaan."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfverPZcDllMNE2bLdU7wOE6",
+        "_type": "image",
+        "_entry": "3JjYfp3rBdUkjtJoolX62xspWQK"
+      },
+      "credit": "Photo by Dominik Scythe on Unsplash",
+      "link": {
+        "_id": "3JjYg1UPT0wRxH2AfMacuK8dzAw",
+        "_type": "entry",
+        "_entry": "3JjYfyqstkl0nCFPN9GU7AEK4AS",
+        "label": "Lees meer in het journaal"
+      }
+    },
+    {
+      "_id": "3JjYg1S72OxjkvgyG1zRVWHvEIr",
+      "_index": "a3",
+      "_type": "DemoQuoteBlock",
+      "quote": "We maken liever honderd tafels die vijftig jaar meegaan dan duizend die er vijf halen.",
+      "author": "Maya Janssens",
+      "source": "Medeoprichter"
+    },
+    {
+      "_id": "3JjYg3BKYuSYXg7UPZTSZD1lAhI",
+      "_index": "a4",
+      "_type": "DemoNewsletterBlock",
+      "title": "Brieven uit het atelier",
+      "text": "Elk seizoen een korte brief: nieuwe stukken, opendeurdagen in het atelier en af en toe een verhaal over hout.",
+      "buttonLabel": "Inschrijven",
+      "note": "Geen spam. Uitschrijven kan altijd."
+    }
+  ],
+  "metadata": {
+    "title": "Over ons",
+    "description": "Een kleine meubelstudio in Gent die stukken maakt voor huizen waarin echt geleefd wordt.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

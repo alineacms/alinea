@@ -1,0 +1,10 @@
+{
+  "_id": "3JjYfw4jxSLAyOGzbIzDbfrNHoT",
+  "_type": "DemoAuthor",
+  "_index": "a0",
+  "_root": "authors",
+  "title": "Maya Janssens",
+  "role": "Co-founder and designer",
+  "email": "maya@oakandloom.example",
+  "bio": "Maya trained as an architect before swapping drawings for a workbench. She designs most of our pieces and still sands the prototypes herself."
+}

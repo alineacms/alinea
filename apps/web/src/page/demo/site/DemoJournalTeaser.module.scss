@@ -1,0 +1,13 @@
+.DemoJournalTeaser {
+  padding: clamp(56px, 9cqi, 120px) 0 0;
+}
+
+.DemoJournalTeaser-grid {
+  display: grid;
+  gap: 40px;
+
+  @container demo-site (min-width: 760px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "_id": "3JjYg1RR8ghz3NENJTrtX2QiHgP",
+  "_type": "DemoProduct",
+  "_index": "a0",
+  "title": "Ferris Dining Table",
+  "tagline": "A solid oak table for long dinners",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Ferris is the table we built for our own studio kitchen, and it is still there. The top is made from wide, solid oak boards, glued up by hand so the grain runs unbroken from end to end."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The legs are joined to the frame with mortise and tenon joints, so there is nothing to tighten and nothing to wobble. It seats six comfortably, eight when it is a good party."
+        }
+      ]
+    }
+  ],
+  "care": "Wipe with a soft, damp cloth and dry straight away. Re-oil once or twice a year with the care kit included.",
+  "metadata": {
+    "title": "Ferris Dining Table · A solid oak table for long dinners",
+    "description": "Ferris is the table we built for our own studio kitchen, and it is still there. The top is made from wide, solid oak boards, glued up by hand so the grain ",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "Bestseller",
+    "nl": "Bestseller",
+    "fr": "Best-seller"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfyM0nYVaofs4xXuP5uO4RcN",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYftqzSwf47KYcXstMr3MmJxo"
+    },
+    {
+      "_id": "3JjYfvWMUJAzS0mUUGUPNuEv9Ik",
+      "_index": "a1",
+      "_type": "image",
+      "_entry": "3JjYftknfCFWvObLFvrW7HbhEun"
+    }
+  ],
+  "price": 2450,
+  "leadTime": 8,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfvlWeREJSbyydHDVyu5OPD1",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oil",
+        "nl": "Naturel geolied",
+        "fr": "Huile naturelle"
+      },
+      "swatch": "#c9a57a",
+      "stock": 4,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg05V4co3ADKIdvOivufOVTB",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "White oil",
+        "nl": "Wit geolied",
+        "fr": "Huile blanche"
+      },
+      "swatch": "#e2d3bd",
+      "stock": 2,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg2k4Br8tVTvcWiFHJQzewYF",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Smoked oak",
+        "nl": "Gerookt eiken",
+        "fr": "Chêne fumé"
+      },
+      "swatch": "#6f4e37",
+      "stock": 0,
+      "surcharge": 250
+    }
+  ],
+  "material": "oak",
+  "designer": "Maya Janssens",
+  "dimensions": {
+    "width": 220,
+    "depth": 95,
+    "height": 75,
+    "weight": 68
+  },
+  "related": [
+    {
+      "_id": "3JjYg25LTRaMMoWPKElK32VASh2",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfxqJIBmzojJ0ZKFuR5tUVIA"
+    }
+  ]
+}

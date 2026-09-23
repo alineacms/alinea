@@ -1,154 +1,31 @@
 'use client'
 
 import * as schema from '@/schema/demo'
-import {Config} from 'alinea'
 import 'alinea/css'
 import {createConfig} from 'alinea/core/Config'
-import type {LocalConnection} from 'alinea/core/Connection'
-import {Entry} from 'alinea/core/Entry'
-import {localUser} from 'alinea/core/User'
-import {
-  type ExportedSource,
-  importSource
-} from 'alinea/core/source/SourceExport'
+import type {ExportedSource} from 'alinea/core/source/SourceExport'
 import {App} from 'alinea/dashboard/App'
 import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
 import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
 import {views as defaultViews} from 'alinea/field/views'
-import {useGraph} from 'alinea/dashboard/hook/UseGraph'
-import {
-  type MouseEvent,
-  type ReactNode,
-  Suspense,
-  use,
-  useDeferredValue,
-  useMemo
-} from 'react'
-import {DemoHomePage} from './DemoHomePage'
-import {DemoRecipePage} from './DemoRecipePage'
+import {Suspense, use, useMemo} from 'react'
+import {DemoConnection, demoUser} from './DemoConnection'
+import {DemoPreview} from './DemoPreview'
+import {DemoReset} from './DemoReset'
+import {demoRoles} from './demoRoles'
+import {demoWorkspace} from './demoWorkspace'
 
 const config = createConfig({
   schema,
-  workspaces: {
-    demo: Config.workspace('Milk & Cookies', {
-      color: '#3F61E8',
-      mediaDir: 'public',
-      source: 'content/demo',
-      roots: {
-        pages: Config.root('Pages'),
-        media: Config.media()
-      }
-    })
-  },
-  preview({entry}) {
-    switch (entry.type) {
-      case 'DemoHome':
-        return <PreviewHome entry={entry} />
-      case 'DemoRecipe':
-        return <PreviewRecipe entry={entry} />
-      default:
-        return null
-    }
-  }
+  roles: demoRoles,
+  enableDrafts: true,
+  workspaces: {demo: demoWorkspace},
+  preview: DemoPreview
 })
 
-interface PreviewLinksProps {
-  children: ReactNode
-}
-
-// The preview renders inline instead of in an iframe, so links to other demo
-// pages would leave the dashboard. Open the linked entry in the dashboard.
-function PreviewLinks({children}: PreviewLinksProps) {
-  const graph = useGraph()
-  function onClickCapture(event: MouseEvent) {
-    if (!(event.target instanceof Element)) return
-    const href = event.target.closest('a')?.getAttribute('href')
-    if (!href?.startsWith('/demo/preview')) return
-    event.preventDefault()
-    graph
-      .first({
-        select: {id: Entry.id, root: Entry.root},
-        filter: {_url: href}
-      })
-      .then(linked => {
-        if (!linked) return
-        window.location.hash = `#/entry/demo/${linked.root}/${linked.id}?view=edit`
-      })
-  }
-  return <div onClickCapture={onClickCapture}>{children}</div>
-}
-
-function PreviewHome({entry}: {entry: Entry}) {
-  const graph = useGraph()
-  const update = useDeferredValue(entry)
-  const props = use(
-    useMemo(() => {
-      return DemoHomePage.query(graph, update)
-    }, [graph, update])
-  )
-  return (
-    <PreviewLinks>
-      <DemoHomePage {...props} />
-    </PreviewLinks>
-  )
-}
-
-function PreviewRecipe({entry}: {entry: Entry}) {
-  const graph = useGraph()
-  const update = useDeferredValue(entry)
-  const props = use(
-    useMemo(() => {
-      return DemoRecipePage.query(graph, update)
-    }, [graph, update])
-  )
-  return (
-    <PreviewLinks>
-      <DemoRecipePage {...props} />
-    </PreviewLinks>
-  )
-}
-
-const notImplemented = () => {
-  throw new Error('Not implemented')
-}
-
 async function setup(exported: ExportedSource) {
-  const source = await importSource(exported)
-  const worker = new DashboardWorker(source)
-  const client: LocalConnection = {
-    previewToken: notImplemented,
-    resolve: notImplemented,
-    revisionData: notImplemented,
-    prepareUpload: notImplemented,
-    getDraft: notImplemented,
-    storeDraft: notImplemented,
-    capabilities: async () => ({users: false}),
-    enrichUser: async user => user,
-    listUsers: async () => [],
-    createUser: notImplemented,
-    updateUser: notImplemented,
-    removeUser: notImplemented,
-    getTreeIfDifferent(sha: string) {
-      return source.getTreeIfDifferent(sha)
-    },
-    getBlobs(shas: Array<string>) {
-      return source.getBlobs(shas)
-    },
-    async write(request) {
-      const tree = await source.getTree()
-      return {sha: tree.sha}
-    },
-    async mutate(mutations) {
-      const tree = await source.getTree()
-      return {sha: tree.sha}
-    },
-    async revisions() {
-      return []
-    },
-    async user() {
-      return localUser
-    }
-  }
+  const client = await DemoConnection.create(config, exported)
+  const worker = new DashboardWorker(client.source)
   const db = new WorkerDB(config, worker, client, worker)
   await worker.load('demo', config, client)
   return {config, client, db, events: worker}
@@ -160,15 +37,24 @@ interface RenderDashboardProps {
 
 function RenderDashboard({init}: RenderDashboardProps) {
   const {config, client, db, events} = use(init)
+  async function reset() {
+    await client.reset()
+    // Reload without the hash, entries created in this session are gone
+    window.location.replace(window.location.pathname + window.location.search)
+  }
   return (
-    <App
-      local
-      config={config}
-      graph={db}
-      events={events}
-      client={client}
-      views={defaultViews}
-    />
+    <>
+      <App
+        local
+        config={config}
+        graph={db}
+        events={events}
+        client={client}
+        views={defaultViews}
+        user={demoUser}
+      />
+      <DemoReset onReset={reset} />
+    </>
   )
 }
 

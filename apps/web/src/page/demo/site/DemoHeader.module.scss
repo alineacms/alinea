@@ -1,0 +1,109 @@
+.DemoHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--demo-line);
+  background: color-mix(in srgb, var(--demo-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.DemoHeader-inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'logo locales'
+    'nav nav';
+  align-items: center;
+  gap: 4px 16px;
+  max-width: var(--demo-max);
+  margin: 0 auto;
+  padding: 14px var(--demo-gutter) 0;
+
+  @container demo-site (min-width: 760px) {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'logo nav locales';
+    gap: 32px;
+    padding-block: 20px;
+  }
+}
+
+.DemoHeader-logo {
+  grid-area: logo;
+  color: var(--demo-ink);
+  font-family: var(--demo-serif);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.DemoHeader-logo-amp {
+  color: var(--demo-accent);
+  font-style: italic;
+}
+
+.DemoHeader-nav {
+  grid-area: nav;
+  display: flex;
+  gap: 22px;
+  margin: 0 calc(var(--demo-gutter) * -1);
+  padding: 10px var(--demo-gutter) 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  @container demo-site (min-width: 760px) {
+    justify-content: center;
+    gap: 32px;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.DemoHeader-nav-link {
+  flex-shrink: 0;
+  color: var(--demo-muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+
+  &:hover,
+  &.is-active {
+    color: var(--demo-ink);
+  }
+
+  &.is-active {
+    text-decoration: underline;
+    text-decoration-color: var(--demo-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
+  }
+}
+
+.DemoHeader-locales {
+  grid-area: locales;
+  display: flex;
+  gap: 2px;
+}
+
+.DemoHeader-locales-link {
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--demo-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+
+  &:hover {
+    color: var(--demo-ink);
+  }
+
+  &.is-active {
+    background: var(--demo-ink);
+    color: var(--demo-bg);
+  }
+}

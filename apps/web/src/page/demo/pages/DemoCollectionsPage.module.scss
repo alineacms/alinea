@@ -1,0 +1,13 @@
+.DemoCollectionsPage {
+  padding-bottom: clamp(64px, 10cqi, 140px);
+}
+
+.DemoCollectionsPage-grid {
+  display: grid;
+  gap: 16px;
+
+  @container demo-site (min-width: 640px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+}

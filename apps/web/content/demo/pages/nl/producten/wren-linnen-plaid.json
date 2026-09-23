@@ -1,0 +1,111 @@
+{
+  "_id": "3JjYfxETiSEJFpJd6V8X7wREiez",
+  "_type": "DemoProduct",
+  "_index": "a7",
+  "title": "Wren Linen Throw",
+  "tagline": "Stonewashed Belgisch linnen, zwaar en zacht",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wren wordt in West-Vlaanderen geweven van vlas dat een paar velden verderop groeit, en daarna stonewashed tot het vanaf de eerste dag zacht aanvoelt."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Leg hem over de zetel, vouw hem aan het voeteneind van het bed of neem hem mee naar buiten op frisse avonden. Met elke wasbeurt wordt hij mooier."
+        }
+      ]
+    }
+  ],
+  "care": "Wassen op 40 graden, zonder wasverzachter, en indien mogelijk aan de lijn laten drogen. Strijken is niet nodig.",
+  "metadata": {
+    "title": "Wren Linen Throw · Stonewashed Belgisch linnen, zwaar en zacht",
+    "description": "Wren wordt in West-Vlaanderen geweven van vlas dat een paar velden verderop groeit, en daarna stonewashed tot het vanaf de eerste dag zacht aanvoelt.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg1jjjuKIrKcaDY4Jqfj6sDb",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYftTZMRsLykjL9ZPMMERsAIc"
+    }
+  ],
+  "price": 160,
+  "leadTime": 0,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYg1wHGjKDOVJTJcAa64XMCiz",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural",
+        "nl": "Naturel",
+        "fr": "Naturel"
+      },
+      "swatch": "#cfc3ae",
+      "stock": 14,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg2LG3YOBolTZpkEPkaDEfVh",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Chalk",
+        "nl": "Krijt",
+        "fr": "Craie"
+      },
+      "swatch": "#efeae2",
+      "stock": 8,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfx66Tdt9tyPrvD3JDGCcyMC",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Clay",
+        "nl": "Klei",
+        "fr": "Argile"
+      },
+      "swatch": "#b9876a",
+      "stock": 3,
+      "surcharge": 0
+    }
+  ],
+  "material": "linen",
+  "designer": "Woven in West Flanders",
+  "dimensions": {
+    "width": 130,
+    "depth": 180,
+    "height": null,
+    "weight": 1.2
+  },
+  "related": [
+    {
+      "_id": "3JjYg2rogmJcCjryb7hNu5AmSFG",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfxcjviPGqfZ6hhunQLUSisy"
+    }
+  ]
+}

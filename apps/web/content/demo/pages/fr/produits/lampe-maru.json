@@ -1,0 +1,111 @@
+{
+  "_id": "3JjYfyz12LRO4vdvD9NV5MnQVa4",
+  "_type": "DemoProduct",
+  "_index": "a5",
+  "title": "Maru Table Lamp",
+  "tagline": "Un pied en grès et un doux abat-jour en lin",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Chaque pied Maru est tourné et émaillé par nos amis d'une petite poterie près de Courtrai : aucun n'est tout à fait identique."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "L'abat-jour en lin diffuse une lumière chaude et homogène. Elle trouve sa place sur un buffet, un bureau ou une table de chevet."
+        }
+      ]
+    }
+  ],
+  "care": "Dépoussiérer l'abat-jour avec une brosse douce et essuyer le pied avec un chiffon sec. Ampoule E27 jusqu'à 40 W, nous conseillons une LED chaude de 2700 K.",
+  "metadata": {
+    "title": "Maru Table Lamp · Un pied en grès et un doux abat-jour en lin",
+    "description": "Chaque pied Maru est tourné et émaillé par nos amis d'une petite poterie près de Courtrai : aucun n'est tout à fait identique.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "New",
+    "nl": "Nieuw",
+    "fr": "Nouveau"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg0fBSoc0n4QGCSqqm4evuiS",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfsuwrfeCbRDYF78j28rZQQH"
+    }
+  ],
+  "price": 240,
+  "leadTime": 0,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYg0nSUv2DanW1WqDunZnQPfY",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Chalk",
+        "nl": "Krijt",
+        "fr": "Craie"
+      },
+      "swatch": "#ece6dc",
+      "stock": 9,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfvjM5zH4fP1GcuaDM0qD8nL",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Sand",
+        "nl": "Zand",
+        "fr": "Sable"
+      },
+      "swatch": "#d6c4a8",
+      "stock": 4,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg0foddc59Keue2bnUTRb9Gp",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Charcoal",
+        "nl": "Houtskool",
+        "fr": "Charbon"
+      },
+      "swatch": "#3d3a37",
+      "stock": 2,
+      "surcharge": 0
+    }
+  ],
+  "material": "ceramic",
+  "designer": "Studio Aarde, Kortrijk",
+  "dimensions": {
+    "width": 28,
+    "depth": 28,
+    "height": 42,
+    "weight": 3
+  },
+  "related": [
+    {
+      "_id": "3JjYg2UrlPcnrjGiuMptEr2V5UP",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfyZoRnF3wff9qLrMhgoeZGu"
+    }
+  ]
+}

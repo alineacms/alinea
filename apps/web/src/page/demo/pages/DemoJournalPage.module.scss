@@ -1,0 +1,14 @@
+.DemoJournalPage {
+  padding-bottom: clamp(64px, 10cqi, 140px);
+}
+
+.DemoJournalPage-grid {
+  display: grid;
+  gap: 40px;
+  margin-top: clamp(48px, 7cqi, 88px);
+
+  @container demo-site (min-width: 760px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+  }
+}

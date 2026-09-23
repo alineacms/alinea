@@ -1,0 +1,175 @@
+{
+  "_id": "3JjYg2xcgCGTqmAoAf36mA6hWqR",
+  "_type": "DemoHome",
+  "_index": "a0",
+  "_root": "pages",
+  "title": "Home",
+  "blocks": [
+    {
+      "_id": "3JjYfwo5xtEbNELeEiAxI25UvET",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Autumn 2026 collection",
+      "layout": "overlay",
+      "title": "Furniture made slowly,\nto live with for decades",
+      "text": "Solid oak, walnut and Belgian linen, shaped by hand in our Ghent workshop. Pieces that grow better with every year of use.",
+      "image": {
+        "_id": "3JjYg1I1WxLldlDnaUKfh1vjHO6",
+        "_type": "image",
+        "_entry": "3JjYfnfrYyPLNqfGmo8Xulwojwy"
+      },
+      "credit": "Photo by Spacejoy on Unsplash",
+      "link": {
+        "_id": "3JjYg1c7ghBOPkGMof2ACXQXsfK",
+        "_type": "entry",
+        "_entry": "3JjYfwD09WF5vKYfXObPiZGMUOI",
+        "label": "Shop the collection"
+      }
+    },
+    {
+      "_id": "3JjYg1oUznxL6BMavGgiPnqsv3o",
+      "_index": "a1",
+      "_type": "DemoFeaturedProductsBlock",
+      "title": "New in the workshop",
+      "link": {
+        "_id": "3JjYfx9eOAgQXPz6fcc3uofmQOd",
+        "_type": "entry",
+        "_entry": "3JjYfwD09WF5vKYfXObPiZGMUOI",
+        "label": "View all pieces"
+      },
+      "products": [
+        {
+          "_id": "3JjYfxHASNbuIjYt4863Y4EYV1c",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "3JjYg1RR8ghz3NENJTrtX2QiHgP"
+        },
+        {
+          "_id": "3JjYfwUChXoPZzBK0sTfrEjWb5f",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "3JjYfzPTVtmPWs2O84iAvy3gHyO"
+        },
+        {
+          "_id": "3JjYfyk4GiZhPJ8sU7IwkNqNZhv",
+          "_index": "a2",
+          "_type": "entry",
+          "_entry": "3JjYfyz12LRO4vdvD9NV5MnQVa4"
+        },
+        {
+          "_id": "3JjYg0LrZltrqCrsFfUdytr23u0",
+          "_index": "a3",
+          "_type": "entry",
+          "_entry": "3JjYfyD46Nvf6MOAzgsUIcVYJWw"
+        }
+      ]
+    },
+    {
+      "_id": "3JjYfvzcsniyDtOF4Hi7mQF7xdq",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Our workshop",
+      "imagePosition": "left",
+      "title": "Every joint cut, fitted and oiled by hand",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "We are a team of seven makers in a former textile mill in Ghent. We work with wood from forests that are managed to last, and we build each piece to order, so nothing waits in a warehouse."
+            }
+          ]
+        },
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "It takes longer. We think it's worth it."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfztZZpmE7Z1Lf9IhtQFldV4",
+        "_type": "image",
+        "_entry": "3JjYfsyCks2BAi4ccPyKgtCGGRb"
+      },
+      "credit": "Photo by Craft Kitties on Unsplash",
+      "link": {
+        "_id": "3JjYfxmsM2q3Ts9cTFATgc052pd",
+        "_type": "entry",
+        "_entry": "3JjYfy8P1cHTxmyI3jgaMrUQhMn",
+        "label": "Meet the makers"
+      }
+    },
+    {
+      "_id": "3JjYg2HD4k9YCkTuj7E4yzzuFdt",
+      "_index": "a3",
+      "_type": "DemoCollectionGridBlock",
+      "title": "Shop by room",
+      "text": "Pieces designed to work together, from the first coffee of the day to the last chapter at night.",
+      "collections": [
+        {
+          "_id": "3JjYg2F6eCNvpl9LH9U3ITo3h3W",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "3JjYg0OXixCbaQ50E6n7PRCP0Vq"
+        },
+        {
+          "_id": "3JjYfzOmC26ReVBSk5zA8A5k41G",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "3JjYfwkDH6zRr6exXS99ijOXLx8"
+        },
+        {
+          "_id": "3JjYfzjOQKZiufDRaWUBRgWvIzl",
+          "_index": "a2",
+          "_type": "entry",
+          "_entry": "3JjYfvpACmkJtArSZFCJX4YPI5j"
+        }
+      ]
+    },
+    {
+      "_id": "3JjYfyG89GQstb332CuPhY0E52G",
+      "_index": "a4",
+      "_type": "DemoQuoteBlock",
+      "quote": "The Ferris table has hosted every birthday, homework session and late dinner in our house for three years. It only looks better for it.",
+      "author": "Sofie, Antwerp",
+      "source": "Customer since 2023"
+    },
+    {
+      "_id": "3JjYg2bDAAH6QyQCDidswjkjAZ1",
+      "_index": "a5",
+      "_type": "DemoJournalTeaserBlock",
+      "title": "From the journal",
+      "count": 3,
+      "link": {
+        "_id": "3JjYg2zpjbbwlOaAr0xqCKRnruy",
+        "_type": "entry",
+        "_entry": "3JjYfyqstkl0nCFPN9GU7AEK4AS",
+        "label": "Read the journal"
+      }
+    },
+    {
+      "_id": "3JjYfzCsdpM61bpgYFa5wK83wcz",
+      "_index": "a6",
+      "_type": "DemoNewsletterBlock",
+      "title": "Letters from the workshop",
+      "text": "A short note every season: new pieces, workshop open days and the occasional story about wood.",
+      "buttonLabel": "Subscribe",
+      "note": "No spam. Unsubscribe at any time."
+    }
+  ],
+  "metadata": {
+    "title": "Handmade oak furniture from Ghent",
+    "description": "Solid wood furniture, lighting and linen, made to order in our Ghent workshop and built to be handed down.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

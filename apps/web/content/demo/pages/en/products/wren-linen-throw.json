@@ -1,0 +1,111 @@
+{
+  "_id": "3JjYfxETiSEJFpJd6V8X7wREiez",
+  "_type": "DemoProduct",
+  "_index": "a7",
+  "title": "Wren Linen Throw",
+  "tagline": "Stonewashed Belgian linen, heavy and soft",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wren is woven in West Flanders from flax grown a few fields away, then stonewashed until it's soft from the very first day."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Throw it over a sofa, fold it at the foot of the bed or take it outside on cool evenings. It only gets better with every wash."
+        }
+      ]
+    }
+  ],
+  "care": "Machine wash at 40 degrees, skip the fabric softener and line dry where you can. No need to iron.",
+  "metadata": {
+    "title": "Wren Linen Throw · Stonewashed Belgian linen, heavy and soft",
+    "description": "Wren is woven in West Flanders from flax grown a few fields away, then stonewashed until it's soft from the very first day.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg1jjjuKIrKcaDY4Jqfj6sDb",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYftTZMRsLykjL9ZPMMERsAIc"
+    }
+  ],
+  "price": 160,
+  "leadTime": 0,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYg1wHGjKDOVJTJcAa64XMCiz",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural",
+        "nl": "Naturel",
+        "fr": "Naturel"
+      },
+      "swatch": "#cfc3ae",
+      "stock": 14,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg2LG3YOBolTZpkEPkaDEfVh",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Chalk",
+        "nl": "Krijt",
+        "fr": "Craie"
+      },
+      "swatch": "#efeae2",
+      "stock": 8,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfx66Tdt9tyPrvD3JDGCcyMC",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Clay",
+        "nl": "Klei",
+        "fr": "Argile"
+      },
+      "swatch": "#b9876a",
+      "stock": 3,
+      "surcharge": 0
+    }
+  ],
+  "material": "linen",
+  "designer": "Woven in West Flanders",
+  "dimensions": {
+    "width": 130,
+    "depth": 180,
+    "height": null,
+    "weight": 1.2
+  },
+  "related": [
+    {
+      "_id": "3JjYg2rogmJcCjryb7hNu5AmSFG",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfxcjviPGqfZ6hhunQLUSisy"
+    }
+  ]
+}

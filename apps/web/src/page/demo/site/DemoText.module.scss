@@ -1,0 +1,64 @@
+.DemoText {
+  font-size: 17px;
+  line-height: 1.7;
+
+  @container demo-site (max-width: 480px) {
+    font-size: 16px;
+  }
+
+  &.is-large {
+    font-size: clamp(17px, 1.8cqi, 19px);
+  }
+}
+
+.DemoText-p {
+  margin: 0 0 1.1em;
+}
+
+.DemoText-h2 {
+  margin: 1.8em 0 0.5em;
+  font-family: var(--demo-serif);
+  font-size: clamp(28px, 3.6cqi, 36px);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.DemoText-h3 {
+  margin: 1.6em 0 0.4em;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.DemoText-list {
+  margin: 0 0 1.1em;
+  padding-left: 1.2em;
+}
+
+.DemoText-item {
+  margin: 0.2em 0;
+}
+
+.DemoText-link {
+  color: inherit;
+  text-decoration-color: var(--demo-accent);
+  text-underline-offset: 3px;
+}
+
+.DemoText-strong {
+  font-weight: 600;
+}
+
+.DemoText-figure {
+  margin: 2em 0;
+}
+
+.DemoText-figure-image {
+  border-radius: var(--demo-radius);
+}
+
+.DemoText-figure-caption {
+  margin-top: 10px;
+  color: var(--demo-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}

@@ -1,0 +1,91 @@
+{
+  "_id": "3JjYfyD46Nvf6MOAzgsUIcVYJWw",
+  "_type": "DemoProduct",
+  "_index": "a4",
+  "title": "Linden Sideboard",
+  "tagline": "Fluted oak doors that catch the light",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Linden's doors are fluted by hand on the router table, one groove at a time. As the light moves through the room, the surface shifts from soft to sharp."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Behind the doors are adjustable shelves and a cable opening at the back, so it works as well for records and a turntable as it does for plates and glasses."
+        }
+      ]
+    }
+  ],
+  "care": "Wipe with a soft, damp cloth and dry straight away. Re-oil once or twice a year with the care kit included.",
+  "metadata": {
+    "title": "Linden Sideboard · Fluted oak doors that catch the light",
+    "description": "Linden's doors are fluted by hand on the router table, one groove at a time. As the light moves through the room, the surface shifts from soft to sharp.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "Made to order",
+    "nl": "Op bestelling",
+    "fr": "Sur commande"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg0anrrkHU50dBtFyGser5Kn",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfprQ8y9noCkgL3QMj35Lw42"
+    }
+  ],
+  "price": 2890,
+  "leadTime": 12,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfxUBiyi2o0xgjNjyNcwaiRC",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oil",
+        "nl": "Naturel geolied",
+        "fr": "Huile naturelle"
+      },
+      "swatch": "#caa377",
+      "stock": 1,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfxXhsOUySLCAXL6BKBVLQCR",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Smoked oak",
+        "nl": "Gerookt eiken",
+        "fr": "Chêne fumé"
+      },
+      "swatch": "#6a4a33",
+      "stock": 0,
+      "surcharge": 300
+    }
+  ],
+  "material": "oak",
+  "designer": "Tom Verbeke",
+  "dimensions": {
+    "width": 180,
+    "depth": 45,
+    "height": 75,
+    "weight": 72
+  },
+  "related": []
+}

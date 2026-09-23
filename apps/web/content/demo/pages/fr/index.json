@@ -1,0 +1,175 @@
+{
+  "_id": "3JjYg2xcgCGTqmAoAf36mA6hWqR",
+  "_type": "DemoHome",
+  "_index": "a0",
+  "_root": "pages",
+  "title": "Accueil",
+  "blocks": [
+    {
+      "_id": "3JjYg2QdtbJ0nY3PxgqPQJLLlYt",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Collection automne 2026",
+      "layout": "overlay",
+      "title": "Des meubles faits lentement,\npour vivre avec eux longtemps",
+      "text": "Chêne massif, noyer et lin belge, façonnés à la main dans notre atelier de Gand. Des pièces qui s'embellissent à chaque année d'usage.",
+      "image": {
+        "_id": "3JjYg10ygUNNkgGEx2ck1NIQeFa",
+        "_type": "image",
+        "_entry": "3JjYfnfrYyPLNqfGmo8Xulwojwy"
+      },
+      "credit": "Photo by Spacejoy on Unsplash",
+      "link": {
+        "_id": "3JjYfxcSci7Adx8M0rk2GSP99aJ",
+        "_type": "entry",
+        "_entry": "3JjYfwD09WF5vKYfXObPiZGMUOI",
+        "label": "Découvrir la collection"
+      }
+    },
+    {
+      "_id": "3JjYg1BP6Xt9L2yKT5dUshobpzk",
+      "_index": "a1",
+      "_type": "DemoFeaturedProductsBlock",
+      "title": "Nouveautés de l'atelier",
+      "link": {
+        "_id": "3JjYg2kTZpghm41AtZK61z2dLJJ",
+        "_type": "entry",
+        "_entry": "3JjYfwD09WF5vKYfXObPiZGMUOI",
+        "label": "Voir toutes les pièces"
+      },
+      "products": [
+        {
+          "_id": "3JjYfvqRVuiHEqWH1F886T7PT0G",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "3JjYg1RR8ghz3NENJTrtX2QiHgP"
+        },
+        {
+          "_id": "3JjYg2O5Lk7YbvDTrKnFhtcJCQ9",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "3JjYfzPTVtmPWs2O84iAvy3gHyO"
+        },
+        {
+          "_id": "3JjYfwzy3ZAM70ntp9zCk6GduDD",
+          "_index": "a2",
+          "_type": "entry",
+          "_entry": "3JjYfyz12LRO4vdvD9NV5MnQVa4"
+        },
+        {
+          "_id": "3JjYfyKQRgyjiqsGNZDCwWh70CK",
+          "_index": "a3",
+          "_type": "entry",
+          "_entry": "3JjYfyD46Nvf6MOAzgsUIcVYJWw"
+        }
+      ]
+    },
+    {
+      "_id": "3JjYg2J6wkpRdKllJEKKXpBJIio",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Notre atelier",
+      "imagePosition": "left",
+      "title": "Chaque assemblage taillé, ajusté et huilé à la main",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Nous sommes une équipe de sept artisans installés dans une ancienne filature de Gand. Nous travaillons un bois issu de forêts gérées durablement et fabriquons chaque pièce sur commande : rien n'attend dans un entrepôt."
+            }
+          ]
+        },
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Cela prend plus de temps. Nous pensons que cela en vaut la peine."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfytHitV8pFmKDm6V8XjrXKu",
+        "_type": "image",
+        "_entry": "3JjYfsyCks2BAi4ccPyKgtCGGRb"
+      },
+      "credit": "Photo by Craft Kitties on Unsplash",
+      "link": {
+        "_id": "3JjYg0DAwkZjHfXbGSGyz4sNBZ4",
+        "_type": "entry",
+        "_entry": "3JjYfy8P1cHTxmyI3jgaMrUQhMn",
+        "label": "Rencontrer les artisans"
+      }
+    },
+    {
+      "_id": "3JjYfxFQu9cTGP3RArKYwDojtd3",
+      "_index": "a3",
+      "_type": "DemoCollectionGridBlock",
+      "title": "Par pièce",
+      "text": "Des meubles pensés pour aller ensemble, du premier café du matin au dernier chapitre du soir.",
+      "collections": [
+        {
+          "_id": "3JjYfx3wwgowWOhHTTX73cKZYZd",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "3JjYg0OXixCbaQ50E6n7PRCP0Vq"
+        },
+        {
+          "_id": "3JjYg1hTrVEK8IdmfsTC9YgvNnU",
+          "_index": "a1",
+          "_type": "entry",
+          "_entry": "3JjYfwkDH6zRr6exXS99ijOXLx8"
+        },
+        {
+          "_id": "3JjYfywqXBXIFkCsqzi5wr1BV2L",
+          "_index": "a2",
+          "_type": "entry",
+          "_entry": "3JjYfvpACmkJtArSZFCJX4YPI5j"
+        }
+      ]
+    },
+    {
+      "_id": "3JjYg0jdsg5jUE3fQXHaiYJrpFI",
+      "_index": "a4",
+      "_type": "DemoQuoteBlock",
+      "quote": "La table Ferris a accueilli chaque anniversaire, chaque séance de devoirs et chaque dîner tardif chez nous depuis trois ans. Elle n'en est que plus belle.",
+      "author": "Sofie, Anvers",
+      "source": "Cliente depuis 2023"
+    },
+    {
+      "_id": "3JjYfwfTQPfSd8hBR7r91ThgpBH",
+      "_index": "a5",
+      "_type": "DemoJournalTeaserBlock",
+      "title": "Extraits du journal",
+      "count": 3,
+      "link": {
+        "_id": "3JjYg0tGWsJi4ZI2zy9b16aTEGv",
+        "_type": "entry",
+        "_entry": "3JjYfyqstkl0nCFPN9GU7AEK4AS",
+        "label": "Lire le journal"
+      }
+    },
+    {
+      "_id": "3JjYfzR5CVxjwWMRDPs6ZZtIcdS",
+      "_index": "a6",
+      "_type": "DemoNewsletterBlock",
+      "title": "Lettres de l'atelier",
+      "text": "Une courte lettre chaque saison : nouvelles pièces, portes ouvertes à l'atelier et, de temps en temps, une histoire de bois.",
+      "buttonLabel": "S'inscrire",
+      "note": "Pas de spam. Désinscription à tout moment."
+    }
+  ],
+  "metadata": {
+    "title": "Mobilier en chêne fait main à Gand",
+    "description": "Mobilier en bois massif, luminaires et linge de maison, fabriqués sur commande dans notre atelier de Gand.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

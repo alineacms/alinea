@@ -1,0 +1,119 @@
+{
+  "_id": "3JjYfyZoRnF3wff9qLrMhgoeZGu",
+  "_type": "DemoArticle",
+  "_index": "a2",
+  "title": "A slower living room",
+  "intro": "Fewer things, better light and a chair you actually want to sit in. Five ideas for a room that helps you slow down.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The living room has become the place where we work, eat, scroll and occasionally rest. It is worth asking what you want it to be at eight in the evening, and arranging it around that."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Start with the light"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Overhead lights flatten a room. Two or three lamps at different heights, one near where you read and one on a sideboard, make even a small space feel warm and deep."
+        }
+      ]
+    },
+    {
+      "_type": "DemoArticleImage",
+      "_id": "3JjYfxi6Yb0hvrjQ0Bd2yCaINrn",
+      "image": {
+        "_id": "3JjYfwGBqMElFYywkfD8zUNdGqo",
+        "_type": "image",
+        "_entry": "3JjYfsuwrfeCbRDYF78j28rZQQH"
+      },
+      "caption": "A Maru lamp on a low shelf, the kind of light you read by. Photo by Karolina Grabowska on Unsplash."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Give the best spot to a chair"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Find the corner that catches the late afternoon sun and put a comfortable chair in it, with somewhere to set down a cup. It is remarkable how often a room gets used once it has one place that invites you to sit."
+        }
+      ]
+    },
+    {
+      "_type": "DemoProductCallout",
+      "_id": "3JjYfzYbKo5RgDN6oHQ6Kak79bT",
+      "product": {
+        "_id": "3JjYg2GzdXVZ2t2g8tksvcwZ4BR",
+        "_type": "entry",
+        "_entry": "3JjYfzPTVtmPWs2O84iAvy3gHyO"
+      },
+      "note": "Hollis has a cane back that lets light through, so it never feels heavy in a sunny corner."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Keep what you love within reach"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Open shelves with a few books, a bowl and something you made or found yourself say more about the people who live there than any styled vignette."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "A slower living room",
+    "description": "Fewer things, better light and a chair you actually want to sit in. Five ideas for a room that helps you slow down.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "publishDate": "2026-05-04",
+  "category": "homes",
+  "author": {
+    "_id": "3JjYfyGLvzpuoe6NxePeuqfKcNK",
+    "_type": "entry",
+    "_entry": "3JjYfw4jxSLAyOGzbIzDbfrNHoT"
+  },
+  "readingTime": 5,
+  "cover": {
+    "_id": "3JjYfyevOmJrxaviQCucKknwKcz",
+    "_type": "image",
+    "_entry": "3JjYfp4WjZzQ5kqDgIC15WfK1xR"
+  },
+  "coverCredit": "Photo by Bilal Mansuri on Unsplash"
+}

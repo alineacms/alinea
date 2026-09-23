@@ -1,0 +1,30 @@
+.DemoPageIntro {
+  padding-top: clamp(40px, 8cqi, 104px);
+  padding-bottom: clamp(32px, 5cqi, 64px);
+}
+
+.DemoPageIntro-eyebrow {
+  margin: 0 0 14px;
+  color: var(--demo-accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.DemoPageIntro-title {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(48px, 8cqi, 104px);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.DemoPageIntro-intro {
+  max-width: 36em;
+  margin: 20px 0 0;
+  color: var(--demo-muted);
+  font-size: clamp(17px, 1.8cqi, 20px);
+  line-height: 1.5;
+}

@@ -1,0 +1,104 @@
+{
+  "_id": "3JjYg0ezkcMXzEKuIo6leCH3Crn",
+  "_type": "DemoProduct",
+  "_index": "a1",
+  "title": "Arlo Dining Chair",
+  "tagline": "A light, sturdy chair for everyday meals",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Arlo's seat and back are shaped from thick oak veneer, pressed over a mould we made in the workshop. The result is a chair that weighs just five kilos and takes years of daily use in its stride."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The gently curved back supports you through a long dinner, and the chairs stack two high when you need the floor space."
+        }
+      ]
+    }
+  ],
+  "care": "Wipe with a soft, damp cloth and dry straight away. Re-oil once or twice a year with the care kit included.",
+  "metadata": {
+    "title": "Arlo Dining Chair · A light, sturdy chair for everyday meals",
+    "description": "Arlo's seat and back are shaped from thick oak veneer, pressed over a mould we made in the workshop. The result is a chair that weighs just five kilos and ",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg2Lbw4NcdDzyvva6wigheNM",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfsX65WvXQnkwJOVR2RxDPxD"
+    }
+  ],
+  "price": 420,
+  "leadTime": 6,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYg38yGzdOwn22gu9UH25nAB4",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oak",
+        "nl": "Naturel eiken",
+        "fr": "Chêne naturel"
+      },
+      "swatch": "#d8bb8f",
+      "stock": 12,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg0AoAYFvRZ0BOxHMqiEoOqa",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Black stained",
+        "nl": "Zwart gebeitst",
+        "fr": "Teinté noir"
+      },
+      "swatch": "#2b2622",
+      "stock": 5,
+      "surcharge": 30
+    },
+    {
+      "_id": "3JjYg1xL8SNe2bEPaYADVBr9eK8",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Walnut",
+        "nl": "Notelaar",
+        "fr": "Noyer"
+      },
+      "swatch": "#5c3b28",
+      "stock": 3,
+      "surcharge": 60
+    }
+  ],
+  "material": "oak",
+  "designer": "Maya Janssens",
+  "dimensions": {
+    "width": 48,
+    "depth": 52,
+    "height": 79,
+    "weight": 5
+  },
+  "related": []
+}

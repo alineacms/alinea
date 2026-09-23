@@ -1,0 +1,91 @@
+{
+  "_id": "3JjYfyD46Nvf6MOAzgsUIcVYJWw",
+  "_type": "DemoProduct",
+  "_index": "a4",
+  "title": "Linden Sideboard",
+  "tagline": "Des portes cannelées en chêne qui captent la lumière",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Les portes de Linden sont cannelées à la main sur la toupie, rainure après rainure. Au fil de la journée, la lumière fait passer la surface du doux au graphique."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Derrière les portes se cachent des étagères réglables et un passe-câble à l'arrière : il accueille aussi bien des vinyles et une platine que des assiettes et des verres."
+        }
+      ]
+    }
+  ],
+  "care": "Essuyer avec un chiffon doux et humide, puis sécher aussitôt. Huiler à nouveau une à deux fois par an avec le kit d'entretien fourni.",
+  "metadata": {
+    "title": "Linden Sideboard · Des portes cannelées en chêne qui captent la lumière",
+    "description": "Les portes de Linden sont cannelées à la main sur la toupie, rainure après rainure. Au fil de la journée, la lumière fait passer la surface du doux au grap",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "Made to order",
+    "nl": "Op bestelling",
+    "fr": "Sur commande"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg0anrrkHU50dBtFyGser5Kn",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfprQ8y9noCkgL3QMj35Lw42"
+    }
+  ],
+  "price": 2890,
+  "leadTime": 12,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfxUBiyi2o0xgjNjyNcwaiRC",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oil",
+        "nl": "Naturel geolied",
+        "fr": "Huile naturelle"
+      },
+      "swatch": "#caa377",
+      "stock": 1,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfxXhsOUySLCAXL6BKBVLQCR",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Smoked oak",
+        "nl": "Gerookt eiken",
+        "fr": "Chêne fumé"
+      },
+      "swatch": "#6a4a33",
+      "stock": 0,
+      "surcharge": 300
+    }
+  ],
+  "material": "oak",
+  "designer": "Tom Verbeke",
+  "dimensions": {
+    "width": 180,
+    "depth": 45,
+    "height": 75,
+    "weight": 72
+  },
+  "related": []
+}

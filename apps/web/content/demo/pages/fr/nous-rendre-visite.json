@@ -1,0 +1,106 @@
+{
+  "_id": "3JjYg1vm7IxADgaSnhTphSVvUOh",
+  "_type": "DemoPage",
+  "_index": "a5",
+  "_root": "pages",
+  "title": "Nous rendre visite",
+  "intro": "Venez tout essayer. Nos deux showrooms sont petits, calmes et remplis de pièces que vous pouvez toucher.",
+  "blocks": [
+    {
+      "_id": "3JjYg0KRX2uZTGpaX082JZduC43",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Showrooms",
+      "layout": "overlay",
+      "title": "Venez tout essayer",
+      "text": "Asseyez-vous, ouvrez les tiroirs, touchez les finitions. Nous parlons volontiers de votre intérieur, sans rendez-vous.",
+      "image": {
+        "_id": "3JjYg2CTePD8mIndr8zHGGGwipT",
+        "_type": "image",
+        "_entry": "3JjYfrNXujFJYyEt7tPxTfQ38nm"
+      },
+      "credit": "Photo by Zoshua Colah on Unsplash"
+    },
+    {
+      "_id": "3JjYg1DtsNpKpNA4eVjdM6MNgP2",
+      "_index": "a1",
+      "_type": "DemoStoresBlock",
+      "title": "Nos showrooms",
+      "stores": [
+        {
+          "_id": "3JjYfwdiRXKP4qF4L8lUpQF782A",
+          "_index": "a0",
+          "_type": "Store",
+          "name": "Atelier & showroom de Gand",
+          "address": "Oude Beestenmarkt 12\n9000 Gand",
+          "hours": "mer – ven 10h00 – 18h00\nsam 10h00 – 17h00\ndim – mar fermé",
+          "note": "Visite de l'atelier chaque premier samedi du mois.",
+          "phone": "+32 9 123 45 67",
+          "image": {
+            "_id": "3JjYg2kp4Ouk61ymSmkLjmzQhG6",
+            "_type": "image",
+            "_entry": "3JjYfpug4UkVlWrERfC74yQLSob"
+          }
+        },
+        {
+          "_id": "3JjYg0Xi70LbjxqYMae15tTQk37",
+          "_index": "a1",
+          "_type": "Store",
+          "name": "Showroom de Bruxelles",
+          "address": "Rue de Flandre 72\n1000 Bruxelles",
+          "hours": "jeu – sam 11h00 – 18h00\ndim 12h00 – 17h00",
+          "note": "À cinq minutes à pied du métro Sainte-Catherine.",
+          "phone": "+32 2 765 43 21",
+          "image": {
+            "_id": "3JjYfzon6Q7EqOaY2Huo5F5MHw6",
+            "_type": "image",
+            "_entry": "3JjYfx9GZj8F1Fsn0Fxl76bAEqP"
+          }
+        }
+      ]
+    },
+    {
+      "_id": "3JjYg2GLx5ZLDv4dlUjMvASmKjy",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Sur rendez-vous",
+      "imagePosition": "right",
+      "title": "Vous aménagez une pièce ?",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Réservez une heure avec l'un de nos designers. Apportez un plan et quelques photos : nous vous aiderons à choisir les pièces, les finitions et les dimensions qui conviennent."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYg1GwCbHRDnQnNWZdZXobhIi",
+        "_type": "image",
+        "_entry": "3JjYfp4WjZzQ5kqDgIC15WfK1xR"
+      },
+      "credit": "Photo by Bilal Mansuri on Unsplash",
+      "link": {
+        "_id": "3JjYfwOOg60UQ4O8oxECPSPhmZD",
+        "_type": "url",
+        "_url": "mailto:studio@oakandloom.example",
+        "_title": "",
+        "_target": "_self",
+        "label": "Réserver une visite"
+      }
+    }
+  ],
+  "metadata": {
+    "title": "Nous rendre visite",
+    "description": "Venez tout essayer. Nos deux showrooms sont petits, calmes et remplis de pièces que vous pouvez toucher.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

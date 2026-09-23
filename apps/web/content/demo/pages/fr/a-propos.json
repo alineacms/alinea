@@ -1,0 +1,108 @@
+{
+  "_id": "3JjYfy8P1cHTxmyI3jgaMrUQhMn",
+  "_type": "DemoPage",
+  "_index": "a4",
+  "_root": "pages",
+  "title": "À propos",
+  "intro": "Un petit studio de mobilier à Gand, qui crée des pièces pour des maisons où l'on vit vraiment.",
+  "blocks": [
+    {
+      "_id": "3JjYg02TiMmhRjKbrwrOOEzRbx0",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Depuis 2014",
+      "layout": "split",
+      "title": "Nous prenons le temps de bien faire",
+      "text": "Ce qui a commencé avec un seul établi dans un garage est devenu un atelier de sept artisans. L'approche n'a pas changé : du bon bois, des assemblages honnêtes, aucun raccourci.",
+      "image": {
+        "_id": "3JjYfykbk8JlVl5sXU8Dc7SqLTq",
+        "_type": "image",
+        "_entry": "3JjYfr7FCvc5P9ZTCmOgHBwJZaG"
+      },
+      "credit": "Photo by Adam Patterson on Unsplash"
+    },
+    {
+      "_id": "3JjYfz8BPy6S2UWnDNGXcxI7cUq",
+      "_index": "a1",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Matériaux",
+      "imagePosition": "right",
+      "title": "Un bois dont nous connaissons l’histoire",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Notre chêne et notre noyer proviennent de scieries des Ardennes et du nord de la France avec lesquelles nous travaillons depuis des années. Nous achetons des planches entières, les laissons reposer pendant des mois et utilisons les chutes pour des tabourets et de petites pièces."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfxhf1t4p8r3x4bHVZuTScE4",
+        "_type": "image",
+        "_entry": "3JjYfwTpBKMhQrRvsv5zqeyxE5n"
+      },
+      "credit": "Photo by The Cleveland Museum of Art on Unsplash"
+    },
+    {
+      "_id": "3JjYg0YcRD8UyHp57TdZxX6O7tG",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Savoir-faire",
+      "imagePosition": "left",
+      "title": "Fini à la main, réparé à vie",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Chaque surface est poncée et huilée à la main : trois couches, avec une journée de repos entre chacune. Si un meuble a un jour besoin d’attention, rapportez-le. Nous réparons tout ce que nous fabriquons, aussi longtemps que nous existerons."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfwpuA0Mz6Die3g2Smi7eEtJ",
+        "_type": "image",
+        "_entry": "3JjYfp3rBdUkjtJoolX62xspWQK"
+      },
+      "credit": "Photo by Dominik Scythe on Unsplash",
+      "link": {
+        "_id": "3JjYfzQPsjA0Dx4PAK17Cy7NaOj",
+        "_type": "entry",
+        "_entry": "3JjYfyqstkl0nCFPN9GU7AEK4AS",
+        "label": "Plus d’histoires dans le journal"
+      }
+    },
+    {
+      "_id": "3JjYg158Jli1Onl6OBiYpL349Jc",
+      "_index": "a3",
+      "_type": "DemoQuoteBlock",
+      "quote": "Nous préférons fabriquer cent tables qui durent cinquante ans plutôt que mille qui en durent cinq.",
+      "author": "Maya Janssens",
+      "source": "Cofondatrice"
+    },
+    {
+      "_id": "3JjYfzhiGewtngLjHt2RC1OayHE",
+      "_index": "a4",
+      "_type": "DemoNewsletterBlock",
+      "title": "Lettres de l'atelier",
+      "text": "Une courte lettre chaque saison : nouvelles pièces, portes ouvertes à l'atelier et, de temps en temps, une histoire de bois.",
+      "buttonLabel": "S'inscrire",
+      "note": "Pas de spam. Désinscription à tout moment."
+    }
+  ],
+  "metadata": {
+    "title": "À propos",
+    "description": "Un petit studio de mobilier à Gand, qui crée des pièces pour des maisons où l'on vit vraiment.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

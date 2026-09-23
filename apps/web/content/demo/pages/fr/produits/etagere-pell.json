@@ -1,0 +1,98 @@
+{
+  "_id": "3JjYfvsYj0CE2WT29KwtYkIOFxg",
+  "_type": "DemoProduct",
+  "_index": "a8",
+  "title": "Pell Shelving",
+  "tagline": "Une bibliothèque ouverte en chêne qui évolue avec vous",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pell se compose de montants et d'étagères en chêne massif qui s'emboîtent sans la moindre vis. Commencez avec un module et ajoutez-en d'autres à mesure que votre collection de livres, de vinyles et de céramiques grandit."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Les étagères sont assez épaisses pour porter les plus lourds livres d'art sans fléchir."
+        }
+      ]
+    }
+  ],
+  "care": "Essuyer avec un chiffon doux et humide, puis sécher aussitôt. Huiler à nouveau une à deux fois par an avec le kit d'entretien fourni.",
+  "metadata": {
+    "title": "Pell Shelving · Une bibliothèque ouverte en chêne qui évolue avec vous",
+    "description": "Pell se compose de montants et d'étagères en chêne massif qui s'emboîtent sans la moindre vis. Commencez avec un module et ajoutez-en d'autres à mesure que",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfy0y3UMzL3RfCsboxOjB7yO",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYg3FuuheiHkpH5ixlBiSTEQh"
+    }
+  ],
+  "price": 1640,
+  "leadTime": 8,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfyjSs0RALRnd4PSVuqHO5eK",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oil",
+        "nl": "Naturel geolied",
+        "fr": "Huile naturelle"
+      },
+      "swatch": "#d1ae83",
+      "stock": 2,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfvg2kTAe5r2kOu8Tfu8EqGU",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "White oil",
+        "nl": "Wit geolied",
+        "fr": "Huile blanche"
+      },
+      "swatch": "#e6d8c3",
+      "stock": 0,
+      "surcharge": 0
+    }
+  ],
+  "material": "oak",
+  "designer": "Tom Verbeke",
+  "dimensions": {
+    "width": 120,
+    "depth": 35,
+    "height": 190,
+    "weight": 48
+  },
+  "related": [
+    {
+      "_id": "3JjYg0KwDiQM0mTiksmBKioqmB0",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfyZoRnF3wff9qLrMhgoeZGu"
+    }
+  ]
+}

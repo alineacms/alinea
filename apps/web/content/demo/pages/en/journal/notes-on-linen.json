@@ -1,0 +1,100 @@
+{
+  "_id": "3JjYfxcjviPGqfZ6hhunQLUSisy",
+  "_type": "DemoArticle",
+  "_index": "a1",
+  "title": "Notes on linen",
+  "intro": "Why we work with flax grown and woven a few kilometres from the workshop, and how to care for it so it lasts.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Flanders has grown flax for centuries. The cool, damp summers suit it, and the river Leie was once so busy with retting flax that people called it the golden river. A handful of weavers still work in the region, and our throws and upholstery come from two of them."
+        }
+      ]
+    },
+    {
+      "_type": "DemoArticleImage",
+      "_id": "3JjYfwWo8nWcjOl3mt9mdjb4YOu",
+      "image": {
+        "_id": "3JjYfxZzhogb7TXFVUn9vbfo6sl",
+        "_type": "image",
+        "_entry": "3JjYftTZMRsLykjL9ZPMMERsAIc"
+      },
+      "caption": "Stonewashed throws waiting to be packed. Photo by Maite Oñate on Unsplash."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Softer with every wash"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Linen fibres are long and strong, which is why a good linen throw can easily outlive the sofa it is draped over. New linen can feel crisp, so we stonewash ours before it leaves the mill. After that, every wash makes it a little softer."
+        }
+      ]
+    },
+    {
+      "_type": "DemoProductCallout",
+      "_id": "3JjYfzBlNXN09ELSfuPpCb7zEmT",
+      "product": {
+        "_id": "3JjYfxapVLsP6gaDiG88fuAPWNL",
+        "_type": "entry",
+        "_entry": "3JjYfxETiSEJFpJd6V8X7wREiez"
+      },
+      "note": "Wren is woven in West Flanders and stonewashed until it feels soft from the very first day."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "How to care for it"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wash at forty degrees with a mild detergent, skip the fabric softener and let it dry on the line if you can. Creases are part of the charm, so there is no need to iron."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "Notes on linen",
+    "description": "Why we work with flax grown and woven a few kilometres from the workshop, and how to care for it so it lasts.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "publishDate": "2026-06-18",
+  "category": "materials",
+  "author": {
+    "_id": "3JjYfzYVoZxYcN1Ge6hvch4uyd8",
+    "_type": "entry",
+    "_entry": "3JjYfw4jxSLAyOGzbIzDbfrNHoT"
+  },
+  "readingTime": 4,
+  "cover": {
+    "_id": "3JjYfwwFXaxu4cacdf3k2tLsiUy",
+    "_type": "image",
+    "_entry": "3JjYfugU5AxtFZT5E7MXBeUXnHf"
+  },
+  "coverCredit": "Photo by Annie Spratt on Unsplash"
+}

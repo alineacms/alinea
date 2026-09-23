@@ -1,0 +1,104 @@
+{
+  "_id": "3JjYg0ezkcMXzEKuIo6leCH3Crn",
+  "_type": "DemoProduct",
+  "_index": "a1",
+  "title": "Arlo Dining Chair",
+  "tagline": "Une chaise légère et robuste pour tous les jours",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "L'assise et le dossier d'Arlo sont formés dans un placage de chêne épais, pressé sur un moule que nous avons fabriqué à l'atelier. Le résultat : une chaise de cinq kilos à peine, qui supporte des années d'usage quotidien."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Son dossier légèrement courbé vous soutient pendant les longs dîners, et les chaises s'empilent par deux quand vous avez besoin de place."
+        }
+      ]
+    }
+  ],
+  "care": "Essuyer avec un chiffon doux et humide, puis sécher aussitôt. Huiler à nouveau une à deux fois par an avec le kit d'entretien fourni.",
+  "metadata": {
+    "title": "Arlo Dining Chair · Une chaise légère et robuste pour tous les jours",
+    "description": "L'assise et le dossier d'Arlo sont formés dans un placage de chêne épais, pressé sur un moule que nous avons fabriqué à l'atelier. Le résultat : une chaise",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg2Lbw4NcdDzyvva6wigheNM",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfsX65WvXQnkwJOVR2RxDPxD"
+    }
+  ],
+  "price": 420,
+  "leadTime": 6,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYg38yGzdOwn22gu9UH25nAB4",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oak",
+        "nl": "Naturel eiken",
+        "fr": "Chêne naturel"
+      },
+      "swatch": "#d8bb8f",
+      "stock": 12,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg0AoAYFvRZ0BOxHMqiEoOqa",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Black stained",
+        "nl": "Zwart gebeitst",
+        "fr": "Teinté noir"
+      },
+      "swatch": "#2b2622",
+      "stock": 5,
+      "surcharge": 30
+    },
+    {
+      "_id": "3JjYg1xL8SNe2bEPaYADVBr9eK8",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Walnut",
+        "nl": "Notelaar",
+        "fr": "Noyer"
+      },
+      "swatch": "#5c3b28",
+      "stock": 3,
+      "surcharge": 60
+    }
+  ],
+  "material": "oak",
+  "designer": "Maya Janssens",
+  "dimensions": {
+    "width": 48,
+    "depth": 52,
+    "height": 79,
+    "weight": 5
+  },
+  "related": []
+}

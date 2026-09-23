@@ -1,0 +1,106 @@
+{
+  "_id": "3JjYg1vm7IxADgaSnhTphSVvUOh",
+  "_type": "DemoPage",
+  "_index": "a5",
+  "_root": "pages",
+  "title": "Bezoek ons",
+  "intro": "Kom alles uitproberen. Onze twee showrooms zijn klein, rustig en vol stukken die je mag aanraken.",
+  "blocks": [
+    {
+      "_id": "3JjYg0IUvVDfsrKjsns13ydJxCd",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Showrooms",
+      "layout": "overlay",
+      "title": "Kom alles uitproberen",
+      "text": "Test de stoelen, open de lades, voel de afwerkingen. We denken graag mee over jouw ruimte, zonder afspraak.",
+      "image": {
+        "_id": "3JjYfzHnEEX1BIvcc4FtnQt91Gn",
+        "_type": "image",
+        "_entry": "3JjYfrNXujFJYyEt7tPxTfQ38nm"
+      },
+      "credit": "Photo by Zoshua Colah on Unsplash"
+    },
+    {
+      "_id": "3JjYg30jhlMNuV2c2pxgRCQOrMJ",
+      "_index": "a1",
+      "_type": "DemoStoresBlock",
+      "title": "Onze showrooms",
+      "stores": [
+        {
+          "_id": "3JjYg1UwamQxoxQkI7bnWG8mMHq",
+          "_index": "a0",
+          "_type": "Store",
+          "name": "Atelier & showroom Gent",
+          "address": "Oude Beestenmarkt 12\n9000 Gent",
+          "hours": "wo – vr 10:00 – 18:00\nza 10:00 – 17:00\nzo – di gesloten",
+          "note": "Elke eerste zaterdag van de maand geven we een rondleiding in het atelier.",
+          "phone": "+32 9 123 45 67",
+          "image": {
+            "_id": "3JjYg16C6X5ziMPqBkdjQHNe8pU",
+            "_type": "image",
+            "_entry": "3JjYfpug4UkVlWrERfC74yQLSob"
+          }
+        },
+        {
+          "_id": "3JjYfzGxOSkK43gDPiRM0P32530",
+          "_index": "a1",
+          "_type": "Store",
+          "name": "Showroom Brussel",
+          "address": "Vlaamsesteenweg 72\n1000 Brussel",
+          "hours": "do – za 11:00 – 18:00\nzo 12:00 – 17:00",
+          "note": "Vijf minuten wandelen van metrostation Sint-Katelijne.",
+          "phone": "+32 2 765 43 21",
+          "image": {
+            "_id": "3JjYg1NODZazbtlC9hvRSG6Ulhx",
+            "_type": "image",
+            "_entry": "3JjYfx9GZj8F1Fsn0Fxl76bAEqP"
+          }
+        }
+      ]
+    },
+    {
+      "_id": "3JjYfyakkNNlVhsqaWeAUcjW9wJ",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Op afspraak",
+      "imagePosition": "right",
+      "title": "Een kamer inrichten?",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Boek een uur met een van onze ontwerpers. Breng een grondplan en een paar foto's mee, dan helpen we je de stukken, afwerkingen en maten te kiezen die passen."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYg31jsbmmtc8pIgUL8ROHCxo",
+        "_type": "image",
+        "_entry": "3JjYfp4WjZzQ5kqDgIC15WfK1xR"
+      },
+      "credit": "Photo by Bilal Mansuri on Unsplash",
+      "link": {
+        "_id": "3JjYfysd1oOFr1KsG6yNeyth5yy",
+        "_type": "url",
+        "_url": "mailto:studio@oakandloom.example",
+        "_title": "",
+        "_target": "_self",
+        "label": "Plan een bezoek"
+      }
+    }
+  ],
+  "metadata": {
+    "title": "Bezoek ons",
+    "description": "Kom alles uitproberen. Onze twee showrooms zijn klein, rustig en vol stukken die je mag aanraken.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

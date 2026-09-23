@@ -1,0 +1,42 @@
+{
+  "_id": "3JjYfvpACmkJtArSZFCJX4YPI5j",
+  "_type": "DemoCollection",
+  "_index": "a2",
+  "title": "The bedroom",
+  "intro": "Soft linen, a lamp to read by and a stool for the book you'll finish tomorrow.",
+  "metadata": {
+    "title": "The bedroom",
+    "description": "Soft linen, a lamp to read by and a stool for the book you'll finish tomorrow.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "cover": {
+    "_id": "3JjYg1db6BLgcIxSPJqSILzzb3P",
+    "_type": "image",
+    "_entry": "3JjYftrLnD8BWQhW3HL1t6K68fd"
+  },
+  "products": [
+    {
+      "_id": "3JjYg29mdUZT8KPFmXelOgtjPqa",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfxETiSEJFpJd6V8X7wREiez"
+    },
+    {
+      "_id": "3JjYfytcXRewtjpZfHhGDCfNJQT",
+      "_index": "a1",
+      "_type": "entry",
+      "_entry": "3JjYfyz12LRO4vdvD9NV5MnQVa4"
+    },
+    {
+      "_id": "3JjYg2LAnwNQpuvAh0mNhiJxamS",
+      "_index": "a2",
+      "_type": "entry",
+      "_entry": "3JjYfyc452e8aueFPS0SMYM90qi"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "_id": "3JjYfzPTVtmPWs2O84iAvy3gHyO",
+  "_type": "DemoProduct",
+  "_index": "a2",
+  "title": "Hollis Lounge Chair",
+  "tagline": "Chêne et cannage tressé main, pensé pour l'après-midi",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Hollis associe une structure basse en chêne à un dossier en cannage de rotin tressé à la main. Le cannage laisse passer l'air et la lumière : le fauteuil est aussi agréable dans un coin ensoleillé qu'il est beau à regarder."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Les larges accoudoirs accueillent une tasse de café ou un livre resté ouvert. Ajoutez un coussin d'assise en lin pour les longues lectures."
+        }
+      ]
+    }
+  ],
+  "care": "Dépoussiérer le cannage avec une brosse douce. Éviter l'exposition permanente au soleil pour préserver sa couleur, et huiler la structure une fois par an.",
+  "metadata": {
+    "title": "Hollis Lounge Chair · Chêne et cannage tressé main, pensé pour l'après-midi",
+    "description": "Hollis associe une structure basse en chêne à un dossier en cannage de rotin tressé à la main. Le cannage laisse passer l'air et la lumière : le fauteuil e",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "New",
+    "nl": "Nieuw",
+    "fr": "Nouveau"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfxFncSyyuBP1mQKqfnmCrfp",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfsExn3fvd8sqyNcARnZJN0Y"
+    }
+  ],
+  "price": 1180,
+  "leadTime": 10,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfxQ22DjhBkxptd0UQ7AIVNL",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Natural oak",
+        "nl": "Naturel eiken",
+        "fr": "Chêne naturel"
+      },
+      "swatch": "#c49a6c",
+      "stock": 3,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfyadnn1jkB9YL5f1jDMQbI2",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Dark oak",
+        "nl": "Donker eiken",
+        "fr": "Chêne foncé"
+      },
+      "swatch": "#4a3426",
+      "stock": 0,
+      "surcharge": 120
+    }
+  ],
+  "material": "cane",
+  "designer": "Maya Janssens",
+  "dimensions": {
+    "width": 66,
+    "depth": 78,
+    "height": 76,
+    "weight": 9
+  },
+  "related": [
+    {
+      "_id": "3JjYg1SzY6mubaB3I33Eb1EMLMc",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfyZoRnF3wff9qLrMhgoeZGu"
+    }
+  ]
+}

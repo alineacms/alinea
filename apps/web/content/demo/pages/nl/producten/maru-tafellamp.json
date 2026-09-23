@@ -1,0 +1,111 @@
+{
+  "_id": "3JjYfyz12LRO4vdvD9NV5MnQVa4",
+  "_type": "DemoProduct",
+  "_index": "a5",
+  "title": "Maru Table Lamp",
+  "tagline": "Een voet in steengoed met een zachte linnen kap",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Elke Maru-voet wordt gedraaid en geglazuurd door bevriende pottenbakkers in een klein atelier bij Kortrijk. Geen twee zijn precies hetzelfde."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "De linnen kap verspreidt het licht in een warme, gelijkmatige gloed. Hij staat even goed op een dressoir als op een bureau of nachtkastje."
+        }
+      ]
+    }
+  ],
+  "care": "Stof de kap af met een zachte borstel en neem de voet af met een droge doek. Geschikt voor een E27-lamp tot 40 W, wij raden een warme led van 2700 K aan.",
+  "metadata": {
+    "title": "Maru Table Lamp · Een voet in steengoed met een zachte linnen kap",
+    "description": "Elke Maru-voet wordt gedraaid en geglazuurd door bevriende pottenbakkers in een klein atelier bij Kortrijk. Geen twee zijn precies hetzelfde.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "New",
+    "nl": "Nieuw",
+    "fr": "Nouveau"
+  },
+  "gallery": [
+    {
+      "_id": "3JjYg0fBSoc0n4QGCSqqm4evuiS",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfsuwrfeCbRDYF78j28rZQQH"
+    }
+  ],
+  "price": 240,
+  "leadTime": 0,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYg0nSUv2DanW1WqDunZnQPfY",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Chalk",
+        "nl": "Krijt",
+        "fr": "Craie"
+      },
+      "swatch": "#ece6dc",
+      "stock": 9,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYfvjM5zH4fP1GcuaDM0qD8nL",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Sand",
+        "nl": "Zand",
+        "fr": "Sable"
+      },
+      "swatch": "#d6c4a8",
+      "stock": 4,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg0foddc59Keue2bnUTRb9Gp",
+      "_index": "a2",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Charcoal",
+        "nl": "Houtskool",
+        "fr": "Charbon"
+      },
+      "swatch": "#3d3a37",
+      "stock": 2,
+      "surcharge": 0
+    }
+  ],
+  "material": "ceramic",
+  "designer": "Studio Aarde, Kortrijk",
+  "dimensions": {
+    "width": 28,
+    "depth": 28,
+    "height": 42,
+    "weight": 3
+  },
+  "related": [
+    {
+      "_id": "3JjYg2UrlPcnrjGiuMptEr2V5UP",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfyZoRnF3wff9qLrMhgoeZGu"
+    }
+  ]
+}

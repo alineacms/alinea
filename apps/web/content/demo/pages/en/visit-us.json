@@ -1,0 +1,113 @@
+{
+  "_id": "3JjYg1vm7IxADgaSnhTphSVvUOh",
+  "_type": "DemoPage",
+  "_index": "a5",
+  "_root": "pages",
+  "title": "Visit us",
+  "intro": "Come and sit on everything. Our two showrooms are small, quiet and full of pieces you can touch.",
+  "blocks": [
+    {
+      "_id": "3JjYg1NlwLco9ThkTAvqH91J7Q1",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Showrooms",
+      "layout": "overlay",
+      "title": "Come and sit on everything",
+      "text": "Try the chairs, open the drawers, feel the finishes. We're always happy to talk about your space, no appointment needed.",
+      "image": {
+        "_id": "3JjYfzy14CjCXC4a2nZErA0Uvkt",
+        "_type": "image",
+        "_entry": "3JjYfrNXujFJYyEt7tPxTfQ38nm"
+      },
+      "credit": "Photo by Zoshua Colah on Unsplash"
+    },
+    {
+      "_id": "3JjYfzngx0vYoTX9ETkU6XHBxBI",
+      "_index": "a1",
+      "_type": "DemoStoresBlock",
+      "title": "Our showrooms",
+      "stores": [
+        {
+          "_id": "3JjYfzBlxZ6ME16WZazNK0kTu82",
+          "_index": "a0",
+          "_type": "Store",
+          "name": "Ghent workshop & showroom",
+          "address": "Oude Beestenmarkt 12\n9000 Ghent, Belgium",
+          "hours": "Wed – Fri 10:00 – 18:00\nSat 10:00 – 17:00\nSun – Tue closed",
+          "note": "Workshop tours every first Saturday of the month.",
+          "phone": "+32 9 123 45 67",
+          "image": {
+            "_id": "3JjYfvsnGY62K9FcsRXWsZdT3YT",
+            "_type": "image",
+            "_entry": "3JjYfpug4UkVlWrERfC74yQLSob"
+          }
+        },
+        {
+          "_id": "3JjYg0xienznXsCxM11B0K1jJFY",
+          "_index": "a1",
+          "_type": "Store",
+          "name": "Brussels showroom",
+          "address": "Rue de Flandre 72\n1000 Brussels, Belgium",
+          "hours": "Thu – Sat 11:00 – 18:00\nSun 12:00 – 17:00",
+          "note": "Five minutes' walk from Sainte-Catherine metro.",
+          "phone": "+32 2 765 43 21",
+          "image": {
+            "_id": "3JjYfw29LXV5bssatPMtASxoHSw",
+            "_type": "image",
+            "_entry": "3JjYfx9GZj8F1Fsn0Fxl76bAEqP"
+          }
+        }
+      ]
+    },
+    {
+      "_id": "3JjYfz1w8mlxDeJuV56xtwX3Ubx",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "By appointment",
+      "imagePosition": "right",
+      "title": "Planning a room?",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Book an hour with one of our designers. Bring a floor plan and a few photos, and we'll help you choose the pieces, finishes and sizes that fit."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfz7OYuaIAaEuxwrM5fcLut2",
+        "_type": "image",
+        "_entry": "3JjYfp4WjZzQ5kqDgIC15WfK1xR"
+      },
+      "credit": "Photo by Bilal Mansuri on Unsplash",
+      "link": {
+        "_id": "3JjYfxMVG47lByADFLqZ7wuKGTT",
+        "_type": "url",
+        "_url": "mailto:studio@oakandloom.example",
+        "_title": "",
+        "_target": "_self",
+        "label": "Book a visit"
+      }
+    }
+  ],
+  "metadata": {
+    "title": "Visit us",
+    "description": "Come and sit on everything. Our two showrooms are small, quiet and full of pieces you can touch.",
+    "aliases": [
+      {
+        "_id": "3JjYg2czadN8hc2VAYfD1jdaiwy",
+        "_index": "a0",
+        "_type": "alias",
+        "url": "/demo/site/stores"
+      }
+    ],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

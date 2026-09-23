@@ -1,0 +1,117 @@
+.DemoArticlePage {
+  padding: clamp(32px, 6cqi, 88px) 0 clamp(64px, 10cqi, 140px);
+}
+
+.DemoArticlePage-header {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: clamp(32px, 5cqi, 56px);
+}
+
+.DemoArticlePage-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  color: var(--demo-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.DemoArticlePage-meta-category {
+  color: var(--demo-accent);
+}
+
+.DemoArticlePage-title {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(42px, 6.4cqi, 76px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.DemoArticlePage-intro {
+  margin: 0;
+  color: var(--demo-muted);
+  font-size: clamp(18px, 2cqi, 22px);
+  line-height: 1.5;
+}
+
+.DemoArticlePage-byline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.DemoArticlePage-avatar {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--demo-surface-strong);
+  color: var(--demo-accent-strong);
+  font-family: var(--demo-serif);
+  font-size: 16px;
+
+  &.is-large {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+}
+
+.DemoArticlePage-cover {
+  margin: 0 0 clamp(40px, 6cqi, 72px);
+}
+
+.DemoArticlePage-cover-image {
+  border-radius: var(--demo-radius);
+}
+
+.DemoArticlePage-cover-credit {
+  margin-top: 10px;
+  color: var(--demo-muted);
+  font-size: 12px;
+}
+
+.DemoArticlePage-author {
+  display: flex;
+  gap: 18px;
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--demo-line);
+}
+
+.DemoArticlePage-author-heading {
+  margin: 0;
+  font-weight: 600;
+}
+
+.DemoArticlePage-author-bio {
+  margin: 4px 0 0;
+  color: var(--demo-muted);
+  font-size: 15px;
+}
+
+.DemoArticlePage-more {
+  margin-top: clamp(64px, 10cqi, 128px);
+}
+
+.DemoArticlePage-more-grid {
+  display: grid;
+  gap: 40px;
+
+  @container demo-site (min-width: 760px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+  }
+}

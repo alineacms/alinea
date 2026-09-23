@@ -1,0 +1,98 @@
+{
+  "_id": "3JjYfyc452e8aueFPS0SMYM90qi",
+  "_type": "DemoProduct",
+  "_index": "a6",
+  "title": "Otto Stool",
+  "tagline": "Solid walnut, made from our offcuts",
+  "description": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Otto started as a way to use the offcuts from our larger pieces. The seat is turned from a single block, and the legs are wedged right through it for a joint that only gets tighter."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use it as a stool, a side table or a plant stand. Most people end up with two."
+        }
+      ]
+    }
+  ],
+  "care": "Wipe with a soft, damp cloth and dry straight away. Re-oil once or twice a year with the care kit included.",
+  "metadata": {
+    "title": "Otto Stool · Solid walnut, made from our offcuts",
+    "description": "Otto started as a way to use the offcuts from our larger pieces. The seat is turned from a single block, and the legs are wedged right through it for a joi",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "badge": {
+    "en": "",
+    "nl": "",
+    "fr": ""
+  },
+  "gallery": [
+    {
+      "_id": "3JjYfxcGZCASwvT1JFYwiYdWjRy",
+      "_index": "a0",
+      "_type": "image",
+      "_entry": "3JjYfs1Ul9duNpoBhhRqPJaNSES"
+    }
+  ],
+  "price": 310,
+  "leadTime": 4,
+  "inStock": true,
+  "finishes": [
+    {
+      "_id": "3JjYfvkcus2F5OLvAsjkgy9KwS9",
+      "_index": "a0",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Oiled walnut",
+        "nl": "Geolied notelaar",
+        "fr": "Noyer huilé"
+      },
+      "swatch": "#5a3a26",
+      "stock": 7,
+      "surcharge": 0
+    },
+    {
+      "_id": "3JjYg2nUxbkaLRRd6NtZADmysVL",
+      "_index": "a1",
+      "_type": "DemoFinish",
+      "name": {
+        "en": "Oiled oak",
+        "nl": "Geolied eiken",
+        "fr": "Chêne huilé"
+      },
+      "swatch": "#c8a171",
+      "stock": 5,
+      "surcharge": 0
+    }
+  ],
+  "material": "walnut",
+  "designer": "Tom Verbeke",
+  "dimensions": {
+    "width": 35,
+    "depth": 35,
+    "height": 46,
+    "weight": 4
+  },
+  "related": [
+    {
+      "_id": "3JjYfvhCRoSRlZTOPQdpPWN1WGg",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfvne5ZnEstnjwY8R7Xqm5Wy"
+    }
+  ]
+}

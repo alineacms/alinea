@@ -1,0 +1,156 @@
+.DemoHero {
+  position: relative;
+  display: grid;
+
+  &.is-overlay {
+    min-height: min(88vh, 820px);
+    color: #fff;
+
+    @container demo-site (max-width: 560px) {
+      min-height: 560px;
+    }
+  }
+
+  &.is-split {
+    max-width: var(--demo-max);
+    margin: 0 auto;
+    width: 100%;
+    padding: clamp(24px, 4cqi, 56px) var(--demo-gutter) 0;
+    gap: clamp(28px, 5cqi, 72px);
+
+    @container demo-site (min-width: 760px) {
+      grid-template-columns: 1.1fr 1fr;
+      align-items: center;
+    }
+  }
+}
+
+.DemoHero-media {
+  position: relative;
+
+  .DemoHero.is-overlay & {
+    grid-area: 1 / 1;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          to right,
+          rgb(24 18 13 / 0.55) 0%,
+          rgb(24 18 13 / 0.25) 45%,
+          rgb(24 18 13 / 0) 75%
+        ),
+        linear-gradient(
+          to top,
+          rgb(24 18 13 / 0.55) 0%,
+          rgb(24 18 13 / 0.1) 50%,
+          rgb(24 18 13 / 0) 100%
+        );
+    }
+  }
+}
+
+.DemoHero-image {
+  .DemoHero.is-overlay & {
+    position: absolute;
+    inset: 0;
+  }
+
+  .DemoHero.is-split & {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--demo-radius);
+  }
+}
+
+.DemoHero-credit {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 1;
+  color: rgb(255 255 255 / 0.7);
+  font-size: 11px;
+
+  .DemoHero.is-split & {
+    right: auto;
+    bottom: -22px;
+    left: 0;
+    color: var(--demo-muted);
+  }
+}
+
+.DemoHero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+
+  .DemoHero.is-overlay & {
+    grid-area: 1 / 1;
+    align-self: end;
+    width: 100%;
+    max-width: var(--demo-max);
+    margin: 0 auto;
+    padding: 0 var(--demo-gutter) clamp(40px, 7cqi, 88px);
+  }
+
+  .DemoHero.is-split & {
+    order: -1;
+
+    @container demo-site (min-width: 760px) {
+      order: 0;
+    }
+  }
+}
+
+.DemoHero-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  .DemoHero.is-split & {
+    color: var(--demo-accent);
+  }
+}
+
+.DemoHero-title {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(36px, 7.4cqi, 96px);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  white-space: pre-line;
+
+  .DemoHero.is-overlay & {
+    text-shadow: 0 1px 24px rgb(0 0 0 / 0.12);
+  }
+
+  .DemoHero.is-split & {
+    font-size: clamp(40px, 5.6cqi, 72px);
+  }
+}
+
+.DemoHero-text {
+  max-width: 34em;
+  margin: 0;
+  font-size: clamp(16px, 1.6cqi, 19px);
+  line-height: 1.55;
+
+  .DemoHero.is-overlay & {
+    color: rgb(255 255 255 / 0.88);
+  }
+
+  .DemoHero.is-split & {
+    color: var(--demo-muted);
+  }
+}
+
+.DemoHero-actions {
+  margin-top: 8px;
+}

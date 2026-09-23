@@ -1,0 +1,72 @@
+.DemoNewsletter {
+  padding: clamp(64px, 10cqi, 140px) 0 clamp(56px, 9cqi, 120px);
+}
+
+.DemoNewsletter-panel {
+  display: grid;
+  gap: 28px;
+  padding: clamp(28px, 6cqi, 72px);
+  border-radius: 6px;
+  background: var(--demo-accent-strong);
+  color: var(--demo-dark-ink);
+
+  @container demo-site (min-width: 860px) {
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+    gap: 64px;
+  }
+}
+
+.DemoNewsletter-title {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(32px, 4.4cqi, 52px);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.DemoNewsletter-text {
+  margin: 14px 0 0;
+  color: color-mix(in srgb, var(--demo-dark-ink) 78%, transparent);
+  font-size: 16px;
+}
+
+.DemoNewsletter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.DemoNewsletter-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.DemoNewsletter-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 20px;
+  border: 1px solid color-mix(in srgb, var(--demo-dark-ink) 35%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+
+  &::placeholder {
+    color: color-mix(in srgb, var(--demo-dark-ink) 60%, transparent);
+  }
+
+  &:focus {
+    border-color: var(--demo-dark-ink);
+    outline: none;
+  }
+}
+
+.DemoNewsletter-note {
+  margin: 0;
+  color: color-mix(in srgb, var(--demo-dark-ink) 60%, transparent);
+  font-size: 12px;
+}
