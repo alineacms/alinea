@@ -27,7 +27,7 @@ export interface UseDragDropResult<T extends object> {
 
 /**
  * Converts our declarative `DragDropProps` into react-aria drag and drop
- * hooks for Tree, ContentTable and ContentGrid.
+ * hooks for Tree, Table and ContentGrid.
  */
 export function useDragDrop<T extends object = object>({
   getDragData,

@@ -19,11 +19,9 @@ import {
   Spinner,
   SearchField,
   Table,
-  TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
+  type TableColumn,
   Tag,
   TextField,
   useDialog
@@ -57,15 +55,10 @@ interface RoleItem {
   name: string
 }
 
-interface UserColumn {
-  id: 'user' | 'roles'
-  name: string
-  isRowHeader?: boolean
-}
-
-const userColumns: Array<UserColumn> = [
-  {id: 'user', name: 'User', isRowHeader: true},
-  {id: 'roles', name: 'Roles'}
+const userColumns: Array<TableColumn> = [
+  {id: 'user', header: 'User', minWidth: 200},
+  {id: 'roles', header: 'Roles', minWidth: 160},
+  {id: 'actions', header: null, width: 52, align: 'end'}
 ]
 
 interface UsersState {
@@ -290,91 +283,83 @@ interface UsersTableProps {
 
 function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
   return (
-    <Table aria-label="Users" className={styles.UsersPage.table()}>
-      <TableHeader>
-        {userColumns.map(column => (
-          <TableHead
-            key={column.id}
-            id={column.id}
-            rowHeader={column.isRowHeader}
-          >
-            {column.name}
-          </TableHead>
-        ))}
-      </TableHeader>
-      <TableBody
-        items={users}
-        renderEmptyState={() => (
-          <span className={styles.UsersPage.empty()}>No users found</span>
-        )}
-      >
-        {user => (
-          <TableRow id={user.email ?? user.sub}>
-            {userColumns.map(column => (
-              <TableCell key={column.id}>
-                {renderUserCell(
-                  user,
-                  column.id,
-                  roleLabel,
-                  onEdit,
-                  onDeactivate
-                )}
-              </TableCell>
-            ))}
-          </TableRow>
-        )}
-      </TableBody>
+    <Table
+      aria-label="Users"
+      items={users}
+      columns={userColumns}
+      rowHeight={56}
+      className={styles.UsersPage.table()}
+      dependencies={[roleLabel, onEdit, onDeactivate]}
+      renderEmptyState={() => (
+        <span className={styles.UsersPage.empty()}>No users found</span>
+      )}
+    >
+      {user => (
+        <TableRow
+          id={user.email ?? user.sub}
+          textValue={[user.name, user.email || user.sub]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <TableCell>
+            <UserIdentity user={user} />
+          </TableCell>
+          <TableCell>
+            <UserRoles user={user} roleLabel={roleLabel} />
+          </TableCell>
+          <TableCell align="end">
+            <UserActionsMenu
+              user={user}
+              onEdit={onEdit}
+              onDeactivate={onDeactivate}
+            />
+          </TableCell>
+        </TableRow>
+      )}
     </Table>
   )
 }
 
-function renderUserCell(
-  user: User,
-  column: UserColumn['id'],
-  roleLabel: (role: string) => string | undefined,
-  onEdit: (user: User) => void,
-  onDeactivate: (user: User) => void
-) {
-  if (column === 'user') {
-    return (
-      <span className={styles.UsersPage.identity()}>
-        <span className={styles.UsersPage.identity.text()}>
-          {user.name && (
-            <span className={styles.UsersPage.identity.title()}>
-              {user.name}
-            </span>
-          )}
-          <span className={styles.UsersPage.identity.email()}>
-            {user.email || user.sub}
-          </span>
+interface UserIdentityProps {
+  user: User
+}
+
+function UserIdentity({user}: UserIdentityProps) {
+  return (
+    <span className={styles.UsersPage.identity()}>
+      <span className={styles.UsersPage.identity.text()}>
+        {user.name && (
+          <span className={styles.UsersPage.identity.title()}>{user.name}</span>
+        )}
+        <span className={styles.UsersPage.identity.email()}>
+          {user.email || user.sub}
         </span>
       </span>
-    )
-  }
+    </span>
+  )
+}
+
+interface UserRolesProps {
+  user: User
+  roleLabel: (role: string) => string | undefined
+}
+
+function UserRoles({user, roleLabel}: UserRolesProps) {
   const roles = (user.roles ?? [])
     .map(role => {
       const label = roleLabel(role)
       return label ? {id: role, label} : undefined
     })
     .filter((role): role is {id: string; label: string} => Boolean(role))
+  if (roles.length === 0)
+    return <span className={styles.UsersPage.noRoles()}>No roles</span>
   return (
-    <span className={styles.UsersPage.rolesCell()}>
-      {roles.length === 0 ? (
-        <span className={styles.UsersPage.noRoles()}>No roles</span>
-      ) : (
-        <span className={styles.UsersPage.roles()}>
-          {roles.map(role => (
-            <Badge key={role.id} size="sm">
-              {role.label}
-            </Badge>
-          ))}
-        </span>
-      )}
-      <UserActionsMenu
-        user={user}
-        onEdit={onEdit}
-        onDeactivate={onDeactivate}
-      />
+    <span className={styles.UsersPage.roles()}>
+      {roles.map(role => (
+        <Badge key={role.id} size="sm">
+          {role.label}
+        </Badge>
+      ))}
     </span>
   )
 }

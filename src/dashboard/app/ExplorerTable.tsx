@@ -1,9 +1,9 @@
 import {
-  ContentTable,
-  ContentTableCell,
-  type ContentTableColumn,
-  ContentTableRow,
-  ContentTableTitle,
+  Table,
+  TableCell,
+  type TableColumn,
+  TableRow,
+  TableTitle,
   type DragDropProps,
   type IconType,
   type Selection
@@ -26,20 +26,20 @@ import css from './ExplorerTable.module.css'
 
 const styles = styler(css)
 
-const titleColumn: ContentTableColumn = {
+const titleColumn: TableColumn = {
   id: 'title',
   header: 'Title',
   width: 300
 }
 
-const compactTitleColumn: ContentTableColumn = {
+const compactTitleColumn: TableColumn = {
   id: 'title',
   header: 'Title',
   width: '1fr',
   minWidth: 0
 }
 
-const overviewColumns: Array<ContentTableColumn> = Array.from(
+const overviewColumns: Array<TableColumn> = Array.from(
   {length: dashboardEntryOverviewColumnCount},
   (_, index) => ({
     id: `overview-${index}`,
@@ -182,7 +182,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     [cells, label]
   )
   return (
-    <ContentTableRow
+    <TableRow
       id={entry.id}
       textValue={textValue}
       hasChildren={hasChildren}
@@ -201,7 +201,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
         ) : undefined
       }
     >
-      <ContentTableTitle
+      <TableTitle
         icon={icon}
         title={label}
         label={
@@ -214,7 +214,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
         overviewColumns.map((column, index) => {
           const cell = cells[index]
           return (
-            <ContentTableCell
+            <TableCell
               key={column.id}
               label={cell?.label}
               title={
@@ -224,10 +224,10 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
               }
             >
               {cell && <CompactField field={cell.field} value={cell.value} />}
-            </ContentTableCell>
+            </TableCell>
           )
         })}
-    </ContentTableRow>
+    </TableRow>
   )
 }
 
@@ -353,7 +353,7 @@ export function ExplorerTable({
 
   return (
     <div className={styles.ExplorerTable.viewport({compact})}>
-      <ContentTable
+      <Table
         {...dragDrop}
         aria-label="Explorer entries"
         className={styles.ExplorerTable()}
@@ -382,7 +382,7 @@ export function ExplorerTable({
             page={page}
           />
         )}
-      </ContentTable>
+      </Table>
     </div>
   )
 }

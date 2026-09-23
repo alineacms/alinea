@@ -1,75 +1,92 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Empty, Example, Selection, Sorting, Striped} from './Table.stories.js'
+import {
+  CustomRootView,
+  DragAndDrop,
+  Empty,
+  ExplorerStyle,
+  NestedRows
+} from './Table.stories.js'
 
-test('renders rows and columns', async ({mount, page}) => {
-  await mount(<Example />)
-  const table = page.getByRole('grid', {name: 'Files'})
-  await expect(table).toHaveAttribute('data-slot', 'table')
-  await expect(table.getByRole('columnheader')).toHaveText([
-    'Name',
-    'Type',
-    'Date modified'
-  ])
-  await expect(table.getByRole('row')).toHaveCount(6)
-  await expect(table.getByRole('rowheader', {name: 'Games'})).toBeVisible()
-})
+test('custom root view with thumbnails, custom columns and headers', async ({
+  mount,
+  page
+}) => {
+  await mount(<CustomRootView />)
+  const table = page.getByRole('treegrid', {name: 'Articles'})
+  const rows = table.getByRole('row')
+  await expect(rows).toHaveCount(12)
+  await expect(rows.first().locator('img')).toHaveCount(1)
+  await expect(rows.first()).toContainText('2026-09-28')
 
-test('striped rows', async ({mount, page}) => {
-  await mount(<Striped />)
+  // Sortable column headers
+  await page.getByRole('button', {name: 'Publication date'}).click()
+  await expect(rows.first()).toContainText('2026-01-12')
+  await page.getByRole('button', {name: 'Title'}).click()
+  await expect(rows.first()).toContainText('2025 in twelve highlights')
+
+  // Row action, then selection: once rows are selected a click toggles
+  await table.getByRole('row', {name: 'Photonics on a chip, explained'}).click()
   await expect(
-    page.locator('[data-slot="table-container"][data-striped]')
-  ).toHaveCount(1)
+    page.getByText(/Opened Photonics on a chip, explained/)
+  ).toBeVisible()
+  const row = table.getByRole('row', {
+    name: 'A flexible sensor that repairs itself'
+  })
+  await row.locator('label').click()
+  await expect(row).toHaveAttribute('aria-selected', 'true')
+
+  // Filtering
+  await page.getByRole('button', {name: /All owner regions/}).click()
+  await page.getByRole('option', {name: 'Netherlands'}).click()
+  await expect(rows).toHaveCount(4)
+  await expect(page.getByText(/4 articles/)).toBeVisible()
 })
 
-test('renders the empty state', async ({mount, page}) => {
+test('explorer style hides the header and labels each cell', async ({
+  mount,
+  page
+}) => {
+  await mount(<ExplorerStyle />)
+  const first = page.getByRole('row').first()
+  await expect(first).toContainText('Path')
+  await expect(page.getByRole('button', {name: 'Path'})).toHaveCount(0)
+})
+
+test('nested rows', async ({mount, page}) => {
+  await mount(<NestedRows />)
+  await expect(page.getByRole('row')).toHaveCount(2)
+  await page.getByRole('button', {name: 'Expand News'}).click()
+  await expect(page.getByRole('row')).toHaveCount(4)
+})
+
+test('empty state', async ({mount, page}) => {
   await mount(<Empty />)
-  await expect(page.locator('[data-slot="table-empty"]')).toHaveText(
-    'No files found.'
-  )
+  await expect(page.getByText('No articles yet')).toBeVisible()
 })
 
-test('single and multiple selection', async ({mount, page}) => {
-  await mount(<Selection />)
-  const single = page.getByRole('grid', {name: 'Single selection'})
-  const games = single.getByRole('row', {name: /Games/})
-  const users = single.getByRole('row', {name: /Users/})
-  await expect(games).toHaveAttribute('aria-selected', 'true')
-  await users.click()
-  await expect(users).toHaveAttribute('aria-selected', 'true')
-  await expect(games).toHaveAttribute('aria-selected', 'false')
-  await expect(single.getByRole('row', {name: /bootmgr/})).toHaveAttribute(
-    'aria-disabled',
-    'true'
+test('drags rows onto rows and marks row states', async ({mount, page}) => {
+  await mount(<DragAndDrop />)
+  const table = page.getByRole('treegrid', {name: 'Pages'})
+  const legal = table.getByRole('row', {name: 'Legal'})
+  await expect(legal).toHaveAttribute('data-unselectable', 'true')
+  await expect(legal.getByRole('checkbox')).toHaveCount(0)
+  await expect(table.getByRole('row', {name: 'Home'})).toContainText(
+    'Main / Pages'
   )
-
-  const multiple = page.getByRole('grid', {name: 'Multiple selection'})
-  // Rows trigger their action while nothing is selected
-  await multiple.getByRole('rowheader', {name: 'Windows'}).click()
-  await expect(page.getByTestId('action')).toHaveText('windows')
-  // The checkbox input is visually hidden, click its label instead
-  const checkboxes = multiple
-    .getByRole('checkbox')
-    .locator('xpath=ancestor::label')
-  await checkboxes.nth(1).click()
-  await checkboxes.nth(2).click()
-  await expect(page.getByTestId('selected')).toHaveText('games,program-files')
-  await checkboxes.first().click()
-  await expect(page.getByTestId('selected')).toHaveText('all')
+  await table.getByRole('row', {name: 'News'}).dblclick()
+  await expect(page.getByTestId('log')).toHaveText('Opened News')
+  await table
+    .getByRole('button', {name: 'Drag About us'})
+    .dragTo(table.getByRole('row', {name: 'Home'}), {force: true})
+  await expect(page.getByTestId('log')).toContainText(
+    'Moved About us into Home'
+  )
+  await expect(table.getByRole('row', {name: 'About us'})).toHaveCount(0)
 })
 
-test('sorts by column', async ({mount, page}) => {
-  await mount(<Sorting />)
-  const table = page.getByRole('grid', {name: 'Sorted files'})
-  const name = table.getByRole('columnheader', {name: 'Name'})
-  await expect(name).toHaveAttribute('aria-sort', 'ascending')
-  await expect(table.getByRole('rowheader').first()).toHaveText('bootmgr')
-  await name.click()
-  await expect(name).toHaveAttribute('aria-sort', 'descending')
-  await expect(table.getByRole('rowheader').first()).toHaveText('Windows')
-  await table.getByRole('columnheader', {name: 'Type'}).click()
-  await expect(table.getByRole('columnheader', {name: 'Type'})).toHaveAttribute(
-    'aria-sort',
-    'ascending'
-  )
-  await expect(table.getByRole('rowheader').first()).toHaveText('Games')
+test('collapses columns on narrow screens', async ({mount, page}) => {
+  await page.setViewportSize({width: 600, height: 600})
+  await mount(<DragAndDrop />)
+  const row = page.getByRole('row', {name: 'Home'})
+  await expect(row.getByText('/', {exact: true})).toBeHidden()
 })

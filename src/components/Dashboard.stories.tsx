@@ -61,12 +61,12 @@ import {
 import {ContentCard} from './ContentCard.js'
 import {ContentGrid, ContentGridItem} from './ContentGrid.js'
 import {
-  ContentTable,
-  ContentTableCell,
-  ContentTableRow,
-  ContentTableThumbnail,
-  ContentTableTitle
-} from './ContentTable.js'
+  Table,
+  TableCell,
+  TableRow,
+  TableThumbnail,
+  TableTitle
+} from './Table.js'
 import styles from './Dashboard.stories.module.css'
 import {DatePicker} from './DatePicker.js'
 import {
@@ -820,7 +820,7 @@ function Overview({onOpen}: {onOpen: (key: Key) => void}) {
         </ToggleGroup>
       </div>
       {layout === 'table' ? (
-        <ContentTable
+        <Table
           aria-label="Blog"
           items={items}
           rowHeight={56}
@@ -838,19 +838,19 @@ function Overview({onOpen}: {onOpen: (key: Key) => void}) {
           renderEmptyState={() => <Text color="muted">No pages found</Text>}
         >
           {page => (
-            <ContentTableRow id={page.id} textValue={page.title}>
-              <ContentTableThumbnail src={thumbnail(page.hue)} />
-              <ContentTableTitle title={page.title} label={`/${page.path}`} />
-              <ContentTableCell>
+            <TableRow id={page.id} textValue={page.title}>
+              <TableThumbnail src={thumbnail(page.hue)} />
+              <TableTitle title={page.title} label={`/${page.path}`} />
+              <TableCell>
                 <Badge size="sm" status={page.status}>
                   {page.status}
                 </Badge>
-              </ContentTableCell>
-              <ContentTableCell>{page.author}</ContentTableCell>
-              <ContentTableCell>{page.updated}</ContentTableCell>
-            </ContentTableRow>
+              </TableCell>
+              <TableCell>{page.author}</TableCell>
+              <TableCell>{page.updated}</TableCell>
+            </TableRow>
           )}
-        </ContentTable>
+        </Table>
       ) : (
         <ContentGrid
           aria-label="Blog"
