@@ -42,3 +42,17 @@ test('sizes and orientation', async ({mount, page}) => {
   await page.keyboard.press('ArrowDown')
   await expect(page.getByRole('radio', {name: 'Bottom'})).toBeFocused()
 })
+
+test('outline items sit borderless inside the group frame', async ({
+  mount,
+  page
+}) => {
+  await mount(<Single />)
+  const group = page.locator(
+    '[data-slot="toggle-group"][data-variant="outline"]'
+  )
+  await expect(group.first()).toHaveCSS('border-top-style', 'solid')
+  const items = group.first().locator('[data-slot="toggle-group-item"]')
+  for (const item of await items.all())
+    await expect(item).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)')
+})

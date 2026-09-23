@@ -80,7 +80,13 @@ export function Button({
       {loading ? (
         <Spinner aria-label="Loading" />
       ) : (
-        icon && <Icon icon={icon} className={styles.Button.icon()} />
+        icon && (
+          <Icon
+            icon={icon}
+            data-slot="button-icon"
+            className={styles.Button.icon()}
+          />
+        )
       )}
       {children}
     </ButtonPrimitive>

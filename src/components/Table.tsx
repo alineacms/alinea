@@ -124,10 +124,11 @@ function useCollapsible() {
   return useContext(TableColumnContext)?.collapsible || undefined
 }
 
-function track({width = '1fr', minWidth = 0}: TableColumn) {
-  return typeof width === 'number'
-    ? `${width}px`
-    : `minmax(${minWidth}px, ${width})`
+function track({width = '1fr', minWidth = 0}: TableColumn, narrow: boolean) {
+  if (typeof width === 'number') return `${width}px`
+  // Narrow tables do not scroll sideways, so fractional columns give up their
+  // minimum width to keep fixed columns such as row actions in view
+  return `minmax(${narrow ? 0 : minWidth}px, ${width})`
 }
 
 function gridTemplate(
@@ -138,7 +139,7 @@ function gridTemplate(
   const visible = narrow
     ? columns.filter(column => !column.collapsible)
     : columns
-  const tracks = visible.map(track)
+  const tracks = visible.map(column => track(column, narrow))
   // Let the last column fill the row when only fixed columns remain
   const fills = visible.some(column => typeof column.width !== 'number')
   if (narrow && !fills && tracks.length > 0)

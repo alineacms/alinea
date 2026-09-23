@@ -112,6 +112,7 @@ export function Select({
           data-slot="select-content"
           className={styles.SelectContent()}
           triggerRef={triggerRef}
+          matchTriggerWidth
         >
           <ListBox className={styles.SelectContent.list()}>{children}</ListBox>
         </PopoverSurface>

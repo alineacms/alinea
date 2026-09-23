@@ -121,6 +121,7 @@ export function ComboBox({
           data-slot="combobox-content"
           className={styles.ComboBoxContent()}
           triggerRef={triggerRef}
+          matchTriggerWidth
         >
           <ListBox
             className={styles.ComboBoxContent.list()}

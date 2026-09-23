@@ -41,3 +41,17 @@ test('disabled, read-only and invalid states', async ({mount, page}) => {
     ''
   )
 })
+
+test('shows no focus ring when toggled with the pointer', async ({
+  mount,
+  page
+}) => {
+  await mount(<Controlled />)
+  await page.getByText('Subscribe', {exact: true}).click()
+  const box = page.locator('[data-slot="checkbox-indicator"]').first()
+  await expect(box).toHaveCSS('outline-style', 'none')
+  await page.getByRole('checkbox', {name: 'Subscribe'}).press('Space')
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Shift+Tab')
+  await expect(box).toHaveCSS('outline-style', 'solid')
+})

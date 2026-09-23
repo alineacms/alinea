@@ -64,6 +64,7 @@
     "stories": "bunx --bun ladle serve",
     "tag": "bun tag.js",
     "spec": "playwright test -c .playwright/playwright.config.ts",
+    "spec:visual": "playwright test -c .playwright/playwright.visual.config.ts",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "type": "tsc --diagnostics",
     "web": "run-p dev:check web:run",

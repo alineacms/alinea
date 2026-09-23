@@ -17,10 +17,14 @@ export function SelectionCheckbox(props: SelectionCheckboxProps) {
     <Checkbox
       {...props}
       slot="selection"
+      data-slot="selection-checkbox"
       className={styles.SelectionCheckbox()}
     >
       {({isIndeterminate}) => (
-        <span className={styles.SelectionCheckbox.box()}>
+        <span
+          data-slot="selection-checkbox-indicator"
+          className={styles.SelectionCheckbox.box()}
+        >
           <svg
             className={styles.SelectionCheckbox.mark()}
             viewBox="0 0 18 18"

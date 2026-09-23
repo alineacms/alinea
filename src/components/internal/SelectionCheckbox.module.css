@@ -26,7 +26,12 @@
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-fg) 8%, transparent);
   }
 
-  .SelectionCheckbox:has(:focus-visible) & {
+  /*
+    react-aria focuses the visually hidden input from script, which makes
+    :focus-visible match after a pointer press as well. Its focus-visible
+    attribute follows the input modality instead.
+  */
+  .SelectionCheckbox[data-focus-visible] & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

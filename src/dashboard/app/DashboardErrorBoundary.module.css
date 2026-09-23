@@ -2,6 +2,8 @@
   display: flex;
   flex: 1;
   min-width: 0;
+  /* Fills the page like the app shell it replaces */
+  min-height: 100%;
   align-items: center;
   justify-content: center;
   padding: 16px;

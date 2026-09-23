@@ -139,7 +139,7 @@
 }
 
 .MultipleSelectContent[data-slot] {
-  width: var(--trigger-width);
+  width: var(--alinea-trigger-width, var(--trigger-width));
   max-width: none;
   display: flex;
   flex-direction: column;

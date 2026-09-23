@@ -73,7 +73,12 @@
     border-color: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
   }
 
-  .RadioGroupItem:has(:focus-visible) & {
+  /*
+    react-aria focuses the visually hidden input from script, which makes
+    :focus-visible match after a pointer press as well. Its focus-visible
+    attribute follows the input modality instead.
+  */
+  .RadioGroupItem[data-focus-visible] & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

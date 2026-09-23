@@ -56,3 +56,28 @@ test('required, disabled and invalid states', async ({mount, page}) => {
     page.locator('[data-slot="select-trigger"][data-invalid]')
   ).toHaveCount(1)
 })
+
+test('the list is as wide as the trigger with its clear button', async ({
+  mount,
+  page
+}) => {
+  await mount(
+    <div style={{width: 280}}>
+      <Example />
+    </div>
+  )
+  const trigger = page.getByRole('button', {name: /Design software/})
+  await trigger.click()
+  await page.getByRole('option', {name: 'Figma'}).click()
+  await expect(page.getByRole('button', {name: 'Clear'})).toBeVisible()
+  await trigger.click()
+  const content = page.locator('[data-slot="select-content"]')
+  await expect(content).toBeVisible()
+  const triggerBox = await page
+    .locator('[data-slot="select-trigger"]')
+    .boundingBox()
+  const contentBox = await content.boundingBox()
+  // The list is clamped between 240 and 320 pixels
+  const expected = Math.min(320, Math.max(240, triggerBox!.width))
+  expect(Math.abs(contentBox!.width - expected)).toBeLessThanOrEqual(1)
+})

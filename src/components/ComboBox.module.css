@@ -108,7 +108,7 @@
 }
 
 .ComboBoxContent[data-slot] {
-  width: var(--trigger-width);
+  width: var(--alinea-trigger-width, var(--trigger-width));
 }
 
 .ComboBoxContent-list {

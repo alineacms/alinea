@@ -42,7 +42,12 @@
     border-color: var(--alinea-border-strong);
   }
 
-  .Switch:has(:focus-visible) & {
+  /*
+    react-aria focuses the visually hidden input from script, which makes
+    :focus-visible match after a pointer press as well. Its focus-visible
+    attribute follows the input modality instead.
+  */
+  .Switch[data-focus-visible] & {
     outline: 2px solid var(--alinea-ring);
     outline-offset: 2px;
   }

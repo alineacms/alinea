@@ -23,3 +23,16 @@ test('default, disabled and read-only states', async ({mount, page}) => {
   await readOnly.press('Space')
   await expect(readOnly).toBeChecked()
 })
+
+test('shows no focus ring when toggled with the pointer', async ({
+  mount,
+  page
+}) => {
+  await mount(<Controlled />)
+  await page.getByText('Airplane mode').click()
+  const track = page.locator('[data-slot="switch-track"]').first()
+  await expect(track).toHaveCSS('outline-style', 'none')
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Shift+Tab')
+  await expect(track).toHaveCSS('outline-style', 'solid')
+})

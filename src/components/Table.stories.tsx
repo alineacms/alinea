@@ -1,5 +1,9 @@
 import {useMemo, useState} from 'react'
-import {IcRoundRefresh, LucideFile} from '../dashboard/icons.js'
+import {
+  IcRoundMoreHoriz,
+  IcRoundRefresh,
+  LucideFile
+} from '../dashboard/icons.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {
@@ -394,6 +398,39 @@ export function Empty() {
         )}
       </Table>
     </div>
+  )
+}
+
+const memberColumns: Array<TableColumn> = [
+  {id: 'name', header: 'Name', minWidth: 200},
+  {id: 'role', header: 'Role', minWidth: 160},
+  {id: 'actions', header: null, width: 52, align: 'end'}
+]
+
+const members = [
+  {id: 'alice', name: 'Alice Editor', role: 'Editor'},
+  {id: 'bob', name: 'Bob Reviewer', role: 'Reviewer'}
+]
+
+/** Columns with a minimum width next to a fixed row actions column */
+export function RowActions() {
+  return (
+    <Table aria-label="Members" items={members} columns={memberColumns}>
+      {member => (
+        <TableRow id={member.id} textValue={member.name}>
+          <TableCell>{member.name}</TableCell>
+          <TableCell>{member.role}</TableCell>
+          <TableCell align="end">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              icon={IcRoundMoreHoriz}
+              aria-label={`Actions for ${member.name}`}
+            />
+          </TableCell>
+        </TableRow>
+      )}
+    </Table>
   )
 }
 

@@ -5,7 +5,8 @@ import {
   DragAndDrop,
   Empty,
   ExplorerStyle,
-  NestedRows
+  NestedRows,
+  RowActions
 } from './Table.stories.js'
 
 test('custom root view with thumbnails, custom columns and headers', async ({
@@ -107,4 +108,29 @@ test('rows fill their row height whatever the cells contain', async ({
   await compact.unmount()
   await mount(<CustomRootView />)
   expect(new Set(await heights())).toEqual(new Set([64]))
+})
+
+test('selecting a row with the pointer shows no focus ring', async ({
+  mount,
+  page
+}) => {
+  await mount(<ExplorerStyle />)
+  const row = page.getByRole('row').first()
+  await row.hover()
+  const indicator = row.locator('[data-slot="selection-checkbox-indicator"]')
+  await indicator.click()
+  await expect(row.getByRole('checkbox')).toBeChecked()
+  await expect(indicator).toHaveCSS('outline-style', 'none')
+})
+
+test('narrow tables keep fixed columns in view', async ({mount, page}) => {
+  await page.setViewportSize({width: 390, height: 700})
+  await mount(<RowActions />)
+  const table = page.locator('[data-slot="table"]')
+  const action = page.getByRole('button', {name: 'Actions for Alice Editor'})
+  const tableBox = await table.boundingBox()
+  const actionBox = await action.boundingBox()
+  expect(actionBox!.x + actionBox!.width).toBeLessThanOrEqual(
+    tableBox!.x + tableBox!.width
+  )
 })
