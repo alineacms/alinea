@@ -5,7 +5,7 @@ import {Config} from 'alinea'
 import 'alinea/css'
 import {createConfig} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
-import type {Entry} from 'alinea/core/Entry'
+import {Entry} from 'alinea/core/Entry'
 import {localUser} from 'alinea/core/User'
 import {
   type ExportedSource,
@@ -16,7 +16,14 @@ import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
 import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
 import {views as defaultViews} from 'alinea/field/views'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
-import {Suspense, use, useDeferredValue, useMemo} from 'react'
+import {
+  type MouseEvent,
+  type ReactNode,
+  Suspense,
+  use,
+  useDeferredValue,
+  useMemo
+} from 'react'
 import {DemoHomePage} from './DemoHomePage'
 import {DemoRecipePage} from './DemoRecipePage'
 
@@ -45,6 +52,32 @@ const config = createConfig({
   }
 })
 
+interface PreviewLinksProps {
+  children: ReactNode
+}
+
+// The preview renders inline instead of in an iframe, so links to other demo
+// pages would leave the dashboard. Open the linked entry in the dashboard.
+function PreviewLinks({children}: PreviewLinksProps) {
+  const graph = useGraph()
+  function onClickCapture(event: MouseEvent) {
+    if (!(event.target instanceof Element)) return
+    const href = event.target.closest('a')?.getAttribute('href')
+    if (!href?.startsWith('/demo/preview')) return
+    event.preventDefault()
+    graph
+      .first({
+        select: {id: Entry.id, root: Entry.root},
+        filter: {_url: href}
+      })
+      .then(linked => {
+        if (!linked) return
+        window.location.hash = `#/entry/demo/${linked.root}/${linked.id}?view=edit`
+      })
+  }
+  return <div onClickCapture={onClickCapture}>{children}</div>
+}
+
 function PreviewHome({entry}: {entry: Entry}) {
   const graph = useGraph()
   const update = useDeferredValue(entry)
@@ -53,7 +86,11 @@ function PreviewHome({entry}: {entry: Entry}) {
       return DemoHomePage.query(graph, update)
     }, [graph, update])
   )
-  return <DemoHomePage {...props} />
+  return (
+    <PreviewLinks>
+      <DemoHomePage {...props} />
+    </PreviewLinks>
+  )
 }
 
 function PreviewRecipe({entry}: {entry: Entry}) {
@@ -64,7 +101,11 @@ function PreviewRecipe({entry}: {entry: Entry}) {
       return DemoRecipePage.query(graph, update)
     }, [graph, update])
   )
-  return <DemoRecipePage {...props} />
+  return (
+    <PreviewLinks>
+      <DemoRecipePage {...props} />
+    </PreviewLinks>
+  )
 }
 
 const notImplemented = () => {
