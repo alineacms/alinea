@@ -11,12 +11,15 @@ import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntryStore} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
-import {mkdtemp, rm} from 'node:fs/promises'
+import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {sql} from 'rado'
+import {sql, type Database as RadoDatabase} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
+import {createGeneratedDatabase} from '#/backend/store/GeneratedDatabase.js'
+import {openWasmDatabase} from './driver/WasmDatabase.js'
 import {EntryDatabase} from './EntryDatabase.js'
+import {supportsJsonb} from './entry/EntryData.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
 
 function urlAlias(url: string) {
@@ -140,7 +143,7 @@ test('SQL references retain status and locale behavior', async () => {
   }
 })
 
-test('entry database returns exact source blobs by hash', async () => {
+test('entry database returns source blobs by hash', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -162,10 +165,19 @@ test('entry database returns exact source blobs by hash', async () => {
   const tree = await source.getTree()
   const shas = [...tree.index().values()]
   const expected = new Map<string, Uint8Array>()
-  const actual = new Map<string, Uint8Array>()
+  const actual = new Map<string, unknown>()
   for await (const blob of source.getBlobs(shas)) expected.set(...blob)
-  for await (const blob of runtime.getBlobs(shas)) actual.set(...blob)
-  expect(actual).toEqual(expected)
+  // Data is served as minified JSON.
+  for await (const [sha, blob] of runtime.getBlobs(shas))
+    actual.set(sha, JSON.parse(new TextDecoder().decode(blob)))
+  expect(actual).toEqual(
+    new Map(
+      [...expected].map(([sha, blob]) => [
+        sha,
+        JSON.parse(new TextDecoder().decode(blob))
+      ])
+    )
+  )
   expect(await runtime.getTree()).toEqual(tree)
   const stored = await db
     .select({data: EntryIndexTable.data, payload: EntryIndexTable.payload})
@@ -223,7 +235,7 @@ test('cached trees follow revisions written by another database instance', async
   }
 })
 
-test('generated database overlays sync and query without copying the base', async () => {
+test('generated database overlays copy their parent when they first sync', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -1012,6 +1024,59 @@ test('a reopened database trusts the search index it persisted', async () => {
     expect(
       await reopened.find({search: 'Persisted', select: Entry.id})
     ).toEqual([])
+    await reopened.close()
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
+})
+
+test('JSONB databases are rebuilt or refused where SQLite cannot read them', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const {source} = await createEntryStore(config, [
+    {id: 'page', type: 'Page', index: 'a', data: {title: 'Page'}}
+  ])
+  const dataType = (db: RadoDatabase) =>
+    db
+      .select(sql<string>`typeof(${EntryIndexTable.data})`)
+      .from(EntryIndexTable)
+  // The WASM build reads JSONB, Bun's SQLite (3.43) does not.
+  const handle = await openWasmDatabase()
+  await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
+  const written = new EntryDatabase(config, handle.database)
+  await written.syncWith(source)
+  expect(await dataType(handle.database)).toEqual(['blob'])
+  const data = handle.export()
+  await written.close()
+
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-jsonb-'))
+  const file = join(dir, 'database.sqlite')
+  try {
+    await writeFile(file, data)
+    const native = connect(new Database(file, {readonly: true}))
+    const version = await native.get<{version: string}>(
+      sql`select sqlite_version() as version`
+    )
+    expect(await supportsJsonb(native)).toBe(false)
+    await expect(createGeneratedDatabase(config, native)).rejects.toThrow(
+      `Alinea's generated database stores JSONB, which requires SQLite 3.45.0 or newer (found ${version?.version})`
+    )
+
+    const db = connect(new Database(file))
+    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    expect(await dataType(db)).toEqual([])
+    const reopened = new EntryDatabase(config, db)
+    await reopened.syncWith(source)
+    expect(await reopened.find({select: Entry.title})).toEqual(['Page'])
+    expect(await dataType(db)).toEqual(['text'])
     await reopened.close()
   } finally {
     await rm(dir, {recursive: true, force: true})

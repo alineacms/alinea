@@ -9,6 +9,7 @@ import {
   DatabaseStateTable,
   SourceFileTable
 } from './DatabaseTables.js'
+import {hasJsonbRows, supportsJsonb} from './entry/EntryData.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {
@@ -83,10 +84,12 @@ export class EntryDatabase extends EntryLayer {
           .where(eq(DatabaseMetadataTable.id, 1))
           .get()
       : undefined
+    // Rows stored as JSONB need a SQLite that reads it.
     const compatible =
       present.has('alinea_database_state') &&
       present.has('alinea_source_file') &&
-      current?.configFingerprint === configFingerprint
+      current?.configFingerprint === configFingerprint &&
+      ((await supportsJsonb(db)) || !(await hasJsonbRows(db)))
     if (!compatible) {
       // The FTS5 virtual table is not part of the declared schema.
       await db.run(sql`drop table if exists ${sql.identifier(EntrySearchName)}`)

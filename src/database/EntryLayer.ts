@@ -21,6 +21,7 @@ import {chunks} from '#/core/util/Arrays.js'
 import {TaskQueue} from '#/core/util/Async.js'
 import {eq, inArray, sql, type Database} from 'rado'
 import {DatabaseSource} from './DatabaseSource.js'
+import {entryDataText} from './entry/EntryData.js'
 import {EntryView} from './entry/EntryView.js'
 import type {EntryIndexTarget} from './entry/EntryTable.js'
 import {EntryTransaction} from './EntryTransaction.js'
@@ -62,6 +63,10 @@ export interface EntryLayerState {
   syncer: EntrySyncer
   context: EntryLayerContext
   target: EntrySyncTarget
+  /** The copy-on-write table behind an overlay's target. */
+  view?: EntryView
+  /** The layer an overlay was created from. */
+  parent?: EntryLayer
   tree?: ReadonlyTree
   initialTree?: ReadonlyTree
   searchName: string
@@ -121,7 +126,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   #syncer: EntrySyncer
   #context: EntryLayerContext
   #target: EntrySyncTarget
-  #entryTarget: EntryIndexTarget
+  #view?: EntryView
+  #parent?: EntryLayer
   #tree?: ReadonlyTree
   #initialTree?: ReadonlyTree
   #searchName: string
@@ -147,13 +153,19 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#syncer = state.syncer
     this.#context = state.context
     this.#target = state.target
-    this.#entryTarget = state.target.entries
+    this.#view = state.view
+    this.#parent = state.parent
     this.#tree = state.tree
     this.#initialTree = state.initialTree
     this.#searchName = state.searchName
     this.#ownSearchName = state.ownSearchName
     this.#searchDirty = state.searchDirty
     this.#transactional = state.transactional
+  }
+
+  /** Where reads go: the parent's table while the overlay is unwritten. */
+  get #readTarget(): EntryIndexTarget {
+    return this.#view?.readTarget ?? this.#target.entries
   }
 
   get config(): Config {
@@ -223,7 +235,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       if (this.#context.syncer !== this.#syncer)
         await this.#context.syncer.reconfigure(config)
       const state = this.#target.state
-      const entries = this.#entryTarget
+      const entries = this.#target.entries
       const blobs = sql.identifier(reindexBlobsName)
       const encoder = new TextEncoder()
       const result = await this.#onSyncConnection(async () => {
@@ -239,7 +251,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
             await tx.run(sql`drop table if exists temp.${blobs}`)
             await tx.run(sql`create temp table ${blobs} as
               select ${entries.fileHash} as sha,
-                coalesce(${entries.payload}, ${entries.data}) as blob
+                coalesce(${entries.payload}, ${entryDataText(entries)}) as blob
               from ${entries}`)
             await tx.delete(entries)
             await tx
@@ -316,6 +328,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     options: EntryApplyOptions
   ): Promise<EntryApplyResult> {
     const from = await options.source.getTree()
+    const view = this.#view
+    if (view) await this.#onSyncConnection(() => view.diverge())
     const applied = await this.#syncDb.transaction(
       async tx => {
         const revision = await this.#getRevision(tx)
@@ -380,11 +394,18 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       throw new Error('Cannot close an entry database with active overlays')
     this.#closed = true
     await this.#syncQueue.drain()
-    await this.#withReadConnection(() => this.releaseLayer())
+    await this.#withReadConnection(async () => {
+      if (this.#view) {
+        await this.#syncer.release(this.#target)
+        await this.#view.close()
+      }
+      await this.releaseLayer()
+    })
+    if (this.#parent) this.#parent.#children.delete(this)
   }
 
   /** Release what this layer owns, serialized with the read connection. */
-  protected abstract releaseLayer(): Promise<void>
+  protected async releaseLayer(): Promise<void> {}
 
   [Symbol.asyncDispose](): Promise<void> {
     return this.close()
@@ -421,29 +442,21 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       if (options.signal?.aborted)
         throw options.signal.reason ?? new Error('Blob transfer aborted')
       const requested = shas.slice(offset, offset + 400)
-      // Synced blobs already live in the overlay. Avoid scanning the immutable
-      // base for those hashes, which have no lookup index in generated files.
-      const targets = this.#target.changes
-        ? [this.#target.changes, this.#entryTarget]
-        : [this.#entryTarget]
-      for (const target of targets) {
-        const remaining = requested.filter(sha => !found.has(sha))
-        if (!remaining.length) break
-        const rows = await this.#withReadConnection(async () =>
-          this.#db
-            .select({
-              sha: target.fileHash,
-              payload: sql<string>`coalesce(${target.payload}, ${target.data})`
-            })
-            .from(target)
-            .where(inArray(target.fileHash, remaining))
-            .all()
-        )
-        for (const row of rows) {
-          if (found.has(row.sha)) continue
-          found.add(row.sha)
-          yield [row.sha, encoder.encode(row.payload)]
-        }
+      const target = this.#readTarget
+      const rows = await this.#withReadConnection(async () =>
+        this.#db
+          .select({
+            sha: target.fileHash,
+            payload: sql<string>`coalesce(${target.payload}, ${entryDataText(target)})`
+          })
+          .from(target)
+          .where(inArray(target.fileHash, requested))
+          .all()
+      )
+      for (const row of rows) {
+        if (found.has(row.sha)) continue
+        found.add(row.sha)
+        yield [row.sha, encoder.encode(row.payload)]
       }
     }
   }
@@ -480,6 +493,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#initialTree ??= tree
     let changedEntryIds = Array<string>()
     const sync = async () => {
+      await this.#view?.diverge()
       changedEntryIds = await this.#syncer.sync(
         this.#target,
         source,
@@ -523,7 +537,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       this.#searchDirty = true
       return
     }
-    await updateSearch(db, this.#entryTarget, this.#searchName, changedEntryIds)
+    await updateSearch(db, this.#readTarget, this.#searchName, changedEntryIds)
     await this.#recordSearchRevision(db)
   }
 
@@ -580,34 +594,23 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         return this.#readTreeState()
       })
       const view = await this.#withReadConnection(() =>
-        EntryView.create(this.#db, name, this.#entryTarget, revision)
+        EntryView.create(this.#db, name, this.#target.entries, revision)
       )
-      child = new EntryOverlay(
-        this.#config,
-        this.#options,
-        {
-          db: this.#db,
-          syncDb: this.#db,
-          syncer: this.#context.syncer,
-          context: this.#context,
-          target: {
-            name,
-            entries: view.entries,
-            changes: view.changes,
-            state: view.state
-          },
-          tree,
-          initialTree: this.#initialTree,
-          searchName: this.#searchDirty ? view.searchName : this.#searchName,
-          ownSearchName: view.searchName,
-          searchDirty: this.#searchDirty,
-          transactional: false
-        },
+      child = new EntryOverlay(this.#config, this.#options, {
+        db: this.#db,
+        syncDb: this.#db,
+        syncer: this.#context.syncer,
+        context: this.#context,
+        target: {entries: view.entries, state: view.state},
+        tree,
+        initialTree: this.#initialTree,
+        searchName: this.#searchDirty ? view.searchName : this.#searchName,
+        ownSearchName: view.searchName,
+        searchDirty: this.#searchDirty,
+        transactional: false,
         view,
-        () => {
-          if (child) this.#children.delete(child)
-        }
-      )
+        parent: this
+      })
       this.#children.add(child)
       await child.syncWith(source)
       return child
@@ -647,7 +650,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     return resolveEntryQuery(query, {
       config: this.#config,
       database,
-      entries: this.#entryTarget,
+      entries: this.#readTarget,
       searchName: this.#searchName,
       search:
         this.#options.search ?? (input => this.#searchPlan(database, input)),
@@ -664,7 +667,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#assertOpen()
     return this.#withReadConnection(() =>
       this.#db.transaction(
-        tx => queryEntryReferences(this.#config, tx, this.#entryTarget, query),
+        tx => queryEntryReferences(this.#config, tx, this.#readTarget, query),
         {
           async: true,
           behavior: 'deferred'
@@ -681,7 +684,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     db: Database,
     input: GraphQuery['search']
   ): Promise<SearchQuery | undefined> {
-    const entry = this.#entryTarget
+    const entry = this.#readTarget
     const tokens = searchTokens(input)
     if (!tokens) return undefined
     await this.#ensureSearch(db)
@@ -710,7 +713,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     await this.#resolveSearchState(db)
     if (!this.#searchDirty) return
     if (this.#ownSearchName) await createSearch(db, this.#searchName, true)
-    await rebuildSearch(db, this.#entryTarget, this.#searchName)
+    await rebuildSearch(db, this.#readTarget, this.#searchName)
     this.#searchDirty = false
     await this.#recordSearchRevision(db)
   }
@@ -722,38 +725,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 }
 
-/** A named copy-on-write view over the layer it was created from. */
-export class EntryOverlay extends EntryLayer {
-  #view: EntryView
-  #syncer: EntrySyncer
-  #target: EntrySyncTarget
-  #detach: () => void
-
-  /** @internal Constructed by EntryLayer.overlay. */
-  constructor(
-    config: Config,
-    options: EntryDatabaseOptions,
-    state: EntryLayerState,
-    view: EntryView,
-    detach: () => void
-  ) {
-    super(config, options, state)
-    this.#view = view
-    this.#syncer = state.context.syncer
-    this.#target = state.target
-    this.#detach = detach
-  }
-
-  protected async releaseLayer(): Promise<void> {
-    await this.#syncer.release(this.#target)
-    await this.#view.close()
-    this.#detach()
-  }
-}
+/** A named copy-on-write layer over the layer it was created from. */
+export class EntryOverlay extends EntryLayer {}
 
 /** The working copy of a layer inside its own write transaction. */
-class EntryWorkingLayer extends EntryLayer {
-  protected releaseLayer(): Promise<void> {
-    return Promise.resolve()
-  }
-}
+class EntryWorkingLayer extends EntryLayer {}

@@ -7,6 +7,7 @@ import {
   DatabaseStateTable,
   type DatabaseStateColumns
 } from '../DatabaseTables.js'
+import {supportsJsonb} from '../entry/EntryData.js'
 import {EntryIndexTable, type EntryIndexTarget} from '../entry/EntryTable.js'
 import {
   clearTemporaryTables,
@@ -21,19 +22,15 @@ import {
   deriveStatus,
   deriveUrls,
   expandAffected,
-  materializeAffected,
   validateEntries
 } from './Derive.js'
 
 export interface EntrySyncTarget {
-  name: string
   entries: EntryIndexTarget
-  changes?: EntryIndexTarget
   state: Table<typeof DatabaseStateColumns>
 }
 
 export const EntrySyncRoot: EntrySyncTarget = {
-  name: 'root',
   entries: EntryIndexTable,
   state: DatabaseStateTable
 }
@@ -100,7 +97,6 @@ export class EntrySyncer implements AsyncDisposable {
   ): Promise<Array<string>> {
     const queries = await this.#queriesFor(target)
     const run = async (tx: Database) => {
-      const materialized = new Set<string>()
       await clearTemporaryTables(tx, queries)
       const state = await queries.revision.get()
       if (state?.revision !== fromRevision)
@@ -126,7 +122,6 @@ export class EntrySyncer implements AsyncDisposable {
         queries
       )
       await expandAffected(tx, target.entries)
-      await materializeAffected(tx, target, queries, materialized)
       const hierarchyChanged = await deriveHierarchy(
         tx,
         target.entries,
@@ -137,16 +132,15 @@ export class EntrySyncer implements AsyncDisposable {
         // parentId/parents, so re-walking the same roots picks up entries that
         // moved under them, and `insert or ignore` keeps this idempotent.
         await expandAffected(tx, target.entries)
-        await materializeAffected(tx, target, queries, materialized)
       }
       await deriveStatus(tx, queries)
       if (initial) await queries.copyInitialUrls.run()
       else await deriveUrls(tx, target.entries, this.#config, queries)
-      if (validate) await validateEntries(tx, target.changes ?? target.entries)
+      if (validate) await validateEntries(tx, target.entries)
       const changed = await queries.changedIds.all()
       await queries.setRevision.run({
         revision: tree.sha,
-        tree: target.changes ? null : JSON.stringify(tree)
+        tree: JSON.stringify(tree)
       })
       return changed.map(row => row.id)
     }
@@ -158,7 +152,9 @@ export class EntrySyncer implements AsyncDisposable {
   #queriesFor(target: EntrySyncTarget): Promise<SyncQueries> {
     const cached = this.#queries.get(target)
     if (cached) return cached
-    const queries = this.#ready.then(() => prepareSyncQueries(this.#db, target))
+    const queries = this.#ready.then(async () =>
+      prepareSyncQueries(this.#db, target, await supportsJsonb(this.#db))
+    )
     this.#queries.set(target, queries)
     return queries
   }

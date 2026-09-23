@@ -81,8 +81,17 @@ test('entry store requests are isolated until written', async () => {
   }
 })
 
-test('entry store resolves previews through a temporary database overlay', async () => {
+test('entry store caches preview overlays per payload', async () => {
   const {sqlite, store} = await createStore()
+  const overlayTables = () =>
+    sqlite
+      .query<{name: string}, []>(
+        `select name from sqlite_temp_master
+        where type = 'table' and name like 'alinea_overlay_%_entries'
+        order by name`
+      )
+      .all()
+      .map(row => row.name)
   try {
     await store.mutate([
       {
@@ -95,19 +104,48 @@ test('entry store resolves previews through a temporary database overlay', async
     ])
     const entry = await store.get({id: 'page', select: Entry})
     const {rowHash: _rowHash, fileHash: _fileHash, ...base} = entry
-    const preview = await createEntryRow(
-      config,
-      {...base, title: 'Preview', data: {...entry.data, title: 'Preview'}},
-      entry.status
-    )
-    expect(
-      await store.get({
+    const preview = (title: string) =>
+      createEntryRow(
+        config,
+        {...base, title, data: {...entry.data, title}},
+        entry.status
+      )
+    const title = async (previewed: Entry) =>
+      store.get({
         id: 'page',
         select: Entry.title,
-        preview: {entry: preview}
+        preview: {entry: previewed}
       })
-    ).toBe('Preview')
+    const first = await preview('First')
+    // Concurrent queries of one render share one overlay.
+    expect(await Promise.all([title(first), title(first)])).toEqual([
+      'First',
+      'First'
+    ])
+    expect(await title(first)).toBe('First')
+    expect(overlayTables()).toEqual(['alinea_overlay_1_entries'])
     expect(await store.get({id: 'page', select: Entry.title})).toBe('Published')
+
+    expect(await title(await preview('Second'))).toBe('Second')
+    expect(await title(await preview('Third'))).toBe('Third')
+    expect(overlayTables()).toEqual([
+      'alinea_overlay_2_entries',
+      'alinea_overlay_3_entries'
+    ])
+    // A new store revision replaces the overlays of the previous one.
+    await store.mutate([
+      {
+        op: 'update',
+        id: 'page',
+        locale: null,
+        status: 'published',
+        set: {title: 'Updated'}
+      }
+    ])
+    expect(await title(await preview('Third'))).toBe('Third')
+    expect(overlayTables()).toEqual(['alinea_overlay_4_entries'])
+    await store.close()
+    expect(overlayTables()).toEqual([])
   } finally {
     sqlite.close()
   }

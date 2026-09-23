@@ -3,14 +3,15 @@ import {Database} from 'bun:sqlite'
 import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {asc, eq} from 'rado'
+import {asc, eq, sql} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
 import {EntryDatabase} from '../EntryDatabase.js'
 import {wasmDatabase} from '../driver/WasmDatabase.js'
-import {EntryView} from './EntryView.js'
+import {entryReadTarget, EntryView} from './EntryView.js'
 import {
   EntryIndexTable,
   entryIndexRow,
+  type EntryIndexTarget,
   type IndexedEntry
 } from './EntryTable.js'
 
@@ -46,15 +47,29 @@ function row(id: string, title: string) {
   } satisfies IndexedEntry)
 }
 
-test('named entry views compose changes and clean up independently', async () => {
+test('entry views read their parent until written, then copy it', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await EntryDatabase.createSchema(db, 'base')
   await db
     .insert(EntryIndexTable)
     .values([row('a', 'Base A'), row('b', 'Base B')])
+  const titles = (target: EntryIndexTarget) =>
+    db
+      .select({id: target.id, title: target.title})
+      .from(target)
+      .orderBy(asc(target.id))
 
   const github = await EntryView.create(db, 'github', EntryIndexTable, 'base')
+  const preview = await EntryView.create(db, 'preview', github.entries, 'base')
+  // Unwritten views, nested ones too, read the base table itself.
+  expect(entryReadTarget(github.entries)).toBe(EntryIndexTable)
+  expect(entryReadTarget(preview.entries)).toBe(EntryIndexTable)
+
+  await github.diverge()
+  await github.diverge()
+  expect(entryReadTarget(github.entries)).toBe(github.entries)
+  expect(entryReadTarget(preview.entries)).toBe(github.entries)
   await db
     .update(github.entries)
     .set({title: 'GitHub A'})
@@ -62,52 +77,30 @@ test('named entry views compose changes and clean up independently', async () =>
   await db.delete(github.entries).where(eq(github.entries.id, 'b'))
   await db.insert(github.entries).values(row('c', 'GitHub C'))
 
-  const preview = await EntryView.create(
-    db,
-    'preview_request_1',
-    github.entries,
-    'github'
-  )
+  await preview.diverge()
   await db
     .update(preview.entries)
     .set({title: 'Preview A'})
     .where(eq(preview.entries.id, 'a'))
   await db.insert(preview.entries).values(row('b', 'Preview B'))
+  // A written view is a snapshot: later changes to its parent stay hidden.
+  await db.delete(github.entries).where(eq(github.entries.id, 'c'))
 
-  expect(
-    await db
-      .select({id: preview.entries.id, title: preview.entries.title})
-      .from(preview.entries)
-      .orderBy(asc(preview.entries.id))
-  ).toEqual([
+  expect(await titles(preview.entries)).toEqual([
     {id: 'a', title: 'Preview A'},
     {id: 'b', title: 'Preview B'},
     {id: 'c', title: 'GitHub C'}
   ])
-  expect(await github.getRevision()).toBe('base')
-  expect(await preview.getRevision()).toBe('github')
-
   await preview.close()
-  expect(
-    await db
-      .select({id: github.entries.id, title: github.entries.title})
-      .from(github.entries)
-      .orderBy(asc(github.entries.id))
-  ).toEqual([
-    {id: 'a', title: 'GitHub A'},
-    {id: 'c', title: 'GitHub C'}
-  ])
-
+  expect(await titles(github.entries)).toEqual([{id: 'a', title: 'GitHub A'}])
   await github.close()
-  expect(
-    await db
-      .select({id: EntryIndexTable.id, title: EntryIndexTable.title})
-      .from(EntryIndexTable)
-      .orderBy(asc(EntryIndexTable.id))
-  ).toEqual([
+  expect(await titles(EntryIndexTable)).toEqual([
     {id: 'a', title: 'Base A'},
     {id: 'b', title: 'Base B'}
   ])
+  expect(
+    await db.all(sql`select name from sqlite_temp_master where type = 'table'`)
+  ).toEqual([])
 })
 
 test('entry views remain writable over a readonly base database', async () => {
@@ -129,6 +122,7 @@ test('entry views remain writable over a readonly base database', async () => {
         EntryIndexTable,
         'base'
       )
+      await overlay.diverge()
       await db
         .update(overlay.entries)
         .set({title: 'Overlay A'})
@@ -155,6 +149,7 @@ test('entry views remain writable in SQLite WASM', async () => {
     await EntryDatabase.createSchema(db, 'base')
     await db.insert(EntryIndexTable).values(row('a', 'Base A'))
     const overlay = await EntryView.create(db, 'wasm', EntryIndexTable, 'base')
+    await overlay.diverge()
     await db
       .update(overlay.entries)
       .set({title: 'Overlay A'})

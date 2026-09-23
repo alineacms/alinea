@@ -32,6 +32,19 @@ import type {
 import {wasmDatabase} from './driver/WasmDatabase.js'
 import {DatabaseSource} from './DatabaseSource.js'
 
+/** Preview payloads whose prepared overlays are kept for later queries. */
+const cachedPreviews = 2
+
+interface PreviewOverlay {
+  key: string
+  /** The store revision and source tree the overlay was created over. */
+  base: string
+  database: Promise<EntryOverlay>
+  users: number
+  /** Called once the last query using an evicted overlay finished. */
+  idle?: () => void
+}
+
 export interface EntryStoreOptions {
   ownsDatabase?: boolean
   sourceFollowsDatabase?: boolean
@@ -51,6 +64,8 @@ export class EntryStore
   #sourceFollowsDatabase: boolean
   #close?: () => Promise<void>
   #queue = new TaskQueue()
+  #previews = new Map<string, PreviewOverlay>()
+  #closingPreviews = new Set<Promise<void>>()
 
   constructor(
     config: Config,
@@ -99,49 +114,83 @@ export class EntryStore
     return this.database.resolve(query)
   }
 
+  /**
+   * Every query of a preview render carries the same preview entry: they share
+   * one overlay, prepared once per payload and store revision.
+   */
   async #resolvePreview<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const preview = query.preview
+    const {preview, ...withoutPreview} = query
     if (!preview || !('entry' in preview)) return this.database.resolve(query)
     const entry = preview.entry
-    return this.#withOverlay(
-      async source => {
-        const tree = await source.getTree()
-        await source.applyChanges({
-          fromSha: tree.sha,
-          changes: [
-            {
-              op: 'add',
-              path: entry.filePath,
-              sha: entry.fileHash,
-              contents: new TextEncoder().encode(
-                JSON.stringify(createRecord(entry, entry.status), null, 2)
-              )
-            }
-          ]
-        })
-      },
-      database => {
-        const {preview: _preview, ...withoutPreview} = query
-        return database.resolve(withoutPreview as Query)
+    const contents = JSON.stringify(createRecord(entry, entry.status), null, 2)
+    const tree = await this.source.getTree()
+    const base = JSON.stringify([await this.database.getRevision(), tree.sha])
+    const key = JSON.stringify([base, entry.filePath, entry.fileHash, contents])
+    for (const cached of this.#previews.values())
+      if (cached.base !== base) this.#evictPreview(cached)
+    let overlay = this.#previews.get(key)
+    if (overlay) this.#previews.delete(key)
+    else {
+      const source = new OverlaySource(this.source, tree)
+      overlay = {
+        key,
+        base,
+        users: 0,
+        database: source
+          .applyChanges({
+            fromSha: tree.sha,
+            changes: [
+              {
+                op: 'add',
+                path: entry.filePath,
+                sha: entry.fileHash,
+                contents: new TextEncoder().encode(contents)
+              }
+            ]
+          })
+          .then(() => this.database.overlay(source))
       }
-    )
+      overlay.database.catch(() => {
+        if (this.#previews.get(key) === overlay) this.#previews.delete(key)
+      })
+    }
+    this.#previews.set(key, overlay)
+    for (const oldest of this.#previews.values()) {
+      if (this.#previews.size <= cachedPreviews) break
+      this.#evictPreview(oldest)
+    }
+    overlay.users++
+    try {
+      const database = await overlay.database
+      return await database.resolve(withoutPreview as Query)
+    } finally {
+      if (--overlay.users === 0) overlay.idle?.()
+    }
   }
 
-  /** Run against a throwaway overlay of this store, prepared before it syncs. */
-  async #withOverlay<T>(
-    prepare: ((source: OverlaySource) => Promise<void>) | undefined,
-    run: (database: EntryOverlay, source: OverlaySource) => Promise<T>
-  ): Promise<T> {
-    const source = await OverlaySource.create(this.source)
-    await prepare?.(source)
-    const database = await this.database.overlay(source)
-    try {
-      return await run(database, source)
-    } finally {
-      await database.close()
-    }
+  /** Close an overlay once the queries using it finished. */
+  #evictPreview(overlay: PreviewOverlay): void {
+    if (this.#previews.get(overlay.key) === overlay)
+      this.#previews.delete(overlay.key)
+    const idle = overlay.users
+      ? new Promise<void>(resolve => (overlay.idle = resolve))
+      : undefined
+    const closed = (async () => {
+      await idle
+      const database = await overlay.database.catch(() => undefined)
+      await database?.close()
+    })()
+    const settle = () => this.#closingPreviews.delete(closed)
+    this.#closingPreviews.add(closed)
+    closed.then(settle, settle)
+  }
+
+  /** Close the cached preview overlays, which keep this store's database open. */
+  protected async closePreviews(): Promise<void> {
+    for (const overlay of this.#previews.values()) this.#evictPreview(overlay)
+    await Promise.all(this.#closingPreviews)
   }
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
@@ -237,11 +286,14 @@ export class EntryStore
   ): Promise<CommitRequest> {
     return this.#queue.run(async () => {
       await this.#sync()
-      return this.#withOverlay(
-        undefined,
-        async (database, source) =>
-          (await database.apply(mutations, {source, policy})).request
-      )
+      // Plan through a throwaway overlay of this store.
+      const source = await OverlaySource.create(this.source)
+      const database = await this.database.overlay(source)
+      try {
+        return (await database.apply(mutations, {source, policy})).request
+      } finally {
+        await database.close()
+      }
     })
   }
 
@@ -295,6 +347,7 @@ export class EntryStore
 
   async close(): Promise<void> {
     await this.#queue.drain()
+    await this.closePreviews()
     if (this.#close) await this.#close()
     else if (this.#ownsDatabase) await this.database.close()
   }

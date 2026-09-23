@@ -40,6 +40,7 @@ import {
   storedEntryData,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
+import {entryDataText} from '../entry/EntryData.js'
 import {
   arrayIncludes,
   compileCondition,
@@ -144,7 +145,7 @@ class Expressions {
         .forSelection()
         .mapWith({mapFromDriverValue: value => storedEntryData(value, '')})
     if (name === 'aliases')
-      return sql`${this.#entry.data}`.forSelection().mapWith({
+      return sql`${entryDataText(this.#entry)}`.forSelection().mapWith({
         mapFromDriverValue(value, specs) {
           const data = specs.parsesJson
             ? (value as Record<string, unknown>)
@@ -369,7 +370,7 @@ export function compileEntryQuery(
   if (query.alias !== undefined)
     conditions.push(
       arrayIncludes(membership.index('aliases'), item =>
-        compileCondition(jsonField(item, ['url']), query.alias)
+        compileCondition(jsonField(item, ['url']), query.alias, 1)
       )
     )
   if (query.filter !== undefined)
@@ -534,7 +535,7 @@ export function compileEntryQuery(
             value: selection,
             source: relationSource(entry),
             ...(plan.fields.length || plan.optional.length
-              ? {data: entry.data}
+              ? {data: entryDataText(entry)}
               : {})
           }
         : selection

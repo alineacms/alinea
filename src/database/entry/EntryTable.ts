@@ -56,7 +56,10 @@ export const EntryIndexColumns = {
   searchableText: column.text().notNull(),
   /** Exact source blob for seeded rows whose expanded data differs. */
   payload: column.text(),
-  /** Exact source JSON, or expanded JSON for seeded rows. */
+  /**
+   * Exact source JSON, or expanded JSON for seeded rows. Stored as JSONB where
+   * SQLite supports it; read it as text with `entryDataText`.
+   */
   data: column.text().notNull()
 }
 

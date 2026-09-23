@@ -17,7 +17,6 @@ import {
   type Database
 } from 'rado'
 import {storedEntryData, type EntryIndexTarget} from '../entry/EntryTable.js'
-import type {EntrySyncTarget} from './EntrySyncer.js'
 import {
   sqliteBatchSize,
   SyncAffected,
@@ -117,35 +116,6 @@ export async function expandAffected(
     )
     insert or ignore into ${SyncAffected}(id) select id from descendants;
   `)
-}
-
-export async function materializeAffected(
-  db: Database,
-  target: EntrySyncTarget,
-  queries: SyncQueries,
-  materialized: Set<string>
-): Promise<void> {
-  if (!target.changes) return
-  const affected = await queries.changedIds.all()
-  const candidates = affected
-    .map(row => row.id)
-    .filter(id => !materialized.has(id))
-  for (const ids of chunks(candidates, sqliteBatchSize)) {
-    const resident = await db
-      .select({id: target.changes.id})
-      .from(target.changes)
-      .where(inArray(target.changes.id, ids))
-      .groupBy(target.changes.id)
-    for (const row of resident) materialized.add(row.id)
-  }
-  const missing = candidates.filter(id => !materialized.has(id))
-  for (const ids of chunks(missing, sqliteBatchSize)) {
-    await db
-      .update(target.entries)
-      .set({versionId: target.entries.versionId})
-      .where(inArray(target.entries.id, ids))
-  }
-  for (const id of missing) materialized.add(id)
 }
 
 export async function deriveStatus(

@@ -20,6 +20,7 @@ import {
   type Sql
 } from 'rado'
 import * as column from 'rado/universal/columns'
+import {entryDataText} from '../entry/EntryData.js'
 import {
   EntryIndexColumns,
   type entryIndexRow,
@@ -87,7 +88,7 @@ function setRevisionQuery(target: EntrySyncTarget) {
 }
 
 function hierarchyQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
+  const DerivedEntries = target.entries
   return builder
     .select({
       id: DerivedEntries.id,
@@ -104,7 +105,7 @@ function hierarchyQuery(target: EntrySyncTarget) {
 }
 
 function levelsQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
+  const DerivedEntries = target.entries
   return builder
     .select({level: DerivedEntries.level})
     .from(DerivedEntries)
@@ -114,7 +115,7 @@ function levelsQuery(target: EntrySyncTarget) {
 }
 
 function statusesQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
+  const DerivedEntries = target.entries
   const isDraft = max(eq(DerivedEntries.versionStatus, 'draft'))
   const isPublished = max(eq(DerivedEntries.versionStatus, 'published'))
   const isArchived = max(eq(DerivedEntries.versionStatus, 'archived'))
@@ -147,7 +148,7 @@ function statusesQuery(target: EntrySyncTarget) {
 }
 
 function mainEntriesQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
+  const DerivedEntries = target.entries
   return builder
     .select({
       versionId: DerivedEntries.versionId,
@@ -159,7 +160,7 @@ function mainEntriesQuery(target: EntrySyncTarget) {
       root: DerivedEntries.root,
       path: DerivedEntries.path,
       parents: DerivedEntries.parents,
-      data: DerivedEntries.data
+      data: entryDataText(DerivedEntries)
     })
     .from(DerivedEntries)
     .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
@@ -202,7 +203,7 @@ function updateChildrenShaQuery(target: EntrySyncTarget) {
 }
 
 function updateUrlsQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
+  const DerivedEntries = target.entries
   const MainEntry = alias(DerivedEntries, 'main_entry')
   const hasUpdatedMainUrl = exists(
     builder
@@ -249,7 +250,7 @@ function copyInitialUrlsQuery(target: EntrySyncTarget) {
 }
 
 function updateHierarchyQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
+  const DerivedEntries = target.entries
   return builder
     .update(DerivedEntries)
     .set({
@@ -265,7 +266,7 @@ function updateHierarchyQuery(target: EntrySyncTarget) {
 }
 
 function updateStatusQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
+  const DerivedEntries = target.entries
   return builder
     .update(DerivedEntries)
     .set({
@@ -292,11 +293,12 @@ function updateStatusQuery(target: EntrySyncTarget) {
 }
 
 /** Reuse the same INSERT while streaming entries through bounded batches. */
-function insertEntryQuery(target: EntrySyncTarget) {
+function insertEntryQuery(target: EntrySyncTarget, jsonb: boolean) {
   type Row = ReturnType<typeof entryIndexRow>
   const values = Object.fromEntries(
     Object.keys(EntryIndexColumns).map(name => [name, sql.placeholder(name)])
   ) as {[Key in keyof Row]: Sql<NonNullable<Row[Key]>>}
+  if (jsonb) values.data = sql<string>`jsonb(${values.data})`
   return builder.insert(target.entries).values(values)
 }
 
@@ -314,7 +316,12 @@ export function insertEntryValues(row: ReturnType<typeof entryIndexRow>) {
   }
 }
 
-export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
+export function prepareSyncQueries(
+  db: Database,
+  target: EntrySyncTarget,
+  /** Store entry data as JSONB, on a SQLite that reads it. */
+  jsonb: boolean
+) {
   const statements = {
     insertValue: builder
       .insert(SyncValues)
@@ -332,7 +339,7 @@ export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
         mainStatus: sql.placeholder<string>('mainStatus')
       })
       .prepare(undefined, db),
-    insertEntry: insertEntryQuery(target).prepare(undefined, db),
+    insertEntry: insertEntryQuery(target, jsonb).prepare(undefined, db),
     revision: revisionQuery(target).prepare(undefined, db),
     entryCount: entryCountQuery(target).prepare(undefined, db),
     setRevision: setRevisionQuery(target).prepare(undefined, db),

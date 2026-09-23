@@ -6,6 +6,7 @@ import type {
 } from '#/core/db/EntryReference.js'
 import {Type} from '#/core/Type.js'
 import {and, asc, eq, gt, type Database} from 'rado'
+import {entryDataText} from '../entry/EntryData.js'
 import {storedEntryData, type EntryIndexTarget} from '../entry/EntryTable.js'
 import {localeCondition, statusCondition} from './EntryQuery.js'
 
@@ -38,7 +39,7 @@ export async function queryEntryReferences(
         active: entry.active,
         main: entry.main,
         path: entry.path,
-        data: entry.data
+        data: entryDataText(entry)
       })
       .from(entry)
       .where(and(...conditions, gt(entry.versionId, cursor)))
