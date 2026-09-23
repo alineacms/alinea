@@ -61,13 +61,15 @@
     "format:check": "oxfmt --check src apps/web/src",
     "lint": "oxlint",
     "prepublishOnly": "bun run build",
+    "postinstall": "node -e \"require('node:fs').existsSync('apps/web/scripts/fix-alinea-link.mjs')&&require('node:child_process').execSync('node apps/web/scripts/fix-alinea-link.mjs',{stdio:'inherit'})\"",
     "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "bunx --bun ladle serve",
     "tag": "bun tag.js",
     "spec": "playwright test -c .playwright/playwright.config.ts",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "type": "tsc --diagnostics",
-    "web": "bun run --cwd apps/web dev"
+    "web": "run-p dev:check web:run",
+    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev"
   },
   "resolutions": {
     "vite": "^8.0.10"
