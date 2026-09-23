@@ -139,7 +139,8 @@ export async function createDevServer(
           context,
           cms,
           handleApi,
-          await user
+          await user,
+          db
         )
 
         currentServer?.close()

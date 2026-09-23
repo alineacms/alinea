@@ -61,11 +61,13 @@ export async function serve(options: ServeOptions): Promise<void> {
         dashboardUrl.then(url => {
           const version = gray(pkg.version)
           const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
-          const showUrl = cmd === 'dev' && !options.onAfterGenerate
-          const connector = gray(showUrl ? '├' : '╰')
+          const isDev = cmd === 'dev'
+          const showUrl = isDev && !options.onAfterGenerate
+          const connector = gray(isDev ? '├' : '╰')
           const details = `${connector} ${gray(msg)}\n`
-          const footer = showUrl
-            ? `${gray('╰')} Local CMS:    ${url}\n\n`
+          const cmsLine = showUrl ? `${gray('├')} Local CMS:    ${url}\n` : ''
+          const footer = isDev
+            ? `${cmsLine}${gray('╰')} MCP server:   ${url}/mcp\n\n`
             : '\n'
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({

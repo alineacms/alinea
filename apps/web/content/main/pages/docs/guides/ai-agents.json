@@ -21,9 +21,229 @@
       "content": [
         {
           "_type": "text",
-          "text": "Scope and source priority"
+          "text": "Edit content through the MCP server"
+        }
+      ],
+      "_anchor": "edit-content-through-the-mcp-server"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "While `alinea dev` runs, it also serves a Model Context Protocol (MCP) server next to the local dashboard. Coding agents such as Claude Code, Cursor or Codex use it to read the schema and to create, edit, publish and delete entries through the same write path as the dashboard. Internal fields such as `_id`, `_index`, list row ids, rich text nodes, link objects and media metadata are filled in for them, so the result is always valid and an open dashboard updates live. Prefer it over editing JSON files by hand, the rules further down this page remain the reference for manual edits."
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The MCP server only exists during `alinea dev`: it is not part of `alinea build` or your deployed handler, and it only accepts requests from localhost. Its url is printed when the dev server starts (`MCP server: http://localhost:4500/mcp`), the port moves to 4501 and up when 4500 is taken."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Setup"
+        }
+      ],
+      "_anchor": "setup"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add the server to Claude Code:"
+        }
+      ]
+    },
+    {
+      "_id": "3JjZbW7MaMvkb9fSRI9kactq6ew",
+      "_type": "CodeBlock",
+      "code": "claude mcp add --transport http alinea http://localhost:4500/mcp",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Or share it with your team in a project `.mcp.json` file:"
+        }
+      ]
+    },
+    {
+      "_id": "3JjZbUNoME5HzQuHJcAlFk43rV9",
+      "_type": "CodeBlock",
+      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
+      "fileName": "",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Cursor reads the same configuration from `.cursor/mcp.json`, where the `url` alone is enough. Start `alinea dev` (or your dev script that runs it) before the agent connects."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Tools"
+        }
+      ],
+      "_anchor": "tools"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`describe_schema`: workspaces, roots, locales, types, fields and how to write a value for every field kind. Agents call this first."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`find_entries`: list entries by workspace, root, type, parent, locale, status or search terms."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`get_entry`: read an entry by id or url, rich text is returned as Markdown."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`create_entry`: create an entry, or a translation with `translationOf`. Rich text accepts Markdown, links accept entry ids and list rows need no ids."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`update_entry`: change some fields of an entry, published or as a draft."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`delete_entry`, `publish_entry`, `archive_entry` and `move_entry`: remove entries, change their status or move them in the content tree."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`upload_file`: add a local file or a downloaded url to the media library, with image dimensions and previews computed. It returns the id to use in image and file fields."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries are published by default, pass `publish: false` to save a draft when drafts are enabled. Validation errors name the field path and the expected value, so the agent can correct its input and retry."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Scope and source priority"
+        }
+      ],
+      "_anchor": "scope-and-source-priority"
     },
     {
       "_type": "paragraph",
@@ -143,7 +363,8 @@
           "_type": "text",
           "text": "Project structure conventions"
         }
-      ]
+      ],
+      "_anchor": "project-structure-conventions"
     },
     {
       "_type": "paragraph",
@@ -173,7 +394,8 @@
           "_type": "text",
           "text": "Entry metadata rules"
         }
-      ]
+      ],
+      "_anchor": "entry-metadata-rules"
     },
     {
       "_type": "paragraph",
@@ -186,8 +408,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhE9SPtaytVzp1tWLDjn9awx9",
+      "_type": "CodeBlock",
       "code": "{\n  \"_id\": \"<createId()>\",\n  \"_type\": \"<schema type name>\",\n  \"_index\": \"<fractional index>\",\n  \"_root\": \"pages\",\n  \"_seeded\": \"/index.json\",\n  \"title\": \"...\"\n}",
       "fileName": "",
       "language": "json",
@@ -281,11 +503,12 @@
           "_type": "text",
           "text": "ID and index generation"
         }
-      ]
+      ],
+      "_anchor": "id-and-index-generation"
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhEELbvoUM6nqhUHXYGWbidbF",
+      "_type": "CodeBlock",
       "code": "# New id\nnode --input-type=module -e \"import {createId} from 'alinea/core/Id'; console.log(createId())\"\n\n# Index between two siblings\nnode --input-type=module -e \"import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'; console.log(generateKeyBetween('a0', 'a1'))\"\n\n# Append after last sibling\nnode --input-type=module -e \"import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'; console.log(generateKeyBetween('a0', null))\"",
       "fileName": "",
       "language": "shellscript",
@@ -309,7 +532,8 @@
           "_type": "text",
           "text": "Internal and external links"
         }
-      ]
+      ],
+      "_anchor": "internal-and-external-links"
     },
     {
       "_type": "paragraph",
@@ -329,11 +553,12 @@
           "_type": "text",
           "text": "Rich text link marks"
         }
-      ]
+      ],
+      "_anchor": "rich-text-link-marks"
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhEAIUY4oUqOgqNS3DoP6tfz8",
+      "_type": "CodeBlock",
       "code": "[\n  {\n    \"_type\": \"paragraph\",\n    \"content\": [\n      {\n        \"_type\": \"text\",\n        \"text\": \"Internal doc\",\n        \"marks\": [\n          {\n            \"_type\": \"link\",\n            \"_id\": \"<createId()>\",\n            \"_link\": \"entry\",\n            \"_entry\": \"<target entry id>\"\n          }\n        ]\n      },\n      {\n        \"_type\": \"text\",\n        \"text\": \" and external site\",\n        \"marks\": [\n          {\n            \"_type\": \"link\",\n            \"_id\": \"<createId()>\",\n            \"_link\": \"url\",\n            \"href\": \"https://example.com\",\n            \"target\": \"_blank\",\n            \"title\": \"\"\n          }\n        ]\n      }\n    ]\n  }\n]",
       "fileName": "",
       "language": "json",
@@ -357,11 +582,12 @@
           "_type": "text",
           "text": "Link field objects"
         }
-      ]
+      ],
+      "_anchor": "link-field-objects"
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhEAeaaAWl53zEwQztlLReKzR",
+      "_type": "CodeBlock",
       "code": "// Field.link('Link') -> single entry link\n{\n  \"_id\": \"<createId()>\",\n  \"_type\": \"entry\",\n  \"_entry\": \"<target entry id>\",\n  \"label\": \"Optional extra field\"\n}\n\n// Field.link('Link') -> single external url\n{\n  \"_id\": \"<createId()>\",\n  \"_type\": \"url\",\n  \"_url\": \"https://example.com\",\n  \"_title\": \"Example\",\n  \"_target\": \"_blank\",\n  \"label\": \"Optional extra field\"\n}\n\n// Field.link.multiple('Links') row\n{\n  \"_id\": \"<createId()>\",\n  \"_index\": \"<fractional index>\",\n  \"_type\": \"entry\",\n  \"_entry\": \"<target entry id>\",\n  \"label\": \"Optional extra field\"\n}",
       "fileName": "",
       "language": "javascript",
@@ -385,7 +611,8 @@
           "_type": "text",
           "text": "Lists and union/list row metadata"
         }
-      ]
+      ],
+      "_anchor": "lists-and-union-list-row-metadata"
     },
     {
       "_type": "paragraph",
@@ -398,8 +625,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhEFiSAcrYip53jSe2Blq92FT",
+      "_type": "CodeBlock",
       "code": "{\n  \"items\": [\n    {\n      \"_id\": \"<createId()>\",\n      \"_index\": \"a0\",\n      \"_type\": \"Item\",\n      \"title\": \"First\"\n    },\n    {\n      \"_id\": \"<createId()>\",\n      \"_index\": \"a1\",\n      \"_type\": \"Item\",\n      \"title\": \"Second\"\n    }\n  ]\n}",
       "fileName": "",
       "language": "json",
@@ -423,7 +650,8 @@
           "_type": "text",
           "text": "Rich text JSON format"
         }
-      ]
+      ],
+      "_anchor": "rich-text-json-format"
     },
     {
       "_type": "paragraph",
@@ -436,8 +664,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhEBmLP7AlOjLugjsdjaiIhqq",
+      "_type": "CodeBlock",
       "code": "[\n  {\n    \"_type\": \"heading\",\n    \"level\": 2,\n    \"content\": [{\"_type\": \"text\", \"text\": \"Heading\"}]\n  },\n  {\n    \"_type\": \"paragraph\",\n    \"textAlign\": \"left\",\n    \"content\": [\n      {\"_type\": \"text\", \"text\": \"Normal text \"},\n      {\n        \"_type\": \"text\",\n        \"text\": \"bold\",\n        \"marks\": [{\"_type\": \"bold\"}]\n      },\n      {\"_type\": \"text\", \"text\": \" \"},\n      {\n        \"_type\": \"text\",\n        \"text\": \"italic\",\n        \"marks\": [{\"_type\": \"italic\"}]\n      },\n      {\"_type\": \"hardBreak\"},\n      {\n        \"_type\": \"text\",\n        \"text\": \"anchor\",\n        \"marks\": [\n          {\n            \"_type\": \"link\",\n            \"_id\": \"<createId()>\",\n            \"_link\": \"url\",\n            \"href\": \"https://example.com\",\n            \"target\": \"_blank\",\n            \"title\": \"\"\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"_type\": \"bulletList\",\n    \"content\": [\n      {\n        \"_type\": \"listItem\",\n        \"content\": [\n          {\n            \"_type\": \"paragraph\",\n            \"content\": [{\"_type\": \"text\", \"text\": \"Bullet item\"}]\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"_type\": \"orderedList\",\n    \"start\": 1,\n    \"content\": [\n      {\n        \"_type\": \"listItem\",\n        \"content\": [\n          {\n            \"_type\": \"paragraph\",\n            \"content\": [{\"_type\": \"text\", \"text\": \"Ordered item\"}]\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"_type\": \"CodeBlock\",\n    \"_id\": \"<createId()>\",\n    \"code\": \"console.log('block nodes need _id')\",\n    \"language\": \"javascript\",\n    \"fileName\": \"\",\n    \"compact\": false\n  }\n]",
       "fileName": "",
       "language": "json",
@@ -461,7 +689,8 @@
           "_type": "text",
           "text": "Roots and workspaces"
         }
-      ]
+      ],
+      "_anchor": "roots-and-workspaces"
     },
     {
       "_type": "paragraph",
@@ -474,8 +703,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhEEidv1VGL0XMoV3RkckFfso",
+      "_type": "CodeBlock",
       "code": "// Example workspace layout in this repository\ncontent/\n  main/\n    pages/\n      docs.json\n      docs/\n        reference/\n          cli.json\n    media/\n      screenshot.json\n  demo/\n    pages/\n      index.json\n      recipes/\n        chocolate-chip.json\n    media/\n      ...\n\n// Workspace key -> source\nmain -> content/main\ndemo -> content/demo\n\n// Root key -> folder under each workspace source\npages -> <workspace>/pages\nmedia -> <workspace>/media",
       "fileName": "",
       "language": "text",
@@ -564,11 +793,12 @@
           "_type": "text",
           "text": "Validation workflow"
         }
-      ]
+      ],
+      "_anchor": "validation-workflow"
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AQhEAc2JMSPC3IotHJuc9aZYF9",
+      "_type": "CodeBlock",
       "code": "# Normalize metadata via Alinea fix path\nalinea build --fix\n\n# In this repository\nbun run build -- --fix\n\n# Final validation\nbun run build",
       "fileName": "",
       "language": "shellscript",
@@ -592,6 +822,17 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1790176509,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790176509,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

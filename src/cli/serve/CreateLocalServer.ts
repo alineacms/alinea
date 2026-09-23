@@ -1,6 +1,7 @@
 import type {Handler} from '#/backend/Handler.js'
 import {router} from '#/backend/router/Router.js'
 import type {CMS} from '#/core/CMS.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import {Config} from '#/core/Config.js'
 import {HttpError} from '#/core/HttpError.js'
 import {type Trigger, trigger} from '#/core/Trigger.js'
@@ -16,6 +17,7 @@ import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {reportFatal} from '../util/Report.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
+import {createDevMcp} from './mcp/DevMcp.js'
 import type {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
@@ -46,7 +48,8 @@ export function createLocalServer(
   }: ServeContext,
   cms: CMS,
   handleApi: Handler,
-  user: User
+  user: User,
+  db: LocalStore
 ): {
   close(): void
   handle(input: Request): Promise<Response>
@@ -58,6 +61,17 @@ export function createLocalServer(
       apiKey
     })
   }
+  // Coding agents edit content through MCP, only while developing locally
+  const handleMcp =
+    cmd === 'dev'
+      ? createDevMcp({
+          config: cms.config,
+          db,
+          rootDir,
+          user,
+          handleApi: devHandler
+        })
+      : undefined
   const devDir = path.join(staticDir, 'dev')
   const publicDir = path.join(rootDir, cms.config.publicDir ?? 'public')
   const adminPath = Config.adminPath(cms.config)
@@ -198,6 +212,7 @@ export function createLocalServer(
   }
 
   const httpRouter = router(
+    handleMcp && matcher.all('/mcp').map(({request}) => handleMcp(request)),
     matcher.get('/~dev').map((): Response => {
       const stream = new ReadableStream<string>({
         start(controller) {
