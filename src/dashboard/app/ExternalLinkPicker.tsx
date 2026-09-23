@@ -105,11 +105,9 @@ function ExternalLinkPickerDialog({
             isRequired
           />
           <Label label="Target">
-            <Checkbox
-              isSelected={openInNewTab}
-              onChange={setOpenInNewTab}
-              label="Open link in new tab"
-            />
+            <Checkbox checked={openInNewTab} onCheckedChange={setOpenInNewTab}>
+              Open link in new tab
+            </Checkbox>
           </Label>
         </DashboardModalFormBody>
         <DashboardModalFormFooter>

@@ -39,10 +39,11 @@ export const EntryTranslationBanner = memo(function EntryTranslationBanner({
       {!parentNeedsTranslation && (
         <div className={styles.EntryTranslationBanner.actions()}>
           <Checkbox
-            isSelected={copyFromSource}
-            label="Copy from existing translation"
-            onChange={onCopyFromSourceChange}
-          />
+            checked={copyFromSource}
+            onCheckedChange={onCopyFromSourceChange}
+          >
+            Copy from existing translation
+          </Checkbox>
           {copyFromSource && sourceLocale && (
             <LocaleMenuSelect
               ariaLabel="Translation source language"

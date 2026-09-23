@@ -242,9 +242,9 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
   return (
     <Switch
       className={styles.Explorer.searchScope()}
-      isDisabled={isDisabled}
-      isSelected={searchScope === 'everything'}
-      onChange={selected =>
+      disabled={isDisabled}
+      checked={searchScope === 'everything'}
+      onCheckedChange={selected =>
         startTransition(() =>
           setSearchScope(selected ? 'everything' : 'workspace')
         )
