@@ -14,6 +14,7 @@ import {
   lte,
   ne,
   not,
+  or,
   sql,
   type HasSql,
   type Sql
@@ -25,6 +26,8 @@ export interface RelationSource {
   versionId: string
   id: string
   locale: string | null
+  workspace: string
+  root: string
   parentId: string | null
   parents: Array<string>
   level: number
@@ -44,6 +47,8 @@ export function relationSource(entry: EntryIndexTarget): SqlRelationSource {
     versionId: entry.versionId,
     id: entry.id,
     locale: entry.locale,
+    workspace: entry.workspace,
+    root: entry.root,
     parentId: entry.parentId,
     parents: entry.parents,
     level: entry.level,
@@ -72,6 +77,25 @@ export function linkRelation(
   }
 }
 
+/**
+ * Entries on the same level as the source: children of the same parent, or
+ * for a top-level entry the other top-level entries of its workspace root.
+ */
+function sameParent(
+  entry: EntryIndexTarget,
+  source: AnyRelationSource
+): Sql<boolean> {
+  // Children of a parent are found through the parent index, the location
+  // only narrows down top-level entries
+  return and(
+    sql<boolean>`${entry.parentId} is ${source.parentId}`,
+    or(
+      sql<boolean>`${source.parentId} is not null`,
+      and(eq(entry.workspace, source.workspace), eq(entry.root, source.root))
+    )
+  )
+}
+
 /** Restrict related identities in SQL before the query's own filters/paging. */
 export function relationCondition(
   entry: EntryIndexTarget,
@@ -85,13 +109,11 @@ export function relationCondition(
         ? and(eq(entry.id, source.parentId), locale)
         : sql.value(false)
     case 'siblings':
-      return source.parentId
-        ? and(
-            eq(entry.parentId, source.parentId),
-            locale,
-            query.includeSelf ? sql.value(true) : ne(entry.id, source.id)
-          )
-        : sql.value(false)
+      return and(
+        sameParent(entry, source),
+        locale,
+        query.includeSelf ? sql.value(true) : ne(entry.id, source.id)
+      )
     case 'translations':
       return and(
         eq(entry.id, source.id),
@@ -156,14 +178,13 @@ export function relationCondition(
     }
     case 'next':
     case 'previous': {
-      if (!source.parentId) return sql.value(false)
       const next = query.edge === 'next'
       const neighbor = new Builder()
         .select(entry.id)
         .from(entry)
         .where(
           and(
-            eq(entry.parentId, source.parentId),
+            sameParent(entry, source),
             locale,
             next ? gt(entry.index, source.index) : lt(entry.index, source.index)
           )

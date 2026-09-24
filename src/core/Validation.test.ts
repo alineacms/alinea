@@ -230,3 +230,55 @@ test('fields the policy hides or locks are ignored', () => {
     )
   ).toEqual(['title'])
 })
+
+test('localised fields are validated per locale', () => {
+  const localised = Field.localiser({locales: ['en', 'nl']})
+  const Row = Config.type('Row', {
+    fields: {name: Field.text('Name', {required: true})}
+  })
+  const type = Config.type('Localised', {
+    fields: {
+      title: localised(Field.text('Title', {required: true})),
+      slug: localised(
+        Field.text('Slug', {
+          validate(value) {
+            if (typeof value !== 'string') return 'Expected a string'
+            if (value.includes(' ')) return 'No spaces'
+          }
+        })
+      ),
+      rows: localised(Field.list('Rows', {schema: {Row}, max: 1}))
+    }
+  })
+  const row = (name: string) => ({_id: name, _index: 'a0', _type: 'Row', name})
+  expect(
+    messages(type, {
+      title: {en: 'Hello', nl: ''},
+      slug: {en: 'hello', nl: 'hallo wereld'},
+      rows: {en: [row('a')], nl: [row(''), {...row('b'), _index: 'a1'}]}
+    })
+  ).toEqual([
+    ['title.nl', 'Field is required'],
+    ['slug.nl', 'No spaces'],
+    ['rows.nl', 'Add at most 1 item'],
+    ['rows.nl[0].name', 'Field is required']
+  ])
+  const [error] = validateEntry(type, {
+    title: {en: '', nl: 'Hallo'},
+    slug: {en: 'a', nl: 'b'},
+    rows: {en: [], nl: []}
+  })
+  expect(error?.labels).toEqual(['Title', 'EN'])
+  expect(
+    messages(type, {
+      title: {en: 'Hello', nl: 'Hallo'},
+      slug: {en: 'hello', nl: 'hallo'},
+      rows: {en: [], nl: []}
+    })
+  ).toEqual([])
+  // A missing value is missing in every locale
+  expect(messages(type, {slug: {en: 'a', nl: 'b'}})).toEqual([
+    ['title.en', 'Field is required'],
+    ['title.nl', 'Field is required']
+  ])
+})

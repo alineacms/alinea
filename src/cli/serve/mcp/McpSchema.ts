@@ -441,11 +441,11 @@ export const valueFormats: Record<string, string> = {
   select: 'an option key (not the label) or null',
   multipleSelect: 'array of option keys',
   richText:
-    'Markdown (headings, **bold**, *italic*, ~~strike~~, links, lists, > quotes, ---, tables, images on their own line) or TextDoc JSON. Entry links: [text](entry:ID), images: ![alt](entry:MEDIA_ID). A fenced code block becomes the block with a `code` field, other fields in the info string: ```ts id=BLOCK_ID fileName=app.tsx compact (keep the id to keep the block). Other blocks: ```alinea-block with the block JSON {"_type": "BlockKey", ...fields}. Inline `code` stays text with its backticks (there is no code mark)',
+    'Markdown (headings, **bold**, *italic*, ~~strike~~, links, lists, > quotes, ---, tables, images on their own line) or TextDoc JSON. Entry links: [text](entry:ID) or [text](entry:ID#anchor), images: ![alt](entry:MEDIA_ID). A fenced code block becomes the block with a `code` field, other fields in the info string: ```ts id=BLOCK_ID fileName=app.tsx compact (keep the id to keep the block). Other blocks: ```alinea-block with the block JSON {"_type": "BlockKey", ...fields}. Inline `code` stays text with its backticks (there is no code mark)',
   list: 'array of rows {"_type": "BlockKey", ...fields} (_type optional with one block type; _id/_index are generated). An array replaces the list, rows with an existing _id merge into that row: [{"_id": "..."}, {"_id": "...", "title": "New"}]. Or patch with {"update": [{"_id", ...fields}], "insert": [{"row": {...}, "after"|"before": "_id"}], "remove": ["_id"], "order": [every _id]}, applied in that order. Nested lists take the same forms',
   'object/metadata':
     'object of nested fields, only given keys change (metadata audit fields are filled in)',
-  link: 'entry/image/file: an entry id or {"id": "...", ...linkFields}, images and files are media entries (upload_file). url: a url or {"url": "...", "title": "...", "target": "_blank"}. Multiple links: an array. null clears a single link',
+  link: 'entry/image/file: an entry id or {"id": "...", ...linkFields}, a page link can add "anchor" (#id on the page, null clears it), images and files are media entries (upload_file). url: a url or {"url": "...", "title": "...", "target": "_blank"}. Multiple links: an array. null clears a single link',
   localised: 'object keyed by locale {"en": value}, only given locales change',
   mediaAlt:
     'string, or strings keyed by locale when the media root is translated',

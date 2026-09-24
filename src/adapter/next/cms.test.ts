@@ -1,3 +1,4 @@
+import {nextMocks} from '#test/NextMocks.js'
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
@@ -14,8 +15,6 @@ import PLazy from 'p-lazy'
 
 const phase = process.env.NEXT_PHASE
 const runtime = process.env.NEXT_RUNTIME
-let previewCookies: Array<{name: string; value: string}> = []
-let handlerUrl = new URL('https://example.com/api/cms')
 type HandlerFetch = (
   ...args: Parameters<typeof iso.fetch>
 ) => ReturnType<typeof iso.fetch>
@@ -27,33 +26,19 @@ mock.module('@alinea/iso', () => ({
   fetch: (...args: Parameters<typeof iso.fetch>) => handlerFetch(...args)
 }))
 
-mock.module('./context.js', () => ({
-  requestContext: async () => ({
-    isDev: false,
-    handlerUrl,
-    apiKey: 'test-api-key'
-  })
-}))
-
 mock.module('next/constants.js', () => ({
   PHASE_PRODUCTION_SERVER: 'production-server',
   PHASE_PRODUCTION_BUILD: 'production-build'
-}))
-
-let isDraft = true
-
-mock.module('next/headers.js', () => ({
-  cookies: async () => ({getAll: () => previewCookies}),
-  draftMode: async () => ({isEnabled: isDraft})
 }))
 
 const {NextCMS} = await import('./cms.js')
 
 beforeEach(() => {
   process.env.NEXT_PHASE = 'production-server'
-  previewCookies = []
-  isDraft = true
-  handlerUrl = new URL('https://example.com/api/cms')
+  nextMocks.cookies = []
+  nextMocks.draftMode = true
+  nextMocks.handlerUrl = new URL('https://example.com/api/cms')
+  nextMocks.apiKey = 'test-api-key'
   handlerFetch = defaultFetch
 })
 
@@ -98,7 +83,7 @@ test('skips syncing a bundled database for a matching preview content hash', asy
     status: 'draft',
     patch: new Uint8Array()
   })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
+  nextMocks.cookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
   await cms.resolve({syncInterval: 0})
 
@@ -127,7 +112,7 @@ test('syncs a bundled database for a mismatched preview content hash', async () 
     status: 'draft',
     patch: new Uint8Array()
   })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
+  nextMocks.cookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
   await cms.resolve({syncInterval: 0})
 
@@ -190,7 +175,7 @@ test('syncs once for a stale preview content hash and still applies the patch', 
     status: entry.status,
     patch
   })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
+  nextMocks.cookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
   const results = await Promise.all([
     cms.first({id: entry.id, select: Entry}),
@@ -226,7 +211,7 @@ test('syncs without asking the handler for the shared sha in draft mode', async 
 })
 
 test('reports the bundled database revision and the last sync', async () => {
-  isDraft = false
+  nextMocks.draftMode = false
   const sha = 'synced-content-hash'
   const db = {
     sha: 'stale-content-hash',
@@ -266,7 +251,7 @@ test('reports the handler revision when queries are forwarded', async () => {
 })
 
 test('serves the bundled database when the handler cannot be synced', async () => {
-  isDraft = false
+  nextMocks.draftMode = false
   const db = {
     sha: 'bundled-content-hash',
     syncWith: mock(async () => {

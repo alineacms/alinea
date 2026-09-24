@@ -621,6 +621,29 @@ export class EntryInput {
     ) => {
       this.references.push({id, path, linkType: type})
       const {fields, ...others} = rest
+      // Page links can point to an anchor (#id) and carry a url suffix (?q)
+      const linkParts: Row = {}
+      const fieldsType = pickers[type]?.fields
+      const linkFieldKeys = fieldsType ? keys(Type.fields(fieldsType)) : []
+      if (type === 'entry')
+        for (const [key, name] of [
+          ['_anchor', 'anchor'],
+          ['_suffix', 'suffix']
+        ] as const) {
+          // The short name, unless a link field has that name
+          const alias = linkFieldKeys.includes(name) ? key : name
+          const value = key in others ? others[key] : others[alias]
+          const given = key in others || alias in others
+          delete others[key]
+          delete others[alias]
+          if (!given) continue
+          if (value !== null && typeof value !== 'string')
+            this.fail(
+              childPath(path, key),
+              `expected a string or null, got ${describe(value)}`
+            )
+          linkParts[key] = value
+        }
       const extra = {...(isRecord(fields) ? fields : {}), ...others}
       const existing = candidates.find(
         row =>
@@ -637,7 +660,14 @@ export class EntryInput {
         _entry: id,
         ...(type === 'entry' && this.#locale ? {_locale: this.#locale} : {})
       }
-      return extraFields(type, extra, base)
+      const result = extraFields(type, extra, base)
+      if (keys(linkParts).length === 0) return result
+      const updated: Row = {...result}
+      for (const [key, value] of entries(linkParts)) {
+        if (value) updated[key] = value
+        else delete updated[key]
+      }
+      return updated
     }
     const urlReference = (
       url: string,
@@ -942,8 +972,35 @@ function withoutIds(value: unknown): unknown {
   return result
 }
 
-function linkTarget(mark: Row): string {
-  return JSON.stringify([mark._link, mark._entry, mark.href, mark._anchor])
+function linkTarget(mark: Row, withAnchor = true): string {
+  return JSON.stringify([
+    mark._link,
+    mark._entry,
+    mark.href,
+    withAnchor ? mark._anchor : undefined
+  ])
+}
+
+/** Link mark properties Markdown expresses: `entry:<id>#<anchor>` or a url */
+const markdownLinkProperties = new Set([
+  '_type',
+  '_id',
+  '_link',
+  '_entry',
+  '_anchor',
+  'href',
+  'title'
+])
+
+/** The part of a link mark Markdown expresses, to compare marks */
+function markdownLinkShape(mark: Row): Row {
+  const result: Row = {_type: mark._type}
+  if (typeof mark._entry === 'string') {
+    result._entry = mark._entry
+    if (mark._anchor) result._anchor = mark._anchor
+  } else if (mark.href !== undefined) result.href = mark.href
+  if (mark.title !== undefined) result.title = mark.title
+  return result
 }
 
 function visitMarks(value: unknown, visit: (mark: Row) => void) {
@@ -976,6 +1033,7 @@ function markdownShape(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(markdownShape)
   if (!isRecord(value)) return value
   if (isBlockType(value._type)) return withoutIds(value)
+  if (value._type === 'link') return markdownLinkShape(value)
   const result: Row = {}
   for (const [key, inner] of entries(value))
     if (markdownProperties.has(key)) result[key] = markdownShape(inner)
@@ -999,26 +1057,39 @@ function reconcileDoc(
   fromMarkdown: boolean
 ): TextDoc {
   if (!Array.isArray(current) || current.length === 0) return next
-  const linkIds = new Map<string, Array<string>>()
+  const storedLinks: Array<Row> = []
   visitMarks(current, mark => {
     if (typeof mark._id !== 'string') return
-    const key = linkTarget(mark)
-    linkIds.set(key, [...(linkIds.get(key) ?? []), mark._id])
+    if (storedLinks.some(link => link._id === mark._id)) return
+    storedLinks.push(mark)
   })
+  // Reuse a stored link to the same target, else the same entry or url with
+  // another anchor
+  const claim = (mark: Row): Row | undefined => {
+    for (const withAnchor of [true, false]) {
+      const target = linkTarget(mark, withAnchor)
+      const index = storedLinks.findIndex(
+        link => linkTarget(link, withAnchor) === target
+      )
+      if (index !== -1) return storedLinks.splice(index, 1)[0]
+    }
+    return undefined
+  }
   // Text nodes of one link share its id
-  const assigned = new Map<unknown, string>()
+  const assigned = new Map<unknown, Row | undefined>()
   const reconciled = reconcileNodes(next, current, fromMarkdown)
   for (const node of reconciled.changed)
     visitMarks(node, mark => {
-      const known = assigned.get(mark._id)
-      if (known) {
-        mark._id = known
-        return
-      }
-      const reused = linkIds.get(linkTarget(mark))?.shift()
-      if (!reused) return
-      assigned.set(mark._id, reused)
-      mark._id = reused
+      if (!assigned.has(mark._id)) assigned.set(mark._id, claim(mark))
+      const stored = assigned.get(mark._id)
+      if (!stored) return
+      mark._id = stored._id
+      assigned.set(stored._id, stored)
+      // Keep what Markdown can not express, such as the link target window
+      if (fromMarkdown)
+        for (const [key, value] of entries(stored))
+          if (!markdownLinkProperties.has(key) && !(key in mark))
+            mark[key] = value
     })
   return reconciled.nodes
 }

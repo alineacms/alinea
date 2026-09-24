@@ -1052,6 +1052,81 @@ test('shared fields only touch other locales when they change', async () => {
   test.is(updated.summary, 'Hoi')
 })
 
+test('update_entry applies a changed link anchor or target', async () => {
+  await using env = await setup()
+  const target = await env.ok('create_entry', {
+    type: 'Page',
+    data: {title: 'Target'}
+  })
+  const other = await env.ok('create_entry', {
+    type: 'Page',
+    data: {title: 'Other'}
+  })
+  const source = await env.ok('create_entry', {
+    type: 'Page',
+    data: {title: 'Source', body: `See [the target](entry:${target.id}#one)`}
+  })
+  const mark = async () => {
+    const stored = await env.readEntry(source.file)
+    return stored.body[0].content[1].marks[0]
+  }
+  const created = await mark()
+  test.is(created._anchor, 'one')
+
+  const anchored = await env.ok('update_entry', {
+    id: source.id,
+    data: {body: `See [the target](entry:${target.id}#two)`}
+  })
+  test.is(anchored.note, undefined)
+  const withAnchor = await mark()
+  test.is(withAnchor._anchor, 'two')
+  test.is(withAnchor._entry, target.id)
+  test.is(withAnchor._id, created._id)
+
+  await env.ok('update_entry', {
+    id: source.id,
+    data: {body: `See [the target](entry:${target.id})`}
+  })
+  test.is((await mark())._anchor, undefined)
+
+  await env.ok('update_entry', {
+    id: source.id,
+    data: {body: `See [the target](entry:${other.id})`}
+  })
+  test.is((await mark())._entry, other.id)
+
+  const read = await env.ok('get_entry', {id: source.id})
+  test.is(read.data.body, `See [the target](entry:${other.id})`)
+
+  // Link fields: the stored link is kept and its anchor changes
+  const linked = await env.ok('create_entry', {
+    type: 'Page',
+    data: {
+      title: 'Linked',
+      features: [{_type: 'Feature', title: 'F', link: {id: target.id}}]
+    }
+  })
+  const link = async () => (await env.readEntry(linked.file)).features[0].link
+  const initial = await link()
+  const feature = (await env.ok('get_entry', {id: linked.id})).data.features[0]
+  const withLinkAnchor = await env.ok('update_entry', {
+    id: linked.id,
+    data: {features: [{...feature, link: {...feature.link, _anchor: 'two'}}]}
+  })
+  test.equal(withLinkAnchor.changed, ['features'])
+  test.equal(await link(), {...initial, _anchor: 'two'})
+  await env.ok('update_entry', {
+    id: linked.id,
+    data: {features: [{...feature, link: {id: target.id, anchor: 'three'}}]}
+  })
+  test.equal(await link(), {...initial, _anchor: 'three'})
+  await env.ok('update_entry', {
+    id: linked.id,
+    data: {features: [{...feature, link: {id: target.id, anchor: null}}]}
+  })
+  test.equal(await link(), initial)
+})
+
 test('find_references and guarded deletes', async () => {
   await using env = await setup()
   const target = await env.ok('create_entry', {

@@ -49,6 +49,8 @@ export function fieldError(
   options: FieldOptions<unknown>,
   value: unknown
 ): string | undefined {
+  // The values it holds are checked one by one, see Field.valueErrors
+  if (Field.hasValueErrors(field)) return undefined
   const {min, max} = options as {min?: unknown; max?: unknown}
   if (Array.isArray(value)) {
     if (typeof min === 'number' && value.length < min)
@@ -138,16 +140,20 @@ export function validateType(
     const path = [...context.path, key]
     const labels = [...context.labels, options.label]
     const fieldValue = record[key]
+    const fieldContext = {...context, path, labels, scopes}
+    const valueErrors = Field.valueErrors(
+      field,
+      fieldValue,
+      options,
+      fieldContext
+    )
+    if (valueErrors) {
+      result.push(...valueErrors)
+      continue
+    }
     const message = fieldError(field, options, fieldValue)
     if (message) result.push({path, labels, message})
-    result.push(
-      ...Field.nestedErrors(field, fieldValue, {
-        ...context,
-        path,
-        labels,
-        scopes
-      })
-    )
+    result.push(...Field.nestedErrors(field, fieldValue, fieldContext))
   }
   return result
 }

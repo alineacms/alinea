@@ -1,4 +1,5 @@
 import {Field} from '#/core/Field.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {viewsAtom} from '#/dashboard/atoms/core.js'
@@ -9,6 +10,7 @@ import {
 } from '#/field/localiser/Localiser.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw} from 'jotai'
+import prettyBytes from 'pretty-bytes'
 import type {ComponentType, ReactNode} from 'react'
 import {useMemo} from 'react'
 import {Badge} from '#/components.js'
@@ -129,7 +131,7 @@ function compactResolvedText(
   if (isEmptyValue(value)) return '-'
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   if (typeof value === 'string') return stringText(field, value, options)
-  if (typeof value === 'number') return numberText(value)
+  if (typeof value === 'number') return numberFieldText(field, value)
   const links = linkRows(value)
   if (links) return links.map(link => linkLabel(link, context)).join(', ')
   if (Array.isArray(value)) {
@@ -175,7 +177,9 @@ function renderCompactValue(
   }
   if (typeof value === 'number') {
     return (
-      <span className={styles.CompactField.text()}>{numberText(value)}</span>
+      <span className={styles.CompactField.text()}>
+        {numberFieldText(field, value)}
+      </span>
     )
   }
   const links = linkRows(value)
@@ -366,6 +370,13 @@ const numberFormat = new Intl.NumberFormat(undefined, {
 
 function numberText(value: number): string {
   return Number.isFinite(value) ? numberFormat.format(value) : String(value)
+}
+
+function numberFieldText(field: Field, value: number): string {
+  // Media file sizes are stored in bytes
+  if (field === MediaFile.size && Number.isFinite(value) && value >= 0)
+    return prettyBytes(value)
+  return numberText(value)
 }
 
 const dateFormat = new Intl.DateTimeFormat(undefined, {

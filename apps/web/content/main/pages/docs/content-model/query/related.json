@@ -151,7 +151,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`siblings`, `previous` and `next` only find entries that share a parent. Entries at the top level of a root don't have siblings in this sense: query them with `level: 0` instead."
+          "text": "`siblings`, `previous` and `next` find entries that share a parent. For an entry at the top level of a root, they find the other top-level entries of the same root (and locale)."
         }
       ]
     },

@@ -104,6 +104,16 @@ export interface FieldData<
     value: StoredValue,
     context: FieldValidationContext
   ) => Array<FieldValidationError>
+  /**
+   * Validate a field that holds several values of another field, such as one
+   * per locale. Replaces the field's own checks: its required, min, max and
+   * validate options apply to each of the values instead.
+   */
+  valueErrors?: (
+    value: StoredValue,
+    options: FieldOptions<unknown>,
+    context: FieldValidationContext
+  ) => Array<FieldValidationError>
 }
 
 export interface FieldInternal extends FieldData<any, any, any, any> {
@@ -257,6 +267,20 @@ export namespace Field {
     context: FieldValidationContext
   ): Array<FieldValidationError> {
     return getField(field).nestedErrors?.(value, context) ?? []
+  }
+
+  /** Errors of a field holding several values, undefined for other fields */
+  export function valueErrors(
+    field: HasField,
+    value: unknown,
+    options: FieldOptions<unknown>,
+    context: FieldValidationContext
+  ): Array<FieldValidationError> | undefined {
+    return getField(field).valueErrors?.(value, options, context)
+  }
+
+  export function hasValueErrors(field: HasField): boolean {
+    return Boolean(getField(field).valueErrors)
   }
 
   export function references<StoredValue, QueryValue, Mutator, Options>(

@@ -1,5 +1,6 @@
 import {cleanup, render, screen} from '#test/react.js'
 import {Field} from '#/core/Field.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {date} from '#/field/date.js'
@@ -187,4 +188,17 @@ test('CompactField formats dates and numbers', () => {
   expect(compactFieldText(number('Size'), 345466)).toBe(
     (345466).toLocaleString(undefined)
   )
+})
+
+test('CompactField shows media file sizes in a readable unit', () => {
+  render(<CompactField field={MediaFile.size} value={345466} />)
+
+  expect(screen.getByText('345 kB')).toBeDefined()
+  expect(compactFieldText(MediaFile.size, 345466)).toBe('345 kB')
+  expect(compactFieldText(MediaFile.size, 12)).toBe('12 B')
+  // Other numbers keep their grouping
+  expect(compactFieldText(number('Count'), 345466)).toBe(
+    compactFieldText(number('Other'), 345466)
+  )
+  expect(compactFieldText(number('Count'), 345466)).not.toContain('kB')
 })

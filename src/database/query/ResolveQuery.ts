@@ -119,17 +119,15 @@ async function projectRows(
   plan: ProjectionPlan,
   result: Array<unknown>,
   context: EntryQueryContext,
-  nested = false,
   inheritedLocale: string | null = null
 ): Promise<unknown> {
   const rows = await Promise.all(
     result.map(row => projectRow(query, plan, row, context, inheritedLocale))
   )
-  // Graph's nested projection stage returns undefined for an absent single
-  // relation; only the public top-level first/get stage normalizes absence.
+  // A single result (first/get, parent, next, previous) is null when nothing
+  // matches, both at the top level and for nested relations.
   if (!plan.single) return rows
-  if (nested || rows.length) return rows[0]
-  return null
+  return rows.length ? rows[0] : null
 }
 
 async function projectRow(
@@ -194,7 +192,6 @@ async function projectRow(
             relation.plan,
             relationRows(included, relation.plan.single),
             context,
-            true,
             locale
           )
       if (!relation.path.length) value = related

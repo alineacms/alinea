@@ -1,31 +1,11 @@
+import {nextMocks} from '#test/NextMocks.js'
 import {Config} from '#/index.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {sign} from '#/core/util/JWT.js'
 import {EntryStore} from '#/database/EntryStore.js'
-import {afterEach, beforeEach, expect, mock, spyOn, test} from 'bun:test'
+import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
 const apiKey = 'preview-secret'
-let draftEnabled = false
-let enableCalls = 0
-
-mock.module('./context.js', () => ({
-  requestContext: async () => ({
-    isDev: false,
-    handlerUrl: new URL('https://example.com/api/cms'),
-    apiKey
-  })
-}))
-
-mock.module('next/headers', () => ({
-  draftMode: async () => ({
-    get isEnabled() {
-      return draftEnabled
-    },
-    enable() {
-      enableCalls += 1
-    }
-  })
-}))
 
 const [{createCMS}, {createHandlerWithDatabase, handlerPathname}] =
   await Promise.all([import('./cms.js'), import('./handler.js')])
@@ -105,8 +85,11 @@ test('rejects non-read requests on the public media pathname', async () => {
 })
 
 beforeEach(() => {
-  draftEnabled = false
-  enableCalls = 0
+  nextMocks.draftMode = false
+  nextMocks.enableCalls = 0
+  nextMocks.cookies = []
+  nextMocks.handlerUrl = new URL('https://example.com/api/cms')
+  nextMocks.apiKey = apiKey
   consoleError = spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -119,24 +102,24 @@ test('rejects an invalid preview token without a draft session', async () => {
 
   expect(response.status).toBe(500)
   expect(response.headers.get('location')).toBeNull()
-  expect(enableCalls).toBe(0)
+  expect(nextMocks.enableCalls).toBe(0)
 })
 
 test('accepts an expired preview token with an existing draft session', async () => {
-  draftEnabled = true
+  nextMocks.draftMode = true
   const response = await previewRequest(await expiredToken(), '/articles/one')
 
   expect(response.status).toBe(302)
   expect(response.headers.get('location')).toBe(
     'https://example.com/articles/one'
   )
-  expect(enableCalls).toBe(1)
+  expect(nextMocks.enableCalls).toBe(1)
 })
 
 test.each([false, true])(
   'rejects cross-origin preview redirects when draft mode is %s',
   async isDraftEnabled => {
-    draftEnabled = isDraftEnabled
+    nextMocks.draftMode = isDraftEnabled
     const token = isDraftEnabled ? await expiredToken() : await validToken()
 
     for (const returnTo of [
@@ -147,7 +130,7 @@ test.each([false, true])(
       expect(response.status).toBe(500)
       expect(response.headers.get('location')).toBeNull()
     }
-    expect(enableCalls).toBe(0)
+    expect(nextMocks.enableCalls).toBe(0)
   }
 )
 
