@@ -59,6 +59,8 @@ import type {ComponentType} from 'react'
 import {
   createContext,
   Fragment,
+  memo,
+  useCallback,
   useContext,
   useMemo,
   useRef,
@@ -183,14 +185,29 @@ export function ListFieldView({field}: ListFieldViewProps) {
     setFoldedIds(allExpanded ? new Set(rowIds) : new Set())
   }
 
-  function toggleRow(rowId: string) {
+  // Rows are memoized, keep the callbacks passed to them stable
+  const toggleRow = useCallback((rowId: string) => {
     setFoldedIds(current => {
       const next = new Set(current)
       if (next.has(rowId)) next.delete(rowId)
       else next.add(rowId)
       return next
     })
-  }
+  }, [])
+  const endRowDrag = useCallback(() => {
+    setDraggingRowId(null)
+    setDropIndicator(null)
+  }, [])
+  const changeDropIndicator = useCallback(
+    (index: number, position: 'before' | 'after' | null) => {
+      setDropIndicator(current => {
+        if (current?.index === index && current.position === position)
+          return current
+        return position ? {index, position} : null
+      })
+    },
+    []
+  )
 
   function addRow(typeName: string, type: Schema[string]) {
     pushRow(createRow(typeName, type))
@@ -220,25 +237,18 @@ export function ListFieldView({field}: ListFieldViewProps) {
               <ListFieldDropIndicator active={isBoundaryDropTarget(index)} />
             )}
             <ListFieldRow
-              addBetweenRow={(value, position = 'after') =>
-                insertRow(insertIndex(index, position), value)
-              }
               canCreate={canCreate}
               draggingRowId={draggingRowId}
-              foldedIds={foldedIds}
+              expanded={!foldedIds.has(rowIds[index])}
               index={index}
               list={list}
               readOnly={readOnly}
               onCopyRow={copyRow}
+              onInsertRow={insertRow}
               onMoveRow={moveRow}
-              onRowDragEnd={() => {
-                setDraggingRowId(null)
-                setDropIndicator(null)
-              }}
-              onRowDragStart={() => setDraggingRowId(rowIds[index] ?? null)}
-              onDropIndicatorChange={position =>
-                setDropIndicator(position ? {index, position} : null)
-              }
+              onRowDragEnd={endRowDrag}
+              onRowDragStart={setDraggingRowId}
+              onDropIndicatorChange={changeDropIndicator}
               onToggleRow={toggleRow}
               row={row}
               rows={nodes.length}
@@ -400,14 +410,17 @@ interface ListFieldRowProps {
   schema: Schema
   typeItems: Array<ListFieldTypeItem>
   pasted?: ListValue
-  foldedIds: Set<string>
+  expanded: boolean
   onToggleRow: (rowId: string) => void
   onCopyRow: (rowId: string) => void
+  onInsertRow: (index: number, row: ListValue) => void
   onMoveRow: (rowId: string, targetIndex: number) => void
   onRowDragEnd: () => void
-  onRowDragStart: () => void
-  onDropIndicatorChange: (position: 'before' | 'after' | null) => void
-  addBetweenRow: (row: ListValue, position?: 'before' | 'after') => void
+  onRowDragStart: (rowId: string) => void
+  onDropIndicatorChange: (
+    index: number,
+    position: 'before' | 'after' | null
+  ) => void
 }
 
 interface ListFieldDropIndicatorState {
@@ -526,9 +539,10 @@ function ListFieldInsertPanel({
   )
 }
 
-function ListFieldRow({
+const ListFieldRow = memo(function ListFieldRow({
   canCreate,
   draggingRowId,
+  expanded,
   index,
   list,
   readOnly,
@@ -537,14 +551,13 @@ function ListFieldRow({
   schema,
   typeItems,
   pasted,
-  foldedIds,
   onToggleRow,
   onCopyRow,
+  onInsertRow,
   onMoveRow,
   onRowDragEnd,
   onRowDragStart,
-  onDropIndicatorChange,
-  addBetweenRow
+  onDropIndicatorChange
 }: ListFieldRowProps) {
   const itemId = useAtomValueRaw(row.field('_id')) as string
   const typeName = useAtomValueRaw(row.field('_type')) as string
@@ -569,7 +582,7 @@ function ListFieldRow({
       return ['move']
     },
     onDragEnd: onRowDragEnd,
-    onDragStart: onRowDragStart,
+    onDragStart: () => onRowDragStart(itemId),
     isDisabled: readOnly,
     preview: dragPreview
   })
@@ -586,19 +599,19 @@ function ListFieldRow({
     },
     onDropEnter(event) {
       const position = rowDropPosition(rowRef.current, event.y)
-      onDropIndicatorChange(position)
+      onDropIndicatorChange(index, position)
     },
     onDropMove(event) {
       const position = rowDropPosition(rowRef.current, event.y)
-      onDropIndicatorChange(position)
+      onDropIndicatorChange(index, position)
     },
     onDropExit() {
-      onDropIndicatorChange(null)
+      onDropIndicatorChange(index, null)
     },
     async onDrop(event) {
       const position = rowDropPosition(rowRef.current, event.y)
       const rowId = await getDraggedRowId(event.items, LIST_FIELD_ROW_DRAG_TYPE)
-      onDropIndicatorChange(null)
+      onDropIndicatorChange(index, null)
       if (!rowId) return
       onMoveRow(rowId, insertIndex(index, position))
     }
@@ -608,7 +621,6 @@ function ListFieldRow({
 
   const label = Type.label(type)
   const typeIcon = getType(type).icon
-  const expanded = !foldedIds.has(itemId)
   function moveCurrentRow(direction: -1 | 1) {
     moveListRow(index, index + direction)
   }
@@ -665,9 +677,11 @@ function ListFieldRow({
             onCopy={() => onCopyRow(itemId)}
             onDelete={deleteRow}
             onInsertBefore={(value: ListValue) =>
-              addBetweenRow(value, 'before')
+              onInsertRow(insertIndex(index, 'before'), value)
             }
-            onInsertAfter={(value: ListValue) => addBetweenRow(value, 'after')}
+            onInsertAfter={(value: ListValue) =>
+              onInsertRow(insertIndex(index, 'after'), value)
+            }
             onMoveDown={() => moveCurrentRow(1)}
             onMoveUp={() => moveCurrentRow(-1)}
             onToggle={() => onToggleRow(itemId)}
@@ -681,7 +695,7 @@ function ListFieldRow({
       </div>
     </>
   )
-}
+})
 
 interface ListFieldDropIndicatorProps {
   active: boolean
