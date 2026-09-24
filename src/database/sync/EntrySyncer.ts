@@ -9,6 +9,7 @@ import {
 } from '../DatabaseTables.js'
 import {supportsJsonb} from '../entry/EntryData.js'
 import {EntryIndexTable, type EntryIndexTarget} from '../entry/EntryTable.js'
+import {EntrySearchTable, type EntrySearchTarget} from '../query/Search.js'
 import {deriveEntries} from './Derive.js'
 import {mergeTrees} from './Ingest.js'
 import {prepareSyncQueries, type SyncQueries} from './SyncQueries.js'
@@ -16,6 +17,8 @@ import {prepareSyncQueries, type SyncQueries} from './SyncQueries.js'
 export interface EntrySyncTarget {
   entries: EntryIndexTarget
   state: Table<typeof DatabaseStateColumns>
+  /** The full-text index of the entries, written along with them. */
+  search: EntrySearchTarget
   /**
    * Whether the state records the synced source tree, so the database can be
    * reopened and synced from it. A temporary overlay keeps its tree in memory.
@@ -25,7 +28,8 @@ export interface EntrySyncTarget {
 
 export const EntrySyncRoot: EntrySyncTarget = {
   entries: EntryIndexTable,
-  state: DatabaseStateTable
+  state: DatabaseStateTable,
+  search: EntrySearchTable
 }
 
 export interface EntrySyncOptions {

@@ -13,6 +13,7 @@ import {Config as ConfigBuilder, Field, Query} from '#/index.js'
 import {wasmDatabase} from '../driver/WasmDatabase.js'
 import {EntryDatabase} from '../EntryDatabase.js'
 import {snippet} from '#/core/pages/Snippet.js'
+import {Type} from '#/core/Type.js'
 
 const Page = ConfigBuilder.document('Page', {
   fields: {
@@ -266,3 +267,108 @@ for (const driver of ['native', 'wasm'] as const)
       await db.close()
     }
   })
+
+async function sourceWith(
+  entries: Record<string, [title: string, body?: string]>
+): Promise<MemorySource> {
+  const source = new MemorySource()
+  const change = await transaction(source)
+  for (const [id, [title, body]] of Object.entries(entries))
+    change.add(`pages/${id}.json`, entry(id, title, body))
+  await applySourceChange(source, await change.compile())
+  return source
+}
+
+test('an overlay searches its own changes, not later ones of its parent', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  const base = new EntryDatabase(config, db)
+  await base.syncWith(await sourceWith({a: ['Alpha'], b: ['Beta']}))
+  const overlay = await base.overlay(
+    await sourceWith({a: ['Gamma'], b: ['Beta'], c: ['Delta']})
+  )
+  // An unwritten overlay over the overlay reads the overlay's index.
+  const nested = await overlay.overlay(
+    await sourceWith({a: ['Gamma'], b: ['Beta'], c: ['Delta']})
+  )
+  await base.syncWith(await sourceWith({a: ['Alpha'], b: ['Epsilon']}))
+  const search = (layer: typeof base | typeof overlay, search: string) =>
+    layer.find({search, select: Entry.id})
+  for (const layer of [overlay, nested]) {
+    expect(await search(layer, 'Gamma')).toEqual(['a'])
+    expect(await search(layer, 'Alpha')).toEqual([])
+    expect(await search(layer, 'Beta')).toEqual(['b'])
+    expect(await search(layer, 'Delta')).toEqual(['c'])
+    expect(await search(layer, 'Epsilon')).toEqual([])
+    // Close spellings come from the vocabulary of the index the layer reads.
+    expect(await search(layer, 'gammx')).toEqual(['a'])
+    expect(await search(layer, 'epsilom')).toEqual([])
+  }
+  expect(await search(base, 'Epsilon')).toEqual(['b'])
+  expect(await search(base, 'epsilom')).toEqual(['b'])
+  expect(await search(base, 'Gamma')).toEqual([])
+  await nested.close()
+  await overlay.close()
+  await base.close()
+})
+
+test('Entry.searchableText selects the indexed text of an entry', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  const runtime = new EntryDatabase(config, db)
+  await runtime.syncWith(
+    await sourceWith({a: ['First', 'hidden chocolate'], b: ['Second']})
+  )
+  const expected = [
+    Type.searchableText(Page, {title: 'First', body: 'hidden chocolate'}),
+    Type.searchableText(Page, {title: 'Second', body: ''})
+  ]
+  expect(expected[0]).toBe('hidden chocolate')
+  expect(await runtime.find({select: Entry.searchableText})).toEqual(expected)
+  const rows = await runtime.find({select: Entry})
+  expect(rows.map(row => row.searchableText)).toEqual(expected)
+  // Relations read it from their aliased entry rows too.
+  expect(
+    await runtime.first({
+      id: 'a',
+      select: Query.translations({
+        includeSelf: true,
+        search: 'hidden',
+        select: Entry.searchableText
+      })
+    })
+  ).toEqual([expected[0]])
+  await runtime.close()
+})
+
+test('reindexing indexes the searchable text of the new config', async () => {
+  const Plain = ConfigBuilder.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      body: Field.text('Body')
+    }
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  const runtime = new EntryDatabase({...config, schema: {Page: Plain}}, db)
+  await runtime.syncWith(
+    await sourceWith({a: ['First', 'chocolate'], b: ['Second', 'vanilla']})
+  )
+  expect(await runtime.find({search: 'chocolate', select: Entry.id})).toEqual(
+    []
+  )
+  await runtime.reindex(config)
+  expect(await runtime.find({search: 'chocolate', select: Entry.id})).toEqual([
+    'a'
+  ])
+  expect(await runtime.find({search: 'vanila', select: Entry.id})).toEqual([
+    'b'
+  ])
+  expect(
+    sqlite.query('select count(*) as count from alinea_entry_search').get()
+  ).toEqual({count: 2})
+  await runtime.close()
+})

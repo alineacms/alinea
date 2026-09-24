@@ -81,6 +81,140 @@ test('entry store requests are isolated until written', async () => {
   }
 })
 
+async function pagesStore() {
+  const created = await createStore()
+  await created.store.mutate(
+    ['page', 'other', 'third'].map(id => ({
+      op: 'create' as const,
+      id,
+      type: 'Page',
+      locale: null,
+      data: {title: `Title ${id}`}
+    }))
+  )
+  return created
+}
+
+const plannedMutations: Array<Array<Mutation>> = [
+  [
+    {
+      op: 'update',
+      id: 'page',
+      locale: null,
+      status: 'published',
+      set: {title: 'Changed'}
+    }
+  ],
+  [{op: 'archive', id: 'other', locale: null}],
+  [{op: 'move', id: 'third', target: 'page', dropPosition: 'before'}],
+  [{op: 'remove', id: 'page'}],
+  [
+    {
+      op: 'create',
+      id: 'created',
+      type: 'Page',
+      locale: null,
+      data: {title: 'Created'}
+    },
+    {op: 'unpublish', id: 'other', locale: null}
+  ]
+]
+
+test('requests plan the commit mutate applies and leave the store', async () => {
+  for (const mutations of plannedMutations) {
+    const planning = await pagesStore()
+    const applying = await pagesStore()
+    const {sqlite, store} = planning
+    try {
+      const tempTables = () =>
+        sqlite
+          .query(`select name from sqlite_temp_master where type = 'table'`)
+          .all()
+      const state = async () => ({
+        sha: await store.sha,
+        tree: (await store.source.getTree()).sha,
+        rows: await store.find({
+          status: 'all',
+          select: {filePath: Entry.filePath, title: Entry.title}
+        }),
+        found: await store.find({search: 'title', select: Entry.id})
+      })
+      const before = await state()
+      const tables = tempTables()
+      const request = await store.request(mutations)
+      expect(await state()).toEqual(before)
+      expect(tempTables()).toEqual(tables)
+      const {sha} = await applying.store.mutate(mutations)
+      expect(request.intoSha).toBe(sha)
+      expect(await store.write(request)).toEqual({sha})
+      expect(await store.find({status: 'all', select: Entry.filePath})).toEqual(
+        await applying.store.find({status: 'all', select: Entry.filePath})
+      )
+    } finally {
+      planning.sqlite.close()
+      applying.sqlite.close()
+    }
+  }
+})
+
+test('reads during a request never see the planned commit', async () => {
+  const {sqlite, store} = await pagesStore()
+  try {
+    // Each read polls on its own: a pending query holds up those behind it.
+    async function pollDuringRequest<T>(read: () => Promise<T>) {
+      let planning = true
+      const seen = Array<T>()
+      const request = store
+        .request(plannedMutations.flat())
+        .finally(() => (planning = false))
+      while (planning) {
+        seen.push(await read())
+        // Let the request continue past its asynchronous hashing.
+        await new Promise(resolve => setTimeout(resolve))
+      }
+      await request
+      return seen
+    }
+    const sha = await store.sha
+    const shas = await pollDuringRequest(() => store.sha)
+    expect(shas.length).toBeGreaterThan(1)
+    expect(new Set(shas)).toEqual(new Set([sha]))
+    const titles = await store.find({select: Entry.title})
+    const found = await pollDuringRequest(() =>
+      store.find({select: Entry.title})
+    )
+    for (const read of found) expect(read).toEqual(titles)
+    // Planning writes no temporary overlay tables, not even while it runs.
+    const tables = await pollDuringRequest(async () =>
+      sqlite
+        .query(`select name from sqlite_temp_master where type = 'table'`)
+        .all()
+    )
+    expect(tables.flat()).toEqual([])
+  } finally {
+    sqlite.close()
+  }
+})
+
+test('a store sourced from its own database plans requests', async () => {
+  const {sqlite, store} = await pagesStore()
+  // Like a generated database: the source reads the rows being moved.
+  const layer = await store.database.createOverlay()
+  const generated = new EntryStore(config, layer.database, layer.source)
+  try {
+    const before = await generated.sha
+    for (const mutations of plannedMutations) {
+      const request = await generated.request(mutations)
+      expect(request.fromSha).toBe(before)
+      expect(await generated.sha).toBe(before)
+    }
+  } finally {
+    await generated.close()
+    await layer.close()
+    sqlite.close()
+  }
+})
+
 async function previewStore() {
   const created = await createStore()
   const {sqlite, store} = created

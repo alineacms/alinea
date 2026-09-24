@@ -51,6 +51,7 @@ async function removeVersions(
     changes.parents.add(row.id)
     changes.childDirs.add(row.childrenDir)
   }
+  await queries.deleteSearch.run(params)
   await queries.deleteFiles.run(params)
   return stored
 }
@@ -82,7 +83,8 @@ async function parseFiles(
     assert(found.has(fileHash), `Source did not return blob ${fileHash}`)
   return parsedEntries.map(entry => ({
     ...entryIndexRow(entry),
-    childrenSha: sourceDirectorySha(tree, entry.childrenDir)
+    childrenSha: sourceDirectorySha(tree, entry.childrenDir),
+    searchableText: entry.searchableText
   }))
 }
 
@@ -155,6 +157,10 @@ export async function mergeTrees(
     )
     for (const row of rows) {
       await queries.insertEntry.run(insertEntryValues(row))
+      await queries.insertSearch.run({
+        title: row.title,
+        body: row.searchableText
+      })
       changes.touched.add(row.id)
       changes.inserted.add(row.versionId)
       if (hasChildren(row.childrenSha)) changes.parents.add(row.id)

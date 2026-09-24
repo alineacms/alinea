@@ -11,16 +11,15 @@ import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
 import type {EntryIndexTarget} from '../entry/EntryTable.js'
 import {compileEntryQuery, type ProjectionPlan} from './EntryQuery.js'
-import type {SearchQuery} from './Search.js'
+import type {EntrySearchTarget, SearchQuery} from './Search.js'
 
 /** Query dependencies bound to one connection and its current transaction. */
 export interface EntryQueryContext {
   config: Config
   database: Database
   entries: EntryIndexTarget
-  searchName: string
+  searchTable: EntrySearchTarget
   search(input: GraphQuery['search']): Promise<SearchQuery | undefined>
-  prepareSearch(): Promise<void>
   includedAtBuild(filePath: string): boolean | Promise<boolean>
 }
 
@@ -28,14 +27,12 @@ export async function resolveEntryQuery(
   query: GraphQuery,
   context: EntryQueryContext
 ): Promise<unknown> {
-  const {database: db, config, entries, searchName} = context
+  const {database: db, config, entries, searchTable} = context
   const {rows, plan} = compileEntryQuery(config, query, {
     search: await context.search(query.search),
     entry: entries,
-    searchName
+    searchTable
   })
-  // Relations can search too, not only the query itself.
-  if (plan.needsSearch) await context.prepareSearch()
   if (plan.count) return db.select(count()).from(rows.as('matches')).get()
   const result = await rows.all(db)
   if (query.get && !result.length) throw new Error('Entry not found')

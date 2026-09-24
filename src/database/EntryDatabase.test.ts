@@ -20,6 +20,7 @@ import {openWasmDatabase} from './driver/WasmDatabase.js'
 import {EntryDatabase} from './EntryDatabase.js'
 import {entryDataText, supportsJsonb} from './entry/EntryData.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
+import {databaseVersion} from './Version.js'
 
 function urlAlias(url: string) {
   return {
@@ -341,7 +342,7 @@ test('generated database overlays copy their parent when they first sync', async
   await replacement.close()
 })
 
-test('an unchanged overlay reuses the prepared base search index', async () => {
+test('an unchanged overlay reuses the base search index', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -360,7 +361,6 @@ test('an unchanged overlay reuses the prepared base search index', async () => {
   await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
   const base = new EntryDatabase(config, db)
   await base.syncWith(source)
-  await base.prepareSearch()
   const overlay = await base.overlay(source)
 
   expect(await overlay.find({search: 'Searchable', select: Entry.id})).toEqual([
@@ -840,7 +840,7 @@ test('database mutations propagate shared fields between translations', async ()
   await database.close()
 })
 
-test('search follows synced changes without rebuilding the index', async () => {
+test('sync writes search rows with the entry rows they index', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -869,14 +869,9 @@ test('search follows synced changes without rebuilding the index', async () => {
   await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
   const base = new EntryDatabase(config, db)
   await base.syncWith(source)
-  await base.prepareSearch()
   expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual(['a'])
+  expect(await base.find({search: 'Beta', select: Entry.id})).toEqual(['b'])
 
-  // Corrupting the index proves later results come from in-place updates
-  // rather than a rebuild from the entry table.
-  await db.run(
-    sql`delete from alinea_entry_search where versionId like '%"b"%'`
-  )
   const change = await transaction(source)
   change.add('pages/a.json', encode('a', 'Gamma'))
   change.remove('pages/b.json')
@@ -889,18 +884,23 @@ test('search follows synced changes without rebuilding the index', async () => {
   expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual([])
   expect(await base.find({search: 'Beta', select: Entry.id})).toEqual([])
   expect(await base.find({search: 'Delta', select: Entry.id})).toEqual(['c'])
-  const rows = await db.all<{versionId: string}>(
-    sql`select versionId from alinea_entry_search`
-  )
-  expect(rows.length).toBe(2)
-  const state = await db.get<{revision: string; searchRevision: string}>(
-    sql`select revision, searchRevision from alinea_database_state where id = 1`
-  )
-  expect(state?.searchRevision).toBe(state?.revision)
+  // One search row per entry row, under the same rowid.
+  expect(
+    await db.all(sql`select entry.id, search.title
+      from alinea_entry_index entry
+      left join alinea_entry_search search on search.rowid = entry.rowid
+      order by entry.id`)
+  ).toEqual([
+    {id: 'a', title: 'Gamma'},
+    {id: 'c', title: 'Delta'}
+  ])
+  expect(
+    await db.get(sql`select count(*) as count from alinea_entry_search`)
+  ).toEqual({count: 2})
   await base.close()
 })
 
-test('a reopened database trusts the search index it persisted', async () => {
+test('a reopened database searches the index it persisted', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -921,7 +921,6 @@ test('a reopened database trusts the search index it persisted', async () => {
     await EntryDatabase.createSchema(initial, ReadonlyTree.EMPTY.sha)
     const first = new EntryDatabase(config, initial)
     await first.syncWith(source)
-    await first.prepareSearch()
     expect(await first.find({search: 'Persisted', select: Entry.id})).toEqual([
       'page'
     ])
@@ -999,4 +998,35 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
   } finally {
     await rm(dir, {recursive: true, force: true})
   }
+})
+
+test('databases written with an older layout are rebuilt', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const {source} = await createEntryStore(config, [
+    {id: 'page', type: 'Page', index: 'a', data: {title: 'Page'}}
+  ])
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await new EntryDatabase(config, db).syncWith(source)
+  const entries = () =>
+    db.get(sql`select count(*) as count from alinea_entry_index`)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  expect(await entries()).toEqual({count: 1})
+  // Layouts before version 4 did not record their version.
+  await db.run(sql`alter table alinea_database_metadata drop column version`)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  expect(await entries()).toEqual({count: 0})
+  expect(
+    await db.get(sql`select version from alinea_database_metadata`)
+  ).toEqual({version: databaseVersion})
 })

@@ -1,9 +1,11 @@
+import type {EntryStatus} from '#/core/Entry.js'
 import type {Tree} from '#/core/source/Tree.js'
 import {
   and,
   count,
   eq,
   gt,
+  inArray,
   lt,
   max,
   min,
@@ -75,8 +77,10 @@ function versionFields(entries: EntryIndexTarget) {
 /** Reuse the same INSERT while streaming entries through bounded batches. */
 function insertEntryQuery(entries: EntryIndexTarget, jsonb: boolean) {
   type Row = ReturnType<typeof entryIndexRow>
+  // SQLite assigns the rowid.
+  const {rowid: _, ...columns} = EntryIndexColumns
   const values = Object.fromEntries(
-    Object.keys(EntryIndexColumns).map(name => [name, sql.placeholder(name)])
+    Object.keys(columns).map(name => [name, sql.placeholder(name)])
   ) as {[Key in keyof Row]: Sql<NonNullable<Row[Key]>>}
   if (jsonb) values.data = sql<string>`jsonb(${values.data})`
   return builder.insert(entries).values(values)
@@ -102,7 +106,11 @@ export function prepareSyncQueries(
   /** Store entry data as JSONB, on a SQLite that reads it. */
   jsonb: boolean
 ) {
-  const {entries, state} = target
+  const {entries, state, search} = target
+  const storedVersion = or(
+    inJson(entries.filePath, filePaths),
+    inJson(entries.versionId, versionIds)
+  )
   const activeCount = count(
     when([eq(entries.active, true), sql.value(1)], null)
   )
@@ -133,6 +141,15 @@ export function prepareSyncQueries(
       .$first()
       .prepare(undefined, db),
     insertEntry: insertEntryQuery(entries, jsonb).prepare(undefined, db),
+    /** Index the entry row inserted last, under its rowid. */
+    insertSearch: builder
+      .insert(search)
+      .values({
+        rowid: sql<number>`last_insert_rowid()`,
+        title: sql.placeholder<string>('title'),
+        body: sql.placeholder<string>('body')
+      })
+      .prepare(undefined, db),
     /** Versions stored at these file paths or under these version ids. */
     storedFiles: builder
       .select({
@@ -142,19 +159,20 @@ export function prepareSyncQueries(
         childrenSha: entries.childrenSha
       })
       .from(entries)
-      .where(
-        or(
-          inJson(entries.filePath, filePaths),
-          inJson(entries.versionId, versionIds)
-        )
-      )
+      .where(storedVersion)
       .prepare(undefined, db),
+    /** Delete the versions stored at these file paths or version ids. */
     deleteFiles: builder
       .delete(entries)
+      .where(storedVersion)
+      .prepare(undefined, db),
+    /** Delete the search rows of those versions, before the versions. */
+    deleteSearch: builder
+      .delete(search)
       .where(
-        or(
-          inJson(entries.filePath, filePaths),
-          inJson(entries.versionId, versionIds)
+        inArray(
+          search.rowid,
+          builder.select(entries.rowid).from(entries).where(storedVersion)
         )
       )
       .prepare(undefined, db),
@@ -169,7 +187,7 @@ export function prepareSyncQueries(
       .prepare(undefined, db),
     updateChildrenSha: builder
       .update(entries)
-      .set({childrenSha: sql<string>`${sql.placeholder('sha')}`})
+      .set({childrenSha: sql.placeholder<string>('sha')})
       .where(eq(entries.childrenDir, dir))
       .prepare(undefined, db),
     /** Every version of these entries. */
@@ -204,13 +222,13 @@ export function prepareSyncQueries(
     updateVersion: builder
       .update(entries)
       .set({
-        parentId: sql<string | null>`${sql.placeholder('parentId')}`,
-        parents: sql<Array<string>>`${sql.placeholder('parents')}`,
-        status: sql<never>`${sql.placeholder('status')}`,
-        active: sql<boolean>`${sql.placeholder('active')}`,
-        main: sql<boolean>`${sql.placeholder('main')}`,
-        visible: sql<boolean>`${sql.placeholder('visible')}`,
-        url: sql<string>`${sql.placeholder('url')}`
+        parentId: sql.placeholder<string | null>('parentId'),
+        parents: sql.placeholder<Array<string>>('parents'),
+        status: sql.placeholder<EntryStatus>('status'),
+        active: sql.placeholder<boolean>('active'),
+        main: sql.placeholder<boolean>('main'),
+        visible: sql.placeholder<boolean>('visible'),
+        url: sql.placeholder<string>('url')
       })
       .where(eq(entries.versionId, sql.placeholder<string>('versionId')))
       .prepare(undefined, db),

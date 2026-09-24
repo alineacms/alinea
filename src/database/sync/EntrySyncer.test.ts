@@ -10,9 +10,10 @@ import {Config as AlineaConfig, Field} from '#/index.js'
 import {cms} from '#test/cms.js'
 import {createEntrySource, type EntryFixtureEntry} from '#test/EntryFixture.js'
 import {config as exampleConfig} from '#test/example.js'
-import {asc, eq} from 'rado'
+import {asc, count, eq} from 'rado'
 import {DatabaseStateTable} from '../DatabaseTables.js'
 import {EntryIndexTable} from '../entry/EntryTable.js'
+import {EntrySearchTable} from '../query/Search.js'
 import {EntryDatabase} from '../EntryDatabase.js'
 
 async function expectInvalidEntries(
@@ -333,11 +334,21 @@ async function openRuntime(config: Config) {
   return {sqlite, db, runtime: new EntryDatabase(config, db)}
 }
 
-function storedRows(db: ReturnType<typeof connect>) {
-  return db
-    .select()
+/** Entry rows with their searchable text; rowids follow the write order. */
+async function storedRows(db: ReturnType<typeof connect>) {
+  const rows = await db
+    .select({entry: EntryIndexTable, text: EntrySearchTable.body})
     .from(EntryIndexTable)
+    .innerJoin(
+      EntrySearchTable,
+      eq(EntrySearchTable.rowid, EntryIndexTable.rowid)
+    )
     .orderBy(asc(EntryIndexTable.versionId))
+  // Exactly one search row per entry row.
+  const entries = await db.select(count()).from(EntryIndexTable).get()
+  const search = await db.select(count()).from(EntrySearchTable).get()
+  expect([rows.length, search]).toEqual([entries, entries])
+  return rows.map(({entry: {rowid: _, ...entry}, text}) => ({...entry, text}))
 }
 
 /** Sync incrementally, and expect the rows a full sync of the source writes. */

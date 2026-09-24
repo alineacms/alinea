@@ -257,14 +257,7 @@ export class EntryStore
   ): Promise<CommitRequest> {
     return this.#queue.run(async () => {
       await this.#sync()
-      // Plan through a throwaway overlay of this store.
-      const source = await OverlaySource.create(this.source)
-      const database = await this.database.overlay(source)
-      try {
-        return (await database.apply(mutations, {source, policy})).request
-      } finally {
-        await database.close()
-      }
+      return this.database.plan(mutations, {source: this.source, policy})
     })
   }
 

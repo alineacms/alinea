@@ -46,7 +46,12 @@ import {
   compileFilter,
   jsonField
 } from './Condition.js'
-import {EntrySearchName, searchQuery} from './Search.js'
+import {
+  EntrySearchTable,
+  searchableText,
+  searchQuery,
+  type EntrySearchTarget
+} from './Search.js'
 
 import {linkRelation, relationCondition} from './Relation.js'
 
@@ -71,7 +76,6 @@ interface FieldProjection {
 export interface ProjectionPlan {
   count: boolean
   single: boolean
-  needsSearch: boolean
   relations: Array<RelationProjection>
   fields: Array<FieldProjection>
 }
@@ -87,17 +91,20 @@ class Expressions {
   fields: Array<FieldProjection> = []
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
+  #searchTable: EntrySearchTarget
   #entry: EntryIndexTarget
   #relation?: (query: EdgeQuery) => CompiledRelation
 
   constructor(
     scope: Scope,
     entry: EntryIndexTarget,
+    searchTable: EntrySearchTarget,
     search: ReturnType<typeof searchQuery> | undefined,
     relation?: (query: EdgeQuery) => CompiledRelation
   ) {
     this.#scope = scope
     this.#entry = entry
+    this.#searchTable = searchTable
     this.#search = search
     this.#relation = relation
   }
@@ -113,6 +120,11 @@ class Expressions {
 
   index(name: string, path?: Array<string>, selecting = false): HasSql {
     if (path) return this.data([...path, name], selecting)
+    if (name === 'searchableText') {
+      const text = searchableText(this.#entry, this.#searchTable)
+      // Relations select fields by name.
+      return selecting ? text.as(name) : text
+    }
     if (Object.hasOwn(this.#entry, name))
       return this.#entry[name as keyof EntryIndexTarget] as HasSql
     const expr = EntryExpressions[name as keyof typeof EntryExpressions]
@@ -241,7 +253,7 @@ interface EntryQueryOptions {
   entry?: EntryIndexTarget
   depth?: number
   baseEntry?: EntryIndexTarget
-  searchName?: string
+  searchTable?: EntrySearchTarget
 }
 
 export function compileEntryQuery(
@@ -254,13 +266,13 @@ export function compileEntryQuery(
     entry = EntryIndexTable,
     depth = 0,
     baseEntry = entry,
-    searchName = EntrySearchName
+    searchTable = EntrySearchTable
   } = options
-  const search = options.search ?? searchQuery(query.search, entry, searchName)
+  const search = options.search ?? searchQuery(query.search, entry, searchTable)
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const membership = new Expressions(scope, entry, search)
+  const membership = new Expressions(scope, entry, searchTable, search)
   const queryTypes: Array<Type> = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
@@ -375,7 +387,7 @@ export function compileEntryQuery(
     ordering.push(asc(when([eq(entry.locale, source.locale), 0], 1)))
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
-  const projection = new Expressions(scope, entry, search, relationQuery => {
+  function relation(relationQuery: EdgeQuery): CompiledRelation {
     const nestedEntry = alias(baseEntry, `alinea_relation_${depth + 1}`)
     const {rows, plan} = compileEntryQuery(
       config,
@@ -385,7 +397,7 @@ export function compileEntryQuery(
         entry: nestedEntry,
         depth: depth + 1,
         baseEntry,
-        searchName
+        searchTable
       }
     )
     if (plan.count) {
@@ -401,7 +413,14 @@ export function compileEntryQuery(
       selection: plan.single ? include.one(rows) : include(rows),
       plan
     }
-  })
+  }
+  const projection = new Expressions(
+    scope,
+    entry,
+    searchTable,
+    search,
+    relation
+  )
   const selection = query.count
     ? entry.versionId
     : projection.projection(
@@ -473,9 +492,6 @@ export function compileEntryQuery(
   const plan: ProjectionPlan = {
     count: query.count === true,
     single,
-    needsSearch:
-      query.search !== undefined ||
-      projection.relations.some(relation => relation.plan.needsSearch),
     relations: projection.relations,
     fields: projection.fields
   }

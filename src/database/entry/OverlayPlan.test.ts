@@ -232,7 +232,6 @@ test('overlay queries read indexed tables and answer as a plain database', async
   await EntryDatabase.createSchema(db, 'empty')
   const database = new EntryDatabase(config, db)
   await database.syncWith(await source(base))
-  await database.prepareSearch()
 
   /** Resolve through a layer, recording the entry reads of every query. */
   async function recorded(layer: EntryLayer) {
