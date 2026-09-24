@@ -10,4 +10,5 @@ export namespace ListRow {
   export const id = '_id' satisfies keyof ListRow
   export const index = '_index' satisfies keyof ListRow
   export const type = '_type' satisfies keyof ListRow
+  export const label = '_label' satisfies keyof ListRow
 }

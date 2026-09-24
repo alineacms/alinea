@@ -37,6 +37,30 @@ test('infers stored gallery content separately from resolved images', () => {
   })
 })
 
+test('infers custom labels on queried links', () => {
+  const Navigation = Config.type('Navigation', {
+    fields: {
+      link: Field.link('Link'),
+      links: Field.link.multiple('Links'),
+      entry: Field.entry('Entry'),
+      image: Field.image('Image')
+    }
+  })
+  type Navigation = Infer<typeof Navigation>
+  expectTypeOf<Navigation['link']['_label']>().toEqualTypeOf<
+    string | undefined
+  >()
+  expectTypeOf<Navigation['links'][number]['_label']>().toEqualTypeOf<
+    string | undefined
+  >()
+  expectTypeOf<Navigation['entry']['_label']>().toEqualTypeOf<
+    string | undefined
+  >()
+  expectTypeOf<Navigation['image']['_label']>().toEqualTypeOf<
+    string | undefined
+  >()
+})
+
 test('preserves custom stored fields for single and multiple link editors', () => {
   const fields = {
     image: Field.image('Image', {fields: customFields}),

@@ -44,6 +44,7 @@ export function urlPicker<Fields>(
         [UrlReference.title]: title,
         [UrlReference.target]: target,
         [ListRow.index]: index,
+        [ListRow.label]: label,
         ...fields
       } = row as UrlReference & ListRow
       const fieldKeys = keys(fields)
