@@ -112,3 +112,21 @@ test('folds a single item', async ({mount, page}) => {
   await hero.getByRole('button', {name: 'Expand Hero'}).click()
   await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
 })
+
+test('reorders rows by dragging', async ({mount, page}) => {
+  await mount(<Example />)
+  await page.getByRole('button', {name: 'Collapse all items'}).first().click()
+  const rows = page.getByRole('list', {name: 'Sections'}).getByRole('listitem')
+  const target = (await rows.nth(1).boundingBox())!
+  const handle = (await page
+    .getByLabel('Drag Hero item 1', {exact: true})
+    .boundingBox())!
+  await page.mouse.move(handle.x + 4, handle.y + 4)
+  await page.mouse.down()
+  await page.mouse.move(target.x + 20, target.y + target.height - 4, {
+    steps: 10
+  })
+  await page.mouse.up()
+  await expect(rows.first()).toHaveAccessibleName('Quote item 1')
+  await expect(rows.nth(1)).toHaveAccessibleName('Hero item 2')
+})
