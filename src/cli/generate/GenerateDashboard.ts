@@ -46,6 +46,7 @@ export async function generateDashboard(
     inject: ['alinea/cli/util/WarnPublicEnv'],
     alias: {
       'alinea/next': 'alinea/core',
+      'alinea/server': 'alinea/core',
       '#alinea/config': configLocation
     },
     external: ['@alinea/generated'],

@@ -117,7 +117,7 @@ export async function init(options: InitOptions) {
   }
   const isNext = options.next ?? false
   const configFileContents = isNext
-    ? configFile.replaceAll('alinea/core', 'alinea/next')
+    ? configFile.replaceAll('alinea/server', 'alinea/next')
     : configFile
   const hasSrcDir = await fs.access(path.join(cwd, 'src')).then(
     () => true,

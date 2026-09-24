@@ -7,8 +7,12 @@ import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
 const apiKey = 'preview-secret'
 
-const [{createCMS}, {createHandlerWithDatabase, handlerPathname}] =
-  await Promise.all([import('./cms.js'), import('./handler.js')])
+const [{createCMS}, {createHandlerWithDatabase}, {handlerPathname}] =
+  await Promise.all([
+    import('./cms.js'),
+    import('./handler.js'),
+    import('#/adapter/core/ServerHandler.js')
+  ])
 
 const Page = Config.document('Page', {fields: {}})
 const cms = createCMS({

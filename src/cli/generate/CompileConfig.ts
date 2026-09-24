@@ -20,7 +20,7 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
     target: 'esnext',
     treeShaking: true,
     bundle: true,
-    alias: {'alinea/next': 'alinea/core'},
+    alias: {'alinea/next': 'alinea/core', 'alinea/server': 'alinea/core'},
     packages: 'external',
     logOverride: {
       'ignored-bare-import': 'silent'

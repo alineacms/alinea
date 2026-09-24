@@ -29,7 +29,7 @@ function headers() {
 
 mock.module('next/headers', headers)
 mock.module('next/headers.js', headers)
-mock.module('#/adapter/next/context.js', () => ({
+mock.module('#/adapter/core/context.js', () => ({
   requestContext: async () => ({
     isDev: false,
     handlerUrl: nextMocks.handlerUrl,

@@ -72,7 +72,8 @@ export async function serve(options: ServeOptions): Promise<void> {
             ALINEA_ADMIN_PATH: Config.adminPath(config),
             ALINEA_HANDLER_URL: Config.handlerUrl(config),
             ALINEA_API_KEY: apiKey,
-            ALINEA_GENERATED_DATABASE: databasePath
+            ALINEA_GENERATED_DATABASE: databasePath,
+            ...(cmd === 'build' ? {ALINEA_BUILD: 'true'} : {})
           })
         })
       }

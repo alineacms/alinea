@@ -95,6 +95,7 @@ export function createLocalServer(
   plugins.push(viewsPlugin(rootDir, cms), ignorePlugin)
   const alias: Record<string, string> = {
     'alinea/next': 'alinea/core',
+    'alinea/server': 'alinea/core',
     '#alinea/config': configLocation,
     '#alinea/entry': `data:text/javascript,
         export * from '#alinea/config'
