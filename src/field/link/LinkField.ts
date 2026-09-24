@@ -11,6 +11,8 @@ import type {
   EdgeEntry,
   GraphQuery,
   IncludeGuard,
+  PickModifiers,
+  QueryModifiers,
   SelectionGuard,
   TypeGuard
 } from '#/core/Graph.js'
@@ -55,7 +57,8 @@ export class LinkField<
     Include extends IncludeGuard = undefined
   >(
     query: GraphQuery<Selection, Type, Include>
-  ): GraphQuery<Selection, Type, Include> & EdgeEntry & {first: true} {
+  ): GraphQuery<NoInfer<Selection>, NoInfer<Type>, NoInfer<Include>> &
+    EdgeEntry & {first: true} {
     return {edge: 'entrySingle', first: true, field: this, ...query}
   }
 }
@@ -108,10 +111,13 @@ export class LinksField<
   find<
     Selection extends SelectionGuard = undefined,
     Type extends TypeGuard = undefined,
-    Include extends IncludeGuard = undefined
+    Include extends IncludeGuard = undefined,
+    Modifiers extends QueryModifiers = {}
   >(
-    query: GraphQuery<Selection, Type, Include>
-  ): GraphQuery<Selection, Type, Include> & EdgeEntries {
+    query: GraphQuery<Selection, Type, Include> & Modifiers
+  ): GraphQuery<NoInfer<Selection>, NoInfer<Type>, NoInfer<Include>> &
+    EdgeEntries &
+    PickModifiers<NoInfer<Modifiers>> {
     return {edge: 'entryMultiple', field: this, ...query}
   }
 
@@ -121,7 +127,8 @@ export class LinksField<
     Include extends IncludeGuard = undefined
   >(
     query?: GraphQuery<Selection, Type, Include>
-  ): GraphQuery<Selection, Type, Include> & EdgeEntries & {first: true} {
+  ): GraphQuery<NoInfer<Selection>, NoInfer<Type>, NoInfer<Include>> &
+    EdgeEntries & {first: true} {
     return {edge: 'entryMultiple', first: true, field: this, ...query}
   }
 
@@ -131,7 +138,8 @@ export class LinksField<
     Include extends IncludeGuard = undefined
   >(
     query?: GraphQuery<Selection, Type, Include>
-  ): GraphQuery<Selection, Type, Include> & EdgeEntries & {count: true} {
+  ): GraphQuery<NoInfer<Selection>, NoInfer<Type>, NoInfer<Include>> &
+    EdgeEntries & {count: true} {
     return {edge: 'entryMultiple', count: true, field: this, ...query}
   }
 }

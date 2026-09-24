@@ -24,6 +24,7 @@ export function CheckFieldView({field}: CheckFieldViewProps) {
     >
       <div className={styles.checkline()}>
         <Checkbox
+          autoFocus={options.autoFocus}
           checked={Boolean(value)}
           disabled={options.readOnly}
           onCheckedChange={setValue}

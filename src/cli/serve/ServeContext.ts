@@ -5,7 +5,6 @@ export interface ServeContext {
   cmd: 'dev' | 'build'
   configLocation: string
   rootDir: string
-  base: string | undefined
   staticDir: string
   alineaDev: boolean
   buildOptions: BuildOptions

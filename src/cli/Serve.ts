@@ -14,7 +14,6 @@ const __dirname = dirname(import.meta.url)
 export interface ServeOptions {
   cmd: 'dev' | 'build'
   cwd?: string
-  base?: string
   staticDir?: string
   configFile?: string
   port?: number
@@ -27,7 +26,6 @@ export interface ServeOptions {
 export async function serve(options: ServeOptions): Promise<void> {
   const {
     cwd = process.cwd(),
-    base,
     staticDir = path.join(__dirname, 'static'),
     cmd
   } = options
@@ -43,7 +41,6 @@ export async function serve(options: ServeOptions): Promise<void> {
   try {
     devServer = await createDevServer(cwd, {
       cmd,
-      base,
       staticDir,
       configFile: options.configFile,
       alineaDev: options.alineaDev,

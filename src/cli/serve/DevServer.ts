@@ -30,7 +30,6 @@ interface LocalServer {
 
 export interface CreateDevServerOptions {
   cmd: 'dev' | 'build'
-  base?: string
   staticDir?: string
   configFile?: string
   buildOptions?: BuildOptions
@@ -56,7 +55,6 @@ export async function createDevServer(
 ): Promise<DevServer> {
   const {
     cmd,
-    base,
     configFile,
     staticDir = path.join(__dirname, '..', 'static'),
     alineaDev = false,
@@ -78,7 +76,6 @@ export async function createDevServer(
     cmd,
     configLocation,
     rootDir,
-    base,
     staticDir,
     alineaDev,
     buildOptions: options.buildOptions || {},

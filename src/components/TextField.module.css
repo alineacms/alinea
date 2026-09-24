@@ -2,6 +2,30 @@
   display: block;
 }
 
+.TextFieldGroup {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.TextFieldGroup-icon {
+  position: absolute;
+  /* Centered on the first line: border + padding + (line-height - 1em) / 2 */
+  top: calc(9px + 0.25em);
+  z-index: 1;
+  font-size: var(--alinea-font-size-base);
+  color: var(--alinea-fg-muted);
+  pointer-events: none;
+
+  &.is-start {
+    left: 10px;
+  }
+
+  &.is-end {
+    right: 10px;
+  }
+}
+
 .TextFieldGrow {
   display: grid;
   width: 100%;
@@ -59,6 +83,14 @@
     resize: none;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+  }
+
+  &.is-start {
+    padding-left: calc(20px + 1em);
+  }
+
+  &.is-end {
+    padding-right: calc(20px + 1em);
   }
 
   &.is-shadow {

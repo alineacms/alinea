@@ -15,6 +15,7 @@ import {
 } from '#/picker/url.js'
 
 export interface UrlLink<InferredFields = undefined> extends UrlReference {
+  url: string
   href: string
   title: string
   target: string

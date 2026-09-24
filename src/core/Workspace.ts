@@ -1,6 +1,7 @@
 import type {Preview} from '#/core/Preview.js'
 import type {ComponentType} from 'react'
 import {
+  getRoot,
   getWorkspace,
   hasWorkspace,
   type HasWorkspace,
@@ -64,8 +65,12 @@ export namespace Workspace {
     throw new Error('Workspace has no media root')
   }
 
+  /** The first root marked `openByDefault`, or the first root */
   export function defaultRoot(workspace: Workspace): string {
-    return Object.keys(getWorkspace(workspace).roots)[0]
+    const {roots} = getWorkspace(workspace)
+    for (const [name, root] of entries(roots))
+      if (getRoot(root).openByDefault) return name
+    return Object.keys(roots)[0]
   }
 
   export function validate(workspace: Workspace, schema: Schema) {

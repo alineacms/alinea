@@ -12,6 +12,7 @@ export function TimeFieldView({field}: TimeFieldViewProps) {
   const error = useFieldError(field)
   return (
     <TimeInput
+      autoFocus={options.autoFocus}
       description={options.help}
       error={error}
       hourCycle={24}

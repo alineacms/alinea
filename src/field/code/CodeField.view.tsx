@@ -31,6 +31,8 @@ export interface CodeEditorInputProps {
   invalid?: boolean
   isRequired?: boolean
   label?: ReactNode
+  /** Language of the code, `text` or `plaintext` disables highlighting */
+  language?: string
   shared?: boolean
   onValueChange: (value: string) => void
   onBlur?: () => void
@@ -38,6 +40,12 @@ export interface CodeEditorInputProps {
   placeholder?: string
   readOnly?: boolean
   value: string
+}
+
+const plainTextLanguages = new Set(['text', 'plaintext', 'txt', 'plain'])
+
+function renderPlainCode(value: string) {
+  return value
 }
 
 function renderHighlightedCode(value: string) {
@@ -56,10 +64,11 @@ export function CodeEditorInput({
   autoFocus,
   description,
   errorMessage,
-  highlight = renderHighlightedCode,
+  highlight,
   invalid = false,
   isRequired,
   label,
+  language,
   shared,
   onBlur,
   onFocus,
@@ -69,6 +78,10 @@ export function CodeEditorInput({
   value
 }: CodeEditorInputProps) {
   const inputId = useId()
+  const isPlainText =
+    language !== undefined && plainTextLanguages.has(language.toLowerCase())
+  const highlightCode =
+    highlight ?? (isPlainText ? renderPlainCode : renderHighlightedCode)
   return (
     <Field
       htmlFor={inputId}
@@ -81,13 +94,14 @@ export function CodeEditorInput({
       <div
         className={styles.CodeEditorInput()}
         data-invalid={invalid || undefined}
+        data-language={language}
         data-read-only={readOnly || undefined}
       >
         <SimpleCodeEditor
           autoFocus={autoFocus}
           className={styles.CodeEditorInput.editor()}
           disabled={readOnly}
-          highlight={highlight}
+          highlight={highlightCode}
           onBlur={onBlur}
           onFocus={onFocus}
           onValueChange={onValueChange}
@@ -115,6 +129,7 @@ export function CodeFieldView({field}: CodeFieldViewProps) {
       errorMessage={error}
       isRequired={options.required}
       label={options.label}
+      language={options.language}
       shared={options.shared}
       onValueChange={setValue}
       placeholder={options.inline ? String(options.label) : undefined}

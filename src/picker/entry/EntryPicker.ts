@@ -1,7 +1,7 @@
 import type {EntryFields} from '#/core/EntryFields.js'
 import {Entry} from '#/core/Entry.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
-import type {Filter} from '#/core/Filter.js'
+import type {OpenFilter} from '#/core/Filter.js'
 import type {Graph, Projection} from '#/core/Graph.js'
 import type {Label} from '#/core/Label.js'
 import type {Picker} from '#/core/Picker.js'
@@ -46,8 +46,12 @@ export interface EntryPickerConditions {
   pickChildren?: boolean
   /** Set the initial location in which the entry picker is opened */
   location?: DynamicOption<EditorLocation>
-  /** Filter entries by a condition, shown as a flat list across all locations */
-  condition?: DynamicOption<Filter<EntryFields>>
+  /**
+   * Filter entries by a condition, shown as a flat list across all locations.
+   * Filter on entry properties such as `_type` or on the fields of the
+   * entries that can be picked.
+   */
+  condition?: DynamicOption<OpenFilter<EntryFields>>
   /** Limit the entry picker to an array of workspace and root locations */
   limitLocations?: Array<EditorLimitLocation>
   /** @internal Start the entry picker at its selected location */
@@ -130,7 +134,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       const version = typeof rest.hash === 'string' ? rest.hash : undefined
       const versionedSrc =
         typeof src === 'string' ? MediaLocation.versionedUrl(src, version) : src
-      assign(row, rest, {extension, src: versionedSrc})
+      assign(row, rest, {extension, src: versionedSrc, url: versionedSrc})
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
     }
   }

@@ -1,16 +1,24 @@
 import styler from '@alinea/styler'
-import {type FocusEvent, type KeyboardEvent, type Ref, useState} from 'react'
+import {
+  type FocusEvent,
+  type KeyboardEvent,
+  type ReactElement,
+  type Ref,
+  useState
+} from 'react'
 import {
   Input,
   TextArea,
   TextField as TextFieldPrimitive
 } from 'react-aria-components'
 import {Field} from './Field.js'
+import {Icon} from './Icon.js'
 import css from './TextField.module.css'
 import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
+  IconType,
   StyleProps
 } from './types.js'
 
@@ -29,6 +37,10 @@ export interface TextFieldProps
   multiline?: boolean
   /** Minimum number of rows of a multiline field */
   rows?: number
+  /** Icon displayed inside the input, before the text */
+  startIcon?: IconType | ReactElement
+  /** Icon displayed inside the input, after the text */
+  endIcon?: IconType | ReactElement
   name?: string
   autoFocus?: boolean
   autoComplete?: string
@@ -58,6 +70,8 @@ export function TextField({
   type = 'text',
   multiline,
   rows = 1,
+  startIcon,
+  endIcon,
   autoComplete,
   maxLength,
   minLength,
@@ -88,6 +102,7 @@ export function TextField({
     onFocus,
     onKeyDown
   }
+  const adornments = {start: Boolean(startIcon), end: Boolean(endIcon)}
   return (
     <TextFieldPrimitive
       data-slot="text-field"
@@ -115,30 +130,49 @@ export function TextField({
         icon={icon}
         shared={shared}
       >
-        {multiline ? (
-          <div data-slot="text-field-grow" className={styles.TextFieldGrow()}>
-            <TextArea
+        <div data-slot="text-field-group" className={styles.TextFieldGroup()}>
+          {startIcon && (
+            <Icon
+              data-slot="text-field-start-icon"
+              icon={startIcon}
+              className={styles.TextFieldGroup.icon({start: true})}
+            />
+          )}
+          {multiline ? (
+            <div data-slot="text-field-grow" className={styles.TextFieldGrow()}>
+              <TextArea
+                data-slot="text-field-control"
+                {...inputProps}
+                {...control}
+                rows={rows}
+                className={styles.TextFieldControl(adornments)}
+              />
+              <div
+                aria-hidden="true"
+                className={styles.TextFieldControl({
+                  ...adornments,
+                  shadow: true
+                })}
+              >
+                {`${current || placeholder || ''} `}
+              </div>
+            </div>
+          ) : (
+            <Input
               data-slot="text-field-control"
               {...inputProps}
               {...control}
-              rows={rows}
-              className={styles.TextFieldControl()}
+              className={styles.TextFieldControl(adornments)}
             />
-            <div
-              aria-hidden="true"
-              className={styles.TextFieldControl({shadow: true})}
-            >
-              {`${current || placeholder || ''} `}
-            </div>
-          </div>
-        ) : (
-          <Input
-            data-slot="text-field-control"
-            {...inputProps}
-            {...control}
-            className={styles.TextFieldControl()}
-          />
-        )}
+          )}
+          {endIcon && (
+            <Icon
+              data-slot="text-field-end-icon"
+              icon={endIcon}
+              className={styles.TextFieldGroup.icon({end: true})}
+            />
+          )}
+        </div>
       </Field>
     </TextFieldPrimitive>
   )

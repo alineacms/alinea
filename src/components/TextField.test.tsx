@@ -1,5 +1,6 @@
 import {cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
+import type {SVGProps} from 'react'
 import {TextField} from './TextField.js'
 
 afterEach(cleanup)
@@ -37,4 +38,19 @@ test('TextField keeps typed text when uncontrolled', () => {
   expect(input.value).toBe('Ada')
   fireEvent.change(input, {target: {value: 'Grace'}})
   expect(input.value).toBe('Grace')
+})
+
+test('TextField renders start and end icons', () => {
+  function Start(props: SVGProps<SVGSVGElement>) {
+    return <svg data-testid="start" {...props} />
+  }
+  function End(props: SVGProps<SVGSVGElement>) {
+    return <svg data-testid="end" {...props} />
+  }
+  render(<TextField label="Name" startIcon={Start} endIcon={End} />)
+  const start = screen.getByTestId('start')
+  const end = screen.getByTestId('end')
+  expect(start.getAttribute('data-slot')).toBe('text-field-start-icon')
+  expect(end.getAttribute('data-slot')).toBe('text-field-end-icon')
+  expect(start.getAttribute('aria-hidden')).toBe('true')
 })

@@ -1,5 +1,9 @@
 import {useState} from 'react'
-import {IcRoundDescription} from '#/dashboard/icons.js'
+import {
+  IcRoundDescription,
+  IcRoundLink,
+  IcRoundSearch
+} from '#/dashboard/icons.js'
 import {TextField} from './TextField.js'
 
 const column = {
@@ -60,6 +64,19 @@ export function States() {
       />
       <TextField disabled label="Disabled" defaultValue="Disabled text" />
       <TextField readOnly label="Read-only" defaultValue="Read-only text" />
+    </div>
+  )
+}
+
+export function Icons() {
+  return (
+    <div style={column}>
+      <TextField
+        label="Search"
+        placeholder="Search entries"
+        startIcon={IcRoundSearch}
+      />
+      <TextField label="Website" type="url" endIcon={IcRoundLink} />
     </div>
   )
 }

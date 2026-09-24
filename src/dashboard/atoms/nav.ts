@@ -210,7 +210,12 @@ export const pageAtom = atom((get): Page => {
         policy.canRead({workspace, root})
       )
     : []
-  const root = route.root && roots.includes(route.root) ? route.root : roots[0]
+  // Without a requested root, open the first root marked openByDefault
+  const defaultRoot =
+    roots.find(key => getRoot(workspaceConfig!.roots[key]).openByDefault) ??
+    roots[0]
+  const root =
+    route.root && roots.includes(route.root) ? route.root : defaultRoot
   const rootConfig = workspaceConfig?.roots[root]
   const i18n = rootConfig ? getRoot(rootConfig).i18n : undefined
   const locale =

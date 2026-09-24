@@ -14,6 +14,7 @@ export function DateFieldView({field}: DateFieldViewProps) {
   return (
     <DatePicker
       locale="en-GB"
+      autoFocus={options.autoFocus}
       description={options.help}
       error={error}
       required={options.required}

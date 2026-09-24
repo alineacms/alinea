@@ -1,4 +1,4 @@
-import {init} from '#/cli/Init.js'
+import {detectPm, init, PM, patchPackageJson} from '#/cli/Init.js'
 import {suite} from '@alinea/suite'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -65,3 +65,38 @@ if (testPms) {
     test.is(config.includes('mediaUrl'), false)
   })
 }
+
+test('patchPackageJson keeps indentation', () => {
+  const source =
+    '{\n    "scripts": {\n        "dev": "next dev",\n        "build": "next build"\n    }\n}\n'
+  const patched = patchPackageJson(source)!
+  test.is(
+    patched.source,
+    '{\n    "scripts": {\n        "dev": "alinea dev -- next dev",\n        "build": "alinea build -- next build"\n    }\n}\n'
+  )
+})
+
+test('patchPackageJson handles minified package.json', () => {
+  const patched = patchPackageJson(
+    '{"dependencies":{"next":"15"},"scripts":{"dev":"next dev"}}'
+  )!
+  test.is(
+    patched.source,
+    '{"dependencies":{"next":"15"},"scripts":{"dev":"alinea dev -- next dev"}}'
+  )
+})
+
+test('patchPackageJson does not patch twice', () => {
+  const source = '{"scripts":{"dev":"alinea dev -- next dev"}}'
+  test.is(patchPackageJson(source)!.source, source)
+  test.is(patchPackageJson('not json'), undefined)
+})
+
+test('detectPm detects bun.lock', async () => {
+  const cwd = path.join(process.cwd(), 'dist/.init-pm')
+  await fs.rm(cwd, {recursive: true}).catch(() => {})
+  await fs.mkdir(cwd, {recursive: true})
+  test.is(await detectPm(cwd), PM.NPM)
+  await fs.writeFile(path.join(cwd, 'bun.lock'), '')
+  test.is(await detectPm(cwd), PM.Bun)
+})

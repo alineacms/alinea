@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, Multiline, States} from './TextField.stories.js'
+import {Example, Icons, Multiline, States} from './TextField.stories.js'
 
 test('labels the input and reports its value', async ({mount, page}) => {
   await mount(<Example />)
@@ -43,4 +43,16 @@ test('reflects required, invalid, disabled and read-only', async ({
     'readonly',
     ''
   )
+})
+
+test('renders start and end icons inside the input', async ({mount, page}) => {
+  await mount(<Icons />)
+  const search = page.getByRole('textbox', {name: 'Search'})
+  const startIcon = page.locator('[data-slot="text-field-start-icon"]')
+  await expect(startIcon).toBeVisible()
+  const inputBox = (await search.boundingBox())!
+  const iconBox = (await startIcon.boundingBox())!
+  expect(iconBox.x).toBeGreaterThan(inputBox.x)
+  expect(iconBox.x + iconBox.width).toBeLessThan(inputBox.x + inputBox.width)
+  await expect(page.locator('[data-slot="text-field-end-icon"]')).toBeVisible()
 })

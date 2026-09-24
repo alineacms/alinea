@@ -32,6 +32,22 @@ export type Condition<Value> = [Value] extends [Primitive]
     ? ArrayOps<Value[0]>
     : ObjectOps<Value>
 
+/** A condition on a field whose type is not known */
+export type AnyCondition =
+  | Primitive
+  | Ops<unknown>
+  | ArrayOps<unknown>
+  | ObjectOps<unknown>
+
+/**
+ * A filter on known fields that also accepts conditions on any other field,
+ * for example the fields of the entry types an entry picker can select
+ */
+export type OpenFilter<Fields> =
+  | {and: Array<OpenFilter<Fields> | undefined>}
+  | {or: Array<OpenFilter<Fields> | undefined>}
+  | (FieldOps<Fields> & {[field: string]: AnyCondition | undefined})
+
 type AndCondition<Fields> = {and: Array<Filter<Fields> | undefined>}
 type OrCondition<Fields> = {or: Array<Filter<Fields> | undefined>}
 

@@ -179,9 +179,12 @@ test('SQL grouping picks representatives before sorting', async () => {
     take: 2
   })
   expect(await plan.rows.all(db)).toEqual(['02', '00'])
-  expect(() => compileEntryQuery(config, {groupBy: [Page.title]})).toThrow(
-    'groupBy must be a single field'
-  )
+  expect(() =>
+    compileEntryQuery(config, {
+      // @ts-expect-error groupBy takes a single field
+      groupBy: [Page.title]
+    })
+  ).toThrow('groupBy must be a single field')
 })
 
 test('SQL alias projections use metadata aliases and ignore non-URL rows', async () => {

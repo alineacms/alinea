@@ -40,6 +40,8 @@ export const TextFieldView = memo(function TextFieldView({
         options.placeholder ?? (options.inline ? options.label : undefined)
       }
       type={options.type}
+      startIcon={options.iconLeft}
+      endIcon={options.iconRight}
     />
   )
 })

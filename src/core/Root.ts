@@ -10,7 +10,15 @@ import {Type} from './Type.js'
 import type {View} from './View.js'
 
 export interface RootI18n {
+  /** The locales entries in this root are translated into, the first is the default */
   locales: ReadonlyArray<string>
+  /**
+   * Locales to try, in order, when a per-locale value is empty for the
+   * requested locale. Used by `Config.media({i18n})` to pick the alt text of
+   * images. It does not affect which entry version a query returns: content
+   * roots store a separate entry per locale and a query for a locale without
+   * a translation returns nothing.
+   */
   fallback?: (requested: string) => ReadonlyArray<string>
 }
 
@@ -19,7 +27,7 @@ export interface RootMeta {
   contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
   orderChildrenBy?: OrderBy | Array<OrderBy>
-  /** Open this root in the sidebar content tree by default */
+  /** Open this root when the workspace is opened without a specific root */
   openByDefault?: boolean
   icon?: ComponentType
   i18n?: RootI18n
