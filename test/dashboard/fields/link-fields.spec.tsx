@@ -366,6 +366,8 @@ test('adds the same entry to a multiple link field more than once', async ({
     await expect(alpha).toBeVisible()
     await expect(alpha).not.toHaveAttribute('aria-selected', 'true')
     await alpha.click()
+    await expect(picker.getByText('1 item selected')).toBeVisible()
+    await picker.getByRole('button', {name: 'Select', exact: true}).click()
     await expect(picker).toBeHidden()
   }
 
