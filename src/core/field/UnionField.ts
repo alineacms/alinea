@@ -3,6 +3,7 @@ import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {type UnionMutator, UnionRow} from '../UnionRow.js'
 import {entries} from '../util/Objects.js'
+import {validateType} from '../Validation.js'
 
 export class UnionField<
   StoredValue extends UnionRow,
@@ -36,6 +37,15 @@ export class UnionField<
         if (!value) return ''
         const type = schema?.[value[UnionRow.type]]
         return type ? Type.searchableText(type, value) : ''
+      },
+      nestedErrors(value, context) {
+        if (!value) return []
+        const type = schema?.[value[UnionRow.type]]
+        if (!type) return []
+        return validateType(type, value, {
+          ...context,
+          labels: [...context.labels, Type.label(type)]
+        })
       },
       references(value, context) {
         const result = customReferences?.(value, context) ?? []

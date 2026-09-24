@@ -1,6 +1,7 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
 import type {EntryReference} from '#/core/db/EntryReference.js'
+import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
@@ -18,6 +19,11 @@ import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
+import {
+  type FieldValidationError,
+  policyFieldOptions,
+  validateEntry
+} from '#/core/Validation.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
@@ -396,6 +402,42 @@ export class EntryLocaleAtoms {
     })
   })
 
+  /**
+   * Field validation errors of the edited values. Publishing is blocked while
+   * there are any, drafts can be saved with errors.
+   */
+  errors = dispense((node: ReactiveNode<object>) =>
+    atom((get): Array<FieldValidationError> => {
+      if (node.readOnly) return []
+      const data = get(this.entry.data)
+      const config = get(configAtom)
+      const type = config.schema[data.type]
+      assert(type, `Type "${data.type}" not found in config`)
+      return validateEntry(type, get(node.value), {
+        locale: this.requestedLocale,
+        fieldOptions: policyFieldOptions(config, get(policyAtom), {
+          workspace: data.workspace,
+          root: data.root,
+          type: data.type,
+          id: data.id,
+          parents: data.parents.map(parent => parent.id),
+          locale: this.requestedLocale
+        })
+      })
+    })
+  )
+
+  #assertValid(get: Getter, node: ReactiveNode<object>) {
+    const errors = get(this.errors(node))
+    if (errors.length === 0) return
+    const title = (get(node.value) as Record<string, unknown>).title
+    throw new EntryValidationError({
+      entryId: this.entry.id,
+      title: typeof title === 'string' ? title : undefined,
+      errors
+    })
+  }
+
   saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const dataState = get(this.entry.data)
     const {id, type} = dataState
@@ -448,6 +490,7 @@ export class EntryLocaleAtoms {
       get(userAtom)
     )
     policy.assert(Permission.Publish, activeEntry)
+    this.#assertValid(get, node)
     const saved = await graph.create({
       type: typeConfig,
       id,
@@ -485,6 +528,7 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const type = config.schema[dataState.type]
     assert(type, `Type "${dataState.type}" not found in config`)
+    if (!config.enableDrafts) this.#assertValid(get, node)
     const {checkpoint, data} = prepareData(
       get,
       node,

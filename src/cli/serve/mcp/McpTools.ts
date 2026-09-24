@@ -18,6 +18,7 @@ import {Schema} from '#/core/Schema.js'
 import {textDocToMarkdown} from '#/core/text/TextDocToMarkdown.js'
 import type {TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
+import {formatFieldPath, validateEntry} from '#/core/Validation.js'
 import type {User} from '#/core/User.js'
 import {entries, isRecord, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
@@ -280,6 +281,26 @@ export function createContentTools(
         'Drafts are not enabled in this config (enableDrafts), save with publish: true'
       )
     return 'draft'
+  }
+
+  /** Published versions must pass field validation, like the dashboard */
+  function checkPublishable(
+    type: Type,
+    data: Record<string, unknown>,
+    locale: string | null,
+    canSaveDraft = true
+  ) {
+    const errors = validateEntry(type, data, {locale})
+    if (errors.length === 0) return
+    const draft =
+      canSaveDraft && config.enableDrafts
+        ? ', or pass publish: false to save a draft'
+        : ''
+    fail(
+      `Cannot publish, fix these fields first${draft}:\n${errors
+        .map(error => `- data.${formatFieldPath(error.path)}: ${error.message}`)
+        .join('\n')}`
+    )
   }
 
   async function checkReferences(input: EntryInput) {
@@ -914,6 +935,7 @@ export function createContentTools(
             now: new Date()
           }
         )
+        if (status === 'published') checkPublishable(type, prepared, locale)
         const parentType = parentId
           ? await graph.first({
               id: parentId,
@@ -1006,6 +1028,8 @@ export function createContentTools(
           user: options.user,
           now: new Date()
         })
+        if (status === 'published')
+          checkPublishable(type, prepared, current.locale)
         // The mutation the dashboard's save sends (graph.create with
         // overwrite), without re-initializing the values of every field
         await graph.mutate([
@@ -1192,6 +1216,14 @@ export function createContentTools(
             : undefined
         if (!from)
           return {id, locale, status: 'published', note: 'Already published'}
+        const pending = (await graph.first({
+          id,
+          locale,
+          status: from,
+          select: {type: Entry.type, data: Entry.data}
+        })) as {type: string; data: Record<string, unknown>} | null
+        if (pending && schema[pending.type])
+          checkPublishable(schema[pending.type], pending.data, locale, false)
         await graph.publish({id, locale, status: from})
         return {id, locale, status: 'published', from}
       }

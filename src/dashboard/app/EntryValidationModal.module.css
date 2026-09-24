@@ -1,0 +1,22 @@
+.EntryValidationModal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.EntryValidationModal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--alinea-danger-subtle);
+}
+
+.EntryValidationModal-message {
+  margin-top: 12px;
+  white-space: pre-wrap;
+}

@@ -6,6 +6,11 @@ import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
 import type {User} from './User.js'
+import {isRecord, values} from './util/Objects.js'
+import type {
+  FieldValidationContext,
+  FieldValidationError
+} from './Validation.js'
 import type {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
@@ -92,10 +97,24 @@ export interface FieldData<
   withInitialValue?: (value: StoredValue) => StoredValue
   applyLinks?: (value: StoredValue, loader: LinkResolver) => Promise<void>
   searchableText?: (value: StoredValue) => string
+  /** Whether the value counts as missing for the `required` option */
+  isEmpty?: (value: StoredValue) => boolean
+  /** Validate fields nested in the value (list rows, object fields, blocks) */
+  nestedErrors?: (
+    value: StoredValue,
+    context: FieldValidationContext
+  ) => Array<FieldValidationError>
 }
 
 export interface FieldInternal extends FieldData<any, any, any, any> {
   ref: symbol
+}
+
+function isEmptyValue(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return true
+  if (Array.isArray(value)) return value.length === 0
+  if (isRecord(value)) return values(value).every(isEmptyValue)
+  return false
 }
 
 declare const brand: unique symbol
@@ -224,6 +243,20 @@ export namespace Field {
   ): string {
     const data = getField(field)
     return data.searchableText?.(value) ?? ''
+  }
+
+  export function isEmpty(field: HasField, value: unknown): boolean {
+    const data = getField(field)
+    if (data.isEmpty) return data.isEmpty(value)
+    return isEmptyValue(value)
+  }
+
+  export function nestedErrors(
+    field: HasField,
+    value: unknown,
+    context: FieldValidationContext
+  ): Array<FieldValidationError> {
+    return getField(field).nestedErrors?.(value, context) ?? []
   }
 
   export function references<StoredValue, QueryValue, Mutator, Options>(

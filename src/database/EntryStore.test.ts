@@ -267,6 +267,62 @@ test('entry store finds an existing seed by its seed identity', async () => {
   }
 })
 
+test('an entry whose seed was removed from the config is no longer seeded', async () => {
+  const Seeded = ConfigBuilder.document('Seeded', {fields: {}})
+  function seededConfig(includeSeed: boolean): Config {
+    return {
+      schema: {Seeded},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {
+            pages: ConfigBuilder.root('Pages', {
+              contains: ['Seeded'],
+              children: includeSeed
+                ? {home: ConfigBuilder.page({type: Seeded})}
+                : {}
+            })
+          }
+        })
+      }
+    }
+  }
+  const source = new MemorySource()
+  const initial = await createStore(source, seededConfig(true))
+  await initial.store.sync()
+  const {id} = await initial.store.get({path: 'home', select: {id: Entry.id}})
+  initial.sqlite.close()
+
+  const unseeded = await createStore(source, seededConfig(false))
+  try {
+    await unseeded.store.sync()
+    const entry = await unseeded.store.get({
+      id,
+      select: {seeded: Entry.seeded, title: Entry.title}
+    })
+    expect(entry.seeded).toBeNull()
+    // Saving drops the stale marker from the file
+    await unseeded.store.mutate([
+      {
+        op: 'update',
+        id,
+        locale: null,
+        status: 'published',
+        set: {title: 'Home'}
+      }
+    ])
+    const sha = (await source.getTree()).getLeaf('pages/home.json').sha
+    let file: Uint8Array = new Uint8Array()
+    for await (const [, blob] of source.getBlobs([sha])) file = blob
+    const record = JSON.parse(new TextDecoder().decode(file))
+    expect(record._seeded).toBeUndefined()
+    await unseeded.store.mutate([{op: 'remove', id, locale: null}])
+    expect(await unseeded.store.find({id, select: Entry.id})).toEqual([])
+  } finally {
+    unseeded.sqlite.close()
+  }
+})
+
 test('SQLite seed defaults follow config changes without rewriting source', async () => {
   const Seeded = ConfigBuilder.document('Seeded', {
     fields: {rate: Field.number('Rate')}

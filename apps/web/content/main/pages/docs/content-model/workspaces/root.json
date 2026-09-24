@@ -309,6 +309,15 @@
       "content": [
         {
           "_type": "text",
+          "text": "Removing a page from `children` doesn't delete its entry: it stays in your content and becomes a regular entry that editors can move and delete."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
           "text": "To query a seeded settings entry, filter by its type: `cms.get({type: Settings})`. If you created the entry by hand before seeding it, Alinea adopts the existing file with the same path."
         }
       ]
@@ -406,7 +415,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196933,
+    "updatedAt": 1790233291,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

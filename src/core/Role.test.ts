@@ -298,3 +298,14 @@ test('locale permissions', async () => {
   test.ok(policy.canRead({locale: 'en'}))
   test.not.ok(policy.canRead({locale: 'fr'}))
 })
+
+test('Policy.concat keeps denies from every role', () => {
+  const restrict = new WriteablePolicy(scope)
+  const grant = new WriteablePolicy(scope)
+  restrict.set({allow: {read: true}}, {id: a.id, deny: {update: true}})
+  grant.set({allow: {read: true, update: true}})
+  const merged = grant.concat(restrict)
+  test.ok(merged.canUpdate({id: 'x'}))
+  test.not.ok(merged.canUpdate(a))
+  test.not.ok(merged.canUpdate(b))
+})

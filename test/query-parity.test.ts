@@ -654,7 +654,11 @@ test('preserves paging, ordering, grouping and location behavior', async () => {
       4
     )
     await expect(
-      store.find({type: Article, groupBy: [Article.title]})
+      store.find({
+        type: Article,
+        // @ts-expect-error groupBy takes a single field
+        groupBy: [Article.title]
+      })
     ).rejects.toThrow('groupBy must be a single field')
     await expect(
       store.find({

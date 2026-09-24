@@ -43,7 +43,7 @@
         "_type": "image",
         "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
       },
-      "caption": "The Dutch translation of a product. Shared fields are the same in every language, the badge switches between locales."
+      "caption": "The Dutch translation of a product, with the language menu open. Shared fields hold the same value in every language, all other fields are translated."
     },
     {
       "_type": "heading",
@@ -365,7 +365,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "An entry without a locale, in a root without `i18n`, always gets the value of the first locale. Localised fields also work inside objects, list rows and rich text blocks."
+          "text": "An entry without a locale, in a root without `i18n`, gets the value for the locale you ask for with `preferredLocale`, or for the locale of the entry that links to it. Without either it gets the first locale. Localised fields also work inside objects, list rows and rich text blocks."
         }
       ]
     },
@@ -462,7 +462,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196936,
+    "updatedAt": 1790233291,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

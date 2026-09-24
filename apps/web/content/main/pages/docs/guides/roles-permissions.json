@@ -447,7 +447,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`explore`: part of the policy API, but not checked by the 2.0 dashboard."
+                  "text": "`explore`: deprecated and never checked. What a role can browse in the entry tree and media library follows `read`."
                 }
               ]
             }
@@ -657,7 +657,7 @@
     {
       "_id": "3Ahwa7yMlETIJ4wuAZEMy6pdx5E",
       "_type": "CodeBlock",
-      "code": "const translator = Config.role('Translator', {\n  description: 'Translates pages into French',\n  permissions(policy) {\n    policy.set(\n      {allow: {read: true}},\n      {locale: 'fr', allow: {update: true, publish: true}}\n    )\n  }\n})",
+      "code": "const translator = Config.role('Translator', {\n  description: 'Translates pages into French',\n  permissions(policy) {\n    policy.set(\n      {allow: {read: true}},\n      {locale: 'fr', allow: {create: true, update: true, publish: true}}\n    )\n  }\n})",
       "fileName": "",
       "language": "tsx"
     },
@@ -666,7 +666,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Creating an entry, including a new translation, is checked without its locale. This role can edit and publish French translations that exist, but can't start new ones: allow `create` on the root or type as well if translators should."
+          "text": "Rules for a locale apply to creating entries too: with `create` allowed in `fr`, this role can start the French translation of a page. Leave it out to limit translators to French versions that already exist."
         }
       ]
     },
@@ -873,7 +873,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196936,
+    "updatedAt": 1790233273,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

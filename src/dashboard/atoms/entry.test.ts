@@ -1,3 +1,4 @@
+import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {Entry} from '#/core/Entry.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -349,4 +350,61 @@ test('publishing reconciles transaction-generated media aliases immediately', as
     metadata: {aliases: [{url: '/admin/file/original.jpg'}]}
   })
   expect(store.get(node.isDirty)).toBeFalse()
+})
+
+test('publishing is blocked while fields are invalid, drafts are not', async () => {
+  const Article = Config.document('Article', {
+    fields: {
+      summary: Field.text('Summary', {required: true}),
+      notes: Field.text('Notes', {required: true, hidden: true})
+    }
+  })
+  const config = Config.create({
+    schema: {Article},
+    enableDrafts: true,
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages', {contains: ['Article']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const created = await db.create({
+    type: Article,
+    root: 'pages',
+    set: {title: 'Article', summary: 'Summary'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms(created._id))
+  const locale = entry.locales(null)
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  expect(store.get(locale.errors(node))).toEqual([])
+
+  store.set(node.field('summary'), '')
+  expect(store.get(locale.errors(node))).toEqual([
+    {path: ['summary'], labels: ['Summary'], message: 'Field is required'}
+  ])
+  const mutate = spyOn(db, 'mutate')
+  let error: unknown
+  try {
+    await store.set(locale.publishEdits, node)
+  } catch (cause) {
+    error = cause
+  }
+  expect(error).toBeInstanceOf(EntryValidationError)
+  expect(mutate).not.toHaveBeenCalled()
+
+  await store.set(locale.saveDraft, node)
+  expect(mutate).toHaveBeenCalledTimes(1)
+  mutate.mockRestore()
+  const draft = await db.first({
+    id: created._id,
+    status: 'draft',
+    select: Article.summary
+  })
+  expect(draft).toBe('')
 })

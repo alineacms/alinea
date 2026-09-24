@@ -15,7 +15,9 @@ import {
 const ScenarioPage = Config.document('Page', {
   contains: ['Page'],
   fields: {
-    title: Field.text('Title'),
+    title: Field.text('Title', {
+      validate: value => value !== 'Invalid' || 'Pick another title'
+    }),
     body: Field.richText('Body', {searchable: true}),
     relatedPage: Field.entry('Related page', {
       async location({entry, graph}) {

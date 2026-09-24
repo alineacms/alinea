@@ -1,11 +1,15 @@
 import {Field, type EntryAnchorTarget, type FieldOptions} from '#/core/Field.js'
 import type {Resource} from '#/core/Role.js'
 import type {Policy} from '#/core/Role.js'
-import {getScope} from '#/core/Scope.js'
 import {Section} from '#/core/Section.js'
-import {type FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
+import type {FieldGetter} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
+import {
+  fieldError,
+  policyFieldOptions,
+  trackedFieldOptions
+} from '#/core/Validation.js'
 import type {Atom, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
@@ -142,49 +146,21 @@ class EntryEditorField implements EditorField {
   })
 
   options = atom((get): FieldOptions<unknown> => {
-    const defaultOptions = Field.options(this.field) as FieldOptions<unknown>
-    const tracker = optionTrackerOf(this.field)
-    const update = tracker ? tracker(get(this.#getter)) : undefined
-    const trackedOptions = {...defaultOptions, ...update}
+    const tracked = trackedFieldOptions(this.field, get(this.#getter))
     const options = this.editor.readOnly
-      ? {...trackedOptions, readOnly: true}
-      : trackedOptions
-    const resource = this.editor.resource
-    if (!resource) return options
-    const fieldName = getScope(get(configAtom)).nameOf(this.field)
-    if (!fieldName) return options
-    const policy = this.editor.policy
-    if (!policy) return options
-    const fieldResource = {...resource, field: fieldName}
-    return {
-      ...options,
-      hidden: options.hidden || !policy.canRead(fieldResource),
-      readOnly: options.readOnly || !policy.canUpdate(fieldResource)
-    }
+      ? {...tracked, readOnly: true}
+      : tracked
+    const {resource, policy} = this.editor
+    if (!resource || !policy) return options
+    return policyFieldOptions(
+      get(configAtom),
+      policy,
+      resource
+    )(this.field, options)
   })
 
   error = atom((get): string | undefined => {
-    const options = get(this.options)
-    const value = get(this.value)
-    const {min, max} = options as {min?: unknown; max?: unknown}
-    if (Array.isArray(value)) {
-      if (typeof min === 'number' && value.length < min)
-        return `Add at least ${min} ${min === 1 ? 'item' : 'items'}`
-      if (typeof max === 'number' && value.length > max)
-        return `Add at most ${max} ${max === 1 ? 'item' : 'items'}`
-    }
-    if (options.validate) {
-      const result = options.validate(value)
-      // Returning true means valid, false shows a generic message
-      if (result === false) return 'Field is invalid'
-      if (typeof result === 'string') return result
-    }
-    if (options.required) {
-      if (value === undefined || value === null) return 'Field is required'
-      if (typeof value === 'string' && value === '') return 'Field is required'
-      if (Array.isArray(value) && value.length === 0) return 'Field is required'
-    }
-    return undefined
+    return fieldError(this.field, get(this.options), get(this.value))
   })
 
   view = atom(get => {

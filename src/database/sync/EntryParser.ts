@@ -1,5 +1,5 @@
 import type {Config} from '#/core/Config.js'
-import {seedData} from '#/core/EntrySeed.js'
+import {entrySeed} from '#/core/EntrySeed.js'
 import {parseRecord, type EntryRecord} from '#/core/EntryRecord.js'
 import {Type} from '#/core/Type.js'
 import {entryUrl, parseEntryFilePath} from '#/core/util/EntryFilenames.js'
@@ -42,13 +42,17 @@ export function parseSourceEntry(
   } = parseEntryFilePath(config, filePath)
   const type = config.schema[meta.type]
   assert(type, `Entry ${meta.id} has an unknown type: ${meta.type}`)
+  // A `_seeded` marker whose seed is no longer configured is ignored, so the
+  // entry behaves like any other (it can be moved and deleted) and the marker
+  // is dropped on its next save
+  const seed = entrySeed(
+    config,
+    typeof meta.seeded === 'string' ? meta.seeded : null,
+    {workspace, root, locale}
+  )
   const data: Record<string, unknown> = {
     path,
-    ...seedData(config, meta.seeded ?? null, authoredData, {
-      workspace,
-      root,
-      locale
-    })
+    ...(seed ? {...seed.data, ...authoredData} : authoredData)
   }
   return {
     id: meta.id,
@@ -56,7 +60,7 @@ export function parseSourceEntry(
     index: meta.index,
     data,
     title: typeof data.title === 'string' ? data.title : '',
-    seeded: typeof meta.seeded === 'string' ? meta.seeded : null,
+    seeded: seed ? seed.seedPath : null,
     rowHash: fileHash,
     fileHash,
     locale,

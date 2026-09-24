@@ -528,7 +528,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`required`: the field must have a value. Empty strings, `null` and empty lists count as missing."
+                  "text": "`required`: the field must have a value. Empty strings, `null`, empty lists, empty links and rich text without text count as missing."
                 }
               ]
             }
@@ -621,7 +621,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Required fields and validation messages are shown on the field while an editor works on the entry."
+          "text": "Required fields and validation messages are shown on the field while an editor works on the entry. An entry can't be published while a field fails these checks: the dashboard lists the invalid fields, and publishing through the API or the MCP server is rejected with the field paths and messages. Drafts can be saved with errors, and hidden or read-only fields are not checked."
         }
       ]
     },
@@ -801,7 +801,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196930,
+    "updatedAt": 1790233887,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

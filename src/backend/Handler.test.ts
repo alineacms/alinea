@@ -15,7 +15,7 @@ import {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
-import {Config} from '#/index.js'
+import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
 
 const test = suite(import.meta)
@@ -748,6 +748,79 @@ test('rejects create mutations without an id', async () => {
   } finally {
     console.error = error
   }
+})
+
+test('rejects publishing entries with invalid fields', async () => {
+  const Article = Config.document('Article', {
+    fields: {
+      summary: Field.text('Summary', {required: true}),
+      code: Field.text('Code', {
+        validate: value => (value?.startsWith('A') ? true : 'Starts with A')
+      })
+    }
+  })
+  const cms = createCMS({
+    schema: {Article},
+    workspaces: {main},
+    enableDrafts: true
+  })
+  const db = new LocalDB(cms.config)
+  let writes = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async write(request) {
+          writes += 1
+          return db.write(request)
+        }
+      })
+    }
+  })
+  const create = (status: string, data: object) =>
+    handle(
+      mutationRequest([
+        {
+          op: 'create',
+          id: 'article',
+          type: 'Article',
+          locale: null,
+          status,
+          overwrite: true,
+          data: {title: 'Article', ...data}
+        }
+      ]),
+      requestContext()
+    )
+
+  const rejected = await create('published', {code: 'B'})
+  test.is(rejected.status, 422)
+  const {error} = (await rejected.json()) as {error: string}
+  test.ok(error.includes('- summary (Summary): Field is required'))
+  test.ok(error.includes('- code (Code): Starts with A'))
+  test.is(writes, 0)
+
+  // Drafts are work in progress and may be invalid
+  const draft = await create('draft', {code: 'B'})
+  test.is(draft.status, 200)
+  const publish = await handle(
+    mutationRequest([
+      {op: 'publish', id: 'article', locale: null, status: 'draft'}
+    ]),
+    requestContext()
+  )
+  test.is(publish.status, 422)
+
+  const valid = await create('published', {summary: 'Summary', code: 'A1'})
+  test.is(valid.status, 200)
 })
 
 test('does not report a committed mutation as failed when afterCommit throws', async () => {

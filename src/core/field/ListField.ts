@@ -13,6 +13,7 @@ import {createUniqueAnchor} from '../util/Anchors.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
+import {validateType} from '../Validation.js'
 
 export interface ListMutator<Row> {
   replace(id: string, row: Row): void
@@ -86,6 +87,18 @@ export class ListFieldBase<
           }
         }
         return res
+      },
+      nestedErrors(value, context) {
+        const rows = Array.isArray(value) ? value : []
+        return rows.flatMap((row, index) => {
+          const type = schema[row[ListRow.type]]
+          if (!type) return []
+          return validateType(type, row, {
+            ...context,
+            path: [...context.path, index],
+            labels: [...context.labels, Type.label(type)]
+          })
+        })
       },
       references(value, context) {
         const result = customReferences?.(value, context) ?? []

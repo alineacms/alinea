@@ -15,11 +15,13 @@ import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
+import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Entry} from '#/core/Entry.js'
 import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
+import type {FieldValidationError} from '#/core/Validation.js'
 import {activityAtom} from '#/dashboard/atoms/activity.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
@@ -50,6 +52,7 @@ import {
   entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {EntryValidationModal} from './EntryValidationModal.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 import {
   DashboardModal,
@@ -125,6 +128,24 @@ function entryUrlConflictInfo(
       root: info.root
     }
   }
+}
+
+interface EntryValidationFailure {
+  errors?: Array<FieldValidationError>
+  message?: string
+}
+
+function entryValidationFailure(
+  error: unknown
+): EntryValidationFailure | undefined {
+  if (error instanceof EntryValidationError)
+    return {errors: error.info.errors, message: error.message}
+  // Errors thrown in the shared worker arrive without their details
+  if (!isRecord(error) || error.name !== 'EntryValidationError') return
+  const info = error.info
+  if (isRecord(info) && Array.isArray(info.errors))
+    return {errors: info.errors as Array<FieldValidationError>}
+  return {message: typeof error.message === 'string' ? error.message : ''}
 }
 
 const variantDescription = {
@@ -224,6 +245,8 @@ export function EntryHeader({
   const [isPending, startTransition] = useTransition()
   const isActionDisabled = isPending || activity.isMutating
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
+  const errors = useAtomValueRaw(localeData.errors(node))
+  const [invalid, setInvalid] = useState<EntryValidationFailure>()
 
   function runAction(action: () => void | Promise<void>) {
     startTransition(async () => {
@@ -231,10 +254,18 @@ export function EntryHeader({
         await action()
       } catch (error) {
         const conflict = entryUrlConflictInfo(error)
+        const failure = entryValidationFailure(error)
         if (conflict) setUrlConflict(conflict)
+        else if (failure) setInvalid(failure)
         else throw error
       }
     })
+  }
+
+  // Publishing requires valid fields, drafts are work in progress
+  function runPublish(action: () => void | Promise<void>) {
+    if (errors.length > 0) setInvalid({errors})
+    else runAction(action)
   }
 
   async function deleteAndNavigate() {
@@ -280,11 +311,13 @@ export function EntryHeader({
   }
 
   function saveTranslationChanges() {
-    runAction(() => saveTranslation(node))
+    const save = () => saveTranslation(node)
+    if (config.enableDrafts) runAction(save)
+    else runPublish(save)
   }
 
   function publishChanges() {
-    runAction(() => publishEdits(node))
+    runPublish(() => publishEdits(node))
   }
 
   function saveDraftChanges() {
@@ -292,7 +325,7 @@ export function EntryHeader({
   }
 
   function publishCurrentDraft() {
-    runAction(publishDraft)
+    runPublish(publishDraft)
   }
 
   let saveShortcut: (() => void) | undefined
@@ -500,6 +533,11 @@ export function EntryHeader({
       <UrlConflictModal
         conflict={urlConflict}
         onClose={() => setUrlConflict(undefined)}
+      />
+      <EntryValidationModal
+        errors={invalid?.errors}
+        message={invalid?.message}
+        onClose={() => setInvalid(undefined)}
       />
     </PageHeader>
   )
