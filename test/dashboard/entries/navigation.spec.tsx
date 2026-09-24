@@ -368,3 +368,22 @@ test('opens metadata for a localised file with null alt text', async ({
   await expect(app.field('Alt text')).toBeVisible()
   await expect(app.field('Alt text')).toHaveValue('')
 })
+
+test('splits document metadata into SEO and Details tabs', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const createdAt = app.page.getByText('Created at', {exact: true})
+
+  await app.page.getByRole('tab', {name: 'SEO'}).click()
+  await expect(app.field('Description')).toHaveCount(2)
+  await expect(app.page.getByText('Open Graph', {exact: true})).toBeVisible()
+  await expect(createdAt).toHaveCount(0)
+
+  await app.page.getByRole('tab', {name: 'Details'}).click()
+  await expect(createdAt).toBeVisible()
+  await expect(app.page.getByText('Updated by', {exact: true})).toBeVisible()
+  await expect(app.page.getByText('URL aliases', {exact: true})).toBeVisible()
+  await expect(app.field('Description')).toHaveCount(0)
+})

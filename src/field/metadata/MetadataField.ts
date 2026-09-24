@@ -1,6 +1,7 @@
 import type {FieldBeforeSaveContext, FieldOptions} from '#/core/Field.js'
 import {RecordField} from '#/core/field/RecordField.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
+import {type Section, type SectionData, section} from '#/core/Section.js'
 import {Type, type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
@@ -27,20 +28,26 @@ export interface MetadataUserOptions extends FieldOptions<MetadataAuditUser> {
   width?: number
 }
 
-export interface MetadataFields {
+export interface MetadataSeoFields {
   title: TextField
   description: TextField
-  aliases: AliasesField
   openGraph: ObjectField<{
     image: ImageField
     title: TextField
     description: TextField
   }>
+}
+
+export interface MetadataDetailsFields {
   createdAt: MetadataTimestampField
   createdBy: MetadataUserField
   updatedAt: MetadataTimestampField
   updatedBy: MetadataUserField
+  aliases: AliasesField
 }
+
+export interface MetadataFields
+  extends MetadataSeoFields, MetadataDetailsFields {}
 
 export interface MetadataAuditUser {
   name: string
@@ -64,6 +71,16 @@ export interface Metadata {
 
 export interface MetadataOptions extends FieldOptions<Metadata> {
   fields: Type<MetadataFields>
+  seo: Type<MetadataSeoFields>
+  details: Type<MetadataDetailsFields>
+  /** The details are rendered by a separate `metadataDetails` section */
+  detailsSection?: boolean
+}
+
+export interface MetadataConfig {
+  /** Leave the details out of the field view, render them with
+   * `metadataDetails(field)` instead */
+  detailsSection?: boolean
 }
 
 export class MetadataField extends RecordField<Metadata, MetadataOptions> {}
@@ -80,8 +97,11 @@ export class MetadataUserField extends ScalarField<
   MetadataUserOptions
 > {}
 
-export function metadata(label = 'Metadata'): MetadataField {
-  const fields = type('Fields', {
+export function metadata(
+  label = 'Metadata',
+  {detailsSection}: MetadataConfig = {}
+): MetadataField {
+  const seo = type('SEO', {
     fields: {
       title: text('Title'),
       description: text('Description', {
@@ -91,7 +111,6 @@ export function metadata(label = 'Metadata'): MetadataField {
           if (value.length > 160) return 'Too many characters.'
         }
       }),
-      aliases: aliases(),
       openGraph: object('Open Graph', {
         fields: {
           image: image('Image', {
@@ -103,17 +122,39 @@ export function metadata(label = 'Metadata'): MetadataField {
             help: 'If empty, default description'
           })
         }
-      }),
+      })
+    }
+  })
+  const details = type('Details', {
+    fields: {
       createdAt: timestamp('Created at'),
       createdBy: user('Created by'),
       updatedAt: timestamp('Updated at'),
-      updatedBy: user('Updated by')
+      updatedBy: user('Updated by'),
+      aliases: aliases()
+    }
+  })
+  const {title, description, openGraph} = seo
+  const {createdAt, createdBy, updatedAt, updatedBy} = details
+  const fields = type('Fields', {
+    fields: {
+      title,
+      description,
+      aliases: details.aliases,
+      openGraph,
+      createdAt,
+      createdBy,
+      updatedAt,
+      updatedBy
     }
   })
   const result = new MetadataField(fields, {
     options: {
       label,
-      fields
+      fields,
+      seo,
+      details,
+      detailsSection
     },
     defaultValue() {
       return Type.initialValue(fields) as unknown as Metadata
@@ -133,6 +174,20 @@ export function metadata(label = 'Metadata'): MetadataField {
     }
   })
   return Object.assign(result, fields)
+}
+
+export class MetadataDetailsSection implements SectionData {
+  view = viewKeys.MetadataDetailsView
+  definition = {}
+  fields = {}
+  sections = []
+  constructor(public field: MetadataField) {}
+}
+
+/** Renders the created/updated details and aliases of a metadata field
+ * created with `detailsSection: true` */
+export function metadataDetails(field: MetadataField): Section {
+  return section(new MetadataDetailsSection(field))
 }
 
 function timestamp(label: string): MetadataTimestampField {

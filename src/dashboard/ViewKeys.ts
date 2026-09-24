@@ -17,6 +17,8 @@ export const viewKeys = {
   MetadataUserInput:
     'alinea/field/metadata/MetadataField.view#MetadataUserFieldView',
   MetadataInput: 'alinea/field/metadata/MetadataField.view#MetadataFieldView',
+  MetadataDetailsView:
+    'alinea/field/metadata/MetadataField.view#MetadataDetailsView',
   NumberInput: 'alinea/field/number/NumberField.view#NumberFieldView',
   ObjectInput: 'alinea/field/object/ObjectField.view#ObjectFieldView',
   PathInput: 'alinea/field/path/PathField.view#PathFieldView',
