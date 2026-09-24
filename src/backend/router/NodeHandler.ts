@@ -9,6 +9,8 @@ async function writeReadableStreamToWritable(
   writable: Writable
 ) {
   const reader = stream.getReader()
+  // Let the stream clean up when the client disconnects
+  writable.once('close', () => reader.cancel().catch(() => {}))
   async function read() {
     const {done, value} = await reader.read()
     if (done) return writable.end()

@@ -4,7 +4,6 @@ import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
 
-type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
 
 export function createCMS() {
@@ -32,9 +31,6 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   } catch {
     console.warn('Alinea could not determine Next.js version, assuming 15+')
   }
-  const redirects = adminPath
-    ? createRedirects(config, adminPath)
-    : config.redirects
   const rewrites = adminPath
     ? createRewrites(config, adminPath, settings.handlerUrl)
     : config.rewrites
@@ -56,7 +52,6 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
           '@alinea/generated'
         ]
       },
-      redirects,
       rewrites,
       images,
       env
@@ -67,7 +62,6 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
       ...(config.serverExternalPackages ?? []),
       '@alinea/generated'
     ],
-    redirects,
     rewrites,
     images,
     env
@@ -92,22 +86,6 @@ function createImages(config: NextConfig, adminPath: string) {
       ...localPatterns,
       {
         pathname: filePattern
-      }
-    ]
-  }
-}
-
-function createRedirects(config: NextConfig, adminPath: string) {
-  const dev = process.env.ALINEA_DEV_SERVER
-  if (!dev) return config.redirects
-  return async (): Promise<RedirectsResult> => {
-    const existing = config.redirects ? await config.redirects() : []
-    return [
-      ...existing,
-      {
-        permanent: true,
-        source: `${adminPath}/~dev`,
-        destination: `${dev}/~dev`
       }
     ]
   }

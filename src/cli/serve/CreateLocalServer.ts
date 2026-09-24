@@ -199,18 +199,36 @@ export function createLocalServer(
 
   const httpRouter = router(
     matcher.get('/~dev').map((): Response => {
+      let heartbeat: ReturnType<typeof setInterval> | undefined
+      let unregister: (() => void) | undefined
       const stream = new ReadableStream<string>({
         start(controller) {
-          liveReload.register({
+          // Proxies such as Next.js rewrites give up on requests that are
+          // idle for 30s: send headers right away and keep the stream active
+          controller.enqueue(': connected\n\n')
+          heartbeat = setInterval(
+            () => controller.enqueue(': ping\n\n'),
+            15_000
+          )
+          unregister = liveReload.register({
             write: v => controller.enqueue(v),
-            close: () => controller.close()
+            close() {
+              clearInterval(heartbeat)
+              controller.close()
+            }
           })
+        },
+        cancel() {
+          clearInterval(heartbeat)
+          unregister?.()
         }
       })
       return new Response(stream, {
         headers: {
           'content-type': 'text/event-stream',
-          'cache-control': 'no-cache',
+          // no-transform keeps proxies (Next compresses rewrites) from
+          // buffering events
+          'cache-control': 'no-cache, no-transform',
           'access-control-allow-origin': '*',
           connection: 'keep-alive'
         }

@@ -69,13 +69,18 @@ test('routes development files through the CLI dev handler', async () => {
   process.env.ALINEA_DEV_SERVER = 'http://localhost:4500'
   process.env.NODE_ENV = 'development'
   try {
+    const redirects = async () => []
     const config = withAlinea({
       env: {
         ALINEA_ADMIN_PATH: '/admin',
         ALINEA_HANDLER_URL: '/api/cms'
-      }
+      },
+      redirects
     })
 
+    // The dev server only listens on 127.0.0.1, so the browser must never be
+    // sent there: everything, including the ~dev event stream, is proxied
+    test.is(config.redirects, redirects)
     const rewrites = await config.rewrites!()
     test.equal(rewrites, {
       beforeFiles: [
