@@ -3,13 +3,7 @@
 import {Query} from 'alinea'
 import type {Entry} from 'alinea/core/Entry'
 import {useGraph} from 'alinea/cms'
-import {
-  type MouseEvent,
-  type ReactNode,
-  use,
-  useDeferredValue,
-  useMemo
-} from 'react'
+import {type MouseEvent, type ReactNode, use, useDeferredValue} from 'react'
 import {demoBaseUrl} from '@/schema/demo/DemoUrl'
 import {hasDemoPage, renderDemoPage} from './demoPages'
 
@@ -54,22 +48,24 @@ interface DemoPagePreviewProps {
   entry: Entry
 }
 
+// Rendered pages by entry version, a preview that suspends before it mounts
+// loses its memoized state, so the pending render is cached outside React
+const renders = new WeakMap<Entry, Promise<ReactNode>>()
+
 function DemoPagePreview({entry}: DemoPagePreviewProps) {
   const graph = useGraph()
   const update = useDeferredValue(entry)
-  const page = use(
-    useMemo(
-      () =>
-        renderDemoPage(graph, {
-          id: update.id,
-          type: update.type,
-          locale: update.locale,
-          preview: update
-        }),
-      [graph, update]
-    )
-  )
-  return <PreviewLinks>{page}</PreviewLinks>
+  let render = renders.get(update)
+  if (!render) {
+    render = renderDemoPage(graph, {
+      id: update.id,
+      type: update.type,
+      locale: update.locale,
+      preview: update
+    })
+    renders.set(update, render)
+  }
+  return <PreviewLinks>{use(render)}</PreviewLinks>
 }
 
 export interface DemoPreviewProps {
