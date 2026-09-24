@@ -203,13 +203,29 @@ async function resolveAll(layer: EntryLayer, onQuery = (_: string) => {}) {
 function recordingDatabase() {
   const sqlite = new Database(':memory:')
   const log = {reads: Array<string>()}
+  const executing = new Set<string | symbol>(['all', 'get', 'run', 'values'])
+  // Record when statements run: rado reuses prepared statements.
+  function recordRuns<T extends object>(statement: T, query: string): T {
+    return new Proxy(statement, {
+      get(target, key) {
+        const value = Reflect.get(target, key)
+        if (typeof value !== 'function') return value
+        if (!executing.has(key)) return value.bind(target)
+        return (...args: Array<unknown>) => {
+          log.reads.push(query)
+          return value.apply(target, args)
+        }
+      }
+    })
+  }
   const recording = new Proxy(sqlite, {
     get(target, key) {
       if (key === 'prepare')
         return (query: string) => {
-          if (/alinea_entry_index|alinea_overlay_\d+_entries/.test(query))
-            log.reads.push(query)
-          return target.prepare(query)
+          const statement = target.prepare(query)
+          return /alinea_entry_index|alinea_overlay_\d+_entries/.test(query)
+            ? recordRuns(statement, query)
+            : statement
         }
       const value = Reflect.get(target, key)
       return typeof value === 'function' ? value.bind(target) : value
