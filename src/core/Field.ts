@@ -38,6 +38,11 @@ export interface FieldAnchorContext {
   anchors: Set<string>
 }
 
+export interface FieldLocalizeContext {
+  locale: string
+  entryIds: Set<string>
+}
+
 export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
   Options,
   'label'
@@ -64,6 +69,11 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   normalizeAnchors?: (
     value: StoredValue,
     context: FieldAnchorContext
+  ) => StoredValue
+  /** Point entry links to entryIds at the given locale */
+  localizeLinks?: (
+    value: StoredValue,
+    context: FieldLocalizeContext
   ) => StoredValue
   beforeSave?: (context: FieldBeforeSaveContext<StoredValue>) => StoredValue
 }
@@ -250,6 +260,14 @@ export namespace Field {
     context: FieldAnchorContext
   ): StoredValue {
     return getField(field).normalizeAnchors?.(value, context) ?? value
+  }
+
+  export function localizeLinks<StoredValue>(
+    field: HasField,
+    value: StoredValue,
+    context: FieldLocalizeContext
+  ): StoredValue {
+    return getField(field).localizeLinks?.(value, context) ?? value
   }
 
   export function isField(value: any): value is Field {

@@ -57,6 +57,14 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
           context
         ) as Row
       },
+      localizeLinks(value, context) {
+        if (value === undefined || value === null) return value
+        return Type.localizeLinks(
+          type,
+          value as Record<string, unknown>,
+          context
+        ) as Row
+      },
       async queryValue(value, loader) {
         const row = (value ?? {}) as Record<string, unknown>
         await Promise.all(

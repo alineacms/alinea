@@ -43,6 +43,7 @@ export class ListFieldBase<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
+    const customLocalizeLinks = meta.localizeLinks
     super({
       referencedViews: Schema.referencedViews(schema),
       ...meta,
@@ -102,6 +103,26 @@ export class ListFieldBase<
           )
         }
         return result
+      },
+      localizeLinks(value, context) {
+        const rows = customLocalizeLinks
+          ? customLocalizeLinks(value, context)
+          : value
+        if (!Array.isArray(rows)) return rows
+        let next = rows
+        rows.forEach((row, index) => {
+          const type = schema[row[ListRow.type]]
+          if (!type) return
+          const localized = Type.localizeLinks(
+            type,
+            row as Record<string, unknown>,
+            context
+          )
+          if (localized === row) return
+          if (next === rows) next = [...rows]
+          next[index] = localized as StoredValue
+        })
+        return next
       },
       async queryValue(value, loader) {
         const rows = Array.isArray(value) ? value : []

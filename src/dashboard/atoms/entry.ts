@@ -247,11 +247,33 @@ export class EntryLocaleAtoms {
     const readOnly =
       version?.type === 'history' ||
       (!isUntranslated && (!entry.active || !policy.canUpdate(entry)))
+    let data =
+      !isUntranslated || get(this.copyTranslationSource)
+        ? entry.data
+        : undefined
+    if (isUntranslated && data && this.requestedLocale) {
+      const linkIds = new Set(
+        Type.references(type, data)
+          .filter(reference => reference.linkType === 'entry')
+          .map(reference => reference.targetId)
+      )
+      if (linkIds.size > 0) {
+        const graph = get(graphAtom)
+        const translated = await graph.find({
+          select: Entry.id,
+          id: {in: Array.from(linkIds)},
+          locale: this.requestedLocale,
+          status: 'preferDraft'
+        })
+        data = Type.localizeLinks(type, data, {
+          locale: this.requestedLocale,
+          entryIds: new Set(translated)
+        })
+      }
+    }
     const value = Type.withInitialValue(type, {
       ...Type.initialValue(type),
-      ...(!isUntranslated || get(this.copyTranslationSource)
-        ? entry.data
-        : undefined),
+      ...data,
       ...(isUntranslated ? {path: undefined} : undefined)
     })
     return new ReactiveNode<object>(value, readOnly)

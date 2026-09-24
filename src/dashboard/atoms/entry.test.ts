@@ -201,6 +201,132 @@ test('untranslated entries can start with empty fields instead of copied content
   })
 })
 
+function linkedSourceData() {
+  return {
+    title: 'Nieuws',
+    single: {
+      _type: 'entry' as const,
+      _id: 'single',
+      _entry: 'news',
+      _locale: 'nl'
+    },
+    many: [
+      {
+        _type: 'entry' as const,
+        _id: 'row-1',
+        _index: 'a0',
+        _entry: 'news',
+        _locale: 'nl'
+      },
+      {
+        _type: 'entry' as const,
+        _id: 'row-2',
+        _index: 'a1',
+        _entry: 'about',
+        _locale: 'nl'
+      }
+    ],
+    body: [
+      {
+        _type: 'paragraph' as const,
+        content: [
+          {
+            _type: 'text' as const,
+            text: 'Nieuws & events',
+            marks: [
+              {
+                _type: 'link' as const,
+                _id: 'mark-1',
+                _link: 'entry' as const,
+                _entry: 'news',
+                _locale: 'nl'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        _type: 'image' as const,
+        _id: 'image-1',
+        _entry: 'media-1',
+        _link: 'image' as const
+      }
+    ]
+  }
+}
+
+test('copied translations link to translated entries', async () => {
+  const Page = Config.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      single: Field.entry('Single'),
+      many: Field.entry.multiple('Many'),
+      body: Field.richText('Body')
+    }
+  })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {
+          pages: Config.root('Pages', {
+            contains: ['Page'],
+            i18n: {locales: ['nl', 'fr']}
+          })
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.create({
+    id: 'news',
+    locale: 'nl',
+    root: 'pages',
+    type: Page,
+    set: {title: 'Nieuws & events'}
+  })
+  await db.create({
+    id: 'news',
+    locale: 'fr',
+    root: 'pages',
+    type: Page,
+    set: {title: 'Actualités et événements'}
+  })
+  await db.create({
+    id: 'about',
+    locale: 'nl',
+    root: 'pages',
+    type: Page,
+    set: {title: 'Over ons'}
+  })
+  const {title: _, ...set} = linkedSourceData()
+  await db.create({
+    id: 'home',
+    locale: 'nl',
+    root: 'pages',
+    type: Page,
+    set: {title: 'Home', ...set}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms('home'))
+  const node = await store.get(entry.locales('fr').selectedNode)
+  const value = store.get(node.value) as ReturnType<typeof linkedSourceData>
+
+  expect(value.single).toMatchObject({_entry: 'news', _locale: 'fr'})
+  expect(value.many).toMatchObject([
+    {_entry: 'news', _locale: 'fr'},
+    {_entry: 'about', _locale: 'nl'}
+  ])
+  expect(value.body[0].content![0].marks![0]).toMatchObject({
+    _entry: 'news',
+    _locale: 'fr'
+  })
+  const source = store.get(entry.data).entries.find(e => e.locale === 'nl')!
+  expect(source.data.single).toMatchObject({_locale: 'nl'})
+})
+
 test('preloads linked rich text images without changing stored data', async () => {
   const Page = Config.document('Page', {
     fields: {body: Field.richText('Body')}
