@@ -12,6 +12,26 @@
         {
           "_type": "text",
           "text": "Build a small but complete Next.js website with Alinea, one feature at a time. Each step adds to the code of the previous one and ends with a list of things you can check in the browser and the dashboard."
+        },
+        {
+          "_type": "text",
+          "text": " The finished code of every step is in the repository at "
+        },
+        {
+          "_type": "text",
+          "text": "apps/web/tutorial-sites",
+          "marks": [
+            {
+              "_type": "link",
+              "_link": "url",
+              "href": "https://github.com/alineacms/alinea/tree/main/apps/web/tutorial-sites",
+              "_id": "3JlYEUQlJnJtoJ8Pw4HgjYUO9YF"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
         }
       ]
     },
@@ -311,7 +331,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790195601,
+    "updatedAt": 1790237010,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

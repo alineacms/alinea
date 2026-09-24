@@ -141,7 +141,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONCAa2Rl2v6v1rbhieBd2wvdb",
-      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
       "fileName": "cms.tsx",
       "language": "tsx",
       "compact": false
@@ -326,7 +326,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790195601,
+    "updatedAt": 1790237009,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

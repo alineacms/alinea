@@ -441,7 +441,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`'url'`: an external link with the `href`, `title` and `target` (`'_blank'` or `'_self'`) the editor entered."
+                  "text": "`'url'`: an external link with the `url` and `href` (the same value), `title` and `target` (`'_blank'` or `'_self'`) the editor entered."
                 }
               ]
             }
@@ -455,7 +455,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`'file'`: an uploaded file with its `href`, `title`, `extension` and `size` in bytes."
+                  "text": "`'file'`: an uploaded file with its `url` and `href` (the same value), `title`, `extension` and `size` in bytes."
                 }
               ]
             }
@@ -546,7 +546,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790233917,
+    "updatedAt": 1790236793,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

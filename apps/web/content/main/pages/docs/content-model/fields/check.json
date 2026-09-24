@@ -63,6 +63,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`autoFocus`: focus the input when the entry opens."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "The "
                 },
                 {
@@ -130,7 +144,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196913,
+    "updatedAt": 1790236755,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -176,7 +176,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONC7OGaXa2S1uEHArBC9wRAyw",
-      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {Blog} from '@/entries/blog/Blog.schema'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    LandingPage,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage', 'Blog'],\n          children: {\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            }),\n            blog: Config.page({\n              type: Blog,\n              fields: {\n                title: 'Blog',\n                intro: 'Latest posts'\n              }\n            })\n          }\n        })\n        // The settings and media roots stay the same as in step 3\n      }\n    })\n  }\n  // baseUrl, handlerUrl, adminPath and preview stay the same as in step 3\n})",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {Blog} from '@/entries/blog/Blog.schema'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    LandingPage,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage', 'Blog'],\n          children: {\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            }),\n            blog: Config.page({\n              type: Blog,\n              fields: {\n                title: 'Blog',\n                intro: 'Latest posts'\n              }\n            })\n          }\n        })\n        // The settings and media roots stay the same as in step 3\n      }\n    })\n  }\n  // baseUrl, handlerUrl, adminPath and preview stay the same as in step 3\n})",
       "fileName": "cms.tsx",
       "language": "tsx",
       "compact": false
@@ -308,7 +308,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790195602,
+    "updatedAt": 1790237009,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

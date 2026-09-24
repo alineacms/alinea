@@ -49,7 +49,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`language`: the language of the code. It's available on the field's options, but the editor currently highlights every language the same way."
+                  "text": "`language`: the language of the code, such as `'ts'` or `'css'`. The editor highlights code with a language-agnostic tokenizer and exposes the language as a `data-language` attribute; use `'text'` (or `'plaintext'`) to turn highlighting off."
                 }
               ]
             }
@@ -147,7 +147,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196930,
+    "updatedAt": 1790236724,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

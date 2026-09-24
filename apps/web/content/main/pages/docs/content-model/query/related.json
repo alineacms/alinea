@@ -26,7 +26,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Every relation takes the same options as a query, such as `type`, `filter`, `select`, `orderBy`, `skip` and `take`. `parent`, `previous` and `next` return a single entry, the others a list. Relations can be nested, for example children with their own children."
+          "text": "Every relation takes the same options as a query, such as `type`, `filter`, `select`, `orderBy`, `skip` and `take`. `parent`, `previous` and `next` return a single entry, the others a list. Add `count: true` to get the number of matches instead, as in `Query.children({count: true})`, or `first: true` to get a single entry (or `null`). Relations can be nested, for example children with their own children."
         }
       ]
     },
@@ -366,7 +366,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196932,
+    "updatedAt": 1790236898,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

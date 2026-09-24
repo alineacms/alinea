@@ -245,7 +245,7 @@
         },
         {
           "_type": "text",
-          "text": " on the entries that can be picked, written with the `_` prefixed entry properties: `_type`, `_workspace`, `_root`, `_parentId`, `_status`, `_locale`, `_path` and `_url`. All operators work, such as `in` and `startsWith`:"
+          "text": " on the entries that can be picked, written with the `_` prefixed entry properties: `_type`, `_workspace`, `_root`, `_parentId`, `_status`, `_locale`, `_path` and `_url`. It can also filter on the fields of those entries, such as `{_type: 'BlogPost', category: 'news'}`. All operators work, such as `in` and `startsWith`:"
         }
       ]
     },
@@ -641,7 +641,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790233901,
+    "updatedAt": 1790236813,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -1039,7 +1039,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`alinea/yjs`, `alinea/cloud/view/CloudAuth`, `alinea/picker/entry/EntryPicker` and `alinea/picker/url/UrlPicker` no longer exist. Code that subclassed fields relied on the removed shape system (`alinea/core/Shape`, `Field.shape`, `Type.shape`): the field constructors no longer take a shape, and `postProcess` became `queryValue`."
+          "text": "`alinea/yjs` and `alinea/cloud/view/CloudAuth` no longer exist. `alinea/picker/entry/EntryPicker` and `alinea/picker/url/UrlPicker` no longer ship the picker UI: `EntryPickerModal`, `UrlPickerForm` and `UrlPickerModal` were removed without a public replacement. Import the picker option types (`EditorInfo`, `EditorLocation`, `EditorLimitLocation` and `EntryPickerConditions`) from `alinea/field/link`. Code that subclassed fields relied on the removed shape system (`alinea/core/Shape`, `Field.shape`, `Type.shape`): the field constructors no longer take a shape, and `postProcess` became `queryValue`."
         }
       ]
     },
@@ -1125,7 +1125,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790234273,
+    "updatedAt": 1790236945,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

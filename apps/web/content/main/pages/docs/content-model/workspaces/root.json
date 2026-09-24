@@ -207,6 +207,20 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`openByDefault`: open this root when the workspace is opened without a specific root. Otherwise the first root opens."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -216,7 +230,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The key of a root (`pages`) is its name in content files and queries. It must start with a letter and contain only letters, digits and underscores. The first root of a workspace is the one the dashboard opens by default."
+          "text": "The key of a root (`pages`) is its name in content files and queries. It must start with a letter and contain only letters, digits and underscores. The first root of a workspace is the one the dashboard opens by default, unless another root sets `openByDefault`."
         }
       ]
     },
@@ -415,7 +429,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790233291,
+    "updatedAt": 1790236755,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

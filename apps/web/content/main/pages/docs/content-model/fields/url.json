@@ -136,7 +136,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Each link is resolved to `{href, title, target, fields}`: `href` holds the url as entered, `target` is `'_blank'` when the editor chose a new tab and `'_self'` otherwise, and `fields` holds your extra fields. A single url field is `null` while it's empty, a multiple one is an array."
+          "text": "Each link is resolved to `{url, href, title, target, fields}`: `url` and `href` both hold the url as entered, `target` is `'_blank'` when the editor chose a new tab and `'_self'` otherwise, and `fields` holds your extra fields. A single url field is `null` while it's empty, a multiple one is an array."
         }
       ]
     },
@@ -171,7 +171,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196931,
+    "updatedAt": 1790236793,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

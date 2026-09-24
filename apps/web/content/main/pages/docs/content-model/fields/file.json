@@ -219,7 +219,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`href`: the url of the file on your site, such as `/admin/file/brochure.pdf`. It's served through your Alinea handler and keeps working when the file is moved or renamed."
+                  "text": "`url` and `href`: the url of the file on your site (both hold the same value), such as `/admin/file/brochure.pdf`. It's served through your Alinea handler and keeps working when the file is moved or renamed."
                 }
               ]
             }
@@ -314,7 +314,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196931,
+    "updatedAt": 1790236793,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

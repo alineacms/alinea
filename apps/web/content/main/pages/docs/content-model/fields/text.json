@@ -137,6 +137,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`iconLeft` and `iconRight`: an icon component shown inside the input, before or after the text."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`autoFocus`: focus the input when the entry opens."
                 }
               ]
@@ -221,7 +235,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196931,
+    "updatedAt": 1790236749,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

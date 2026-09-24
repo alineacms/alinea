@@ -117,7 +117,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Prefixes the `dev` and `build` scripts in `package.json` with `alinea dev --` and `alinea build --`."
+                  "text": "Prefixes the `dev` and `build` scripts in `package.json` with `alinea dev --` and `alinea build --`. Scripts that already run alinea are left alone, and the formatting of `package.json` is kept."
                 }
               ]
             }
@@ -132,6 +132,20 @@
                 {
                   "_type": "text",
                   "text": "In a Next.js project (`next` in `dependencies`), creates the API route `app/(alinea)/api/cms/route.ts`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Detects your package manager from the lockfile (`bun.lock` or `bun.lockb`, `pnpm-lock.yaml`, `yarn.lock` or `package-lock.json`, falling back to npm) and prints the command that starts the dashboard, such as `bun alinea dev` or `npx alinea dev`."
                 }
               ]
             }
@@ -205,7 +219,7 @@
     {
       "_type": "CodeBlock",
       "_id": "P1sIdtOUVmGJBcPNDrfmU",
-      "code": "Aliases\n  $ alinea serve\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  -p, --port      Port to listen on\n  -b, --base      Base URL for previews\n  --production    Use production backend\n  --dev           Watch alinea sources",
+      "code": "Aliases\n  $ alinea serve\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  -p, --port      Port to listen on\n  --production    Use production backend\n  --dev           Watch alinea sources",
       "fileName": "",
       "language": "shellscript",
       "compact": false
@@ -317,7 +331,7 @@
     {
       "_type": "CodeBlock",
       "_id": "KipDFk3xI6h94TjE3Mhc_",
-      "code": "Aliases\n  $ alinea generate\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  -w, --watch     Watch for changes to source files\n  --fix           Any missing or incorrect properties will be overwritten by their default",
+      "code": "Aliases\n  $ alinea generate\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  --fix           Any missing or incorrect properties will be overwritten by their default",
       "fileName": "",
       "language": "shellscript",
       "compact": false
@@ -406,7 +420,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790195051,
+    "updatedAt": 1790236677,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

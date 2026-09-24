@@ -346,7 +346,7 @@
     {
       "_type": "CodeBlock",
       "_id": "aQam3FUTLfN1uYyFFSiZk",
-      "code": "import {Config, Field, type Infer, type TextDoc} from 'alinea'\nimport {RichText} from 'alinea/ui'\n\nconst Quote = Config.type('Quote', {\n  fields: {\n    text: Field.text('Text', {multiline: true}),\n    author: Field.text('Author')\n  }\n})\n\nconst blocks = {Quote}\n\nexport const Article = Config.document('Article', {\n  fields: {\n    body: Field.richText('Body', {schema: blocks})\n  }\n})\n\nfunction QuoteView({text, author}: Infer<typeof Quote>) {\n  return (\n    <figure>\n      <blockquote>{text}</blockquote>\n      <figcaption>{author}</figcaption>\n    </figure>\n  )\n}\n\nexport function Body({doc}: {doc: TextDoc}) {\n  return <RichText<typeof blocks> doc={doc} Quote={QuoteView} />\n}",
+      "code": "import {Config, Field, type Infer, type TextDoc} from 'alinea'\nimport {RichText} from 'alinea/ui'\n\nconst Quote = Config.type('Quote', {\n  fields: {\n    text: Field.text('Text', {multiline: true}),\n    author: Field.text('Author')\n  }\n})\n\nconst blocks = {Quote}\n\nexport const Article = Config.document('Article', {\n  fields: {\n    body: Field.richText('Body', {schema: blocks})\n  }\n})\n\nfunction QuoteView({text, author}: Infer<typeof Quote>) {\n  return (\n    <figure>\n      <blockquote>{text}</blockquote>\n      <figcaption>{author}</figcaption>\n    </figure>\n  )\n}\n\nexport function Body({doc}: {doc: TextDoc<typeof blocks>}) {\n  return <RichText doc={doc} Quote={QuoteView} />\n}",
       "fileName": "",
       "language": "tsx"
     },
@@ -355,7 +355,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Pass the blocks schema as type argument (`RichText<typeof blocks>`) so TypeScript checks the props of your block components."
+          "text": "Type the document as `TextDoc<typeof blocks>` (a queried rich text field already has this type) and `<RichText>` checks the props of your block components. `RichText<typeof blocks>` is only needed when the document is typed as plain `TextDoc`."
         }
       ]
     },
@@ -436,7 +436,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790234417,
+    "updatedAt": 1790236853,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

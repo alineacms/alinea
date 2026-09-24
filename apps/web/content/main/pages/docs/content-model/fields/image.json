@@ -217,6 +217,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`url`: the same as `src`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`width` and `height`: the dimensions in pixels."
                 }
               ]
@@ -397,7 +411,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196931,
+    "updatedAt": 1790236793,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
