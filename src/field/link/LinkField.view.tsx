@@ -512,7 +512,6 @@ function LinkPickerAction({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const selectsMultiple = handlesMultiple && !allowDuplicates
   const pickerProps: LinkPickerOptions = {
     condition,
     enableNavigation: options.enableNavigation,
@@ -534,9 +533,9 @@ function LinkPickerAction({
     limitLocations: options.limitLocations,
     nestedNavigation: !pickingChildren,
     pickChildren: pickingChildren,
-    preselect: selectsMultiple,
-    selectionMode: selectsMultiple ? 'multiple' : 'single',
-    selectionBehavior: selectsMultiple ? 'toggle' : 'replace',
+    preselect: handlesMultiple && !allowDuplicates,
+    selectionMode: handlesMultiple ? 'multiple' : 'single',
+    selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
     onConfirm(entryIds: Array<string>, locale: string | null) {
       const existing = allowDuplicates ? [] : selection

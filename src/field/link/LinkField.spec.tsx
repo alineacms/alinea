@@ -236,17 +236,22 @@ test('allows duplicate generic links by default', async ({mount, page}) => {
   await mount(<Example />)
   const field = page.getByRole('list', {name: 'Resources'})
   await expect(field.getByText('Home', {exact: true})).toHaveCount(1)
+  await expect(field.getByText('About', {exact: true})).toHaveCount(0)
 
   await field.getByRole('button', {name: 'Page link'}).click()
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   const home = picker.getByRole('row', {name: /^Home /})
   await expect(home).not.toHaveAttribute('aria-selected', 'true')
   await expect(home).toHaveClass(/is-linked/)
-  await expect(picker.getByRole('checkbox')).toHaveCount(0)
   await home.click()
+  await picker.getByRole('row', {name: /^About /}).click()
+  await expect(picker).toBeVisible()
+  await expect(picker.getByText('2 items selected')).toBeVisible()
+  await picker.getByRole('button', {name: 'Select'}).click()
 
   await expect(picker).toBeHidden()
   await expect(field.getByText('Home', {exact: true})).toHaveCount(2)
+  await expect(field.getByText('About', {exact: true})).toHaveCount(1)
 })
 
 test('expands the compact entry picker into the explorer modal', async ({
