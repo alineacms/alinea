@@ -275,7 +275,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`content/pages/welcome.json` is a first entry, and `content/media` holds uploaded files."
+                  "text": "`content/pages/welcome.json` is a first entry. `content/media` holds the entries of the media library, the uploaded files themselves are written to `public/media` (the workspace's `mediaDir`)."
                 }
               ]
             }
@@ -446,10 +446,94 @@
       "content": [
         {
           "_type": "text",
-          "text": "6. Enable live previews"
+          "text": "6. Show content on a page"
         }
       ],
       "_anchor": "6-enable-live-previews"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The generated `Page` type only has a title. Add an image and a body to it in `cms.ts`, and export it so your pages can query it:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlS17uX2PHcjjob066v1kM1zYl",
+      "code": "import {Config, Field} from 'alinea'\n\n// Export the type so your pages can query it\nexport const Page = Config.document('Page', {\n  fields: {\n    cover: Field.image('Cover image'),\n    body: Field.richText('Body')\n  }\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Open the Welcome page in the dashboard, pick a cover image (upload one in the picker), write some text and publish. Then render it on your homepage by replacing `app/page.tsx`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlS182LhFA74PTbc8pxZhf2o86",
+      "code": "import {cms, Page} from '@/cms'\nimport {RichText} from 'alinea/ui'\nimport Image from 'next/image'\nimport {notFound} from 'next/navigation'\n\nexport default async function Home() {\n  const page = await cms.first({type: Page, path: 'welcome'})\n  if (!page) notFound()\n  return (\n    <main>\n      <h1>{page.title}</h1>\n      {page.cover && (\n        <Image\n          src={page.cover.src}\n          width={page.cover.width}\n          height={page.cover.height}\n          alt={page.cover.alt ?? ''}\n        />\n      )}\n      <RichText doc={page.body} />\n    </main>\n  )\n}",
+      "fileName": "app/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`cms.first` finds the entry stored in `content/pages/welcome.json` by its path, and passing `type: Page` types the result. An image field returns the `src`, dimensions and alt text `next/image` needs, and `withAlinea` allows these urls in your image config. See the "
+        },
+        {
+          "_type": "text",
+          "text": "Image field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JlS15pHALWBxZuIPjdgMCoY6xX",
+              "_link": "entry",
+              "_entry": "Xu4-sW6S0ynehY5zKR1VZ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for blur placeholders and focal points, and the "
+        },
+        {
+          "_type": "text",
+          "text": "Rich text field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JlS1BBOygGs100QK2DD1hrf4bp",
+              "_link": "entry",
+              "_entry": "268hjH2OU9fiReg61Wov1SRbPD5"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for rendering rich text with your own components."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "7. Enable live previews"
+        }
+      ],
+      "_anchor": "7-enable-live-previews"
     },
     {
       "_type": "paragraph",
@@ -655,7 +739,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790195602,
+    "updatedAt": 1790233942,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

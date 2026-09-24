@@ -262,6 +262,232 @@
       "content": [
         {
           "_type": "text",
+          "text": "Where the picker opens"
+        }
+      ],
+      "_anchor": "where-the-picker-opens"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without a `condition`, editors browse the content tree in the picker, starting in the root of the entry being edited. `location` sets another starting point: a workspace and root, optionally with a `parentId` to open inside a specific entry, and a `locale`. `limitLocations` lists the workspace and root pairs editors can switch to. Without it, they can browse every workspace and root."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlRueVDmH8ryKkY6eGXQ08slPo",
+      "code": "import {Field} from 'alinea'\n\ndeclare const blogId: string\n\n// Open the picker below the blog entry\nField.entry('Related post', {\n  location: {workspace: 'main', root: 'pages', parentId: blogId}\n})\n\n// Only let editors browse the pages roots of two workspaces\nField.entry('Page', {\n  location: {workspace: 'main', root: 'pages'},\n  limitLocations: [\n    {workspace: 'main', root: 'pages'},\n    {workspace: 'docs', root: 'pages'}\n  ]\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With a `condition`, the picker shows a flat list of the matching entries instead of the tree. Without a `location`, that list covers every workspace and root. With a `location`, it starts in that workspace and root, and when you set a `parentId` it only lists entries below that entry."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A `location` outside `limitLocations` isn't used: the picker opens in the first allowed location of the same workspace instead, or else the first one in the list."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Combining the options"
+        }
+      ],
+      "_anchor": "combining-the-options"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each option restricts one thing, so combine them to get exactly the entries you want:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Types",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": `condition: {_type: 'BlogPost'}`, or `{_type: {in: [...]}}` for several."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Workspaces",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": `condition: {_workspace: 'main'}` limits what can be selected, `limitLocations` limits what editors can browse."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Roots",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": `condition: {_root: 'pages'}`, or `limitLocations` to hide other roots."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Starting point",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": `location`, with a `parentId` to start inside an entry. `pickChildren` uses the entry being edited as the parent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Number of entries",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": `max` on `Field.entry.multiple`, `required` to demand at least one."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This field accepts up to three blog posts, picked from below the blog entry:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlRufEQveua4S5WrLDKLDt0fRC",
+      "code": "import {Field} from 'alinea'\n\ndeclare const blogId: string\n\nField.entry.multiple('Related posts', {\n  // Only blog posts can be selected\n  condition: {_type: 'BlogPost'},\n  // List the posts below the blog entry in the pages root\n  location: {workspace: 'main', root: 'pages', parentId: blogId},\n  // Don't offer other workspaces and roots\n  limitLocations: [{workspace: 'main', root: 'pages'}],\n  // Pick up to three\n  max: 3\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`condition` and `location` also work on the "
+        },
+        {
+          "_type": "text",
+          "text": "Link field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzxMQjhNZKS6Ib7AMo4iv5mu",
+              "_link": "entry",
+              "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", where they apply to its page picker."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Dynamic options"
         }
       ],
@@ -415,7 +641,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196930,
+    "updatedAt": 1790233901,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

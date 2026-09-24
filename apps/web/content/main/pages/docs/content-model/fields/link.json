@@ -156,7 +156,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`condition`, `location`, `limitLocations` and `pickChildren`: limit which entries the page picker offers, see the "
+                  "text": "`condition` and `location`: limit which entries the page picker offers and where it opens, see the "
                 },
                 {
                   "_type": "text",
@@ -172,7 +172,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": "."
+                  "text": ". They don't affect the file picker."
                 }
               ]
             }
@@ -209,6 +209,190 @@
           ]
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Allowing only some kinds of links"
+        }
+      ],
+      "_anchor": "allowing-only-some-kinds-of-links"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.link` accepts all three kinds. To accept a single kind, use the field made for it:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Pages, external urls and files: `Field.link`"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Only pages (internal links): "
+                },
+                {
+                  "_type": "text",
+                  "text": "`Field.entry`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "2aiM1Ghv4EPsnyCwFTBaljNTqhe",
+                      "_link": "entry",
+                      "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Only external urls: "
+                },
+                {
+                  "_type": "text",
+                  "text": "`Field.url`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "2aiNTO1P2dBKjx6oBxmdnwk7vuB",
+                      "_link": "entry",
+                      "_entry": "2aiM9Z6hrhingqGxBX6GGKEVBAh"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Only files from the media library: "
+                },
+                {
+                  "_type": "text",
+                  "text": "`Field.file`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "2aiM4jKizlp5cMp5nIZg1aG5zfw",
+                      "_link": "entry",
+                      "_entry": "tlhZ01MHUjv3Od172Ew6w"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Only images: "
+                },
+                {
+                  "_type": "text",
+                  "text": "`Field.image`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "2aiM5hmOU6jSqFdf9wHRoZw21TE",
+                      "_link": "entry",
+                      "_entry": "Xu4-sW6S0ynehY5zKR1VZ"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each has the same `.multiple` variant, a narrower value type and a picker without the tabs for the other kinds."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.link` has no option to hide one of its kinds. To accept two of them, such as a page or a url but no file, reject the third in `validate`. The stored link's `_type` is `'entry'`, `'url'` or `'file'`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlRxqHbYq7a1ISpt7yE0IzqF0Y",
+      "code": "import {Field} from 'alinea'\n\n// A page or an external url, but no file\nField.link('Button link', {\n  validate(link) {\n    if (link?._type === 'file') return 'Link to a page or a url'\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To offer only some pages, pass a `condition`. It applies to the page picker, the url and file pickers are unaffected:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlRxpPDk48xtBB0CVrUugKw6Q6",
+      "code": "import {Field} from 'alinea'\n\nField.link('Button link', {\n  // Only offer pages of these types in the page picker\n  condition: {_type: {in: ['Page', 'BlogPost']}}\n})",
+      "fileName": "",
+      "language": "tsx"
     },
     {
       "_type": "heading",
@@ -362,7 +546,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196931,
+    "updatedAt": 1790233917,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
