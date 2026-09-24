@@ -1,0 +1,31 @@
+@use '@/style' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &-stage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 200px;
+    padding: 40px 32px;
+    border-radius: var(--web-docs-radius);
+    border: 1px solid var(--web-outline);
+    background-color: var(--web-background);
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--web-foreground-muted) 35%, transparent) 1px,
+      transparent 1.2px
+    );
+    background-size: 16px 16px;
+    background-position: center;
+    overflow-x: auto;
+
+    @include s {
+      padding: 32px 16px;
+    }
+  }
+}

@@ -1,0 +1,106 @@
+@use '@/style' as *;
+
+.root {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 16px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  color: var(--web-foreground);
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+
+  &:hover,
+  &:has(:focus-visible) {
+    border-color: color-mix(in srgb, var(--web-accent) 45%, var(--web-outline));
+    box-shadow: 0 8px 24px -12px
+      color-mix(in srgb, var(--web-foreground) 30%, transparent);
+  }
+
+  &:has(:focus-visible) {
+    outline: 2px solid var(--web-accent);
+    outline-offset: 2px;
+  }
+
+  &-stage {
+    position: relative;
+    height: 184px;
+
+    @include s {
+      height: 160px;
+    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--web-outline);
+    overflow: hidden;
+  }
+
+  // Fields sit on a form, like in the entry editor
+  &.is-field &-stage {
+    background: var(--web-background);
+  }
+
+  // Components sit on a canvas
+  &.is-component &-stage {
+    background-color: var(--web-background);
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--web-foreground-muted) 35%, transparent) 1px,
+      transparent 1.2px
+    );
+    background-size: 16px 16px;
+    background-position: center;
+  }
+
+  &-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px 15px;
+  }
+
+  &-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &-title {
+    color: inherit;
+    outline: none;
+    font: 600 15px/22px var(--web-body-font);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    // Stretch the link over the whole card
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+  }
+
+  &-code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font: 400 12.5px/20px var(--web-mono-font);
+    color: var(--web-accent);
+  }
+
+  &-meta {
+    flex-shrink: 0;
+    font: var(--web-docs-font-small);
+    color: var(--web-foreground-muted);
+  }
+}

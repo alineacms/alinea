@@ -1,0 +1,104 @@
+{
+  "_id": "3JmLPk1X3jKs0p6gru91ikagpOt",
+  "_type": "Doc",
+  "_index": "aw",
+  "title": "Tooltip",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A short description that appears when its trigger is hovered or focused. Use it to name icon-only buttons, not for information editors need to do their work."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPh56v5AiFfknTWOD7jlVlvG",
+      "example": "Tooltip"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Placement"
+        }
+      ],
+      "_anchor": "placement"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`side` sets where the tooltip opens, it flips to the other side when there is no room."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPhixxkgzsoEcakjUWqZycdu",
+      "example": "TooltipSides"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPnHURTRDC8MJL7zzM5Qiz6P",
+      "component": "Tooltip"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The tooltip describes its trigger with `aria-describedby`. It opens on keyboard focus as well as on hover and closes with Escape. An icon-only trigger still needs an `aria-label`."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261274,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261274,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

@@ -6,7 +6,13 @@ import Link from 'next/link'
 import {cms} from '@/cms'
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
 import {CopyMarkdownButton} from '@/page/docs/CopyMarkdownButton'
-import {DocBody, DocLead, docHeadings, splitLead} from '@/page/docs/DocBody'
+import {
+  DocBody,
+  DocLead,
+  docHeadings,
+  hasCatalog,
+  splitLead
+} from '@/page/docs/DocBody'
 import {DocsFooter} from '@/page/docs/DocsFooter'
 import {DocsIconArrowRight} from '@/page/docs/DocsIcons'
 import {renderNodes} from '@/page/docs/DocMarkdown'
@@ -82,11 +88,13 @@ export default async function DocPage({params}: DocPageProps) {
     : doc.parents.filter(parent => parent.id !== tree.root.id)
   const {lead, rest} = splitLead(doc.body)
   const headings = docHeadings(rest)
+  // A catalog lists the children of the page already, and needs the room
+  const wide = hasCatalog(rest)
   const markdown = [`# ${title}`, renderNodes(doc.body, tree.urls, new Map())]
     .filter(Boolean)
     .join('\n\n')
   return (
-    <div className={styles.root()}>
+    <div className={styles.root({wide})}>
       <article className={styles.root.article()}>
         <div className={styles.root.top()}>
           <Breadcrumbs
@@ -99,8 +107,8 @@ export default async function DocPage({params}: DocPageProps) {
           <h1 className={styles.root.title()}>{title}</h1>
           {lead && <DocLead doc={lead} />}
         </header>
-        <DocBody body={rest} />
-        {children.length > 0 && (
+        <DocBody body={rest} wide={wide} />
+        {children.length > 0 && !wide && (
           <section className={styles.root.section()}>
             <h2 className={styles.root.section.title()}>In this section</h2>
             <div className={styles.root.section.grid()}>
@@ -121,10 +129,12 @@ export default async function DocPage({params}: DocPageProps) {
         )}
         <DocsFooter prev={prev} next={next} />
       </article>
-      {/* Always rendered so the article has the same width on every page */}
-      <aside className={styles.root.toc()}>
-        {headings.length > 0 && <DocToc items={headings} />}
-      </aside>
+      {/* Rendered without headings too, so articles share one width */}
+      {!wide && (
+        <aside className={styles.root.toc()}>
+          {headings.length > 0 && <DocToc items={headings} />}
+        </aside>
+      )}
     </div>
   )
 }

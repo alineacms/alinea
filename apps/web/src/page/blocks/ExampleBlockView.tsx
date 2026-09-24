@@ -11,6 +11,7 @@ export async function ExampleBlockView({code}: Infer<typeof ExampleBlock>) {
   return (
     <div>
       <iframe
+        loading="lazy"
         className={styles.root.iframe()}
         src={`/playground?view=preview#code/${hash}`}
       />

@@ -1,0 +1,104 @@
+{
+  "_id": "3JmLPEDy7XfWVptYqVh78F4DgcS",
+  "_type": "Doc",
+  "_index": "aL",
+  "title": "DropdownMenu",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A menu of actions that opens from a button, like the actions of an entry in the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPHOUBCfo61DI1GXYrRGj5pi",
+      "example": "DropdownMenu"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Checkbox and radio items"
+        }
+      ],
+      "_anchor": "checkbox-and-radio-items"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A menu can hold options as well: a checkbox item toggles one, a radio group picks one of several. Unlike actions they keep the menu open when selected."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPFlDXwWtggVzVCg0diygEes",
+      "example": "DropdownMenuSelection"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPE6mr1YAuDm6oaSLcxKagST",
+      "component": "DropdownMenu"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The menu opens with Enter, Space or the arrow keys, the arrow keys move through its items and typing jumps to a matching item. Escape closes it and returns focus to the trigger."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261270,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261270,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

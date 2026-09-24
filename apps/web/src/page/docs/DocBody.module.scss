@@ -23,6 +23,11 @@
   min-width: 0;
   font: var(--web-docs-font-body);
   color: var(--web-foreground-faded);
+
+  // On a wide page text keeps its measure, catalogs use the full width
+  &.is-wide :is(.p, .h2, .h3, .h4, .list, .blockquote, .block:not(.is-wide)) {
+    max-width: 760px;
+  }
 }
 
 .lead {

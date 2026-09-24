@@ -38,6 +38,14 @@ const nextConfig: NextConfig = {
     // We check types in plenty other places, no need to waste time here
     ignoreBuildErrors: true
   },
+  // The component pages read example sources and the published component
+  // declarations, also when a page renders on demand (eg. in a preview)
+  outputFileTracingIncludes: {
+    '/**': [
+      './src/page/catalog/examples/*.tsx',
+      '../../dist/components/**/*.{d.ts,js}'
+    ]
+  },
   async redirects() {
     return [
       {

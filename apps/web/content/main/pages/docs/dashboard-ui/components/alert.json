@@ -1,0 +1,109 @@
+{
+  "_id": "3JmLOw9ryzMNnMDgv6HqGAlH5Mh",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "Alert",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A callout for an important message, with a title, a description and optional actions."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLP2RTRbFvtM3jxL55EUVVwS3",
+      "example": "Alert"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Variants"
+        }
+      ],
+      "_anchor": "variants"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`warning` asks for attention and `destructive` reports an error. Destructive alerts get `role=\"alert\"`, which screen readers announce right away, the others use `role=\"status\"`."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLOvcqeU4QpcUOwY0Biy6ixgn",
+      "example": "AlertVariants"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Actions"
+        }
+      ],
+      "_anchor": "actions"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "AlertActions holds buttons below the description, for example to retry or to dismiss the message."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLOxYlUyzRZGpcuwhVKntKkRy",
+      "example": "AlertActions"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLOzm98Xe5PQSsRSIVs7f7oBO",
+      "component": "Alert"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261268,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261268,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

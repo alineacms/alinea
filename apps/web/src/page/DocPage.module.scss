@@ -25,6 +25,15 @@
     flex-direction: column;
   }
 
+  // Pages with a catalog use the width of the table of contents as well
+  &.is-wide &-article {
+    flex-basis: 1024px;
+  }
+
+  &.is-wide &-header {
+    max-width: 760px;
+  }
+
   &-top {
     display: flex;
     align-items: center;

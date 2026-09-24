@@ -7,8 +7,12 @@ import {WebText} from '@/layout/WebText'
 import {ChapterLinkView} from '@/page/blocks/ChapterLinkView'
 import {CodeBlockView} from '@/page/blocks/CodeBlockView'
 import {CodeVariantsView} from '@/page/blocks/CodeVariantsView'
+import {ComponentCatalogView} from '@/page/blocks/ComponentCatalogView'
+import {ComponentExampleView} from '@/page/blocks/ComponentExampleView'
+import {ComponentPropsView} from '@/page/blocks/ComponentPropsView'
 import {CopyPromptView} from '@/page/blocks/CopyPromptView'
 import {ExampleBlockView} from '@/page/blocks/ExampleBlockView'
+import {FieldCatalogView} from '@/page/blocks/FieldCatalogView'
 import {ImageBlockView} from '@/page/blocks/ImageBlockView'
 import {NoticeView} from '@/page/blocks/NoticeView'
 import type {bodyField} from '@/schema/fields/BodyField'
@@ -90,15 +94,28 @@ function DocHeadingTag(Tag: 'h2' | 'h3' | 'h4') {
   }
 }
 
-/** Wraps a block view so the body flow owns the space around it */
-function docBlock<Props extends object>(View: ComponentType<Props>) {
+/**
+ * Wraps a block view so the body flow owns the space around it. Wide blocks,
+ * such as the catalogs, may use the full width of a wide page.
+ */
+function docBlock<Props extends object>(
+  View: ComponentType<Props>,
+  wide = false
+) {
   return function DocBlock(props: Props) {
     return (
-      <div className={styles.block()}>
+      <div className={styles.block({wide})}>
         <View {...props} />
       </div>
     )
   }
+}
+
+const catalogBlocks = new Set(['FieldCatalogBlock', 'ComponentCatalogBlock'])
+
+/** Pages with a catalog are laid out wider, without the table of contents */
+export function hasCatalog(body: DocBodyDoc) {
+  return body.some(node => catalogBlocks.has(node._type))
 }
 
 const DocCodeBlock = docBlock(CodeBlockView)
@@ -108,6 +125,10 @@ const DocChapterLink = docBlock(ChapterLinkView)
 const DocNotice = docBlock(NoticeView)
 const DocImage = docBlock(ImageBlockView)
 const DocCopyPrompt = docBlock(CopyPromptView)
+const DocFieldCatalog = docBlock(FieldCatalogView, true)
+const DocComponentCatalog = docBlock(ComponentCatalogView, true)
+const DocComponentExample = docBlock(ComponentExampleView)
+const DocComponentProps = docBlock(ComponentPropsView)
 
 const DocH2 = DocHeadingTag('h2')
 const DocH3 = DocHeadingTag('h3')
@@ -138,6 +159,10 @@ function DocText({doc}: DocTextProps) {
       NoticeBlock={DocNotice}
       ImageBlock={DocImage}
       CopyPromptBlock={DocCopyPrompt}
+      FieldCatalogBlock={DocFieldCatalog}
+      ComponentCatalogBlock={DocComponentCatalog}
+      ComponentExampleBlock={DocComponentExample}
+      ComponentPropsBlock={DocComponentProps}
     />
   )
 }
@@ -164,15 +189,17 @@ interface DocSection {
 
 export interface DocBodyProps {
   body: DocBodyDoc
+  /** Keeps text at a readable width while wide blocks use the full width */
+  wide?: boolean
 }
 
-export function DocBody({body}: DocBodyProps) {
+export function DocBody({body, wide}: DocBodyProps) {
   const headings = docHeadings(body)
   const isSteps =
     headings.length > 1 && headings.every(heading => heading.step !== undefined)
   if (!isSteps)
     return (
-      <div className={styles.root()}>
+      <div className={styles.root({wide})}>
         <DocText doc={body} />
       </div>
     )

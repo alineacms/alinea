@@ -253,6 +253,8 @@
 
 .searchmodal {
   position: fixed;
+  // Portaled to <body>, which the dashboard stylesheet gives its own font
+  font-family: var(--web-body-font);
   display: flex;
   align-items: flex-start;
   inset: 0;

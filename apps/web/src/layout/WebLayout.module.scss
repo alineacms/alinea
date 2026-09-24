@@ -3,6 +3,9 @@
   z-index: 0;
   display: flex;
   flex-direction: column;
+  // Set here as well as on <body>: the dashboard stylesheet (for the preview
+  // widget and the dashboard component examples) sets its own font on <body>
+  font-family: var(--web-body-font);
   font-size: 15px;
   line-height: 1.4;
   color: var(--web-foreground);

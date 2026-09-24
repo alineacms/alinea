@@ -1,0 +1,113 @@
+@use '@/style' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+
+  &-part {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &-title {
+    font: 500 15px/1.4 var(--web-mono-font);
+    color: var(--web-foreground);
+  }
+
+  &-description,
+  &-accepts {
+    font: var(--web-docs-font-compact);
+    color: var(--web-foreground-faded);
+  }
+
+  &-inline {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--web-code-inline-background);
+    color: var(--web-code-inline-foreground);
+    font: 400 0.88em/1 var(--web-mono-font);
+  }
+
+  &-table {
+    border-radius: 12px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    overflow: hidden;
+    font: 400 14px/1.5 var(--web-body-font);
+  }
+
+  &-row {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1.3fr) 90px minmax(0, 1fr);
+    gap: 16px;
+    align-items: baseline;
+    padding: 11px 18px;
+    border-top: 1px solid var(--web-outline);
+
+    &.is-head {
+      border-top: none;
+      background: var(--web-neutral-soft);
+      font-weight: 600;
+      color: var(--web-foreground-faded);
+    }
+
+    @include s {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+      padding: 12px 16px;
+
+      &.is-head {
+        display: none;
+      }
+
+      &:nth-child(2) {
+        border-top: none;
+      }
+    }
+  }
+
+  &-prop {
+    font: 500 13px/1.6 var(--web-mono-font);
+    color: var(--web-foreground);
+    overflow-wrap: anywhere;
+  }
+
+  &-required {
+    margin-left: 2px;
+    color: var(--web-accent);
+  }
+
+  &-type {
+    font: 400 12.5px/1.6 var(--web-mono-font);
+    color: var(--web-accent);
+    overflow-wrap: anywhere;
+  }
+
+  &-default {
+    font: 400 12.5px/1.6 var(--web-mono-font);
+    color: var(--web-foreground-faded);
+    overflow-wrap: anywhere;
+  }
+
+  &-label {
+    display: none;
+
+    @include s {
+      display: inline;
+      font-family: var(--web-body-font);
+      color: var(--web-foreground-muted);
+    }
+  }
+
+  &-text {
+    color: var(--web-foreground-faded);
+
+    &:empty {
+      @include s {
+        display: none;
+      }
+    }
+  }
+}

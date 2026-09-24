@@ -6,8 +6,12 @@ import {ComponentType} from 'react'
 import {ChapterLinkView} from './ChapterLinkView'
 import {CodeBlockView} from './CodeBlockView'
 import {CodeVariantsView} from './CodeVariantsView'
+import {ComponentCatalogView} from './ComponentCatalogView'
+import {ComponentExampleView} from './ComponentExampleView'
+import {ComponentPropsView} from './ComponentPropsView'
 import {CopyPromptView} from './CopyPromptView'
 import {ExampleBlockView} from './ExampleBlockView'
+import {FieldCatalogView} from './FieldCatalogView'
 import {ImageBlockView} from './ImageBlockView'
 import {NoticeView} from './NoticeView'
 import css from './TextFieldView.module.scss'
@@ -30,6 +34,10 @@ export function BodyFieldView({body}: BodyViewProps) {
       NoticeBlock={NoticeView}
       ImageBlock={ImageBlockView}
       CopyPromptBlock={CopyPromptView}
+      FieldCatalogBlock={FieldCatalogView}
+      ComponentCatalogBlock={ComponentCatalogView}
+      ComponentExampleBlock={ComponentExampleView}
+      ComponentPropsBlock={ComponentPropsView}
     />
   )
 }

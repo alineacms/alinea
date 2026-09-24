@@ -1,3 +1,10 @@
+import {
+  componentCatalogMarkdown,
+  componentExampleMarkdown,
+  componentPropsMarkdown,
+  fieldCatalogMarkdown
+} from '@/page/catalog/catalogMarkdown'
+
 export type DocEntryMap = Map<string, {url: string}>
 export type DocMediaMap = Map<string, {title: string; location: string}>
 
@@ -135,6 +142,14 @@ function renderNode(
       const prompt = normalizeText(asString(node.prompt)).trim()
       return prompt ? `> ${prompt}` : ''
     }
+    case 'FieldCatalogBlock':
+      return fieldCatalogMarkdown()
+    case 'ComponentCatalogBlock':
+      return componentCatalogMarkdown()
+    case 'ComponentExampleBlock':
+      return componentExampleMarkdown(asString(node.example))
+    case 'ComponentPropsBlock':
+      return componentPropsMarkdown(asString(node.component))
     case 'ImageBlock': {
       const image =
         node.image && typeof node.image === 'object'

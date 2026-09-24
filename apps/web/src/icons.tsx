@@ -941,3 +941,48 @@ export function IcOutlineStorefront(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
+export function StrokeDatabase(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <ellipse cx="12" cy="5.5" rx="8" ry="2.5"></ellipse>
+      <path d="M4 5.5v6c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-6"></path>
+      <path d="M4 11.5v7c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-7"></path>
+    </svg>
+  )
+}
+
+export function StrokeBlocks(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <rect x="3" y="3" width="8" height="8" rx="1.5"></rect>
+      <rect x="13" y="3" width="8" height="8" rx="1.5"></rect>
+      <rect x="3" y="13" width="8" height="8" rx="1.5"></rect>
+      <path d="M17 13v8M13 17h8"></path>
+    </svg>
+  )
+}
