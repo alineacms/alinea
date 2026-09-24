@@ -25,6 +25,31 @@ test('keeps the remove control visible beside block row actions', async ({
   )
 })
 
+test('reopens row actions on the menu after leaving the insert picker', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const hero = page
+    .getByRole('list', {name: 'Sections'})
+    .getByRole('listitem')
+    .first()
+  const actions = page.getByRole('dialog', {name: 'Hero actions'})
+  await hero.getByRole('button', {name: 'Hero actions'}).click()
+  await actions.getByRole('button', {name: 'Insert after'}).click()
+  await expect(actions.getByRole('button', {name: 'Insert after'})).toHaveCount(
+    0
+  )
+  await page.mouse.click(5, 5)
+  await expect(actions).toHaveCount(0)
+
+  await hero.getByRole('button', {name: 'Hero actions'}).click()
+  await expect(
+    actions.getByRole('button', {name: 'Insert after'})
+  ).toBeVisible()
+})
+
 test('collapsed lists keep only row headers and restore editors when expanded', async ({
   mount,
   page

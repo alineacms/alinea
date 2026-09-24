@@ -799,7 +799,13 @@ function ListFieldRowHeader({
         </ListRowBadges>
       </ListRowDrag>
       <ListRowActions>
-        <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+        <DialogTrigger
+          isOpen={actionsOpen}
+          onOpenChange={isOpen => {
+            if (isOpen) setActionsOpen(true)
+            else closeActions()
+          }}
+        >
           <Button
             appearance="plain"
             aria-label={`${label} actions`}
