@@ -3,14 +3,18 @@ import {createEntrySource} from '#test/EntryFixture.js'
 import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {DemoRecipes} from '#test/schema/DemoRecipes.js'
 import {afterAll, beforeAll, expect, test} from 'bun:test'
+import {Database} from 'bun:sqlite'
+import {connect} from 'rado/driver/bun-sqlite'
 import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import type {Condition} from '#/core/Filter.js'
 import {ListRow} from '#/core/ListRow.js'
+import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {getScope} from '#/core/Scope.js'
 import {FSSource} from '#/core/source/FSSource.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import {Node} from '#/core/TextDoc.js'
 import {Config, Field, Query} from '#/index.js'
 
@@ -818,4 +822,33 @@ test('resolves link suffixes, rich text links and image metadata', async () => {
     })
     expect(localizedImage?.alt).toBe('Texte alternatif francais')
   })
+})
+
+test('translations nested in a selection list the own language first', async () => {
+  // SQLite before 3.45 (Bun's on macOS) cannot order a relation by a column
+  // of its source entry.
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(advancedCms.config, db)
+  await database.syncWith(
+    await createEntrySource(advancedCms.config, advancedEntries)
+  )
+  expect(
+    await database.find({
+      root: mainWorkspace.localized,
+      id: 'trans',
+      select: {
+        locale: Entry.locale,
+        translations: Query.translations({
+          includeSelf: true,
+          select: Entry.locale
+        })
+      }
+    })
+  ).toEqual([
+    {locale: 'de', translations: ['de', 'en']},
+    {locale: 'en', translations: ['en', 'de']}
+  ])
+  await database.close()
 })

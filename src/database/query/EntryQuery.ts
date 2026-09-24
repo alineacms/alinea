@@ -76,6 +76,8 @@ interface FieldProjection {
 export interface ProjectionPlan {
   count: boolean
   single: boolean
+  /** Rows carry the selection as `value`, next to the columns they need. */
+  wrapped: boolean
   relations: Array<RelationProjection>
   fields: Array<FieldProjection>
 }
@@ -383,8 +385,17 @@ export function compileEntryQuery(
     }
   } else if (search) ordering.push(asc(search.rank))
   else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
-  else if (edge?.edge === 'translations' && edge.includeSelf && source)
-    ordering.push(asc(when([eq(entry.locale, source.locale), 0], 1)))
+  // The entry's own language first. SQLite before 3.45 cannot order a
+  // relation by a column of its source, so it orders by a selected column.
+  const selfFirst =
+    !query.orderBy &&
+    !search &&
+    edge?.edge === 'translations' &&
+    edge.includeSelf &&
+    source
+      ? when([eq(entry.locale, source.locale), 0], 1)
+      : undefined
+  if (selfFirst) ordering.push(asc(sql.identifier('selfFirst')))
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
   function relation(relationQuery: EdgeQuery): CompiledRelation {
@@ -489,17 +500,27 @@ export function compileEntryQuery(
     return rows
   }
 
+  // Fields resolve their links in the locale of the entry they were read
+  // from; the own language first is ordered by its selected column.
+  const wrapped = Boolean(
+    projection.relations.length || projection.fields.length || selfFirst
+  )
   const plan: ProjectionPlan = {
     count: query.count === true,
     single,
+    wrapped,
     relations: projection.relations,
     fields: projection.fields
   }
-  // Fields resolve their links in the locale of the entry they were read from.
-  const needsContext = plan.relations.length || plan.fields.length
   return {
     rows: selectRows(
-      needsContext ? {value: selection, locale: entry.locale} : selection
+      wrapped
+        ? {
+            value: selection,
+            locale: entry.locale,
+            ...(selfFirst ? {selfFirst} : {})
+          }
+        : selection
     ),
     plan
   }

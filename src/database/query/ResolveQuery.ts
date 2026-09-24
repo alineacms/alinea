@@ -124,9 +124,10 @@ async function projectRow(
   row: unknown,
   context: EntryQueryContext
 ): Promise<unknown> {
-  if (!plan.relations.length && !plan.fields.length) return row
+  if (!plan.wrapped) return row
   const projected = row as {value: unknown; locale: string | null}
   let value = projected.value
+  if (!plan.relations.length && !plan.fields.length) return value
   const loader = createLinkResolver(status, projected.locale, context)
   await Promise.all(
     plan.fields.map(async selected => {
