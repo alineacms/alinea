@@ -69,18 +69,18 @@ async function parseFiles(
     pathsByHash.set(file.fileHash, paths)
   }
   const parsedEntries = Array<IndexedEntry>()
-  const found = new Set<string>()
   for await (const [fileHash, blob] of source.getBlobs([
     ...pathsByHash.keys()
   ])) {
+    // Files sharing a blob are parsed once, however often it is returned.
     const paths = pathsByHash.get(fileHash)
     if (!paths) continue
-    found.add(fileHash)
+    pathsByHash.delete(fileHash)
     for (const filePath of paths)
       parsedEntries.push(parseSourceEntry(config, filePath, fileHash, blob))
   }
-  for (const fileHash of pathsByHash.keys())
-    assert(found.has(fileHash), `Source did not return blob ${fileHash}`)
+  const [missing] = pathsByHash.keys()
+  assert(missing === undefined, `Source did not return blob ${missing}`)
   return parsedEntries.map(entry => ({
     ...entryIndexRow(entry),
     childrenSha: sourceDirectorySha(tree, entry.childrenDir),

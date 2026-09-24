@@ -558,3 +558,23 @@ test('a sync of more than one batch moves an entry to an earlier path', async ()
     incremental.sqlite.close()
   }
 })
+
+test('reindexes versions stored with identical files', async () => {
+  const source = new MemorySource()
+  await change(source, tx => {
+    tx.add('pages/twin.json', recipe('twin', 'Twin'))
+    tx.add('pages/twin.draft.json', recipe('twin', 'Twin'))
+  })
+  const incremental = await openRuntime(cms.config)
+  try {
+    const synced = await syncLikeFullSync(cms.config, source, incremental)
+    const before = await storedRows(incremental.db)
+    // The stored payloads of both versions hold the same blob.
+    const reindexed = await incremental.runtime.reindex(cms.config)
+    expect(reindexed.revision).toBe(synced.revision)
+    expect(await storedRows(incremental.db)).toEqual(before)
+  } finally {
+    await incremental.runtime.close()
+    incremental.sqlite.close()
+  }
+})
