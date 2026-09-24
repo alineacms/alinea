@@ -1,7 +1,9 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
+import {root} from '#/core/Root.js'
 import {type} from '#/core/Type.js'
+import {workspace} from '#/core/Workspace.js'
 import {text} from '#/field/text/TextField.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
@@ -81,20 +83,14 @@ test('structural SQL queries use the complete entry table', async () => {
   expect(
     await compileEntryQuery(config, {
       select: Entry.id,
-      preferredLocale: 'en'
+      preferredLocale: 'EN'
     }).rows.all(db)
   ).toEqual(['a', 'b'])
   expect(
-    await compileEntryQuery(config, {select: Entry.id, locale: 'en'}).rows.all(
+    await compileEntryQuery(config, {select: Entry.id, locale: 'EN'}).rows.all(
       db
     )
   ).toEqual(['b'])
-  expect(
-    await compileEntryQuery(config, {
-      select: Entry.locale,
-      locale: 'en'
-    }).rows.all(db)
-  ).toEqual(['EN'])
   expect(
     await compileEntryQuery(config, {
       select: Entry.id,
@@ -109,6 +105,63 @@ test('structural SQL queries use the complete entry table', async () => {
       ...(statement.params as Array<string | number | null>)
     )
     expect(JSON.stringify(explain)).toContain('INDEX')
+  } finally {
+    explainStatement.finalize()
+  }
+})
+
+test('locales match configured spellings in any case', async () => {
+  const localized: Config = {
+    schema: {Page},
+    workspaces: {
+      main: workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: root('Pages', {i18n: {locales: ['nl-BE', 'en-GB']}}),
+          other: root('Other', {i18n: {locales: ['en-gb']}})
+        }
+      })
+    }
+  }
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable)
+  await db
+    .insert(EntryIndexTable)
+    .values([
+      entryIndexRow(entry('a')),
+      entryIndexRow(entry('b', {locale: 'nl-BE'})),
+      entryIndexRow(entry('c', {locale: 'en-GB'})),
+      entryIndexRow(entry('d', {locale: 'en-gb', root: 'other'}))
+    ])
+  function ids(query: GraphQuery) {
+    return compileEntryQuery(localized, {select: Entry.id, ...query}).rows.all(
+      db
+    )
+  }
+  expect(await ids({locale: 'nl-be'})).toEqual(['b'])
+  expect(await ids({locale: 'NL-BE'})).toEqual(['b'])
+  expect(await ids({preferredLocale: 'nl-be'})).toEqual(['a', 'b'])
+  expect(await ids({locale: 'EN-GB'})).toEqual(['c', 'd'])
+  expect(await ids({locale: 'fr'})).toEqual([])
+  expect(
+    await compileEntryQuery(localized, {
+      select: Entry.locale,
+      locale: 'nl-be'
+    }).rows.all(db)
+  ).toEqual(['nl-BE'])
+  const statement = compileEntryQuery(localized, {
+    type: Page,
+    locale: 'nl-be',
+    select: Entry.id
+  }).rows.toSQL(db)
+  expect(statement.sql).not.toContain('nocase')
+  const explainStatement = sqlite.prepare(`explain query plan ${statement.sql}`)
+  try {
+    const explain = explainStatement.all(
+      ...(statement.params as Array<string | number | null>)
+    )
+    expect(JSON.stringify(explain)).toContain('by_type (type=? AND locale=?)')
   } finally {
     explainStatement.finalize()
   }
