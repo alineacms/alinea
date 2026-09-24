@@ -7,6 +7,7 @@ import {code} from '#/core/util/CodeGen.js'
 import esbuild from 'esbuild'
 import escapeHtml from 'escape-html'
 import {buildOptions} from '../build/BuildOptions.js'
+import {previewsBuild} from '../build/PreviewsBuild.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
@@ -61,6 +62,7 @@ export async function generateDashboard(
     tsconfig,
     logLevel: 'error'
   })
+  await esbuild.build({...previewsBuild(configDir), outdir: assetsFolder})
   const baseUrl = `./${escapeHtml(basename)}`
   await writeFileIfContentsDiffer(
     path.join(rootDir, staticFile),

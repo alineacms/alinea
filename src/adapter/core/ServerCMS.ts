@@ -6,7 +6,7 @@ import {
 import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
 import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -37,6 +37,14 @@ export interface SyncStatus {
   sha: string | undefined
   /** When this isolate last synced its bundled database with the handler. */
   syncedAt: Date | undefined
+}
+
+/** What the previews client of a draft render needs. */
+export interface PreviewInfo {
+  /** The dashboard the preview widget links to. */
+  dashboardUrl: string
+  /** The queries and syncs of this render. */
+  stats: RenderStats
 }
 
 interface AppliedPreview {
@@ -121,6 +129,19 @@ export class ServerCMS<
     if (!request || !(await request.isDraft())) return undefined
     const state = this.#state(request)
     return (state.stats ??= new RenderStats())
+  }
+
+  /** Previews only render for drafts, undefined otherwise. */
+  async previewInfo(): Promise<PreviewInfo | undefined> {
+    const stats = await this.renderStats()
+    if (!stats) return undefined
+    const {isDev, handlerUrl} = await requestContext(this.config)
+    let file = `${Config.adminPath(this.config)}.html`
+    if (!file.startsWith('/')) file = `/${file}`
+    const dashboardUrl = isDev
+      ? new URL('/', handlerUrl)
+      : new URL(file, handlerUrl)
+    return {dashboardUrl: dashboardUrl.href, stats}
   }
 
   /** The bundled database answers outside Edge, except during development. */

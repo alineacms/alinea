@@ -1,6 +1,5 @@
-import {requestContext} from '#/adapter/core/context.js'
 import {type OpenBundledDatabase, ServerCMS} from '#/adapter/core/ServerCMS.js'
-import {Config} from '#/core/Config.js'
+import type {Config} from '#/core/Config.js'
 import {nextHost} from './host.js'
 
 export type {SyncStatus} from '#/adapter/core/ServerCMS.js'
@@ -26,23 +25,17 @@ export class NextCMS<
     workspace,
     root
   }: PreviewProps) => {
-    const stats = await this.renderStats()
-    if (!stats) return null
+    const info = await this.previewInfo()
+    if (!info) return null
     const {default: dynamic} = await import('next/dynamic.js')
-    const {isDev, handlerUrl} = await requestContext(this.config)
-    let file = `${Config.adminPath(this.config)}.html`
-    if (!file.startsWith('/')) file = `/${file}`
-    const dashboardUrl = isDev
-      ? new URL('/', handlerUrl)
-      : new URL(file, handlerUrl)
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
     return (
       <NextPreviews
-        dashboardUrl={dashboardUrl.href}
+        dashboardUrl={info.dashboardUrl}
         widget={widget}
-        stats={widget && showStats ? stats.settled() : undefined}
+        stats={widget && showStats ? info.stats.settled() : undefined}
         workspace={workspace}
         root={root}
       />

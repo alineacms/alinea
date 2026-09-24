@@ -8,10 +8,15 @@ import {type Trigger, trigger} from '#/core/Trigger.js'
 import type {User} from '#/core/User.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {ReadableStream, Request, Response} from '@alinea/iso'
-import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
+import esbuild, {
+  type BuildOptions,
+  type BuildResult,
+  type OutputFile
+} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {buildEmitter} from '../build/BuildEmitter.js'
+import {previewsBuild} from '../build/PreviewsBuild.js'
 import {contentType} from '../util/ContentType.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
@@ -156,6 +161,17 @@ export function createLocalServer(
       }
     }
   })()
+
+  // Built once: the previews client does not depend on the config
+  let previews: Promise<string> | undefined
+  async function servePreviews(): Promise<Response> {
+    previews ??= esbuild
+      .build({...previewsBuild(rootDir), outdir: devDir, write: false})
+      .then(result => result.outputFiles![0].text)
+    return new Response(await previews, {
+      headers: {'content-type': contentType('.js')}
+    })
+  }
 
   async function serveBrowserBuild(
     request: Request
@@ -305,6 +321,7 @@ export function createLocalServer(
       matcher.all('/api').map(async ({url, request}) => {
         return devHandler(request)
       }),
+      matcher.get('/previews.js').map(servePreviews),
       matcher.get('/').map(({url}): Response => {
         const handlerUrl = `${url.protocol}//${url.host}`
         const path = url.pathname.endsWith('/')

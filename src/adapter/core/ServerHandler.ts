@@ -82,6 +82,12 @@ export function createServerHandler(
         backendUrl.searchParams.set('delivery', 'proxy')
         return await handleBackend(new Request(backendUrl, request), context)
       }
+      // Frameworks without a rewrite for the dashboard land here
+      if (url.pathname === Config.adminPath(config))
+        return new Response('Redirecting...', {
+          status: 302,
+          headers: {location: `/${Config.dashboardFile(config)}${url.search}`}
+        })
       if (url.pathname !== handlerPath)
         return new Response(`Expected handler to be served on ${handlerPath}`, {
           status: 400
@@ -118,6 +124,16 @@ export function createServerHandler(
     }
   }
   return handle
+}
+
+/** Whether the handler answers this request: the API, files or dashboard. */
+export function isAlineaRoute(config: Config, request: Request): boolean {
+  const url = new URL(request.url)
+  return (
+    url.pathname === handlerPathname(config, url) ||
+    url.pathname === Config.adminPath(config) ||
+    rewrittenFilePath(config, request) !== undefined
+  )
 }
 
 export function handlerPathname(config: Config, requestUrl: URL): string {

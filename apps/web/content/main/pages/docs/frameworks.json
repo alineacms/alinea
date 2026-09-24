@@ -1,0 +1,166 @@
+{
+  "_id": "3JmSMLy1lvdLEaLT1BYb3fuPheT",
+  "_type": "Docs",
+  "_index": "a0V",
+  "title": "Frameworks",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea runs inside your website: the dashboard, the API it talks to and the queries of your pages are all served by the site itself. It supports "
+        },
+        {
+          "_type": "text",
+          "text": "Next.js",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JmSMNMcSzg1gbMYatL5miD17SP",
+              "_link": "entry",
+              "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", Astro, SvelteKit and Nuxt, and any other Node server through `alinea/server`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "How it works"
+        }
+      ],
+      "_anchor": "how-it-works"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every integration works the same way, only the few lines that connect Alinea to your framework differ:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The Alinea CLI reads your `cms.ts` config and generates its types and a SQLite database of your content into the `@alinea/generated` package, which your site queries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alinea dev -- <your dev command>` starts the local dashboard and runs the dev server of your framework with it. Your site serves the dashboard on `adminPath` (`/admin` by default) and proxies it to the Alinea CLI."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "One middleware serves the handler on `handlerUrl`, the media files and the dashboard route, and runs every other request in its own context so queries can see drafts."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Pages rendered for a preview get a small script that refreshes them as editors type. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Live previews",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JmSMPNVC058vYDmGgGkZzUcede",
+                      "_link": "entry",
+                      "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alinea build -- <your build command>` generates the dashboard into your public folder and the content database, then builds your site."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pick your framework in the navigation to set it up."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

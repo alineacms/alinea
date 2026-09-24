@@ -1,0 +1,384 @@
+{
+  "_id": "3JmSMRNMPcr7WzcnJCqthSz3k7p",
+  "_type": "Doc",
+  "_index": "a0",
+  "title": "Node servers",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea/server` runs Alinea in any Node server that works with web `Request` and `Response` objects, such as Hono, and in scripts and static site generators. The framework integrations are built on it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Create the CMS"
+        }
+      ],
+      "_anchor": "create-the-cms"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Create your CMS with `createCMS` from `alinea/server`. `baseUrl` is where your site runs, `handlerUrl` the route of the Alinea API and `adminPath` the path of the dashboard:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmSMQ2ISgXqV9Bc499tO283yTU",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/server'\n\nexport const Page = Config.document('Page', {\n  fields: {}\n})\n\nexport const cms = createCMS({\n  schema: {Page},\n  workspaces: {\n    main: Config.workspace('Example', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {contains: ['Page']}),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
+      "fileName": "cms.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add the middleware"
+        }
+      ],
+      "_anchor": "add-the-middleware"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`createMiddleware(cms)` returns a function that takes a request and a `next` function that renders your site. It answers the Alinea routes itself and runs `next` for everything else. Put it in front of your app, here a Hono app served by `@hono/node-server`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmSMQmfgq0u7090UrdKyojdqvo",
+      "code": "import {serve} from '@hono/node-server'\nimport {createMiddleware} from 'alinea/server'\nimport {Hono} from 'hono'\nimport {cms, Page} from './cms.ts'\n\nconst alinea = createMiddleware(cms)\nconst app = new Hono()\n\napp.get('*', async c => {\n  const page = await cms.first({type: Page, url: c.req.path})\n  if (!page) return c.notFound()\n  return c.html(`<!DOCTYPE html>\n    <html>\n      <body><h1>${page.title}</h1></body>\n    </html>`)\n})\n\nserve({\n  port: 3000,\n  fetch: request => alinea(request, () => app.fetch(request))\n})",
+      "fileName": "server.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For every request the middleware:"
+        }
+      ]
+    },
+    {
+      "_type": "orderedList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "proxies the dashboard to the Alinea CLI during development,"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "answers the handler route, `GET` requests for media files under `/admin/file/` and the dashboard route `/admin` itself,"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "otherwise renders your page within the request, so queries see drafts when an editor previews the page."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass options instead of the CMS to configure the handler, for example a custom "
+        },
+        {
+          "_type": "text",
+          "text": "backend",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JmSMNCq79IF4tQUqKagQLqcXS2",
+              "_link": "entry",
+              "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " or hooks, and the previews:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmSMNAhT4Iws5PLMI1YvrdNZ6H",
+      "code": "const alinea = createMiddleware({\n  cms,\n  previews: {widget: true},\n  afterCommit(context) {\n    // Rebuild or purge caches here\n  }\n})",
+      "fileName": "server.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3JmSMMOuhEMn0WoAOOu7cMAiCXJ",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Express and `node:http` servers do not use web requests. Adapt them with `getRequestListener` from `@hono/node-server`, which turns a function from `Request` to `Response` into a Node request listener. In an Express app, answer the Alinea routes with `createHandler(cms)` and wrap your route handlers in `withRequest` (below) so queries see drafts."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Queries outside the middleware"
+        }
+      ],
+      "_anchor": "queries-outside-the-middleware"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Queries run by the middleware's `next` know which request they belong to. Code that renders outside of it, like a custom route or a static site generator, passes the request with `withRequest`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmSMS7l566VXc3n1SW4s7KLfc3",
+      "code": "import {withRequest} from 'alinea/server'\nimport {cms, Page} from './cms.ts'\n\nexport function renderPage(request: Request) {\n  return withRequest(request, async () => {\n    const pages = await cms.find({type: Page})\n    // ...\n  })\n}",
+      "fileName": "render.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Scripts and builds that do not serve requests can query `cms` directly. They only see published content."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Live previews"
+        }
+      ],
+      "_anchor": "live-previews"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The dashboard previews an entry by loading its page with a preview token. The handler turns that into a signed draft cookie and redirects to the page. The middleware then adds a small script to the HTML of draft pages, which receives the edits from the dashboard and reloads the page while keeping its scroll position. With `previews: {widget: true}` the page also shows the floating preview toolbar. Set `previews: false` to leave draft pages untouched."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sites that can refresh without a full reload listen for the `alinea:refresh` event, cancel it and call `done` once the new content is rendered:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmSMO3JTk95g8zmxW63MCMyMnG",
+      "code": "addEventListener('alinea:refresh', event => {\n  event.preventDefault()\n  refreshMyPage().then(event.detail.done)\n})",
+      "fileName": "client.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Develop and build"
+        }
+      ],
+      "_anchor": "develop-and-build"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Run your server through the Alinea CLI. It generates your content database, starts the dashboard and passes its location to your server in environment variables:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmSMNR8oywXo2qq1zsigGziGSR",
+      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea dev -- node --watch server.ts\",\n    \"build\": \"alinea build\",\n    \"start\": \"node server.ts\"\n  }\n}",
+      "fileName": "package.json",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Open `http://localhost:3000/admin` to edit content. `alinea build` writes the production dashboard into your public folder and generates the content database. If your site has a build step of its own, pass it after `--` like in development. Serve the public folder as static files: the middleware redirects `/admin` to the dashboard in it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deploy"
+        }
+      ],
+      "_anchor": "deploy"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Your server needs a Node runtime: pages query the SQLite database generated in `@alinea/generated`, so deploy `node_modules` (or trace it along) with your build."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Set `ALINEA_API_KEY` in the production environment. The handler uses it to sign preview tokens and draft cookies, and to talk to its backend."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The handler saves edits as commits through "
+                },
+                {
+                  "_type": "text",
+                  "text": "Alinea Cloud or your own backend",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JmSMPC1fls8xH5sLl5LQJiYb9l",
+                      "_link": "entry",
+                      "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ". Running servers sync their database with the handler, so published changes show without a redeploy."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}
