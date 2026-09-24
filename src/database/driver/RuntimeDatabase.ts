@@ -1,5 +1,4 @@
 import type {Database} from 'rado'
-import {cacheStatements} from './StatementCache.js'
 
 export interface RuntimeDatabaseOptions {
   path?: string
@@ -18,23 +17,19 @@ export async function runtimeDatabase(
         import('rado/driver/bun-sqlite')
       ])
       return connect(
-        cacheStatements(
-          new BunDatabase(options.path, {
-            create: !options.readonly,
-            readonly: options.readonly
-          })
-        )
+        new BunDatabase(options.path, {
+          create: !options.readonly,
+          readonly: options.readonly
+        })
       )
     }
     const [{DatabaseSync}, {connect}] = await Promise.all([
       import('node:sqlite'),
       import('rado/driver/node-sqlite')
     ])
-    const sqlite = cacheStatements(
-      new DatabaseSync(options.path, {
-        readOnly: options.readonly
-      })
-    )
+    const sqlite = new DatabaseSync(options.path, {
+      readOnly: options.readonly
+    })
     return connect(sqlite as unknown as Parameters<typeof connect>[0])
   }
   const {wasmDatabase} = await import('./WasmDatabase.js')
