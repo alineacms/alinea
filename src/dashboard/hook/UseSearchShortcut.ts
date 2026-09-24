@@ -10,21 +10,8 @@ export function isSearchShortcut(event: KeyboardEvent): boolean {
   )
 }
 
-/** Apple platforms use ⌘ where others use Ctrl */
-export function isApplePlatform(): boolean {
-  if (typeof navigator === 'undefined') return false
-  const platform =
-    (navigator as Navigator & {userAgentData?: {platform?: string}})
-      .userAgentData?.platform ??
-    navigator.platform ??
-    ''
-  return /mac|iphone|ipad|ipod/i.test(platform)
-}
-
-/** The search shortcut as shown to the user, eg. `⌘K` */
-export function searchShortcutLabel(apple = isApplePlatform()): string {
-  return apple ? '⌘K' : 'Ctrl K'
-}
+/** The search shortcut in `aria-keyshortcuts` notation */
+export const searchShortcutKeys = 'Meta+K Control+K'
 
 /**
  * Runs `action` on ⌘K / Ctrl+K anywhere in the document, including text

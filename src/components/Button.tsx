@@ -30,6 +30,8 @@ export interface ButtonProps extends StyleProps, AriaProps, DataProps {
   'aria-pressed'?: boolean
   'aria-controls'?: string
   'aria-current'?: boolean | 'page' | 'step' | 'location' | 'date' | 'time'
+  /** Keyboard shortcuts that activate the button, eg. `Meta+K Control+K` */
+  'aria-keyshortcuts'?: string
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void
   ref?: Ref<HTMLButtonElement>
   children?: ReactNode
@@ -47,6 +49,7 @@ export function Button({
   className,
   children,
   onClick,
+  'aria-keyshortcuts': ariaKeyShortcuts,
   ...props
 }: ButtonProps) {
   const attributes = {
@@ -62,6 +65,7 @@ export function Button({
       <Slot
         {...props}
         {...attributes}
+        aria-keyshortcuts={ariaKeyShortcuts}
         aria-disabled={disabled || undefined}
         onClick={onClick as SlotProps['onClick']}
       >
@@ -74,6 +78,14 @@ export function Button({
       {...attributes}
       isDisabled={disabled}
       isPending={loading}
+      render={
+        ariaKeyShortcuts
+          ? // react-aria does not pass aria-keyshortcuts on to the element
+            domProps => (
+              <button {...domProps} aria-keyshortcuts={ariaKeyShortcuts} />
+            )
+          : undefined
+      }
       onClick={
         onClick && (event => onClick(event as MouseEvent<HTMLButtonElement>))
       }

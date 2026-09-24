@@ -92,7 +92,7 @@
   --alinea-radius-xl: calc(var(--alinea-radius) * 2);
 
   --alinea-fg-strong: color-mix(in oklab, var(--alinea-fg) 70%, CanvasText);
-  --alinea-fg-muted: color-mix(in oklab, var(--alinea-fg) 72%, var(--alinea-bg));
+  --alinea-fg-muted: color-mix(in oklab, var(--alinea-fg) 85%, var(--alinea-bg));
   --alinea-fg-disabled: color-mix(in oklab, var(--alinea-fg) 45%, var(--alinea-bg));
   --alinea-field-label: color-mix(in oklab, var(--alinea-fg) 42%, var(--alinea-bg));
 

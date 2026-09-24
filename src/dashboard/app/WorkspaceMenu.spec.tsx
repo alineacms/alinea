@@ -66,7 +66,8 @@ test('global search opens with the keyboard shortcut and navigates results', asy
 }) => {
   await mount(<GlobalSearchStory />)
   const trigger = page.getByRole('button', {name: 'Search entries'})
-  await expect(trigger.locator('kbd')).toHaveText(/K$/)
+  await expect(trigger).toHaveAttribute('aria-keyshortcuts', 'Meta+K Control+K')
+  await expect(trigger.locator('kbd')).toHaveCount(0)
 
   await trigger.focus()
   await page.keyboard.press('ControlOrMeta+k')

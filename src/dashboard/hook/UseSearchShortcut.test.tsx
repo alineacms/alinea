@@ -1,10 +1,6 @@
 import {cleanup, render} from '#test/react.js'
 import {afterEach, expect, mock, test} from 'bun:test'
-import {
-  isSearchShortcut,
-  searchShortcutLabel,
-  useSearchShortcut
-} from './UseSearchShortcut.js'
+import {isSearchShortcut, useSearchShortcut} from './UseSearchShortcut.js'
 
 afterEach(cleanup)
 
@@ -97,9 +93,4 @@ test('removes its keyboard handler when unmounted', () => {
   view.unmount()
   press({key: 'k', metaKey: true})
   expect(action).not.toHaveBeenCalled()
-})
-
-test('labels the shortcut per platform', () => {
-  expect(searchShortcutLabel(true)).toBe('⌘K')
-  expect(searchShortcutLabel(false)).toBe('Ctrl K')
 })

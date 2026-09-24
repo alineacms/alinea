@@ -31,11 +31,8 @@ import {
   LucideFile
 } from '../../icons.js'
 import {AppearanceToggle} from '../AppearanceToggle.js'
-import {
-  GlobalSearch,
-  SearchShortcut,
-  WorkspaceAvatar
-} from '../WorkspaceMenu.js'
+import {searchShortcutKeys} from '../../hook/UseSearchShortcut.js'
+import {GlobalSearch, WorkspaceAvatar} from '../WorkspaceMenu.js'
 import css from './SplashPage.module.css'
 
 const styles = styler(css)
@@ -236,9 +233,9 @@ function SplashPage({
                   icon={IcRoundSearch}
                   className={styles.SplashPage.action()}
                   aria-label="Search content"
+                  aria-keyshortcuts={searchShortcutKeys}
                 >
                   <Text truncate>Search content</Text>
-                  <SearchShortcut />
                 </Button>
               </GlobalSearch>
             )}

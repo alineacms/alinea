@@ -193,11 +193,6 @@
   padding-block: 0;
   margin-inline: -8px;
   border: none;
-
-  /* Without rows to fold the toggle is disabled, but it still labels the field */
-  &:disabled {
-    opacity: 1;
-  }
 }
 
 .ListLabel-title {
