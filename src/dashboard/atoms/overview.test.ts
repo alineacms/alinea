@@ -35,9 +35,12 @@ import {
   overviewOrder,
   type OverviewParent,
   resolveOverview,
+  type OverviewChildren,
+  resolveOverviewOptions,
   sortedColumn,
-  withAuditColumns
+  summarizeRows
 } from './overview.js'
+import {syncAtom} from './graph.js'
 import {getScope} from '#/core/Scope.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 import {Policy} from '#/core/Role.js'
@@ -53,11 +56,12 @@ const blogParent: OverviewParent = {kind: 'type', name: 'Blog', type: Blog}
 
 test('the title comes first, then built-in columns, then the parent columns', () => {
   const overview = resolveOverview(config, rootParent('products'))
+  // The article number is placed at the start
   expect(overview.columns.map(column => column.key)).toEqual([
+    'articleNumber',
     'status',
     'updated',
     'author',
-    'articleNumber',
     'categories',
     'brand',
     'price'
@@ -75,7 +79,7 @@ test('the type column shows for lists of several types', () => {
     'date'
   ])
   const search = resolveOverview(config, rootParent('products'), {mixed: true})
-  expect(search.columns[0].key).toBe('type')
+  expect(search.columns[1].key).toBe('type')
 })
 
 test('a parent column replaces the built-in column with its key', () => {
@@ -454,7 +458,6 @@ test('entry tables load their rows by query, sorted by a column', async () => {
 })
 
 test('updated and author columns only show when entries store audit data', () => {
-  const overview = resolveOverview(config, rootParent('products'))
   const row = {
     id: 'chair',
     type: 'Product',
@@ -465,8 +468,10 @@ test('updated and author columns only show when entries store audit data', () =>
     root: 'products',
     parentId: null
   }
-  const keys = (rows: Parameters<typeof withAuditColumns>[1]) =>
-    withAuditColumns(overview, rows).columns.map(column => column.key)
+  const keys = (rows: Parameters<typeof summarizeRows>[0]) =>
+    resolveOverview(config, rootParent('products'), {
+      children: summarizeRows(rows)
+    }).columns.map(column => column.key)
   expect(keys([{...row, data: {}}])).not.toContain('updated')
   expect(keys([{...row, data: {}}])).not.toContain('author')
   const edited = {
@@ -475,4 +480,230 @@ test('updated and author columns only show when entries store audit data', () =>
   }
   expect(keys([{...row, data: {}}, edited])).toContain('updated')
   expect(keys([edited])).toContain('author')
+})
+
+function group(
+  type: string,
+  status: OverviewChildren['status'] = 'published',
+  audit = false
+): OverviewChildren {
+  return {type, status, updatedAt: audit, updatedBy: audit}
+}
+
+const Note = Config.document('Note', {
+  fields: {summary: Field.text('Summary', {overview: true})}
+})
+const Page = Config.document('Page', {
+  fields: {stock: Field.number('Stock', {overview: true})}
+})
+const open = Config.create({
+  schema: {Note, Page, Product},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {
+        pages: Config.root('Pages'),
+        notes: Config.root('Notes', {contains: ['Note', 'Page']})
+      }
+    })
+  }
+})
+const openRoot = (root: 'pages' | 'notes'): OverviewParent => ({
+  kind: 'root',
+  data: getRoot(open.workspaces.main[root])
+})
+
+test('a parent without contains lists the columns of the types of its children', () => {
+  const keys = (children: Array<OverviewChildren>) =>
+    resolveOverview(open, openRoot('pages'), {children}).columns.map(
+      column => column.key
+    )
+  // Only the overview: true fields of the types present, no type column
+  expect(keys([group('Note')])).toEqual(['path', 'summary'])
+  expect(keys([group('Note'), group('Page')])).toEqual([
+    'type',
+    'path',
+    'summary',
+    'stock'
+  ])
+  // Without a summary every type of the schema could be listed
+  expect(
+    resolveOverview(open, openRoot('pages')).columns.map(column => column.key)
+  ).toContain('stock')
+  expect(
+    resolveOverview(open, openRoot('pages'), {children: []}).types
+  ).toEqual([])
+})
+
+test('declared types follow the children that are present', () => {
+  const overview = resolveOverview(open, openRoot('notes'), {
+    children: [group('Page')]
+  })
+  expect(overview.types).toEqual(['Page'])
+  expect(overview.columns.map(column => column.key)).toEqual(['path', 'stock'])
+  expect(overview.columns[1].select).toEqual({all: Page.stock})
+})
+
+test('the status column shows when the statuses of the children differ', () => {
+  const keys = (children: Array<OverviewChildren>) =>
+    resolveOverview(config, rootParent('products'), {children}).columns.map(
+      column => column.key
+    )
+  expect(keys([group('Product')])).not.toContain('status')
+  expect(keys([group('Product'), group('Product', 'draft')])).toContain(
+    'status'
+  )
+})
+
+test('audit columns show when any child stores audit metadata', () => {
+  const keys = (children: Array<OverviewChildren>) =>
+    resolveOverview(config, rootParent('products'), {children}).columns.map(
+      column => column.key
+    )
+  expect(keys([group('Product')])).not.toContain('updated')
+  expect(keys([group('Product'), group('Product', 'draft', true)])).toEqual(
+    expect.arrayContaining(['updated', 'author'])
+  )
+  const byOnly = {...group('Product'), updatedBy: true}
+  expect(keys([byOnly])).toEqual(expect.not.arrayContaining(['updated']))
+  expect(keys([byOnly])).toContain('author')
+})
+
+test('builtins force columns on or off regardless of the children', () => {
+  const overview = resolveOverviewOptions(
+    config,
+    {columns: {}, builtins: {type: true, status: true, author: false}},
+    ['Product'],
+    undefined,
+    {children: [group('Product', 'published', true)]}
+  )
+  expect(overview.columns.map(column => column.key)).toEqual([
+    'type',
+    'status',
+    'updated'
+  ])
+})
+
+test('columns with position start come right after the title', () => {
+  const overview = resolveOverviewOptions(
+    config,
+    {
+      builtins: {status: true, updated: false, author: false},
+      columns: {
+        price: Config.column({header: 'Price', select: Product.price}),
+        image: Config.column({
+          header: 'Image',
+          select: Product.brand,
+          position: 'start'
+        }),
+        stock: Config.column({
+          header: 'Stock',
+          select: Product.stock,
+          position: 'end'
+        }),
+        type: Config.column({
+          header: 'Kind',
+          select: Entry.type,
+          position: 'start'
+        })
+      }
+    },
+    ['Product'],
+    undefined
+  )
+  // A column replacing a built-in stays in the built-in's place
+  expect(overview.columns.map(column => column.key)).toEqual([
+    'image',
+    'type',
+    'status',
+    'price',
+    'stock'
+  ])
+})
+
+async function mixedChildren() {
+  const db = new LocalDB(open)
+  await db.sync()
+  await db.create({
+    type: Note,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Note', metadata: {updatedAt: 5, updatedBy: {name: 'Ann'}}}
+  } as never)
+  await db.create({
+    type: Note,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Plain note'}
+  })
+  await db.create({
+    type: Page,
+    workspace: 'main',
+    root: 'pages',
+    status: 'draft',
+    set: {title: 'Draft page'}
+  })
+  return db
+}
+
+test('explorers resolve their columns from the children of the parent', async () => {
+  const db = await mixedChildren()
+  const store = createDashboardStore(open, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {rootData: atom(getRoot(open.workspaces.main.pages))}
+  )
+  const page = await store.get(explorer.pageReady)
+  expect(page.overview.columns.map(column => column.key)).toEqual([
+    'type',
+    'status',
+    'updated',
+    'author',
+    'path',
+    'summary',
+    'stock'
+  ])
+  expect(page.items).toHaveLength(3)
+})
+
+test('explorer columns follow the children as the content changes', async () => {
+  const db = new LocalDB(open)
+  await db.sync()
+  await db.create({
+    type: Note,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'A'}
+  })
+  await db.create({
+    type: Note,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'B'}
+  })
+  const store = createDashboardStore(open, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {rootData: atom(getRoot(open.workspaces.main.pages))}
+  )
+  const keys = async () =>
+    (await store.get(explorer.pageReady)).overview.columns.map(
+      column => column.key
+    )
+  // One type, all published, no audit data: only the Note fields
+  expect(await keys()).toEqual(['path', 'summary'])
+  // Sorting keeps the columns
+  store.set(explorer.sort, {column: 'title', direction: 'desc'})
+  expect(await keys()).toEqual(['path', 'summary'])
+  await db.create({
+    type: Note,
+    workspace: 'main',
+    root: 'pages',
+    status: 'draft',
+    set: {title: 'C'}
+  })
+  await store.set(syncAtom)
+  expect(await keys()).toEqual(['status', 'path', 'summary'])
 })

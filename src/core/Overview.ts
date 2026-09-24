@@ -15,6 +15,9 @@ import type {View} from './View.js'
 /** Horizontal alignment of a column's header and cells */
 export type OverviewColumnAlign = 'start' | 'end' | 'center'
 
+/** Where a column goes relative to the built-in columns */
+export type OverviewColumnPosition = 'start' | 'end'
+
 /** A fixed width in pixels or a fraction of the remaining space */
 export type OverviewColumnWidth = number | `${number}fr`
 
@@ -139,6 +142,12 @@ interface OverviewColumnBase<Value> {
   align?: OverviewColumnAlign
   /** Hide the column on narrow screens, defaults to true */
   collapsible?: boolean
+  /**
+   * Where the column goes: `start` places it right after the title, before
+   * the built-in columns (eg. a thumbnail), `end` after them. Defaults to
+   * `end`. Columns keep their order within each position.
+   */
+  position?: OverviewColumnPosition
 }
 
 export interface OverviewColumnOptions<
@@ -159,23 +168,28 @@ export interface OverviewColumn<Value = any> extends OverviewColumnBase<Value> {
   select?: OverviewColumnSelect
 }
 
-/** Which built-in columns an overview shows */
+/**
+ * Which built-in columns an overview shows. By default a built-in column
+ * only shows when it tells the listed entries apart. Set one to true to
+ * always show it, or false to never show it.
+ */
 export interface OverviewBuiltins {
-  /** The entry type, shown by default when the list holds several types */
+  /** The entry type, shown by default when the children have several types */
   type?: boolean
-  /** The publication status, shown by default */
+  /** The publication status, shown by default when the statuses differ */
   status?: boolean
-  /** When the entry was last edited, shown by default for documents */
+  /** When the entry was last edited, shown by default when recorded */
   updated?: boolean
-  /** Who last edited the entry, shown by default for documents */
+  /** Who last edited the entry, shown by default when recorded */
   author?: boolean
 }
 
 /** Configures how the dashboard lists the children of a root or entry */
 export interface OverviewOptions {
   /**
-   * Columns shown after the title and the built-in columns. A column keyed
-   * `type`, `status`, `updated` or `author` replaces that built-in column.
+   * Columns shown after the title and the built-in columns, or before the
+   * built-in columns with `position: 'start'`. A column keyed `type`,
+   * `status`, `updated` or `author` replaces that built-in column.
    */
   columns?: Record<string, OverviewColumn>
   /** Show or hide the built-in columns */

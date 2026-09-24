@@ -44,7 +44,7 @@ import {
   resolveOverviewOptions,
   sortedColumn,
   titleColumn,
-  withAuditColumns
+  summarizeRows
 } from '#/dashboard/atoms/overview.js'
 import {
   OverviewCell,
@@ -245,7 +245,14 @@ function EntryTableContent(props: EntryTableProps) {
   const setRequested = useSetAtom(atoms.requested)
   const loaded = useAtomValueRaw(atoms.rows)
   const rows = loaded ?? use(store.get(atoms.ready))
-  const shown = withAuditColumns(overview, rows)
+  const shown = resolveOverviewOptions(
+    config,
+    props.columns ? {...configured, columns: props.columns} : configured,
+    types,
+    overview.sort,
+    // All rows are loaded, so they tell which columns set them apart
+    {children: summarizeRows(rows)}
+  )
   const sorted = sortedColumn(shown, requested)
   const columns: Array<TableColumn> = [
     {

@@ -179,6 +179,12 @@ function hasAuditMetadata(type: Type) {
 export interface OverviewResolveOptions {
   /** The list holds entries of several parents, eg. search results */
   mixed?: boolean
+  /**
+   * The listed children grouped by type and status, see `summarizeRows`.
+   * The columns then follow the children: the types present, and built-in
+   * columns only when they tell the children apart.
+   */
+  children?: ReadonlyArray<OverviewChildren>
 }
 
 /** Resolves the columns and settings of the overview of a parent */
@@ -196,6 +202,24 @@ export function resolveOverview(
   )
 }
 
+/**
+ * The types of a list: the types of its children when they are known,
+ * otherwise the types the parent accepts, or any type
+ */
+function listedTypes(
+  config: Config,
+  types: Array<string>,
+  children: ReadonlyArray<OverviewChildren> | undefined
+): Array<string> {
+  const schemaTypes = Object.keys(config.schema)
+  if (children?.length) {
+    const present = new Set(children.map(group => group.type))
+    return schemaTypes.filter(name => present.has(name))
+  }
+  if (types.length > 0 || children) return types
+  return schemaTypes
+}
+
 /** Resolves an overview for a list of entries of the given types */
 export function resolveOverviewOptions(
   config: Config,
@@ -205,26 +229,41 @@ export function resolveOverviewOptions(
   options: OverviewResolveOptions = {}
 ): OverviewState {
   const typeNames = new Set(Object.keys(config.schema))
-  const childTypes = (
-    types.length > 0 ? types : Object.keys(config.schema)
-  ).flatMap(name => (config.schema[name] ? [config.schema[name]] : []))
-  const custom = overview?.columns
-    ? Object.entries(overview.columns)
-        .filter(([key]) => key !== titleColumn.key)
-        .map(([key, column]) => customColumn(key, column, typeNames))
-    : fieldColumns(
-        config,
-        types.length > 0 ? types : Object.keys(config.schema)
+  const {children} = options
+  const listed = listedTypes(config, types, children)
+  const childTypes = listed.flatMap(name =>
+    config.schema[name] ? [config.schema[name]] : []
+  )
+  const configured = overview?.columns
+    ? Object.entries(overview.columns).filter(
+        ([key]) => key !== titleColumn.key
       )
+    : undefined
+  const custom = configured
+    ? configured.map(([key, column]) => customColumn(key, column, typeNames))
+    : fieldColumns(config, listed)
   const byKey = new Map(custom.map(column => [column.key, column]))
   const builtins = overview?.builtins ?? {}
+  const audited = childTypes.some(hasAuditMetadata)
+  // With the children known, built-in columns show when they differ
   const defaults: Record<OverviewBuiltinColumn, boolean> = {
-    type: Boolean(options.mixed) || types.length > 1,
-    status: true,
-    updated: childTypes.some(hasAuditMetadata),
-    author: childTypes.some(hasAuditMetadata)
+    type: Boolean(options.mixed) || listed.length > 1,
+    status: children
+      ? new Set(children.map(group => group.status)).size > 1
+      : true,
+    updated: children ? children.some(group => group.updatedAt) : audited,
+    author: children ? children.some(group => group.updatedBy) : audited
   }
-  const columns = new Array<OverviewColumnState>()
+  const atStart = new Set(
+    (configured ?? [])
+      .filter(([, column]) => column.position === 'start')
+      .map(([key]) => key)
+  )
+  const isBuiltinKey = (key: string) =>
+    builtinColumns.includes(key as OverviewBuiltinColumn)
+  const columns = custom.filter(
+    column => atStart.has(column.key) && !isBuiltinKey(column.key)
+  )
   for (const key of builtinColumns) {
     const replacement = byKey.get(key)
     if (replacement) {
@@ -234,7 +273,7 @@ export function resolveOverviewOptions(
     if (builtins[key] ?? defaults[key]) columns.push(builtinColumn(key))
   }
   for (const column of custom)
-    if (!builtinColumns.includes(column.key as OverviewBuiltinColumn))
+    if (!atStart.has(column.key) && !isBuiltinKey(column.key))
       columns.push(column)
   return {
     columns,
@@ -244,7 +283,7 @@ export function resolveOverviewOptions(
       ? selection(overview.thumbnail, typeNames)
       : undefined,
     actions: overview?.actions ?? [],
-    types
+    types: listed
   }
 }
 
@@ -618,6 +657,41 @@ export const openEntryAtom = atom(
   }
 )
 
+/** The listed children that share a type and status */
+export interface OverviewChildren {
+  type: string
+  status: EntryStatus
+  /** Some of these children store when they were last edited */
+  updatedAt: boolean
+  /** Some of these children store who last edited them */
+  updatedBy: boolean
+}
+
+/**
+ * Groups rows by type and status, noting whether they store audit
+ * metadata. Lists load every child of their parent, so this covers all of
+ * them and the columns stay put.
+ */
+export function summarizeRows(
+  rows: ReadonlyArray<OverviewRow>
+): Array<OverviewChildren> {
+  const groups = new Map<string, OverviewChildren>()
+  for (const row of rows) {
+    const status = row.status ?? 'published'
+    const key = `${row.type}\u0000${status}`
+    const group = groups.get(key) ?? {
+      type: row.type,
+      status,
+      updatedAt: false,
+      updatedBy: false
+    }
+    group.updatedAt ||= hasAuditValue(row, 'updatedAt')
+    group.updatedBy ||= hasAuditValue(row, 'updatedBy')
+    groups.set(key, group)
+  }
+  return [...groups.values()]
+}
+
 /** Whether a row stores when or by whom it was last edited */
 function hasAuditValue(row: OverviewRow, key: 'updatedAt' | 'updatedBy') {
   const metadata = row.data.metadata
@@ -625,24 +699,4 @@ function hasAuditValue(row: OverviewRow, key: 'updatedAt' | 'updatedBy') {
   const value = metadata[key]
   if (key === 'updatedAt') return typeof value === 'number'
   return isRecord(value) && typeof value.name === 'string' && value.name !== ''
-}
-
-/**
- * Leaves out the built-in updated and author columns when none of the rows
- * store audit metadata, eg. content created before it was recorded
- */
-export function withAuditColumns(
-  overview: OverviewState,
-  rows: ReadonlyArray<OverviewRow>
-): OverviewState {
-  const columns = overview.columns.filter(column => {
-    if (column.builtin === 'updated')
-      return rows.some(row => hasAuditValue(row, 'updatedAt'))
-    if (column.builtin === 'author')
-      return rows.some(row => hasAuditValue(row, 'updatedBy'))
-    return true
-  })
-  return columns.length === overview.columns.length
-    ? overview
-    : {...overview, columns}
 }

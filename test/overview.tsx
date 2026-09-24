@@ -48,7 +48,8 @@ export const productsOverview: OverviewOptions = {
     articleNumber: Config.column({
       header: 'Article number',
       select: Product.articleNumber,
-      width: 140
+      width: 140,
+      position: 'start'
     }),
     categories: Config.column({
       header: 'Categories',

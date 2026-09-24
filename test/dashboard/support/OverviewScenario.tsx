@@ -32,8 +32,13 @@ async function createOverviewScenario() {
   await db.create({...main, id: ids.zeta, type: Brand, root: 'brands', set: {title: 'Zeta'}})
   await db.create({...main, id: ids.chairs, type: Category, root: 'categories', set: {title: 'Chairs'}})
   await db.create({...main, id: ids.tables, type: Category, root: 'categories', set: {title: 'Tables'}})
-  const product = (id: string, title: string, set: Record<string, unknown>) =>
-    db.create({...main, id, type: Product, root: 'products', set: {title, ...set}})
+  const product = (
+    id: string,
+    title: string,
+    set: Record<string, unknown>,
+    status?: 'draft'
+  ) =>
+    db.create({...main, id, type: Product, root: 'products', status, set: {title, ...set}})
   await product(ids.chair, 'Chair', {
     articleNumber: 'A-100',
     price: 20,
@@ -46,7 +51,8 @@ async function createOverviewScenario() {
     brand: link('b2', ids.acme),
     categories: [link('c2', ids.tables, 'a0'), link('c3', ids.chairs, 'a1')]
   })
-  await product(ids.lamp, 'Lamp', {articleNumber: 'A-300', price: 12})
+  // A draft, so the products differ in status
+  await product(ids.lamp, 'Lamp', {articleNumber: 'A-300', price: 12}, 'draft')
   await db.create({...main, id: ids.ann, type: Person, root: 'people', set: {title: 'Ann'}})
   await db.create({...main, id: ids.bob, type: Person, root: 'people', set: {title: 'Bob'}})
   await db.mutate([

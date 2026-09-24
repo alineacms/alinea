@@ -39,7 +39,8 @@ export const DemoProducts = Config.type('Products', {
         width: 72,
         collapsible: false,
         select: DemoProduct.gallery,
-        sortable: false
+        sortable: false,
+        position: 'start'
       }),
       price: Config.column({
         header: 'Price',

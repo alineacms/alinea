@@ -10,7 +10,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "When an entry has children, or a root holds entries, the dashboard lists them in an overview: a table, or cards, with the title, type and status of each entry and who edited it last. The `overview` option of a container "
+          "text": "When an entry has children, or a root holds entries, the dashboard lists them in an overview: a table, or cards, with the title of each entry and, when they tell the entries apart, its type, status and who edited it last. The `overview` option of a container "
         },
         {
           "_type": "text",
@@ -107,7 +107,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": "."
+                  "text": ". A column with `position: 'start'` goes before the built-in columns."
                 }
               ]
             }
@@ -429,6 +429,36 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`position`: `'start'` places the column right after the title, before the "
+                },
+                {
+                  "_type": "text",
+                  "text": "built-in columns",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0omf2Ug0zSBcCrqld7cdO0R",
+                      "_link": "url",
+                      "href": "#built-in-columns"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", for example a thumbnail or an article number. `'end'`, the default, places it after them. Columns keep the order you define them in within each position."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -453,13 +483,27 @@
     {
       "_type": "CodeBlock",
       "_id": "3Jlm0sevS7xJqkJywVFe8tzAcPK",
-      "code": "import {Config, Field, type OverviewOptions, Query} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    articleNumber: Field.text('Article number'),\n    categories: Field.entry.multiple('Categories', {\n      condition: {_type: 'Category'}\n    }),\n    brand: Field.entry('Brand', {condition: {_type: 'Brand'}}),\n    price: Field.number('Price'),\n    stock: Field.number('Stock')\n  }\n})\n\nexport const productsOverview: OverviewOptions = {\n  columns: {\n    articleNumber: Config.column({\n      header: 'Article number',\n      width: 140,\n      select: Product.articleNumber\n    }),\n    categories: Config.column({\n      header: 'Categories',\n      select: Product.categories.find({\n        select: {entryId: Query.id, title: Query.title},\n        filter: {_status: 'published'},\n        orderBy: {asc: Query.title}\n      })\n    }),\n    brand: Config.column({\n      header: 'Brand',\n      select: Product.brand,\n      sortBy: Product.brand.first({select: Query.title})\n    }),\n    price: Config.column({\n      header: 'Price',\n      width: 120,\n      align: 'end',\n      select: Product.price,\n      format: (price, {locale}) =>\n        typeof price === 'number'\n          ? new Intl.NumberFormat(locale ?? 'en', {\n              style: 'currency',\n              currency: 'EUR'\n            }).format(price)\n          : ''\n    }),\n    stock: Config.column({\n      header: 'Stock',\n      width: 120,\n      select: Product.stock,\n      view: '@/views/StockCell#StockCell'\n    })\n  },\n  builtins: {updated: false},\n  actions: ['@/views/ExportProducts#ExportProducts']\n}",
+      "code": "import {Config, Field, type OverviewOptions, Query} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    articleNumber: Field.text('Article number'),\n    categories: Field.entry.multiple('Categories', {\n      condition: {_type: 'Category'}\n    }),\n    brand: Field.entry('Brand', {condition: {_type: 'Brand'}}),\n    price: Field.number('Price'),\n    stock: Field.number('Stock')\n  }\n})\n\nexport const productsOverview: OverviewOptions = {\n  columns: {\n    articleNumber: Config.column({\n      header: 'Article number',\n      width: 140,\n      select: Product.articleNumber,\n      position: 'start'\n    }),\n    categories: Config.column({\n      header: 'Categories',\n      select: Product.categories.find({\n        select: {entryId: Query.id, title: Query.title},\n        filter: {_status: 'published'},\n        orderBy: {asc: Query.title}\n      })\n    }),\n    brand: Config.column({\n      header: 'Brand',\n      select: Product.brand,\n      sortBy: Product.brand.first({select: Query.title})\n    }),\n    price: Config.column({\n      header: 'Price',\n      width: 120,\n      align: 'end',\n      select: Product.price,\n      format: (price, {locale}) =>\n        typeof price === 'number'\n          ? new Intl.NumberFormat(locale ?? 'en', {\n              style: 'currency',\n              currency: 'EUR'\n            }).format(price)\n          : ''\n    }),\n    stock: Config.column({\n      header: 'Stock',\n      width: 120,\n      select: Product.stock,\n      view: '@/views/StockCell#StockCell'\n    })\n  },\n  builtins: {updated: false},\n  actions: ['@/views/ExportProducts#ExportProducts']\n}",
       "fileName": "schema/Product.ts",
       "language": "tsx"
     },
     {
       "_type": "bulletList",
       "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`articleNumber` comes right after the title, before the built-in columns, because of `position: 'start'`."
+                }
+              ]
+            }
+          ]
+        },
         {
           "_type": "listItem",
           "content": [
@@ -589,7 +633,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "The title is always the first column. The built-in columns follow, then the columns you define:"
+          "text": "The title is always the first column. The built-in columns follow, then the columns you define. Columns with `position: 'start'` go between the title and the built-in columns."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A built-in column only shows when it tells the listed entries apart. The dashboard decides this from all children of the parent, not only those on screen, so the columns don't change while scrolling or sorting:"
         }
       ]
     },
@@ -604,7 +657,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`type`: the type of the entry. Shown when the parent can contain several types, and in search results and filtered lists."
+                  "text": "`type`: the type of the entry. Shown when the children have more than one type, and in search results and filtered lists."
                 }
               ]
             }
@@ -618,7 +671,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`status`: the publication status. Shown by default."
+                  "text": "`status`: the publication status. Shown when the children differ in status, for example when some are drafts. A list of published entries has no status column."
                 }
               ]
             }
@@ -632,7 +685,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`updated` and `author`: when the entry was last edited and by whom, read from the audit fields of the metadata field. Shown by default when the child types have a metadata field under the key `metadata`, which `Config.document` and `Field.metadata()` add, and at least one listed entry stores audit data. Lists of entries created before audit data was recorded don't show empty columns."
+                  "text": "`updated` and `author`: when the entry was last edited and by whom, read from the audit fields of the metadata field (under the key `metadata`, which `Config.document` and `Field.metadata()` add). Shown when at least one child stores that audit data, so lists of entries created before audit data was recorded don't show empty columns."
                 }
               ]
             }
@@ -645,7 +698,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "Force them off or on with `builtins`: `{type: false, status: false, updated: false, author: false}`. A column keyed `type`, `status`, `updated` or `author` replaces that built-in column in place, for example to show the writer of an article instead of the last editor. The `title` key is reserved."
+          "text": "The columns follow the types of the children that are there. A parent without `contains` accepts any type, but its overview only shows the columns of the types it holds."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Force them on or off with `builtins`, for example `{status: true}` to always show the status, or `{type: false, updated: false, author: false}` to never show those. A column keyed `type`, `status`, `updated` or `author` replaces that built-in column in place, for example to show the writer of an article instead of the last editor. The `title` key is reserved."
         }
       ]
     },
@@ -1236,7 +1298,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "The `overview: true` field option is deprecated. It's still used when the parent defines no `overview.columns`: the marked fields of the child types become columns, with the label of the field as header and up to five columns. A field name shared by several child types is one column, and types without it show \"–\". These columns sort by the same rules as other columns."
+                  "text": "The `overview: true` field option is deprecated. It's still used when the parent defines no `overview.columns`: the marked fields of the types of the listed children become columns, with the label of the field as header and up to five columns. A field name shared by several child types is one column, and types without it show \"–\". These columns sort by the same rules as other columns."
                 }
               ]
             }
@@ -1259,7 +1321,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790244477,
+    "updatedAt": 1790260484,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

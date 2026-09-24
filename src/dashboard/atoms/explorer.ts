@@ -4,13 +4,14 @@ import type {EntryFields} from '#/core/EntryFields.js'
 import {filterChecker} from '#/core/Filter.js'
 import {Field} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
-import type {GraphQuery} from '#/core/Graph.js'
+import type {Graph, GraphQuery} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
+import {chunks} from '#/core/util/Arrays.js'
 import type {Infer} from '#/types.js'
 import {parents} from '#/query.js'
 import {
@@ -34,8 +35,8 @@ import {
   resolveOverview,
   sortColumn,
   sortedColumn,
-  thumbnailField,
-  withAuditColumns
+  summarizeRows,
+  thumbnailField
 } from './overview.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
@@ -744,12 +745,18 @@ export class ExplorerAtoms {
       if (treeReady) await get(treeReady)
       const canUpload = get(this.#canUpload(location, locale))
       const items = await itemsPromise
-      const shown = withAuditColumns(
-        overview,
-        items.map(item => get(get(item.data).data.item))
-      )
+      // The list holds every child of the parent, so the columns follow
+      // the children: their types, and built-in columns that differ
+      const listed = get(this.#listedParent)
+      const shown = listed
+        ? resolveOverview(get(configAtom), await get(listed), {
+            children: summarizeRows(
+              items.map(item => get(get(item.data).data.item))
+            )
+          })
+        : overview
       const requested = get(this.requestedSort)
-      const sorted = search.trim() ? undefined : sortColumn(overview, requested)
+      const sorted = search.trim() ? undefined : sortColumn(shown, requested)
       return {
         canUpload,
         isMedia,
@@ -769,8 +776,8 @@ export class ExplorerAtoms {
         sort: {
           requested: sorted ? requested : undefined,
           label: sorted?.header,
-          column: search.trim() ? undefined : sortedColumn(overview, requested),
-          manual: !search.trim() && !sorted && !overview.sort
+          column: search.trim() ? undefined : sortedColumn(shown, requested),
+          manual: !search.trim() && !sorted && !shown.sort
         },
         view
       }
@@ -789,39 +796,46 @@ export class ExplorerAtoms {
   sort = atom(null, (_get, set, sort: OverviewSort | undefined) => {
     set(this.requestedSort, sort)
   })
-  /** The overview of the listed parent */
+  /** The parent of the listed children, undefined for search results */
+  #listedParent = atom(get => {
+    const location = get(this.location)
+    const scoped = !get(this.searchesEverything) && this.rootScope === 'current'
+    if (!scoped || get(this.resultMode) === 'matches') return undefined
+    return this.#parentAt(
+      location.workspace,
+      location.root,
+      location.parentId ?? null
+    )
+  })
+  /**
+   * The overview the list is loaded with: its columns, the values they
+   * query and the order. The page shows the columns that tell the loaded
+   * children apart, see `pageReady`.
+   */
   overview = atom(async get => {
     const location = get(this.location)
-    const searchesEverything = get(this.searchesEverything)
-    const scoped = !searchesEverything && this.rootScope === 'current'
-    const mixed = !scoped || get(this.resultMode) === 'matches'
-    return scoped
-      ? get(
-          this.#overviewAt(
-            location.workspace,
-            location.root,
-            location.parentId ?? null,
-            mixed
-          )
+    const listed = get(this.#listedParent)
+    const config = get(configAtom)
+    if (listed) return resolveOverview(config, await get(listed))
+    const scoped = !get(this.searchesEverything) && this.rootScope === 'current'
+    const parent = scoped
+      ? this.#parentAt(
+          location.workspace,
+          location.root,
+          location.parentId ?? null
         )
-      : get(this.#overviewAt(location.workspace, undefined, null, mixed))
+      : this.#parentAt(location.workspace, undefined, null)
+    return resolveOverview(config, await get(parent), {mixed: true})
   })
-  #overviewAt = dispense(
-    (
-      workspace: string,
-      root: string | undefined,
-      parentId: string | null,
-      mixed: boolean
-    ) =>
-      atom(async get => {
-        const config = get(configAtom)
-        const parent = await loadOverviewParent(config, get(graphAtom), {
+  #parentAt = dispense(
+    (workspace: string, root: string | undefined, parentId: string | null) =>
+      atom(get =>
+        loadOverviewParent(get(configAtom), get(graphAtom), {
           workspace,
           root,
           parentId
         })
-        return resolveOverview(config, parent, {mixed})
-      })
+      )
   )
   filter = atom(
     get => get(this.#selectedFilter),
@@ -1023,14 +1037,12 @@ export class ExplorerAtoms {
       const policy = get(policyAtom)
       const readable = entries.filter(candidate => policy.canRead(candidate))
       const [parentIds, rows] = await Promise.all([
-        graph.find({
-          workspace: entry.workspace,
-          root: entry.root,
-          parentId: {in: readable.map(candidate => candidate.id)},
-          status: 'preferDraft',
-          groupBy: Entry.parentId,
-          select: Entry.parentId
-        }),
+        parentsWithChildren(
+          graph,
+          entry.workspace,
+          entry.root,
+          readable.map(candidate => candidate.id)
+        ),
         loadColumnValues(config, graph, overview, readable)
       ])
       const currentParents = get(data.parents)
@@ -1039,7 +1051,7 @@ export class ExplorerAtoms {
         overview,
         rows.map(candidate => ({
           ...candidate,
-          hasChildren: parentIds.includes(candidate.id)
+          hasChildren: parentIds.has(candidate.id)
         }))
       )
       return values.map(value => {
@@ -1134,14 +1146,12 @@ export class ExplorerAtoms {
           (!flatList || !matchesCondition || matchesCondition(entry as never))
       )
       const [parentIds, rows] = await Promise.all([
-        graph.find({
-          workspace: query.workspace,
-          root: query.root,
-          parentId: {in: readable.map(entry => entry.id)},
-          status: 'preferDraft',
-          groupBy: Entry.parentId,
-          select: Entry.parentId
-        }),
+        parentsWithChildren(
+          graph,
+          query.workspace,
+          query.root,
+          readable.map(entry => entry.id)
+        ),
         loadColumnValues(config, graph, overview, readable)
       ])
       return withLinkedEntries(
@@ -1149,11 +1159,36 @@ export class ExplorerAtoms {
         overview,
         rows.map(entry => ({
           ...entry,
-          hasChildren: parentIds.includes(entry.id)
+          hasChildren: parentIds.has(entry.id)
         }))
       )
     })
   )
+}
+
+/**
+ * The ids of the given entries that have children. Queried in chunks: SQLite
+ * fails on a list of about ten thousand bound values.
+ */
+async function parentsWithChildren(
+  graph: Graph,
+  workspace: GraphQuery['workspace'],
+  root: GraphQuery['root'],
+  ids: Array<string>
+): Promise<Set<string>> {
+  const found = await Promise.all(
+    Array.from(chunks(ids, 1000), chunk =>
+      graph.find({
+        workspace,
+        root,
+        parentId: {in: chunk},
+        status: 'preferDraft',
+        groupBy: Entry.parentId,
+        select: Entry.parentId
+      })
+    )
+  )
+  return new Set(found.flat().filter(id => id !== null))
 }
 
 const explorerItemSelect = {

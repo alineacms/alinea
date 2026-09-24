@@ -36,6 +36,17 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
   await expect(header).toContainText('Title')
   for (const column of ['Status', 'Article number', 'Categories', 'Brand', 'Price'])
     await expect(header.getByText(column, {exact: true})).toBeVisible()
+  // The article number is placed before the built-in columns
+  await expect
+    .poll(() =>
+      header
+        .locator('[data-slot="table-head"]')
+        .evaluateAll(cells => cells.map(cell => cell.textContent?.trim()))
+    )
+    .toEqual(['Title', 'Article number', 'Status', 'Categories', 'Brand', 'Price'])
+  // All products share a type and no product stores audit data
+  for (const column of ['Type', 'Updated', 'Author'])
+    await expect(header.getByText(column, {exact: true})).toHaveCount(0)
   const chair = table(page).getByRole('row', {name: /^Chair/})
   await expect(chair).toContainText('€20.00')
   await expect(chair).toContainText('A-100')
@@ -126,6 +137,8 @@ test('lists mixed children with per type columns and card thumbnails', async ({
   await page.getByRole('radio', {name: 'Row view'}).click()
   const header = page.locator('[data-slot="table-header"]')
   await expect(header.getByText('Type', {exact: true})).toBeVisible()
+  // Every child is published, so there is no status column
+  await expect(header.getByText('Status', {exact: true})).toHaveCount(0)
   // Ordered by the default sort: newest first
   await expect.poll(() => titles(page)).toEqual(['Meetup', 'Post'])
   await expect(
@@ -172,6 +185,9 @@ test('lists the products of a brand with an entry table', async ({
       .locator('[data-slot="entry-table"] [data-slot="table-header"]')
       .getByText('Price', {exact: true})
   ).toBeVisible()
-  await products.getByRole('row', {name: /^Table/}).click()
+  await products
+    .getByRole('row', {name: /^Table/})
+    .locator('[data-slot="table-title"]')
+    .click()
   await expect(page.getByRole('heading', {level: 1})).toHaveText('Table')
 })
