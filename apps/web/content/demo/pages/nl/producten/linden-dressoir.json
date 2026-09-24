@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "Made to order",
-    "nl": "Op bestelling",
-    "fr": "Sur commande"
-  },
+  "badge": "Op bestelling",
   "gallery": [
     {
       "_id": "3JjYg0anrrkHU50dBtFyGser5Kn",
@@ -56,11 +52,7 @@
       "_id": "3JjYfxUBiyi2o0xgjNjyNcwaiRC",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Natural oil",
-        "nl": "Naturel geolied",
-        "fr": "Huile naturelle"
-      },
+      "name": "Naturel geolied",
       "swatch": "#caa377",
       "stock": 1,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYfxXhsOUySLCAXL6BKBVLQCR",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Smoked oak",
-        "nl": "Gerookt eiken",
-        "fr": "Chêne fumé"
-      },
+      "name": "Gerookt eiken",
       "swatch": "#6a4a33",
       "stock": 0,
       "surcharge": 300

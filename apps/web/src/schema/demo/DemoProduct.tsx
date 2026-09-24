@@ -1,11 +1,10 @@
 import {Config, Field} from 'alinea'
 import {IcOutlineChair} from '@/icons'
 import {DemoStockOverview} from './DemoStockOverview'
-import {demoEntryUrl, demoLocales} from './DemoUrl'
+import {demoEntryUrl} from './DemoUrl'
 
-// Localised fields keep every locale in a single value, handy for short
-// labels that are shared between all translations of a product
-const localise = Field.localiser({locales: demoLocales})
+// The Site root is translated, so every field is translated per locale unless
+// it is marked shared: the value is then the same in every translation
 
 export const DemoProduct = Config.type('Product', {
   icon: IcOutlineChair,
@@ -19,12 +18,9 @@ export const DemoProduct = Config.type('Product', {
           tagline: Field.text('Tagline', {
             help: 'One line shown under the name on product cards'
           }),
-          badge: localise(
-            Field.text('Badge', {
-              shared: true,
-              help: 'Short label on the product card, eg. "New" or "Made to order"'
-            })
-          ),
+          badge: Field.text('Badge', {
+            help: 'Short label on the product card, eg. "New" or "Made to order"'
+          }),
           gallery: Field.image.multiple('Gallery', {shared: true}),
           description: Field.richText('Description')
         }
@@ -49,11 +45,10 @@ export const DemoProduct = Config.type('Product', {
           }),
           ...Field.view(<DemoStockOverview />),
           finishes: Field.list('Finishes', {
-            shared: true,
             schema: {
               DemoFinish: Config.type('Finish', {
                 fields: {
-                  name: localise(Field.text('Name')),
+                  name: Field.text('Name'),
                   swatch: Field.text('Swatch', {
                     width: 1 / 3,
                     placeholder: '#c8a47e'

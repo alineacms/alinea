@@ -16,7 +16,7 @@ import {
   TableCell,
   TableRow
 } from 'alinea/components'
-import {useEntry, useSiblingFieldValue} from 'alinea/dashboard/hooks'
+import {useSiblingFieldValue} from 'alinea/cms'
 import css from './DemoStockOverview.module.scss'
 
 const styles = styler(css)
@@ -26,7 +26,7 @@ const lowStock = 3
 
 interface FinishRow {
   _id: string
-  name?: Record<string, string>
+  name?: string
   swatch?: string
   stock?: number | null
   surcharge?: number | null
@@ -84,9 +84,8 @@ function asNumber(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0
 }
 
-function finishName(row: FinishRow, locale: string | null) {
-  const names = row.name ?? {}
-  return (locale && names[locale]) || names.en || 'Unnamed finish'
+function finishName(row: FinishRow) {
+  return row.name || 'Unnamed finish'
 }
 
 /**
@@ -94,12 +93,10 @@ function finishName(row: FinishRow, locale: string | null) {
  * the same components as the rest of the dashboard.
  */
 export function DemoStockOverview() {
-  const entry = useEntry()
   const price = asNumber(useSiblingFieldValue('price'))
   const leadTime = asNumber(useSiblingFieldValue('leadTime'))
   const available = Boolean(useSiblingFieldValue('inStock'))
   const finishes = (useSiblingFieldValue('finishes') ?? []) as Array<FinishRow>
-  const locale = entry?.locale ?? null
   const totalStock = finishes.reduce((sum, row) => sum + asNumber(row.stock), 0)
   const status = stockStatus(totalStock)
   const soldOut = finishes.filter(row => asNumber(row.stock) <= 0)
@@ -156,17 +153,17 @@ export function DemoStockOverview() {
             aria-label="Stock per finish"
             items={finishes}
             columns={columns}
-            dependencies={[locale, price]}
+            dependencies={[price]}
           >
             {row => (
-              <TableRow id={row._id} textValue={finishName(row, locale)}>
+              <TableRow id={row._id} textValue={finishName(row)}>
                 <TableCell>
                   <span className={styles.DemoStockOverview.finish()}>
                     <span
                       className={styles.DemoStockOverview.finish.swatch()}
                       style={{background: row.swatch || 'transparent'}}
                     />
-                    {finishName(row, locale)}
+                    {finishName(row)}
                   </span>
                 </TableCell>
                 <TableCell align="end">
@@ -185,7 +182,7 @@ export function DemoStockOverview() {
         <Alert variant="warning">
           <AlertTitle>
             {soldOut.length === 1
-              ? `${finishName(soldOut[0], locale)} is sold out`
+              ? `${finishName(soldOut[0])} is sold out`
               : `${soldOut.length} finishes are sold out`}
           </AlertTitle>
           <AlertDescription>

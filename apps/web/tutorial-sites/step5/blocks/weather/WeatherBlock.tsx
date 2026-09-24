@@ -1,5 +1,5 @@
 import type {Infer} from 'alinea'
-import {unstable_cacheLife as cacheLife} from 'next/cache'
+import {cacheLife} from 'next/cache'
 import type {WeatherBlock} from './WeatherBlock.schema'
 
 type WeatherBlockData = Infer.ListItem<typeof WeatherBlock>

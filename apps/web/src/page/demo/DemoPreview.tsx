@@ -2,7 +2,7 @@
 
 import {Query} from 'alinea'
 import type {Entry} from 'alinea/core/Entry'
-import {useGraph} from 'alinea/dashboard/hook/UseGraph'
+import {useGraph} from 'alinea/cms'
 import {
   type MouseEvent,
   type ReactNode,

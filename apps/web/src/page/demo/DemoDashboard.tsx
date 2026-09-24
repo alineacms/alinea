@@ -1,38 +1,16 @@
 'use client'
 
-import * as schema from '@/schema/demo'
 import 'alinea/css'
-import {createConfig} from 'alinea/core/Config'
 import type {ExportedSource} from 'alinea/core/source/SourceExport'
 import {App} from 'alinea/dashboard/App'
-import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
-import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
 import {views as defaultViews} from 'alinea/field/views'
 import {Suspense, use, useMemo} from 'react'
-import {DemoConnection, demoUser} from './DemoConnection'
-import {DemoPreview} from './DemoPreview'
+import {demoUser} from './DemoConnection'
 import {DemoReset} from './DemoReset'
-import {demoRoles} from './demoRoles'
-import {demoWorkspace} from './demoWorkspace'
-
-const config = createConfig({
-  schema,
-  roles: demoRoles,
-  enableDrafts: true,
-  workspaces: {demo: demoWorkspace},
-  preview: DemoPreview
-})
-
-async function setup(exported: ExportedSource) {
-  const client = await DemoConnection.create(config, exported)
-  const worker = new DashboardWorker(client.source)
-  const db = new WorkerDB(config, worker, client, worker)
-  await worker.load('demo', config, client)
-  return {config, client, db, events: worker}
-}
+import {setupDemo} from './demoSetup'
 
 interface RenderDashboardProps {
-  init: ReturnType<typeof setup>
+  init: ReturnType<typeof setupDemo>
 }
 
 /**
@@ -72,7 +50,7 @@ export interface DemoProps {
 }
 
 export default function DemoDashboard({exported}: DemoProps) {
-  const init = useMemo(() => setup(exported), [exported])
+  const init = useMemo(() => setupDemo(exported), [exported])
   return (
     <Suspense>
       <RenderDashboard init={init} />

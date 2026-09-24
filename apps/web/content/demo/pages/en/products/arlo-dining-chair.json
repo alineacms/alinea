@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "",
-    "nl": "",
-    "fr": ""
-  },
+  "badge": "",
   "gallery": [
     {
       "_id": "3JjYg2Lbw4NcdDzyvva6wigheNM",
@@ -56,11 +52,7 @@
       "_id": "3JjYg38yGzdOwn22gu9UH25nAB4",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Natural oak",
-        "nl": "Naturel eiken",
-        "fr": "Chêne naturel"
-      },
+      "name": "Natural oak",
       "swatch": "#d8bb8f",
       "stock": 12,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYg0AoAYFvRZ0BOxHMqiEoOqa",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Black stained",
-        "nl": "Zwart gebeitst",
-        "fr": "Teinté noir"
-      },
+      "name": "Black stained",
       "swatch": "#2b2622",
       "stock": 5,
       "surcharge": 30
@@ -82,11 +70,7 @@
       "_id": "3JjYg1xL8SNe2bEPaYADVBr9eK8",
       "_index": "a2",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Walnut",
-        "nl": "Notelaar",
-        "fr": "Noyer"
-      },
+      "name": "Walnut",
       "swatch": "#5c3b28",
       "stock": 3,
       "surcharge": 60

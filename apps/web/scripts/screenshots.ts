@@ -13,14 +13,15 @@
  * Captures land in apps/web/.cache/screenshots as WebP. Publishing uploads
  * them through the alinea dev MCP server into the "Screenshots" folder of the
  * main media library. Every shot keeps one media entry, found by its title,
- * so re-running replaces the image while the entry id and file path stay the
- * same and pages that reference it pick up the new capture.
+ * so re-running replaces the image while the entry id stays the same and
+ * pages that reference it pick up the new capture. A renamed shot finds its
+ * entry by its previous name.
  *
  * Pass shot names to publish a subset, eg. only the ones the site uses:
- *   bun screenshots --publish dashboard-product dashboard-localiser
+ *   bun screenshots --publish dashboard-product dashboard-translations
  */
 
-import {mkdir, readFile, writeFile} from 'node:fs/promises'
+import {mkdir, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {
@@ -39,6 +40,8 @@ interface Shot {
   /** Alt text of the published media entry */
   alt: string
   viewport?: {width: number; height: number}
+  /** Earlier name of the shot, its media entry is reused when renamed */
+  previousName?: string
   /** Bring the dashboard into the state to capture */
   prepare?(page: Page): Promise<void>
 }
@@ -56,11 +59,13 @@ const shots: Array<Shot> = [
     }
   },
   {
-    name: 'dashboard-localiser',
-    alt: 'A product in Dutch, with tabs to switch the localised badge field between English, Dutch and French',
+    name: 'dashboard-translations',
+    previousName: 'dashboard-localiser',
+    alt: 'The Dutch translation of a product, with the language menu open to switch between English, Dutch and French',
     hash: `/entry/demo/pages:nl/${ferris}`,
     async prepare(page) {
       await page.getByRole('tab', {name: 'Preview'}).click()
+      await page.getByRole('button', {name: 'Language'}).first().click()
     }
   },
   {
@@ -257,9 +262,10 @@ async function capture(
     )
     const result: Capture = {
       file,
-      alt: shot.alt,
-      width: viewport.width * 2,
-      height: viewport.height * 2
+      previousTitle: shot.previousName
+        ? path.basename(fileName(shot.previousName, scheme), '.webp')
+        : undefined,
+      alt: shot.alt
     }
     return result
   } finally {
@@ -269,9 +275,9 @@ async function capture(
 
 interface Capture {
   file: string
+  /** Title of the media entry of an earlier name of the shot */
+  previousTitle?: string
   alt: string
-  width: number
-  height: number
 }
 
 function fileName(name: string, scheme: Scheme) {
@@ -330,17 +336,6 @@ interface FindResult {
   entries: Array<EntrySummary>
 }
 
-interface MediaData {
-  location: string
-  width: number
-  height: number
-}
-
-interface MediaEntry {
-  id: string
-  data: MediaData
-}
-
 interface UploadResult {
   id: string
 }
@@ -363,45 +358,43 @@ async function screenshotsFolder() {
   return created.id
 }
 
-async function publish(item: Capture, folderId: string) {
-  const title = path.basename(item.file, path.extname(item.file))
+async function findMedia(folderId: string, title: string) {
   const {entries} = await mcp<FindResult>('find_entries', {
     workspace: 'main',
     root: 'media',
     parentId: folderId,
     search: title
   })
-  const existing = entries.find(entry => entry.title === title)
+  return entries.find(entry => entry.title === title)
+}
+
+async function publish(item: Capture, folderId: string) {
+  const title = path.basename(item.file, path.extname(item.file))
+  const existing =
+    (await findMedia(folderId, title)) ??
+    (item.previousTitle
+      ? await findMedia(folderId, item.previousTitle)
+      : undefined)
+  const file = path.relative(webDir, item.file)
   if (!existing) {
     const upload = await mcp<UploadResult>('upload_file', {
-      path: path.relative(webDir, item.file),
+      path: file,
       workspace: 'main',
       parentId: folderId,
-      title
+      title,
+      alt: item.alt
     })
-    await mcp('update_entry', {id: upload.id, data: {alt: item.alt}})
     console.log(`↑ ${title} → ${upload.id}`)
     return
   }
-  // The MCP server cannot replace the file of an existing media entry
-  // (upload_file always creates a new entry and update_entry only accepts
-  // title, alt and focus on media). To keep the entry id and path that pages
-  // reference, write the new capture over the existing file. Captures have a
-  // fixed size so the stored width and height stay correct; the blur
-  // preview is left from the first upload.
-  const current = await mcp<MediaEntry>('get_entry', {id: existing.id})
-  const {width, height} = item
-  if (current.data.width !== width || current.data.height !== height)
-    throw new Error(
-      `${title} changed size (${current.data.width}x${current.data.height} → ` +
-        `${width}x${height}), delete media entry ${existing.id} and publish ` +
-        'again, then point the pages that used it to the new entry'
-    )
-  await writeFile(
-    path.join(webDir, 'public', current.data.location),
-    await readFile(item.file)
-  )
-  await mcp('update_entry', {id: existing.id, data: {alt: item.alt}})
+  // Replace the file of the existing media entry, so its id stays the same
+  // and pages that reference it pick up the new capture
+  await mcp<UploadResult>('upload_file', {
+    path: file,
+    replace: existing.id,
+    title,
+    alt: item.alt
+  })
   console.log(`↻ ${title} → ${existing.id}`)
 }
 

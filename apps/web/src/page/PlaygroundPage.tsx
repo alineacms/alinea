@@ -2,6 +2,8 @@ import {promises as fs} from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {Loader} from '@/layout/Loader'
+import {FSSource} from 'alinea/core/source/FSSource'
+import {exportSource} from 'alinea/core/source/SourceExport'
 import type {Metadata, MetadataRoute, Viewport} from 'next'
 import {Suspense} from 'react'
 import {getMetadata, type MetadataProps} from '@/utils/metadata'
@@ -29,9 +31,11 @@ export default async function PlaygroundPage() {
     path.join(alineaDir, 'dist/bundled.d.ts'),
     'utf8'
   )
+  // Previews use the demo content, so link fields have entries to pick
+  const exported = await exportSource(new FSSource('content/demo'))
   return (
     <Suspense fallback={<Loader absolute />}>
-      <PlaygroundDynamic declarations={declarations} />
+      <PlaygroundDynamic declarations={declarations} exported={exported} />
     </Suspense>
   )
 }

@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "",
-    "nl": "",
-    "fr": ""
-  },
+  "badge": "",
   "gallery": [
     {
       "_id": "3JjYg1jjjuKIrKcaDY4Jqfj6sDb",
@@ -56,11 +52,7 @@
       "_id": "3JjYg1wHGjKDOVJTJcAa64XMCiz",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Natural",
-        "nl": "Naturel",
-        "fr": "Naturel"
-      },
+      "name": "Natural",
       "swatch": "#cfc3ae",
       "stock": 14,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYg2LG3YOBolTZpkEPkaDEfVh",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Chalk",
-        "nl": "Krijt",
-        "fr": "Craie"
-      },
+      "name": "Chalk",
       "swatch": "#efeae2",
       "stock": 8,
       "surcharge": 0
@@ -82,11 +70,7 @@
       "_id": "3JjYfx66Tdt9tyPrvD3JDGCcyMC",
       "_index": "a2",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Clay",
-        "nl": "Klei",
-        "fr": "Argile"
-      },
+      "name": "Clay",
       "swatch": "#b9876a",
       "stock": 3,
       "surcharge": 0

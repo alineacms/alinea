@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "",
-    "nl": "",
-    "fr": ""
-  },
+  "badge": "",
   "gallery": [
     {
       "_id": "3JjYfy0y3UMzL3RfCsboxOjB7yO",
@@ -56,11 +52,7 @@
       "_id": "3JjYfyjSs0RALRnd4PSVuqHO5eK",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Natural oil",
-        "nl": "Naturel geolied",
-        "fr": "Huile naturelle"
-      },
+      "name": "Natural oil",
       "swatch": "#d1ae83",
       "stock": 2,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYfvg2kTAe5r2kOu8Tfu8EqGU",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "White oil",
-        "nl": "Wit geolied",
-        "fr": "Huile blanche"
-      },
+      "name": "White oil",
       "swatch": "#e6d8c3",
       "stock": 0,
       "surcharge": 0

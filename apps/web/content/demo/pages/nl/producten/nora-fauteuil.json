@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "",
-    "nl": "",
-    "fr": ""
-  },
+  "badge": "",
   "gallery": [
     {
       "_id": "3JjYfxlkrmUy307P9RXGvE35POt",
@@ -56,11 +52,7 @@
       "_id": "3JjYg352kG3LzBwJ6E499WHPMOi",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Oat linen",
-        "nl": "Haver linnen",
-        "fr": "Lin avoine"
-      },
+      "name": "Haver linnen",
       "swatch": "#d9cdb8",
       "stock": 6,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYfwcN8X6h7gKdGeLJryuThU5",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Stone linen",
-        "nl": "Steen linnen",
-        "fr": "Lin pierre"
-      },
+      "name": "Steen linnen",
       "swatch": "#a39e93",
       "stock": 2,
       "surcharge": 0
@@ -82,11 +70,7 @@
       "_id": "3JjYfxqnBE9FXjVT332J4PDCLAa",
       "_index": "a2",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Moss linen",
-        "nl": "Mos linnen",
-        "fr": "Lin mousse"
-      },
+      "name": "Mos linnen",
       "swatch": "#6b6f4f",
       "stock": 0,
       "surcharge": 80

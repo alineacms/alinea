@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "New",
-    "nl": "Nieuw",
-    "fr": "Nouveau"
-  },
+  "badge": "New",
   "gallery": [
     {
       "_id": "3JjYg0fBSoc0n4QGCSqqm4evuiS",
@@ -56,11 +52,7 @@
       "_id": "3JjYg0nSUv2DanW1WqDunZnQPfY",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Chalk",
-        "nl": "Krijt",
-        "fr": "Craie"
-      },
+      "name": "Chalk",
       "swatch": "#ece6dc",
       "stock": 9,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYfvjM5zH4fP1GcuaDM0qD8nL",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Sand",
-        "nl": "Zand",
-        "fr": "Sable"
-      },
+      "name": "Sand",
       "swatch": "#d6c4a8",
       "stock": 4,
       "surcharge": 0
@@ -82,11 +70,7 @@
       "_id": "3JjYg0foddc59Keue2bnUTRb9Gp",
       "_index": "a2",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Charcoal",
-        "nl": "Houtskool",
-        "fr": "Charbon"
-      },
+      "name": "Charcoal",
       "swatch": "#3d3a37",
       "stock": 2,
       "surcharge": 0

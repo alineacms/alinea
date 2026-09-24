@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "Bestseller",
-    "nl": "Bestseller",
-    "fr": "Best-seller"
-  },
+  "badge": "Bestseller",
   "gallery": [
     {
       "_id": "3JjYfyM0nYVaofs4xXuP5uO4RcN",
@@ -62,11 +58,7 @@
       "_id": "3JjYfvlWeREJSbyydHDVyu5OPD1",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Natural oil",
-        "nl": "Naturel geolied",
-        "fr": "Huile naturelle"
-      },
+      "name": "Natural oil",
       "swatch": "#c9a57a",
       "stock": 4,
       "surcharge": 0
@@ -75,11 +67,7 @@
       "_id": "3JjYg05V4co3ADKIdvOivufOVTB",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "White oil",
-        "nl": "Wit geolied",
-        "fr": "Huile blanche"
-      },
+      "name": "White oil",
       "swatch": "#e2d3bd",
       "stock": 2,
       "surcharge": 0
@@ -88,11 +76,7 @@
       "_id": "3JjYg2k4Br8tVTvcWiFHJQzewYF",
       "_index": "a2",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Smoked oak",
-        "nl": "Gerookt eiken",
-        "fr": "Chêne fumé"
-      },
+      "name": "Smoked oak",
       "swatch": "#6f4e37",
       "stock": 0,
       "surcharge": 250

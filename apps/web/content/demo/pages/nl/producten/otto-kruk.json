@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "",
-    "nl": "",
-    "fr": ""
-  },
+  "badge": "",
   "gallery": [
     {
       "_id": "3JjYfxcGZCASwvT1JFYwiYdWjRy",
@@ -56,11 +52,7 @@
       "_id": "3JjYfvkcus2F5OLvAsjkgy9KwS9",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Oiled walnut",
-        "nl": "Geolied notelaar",
-        "fr": "Noyer huilé"
-      },
+      "name": "Geolied notelaar",
       "swatch": "#5a3a26",
       "stock": 7,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYg2nUxbkaLRRd6NtZADmysVL",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Oiled oak",
-        "nl": "Geolied eiken",
-        "fr": "Chêne huilé"
-      },
+      "name": "Geolied eiken",
       "swatch": "#c8a171",
       "stock": 5,
       "surcharge": 0

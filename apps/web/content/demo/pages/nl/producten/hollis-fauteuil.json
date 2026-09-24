@@ -35,11 +35,7 @@
       "description": ""
     }
   },
-  "badge": {
-    "en": "New",
-    "nl": "Nieuw",
-    "fr": "Nouveau"
-  },
+  "badge": "Nieuw",
   "gallery": [
     {
       "_id": "3JjYfxFncSyyuBP1mQKqfnmCrfp",
@@ -56,11 +52,7 @@
       "_id": "3JjYfxQ22DjhBkxptd0UQ7AIVNL",
       "_index": "a0",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Natural oak",
-        "nl": "Naturel eiken",
-        "fr": "Chêne naturel"
-      },
+      "name": "Naturel eiken",
       "swatch": "#c49a6c",
       "stock": 3,
       "surcharge": 0
@@ -69,11 +61,7 @@
       "_id": "3JjYfyadnn1jkB9YL5f1jDMQbI2",
       "_index": "a1",
       "_type": "DemoFinish",
-      "name": {
-        "en": "Dark oak",
-        "nl": "Donker eiken",
-        "fr": "Chêne foncé"
-      },
+      "name": "Donker eiken",
       "swatch": "#4a3426",
       "stock": 0,
       "surcharge": 120
