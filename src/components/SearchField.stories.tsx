@@ -50,6 +50,56 @@ export function States() {
   )
 }
 
+const fruits = ['Apple', 'Banana', 'Cherry']
+
+/** A search field that controls a list of results with the arrow keys */
+export function Combobox() {
+  const [query, setQuery] = useState('')
+  const [active, setActive] = useState(0)
+  const results = fruits.filter(fruit =>
+    fruit.toLowerCase().includes(query.toLowerCase())
+  )
+  const expanded = Boolean(query) && results.length > 0
+  return (
+    <div style={column}>
+      <SearchField
+        aria-label="Fruit"
+        icon={IcRoundSearch}
+        value={query}
+        onValueChange={value => {
+          setQuery(value)
+          setActive(0)
+        }}
+        onKeyDown={event => {
+          if (event.key === 'ArrowDown')
+            setActive(Math.min(results.length - 1, active + 1))
+          if (event.key === 'ArrowUp') setActive(Math.max(0, active - 1))
+        }}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-haspopup="listbox"
+        aria-expanded={expanded}
+        aria-controls={expanded ? 'fruits' : undefined}
+        aria-activedescendant={expanded ? `fruit-${active}` : undefined}
+      />
+      {expanded && (
+        <ul id="fruits" role="listbox" aria-label="Fruits">
+          {results.map((fruit, index) => (
+            <li
+              key={fruit}
+              id={`fruit-${index}`}
+              role="option"
+              aria-selected={index === active}
+            >
+              {fruit}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 export default {
   title: 'Pure components / SearchField'
 }

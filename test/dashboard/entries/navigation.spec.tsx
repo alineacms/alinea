@@ -306,7 +306,7 @@ test('searches entries and navigates with enter or click', async ({
 
   await app.page.getByRole('button', {name: 'Search entries'}).click()
   const enterSearch = app.page.getByRole('dialog', {name: 'Search entries'})
-  const enterSearchbox = enterSearch.getByRole('searchbox', {name: 'Search'})
+  const enterSearchbox = enterSearch.getByRole('combobox', {name: 'Search'})
   await enterSearchbox.fill('Beta')
   const betaResult = enterSearch.getByRole('row', {name: /Beta/})
   await expect(betaResult).toBeVisible()
@@ -318,7 +318,7 @@ test('searches entries and navigates with enter or click', async ({
 
   await app.page.getByRole('button', {name: 'Search entries'}).click()
   const clickSearch = app.page.getByRole('dialog', {name: 'Search entries'})
-  await clickSearch.getByRole('searchbox', {name: 'Search'}).fill('Alpha')
+  await clickSearch.getByRole('combobox', {name: 'Search'}).fill('Alpha')
   await clickSearch.getByRole('row', {name: /Alpha/}).click()
   await expect(app.title).toHaveText('Alpha')
   await expect(clickSearch).not.toBeVisible()
@@ -333,7 +333,7 @@ test('search requires every word and prioritizes title prefixes', async ({
   await app.page.getByRole('button', {name: 'Search entries'}).click()
   const search = app.page.getByRole('dialog', {name: 'Search entries'})
   await search
-    .getByRole('searchbox', {name: 'Search'})
+    .getByRole('combobox', {name: 'Search'})
     .fill('wireless receiver 77 GHz')
 
   const results = search
@@ -343,7 +343,7 @@ test('search requires every word and prioritizes title prefixes', async ({
   await expect(results.nth(0)).toContainText('Wireless receiver at 77 GHz')
   await expect(results.nth(1)).toContainText('Archive')
 
-  await search.getByRole('searchbox', {name: 'Search'}).fill('wireless')
+  await search.getByRole('combobox', {name: 'Search'}).fill('wireless')
 
   await expect(results).toHaveCount(3)
   await expect(results.nth(0)).toContainText('Wireless receiver at 77 GHz')

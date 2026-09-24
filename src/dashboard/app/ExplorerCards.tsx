@@ -100,6 +100,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const file = useAtomValueRaw(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
+  const thumbnail = useAtomValueRaw(data.thumbnail)
   const card: ContentCardProps = file
     ? {
         variant: 'media',
@@ -110,11 +111,19 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
         description: formatExtension(file.extension),
         details: formatFileDetails(file)
       }
-    : {
-        icon: icon ?? (canOpen ? IcTwotoneFolder : IcTwotoneDescription),
-        title: label,
-        description: type.label
-      }
+    : thumbnail
+      ? {
+          variant: 'media',
+          image: thumbnail.preview,
+          color: thumbnail.averageColor,
+          title: label,
+          description: type.label
+        }
+      : {
+          icon: icon ?? (canOpen ? IcTwotoneFolder : IcTwotoneDescription),
+          title: label,
+          description: type.label
+        }
   return (
     <ContentGridItem
       id={entry.id}
@@ -211,6 +220,7 @@ export function ExplorerCards({
     page.searchesEverything
   return (
     <div
+      id={explorer.resultsId}
       aria-label="Explorer card results"
       className={styles.ExplorerCards()}
       role="region"

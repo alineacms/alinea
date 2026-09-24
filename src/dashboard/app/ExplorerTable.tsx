@@ -17,6 +17,7 @@ import type {
   DashboardEntryData,
   DashboardEntryOverviewCell,
   DashboardExplorer,
+  ExplorerLinkedEntry,
   ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {dashboardEntryOverviewColumnCount} from '../atoms/explorer.js'
@@ -64,6 +65,7 @@ interface ExplorerTableRowProps {
 
 interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
   cells: Array<DashboardEntryOverviewCell>
+  links?: ReadonlyMap<string, ExplorerLinkedEntry>
   hasChildren: boolean
   icon: IconType
   isSelectable: boolean
@@ -152,9 +154,12 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     icon,
     isSelectable,
     label,
+    links,
     parents,
     rootLabel
   } = props
+  // Search results span locales, show each entry's own values
+  const cellLocale = entry.locale ?? props.locale
   const isExpanded = useAtomValueRaw(
     useMemo(() => explorer.isExpanded(entry), [explorer, entry])
   )
@@ -176,10 +181,15 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
   }
   const textValue = useMemo(
     () =>
-      [label, ...cells.map(cell => compactFieldText(cell.field, cell.value))]
+      [
+        label,
+        ...cells.map(cell =>
+          compactFieldText(cell.field, cell.value, {locale: cellLocale, links})
+        )
+      ]
         .filter(Boolean)
         .join(' '),
-    [cells, label]
+    [cellLocale, cells, label, links]
   )
   return (
     <TableRow
@@ -219,11 +229,18 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
               label={cell?.label}
               title={
                 cell
-                  ? `${cell.label} ${compactFieldText(cell.field, cell.value)}`
+                  ? `${cell.label} ${compactFieldText(cell.field, cell.value, {locale: cellLocale, links})}`
                   : undefined
               }
             >
-              {cell && <CompactField field={cell.field} value={cell.value} />}
+              {cell && (
+                <CompactField
+                  field={cell.field}
+                  value={cell.value}
+                  locale={cellLocale}
+                  links={links}
+                />
+              )}
             </TableCell>
           )
         })}
@@ -280,6 +297,7 @@ function ExplorerTableLoadedRow({
   const configuredIcon = useAtomValueRaw(data.icon)
   const hasChildren = useAtomValueRaw(data.hasChildren)
   const cells = useAtomValueRaw(data.overviewCells)
+  const links = useAtomValueRaw(data.linked)
   const parents = useAtomValueRaw(data.parents)
   const isSelectable = useAtomValueRaw(
     useMemo(() => explorer.isSelectable(props.entry), [explorer, props.entry])
@@ -297,6 +315,7 @@ function ExplorerTableLoadedRow({
       icon={configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)}
       isSelectable={isSelectable}
       label={label}
+      links={links}
       parents={parents}
       rootLabel={rootLabel}
     />
@@ -352,7 +371,10 @@ export function ExplorerTable({
   }
 
   return (
-    <div className={styles.ExplorerTable.viewport({compact})}>
+    <div
+      id={explorer.resultsId}
+      className={styles.ExplorerTable.viewport({compact})}
+    >
       <Table
         {...dragDrop}
         aria-label="Explorer entries"

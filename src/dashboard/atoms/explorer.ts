@@ -187,6 +187,144 @@ export interface ExplorerItemData {
   index: string
   data: Record<string, unknown>
   hasChildren: boolean
+  /** Summaries of the entries linked from the overview fields, by id */
+  linked?: Record<string, ExplorerLinkedEntry>
+  /** The first image found in the entry's fields */
+  thumbnail?: ExplorerLinkedEntry
+}
+
+/** What the explorer shows of an entry linked from another entry */
+export interface ExplorerLinkedEntry {
+  id: string
+  title: string
+  /** A small data url preview of an image */
+  preview?: string
+  averageColor?: string
+}
+
+/** The fields shown as columns in the explorer's row view, in order */
+export function explorerOverviewFields(type: Type): Array<[string, Field]> {
+  return Object.entries(Type.fields(type))
+    .filter(([key, field]) => {
+      const options = Field.options(field) as FieldOptions<unknown>
+      return !options.hidden && options.overview === true && key !== 'title'
+    })
+    .slice(0, dashboardEntryOverviewColumnCount)
+}
+
+/**
+ * The id of the first image an entry links to, following the order of the
+ * type's fields and the items within them (eg. a gallery). Returns undefined
+ * if the entry has no images.
+ */
+export function explorerThumbnailId(
+  type: Type,
+  data: Record<string, unknown>
+): string | undefined {
+  return Type.references(type, data).find(
+    reference => reference.linkType === 'image'
+  )?.targetId
+}
+
+/** The ids of the entries linked from an entry's overview fields */
+export function explorerOverviewLinkIds(
+  type: Type,
+  data: Record<string, unknown>
+): Array<string> {
+  return explorerOverviewFields(type).flatMap(([key, field]) =>
+    Field.references(field, data[key], {
+      path: [key],
+      label: Field.label(field)
+    }).map(reference => reference.targetId)
+  )
+}
+
+interface LinkedEntryRow extends ExplorerLinkedEntry {
+  locale: string | null
+}
+
+function pickLinkedEntry(
+  rows: Array<LinkedEntryRow> | undefined,
+  locale: string | null
+): ExplorerLinkedEntry | undefined {
+  if (!rows?.length) return undefined
+  const row =
+    rows.find(row => row.locale === locale) ??
+    rows.find(row => row.locale === null) ??
+    rows[0]
+  return {
+    id: row.id,
+    title: row.title,
+    preview: row.preview || undefined,
+    averageColor: row.averageColor || undefined
+  }
+}
+
+/**
+ * Loads the thumbnails and the entries linked from the overview fields of
+ * the given explorer items in a single query
+ */
+async function withLinkedEntries<Item extends ExplorerItemData>(
+  get: Getter,
+  items: Array<Item>
+): Promise<Array<Item>> {
+  const schema = get(configAtom).schema
+  const wanted = items.map(item => {
+    const type = schema[item.type]
+    if (!type || type === MediaFile || type === MediaLibrary)
+      return {thumbnail: undefined, links: []}
+    return {
+      thumbnail: explorerThumbnailId(type, item.data),
+      links: explorerOverviewLinkIds(type, item.data)
+    }
+  })
+  const ids = Array.from(
+    new Set(
+      wanted.flatMap(({thumbnail, links}) =>
+        thumbnail ? [thumbnail, ...links] : links
+      )
+    )
+  )
+  if (ids.length === 0) return items
+  const graph = get(graphAtom)
+  const policy = get(policyAtom)
+  const rows = await graph.find({
+    id: {in: ids},
+    status: 'preferDraft',
+    select: {
+      id: Entry.id,
+      title: Entry.title,
+      workspace: Entry.workspace,
+      root: Entry.root,
+      locale: Entry.locale,
+      parents: Entry.parents,
+      preview: MediaFile.preview,
+      averageColor: MediaFile.averageColor
+    }
+  })
+  const byId = new Map<string, Array<LinkedEntryRow>>()
+  for (const row of rows) {
+    if (!policy.canRead(row)) continue
+    const versions = byId.get(row.id) ?? []
+    versions.push(row as LinkedEntryRow)
+    byId.set(row.id, versions)
+  }
+  return items.map((item, index) => {
+    const {thumbnail, links} = wanted[index]
+    const linked: Record<string, ExplorerLinkedEntry> = {}
+    for (const id of links) {
+      const entry = pickLinkedEntry(byId.get(id), item.locale)
+      if (entry) linked[id] = entry
+    }
+    const image = thumbnail
+      ? pickLinkedEntry(byId.get(thumbnail), item.locale)
+      : undefined
+    return {
+      ...item,
+      linked,
+      thumbnail: image?.preview ? image : undefined
+    }
+  })
 }
 
 function explorerItemField(item: ExplorerItemData, name: string) {
@@ -241,17 +379,18 @@ export class ExplorerEntryData {
     const item = get(this.item)
     const type = get(configAtom).schema[item.type]
     if (!type) return []
-    return Object.entries(Type.fields(type))
-      .flatMap(([key, field]) => {
-        const options = Field.options(field) as FieldOptions<unknown>
-        if (options.hidden || options.overview !== true || key === 'title')
-          return []
-        return [
-          {id: key, field, label: Field.label(field), value: item.data[key]}
-        ]
-      })
-      .slice(0, dashboardEntryOverviewColumnCount)
+    return explorerOverviewFields(type).map(([key, field]) => ({
+      id: key,
+      field,
+      label: Field.label(field),
+      value: item.data[key]
+    }))
   })
+  linked = atom(
+    (get): ReadonlyMap<string, ExplorerLinkedEntry> =>
+      new Map(Object.entries(get(this.item).linked ?? {}))
+  )
+  thumbnail = atom(get => get(this.item).thumbnail)
 
   constructor(
     public readonly item: Atom<ExplorerItemData>,
@@ -308,7 +447,11 @@ export class ExplorerEntry {
   }
 }
 
+let explorerCount = 0
+
 export class ExplorerAtoms {
+  /** The id of the element that contains the results */
+  readonly resultsId = `alinea-explorer-results-${++explorerCount}`
   readonly allowAllWorkspaces
   readonly selectionMode
   readonly selectionBehavior
@@ -835,12 +978,15 @@ export class ExplorerAtoms {
         select: Entry.parentId
       })
       const currentParents = get(data.parents)
-      return readable.map(candidate => {
-        const value = {
+      const values = await withLinkedEntries(
+        get,
+        readable.map(candidate => ({
           ...candidate,
           hasChildren: parentIds.includes(candidate.id)
-        }
-        return new ExplorerEntry(candidate.id, value, atom(value), this.root, [
+        }))
+      )
+      return values.map(value => {
+        return new ExplorerEntry(value.id, value, atom(value), this.root, [
           ...currentParents,
           entry
         ])
@@ -975,10 +1121,13 @@ export class ExplorerAtoms {
         groupBy: Entry.parentId,
         select: Entry.parentId
       })
-      return readable.map(entry => ({
-        ...entry,
-        hasChildren: parentIds.includes(entry.id)
-      }))
+      return withLinkedEntries(
+        get,
+        readable.map(entry => ({
+          ...entry,
+          hasChildren: parentIds.includes(entry.id)
+        }))
+      )
     })
   )
 }

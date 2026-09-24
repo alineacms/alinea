@@ -36,6 +36,21 @@ export interface SearchFieldProps
   onBlur?: (event: FocusEvent<HTMLInputElement>) => void
   onFocus?: (event: FocusEvent<HTMLInputElement>) => void
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
+  /**
+   * Set to `combobox` when the field controls a list of results that is
+   * navigated with the arrow keys while focus stays in the field (together
+   * with `aria-controls` and `aria-activedescendant`), defaults to `searchbox`
+   */
+  role?: 'searchbox' | 'combobox'
+  /** The id of the results a combobox controls */
+  'aria-controls'?: string
+  /** The id of the active result within the results a combobox controls */
+  'aria-activedescendant'?: string
+  /** Whether the results a combobox controls are shown */
+  'aria-expanded'?: boolean
+  /** The kind of element holding the results a combobox controls */
+  'aria-haspopup'?: 'listbox' | 'grid' | 'tree' | 'dialog'
+  'aria-autocomplete'?: 'list' | 'none'
 }
 
 /**
@@ -57,6 +72,12 @@ export function SearchField({
   onBlur,
   onFocus,
   onKeyDown,
+  role,
+  'aria-controls': ariaControls,
+  'aria-activedescendant': ariaActiveDescendant,
+  'aria-expanded': ariaExpanded,
+  'aria-haspopup': ariaHasPopup,
+  'aria-autocomplete': ariaAutocomplete,
   className,
   ...props
 }: SearchFieldProps) {
@@ -98,6 +119,14 @@ export function SearchField({
             onBlur={onBlur}
             onFocus={onFocus}
             onKeyDown={onKeyDown}
+            role={role === 'combobox' ? role : undefined}
+            aria-controls={ariaControls}
+            aria-activedescendant={ariaActiveDescendant}
+            aria-expanded={
+              role === 'combobox' ? Boolean(ariaExpanded) : undefined
+            }
+            aria-haspopup={ariaHasPopup}
+            aria-autocomplete={ariaAutocomplete}
           />
           {loading && (
             <Spinner

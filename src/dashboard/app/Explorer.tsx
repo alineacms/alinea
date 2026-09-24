@@ -31,7 +31,10 @@ import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
   type KeyboardEvent,
@@ -83,6 +86,8 @@ export interface ExplorerHeaderEntry {
 export interface ExplorerHeaderProps {
   canBrowse?: boolean
   autoFocusSearch?: boolean
+  /** Called when escape is pressed in the search field */
+  onSearchEscape?: () => void
   controls?: ReactNode
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
@@ -103,7 +108,27 @@ interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: DashboardExplorer
   onEntryAction?: (entry: DashboardEntry) => void
+  onEscape?: () => void
   page: ExplorerReadyPage
+}
+
+/** The closest element that scrolls vertically, starting at `element` */
+function scrollParent(element: HTMLElement): HTMLElement | undefined {
+  let current: HTMLElement | null = element
+  while (current) {
+    const {overflowY} = getComputedStyle(current)
+    if (
+      (overflowY === 'auto' || overflowY === 'scroll') &&
+      current.scrollHeight > current.clientHeight
+    )
+      return current
+    current = current.parentElement
+  }
+  return undefined
+}
+
+function findResult(results: HTMLElement | null, key: string) {
+  return results?.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`)
 }
 
 interface ExplorerHeaderMainProps {
@@ -129,6 +154,7 @@ export function ExplorerSearch({
   autoFocus,
   explorer,
   onEntryAction,
+  onEscape,
   page
 }: ExplorerSearchProps) {
   const items = page.items
@@ -138,6 +164,16 @@ export function ExplorerSearch({
   const performAction = useSetAtom(explorer.onAction)
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
+  const inputId = useId()
+
+  // Focus natively rather than through react-aria's autoFocus: it defers
+  // focus until transitions end for screen reader users, by which time an
+  // opening dialog has moved focus to itself
+  useEffect(() => {
+    // Focusing on mount is not an event handler
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
+    if (autoFocus) document.getElementById(inputId)?.focus()
+  }, [autoFocus, inputId])
 
   function selectEntry(entry: DashboardEntry | undefined) {
     if (!entry) return
@@ -155,6 +191,8 @@ export function ExplorerSearch({
   // after the result set changes.
   // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-disable react-you-might-not-need-an-effect/no-event-handler
+  // A new query starts at its best match.
+  const selectedForSearch = useRef(page.search)
   useEffect(() => {
     if (!explorer.autoSelectFirstItem || !explorer.hasSelection) return
     if (items.length === 0) {
@@ -162,17 +200,75 @@ export function ExplorerSearch({
         setSelection(new Set<Key>())
       return
     }
-    if (!selectedEntry) setSelection(new Set<Key>([items[0].id]))
+    const searchChanged = selectedForSearch.current !== page.search
+    selectedForSearch.current = page.search
+    if (!selectedEntry || searchChanged)
+      setSelection(new Set<Key>([items[0].id]))
   }, [
     explorer.autoSelectFirstItem,
     explorer.hasSelection,
     items,
+    page.search,
     selectedEntry,
     selection,
     setSelection
   ])
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
+
+  // In search mode the field is a combobox: focus stays in the field while
+  // the arrow keys move the active result, announced by its element id
+  const isCombobox = explorer.mode === 'search' && explorer.hasSelection
+  const showsResults = isCombobox && Boolean(page.search.trim())
+  const [combobox, setCombobox] = useState<{
+    controls?: string
+    active?: string
+  }>({})
+  const revealActive = useRef(false)
+  // Result rows are virtualized, their elements exist only after rendering
+  useLayoutEffect(() => {
+    if (!isCombobox) return
+    const results = document
+      .getElementById(explorer.resultsId)
+      ?.querySelector<HTMLElement>('[role="treegrid"], [role="grid"]')
+    const key = showsResults ? selectedEntry?.id : undefined
+    const controls = showsResults ? results?.id || undefined : undefined
+    function update(row: HTMLElement | null | undefined) {
+      const active = row?.id || undefined
+      setCombobox(current =>
+        current.controls === controls && current.active === active
+          ? current
+          : {controls, active}
+      )
+    }
+    if (!key || !results) return update(undefined)
+    const reveal = revealActive.current
+    revealActive.current = false
+    const row = findResult(results, key)
+    if (row) {
+      if (reveal) row.scrollIntoView({block: 'nearest'})
+      return update(row)
+    }
+    update(undefined)
+    if (reveal) {
+      // Scroll to the estimated position so the row gets rendered
+      const scroller = scrollParent(results)
+      const index = items.findIndex(item => item.id === key)
+      if (scroller && index > -1)
+        scroller.scrollTop =
+          (index / items.length) * scroller.scrollHeight -
+          scroller.clientHeight / 2
+    }
+    const observer = new MutationObserver(() => {
+      const rendered = findResult(results, key)
+      if (!rendered) return
+      observer.disconnect()
+      if (reveal) rendered.scrollIntoView({block: 'nearest'})
+      update(rendered)
+    })
+    observer.observe(results, {childList: true, subtree: true})
+    return () => observer.disconnect()
+  }, [explorer.resultsId, isCombobox, items, page, selectedEntry, showsResults])
 
   function onSearchChange(value: string) {
     setInputValue(value)
@@ -195,11 +291,15 @@ export function ExplorerSearch({
           ? 0
           : items.length - 1
         : Math.max(0, Math.min(items.length - 1, current + direction))
+    revealActive.current = true
     selectEntry(items[next])
   }
 
   function onSearchKeyDown(event: KeyboardEvent) {
-    if (event.key === 'ArrowDown') {
+    if (event.key === 'Escape' && onEscape) {
+      event.preventDefault()
+      onEscape()
+    } else if (event.key === 'ArrowDown') {
       event.preventDefault()
       moveSelection(1)
     } else if (event.key === 'ArrowUp') {
@@ -217,8 +317,8 @@ export function ExplorerSearch({
 
   return (
     <SearchField
+      id={inputId}
       aria-label="Search"
-      autoFocus={autoFocus}
       className={styles.Explorer.search()}
       icon={IcRoundSearch}
       loading={isPending || inputValue !== page.search}
@@ -226,6 +326,14 @@ export function ExplorerSearch({
       value={inputValue}
       onValueChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
+      {...(isCombobox && {
+        role: 'combobox' as const,
+        'aria-autocomplete': 'list' as const,
+        'aria-haspopup': 'grid' as const,
+        'aria-controls': combobox.controls,
+        'aria-expanded': showsResults,
+        'aria-activedescendant': combobox.active
+      })}
     />
   )
 }
@@ -875,6 +983,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
 export function ExplorerHeader({
   canBrowse = true,
   autoFocusSearch,
+  onSearchEscape,
   controls,
   explorer,
   headerEntry,
@@ -900,6 +1009,7 @@ export function ExplorerHeader({
             <ExplorerSearch
               autoFocus={autoFocusSearch}
               explorer={explorer}
+              onEscape={onSearchEscape}
               page={page}
             />
             <ExplorerSearchScope explorer={explorer} page={page} />

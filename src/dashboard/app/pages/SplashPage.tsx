@@ -31,7 +31,11 @@ import {
   LucideFile
 } from '../../icons.js'
 import {AppearanceToggle} from '../AppearanceToggle.js'
-import {GlobalSearch, WorkspaceAvatar} from '../WorkspaceMenu.js'
+import {
+  GlobalSearch,
+  SearchShortcut,
+  WorkspaceAvatar
+} from '../WorkspaceMenu.js'
 import css from './SplashPage.module.css'
 
 const styles = styler(css)
@@ -234,6 +238,7 @@ function SplashPage({
                   aria-label="Search content"
                 >
                   <Text truncate>Search content</Text>
+                  <SearchShortcut />
                 </Button>
               </GlobalSearch>
             )}

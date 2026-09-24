@@ -12,9 +12,12 @@ import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {routeAtom} from './nav.js'
 import {rootAtoms} from './root.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {
   createExplorerAtoms,
   ExplorerEntry,
+  explorerOverviewLinkIds,
+  explorerThumbnailId,
   type ExplorerItemData
 } from './explorer.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -420,4 +423,132 @@ test('picker preselects initial links by default', () => {
   const store = createStore()
 
   expect(store.get(explorer.selection)).toEqual(new Set(['linked-entry']))
+})
+
+test('the thumbnail is the first image in field order, including lists', () => {
+  const Block = Config.type('Block', {
+    fields: {photo: Field.image('Photo')}
+  })
+  const Product = Config.document('Product', {
+    fields: {
+      title: Field.text('Title'),
+      related: Field.entry('Related'),
+      gallery: Field.image.multiple('Gallery'),
+      blocks: Field.list('Blocks', {schema: {Block}}),
+      cover: Field.image('Cover')
+    }
+  })
+  const image = (id: string, entry: string) => ({
+    _id: id,
+    _index: 'a0',
+    _type: 'image',
+    _entry: entry
+  })
+  expect(
+    explorerThumbnailId(Product, {
+      related: {_id: 'r', _type: 'entry', _entry: 'page'},
+      gallery: [image('g1', 'first'), image('g2', 'second')],
+      cover: image('c', 'cover')
+    })
+  ).toBe('first')
+  expect(
+    explorerThumbnailId(Product, {
+      gallery: [],
+      blocks: [
+        {_id: 'b', _index: 'a0', _type: 'Block', photo: image('p', 'block')}
+      ],
+      cover: image('c', 'cover')
+    })
+  ).toBe('block')
+  expect(explorerThumbnailId(Product, {title: 'No images'})).toBeUndefined()
+})
+
+test('overview link ids only come from overview fields', () => {
+  const Page = Config.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      author: Field.entry('Author', {overview: true}),
+      cover: Field.image('Cover')
+    }
+  })
+  expect(
+    explorerOverviewLinkIds(Page, {
+      author: {_id: 'a', _type: 'entry', _entry: 'author-1'},
+      cover: {_id: 'c', _type: 'image', _entry: 'image-1'}
+    })
+  ).toEqual(['author-1'])
+})
+
+test('search results load thumbnails and linked entry titles', async () => {
+  const Author = Config.document('Author', {
+    fields: {title: Field.text('Title')}
+  })
+  const Product = Config.document('Product', {
+    fields: {
+      title: Field.text('Title'),
+      author: Field.entry('Author', {overview: true}),
+      gallery: Field.image.multiple('Gallery')
+    }
+  })
+  const config = Config.create({
+    schema: {Author, Product},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: Config.root('Pages', {contains: [Author, Product]}),
+          media: Config.media()
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  await db.create({
+    id: 'photo',
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Photo',
+      path: 'photo',
+      location: 'photo.jpg',
+      extension: '.jpg',
+      preview: 'data:image/webp;base64,preview',
+      averageColor: '#524537'
+    }
+  })
+  await db.create({
+    id: 'author',
+    type: Author,
+    root: 'pages',
+    set: {title: 'Maya'}
+  })
+  await db.create({
+    id: 'table',
+    type: Product,
+    root: 'pages',
+    set: {
+      title: 'Dining table',
+      author: {_id: 'l1', _type: 'entry', _entry: 'author'},
+      gallery: [{_id: 'g1', _index: 'a0', _type: 'image', _entry: 'photo'}]
+    }
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {mode: 'search'}
+  )
+  store.set(explorer.search, 'Dining')
+
+  const [item] = await store.get(explorer.itemsReady(null))
+  const {data} = store.get(item.data)
+
+  expect(store.get(data.thumbnail)).toEqual({
+    id: 'photo',
+    title: 'Photo',
+    preview: 'data:image/webp;base64,preview',
+    averageColor: '#524537'
+  })
+  expect(store.get(data.linked).get('author')?.title).toBe('Maya')
 })

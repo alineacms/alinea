@@ -57,3 +57,8 @@
 .WorkspaceMenu-search {
   flex-shrink: 0;
 }
+
+.WorkspaceMenu-shortcut {
+  flex-shrink: 0;
+  margin-left: auto;
+}

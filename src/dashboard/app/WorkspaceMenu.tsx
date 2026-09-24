@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Icon,
+  Kbd,
   useDialog
 } from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
@@ -19,7 +20,17 @@ import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
-import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
+import {
+  Suspense,
+  useMemo,
+  useState,
+  type ComponentType,
+  type ReactNode
+} from 'react'
+import {
+  searchShortcutLabel,
+  useSearchShortcut
+} from '../hook/UseSearchShortcut.js'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
@@ -209,6 +220,7 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
             autoFocusSearch
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            onSearchEscape={modal.close}
             page={explorerPage}
           />
           <ExplorerBody explorer={explorer} page={explorerPage} />
@@ -218,13 +230,31 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
   )
 }
 
+/** The keys that open the search, shown next to its trigger */
+export function SearchShortcut() {
+  const label = useMemo(() => searchShortcutLabel(), [])
+  return (
+    <Kbd size="sm" aria-hidden className={styles.WorkspaceMenu.shortcut()}>
+      {label}
+    </Kbd>
+  )
+}
+
+/** Opens the entry search from its trigger or with ⌘K / Ctrl+K */
 export function GlobalSearch({
   children,
   initialSearchScope,
   root
 }: GlobalSearchProps) {
+  const [open, setOpen] = useState(false)
+  useSearchShortcut(() => {
+    if (open) return setOpen(false)
+    // Leave other modals, eg. a link picker, in charge of the keyboard
+    if (document.querySelector('[data-slot="dialog-content"]')) return
+    setOpen(true)
+  })
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DashboardModal size="explorer" aria-label="Search entries">
         <Suspense
@@ -271,12 +301,14 @@ export function WorkspaceMenu({
       {menu}
       <GlobalSearch root={root}>
         <Button
-          size="icon"
+          size="sm"
           variant="ghost"
           icon={IcRoundSearch}
           className={styles.WorkspaceMenu.search()}
           aria-label="Search entries"
-        />
+        >
+          <SearchShortcut />
+        </Button>
       </GlobalSearch>
     </div>
   )
