@@ -27,7 +27,12 @@ async function writeReadableStreamToWritable(
 
 export async function respondTo(to: http.ServerResponse, response: Response) {
   to.statusCode = response.status
-  response.headers.forEach((value, key) => to.setHeader(key, value))
+  response.headers.forEach((value, key) => {
+    if (key !== 'set-cookie') to.setHeader(key, value)
+  })
+  // Each cookie is a header of its own
+  const cookies = response.headers.getSetCookie()
+  if (cookies.length > 0) to.setHeader('set-cookie', cookies)
   if (response.body) {
     await writeReadableStreamToWritable(response.body, to)
   }

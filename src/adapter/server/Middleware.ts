@@ -64,7 +64,8 @@ export function createMiddleware(
   }
 }
 
-async function previewsScript(
+/** The previews client tag for a draft page, see `createMiddleware`. */
+export async function previewsScript(
   config: Config,
   info: PreviewInfo,
   {widget, stats, workspace, root}: PreviewsOptions
