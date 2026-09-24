@@ -2,13 +2,15 @@
 
 import {setPreviewCookies} from '#/preview/PreviewCookies.js'
 import {usePreview} from '#/preview/react.js'
-import {registerPreviewWidget} from '#/preview/widget.js'
+import {type PreviewStats, registerPreviewWidget} from '#/preview/widget.js'
 import {usePathname, useRouter} from 'next/navigation.js'
 import {useEffect, useRef, useState, useTransition} from 'react'
 
 export interface NextPreviewsProps {
   dashboardUrl: string
   widget?: boolean
+  /** Resolves once the render's CMS queries settled. */
+  stats?: Promise<PreviewStats>
   root?: string
   workspace?: string
 }
@@ -16,12 +18,14 @@ export interface NextPreviewsProps {
 export default function NextPreviews({
   dashboardUrl,
   widget,
+  stats,
   root,
   workspace
 }: NextPreviewsProps) {
   const refresh = useRouterRefresh()
   const [isLoading, setIsLoading] = useState(false)
   const [previewDisabled, setPreviewDisabled] = useState(false)
+  const [renderStats, setRenderStats] = useState<string>()
   const pathname = usePathname()
   const adminUrl = new URL(dashboardUrl, location.origin)
   const host = window.parent !== window ? window.parent : window.opener
@@ -51,6 +55,16 @@ export default function NextPreviews({
     if (widget) registerPreviewWidget()
   }, [widget])
   /* oxlint-enable react-you-might-not-need-an-effect/no-event-handler */
+  // Each render streams new stats; waiting here keeps refreshes unblocked.
+  useEffect(() => {
+    let current = true
+    stats?.then(value => {
+      if (current) setRenderStats(JSON.stringify(value))
+    })
+    return () => {
+      current = false
+    }
+  }, [stats])
   if (!widget) return null
   return (
     <alinea-preview
@@ -65,6 +79,7 @@ export default function NextPreviews({
               : 'connected'
           : undefined
       }
+      stats={renderStats}
     />
   )
 }

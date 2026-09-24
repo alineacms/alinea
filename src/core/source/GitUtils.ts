@@ -16,14 +16,12 @@ const decoder = new TextDecoder()
  */
 export function serializeTreeEntries(entries: Array<Entry>): Uint8Array {
   const sortedEntries = entries.slice().sort(compareTreeEntries)
-  const entryBytesList = sortedEntries.map(entry => {
-    const mode = entry.mode.startsWith('0') ? entry.mode.slice(1) : entry.mode
-    const prefix = `${mode} ${entry.name}\0`
-    const prefixBytes = encoder.encode(prefix)
-    const sha1Bytes = hexToBytes(entry.sha)
-    return new Uint8Array([...prefixBytes, ...sha1Bytes])
-  })
-  return concatUint8Arrays(entryBytesList)
+  return concatUint8Arrays(
+    sortedEntries.flatMap(entry => {
+      const mode = entry.mode.startsWith('0') ? entry.mode.slice(1) : entry.mode
+      return [encoder.encode(`${mode} ${entry.name}\0`), hexToBytes(entry.sha)]
+    })
+  )
 }
 
 /**

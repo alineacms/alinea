@@ -5,6 +5,7 @@ import {Entry} from '../Entry.js'
 import {
   Field,
   type EntryAnchorTarget,
+  type FieldLocalizeContext,
   type FieldMeta,
   type FieldOptions
 } from '../Field.js'
@@ -130,6 +131,10 @@ export class RichTextField<
       normalizeAnchors(value, context) {
         if (!Array.isArray(value)) return value
         return normalizeRichTextAnchors(schema, value, context.anchors)
+      },
+      localizeLinks(value, context) {
+        if (!Array.isArray(value)) return value
+        return localizeRichTextLinks(schema, value, context)
       },
       async queryValue(value, loader) {
         const doc = Array.isArray(value) ? value : []
@@ -262,6 +267,58 @@ function normalizeRichTextAnchors<Blocks>(
     if (normalized === node) return
     if (next === doc) next = [...doc]
     next[index] = normalized
+  })
+  return next
+}
+
+function localizeRichTextLinks<Blocks>(
+  schema: Schema | undefined,
+  doc: TextDoc<Blocks>,
+  context: FieldLocalizeContext
+): TextDoc<Blocks> {
+  let next = doc
+  doc.forEach((node, index) => {
+    const localized = localizeRichTextNode(schema, node, context)
+    if (localized === node) return
+    if (next === doc) next = [...doc]
+    next[index] = localized
+  })
+  return next
+}
+
+function localizeRichTextNode(
+  schema: Schema | undefined,
+  node: Node,
+  context: FieldLocalizeContext
+): Node {
+  if (Node.isBlock(node)) {
+    const type = schema?.[node[Node.type]]
+    return type ? (Type.localizeLinks(type, node, context) as Node) : node
+  }
+  let next = node
+  if (node.marks) {
+    const marks = localizeLinkMarks(node.marks, context)
+    if (marks !== node.marks) next = {...next, marks}
+  }
+  if (Node.isElement(node) && node.content) {
+    const content = localizeRichTextLinks(schema, node.content, context)
+    if (content !== node.content) next = {...next, content}
+  }
+  return next
+}
+
+function localizeLinkMarks(
+  marks: Array<Mark>,
+  context: FieldLocalizeContext
+): Array<Mark> {
+  let next = marks
+  marks.forEach((mark, index) => {
+    if (mark[Mark.type] !== 'link' || mark[LinkMark.link] !== 'entry') return
+    const entryId = mark[LinkMark.entry]
+    if (!entryId || !context.entryIds.has(entryId)) return
+    if (mark[LinkMark.locale] === context.locale) return
+    if (next === marks) next = [...marks]
+    next[index] = {...mark, [LinkMark.locale]: context.locale}
   })
   return next
 }

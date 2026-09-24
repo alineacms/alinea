@@ -1,303 +1,89 @@
+import type {EntryStatus} from '#/core/Entry.js'
 import type {Tree} from '#/core/source/Tree.js'
 import {
-  alias,
   and,
-  asc,
-  Builder,
   count,
   eq,
-  exists,
   gt,
   inArray,
-  isNull,
+  lt,
   max,
   min,
-  not,
+  ne,
+  or,
   sql,
-  temporaryTable,
   when,
+  Builder,
   type Database,
+  type HasSql,
   type Sql
 } from 'rado'
-import * as column from 'rado/universal/columns'
+import {entryDataText} from '../entry/EntryData.js'
 import {
   EntryIndexColumns,
   type entryIndexRow,
-  type IndexedEntry
+  type EntryIndexTarget
 } from '../entry/EntryTable.js'
 import type {EntrySyncTarget} from './EntrySyncer.js'
 
 export const sqliteBatchSize = 5000
 
-export const SyncAffected = temporaryTable('alinea_sync_affected', {
-  id: column.text().primaryKey()
-})
-
-export const SyncCascade = temporaryTable('alinea_sync_cascade', {
-  id: column.text().primaryKey()
-})
-
-export const SyncValues = temporaryTable('alinea_sync_values', {
-  key: column.text().primaryKey(),
-  value: column.text().notNull()
-})
-
-export const SyncStatus = temporaryTable('alinea_sync_status', {
-  key: column.text().primaryKey(),
-  effectiveStatus: column.text().$type<string | null>(),
-  activeStatus: column.text().notNull(),
-  mainStatus: column.text().notNull()
-})
-
-/** One key/value pair staged in the temporary {@link SyncValues} table. */
-export interface SyncValueRow {
-  key: string
-  value: string
-}
-
 const builder = new Builder()
-const afterVersionId = sql.placeholder<string>('afterVersionId')
-const level = sql.placeholder<number>('level')
+const ids = sql.placeholder<string>('ids')
+const versionIds = sql.placeholder<string>('versionIds')
+const filePaths = sql.placeholder<string>('filePaths')
+const dirs = sql.placeholder<string>('dirs')
+const dir = sql.placeholder<string>('dir')
+const from = sql.placeholder<string>('from')
+const to = sql.placeholder<string>('to')
 const revision = sql.placeholder<string>('revision')
 const treeSnapshot = sql.placeholder<string | null>('tree')
-function revisionQuery(target: EntrySyncTarget) {
-  const DatabaseState = target.state
-  return builder
-    .select({revision: DatabaseState.revision, tree: DatabaseState.tree})
-    .from(DatabaseState)
-    .where(eq(DatabaseState.id, 1))
-    .$first()
+
+/**
+ * Match a column against a JSON array parameter, so one prepared statement
+ * takes any number of values and SQLite still searches the column's index.
+ */
+function inJson(column: HasSql, values: Sql<string>): Sql<boolean> {
+  return sql<boolean>`${column} in (select value from json_each(${values}))`
 }
 
-function entryCountQuery(target: EntrySyncTarget) {
-  const EntryIndexTable = target.entries
-  return builder
-    .select({value: count()})
-    .from(EntryIndexTable)
-    .where(sql.value(true))
-    .$first()
-}
-
-function setRevisionQuery(target: EntrySyncTarget) {
-  const DatabaseState = target.state
-  return builder
-    .update(DatabaseState)
-    .set({revision, tree: sql<Tree>`${treeSnapshot}`})
-    .where(eq(DatabaseState.id, 1))
-}
-
-function hierarchyQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
-  return builder
-    .select({
-      id: DerivedEntries.id,
-      versionId: DerivedEntries.versionId,
-      parentDir: DerivedEntries.parentDir,
-      parentId: DerivedEntries.parentId,
-      parents: DerivedEntries.parents
-    })
-    .from(DerivedEntries)
-    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
-    .where(gt(DerivedEntries.versionId, afterVersionId))
-    .orderBy(asc(DerivedEntries.versionId))
-    .limit(sqliteBatchSize)
-}
-
-function levelsQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
-  return builder
-    .select({level: DerivedEntries.level})
-    .from(DerivedEntries)
-    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
-    .groupBy(DerivedEntries.level)
-    .orderBy(asc(DerivedEntries.level))
-}
-
-function statusesQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
-  const isDraft = max(eq(DerivedEntries.versionStatus, 'draft'))
-  const isPublished = max(eq(DerivedEntries.versionStatus, 'published'))
-  const isArchived = max(eq(DerivedEntries.versionStatus, 'archived'))
-  return builder
-    .select({
-      id: DerivedEntries.id,
-      locale: DerivedEntries.locale,
-      parentId: min(DerivedEntries.parentId),
-      activeStatus: when(
-        [isDraft, 'draft'],
-        [isPublished, 'published'],
-        'archived'
-      ),
-      ownStatus: when(
-        [isArchived, 'archived'],
-        [and(isDraft, not(isPublished)), 'draft'],
-        null
-      ),
-      mainStatus: when(
-        [isPublished, 'published'],
-        [isArchived, 'archived'],
-        'draft'
-      )
-    })
-    .from(DerivedEntries)
-    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
-    .where(eq(DerivedEntries.level, level))
-    .groupBy(DerivedEntries.id, DerivedEntries.locale)
-    .orderBy(asc(DerivedEntries.id), asc(DerivedEntries.locale))
-}
-
-function mainEntriesQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
-  return builder
-    .select({
-      versionId: DerivedEntries.versionId,
-      id: DerivedEntries.id,
-      locale: DerivedEntries.locale,
-      type: DerivedEntries.type,
-      versionStatus: DerivedEntries.versionStatus,
-      workspace: DerivedEntries.workspace,
-      root: DerivedEntries.root,
-      path: DerivedEntries.path,
-      parents: DerivedEntries.parents,
-      data: DerivedEntries.data
-    })
-    .from(DerivedEntries)
-    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
-    .where(
-      and(
-        eq(DerivedEntries.main, true),
-        gt(DerivedEntries.versionId, afterVersionId)
-      )
-    )
-    .orderBy(asc(DerivedEntries.versionId))
-    .limit(sqliteBatchSize)
-}
-
-function changedIdsQuery() {
-  return builder
-    .select({id: SyncAffected.id})
-    .from(SyncAffected)
-    .orderBy(asc(SyncAffected.id))
-}
-
-function clearValuesQuery() {
-  return builder.delete(SyncValues)
-}
-
-function updateChildrenShaQuery(target: EntrySyncTarget) {
-  const EntryIndexTable = target.entries
-  const updateValueForVersion = builder
-    .select(SyncValues.value)
-    .from(SyncValues)
-    .where(eq(SyncValues.key, EntryIndexTable.versionId))
-  return builder
-    .update(EntryIndexTable)
-    .set({childrenSha: updateValueForVersion})
-    .where(
-      inArray(
-        EntryIndexTable.versionId,
-        builder.select(SyncValues.key).from(SyncValues)
-      )
-    )
-}
-
-function updateUrlsQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
-  const MainEntry = alias(DerivedEntries, 'main_entry')
-  const hasUpdatedMainUrl = exists(
-    builder
-      .select({value: sql.value(1)})
-      .from(SyncValues)
-      .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
-      .where(
-        and(
-          eq(MainEntry.id, DerivedEntries.id),
-          sql<boolean>`${MainEntry.locale} is ${DerivedEntries.locale}`
-        )
-      )
-  )
-  const updatedMainUrl = builder
-    .select(SyncValues.value)
-    .from(SyncValues)
-    .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
-    .where(
-      and(
-        eq(MainEntry.id, DerivedEntries.id),
-        sql<boolean>`${MainEntry.locale} is ${DerivedEntries.locale}`
-      )
-    )
-  return builder
-    .update(DerivedEntries)
-    .set({url: updatedMainUrl})
-    .where(hasUpdatedMainUrl)
-}
-
-function copyInitialUrlsQuery(target: EntrySyncTarget) {
-  const EntryIndexTable = target.entries
-  const InitialMainEntry = alias(EntryIndexTable, 'initial_main_entry')
-  const initialMainUrl = builder
-    .select(InitialMainEntry.url)
-    .from(InitialMainEntry)
-    .where(
-      and(
-        eq(InitialMainEntry.id, EntryIndexTable.id),
-        sql<boolean>`${InitialMainEntry.locale} is ${EntryIndexTable.locale}`,
-        eq(InitialMainEntry.main, true)
-      )
-    )
-  return builder.update(EntryIndexTable).set({url: initialMainUrl})
-}
-
-function updateHierarchyQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
-  return builder
-    .update(DerivedEntries)
-    .set({
-      parentId: sql<
-        string | null
-      >`json_extract(${SyncValues.value}, '$.parentId')`,
-      parents: sql<
-        Array<string>
-      >`json_extract(${SyncValues.value}, '$.parents')`
-    })
-    .from(SyncValues)
-    .where(eq(SyncValues.key, DerivedEntries.versionId))
-}
-
-function updateStatusQuery(target: EntrySyncTarget) {
-  const DerivedEntries = target.changes ?? target.entries
-  return builder
-    .update(DerivedEntries)
-    .set({
-      status: sql<
-        IndexedEntry['status']
-      >`coalesce(${SyncStatus.effectiveStatus}, ${DerivedEntries.versionStatus})`,
-      active: eq(DerivedEntries.versionStatus, SyncStatus.activeStatus),
-      main: eq(
-        DerivedEntries.versionStatus,
-        when(
-          [isNull(SyncStatus.effectiveStatus), SyncStatus.mainStatus],
-          SyncStatus.activeStatus
-        )
-      ),
-      visible: when(
-        [isNull(SyncStatus.effectiveStatus), true],
-        eq(DerivedEntries.versionStatus, SyncStatus.activeStatus)
-      )
-    })
-    .from(SyncStatus)
-    .where(
-      sql<boolean>`${SyncStatus.key} = json_array(${DerivedEntries.id}, ${DerivedEntries.locale})`
-    )
+/** The columns of an entry version that deriving reads and writes. */
+function versionFields(entries: EntryIndexTarget) {
+  return {
+    versionId: entries.versionId,
+    id: entries.id,
+    locale: entries.locale,
+    versionStatus: entries.versionStatus,
+    type: entries.type,
+    index: entries.index,
+    workspace: entries.workspace,
+    root: entries.root,
+    path: entries.path,
+    filePath: entries.filePath,
+    level: entries.level,
+    parentDir: entries.parentDir,
+    childrenDir: entries.childrenDir,
+    childrenSha: entries.childrenSha,
+    parentId: entries.parentId,
+    parents: entries.parents,
+    status: entries.status,
+    active: entries.active,
+    main: entries.main,
+    visible: entries.visible,
+    url: entries.url
+  }
 }
 
 /** Reuse the same INSERT while streaming entries through bounded batches. */
-function insertEntryQuery(target: EntrySyncTarget) {
+function insertEntryQuery(entries: EntryIndexTarget, jsonb: boolean) {
   type Row = ReturnType<typeof entryIndexRow>
+  // SQLite assigns the rowid.
+  const {rowid: _, ...columns} = EntryIndexColumns
   const values = Object.fromEntries(
-    Object.keys(EntryIndexColumns).map(name => [name, sql.placeholder(name)])
+    Object.keys(columns).map(name => [name, sql.placeholder(name)])
   ) as {[Key in keyof Row]: Sql<NonNullable<Row[Key]>>}
-  return builder.insert(target.entries).values(values)
+  if (jsonb) values.data = sql<string>`jsonb(${values.data})`
+  return builder.insert(entries).values(values)
 }
 
 /**
@@ -314,39 +100,194 @@ export function insertEntryValues(row: ReturnType<typeof entryIndexRow>) {
   }
 }
 
-export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
+export function prepareSyncQueries(
+  db: Database,
+  target: EntrySyncTarget,
+  /** Store entry data as JSONB, on a SQLite that reads it. */
+  jsonb: boolean
+) {
+  const {entries, state, search} = target
+  const storedVersion = or(
+    inJson(entries.filePath, filePaths),
+    inJson(entries.versionId, versionIds)
+  )
+  const activeCount = count(
+    when([eq(entries.active, true), sql.value(1)], null)
+  )
+  const mainCount = count(when([eq(entries.main, true), sql.value(1)], null))
+  const parentKey = sql<string>`coalesce(${entries.parentId}, '')`
   const statements = {
-    insertValue: builder
-      .insert(SyncValues)
+    revision: builder
+      .select({revision: state.revision})
+      .from(state)
+      .where(eq(state.id, 1))
+      .$first()
+      .prepare(undefined, db),
+    tree: builder
+      .select({tree: state.tree})
+      .from(state)
+      .where(eq(state.id, 1))
+      .$first()
+      .prepare(undefined, db),
+    setRevision: builder
+      .update(state)
+      .set({revision, tree: sql<Tree>`${treeSnapshot}`})
+      .where(eq(state.id, 1))
+      .prepare(undefined, db),
+    entryCount: builder
+      .select({value: count()})
+      .from(entries)
+      .where(sql.value(true))
+      .$first()
+      .prepare(undefined, db),
+    insertEntry: insertEntryQuery(entries, jsonb).prepare(undefined, db),
+    /** Index the entry row inserted last, under its rowid. */
+    insertSearch: builder
+      .insert(search)
       .values({
-        key: sql.placeholder<string>('key'),
-        value: sql.placeholder<string>('value')
+        rowid: sql<number>`last_insert_rowid()`,
+        title: sql.placeholder<string>('title'),
+        body: sql.placeholder<string>('body')
       })
       .prepare(undefined, db),
-    insertStatus: builder
-      .insert(SyncStatus)
-      .values({
-        key: sql.placeholder<string>('key'),
-        effectiveStatus: sql.placeholder<string>('effectiveStatus'),
-        activeStatus: sql.placeholder<string>('activeStatus'),
-        mainStatus: sql.placeholder<string>('mainStatus')
+    /** Versions stored at these file paths or under these version ids. */
+    storedFiles: builder
+      .select({
+        id: entries.id,
+        filePath: entries.filePath,
+        childrenDir: entries.childrenDir,
+        childrenSha: entries.childrenSha
       })
+      .from(entries)
+      .where(storedVersion)
       .prepare(undefined, db),
-    insertEntry: insertEntryQuery(target).prepare(undefined, db),
-    revision: revisionQuery(target).prepare(undefined, db),
-    entryCount: entryCountQuery(target).prepare(undefined, db),
-    setRevision: setRevisionQuery(target).prepare(undefined, db),
-    hierarchy: hierarchyQuery(target).prepare(undefined, db),
-    levels: levelsQuery(target).prepare(undefined, db),
-    statuses: statusesQuery(target).prepare(undefined, db),
-    mainEntries: mainEntriesQuery(target).prepare(undefined, db),
-    changedIds: changedIdsQuery().prepare(undefined, db),
-    clearValues: clearValuesQuery().prepare(undefined, db),
-    updateChildrenSha: updateChildrenShaQuery(target).prepare(undefined, db),
-    updateUrls: updateUrlsQuery(target).prepare(undefined, db),
-    copyInitialUrls: copyInitialUrlsQuery(target).prepare(undefined, db),
-    updateHierarchy: updateHierarchyQuery(target).prepare(undefined, db),
-    updateStatus: updateStatusQuery(target).prepare(undefined, db)
+    /** Delete the versions stored at these file paths or version ids. */
+    deleteFiles: builder
+      .delete(entries)
+      .where(storedVersion)
+      .prepare(undefined, db),
+    /** Delete the search rows of those versions, before the versions. */
+    deleteSearch: builder
+      .delete(search)
+      .where(
+        inArray(
+          search.rowid,
+          builder.select(entries.rowid).from(entries).where(storedVersion)
+        )
+      )
+      .prepare(undefined, db),
+    directories: builder
+      .select({
+        id: entries.id,
+        childrenDir: entries.childrenDir,
+        childrenSha: entries.childrenSha
+      })
+      .from(entries)
+      .where(inJson(entries.childrenDir, dirs))
+      .prepare(undefined, db),
+    updateChildrenSha: builder
+      .update(entries)
+      .set({childrenSha: sql.placeholder<string>('sha')})
+      .where(eq(entries.childrenDir, dir))
+      .prepare(undefined, db),
+    /** Every version of these entries. */
+    versionsOf: builder
+      .select(versionFields(entries))
+      .from(entries)
+      .where(inJson(entries.id, ids))
+      .prepare(undefined, db),
+    /** Every version stored below one directory. */
+    versionsBelow: builder
+      .select(versionFields(entries))
+      .from(entries)
+      .where(and(gt(entries.filePath, from), lt(entries.filePath, to)))
+      .prepare(undefined, db),
+    /** The entry owning each directory: children stored there have it as parent. */
+    owners: builder
+      .select({childrenDir: entries.childrenDir, id: entries.id})
+      .from(entries)
+      .where(inJson(entries.childrenDir, dirs))
+      .groupBy(entries.childrenDir)
+      .prepare(undefined, db),
+    statusesOf: builder
+      .select({id: entries.id, locale: entries.locale, status: entries.status})
+      .from(entries)
+      .where(inJson(entries.id, ids))
+      .prepare(undefined, db),
+    dataOf: builder
+      .select({versionId: entries.versionId, data: entryDataText(entries)})
+      .from(entries)
+      .where(inJson(entries.versionId, versionIds))
+      .prepare(undefined, db),
+    updateVersion: builder
+      .update(entries)
+      .set({
+        parentId: sql.placeholder<string | null>('parentId'),
+        parents: sql.placeholder<Array<string>>('parents'),
+        status: sql.placeholder<EntryStatus>('status'),
+        active: sql.placeholder<boolean>('active'),
+        main: sql.placeholder<boolean>('main'),
+        visible: sql.placeholder<boolean>('visible'),
+        url: sql.placeholder<string>('url')
+      })
+      .where(eq(entries.versionId, sql.placeholder<string>('versionId')))
+      .prepare(undefined, db),
+    /** An entry whose versions disagree on what all of them must share. */
+    mismatchedEntry: builder
+      .select({id: entries.id})
+      .from(entries)
+      .where(inJson(entries.id, ids))
+      .groupBy(entries.id)
+      .having(
+        or(
+          ne(min(entries.type), max(entries.type)),
+          ne(min(entries.index), max(entries.index)),
+          ne(min(entries.root), max(entries.root)),
+          ne(min(entries.workspace), max(entries.workspace)),
+          ne(min(parentKey), max(parentKey))
+        )
+      )
+      .$first()
+      .prepare(undefined, db),
+    /** A language whose versions disagree on their location. */
+    mismatchedLanguage: builder
+      .select({id: entries.id, locale: entries.locale})
+      .from(entries)
+      .where(inJson(entries.id, ids))
+      .groupBy(entries.id, entries.locale)
+      .having(
+        or(
+          ne(min(entries.path), max(entries.path)),
+          ne(min(entries.parentDir), max(entries.parentDir)),
+          ne(min(entries.childrenDir), max(entries.childrenDir))
+        )
+      )
+      .$first()
+      .prepare(undefined, db),
+    /** A language without exactly one active and one main version. */
+    invalidStatus: builder
+      .select({id: entries.id, locale: entries.locale})
+      .from(entries)
+      .where(inJson(entries.id, ids))
+      .groupBy(entries.id, entries.locale)
+      .having(or(ne(activeCount, 1), ne(mainCount, 1)))
+      .$first()
+      .prepare(undefined, db),
+    /** A version listed among its own parents. */
+    cyclicVersion: builder
+      .select({filePath: entries.filePath})
+      .from(entries)
+      .where(
+        and(
+          inJson(entries.id, ids),
+          sql<boolean>`exists (
+          select 1 from json_each(${entries.parents}) parent
+          where parent.value = ${entries.id}
+        )`
+        )
+      )
+      .$first()
+      .prepare(undefined, db)
   }
   return {
     ...statements,
@@ -357,33 +298,3 @@ export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
 }
 
 export type SyncQueries = ReturnType<typeof prepareSyncQueries>
-
-/** Stage key/value pairs and apply the update that reads them back. */
-export async function writeValues(
-  queries: SyncQueries,
-  rows: ReadonlyArray<SyncValueRow>,
-  update: SyncQueries['updateChildrenSha' | 'updateHierarchy' | 'updateUrls']
-): Promise<void> {
-  await queries.clearValues.run()
-  for (const row of rows)
-    await queries.insertValue.run({key: row.key, value: row.value})
-  await update.run()
-}
-
-export async function createTemporaryTables(db: Database): Promise<void> {
-  await db.create(SyncAffected, SyncCascade, SyncValues, SyncStatus)
-}
-
-export async function dropTemporaryTables(db: Database): Promise<void> {
-  await db.drop(SyncAffected, SyncCascade, SyncValues, SyncStatus)
-}
-
-export async function clearTemporaryTables(
-  db: Database,
-  queries: SyncQueries
-): Promise<void> {
-  await db.delete(SyncAffected)
-  await db.delete(SyncCascade)
-  await queries.clearValues.run()
-  await db.delete(SyncStatus)
-}

@@ -16,20 +16,28 @@ import type {PreviewRequest} from '#/core/Preview.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
+import type {PreviewStat} from '#/preview/widget.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
 import {Headers} from '@alinea/iso'
 import PLazy from 'p-lazy'
+import type {DatabaseOptions} from 'rado'
 import {cache} from 'react'
 import {requestContext} from './context.js'
+import {RenderStats, summarizeQuery, timed} from './renderStats.js'
 import {syncIfStale} from './syncCheck.js'
 
 export interface PreviewProps {
   widget?: boolean
+  /** Show the queries and syncs of each draft render in the widget */
+  stats?: boolean
   workspace?: string
   root?: string
 }
 
-export type OpenBundledDatabase = (config: Config) => Promise<LocalStore>
+export type OpenBundledDatabase = (
+  config: Config,
+  options?: DatabaseOptions
+) => Promise<LocalStore>
 
 export interface SyncStatus {
   /** Whether queries are answered from the bundled database or the handler. */
@@ -61,11 +69,37 @@ export class NextCMS<
           "A bundled database loader is required. Import createCMS from 'alinea/next'."
         )
       const span = trace(this.config, 'alinea.next.cms.db')
-      return span(() => openBundledDatabase(this.config))
+      return span(() =>
+        openBundledDatabase(this.config, {
+          // Statements run in the async context of the query that caused
+          // them, which carries the React request of the render.
+          logQuery: (_query, durationMs) =>
+            this.#render().stats?.statement(durationMs)
+        })
+      )
     })
   }
 
   throttle = createThrottledSync()
+
+  /**
+   * Per React request; outside a request (build, route handlers) every call
+   * returns a fresh holder, so nothing is recorded there.
+   */
+  #render = cache((): {stats?: RenderStats} => ({}))
+
+  #isDraft = cache(async () => {
+    const {draftMode} = await import('next/headers.js')
+    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
+    return Boolean(isDraft)
+  })
+
+  /** Draft renders collect their queries and syncs for the preview widget. */
+  async #renderStats(): Promise<RenderStats | undefined> {
+    if (!(await this.#isDraft())) return undefined
+    const render = this.#render()
+    return (render.stats ??= new RenderStats())
+  }
 
   /** The bundled database answers outside Edge, except during development. */
   async #environment(context: RequestContext) {
@@ -76,7 +110,15 @@ export class NextCMS<
   }
 
   /** Renders keep serving the current content when the handler is unreachable. */
-  async #syncDb(db: LocalStore, client: Client): Promise<string> {
+  async #syncDb(
+    db: LocalStore,
+    client: Client,
+    stats: RenderStats | undefined
+  ): Promise<string> {
+    if (stats)
+      return stats.track({kind: 'sync', summary: 'sync'}, row =>
+        timed(row, () => this.#syncDb(db, client, undefined))
+      )
     try {
       const sha = await db.syncWith(client, preValidatedRemote)
       this.#syncedAt = Date.now()
@@ -94,11 +136,11 @@ export class NextCMS<
   #applyPreview = cache(async () => {
     const context = await requestContext(this.config)
     const {isBuild, useLocalDb} = await this.#environment(context)
-    const {cookies, draftMode} = await import('next/headers.js')
-    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
+    const isDraft = await this.#isDraft()
     if (!isDraft)
       return {context, hasPreview: false, isDraft, isBuild, useLocalDb}
 
+    const {cookies} = await import('next/headers.js')
     const cookie = await cookies()
     const payload = getPreviewPayloadFromCookies(cookie.getAll())
     if (!payload)
@@ -135,7 +177,11 @@ export class NextCMS<
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
     if ((await db.sha) !== decoded.contentHash)
-      await this.#syncDb(db, createClient(this.config, context))
+      await this.#syncDb(
+        db,
+        createClient(this.config, context),
+        this.#render().stats
+      )
     return applyPreviewUpdate(db, decoded)
   }
 
@@ -159,22 +205,31 @@ export class NextCMS<
   }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
+    const stats = await this.#renderStats()
+    if (!stats) return this.#resolve(query, undefined)
+    return stats.track({kind: 'query', summary: summarizeQuery(query)}, row =>
+      this.#resolve(query, row)
+    )
+  }
+
+  async #resolve(query: GraphQuery, row: PreviewStat | undefined) {
     let status = query.status
     const {context, hasPreview, isDraft, isBuild, preview, useLocalDb} =
       await this.#applyPreview()
     if (isDraft && !status) status = 'preferDraft'
     const request = {...query, preview, status}
     const client = createClient(this.config, context)
+    if (row) row.source = useLocalDb ? 'database' : 'handler'
     if (!useLocalDb) {
       const span = trace(this.config, 'alinea.cms.resolve.client')
-      return span(() => client.resolve(request))
+      return timed(row, () => span(() => client.resolve(request)))
     }
     const db = await this.bundledDb
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
     // A preview cookie already settled freshness through its content hash.
-    if (hasPreview) return db.resolve(request)
+    if (hasPreview) return timed(row, () => db.resolve(request))
     if (!isBuild) {
       // In draft mode Next bypasses the `unstable_cache` behind `syncIfStale`,
       // so asking for the shared sha would cost an uncached request on every
@@ -182,13 +237,18 @@ export class NextCMS<
       // and the throttled sync keeps drafts fresh instead.
       // Route the sync syncIfStale may trigger through #syncDb so it counts
       // as this isolate's last sync.
-      const tracked = {sha: db.sha, syncWith: () => this.#syncDb(db, client)}
+      const stats = this.#render().stats
+      const tracked = {
+        sha: db.sha,
+        syncWith: () => this.#syncDb(db, client, stats)
+      }
       const settled =
         !isDraft && (await syncIfStale(tracked, client, syncInterval))
       if (!settled)
-        await this.throttle(() => this.#syncDb(db, client), syncInterval)
+        await this.throttle(() => this.#syncDb(db, client, stats), syncInterval)
     }
-    return db.resolve(request)
+    // Time the answer only: a sync it waited for has a row of its own.
+    return timed(row, () => db.resolve(request))
   }
 
   async #authenticatedClient() {
@@ -234,11 +294,15 @@ export class NextCMS<
     return client.prepareUpload(file)
   }
 
-  previews = async ({widget, workspace, root}: PreviewProps) => {
-    const {draftMode} = await import('next/headers.js')
+  previews = async ({
+    widget,
+    stats: showStats,
+    workspace,
+    root
+  }: PreviewProps) => {
+    const stats = await this.#renderStats()
+    if (!stats) return null
     const {default: dynamic} = await import('next/dynamic.js')
-    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
-    if (!isDraft) return null
     const {isDev, handlerUrl} = await requestContext(this.config)
     let file = `${Config.adminPath(this.config)}.html`
     if (!file.startsWith('/')) file = `/${file}`
@@ -252,6 +316,7 @@ export class NextCMS<
       <NextPreviews
         dashboardUrl={dashboardUrl.href}
         widget={widget}
+        stats={widget && showStats ? stats.settled() : undefined}
         workspace={workspace}
         root={root}
       />

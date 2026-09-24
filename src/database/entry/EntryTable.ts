@@ -19,7 +19,12 @@ function entryVersionId(
 
 /** One complete authored entry version. Only arrays and authored data are JSON. */
 export const EntryIndexColumns = {
-  versionId: column.varchar(undefined, {length: 255}).primaryKey(),
+  /**
+   * Also the rowid of the version's full-text search row. Declared, so VACUUM
+   * and copies into overlay tables keep it.
+   */
+  rowid: column.integer().primaryKey(),
+  versionId: column.varchar(undefined, {length: 255}).notNull().unique(),
   id: column.varchar(undefined, {length: 128}).notNull(),
   locale: column.varchar(undefined, {length: 64}),
   versionStatus: column
@@ -53,10 +58,12 @@ export const EntryIndexColumns = {
   rowHash: column.varchar(undefined, {length: 128}).notNull(),
   /** Hash of this entry's child directory in the synced source tree. */
   childrenSha: column.varchar(undefined, {length: 128}),
-  searchableText: column.text().notNull(),
   /** Exact source blob for seeded rows whose expanded data differs. */
   payload: column.text(),
-  /** Exact source JSON, or expanded JSON for seeded rows. */
+  /**
+   * Exact source JSON, or expanded JSON for seeded rows. Stored as JSONB where
+   * SQLite supports it; read it as text with `entryDataText`.
+   */
   data: column.text().notNull()
 }
 
@@ -131,7 +138,6 @@ export function entryIndexRow(entry: IndexedEntry) {
     seeded: entry.seeded,
     rowHash: entry.rowHash,
     childrenSha: entry.childrenSha ?? null,
-    searchableText: entry.searchableText,
     payload: entry.seeded ? payload : null,
     data: entry.seeded ? JSON.stringify(entry.data) : payload
   }

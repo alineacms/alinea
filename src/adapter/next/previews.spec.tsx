@@ -154,7 +154,45 @@ test('connects to a trusted cross-origin CLI dashboard', async ({
   await expect(preview.locator('alinea-preview .is-connected')).toHaveCount(1)
 })
 
-async function buildPreviewScript(dashboardUrl: string): Promise<string> {
+test('shows the query totals of the render', async ({page, context}) => {
+  const stats = {
+    rows: [
+      {kind: 'sync', summary: 'sync', durationMs: 120.4},
+      {kind: 'query', summary: 'first(url=/)', durationMs: 10.2},
+      {kind: 'query', summary: 'find(type)', durationMs: 4.6}
+    ],
+    statements: 5,
+    sqlMs: 2.5
+  }
+  const script = await buildPreviewScript(
+    'http://preview.example/admin',
+    `stats: Promise.resolve(${JSON.stringify(stats)})`
+  )
+  await context.route('http://preview.example/**', route =>
+    route.fulfill({
+      contentType: 'text/html',
+      body: `<body><div id="root"></div><script>${script}</script></body>`
+    })
+  )
+  await page.goto('http://preview.example/page')
+  const indicator = page.getByTitle(
+    'Click to log the queries of this page to the browser console'
+  )
+  await expect(indicator).toHaveText('2 queries · 15 ms · sync 120 ms')
+  const tables: Array<string> = []
+  page.on('console', message => {
+    if (message.type() === 'table') tables.push(message.text())
+  })
+  await indicator.click()
+  await expect.poll(() => tables.length).toBe(1)
+  await expect(indicator).toHaveText('Logged to console ↓')
+  await expect(indicator).toHaveText('2 queries · 15 ms · sync 120 ms')
+})
+
+async function buildPreviewScript(
+  dashboardUrl: string,
+  props = ''
+): Promise<string> {
   const result = await build({
     absWorkingDir: projectDir,
     stdin: {
@@ -163,7 +201,7 @@ async function buildPreviewScript(dashboardUrl: string): Promise<string> {
         import {createRoot} from 'react-dom/client'
         import NextPreviews from './src/adapter/next/previews.tsx'
         createRoot(document.getElementById('root')).render(
-          React.createElement(NextPreviews, {dashboardUrl: ${JSON.stringify(dashboardUrl)}, widget: true})
+          React.createElement(NextPreviews, {dashboardUrl: ${JSON.stringify(dashboardUrl)}, widget: true, ${props}})
         )
       `,
       resolveDir: projectDir

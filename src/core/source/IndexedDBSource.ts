@@ -58,7 +58,7 @@ export class IndexedDBSource implements Source {
       ])
       const tree = stored ? new ReadonlyTree(stored) : ReadonlyTree.EMPTY
       const availableBlobs = new Set(blobKeys)
-      for (const sha of tree.shas) {
+      for (const sha of tree.index().values()) {
         if (!availableBlobs.has(sha)) {
           console.warn(`Blob ${sha} in tree, but not found`)
           return ReadonlyTree.EMPTY

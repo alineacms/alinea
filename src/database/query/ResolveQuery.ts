@@ -1,22 +1,25 @@
 import type {Config} from '#/core/Config.js'
 import {Field} from '#/core/Field.js'
-import type {GraphQuery, InferProjection, Projection} from '#/core/Graph.js'
+import type {
+  GraphQuery,
+  InferProjection,
+  Projection,
+  Status
+} from '#/core/Graph.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
-import {storedEntryData, type EntryIndexTarget} from '../entry/EntryTable.js'
+import type {EntryIndexTarget} from '../entry/EntryTable.js'
 import {compileEntryQuery, type ProjectionPlan} from './EntryQuery.js'
-import type {RelationSource} from './Relation.js'
-import {searchQuery, type SearchQuery} from './Search.js'
+import type {EntrySearchTarget, SearchQuery} from './Search.js'
 
 /** Query dependencies bound to one connection and its current transaction. */
 export interface EntryQueryContext {
   config: Config
   database: Database
   entries: EntryIndexTarget
-  searchName: string
-  search?(input: GraphQuery['search']): Promise<SearchQuery | undefined>
-  prepareSearch(): Promise<void>
+  searchTable: EntrySearchTarget
+  search(input: GraphQuery['search']): Promise<SearchQuery | undefined>
   includedAtBuild(filePath: string): boolean | Promise<boolean>
 }
 
@@ -24,37 +27,21 @@ export async function resolveEntryQuery(
   query: GraphQuery,
   context: EntryQueryContext
 ): Promise<unknown> {
-  const {database: db, config, entries, searchName} = context
-  const search = context.search
-    ? await context.search(query.search)
-    : searchQuery(query.search, entries, searchName)
+  const {database: db, config, entries, searchTable} = context
   const {rows, plan} = compileEntryQuery(config, query, {
-    search,
+    search: await context.search(query.search),
     entry: entries,
-    searchName
+    searchTable
   })
-  if (plan.needsSearch && !context.search) await context.prepareSearch()
   if (plan.count) return db.select(count()).from(rows.as('matches')).get()
   const result = await rows.all(db)
   if (query.get && !result.length) throw new Error('Entry not found')
-  return projectRows(query, plan, result, context)
-}
-
-/**
- * The locale field values of a row resolve in: its own locale, or for an
- * untranslated entry the locale the query asked for, or else the locale of
- * the entry that selected it.
- */
-function rowLocale(
-  query: GraphQuery,
-  source: RelationSource,
-  inherited: string | null
-): string | null {
-  return source.locale ?? query.locale ?? query.preferredLocale ?? inherited
+  const status = query.status ?? 'published'
+  return projectRows(status, plan, result, context)
 }
 
 function createLinkResolver(
-  query: GraphQuery,
+  status: Status,
   locale: string | null,
   context: EntryQueryContext
 ): LinkResolver {
@@ -73,7 +60,7 @@ function createLinkResolver(
         {
           select: projection,
           id: {in: ids},
-          status: query.status ?? 'published',
+          status,
           preferredLocale: locale ?? undefined
         },
         context
@@ -115,14 +102,14 @@ function createLinkResolver(
 }
 
 async function projectRows(
-  query: GraphQuery,
+  status: Status,
   plan: ProjectionPlan,
   result: Array<unknown>,
   context: EntryQueryContext,
   inheritedLocale: string | null = null
 ): Promise<unknown> {
   const rows = await Promise.all(
-    result.map(row => projectRow(query, plan, row, context, inheritedLocale))
+    result.map(row => projectRow(status, plan, row, context, inheritedLocale))
   )
   // A single result (first/get, parent, next, previous) is null when nothing
   // matches, both at the top level and for nested relations.
@@ -131,31 +118,24 @@ async function projectRows(
 }
 
 async function projectRow(
-  query: GraphQuery,
+  status: Status,
   plan: ProjectionPlan,
   row: unknown,
   context: EntryQueryContext,
   inheritedLocale: string | null
 ): Promise<unknown> {
-  if (!plan.relations.length && !plan.fields.length && !plan.optional.length)
-    return row
-  const projected = row as {
-    value: unknown
-    source: RelationSource
-    data?: unknown
-  }
+  if (!plan.wrapped) return row
+  const projected = row as {value: unknown; locale: string | null}
   let value = projected.value
-  const selectedData =
-    plan.fields.length || plan.optional.length
-      ? storedEntryData(projected.data, projected.source.path)
-      : {}
-  const locale = rowLocale(query, projected.source, inheritedLocale)
-  const loader = createLinkResolver(query, locale, context)
+  if (!plan.relations.length && !plan.fields.length) return value
+  // Field values resolve in the locale of their row, or for an untranslated
+  // entry the locale the query asked for, or else the locale of the entry
+  // that selected it.
+  const locale = projected.locale ?? plan.locale ?? inheritedLocale
+  const loader = createLinkResolver(status, locale, context)
   await Promise.all(
     plan.fields.map(async selected => {
-      const present = Object.hasOwn(selectedData, selected.name)
       if (!selected.path.length) {
-        if (!present) value = undefined
         // The Graph resolver returns a falsy top-level selection directly.
         if (value) value = await Field.queryValue(selected.field, value, loader)
       } else {
@@ -163,32 +143,20 @@ async function projectRow(
         if (!ref) throw new Error('Invalid field projection target')
         const processed = await Field.queryValue(
           selected.field,
-          present ? ref.parent[ref.key] : undefined,
+          ref.parent[ref.key],
           loader
         )
         defineProjection(ref, processed)
       }
     })
   )
-  for (const selected of plan.optional) {
-    if (hasOwnPath(selectedData, selected.dataPath)) continue
-    if (!selected.path.length) value = undefined
-    else {
-      const ref = projectionRef(value, selected.path)
-      if (ref) defineProjection(ref, undefined)
-    }
-  }
   await Promise.all(
     plan.relations.map(async relation => {
-      const relationQuery = {
-        ...relation.query,
-        status: query.status ?? 'published'
-      }
       const included = getProjectionValue(value, relation.path)
       const related = relation.plan.count
         ? (included ?? 0)
         : await projectRows(
-            relationQuery,
+            status,
             relation.plan,
             relationRows(included, relation.plan.single),
             context,
@@ -203,15 +171,6 @@ async function projectRow(
     })
   )
   return value
-}
-
-function hasOwnPath(value: unknown, path: Array<string>): boolean {
-  let current = value
-  for (const key of path) {
-    if (!isRecord(current) || !Object.hasOwn(current, key)) return false
-    current = current[key]
-  }
-  return true
 }
 
 interface ProjectionRef {

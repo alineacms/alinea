@@ -16,6 +16,7 @@ export class UnionField<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
+    const customLocalizeLinks = meta.localizeLinks
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
@@ -66,6 +67,15 @@ export class UnionField<
         const type = schema?.[value[UnionRow.type]]
         if (!type) return value
         return Type.normalizeAnchors(type, value, context) as StoredValue
+      },
+      localizeLinks(value, context) {
+        const localized = customLocalizeLinks
+          ? customLocalizeLinks(value, context)
+          : value
+        if (!localized) return localized
+        const type = schema?.[localized[UnionRow.type]]
+        if (!type) return localized
+        return Type.localizeLinks(type, localized, context) as StoredValue
       },
       async queryValue(value, loader) {
         if (!value) return value as QueryValue

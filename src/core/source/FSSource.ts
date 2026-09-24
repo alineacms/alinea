@@ -106,9 +106,12 @@ export class FSSource implements Source {
     })
   }
 
-  async getFile(current: ReadonlyTree, builder: WriteableTree, file: string) {
-    const filePath = file.replaceAll('\\', '/')
-    const fullPath = path.join(this.#cwd, filePath)
+  async getFile(
+    current: ReadonlyTree,
+    builder: WriteableTree,
+    filePath: string
+  ) {
+    const fullPath = `${this.#cwd}/${filePath}`
     let stat: Stats
     try {
       stat = await fs.stat(fullPath)

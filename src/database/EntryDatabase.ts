@@ -9,6 +9,7 @@ import {
   DatabaseStateTable,
   SourceFileTable
 } from './DatabaseTables.js'
+import {hasJsonbRows, supportsJsonb} from './entry/EntryData.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {
@@ -16,42 +17,32 @@ import {
   type EntryDatabaseOptions,
   type EntrySyncResult
 } from './EntryLayer.js'
-import {createSearch, EntrySearchName} from './query/Search.js'
+import {createSearch, EntrySearchTable} from './query/Search.js'
 import {EntrySyncer, EntrySyncRoot} from './sync/EntrySyncer.js'
 import {sqliteBatchSize} from './sync/SyncQueries.js'
+import {databaseVersion} from './Version.js'
 
 const defaultConfigFingerprint = 'runtime'
 
-/** A queryable entry database owning its SQLite connections. */
+/** A queryable entry database owning its SQLite connection. */
 export class EntryDatabase extends EntryLayer {
   #db: Database
-  #syncDb: Database
-  #contextSyncer: EntrySyncer
-  #ownedSyncer?: EntrySyncer
+  #syncer: EntrySyncer
 
   constructor(
     config: Config,
     db: Database,
     options: EntryDatabaseOptions = {}
   ) {
-    const syncDb = options.syncDatabase ?? db
     const syncer = new EntrySyncer(config, db)
-    const ownedSyncer =
-      syncDb === db ? undefined : new EntrySyncer(config, syncDb)
     super(config, options, {
       db,
-      syncDb,
-      syncer: ownedSyncer ?? syncer,
-      context: {nextOverlayId: 1, queue: new TaskQueue(), syncer},
-      target: EntrySyncRoot,
-      searchName: EntrySearchName,
-      searchDirty: options.searchReady ? false : 'unknown',
-      transactional: false
+      queue: new TaskQueue(),
+      syncer,
+      target: EntrySyncRoot
     })
     this.#db = db
-    this.#syncDb = syncDb
-    this.#contextSyncer = syncer
-    this.#ownedSyncer = ownedSyncer
+    this.#syncer = syncer
   }
 
   static async createSchema(
@@ -74,27 +65,28 @@ export class EntryDatabase extends EntryLayer {
       )
     `)
     const present = new Set(rows.map(row => row.name))
+    // Older layouts lack the version column: read whichever columns exist.
     const current = present.has('alinea_database_metadata')
-      ? await db
-          .select({
-            configFingerprint: DatabaseMetadataTable.configFingerprint
-          })
-          .from(DatabaseMetadataTable)
-          .where(eq(DatabaseMetadataTable.id, 1))
-          .get()
+      ? await db.get<{configFingerprint: string; version?: number}>(
+          sql`select * from ${DatabaseMetadataTable} where id = 1`
+        )
       : undefined
+    // Rows stored as JSONB need a SQLite that reads it.
     const compatible =
       present.has('alinea_database_state') &&
       present.has('alinea_source_file') &&
-      current?.configFingerprint === configFingerprint
+      current?.version === databaseVersion &&
+      current.configFingerprint === configFingerprint &&
+      ((await supportsJsonb(db)) || !(await hasJsonbRows(db)))
     if (!compatible) {
       // The FTS5 virtual table is not part of the declared schema.
-      await db.run(sql`drop table if exists ${sql.identifier(EntrySearchName)}`)
+      await db.run(sql`drop table if exists ${EntrySearchTable}`)
       await db.drop(...tables)
       await db.create(...tables)
-      await createSearch(db)
+      await createSearch(db, EntrySearchTable)
       await db.insert(DatabaseMetadataTable).values({
         id: 1,
+        version: databaseVersion,
         configFingerprint
       })
     }
@@ -165,17 +157,18 @@ export class EntryDatabase extends EntryLayer {
   }
 
   async compact(): Promise<void> {
-    await this.prepareSearch()
     await this.withReadConnection(async () => {
       await this.#db.run(sql`pragma optimize`)
-      await this.#db.run(sql`vacuum`)
+      // Rewriting the whole file only pays off when it has pages to reclaim.
+      const free = await this.#db.get<{freelist_count: number}>(
+        sql`pragma freelist_count`
+      )
+      if (free?.freelist_count) await this.#db.run(sql`vacuum`)
     })
   }
 
   protected async releaseLayer(): Promise<void> {
-    await this.#contextSyncer.close()
-    if (this.#ownedSyncer) await this.#ownedSyncer.close()
-    if (this.#syncDb !== this.#db) await this.#syncDb.close()
+    await this.#syncer.close()
     await this.#db.close()
   }
 }

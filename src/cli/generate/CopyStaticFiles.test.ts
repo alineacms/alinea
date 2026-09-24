@@ -21,7 +21,7 @@ async function withPackage(run: (packageDir: string) => Promise<void>) {
   }
 }
 
-test('copying static files removes databases from other Alinea versions', async () => {
+test('copying static files removes outputs from other Alinea versions', async () => {
   await withPackage(async packageDir => {
     const outDir = join(packageDir, 'site-0123456789')
     await mkdir(outDir, {recursive: true})
@@ -34,13 +34,21 @@ test('copying static files removes databases from other Alinea versions', async 
       'database.sqlite',
       'database-old-version.sqlite',
       'database-old-version.sqlite-shm',
-      'database-old-version.sqlite-wal'
+      'database-old-version.sqlite-wal',
+      'source.js',
+      'empty-source.js'
     ]
     await Promise.all(
       [...currentFiles, ...oldFiles].map(file =>
         writeFile(join(outDir, file), '')
       )
     )
+    await mkdir(join(outDir, '.server'))
+    oldFiles.push('.server')
+    // Another project's output directory is left alone
+    const otherDir = join(packageDir, 'other-9876543210')
+    await mkdir(otherDir)
+    await writeFile(join(otherDir, 'source.js'), '')
     // Another project's database in the shared package is left alone
     await writeFile(join(packageDir, generatedDatabaseFile), '')
 
@@ -50,6 +58,7 @@ test('copying static files removes databases from other Alinea versions', async 
     expect(currentFiles.every(file => files.includes(file))).toBe(true)
     expect(oldFiles.every(file => !files.includes(file))).toBe(true)
     expect(await readdir(packageDir)).toContain(generatedDatabaseFile)
+    expect(await readdir(otherDir)).toContain('source.js')
   })
 })
 

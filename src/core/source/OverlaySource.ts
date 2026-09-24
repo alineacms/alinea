@@ -89,7 +89,11 @@ export class OverlaySource implements Source {
   #pruneReplaced(batch: ChangesBatch, previous: ReadonlyTree): void {
     for (const change of batch.changes) {
       const replaced = previous.get(change.path)
-      if (replaced instanceof Leaf && !this.#tree.hasSha(replaced.sha))
+      if (
+        replaced instanceof Leaf &&
+        this.#blobs.has(replaced.sha) &&
+        !this.#tree.hasSha(replaced.sha)
+      )
         this.#blobs.delete(replaced.sha)
     }
   }

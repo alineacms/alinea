@@ -1,154 +1,113 @@
-import {eq, sql, temporaryTable, type Database, type Table} from 'rado'
-import * as column from 'rado/universal/columns'
+import {getTable, sql, temporaryTable, type Database} from 'rado'
 import {DatabaseStateColumns} from '../DatabaseTables.js'
-import {dropVocabulary} from '../query/Search.js'
 import {
-  EntryIndexColumns,
-  entryIndexTable,
-  type EntryIndexTarget
-} from './EntryTable.js'
+  createSearch,
+  dropVocabulary,
+  entrySearchTable
+} from '../query/Search.js'
+import type {EntrySyncTarget} from '../sync/EntrySyncer.js'
+import {EntryIndexColumns, entryIndexTable} from './EntryTable.js'
 
-const namePattern = /^[a-z][a-z0-9_]*$/i
+const views = new WeakMap<EntrySyncTarget['entries'], EntryView>()
 
-const OverlayKeyColumns = {
-  versionId: column.varchar(undefined, {length: 255}).primaryKey()
+/** The tables reads of a target go to: an unwritten view reads its parent's. */
+export function entryReadTarget(target: EntrySyncTarget): EntrySyncTarget {
+  return views.get(target.entries)?.readTarget ?? target
 }
 
-function objectName(name: string, suffix: string): string {
-  if (!namePattern.test(name))
-    throw new Error(
-      `Invalid entry view name ${JSON.stringify(name)}: use letters, numbers and underscores`
-    )
-  return `alinea_${name}_${suffix}`
-}
-
-/** A named, copy-on-write entry view over another entry table or view. */
-export class EntryView implements AsyncDisposable {
-  readonly name: string
-  readonly entries: EntryIndexTarget
-  readonly changes: EntryIndexTarget
-  readonly searchName: string
-  readonly state: Table<typeof DatabaseStateColumns>
+/**
+ * Named, copy-on-write entry and search tables over another target. A view
+ * reads its parent until the first write copies the parent's rows into
+ * temporary tables of its own, which from then on no longer follow the parent.
+ */
+export class EntryView {
+  readonly target: EntrySyncTarget
   readonly #db: Database
-  readonly #entryChanges: EntryIndexTarget
-  readonly #keys: Table<typeof OverlayKeyColumns>
+  readonly #parent: EntrySyncTarget
+  #copy?: Promise<void>
+  #copied = false
   #closed = false
 
-  private constructor(
-    db: Database,
-    name: string,
-    entries: EntryIndexTarget,
-    entryChanges: EntryIndexTarget,
-    keys: Table<typeof OverlayKeyColumns>,
-    state: Table<typeof DatabaseStateColumns>
-  ) {
+  private constructor(db: Database, name: string, parent: EntrySyncTarget) {
     this.#db = db
-    this.name = name
-    this.entries = entries
-    this.changes = entryChanges
-    this.searchName = objectName(name, 'search')
-    this.#entryChanges = entryChanges
-    this.#keys = keys
-    this.state = state
+    this.#parent = parent
+    this.target = {
+      entries: entryIndexTable(`alinea_${name}_entries`, true),
+      state: temporaryTable(`alinea_${name}_state`, DatabaseStateColumns),
+      search: entrySearchTable(`alinea_${name}_search`, true),
+      recordsTree: false
+    }
+    views.set(this.target.entries, this)
   }
 
   static async create(
     db: Database,
     name: string,
-    parent: EntryIndexTarget,
+    parent: EntrySyncTarget,
     revision: string
   ): Promise<EntryView> {
-    const viewName = objectName(name, 'entries')
-    const changesName = objectName(name, 'entry_changes')
-    const keysName = objectName(name, 'entry_keys')
-    const stateName = objectName(name, 'state')
-    const insertTrigger = objectName(name, 'entry_insert')
-    const updateTrigger = objectName(name, 'entry_update')
-    const deleteTrigger = objectName(name, 'entry_delete')
-    const entries = entryIndexTable(viewName)
-    const entryChanges = entryIndexTable(changesName, true)
-    const keys = temporaryTable(keysName, OverlayKeyColumns)
-    const state = temporaryTable(stateName, DatabaseStateColumns)
-    const columns = Object.keys(EntryIndexColumns)
-    const columnList = sql.join(columns.map(sql.identifier), sql`, `)
-    const newValues = sql.join(
-      columns.map(name => sql`new.${sql.identifier(name)}`),
-      sql`, `
-    )
-    const result = new EntryView(db, name, entries, entryChanges, keys, state)
+    const view = new EntryView(db, name, parent)
     try {
-      await db.create(entryChanges, keys, state)
-      await db.insert(state).values({id: 1, revision, tree: null})
-      await db.run(sql`create temp view ${sql.identifier(viewName)} as
-        select parent.* from ${parent} parent
-        where not exists (
-          select 1 from ${keys} changed
-          where changed.versionId = parent.versionId
-        )
-        union all
-        select changes.* from ${entryChanges} changes`)
-      await db.run(sql`create temp trigger ${sql.identifier(insertTrigger)}
-        instead of insert on ${sql.identifier(viewName)} begin
-          insert or ignore into ${keys}(versionId) values (new.versionId);
-          insert or replace into ${entryChanges}(${columnList})
-            values (${newValues});
-        end`)
-      await db.run(sql`create temp trigger ${sql.identifier(updateTrigger)}
-        instead of update on ${sql.identifier(viewName)} begin
-          insert or ignore into ${keys}(versionId) values (old.versionId);
-          insert or ignore into ${keys}(versionId) values (new.versionId);
-          delete from ${entryChanges} where versionId = old.versionId;
-          insert or replace into ${entryChanges}(${columnList})
-            values (${newValues});
-        end`)
-      await db.run(sql`create temp trigger ${sql.identifier(deleteTrigger)}
-        instead of delete on ${sql.identifier(viewName)} begin
-          insert or ignore into ${keys}(versionId) values (old.versionId);
-          delete from ${entryChanges} where versionId = old.versionId;
-        end`)
-      return result
+      await db.create(view.target.state)
+      await db.insert(view.target.state).values({id: 1, revision, tree: null})
+      return view
     } catch (error) {
-      await result.close()
+      await view.close()
       throw error
     }
   }
 
-  async getRevision(): Promise<string> {
-    const revision = await this.#db
-      .select(this.state.revision)
-      .from(this.state)
-      .where(eq(this.state.id, 1))
-      .get()
-    if (revision == null)
-      throw new Error(`Missing revision for view ${this.name}`)
-    return revision
+  get readTarget(): EntrySyncTarget {
+    return this.#copied ? this.target : entryReadTarget(this.#parent)
+  }
+
+  /**
+   * Copy the parent's rows into this view's tables. Await this before every
+   * write through the view: until then reads go to the parent.
+   */
+  diverge(): Promise<void> {
+    this.#copy ??= this.#materialize().catch(error => {
+      this.#copy = undefined
+      throw error
+    })
+    return this.#copy
+  }
+
+  async #materialize(): Promise<void> {
+    const {entries, search} = this.target
+    const parent = entryReadTarget(this.#parent)
+    const table = getTable(entries)
+    // The rowid column keeps each entry row next to its search row.
+    const columns = sql.join(
+      Object.keys(EntryIndexColumns).map(name => sql.identifier(name)),
+      sql`, `
+    )
+    try {
+      await this.#db.run(table.createTable())
+      await this.#db.run(sql`insert into ${entries} (${columns})
+        select ${columns} from ${parent.entries}`)
+      // Indexing the filled table is faster than filling an indexed one.
+      for (const index of table.createIndexes()) await this.#db.run(index)
+      await createSearch(this.#db, search)
+      await this.#db.run(sql`insert into ${search} (rowid, title, body)
+        select rowid, title, body from ${parent.search}`)
+    } catch (error) {
+      await this.#dropCopies()
+      throw error
+    }
+    this.#copied = true
+  }
+
+  async #dropCopies(): Promise<void> {
+    await this.#db.run(sql`drop table if exists ${this.target.search}`)
+    await this.#db.drop(this.target.entries)
   }
 
   async close(): Promise<void> {
     if (this.#closed) return
     this.#closed = true
-    const insertTrigger = objectName(this.name, 'entry_insert')
-    const updateTrigger = objectName(this.name, 'entry_update')
-    const deleteTrigger = objectName(this.name, 'entry_delete')
-    const viewName = objectName(this.name, 'entries')
-    await this.#db.run(
-      sql`drop trigger if exists ${sql.identifier(insertTrigger)}`
-    )
-    await this.#db.run(
-      sql`drop trigger if exists ${sql.identifier(updateTrigger)}`
-    )
-    await this.#db.run(
-      sql`drop trigger if exists ${sql.identifier(deleteTrigger)}`
-    )
-    await this.#db.run(sql`drop view if exists ${sql.identifier(viewName)}`)
-    await dropVocabulary(this.#db, this.searchName)
-    await this.#db.run(
-      sql`drop table if exists ${sql.identifier(this.searchName)}`
-    )
-    await this.#db.drop(this.#entryChanges, this.#keys, this.state)
-  }
-
-  [Symbol.asyncDispose](): Promise<void> {
-    return this.close()
+    await dropVocabulary(this.#db, this.target.search)
+    await this.#dropCopies()
+    await this.#db.drop(this.target.state)
   }
 }

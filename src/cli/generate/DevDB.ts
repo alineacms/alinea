@@ -112,6 +112,8 @@ export class DevDB extends EntryStore {
       )
     this.#options = {...this.#options, ...options}
     this.config = options.config
+    // Preview overlays hang off the database, which reindexes without any.
+    await this.closePreviews()
     await this.database.reindex(options.config, options.configFingerprint)
     // Files changed since the recorded tree are picked up by a normal sync.
     this.#persistedRevision = undefined

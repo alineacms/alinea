@@ -2,6 +2,7 @@ import * as paths from '#/core/util/Paths.js'
 import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
 import {assert} from '../util/Assert.js'
+import {isRecord} from '#/core/util/Objects.js'
 import type {ChangesBatch} from './Change.js'
 import type {GetBlobsOptions, Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
@@ -20,6 +21,13 @@ interface ShaCacheEntry {
   sha: string
 }
 
+/**
+ * Backends construct a source per request, so conditional request state is
+ * kept per module to let polls resolve as 304s, which GitHub does not count
+ * against the rate limit.
+ */
+const shaCache = new Map<string, ShaCacheEntry>()
+
 export function normalizeGithubSourceOptions<
   Options extends GithubSourceOptions
 >(options: Options): Options {
@@ -34,7 +42,6 @@ export class GithubSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #options: GithubSourceOptions
   #limit = pLimit(8)
-  #shaCache = new Map<string, ShaCacheEntry>()
 
   constructor(options: GithubSourceOptions) {
     this.#options = normalizeGithubSourceOptions(options)
@@ -56,7 +63,7 @@ export class GithubSource implements Source {
     const {owner, repo, authToken} = this.#options
     const parentDir = this.contentLocation.split('/').slice(0, -1).join('/')
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${parentDir}?ref=${ref}`
-    const cached = this.#shaCache.get(url)
+    const cached = shaCache.get(url)
     const headers = new Headers({Authorization: `Bearer ${authToken}`})
     if (cached) headers.set('If-None-Match', cached.etag)
     const parentInfo = await fetch(url, {headers})
@@ -64,15 +71,16 @@ export class GithubSource implements Source {
       assert(cached, 'Received 304 without a cached GitHub response')
       return cached.sha
     }
-    assert(parentInfo.ok, `Failed to get parent: ${parentInfo.statusText}`)
+    if (!parentInfo.ok)
+      throw await githubError(parentInfo, 'Failed to get parent')
     const parents = await parentInfo.json()
     assert(Array.isArray(parents))
     const parent = parents.find(entry => entry.path === this.contentLocation)
     const sha = parent ? parent.sha : ReadonlyTree.EMPTY.sha
     assert(typeof sha === 'string')
     const etag = parentInfo.headers.get('etag')
-    if (etag) this.#shaCache.set(url, {etag, sha})
-    else this.#shaCache.delete(url)
+    if (etag) shaCache.set(url, {etag, sha})
+    else shaCache.delete(url)
     return sha
   }
 
@@ -84,7 +92,7 @@ export class GithubSource implements Source {
       `https://api.github.com/repos/${owner}/${repo}/git/trees/${remoteSha}?recursive=true`,
       {headers: {Authorization: `Bearer ${authToken}`}}
     )
-    assert(treeInfo.ok, `Failed to get tree: ${treeInfo.statusText}`)
+    if (!treeInfo.ok) throw await githubError(treeInfo, 'Failed to get tree')
     const treeData = await treeInfo.json()
     assert(treeData.truncated === false)
     const tree = ReadonlyTree.fromFlat(treeData)
@@ -110,11 +118,7 @@ export class GithubSource implements Source {
     })
     for (const [sha, promise] of responses) {
       const response = await promise
-      if (!response.ok)
-        throw new HttpError(
-          response.status,
-          `Failed to get blob: ${response.statusText}`
-        )
+      if (!response.ok) throw await githubError(response, 'Failed to get blob')
       const blobData = await response.json()
       assert(blobData.encoding === 'base64')
       assert(typeof blobData.content === 'string')
@@ -126,6 +130,23 @@ export class GithubSource implements Source {
   async applyChanges(batch: ChangesBatch) {
     throw new Error('Not implemented')
   }
+}
+
+/** Include GitHub's explanation, which tells a rate limit from a missing permission. */
+async function githubError(
+  response: Response,
+  description: string
+): Promise<HttpError> {
+  let reason = response.statusText
+  try {
+    const body: unknown = await response.json()
+    if (isRecord(body) && typeof body.message === 'string')
+      reason = body.message
+  } catch {}
+  return new HttpError(
+    response.status,
+    `${description}: ${response.status} ${reason}`
+  )
 }
 
 function normalizeDirectory(directory: string): string {

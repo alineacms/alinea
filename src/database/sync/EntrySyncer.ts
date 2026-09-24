@@ -7,35 +7,29 @@ import {
   DatabaseStateTable,
   type DatabaseStateColumns
 } from '../DatabaseTables.js'
+import {supportsJsonb} from '../entry/EntryData.js'
 import {EntryIndexTable, type EntryIndexTarget} from '../entry/EntryTable.js'
-import {
-  clearTemporaryTables,
-  createTemporaryTables,
-  dropTemporaryTables,
-  prepareSyncQueries,
-  type SyncQueries
-} from './SyncQueries.js'
+import {EntrySearchTable, type EntrySearchTarget} from '../query/Search.js'
+import {deriveEntries} from './Derive.js'
 import {mergeTrees} from './Ingest.js'
-import {
-  deriveHierarchy,
-  deriveStatus,
-  deriveUrls,
-  expandAffected,
-  materializeAffected,
-  validateEntries
-} from './Derive.js'
+import {prepareSyncQueries, type SyncQueries} from './SyncQueries.js'
 
 export interface EntrySyncTarget {
-  name: string
   entries: EntryIndexTarget
-  changes?: EntryIndexTarget
   state: Table<typeof DatabaseStateColumns>
+  /** The full-text index of the entries, written along with them. */
+  search: EntrySearchTarget
+  /**
+   * Whether the state records the synced source tree, so the database can be
+   * reopened and synced from it. A temporary overlay keeps its tree in memory.
+   */
+  recordsTree?: boolean
 }
 
 export const EntrySyncRoot: EntrySyncTarget = {
-  name: 'root',
   entries: EntryIndexTable,
-  state: DatabaseStateTable
+  state: DatabaseStateTable,
+  search: EntrySearchTable
 }
 
 export interface EntrySyncOptions {
@@ -46,18 +40,16 @@ export interface EntrySyncOptions {
 }
 
 /** Prepared, serialized source synchronization for one database connection. */
-export class EntrySyncer implements AsyncDisposable {
+export class EntrySyncer {
   #db: Database
   #config: Config
   #queries = new Map<EntrySyncTarget, Promise<SyncQueries>>()
-  #ready: Promise<void>
   #queue = new TaskQueue()
   #closed = false
 
   constructor(config: Config, db: Database) {
     this.#config = config
     this.#db = db
-    this.#ready = createTemporaryTables(this.#db)
   }
 
   /** Derive later syncs with another config; prepared statements are shared. */
@@ -99,66 +91,48 @@ export class EntrySyncer implements AsyncDisposable {
     validate: boolean
   ): Promise<Array<string>> {
     const queries = await this.#queriesFor(target)
-    const run = async (tx: Database) => {
-      const materialized = new Set<string>()
-      await clearTemporaryTables(tx, queries)
+    const run = async () => {
       const state = await queries.revision.get()
       if (state?.revision !== fromRevision)
         throw new Error('Database revision mismatch')
       if (previousTree && previousTree.sha !== fromRevision)
         throw new Error('Cached tree revision mismatch')
+      const stored = previousTree ? undefined : await queries.tree.get()
       const storedTree =
-        previousTree ?? (state.tree ? new ReadonlyTree(state.tree) : undefined)
-      const initial = storedTree
-        ? storedTree.isEmpty
-        : (await queries.entryCount.get())?.value === 0
-      if (!storedTree && !initial)
+        previousTree ??
+        (stored?.tree ? new ReadonlyTree(stored.tree) : undefined)
+      if (!storedTree && (await queries.entryCount.get())?.value !== 0)
         throw new Error(
           'Cannot sync a populated database without a recorded source tree'
         )
-      await mergeTrees(
-        tx,
-        target.entries,
+      const changes = await mergeTrees(
         this.#config,
         source,
         storedTree ?? ReadonlyTree.EMPTY,
         tree,
         queries
       )
-      await expandAffected(tx, target.entries)
-      await materializeAffected(tx, target, queries, materialized)
-      const hierarchyChanged = await deriveHierarchy(
-        tx,
-        target.entries,
-        queries
+      const changed = await deriveEntries(
+        this.#config,
+        queries,
+        changes,
+        validate
       )
-      if (hierarchyChanged) {
-        // The cascade table is deliberately left as is: deriveHierarchy rewrote
-        // parentId/parents, so re-walking the same roots picks up entries that
-        // moved under them, and `insert or ignore` keeps this idempotent.
-        await expandAffected(tx, target.entries)
-        await materializeAffected(tx, target, queries, materialized)
-      }
-      await deriveStatus(tx, queries)
-      if (initial) await queries.copyInitialUrls.run()
-      else await deriveUrls(tx, target.entries, this.#config, queries)
-      if (validate) await validateEntries(tx, target.changes ?? target.entries)
-      const changed = await queries.changedIds.all()
       await queries.setRevision.run({
         revision: tree.sha,
-        tree: target.changes ? null : JSON.stringify(tree)
+        tree: target.recordsTree === false ? null : JSON.stringify(tree)
       })
-      return changed.map(row => row.id)
+      return changed
     }
-    return withinTransaction
-      ? run(this.#db)
-      : this.#db.transaction(run, {async: true})
+    return withinTransaction ? run() : this.#db.transaction(run, {async: true})
   }
 
   #queriesFor(target: EntrySyncTarget): Promise<SyncQueries> {
     const cached = this.#queries.get(target)
     if (cached) return cached
-    const queries = this.#ready.then(() => prepareSyncQueries(this.#db, target))
+    const queries = supportsJsonb(this.#db).then(jsonb =>
+      prepareSyncQueries(this.#db, target, jsonb)
+    )
     this.#queries.set(target, queries)
     return queries
   }
@@ -176,16 +150,10 @@ export class EntrySyncer implements AsyncDisposable {
     if (this.#closed) return
     this.#closed = true
     await this.#queue.drain()
-    await this.#ready
     const queries = Array.from(this.#queries.values())
     this.#queries.clear()
     await Promise.all(
       queries.map(async statements => (await statements).free())
     )
-    await dropTemporaryTables(this.#db)
-  }
-
-  [Symbol.asyncDispose](): Promise<void> {
-    return this.close()
   }
 }

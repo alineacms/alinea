@@ -24,7 +24,26 @@ export async function copyStaticFiles({
   outDir
 }: Pick<GenerateContext, 'cmd' | 'packageDir' | 'outDir'>) {
   await fs.mkdir(outDir, {recursive: true}).catch(console.error)
-  await cleanupOldDatabases(outDir)
+  // The output directory belongs to this project alone: everything in it but
+  // the database is written again by this run, so files that older Alinea
+  // versions generated do not linger. The database stays so unchanged content
+  // is not indexed again. Other projects' directories and the shared runtime
+  // files in the package root are never touched here.
+  const keep = new Set([
+    generatedDatabaseFile,
+    `${generatedDatabaseFile}-shm`,
+    `${generatedDatabaseFile}-wal`
+  ])
+  const files = await fs.readdir(outDir).catch(() => [])
+  await Promise.all(
+    files
+      .filter(file => !keep.has(file))
+      .map(file =>
+        fs
+          .rm(path.join(outDir, file), {recursive: true, force: true})
+          .catch(() => {})
+      )
+  )
 
   // The runtime modules point at a single project. A build claims them for
   // its project; a dev server only creates them when missing so it cannot
@@ -65,23 +84,4 @@ async function writeRuntimeFile(
   await fs.writeFile(file, contents, {flag: 'wx'}).catch(error => {
     if (error?.code !== 'EEXIST') throw error
   })
-}
-
-export async function cleanupOldDatabases(outDir: string): Promise<void> {
-  const files = await fs.readdir(outDir).catch(() => [])
-  const currentFiles = new Set([
-    generatedDatabaseFile,
-    `${generatedDatabaseFile}-shm`,
-    `${generatedDatabaseFile}-wal`
-  ])
-  const oldFiles = files.filter(
-    file =>
-      !currentFiles.has(file) &&
-      /^database(?:-.+)?\.sqlite(?:-(?:shm|wal))?$/.test(file)
-  )
-  await Promise.all(
-    oldFiles.map(file =>
-      fs.rm(path.join(outDir, file), {force: true}).catch(() => {})
-    )
-  )
 }

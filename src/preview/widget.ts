@@ -1,8 +1,24 @@
 import type {DOMAttributes} from 'react'
 
+export interface PreviewStat {
+  kind: 'query' | 'sync'
+  summary: string
+  /** Whether the query was answered by the bundled database or the handler. */
+  source?: 'database' | 'handler'
+  durationMs: number
+}
+
+/** The CMS work of one render, shown in the widget. */
+export interface PreviewStats {
+  rows: Array<PreviewStat>
+  /** SQL statements run in this process for the render. */
+  statements: number
+  sqlMs: number
+}
+
 export function registerPreviewWidget() {
   if (customElements.get('alinea-preview')) return
-  const observedAttributes = ['adminurl', 'editurl', 'livepreview']
+  const observedAttributes = ['adminurl', 'editurl', 'livepreview', 'stats']
   const template = `
     <div class="previews">
       <div class="inner">
@@ -22,6 +38,8 @@ export function registerPreviewWidget() {
             <path fill="#5763E6" d="M3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15L17.81 9.94l-3.75-3.75L3.15 17.1c-.1.1-.15.22-.15.36M20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83l3.75 3.75z"/>
           </svg>
         </a>
+        <span class="separator stats"></span>
+        <button type="button" class="button stats" title="Click to log the queries of this page to the browser console" id="btn-stats"></button>
       </div>
     </div>
   `
@@ -114,6 +132,19 @@ export function registerPreviewWidget() {
       border-left: 1px solid #E4E4E7;
       height: 16px;
     }
+    .stats {
+      display: none;
+    }
+    .has-stats .stats {
+      display: flex;
+    }
+    .button.stats {
+      width: auto;
+      padding: 0 16px 0 12px;
+      font: inherit;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
     @keyframes pulse {
       0%, 100% {
         opacity: 1;
@@ -138,6 +169,9 @@ export function registerPreviewWidget() {
     #previews?: HTMLDivElement
     #adminButton?: HTMLAnchorElement
     #editButton?: HTMLAnchorElement
+    #statsButton?: HTMLButtonElement
+    #stats?: PreviewStats
+    #hint?: ReturnType<typeof setTimeout>
     #disconnect!: () => void
 
     disconnectedCallback() {
@@ -164,7 +198,47 @@ export function registerPreviewWidget() {
           )
           this.#previews?.classList.toggle('is-warning', value === 'warning')
           return
+        case 'stats':
+          this.#stats = value ? JSON.parse(value) : undefined
+          this.#previews?.classList.toggle('has-stats', Boolean(this.#stats))
+          if (this.#statsButton) this.#statsButton.textContent = this.#summary()
+          return
       }
+    }
+
+    #summary() {
+      if (!this.#stats) return ''
+      const {queries, syncs} = split(this.#stats.rows)
+      let text = `${queries.length} ${queries.length === 1 ? 'query' : 'queries'} · ${total(queries)} ms`
+      if (syncs.length) text += ` · sync ${total(syncs)} ms`
+      return text
+    }
+
+    #logStats = () => {
+      if (!this.#stats) return
+      const {rows, statements, sqlMs} = this.#stats
+      const table: Array<Record<string, unknown>> = rows.map(row => ({
+        type: row.kind,
+        what: row.summary,
+        source: row.source ?? '',
+        ms: round(row.durationMs)
+      }))
+      if (statements)
+        table.push({
+          type: 'sql',
+          what: `${statements} statements`,
+          source: 'database',
+          ms: round(sqlMs)
+        })
+      console.table(table)
+      // Point at the console: the table is logged there, not shown here.
+      const button = this.#statsButton
+      if (!button) return
+      button.textContent = 'Logged to console ↓'
+      clearTimeout(this.#hint)
+      this.#hint = setTimeout(() => {
+        button.textContent = this.#summary()
+      }, 1500)
     }
 
     connectedCallback() {
@@ -180,6 +254,8 @@ export function registerPreviewWidget() {
       const inner: HTMLDivElement = wrapper.querySelector('.inner')!
       this.#adminButton = previews.querySelector('#btn-admin')!
       this.#editButton = previews.querySelector('#btn-edit')!
+      this.#statsButton = previews.querySelector('#btn-stats')!
+      this.#statsButton.addEventListener('click', this.#logStats)
 
       for (const attr of AlineaPreview.observedAttributes)
         this.attributeChangedCallback(attr, null, this.getAttribute(attr))
@@ -229,6 +305,19 @@ export function registerPreviewWidget() {
     }
   }
 
+  function split(rows: Array<PreviewStat>) {
+    return {
+      queries: rows.filter(row => row.kind === 'query'),
+      syncs: rows.filter(row => row.kind === 'sync')
+    }
+  }
+  function round(ms: number) {
+    return Math.round(ms * 10) / 10
+  }
+  function total(rows: Array<PreviewStat>) {
+    return Math.round(rows.reduce((sum, row) => sum + row.durationMs, 0))
+  }
+
   customElements.define('alinea-preview', AlineaPreview)
 }
 
@@ -239,6 +328,8 @@ declare global {
         adminUrl: string
         editUrl: string
         livePreview?: 'connected' | 'warning' | 'loading'
+        /** JSON encoded PreviewStats */
+        stats?: string
       }
     }
   }

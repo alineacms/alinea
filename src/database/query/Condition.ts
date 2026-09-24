@@ -40,11 +40,13 @@ function equals(field: HasSql, value: unknown): Sql<boolean> {
   return value === null ? isNull(field) : eq(field, value)
 }
 
+/** Compile a condition; `depth` names the array items it iterates. */
 export function compileCondition(
   field: HasSql,
-  condition: unknown
+  condition: unknown,
+  depth = 0
 ): Sql<boolean> {
-  return conditionSql(field, parseCondition(condition), 0)
+  return conditionSql(field, parseCondition(condition), depth)
 }
 
 export function compileFilter(filter: unknown, field: FieldSql): Sql<boolean> {

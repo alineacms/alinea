@@ -1,4 +1,8 @@
-import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import type {
+  FieldLocalizeContext,
+  FieldOptions,
+  WithoutLabel
+} from '#/core/Field.js'
 import {
   type EntryReferenceLinkType,
   type EntryReferenceTarget,
@@ -23,6 +27,7 @@ import {ListRow} from '#/core/ListRow.js'
 import {entries, fromEntries} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {unresolvedEntryMarker} from '#/picker/entry/EntryPicker.js'
+import {EntryReference} from '#/picker/entry/EntryReference.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
@@ -94,6 +99,9 @@ export function createLink<StoredValue extends Reference, QueryValue>(
           linkType: entryLinkType(value[Reference.type])
         }
       ]
+    },
+    localizeLinks(value, context) {
+      return localizeEntryLink(value, context)
     },
     view: viewKeys.SingleLinkInput
   })
@@ -193,6 +201,17 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       }
       return result
     },
+    localizeLinks(rows, context) {
+      if (!Array.isArray(rows)) return rows
+      let next = rows
+      rows.forEach((row, index) => {
+        const localized = localizeEntryLink(row, context)
+        if (localized === row) return
+        if (next === rows) next = [...rows]
+        next[index] = localized
+      })
+      return next
+    },
     view: viewKeys.MultipleLinksInput
   })
 }
@@ -201,6 +220,20 @@ function entryIdOf(value: Reference | undefined | null): string | undefined {
   if (!value || typeof value !== 'object') return undefined
   const entry = (value as {_entry?: unknown})._entry
   return typeof entry === 'string' ? entry : undefined
+}
+
+function localizeEntryLink<Value extends Reference>(
+  value: Value,
+  context: FieldLocalizeContext
+): Value {
+  if (!value || value[Reference.type] !== 'entry') return value
+  const entryId = entryIdOf(value)
+  if (!entryId || !context.entryIds.has(entryId)) return value
+  if (
+    (value as Partial<EntryReference>)[EntryReference.locale] === context.locale
+  )
+    return value
+  return {...value, [EntryReference.locale]: context.locale}
 }
 
 function entryLinkType(type: string): EntryReferenceLinkType | undefined {

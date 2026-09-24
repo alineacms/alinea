@@ -7,6 +7,7 @@ import {
   Field,
   type EntryAnchorTarget,
   type FieldAnchorContext,
+  type FieldLocalizeContext,
   type FieldBeforeSaveContext
 } from './Field.js'
 import {type HasType, getType, hasType, internalType} from './Internal.js'
@@ -177,6 +178,22 @@ export namespace Type {
     for (const [key, field] of entries(fields(type))) {
       const before = next[key]
       const after = Field.normalizeAnchors(field, before, context)
+      if (after === before) continue
+      if (next === value) next = {...value}
+      next[key] = after
+    }
+    return next
+  }
+
+  export function localizeLinks(
+    type: Type,
+    value: Record<string, unknown>,
+    context: FieldLocalizeContext
+  ): Record<string, unknown> {
+    let next = value
+    for (const [key, field] of entries(fields(type))) {
+      const before = next[key]
+      const after = Field.localizeLinks(field, before, context)
       if (after === before) continue
       if (next === value) next = {...value}
       next[key] = after

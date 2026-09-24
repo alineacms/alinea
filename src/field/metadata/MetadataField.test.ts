@@ -1,3 +1,4 @@
+import {document} from '#/core/Document.js'
 import {Type, type} from '#/core/Type.js'
 import {Field} from '#/core/Field.js'
 import {suite} from '@alinea/suite'
@@ -135,4 +136,30 @@ test('metadata audit fields use custom display fields', () => {
   test.ok(fields.updatedAt instanceof MetadataTimestampField)
   test.ok(fields.createdBy instanceof MetadataUserField)
   test.ok(fields.updatedBy instanceof MetadataUserField)
+})
+
+test('document metadata stays one record split over SEO and details', () => {
+  const Page = document('Page', {fields: {}})
+  const options = Field.options(Page.metadata)
+
+  test.ok(options.detailsSection)
+  test.equal(Object.keys(Type.fields(Page)), ['title', 'path', 'metadata'])
+  test.equal(Object.keys(Type.fields(options.seo)), [
+    'title',
+    'description',
+    'openGraph'
+  ])
+  test.equal(Object.keys(Type.fields(options.details)), [
+    'createdAt',
+    'createdBy',
+    'updatedAt',
+    'updatedBy',
+    'aliases'
+  ])
+  test.is(options.seo.title, options.fields.title)
+  test.is(options.details.aliases, Page.metadata.aliases)
+  test.equal(
+    Object.keys(Type.initialValue(Page).metadata as object).sort(),
+    Object.keys(Type.fields(options.fields)).sort()
+  )
 })

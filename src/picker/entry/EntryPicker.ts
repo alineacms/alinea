@@ -90,6 +90,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         [EntryReference.anchor]: anchor,
         [EntryReference.suffix]: suffix,
         [ListRow.index]: index,
+        [ListRow.label]: label,
         ...fields
       } = row as EntryReference & ListRow
       for (const key of keys(fields)) delete row[key]

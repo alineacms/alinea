@@ -46,10 +46,6 @@ export class Leaf {
     Object.freeze(this)
   }
 
-  clone(): Leaf {
-    return this
-  }
-
   toJSON(): BaseEntry {
     return {...this}
   }
@@ -147,20 +143,39 @@ class TreeBase<Node extends TreeBase<Node>> {
 export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   readonly sha: string
   static readonly EMPTY = new ReadonlyTree({sha: EMPTY_TREE_SHA, entries: []})
-  #shas = new Set<string>()
+  /** A path of every blob, by sha, indexed on first use. */
+  #paths?: Map<string, string>
 
   constructor({sha, entries}: Tree) {
     super(sha)
     this.sha = sha
-    for (const entry of entries.slice().sort(compareTreeEntries)) {
-      const node = entry.entries
-        ? new ReadonlyTree(entry as EntryNode)
-        : new Leaf(entry)
-      if (node instanceof Leaf) this.#shas.add(node.sha)
-      else for (const sha of node.#shas) this.#shas.add(sha)
-      this.nodes.set(entry.name, node)
-    }
+    for (const entry of entries.slice().sort(compareTreeEntries))
+      this.nodes.set(
+        entry.name,
+        entry.entries ? new ReadonlyTree(entry as EntryNode) : new Leaf(entry)
+      )
     Object.freeze(this)
+  }
+
+  /** A tree over built nodes, which it shares instead of copying. */
+  static async fromNodes(
+    nodes: Map<string, ReadonlyTree | Leaf>,
+    sha?: string
+  ): Promise<ReadonlyTree> {
+    // Git sorts a directory, marked by its entries, as `name/`
+    const entries = Array.from(nodes, ([name, node]): Entry => {
+      const {mode, sha} = node
+      return node instanceof Leaf
+        ? {name, mode, sha}
+        : {name, mode, sha, entries: []}
+    }).sort(compareTreeEntries)
+    const tree = new ReadonlyTree({
+      sha: sha ?? (await hashTree(serializeTreeEntries(entries))),
+      entries: []
+    })
+    // Freezing the tree leaves its node map writable
+    for (const {name} of entries) tree.nodes.set(name, nodes.get(name)!)
+    return tree
   }
 
   get isEmpty() {
@@ -174,19 +189,28 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
     }))
   }
 
-  get shas(): ReadonlySet<string> {
-    return this.#shas
+  /** A path holding the blob, if this tree has it. */
+  pathOf(sha: string): string | undefined {
+    if (!this.#paths) this.#indexPaths('', (this.#paths = new Map()))
+    return this.#paths.get(sha)
+  }
+
+  #indexPaths(prefix: string, paths: Map<string, string>): void {
+    for (const [name, node] of this.nodes)
+      if (node instanceof Leaf) paths.set(node.sha, prefix + name)
+      else node.#indexPaths(`${prefix}${name}/`, paths)
   }
 
   hasSha(sha: string): boolean {
-    return this.#shas.has(sha)
+    return this.pathOf(sha) !== undefined
   }
 
+  /** A writable tree sharing these nodes until they change. */
   clone(): WriteableTree {
-    return new WriteableTree({
-      sha: this.sha,
-      entries: this.entries
-    })
+    const result = new WriteableTree()
+    for (const [name, node] of this.nodes) result.add(name, node)
+    result.sha = this.sha
+    return result
   }
 
   toJSON() {
@@ -316,7 +340,8 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   }
 }
 
-export class WriteableTree extends TreeBase<WriteableTree> {
+/** A mutable tree, which copies shared readonly subtrees once they change. */
+export class WriteableTree extends TreeBase<WriteableTree | ReadonlyTree> {
   constructor({sha, entries}: Tree = {sha: EMPTY_TREE_SHA, entries: []}) {
     super(sha)
     for (const entry of entries) {
@@ -327,12 +352,11 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     }
   }
 
-  add(path: string, input: {clone(): WriteableTree | Leaf} | string): void {
+  add(path: string, input: WriteableTree | ReadonlyTree | Leaf | string): void {
     this.sha = undefined
     const [name, rest] = splitPath(path)
     if (rest) {
-      const target = this.#makeNode(name)
-      target.add(rest, input)
+      this.#writable(name, true)!.add(rest, input)
     } else {
       const node =
         typeof input === 'string'
@@ -340,26 +364,30 @@ export class WriteableTree extends TreeBase<WriteableTree> {
               sha: input,
               mode: '100644'
             })
-          : input.clone()
+          : input instanceof WriteableTree
+            ? input.clone()
+            : input
       this.nodes.set(name, node)
     }
   }
 
-  #makeNode(segment: string): WriteableTree {
-    this.sha = undefined
-    if (!this.nodes.has(segment)) this.nodes.set(segment, new WriteableTree())
-    return this.getNode(segment)
-  }
-
-  #getNode(segment: string) {
-    return this.nodes.get(segment) as WriteableTree | undefined
+  /** The writable subtree at a name, copied first if it is shared. */
+  #writable(name: string, create: boolean): WriteableTree | undefined {
+    const node = this.nodes.get(name)
+    if (node instanceof WriteableTree) return node
+    if (node instanceof Leaf)
+      throw new Error(`Expected node, found leaf: ${name}`)
+    if (!node && !create) return undefined
+    const writable = node ? node.clone() : new WriteableTree()
+    this.nodes.set(name, writable)
+    return writable
   }
 
   remove(path: string): boolean {
     this.sha = undefined
     const [name, rest] = splitPath(path)
     if (!rest) return this.nodes.delete(name)
-    const target = this.#getNode(name)
+    const target = this.#writable(name, false)
     if (!target) return false
     const result = target.remove(rest)
     if (target.nodes.size === 0) this.nodes.delete(name)
@@ -370,7 +398,7 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     const entry = this.get(from)
     if (!entry) return
     this.remove(from)
-    this.add(to, entry.clone())
+    this.add(to, entry)
   }
 
   applyChanges(batch: ChangesBatch): void {
@@ -400,44 +428,35 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     }
   }
 
-  async #getTree(previous?: ReadonlyTree): Promise<Tree> {
-    if (previous?.equals(this)) return previous.toJSON()
-    const entries = await this.#treeEntries(previous)
-    if (this.sha) return {sha: this.sha, entries}
-    const serialized = serializeTreeEntries(entries)
-    this.sha = await hashTree(serialized)
-    return {sha: this.sha, entries}
-  }
-
-  async #treeEntries(previous?: ReadonlyTree): Promise<Array<Entry>> {
-    const entries = Array<Entry>()
-    for (const [name, node] of this.nodes.entries()) {
-      if (node instanceof TreeBase) {
-        const previousNode = previous?.get(name)
-        const entry = await node.#getTree(
-          previousNode instanceof ReadonlyTree ? previousNode : undefined
-        )
-        // We probably should not allow an empty tree to be added in the
-        // first place
-        if (entry.entries.length > 0) entries.push({name, ...node, ...entry})
-      } else {
-        entries.push({name, ...node})
-      }
-    }
-    return entries
-  }
-
   async getSha(): Promise<string> {
-    return (await this.#getTree()).sha
+    return (await this.compile()).sha
   }
 
+  /** Compile, reusing the nodes of a previous tree wherever they are equal. */
   async compile(previous?: ReadonlyTree): Promise<ReadonlyTree> {
-    return new ReadonlyTree(await this.#getTree(previous))
+    if (previous?.equals(this)) return previous
+    const nodes = new Map<string, ReadonlyTree | Leaf>()
+    for (const [name, node] of this.nodes) {
+      const before = previous?.get(name)
+      const compiled =
+        node instanceof WriteableTree
+          ? await node.compile(
+              before instanceof ReadonlyTree ? before : undefined
+            )
+          : node
+      // We probably should not allow an empty tree to be added in the
+      // first place
+      if (compiled instanceof Leaf || !compiled.isEmpty)
+        nodes.set(name, compiled)
+    }
+    const tree = await ReadonlyTree.fromNodes(nodes, this.sha)
+    this.sha = tree.sha
+    return tree
   }
 
   clone(): WriteableTree {
     const result = new WriteableTree()
-    for (const [name, entry] of this.nodes) result.add(name, entry.clone())
+    for (const [name, entry] of this.nodes) result.add(name, entry)
     result.sha = this.sha
     return result
   }

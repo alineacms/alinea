@@ -1,5 +1,6 @@
 import {Button, Field, Surface, SurfaceContent} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
+import {Section} from '#/core/Section.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {
   useFieldError,
@@ -10,6 +11,7 @@ import {
 } from '#/dashboard/hooks.js'
 import {IcRoundPublic} from '#/dashboard/icons.js'
 import {
+  MetadataDetailsSection,
   MetadataField,
   MetadataTimestampField,
   MetadataUserField
@@ -76,10 +78,27 @@ export function MetadataFieldView({field}: MetadataFieldViewProps) {
       <NodeEditor
         node={node}
         readOnly={options.readOnly}
-        type={options.fields}
+        type={options.detailsSection ? options.seo : options.fields}
       />
       <MetadataPreview metadata={metadata} origin={origin} />
     </>
+  )
+}
+
+export interface MetadataDetailsViewProps {
+  section: Section
+}
+
+export function MetadataDetailsView({section}: MetadataDetailsViewProps) {
+  const {field} = section[Section.Data] as MetadataDetailsSection
+  const options = useFieldOptions(field)
+  const node = useFieldNode<object>(field)
+  return (
+    <NodeEditor
+      node={node}
+      readOnly={options.readOnly}
+      type={options.details}
+    />
   )
 }
 

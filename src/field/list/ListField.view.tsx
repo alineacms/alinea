@@ -612,7 +612,13 @@ function ListFieldRowHeader({
         {showAnchor && <Badge size="sm">#{displayAnchor}</Badge>}
       </SortableListItemTitle>
       <SortableListItemActions>
-        <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+        <Popover
+          open={actionsOpen}
+          onOpenChange={open => {
+            if (open) setActionsOpen(true)
+            else closeActions()
+          }}
+        >
           <PopoverTrigger
             variant="ghost"
             aria-label={`${label} actions`}

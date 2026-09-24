@@ -5,10 +5,13 @@ import {type} from '#/core/Type.js'
 import {text} from '#/field/text/TextField.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
+import {sql} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
+import {wasmDatabase} from '../driver/WasmDatabase.js'
 import {
   EntryIndexTable,
   entryIndexRow,
+  entryIndexTable,
   type IndexedEntry
 } from '../entry/EntryTable.js'
 import {compileEntryQuery} from './EntryQuery.js'
@@ -233,6 +236,133 @@ test('SQL alias projections use metadata aliases and ignore non-URL rows', async
     }).rows.all(db)
   ).toEqual(['3'])
 })
+
+/** Stores data as text whatever the driver supports. */
+const Reference = entryIndexTable('alinea_reference_index')
+
+const drivers = [
+  {
+    name: 'text',
+    async open() {
+      const sqlite = new Database(':memory:')
+      return {db: connect(sqlite), close: () => sqlite.close()}
+    }
+  },
+  {
+    name: 'jsonb',
+    async open() {
+      const db = await wasmDatabase()
+      return {db, close: () => db.close()}
+    }
+  }
+]
+
+/**
+ * The indexed table stores data in the driver's format, the reference table
+ * always as text, so comparing them also compares JSONB reads with text.
+ */
+async function referenceDatabase(
+  driver: (typeof drivers)[number],
+  entries: Array<IndexedEntry>
+) {
+  const {db, close} = await driver.open()
+  await db.create(EntryIndexTable, Reference)
+  for (const input of entries) {
+    const row = entryIndexRow(input)
+    await db.insert(EntryIndexTable).values({
+      ...row,
+      data: driver.name === 'jsonb' ? sql<string>`jsonb(${row.data})` : row.data
+    })
+    await db.insert(Reference).values(row)
+  }
+  async function compare(query: GraphQuery) {
+    const indexed = await compileEntryQuery(config, query).rows.all(db)
+    const reference = await compileEntryQuery(config, query, {
+      entry: Reference
+    }).rows.all(db)
+    expect({query, result: indexed}).toEqual({query, result: reference})
+    return indexed
+  }
+  return {db, close, compare}
+}
+
+for (const driver of drivers)
+  test(`structured alias conditions parse each url (${driver.name})`, async () => {
+    const {close, compare} = await referenceDatabase(driver, [
+      entry('object', {data: {metadata: {aliases: [{url: {x: 1}}]}}}),
+      entry('list', {
+        data: {metadata: {aliases: [{url: [1, 2]}, {url: {x: 3}}]}}
+      })
+    ])
+    const structured: Array<[unknown, Array<string>]> = [
+      [{has: {x: 1}}, ['object']],
+      [{has: {x: {gt: 2}}}, ['list']],
+      [{includes: 2}, ['list']]
+    ]
+    for (const [alias, expected] of structured)
+      expect(await compare({alias, select: Entry.id} as GraphQuery)).toEqual(
+        expected
+      )
+    await close()
+  })
+
+for (const driver of drivers)
+  test(`data fields answer filters and ordering as text data does (${driver.name})`, async () => {
+    const long = (value: number) => String(value).padStart(300, '0')
+    const {db, close, compare} = await referenceDatabase(
+      driver,
+      Array.from({length: 6}, (_, index) =>
+        entry(String(index), {
+          data: {
+            title: index % 2 ? long(index) : `short ${index}`,
+            rank: index % 3,
+            body: long(5 - index),
+            tags:
+              index % 2 ? ['a', 'b'] : Array.from({length: 60}, () => 'tag'),
+            nested: {small: index, large: long(index), list: [index]},
+            metadata: {
+              createdAt: 10 - index,
+              aliases: [{url: long(index)}]
+            }
+          }
+        })
+      )
+    )
+    const queries: Array<Record<string, unknown>> = [
+      {filter: {title: {startsWith: '0'}}},
+      {filter: {title: {startsWith: 'short'}}},
+      {filter: {body: {gt: long(2)}}},
+      {filter: {tags: {includes: 'tag'}}},
+      {filter: {tags: {includes: 'b'}}},
+      {filter: {nested: {has: {small: {gte: 3}}}}},
+      {filter: {nested: {has: {large: long(4)}}}},
+      {filter: {nested: {has: {list: {includes: 2}}}}},
+      {filter: {rank: 1}},
+      {orderBy: {desc: Page.title}},
+      {orderBy: [{asc: Entry.createdAt}]},
+      {filter: {_createdAt: {lt: 8}}, orderBy: {asc: Entry.createdAt}},
+      {alias: long(3)}
+    ]
+    expect(
+      await db
+        .select(sql<string>`typeof(${EntryIndexTable.data})`)
+        .from(EntryIndexTable)
+        .limit(1)
+    ).toEqual([driver.name === 'jsonb' ? 'blob' : 'text'])
+    for (const query of queries)
+      await compare({...query, select: Entry.id} as GraphQuery)
+    await compare({
+      select: {
+        id: Entry.id,
+        createdAt: Entry.createdAt,
+        aliases: Entry.aliases,
+        path: Entry.path,
+        title: Page.title,
+        data: Entry.data
+      }
+    })
+    await close()
+  })
 
 test('page locations use the physical source root and remain index-only', async () => {
   using sqlite = new Database(':memory:')
