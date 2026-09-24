@@ -45,8 +45,9 @@ themed(() => {
       hash: routes.home,
       title: 'Home'
     })
-    await app.page.getByRole('tab', {name: 'Metadata'}).click()
-    await expect(app.page.getByRole('tab', {name: 'Metadata'})).toHaveAttribute(
+    // The document metadata lives in the SEO tab, next to a Details tab
+    await app.page.getByRole('tab', {name: 'SEO'}).click()
+    await expect(app.page.getByRole('tab', {name: 'SEO'})).toHaveAttribute(
       'aria-selected',
       'true'
     )

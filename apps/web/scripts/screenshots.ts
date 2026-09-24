@@ -18,7 +18,11 @@
  * entry by its previous name.
  *
  * Pass shot names to publish a subset, eg. only the ones the site uses:
- *   bun screenshots --publish dashboard-product dashboard-translations
+ *   bun screenshots --publish dashboard-product dashboard-translations \
+ *     dashboard-stock dashboard-roles dashboard-overview
+ *
+ * Every shot waits for concrete elements rather than fixed delays, so a run
+ * fails with the name of the shot when the dashboard changed underneath it.
  */
 
 import {mkdir, writeFile} from 'node:fs/promises'
@@ -28,10 +32,18 @@ import {
   type Browser,
   type BrowserContext,
   chromium,
+  type Locator,
   type Page
 } from 'playwright'
 
 type Scheme = 'light' | 'dark'
+
+interface Clip {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
 interface Shot {
   name: string
@@ -40,22 +52,49 @@ interface Shot {
   /** Alt text of the published media entry */
   alt: string
   viewport?: {width: number; height: number}
+  /** Capture only this region of the viewport, in CSS pixels */
+  clip?: Clip
   /** Earlier name of the shot, its media entry is reused when renamed */
   previousName?: string
-  /** Bring the dashboard into the state to capture */
+  /** Keep keyboard focus where prepare left it, eg. in an open menu */
+  keepFocus?: boolean
+  /** Waits for an element that shows the location finished loading */
+  ready(page: Page): Locator
+  /** Bring the dashboard into the state to capture, then wait until it shows
+   * that state */
   prepare?(page: Page): Promise<void>
 }
 
 const ferris = '3JjYg1RR8ghz3NENJTrtX2QiHgP'
 const home = '3JjYg2xcgCGTqmAoAf36mA6hWqR'
+const products = '3JjYfwD09WF5vKYfXObPiZGMUOI'
+
+/** Opens a tab of the entry editor or its side panel */
+async function openTab(page: Page, name: string) {
+  const tab = page.getByRole('tab', {name, exact: true})
+  await tab.click()
+  await expectAttribute(tab, 'aria-selected', 'true')
+}
+
+/** Waits until the element has the attribute value, eg. is selected */
+async function expectAttribute(locator: Locator, name: string, value: string) {
+  await locator.and(locator.page().locator(`[${name}="${value}"]`)).waitFor()
+}
+
+/** The product page rendered in the preview panel */
+function previewHeading(page: Page, title: string) {
+  return page.getByRole('heading', {name: title, level: 1}).last()
+}
 
 const shots: Array<Shot> = [
   {
     name: 'dashboard-product',
     alt: 'The Alinea dashboard editing a product, with a live preview of the page beside the form',
     hash: `/entry/demo/pages:en/${ferris}`,
+    ready: page => page.getByRole('tab', {name: 'Preview'}),
     async prepare(page) {
-      await page.getByRole('tab', {name: 'Preview'}).click()
+      await openTab(page, 'Preview')
+      await previewHeading(page, 'Ferris Dining Table').waitFor()
     }
   },
   {
@@ -63,33 +102,71 @@ const shots: Array<Shot> = [
     previousName: 'dashboard-localiser',
     alt: 'The Dutch translation of a product, with the language menu open to switch between English, Dutch and French',
     hash: `/entry/demo/pages:nl/${ferris}`,
+    keepFocus: true,
+    ready: page => page.getByRole('tab', {name: 'Preview'}),
     async prepare(page) {
-      await page.getByRole('tab', {name: 'Preview'}).click()
+      await openTab(page, 'Preview')
+      await page
+        .getByText('Een massief eiken tafel voor lange diners')
+        .last()
+        .waitFor()
       await page.getByRole('button', {name: 'Language'}).first().click()
+      await page
+        .getByRole('menu', {name: 'Language'})
+        .getByRole('menuitemradio', {name: 'NL Dutch'})
+        .waitFor()
+    }
+  },
+  {
+    name: 'dashboard-overview',
+    alt: 'The products overview, a table with a thumbnail, price, material and stock for every product, sorted by price',
+    hash: `/entry/demo/pages:en/${products}`,
+    // Nine products fill the table, a taller window only adds empty space
+    viewport: {width: 1280, height: 560},
+    ready: page => page.getByRole('treegrid', {name: 'Explorer entries'}),
+    async prepare(page) {
+      const price = page.getByRole('button', {name: 'Price', exact: true})
+      // The first click sorts ascending, the second descending
+      await price.click()
+      await page.getByText('Sorted by Price').waitFor()
+      await price.click()
+      await page
+        .getByRole('treegrid', {name: 'Explorer entries'})
+        .getByRole('row')
+        .first()
+        .filter({hasText: 'Linden Sideboard'})
+        .waitFor()
     }
   },
   {
     name: 'dashboard-stock',
     alt: 'A custom stock overview panel in the pricing tab, calculated from the price and finishes of the product',
     hash: `/entry/demo/pages:en/${ferris}`,
+    ready: page => page.getByRole('tab', {name: 'Pricing & stock'}),
     async prepare(page) {
-      await page.getByRole('tab', {name: 'Pricing & stock'}).click()
+      await openTab(page, 'Preview')
+      await openTab(page, 'Pricing & stock')
+      await page.getByText('Units in stock').waitFor()
     }
   },
   {
     name: 'dashboard-references',
     alt: 'The references panel listing the pages that link to this product',
     hash: `/entry/demo/pages:en/${ferris}`,
+    ready: page => page.getByRole('tab', {name: 'References'}),
     async prepare(page) {
-      await page.getByRole('tab', {name: 'References'}).click()
+      await openTab(page, 'References')
+      await page.getByText(/references in other languages/).waitFor()
     }
   },
   {
     name: 'dashboard-history',
     alt: 'The history panel listing earlier published versions of the product',
     hash: `/entry/demo/pages:en/${ferris}`,
+    ready: page => page.getByRole('tab', {name: 'History'}),
     async prepare(page) {
-      await page.getByRole('tab', {name: 'History'}).click()
+      await openTab(page, 'History')
+      await page.getByText('Previous versions').waitFor()
     }
   },
   // Four demo users leave a full window mostly empty, use a smaller one
@@ -97,30 +174,43 @@ const shots: Array<Shot> = [
     name: 'dashboard-roles',
     alt: 'The users screen with an admin, editor, translator and viewer, each with their role',
     hash: '/users',
-    viewport: {width: 1200, height: 420}
+    viewport: {width: 1280, height: 400},
+    ready: page => page.getByText('Viewer', {exact: true}).first()
   },
   {
     name: 'dashboard-home-builder',
     alt: 'The home page built from blocks, with the hero block open and the page previewed beside it',
     hash: `/entry/demo/pages:en/${home}`,
+    ready: page => page.getByRole('tab', {name: 'Preview'}),
     async prepare(page) {
-      await page.getByRole('tab', {name: 'Preview'}).click()
+      await openTab(page, 'Preview')
+      await page.getByText('Shop the collection').last().waitFor()
     }
   },
   {
     name: 'dashboard-media',
     alt: 'The media library showing a grid of product and interior photos',
-    hash: '/entry/demo/media'
+    hash: '/entry/demo/media',
+    ready: page => page.getByRole('grid', {name: 'Explorer entries'})
   },
   {
     name: 'dashboard-search',
     alt: 'Searching all content for "dining", showing matching products, a collection, an article and images',
     hash: `/entry/demo/pages:en/${ferris}`,
+    // Six results fill two rows of cards, a shorter window keeps the dialog
+    // from showing mostly empty space
+    viewport: {width: 1280, height: 600},
+    keepFocus: true,
+    ready: page => page.getByRole('button', {name: 'Search entries'}),
     async prepare(page) {
+      // Search opens from the icon button in the sidebar or with ⌘K
       await page.getByRole('button', {name: 'Search entries'}).click()
-      const dialog = page.getByRole('dialog')
-      await dialog.getByRole('radio', {name: 'Card view'}).click()
-      await dialog.getByRole('searchbox').fill('dining')
+      const dialog = page.getByRole('dialog', {name: 'Search entries'})
+      const cards = dialog.getByRole('radio', {name: 'Card view'})
+      await cards.click()
+      await expectAttribute(cards, 'aria-checked', 'true')
+      await dialog.getByRole('combobox', {name: 'Search'}).fill('dining')
+      await dialog.getByText('Inside our Ghent workshop').waitFor()
     }
   }
 ]
@@ -129,7 +219,9 @@ const baseUrl = process.env.SCREENSHOTS_BASE_URL ?? 'http://localhost:3000'
 const mcpUrl = process.env.ALINEA_MCP_URL ?? 'http://localhost:4500/mcp'
 const webDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const outDir = path.join(webDir, '.cache/screenshots')
-const defaultViewport = {width: 1600, height: 1000}
+// A laptop sized window, small enough that the interface reads well when the
+// capture is scaled down on the site
+const defaultViewport = {width: 1280, height: 800}
 const maxBytes = 500 * 1024
 const mediaFolder = 'Screenshots'
 
@@ -140,9 +232,10 @@ const captureCss = `
 `
 
 /** Waits until the dashboard shows no loaders, images and fonts are loaded
- * and the DOM stopped changing */
+ * and the DOM stopped changing. The dev server keeps connections open while
+ * it compiles, so this checks the page rather than waiting for network idle */
 async function settle(page: Page) {
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('load')
   await page.waitForFunction(
     () => {
       const busy = document.querySelector(
@@ -191,7 +284,7 @@ async function settle(page: Page) {
 
 /** Moves the pointer off the page and clears focus rings */
 async function calm(page: Page, keepFocus: boolean) {
-  await page.mouse.move(defaultViewport.width - 1, 0)
+  await page.mouse.move(page.viewportSize()!.width - 1, 0)
   await page.mouse.move(-1, -1)
   if (!keepFocus)
     await page.evaluate(() => {
@@ -245,15 +338,23 @@ async function capture(
     await page.addInitScript(() => sessionStorage.clear())
     await page.goto(`${baseUrl}/demo?screenshot#${shot.hash}`)
     await page.addStyleTag({content: captureCss})
-    await page.locator('[data-slot="demo-reset"]').waitFor({state: 'detached'})
+    try {
+      await shot.ready(page).waitFor({timeout: 60_000})
+    } catch (error) {
+      throw new Error(
+        `${shot.name}: the dashboard did not render at ${page.url()}, ` +
+          'check the dev server for build errors',
+        {cause: error}
+      )
+    }
     await settle(page)
     if (shot.prepare) {
       await shot.prepare(page)
       await settle(page)
     }
-    await calm(page, shot.name === 'dashboard-search')
+    await calm(page, shot.keepFocus ?? false)
     await settle(page)
-    const png = await page.screenshot({animations: 'disabled'})
+    const png = await page.screenshot({animations: 'disabled', clip: shot.clip})
     const webp = await toWebp(encoder, png)
     const file = path.join(outDir, fileName(shot.name, scheme))
     await writeFile(file, webp)
