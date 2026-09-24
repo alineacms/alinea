@@ -148,7 +148,7 @@ const bundleTs: Plugin = {
 // Public entry points must not expose react-aria or allotment in their types:
 // consumers do not have them installed and they stay implementation details
 // we bundle.
-const publicTypeEntries = ['components']
+const publicTypeEntries = ['components', 'cms']
 const internalTypePackages =
   /^(react-aria-components|react-aria|react-stately|allotment|@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/)/
 

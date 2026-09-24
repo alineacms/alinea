@@ -19,7 +19,7 @@ export type Options<F> = Expand<
 export interface CreateConfig<Value, Options> {
   label: string
   options: Options
-  view: View<{field: Field<Value, Value, (value: Value) => void, Options>}>
+  view: View<{field: Create<Value, Options>}>
   defaultValue?: () => Value
   searchableText?: (value: Value) => string
 }

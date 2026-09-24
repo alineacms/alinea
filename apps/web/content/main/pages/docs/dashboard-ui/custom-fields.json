@@ -186,16 +186,25 @@
       "content": [
         {
           "_type": "text",
-          "text": "The view receives the field as its `field` prop. Hooks from `alinea/dashboard/hooks` read and write its value, and `Field` from `alinea/components` renders the label, help text and error like the built-in fields do:"
+          "text": "The view receives the field as its `field` prop. Hooks from `alinea/cms` read and write its value, and `FieldChrome` renders the label, help text, shared badge and validation error around your control, like the built-in fields do:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2nv09c35sDr2QrQy3epoEKPrlWj",
-      "code": "import {Field} from 'alinea/components'\nimport {\n  useField,\n  useFieldError,\n  useFieldOptions\n} from 'alinea/dashboard/hooks'\nimport {useId} from 'react'\nimport type {RangeField} from './Range'\n\ninterface RangeViewProps {\n  field: RangeField\n}\n\nexport default function RangeView({field}: RangeViewProps) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  const error = useFieldError(field)\n  const id = useId()\n  const {min = 0, max = 10} = options\n  return (\n    <Field\n      htmlFor={id}\n      label={options.label}\n      description={options.help}\n      error={error}\n      required={options.required}\n      readOnly={options.readOnly}\n      shared={options.shared}\n    >\n      <input\n        id={id}\n        type=\"range\"\n        min={min}\n        max={max}\n        value={value ?? min}\n        disabled={options.readOnly}\n        onChange={event => setValue(Number(event.target.value))}\n      />\n    </Field>\n  )\n}",
+      "code": "import {\n  FieldChrome,\n  type FieldViewProps,\n  useField,\n  useFieldOptions\n} from 'alinea/cms'\nimport {useId} from 'react'\nimport type {RangeField} from './Range'\n\nexport default function RangeView({field}: FieldViewProps<RangeField>) {\n  const [value, setValue] = useField(field)\n  const {min = 0, max = 10, readOnly} = useFieldOptions(field)\n  const id = useId()\n  return (\n    <FieldChrome field={field} htmlFor={id}>\n      <input\n        id={id}\n        type=\"range\"\n        min={min}\n        max={max}\n        value={value ?? min}\n        disabled={readOnly}\n        onChange={event => setValue(Number(event.target.value))}\n      />\n    </FieldChrome>\n  )\n}",
       "fileName": "fields/Range.view.tsx",
       "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`FieldChrome` takes the `label`, the `help` option, `required`, `readOnly` and `shared` from the field's options and the message from its validation. Pass any of these as a prop to override it."
+        }
+      ]
     },
     {
       "_type": "paragraph",
@@ -264,7 +273,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A path keeps dashboard code out of your site: your schema is imported by your pages and server components, and the view is only loaded by the dashboard. You can pass a component instead (`view: RangeView`), but then the component and the dashboard hooks it imports end up everywhere your schema is imported, including server components where they can't run. Use a path unless the field is only used in scripts."
+          "text": "A path keeps dashboard code out of your site: your schema is imported by your pages and server components, and the view is only loaded by the dashboard. You can pass a component instead (`view: RangeView`), but then the component and the `alinea/cms` hooks it imports end up everywhere your schema is imported, including server components where they can't run. Use a path unless the field is only used in scripts."
         }
       ]
     },
@@ -284,7 +293,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The form controls in "
+          "text": "`alinea/cms` holds what is tied to the CMS: the hooks, `FieldChrome` and the view prop types. The generic building blocks are in "
         },
         {
           "_type": "text",
@@ -300,14 +309,14 @@
         },
         {
           "_type": "text",
-          "text": " take the same `label`, `description`, `error`, `required`, `readOnly` and `shared` props and render their own `Field` chrome, so a field built on one of them looks native:"
+          "text": ". Its form controls take the same `label`, `description`, `error`, `required`, `readOnly` and `shared` props and render their own chrome, so a field built on one of them looks native:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JkF1q6ppRJDRfbk9g75cYeO2o8",
-      "code": "import {Select, SelectItem} from 'alinea/components'\nimport {\n  useField,\n  useFieldError,\n  useFieldOptions\n} from 'alinea/dashboard/hooks'\nimport type {Priority, PriorityField} from './Priority'\n\ninterface PriorityViewProps {\n  field: PriorityField\n}\n\nexport function PriorityView({field}: PriorityViewProps) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  const error = useFieldError(field)\n  return (\n    <Select\n      label={options.label}\n      value={value}\n      onValueChange={next => setValue((next ?? 'normal') as Priority)}\n      error={error}\n      required={options.required}\n      readOnly={options.readOnly}\n      shared={options.shared}\n    >\n      <SelectItem value=\"low\">Low</SelectItem>\n      <SelectItem value=\"normal\">Normal</SelectItem>\n      <SelectItem value=\"high\">High</SelectItem>\n    </Select>\n  )\n}",
+      "code": "import {\n  type FieldViewProps,\n  useField,\n  useFieldError,\n  useFieldOptions\n} from 'alinea/cms'\nimport {Select, SelectItem} from 'alinea/components'\nimport type {Priority, PriorityField} from './Priority'\n\nexport function PriorityView({field}: FieldViewProps<PriorityField>) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  const error = useFieldError(field)\n  return (\n    <Select\n      label={options.label}\n      value={value}\n      onValueChange={next => setValue((next ?? 'normal') as Priority)}\n      error={error}\n      required={options.required}\n      readOnly={options.readOnly}\n      shared={options.shared}\n    >\n      <SelectItem value=\"low\">Low</SelectItem>\n      <SelectItem value=\"normal\">Normal</SelectItem>\n      <SelectItem value=\"high\">High</SelectItem>\n    </Select>\n  )\n}",
       "fileName": "fields/Priority.view.tsx",
       "language": "tsx"
     },
@@ -324,7 +333,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Hooks"
+          "text": "The alinea/cms API"
         }
       ],
       "_anchor": "hooks"
@@ -334,7 +343,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "`alinea/dashboard/hooks` works in field views and in other components the dashboard renders:"
+          "text": "Everything in `alinea/cms` works in field views and in the other components the dashboard renders: `Field.view` sections and custom type and root views."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Field hooks, for the field passed to a view or another field of the same entry, list row or object:"
         }
       ]
     },
@@ -405,7 +423,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useSiblingFieldValue(key)`: the value of another field in the same entry, list row or object, by its key."
+                  "text": "`useFieldKey(field)`: the key the field is stored under, such as `'title'`."
                 }
               ]
             }
@@ -419,7 +437,49 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useEntry()`: the entry being edited, with its `title`, `url`, `locale`, `status` and the stored `data`. `null` outside an entry."
+                  "text": "`useSiblingFieldValue(key)`: the value of another field in the same entry, list row or object, by its key."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entry and dashboard hooks:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useEntry()`: the entry being edited, with its `id`, `title`, `url`, `workspace`, `root`, `locale`, `status` and the stored `data`. `null` outside an entry."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useLocale()`: the locale being edited, or `null` for content without translations."
                 }
               ]
             }
@@ -455,7 +515,7 @@
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "3JkF1nH7ADvUy3oZPXAD0sYiaH2",
+                      "_id": "3JkF1re4uJUymfZmO3VpGErxuFx",
                       "_link": "entry",
                       "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
                     }
@@ -464,6 +524,90 @@
                 {
                   "_type": "text",
                   "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useNavigate()`: returns a function that opens an entry or root in the dashboard: `navigate({workspace, root, entryId})`. The editor is asked to confirm first when there are unsaved changes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`usePreviewMetadata()`: the title, description and other metadata the live preview reports for the current page."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Components and types:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`FieldChrome`: the label, help text and error of a field around your own control."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`EditField`, `EditFields`: render a field, or a record of fields, with the view it is configured with, for example to lay out existing fields in a `Field.view` section."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`FieldViewProps<F>`, `SectionViewProps`, `TypeViewProps`, `RootViewProps`: the props the dashboard passes to a field view, a `Field.view` component, a type's `view` and a root's `view`."
                 }
               ]
             }
@@ -501,7 +645,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JkF1qRklf6emNbglBotdOHkqUs",
-      "code": "import {Field, Link} from 'alinea/components'\nimport {useEntry} from 'alinea/dashboard/hooks'\n\nexport function ProductUrls() {\n  const entry = useEntry()\n  if (!entry) return null\n  return (\n    <Field label=\"Public URL\" description=\"Where this product is published\">\n      <Link href={entry.url} target=\"_blank\">\n        {entry.url}\n      </Link>\n    </Field>\n  )\n}",
+      "code": "import {useEntry} from 'alinea/cms'\nimport {Field, Link} from 'alinea/components'\n\nexport function ProductUrls() {\n  const entry = useEntry()\n  if (!entry) return null\n  return (\n    <Field label=\"Public URL\" description=\"Where this product is published\">\n      <Link href={entry.url} target=\"_blank\">\n        {entry.url}\n      </Link>\n    </Field>\n  )\n}",
       "fileName": "fields/ProductUrls.view.tsx",
       "language": "tsx"
     },
@@ -536,7 +680,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useField` from `alinea/dashboard` returns `{value, mutator, options, label, error}`. Replace it with the tuple `useField` from `alinea/dashboard/hooks` and the separate `useFieldOptions` and `useFieldError`."
+                  "text": "`useField` from `alinea/dashboard` returns `{value, mutator, options, label, error}`. Replace it with the tuple `useField` from `alinea/cms` and the separate `useFieldOptions` and `useFieldError`. `useFieldValue`, `useFieldOptions`, `useFieldError` and `useFieldKey` also move to `alinea/cms`, and `useFieldMutator` becomes `useFieldSetter`."
                 }
               ]
             }
@@ -550,7 +694,35 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`InputLabel` from `alinea/dashboard` is now the `Field` component. It no longer shows `help` from `{...options}`: pass the help text as `description`."
+                  "text": "`InputLabel` from `alinea/dashboard` is now the `Field` component. It no longer shows `help` from `{...options}`: use `FieldChrome` from `alinea/cms`, which reads it from the field, or pass the help text to `Field` from `alinea/components` as `description`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useLocale`, `useGraph` and `useEntryEditor` from `alinea/dashboard/hook/*` become `useLocale`, `useGraph` and `useEntry` from `alinea/cms`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Hooks imported from `alinea/dashboard/hooks` still work, but that module is internal: import them from `alinea/cms`."
                 }
               ]
             }
@@ -628,7 +800,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196946,
+    "updatedAt": 1790234243,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

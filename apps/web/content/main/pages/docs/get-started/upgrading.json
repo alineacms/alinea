@@ -163,7 +163,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Custom field views and dashboard code: replace imports from `alinea/ui` and `alinea/dashboard` internals with `alinea/components`."
+                  "text": "Custom field views and dashboard code: import hooks from `alinea/cms` and components from `alinea/components` instead of `alinea/dashboard` and `alinea/ui`."
                 }
               ]
             }
@@ -655,7 +655,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`defaultToolbar(enableTables)` became `defaultToolbar({enableTables, enableImages})`, and toolbar button icons are components (or elements) instead of nodes."
+          "text": "`defaultToolbar(enableTables)` became `defaultToolbar({enableTables, enableImages})`, and toolbar button icons are components (or elements) instead of nodes. The toolbar presets, `defaultToolbar`, the `ToolbarButton` type and the default `extensions` are exported from `alinea/field/richtext` (`alinea/field/richtext/Toolbar` still works)."
         }
       ]
     },
@@ -915,7 +915,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`alinea/ui` now only exports the `RichText` renderer (and the deprecated `HStack`/`VStack` and `imageBlurUrl`). Its `Button`, `Chip`, `Icon`, `Loader`, `Typo` and other components were removed, as were the files behind deep imports like `alinea/ui/Button`. Use the public component library instead, it is what the dashboard itself is built from:"
+          "text": "`alinea/ui` now only exports the `RichText` renderer and the `imageBlurUrl` helper (and the deprecated `HStack`/`VStack`). Its `Button`, `Chip`, `Icon`, `Loader`, `Typo` and other components were removed, as were the files behind deep imports like `alinea/ui/Button`. Use the public component library instead, it is what the dashboard itself is built from:"
         }
       ]
     },
@@ -967,7 +967,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Field views are still referenced by path (`view: '@/fields/Range.view'`) or passed as a component. From `alinea/dashboard`, `useField` and its related hooks still work but are deprecated. `InputLabel` is now an alias of the `Field` component: it takes `label`, `description`, `error`, `required`, `disabled`, `readOnly`, `icon` and `shared`. Its 1.7 props `help`, `width`, `inline`, `size` and the fold props are gone, so help text passed through `{...options}` is no longer shown: pass it as `description`. The form atoms (`useForm`, `FormProvider`, `FormRow` and so on) were removed from `alinea/dashboard`. See "
+          "text": "Field views are still referenced by path (`view: '@/fields/Range.view'`) or passed as a component. The hooks and helpers for custom views now come from one entry point, `alinea/cms`. From `alinea/dashboard`, `useField` and its related hooks still work but are deprecated: the new `useField` returns a `[value, setValue]` tuple, and the options and error have their own hooks:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlSgcHRBpNNFYltBokze3iRySs",
+      "code": "// 1.7\nimport {useField} from 'alinea/dashboard'\nconst {value, mutator, options, error} = useField(field)\n\n// 2.0\nimport {useField, useFieldError, useFieldOptions} from 'alinea/cms'\nconst [value, setValue] = useField(field)\nconst options = useFieldOptions(field)\nconst error = useFieldError(field)",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`useFieldValue`, `useFieldOptions`, `useFieldError` and `useFieldKey` move to `alinea/cms` too and `useFieldMutator` becomes `useFieldSetter`. Deep imports of dashboard hooks move as well: `useLocale` and `useGraph` from `alinea/dashboard/hook/*` are exported from `alinea/cms`, and `useEntryEditor` is replaced by `useEntry`. `alinea/dashboard/hooks` is internal now. `InputLabel` is now an alias of the `Field` component: it takes `label`, `description`, `error`, `required`, `disabled`, `readOnly`, `icon` and `shared`. Its 1.7 props `help`, `width`, `inline`, `size` and the fold props are gone, so help text passed through `{...options}` is no longer shown: pass it as `description`, or replace it with `FieldChrome` from `alinea/cms`, which reads the label, help text and error from the field. The form atoms (`useForm`, `FormProvider`, `FormRow` and so on) were removed from `alinea/dashboard`. See "
         },
         {
           "_type": "text",
@@ -1109,7 +1125,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790195602,
+    "updatedAt": 1790234273,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

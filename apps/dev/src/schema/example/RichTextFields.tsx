@@ -11,7 +11,7 @@ import {
   lists,
   quotes,
   tables
-} from 'alinea/field/richtext/Toolbar'
+} from 'alinea/field/richtext'
 
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {

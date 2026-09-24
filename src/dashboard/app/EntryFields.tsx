@@ -69,9 +69,14 @@ const EntryFormSection = memo(function EntryFormSection({
 })
 
 export interface EditFieldsProps {
+  /** The fields and sections to render, keyed by name */
   fields: Record<string, Field | Section>
 }
 
+/**
+ * Renders a set of fields and sections with their configured views, laid out
+ * like the default entry form (including each field's `width`).
+ */
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   return (
     <div className={styles.EditFields()}>
@@ -92,7 +97,8 @@ export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   )
 })
 
-interface EditFieldProps {
+export interface EditFieldProps {
+  /** The field to render, it must belong to the entry, row or object being edited */
   field: Field
 }
 
@@ -100,6 +106,10 @@ interface FieldLayoutOptions extends FieldOptions<unknown> {
   width?: number
 }
 
+/**
+ * Renders a field with its configured view, as the default entry form does.
+ * Renders nothing for hidden fields.
+ */
 export const EditField = memo(function EditField({field}: EditFieldProps) {
   const options = useFieldOptions(field) as FieldLayoutOptions
   const View = useFieldView(field)

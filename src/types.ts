@@ -1,8 +1,19 @@
+export type {Filter} from '#/core/Filter.js'
+export type {Graph, GraphQuery} from '#/core/Graph.js'
 export type {Infer} from '#/core/Infer.js'
+export type {ListRow} from '#/core/ListRow.js'
 export type {Root} from '#/core/Root.js'
 export type {Schema} from '#/core/Schema.js'
-export type {TextDoc} from '#/core/TextDoc.js'
-export type {Type} from '#/core/Type.js'
+export type {
+  BlockNode,
+  ElementNode,
+  ImageNode,
+  LinkMark,
+  Mark,
+  TextDoc,
+  TextNode
+} from '#/core/TextDoc.js'
+export type {EntryUrlMeta, Type} from '#/core/Type.js'
 export type {Workspace} from '#/core/Workspace.js'
 export type {EntryLink} from '#/field/link/EntryLink.js'
 export type {FileLink} from '#/field/link/FileLink.js'

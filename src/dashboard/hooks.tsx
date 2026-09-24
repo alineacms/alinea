@@ -1,3 +1,13 @@
+/**
+ * Internal dashboard hooks and scopes.
+ *
+ * Custom field and dashboard views should import the public hooks from
+ * `alinea/cms` instead. Importing `alinea/dashboard/hooks` directly is
+ * deprecated: this module also exposes dashboard internals (atoms, reactive
+ * nodes, editor models) that change without notice.
+ *
+ * @internal
+ */
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -23,7 +33,13 @@ import type {
   PropsWithChildren,
   SetStateAction
 } from 'react'
-import {createContext, createElement, useContext, useMemo} from 'react'
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useMemo
+} from 'react'
 import {
   alineaDevAtom,
   clientAtom,
@@ -43,6 +59,7 @@ import type {EntryAtoms, EntryLocaleAtoms} from './atoms/entry.js'
 import type {Page} from './atoms/nav.js'
 import type {RootAtoms} from './atoms/root.js'
 import type {ReactiveNode} from './atoms/ReactiveNode.js'
+import {routeAtom} from './atoms/nav.js'
 import {previewMetadataAtom} from './atoms/preview.js'
 import {policyAtom, userAtom} from './atoms/user.js'
 
@@ -132,9 +149,11 @@ export function useDashboard(): Dashboard {
   return dashboard
 }
 /**
- * Returns the active dashboard policy.
+ * Returns the permissions of the signed-in user. Check access with
+ * `policy.get({workspace, root, id, ...})`, which returns flags such as
+ * `read`, `update` and `publish`.
  */
-export function usePolicy() {
+export function usePolicy(): Policy {
   return useAtomValueRaw(policyAtom)
 }
 
@@ -146,7 +165,9 @@ export function useUser(): User | null {
 }
 
 /**
- * Returns the dashboard graph database for direct read queries.
+ * Returns the dashboard's content graph. Query it with the same API as the
+ * `cms` instance, for example `graph.find({type: Article})`. Changes made
+ * through it are committed with the permissions of the signed-in user.
  */
 export function useGraph(): WriteableGraph {
   return useAtomValueRaw(graphAtom)
@@ -286,7 +307,8 @@ export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
 }
 
 /**
- * Returns the current stored value for a field.
+ * Returns the stored value of a field in the entry, list row or object being
+ * edited. Use it in a view that only reads the value.
  */
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -296,7 +318,11 @@ export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * Returns the current stored field value and a setter for that value.
+ * Returns the stored value of a field and a setter, like `useState`. The
+ * setter also accepts an updater function that receives the current value.
+ *
+ * @example
+ * const [value, setValue] = useField(field)
  */
 export function useField<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -310,7 +336,8 @@ export function useField<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * Returns a setter for the current stored field value.
+ * Returns only the setter of a field's stored value, so the component does
+ * not re-render when the value changes.
  */
 export function useFieldSetter<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -320,7 +347,8 @@ export function useFieldSetter<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * Returns the dashboard storage key for a field.
+ * Returns the key a field is stored under in the entry, list row or object
+ * being edited, for example `'title'`.
  */
 export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -330,7 +358,9 @@ export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * Returns the resolved dashboard options for a field.
+ * Returns the options of a field with the dashboard state applied: `readOnly`
+ * is also `true` when the user may not edit the field or the entry, and
+ * `hidden` reflects the user's permissions. Includes the field's `label`.
  */
 export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -340,7 +370,8 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * Returns the current validation error for a field, if any.
+ * Returns the validation message of a field (from `required` or `validate`),
+ * or `undefined` while the value is valid.
  */
 export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
@@ -360,7 +391,8 @@ export function useFieldView<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * Returns the current value for a sibling field by storage key.
+ * Returns the stored value of another field in the same entry, list row or
+ * object, by its key.
  */
 export function useSiblingFieldValue(key: string) {
   const editor = useEditor()
@@ -386,6 +418,53 @@ function useEntryModel() {
 export function useEntry(): EntryRecord<Record<string, unknown>> | null {
   const scope = useEntryModel()
   return scope?.selectedEntry ?? null
+}
+
+/**
+ * Returns the current locale of the dashboard: the locale of the entry being
+ * edited, or the selected locale of the current root. `null` for content
+ * without translations or outside the dashboard layout.
+ */
+export function useLocale(): string | null {
+  const entry = useContext(entryContext)
+  const dashboard = useContext(dashboardContext)
+  if (entry) return entry.selectedEntry.locale
+  return dashboard?.page.locale ?? null
+}
+
+/** A place in the dashboard to navigate to */
+export interface DashboardLocation {
+  /** Name of the workspace */
+  workspace: string
+  /** Name of the root */
+  root: string
+  /** Id of the entry to open, leave out to open the root */
+  entryId?: string
+  /** Locale to open, for roots with translations */
+  locale?: string | null
+}
+
+/**
+ * Returns a function that navigates the dashboard to an entry or root. The
+ * user is asked to confirm first when the current entry has unsaved changes.
+ *
+ * @example
+ * const navigate = useNavigate()
+ * navigate({workspace: entry.workspace, root: entry.root, entryId: entry.id})
+ */
+export function useNavigate(): (location: DashboardLocation) => void {
+  const setRoute = useSetAtom(routeAtom)
+  return useCallback(
+    (location: DashboardLocation) =>
+      setRoute({
+        page: 'entry',
+        workspace: location.workspace,
+        root: location.root,
+        entry: location.entryId,
+        locale: location.locale ?? undefined
+      }),
+    [setRoute]
+  )
 }
 
 /**

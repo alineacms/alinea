@@ -32,6 +32,65 @@
       ]
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Custom dashboard code imports from two entry points:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alinea/components`: generic UI building blocks, such as buttons, inputs, dialogs and tables. They don't know about your content and work anywhere inside the dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alinea/cms`: what is tied to the CMS, such as the hooks that read and write field values, the entry being edited and the signed-in user, `FieldChrome` and the prop types of field, type and root views. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "the alinea/cms API",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JlSsIfoORPSTzVmlcGVHt1CFfU",
+                      "_link": "entry",
+                      "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+                      "_anchor": "hooks"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " in Custom fields."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "_id": "3JjflViXwJCI3t5K6eARQYBLHzu",
       "_type": "ImageBlock",
       "image": {
@@ -60,7 +119,7 @@
     {
       "_id": "3JjNWim7SkrxztPeoQ9o58qXo6U",
       "_type": "CodeBlock",
-      "code": "import {Select, SelectItem} from 'alinea/components'\nimport {useField, useFieldOptions} from 'alinea/dashboard/hooks'\nimport type {Priority, PriorityField} from './Priority'\n\nexport function PriorityView({field}: {field: PriorityField}) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  return (\n    <Select\n      label={options.label}\n      value={value}\n      onValueChange={next => setValue((next ?? 'normal') as Priority)}\n      readOnly={options.readOnly}\n    >\n      <SelectItem value=\"low\">Low</SelectItem>\n      <SelectItem value=\"normal\">Normal</SelectItem>\n      <SelectItem value=\"high\">High</SelectItem>\n    </Select>\n  )\n}",
+      "code": "import {type FieldViewProps, useField, useFieldOptions} from 'alinea/cms'\nimport {Select, SelectItem} from 'alinea/components'\nimport type {Priority, PriorityField} from './Priority'\n\nexport function PriorityView({field}: FieldViewProps<PriorityField>) {\n  const [value, setValue] = useField(field)\n  const options = useFieldOptions(field)\n  return (\n    <Select\n      label={options.label}\n      value={value}\n      onValueChange={next => setValue((next ?? 'normal') as Priority)}\n      readOnly={options.readOnly}\n    >\n      <SelectItem value=\"low\">Low</SelectItem>\n      <SelectItem value=\"normal\">Normal</SelectItem>\n      <SelectItem value=\"high\">High</SelectItem>\n    </Select>\n  )\n}",
       "fileName": "fields/Priority.view.tsx",
       "language": "tsx",
       "compact": false
@@ -248,7 +307,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`Field`, `FieldLabel`, `FieldDescription`, `FieldError`, `FieldSharedBadge`: the label, help text and error around a control. Use it to wrap your own inputs."
+                  "text": "`Field`, `FieldLabel`, `FieldDescription`, `FieldError`, `FieldSharedBadge`: the label, help text and error around a control. Use it to wrap your own inputs, or use `FieldChrome` from `alinea/cms` to fill it from a field's options."
                 }
               ]
             }
@@ -958,7 +1017,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196946,
+    "updatedAt": 1790234365,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

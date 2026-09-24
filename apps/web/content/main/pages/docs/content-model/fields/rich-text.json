@@ -402,14 +402,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "By default the toolbar has heading styles, formatting, alignment, lists, links, anchors, quotes and a horizontal rule, plus tables and images when you enable them. Build your own from the presets in `alinea/field/richtext/Toolbar`: each is a group of buttons, and groups can be picked apart."
+          "text": "By default the toolbar has heading styles, formatting, alignment, lists, links, anchors, quotes and a horizontal rule, plus tables and images when you enable them. Build your own from the presets in `alinea/field/richtext`: each is a group of buttons, and groups can be picked apart."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JkF00mGOWe6NG6j3UltqD3cJr8",
-      "code": "import {Field} from 'alinea'\nimport {formatting, links, lists} from 'alinea/field/richtext/Toolbar'\n\nconst {bold, italic, clear} = formatting.group\n\n// A small editor for short texts: no headings, tables or images\nexport const summary = Field.richText('Summary', {\n  toolbar: {\n    formatting: {group: {bold, italic, clear}},\n    lists,\n    links\n  }\n})",
+      "code": "import {Field} from 'alinea'\nimport {formatting, links, lists} from 'alinea/field/richtext'\n\nconst {bold, italic, clear} = formatting.group\n\n// A small editor for short texts: no headings, tables or images\nexport const summary = Field.richText('Summary', {\n  toolbar: {\n    formatting: {group: {bold, italic, clear}},\n    lists,\n    links\n  }\n})",
       "fileName": "",
       "language": "tsx"
     },
@@ -418,7 +418,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The presets are `headings`, `formatting`, `alignment`, `lists`, `links`, `anchors`, `images`, `tables`, `quotes` and `inserts`. `defaultToolbar({enableTables, enableImages})` returns the default layout, so you can extend it. The toolbar only controls buttons: pasted content can still contain other formatting, so trim the `extensions` too if an editor must not produce it."
+          "text": "The presets are `headings`, `formatting`, `alignment`, `lists`, `links`, `anchors`, `images`, `tables`, `quotes` and `inserts`. `defaultToolbar({enableTables, enableImages})` returns the default layout, so you can extend it. Type your own buttons with `ToolbarButton`. The same module exports the built-in Tiptap extensions as `extensions`, to extend one in your `extensions` option, for example `extensions.BulletList.extend({...})`. The toolbar only controls buttons: pasted content can still contain other formatting, so trim the `extensions` too if an editor must not produce it."
         }
       ]
     }
@@ -436,7 +436,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196931,
+    "updatedAt": 1790234417,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
