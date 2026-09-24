@@ -21,13 +21,15 @@ import {isRecord} from '#/core/util/Objects.js'
 
 /** Include data attributes produced by custom extensions in the stored document. */
 export function editorDocument(editor: Editor): JSONContent {
+  // The extension manager recomputes this list on every access
+  const attributes = editor.extensionManager.attributes
   function serialize(node: ProseMirrorNode): JSONContent {
     const content: JSONContent = node.toJSON()
     if (!node.isText) {
       const dataAttributes = Object.fromEntries(
-        Object.entries(
-          getRenderedAttributes(node, editor.extensionManager.attributes)
-        ).filter(([key, value]) => key.startsWith('data-') && value != null)
+        Object.entries(getRenderedAttributes(node, attributes)).filter(
+          ([key, value]) => key.startsWith('data-') && value != null
+        )
       )
       if (Object.keys(dataAttributes).length)
         content.attrs = {...content.attrs, ...dataAttributes}
