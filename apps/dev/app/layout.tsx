@@ -6,7 +6,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <body>
         {children}
 
-        <cms.previews widget />
+        <cms.previews widget stats />
       </body>
     </html>
   )

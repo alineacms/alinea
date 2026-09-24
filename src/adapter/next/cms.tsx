@@ -28,6 +28,8 @@ import {syncIfStale} from './syncCheck.js'
 
 export interface PreviewProps {
   widget?: boolean
+  /** Show the queries and syncs of each draft render in the widget */
+  stats?: boolean
   workspace?: string
   root?: string
 }
@@ -292,7 +294,12 @@ export class NextCMS<
     return client.prepareUpload(file)
   }
 
-  previews = async ({widget, workspace, root}: PreviewProps) => {
+  previews = async ({
+    widget,
+    stats: showStats,
+    workspace,
+    root
+  }: PreviewProps) => {
     const stats = await this.#renderStats()
     if (!stats) return null
     const {default: dynamic} = await import('next/dynamic.js')
@@ -309,7 +316,7 @@ export class NextCMS<
       <NextPreviews
         dashboardUrl={dashboardUrl.href}
         widget={widget}
-        stats={widget ? stats.settled() : undefined}
+        stats={widget && showStats ? stats.settled() : undefined}
         workspace={workspace}
         root={root}
       />
