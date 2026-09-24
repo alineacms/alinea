@@ -14,13 +14,13 @@ import {
   type CSSModuleExports,
   type CSSModuleReference
 } from 'lightningcss'
-import {spawn} from 'node:child_process'
 import fs from 'node:fs'
 import {builtinModules} from 'node:module'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import sade from 'sade'
 import {sync} from 'symlink-dir'
+import {runForwarded, watchParent} from './src/cli/util/RunForwarded.js'
 
 sync('.', 'node_modules/alinea')
 
@@ -411,6 +411,10 @@ function jsEntry({
       filter: /node_modules[\\/]use-sync-external-store[\\/].*\.js$/,
       only: ['react']
     }),
+    commonjs({
+      filter: /node_modules[\\/]tree-kill[\\/].*\.js$/,
+      only: ['child_process']
+    }),
     cssModulesJsPlugin,
     internalPlugin,
     externalize,
@@ -539,20 +543,27 @@ function forwardCmd() {
   return command.join(' ')
 }
 
+let buildContext: BuildContext | undefined
+
 const runPlugin: Plugin = {
   name: 'run',
   setup(build) {
+    const cmd = forwardCmd()
+    if (!cmd) return
+    // Exit if our parent disappears before the command is started
+    const stopWatching = watchParent(() => process.exit(129))
     let isStarted = false
     build.onEnd(res => {
       if (isStarted) return
       if (res.errors.length > 0) return
-      const cmd = forwardCmd()
-      if (!cmd) return
-      spawn(cmd, {
-        stdio: 'inherit',
-        shell: true
-      })
       isStarted = true
+      stopWatching()
+      // Stop watching once the forwarded command exits
+      runForwarded(cmd, process.env, code => {
+        Promise.resolve(buildContext?.dispose()).finally(() =>
+          process.exit(code)
+        )
+      })
     })
   }
 }
@@ -643,6 +654,7 @@ async function build({
     sourcemap: Boolean(watch),
     plugins
   })
+  buildContext = context
 
   return watch
     ? context.watch()
