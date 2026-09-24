@@ -123,6 +123,7 @@ export function createServerHandler(
       return new Response('Internal server error', {status: 500})
     }
   }
+  options.cms.attachHandler({handle, db})
   return handle
 }
 

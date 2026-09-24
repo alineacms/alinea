@@ -1,0 +1,419 @@
+{
+  "_id": "3JmWI2BYqziNE5ZSkrKk6YBhJgf",
+  "_type": "Doc",
+  "_index": "Zx",
+  "title": "Astro",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea/astro` runs Alinea in Astro sites that render pages on demand. A middleware serves the dashboard and the Alinea API and lets your pages query drafts, and an integration refreshes live previews on pages that use the client router. It is built on "
+        },
+        {
+          "_type": "text",
+          "text": "Node servers",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JmWI2i4vlaa7oDXCOEbsPkSS4s",
+              "_link": "entry",
+              "_entry": "3JmSMRNMPcr7WzcnJCqthSz3k7p"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Install"
+        }
+      ],
+      "_anchor": "install"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea needs server output with a Node adapter, so add `@astrojs/node` if your site does not have an adapter yet, then install Alinea:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI2ITxZx3BXo75FWuxsMugbS",
+      "code": "npx astro add node\nnpm install alinea",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add the Alinea integration to your Astro config:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI2h0Ig77jBaUYueoG11NPgm",
+      "code": "import node from '@astrojs/node'\nimport {defineConfig} from 'astro/config'\nimport {alinea} from 'alinea/astro'\n\nexport default defineConfig({\n  output: 'server',\n  adapter: node({mode: 'standalone'}),\n  integrations: [alinea()]\n})",
+      "fileName": "astro.config.mjs",
+      "language": "js",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Create the CMS"
+        }
+      ],
+      "_anchor": "create-the-cms"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Create your CMS in `src/cms.ts` with `createCMS` from `alinea/server`. The Alinea CLI bundles this file for the dashboard too, and replaces that import with a version for the browser. Astro's dev server runs on port 4321:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI6vlT9mozs1DWkWmnuCyaLI",
+      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/server'\n\nexport const Page = Config.document('Page', {\n  fields: {\n    body: Field.text('Body', {multiline: true})\n  }\n})\n\nexport const cms = createCMS({\n  schema: {Page},\n  workspaces: {\n    main: Config.workspace('Example', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {contains: ['Page']}),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:4321',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
+      "fileName": "src/cms.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add the middleware"
+        }
+      ],
+      "_anchor": "add-the-middleware"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Export the Alinea middleware as `onRequest` from `src/middleware.ts`. It answers the handler route, media files under `/admin/file/` and the dashboard, proxies the dashboard to the Alinea CLI during development and renders every other page within its request, so queries see drafts when an editor previews the page:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI59r147aL5LkOnESiZKe8ZL",
+      "code": "import {createMiddleware} from 'alinea/astro'\nimport {cms} from './cms'\n\nexport const onRequest = createMiddleware(cms)",
+      "fileName": "src/middleware.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Combine it with middleware of your own through `sequence`, with Alinea first. Pass options instead of the CMS to configure the "
+        },
+        {
+          "_type": "text",
+          "text": "backend",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JmWI6WaIQh0WgVhXCBKvIB2av6",
+              "_link": "entry",
+              "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", commit hooks or previews:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI6a4LIOZQxddFbZiqjqi43Z",
+      "code": "import {sequence} from 'astro:middleware'\nimport {createMiddleware} from 'alinea/astro'\nimport {cms} from './cms'\nimport {auth} from './auth'\n\nconst alinea = createMiddleware({\n  cms,\n  previews: {widget: true},\n  afterCommit(context) {\n    // Purge caches here\n  }\n})\n\nexport const onRequest = sequence(alinea, auth)",
+      "fileName": "src/middleware.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query content"
+        }
+      ],
+      "_anchor": "query-content"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query the CMS in the frontmatter of your pages and components. There is no request to pass along: the middleware runs each render within its request."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI23KWz5lgPvEJlRrZhgxDrq",
+      "code": "---\nimport Layout from '../layouts/Layout.astro'\nimport {cms, Page} from '../cms'\n\nconst page = await cms.first({type: Page, url: `/${Astro.params.slug}`})\nif (!page) return new Response('Not found', {status: 404})\n---\n\n<Layout title={page.title}>\n  <h1>{page.title}</h1>\n  <p>{page.body}</p>\n</Layout>",
+      "fileName": "src/pages/[slug].astro",
+      "language": "astro",
+      "compact": false
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI6qJ5D8pQfBTBIspP6lSI9B",
+      "code": "---\nimport {Query} from 'alinea'\nimport {cms, Page} from '../cms'\n\nconst pages = await cms.find({\n  type: Page,\n  select: {title: Query.title, url: Query.url}\n})\n---\n\n<nav>\n  {pages.map(page => <a href={page.url}>{page.title}</a>)}\n</nav>",
+      "fileName": "src/components/Nav.astro",
+      "language": "astro",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Develop and build"
+        }
+      ],
+      "_anchor": "develop-and-build"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Run Astro through the Alinea CLI. It generates your content database, starts the dashboard and passes its location to Astro in environment variables:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI46OVR6ZzUJLKlsIs22I64R",
+      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea dev -- astro dev\",\n    \"build\": \"alinea build -- astro build\",\n    \"start\": \"node dist/server/entry.mjs\"\n  }\n}",
+      "fileName": "package.json",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Open `http://localhost:4321/admin` to edit content, the integration prints this address when the dev server starts. `alinea build` writes the production dashboard to `public/admin.html` and `public/admin/` before Astro builds the site. These files are generated, so add them to `.gitignore`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Live previews"
+        }
+      ],
+      "_anchor": "live-previews"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The dashboard previews an entry by loading its page with a preview token. The handler turns that token into a signed draft cookie, and the middleware adds a small script to draft pages which receives the edits from the dashboard. It reloads the page on every change while keeping its scroll position."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pages that use Astro's `<ClientRouter />` refresh without a reload: the integration swaps in the updated page through the router, keeping the scroll position and the state of your scripts. Navigating within the preview keeps receiving edits. Add `previews: {widget: true}` to the middleware options to show the floating preview toolbar on draft pages, or `previews: false` to leave them untouched."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deploy"
+        }
+      ],
+      "_anchor": "deploy"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Deploy to a Node runtime, such as `@astrojs/node` or the Node runtime of your host. Pages query the SQLite database generated in `@alinea/generated`, so deploy `node_modules` with your build. Edge runtimes cannot open this database."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Set `ALINEA_API_KEY` in the production environment. The handler uses it to sign preview tokens and draft cookies, and to talk to its backend."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The handler saves edits as commits through "
+                },
+                {
+                  "_type": "text",
+                  "text": "Alinea Cloud or your own backend",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JmWI4s1Iw8pm6swvXBDY6qxDHY",
+                      "_link": "entry",
+                      "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ". Running servers sync their database with the handler, so published changes show without a redeploy."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Static output"
+        }
+      ],
+      "_anchor": "static-output"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With `output: 'static'` Astro prerenders your pages during `alinea build -- astro build`, querying the database generated just before. Use `getStaticPaths` to list the pages of your content:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JmWI4ZnJyDW4Qi5pPui52F8UT9",
+      "code": "---\nimport {Query} from 'alinea'\nimport {cms, Page} from '../cms'\n\nexport async function getStaticPaths() {\n  const urls = await cms.find({type: Page, select: Query.url})\n  return urls.map(url => ({params: {slug: url.slice(1)}}))\n}\n\nconst page = await cms.first({type: Page, url: `/${Astro.params.slug}`})\n---",
+      "fileName": "src/pages/[slug].astro",
+      "language": "astro",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3JmWI5ylibcsRh3DIVcCW7as87L",
+      "level": "warning",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Without an adapter there is no server to run the handler: the dashboard can save content during development only, and published changes need a new build. Prerendered pages have no request headers, so they never show drafts and live previews do not update them, also not during development."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Keep an adapter to edit a live site with mostly static pages. The middleware then still serves the dashboard and the handler, and pages marked with `export const prerender = false` render on demand with drafts and live previews."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

@@ -172,11 +172,6 @@ export function registerPreviewWidget() {
     #statsButton?: HTMLButtonElement
     #stats?: PreviewStats
     #hint?: ReturnType<typeof setTimeout>
-    #disconnect!: () => void
-
-    disconnectedCallback() {
-      this.#disconnect()
-    }
 
     attributeChangedCallback(
       name: string,
@@ -242,6 +237,8 @@ export function registerPreviewWidget() {
     }
 
     connectedCallback() {
+      // Client routers may move the widget to the next page they swap in
+      if (this.shadowRoot) return
       const shadow = this.attachShadow({mode: 'open'})
       const style = document.createElement('style')
       style.textContent = styles
@@ -297,10 +294,6 @@ export function registerPreviewWidget() {
         }
         window.addEventListener('mousemove', move)
         window.addEventListener('mouseup', stop)
-      }
-
-      this.#disconnect = () => {
-        previews.removeEventListener('mousedown', startDrag)
       }
     }
   }

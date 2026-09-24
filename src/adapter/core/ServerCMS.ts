@@ -1,3 +1,4 @@
+import {HandleAction} from '#/backend/HandleAction.js'
 import {
   applyPreview as applyPreviewUpdate,
   type DecodedPreviewRequest,
@@ -39,6 +40,12 @@ export interface SyncStatus {
   syncedAt: Date | undefined
 }
 
+/** A handler in this process and the database it answers from. */
+export interface LocalHandler {
+  handle(request: Request): Promise<Response>
+  db: Promise<LocalStore>
+}
+
 /** What the previews client of a draft render needs. */
 export interface PreviewInfo {
   /** The dashboard the preview widget links to. */
@@ -76,6 +83,7 @@ export class ServerCMS<
   bundledDb: PLazy<LocalStore>
   #host: ServerHost
   #syncedAt: number | undefined
+  #handler: LocalHandler | undefined
   /**
    * Per request; outside a request (build, scripts) nothing is memoized or
    * recorded.
@@ -111,6 +119,32 @@ export class ServerCMS<
   }
 
   throttle = createThrottledSync()
+
+  /**
+   * A handler serving this CMS from the same process, as in servers that
+   * bundle pages and handler together. When it answers from the same
+   * database, syncing with it over HTTP would wait for that database while
+   * the handler waits to sync it too: queries have it sync in process instead.
+   */
+  attachHandler(handler: LocalHandler): void {
+    this.#handler = handler
+  }
+
+  async #syncWith(db: LocalStore, client: Client): Promise<string> {
+    const handler = this.#handler
+    const shared = handler && (await handler.db.catch(() => undefined)) === db
+    if (!shared) return db.syncWith(client, preValidatedRemote)
+    const context = await requestContext(this.config)
+    const url = new URL(context.handlerUrl)
+    url.searchParams.set('action', HandleAction.Tree)
+    url.searchParams.set('sha', await db.sha)
+    const init = applyContextAuth(context, {
+      headers: {accept: 'application/json'}
+    })
+    const response = await handler.handle(new Request(url, init))
+    if (!response.ok) throw new Error(`Handler answered ${response.status}`)
+    return db.sha
+  }
 
   #state(request: HostRequest): RequestState {
     let state = this.#requests.get(request)
@@ -162,7 +196,7 @@ export class ServerCMS<
         timed(row, () => this.#syncDb(db, client, undefined))
       )
     try {
-      const sha = await db.syncWith(client, preValidatedRemote)
+      const sha = await this.#syncWith(db, client)
       this.#syncedAt = Date.now()
       return sha
     } catch (error) {
