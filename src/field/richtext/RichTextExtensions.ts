@@ -89,6 +89,13 @@ const ImageWithReferenceAttributes = Image.extend({
   }
 })
 
+// Each editor resolves every declared node view on creation and redraws its
+// document when it mounts with any. Only declare them when they are used.
+const ImageWithoutNodeView = ImageWithReferenceAttributes.extend({
+  addNodeView: null
+})
+const TableWithoutNodeView = Table.extend({addNodeView: null})
+
 function headingExtension(getEntryAnchors?: () => Iterable<string>) {
   return Heading.extend({
     addAttributes() {
@@ -334,9 +341,10 @@ export const extensions = createExtensions()
 
 export function defaultExtensionConfig(
   getEntryAnchors?: () => Iterable<string>,
-  enableImageResize = false
+  enableImageResize = false,
+  enableTables = false
 ) {
-  return createExtensions(getEntryAnchors, enableImageResize)
+  return createExtensions(getEntryAnchors, enableImageResize, enableTables)
 }
 
 export function defaultExtensions(
@@ -396,7 +404,8 @@ export function richTextBlockExtensions(
 
 function createExtensions(
   getEntryAnchors?: () => Iterable<string>,
-  enableImageResize = false
+  enableImageResize = false,
+  enableTables = false
 ) {
   return {
     Document,
@@ -422,7 +431,10 @@ function createExtensions(
     HorizontalRule: HorizontalRule.configure({
       HTMLAttributes: {class: styles.RichTextExtensions.rule()}
     }),
-    Image: ImageWithReferenceAttributes.configure({
+    Image: (enableImageResize
+      ? ImageWithReferenceAttributes
+      : ImageWithoutNodeView
+    ).configure({
       HTMLAttributes: {class: styles.RichTextExtensions.image()},
       resize: enableImageResize
         ? {
@@ -461,7 +473,7 @@ function createExtensions(
     SubScript: Subscript.configure({
       HTMLAttributes: {class: styles.RichTextExtensions.subscript()}
     }),
-    Table: Table.configure({
+    Table: (enableTables ? Table : TableWithoutNodeView).configure({
       HTMLAttributes: {class: styles.RichTextExtensions.table()}
     }),
     TableCell: TableCell.configure({

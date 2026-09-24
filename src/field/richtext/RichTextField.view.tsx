@@ -113,7 +113,8 @@ export function RichTextFieldView<Blocks extends Schema>({
       configureRichTextExtensions(options.extensions, {
         ...defaultExtensionConfig(
           getEntryAnchors,
-          Boolean(options.enableImages)
+          Boolean(options.enableImages),
+          Boolean(options.enableTables)
         ),
         Placeholder: Placeholder.configure({
           placeholder:
@@ -133,6 +134,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     getEntryAnchors,
     hosts,
     options.enableImages,
+    options.enableTables,
     options.extensions,
     options.inline,
     options.placeholder,
