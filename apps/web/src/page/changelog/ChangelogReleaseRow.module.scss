@@ -6,7 +6,9 @@
   gap: 40px;
   padding: 40px 0;
   border-top: 1px solid var(--web-outline, #e3e5f0);
-  scroll-margin-top: calc(var(--web-header-height, 0px) + 24px);
+  // The header does not stick on this page, the release select does on
+  // small screens
+  scroll-margin-top: 32px;
 
   &.is-latest {
     padding-top: 0;
@@ -18,8 +20,10 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
     padding: 32px 0;
+    scroll-margin-top: 80px;
 
     &.is-latest {
+      padding-top: 28px;
       padding-bottom: 32px;
     }
   }

@@ -1,6 +1,6 @@
 /// <reference types="bun" />
 import {expect, test} from 'bun:test'
-import {parseChangelog} from './parseChangelog'
+import {groupReleasesBySeries, parseChangelog} from './parseChangelog'
 
 test('releases without subsections become a single unlabeled group', () => {
   const releases = parseChangelog(`# Changelog
@@ -94,5 +94,20 @@ test('dates are optional', () => {
   expect(releases.map(release => [release.version, release.date])).toEqual([
     ['1.7.0', '2026-06-26'],
     ['1.6.4', null]
+  ])
+})
+
+test('releases are grouped by their major.minor series', () => {
+  const series = groupReleasesBySeries([
+    {version: '2.0.0'},
+    {version: '2.0.0-beta.1'},
+    {version: '1.6.1'},
+    {version: '1.6.0'},
+    {version: '1.0.11'}
+  ])
+  expect(series).toEqual([
+    {name: '2.0', releases: [{version: '2.0.0'}, {version: '2.0.0-beta.1'}]},
+    {name: '1.6', releases: [{version: '1.6.1'}, {version: '1.6.0'}]},
+    {name: '1.0', releases: [{version: '1.0.11'}]}
   ])
 })

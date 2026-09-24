@@ -132,3 +132,28 @@ export function formatReleaseDate(date: string, short = false): string {
   if (short) return `${name.slice(0, 3)} ${year}`
   return `${day} ${name} ${year}`
 }
+
+export interface ChangelogSeries<T extends Pick<ChangelogRelease, 'version'>> {
+  /** Major and minor version, eg. "1.6" */
+  name: string
+  releases: Array<T>
+}
+
+/** Groups releases, newest first, into their major.minor series */
+export function groupReleasesBySeries<
+  T extends Pick<ChangelogRelease, 'version'>
+>(releases: Array<T>): Array<ChangelogSeries<T>> {
+  const series: Array<ChangelogSeries<T>> = []
+  for (const release of releases) {
+    const name = releaseSeries(release.version)
+    const last = series.at(-1)
+    if (last?.name === name) last.releases.push(release)
+    else series.push({name, releases: [release]})
+  }
+  return series
+}
+
+/** "1.6.4" and "2.0.0-beta.1" become "1.6" and "2.0" */
+export function releaseSeries(version: string): string {
+  return version.split('.').slice(0, 2).join('.')
+}

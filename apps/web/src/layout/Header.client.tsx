@@ -28,12 +28,7 @@ const styles = styler(css)
 export function HeaderRoot({children}: PropsWithChildren) {
   const pathname = usePathname()
   return (
-    <header
-      className={styles.root({
-        transparent: pathname === '/',
-        sticky: isDocsPath(pathname)
-      })}
-    >
+    <header className={styles.root({sticky: isDocsPath(pathname)})}>
       {children}
     </header>
   )

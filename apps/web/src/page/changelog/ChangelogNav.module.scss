@@ -1,9 +1,27 @@
 @use '@/style' as *;
 
+// The header does not stick on this page, so the nav sticks to the viewport
 .root {
   position: sticky;
-  top: calc(var(--web-header-height, 0px) + 24px);
-  max-height: calc(100vh - var(--web-header-height, 0px) - 48px);
+  top: 32px;
+  z-index: 2;
+  max-height: calc(100dvh - 64px);
+  display: flex;
+  flex-direction: column;
+
+  // Small screens: a full width bar with a release select, stuck to the top
+  @include sm {
+    top: 0;
+    max-height: none;
+    margin-inline: calc(-1 * var(--web-gutter));
+    padding: 10px var(--web-gutter);
+    border-bottom: 1px solid var(--web-outline);
+    background: var(--web-background);
+  }
+}
+
+.nav {
+  min-height: 0;
   display: flex;
   flex-direction: column;
   font-size: 15px;
@@ -11,15 +29,27 @@
   @include sm {
     display: none;
   }
-}
 
-.title {
-  padding: 0 12px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--web-foreground-muted, #7c80a0);
+  &-title {
+    padding: 0 12px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--web-foreground-muted);
+  }
+
+  &-all {
+    margin-top: 12px;
+    padding: 8px 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--web-accent);
+
+    &:hover {
+      color: var(--web-accent-strong);
+    }
+  }
 }
 
 .list {
@@ -28,50 +58,179 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  // Room for focus rings inside the scroll area
+  margin: -3px;
+  padding: 3px;
+  list-style: none;
   scrollbar-width: thin;
+  overscroll-behavior: contain;
+
+  &-item {
+    display: block;
+  }
+}
+
+.link,
+.series-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  color: color-mix(in srgb, var(--web-foreground) 78%, var(--web-background));
+  text-decoration: none;
+  transition:
+    color 0.15s ease-out,
+    background 0.15s ease-out;
+
+  &:hover {
+    color: var(--web-foreground);
+    background: var(--web-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--web-accent);
+    outline-offset: -2px;
+  }
 }
 
 .link {
-  display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: color-mix(
-    in srgb,
-    var(--web-foreground, #171a42) 78%,
-    var(--web-background, #f7f7fa)
-  );
-  text-decoration: none;
 
-  &:hover {
-    color: var(--web-foreground, #171a42);
-    background: var(--web-surface, #ffffff);
-  }
-
-  &.is-latest {
-    background: var(--web-accent-soft, #eef0fd);
-    color: var(--web-accent-strong, #2c47c0);
+  &[aria-current] {
+    background: var(--web-accent-soft);
+    color: var(--web-accent-strong);
     font-weight: 600;
   }
 
+  &-version {
+    font-variant-numeric: tabular-nums;
+  }
+
   &-latest {
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--web-accent);
   }
 
   &-date {
-    color: var(--web-foreground-muted, #7c80a0);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--web-foreground-muted);
+    white-space: nowrap;
   }
 }
 
-.all {
-  margin-top: 12px;
-  padding: 8px 12px;
-  font-weight: 600;
-  text-decoration: none;
-  color: var(--web-accent, #3f61e8);
+.series {
+  display: block;
 
-  &:hover {
-    color: var(--web-accent-strong, #2c47c0);
+  &-summary {
+    align-items: center;
+    gap: 6px;
+    padding-right: 8px;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    // The current release sits in this collapsed series
+    &[data-current] {
+      color: var(--web-accent-strong);
+      font-weight: 600;
+    }
+
+    &-icon {
+      flex-shrink: 0;
+      font-size: 18px;
+      color: var(--web-foreground-muted);
+      transition: rotate 0.15s ease-out;
+
+      .series[open] & {
+        rotate: 90deg;
+      }
+    }
+
+    &-label {
+      font-variant-numeric: tabular-nums;
+    }
+
+    &-count {
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--web-foreground-muted);
+    }
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 2px 0 4px 12px;
+    padding-left: 8px;
+    border-left: 1px solid var(--web-outline);
+    list-style: none;
+
+    &-item {
+      display: block;
+    }
+  }
+}
+
+.jump {
+  display: none;
+
+  @include sm {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--web-foreground-muted);
+  }
+
+  &-field {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+
+    &-icon {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      translate: 0 -50%;
+      font-size: 20px;
+      color: var(--web-foreground-muted);
+      pointer-events: none;
+    }
+  }
+
+  &-select {
+    width: 100%;
+    height: 44px;
+    padding: 0 40px 0 14px;
+    border: 1px solid var(--web-outline);
+    border-radius: 10px;
+    appearance: none;
+    background: var(--web-surface);
+    color: var(--web-foreground);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--web-accent);
+      outline-offset: 1px;
+    }
   }
 }

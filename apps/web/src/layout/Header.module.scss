@@ -6,13 +6,15 @@
   height: var(--web-header-height);
   z-index: 7;
   color: var(--web-foreground);
+  // Same colour as the page, the header reads as part of it
+  background: var(--web-background);
 
-  // Docs pages keep the header in view, their sidebar sticks below it
+  // Docs pages keep the header in view, their sidebar sticks below it; the
+  // border keeps content that scrolls underneath separated from the nav
   &.is-sticky {
     position: sticky;
     top: 0;
     border-bottom: 1px solid var(--web-outline);
-    background: var(--web-background);
   }
 }
 
@@ -37,11 +39,16 @@
     flex-shrink: 0;
     color: var(--web-foreground);
 
+    // The wordmark's baseline sits at 90% of its box, lower than the
+    // baseline of the vertically centered 15px nav labels: shift it up so
+    // both share one baseline. Without nav labels (mobile) it stays centered.
     &-mark {
-      width: 96px;
+      width: 80px;
+      transform: translateY(-3.5px);
 
       @include sm {
-        width: 80px;
+        width: 70px;
+        transform: none;
       }
     }
 
@@ -168,8 +175,13 @@
     border-radius: 12px;
     font-size: 22px;
     color: var(--web-foreground);
-    background: var(--web-surface);
+    background: transparent;
     cursor: pointer;
+    transition: background 0.2s ease-out;
+
+    &:hover {
+      background: var(--web-highlight);
+    }
 
     @include l {
       display: none !important;

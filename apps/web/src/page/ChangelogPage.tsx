@@ -36,15 +36,11 @@ export default async function Changelog() {
             Every release, what changed and why it matters.
           </p>
         </div>
-        <a
-          href="https://github.com/alineacms/alinea/issues"
-          className={styles.header.roadmap()}
-        >
-          Roadmap on GitHub →
-        </a>
       </header>
       <div className={styles.layout()}>
-        <ChangelogNav releases={releases} />
+        <ChangelogNav
+          releases={releases.map(({version, date}) => ({version, date}))}
+        />
         <div className={styles.releases()}>
           {releases.map((release, index) => (
             <ChangelogReleaseRow
