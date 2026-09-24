@@ -2,7 +2,13 @@ import type {Workspace} from '#/types.js'
 import type {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import type {Field} from './Field.js'
-import {getExpr, type HasRoot, type HasWorkspace, hasExpr} from './Internal.js'
+import {
+  getExpr,
+  getRoot,
+  type HasRoot,
+  type HasWorkspace,
+  hasExpr
+} from './Internal.js'
 import type {Page} from './Page.js'
 import type {Root} from './Root.js'
 import type {Type} from './Type.js'
@@ -41,12 +47,19 @@ export const ScopeKey = {
 export class Scope {
   #keys: Map<string, Entity> = new Map()
   #paths: Map<Entity, Array<string>> = new Map()
+  #locales: Map<string, Array<string>> = new Map()
 
   constructor(config: Config) {
     for (const [workspaceName, workspace] of entries(config.workspaces)) {
       this.#insert(workspace, ScopeKey.workspace(workspaceName))
       for (const [rootName, root] of entries(workspace)) {
         this.#insert(root, ScopeKey.root(workspaceName, rootName))
+        for (const locale of getRoot(root).i18n?.locales ?? []) {
+          const key = locale.toLowerCase()
+          const spellings = this.#locales.get(key) ?? []
+          if (!spellings.includes(locale)) spellings.push(locale)
+          this.#locales.set(key, spellings)
+        }
         for (const [pageName, page] of entries(root)) {
           this.#insert(page, ScopeKey.page(workspaceName, rootName, pageName))
         }
@@ -78,6 +91,11 @@ export class Scope {
 
   nameOf(entity: Entity) {
     return this.#paths.get(entity)?.at(-1)
+  }
+
+  /** Configured spellings of a locale, matched case-insensitively. */
+  locales(locale: string): Array<string> {
+    return this.#locales.get(locale.toLowerCase()) ?? [locale]
   }
 
   stringify(input: any): string {

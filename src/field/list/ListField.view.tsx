@@ -58,7 +58,14 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import type {ComponentType} from 'react'
-import {createContext, useContext, useMemo, useState} from 'react'
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useMemo,
+  useState
+} from 'react'
 import css from './ListField.module.css'
 
 const styles = styler(css)
@@ -165,14 +172,15 @@ export function ListFieldView({field}: ListFieldViewProps) {
     setFoldedIds(allExpanded ? new Set(rowIds) : new Set())
   }
 
-  function toggleRow(rowId: string) {
+  // Stable callbacks keep memoized rows from rendering on unrelated changes
+  const toggleRow = useCallback((rowId: string) => {
     setFoldedIds(current => {
       const next = new Set(current)
       if (next.has(rowId)) next.delete(rowId)
       else next.add(rowId)
       return next
     })
-  }
+  }, [])
 
   function addRow(typeName: string, type: Schema[string]) {
     pushRow(createRow(typeName, type))
@@ -188,11 +196,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
       {nodes.map((row, index) => (
         <ListFieldRow
           key={rowIds[index] || index}
-          addBetweenRow={(value, position = 'after') =>
-            insertRow(insertIndex(index, position), value)
-          }
+          onInsertRow={insertRow}
           canCreate={canCreate}
-          foldedIds={foldedIds}
+          expanded={!foldedIds.has(rowIds[index])}
           index={index}
           list={list}
           readOnly={readOnly}
@@ -346,10 +352,10 @@ interface ListFieldRowProps {
   schema: Schema
   typeItems: Array<ListFieldTypeItem>
   pasted?: ListValue
-  foldedIds: Set<string>
+  expanded: boolean
   onToggleRow: (rowId: string) => void
   onCopyRow: (rowId: string) => void
-  addBetweenRow: (row: ListValue, position?: 'before' | 'after') => void
+  onInsertRow: (index: number, row: ListValue) => void
 }
 
 interface ListFieldInsertActionProps {
@@ -434,7 +440,7 @@ function ListFieldInsertPanel({
   )
 }
 
-function ListFieldRow({
+const ListFieldRow = memo(function ListFieldRow({
   canCreate,
   index,
   list,
@@ -444,10 +450,10 @@ function ListFieldRow({
   schema,
   typeItems,
   pasted,
-  foldedIds,
+  expanded,
   onToggleRow,
   onCopyRow,
-  addBetweenRow
+  onInsertRow
 }: ListFieldRowProps) {
   const itemId = useAtomValueRaw(row.field('_id')) as string
   const typeName = useAtomValueRaw(row.field('_type')) as string
@@ -467,7 +473,6 @@ function ListFieldRow({
 
   const label = Type.label(type)
   const typeIcon = getType(type).icon
-  const expanded = !foldedIds.has(itemId)
   function moveCurrentRow(direction: -1 | 1) {
     moveListRow(index, index + direction)
   }
@@ -512,8 +517,12 @@ function ListFieldRow({
         onCustomLabelChange={updateCustomLabel}
         onCopy={() => onCopyRow(itemId)}
         onDelete={deleteRow}
-        onInsertBefore={(value: ListValue) => addBetweenRow(value, 'before')}
-        onInsertAfter={(value: ListValue) => addBetweenRow(value, 'after')}
+        onInsertBefore={(value: ListValue) =>
+          onInsertRow(insertIndex(index, 'before'), value)
+        }
+        onInsertAfter={(value: ListValue) =>
+          onInsertRow(insertIndex(index, 'after'), value)
+        }
         onMoveDown={() => moveCurrentRow(1)}
         onMoveUp={() => moveCurrentRow(-1)}
         onToggle={() => onToggleRow(itemId)}
@@ -525,7 +534,7 @@ function ListFieldRow({
       )}
     </SortableListItem>
   )
-}
+})
 
 interface ListFieldRowHeaderProps {
   className?: string

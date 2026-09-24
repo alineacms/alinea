@@ -25,6 +25,7 @@ import {
   exists,
   getSql,
   getQuery,
+  inArray,
   include,
   isNull,
   or,
@@ -261,14 +262,21 @@ export function statusCondition(
   }
 }
 
-/** Rows in one locale, compared case-insensitively; null is unlocalized. */
+/**
+ * Rows in one locale; null is unlocalized. Stored locales use the configured
+ * spelling, so a requested locale matches any case of it.
+ */
 export function localeCondition(
+  scope: Scope,
   entry: EntryIndexTarget,
   locale: string | null | HasSql<string | null>
 ): Sql<boolean> {
-  return locale === null
-    ? isNull(entry.locale)
-    : eq(sql`${entry.locale} collate nocase`, locale)
+  if (locale === null) return isNull(entry.locale)
+  if (typeof locale !== 'string') return eq(entry.locale, locale)
+  const spellings = scope.locales(locale)
+  return spellings.length === 1
+    ? eq(entry.locale, spellings[0])
+    : inArray(entry.locale, spellings)
 }
 
 interface EntryQueryOptions {
@@ -369,14 +377,17 @@ export function compileEntryQuery(
       conditions.push(compileCondition(membership.index(key), value))
   }
   if (query.locale !== undefined && edge?.edge !== 'translations')
-    conditions.push(localeCondition(entry, query.locale))
+    conditions.push(localeCondition(scope, entry, query.locale))
   else if (query.preferredLocale && edge?.edge !== 'translations')
     conditions.push(
-      or(isNull(entry.locale), localeCondition(entry, query.preferredLocale))
+      or(
+        isNull(entry.locale),
+        localeCondition(scope, entry, query.preferredLocale)
+      )
     )
   else if (link && source)
     conditions.push(
-      or(isNull(entry.locale), localeCondition(entry, source.locale))
+      or(isNull(entry.locale), localeCondition(scope, entry, source.locale))
     )
   if (query.type) {
     const names = queryTypes.map(type => {

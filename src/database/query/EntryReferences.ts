@@ -4,6 +4,7 @@ import type {
   EntryReferenceQuery,
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
+import {getScope} from '#/core/Scope.js'
 import {Type} from '#/core/Type.js'
 import {and, asc, eq, gt, type Database} from 'rado'
 import {entryDataText} from '../entry/EntryData.js'
@@ -22,7 +23,7 @@ export async function queryEntryReferences(
     statusCondition(entry, query.status)
   ]
   if (query.locale !== undefined)
-    conditions.push(localeCondition(entry, query.locale))
+    conditions.push(localeCondition(getScope(config), entry, query.locale))
 
   const references: Array<EntryReference> = []
   const pageSize = 500

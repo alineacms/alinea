@@ -275,7 +275,6 @@ export function EntryHeader({
       entry: parentId ?? undefined,
       locale: route.locale
     })
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
     await deleteEntry()
   }
 

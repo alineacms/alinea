@@ -113,7 +113,8 @@ export function RichTextFieldView<Blocks extends Schema>({
       configureRichTextExtensions(options.extensions, {
         ...defaultExtensionConfig(
           getEntryAnchors,
-          Boolean(options.enableImages)
+          Boolean(options.enableImages),
+          Boolean(options.enableTables)
         ),
         Placeholder: Placeholder.configure({
           placeholder:
@@ -133,6 +134,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     getEntryAnchors,
     hosts,
     options.enableImages,
+    options.enableTables,
     options.extensions,
     options.inline,
     options.placeholder,
@@ -176,7 +178,7 @@ export function RichTextFieldView<Blocks extends Schema>({
       // ProseMirror owns selection restoration. React's contenteditable
       // traversal cannot safely inspect nested ProseMirror-owned DOM.
       setEditorReadOnly(editor, readOnly)
-      lastEditorDocument.current = documentStructureKey(
+      lastEditorDocument.current ??= documentStructureKey(
         editorNodes(editorDocument(editor), resolveBlock)
       )
     },
@@ -208,9 +210,14 @@ export function RichTextFieldView<Blocks extends Schema>({
   }, [editor, readOnly])
 
   useEffect(() => {
-    if (!editor) return
-    const current = editorNodes(editorDocument(editor), resolveBlock)
-    if (documentKey === documentStructureKey(current)) return
+    if (!editor || documentKey === lastEditorDocument.current) return
+    const current = documentStructureKey(
+      editorNodes(editorDocument(editor), resolveBlock)
+    )
+    if (documentKey === current) {
+      lastEditorDocument.current = current
+      return
+    }
     const documentValue = store.get(fieldNode.value)
     editor.commands.setContent(editorContent(documentValue, richTextImages), {
       emitUpdate: false
@@ -348,7 +355,9 @@ export function RichTextFieldView<Blocks extends Schema>({
 function setEditorReadOnly(editor: Editor, readOnly: boolean) {
   if (editor.isDestroyed) return
   editor.setEditable(!readOnly)
-  editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
+  const contentEditable = readOnly ? 'false' : 'plaintext-only'
+  if (editor.view.dom.contentEditable !== contentEditable)
+    editor.view.dom.contentEditable = contentEditable
 }
 
 interface RichTextBlockPortalsProps {

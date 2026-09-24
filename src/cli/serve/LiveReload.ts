@@ -19,5 +19,8 @@ export class LiveReload {
 
   register(client: Client) {
     this.clients.push(client)
+    return () => {
+      this.clients = this.clients.filter(c => c !== client)
+    }
   }
 }
