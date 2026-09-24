@@ -737,12 +737,21 @@ export const entryAtoms = dispense((entryId: string) => {
     assert(result, `Entry "${entryId}" not found`)
     return result
   })
+  // A mounted view keeps its last loaded entry if the entry is removed, the
+  // page atom replaces the view once the next page is ready
+  const current = atom(get =>
+    get(data).catch(error => {
+      if (error instanceof MissingEntryError)
+        return new Promise<never>(() => {})
+      throw error
+    })
+  )
   let entry: EntryAtoms | undefined
   return atom(async get => {
     const initial = await get(data)
     return (entry ??= new EntryAtoms(
       entryId,
-      unwrap(data, previous => previous ?? initial) as Atom<EntryData>
+      unwrap(current, previous => previous ?? initial) as Atom<EntryData>
     ))
   })
 })

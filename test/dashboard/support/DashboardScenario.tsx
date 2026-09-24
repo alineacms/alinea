@@ -1,6 +1,7 @@
 import type {LocalConnection, Revision} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
+import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
 import {Config, Field, Query} from '#/index.js'
@@ -82,6 +83,31 @@ interface DashboardScenarioState {
   db: LocalDB
 }
 
+export interface DashboardScenarioProps {
+  // Answer graph reads one at a time after this many milliseconds, like the
+  // dashboard worker does in production
+  readDelay?: number
+}
+
+class ScenarioDB extends LocalDB {
+  readDelay = 0
+  #reads = Promise.resolve()
+
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    if (!this.readDelay) return super.resolve(query)
+    const result = this.#reads
+      .then(() => new Promise(resolve => setTimeout(resolve, this.readDelay)))
+      .then(() => super.resolve(query))
+    this.#reads = result.then(
+      () => undefined,
+      () => undefined
+    )
+    return result
+  }
+}
+
 const users: Array<User> = [
   {
     sub: 'local',
@@ -97,8 +123,10 @@ const users: Array<User> = [
   }
 ]
 
-async function createDashboardScenario(): Promise<DashboardScenarioState> {
-  const db = new LocalDB(config)
+async function createDashboardScenario({
+  readDelay = 0
+}: DashboardScenarioProps): Promise<DashboardScenarioState> {
+  const db = new ScenarioDB(config)
   await db.sync()
   await db.create({
     id: dashboardScenarioIds.alpha,
@@ -291,6 +319,7 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     parentId: dashboardLinkScenarioIds.referenceFolder,
     set: {title: 'Reference target'}
   })
+  db.readDelay = readDelay
   const baseClient = createTestConnection(db, {users})
   const client: LocalConnection = {
     ...baseClient,
@@ -314,8 +343,8 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
   return {client, db}
 }
 
-export function DashboardScenario() {
-  const [scenario] = useState(createDashboardScenario)
+export function DashboardScenario(props: DashboardScenarioProps) {
+  const [scenario] = useState(() => createDashboardScenario(props))
   const {client, db} = use(scenario)
   return (
     <App
