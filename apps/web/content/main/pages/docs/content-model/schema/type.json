@@ -146,7 +146,23 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`orderChildrenBy`: sort children in the sidebar tree by one or more fields, for example `{desc: BlogPost.publishDate}`. Without it children keep the order editors give them."
+                  "text": "`overview`: how the dashboard lists the children: columns, the default order (`sort`), the layout and actions. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Overviews",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm5njhHS4Q4ZgtzXFyaqstDd1",
+                      "_link": "entry",
+                      "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
                 }
               ]
             }
@@ -281,6 +297,34 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`orderChildrenBy` (deprecated): sort children by one or more fields. Use `overview.sort`, which still accepts the same value."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`summaryRow`, `summaryThumb` (deprecated): not used by the dashboard. Configure the columns and card image in the `overview` of the parent instead."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -380,14 +424,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Use `orderChildrenBy` when children should always be sorted by a field instead of by hand:"
+          "text": "Use `overview.sort` when children should always be sorted by a field instead of by hand. The `overview` also sets the columns of the list of children:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "31mI5wJknHLsx1XB5EcjMbnMCrM",
-      "code": "import {Config, Field, Query} from 'alinea'\n\nexport const Event = Config.document('Event', {\n  fields: {date: Field.date('Date')}\n})\n\nexport const Agenda = Config.document('Agenda', {\n  contains: ['Event'],\n  orderChildrenBy: [{desc: Event.date}, {asc: Query.title}],\n  fields: {}\n})",
+      "code": "import {Config, Field, Query} from 'alinea'\n\nexport const Event = Config.document('Event', {\n  fields: {date: Field.date('Date')}\n})\n\nexport const Agenda = Config.document('Agenda', {\n  contains: ['Event'],\n  fields: {},\n  overview: {\n    sort: [{desc: Event.date}, {asc: Query.title}],\n    columns: {\n      date: Config.column({header: 'Date', width: 140, select: Event.date})\n    }\n  }\n})",
       "fileName": "",
       "language": "tsx"
     },
@@ -396,7 +440,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`orderChildrenBy` and `insertOrder` only affect the dashboard. Queries return children in their stored order unless you pass an "
+          "text": "The sort and `insertOrder` only affect the dashboard. Queries return children in their stored order unless you pass an "
         },
         {
           "_type": "text",
@@ -412,7 +456,23 @@
         },
         {
           "_type": "text",
-          "text": "."
+          "text": ". See "
+        },
+        {
+          "_type": "text",
+          "text": "Overviews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm5sKnfI4nmyxL4erSW6kMAWy",
+              "_link": "entry",
+              "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for the other options."
         }
       ]
     },
@@ -541,7 +601,23 @@
         },
         {
           "_type": "text",
-          "text": " in queries, in `orderChildrenBy` and in "
+          "text": " in queries, in "
+        },
+        {
+          "_type": "text",
+          "text": "overviews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm5urFRXGk1ZAcxuuUuaJmNFv",
+              "_link": "entry",
+              "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and in "
         },
         {
           "_type": "text",
@@ -591,7 +667,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790196932,
+    "updatedAt": 1790243848,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

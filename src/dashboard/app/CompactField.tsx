@@ -1,5 +1,4 @@
 import {Field} from '#/core/Field.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {viewsAtom} from '#/dashboard/atoms/core.js'
@@ -10,10 +9,9 @@ import {
 } from '#/field/localiser/Localiser.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw} from 'jotai'
-import prettyBytes from 'pretty-bytes'
 import type {ComponentType, ReactNode} from 'react'
 import {useMemo} from 'react'
-import {Badge} from '#/components.js'
+import {Badge, Button} from '#/components.js'
 import css from './CompactField.module.css'
 
 const styles = styler(css)
@@ -30,6 +28,8 @@ export interface CompactFieldContext {
   locale?: string | null
   /** Titles and previews of the entries linked from the value, by id */
   links?: ReadonlyMap<string, CompactFieldLink>
+  /** Makes linked entries clickable, called with the id of the entry */
+  onOpenEntry?: (id: string) => void
 }
 
 export interface CompactFieldProps extends CompactFieldContext {
@@ -131,7 +131,7 @@ function compactResolvedText(
   if (isEmptyValue(value)) return '-'
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   if (typeof value === 'string') return stringText(field, value, options)
-  if (typeof value === 'number') return numberFieldText(field, value)
+  if (typeof value === 'number') return numberText(value)
   const links = linkRows(value)
   if (links) return links.map(link => linkLabel(link, context)).join(', ')
   if (Array.isArray(value)) {
@@ -177,9 +177,7 @@ function renderCompactValue(
   }
   if (typeof value === 'number') {
     return (
-      <span className={styles.CompactField.text()}>
-        {numberFieldText(field, value)}
-      </span>
+      <span className={styles.CompactField.text()}>{numberText(value)}</span>
     )
   }
   const links = linkRows(value)
@@ -205,12 +203,13 @@ function renderLinks(
   return (
     <span className={styles.CompactField.items()}>
       {links.slice(0, visibleLinks).map((link, index) => {
-        const preview =
-          typeof link._entry === 'string'
-            ? context.links?.get(link._entry)?.preview
-            : undefined
-        return (
-          <span className={styles.CompactField.link()} key={index}>
+        const entryId =
+          typeof link._entry === 'string' ? link._entry : undefined
+        const preview = entryId
+          ? context.links?.get(entryId)?.preview
+          : undefined
+        const content = (
+          <>
             {preview && (
               <img
                 alt=""
@@ -221,6 +220,23 @@ function renderLinks(
             <span className={styles.CompactField.link.label()}>
               {linkLabel(link, context)}
             </span>
+          </>
+        )
+        const {onOpenEntry} = context
+        if (entryId && link._type === 'entry' && onOpenEntry)
+          return (
+            <Button
+              variant="link"
+              className={styles.CompactField.link()}
+              key={index}
+              onClick={() => onOpenEntry(entryId)}
+            >
+              {content}
+            </Button>
+          )
+        return (
+          <span className={styles.CompactField.link()} key={index}>
+            {content}
           </span>
         )
       })}
@@ -370,13 +386,6 @@ const numberFormat = new Intl.NumberFormat(undefined, {
 
 function numberText(value: number): string {
   return Number.isFinite(value) ? numberFormat.format(value) : String(value)
-}
-
-function numberFieldText(field: Field, value: number): string {
-  // Media file sizes are stored in bytes
-  if (field === MediaFile.size && Number.isFinite(value) && value >= 0)
-    return prettyBytes(value)
-  return numberText(value)
 }
 
 const dateFormat = new Intl.DateTimeFormat(undefined, {

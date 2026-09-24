@@ -109,6 +109,10 @@ const cms = createCMS({
           contains: ['Post'],
           i18n: {locales: ['en', 'nl']}
         }),
+        sorted: Config.root('Sorted', {
+          contains: ['Post'],
+          overview: {sort: {desc: Entry.title}}
+        }),
         media: Config.media()
       }
     })
@@ -286,7 +290,7 @@ test('describe_schema', async () => {
   test.is(main.name, 'main')
   test.equal(
     main.roots.map((root: {name: string}) => root.name),
-    ['pages', 'blog', 'media']
+    ['pages', 'blog', 'sorted', 'media']
   )
   test.equal(main.roots[1].locales, ['en', 'nl'])
   const page = schema.types.find((type: {name: string}) => type.name === 'Page')
@@ -1207,6 +1211,17 @@ test('find_entries lists entries in tree order', async () => {
   test.equal(
     paged.entries.map((entry: {title: string}) => entry.title),
     ['A child', 'A grandchild']
+  )
+})
+
+test('find_entries orders siblings by the overview sort of their parent', async () => {
+  await using env = await setup()
+  for (const title of ['Apple', 'Cherry', 'Banana'])
+    await env.ok('create_entry', {type: 'Post', root: 'sorted', data: {title}})
+  const found = await env.ok('find_entries', {root: 'sorted'})
+  test.equal(
+    found.entries.map((entry: {title: string}) => entry.title),
+    ['Cherry', 'Banana', 'Apple']
   )
 })
 

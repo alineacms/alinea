@@ -49,7 +49,7 @@ export interface TableColumn {
   width?: number | `${number}fr`
   /** Minimum width in pixels of a fractional column */
   minWidth?: number
-  align?: 'start' | 'end'
+  align?: 'start' | 'end' | 'center'
   sortable?: boolean
   /** Hide the column on narrow screens (below 768px) */
   collapsible?: boolean
@@ -473,7 +473,7 @@ export interface TableCellProps extends StyleProps {
    * columns when the header is hidden
    */
   label?: ReactNode
-  align?: 'start' | 'end'
+  align?: 'start' | 'end' | 'center'
   /** Tooltip text */
   title?: string
   children?: ReactNode

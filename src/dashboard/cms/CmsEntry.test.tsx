@@ -24,6 +24,7 @@ test('alinea/cms exports the custom UI api', () => {
   expect(Object.keys(cms).sort()).toEqual([
     'EditField',
     'EditFields',
+    'EntryTable',
     'FieldChrome',
     'useEntry',
     'useField',

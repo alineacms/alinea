@@ -9,7 +9,8 @@ import {Button, type ButtonProps} from './Button.js'
 const variants: Array<NonNullable<ButtonProps['variant']>> = [
   'solid',
   'outline',
-  'ghost'
+  'ghost',
+  'link'
 ]
 const colors: Array<NonNullable<ButtonProps['color']>> = [
   'neutral',

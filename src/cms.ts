@@ -46,6 +46,14 @@ export {
   type FieldChromeProps
 } from './dashboard/cms/FieldChrome.js'
 
+// Listing entries
+export {EntryTable, type EntryTableProps} from './dashboard/cms/EntryTable.js'
+export type {
+  OverviewActionProps,
+  OverviewCellProps,
+  OverviewEntry
+} from './core/Overview.js'
+
 // View props
 export type {
   FieldViewProps,

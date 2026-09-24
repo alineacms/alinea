@@ -1027,7 +1027,7 @@ export class TreeEntryAtoms {
           parentId: this.id
         },
         locale,
-        getType(type).orderChildrenBy
+        Type.childrenOrder(type)
       )
     })
   )

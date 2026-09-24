@@ -25,6 +25,7 @@ import {
   eq,
   exists,
   getSql,
+  getQuery,
   include,
   isNull,
   or,
@@ -97,17 +98,20 @@ class Expressions {
   #search: ReturnType<typeof searchQuery>
   #entry: EntryIndexTarget
   #relation?: (query: EdgeQuery) => CompiledRelation
+  #scalar?: (query: EdgeQuery) => HasSql
 
   constructor(
     scope: Scope,
     entry: EntryIndexTarget,
     search: ReturnType<typeof searchQuery> | undefined,
-    relation?: (query: EdgeQuery) => CompiledRelation
+    relation?: (query: EdgeQuery) => CompiledRelation,
+    scalar?: (query: EdgeQuery) => HasSql
   ) {
     this.#scope = scope
     this.#entry = entry
     this.#search = search
     this.#relation = relation
+    this.#scalar = scalar
   }
 
   data(path: Array<string>): HasSql {
@@ -171,6 +175,22 @@ class Expressions {
       }
       case 'value':
         return sql.value(internal.value)
+      case 'relation': {
+        if (!this.#scalar)
+          throw new Error('Relation expressions are not supported here')
+        const value = this.#scalar(internal.query)
+        return selecting ? getSql(value).forSelection() : value
+      }
+      case 'typeSwitch': {
+        const branches = Object.entries(internal.cases).map(
+          ([type, inner]) =>
+            sql`when ${this.#entry.type} = ${sql.value(type)} then ${this.expr(inner)}`
+        )
+        const value = branches.length
+          ? sql`(case ${sql.join(branches, sql` `)} end)`
+          : sql`null`
+        return selecting ? getSql(value).forSelection() : value
+      }
       case 'call': {
         if (internal.method !== 'snippet')
           throw new Error(`Unsupported SQL function: ${internal.method}`)
@@ -273,6 +293,8 @@ interface EntryQueryOptions {
   depth?: number
   baseEntry?: EntryIndexTarget
   searchName?: string
+  /** Select the single expression of the query, to use it as a subquery */
+  scalar?: boolean
 }
 
 export function compileEntryQuery(
@@ -291,7 +313,25 @@ export function compileEntryQuery(
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const membership = new Expressions(scope, entry, search)
+  // A related entry's value, eg. to order by the title of a linked entry
+  const scalar = (relationQuery: EdgeQuery): HasSql => {
+    if (!isRecord(relationQuery.select) || !hasExpr(relationQuery.select))
+      throw new Error('A relation expression must select a single expression')
+    const {rows} = compileEntryQuery(
+      config,
+      {...relationQuery, status: query.status ?? 'published'},
+      {
+        source: relationSource(entry),
+        entry: alias(baseEntry, `alinea_scalar_${depth + 1}`),
+        depth: depth + 1,
+        baseEntry,
+        searchName,
+        scalar: true
+      }
+    )
+    return sql`(${getQuery(rows)})`
+  }
+  const membership = new Expressions(scope, entry, search, undefined, scalar)
   const queryTypes: Array<Type> = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
@@ -420,42 +460,50 @@ export function compileEntryQuery(
   }
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
-  const projection = new Expressions(scope, entry, search, relationQuery => {
-    const nestedEntry = alias(baseEntry, `alinea_relation_${depth + 1}`)
-    const {rows, plan} = compileEntryQuery(
-      config,
-      {...relationQuery, status: query.status ?? 'published'},
-      {
-        source: relationSource(entry),
-        entry: nestedEntry,
-        depth: depth + 1,
-        baseEntry,
-        searchName
-      }
-    )
-    if (plan.count) {
-      const matches = rows.as(`alinea_relation_count_${depth + 1}`)
-      return {
-        selection: include.one(
-          builder.select(count().as('count')).from(matches)
-        ),
-        plan
-      }
-    }
-    return {
-      selection: plan.single ? include.one(rows) : include(rows),
-      plan
-    }
-  })
-  const selection = query.count
-    ? entry.versionId
-    : projection.projection(
-        query.select ?? {
-          ...Object.assign({}, ...queryTypes),
-          ...EntryFields,
-          ...(isRecord(query.include) ? query.include : {})
+  const projection = new Expressions(
+    scope,
+    entry,
+    search,
+    relationQuery => {
+      const nestedEntry = alias(baseEntry, `alinea_relation_${depth + 1}`)
+      const {rows, plan} = compileEntryQuery(
+        config,
+        {...relationQuery, status: query.status ?? 'published'},
+        {
+          source: relationSource(entry),
+          entry: nestedEntry,
+          depth: depth + 1,
+          baseEntry,
+          searchName
         }
       )
+      if (plan.count) {
+        const matches = rows.as(`alinea_relation_count_${depth + 1}`)
+        return {
+          selection: include.one(
+            builder.select(count().as('count')).from(matches)
+          ),
+          plan
+        }
+      }
+      return {
+        selection: plan.single ? include.one(rows) : include(rows),
+        plan
+      }
+    },
+    scalar
+  )
+  const selection = query.count
+    ? entry.versionId
+    : options.scalar
+      ? membership.expr(query.select as Expr, true)
+      : projection.projection(
+          query.select ?? {
+            ...Object.assign({}, ...queryTypes),
+            ...EntryFields,
+            ...(isRecord(query.include) ? query.include : {})
+          }
+        )
   for (const [key, value] of [
     ['skip', query.skip],
     ['take', query.take]
@@ -492,6 +540,7 @@ export function compileEntryQuery(
     )
   }
   const single = Boolean(
+    options.scalar ||
     query.first ||
     query.get ||
     edge?.edge === 'parent' ||
@@ -529,7 +578,7 @@ export function compileEntryQuery(
     plan.relations.length || plan.fields.length || plan.optional.length
   return {
     rows: selectRows(
-      needsContext
+      needsContext && !options.scalar
         ? {
             value: selection,
             source: relationSource(entry),

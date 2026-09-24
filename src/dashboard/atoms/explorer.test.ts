@@ -16,11 +16,12 @@ import {MediaFile} from '#/core/media/MediaTypes.js'
 import {
   createExplorerAtoms,
   ExplorerEntry,
-  explorerOverviewLinkIds,
   explorerThumbnailId,
   type ExplorerItemData
 } from './explorer.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
+import {columnLinkIds, resolveOverview} from './overview.js'
+import {getRoot} from '#/core/Internal.js'
 
 function folderEntry(value: ExplorerItemData) {
   const item = atom(value)
@@ -112,14 +113,19 @@ test('page explorers browse into media folders instead of editing them', () => {
   expect(store.get(explorer.location).parentId).toBe('images')
 })
 
-test('explorers default to index sorting', () => {
+test('explorers default to the stored order', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'media'},
     {}
   )
   const store = createStore()
 
-  expect(store.get(explorer.sort)).toEqual({sortBy: 'index', direction: 'asc'})
+  expect(store.get(explorer.requestedSort)).toBeUndefined()
+  store.set(explorer.sort, {column: 'title', direction: 'desc'})
+  expect(store.get(explorer.requestedSort)).toEqual({
+    column: 'title',
+    direction: 'desc'
+  })
 })
 
 test('uses the locale from its initial location', () => {
@@ -463,7 +469,7 @@ test('the thumbnail is the first image in field order, including lists', () => {
   expect(explorerThumbnailId(Product, {title: 'No images'})).toBeUndefined()
 })
 
-test('overview link ids only come from overview fields', () => {
+test('overview link ids only come from overview columns', () => {
   const Page = Config.document('Page', {
     fields: {
       title: Field.text('Title'),
@@ -471,10 +477,33 @@ test('overview link ids only come from overview fields', () => {
       cover: Field.image('Cover')
     }
   })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages', {contains: ['Page']})}
+      })
+    }
+  })
+  const overview = resolveOverview(config, {
+    kind: 'root',
+    data: getRoot(config.workspaces.main.pages)
+  })
   expect(
-    explorerOverviewLinkIds(Page, {
-      author: {_id: 'a', _type: 'entry', _entry: 'author-1'},
-      cover: {_id: 'c', _type: 'image', _entry: 'image-1'}
+    columnLinkIds(config, overview, {
+      id: 'page',
+      type: 'Page',
+      title: 'Page',
+      path: 'page',
+      locale: null,
+      workspace: 'main',
+      root: 'pages',
+      parentId: null,
+      data: {
+        author: {_id: 'a', _type: 'entry', _entry: 'author-1'},
+        cover: {_id: 'c', _type: 'image', _entry: 'image-1'}
+      }
     })
   ).toEqual(['author-1'])
 })

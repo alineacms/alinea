@@ -10,7 +10,8 @@ import type {AriaProps, DataProps, IconType, StyleProps} from './types.js'
 const styles = styler(css)
 
 export interface ButtonProps extends StyleProps, AriaProps, DataProps {
-  variant?: 'solid' | 'outline' | 'ghost'
+  /** `link` looks like inline text that underlines on hover */
+  variant?: 'solid' | 'outline' | 'ghost' | 'link'
   color?: 'neutral' | 'primary' | 'secondary' | 'destructive' | 'warning'
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg'
   /** Renders the button in its selected state, eg. an active toolbar tool */

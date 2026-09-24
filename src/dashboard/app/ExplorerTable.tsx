@@ -12,25 +12,32 @@ import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {startTransition, useMemo} from 'react'
+import {configAtom} from '../atoms/core.js'
 import type {
   DashboardEntry,
   DashboardEntryData,
-  DashboardEntryOverviewCell,
   DashboardExplorer,
+  ExplorerItemData,
   ExplorerLinkedEntry,
   ExplorerReadyPage
 } from '../atoms/explorer.js'
-import {dashboardEntryOverviewColumnCount} from '../atoms/explorer.js'
+import {titleColumn as overviewTitle} from '../atoms/overview.js'
 import {LucideFile, LucideFolder} from '../icons.js'
-import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
+import {
+  OverviewCell,
+  overviewCellText,
+  overviewTableColumn
+} from './OverviewCell.js'
 
 const styles = styler(css)
 
 const titleColumn: TableColumn = {
-  id: 'title',
-  header: 'Title',
-  width: 300
+  id: overviewTitle.key,
+  header: overviewTitle.header,
+  width: '2fr',
+  minWidth: 200,
+  sortable: true
 }
 
 const compactTitleColumn: TableColumn = {
@@ -40,18 +47,6 @@ const compactTitleColumn: TableColumn = {
   minWidth: 0
 }
 
-const overviewColumns: Array<TableColumn> = Array.from(
-  {length: dashboardEntryOverviewColumnCount},
-  (_, index) => ({
-    id: `overview-${index}`,
-    header: '',
-    width: '1fr',
-    minWidth: 120,
-    collapsible: true
-  })
-)
-
-const columns = [titleColumn, ...overviewColumns]
 const compactColumns = [compactTitleColumn]
 
 interface ExplorerTableRowProps {
@@ -64,7 +59,7 @@ interface ExplorerTableRowProps {
 }
 
 interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
-  cells: Array<DashboardEntryOverviewCell>
+  item?: ExplorerItemData
   links?: ReadonlyMap<string, ExplorerLinkedEntry>
   hasChildren: boolean
   icon: IconType
@@ -146,7 +141,7 @@ function ExplorerTableLoadedBreadcrumb({
 function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
   const {
     breadcrumbs,
-    cells,
+    item,
     compact,
     entry,
     explorer,
@@ -158,8 +153,8 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     parents,
     rootLabel
   } = props
-  // Search results span locales, show each entry's own values
-  const cellLocale = entry.locale ?? props.locale
+  const config = useAtomValueRaw(configAtom)
+  const columns = props.page.overview.columns
   const isExpanded = useAtomValueRaw(
     useMemo(() => explorer.isExpanded(entry), [explorer, entry])
   )
@@ -179,18 +174,14 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
   function enterParent() {
     startTransition(() => openLocation(entry))
   }
-  const textValue = useMemo(
+  const cellTexts = useMemo(
     () =>
-      [
-        label,
-        ...cells.map(cell =>
-          compactFieldText(cell.field, cell.value, {locale: cellLocale, links})
-        )
-      ]
-        .filter(Boolean)
-        .join(' '),
-    [cellLocale, cells, label, links]
+      item
+        ? columns.map(column => overviewCellText(config, column, item, links))
+        : [],
+    [columns, config, item, links]
   )
+  const textValue = [label, ...cellTexts].filter(Boolean).join(' ')
   return (
     <TableRow
       id={entry.id}
@@ -221,29 +212,15 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
         }
       />
       {!compact &&
-        overviewColumns.map((column, index) => {
-          const cell = cells[index]
-          return (
-            <TableCell
-              key={column.id}
-              label={cell?.label}
-              title={
-                cell
-                  ? `${cell.label} ${compactFieldText(cell.field, cell.value, {locale: cellLocale, links})}`
-                  : undefined
-              }
-            >
-              {cell && (
-                <CompactField
-                  field={cell.field}
-                  value={cell.value}
-                  locale={cellLocale}
-                  links={links}
-                />
-              )}
-            </TableCell>
-          )
-        })}
+        columns.map((column, index) => (
+          <TableCell
+            key={column.key}
+            align={column.align}
+            title={cellTexts[index] || undefined}
+          >
+            {item && <OverviewCell column={column} row={item} links={links} />}
+          </TableCell>
+        ))}
     </TableRow>
   )
 }
@@ -272,7 +249,6 @@ function ExplorerTableLoadingRow(props: ExplorerTableRowProps) {
   return (
     <ExplorerTableDisplayRow
       {...props}
-      cells={[]}
       hasChildren={false}
       icon={LucideFile}
       isSelectable={false}
@@ -296,7 +272,7 @@ function ExplorerTableLoadedRow({
   const label = useAtomValueRaw(data.label)
   const configuredIcon = useAtomValueRaw(data.icon)
   const hasChildren = useAtomValueRaw(data.hasChildren)
-  const cells = useAtomValueRaw(data.overviewCells)
+  const item = useAtomValueRaw(data.item)
   const links = useAtomValueRaw(data.linked)
   const parents = useAtomValueRaw(data.parents)
   const isSelectable = useAtomValueRaw(
@@ -305,7 +281,7 @@ function ExplorerTableLoadedRow({
   return (
     <ExplorerTableDisplayRow
       {...props}
-      cells={cells}
+      item={item}
       explorer={explorer}
       hasChildren={
         props.page.resultMode === 'browse' &&
@@ -351,6 +327,14 @@ export function ExplorerTable({
 }: ExplorerTableProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
+  const sort = useSetAtom(explorer.sort)
+  const columns = useMemo(
+    () => [titleColumn, ...page.overview.columns.map(overviewTableColumn)],
+    [page.overview]
+  )
+  const sortDescriptor = page.sort.column
+    ? {column: page.sort.column.column, direction: page.sort.column.direction}
+    : undefined
   const selectionMode = explorer.selectionMode
   const search = useAtomValueRaw(explorer.search)
   const isSearching = Boolean(search.trim())
@@ -381,7 +365,19 @@ export function ExplorerTable({
         className={styles.ExplorerTable()}
         variant={compact ? 'plain' : 'surface'}
         columns={compact ? compactColumns : columns}
-        showHeader={false}
+        showHeader={!compact}
+        sortDescriptor={sortDescriptor}
+        onSortChange={
+          isSearching
+            ? undefined
+            : descriptor =>
+                startTransition(() =>
+                  sort({
+                    column: String(descriptor.column),
+                    direction: descriptor.direction
+                  })
+                )
+        }
         expandable={explorer.supportsInlineExpansion}
         dependencies={[breadcrumbs, compact, locale, page]}
         items={items}

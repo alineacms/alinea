@@ -128,23 +128,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`orderChildrenBy`: sort the top-level entries in the sidebar by one or more fields, like the "
-                },
-                {
-                  "_type": "text",
-                  "text": "type option",
-                  "marks": [
-                    {
-                      "_type": "link",
-                      "_id": "3JkF0DMUEAMJ6xasCmqDzthWMDZ",
-                      "_link": "entry",
-                      "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
-                    }
-                  ]
-                },
-                {
-                  "_type": "text",
-                  "text": "."
+                  "text": "`overview`: how the dashboard lists the top-level entries: columns, the default order (`sort`), the layout and actions, see below."
                 }
               ]
             }
@@ -202,7 +186,24 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`view`: a React component, or a path to one, that replaces the dashboard view of the root."
+                  "text": "`view`: a React component, or a path to one, that replaces the dashboard view of the root. It receives `{root}`. Use it to add a "
+                },
+                {
+                  "_type": "text",
+                  "text": "custom page",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm8J3yzjqKENrM7LjHg67sUMe",
+                      "_link": "entry",
+                      "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB",
+                      "_anchor": "custom-dashboard-pages"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " to the dashboard."
                 }
               ]
             }
@@ -221,6 +222,20 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`orderChildrenBy` (deprecated): sort the top-level entries by one or more fields. Use `overview.sort`."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -231,6 +246,58 @@
         {
           "_type": "text",
           "text": "The key of a root (`pages`) is its name in content files and queries. It must start with a letter and contain only letters, digits and underscores. The first root of a workspace is the one the dashboard opens by default, unless another root sets `openByDefault`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Overview"
+        }
+      ],
+      "_anchor": "overview"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Opening a root lists its top-level entries. `overview` adds columns and sets the default order, which the sidebar tree follows too:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm8KudxG8PqnN4WXsp1mCTBfR",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Author = Config.document('Author', {\n  fields: {\n    avatar: Field.image('Avatar'),\n    role: Field.text('Role')\n  }\n})\n\nexport const authors = Config.root('Authors', {\n  contains: ['Author'],\n  overview: {\n    columns: {\n      role: Config.column({header: 'Role', select: Author.role})\n    },\n    sort: {asc: Author.title},\n    layout: 'cards'\n  }\n})",
+      "fileName": "schema/authors.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "See "
+        },
+        {
+          "_type": "text",
+          "text": "Overviews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm8KNGq6IwS5iG0RSoLUH3lZe",
+              "_link": "entry",
+              "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for all options. Types configure the list of their children the same way."
         }
       ]
     },
@@ -429,7 +496,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790236755,
+    "updatedAt": 1790243867,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

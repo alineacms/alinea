@@ -91,6 +91,10 @@
     justify-content: flex-end;
   }
 
+  &[data-align='center'] {
+    justify-content: center;
+  }
+
   .Table:not([data-selectable]) &:first-child {
     padding-inline-start: 16px;
   }
@@ -249,6 +253,10 @@
   &[data-align='end'] {
     align-items: flex-end;
     font-variant-numeric: tabular-nums;
+  }
+
+  &[data-align='center'] {
+    align-items: center;
   }
 }
 

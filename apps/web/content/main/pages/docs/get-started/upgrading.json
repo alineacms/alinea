@@ -1019,7 +1019,120 @@
       "content": [
         {
           "_type": "text",
-          "text": "A type's `view` now only receives `{type}`, the `editor` prop of 1.7 is gone. `summaryRow` and `summaryThumb` views are no longer rendered, and a custom `auth` view in the config is not used: the dashboard always renders its own sign-in."
+          "text": "A type's `view` now only receives `{type}`, the `editor` prop of 1.7 is gone. A custom `auth` view in the config is not used: the dashboard always renders its own sign-in."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "List overviews"
+        }
+      ],
+      "_anchor": "list-overviews"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The lists of children are configured on the parent with the new `overview` option. `summaryRow` and `summaryThumb` views are no longer rendered, and `orderChildrenBy` and the `overview: true` field option are deprecated:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JlmEzyGAkk9ynFYYDauIX4ahcC",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const BlogPost = Config.document('Blog post', {\n  // 1.7: summaryRow and summaryThumb views\n  fields: {\n    cover: Field.image('Cover'),\n    // 1.7: Field.date('Publish date', {overview: true})\n    publishDate: Field.date('Publish date')\n  }\n})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {},\n  overview: {\n    columns: {\n      publishDate: Config.column({\n        header: 'Published',\n        select: BlogPost.publishDate\n      })\n    },\n    // 1.7: orderChildrenBy: {desc: BlogPost.publishDate}\n    sort: {desc: BlogPost.publishDate},\n    thumbnail: BlogPost.cover\n  }\n})",
+      "fileName": "schema/Blog.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`summaryRow`: define the columns with `overview.columns`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`summaryThumb`: set the card image with `overview.thumbnail`. By default cards show the first image found in the entry's fields."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`orderChildrenBy`: still works, move it to `overview.sort`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`overview: true` on a field: still shows the field as a column, but only while the parent has no `overview.columns`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "See "
+        },
+        {
+          "_type": "text",
+          "text": "Overviews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JlmF17iSU6Un7smFtu8jXrVUbS",
+              "_link": "entry",
+              "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for sorting, custom cells and toolbar actions."
         }
       ]
     },
@@ -1125,7 +1238,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790236945,
+    "updatedAt": 1790243921,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

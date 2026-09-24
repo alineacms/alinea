@@ -607,7 +607,52 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`EntryTable`: a table of entries with the columns of an "
+                },
+                {
+                  "_type": "text",
+                  "text": "overview",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JlmBgZRuudwlzSamfMClIvmzzL",
+                      "_link": "entry",
+                      "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB",
+                      "_anchor": "entry-tables-in-your-own-views"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", for example to list related entries in a `Field.view` section."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`FieldViewProps<F>`, `SectionViewProps`, `TypeViewProps`, `RootViewProps`: the props the dashboard passes to a field view, a `Field.view` component, a type's `view` and a root's `view`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`OverviewCellProps`, `OverviewActionProps`, `OverviewEntry`: the props of an overview column's `view` and of an overview action, and the entry they receive."
                 }
               ]
             }
@@ -800,7 +845,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790234243,
+    "updatedAt": 1790243893,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

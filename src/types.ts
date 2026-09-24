@@ -2,6 +2,16 @@ export type {Filter} from '#/core/Filter.js'
 export type {Graph, GraphQuery} from '#/core/Graph.js'
 export type {Infer} from '#/core/Infer.js'
 export type {ListRow} from '#/core/ListRow.js'
+export type {
+  OverviewActionProps,
+  OverviewBuiltins,
+  OverviewCellProps,
+  OverviewColumn,
+  OverviewEntry,
+  OverviewFormatContext,
+  OverviewOptions,
+  OverviewSort
+} from '#/core/Overview.js'
 export type {Root} from '#/core/Root.js'
 export type {Schema} from '#/core/Schema.js'
 export type {

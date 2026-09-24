@@ -23,6 +23,8 @@ import {
 } from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {OverviewActionProps, OverviewSort} from '#/core/Overview.js'
+import {resolveView} from '#/core/View.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
@@ -40,17 +42,17 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {configAtom} from '../atoms/core.js'
+import {configAtom, viewsAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
   type DashboardEntryData,
   type DashboardExplorer,
   explorerPageIsPending,
   type ExplorerReadyPage,
-  type ExplorerSort,
-  type ExplorerSortBy,
+  type ExplorerSortState,
   type ExplorerTypeFilters
 } from '../atoms/explorer.js'
+import {titleColumn} from '../atoms/overview.js'
 import {
   IcRoundAccountTree,
   IcRoundArrowDownward,
@@ -829,56 +831,46 @@ const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},
   {type: MediaLibrary, label: 'Folder'}
 ]
-const sortingOptions: Array<{id: ExplorerSortBy; label: string}> = [
-  {id: 'index', label: 'Index'},
-  {id: 'title', label: 'Title'},
-  {id: 'id', label: 'Creation date'},
-  {id: 'size', label: 'Size'}
-]
+interface ExplorerSortOption {
+  column: string
+  label: string
+}
 
 interface ExplorerControlsProps {
   isMedia: boolean | undefined
-  sort: ExplorerSort
+  sort: ExplorerSortState
+  sortOptions: Array<ExplorerSortOption>
   selectedFilter: ExplorerTypeFilters | undefined
-  setSort: (sortBy: ExplorerSortBy) => void
+  setSort: (sort: OverviewSort | undefined) => void
   toggleFilter: (filterBy: ExplorerTypeFilters) => void
 }
 
-function ExplorerControlsButton({
-  isMedia,
-  sort,
-  selectedFilter,
-  setSort,
-  toggleFilter
-}: ExplorerControlsProps) {
+function ExplorerControlsButton(props: ExplorerControlsProps) {
   return (
     <Popover>
       <PopoverTrigger
         aria-label="Filter and sort"
         variant="outline"
-        active={Boolean(selectedFilter)}
+        active={Boolean(props.selectedFilter || props.sort.requested)}
         icon={IcRoundFilterList}
         size="icon-lg"
       />
       <PopoverContent aria-label="Filter and sort" side="bottom" align="start">
-        <ExplorerControlsPopover
-          isMedia={isMedia}
-          sort={sort}
-          selectedFilter={selectedFilter}
-          setSort={setSort}
-          toggleFilter={toggleFilter}
-        />
+        <ExplorerControlsPopover {...props} />
       </PopoverContent>
     </Popover>
   )
 }
+
 function ExplorerControlsPopover({
   isMedia,
   sort,
+  sortOptions,
   selectedFilter,
   setSort,
   toggleFilter
 }: ExplorerControlsProps) {
+  const current = sort.column
   return (
     <>
       {isMedia && (
@@ -913,32 +905,109 @@ function ExplorerControlsPopover({
       >
         Sort by
       </Text>
-      {sortingOptions.map(option =>
-        !isMedia && option.id === 'size' ? null : (
+      <Button
+        variant={sort.requested ? 'ghost' : 'solid'}
+        onClick={() => setSort(undefined)}
+        className={styles.Sorting.button()}
+      >
+        Default order
+      </Button>
+      {sortOptions.map(option => {
+        const active = sort.requested?.column === option.column
+        return (
           <Button
-            key={option.id}
-            variant={sort.sortBy === option.id ? 'solid' : 'ghost'}
-            onClick={() => setSort(option.id)}
+            key={option.column}
+            variant={active ? 'solid' : 'ghost'}
+            onClick={() =>
+              setSort({
+                column: option.column,
+                direction:
+                  active && current?.direction === 'asc' ? 'desc' : 'asc'
+              })
+            }
             className={styles.Sorting.button()}
           >
             {option.label}
-            {sort.sortBy === option.id &&
-              (sort.direction === 'asc' ? (
+            {active &&
+              (current?.direction === 'asc' ? (
                 <IcRoundArrowUpward />
               ) : (
                 <IcRoundArrowDownward />
               ))}
           </Button>
         )
-      )}
+      })}
     </>
   )
 }
 
+interface ExplorerSortedByProps {
+  explorer: DashboardExplorer
+  page: ExplorerReadyPage
+}
+
+/** Tells the editor the list is sorted by a column rather than its order */
+function ExplorerSortedBy({explorer, page}: ExplorerSortedByProps) {
+  const sort = useSetAtom(explorer.sort)
+  const [, startTransition] = useTransition()
+  if (!page.sort.requested || !page.sort.label) return null
+  return (
+    <div className={styles.Explorer.sortedBy()} data-slot="explorer-sorted-by">
+      <Text
+        size="sm"
+        color="muted"
+        className={styles.Explorer.sortedBy.label()}
+      >
+        Sorted by {page.sort.label}
+      </Text>
+      <span aria-hidden="true" className={styles.Explorer.sortedBy.separator()}>
+        ·
+      </span>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={styles.Explorer.sortedBy.reset()}
+        onClick={() => startTransition(() => sort(undefined))}
+      >
+        Reset
+      </Button>
+    </div>
+  )
+}
+
+interface ExplorerActionsProps {
+  page: ExplorerReadyPage
+}
+
+/** The actions configured with `overview.actions` */
+function ExplorerActions({page}: ExplorerActionsProps) {
+  const views = useAtomValueRaw(viewsAtom)
+  const {location, overview} = page
+  if (overview.actions.length === 0 || !location.root) return null
+  const props: OverviewActionProps = {
+    workspace: location.workspace,
+    root: location.root,
+    parentId: location.parentId ?? null,
+    locale: page.locale,
+    search: page.search,
+    sort: page.sort.requested,
+    query: page.query
+  }
+  return (
+    <div className={styles.Explorer.actions()} data-slot="explorer-actions">
+      {overview.actions.map((view, index) => {
+        const Action = resolveView<OverviewActionProps>(views, view)
+        return Action ? <Action key={index} {...props} /> : null
+      })}
+    </div>
+  )
+}
+
 function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
-  const [, setView] = useAtom(explorer.view)
-  const [sort, setSort] = useAtom(explorer.sort)
+  const setView = useSetAtom(explorer.view)
+  const setSort = useSetAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
+  const [, startTransition] = useTransition()
   const requestedLocation = useAtomValueRaw(explorer.location)
   const selectedLocale = useAtomValueRaw(explorer.selectedLocale)
   const locationIsPending = explorerPageIsPending(
@@ -951,6 +1020,12 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const uploadCount = uploads.length
   const uploadLabel =
     uploadCount === 1 ? '1 file uploading' : `${uploadCount} files uploading`
+  const sortOptions: Array<ExplorerSortOption> = [
+    {column: titleColumn.key, label: titleColumn.header},
+    ...page.overview.columns
+      .filter(column => column.sortBy)
+      .map(column => ({column: column.key, label: column.header}))
+  ]
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
@@ -959,11 +1034,14 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
           {uploadCount}
         </ActivityStatus>
       )}
+      <ExplorerSortedBy explorer={explorer} page={page} />
+      <ExplorerActions page={page} />
       <ExplorerControlsButton
         isMedia={page.isMedia}
-        sort={sort}
+        sort={page.sort}
+        sortOptions={page.search.trim() ? [] : sortOptions}
         selectedFilter={selectedFilter}
-        setSort={setSort}
+        setSort={sort => startTransition(() => setSort(sort))}
         toggleFilter={toggleFilter}
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>

@@ -18,7 +18,11 @@ export interface FieldOptions<StoredValue> {
   label: string
   /** Hide this field in the dashboard */
   hidden?: boolean
-  /** Display this field in overview listings */
+  /**
+   * Display this field in overview listings
+   * @deprecated Define the columns on the parent with `overview.columns`.
+   * Still used as columns when the parent defines none.
+   */
   overview?: boolean
   /** Mark this field as read-only */
   readOnly?: boolean

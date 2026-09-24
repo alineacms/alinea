@@ -3,6 +3,7 @@ import type {ComponentType} from 'react'
 import {type HasRoot, getRoot, hasRoot, internalRoot} from './Internal.js'
 import type {Label} from './Label.js'
 import type {OrderBy} from './OrderBy.js'
+import {Overview, type OverviewOptions} from './Overview.js'
 import type {Page} from './Page.js'
 import type {Preview} from './Preview.js'
 import {Schema} from './Schema.js'
@@ -25,7 +26,12 @@ export interface RootI18n {
 export interface RootMeta {
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
-  /** Order children entries in the sidebar content tree */
+  /** How the dashboard lists the entries at the top level of this root */
+  overview?: OverviewOptions
+  /**
+   * Order children entries in the sidebar content tree
+   * @deprecated Use `overview.sort`
+   */
   orderChildrenBy?: OrderBy | Array<OrderBy>
   /** Open this root when the workspace is opened without a specific root */
   openByDefault?: boolean
@@ -77,6 +83,17 @@ export namespace Root {
     return getRoot(root).i18n?.locales[0]
   }
 
+  export function overview(root: Root): OverviewOptions | undefined {
+    return getRoot(root).overview
+  }
+
+  /** The default order of children: `overview.sort`, or `orderChildrenBy` */
+  export function childrenOrder(
+    root: RootData
+  ): OrderBy | Array<OrderBy> | undefined {
+    return root.overview?.sort ?? root.orderChildrenBy
+  }
+
   export function isRoot(value: any): value is Root {
     return Boolean(value && hasRoot(value))
   }
@@ -123,8 +140,11 @@ export namespace Root {
   }
 
   export function referencedViews(root: Root): Array<string> {
-    const {view} = data(root)
-    return typeof view === 'string' ? [view] : []
+    const {view, overview} = data(root)
+    return [
+      ...(typeof view === 'string' ? [view] : []),
+      ...Overview.referencedViews(overview)
+    ]
   }
 }
 

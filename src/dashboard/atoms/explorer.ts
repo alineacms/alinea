@@ -2,11 +2,12 @@ import type {DragTypes, DropTarget, Key} from '#/components.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {filterChecker} from '#/core/Filter.js'
-import {Field, type FieldOptions} from '#/core/Field.js'
+import {Field} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
+import type {GraphQuery} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import type {OrderBy} from '#/core/OrderBy.js'
+import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
@@ -24,6 +25,18 @@ import type {ComponentType, SetStateAction} from 'react'
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
+import {
+  columnLinkIds,
+  loadColumnValues,
+  loadOverviewParent,
+  overviewOrder,
+  type OverviewState,
+  resolveOverview,
+  sortColumn,
+  sortedColumn,
+  thumbnailField,
+  withAuditColumns
+} from './overview.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
 import {uploadFilesAtom} from './upload.js'
@@ -34,18 +47,10 @@ import {
   dispense
 } from './utils.js'
 
-export const dashboardEntryOverviewColumnCount = 5
-
 /** The best ranked matches a search loads into the explorer. */
 export const searchResultLimit = 100
 
 export type ExplorerView = 'card' | 'row'
-export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id' | 'index'
-export type ExplorerSortDirections = 'asc' | 'desc'
-export interface ExplorerSort {
-  sortBy: ExplorerSortBy
-  direction: ExplorerSortDirections
-}
 export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
 
 export interface ExplorerLocation {
@@ -88,7 +93,6 @@ export interface ExplorerOptions {
   autoSelectFirstItem?: boolean
   breadcrumbs?: boolean
   condition?: Filter<EntryFields>
-  defaultOrderBy?: Atom<OrderBy | Array<OrderBy> | undefined>
   enableNavigation?: boolean
   initialView?: ExplorerView
   initialResultMode?: ExplorerResultMode
@@ -115,6 +119,15 @@ export interface ExplorerOptions {
   selectedLocale?: string | null
   selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
+  /**
+   * The column the editor sorted by, defaults to state kept by the explorer.
+   * Page explorers keep it in the url.
+   */
+  sortState?: WritableAtom<
+    OverviewSort | undefined,
+    [OverviewSort | undefined],
+    void
+  >
   showSelectionControls?: boolean
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
@@ -133,17 +146,35 @@ export interface ExplorerTreeItem {
 
 export type ExplorerResultMode = 'browse' | 'matches'
 
+type ExplorerQuery = GraphQuery<undefined, Type | undefined, undefined>
+
+/** How the listed entries are ordered */
+export interface ExplorerSortState {
+  /** The column the editor sorted by */
+  requested?: OverviewSort
+  /** The header of the column the editor sorted by */
+  label?: string
+  /** The column shown as sorted, also for the parent's default order */
+  column?: OverviewSort
+  /** Entries are listed in their stored order and can be reordered */
+  manual: boolean
+}
+
 export interface ExplorerReadyPage {
   canUpload: boolean
   isMedia: boolean
   items: Array<ExplorerEntry>
   locale: string | null
   location: ExplorerLocation
+  overview: OverviewState
+  /** The query of the listed entries, without selection and paging */
+  query: ExplorerQuery
   root: ExplorerRootData
   resultMode: ExplorerResultMode
   search: string
   searchScope: 'workspace' | 'everything'
   searchesEverything: boolean
+  sort: ExplorerSortState
   view: ExplorerView
 }
 
@@ -187,7 +218,9 @@ export interface ExplorerItemData {
   index: string
   data: Record<string, unknown>
   hasChildren: boolean
-  /** Summaries of the entries linked from the overview fields, by id */
+  /** The values of the overview columns that are queried, by column key */
+  columns?: Record<string, unknown>
+  /** Summaries of the entries linked from the overview columns, by id */
   linked?: Record<string, ExplorerLinkedEntry>
   /** The first image found in the entry's fields */
   thumbnail?: ExplorerLinkedEntry
@@ -202,16 +235,6 @@ export interface ExplorerLinkedEntry {
   averageColor?: string
 }
 
-/** The fields shown as columns in the explorer's row view, in order */
-export function explorerOverviewFields(type: Type): Array<[string, Field]> {
-  return Object.entries(Type.fields(type))
-    .filter(([key, field]) => {
-      const options = Field.options(field) as FieldOptions<unknown>
-      return !options.hidden && options.overview === true && key !== 'title'
-    })
-    .slice(0, dashboardEntryOverviewColumnCount)
-}
-
 /**
  * The id of the first image an entry links to, following the order of the
  * type's fields and the items within them (eg. a gallery). Returns undefined
@@ -224,19 +247,6 @@ export function explorerThumbnailId(
   return Type.references(type, data).find(
     reference => reference.linkType === 'image'
   )?.targetId
-}
-
-/** The ids of the entries linked from an entry's overview fields */
-export function explorerOverviewLinkIds(
-  type: Type,
-  data: Record<string, unknown>
-): Array<string> {
-  return explorerOverviewFields(type).flatMap(([key, field]) =>
-    Field.references(field, data[key], {
-      path: [key],
-      label: Field.label(field)
-    }).map(reference => reference.targetId)
-  )
 }
 
 interface LinkedEntryRow extends ExplorerLinkedEntry {
@@ -260,22 +270,42 @@ function pickLinkedEntry(
   }
 }
 
+/** The id of the image shown on the card of an entry */
+function cardThumbnailId(
+  get: Getter,
+  overview: OverviewState,
+  item: ExplorerItemData
+): string | undefined {
+  const config = get(configAtom)
+  const type = config.schema[item.type]
+  if (!type) return undefined
+  const configured = thumbnailField(config, overview, item.type)
+  if (!configured) return explorerThumbnailId(type, item.data)
+  const [name, field] = configured
+  return Field.references(field, item.data[name], {
+    path: [name],
+    label: Field.label(field)
+  }).find(reference => reference.linkType === 'image')?.targetId
+}
+
 /**
- * Loads the thumbnails and the entries linked from the overview fields of
+ * Loads the thumbnails and the entries linked from the overview columns of
  * the given explorer items in a single query
  */
-async function withLinkedEntries<Item extends ExplorerItemData>(
+export async function withLinkedEntries<Item extends ExplorerItemData>(
   get: Getter,
+  overview: OverviewState,
   items: Array<Item>
 ): Promise<Array<Item>> {
-  const schema = get(configAtom).schema
+  const config = get(configAtom)
+  const schema = config.schema
   const wanted = items.map(item => {
     const type = schema[item.type]
     if (!type || type === MediaFile || type === MediaLibrary)
       return {thumbnail: undefined, links: []}
     return {
-      thumbnail: explorerThumbnailId(type, item.data),
-      links: explorerOverviewLinkIds(type, item.data)
+      thumbnail: cardThumbnailId(get, overview, item),
+      links: columnLinkIds(config, overview, item)
     }
   })
   const ids = Array.from(
@@ -333,13 +363,6 @@ function explorerItemField(item: ExplorerItemData, name: string) {
   return entry[name.slice(1)]
 }
 
-export interface DashboardEntryOverviewCell {
-  id: string
-  field: Field
-  label: string
-  value: unknown
-}
-
 export interface ExplorerRootData {
   icon: Atom<ComponentType>
   label: Atom<string>
@@ -374,17 +397,6 @@ export class ExplorerEntryData {
     const item = get(this.item)
     const type = get(configAtom).schema[item.type]
     return type === MediaFile ? (item.data as Infer<typeof MediaFile>) : null
-  })
-  overviewCells = atom((get): Array<DashboardEntryOverviewCell> => {
-    const item = get(this.item)
-    const type = get(configAtom).schema[item.type]
-    if (!type) return []
-    return explorerOverviewFields(type).map(([key, field]) => ({
-      id: key,
-      field,
-      label: Field.label(field),
-      value: item.data[key]
-    }))
   })
   linked = atom(
     (get): ReadonlyMap<string, ExplorerLinkedEntry> =>
@@ -478,7 +490,12 @@ export class ExplorerAtoms {
   sidebarExpandedKeys = atom(new Set<string>())
   #selectedResultMode: PrimitiveAtom<ExplorerResultMode>
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
-  #selectedSort = atom<ExplorerSort>()
+  /** The column the editor sorted by */
+  requestedSort: WritableAtom<
+    OverviewSort | undefined,
+    [OverviewSort | undefined],
+    void
+  >
   #selectedFilter = atom<ExplorerTypeFilters>()
   selectedLocale: WritableAtom<
     string | null,
@@ -547,6 +564,8 @@ export class ExplorerAtoms {
         set(this.#selectedResultMode, resultMode)
     )
     this.#selectedView = atom(options.initialView)
+    this.requestedSort =
+      options.sortState ?? atom<OverviewSort | undefined>(undefined)
     this.mode = options.mode ?? 'browse'
     this.hasRowAction =
       options.onAction !== undefined ||
@@ -697,7 +716,6 @@ export class ExplorerAtoms {
       const resultMode = get(this.resultMode)
       const searchScope = get(this.searchScope)
       const searchesEverything = get(this.searchesEverything)
-      const view = get(this.view)
       const isMedia = get(this.isMedia)
       const requestedRoot = get(this.root)
       const root = {
@@ -705,6 +723,14 @@ export class ExplorerAtoms {
         label: atom(get(requestedRoot.label))
       }
       const itemsPromise = get(this.itemsReady(locale))
+      const overview = await get(this.overview)
+      const view =
+        get(this.#selectedView) ??
+        (overview.layout === 'cards'
+          ? 'card'
+          : overview.layout === 'table'
+            ? 'row'
+            : get(this.view))
       const needsTree =
         Boolean(location.parentId) ||
         (view === 'card' &&
@@ -718,17 +744,34 @@ export class ExplorerAtoms {
       if (treeReady) await get(treeReady)
       const canUpload = get(this.#canUpload(location, locale))
       const items = await itemsPromise
+      const shown = withAuditColumns(
+        overview,
+        items.map(item => get(get(item.data).data.item))
+      )
+      const requested = get(this.requestedSort)
+      const sorted = search.trim() ? undefined : sortColumn(overview, requested)
       return {
         canUpload,
         isMedia,
         items,
         locale,
         location,
+        overview: shown,
+        query: (await get(this.#query(locale))) ?? {
+          workspace: location.workspace,
+          root: location.root
+        },
         resultMode,
         root,
         search,
         searchScope,
         searchesEverything,
+        sort: {
+          requested: sorted ? requested : undefined,
+          label: sorted?.header,
+          column: search.trim() ? undefined : sortedColumn(overview, requested),
+          manual: !search.trim() && !sorted && !overview.sort
+        },
         view
       }
     })
@@ -742,22 +785,43 @@ export class ExplorerAtoms {
     get => get(this.#selectedView) ?? (get(this.isMedia) ? 'card' : 'row'),
     (_get, set, view: ExplorerView) => set(this.#selectedView, view)
   )
-  sort = atom(
-    (get): ExplorerSort =>
-      get(this.#selectedSort) ?? {
-        sortBy: 'index',
-        direction: 'asc'
-      },
-    (get, set, sortBy: ExplorerSortBy) => {
-      const current = get(this.sort)
-      set(this.#selectedSort, {
-        sortBy,
-        direction:
-          current.sortBy === sortBy && current.direction === 'desc'
-            ? 'asc'
-            : 'desc'
+  /** Sorts by a column, or returns to the default order */
+  sort = atom(null, (_get, set, sort: OverviewSort | undefined) => {
+    set(this.requestedSort, sort)
+  })
+  /** The overview of the listed parent */
+  overview = atom(async get => {
+    const location = get(this.location)
+    const searchesEverything = get(this.searchesEverything)
+    const scoped = !searchesEverything && this.rootScope === 'current'
+    const mixed = !scoped || get(this.resultMode) === 'matches'
+    return scoped
+      ? get(
+          this.#overviewAt(
+            location.workspace,
+            location.root,
+            location.parentId ?? null,
+            mixed
+          )
+        )
+      : get(this.#overviewAt(location.workspace, undefined, null, mixed))
+  })
+  #overviewAt = dispense(
+    (
+      workspace: string,
+      root: string | undefined,
+      parentId: string | null,
+      mixed: boolean
+    ) =>
+      atom(async get => {
+        const config = get(configAtom)
+        const parent = await loadOverviewParent(config, get(graphAtom), {
+          workspace,
+          root,
+          parentId
+        })
+        return resolveOverview(config, parent, {mixed})
       })
-    }
   )
   filter = atom(
     get => get(this.#selectedFilter),
@@ -848,6 +912,35 @@ export class ExplorerAtoms {
       }
     }
   )
+  /** Moves the dragged entries of this explorer before or after the target */
+  reorder = atom(
+    null,
+    async (
+      get,
+      _set,
+      ids: Iterable<string>,
+      target: DropTarget,
+      locale: string | null
+    ) => {
+      if (target.position === 'on') return
+      const entries = get(this.items(locale))
+      const policy = get(policyAtom)
+      const graph = get(graphAtom)
+      for (const id of ids) {
+        const entry = entries.find(entry => entry.id === id)
+        if (!entry || String(target.key) === id) continue
+        const {data} = get(entry.data)
+        if (!data) continue
+        policy.assert(Permission.Reorder, get(data.item))
+        await graph.move({
+          id,
+          target: String(target.key),
+          targetType: 'entry',
+          dropPosition: target.position
+        })
+      }
+    }
+  )
   onAction = atom(
     null,
     (get, set, entry: ExplorerEntry, locale: string | null) => {
@@ -911,19 +1004,10 @@ export class ExplorerAtoms {
       get(shaAtom)
       const {data} = get(entry.data)
       if (!data || !get(data.hasChildren)) return []
+      const config = get(configAtom)
       const graph = get(graphAtom)
-      const sort = get(this.sort)
       const filter = get(this.filter)
-      const orderField =
-        sort.sortBy === 'title'
-          ? Entry.title
-          : sort.sortBy === 'path'
-            ? Entry.path
-            : sort.sortBy === 'size'
-              ? MediaFile.size
-              : sort.sortBy === 'id'
-                ? Entry.id
-                : Entry.index
+      const overview = await get(this.overview)
       const entries = await graph.find({
         workspace: entry.workspace,
         root: entry.root,
@@ -933,54 +1017,27 @@ export class ExplorerAtoms {
         type: filter,
         status: 'preferDraft',
         groupBy: Entry.id,
-        orderBy:
-          sort.direction === 'asc'
-            ? {asc: orderField, caseSensitive: sort.sortBy !== 'id'}
-            : {desc: orderField, caseSensitive: sort.sortBy !== 'id'},
-        select: {
-          active: Entry.active,
-          createdAt: Entry.createdAt,
-          id: Entry.id,
-          status: Entry.status,
-          title: Entry.title,
-          path: Entry.path,
-          updatedAt: Entry.updatedAt,
-          url: Entry.url,
-          type: Entry.type,
-          workspace: Entry.workspace,
-          root: Entry.root,
-          locale: Entry.locale,
-          parentId: Entry.parentId,
-          parents: Entry.parents,
-          parentEntries: parents({
-            select: {
-              id: Entry.id,
-              title: Entry.title,
-              type: Entry.type,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              locale: Entry.locale,
-              parentId: Entry.parentId
-            }
-          }),
-          index: Entry.index,
-          data: Entry.data
-        }
+        orderBy: overviewOrder(overview, get(this.requestedSort)),
+        select: explorerItemSelect
       })
       const policy = get(policyAtom)
       const readable = entries.filter(candidate => policy.canRead(candidate))
-      const parentIds = await graph.find({
-        workspace: entry.workspace,
-        root: entry.root,
-        parentId: {in: readable.map(candidate => candidate.id)},
-        status: 'preferDraft',
-        groupBy: Entry.parentId,
-        select: Entry.parentId
-      })
+      const [parentIds, rows] = await Promise.all([
+        graph.find({
+          workspace: entry.workspace,
+          root: entry.root,
+          parentId: {in: readable.map(candidate => candidate.id)},
+          status: 'preferDraft',
+          groupBy: Entry.parentId,
+          select: Entry.parentId
+        }),
+        loadColumnValues(config, graph, overview, readable)
+      ])
       const currentParents = get(data.parents)
       const values = await withLinkedEntries(
         get,
-        readable.map(candidate => ({
+        overview,
+        rows.map(candidate => ({
           ...candidate,
           hasChildren: parentIds.includes(candidate.id)
         }))
@@ -996,54 +1053,26 @@ export class ExplorerAtoms {
   children = dispense((entry: ExplorerEntry, locale: string | null) =>
     unwrap(this.childrenReady(entry, locale), previous => previous ?? [])
   )
-  #itemData = dispense((locale: string | null) =>
-    atom(async get => {
-      get(shaAtom)
+  /** The query of the listed entries, undefined when nothing is listed */
+  #query = dispense((locale: string | null) =>
+    atom(async (get): Promise<ExplorerQuery | undefined> => {
       const location = get(this.location)
       const search = get(this.search).trim()
       const searchesEverything = get(this.searchesEverything)
       const searchesMultipleRoots =
         searchesEverything || this.rootScope === 'workspace'
       const resultMode = get(this.resultMode)
-      const workspace = searchesEverything ? undefined : location.workspace
-      const root = searchesEverything
-        ? undefined
-        : this.rootScope === 'workspace'
-          ? undefined
-          : location.root
       if (!searchesEverything && !location.root && this.rootScope === 'current')
-        return []
-      if (this.mode === 'search' && !search) return []
-      const graph = get(graphAtom)
-      const sort = get(this.sort)
-      const selectedSort = get(this.#selectedSort)
-      const filter = get(this.filter)
-      const defaultOrderBy = this.#options.defaultOrderBy
-        ? get(this.#options.defaultOrderBy)
-        : undefined
+        return undefined
+      if (this.mode === 'search' && !search) return undefined
+      const overview = await get(this.overview)
       const flatList = resultMode === 'matches'
-      const filterSelectable = flatList
-      const selectedLocationParentId =
-        !searchesEverything &&
-        flatList &&
-        !this.pickChildren &&
-        location.root &&
-        location.parentId
-          ? location.parentId
-          : undefined
-      const orderField =
-        sort.sortBy === 'title'
-          ? Entry.title
-          : sort.sortBy === 'path'
-            ? Entry.path
-            : sort.sortBy === 'size'
-              ? MediaFile.size
-              : sort.sortBy === 'id'
-                ? Entry.id
-                : Entry.index
-      const entries = await graph.find({
-        workspace,
-        root,
+      return {
+        workspace: searchesEverything ? undefined : location.workspace,
+        root:
+          searchesEverything || this.rootScope === 'workspace'
+            ? undefined
+            : location.root,
         parentId: this.pickChildren
           ? (location.parentId ?? null)
           : flatList
@@ -1053,49 +1082,42 @@ export class ExplorerAtoms {
               : (location.parentId ?? null),
         locale: searchesMultipleRoots ? undefined : locale,
         search: search || undefined,
+        filter: flatList ? this.#options.condition : undefined,
+        type: get(this.filter),
+        status: 'preferDraft',
+        orderBy: search
+          ? undefined
+          : overviewOrder(overview, get(this.requestedSort))
+      }
+    })
+  )
+  #itemData = dispense((locale: string | null) =>
+    atom(async get => {
+      get(shaAtom)
+      const query = await get(this.#query(locale))
+      if (!query) return []
+      const location = get(this.location)
+      const search = get(this.search).trim()
+      const searchesEverything = get(this.searchesEverything)
+      const flatList = get(this.resultMode) === 'matches'
+      const config = get(configAtom)
+      const graph = get(graphAtom)
+      const overview = await get(this.overview)
+      const selectedLocationParentId =
+        !searchesEverything &&
+        flatList &&
+        !this.pickChildren &&
+        location.root &&
+        location.parentId
+          ? location.parentId
+          : undefined
+      const entries = await graph.find({
+        ...query,
         // Search results arrive ranked; loading every match with its data
         // costs seconds on large sites while only the best ones are shown.
         take: search ? searchResultLimit : undefined,
-        filter: filterSelectable ? this.#options.condition : undefined,
-        type: filter,
-        status: 'preferDraft',
         groupBy: Entry.id,
-        orderBy: search
-          ? undefined
-          : selectedSort === undefined && defaultOrderBy !== undefined
-            ? defaultOrderBy
-            : sort.direction === 'asc'
-              ? {asc: orderField, caseSensitive: sort.sortBy !== 'id'}
-              : {desc: orderField, caseSensitive: sort.sortBy !== 'id'},
-        select: {
-          active: Entry.active,
-          createdAt: Entry.createdAt,
-          id: Entry.id,
-          status: Entry.status,
-          title: Entry.title,
-          path: Entry.path,
-          updatedAt: Entry.updatedAt,
-          url: Entry.url,
-          type: Entry.type,
-          workspace: Entry.workspace,
-          root: Entry.root,
-          locale: Entry.locale,
-          parentId: Entry.parentId,
-          parents: Entry.parents,
-          parentEntries: parents({
-            select: {
-              id: Entry.id,
-              title: Entry.title,
-              type: Entry.type,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              locale: Entry.locale,
-              parentId: Entry.parentId
-            }
-          }),
-          index: Entry.index,
-          data: Entry.data
-        }
+        select: explorerItemSelect
       })
       const policy = get(policyAtom)
       const condition = this.#options.condition
@@ -1109,27 +1131,59 @@ export class ExplorerAtoms {
           policy.canRead(entry) &&
           (!selectedLocationParentId ||
             entry.parents.includes(selectedLocationParentId)) &&
-          (!filterSelectable ||
-            !matchesCondition ||
-            matchesCondition(entry as never))
+          (!flatList || !matchesCondition || matchesCondition(entry as never))
       )
-      const parentIds = await graph.find({
-        workspace,
-        root,
-        parentId: {in: readable.map(entry => entry.id)},
-        status: 'preferDraft',
-        groupBy: Entry.parentId,
-        select: Entry.parentId
-      })
+      const [parentIds, rows] = await Promise.all([
+        graph.find({
+          workspace: query.workspace,
+          root: query.root,
+          parentId: {in: readable.map(entry => entry.id)},
+          status: 'preferDraft',
+          groupBy: Entry.parentId,
+          select: Entry.parentId
+        }),
+        loadColumnValues(config, graph, overview, readable)
+      ])
       return withLinkedEntries(
         get,
-        readable.map(entry => ({
+        overview,
+        rows.map(entry => ({
           ...entry,
           hasChildren: parentIds.includes(entry.id)
         }))
       )
     })
   )
+}
+
+const explorerItemSelect = {
+  active: Entry.active,
+  createdAt: Entry.createdAt,
+  id: Entry.id,
+  status: Entry.status,
+  title: Entry.title,
+  path: Entry.path,
+  updatedAt: Entry.updatedAt,
+  url: Entry.url,
+  type: Entry.type,
+  workspace: Entry.workspace,
+  root: Entry.root,
+  locale: Entry.locale,
+  parentId: Entry.parentId,
+  parents: Entry.parents,
+  parentEntries: parents({
+    select: {
+      id: Entry.id,
+      title: Entry.title,
+      type: Entry.type,
+      workspace: Entry.workspace,
+      root: Entry.root,
+      locale: Entry.locale,
+      parentId: Entry.parentId
+    }
+  }),
+  index: Entry.index,
+  data: Entry.data
 }
 
 export function createExplorerAtoms(

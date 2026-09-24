@@ -190,15 +190,9 @@ test('CompactField formats dates and numbers', () => {
   )
 })
 
-test('CompactField shows media file sizes in a readable unit', () => {
-  render(<CompactField field={MediaFile.size} value={345466} />)
-
-  expect(screen.getByText('345 kB')).toBeDefined()
-  expect(compactFieldText(MediaFile.size, 345466)).toBe('345 kB')
-  expect(compactFieldText(MediaFile.size, 12)).toBe('12 B')
-  // Other numbers keep their grouping
-  expect(compactFieldText(number('Count'), 345466)).toBe(
+test('CompactField shows numbers without a unit, media sizes are columns', () => {
+  expect(compactFieldText(MediaFile.size, 345466)).toBe(
     compactFieldText(number('Other'), 345466)
   )
-  expect(compactFieldText(number('Count'), 345466)).not.toContain('kB')
+  expect(compactFieldText(MediaFile.size, 345466)).not.toContain('kB')
 })

@@ -1,0 +1,26 @@
+.MediaPreviewCell {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: var(--alinea-radius-sm);
+
+  &.is-file {
+    background: var(--alinea-bg-muted);
+    color: var(--alinea-fg-muted);
+  }
+}
+
+.MediaPreviewCell-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.MediaPreviewCell-icon {
+  width: 18px;
+  height: 18px;
+}

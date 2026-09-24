@@ -19,7 +19,10 @@ import {
   type DashboardRoot,
   type ExplorerReadyPage
 } from '../atoms/explorer.js'
-import {dashboardEntryDropIds} from '../atoms/utils.js'
+import {
+  acceptsDashboardEntryDrag,
+  dashboardEntryDropIds
+} from '../atoms/utils.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -103,6 +106,7 @@ export function ExplorerList({
   const getDragData = useSetAtom(explorer.getDragData)
   const canDrop = useSetAtom(explorer.canDrop)
   const moveInto = useSetAtom(explorer.moveInto)
+  const reorder = useSetAtom(explorer.reorder)
   const requestedLocation = useAtomValueRaw(explorer.location)
   const selectedLocale = useAtomValueRaw(explorer.selectedLocale)
   const locationIsPending = explorerPageIsPending(
@@ -112,10 +116,23 @@ export function ExplorerList({
   )
   const upload = useSetAtom(explorer.upload)
   const acceptsDrops = page.isMedia && page.canUpload && !locationIsPending
+  // Entries in their stored order can be reordered, sorting only changes
+  // the view
+  const canReorder =
+    explorer.hasRowAction &&
+    page.sort.manual &&
+    page.resultMode === 'browse' &&
+    !locationIsPending
   const dragDrop: DragDropProps = {
     getDragData,
     acceptedDragTypes: acceptsDrops ? undefined : [],
-    canDrop,
+    canDrop(target, types) {
+      if (target.position === 'on') return canDrop(target, types)
+      return canReorder && acceptsDashboardEntryDrag(types)
+    },
+    onReorder: canReorder
+      ? event => reorder([...event.keys].map(String), event.target, page.locale)
+      : undefined,
     onMove(event) {
       return moveInto([...event.keys].map(String), event.target, page.locale)
     },
@@ -154,7 +171,10 @@ export function ExplorerList({
     'ExplorerList requires a root'
   )
   return (
-    <div className={styles.ExplorerList()}>
+    <div
+      className={styles.ExplorerList()}
+      data-reorderable={canReorder || undefined}
+    >
       {page.view === 'card' ? (
         <ExplorerCards
           dragDrop={dragDrop}

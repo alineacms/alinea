@@ -92,6 +92,28 @@
     border-color: color-mix(in oklab, var(--alinea-button-accent) 30%, transparent);
   }
 
+  &[data-variant='link'] {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--alinea-radius-sm);
+    background: transparent;
+    color: var(--alinea-button-accent);
+    font-weight: inherit;
+    line-height: inherit;
+    text-overflow: ellipsis;
+    text-underline-offset: 3px;
+
+    @media (hover: hover) {
+      &:hover {
+        background: transparent;
+        text-decoration: underline;
+      }
+    }
+  }
+
   /* A neutral outline matches the borders of inputs and toggle groups */
   &[data-variant='outline'][data-color='neutral'] {
     border-color: var(--alinea-border);

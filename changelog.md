@@ -10,6 +10,16 @@
   `alinea/dashboard/icons`.
 - Add `Field.localiser` to keep every locale of a value in a single field, with
   fallbacks.
+- Add the `overview` option to container types and roots to configure how the
+  dashboard lists their children: columns (`Config.column`) with per-type
+  selects, formatting and custom cells, built-in type, status, updated and
+  author columns, sorting by column header (kept in the URL), the default
+  `sort`, `layout`, card `thumbnail` and toolbar `actions`. The media library
+  lists previews, dimensions, sizes and file types. `EntryTable` in
+  `alinea/cms` renders the same columns in custom views. `overview.sort`
+  replaces `orderChildrenBy`, `summaryRow` and `summaryThumb` are deprecated
+  and the `overview` field option only applies when the parent defines no
+  columns.
 - Record URL aliases in the metadata field when an entry's URL changes, and
   resolve them in queries (`alias` filter, `Query.aliases`). The metadata field
   also stores `createdAt`, `createdBy`, `updatedAt` and `updatedBy`.

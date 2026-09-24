@@ -1,0 +1,1268 @@
+{
+  "_id": "3Jlm0pWFwAtuoPTxeYRn4USpAFB",
+  "_type": "Doc",
+  "_index": "a2",
+  "title": "Overviews",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When an entry has children, or a root holds entries, the dashboard lists them in an overview: a table, or cards, with the title, type and status of each entry and who edited it last. The `overview` option of a container "
+        },
+        {
+          "_type": "text",
+          "text": "type",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0lWuoKubjCFkDopAJhI2nv5",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " or a "
+        },
+        {
+          "_type": "text",
+          "text": "root",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0oPv9mObJ7xo5B2GyPIT6V6",
+              "_link": "entry",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " adds your own columns, a default order, a card image and toolbar actions."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0rPureylmTNUqWrWuWlvb3y",
+      "code": "import {Config, Field, Query} from 'alinea'\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    cover: Field.image('Cover'),\n    category: Field.entry('Category', {condition: {_type: 'Category'}}),\n    publishDate: Field.date('Publish date')\n  }\n})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {},\n  overview: {\n    columns: {\n      cover: Config.column({\n        header: 'Cover',\n        width: 72,\n        select: BlogPost.cover\n      }),\n      category: Config.column({\n        header: 'Category',\n        select: BlogPost.category,\n        sortBy: BlogPost.category.first({select: Query.title})\n      }),\n      publishDate: Config.column({\n        header: 'Published',\n        width: 140,\n        select: BlogPost.publishDate\n      })\n    },\n    sort: {desc: BlogPost.publishDate},\n    layout: 'cards',\n    thumbnail: BlogPost.cover\n  }\n})",
+      "fileName": "schema/Blog.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The overview of a type applies to the children of every entry of that type, here the posts of each `Blog`. On a root it applies to the entries at the top level of the root:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0oTAWHRJiXtuSVTLNPoUtYN",
+      "code": "import {Config} from 'alinea'\nimport {productsOverview} from '@/schema/Product'\n\nexport const products = Config.root('Products', {\n  contains: ['Product'],\n  overview: productsOverview\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`columns`: the columns shown after the title and the built-in columns, keyed by name. Create them with `Config.column`, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Columns",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0mvMy0wma2eUFv0wp4cWNH9",
+                      "_link": "url",
+                      "href": "#columns"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`builtins`: show or hide the "
+                },
+                {
+                  "_type": "text",
+                  "text": "built-in columns",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0omf2Ug0zSBcCrqld7cdO0R",
+                      "_link": "url",
+                      "href": "#built-in-columns"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", for example `{updated: false}`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`sort`: the default order of the children, in the overview and in the sidebar tree. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Sorting",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0q7AE4K5Os17DBNjEHhtNbf",
+                      "_link": "url",
+                      "href": "#sorting"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`layout`: `'table'` or `'cards'`, the layout the overview opens in. Editors can still switch."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`thumbnail`: the image shown on cards: an image field, or one per type (`{BlogPost: BlogPost.cover, Event: Event.poster}`). Defaults to the first image found in the fields of the entry."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`actions`: components rendered in the toolbar of the overview, such as an export button. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Actions",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0pWnzXZleMwg2wichxreMaq",
+                      "_link": "url",
+                      "href": "#actions"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Columns"
+        }
+      ],
+      "_anchor": "columns"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.column(options)` takes:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`header` (required): the column header."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`select`: what the column shows. Anything a "
+                },
+                {
+                  "_type": "text",
+                  "text": "query",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0n0q1IV53DvyF5Yf7oHrsqO",
+                      "_link": "entry",
+                      "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " can select: a field (`Product.price`), an expression (`Query.url`), a query of linked entries, or an object of those."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`format`: a function that turns the selected value into text: `(value, {locale}) => string`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`view`: a React component that renders the cell, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Custom cells",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0rr3UjhcRxBfJxhM0aZGoGc",
+                      "_link": "url",
+                      "href": "#custom-cells"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`sortBy`, `sortable`: how the column sorts, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Sorting",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0n1ujsJPCEiBVG8u4c6iSGw",
+                      "_link": "url",
+                      "href": "#sorting"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`width`: a width in pixels (`120`) or a fraction of the remaining space (`'2fr'`). The default is `'1fr'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`minWidth`: the minimum width in pixels of a fractional column, 120 by default."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`align`: `'start'`, `'end'` or `'center'`. Use `'end'` for numbers and amounts."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`collapsible`: hide the column on narrow screens. `true` by default, set it to `false` for columns that should always be visible."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The value passed to `format` and `view` is what a `cms.find` with the same `select` returns. Without `format` or `view`, a column that selects a field renders its value like the dashboard does elsewhere: an image as a thumbnail, a link to an entry as that entry's title. Linked entries open when clicked, and so do selected values with an `entryId` or `_entry` (or an `id` and a `title`)."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A catalogue of products, with linked categories and brands and a price per locale:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0sevS7xJqkJywVFe8tzAcPK",
+      "code": "import {Config, Field, type OverviewOptions, Query} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    articleNumber: Field.text('Article number'),\n    categories: Field.entry.multiple('Categories', {\n      condition: {_type: 'Category'}\n    }),\n    brand: Field.entry('Brand', {condition: {_type: 'Brand'}}),\n    price: Field.number('Price'),\n    stock: Field.number('Stock')\n  }\n})\n\nexport const productsOverview: OverviewOptions = {\n  columns: {\n    articleNumber: Config.column({\n      header: 'Article number',\n      width: 140,\n      select: Product.articleNumber\n    }),\n    categories: Config.column({\n      header: 'Categories',\n      select: Product.categories.find({\n        select: {entryId: Query.id, title: Query.title},\n        filter: {_status: 'published'},\n        orderBy: {asc: Query.title}\n      })\n    }),\n    brand: Config.column({\n      header: 'Brand',\n      select: Product.brand,\n      sortBy: Product.brand.first({select: Query.title})\n    }),\n    price: Config.column({\n      header: 'Price',\n      width: 120,\n      align: 'end',\n      select: Product.price,\n      format: (price, {locale}) =>\n        typeof price === 'number'\n          ? new Intl.NumberFormat(locale ?? 'en', {\n              style: 'currency',\n              currency: 'EUR'\n            }).format(price)\n          : ''\n    }),\n    stock: Config.column({\n      header: 'Stock',\n      width: 120,\n      select: Product.stock,\n      view: '@/views/StockCell#StockCell'\n    })\n  },\n  builtins: {updated: false},\n  actions: ['@/views/ExportProducts#ExportProducts']\n}",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`categories` selects the published categories of each product, sorted by title. They are rendered as links because they select an `entryId` and a `title`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`brand` selects the entry field, so it shows the title of the brand. Linked entries don't sort by themselves: `sortBy` sorts the column by the title of the brand."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`price` is formatted as an amount in euro, in the locale of the listed entry."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Custom cells"
+        }
+      ],
+      "_anchor": "custom-cells"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`view` renders the cell with your own component. It receives `OverviewCellProps`: the selected `value`, the `entry` of the row (with its `id`, `type`, `title`, `url`, `status`, `locale`, `workspace`, `root` and `parentId`), the `column` key and the `locale`. Build it with "
+        },
+        {
+          "_type": "text",
+          "text": "`alinea/components`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0o48ETeB7Kay8f5MOGi9lD8",
+              "_link": "entry",
+              "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ":"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0orb1diGmm38eR7ItcUWl7e",
+      "code": "import type {OverviewCellProps} from 'alinea/cms'\nimport {Badge} from 'alinea/components'\n\nexport function StockCell({value}: OverviewCellProps<number | null>) {\n  if (typeof value !== 'number') return null\n  return <Badge>{value > 0 ? `${value} in stock` : 'Sold out'}</Badge>\n}",
+      "fileName": "views/StockCell.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Like other views, `view` takes a component or a path to one. Use a path to keep dashboard code out of your site, see "
+        },
+        {
+          "_type": "text",
+          "text": "Point to the view",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0mFZExdMUOrNWak1jda2wHZ",
+              "_link": "entry",
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+              "_anchor": "point-to-the-view"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". `format` is a plain function, so it can live in your schema."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Built-in columns"
+        }
+      ],
+      "_anchor": "built-in-columns"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The title is always the first column. The built-in columns follow, then the columns you define:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type`: the type of the entry. Shown when the parent can contain several types, and in search results and filtered lists."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`status`: the publication status. Shown by default."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`updated` and `author`: when the entry was last edited and by whom, read from the audit fields of the metadata field. Shown by default when the child types have a metadata field under the key `metadata`, which `Config.document` and `Field.metadata()` add, and at least one listed entry stores audit data. Lists of entries created before audit data was recorded don't show empty columns."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Force them off or on with `builtins`: `{type: false, status: false, updated: false, author: false}`. A column keyed `type`, `status`, `updated` or `author` replaces that built-in column in place, for example to show the writer of an article instead of the last editor. The `title` key is reserved."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sorting"
+        }
+      ],
+      "_anchor": "sorting"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors sort an overview by clicking a column header, or from the filter and sort menu. The title, the built-in columns, expressions of the entry (such as `Query.title`) and fields that hold a single value (text, number, date, select, check, path, ...) are sortable. Columns that select links, lists, multiple selects, rich text or JSON need `sortBy`: an expression, or a query of a linked entry that selects a single expression, such as `Product.brand.first({select: Query.title})`. Set `sortable: false` to turn sorting off for a column."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sorting runs in the database query, and entries without a value come last. It only changes what the editor sees, never the stored order of the entries. While a list is sorted, \"Sorted by Price · Reset\" shows in the toolbar and rows can't be reordered; Reset goes back to the default order. The sort is kept in the url (`?sort=price`, or `?sort=-price` for descending), so it survives a reload and can be shared, and it is restored when the editor comes back to the overview in the same session. Search results stay ordered by relevance."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Default order"
+        }
+      ],
+      "_anchor": "default-order"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`sort` sets the order of the children in the overview and in the sidebar tree. It takes an "
+        },
+        {
+          "_type": "text",
+          "text": "`orderBy`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0o3gLHx9OUNsoOht7S1YvqJ",
+              "_link": "entry",
+              "_entry": "3AUAiIoQhl86EKefhuhZ6EThETv"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " or an array of them, such as `[{desc: Event.date}, {asc: Query.title}]`. Children of a parent with a `sort` can't be reordered by hand. `find_entries` of the "
+        },
+        {
+          "_type": "text",
+          "text": "MCP server",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0rp9I9UwwvhTFAHBjtKyQOa",
+              "_link": "entry",
+              "_entry": "3JjyQUq7OEXLa3wIwCkEgiRasxN"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " returns them in the same order."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without `sort`, children keep the order editors give them: drag rows in the table or cards, or entries in the sidebar tree, to reorder them. Like `insertOrder`, `sort` only affects the dashboard: queries return children in their stored order unless you pass an `orderBy`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`sort` replaces `orderChildrenBy`, which still works but is deprecated."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Mixed lists"
+        }
+      ],
+      "_anchor": "mixed-lists"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When a parent contains several types, a column can select a different value per type. Key `select` and `sortBy` by the type names of your schema:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0mLNq00vjUEkcaN8wgPpCy8",
+      "code": "import {Config, Field, Query} from 'alinea'\n\nexport const Article = Config.document('Article', {\n  fields: {\n    author: Field.entry('Author', {condition: {_type: 'Person'}}),\n    publishDate: Field.date('Publish date')\n  }\n})\n\nexport const Event = Config.document('Event', {\n  fields: {\n    organiser: Field.entry('Organiser', {condition: {_type: 'Person'}}),\n    startDate: Field.date('Start date')\n  }\n})\n\nexport const News = Config.document('News', {\n  contains: ['Article', 'Event'],\n  fields: {},\n  overview: {\n    columns: {\n      person: Config.column({\n        header: 'Author or organiser',\n        select: {Article: Article.author, Event: Event.organiser},\n        sortBy: {\n          Article: Article.author.first({select: Query.title}),\n          Event: Event.organiser.first({select: Query.title})\n        }\n      }),\n      date: Config.column({\n        header: 'Date',\n        width: 140,\n        select: {Article: Article.publishDate, Event: Event.startDate}\n      })\n    }\n  }\n})",
+      "fileName": "schema/News.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries of a type without a value in the column show \"–\" and come last when sorted."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Actions"
+        }
+      ],
+      "_anchor": "actions"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`actions` renders components in the toolbar of the overview. They receive `OverviewActionProps`: the `workspace`, `root` and `parentId` of the list, the `locale`, the `search` terms, the `sort` the editor picked and a `query` for the listed entries in their current order, without paging. Pass the query to `useGraph().find` with your own `select`, for example to export the products above as CSV:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0o4F2VhC1asd5448QQcDLit",
+      "code": "import {Query} from 'alinea'\nimport {type OverviewActionProps, useGraph} from 'alinea/cms'\nimport {Button} from 'alinea/components'\nimport {Product} from '@/schema/Product'\n\nexport function ExportProducts({query}: OverviewActionProps) {\n  const graph = useGraph()\n  async function exportCsv() {\n    const rows = await graph.find({\n      ...query,\n      select: {\n        title: Query.title,\n        articleNumber: Product.articleNumber,\n        price: Product.price\n      }\n    })\n    const csv = rows\n      .map(row => [row.title, row.articleNumber, row.price].join(';'))\n      .join('\\n')\n    const link = document.createElement('a')\n    link.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}))\n    link.download = 'products.csv'\n    link.click()\n  }\n  return (\n    <Button variant=\"outline\" onClick={exportCsv}>\n      Export\n    </Button>\n  )\n}",
+      "fileName": "views/ExportProducts.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entry tables in your own views"
+        }
+      ],
+      "_anchor": "entry-tables-in-your-own-views"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`EntryTable` from `alinea/cms` renders a table of entries with the columns of an overview: the headers sort and a row opens its entry. Use it in a `Field.view` section, or any other custom view, to show related entries. Here a brand lists its products:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0rgTx1YmBpjDcvEIsHfxuBv",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Brand = Config.document('Brand', {\n  fields: {\n    logo: Field.image('Logo'),\n    ...Field.view('@/views/BrandProducts#BrandProducts')\n  }\n})",
+      "fileName": "schema/Brand.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0lzd4pl9JexPZaoLn2fxRbb",
+      "code": "import {EntryTable, useEntry} from 'alinea/cms'\nimport {Field} from 'alinea/components'\nimport {Product, productsOverview} from '@/schema/Product'\n\nexport function BrandProducts() {\n  const entry = useEntry()\n  if (!entry) return null\n  return (\n    <Field label=\"Products\">\n      <EntryTable\n        aria-label=\"Products\"\n        type={Product}\n        overview={productsOverview}\n        filter={{brand: {has: {_entry: entry.id}}}}\n        emptyMessage=\"No products for this brand yet\"\n      />\n    </Field>\n  )\n}",
+      "fileName": "views/BrandProducts.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`EntryTable` takes:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type`: list entries of this type, or of an array of types."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`filter`: a query "
+                },
+                {
+                  "_type": "text",
+                  "text": "filter",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm0mNO8z4to8hft156BW8SOUL",
+                      "_link": "entry",
+                      "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", such as `{brand: {has: {_entry: entry.id}}}`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace`, `root`, `parentId`: only list entries in this workspace or root, or the children of this entry (`null` for the top level)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`overview`: the columns and default order to use: an overview object, or the type or root that configures one. Defaults to the overview of the root or type that contains `type`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`columns`: show these columns instead of those of the overview."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`sort`: the default order. Defaults to the `sort` of the overview, then the title."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: the locale of the entries, defaults to the locale selected in the dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`limit`: the maximum number of rows."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`emptyMessage`: shown when no entries match."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`aria-label`, `className`, `style`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Tables with the same query share their data, so showing the same table twice doesn't load it twice."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media library"
+        }
+      ],
+      "_anchor": "media-library"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The "
+        },
+        {
+          "_type": "text",
+          "text": "media",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0sGgWp8qRCKmJssef9blfkb",
+              "_link": "entry",
+              "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " root and its folders list a preview, the dimensions (\"1200 × 800 px\"), the file size and the file type of each file, without the status, type, updated and author columns. Pass an `overview` to `Config.media({overview})` to replace these columns."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Custom dashboard pages"
+        }
+      ],
+      "_anchor": "custom-dashboard-pages"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To add a page of your own to the dashboard, such as a report or a table of data from another system, create a root with a `view`. The root shows up with the other roots of the workspace, and its view renders as a full page:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0mzyw4lgD9YjA7N1AwTNTaU",
+      "code": "import {Config} from 'alinea'\nimport {IcReport} from '@/icons'\n\nexport const reports = Config.root('Reports', {\n  icon: IcReport,\n  view: '@/views/Reports#Reports'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jlm0qDhNruanXkx8gmteLKc7j7",
+      "code": "import {EntryTable, type RootViewProps} from 'alinea/cms'\nimport {Heading, Text} from 'alinea/components'\nimport {Product} from '@/schema/Product'\n\nexport function Reports({root}: RootViewProps) {\n  return (\n    <>\n      <Heading>{root.label}</Heading>\n      <Text>Products that are out of stock</Text>\n      <EntryTable\n        aria-label=\"Sold out products\"\n        type={Product}\n        filter={{stock: 0}}\n        emptyMessage=\"Everything is in stock\"\n      />\n    </>\n  )\n}",
+      "fileName": "views/Reports.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The view receives `RootViewProps`: the configuration of the root, including its `label`. It can use everything in "
+        },
+        {
+          "_type": "text",
+          "text": "`alinea/components`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0sAvRCwpmD6rn5ns2Jjm925",
+              "_link": "entry",
+              "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", such as `Table` for rows you load yourself, the hooks of "
+        },
+        {
+          "_type": "text",
+          "text": "`alinea/cms`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm0syk1pXeadkq9ow26O5G1Xu",
+              "_link": "entry",
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " (`useGraph`, `useNavigate`, `useLocale`, ...) and `EntryTable`. A root without `contains` has an empty sidebar tree."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Prefer this over a type with a hidden title and a single `Field.view`: that creates entries in your content only to hold a view."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Two other options replace parts of the dashboard:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A type's `view` replaces the editor of entries of that type. It receives `TypeViewProps`: `{type}`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A type's `defaultView: 'overview'` opens the overview of an entry's children first, instead of its form."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Upgrading from Alinea 1.x"
+        }
+      ],
+      "_anchor": "upgrading-from-alinea-1-x"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`summaryRow` and `summaryThumb` are no longer rendered. Configure the columns on the parent with `overview.columns`, and the card image with `overview.thumbnail`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`orderChildrenBy` still works, but is deprecated: use `overview.sort`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The `overview: true` field option is deprecated. It's still used when the parent defines no `overview.columns`: the marked fields of the child types become columns, with the label of the field as header and up to five columns. A field name shared by several child types is one column, and types without it show \"–\". These columns sort by the same rules as other columns."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790243808,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790244477,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

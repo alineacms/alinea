@@ -605,6 +605,36 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`overview` (deprecated): `true` shows the field as a column in the list of the parent's children. It's only used when the parent's "
+                },
+                {
+                  "_type": "text",
+                  "text": "`overview`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm9WQcsyDIsN40oTymymy0Oy7",
+                      "_link": "entry",
+                      "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " defines no `columns`, for up to five fields. Define `overview.columns` on the parent instead."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -801,7 +831,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790233887,
+    "updatedAt": 1790243876,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

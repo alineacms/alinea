@@ -1,5 +1,6 @@
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {CompactField} from '#/dashboard/app/CompactField.js'
+import {MediaPreviewCell} from '#/dashboard/app/MediaPreviewCell.js'
 import {MediaAltFieldView} from '#/dashboard/app/editor/MediaAltField.view.js'
 import {ComponentType} from 'react'
 import {CheckFieldView} from './check/CheckField.view.js'
@@ -56,6 +57,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.TimeInput]: TimeFieldView,
   [viewKeys.ListInput]: ListFieldView,
   [viewKeys.MediaAltInput]: MediaAltFieldView,
+  [viewKeys.MediaPreviewCell]: MediaPreviewCell,
   [viewKeys.ObjectInput]: ObjectFieldView,
   [viewKeys.HiddenInput]: HiddenInput
 }

@@ -563,7 +563,10 @@ export function createContentTools(
     })
   }
 
-  /** Entries matching a query, parents before children, siblings by index */
+  /**
+   * Entries matching a query, parents before children, siblings in their
+   * sidebar order: by index, or by the parent's `overview.sort`
+   */
   async function inTreeOrder(
     query: GraphQuery<undefined, Type | undefined, undefined>
   ): Promise<Array<EntrySummary>> {
@@ -576,10 +579,63 @@ export function createContentTools(
       ? ((await graph.find({
           id: {in: ancestorIds},
           status: 'all',
-          select: {id: Entry.id, index: Entry.index}
-        })) as Array<{id: string; index: string}>)
+          select: {
+            id: Entry.id,
+            index: Entry.index,
+            type: Entry.type,
+            parentId: Entry.parentId,
+            workspace: Entry.workspace,
+            root: Entry.root
+          }
+        })) as Array<{
+          id: string
+          index: string
+          type: string
+          parentId: string | null
+          workspace: string
+          root: string
+        }>)
       : []
-    const indexOf = new Map(ancestors.map(entry => [entry.id, entry.index]))
+    const typeOf = new Map(ancestors.map(entry => [entry.id, entry.type]))
+    // Siblings of a parent with a configured order sort by their rank in it
+    const ranks = new Map<string, string>()
+    const groups = new Map<
+      string,
+      {workspace: string; root: string; parentId: string | null}
+    >()
+    for (const entry of [...found, ...ancestors])
+      groups.set(`${entry.workspace}/${entry.root}/${entry.parentId}`, {
+        workspace: entry.workspace,
+        root: entry.root,
+        parentId: entry.parentId
+      })
+    await Promise.all(
+      [...groups.values()].map(async group => {
+        const parentType = group.parentId
+          ? schema[typeOf.get(group.parentId) ?? '']
+          : undefined
+        const rootConfig = Workspace.roots(config.workspaces[group.workspace])[
+          group.root
+        ]
+        const orderBy = group.parentId
+          ? parentType && Type.childrenOrder(parentType)
+          : rootConfig && Root.childrenOrder(Root.data(rootConfig))
+        if (!orderBy) return
+        const ids = (await graph.find({
+          workspace: group.workspace,
+          root: group.root,
+          parentId: group.parentId,
+          status: 'preferDraft',
+          groupBy: Entry.id,
+          orderBy,
+          select: Entry.id
+        })) as Array<string>
+        ids.forEach((id, rank) => ranks.set(id, String(rank).padStart(9, '0')))
+      })
+    )
+    const indexOf = new Map(
+      ancestors.map(entry => [entry.id, ranks.get(entry.id) ?? entry.index])
+    )
     const workspaceOrder = keys(config.workspaces)
     const position = (entry: (typeof found)[number]) => {
       const roots = keys(Workspace.roots(config.workspaces[entry.workspace]))
@@ -589,7 +645,10 @@ export function createContentTools(
           workspaceOrder.indexOf(entry.workspace),
           roots.indexOf(entry.root)
         ],
-        path: [...entry.parents.map(id => indexOf.get(id) ?? ''), entry.index],
+        path: [
+          ...entry.parents.map(id => indexOf.get(id) ?? ''),
+          ranks.get(entry.id) ?? entry.index
+        ],
         locale: entry.locale ? locales.indexOf(entry.locale) : -1
       }
     }
