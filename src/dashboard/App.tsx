@@ -5,7 +5,13 @@ import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {User} from '#/core/User.js'
 import {styler} from '@alinea/styler'
 import {atom, Provider, useAtom, useAtomValueRaw, type Getter} from 'jotai'
-import {useEffect, useMemo, type ComponentType, type ReactNode} from 'react'
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  type ComponentType,
+  type ReactNode
+} from 'react'
 import css from './App.module.css'
 import {AccessDenied} from './app/AccessDenied.js'
 import {AuthView} from './app/AuthView.js'
@@ -211,15 +217,21 @@ export function App(props: AppProps) {
 
 function DashboardApp(props: AppProps): ReactNode {
   const [appPending, app] = useAtomValueRaw(appAtom)
+  // The app atom resolves once the next page's data is loaded, but components
+  // on that page (a preview component, a custom field view) may still suspend
+  // while mounting. Render the swap in the background so the current page
+  // stays on screen until the next one is complete, instead of suspending to
+  // the nearest boundary above the dashboard.
+  const shown = useDeferredValue(app)
   const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
   // Mounting the theme applies the stored preference to the document
   useAtomValueRaw(themeAtom)
-  const pending = appPending || activity.isMutating
+  const pending = appPending || shown !== app || activity.isMutating
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])
-  return app ?? <AppLoading />
+  return shown ?? <AppLoading />
 }
 
 function AppLoading() {

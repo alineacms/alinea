@@ -4,6 +4,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
+import type {Entry} from '#/core/Entry.js'
 import {Config, Field, Query} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {views} from '#/field/views.js'
@@ -80,6 +81,34 @@ const config = Config.create({
   workspaces: {main, references}
 })
 
+export const slowPreviewDelay = 600
+
+interface SlowPreviewProps {
+  entry: Entry
+}
+
+const slowPreviews = new Map<string, Promise<string>>()
+
+// A preview component that loads its own data while rendering, like a site
+// page rendered inline, so it suspends the first time it renders an entry
+function SlowPreview({entry}: SlowPreviewProps) {
+  let preview = slowPreviews.get(entry.title)
+  if (!preview) {
+    preview = new Promise<string>(resolve =>
+      setTimeout(() => resolve(entry.title), slowPreviewDelay)
+    )
+    slowPreviews.set(entry.title, preview)
+  }
+  return <p>Preview of {use(preview)}</p>
+}
+
+const slowPreviewConfig = Config.create({
+  enableDrafts: true,
+  schema: {HiddenFolder, OrderedFolder, Page: ScenarioPage},
+  workspaces: {main, references},
+  preview: SlowPreview
+})
+
 interface DashboardScenarioState {
   client: LocalConnection
   db: LocalDB
@@ -89,6 +118,8 @@ export interface DashboardScenarioProps {
   // Answer graph reads one at a time after this many milliseconds, like the
   // dashboard worker does in production
   readDelay?: number
+  // Render entry previews with a component that suspends while it loads
+  slowPreview?: boolean
 }
 
 class ScenarioDB extends LocalDB {
@@ -126,9 +157,10 @@ const users: Array<User> = [
 ]
 
 async function createDashboardScenario({
-  readDelay = 0
+  readDelay = 0,
+  slowPreview
 }: DashboardScenarioProps): Promise<DashboardScenarioState> {
-  const db = new ScenarioDB(config)
+  const db = new ScenarioDB(slowPreview ? slowPreviewConfig : config)
   await db.sync()
   await db.create({
     id: dashboardScenarioIds.alpha,
@@ -352,7 +384,7 @@ export function DashboardScenario(props: DashboardScenarioProps) {
     <App
       graph={db}
       events={db.events}
-      config={config}
+      config={props.slowPreview ? slowPreviewConfig : config}
       client={client}
       views={views}
       local

@@ -22,7 +22,7 @@ import {
   Timestamp
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
-import type {EntryStatus} from '#/core/Entry.js'
+import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
@@ -54,6 +54,8 @@ export interface EntrySidebarProps {
   localeData: EntryLocaleAtoms
   selectedTab: EntrySidebarTab
   previousVersionsOpen: boolean
+  /** The entry a preview component renders, loaded with the page */
+  previewEntry?: Entry
   onOpenChange?: (isOpen: boolean) => void
 }
 
@@ -77,11 +79,12 @@ export async function entrySidebar(
   const previousVersionsOpen =
     selectedTab === 'history' ? get(entry.previousVersionsOpen) : false
   if (!isOpen) return {entry, localeData, selectedTab, previousVersionsOpen}
+  let previewEntry: Entry | undefined
   switch (selectedTab) {
     case 'preview': {
       const preview = get(entry.preview)
       if (preview === true) void get(localeData.previewUrlReady)
-      else if (preview) await get(localeData.previewEntryReady)
+      else if (preview) previewEntry = await get(localeData.previewEntryReady)
       break
     }
     case 'history':
@@ -95,7 +98,7 @@ export async function entrySidebar(
       await get(entry.incomingReferencesReady)
       break
   }
-  return {entry, localeData, selectedTab, previousVersionsOpen}
+  return {entry, localeData, selectedTab, previousVersionsOpen, previewEntry}
 }
 
 function entrySidebarTabs(type: Type): Array<EntrySidebarTab> {
@@ -109,6 +112,7 @@ export function EntrySidebar({
   localeData,
   selectedTab,
   previousVersionsOpen,
+  previewEntry,
   onOpenChange
 }: EntrySidebarProps) {
   const typeName = useAtomValueRaw(entry.type)
@@ -144,7 +148,11 @@ export function EntrySidebar({
               value="preview"
               className={styles.EntrySidebar.previewPanel()}
             >
-              <EntrySidebarPreview entry={entry} localeData={localeData} />
+              <EntrySidebarPreview
+                entry={entry}
+                localeData={localeData}
+                previewEntry={previewEntry}
+              />
             </TabsContent>
           )}
           {!isMediaFile && (

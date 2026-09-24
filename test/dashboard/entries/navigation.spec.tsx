@@ -1,4 +1,5 @@
 import {expect, test} from '../support/DashboardTest.js'
+import type {Page} from 'playwright'
 import {DashboardScenarioMount} from '../support/DashboardScenarioMount.js'
 
 test('navigates between entries and through browser history', async ({
@@ -202,9 +203,7 @@ test('keeps a collapsed parent closed when selecting a child elsewhere', async (
   await tree.getByRole('button', {name: 'Expand Other folder'}).click()
   await app.openEntry('Other child')
 
-  await expect(
-    tree.getByRole('button', {name: 'Expand Folder'})
-  ).toBeVisible()
+  await expect(tree.getByRole('button', {name: 'Expand Folder'})).toBeVisible()
 })
 
 test('blocks navigation until unsaved changes are resolved', async ({
@@ -386,4 +385,83 @@ test('splits document metadata into SEO and Details tabs', async ({
   await expect(app.page.getByText('Updated by', {exact: true})).toBeVisible()
   await expect(app.page.getByText('URL aliases', {exact: true})).toBeVisible()
   await expect(app.field('Description')).toHaveCount(0)
+})
+
+// Counts the animation frames in which the dashboard is hidden, or the preview
+// tab shows anything but the preview of the entry on screen
+async function watchDashboard(page: Page) {
+  await page.evaluate(() => {
+    const state = {hidden: 0, mismatched: 0}
+    Object.assign(window, {dashboardFrames: state})
+    function frame() {
+      const tree = document.querySelector('[aria-label="Content tree"]')
+      const main = document.querySelector('main')
+      if (!tree?.checkVisibility() || !main?.checkVisibility()) state.hidden++
+      const title = document.querySelector('h1')?.textContent
+      const preview = Array.from(document.querySelectorAll('p')).find(p =>
+        p.textContent?.startsWith('Preview of ')
+      )
+      const tab = document.querySelector('[role="tab"][aria-selected="true"]')
+      const previewShown = tab?.textContent === 'Preview'
+      if (previewShown && preview?.textContent !== `Preview of ${title}`)
+        state.mismatched++
+      requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+  })
+  return () =>
+    page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            dashboardFrames: {hidden: number; mismatched: number}
+          }
+        ).dashboardFrames
+    )
+}
+
+test('keeps the current entry on screen while the next preview loads', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() =>
+    mount(<DashboardScenarioMount slowPreview />)
+  )
+  await expect(app.page.getByText('Preview of Alpha')).toBeVisible()
+  const frames = await watchDashboard(app.page)
+
+  await app.entry('Beta').click()
+  await expect(app.title).toHaveText('Alpha')
+  await expect(app.page.getByText('Preview of Beta')).toBeVisible()
+  await expect(app.title).toHaveText('Beta')
+
+  await app.page.goBack()
+  await expect(app.page.getByText('Preview of Alpha')).toBeVisible()
+
+  expect(await frames()).toEqual({hidden: 0, mismatched: 0})
+})
+
+test('keeps the overview on screen while an entry preview loads', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() =>
+    mount(<DashboardScenarioMount slowPreview />)
+  )
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
+  await expect(overview).toBeVisible()
+  const frames = await watchDashboard(app.page)
+
+  await overview.getByRole('row', {name: /^Beta/}).click()
+  await expect(overview).toBeVisible()
+  await expect(app.page.getByText('Preview of Beta')).toBeVisible()
+  await expect(app.title).toHaveText('Beta')
+
+  await app.page.getByRole('tab', {name: 'History'}).click()
+  await expect(app.page.getByText('Preview of Beta')).toHaveCount(0)
+  await app.page.getByRole('tab', {name: 'Preview'}).click()
+  await expect(app.page.getByText('Preview of Beta')).toBeVisible()
+
+  expect(await frames()).toEqual({hidden: 0, mismatched: 0})
 })

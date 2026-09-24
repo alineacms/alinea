@@ -1,4 +1,5 @@
 import {List, ListEmpty, PreviewFrame, PreviewToolbar} from '#/components.js'
+import type {Entry} from '#/core/Entry.js'
 import type {Preview} from '#/core/Preview.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
@@ -14,11 +15,14 @@ const styles = styler(css)
 export interface EntrySidebarPreviewProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
+  /** The preview entry loaded by the page atom */
+  previewEntry?: Entry
 }
 
 export function EntrySidebarPreview({
   entry,
-  localeData
+  localeData,
+  previewEntry
 }: EntrySidebarPreviewProps) {
   const preview = useAtomValueRaw(entry.preview)
   if (!preview)
@@ -30,20 +34,28 @@ export function EntrySidebarPreview({
   if (preview === true)
     return <EntrySidebarBrowserPreview localeData={localeData} />
   return (
-    <EntrySidebarComponentPreview localeData={localeData} preview={preview} />
+    <EntrySidebarComponentPreview
+      localeData={localeData}
+      preview={preview}
+      previewEntry={previewEntry}
+    />
   )
 }
 
 interface EntrySidebarComponentPreviewProps {
   localeData: EntryLocaleAtoms
   preview: Exclude<Preview, boolean>
+  previewEntry?: Entry
 }
 
 function EntrySidebarComponentPreview({
   localeData,
-  preview: Component
+  preview: Component,
+  previewEntry: loadedEntry
 }: EntrySidebarComponentPreviewProps) {
-  const previewEntry = useAtomValueRaw(localeData.previewEntry)
+  // The unwrapped atom is empty on its first read, render the entry the page
+  // loaded until it catches up so the preview mounts with the page
+  const previewEntry = useAtomValueRaw(localeData.previewEntry) ?? loadedEntry
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage title="Preview unavailable">
