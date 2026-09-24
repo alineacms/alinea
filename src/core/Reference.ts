@@ -2,6 +2,7 @@
 export interface Reference {
   _id: string
   _type: string
+  _label?: string
 }
 
 export namespace Reference {
