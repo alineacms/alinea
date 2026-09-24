@@ -37,6 +37,6 @@
 // A compact header on docs pages, it stays in view while reading
 :global(html):has(.root) {
   @include l {
-    --web-header-height: 72px;
+    --web-header-height: 64px;
   }
 }

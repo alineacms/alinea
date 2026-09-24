@@ -15,6 +15,8 @@
     position: sticky;
     top: 0;
     border-bottom: 1px solid var(--web-outline);
+    // Docs pages sit on the surface colour, the header matches them
+    background: var(--web-surface);
   }
 }
 
@@ -43,11 +45,11 @@
     // baseline of the vertically centered 15px nav labels: shift it up so
     // both share one baseline. Without nav labels (mobile) it stays centered.
     &-mark {
-      width: 80px;
-      transform: translateY(-3.5px);
+      width: 68px;
+      transform: translateY(-3px);
 
       @include sm {
-        width: 70px;
+        width: 62px;
         transform: none;
       }
     }
