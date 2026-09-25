@@ -1,6 +1,5 @@
 import {Config, Field} from 'alinea'
 import {IcOutlineChair} from '@/icons'
-import {DemoStockOverview} from './DemoStockOverview'
 import {demoEntryUrl} from './DemoUrl'
 
 // The Site root is translated, so every field is translated per locale unless
@@ -43,7 +42,7 @@ export const DemoProduct = Config.type('Product', {
             shared: true,
             description: 'Show this product as available to order'
           }),
-          ...Field.view(<DemoStockOverview />),
+          ...Field.view('@/schema/demo/DemoStockOverview#DemoStockOverview'),
           finishes: Field.list('Finishes', {
             schema: {
               DemoFinish: Config.type('Finish', {

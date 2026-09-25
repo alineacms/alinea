@@ -1,4 +1,3 @@
-import 'alinea/css'
 import styler from '@alinea/styler'
 import type {ReactNode} from 'react'
 import css from './DashboardTheme.module.scss'
@@ -13,6 +12,8 @@ export interface DashboardThemeProps {
 /**
  * Renders dashboard components with the dashboard font and theme. The site's
  * own typography stays outside, the light or dark scheme follows the site.
+ * The dashboard stylesheet is imported along with the components rendered
+ * inside, so pages without them don't load it.
  */
 export function DashboardTheme({className, children}: DashboardThemeProps) {
   return (

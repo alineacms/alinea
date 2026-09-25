@@ -7,11 +7,21 @@ import type {ExportedSource} from 'alinea/core/source/SourceExport'
 import {App} from 'alinea/dashboard/App'
 import {views as defaultViews} from 'alinea/field/views'
 import {Suspense, use, useMemo, useSyncExternalStore} from 'react'
+import {DemoAuthorArticles} from '@/schema/demo/DemoAuthorArticles'
+import {DemoStockOverview} from '@/schema/demo/DemoStockOverview'
 import {demoBaseUrl} from '@/schema/demo/DemoUrl'
 import {demoUser} from './DemoConnection'
 import {DemoReset} from './DemoReset'
 import {hasDemoPage} from './demoPages'
 import {setupDemo} from './demoSetup'
+
+// The demo schema references its custom views by key, so the site's pages
+// don't bundle them along with the schema
+const views = {
+  ...defaultViews,
+  '@/schema/demo/DemoAuthorArticles#DemoAuthorArticles': DemoAuthorArticles,
+  '@/schema/demo/DemoStockOverview#DemoStockOverview': DemoStockOverview
+}
 
 interface RenderDashboardProps {
   init: ReturnType<typeof setupDemo>
@@ -105,7 +115,7 @@ function RenderDashboard({init}: RenderDashboardProps) {
         graph={db}
         events={events}
         client={client}
-        views={defaultViews}
+        views={views}
         user={demoUser}
       />
       {!screenshot && <DemoReset siteUrl={siteUrl} onReset={reset} />}

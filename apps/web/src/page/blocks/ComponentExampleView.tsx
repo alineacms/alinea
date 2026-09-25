@@ -1,8 +1,7 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import type {ComponentType} from 'react'
 import {isComponentExampleId} from '@/page/catalog/componentCatalog'
-import {componentExampleViews} from '@/page/catalog/componentExampleViews'
+import {ComponentExample} from '@/page/catalog/ComponentExample'
 import {DashboardTheme} from '@/page/catalog/DashboardTheme'
 import {exampleSource} from '@/page/catalog/exampleSource'
 import type {ComponentExampleBlock} from '@/schema/blocks/ComponentExampleBlock'
@@ -16,13 +15,11 @@ export function ComponentExampleView({
   example
 }: Infer<typeof ComponentExampleBlock>) {
   if (!example || !isComponentExampleId(example)) return null
-  const Example: ComponentType | undefined = componentExampleViews[example]
-  if (!Example) return null
   const code = exampleSource(example)
   return (
     <figure className={styles.root()}>
       <DashboardTheme className={styles.root.stage()}>
-        <Example />
+        <ComponentExample example={example} />
       </DashboardTheme>
       {code && (
         <CodeBlockView

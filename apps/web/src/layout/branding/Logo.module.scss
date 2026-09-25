@@ -1,6 +1,8 @@
 @use '@/style' as *;
 
-.root {
+// Without specificity, so a width set by the parent wins regardless of the
+// order in which the stylesheets load
+:where(.root) {
   display: block;
   width: 80px;
 

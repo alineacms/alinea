@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
-import type {ComponentType, CSSProperties} from 'react'
+import type {CSSProperties} from 'react'
 import type {ComponentExampleId} from './componentCatalog'
-import {componentExampleViews} from './componentExampleViews'
+import {ComponentExample} from './ComponentExample'
 import {DashboardTheme} from './DashboardTheme'
 import css from './ComponentThumb.module.scss'
 
@@ -21,8 +21,6 @@ export interface ComponentThumbProps {
 
 /** A live, non-interactive rendering of an example for the catalog cards */
 export function ComponentThumb({example, scale, width}: ComponentThumbProps) {
-  const Example: ComponentType | undefined = componentExampleViews[example]
-  if (!Example) return null
   const style = {
     zoom: scale,
     width: width ? `${width}px` : undefined
@@ -31,7 +29,7 @@ export function ComponentThumb({example, scale, width}: ComponentThumbProps) {
     <div className={styles.root()} {...inert}>
       <DashboardTheme className={styles.root.content()}>
         <div className={styles.root.frame()} style={style}>
-          <Example />
+          <ComponentExample example={example} />
         </div>
       </DashboardTheme>
     </div>

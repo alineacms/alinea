@@ -1,5 +1,6 @@
 'use client'
 
+import 'alinea/css'
 import styler from '@alinea/styler'
 import {Config, Field} from 'alinea'
 import type {Field as AnyField} from 'alinea/core/Field'

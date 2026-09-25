@@ -1,3 +1,4 @@
+import 'alinea/css'
 import type {ComponentType} from 'react'
 import type {ComponentExampleId} from './componentCatalog'
 import {AlertExample} from './examples/Alert'

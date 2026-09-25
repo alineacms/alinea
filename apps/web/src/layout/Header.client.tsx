@@ -4,7 +4,7 @@ import {Breadcrumbs} from '@/layout/Breadcrumbs'
 import {isDocsPath} from '@/utils/docs'
 import styler from '@alinea/styler'
 import {HStack, VStack} from 'alinea/ui'
-import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
+import {IcRoundSearch} from '@/icons'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 import {

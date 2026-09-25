@@ -1,10 +1,9 @@
 import styler from '@alinea/styler'
 import type {Link as AnyLink, Infer} from 'alinea'
-import {Icon} from 'alinea/components/Icon'
 import {HStack, VStack} from 'alinea/ui'
-import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {px} from '@/utils/units'
 import screenshot from '@/assets/vetra.png'
+import {IcRoundOpenInNew} from '@/icons'
 import {Button} from '@/layout/Button'
 import {Image} from '@/layout/Image'
 import {WebText} from '@/layout/WebText'
@@ -54,7 +53,7 @@ export function TemplateBlockView({
                 <HStack gap={8} center>
                   <span>{link.fields.label || link.title}</span>
                   {isUrlLink(link) && link.target === '_blank' && (
-                    <Icon icon={IcRoundOpenInNew} />
+                    <IcRoundOpenInNew />
                   )}
                 </HStack>
               </WebTypo.Link>

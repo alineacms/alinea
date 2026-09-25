@@ -1,7 +1,6 @@
 import styler from '@alinea/styler'
-import {Icon} from 'alinea/components/Icon'
 import Link, {type LinkProps} from 'next/link'
-import type {ComponentType, PropsWithChildren} from 'react'
+import type {PropsWithChildren} from 'react'
 import css from './Button.module.scss'
 
 const styles = styler(css)
@@ -10,8 +9,6 @@ export type ButtonVariant = 'primary' | 'secondary'
 
 export interface ButtonProps extends PropsWithChildren<LinkProps> {
   className?: string
-  icon?: ComponentType
-  iconRight?: ComponentType
   target?: string
   variant?: ButtonVariant
 }
@@ -32,13 +29,7 @@ const linkMetadata = [
   'url'
 ]
 
-export function Button({
-  children,
-  icon,
-  iconRight,
-  variant = 'primary',
-  ...props
-}: ButtonProps) {
+export function Button({children, variant = 'primary', ...props}: ButtonProps) {
   const linkProps = {...props}
   for (const key of linkMetadata) Reflect.deleteProperty(linkProps, key)
   return (
@@ -48,9 +39,7 @@ export function Button({
         secondary: variant === 'secondary'
       })}
     >
-      {icon && <Icon icon={icon} />}
       <span className={styles.root.label()}>{children}</span>
-      {iconRight && <Icon icon={iconRight} />}
     </Link>
   )
 }
