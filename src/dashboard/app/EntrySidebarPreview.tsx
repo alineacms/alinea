@@ -55,7 +55,8 @@ function EntrySidebarComponentPreview({
 }: EntrySidebarComponentPreviewProps) {
   // The unwrapped atom is empty on its first read, render the entry the page
   // loaded until it catches up so the preview mounts with the page
-  const previewEntry = useAtomValueRaw(localeData.previewEntry) ?? loadedEntry
+  const previewEntry =
+    useAtomValueRawSync(localeData.previewEntry) ?? loadedEntry
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage title="Preview unavailable">

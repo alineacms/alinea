@@ -18,7 +18,7 @@ import type {Page} from '#/dashboard/atoms/nav.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {
   searchShortcutKeys,
@@ -202,7 +202,7 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
       }
     )
   )
-  const explorerPage = useAtomValueRaw(explorer.page)
+  const explorerPage = useAtomValueRawSync(explorer.page)
   if (!explorerPage)
     return <DashboardModalDialog variant="explorer" isLoading />
   return (

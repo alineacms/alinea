@@ -30,7 +30,7 @@ import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
   useEffect,
   useId,
@@ -1150,7 +1150,7 @@ export function Explorer({
   readOnly,
   titleControls
 }: ExplorerProps) {
-  const resolvedPage = useAtomValueRaw(explorer.page)
+  const resolvedPage = useAtomValueRawSync(explorer.page)
   const page = resolvedPage ?? loadedPage
   return (
     <>

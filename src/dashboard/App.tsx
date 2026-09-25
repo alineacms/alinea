@@ -4,7 +4,14 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {User} from '#/core/User.js'
 import {styler} from '@alinea/styler'
-import {atom, Provider, useAtom, useAtomValueRaw, type Getter} from 'jotai'
+import {
+  atom,
+  Provider,
+  useAtom,
+  useAtomValueRaw,
+  useAtomValueRawSync,
+  type Getter
+} from 'jotai'
 import {
   useDeferredValue,
   useEffect,
@@ -216,7 +223,7 @@ export function App(props: AppProps) {
 }
 
 function DashboardApp(props: AppProps): ReactNode {
-  const [appPending, app] = useAtomValueRaw(appAtom)
+  const [appPending, app] = useAtomValueRawSync(appAtom)
   // The app atom resolves once the next page's data is loaded, but components
   // on that page (a preview component, a custom field view) may still suspend
   // while mounting. Render the swap in the background so the current page

@@ -22,7 +22,7 @@ import {
   TooltipTrigger
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
   useEffect,
   useRef,
@@ -81,7 +81,7 @@ export function ActivityStatus({
   openOnFail = false,
   side = 'right'
 }: ActivityStatusProps) {
-  const [appPending] = useAtomValueRaw(appAtom)
+  const [appPending] = useAtomValueRawSync(appAtom)
   const activity = useAtomValueRaw(activityAtom)
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)

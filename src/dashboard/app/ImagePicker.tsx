@@ -9,7 +9,7 @@ import {
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useMemo, type ReactNode} from 'react'
 import {ExplorerHeader} from './Explorer.js'
 import {
@@ -99,7 +99,7 @@ function ImagePickerModalContent({options}: ExplorerModalProps) {
     return {explorer, tree}
   }, [explorerIdentity])
   // oxlint-enable react-hooks/exhaustive-deps
-  const explorerPage = useAtomValueRaw(explorer.page)
+  const explorerPage = useAtomValueRawSync(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValueRaw(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size

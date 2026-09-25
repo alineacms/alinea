@@ -75,7 +75,7 @@ import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {
   ComponentPropsWithoutRef,
@@ -196,7 +196,7 @@ function useLinkEntryState(entryId: string, locale?: string) {
   const scope = useOptionalEntryAtoms()
   // Links stored without a locale follow the locale of the edited entry
   const linkLocale = locale ?? scope?.localeData.requestedLocale ?? undefined
-  return useAtomValueRaw(linkEntryAtoms(entryId, linkLocale))
+  return useAtomValueRawSync(linkEntryAtoms(entryId, linkLocale))
 }
 
 interface EntryLoadingRowProps {
@@ -726,7 +726,7 @@ function useResolvedEntryPickerOptions(
     })
     return unwrap(resolved, previous => previous ?? initialValue)
   }, [conditionOption, entry, locationOption, type])
-  return useAtomValueRaw(resolvedAtom)
+  return useAtomValueRawSync(resolvedAtom)
 }
 
 function entryPickerSearchScope(

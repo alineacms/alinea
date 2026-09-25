@@ -54,7 +54,13 @@ import {
 import {useLocale} from '#/dashboard/hooks.js'
 import {LucideFile} from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
+import {
+  atom,
+  useAtomValueRaw,
+  useAtomValueRawSync,
+  useSetAtom,
+  useStore
+} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {
   type CSSProperties,
@@ -243,7 +249,7 @@ function EntryTableContent(props: EntryTableProps) {
   }, [key])
   const requested = useAtomValueRaw(atoms.requested)
   const setRequested = useSetAtom(atoms.requested)
-  const loaded = useAtomValueRaw(atoms.rows)
+  const loaded = useAtomValueRawSync(atoms.rows)
   const rows = loaded ?? use(store.get(atoms.ready))
   const shown = resolveOverviewOptions(
     config,

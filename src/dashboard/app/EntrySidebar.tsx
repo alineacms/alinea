@@ -32,7 +32,14 @@ import {localAtom} from '#/dashboard/atoms/core.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
-import {atom, type Getter, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {
+  atom,
+  type Getter,
+  useAtom,
+  useAtomValueRaw,
+  useAtomValueRawSync,
+  useSetAtom
+} from 'jotai'
 import {type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
@@ -239,7 +246,7 @@ interface EntrySidebarPreviousVersionsProps {
 function EntrySidebarPreviousVersions({
   localeData
 }: EntrySidebarPreviousVersionsProps) {
-  const [pending, history = []] = useAtomValueRaw(localeData.historyState)
+  const [pending, history = []] = useAtomValueRawSync(localeData.historyState)
   if (pending && history.length === 0)
     return (
       <div className={styles.EntrySidebar.loading()}>

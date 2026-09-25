@@ -21,7 +21,7 @@ import {
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
   Suspense,
   useMemo,
@@ -98,7 +98,7 @@ interface LinkPickerModalContentProps {
 
 function LinkPickerModalContent({options}: LinkPickerModalContentProps) {
   const {explorer, tree} = useLinkPickerExplorer(options)
-  const page = useAtomValueRaw(explorer.page)
+  const page = useAtomValueRawSync(explorer.page)
   if (!page) return <LinkPickerModalLoading />
   return (
     <LinkPickerExpanded
@@ -173,7 +173,7 @@ function LinkPickerReady({
   options
 }: LinkPickerReadyProps) {
   const {explorer, tree} = useLinkPickerExplorer(options)
-  const page = useAtomValueRaw(explorer.page)
+  const page = useAtomValueRawSync(explorer.page)
   if (!page)
     return (
       <LinkPickerLoading

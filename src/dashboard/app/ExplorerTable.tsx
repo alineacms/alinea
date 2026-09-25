@@ -9,7 +9,7 @@ import {
   type Selection
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {startTransition, useMemo} from 'react'
 import {configAtom} from '../atoms/core.js'
@@ -226,7 +226,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
 }
 
 function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
-  const children = useAtomValueRaw(
+  const children = useAtomValueRawSync(
     useMemo(
       () => props.explorer.children(props.entry, props.locale),
       [props.entry, props.explorer, props.locale]

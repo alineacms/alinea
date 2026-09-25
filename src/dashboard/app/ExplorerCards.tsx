@@ -12,10 +12,9 @@ import type {MediaFile} from '#/core/media/MediaTypes.js'
 import type {Infer} from '#/types.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
 import prettyBytes from 'pretty-bytes'
 import type {ReactNode} from 'react'
-import {memo, startTransition, useMemo} from 'react'
+import {memo, startTransition} from 'react'
 import {configAtom} from '../atoms/core.js'
 import type {
   DashboardEntry,
@@ -97,9 +96,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   function onAction() {
     startTransition(() => performAction(entry, locale))
   }
-  const file = useAtomValueRaw(
-    useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
-  )
+  const file = useAtomValueRaw(data.fileInfo)
   const thumbnail = useAtomValueRaw(data.thumbnail)
   const card: ContentCardProps = file
     ? {
