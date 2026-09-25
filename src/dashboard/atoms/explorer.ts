@@ -745,16 +745,17 @@ export class ExplorerAtoms {
       if (treeReady) await get(treeReady)
       const canUpload = get(this.#canUpload(location, locale))
       const items = await itemsPromise
-      // The list holds every child of the parent, so the columns follow
-      // the children: their types, and built-in columns that differ
-      const listed = get(this.#listedParent)
-      const shown = listed
-        ? resolveOverview(get(configAtom), await get(listed), {
-            children: summarizeRows(
-              items.map(item => get(get(item.data).data.item))
-            )
-          })
-        : overview
+      // The columns follow the loaded rows, every child of the parent or
+      // the search results: their types, and built-in columns that differ
+      const shown = resolveOverview(
+        get(configAtom),
+        await get(get(this.#overviewParent)),
+        {
+          children: summarizeRows(
+            items.map(item => get(get(item.data).data.item))
+          )
+        }
+      )
       const requested = get(this.requestedSort)
       const sorted = search.trim() ? undefined : sortColumn(shown, requested)
       return {
@@ -808,24 +809,32 @@ export class ExplorerAtoms {
     )
   })
   /**
-   * The overview the list is loaded with: its columns, the values they
-   * query and the order. The page shows the columns that tell the loaded
-   * children apart, see `pageReady`.
+   * Where the overview of the list is configured: the parent of the listed
+   * children, or the location searched in
    */
-  overview = atom(async get => {
-    const location = get(this.location)
+  #overviewParent = atom(get => {
     const listed = get(this.#listedParent)
-    const config = get(configAtom)
-    if (listed) return resolveOverview(config, await get(listed))
+    if (listed) return listed
+    const location = get(this.location)
     const scoped = !get(this.searchesEverything) && this.rootScope === 'current'
-    const parent = scoped
+    return scoped
       ? this.#parentAt(
           location.workspace,
           location.root,
           location.parentId ?? null
         )
       : this.#parentAt(location.workspace, undefined, null)
-    return resolveOverview(config, await get(parent), {mixed: true})
+  })
+  /**
+   * The overview the list is loaded with: its columns, the values they
+   * query and the order. The page shows the columns that tell the loaded
+   * rows apart, see `pageReady`.
+   */
+  overview = atom(async get => {
+    const parent = await get(get(this.#overviewParent))
+    return resolveOverview(get(configAtom), parent, {
+      mixed: !get(this.#listedParent)
+    })
   })
   #parentAt = dispense(
     (workspace: string, root: string | undefined, parentId: string | null) =>

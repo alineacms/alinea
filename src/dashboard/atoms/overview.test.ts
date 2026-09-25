@@ -542,6 +542,13 @@ test('declared types follow the children that are present', () => {
   expect(overview.types).toEqual(['Page'])
   expect(overview.columns.map(column => column.key)).toEqual(['path', 'stock'])
   expect(overview.columns[1].select).toEqual({all: Page.stock})
+  // Without children there is nothing to tell apart
+  const empty = resolveOverview(open, openRoot('notes'), {children: []})
+  expect(empty.columns.map(column => column.key)).toEqual([
+    'path',
+    'summary',
+    'stock'
+  ])
 })
 
 test('the status column shows when the statuses of the children differ', () => {
@@ -706,4 +713,42 @@ test('explorer columns follow the children as the content changes', async () => 
   })
   await store.set(syncAtom)
   expect(await keys()).toEqual(['status', 'path', 'summary'])
+})
+
+test('search result columns follow the results like listed children', async () => {
+  const db = await mixedChildren()
+  const store = createDashboardStore(open, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {mode: 'search'}
+  )
+  const keys = async (search: string) => {
+    store.set(explorer.search, search)
+    return (await store.get(explorer.pageReady)).overview.columns.map(
+      column => column.key
+    )
+  }
+  // Only results with audit data show who edited them and when
+  expect(await keys('plain')).toEqual(['path', 'summary'])
+  expect(await keys('note')).toEqual(['updated', 'author', 'path', 'summary'])
+  // The type and status columns show when the results differ in them
+  expect(await keys('draft')).toEqual(['path', 'stock'])
+  await db.create({
+    type: Page,
+    workspace: 'main',
+    root: 'pages',
+    status: 'draft',
+    set: {title: 'Draft note'}
+  })
+  await store.set(syncAtom)
+  expect(await keys('note')).toEqual([
+    'type',
+    'status',
+    'updated',
+    'author',
+    'path',
+    'summary',
+    'stock'
+  ])
 })

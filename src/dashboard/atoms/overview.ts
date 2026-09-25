@@ -177,7 +177,10 @@ function hasAuditMetadata(type: Type) {
 }
 
 export interface OverviewResolveOptions {
-  /** The list holds entries of several parents, eg. search results */
+  /**
+   * The list can hold entries of any type, eg. search results: shows the
+   * type column while the children are unknown
+   */
   mixed?: boolean
   /**
    * The listed children grouped by type and status, see `summarizeRows`.
@@ -247,7 +250,9 @@ export function resolveOverviewOptions(
   const audited = childTypes.some(hasAuditMetadata)
   // With the children known, built-in columns show when they differ
   const defaults: Record<OverviewBuiltinColumn, boolean> = {
-    type: Boolean(options.mixed) || listed.length > 1,
+    type: children
+      ? new Set(children.map(group => group.type)).size > 1
+      : Boolean(options.mixed) || listed.length > 1,
     status: children
       ? new Set(children.map(group => group.status)).size > 1
       : true,
@@ -669,8 +674,8 @@ export interface OverviewChildren {
 
 /**
  * Groups rows by type and status, noting whether they store audit
- * metadata. Lists load every child of their parent, so this covers all of
- * them and the columns stay put.
+ * metadata. Lists load every child of their parent and searches their
+ * shown results, so this covers every row and the columns stay put.
  */
 export function summarizeRows(
   rows: ReadonlyArray<OverviewRow>

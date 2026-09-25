@@ -47,6 +47,21 @@
       ]
     },
     {
+      "_type": "ImageBlock",
+      "_id": "3JoHjDhD7vD8PngzDaUpY7RzUHH",
+      "image": {
+        "_id": "3JoHjEEdOEPi6cn1w6vh66yrMT6",
+        "_type": "image",
+        "_entry": "3JmLmq1F4JhphD6g2eEfkrvsJew"
+      },
+      "darkImage": {
+        "_id": "3JoHjDXM7Lb2zz8NdG4SPvjGGQA",
+        "_type": "image",
+        "_entry": "3JmLmuz6geh1YDFRslG10otkEQ1"
+      },
+      "caption": "The products overview of the Oak & Loom demo, with its own columns for price, material and stock, sorted by price."
+    },
+    {
       "_type": "CodeBlock",
       "_id": "3Jlm0rPureylmTNUqWrWuWlvb3y",
       "code": "import {Config, Field, Query} from 'alinea'\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    cover: Field.image('Cover'),\n    category: Field.entry('Category', {condition: {_type: 'Category'}}),\n    publishDate: Field.date('Publish date')\n  }\n})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {},\n  overview: {\n    columns: {\n      cover: Config.column({\n        header: 'Cover',\n        width: 72,\n        select: BlogPost.cover\n      }),\n      category: Config.column({\n        header: 'Category',\n        select: BlogPost.category,\n        sortBy: BlogPost.category.first({select: Query.title})\n      }),\n      publishDate: Config.column({\n        header: 'Published',\n        width: 140,\n        select: BlogPost.publishDate\n      })\n    },\n    sort: {desc: BlogPost.publishDate},\n    layout: 'cards',\n    thumbnail: BlogPost.cover\n  }\n})",
@@ -1321,7 +1336,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790260484,
+    "updatedAt": 1790320633,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
