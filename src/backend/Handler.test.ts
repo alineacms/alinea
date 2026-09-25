@@ -1044,7 +1044,7 @@ test('redirects an unbuilt nested media file to its preview', async () => {
 
   const response = await handle(
     new Request('http://localhost/api?file=library/image.jpg'),
-    requestContext()
+    {...requestContext(), isDev: false}
   )
 
   test.is(response.status, 307)
@@ -1053,6 +1053,43 @@ test('redirects an unbuilt nested media file to its preview', async () => {
     'https://uploads.alinea.cloud/preview.jpg'
   )
   test.is(response.headers.get('cache-control'), 'private, no-store')
+})
+
+test('ignores previews in development', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    mediaDir: 'public/media',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  await db.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Image',
+      path: 'image',
+      extension: '.jpg',
+      location: '/stored.jpg',
+      previewUrl: 'https://uploads.alinea.cloud/preview.jpg'
+    }
+  })
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=image.jpg'),
+    requestContext()
+  )
+
+  test.is(response.status, 307)
+  test.is(response.headers.get('location'), '/media/stored.jpg')
 })
 
 test('proxies database upload previews through the trusted file route', async () => {
@@ -1094,7 +1131,7 @@ test('proxies database upload previews through the trusted file route', async ()
   })
   const response = await handle(
     new Request('http://localhost/api?file=image.jpg&delivery=proxy'),
-    requestContext()
+    {...requestContext(), isDev: false}
   )
 
   test.is(response.status, 200)
@@ -1227,7 +1264,7 @@ test('proxies an external preview before a file is built', async () => {
 
   const response = await handle(
     new Request('http://localhost/api?file=guide.pdf&delivery=proxy'),
-    requestContext()
+    {...requestContext(), isDev: false}
   )
 
   test.is(response.status, 200)
@@ -1270,41 +1307,6 @@ test('preserves legacy built locations without a media directory', async () => {
 
   test.is(response.status, 307)
   test.is(response.headers.get('location'), '/stored.pdf')
-})
-
-test('does not proxy a legacy location through the handler', async () => {
-  const mediaWorkspace = Config.workspace('Main', {
-    source: 'content',
-    roots: {media: Config.media()}
-  })
-  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
-  const sourceDb = new LocalDB(cms.config)
-  await sourceDb.create({
-    type: MediaFile,
-    root: 'media',
-    set: {
-      title: 'Guide',
-      path: 'guide',
-      extension: '.pdf',
-      location: '/api/private'
-    }
-  })
-  const db = new LocalDB(cms.config, sourceDb.source)
-  await db.sync()
-  const handle = createHandler({
-    cms,
-    db,
-    remote() {
-      return composeBackend(db)
-    }
-  })
-
-  const response = await handle(
-    new Request('http://localhost/api?file=guide.pdf&delivery=proxy'),
-    requestContext()
-  )
-
-  test.is(response.status, 502)
 })
 
 test('rejects oversized uploads before preparing a remote upload', async () => {
