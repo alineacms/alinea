@@ -51,6 +51,11 @@
 - `unwrap` may preserve already-loaded atom data during recomputation, but do not
   rely on mounting a component that reads an unwrapped atom to begin a required
   load.
+- Read atoms made with `unwrap` (including `atomWithPending`) with
+  `useAtomValueRawSync`. Their first read returns the fallback and they update
+  once the promise settles, which `useAtomValueRaw` misses when that happens
+  before its effect subscribes. Use `useAtomValueRaw` for other atoms so their
+  updates keep rendering concurrently.
 
 ## Public components (`alinea/components`)
 Components exported from `src/components.ts` are a long-term public API that
