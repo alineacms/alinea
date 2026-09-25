@@ -95,6 +95,11 @@ export interface RequestContext {
   isDev: boolean
   handlerUrl: URL
   apiKey: string
+  /**
+   * Origin serving the public files of this build when it is not the
+   * configured baseUrl, such as the local server of `next start`
+   */
+  publicUrl?: URL
   applyAuth?(init?: RequestInit): RequestInit
 }
 

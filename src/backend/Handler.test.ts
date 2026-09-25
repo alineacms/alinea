@@ -1271,6 +1271,76 @@ test('proxies built public media for the Next image optimizer', async () => {
   }
 })
 
+test('proxies built public media from the server of the build', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    mediaDir: 'public/media',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({
+    schema: {},
+    workspaces: {main: mediaWorkspace},
+    baseUrl: {production: 'https://example.com'}
+  })
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Image',
+      path: 'image',
+      extension: '.jpg',
+      location: '/stored.jpg'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+  const originalFetch = globalThis.fetch
+  const requested: Array<string> = []
+  globalThis.fetch = Object.assign(
+    async (input: Parameters<typeof fetch>[0]) => {
+      requested.push(String(input))
+      return new Response('image bytes', {
+        headers: {'content-type': 'image/jpeg'}
+      })
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  const production = {
+    apiKey: 'test',
+    handlerUrl: new URL('https://example.com/api'),
+    isDev: false
+  }
+
+  try {
+    // A deployment serves its files on the configured baseUrl, while
+    // `next start` serves the files of its build locally
+    for (const context of [
+      production,
+      {...production, publicUrl: new URL('http://localhost:3188')}
+    ]) {
+      const response = await handle(
+        new Request('http://localhost/api?file=image.jpg&delivery=proxy'),
+        context
+      )
+      test.is(response.status, 200)
+    }
+    test.equal(requested, [
+      'https://example.com/media/stored.jpg',
+      'http://localhost:3188/media/stored.jpg'
+    ])
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('proxies an external preview before a file is built', async () => {
   const mediaWorkspace = Config.workspace('Main', {
     source: 'content',

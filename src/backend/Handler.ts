@@ -220,7 +220,8 @@ export function createHandler({
           cms.config,
           context.isDev ? 'development' : 'production'
         )
-        const deliveryBase = configuredBase ?? context.handlerUrl
+        const deliveryBase =
+          context.publicUrl ?? configuredBase ?? context.handlerUrl
         const sourceUrl = new URL(source, deliveryBase)
         const deliveryOrigin = new URL(deliveryBase).origin
         const handlerPath = context.handlerUrl.pathname

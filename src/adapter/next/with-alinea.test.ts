@@ -1,4 +1,8 @@
 import {suite} from '@alinea/suite'
+import {hasLocalMatch} from 'next/dist/shared/lib/match-local-pattern.js'
+import {mkdtempSync, rmSync, writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import {withAlinea} from './with-alinea.js'
 
 const test = suite(import.meta)
@@ -18,7 +22,7 @@ test('inlines CLI routing settings into the Next config', () => {
   })
 })
 
-test('routes files through the handler without restricting local images', async () => {
+test('routes files through the handler and keeps the default local images', async () => {
   const config = withAlinea({
     env: {
       ALINEA_ADMIN_PATH: '/cms',
@@ -29,10 +33,7 @@ test('routes files through the handler without restricting local images', async 
 
   test.equal(config.images, {
     unoptimized: true,
-    localPatterns: [
-      {pathname: '/cms/file/**', search: '?**'},
-      {pathname: '/**'}
-    ]
+    localPatterns: [{pathname: '/cms/file/**'}, {pathname: '**', search: ''}]
   })
   const rewrites = await config.rewrites!()
   test.equal(rewrites, {
@@ -62,8 +63,51 @@ test('preserves configured local image patterns', () => {
 
   test.equal(config.images?.localPatterns, [
     {pathname: '/images/**'},
-    {pathname: '/admin/file/**', search: '?**'}
+    {pathname: '/admin/file/**'}
   ])
+  test.ok(
+    hasLocalMatch(config.images?.localPatterns, '/admin/file/hero.jpg?v=1a2b')
+  )
+})
+
+test('lets the image optimizer load versioned file urls', () => {
+  const {localPatterns} = withAlinea({
+    env: {ALINEA_ADMIN_PATH: '/admin'}
+  }).images!
+  const allowed = (url: string) => hasLocalMatch(localPatterns, url)
+
+  test.ok(allowed('/admin/file/screenshots/product.webp?v=f7643a7b'))
+  test.ok(allowed('/admin/file/screenshots/product.webp'))
+  // Next only allows local images without a query by default
+  test.ok(allowed('/images/hero.jpg'))
+  test.not.ok(allowed('/images/hero.jpg?v=1'))
+})
+
+test('uses the routing settings of the build when next start loads the config', () => {
+  const previousNodeEnv = process.env.NODE_ENV
+  const distDir = mkdtempSync(join(tmpdir(), 'alinea-next-'))
+  process.env.NODE_ENV = 'production'
+  try {
+    writeFileSync(
+      join(distDir, 'required-server-files.json'),
+      JSON.stringify({
+        config: {
+          env: {ALINEA_ADMIN_PATH: '/cms', ALINEA_HANDLER_URL: '/api/alinea'}
+        }
+      })
+    )
+    const config = withAlinea({distDir})
+
+    test.equal(config.env, {
+      ALINEA_ADMIN_PATH: '/cms',
+      ALINEA_HANDLER_URL: '/api/alinea'
+    })
+    test.equal(config.images?.localPatterns?.[0], {pathname: '/cms/file/**'})
+  } finally {
+    rmSync(distDir, {recursive: true, force: true})
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV
+    else process.env.NODE_ENV = previousNodeEnv
+  }
 })
 
 test('routes development files through the CLI dev handler', async () => {

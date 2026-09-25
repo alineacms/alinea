@@ -69,36 +69,26 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
 }
 
 function createImages(config: NextConfig, adminPath: string) {
-  const filePattern = `${adminPath}/file/**`
-  const fileSearch = '?**'
+  // Next compares `search` literally, leave it out so the versioned file urls
+  // (?v=<hash>) match whatever their query
+  const filePattern = {pathname: `${adminPath}/file/**`}
   const localPatterns = config.images?.localPatterns
-  // An omitted list allows every local image. Defining any pattern restricts
-  // all others, so preserve the default with an explicit catch-all.
+  // An omitted list allows every local image without a query. Defining any
+  // pattern restricts all others, so keep that default explicitly.
   if (!localPatterns)
     return {
       ...config.images,
-      localPatterns: [
-        {pathname: filePattern, search: fileSearch},
-        {pathname: '/**'}
-      ]
+      localPatterns: [filePattern, {pathname: '**', search: ''}]
     }
   if (
     localPatterns.some(
       pattern =>
-        pattern.pathname === filePattern && pattern.search === fileSearch
+        pattern.pathname === filePattern.pathname &&
+        pattern.search === undefined
     )
   )
     return config.images
-  return {
-    ...config.images,
-    localPatterns: [
-      ...localPatterns,
-      {
-        pathname: filePattern,
-        search: fileSearch
-      }
-    ]
-  }
+  return {...config.images, localPatterns: [...localPatterns, filePattern]}
 }
 
 const emptyRewrites = {
@@ -171,15 +161,35 @@ interface ResolvedSettings {
 }
 
 function resolveSettings(config: NextConfig): ResolvedSettings | undefined {
+  const built = builtEnv(config)
   const adminPath =
-    config.env?.ALINEA_ADMIN_PATH ?? process.env.ALINEA_ADMIN_PATH
+    config.env?.ALINEA_ADMIN_PATH ??
+    process.env.ALINEA_ADMIN_PATH ??
+    built?.ALINEA_ADMIN_PATH
   if (!adminPath) return
   return {
     adminPath: normalizeBasePath(adminPath),
     handlerUrl:
       config.env?.ALINEA_HANDLER_URL ??
       process.env.ALINEA_HANDLER_URL ??
+      built?.ALINEA_HANDLER_URL ??
       '/api/cms'
+  }
+}
+
+// `next start` loads the config again, outside of the Alinea CLI. Use the
+// settings the production build was made with, which Next keeps in its output.
+function builtEnv(config: NextConfig): Record<string, string> | undefined {
+  if (process.env.NODE_ENV !== 'production') return
+  try {
+    const file = resolve(
+      config.distDir ?? '.next',
+      'required-server-files.json'
+    )
+    const built = JSON.parse(readFileSync(file, 'utf-8'))
+    return built?.config?.env
+  } catch {
+    return
   }
 }
 
