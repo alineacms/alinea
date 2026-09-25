@@ -1038,6 +1038,30 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   await expect(fileField).toContainText('Existing file')
 })
 
+test('shows images and files picked into multiple link fields', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+  const gallery = app.page.getByRole('list', {name: 'Gallery'})
+  const attachments = app.page.getByRole('list', {name: 'Attachments'})
+
+  await gallery.getByRole('button', {name: 'Image'}).click()
+  const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
+  await imagePicker.getByText('Existing image', {exact: true}).click()
+  await imagePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(imagePicker).toBeHidden()
+  await expect(gallery.getByRole('listitem')).toHaveCount(1)
+  await expect(gallery).toContainText('Existing image')
+
+  await attachments.getByRole('button', {name: 'File'}).click()
+  const filePicker = app.page.getByRole('dialog', {name: 'Pick a file'})
+  await filePicker.getByText('Existing file', {exact: true}).click()
+  await filePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(filePicker).toBeHidden()
+  await expect(attachments).toContainText('Existing file')
+})
+
 test('card image picker browses directories and filters within them', async ({
   dashboard,
   mount

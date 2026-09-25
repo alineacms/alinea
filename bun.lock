@@ -162,6 +162,7 @@
     },
   },
   "patchedDependencies": {
+    "jotai@3.0.0": "patches/jotai@3.0.0.patch",
     "react-aria@3.48.0": "patches/react-aria@3.48.0.patch",
   },
   "overrides": {

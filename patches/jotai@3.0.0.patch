@@ -1,0 +1,19 @@
+diff --git a/dist/react/useAtomValueRaw.js b/dist/react/useAtomValueRaw.js
+index ffb64adbea1b8a81515a14b948f21579f8d1b181..2c94d52244d88b0ac6ef47eb884b5e62e6adfa3a 100644
+--- a/dist/react/useAtomValueRaw.js
++++ b/dist/react/useAtomValueRaw.js
+@@ -18,7 +18,13 @@ export function useAtomValueRaw(atom, options) {
+         rerender();
+         value = store.get(atom);
+     }
+-    useEffect(() => store.sub(atom, rerender), [store, atom]);
++    useEffect(() => {
++        const unsub = store.sub(atom, rerender);
++        // The value may have changed between render and subscribing, for
++        // example when an async atom resolved in the meantime
++        rerender();
++        return unsub;
++    }, [store, atom]);
+     useDebugValue(value);
+     if (isPromiseLike(value)) {
+         return createContinuablePromise(store, value, () => store.get(atom));

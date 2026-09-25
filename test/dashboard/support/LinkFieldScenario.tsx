@@ -66,7 +66,9 @@ const ScenarioPage = Config.document('Page', {
       enableNavigation: true
     }),
     image: Field.image('Featured image'),
-    file: Field.file('Download')
+    file: Field.file('Download'),
+    gallery: Field.image.multiple('Gallery'),
+    files: Field.file.multiple('Attachments')
   }
 })
 
