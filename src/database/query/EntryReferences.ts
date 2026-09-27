@@ -6,7 +6,7 @@ import type {
 } from '#/core/db/EntryReference.js'
 import {getScope} from '#/core/Scope.js'
 import {Type} from '#/core/Type.js'
-import {and, asc, eq, gt, type Database} from 'rado'
+import {and, asc, eq, gt, sql, type Database} from 'rado'
 import {entryDataText} from '../entry/EntryData.js'
 import {EntryIndexTable, storedEntryData} from '../entry/EntryTable.js'
 import {localeCondition, statusCondition} from './EntryQuery.js'
@@ -20,7 +20,13 @@ export async function queryEntryReferences(
   const entry = EntryIndexTable
   const conditions = [
     eq(entry.visible, true),
-    statusCondition(entry, query.status)
+    statusCondition(entry, query.status),
+    // A reference stores its target id as a plain JSON string, and ids need no
+    // escaping, so every referencing row holds the id's bytes verbatim: in JSON
+    // text and in JSONB, which stores unescaped strings raw. Comparing blobs
+    // searches JSONB bytes directly; text data compares the id as text. This
+    // only skips rows that cannot match, the walk below stays the exact check.
+    sql<boolean>`instr(${entry.data}, cast(${query.targetId} as blob)) > 0`
   ]
   if (query.locale !== undefined)
     conditions.push(localeCondition(getScope(config), entry, query.locale))

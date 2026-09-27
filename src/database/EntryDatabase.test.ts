@@ -141,6 +141,9 @@ test('SQL references retain status and locale behavior', async () => {
     expect(actual.total).toBe(expected.total)
     expect(actual.references).toEqual(expected.references)
   }
+  // The target row holds its own id in data but references nothing.
+  const {references} = await runtime.referencesTo({targetId: 'target'})
+  expect(references.map(reference => reference.sourceId)).toEqual(['source'])
 })
 
 test('entry database returns source blobs by hash', async () => {

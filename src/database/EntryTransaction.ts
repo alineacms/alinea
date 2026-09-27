@@ -85,6 +85,35 @@ const {aliases, createdAt, createdBy, updatedAt, updatedBy, ...EntrySelection} =
   Entry
 
 /**
+ * What placing an entry among its siblings reads: their order and paths, plus
+ * the fields a policy checks to reorder them. Skips parsing each sibling's data.
+ */
+const SiblingSelection = {
+  id: Entry.id,
+  index: Entry.index,
+  path: Entry.path,
+  main: Entry.main,
+  type: Entry.type,
+  workspace: Entry.workspace,
+  root: Entry.root,
+  parents: Entry.parents,
+  locale: Entry.locale
+}
+
+interface Sibling extends Pick<
+  Entry,
+  | 'id'
+  | 'index'
+  | 'path'
+  | 'main'
+  | 'type'
+  | 'workspace'
+  | 'root'
+  | 'parents'
+  | 'locale'
+> {}
+
+/**
  * Plans mutations inside the receiver's write transaction. Each mutation is
  * flushed so subsequent mutations query its result without retaining an
  * in-memory entry index. SQLite rolls the full batch back on failure.
@@ -727,7 +756,7 @@ export class EntryTransaction implements AsyncDisposable {
    * Siblings with colliding indexes are reindexed first.
    */
   async #insertionIndex(
-    siblings: ReadonlyArray<TransactionEntry>,
+    siblings: ReadonlyArray<Sibling>,
     insertion: number,
     moving: ReadonlyArray<TransactionEntry>
   ): Promise<string> {
@@ -1052,12 +1081,14 @@ export class EntryTransaction implements AsyncDisposable {
     })
   }
 
-  #siblings(location: EntryLocation): Promise<Array<TransactionEntry>> {
-    return this.#findEntries({
+  #siblings(location: EntryLocation): Promise<Array<Sibling>> {
+    return this.#workingDatabase.find({
+      status: 'all',
       parentId: location.parentId,
       workspace: location.workspace,
       root: location.root,
-      locale: location.locale
+      locale: location.locale,
+      select: SiblingSelection
     })
   }
 
