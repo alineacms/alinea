@@ -2,7 +2,7 @@ import type {NextConfig} from 'next/dist/types.js'
 import {join} from '#/core/util/Paths.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
-import {dirname, relative, resolve} from 'node:path'
+import {resolve} from 'node:path'
 
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
 
@@ -21,10 +21,10 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   }
   const adminPath = settings?.adminPath
   let nextVersion = 15
-  // Ducktape this together so we can get the package.json contents regardless
-  // of .cjs, .mjs, compiled .ts or Node version
-  const require = createRequire(resolve('./index.js'))
   try {
+    // Ducktape this together so we can get the package.json contents regardless
+    // of .cjs, .mjs, compiled .ts or Node version
+    const require = createRequire(resolve('./index.js'))
     const pkgLocation = require.resolve('next/package.json')
     const pkg = JSON.parse(readFileSync(pkgLocation, 'utf-8'))
     nextVersion = Number(pkg.version.split('.')[0])
@@ -59,38 +59,16 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     }
   return {
     ...config,
-    outputFileTracingIncludes: tracingIncludes(
-      config.outputFileTracingIncludes,
-      require
-    ),
     serverExternalPackages: [
       ...(config.serverExternalPackages ?? []),
       '@alinea/generated',
-      // Loads its native extension from the package directory.
+      // Loads its native extension from the package directory, which file
+      // tracing then includes.
       '@alinea/sqlite-wasm'
     ],
     rewrites,
     images,
     env
-  }
-}
-
-/**
- * The native SQLite extension is loaded from a path that file tracing cannot
- * follow, so functions opening the generated database would miss it.
- */
-function tracingIncludes(
-  includes: Record<string, Array<string>> | undefined,
-  require: NodeJS.Require
-): Record<string, Array<string>> | undefined {
-  try {
-    const alinea = createRequire(require.resolve('alinea/package.json'))
-    const sqlite = dirname(alinea.resolve('@alinea/sqlite-wasm/package.json'))
-    const native = relative(process.cwd(), join(sqlite, 'dist/native'))
-    const files = `${native.replaceAll('\\', '/')}/**`
-    return {...includes, '/**': [...(includes?.['/**'] ?? []), files]}
-  } catch {
-    return includes
   }
 }
 
