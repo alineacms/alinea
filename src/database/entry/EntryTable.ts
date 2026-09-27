@@ -114,12 +114,20 @@ export function isOrderedField(field: unknown): boolean {
 
 const fieldIndexPrefix = 'alinea_entry_index_by_field_'
 
-/** Index the stored value of every ordered field in the config, per type. */
+/** Metadata fields whose queries order by their stored value. */
+export const orderedMetadata = new Set(['createdAt', 'updatedAt'])
+
+/**
+ * Index the stored value of every ordered field in the config, per type, and
+ * of the ordered metadata. Field names are identifiers, so the dotted metadata
+ * names cannot collide with them.
+ */
 export async function syncFieldIndexes(
   db: Database,
   config: Config
 ): Promise<void> {
   const wanted = new Set<string>()
+  for (const name of orderedMetadata) wanted.add(`metadata.${name}`)
   for (const type of Object.values(config.schema))
     for (const [name, field] of Object.entries(Type.fields(type)))
       if (isOrderedField(field)) wanted.add(name)
@@ -137,7 +145,7 @@ export async function syncFieldIndexes(
     if (existing.has(name)) continue
     // Index expressions cannot name their table, but match the queries'
     // qualified column all the same.
-    const value = jsonField(sql.identifier('data'), [name])
+    const value = jsonField(sql.identifier('data'), name.split('.'))
     await db.run(sql`create index ${sql.identifier(fieldIndexPrefix + name)}
       on ${EntryIndexTable}(${sql.identifier('type')}, ${value},
         ${sql.identifier('index')}, ${sql.identifier('filePath')})`)

@@ -516,18 +516,20 @@ const dated: Config = {schema: {Dated}, workspaces: {}}
 async function datedDatabase(sqlite: Database) {
   const db = connect(sqlite)
   await db.create(EntryIndexTable)
-  const values: Array<[string, string | undefined, number | null]> = [
-    ['a', '2024-01-02', 2],
-    ['b', undefined, null],
-    ['c', '2024-03-01', 10],
-    ['d', '2023-12-31', 1]
+  const values: Array<
+    [string, string | undefined, number | null, number | undefined]
+  > = [
+    ['a', '2024-01-02', 2, 200],
+    ['b', undefined, null, undefined],
+    ['c', '2024-03-01', 10, 300],
+    ['d', '2023-12-31', 1, 100]
   ]
   await db.insert(EntryIndexTable).values(
-    values.map(([id, date, rank]) =>
+    values.map(([id, date, rank, createdAt]) =>
       entryIndexRow(
         entry(id, {
           type: 'Dated',
-          data: {date, rank}
+          data: {date, rank, metadata: {createdAt}}
         })
       )
     )
@@ -544,6 +546,18 @@ test('date and number fields order by value with nulls last', async () => {
   expect(await ids({orderBy: {asc: Dated.date}})).toEqual(['d', 'a', 'c', 'b'])
   expect(await ids({orderBy: {desc: Dated.rank}})).toEqual(['c', 'a', 'd', 'b'])
   expect(await ids({orderBy: {asc: Dated.rank}})).toEqual(['d', 'a', 'c', 'b'])
+  expect(await ids({orderBy: {desc: Entry.createdAt}})).toEqual([
+    'c',
+    'a',
+    'd',
+    'b'
+  ])
+  expect(await ids({orderBy: {asc: Entry.createdAt}})).toEqual([
+    'd',
+    'a',
+    'c',
+    'b'
+  ])
 })
 
 test('ordering by a date field walks its field index', async () => {
@@ -561,5 +575,23 @@ test('ordering by a date field walks its field index', async () => {
     .all(...(statement.params as Array<string | number | null>))
   const details = JSON.stringify(explain)
   expect(details).toContain('alinea_entry_index_by_field_date')
+  expect(details).not.toContain('TEMP B-TREE')
+})
+
+test('ordering by creation time walks its metadata index', async () => {
+  using sqlite = new Database(':memory:')
+  const db = await datedDatabase(sqlite)
+  await syncFieldIndexes(db, dated)
+  const statement = compileEntryQuery(dated, {
+    type: Dated,
+    orderBy: {desc: Entry.createdAt},
+    take: 2,
+    select: Entry.id
+  }).rows.toSQL(db)
+  const explain = sqlite
+    .prepare(`explain query plan ${statement.sql}`)
+    .all(...(statement.params as Array<string | number | null>))
+  const details = JSON.stringify(explain)
+  expect(details).toContain('alinea_entry_index_by_field_metadata.createdAt')
   expect(details).not.toContain('TEMP B-TREE')
 })

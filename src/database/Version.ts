@@ -4,7 +4,7 @@
  * by this version rather than the package version, so releases that keep the
  * schema reuse the databases that are already there.
  */
-export const databaseVersion = 7
+export const databaseVersion = 8
 
 export const generatedDatabaseFile = `database-v${databaseVersion}.sqlite`
 

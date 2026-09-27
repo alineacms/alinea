@@ -66,7 +66,7 @@ test('JSONB data reads paths as its JSON text does', async () => {
   await db.close()
 })
 
-test('field indexes follow the ordered fields of the config', async () => {
+test('field indexes follow the ordered fields and metadata of the config', async () => {
   const db = await wasmDatabase()
   await db.create(EntryIndexTable)
   const indexes = async () =>
@@ -82,10 +82,16 @@ test('field indexes follow the ordered fields of the config', async () => {
   await syncFieldIndexes(db, {schema: {Article}, workspaces: {}})
   expect(await indexes()).toEqual([
     'alinea_entry_index_by_field_date',
+    'alinea_entry_index_by_field_metadata.createdAt',
+    'alinea_entry_index_by_field_metadata.updatedAt',
     'alinea_entry_index_by_field_rank'
   ])
   const Dated = type('Article', {fields: {date: date('Date')}})
   await syncFieldIndexes(db, {schema: {Dated}, workspaces: {}})
-  expect(await indexes()).toEqual(['alinea_entry_index_by_field_date'])
+  expect(await indexes()).toEqual([
+    'alinea_entry_index_by_field_date',
+    'alinea_entry_index_by_field_metadata.createdAt',
+    'alinea_entry_index_by_field_metadata.updatedAt'
+  ])
   await db.close()
 })

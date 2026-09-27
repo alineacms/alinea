@@ -39,6 +39,7 @@ import {
 import {
   EntryIndexTable,
   isOrderedField,
+  orderedMetadata,
   storedEntryData,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
@@ -376,9 +377,15 @@ export function compileEntryQuery(
       const ordersByFilePath =
         internal.type === 'entryField' && internal.name === 'filePath'
       const value = membership.expr(expression)
+      const ordersByIndex =
+        internal.type === 'field'
+          ? isOrderedField(expression)
+          : internal.type === 'entryField' &&
+            internal.path?.join() === 'metadata' &&
+            orderedMetadata.has(internal.name)
       // The field index orders these as is: case folding cannot change the
       // order of dates and numbers, and SQLite sorts nulls last for desc.
-      if (internal.type === 'field' && isOrderedField(expression)) {
+      if (ordersByIndex) {
         ordering.push(order.asc ? sql`${value} asc nulls last` : desc(value))
         descendingTies = !order.asc
         continue
