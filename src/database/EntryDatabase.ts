@@ -29,7 +29,11 @@ import {
 } from './DatabaseTables.js'
 import type {DatabaseHandle} from './driver/DatabaseHandle.js'
 import {entryDataText, hasJsonbRows, supportsJsonb} from './entry/EntryData.js'
-import {EntryIndexTable, syncFieldIndexes} from './entry/EntryTable.js'
+import {
+  EntryIndexTable,
+  EntryReferenceTable,
+  syncFieldIndexes
+} from './entry/EntryTable.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {queryEntryReferences} from './query/EntryReferences.js'
 import {resolveEntryQuery} from './query/ResolveQuery.js'
@@ -176,6 +180,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   ): Promise<void> {
     const tables = [
       EntryIndexTable,
+      EntryReferenceTable,
       DatabaseStateTable,
       DatabaseMetadataTable,
       SourceFileTable
@@ -294,6 +299,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
               from ${entries}`)
             await tx.delete(entries)
             await tx.delete(EntrySearchTable)
+            await tx.delete(EntryReferenceTable)
             await tx
               .update(state)
               .set({revision: ReadonlyTree.EMPTY.sha, tree: ReadonlyTree.EMPTY})

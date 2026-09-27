@@ -10,7 +10,7 @@ import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {DateField} from '#/field/date/DateField.js'
 import {NumberField} from '#/field/number/NumberField.js'
-import {index, sql, table, type Database, type Table} from 'rado'
+import {index, primaryKey, sql, table, type Database, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {jsonField} from '../query/Condition.js'
 
@@ -93,6 +93,19 @@ export function entryIndexTable(name: string) {
 export type EntryIndexTarget = Table<typeof EntryIndexColumns>
 
 export const EntryIndexTable = entryIndexTable('alinea_entry_index')
+
+/** The entry ids each entry version references, under the version's rowid. */
+export const EntryReferenceTable = table(
+  'alinea_entry_reference',
+  {
+    targetId: column.varchar(undefined, {length: 128}).notNull(),
+    source: column.integer().notNull()
+  },
+  row => [
+    primaryKey(row.targetId, row.source),
+    index('alinea_entry_reference_by_source').on(row.source)
+  ]
+)
 
 /** Fields whose queries order by their stored value, through a field index. */
 export function isOrderedField(field: unknown): boolean {

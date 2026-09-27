@@ -7,13 +7,18 @@ import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {IndexedEntry} from '../entry/EntryTable.js'
 
+/** A parsed source entry and the ids of the entries it references. */
+export interface ParsedEntry extends IndexedEntry {
+  references: Array<string>
+}
+
 /** Parse one source blob into the entry fields that do not depend on its tree. */
 export function parseSourceEntry(
   config: Config,
   filePath: string,
   fileHash: string,
   blob: Uint8Array
-): IndexedEntry {
+): ParsedEntry {
   const text = new TextDecoder().decode(blob)
   let raw: unknown
   try {
@@ -85,6 +90,9 @@ export function parseSourceEntry(
     main: false,
     visible: true,
     payload: text,
-    searchableText: Type.searchableText(type, data)
+    searchableText: Type.searchableText(type, data),
+    references: Array.from(
+      new Set(Type.references(type, data).map(target => target.targetId))
+    )
   }
 }

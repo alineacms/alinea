@@ -146,6 +146,77 @@ test('SQL references retain status and locale behavior', async () => {
   expect(references.map(reference => reference.sourceId)).toEqual(['source'])
 })
 
+test('indexed references follow updates, deletions and reindexes', async () => {
+  function pages(linked: boolean): Config {
+    // Stored as text, the same data references nothing.
+    const related = linked ? Field.entry('Related') : Field.text('Related')
+    const fields = {related}
+    return {
+      schema: {Page: ConfigBuilder.document('Page', {fields})},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+        })
+      }
+    }
+  }
+  const linked = pages(true)
+  const plain = pages(false)
+  const encode = (id: string, target?: string) =>
+    new TextEncoder().encode(
+      JSON.stringify({
+        _id: id,
+        _type: 'Page',
+        _index: id,
+        title: id,
+        related: target && {_type: 'entry', _id: `link-${id}`, _entry: target}
+      })
+    )
+  const source = new MemorySource()
+  const initial = await transaction(source)
+  initial.add('pages/a.json', encode('a', 'target'))
+  initial.add('pages/b.json', encode('b', 'target'))
+  initial.add('pages/target.json', encode('target'))
+  const compiled = await initial.compile()
+  await source.applyChanges({
+    fromSha: compiled.from.sha,
+    changes: compiled.changes
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, linked, ReadonlyTree.EMPTY.sha)
+  const runtime = new EntryDatabase(linked, db)
+  await runtime.syncWith(source)
+  async function sources(targetId: string) {
+    const {references} = await runtime.referencesTo({targetId})
+    return references.map(reference => reference.sourceId)
+  }
+  const indexed = () =>
+    db.get(sql`select count(*) as count from alinea_entry_reference`)
+  expect(await sources('target')).toEqual(['a', 'b'])
+
+  // One source links elsewhere, the other is deleted.
+  const change = await transaction(source)
+  change.add('pages/a.json', encode('a', 'other'))
+  change.remove('pages/b.json')
+  const next = await change.compile()
+  await source.applyChanges({fromSha: next.from.sha, changes: next.changes})
+  await runtime.syncWith(source)
+  expect(await sources('target')).toEqual([])
+  expect(await sources('other')).toEqual(['a'])
+  expect(await indexed()).toEqual({count: 1})
+
+  // Reindexing derives the references of the config it adopts.
+  await runtime.reindex(plain)
+  expect(await sources('other')).toEqual([])
+  expect(await indexed()).toEqual({count: 0})
+  await runtime.reindex(linked)
+  expect(await sources('other')).toEqual(['a'])
+  expect(await indexed()).toEqual({count: 1})
+  await runtime.close()
+})
+
 test('entry database returns source blobs by hash', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {

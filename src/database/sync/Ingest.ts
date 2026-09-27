@@ -4,7 +4,7 @@ import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
 import {accumulate} from '#/core/util/Async.js'
-import {entryIndexRow, type IndexedEntry} from '../entry/EntryTable.js'
+import {entryIndexRow} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
 
@@ -55,6 +55,7 @@ async function removeVersions(
     changes.childDirs.add(row.childrenDir)
   }
   await queries.deleteSearch.run(params)
+  await queries.deleteReferences.run(params)
   await queries.deleteFiles.run(params)
   return stored
 }
@@ -68,16 +69,12 @@ function parseFiles(
   return files.map(file => {
     const blob = blobs.get(file.fileHash)
     assert(blob, `Source did not return blob ${file.fileHash}`)
-    const entry: IndexedEntry = parseSourceEntry(
-      config,
-      file.filePath,
-      file.fileHash,
-      blob
-    )
+    const entry = parseSourceEntry(config, file.filePath, file.fileHash, blob)
     return {
       ...entryIndexRow(entry),
       childrenSha: sourceDirectorySha(tree, entry.childrenDir),
-      searchableText: entry.searchableText
+      searchableText: entry.searchableText,
+      references: entry.references
     }
   })
 }
@@ -172,6 +169,11 @@ export async function mergeTrees(
         title: row.title,
         body: row.searchableText
       })
+      if (row.references.length)
+        await queries.insertReferences.run({
+          versionId: row.versionId,
+          targets: JSON.stringify(row.references)
+        })
       changes.touched.add(row.id)
       changes.inserted.add(row.versionId)
       if (hasChildren(row.childrenSha)) changes.parents.add(row.id)
