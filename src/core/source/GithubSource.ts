@@ -28,6 +28,9 @@ interface ShaCacheEntry {
  */
 const shaCache = new Map<string, ShaCacheEntry>()
 
+/** Directories GitHub truncated before, listed one level without retrying. */
+const truncatedTrees = new Set<string>()
+
 export function normalizeGithubSourceOptions<
   Options extends GithubSourceOptions
 >(options: Options): Options {
@@ -87,15 +90,16 @@ export class GithubSource implements Source {
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
     const remoteSha = await this.shaAt(this.#options.branch)
     if (remoteSha === sha) return undefined
-    return this.#fetchTree(remoteSha)
+    return this.#fetchTree(remoteSha, this.contentLocation)
   }
 
   /**
    * GitHub truncates recursive listings above 100k entries or 7 MB, so a
    * truncated tree is listed one level and each directory fetched on its own.
    */
-  async #fetchTree(sha: string): Promise<ReadonlyTree> {
+  async #fetchTree(sha: string, location: string): Promise<ReadonlyTree> {
     const {owner, repo, authToken} = this.#options
+    const key = `${owner}/${repo}:${location}`
     const list = async (query: string) => {
       const response = await this.#limit(() =>
         fetch(
@@ -107,8 +111,11 @@ export class GithubSource implements Source {
       const data: FlatTree & {truncated: boolean} = await response.json()
       return data
     }
-    const flat = await list('?recursive=true')
-    if (!flat.truncated) return ReadonlyTree.fromFlat(flat)
+    if (!truncatedTrees.has(key)) {
+      const flat = await list('?recursive=true')
+      if (!flat.truncated) return ReadonlyTree.fromFlat(flat)
+      truncatedTrees.add(key)
+    }
     const level = await list('')
     if (level.truncated)
       throw new Error(`Tree ${sha} has too many entries for GitHub to list`)
@@ -117,7 +124,7 @@ export class GithubSource implements Source {
         async (entry): Promise<[string, ReadonlyTree | Leaf]> => [
           entry.path,
           entry.type === 'tree'
-            ? await this.#fetchTree(entry.sha)
+            ? await this.#fetchTree(entry.sha, paths.join(location, entry.path))
             : new Leaf(entry)
         ]
       )

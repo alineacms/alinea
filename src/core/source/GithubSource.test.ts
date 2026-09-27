@@ -109,6 +109,44 @@ test('reports why GitHub refused a request', async () => {
   }
 })
 
+test('fetches untruncated trees in one recursive request', async () => {
+  const flat = {
+    sha: 'flat-sha',
+    tree: [
+      {path: 'a.json', type: 'blob', mode: '100644', sha: 'a-sha'},
+      {path: 'dir', type: 'tree', mode: '040000', sha: 'dir-sha'},
+      {path: 'dir/b.json', type: 'blob', mode: '100644', sha: 'b-sha'}
+    ]
+  }
+  const originalFetch = globalThis.fetch
+  const treeRequests = Array<string>()
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL): Promise<Response> => {
+      const url = String(input)
+      if (url.includes('/contents/'))
+        return Response.json([{path: 'content', sha: 'flat-sha'}])
+      treeRequests.push(url.split('/git/trees/')[1])
+      return Response.json({...flat, truncated: false})
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const source = new GithubSource({
+      owner: 'owner',
+      repo: 'untruncated-repo',
+      branch: 'main',
+      authToken: 'token',
+      rootDir: '',
+      contentDir: 'content'
+    })
+    const tree = await source.getTree()
+    test.equal(tree.flat(), ReadonlyTree.fromFlat(flat).flat())
+    test.equal(treeRequests, ['flat-sha?recursive=true'])
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('splits trees GitHub truncates by directory', async () => {
   const full = {
     sha: 'root-sha',
@@ -130,7 +168,14 @@ test('splits trees GitHub truncates by directory', async () => {
       tree: [{path: 'b.json', type: 'blob', mode: '100644', sha: 'b-sha'}],
       truncated: false
     },
-    'flat-sha?recursive=true': {...full, sha: 'flat-sha', truncated: false}
+    'next-sha': {
+      sha: 'next-sha',
+      tree: [
+        {path: 'a.json', type: 'blob', mode: '100644', sha: 'a2-sha'},
+        full.tree[1]
+      ],
+      truncated: false
+    }
   }
   const originalFetch = globalThis.fetch
   const treeRequests = Array<string>()
@@ -163,14 +208,21 @@ test('splits trees GitHub truncates by directory', async () => {
       'dir-sha?recursive=true'
     ])
 
+    // The root is remembered as truncated, its subdirectory is not
     treeRequests.length = 0
-    rootSha = 'flat-sha'
-    const flat = await source.getTree()
+    rootSha = 'next-sha'
+    const next = await source.getTree()
     test.equal(
-      flat.flat(),
-      ReadonlyTree.fromFlat({...full, sha: 'flat-sha'}).flat()
+      next.flat(),
+      ReadonlyTree.fromFlat({
+        sha: 'next-sha',
+        tree: [
+          {path: 'a.json', type: 'blob', mode: '100644', sha: 'a2-sha'},
+          ...full.tree.slice(1)
+        ]
+      }).flat()
     )
-    test.equal(treeRequests, ['flat-sha?recursive=true'])
+    test.equal(treeRequests, ['next-sha', 'dir-sha?recursive=true'])
   } finally {
     globalThis.fetch = originalFetch
   }
