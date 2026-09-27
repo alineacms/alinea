@@ -8,6 +8,8 @@ import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
 
 const changeBatchSize = 250
+/** Batches whose blobs are requested while an earlier batch is written. */
+const readAhead = 4
 
 /** What merging a source tree into the entry table changed. */
 export interface SyncChanges {
@@ -56,36 +58,40 @@ async function removeVersions(
   return stored
 }
 
-async function parseFiles(
-  config: Config,
+/** The blobs of files, each read once however many files share it. */
+async function readBlobs(
   source: RemoteSource,
-  tree: ReadonlyTree,
   files: ReadonlyArray<FileRow>
+): Promise<Map<string, Uint8Array>> {
+  const wanted = new Set(files.map(file => file.fileHash))
+  const blobs = new Map<string, Uint8Array>()
+  if (!wanted.size) return blobs
+  for await (const [fileHash, blob] of source.getBlobs([...wanted]))
+    if (wanted.has(fileHash)) blobs.set(fileHash, blob)
+  return blobs
+}
+
+function parseFiles(
+  config: Config,
+  tree: ReadonlyTree,
+  files: ReadonlyArray<FileRow>,
+  blobs: ReadonlyMap<string, Uint8Array>
 ) {
-  const pathsByHash = new Map<string, Array<string>>()
-  for (const file of files) {
-    const paths = pathsByHash.get(file.fileHash) ?? []
-    paths.push(file.filePath)
-    pathsByHash.set(file.fileHash, paths)
-  }
-  const parsedEntries = Array<IndexedEntry>()
-  for await (const [fileHash, blob] of source.getBlobs([
-    ...pathsByHash.keys()
-  ])) {
-    // Files sharing a blob are parsed once, however often it is returned.
-    const paths = pathsByHash.get(fileHash)
-    if (!paths) continue
-    pathsByHash.delete(fileHash)
-    for (const filePath of paths)
-      parsedEntries.push(parseSourceEntry(config, filePath, fileHash, blob))
-  }
-  const [missing] = pathsByHash.keys()
-  assert(missing === undefined, `Source did not return blob ${missing}`)
-  return parsedEntries.map(entry => ({
-    ...entryIndexRow(entry),
-    childrenSha: sourceDirectorySha(tree, entry.childrenDir),
-    searchableText: entry.searchableText
-  }))
+  return files.map(file => {
+    const blob = blobs.get(file.fileHash)
+    assert(blob, `Source did not return blob ${file.fileHash}`)
+    const entry: IndexedEntry = parseSourceEntry(
+      config,
+      file.filePath,
+      file.fileHash,
+      blob
+    )
+    return {
+      ...entryIndexRow(entry),
+      childrenSha: sourceDirectorySha(tree, entry.childrenDir),
+      searchableText: entry.searchableText
+    }
+  })
 }
 
 /** Record the source hash of every directory above a changed file. */
@@ -134,21 +140,36 @@ export async function mergeTrees(
     containers: new Set()
   }
   const diff = previousTree.diff(tree).changes
-  for (const batch of chunks(diff, changeBatchSize)) {
-    const deleted = batch.flatMap(change =>
+  const batches = Array.from(chunks(diff, changeBatchSize), batch => ({
+    deleted: batch.flatMap(change =>
       change.op === 'delete' ? [change.path] : []
+    ),
+    added: batch.flatMap(change =>
+      change.op === 'add' ? [{filePath: change.path, fileHash: change.sha}] : []
     )
+  }))
+  // Later batches' blobs arrive while earlier ones are written, instead of
+  // one request after another.
+  const reads = new Map<number, Promise<Map<string, Uint8Array>>>()
+  for (const [index, {deleted, added}] of batches.entries()) {
+    for (let next = index; next < index + readAhead; next++) {
+      const batch = batches[next]
+      if (!batch || reads.has(next)) continue
+      const read = readBlobs(source, batch.added)
+      // A failed read is thrown once its batch is written.
+      read.catch(() => {})
+      reads.set(next, read)
+    }
     if (deleted.length) {
       const stored = await removeVersions(queries, changes, deleted)
       const found = new Set(stored.map(row => row.filePath))
       for (const filePath of deleted)
         assert(found.has(filePath), `Missing version to delete: ${filePath}`)
     }
-    const added = batch.flatMap(change =>
-      change.op === 'add' ? [{filePath: change.path, fileHash: change.sha}] : []
-    )
+    const blobs = await reads.get(index)!
+    reads.delete(index)
     if (!added.length) continue
-    const rows = await parseFiles(config, source, tree, added)
+    const rows = parseFiles(config, tree, added, blobs)
     await removeVersions(
       queries,
       changes,
@@ -166,6 +187,7 @@ export async function mergeTrees(
       if (hasChildren(row.childrenSha)) changes.parents.add(row.id)
     }
   }
+
   await updateDirectoryHashes(
     queries,
     tree,
