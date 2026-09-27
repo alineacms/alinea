@@ -3,6 +3,7 @@ import {HttpError} from '../HttpError.js'
 import {diff} from '../source/Source.js'
 import {FSSource} from './FSSource.js'
 import {GithubSource, normalizeGithubSourceOptions} from './GithubSource.js'
+import {ReadonlyTree} from './Tree.js'
 
 const test = suite(import.meta)
 
@@ -103,6 +104,73 @@ test('reports why GitHub refused a request', async () => {
       error.message,
       'Failed to get parent: 403 Resource not accessible by personal access token'
     )
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('splits trees GitHub truncates by directory', async () => {
+  const full = {
+    sha: 'root-sha',
+    tree: [
+      {path: 'a.json', type: 'blob', mode: '100644', sha: 'a-sha'},
+      {path: 'dir', type: 'tree', mode: '040000', sha: 'dir-sha'},
+      {path: 'dir/b.json', type: 'blob', mode: '100644', sha: 'b-sha'}
+    ]
+  }
+  const trees: Record<string, object> = {
+    'root-sha?recursive=true': {sha: 'root-sha', tree: [], truncated: true},
+    'root-sha': {
+      sha: 'root-sha',
+      tree: full.tree.slice(0, 2),
+      truncated: false
+    },
+    'dir-sha?recursive=true': {
+      sha: 'dir-sha',
+      tree: [{path: 'b.json', type: 'blob', mode: '100644', sha: 'b-sha'}],
+      truncated: false
+    },
+    'flat-sha?recursive=true': {...full, sha: 'flat-sha', truncated: false}
+  }
+  const originalFetch = globalThis.fetch
+  const treeRequests = Array<string>()
+  let rootSha = 'root-sha'
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL): Promise<Response> => {
+      const url = String(input)
+      if (url.includes('/contents/'))
+        return Response.json([{path: 'content', sha: rootSha}])
+      const key = url.split('/git/trees/')[1]
+      treeRequests.push(key)
+      return Response.json(trees[key])
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const source = new GithubSource({
+      owner: 'owner',
+      repo: 'truncated-repo',
+      branch: 'main',
+      authToken: 'token',
+      rootDir: '',
+      contentDir: 'content'
+    })
+    const tree = await source.getTree()
+    test.equal(tree.flat(), ReadonlyTree.fromFlat(full).flat())
+    test.equal(treeRequests, [
+      'root-sha?recursive=true',
+      'root-sha',
+      'dir-sha?recursive=true'
+    ])
+
+    treeRequests.length = 0
+    rootSha = 'flat-sha'
+    const flat = await source.getTree()
+    test.equal(
+      flat.flat(),
+      ReadonlyTree.fromFlat({...full, sha: 'flat-sha'}).flat()
+    )
+    test.equal(treeRequests, ['flat-sha?recursive=true'])
   } finally {
     globalThis.fetch = originalFetch
   }
