@@ -139,7 +139,8 @@ export async function syncFieldIndexes(
     // qualified column all the same.
     const value = jsonField(sql.identifier('data'), [name])
     await db.run(sql`create index ${sql.identifier(fieldIndexPrefix + name)}
-      on ${EntryIndexTable}(${sql.identifier('type')}, ${value})`)
+      on ${EntryIndexTable}(${sql.identifier('type')}, ${value},
+        ${sql.identifier('index')}, ${sql.identifier('filePath')})`)
   }
 }
 

@@ -465,7 +465,7 @@ test('unique ordering avoids correlated stable-order queries', async () => {
   const details = JSON.stringify(explain)
   expect(details).toContain('alinea_entry_index_by_file_path')
   expect(details).not.toContain('CORRELATED SCALAR SUBQUERY')
-  expect(details).not.toContain('USE TEMP B-TREE FOR ORDER BY')
+  expect(details).not.toContain('TEMP B-TREE')
 })
 
 test('all relations compile into the containing SQL query', () => {
@@ -561,5 +561,5 @@ test('ordering by a date field walks its field index', async () => {
     .all(...(statement.params as Array<string | number | null>))
   const details = JSON.stringify(explain)
   expect(details).toContain('alinea_entry_index_by_field_date')
-  expect(details).not.toContain('USE TEMP B-TREE FOR ORDER BY')
+  expect(details).not.toContain('TEMP B-TREE')
 })

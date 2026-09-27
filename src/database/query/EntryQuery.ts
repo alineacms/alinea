@@ -361,10 +361,10 @@ export function compileEntryQuery(
     throw new Error('groupBy must be a single field')
   const grouping = query.groupBy ? [membership.expr(query.groupBy)] : undefined
   const ordering: Array<HasSql> = []
-  const stableOrdering = links
-    ? [asc(links.ordinal)]
-    : [asc(entry.index), asc(entry.filePath)]
   let uniquelyOrdered = false
+  // Ties after a descending date or number follow its direction, so its field
+  // index covers the whole order and no rows need sorting.
+  let descendingTies = false
   if (query.orderBy) {
     for (const order of Array.isArray(query.orderBy)
       ? query.orderBy
@@ -380,8 +380,10 @@ export function compileEntryQuery(
       // order of dates and numbers, and SQLite sorts nulls last for desc.
       if (internal.type === 'field' && isOrderedField(expression)) {
         ordering.push(order.asc ? sql`${value} asc nulls last` : desc(value))
+        descendingTies = !order.asc
         continue
       }
+      descendingTies = false
       const collated = order.caseSensitive
         ? value
         : sql`${value} collate nocase`
@@ -404,6 +406,10 @@ export function compileEntryQuery(
       ? when([eq(entry.locale, source.locale), 0], 1)
       : undefined
   if (selfFirst) ordering.push(asc(sql.identifier('selfFirst')))
+  const tie = descendingTies ? desc : asc
+  const stableOrdering = links
+    ? [asc(links.ordinal)]
+    : [tie(entry.index), tie(entry.filePath)]
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
   function relation(relationQuery: EdgeQuery): CompiledRelation {
