@@ -73,7 +73,7 @@ async function remoteWith(docs: Array<DocInput>) {
 test('failed validation rolls back the sync', async () => {
   const sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, cms.config, ReadonlyTree.EMPTY.sha)
   const store = new EntryStore(cms.config, new EntryDatabase(cms.config, db), new MemorySource(), {
     ownsDatabase: true
   })

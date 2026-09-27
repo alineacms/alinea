@@ -67,7 +67,7 @@ test('statements count towards the request whose query ran them', async () => {
   const file = join(await mkdtemp(join(tmpdir(), 'alinea-stats-')), 'db')
   const sqlite = new Database(file)
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const database = new EntryDatabase(config, db)
   const seed = new EntryStore(config, database, new MemorySource())
   await seed.mutate(

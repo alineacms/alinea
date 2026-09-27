@@ -29,7 +29,7 @@ import {
 } from './DatabaseTables.js'
 import type {DatabaseHandle} from './driver/DatabaseHandle.js'
 import {entryDataText, hasJsonbRows, supportsJsonb} from './entry/EntryData.js'
-import {EntryIndexTable} from './entry/EntryTable.js'
+import {EntryIndexTable, syncFieldIndexes} from './entry/EntryTable.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {queryEntryReferences} from './query/EntryReferences.js'
 import {resolveEntryQuery} from './query/ResolveQuery.js'
@@ -170,6 +170,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   static async createSchema(
     db: Database,
+    config: Config,
     revision: string,
     configFingerprint = defaultConfigFingerprint
   ): Promise<void> {
@@ -224,6 +225,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         revision,
         tree: revision === ReadonlyTree.EMPTY.sha ? ReadonlyTree.EMPTY : null
       })
+    await syncFieldIndexes(db, config)
   }
 
   /**
@@ -300,6 +302,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
               .update(DatabaseMetadataTable)
               .set({configFingerprint})
               .where(eq(DatabaseMetadataTable.id, 1))
+            await syncFieldIndexes(tx, config)
             const snapshot: RemoteSource = {
               async getTreeIfDifferent() {
                 return tree

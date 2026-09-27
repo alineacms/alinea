@@ -71,7 +71,7 @@ export class EntryStore
   static async memory(config: Config, source: Source): Promise<EntryStore> {
     const {database: db, fork} = await openWasmDatabase()
     try {
-      await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+      await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
       const database = new EntryDatabase(config, db, {fork})
       return new EntryStore(config, database, source, {ownsDatabase: true})
     } catch (error) {

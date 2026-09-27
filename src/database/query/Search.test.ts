@@ -52,7 +52,7 @@ for (const driver of ['native', 'wasm'] as const)
         : await wasmDatabase()
     try {
       const source = new MemorySource()
-      await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+      await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
       const runtime = new EntryDatabase(config, db)
       const initial = await transaction(source)
       await applySourceChange(
@@ -151,7 +151,7 @@ for (const driver of ['native', 'wasm'] as const)
 test('a search inside a relation prepares the index', async () => {
   const db = connect(new Database(':memory:'))
   const source = new MemorySource()
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const runtime = new EntryDatabase(config, db)
   const initial = await transaction(source)
   await applySourceChange(
@@ -177,7 +177,7 @@ test('search updates complete entry rows transactionally', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   const source = new MemorySource()
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const runtime = new EntryDatabase(config, db)
   const initial = await transaction(source)
   await applySourceChange(
@@ -221,7 +221,7 @@ for (const driver of ['native', 'wasm'] as const)
         : await wasmDatabase()
     try {
       const source = new MemorySource()
-      await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+      await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
       const runtime = new EntryDatabase(config, db)
       const initial = await transaction(source)
       await applySourceChange(
@@ -281,7 +281,11 @@ async function sourceWith(
 
 test('an overlay searches its own changes, not later ones of its parent', async () => {
   const {database: db, fork} = await openWasmDatabase()
-  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  await EntryDatabase.createSchema(
+    db,
+    config,
+    (await new MemorySource().getTree()).sha
+  )
   const base = new EntryDatabase(config, db, {fork})
   await base.syncWith(await sourceWith({a: ['Alpha'], b: ['Beta']}))
   const overlay = await base.overlay(
@@ -308,7 +312,11 @@ test('an overlay searches its own changes, not later ones of its parent', async 
 test('Entry.searchableText selects the indexed text of an entry', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  await EntryDatabase.createSchema(
+    db,
+    config,
+    (await new MemorySource().getTree()).sha
+  )
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(
     await sourceWith({a: ['First', 'hidden chocolate'], b: ['Second']})
@@ -344,8 +352,13 @@ test('reindexing indexes the searchable text of the new config', async () => {
   })
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
-  const runtime = new EntryDatabase({...config, schema: {Page: Plain}}, db)
+  const plain = {...config, schema: {Page: Plain}}
+  await EntryDatabase.createSchema(
+    db,
+    plain,
+    (await new MemorySource().getTree()).sha
+  )
+  const runtime = new EntryDatabase(plain, db)
   await runtime.syncWith(
     await sourceWith({a: ['First', 'chocolate'], b: ['Second', 'vanilla']})
   )

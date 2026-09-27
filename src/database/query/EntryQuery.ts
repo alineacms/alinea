@@ -38,6 +38,7 @@ import {
 } from 'rado'
 import {
   EntryIndexTable,
+  isOrderedField,
   storedEntryData,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
@@ -375,6 +376,12 @@ export function compileEntryQuery(
       const ordersByFilePath =
         internal.type === 'entryField' && internal.name === 'filePath'
       const value = membership.expr(expression)
+      // The field index orders these as is: case folding cannot change the
+      // order of dates and numbers, and SQLite sorts nulls last for desc.
+      if (internal.type === 'field' && isOrderedField(expression)) {
+        ordering.push(order.asc ? sql`${value} asc nulls last` : desc(value))
+        continue
+      }
       const collated = order.caseSensitive
         ? value
         : sql`${value} collate nocase`

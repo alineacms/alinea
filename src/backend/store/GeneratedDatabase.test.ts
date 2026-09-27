@@ -34,7 +34,7 @@ test('a read-only generated database commits after searching', async () => {
   )
   const sqlite = new Database(file)
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const database = new EntryDatabase(config, db)
   const store = new EntryStore(config, database, new MemorySource())
   await store.mutate(

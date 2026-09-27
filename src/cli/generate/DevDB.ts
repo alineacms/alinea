@@ -74,6 +74,7 @@ export class DevDB extends EntryStore {
     try {
       await EntryDatabase.createSchema(
         db,
+        options.config,
         ReadonlyTree.EMPTY.sha,
         options.configFingerprint
       )

@@ -74,7 +74,7 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(source)
   for (const select of [
@@ -126,7 +126,7 @@ test('SQL references retain status and locale behavior', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(source)
 
@@ -159,7 +159,7 @@ test('entry database returns source blobs by hash', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(source)
   const tree = await source.getTree()
@@ -218,7 +218,7 @@ test('cached trees follow revisions written by another database instance', async
     })
     using readSqlite = new Database(join(directory, 'entries.sqlite'))
     const db = connect(writeSqlite)
-    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(db, store.config, ReadonlyTree.EMPTY.sha)
     const writer = new EntryDatabase(store.config, db)
     const reader = new EntryDatabase(store.config, connect(readSqlite))
     await writer.syncWith(source)
@@ -267,7 +267,7 @@ test('overlays are independent of their parent and of each other', async () => {
   }
 
   const {database: db, fork} = await openWasmDatabase()
-  await EntryDatabase.createSchema(db, 'empty')
+  await EntryDatabase.createSchema(db, config, 'empty')
   const base = new EntryDatabase(config, db, {fork})
   await base.syncWith(
     await source([
@@ -348,7 +348,7 @@ test('database mutations use one write transaction and commit one final tree', a
   const initial = await source.getTree()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, initial.sha)
+  await EntryDatabase.createSchema(db, config, initial.sha)
   const database = new EntryDatabase(config, db)
 
   const result = await database.apply(
@@ -395,7 +395,7 @@ test('failed database mutation batches leave the receiver untouched', async () =
   const initial = await source.getTree()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, initial.sha)
+  await EntryDatabase.createSchema(db, config, initial.sha)
   const database = new EntryDatabase(config, db)
 
   await expect(
@@ -442,7 +442,7 @@ test('database mutations preserve authored status and hierarchy transitions', as
   const initial = await source.getTree()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, initial.sha)
+  await EntryDatabase.createSchema(db, config, initial.sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -544,7 +544,7 @@ test('database mutations enforce URL ownership and retain previous URLs', async 
   const source = new MemorySource()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -620,7 +620,7 @@ test('database moves retain published URLs for an entire subtree', async () => {
   const source = new MemorySource()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -695,7 +695,7 @@ test('database mutations propagate shared fields between translations', async ()
   const source = new MemorySource()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -761,7 +761,7 @@ test('sync writes search rows with the entry rows they index', async () => {
   })
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const base = new EntryDatabase(config, db)
   await base.syncWith(source)
   expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual(['a'])
@@ -813,7 +813,7 @@ test('a reopened database searches the index it persisted', async () => {
   const file = join(dir, 'database.sqlite')
   try {
     const initial = connect(new Database(file))
-    await EntryDatabase.createSchema(initial, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(initial, config, ReadonlyTree.EMPTY.sha)
     const first = new EntryDatabase(config, initial)
     await first.syncWith(source)
     expect(await first.find({search: 'Persisted', select: Entry.id})).toEqual([
@@ -855,7 +855,11 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
       .from(EntryIndexTable)
   // Write JSONB with the WASM build, which always reads it.
   const handle = await openWasmDatabase()
-  await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(
+    handle.database,
+    config,
+    ReadonlyTree.EMPTY.sha
+  )
   const written = new EntryDatabase(config, handle.database)
   await written.syncWith(source)
   expect(await dataType(handle.database)).toEqual(['blob'])
@@ -887,7 +891,7 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
     }
 
     const db = connect(new Database(file))
-    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
     expect(await dataType(db)).toEqual(readsJsonb ? ['blob'] : [])
     const reopened = new EntryDatabase(config, db)
     await reopened.syncWith(source)
@@ -915,15 +919,15 @@ test('databases written with an older layout are rebuilt', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   await new EntryDatabase(config, db).syncWith(source)
   const entries = () =>
     db.get(sql`select count(*) as count from alinea_entry_index`)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   expect(await entries()).toEqual({count: 1})
   // Layouts before version 4 did not record their version.
   await db.run(sql`alter table alinea_database_metadata drop column version`)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   expect(await entries()).toEqual({count: 0})
   expect(
     await db.get(sql`select version from alinea_database_metadata`)

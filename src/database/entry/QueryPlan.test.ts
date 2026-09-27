@@ -238,7 +238,7 @@ async function recordingDatabase() {
 
 test('queries read indexed tables, also after a sync changed the rows', async () => {
   const {log, db} = await recordingDatabase()
-  await EntryDatabase.createSchema(db, 'empty')
+  await EntryDatabase.createSchema(db, config, 'empty')
   const database = new EntryDatabase(config, db)
   await database.syncWith(await source(base))
 
@@ -253,7 +253,7 @@ test('queries read indexed tables, also after a sync changed the rows', async ()
 
   // The WASM build omits EXPLAIN: plan the statements natively.
   using planner = new Database(':memory:')
-  await EntryDatabase.createSchema(connectNative(planner), 'empty')
+  await EntryDatabase.createSchema(connectNative(planner), config, 'empty')
 
   /** Check the plan of every entry read. */
   function checkPlans(reads: Record<string, Array<string>>) {
@@ -279,7 +279,7 @@ test('queries read indexed tables, also after a sync changed the rows', async ()
   const {reads, results} = await recorded()
   checkPlans(reads)
   const {database: fresh} = await openWasmDatabase()
-  await EntryDatabase.createSchema(fresh, 'empty')
+  await EntryDatabase.createSchema(fresh, config, 'empty')
   const plain = new EntryDatabase(config, fresh)
   await plain.syncWith(await source(diverged))
   expect(results).toEqual(await resolveAll(plain))

@@ -30,7 +30,11 @@ const config: Config = {
 function createStore(source = new MemorySource(), storeConfig = config) {
   const sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  return EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha).then(() => ({
+  return EntryDatabase.createSchema(
+    db,
+    storeConfig,
+    ReadonlyTree.EMPTY.sha
+  ).then(() => ({
     sqlite,
     store: new EntryStore(
       storeConfig,
@@ -48,7 +52,11 @@ interface ForkedConnection {
 async function createForkableStore(source = new MemorySource()) {
   const handle = await openWasmDatabase()
   const forks = Array<ForkedConnection>()
-  await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(
+    handle.database,
+    config,
+    ReadonlyTree.EMPTY.sha
+  )
   const database = new EntryDatabase(config, handle.database, {
     async fork() {
       const copy = await handle.fork()

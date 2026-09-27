@@ -58,7 +58,7 @@ test('handler syncs a readonly database through an overlay', async () => {
     {
       const sqlite = new Database(path)
       const db = connect(sqlite)
-      await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+      await EntryDatabase.createSchema(db, cms.config, ReadonlyTree.EMPTY.sha)
       const store = new EntryStore(
         cms.config,
         new EntryDatabase(cms.config, db),

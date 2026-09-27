@@ -24,7 +24,11 @@ async function expectInvalidEntries(
   const source = await createEntrySource(config, entries)
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  await EntryDatabase.createSchema(
+    db,
+    config,
+    (await new MemorySource().getTree()).sha
+  )
   const runtime = new EntryDatabase(config, db)
   await expect(runtime.syncWith(source)).rejects.toThrow(message)
 }
@@ -50,7 +54,7 @@ test('runtime serializes sources through one database-bound syncer', async () =>
   }
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, 'empty')
+  await EntryDatabase.createSchema(db, cms.config, 'empty')
   const runtime = new EntryDatabase(cms.config, db)
 
   const [first, repeated] = await Promise.all([
@@ -330,7 +334,11 @@ test('rejects mismatched paths between status versions', async () => {
 async function openRuntime(config: Config) {
   const sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  await EntryDatabase.createSchema(
+    db,
+    config,
+    (await new MemorySource().getTree()).sha
+  )
   return {sqlite, db, runtime: new EntryDatabase(config, db)}
 }
 

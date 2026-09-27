@@ -1,9 +1,14 @@
+import {type} from '#/core/Type.js'
+import {date} from '#/field/date/DateField.js'
+import {number} from '#/field/number/NumberField.js'
+import {text} from '#/field/text/TextField.js'
 import {expect, test} from 'bun:test'
 import {getSql, sql, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {wasmDatabase} from '../driver/WasmDatabase.js'
 import {jsonField} from '../query/Condition.js'
 import {entryDataText} from './EntryData.js'
+import {EntryIndexTable, syncFieldIndexes} from './EntryTable.js'
 
 const Rows = table('rows', {
   text: column.text().notNull(),
@@ -58,5 +63,29 @@ test('JSONB data reads paths as its JSON text does', async () => {
     .get()
   expect(JSON.parse(stored!.binary)).toEqual(JSON.parse(document))
   expect(JSON.parse(stored!.text)).toEqual(JSON.parse(document))
+  await db.close()
+})
+
+test('field indexes follow the ordered fields of the config', async () => {
+  const db = await wasmDatabase()
+  await db.create(EntryIndexTable)
+  const indexes = async () =>
+    (
+      await db.all<{name: string}>(
+        sql`select name from sqlite_master
+          where type = 'index' and sql like '%->>%' order by name`
+      )
+    ).map(row => row.name)
+  const Article = type('Article', {
+    fields: {title: text('Title'), date: date('Date'), rank: number('Rank')}
+  })
+  await syncFieldIndexes(db, {schema: {Article}, workspaces: {}})
+  expect(await indexes()).toEqual([
+    'alinea_entry_index_by_field_date',
+    'alinea_entry_index_by_field_rank'
+  ])
+  const Dated = type('Article', {fields: {date: date('Date')}})
+  await syncFieldIndexes(db, {schema: {Dated}, workspaces: {}})
+  expect(await indexes()).toEqual(['alinea_entry_index_by_field_date'])
   await db.close()
 })

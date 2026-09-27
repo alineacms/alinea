@@ -52,7 +52,11 @@ export class BrowserEntryStore extends EntryStore {
     let handle: WasmDatabaseHandle | undefined
     try {
       handle = await openWasmDatabase(data)
-      await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
+      await EntryDatabase.createSchema(
+        handle.database,
+        config,
+        ReadonlyTree.EMPTY.sha
+      )
       const database = new EntryDatabase(config, handle.database, {
         fork: handle.fork
       })

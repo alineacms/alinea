@@ -1,13 +1,18 @@
+import type {Config} from '#/core/Config.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {
   createRecord,
   parseRecord,
   type EntryRecord
 } from '#/core/EntryRecord.js'
+import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {index, table, type Table} from 'rado'
+import {DateField} from '#/field/date/DateField.js'
+import {NumberField} from '#/field/number/NumberField.js'
+import {index, sql, table, type Database, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
+import {jsonField} from '../query/Condition.js'
 
 function entryVersionId(
   id: string,
@@ -88,6 +93,42 @@ export function entryIndexTable(name: string) {
 export type EntryIndexTarget = Table<typeof EntryIndexColumns>
 
 export const EntryIndexTable = entryIndexTable('alinea_entry_index')
+
+/** Fields whose queries order by their stored value, through a field index. */
+export function isOrderedField(field: unknown): boolean {
+  return field instanceof DateField || field instanceof NumberField
+}
+
+const fieldIndexPrefix = 'alinea_entry_index_by_field_'
+
+/** Index the stored value of every ordered field in the config, per type. */
+export async function syncFieldIndexes(
+  db: Database,
+  config: Config
+): Promise<void> {
+  const wanted = new Set<string>()
+  for (const type of Object.values(config.schema))
+    for (const [name, field] of Object.entries(Type.fields(type)))
+      if (isOrderedField(field)) wanted.add(name)
+  const rows = await db.all<{name: string}>(
+    sql`select name from sqlite_master where type = 'index'`
+  )
+  const existing = new Set<string>()
+  for (const {name} of rows)
+    if (name.startsWith(fieldIndexPrefix))
+      existing.add(name.slice(fieldIndexPrefix.length))
+  for (const name of existing)
+    if (!wanted.has(name))
+      await db.run(sql`drop index ${sql.identifier(fieldIndexPrefix + name)}`)
+  for (const name of wanted) {
+    if (existing.has(name)) continue
+    // Index expressions cannot name their table, but match the queries'
+    // qualified column all the same.
+    const value = jsonField(sql.identifier('data'), [name])
+    await db.run(sql`create index ${sql.identifier(fieldIndexPrefix + name)}
+      on ${EntryIndexTable}(${sql.identifier('type')}, ${value})`)
+  }
+}
 
 /** An Entry plus the physical-version and local-index fields. */
 export interface IndexedEntry extends Entry {
