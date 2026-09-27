@@ -3,6 +3,7 @@ import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
+import {accumulate} from '#/core/util/Async.js'
 import {entryIndexRow, type IndexedEntry} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
@@ -56,19 +57,6 @@ async function removeVersions(
   await queries.deleteSearch.run(params)
   await queries.deleteFiles.run(params)
   return stored
-}
-
-/** The blobs of files, each read once however many files share it. */
-async function readBlobs(
-  source: RemoteSource,
-  files: ReadonlyArray<FileRow>
-): Promise<Map<string, Uint8Array>> {
-  const wanted = new Set(files.map(file => file.fileHash))
-  const blobs = new Map<string, Uint8Array>()
-  if (!wanted.size) return blobs
-  for await (const [fileHash, blob] of source.getBlobs([...wanted]))
-    if (wanted.has(fileHash)) blobs.set(fileHash, blob)
-  return blobs
 }
 
 function parseFiles(
@@ -150,26 +138,28 @@ export async function mergeTrees(
   }))
   // Later batches' blobs arrive while earlier ones are written, instead of
   // one request after another.
-  const reads = new Map<number, Promise<Map<string, Uint8Array>>>()
+  function read(files: ReadonlyArray<FileRow>) {
+    const shas = [...new Set(files.map(file => file.fileHash))]
+    const blobs = shas.length
+      ? accumulate(source.getBlobs(shas)).then(found => new Map(found))
+      : Promise.resolve(new Map<string, Uint8Array>())
+    // A failed read is thrown once its batch is written.
+    blobs.catch(() => {})
+    return blobs
+  }
+  const reads = batches.slice(0, readAhead).map(batch => read(batch.added))
   for (const [index, {deleted, added}] of batches.entries()) {
-    for (let next = index; next < index + readAhead; next++) {
-      const batch = batches[next]
-      if (!batch || reads.has(next)) continue
-      const read = readBlobs(source, batch.added)
-      // A failed read is thrown once its batch is written.
-      read.catch(() => {})
-      reads.set(next, read)
-    }
+    const ahead = batches[index + readAhead]
+    if (ahead) reads.push(read(ahead.added))
+    const blobs = reads.shift()!
     if (deleted.length) {
       const stored = await removeVersions(queries, changes, deleted)
       const found = new Set(stored.map(row => row.filePath))
       for (const filePath of deleted)
         assert(found.has(filePath), `Missing version to delete: ${filePath}`)
     }
-    const blobs = await reads.get(index)!
-    reads.delete(index)
     if (!added.length) continue
-    const rows = parseFiles(config, tree, added, blobs)
+    const rows = parseFiles(config, tree, added, await blobs)
     await removeVersions(
       queries,
       changes,
