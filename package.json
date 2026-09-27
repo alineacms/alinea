@@ -30,6 +30,10 @@
     },
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
+    "./database/driver/OverlayExtension": {
+      "browser": "./dist/database/driver/OverlayExtension.browser.js",
+      "default": "./dist/database/driver/OverlayExtension.js"
+    },
     "./core/media/CreatePreview": {
       "edge-light": "./dist/core/media/CreatePreview.js",
       "worker": "./dist/core/media/CreatePreview.js",

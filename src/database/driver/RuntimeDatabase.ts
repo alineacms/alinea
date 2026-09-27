@@ -1,5 +1,5 @@
-import {readFile} from 'node:fs/promises'
-import {pathToFileURL} from 'node:url'
+// Node modules are imported where used: client bundles reach this module
+// through the CMS config without running it.
 import type {Database, DatabaseOptions} from 'rado'
 import type {DatabaseHandle} from './DatabaseHandle.js'
 import {openWasmDatabase} from './WasmDatabase.js'
@@ -21,6 +21,7 @@ export async function runtimeDatabase(
   const {path, overlay, ...rest} = options
   if (!overlay) return {database: await openNative(path, rest)}
   if (await loadOverlayVfs()) return overlayDatabase(path, rest)
+  const {readFile} = await import('node:fs/promises')
   return openWasmDatabase(await readFile(path), rest)
 }
 
@@ -53,7 +54,9 @@ function loadOverlayVfs(): Promise<boolean> {
     try {
       const [{DatabaseSync}, {overlayExtension}] = await Promise.all([
         import('node:sqlite'),
-        import('@alinea/sqlite-wasm/native')
+        // Imported through the package exports: client bundles that reach
+        // this module get a stub instead of the native extension's loader.
+        import('#/database/driver/OverlayExtension.js')
       ])
       const loader = new DatabaseSync(':memory:', {allowExtension: true})
       try {
@@ -79,9 +82,10 @@ async function overlayDatabase(
   path: string,
   options: DatabaseOptions
 ): Promise<DatabaseHandle> {
-  const [{DatabaseSync}, {connect}] = await Promise.all([
+  const [{DatabaseSync}, {connect}, {pathToFileURL}] = await Promise.all([
     import('node:sqlite'),
-    import('rado/driver/node-sqlite')
+    import('rado/driver/node-sqlite'),
+    import('node:url')
   ])
   const file = pathToFileURL(path).href
   // Overlay names are shared by the whole process, including other copies
