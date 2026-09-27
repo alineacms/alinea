@@ -9,6 +9,7 @@ import {mkdtemp} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {connect} from 'rado/driver/bun-sqlite'
+import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import {createGeneratedDatabase} from './GeneratedDatabase.js'
@@ -51,7 +52,7 @@ test('a read-only generated database commits after searching', async () => {
 
   const generated = await createGeneratedDatabase(
     config,
-    connect(new Database(file, {readonly: true}))
+    await runtimeDatabase({path: file, overlay: true})
   )
   try {
     // A search first: writes must never reach the shared, read-only index.

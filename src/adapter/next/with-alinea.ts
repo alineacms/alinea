@@ -49,7 +49,8 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
         ...config.experimental,
         serverComponentsExternalPackages: [
           ...(config.experimental?.serverComponentsExternalPackages ?? []),
-          '@alinea/generated'
+          '@alinea/generated',
+          '@alinea/sqlite-wasm'
         ]
       },
       rewrites,
@@ -60,7 +61,10 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     ...config,
     serverExternalPackages: [
       ...(config.serverExternalPackages ?? []),
-      '@alinea/generated'
+      '@alinea/generated',
+      // Loads its native extension from the package directory, which file
+      // tracing then includes.
+      '@alinea/sqlite-wasm'
     ],
     rewrites,
     images,

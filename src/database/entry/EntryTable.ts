@@ -6,7 +6,7 @@ import {
 } from '#/core/EntryRecord.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {index, table, temporaryTable, type Table} from 'rado'
+import {index, table, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 
 function entryVersionId(
@@ -21,7 +21,7 @@ function entryVersionId(
 export const EntryIndexColumns = {
   /**
    * Also the rowid of the version's full-text search row. Declared, so VACUUM
-   * and copies into overlay tables keep it.
+   * keeps it.
    */
   rowid: column.integer().primaryKey(),
   versionId: column.varchar(undefined, {length: 255}).notNull().unique(),
@@ -67,9 +67,8 @@ export const EntryIndexColumns = {
   data: column.text().notNull()
 }
 
-export function entryIndexTable(name: string, temporary = false) {
-  const create = temporary ? temporaryTable : table
-  return create(name, EntryIndexColumns, row => [
+export function entryIndexTable(name: string) {
+  return table(name, EntryIndexColumns, row => [
     index(`${name}_by_id`).on(row.id, row.locale, row.versionStatus),
     index(`${name}_by_url`).on(row.url),
     index(`${name}_by_type`).on(row.type, row.locale, row.workspace),

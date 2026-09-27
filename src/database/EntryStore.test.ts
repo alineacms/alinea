@@ -9,6 +9,8 @@ import {Config as ConfigBuilder, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
+import {DatabaseSource} from './DatabaseSource.js'
+import {openWasmDatabase} from './driver/WasmDatabase.js'
 import {EntryDatabase} from './EntryDatabase.js'
 import {EntryStore} from './EntryStore.js'
 
@@ -36,6 +38,32 @@ function createStore(source = new MemorySource(), storeConfig = config) {
       source
     )
   }))
+}
+
+interface ForkedConnection {
+  closed: boolean
+}
+
+/** A store that owns a forkable connection, recording what it forks. */
+async function createForkableStore(source = new MemorySource()) {
+  const handle = await openWasmDatabase()
+  const forks = Array<ForkedConnection>()
+  await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(config, handle.database, {
+    async fork() {
+      const copy = await handle.fork()
+      const forked: ForkedConnection = {closed: false}
+      forks.push(forked)
+      const close = copy.database.close.bind(copy.database)
+      copy.database.close = async () => {
+        forked.closed = true
+        close()
+      }
+      return copy
+    }
+  })
+  const store = new EntryStore(config, database, source, {ownsDatabase: true})
+  return {store, forks}
 }
 
 test('entry store mutates its source and database together', async () => {
@@ -81,17 +109,21 @@ test('entry store requests are isolated until written', async () => {
   }
 })
 
-async function pagesStore() {
-  const created = await createStore()
-  await created.store.mutate(
+function createPages(store: EntryStore, title = (id: string) => `Title ${id}`) {
+  return store.mutate(
     ['page', 'other', 'third'].map(id => ({
       op: 'create' as const,
       id,
       type: 'Page',
       locale: null,
-      data: {title: `Title ${id}`}
+      data: {title: title(id)}
     }))
   )
+}
+
+async function pagesStore() {
+  const created = await createStore()
+  await createPages(created.store)
   return created
 }
 
@@ -197,10 +229,10 @@ test('reads during a request never see the planned commit', async () => {
 })
 
 test('a store sourced from its own database plans requests', async () => {
-  const {sqlite, store} = await pagesStore()
+  const {store} = await createForkableStore()
+  await createPages(store)
   // Like a generated database: the source reads the rows being moved.
-  const layer = await store.database.createOverlay()
-  const generated = new EntryStore(config, layer.database, layer.source)
+  const generated = sourcedFromDatabase(store)
   try {
     const before = await generated.sha
     for (const mutations of plannedMutations) {
@@ -210,32 +242,27 @@ test('a store sourced from its own database plans requests', async () => {
     }
   } finally {
     await generated.close()
-    await layer.close()
-    sqlite.close()
+    await store.close()
   }
 })
 
-async function previewStore() {
-  const created = await createStore()
-  const {sqlite, store} = created
-  await store.mutate(
-    ['page', 'other', 'third'].map(id => ({
-      op: 'create' as const,
-      id,
-      type: 'Page',
-      locale: null,
-      data: {title: 'Published'}
-    }))
+/** A store over another's database, sourced from it like a generated one. */
+function sourcedFromDatabase(store: EntryStore) {
+  return new EntryStore(
+    config,
+    store.database,
+    new DatabaseSource(store.database),
+    {sourceFollowsDatabase: true}
   )
-  const overlayTables = () =>
-    sqlite
-      .query<{name: string}, []>(
-        `select name from sqlite_temp_master
-        where type = 'table' and name like 'alinea_overlay_%_entries'
-        order by name`
-      )
-      .all()
-      .map(row => row.name)
+}
+
+async function previewStore(forkable = true) {
+  const created = forkable
+    ? await createForkableStore()
+    : {...(await createStore()), forks: Array<ForkedConnection>()}
+  const {store, forks} = created
+  await createPages(store, () => 'Published')
+  const openForks = () => forks.filter(fork => !fork.closed)
   async function preview(id: string, title: string, path?: string) {
     const entry = await store.get({id, select: Entry})
     const {rowHash: _rowHash, fileHash: _fileHash, ...base} = entry
@@ -268,11 +295,11 @@ async function previewStore() {
     })
     return Object.fromEntries(found.map(row => [row.id, row.title]))
   }
-  return {...created, overlayTables, preview, rows, titles}
+  return {...created, openForks, preview, rows, titles}
 }
 
-test('concurrent previews of different entries share one overlay', async () => {
-  const {sqlite, store, overlayTables, preview, titles} = await previewStore()
+test('concurrent previews of different entries keep one overlay open', async () => {
+  const {store, forks, openForks, preview, titles} = await previewStore()
   try {
     const first = await preview('page', 'First')
     const second = await preview('other', 'Second')
@@ -294,24 +321,21 @@ test('concurrent previews of different entries share one overlay', async () => {
       firstTitles,
       secondTitles
     ])
-    expect(overlayTables()).toEqual(['alinea_overlay_1_entries'])
+    expect(openForks()).toHaveLength(1)
     expect(await titles()).toEqual({
       page: 'Published',
       other: 'Published',
       third: 'Published'
     })
-    await store.close()
-    const tempTables = sqlite
-      .query(`select name from sqlite_temp_master where type = 'table'`)
-      .all()
-    expect(tempTables).toEqual([])
   } finally {
-    sqlite.close()
+    await store.close()
   }
+  // Closing the store closes its preview overlay.
+  expect(forks.every(fork => fork.closed)).toBe(true)
 })
 
 test('switching previews restores the previously previewed entry', async () => {
-  const {sqlite, store, overlayTables, preview, rows} = await previewStore()
+  const {store, openForks, preview, rows} = await previewStore()
   try {
     const payloads = [
       await preview('page', 'First'),
@@ -328,14 +352,14 @@ test('switching previews restores the previously previewed entry', async () => {
       row => row.id !== 'third'
     )
     expect(unchanged).toEqual(published.filter(row => row.id !== 'third'))
-    expect(overlayTables()).toHaveLength(1)
+    expect(openForks()).toHaveLength(1)
   } finally {
-    sqlite.close()
+    await store.close()
   }
 })
 
 test('the preview overlay follows syncs of the store', async () => {
-  const {sqlite, store, overlayTables, preview, titles} = await previewStore()
+  const {store, openForks, preview, titles} = await previewStore()
   try {
     const first = await preview('page', 'First')
     expect(await titles(first)).toEqual({
@@ -361,17 +385,16 @@ test('the preview overlay follows syncs of the store', async () => {
     })
     await store.sync()
     expect(await titles(first)).toEqual({page: 'First', other: 'Updated'})
-    expect(overlayTables()).toEqual(['alinea_overlay_1_entries'])
+    expect(openForks()).toHaveLength(1)
   } finally {
-    sqlite.close()
+    await store.close()
   }
 })
 
 test('previews switch over a store sourced from its own database', async () => {
-  const {sqlite, store, preview} = await previewStore()
+  const {store, preview} = await previewStore()
   // Like a generated database: the source reads the rows being previewed.
-  const layer = await store.database.createOverlay()
-  const generated = new EntryStore(config, layer.database, layer.source)
+  const generated = sourcedFromDatabase(store)
   const title = (previewed: Entry) =>
     generated.get({
       id: previewed.id,
@@ -385,13 +408,12 @@ test('previews switch over a store sourced from its own database', async () => {
       expect(await title(previewed)).toBe(previewed.title)
   } finally {
     await generated.close()
-    await layer.close()
-    sqlite.close()
+    await store.close()
   }
 })
 
 test('previews moving an entry match fresh overlays', async () => {
-  const {sqlite, store, overlayTables, preview, rows} = await previewStore()
+  const {store, openForks, preview, rows} = await previewStore()
   try {
     const payloads = [
       await preview('page', 'First'),
@@ -404,9 +426,37 @@ test('previews moving an entry match fresh overlays', async () => {
       expect(await rows(store, previewed)).toEqual(
         await referenceRows(store, previewed, rows)
       )
-    expect(overlayTables()).toHaveLength(1)
+    expect(openForks()).toHaveLength(1)
   } finally {
-    sqlite.close()
+    await store.close()
+  }
+})
+
+test('previews of a database that cannot fork roll back', async () => {
+  const {store, preview, rows} = await previewStore(false)
+  try {
+    expect(store.database.forkable).toBe(false)
+    const published = await rows(store)
+    const payloads = [
+      await preview('page', 'First'),
+      await preview('page', 'Moved', 'moved'),
+      await preview('other', 'Other')
+    ]
+    for (const previewed of payloads) {
+      const found = await rows(store, previewed)
+      const others = (list: typeof found) =>
+        list.filter(row => row.id !== previewed.id)
+      expect(found).toContainEqual({
+        id: previewed.id,
+        path: previewed.path,
+        filePath: previewed.filePath,
+        title: previewed.title
+      })
+      expect(others(found)).toEqual(others(published))
+    }
+    expect(await rows(store)).toEqual(published)
+  } finally {
+    await store.close()
   }
 })
 

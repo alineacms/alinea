@@ -53,7 +53,9 @@ export class BrowserEntryStore extends EntryStore {
     try {
       handle = await openWasmDatabase(data)
       await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
-      const database = new EntryDatabase(config, handle.database)
+      const database = new EntryDatabase(config, handle.database, {
+        fork: handle.fork
+      })
       // A file persisted by another dashboard build keeps its content and
       // derives it again with this build's config, instead of syncing every
       // entry from the remote into an empty database.

@@ -30,6 +30,10 @@
     },
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
+    "./database/driver/OverlayExtension": {
+      "browser": "./dist/database/driver/OverlayExtension.browser.js",
+      "default": "./dist/database/driver/OverlayExtension.js"
+    },
     "./core/media/CreatePreview": {
       "edge-light": "./dist/core/media/CreatePreview.js",
       "worker": "./dist/core/media/CreatePreview.js",
@@ -74,7 +78,7 @@
   },
   "dependencies": {
     "@alinea/iso": "^0.3.3",
-    "@alinea/sqlite-wasm": "0.1.20",
+    "@alinea/sqlite-wasm": "0.2.0",
     "esbuild": "^0.28.0"
   },
   "peerDependencies": {

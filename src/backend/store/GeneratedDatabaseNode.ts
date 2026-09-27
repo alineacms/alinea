@@ -22,7 +22,7 @@ const stores = new WeakMap<Config, ReturnType<typeof createGeneratedDatabase>>()
 /** The shared connection reports statements to the last registered logger. */
 const loggers = new WeakMap<Config, DatabaseOptions['logQuery']>()
 
-/** Open the traced generated file through the native SQLite driver. */
+/** Open the traced generated file as an in-memory overlay. */
 export function generatedDatabase(
   config: Config,
   options: DatabaseOptions = {}
@@ -34,7 +34,7 @@ export function generatedDatabase(
       .then(path =>
         runtimeDatabase({
           path,
-          readonly: true,
+          overlay: true,
           logQuery: (query, durationMs) =>
             loggers.get(config)?.(query, durationMs)
         })

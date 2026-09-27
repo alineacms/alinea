@@ -1,18 +1,9 @@
-import {
-  getTable,
-  sql,
-  table,
-  temporaryTable,
-  type Database,
-  type HasSql,
-  type Sql,
-  type Table
-} from 'rado'
+import {getTable, sql, table, type Database, type HasSql, type Sql} from 'rado'
 import * as column from 'rado/universal/columns'
 import type {EntryIndexTarget} from '../entry/EntryTable.js'
 
 /**
- * The FTS5 index of an entry table. Sync writes a row for every entry version
+ * The FTS5 index of the entry table. Sync writes a row for every entry version
  * under the rowid of its entry row; the body is the version's searchable text.
  */
 const EntrySearchColumns = {
@@ -21,16 +12,7 @@ const EntrySearchColumns = {
   body: column.text().notNull()
 }
 
-export type EntrySearchTarget = Table<typeof EntrySearchColumns>
-
-export function entrySearchTable(
-  name: string,
-  temporary = false
-): EntrySearchTarget {
-  return (temporary ? temporaryTable : table)(name, EntrySearchColumns)
-}
-
-export const EntrySearchTable = entrySearchTable('alinea_entry_search')
+export const EntrySearchTable = table('alinea_entry_search', EntrySearchColumns)
 
 export interface SearchQuery {
   target: Sql
@@ -45,24 +27,16 @@ export interface SearchQuery {
   ): Sql<string>
 }
 
-export async function createSearch(
-  db: Database,
-  search: EntrySearchTarget
-): Promise<void> {
-  const {name, temporary} = getTable(search)
-  const target = temporary
-    ? sql`temp.${sql.identifier(name)}`
-    : sql.identifier(name)
+export async function createSearch(db: Database): Promise<void> {
+  const target = sql.identifier(getTable(EntrySearchTable).name)
   await db.run(sql`create virtual table if not exists ${target} using fts5(
     title, body, tokenize='unicode61 remove_diacritics 2'
   )`)
 }
 
 /** The searchable text of an entry row, read from its search row. */
-export function searchableText(
-  entry: EntryIndexTarget,
-  search: EntrySearchTarget
-): Sql<string> {
+export function searchableText(entry: EntryIndexTarget): Sql<string> {
+  const search = EntrySearchTable
   return sql<string>`(select ${search.body} from ${search}
     where ${search.rowid} = ${entry.rowid})`
 }
@@ -81,7 +55,6 @@ export interface SearchQueryOptions {
 export function searchQuery(
   input: string | Array<string> | undefined,
   entry: EntryIndexTarget,
-  target: EntrySearchTarget,
   options: SearchQueryOptions = {}
 ): SearchQuery | undefined {
   const tokens = searchTokens(input)
@@ -101,7 +74,7 @@ export function searchQuery(
         : spellings[0]!
     })
     .join(' AND ')
-  const search = sql.identifier(getTable(target).name)
+  const search = sql.identifier(getTable(EntrySearchTable).name)
   const match = sql`${search} match ${terms}`
   const relevance = sql<number>`bm25(${search}, 20, 1)`
   const titlePrefix = tokens.length
@@ -128,25 +101,12 @@ export function searchQuery(
 const fuzzyFactor = 0.1
 const maxFuzzyDistance = 6
 const maxAlternatives = 10
-const objectNamePattern = /^[a-z][a-z0-9_]*$/i
+const vocabulary = 'alinea_entry_search_vocab'
 
 /** The edits a token may be away from an indexed term: none below five
  * characters, one up to fourteen, then one more per ten. */
 export function fuzzyDistance(token: string): number {
   return Math.min(maxFuzzyDistance, Math.round(token.length * fuzzyFactor))
-}
-
-function vocabularyName(search: EntrySearchTarget): string {
-  return `${getTable(search).name}_vocab`
-}
-
-export async function dropVocabulary(
-  db: Database,
-  search: EntrySearchTarget
-): Promise<void> {
-  await db.run(
-    sql`drop table if exists temp.${sql.identifier(vocabularyName(search))}`
-  )
 }
 
 interface VocabularyTerm {
@@ -185,7 +145,7 @@ function withinDistance(a: string, b: string, max: number): boolean {
 }
 
 /**
- * The terms of one FTS5 table, loaded once per database revision. Query tokens
+ * The terms of the search index, loaded once per database revision. Query tokens
  * expand to indexed terms within a small edit distance, so a typo still
  * finds the entry.
  */
@@ -193,27 +153,17 @@ export class SearchVocabulary {
   #loaded: string | undefined
   #byLength = new Map<number, Array<VocabularyTerm>>()
 
-  async load(
-    db: Database,
-    search: EntrySearchTarget,
-    revision: string
-  ): Promise<void> {
-    const {name: searchName, temporary} = getTable(search)
-    const key = `${searchName} ${revision}`
-    if (this.#loaded === key) return
-    if (!objectNamePattern.test(searchName))
-      throw new Error(`Invalid search table name ${JSON.stringify(searchName)}`)
-    const vocab = sql.identifier(vocabularyName(search))
-    const schema = temporary ? 'temp' : 'main'
-    // Module arguments cannot be bound, and the names are validated above.
+  async load(db: Database, revision: string): Promise<void> {
+    if (this.#loaded === revision) return
+    // Module arguments cannot be bound.
     await db.run(
       sql.unsafe(
-        `create virtual table if not exists temp."${vocabularyName(search)}"
-         using fts5vocab('${schema}', '${searchName}', 'row')`
+        `create virtual table if not exists temp.${vocabulary}
+         using fts5vocab('main', '${getTable(EntrySearchTable).name}', 'row')`
       )
     )
     const rows = await db.all<{term: string; cnt: number}>(
-      sql`select term, cnt from temp.${vocab}`
+      sql`select term, cnt from temp.${sql.identifier(vocabulary)}`
     )
     const byLength = new Map<number, Array<VocabularyTerm>>()
     for (const row of rows) {
@@ -222,7 +172,7 @@ export class SearchVocabulary {
       byLength.set(row.term.length, terms)
     }
     this.#byLength = byLength
-    this.#loaded = key
+    this.#loaded = revision
   }
 
   /** Indexed terms close to a token, most frequent first; prefixes of the

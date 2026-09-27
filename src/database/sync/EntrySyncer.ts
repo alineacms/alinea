@@ -2,48 +2,29 @@ import type {Config} from '#/core/Config.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {TaskQueue} from '#/core/util/Async.js'
-import type {Database, Table} from 'rado'
-import {
-  DatabaseStateTable,
-  type DatabaseStateColumns
-} from '../DatabaseTables.js'
+import type {Database} from 'rado'
 import {supportsJsonb} from '../entry/EntryData.js'
-import {EntryIndexTable, type EntryIndexTarget} from '../entry/EntryTable.js'
-import {EntrySearchTable, type EntrySearchTarget} from '../query/Search.js'
 import {deriveEntries} from './Derive.js'
 import {mergeTrees} from './Ingest.js'
 import {prepareSyncQueries, type SyncQueries} from './SyncQueries.js'
-
-export interface EntrySyncTarget {
-  entries: EntryIndexTarget
-  state: Table<typeof DatabaseStateColumns>
-  /** The full-text index of the entries, written along with them. */
-  search: EntrySearchTarget
-  /**
-   * Whether the state records the synced source tree, so the database can be
-   * reopened and synced from it. A temporary overlay keeps its tree in memory.
-   */
-  recordsTree?: boolean
-}
-
-export const EntrySyncRoot: EntrySyncTarget = {
-  entries: EntryIndexTable,
-  state: DatabaseStateTable,
-  search: EntrySearchTable
-}
 
 export interface EntrySyncOptions {
   previousTree?: ReadonlyTree
   withinTransaction?: boolean
   /** Skip entry validation for a source whose entries were already validated. */
   validate?: boolean
+  /**
+   * Record the synced source tree in the state, so the database can be
+   * reopened and synced from it. Defaults to true.
+   */
+  recordsTree?: boolean
 }
 
 /** Prepared, serialized source synchronization for one database connection. */
 export class EntrySyncer {
   #db: Database
   #config: Config
-  #queries = new Map<EntrySyncTarget, Promise<SyncQueries>>()
+  #queries?: Promise<SyncQueries>
   #queue = new TaskQueue()
   #closed = false
 
@@ -61,7 +42,6 @@ export class EntrySyncer {
 
   /** Stream a source/tree diff directly into the canonical SQLite table. */
   sync(
-    target: EntrySyncTarget,
     source: RemoteSource,
     tree: ReadonlyTree,
     fromRevision: string,
@@ -69,28 +49,22 @@ export class EntrySyncer {
   ): Promise<Array<string>> {
     if (this.#closed) return Promise.reject(new Error('EntrySyncer is closed'))
     return this.#queue.run(() =>
-      this.#sync(
-        target,
-        source,
-        tree,
-        fromRevision,
-        options.previousTree,
-        options.withinTransaction ?? false,
-        options.validate ?? true
-      )
+      this.#sync(source, tree, fromRevision, options)
     )
   }
 
   async #sync(
-    target: EntrySyncTarget,
     source: RemoteSource,
     tree: ReadonlyTree,
     fromRevision: string,
-    previousTree: ReadonlyTree | undefined,
-    withinTransaction: boolean,
-    validate: boolean
+    {
+      previousTree,
+      withinTransaction = false,
+      validate = true,
+      recordsTree = true
+    }: EntrySyncOptions
   ): Promise<Array<string>> {
-    const queries = await this.#queriesFor(target)
+    const queries = await this.#prepared()
     const run = async () => {
       const state = await queries.revision.get()
       if (state?.revision !== fromRevision)
@@ -120,40 +94,25 @@ export class EntrySyncer {
       )
       await queries.setRevision.run({
         revision: tree.sha,
-        tree: target.recordsTree === false ? null : JSON.stringify(tree)
+        tree: recordsTree ? JSON.stringify(tree) : null
       })
       return changed
     }
     return withinTransaction ? run() : this.#db.transaction(run, {async: true})
   }
 
-  #queriesFor(target: EntrySyncTarget): Promise<SyncQueries> {
-    const cached = this.#queries.get(target)
-    if (cached) return cached
-    const queries = supportsJsonb(this.#db).then(jsonb =>
-      prepareSyncQueries(this.#db, target, jsonb)
-    )
-    this.#queries.set(target, queries)
-    return queries
-  }
-
-  /** Release prepared statements belonging to a closed named target. */
-  async release(target: EntrySyncTarget): Promise<void> {
-    await this.#queue.drain()
-    const queries = this.#queries.get(target)
-    if (!queries) return
-    this.#queries.delete(target)
-    await (await queries).free()
+  #prepared(): Promise<SyncQueries> {
+    return (this.#queries ??= supportsJsonb(this.#db).then(jsonb =>
+      prepareSyncQueries(this.#db, jsonb)
+    ))
   }
 
   async close(): Promise<void> {
     if (this.#closed) return
     this.#closed = true
     await this.#queue.drain()
-    const queries = Array.from(this.#queries.values())
-    this.#queries.clear()
-    await Promise.all(
-      queries.map(async statements => (await statements).free())
-    )
+    const queries = this.#queries
+    this.#queries = undefined
+    if (queries) (await queries).free()
   }
 }

@@ -6,6 +6,8 @@ import {createCMS} from '#/core.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
+import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
+import {createGeneratedDatabase} from '#/backend/store/GeneratedDatabase.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
@@ -46,8 +48,8 @@ async function remoteWith(docs: Array<DocInput>) {
   )
 }
 
-/** Replicates the Next.js handler: readonly generated database plus a
- * long-lived overlay synced repeatedly against a remote source. */
+/** Replicates the Next.js handler: a generated database opened as an
+ * in-memory overlay and synced repeatedly against a remote source. */
 test('handler syncs a readonly database through an overlay', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'handler-sync-'))
   const path = join(dir, 'generated.sqlite')
@@ -73,17 +75,11 @@ test('handler syncs a readonly database through an overlay', async () => {
       await store.close()
       sqlite.close()
     }
-    // Handler cold open: fresh instances, readonly base, overlay on top.
-    const sqlite = new Database(path, {readonly: true})
-    const db = connect(sqlite)
-    const base = new EntryDatabase(cms.config, db)
-    const overlay = await base.createOverlay()
-    const store = new EntryStore(cms.config, overlay.database, overlay.source, {
-      close: async () => {
-        await overlay.close()
-        await base.close()
-      }
-    })
+    // Handler cold open: the generated file behind an in-memory overlay.
+    const store = await createGeneratedDatabase(
+      cms.config,
+      await runtimeDatabase({path, overlay: true})
+    )
     try {
       // First sync reconciles the overlay against the remote.
       await store.syncWith(
@@ -119,7 +115,18 @@ test('handler syncs a readonly database through an overlay', async () => {
       ])
     } finally {
       await store.close()
-      sqlite.close()
+    }
+    // Syncs never reach the generated file.
+    const sqlite = new Database(path, {readonly: true})
+    const generated = new EntryDatabase(cms.config, connect(sqlite))
+    try {
+      expect(await generated.find({type: Doc, select: Doc.title})).toEqual([
+        'Alpha',
+        'Beta',
+        'Gamma'
+      ])
+    } finally {
+      await generated.close()
     }
   } finally {
     await rm(dir, {recursive: true, force: true})
