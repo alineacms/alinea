@@ -1493,3 +1493,28 @@ test('responds with the content sha after syncing', async () => {
   test.is(sha, await remoteDb.sha)
   test.is(sha, await db.sha)
 })
+
+test('rejects unauthenticated sha requests like tree requests', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          throw new MissingCredentialsError('Missing user credentials')
+        }
+      })
+    }
+  })
+  const request = (query: string) =>
+    new Request(`http://localhost/api?${query}`, {
+      headers: {accept: 'application/json'}
+    })
+
+  const tree = await handle(request('action=tree&sha=abc'), requestContext())
+  const sha = await handle(request('action=sha'), requestContext())
+  test.is(tree.status, 401)
+  test.is(sha.status, 401)
+})
