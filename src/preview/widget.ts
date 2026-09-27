@@ -5,6 +5,11 @@ export interface PreviewStat {
   summary: string
   /** Whether the query was answered by the bundled database or the handler. */
   source?: 'database' | 'handler'
+  /**
+   * Execution time for queries the bundled database answers, without the
+   * wait behind the render's other queries; time from call to answer for
+   * syncs and queries the handler answers.
+   */
   durationMs: number
 }
 
@@ -14,6 +19,8 @@ export interface PreviewStats {
   /** SQL statements run in this process for the render. */
   statements: number
   sqlMs: number
+  /** Time from the first query or sync of the render until the last settled. */
+  renderMs: number
 }
 
 export function registerPreviewWidget() {
@@ -208,15 +215,16 @@ export function registerPreviewWidget() {
 
     #summary() {
       if (!this.#stats) return ''
-      const {queries, syncs} = split(this.#stats.rows)
-      let text = `${queries.length} ${queries.length === 1 ? 'query' : 'queries'} · ${total(queries)} ms`
+      const {rows, renderMs} = this.#stats
+      const {queries, syncs} = split(rows)
+      let text = `${queries.length} ${queries.length === 1 ? 'query' : 'queries'} · ${Math.round(renderMs)} ms`
       if (syncs.length) text += ` · sync ${total(syncs)} ms`
       return text
     }
 
     #logStats = () => {
       if (!this.#stats) return
-      const {rows, statements, sqlMs} = this.#stats
+      const {rows, statements, sqlMs, renderMs} = this.#stats
       const table: Array<Record<string, unknown>> = rows.map(row => ({
         type: row.kind,
         what: row.summary,
@@ -230,6 +238,12 @@ export function registerPreviewWidget() {
           source: 'database',
           ms: round(sqlMs)
         })
+      table.push({
+        type: 'render',
+        what: 'wall time',
+        source: '',
+        ms: round(renderMs)
+      })
       console.table(table)
       // Point at the console: the table is logged there, not shown here.
       const button = this.#statsButton

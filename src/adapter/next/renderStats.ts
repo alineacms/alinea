@@ -8,6 +8,9 @@ export class RenderStats {
   sqlMs = 0
   #pending = 0
   #idleSince = Date.now()
+  #renderStart = Number.POSITIVE_INFINITY
+  #renderEnd = Number.NEGATIVE_INFINITY
+  #executedUntil = Number.NEGATIVE_INFINITY
 
   /** Add a row and count it as pending until `run` settles; see `timed`. */
   async track<T>(
@@ -17,11 +20,30 @@ export class RenderStats {
     const row: PreviewStat = {...stat, durationMs: 0}
     this.rows.push(row)
     this.#pending++
+    this.#renderStart = Math.min(this.#renderStart, performance.now())
     try {
       return await run(row)
     } finally {
       this.#pending--
       this.#idleSince = Date.now()
+      this.#renderEnd = Math.max(this.#renderEnd, performance.now())
+    }
+  }
+
+  /**
+   * Time a database query without the time it waited behind the others:
+   * queries of a render run one at a time in the order they were called, so
+   * one starts executing once the previous one finished, or when it was
+   * called if that is later.
+   */
+  async executed<T>(row: PreviewStat, run: () => Promise<T>): Promise<T> {
+    const start = performance.now()
+    try {
+      return await run()
+    } finally {
+      const end = performance.now()
+      row.durationMs = end - Math.max(start, this.#executedUntil)
+      this.#executedUntil = end
     }
   }
 
@@ -44,13 +66,14 @@ export class RenderStats {
       )
     }
     const {rows, statements, sqlMs} = this
-    return {rows: [...rows], statements, sqlMs}
+    const renderMs = Math.max(0, this.#renderEnd - this.#renderStart)
+    return {rows: [...rows], statements, sqlMs, renderMs}
   }
 }
 
 /**
- * Time the work a row stands for, such as answering a query without the sync
- * it waited for.
+ * Time the work a row stands for from call to answer, such as a sync or a
+ * query the handler answers, without the sync it waited for.
  */
 export async function timed<T>(
   row: PreviewStat | undefined,
