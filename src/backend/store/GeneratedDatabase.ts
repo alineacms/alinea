@@ -1,33 +1,37 @@
 import type {Config} from '#/core/Config.js'
+import type {ReadonlyTree} from '#/core/source/Tree.js'
+import {DatabaseSource} from '#/database/DatabaseSource.js'
+import type {DatabaseHandle} from '#/database/driver/DatabaseHandle.js'
 import {assertReadableData} from '#/database/entry/EntryData.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
-import type {ReadonlyTree} from '#/core/source/Tree.js'
-import type {Database} from 'rado'
 
-/** Add one writable, connection-local layer over a generated database. */
+/**
+ * Serve a generated database from a connection that keeps its writes in
+ * memory, so syncs and commits never reach the generated file.
+ */
 export async function createGeneratedDatabase(
   config: Config,
-  db: Database
+  {database: db, fork}: DatabaseHandle
 ): Promise<EntryStore> {
   let initialTree: ReadonlyTree | undefined
-  const base = new EntryDatabase(config, db, {
+  const database = new EntryDatabase(config, db, {
+    fork,
     includedAtBuild(filePath) {
       return initialTree?.has(filePath) ?? false
-    }
+    },
+    // Nothing reopens the in-memory writes: skip storing the synced tree.
+    recordsTree: false
   })
   try {
     await assertReadableData(db)
-    initialTree = await base.getTree()
-    const overlay = await base.createOverlay()
-    return new EntryStore(config, overlay.database, overlay.source, {
-      close: async () => {
-        await overlay.close()
-        await base.close()
-      }
+    initialTree = await database.getTree()
+    return new EntryStore(config, database, new DatabaseSource(database), {
+      ownsDatabase: true,
+      sourceFollowsDatabase: true
     })
   } catch (error) {
-    await base.close()
+    await database.close()
     throw error
   }
 }

@@ -238,7 +238,7 @@ test('cached trees follow revisions written by another database instance', async
   }
 })
 
-test('generated database overlays copy their parent when they first sync', async () => {
+test('overlays are independent of their parent and of each other', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -266,10 +266,9 @@ test('generated database overlays copy their parent when they first sync', async
     return result
   }
 
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
+  const {database: db, fork} = await openWasmDatabase()
   await EntryDatabase.createSchema(db, 'empty')
-  const base = new EntryDatabase(config, db)
+  const base = new EntryDatabase(config, db, {fork})
   await base.syncWith(
     await source([
       ['a', 'a', 'Base A'],
@@ -305,14 +304,6 @@ test('generated database overlays copy their parent when they first sync', async
       new TextDecoder().decode(encode('c', 'c', 'GitHub C'))
     ].sort()
   )
-  const preview = await github.overlay(
-    await source([
-      ['a', 'a', 'Preview A'],
-      ['b', 'b', 'Preview B'],
-      ['c', 'c', 'GitHub C']
-    ])
-  )
-
   expect(await base.resolve({select: Entry.title})).toEqual([
     'Base A',
     'Base B',
@@ -322,57 +313,22 @@ test('generated database overlays copy their parent when they first sync', async
     'GitHub A',
     'GitHub C'
   ])
-  expect(await preview.resolve({select: Entry.title})).toEqual([
-    'Preview A',
-    'Preview B',
-    'GitHub C'
-  ])
-  expect(
-    await preview.resolve({search: 'Preview', select: Entry.title})
-  ).toEqual(['Preview A', 'Preview B'])
-  await expect(github.close()).rejects.toThrow('active overlays')
-  await preview.close()
-  await github.close()
+  // Later syncs stay on the side that made them.
+  await base.syncWith(await source([['b', 'b', 'Later B']]))
+  await github.syncWith(await source([['c', 'c', 'Later C']]))
+  expect(await base.resolve({select: Entry.title})).toEqual(['Later B'])
+  expect(await github.resolve({select: Entry.title})).toEqual(['Later C'])
+  // Either side closes first without affecting the other.
   const replacement = await base.overlay(
     await source([['a', 'a', 'Replacement A']])
   )
+  await github.close()
+  expect(await base.resolve({select: Entry.title})).toEqual(['Later B'])
+  await base.close()
   expect(await replacement.resolve({select: Entry.title})).toEqual([
     'Replacement A'
   ])
   await replacement.close()
-})
-
-test('an unchanged overlay reuses the base search index', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const {source} = await createEntryStore(config, [
-    {id: 'page', type: 'Page', index: 'a', data: {title: 'Searchable'}}
-  ])
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
-  const base = new EntryDatabase(config, db)
-  await base.syncWith(source)
-  const overlay = await base.overlay(source)
-
-  expect(await overlay.find({search: 'Searchable', select: Entry.id})).toEqual([
-    'page'
-  ])
-  const temporarySearch = await db.get<{name: string}>(sql`
-    select name from sqlite_temp_master
-    where type = 'table' and name = 'alinea_overlay_1_search'
-  `)
-  expect(temporarySearch).toBeNull()
-  await overlay.close()
-  await base.close()
 })
 
 test('database mutations use one write transaction and commit one final tree', async () => {
@@ -569,67 +525,6 @@ test('database mutations preserve authored status and hierarchy transitions', as
   await apply([{op: 'remove', id: 'child'}])
   expect(await database.resolve({id: 'child', select: Entry.id})).toEqual([])
   await database.close()
-})
-
-test('database mutations commit to the receiving overlay only', async () => {
-  const Page = ConfigBuilder.document('Page', {
-    fields: {title: Field.text('Title')}
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  async function source(title: string) {
-    const result = new MemorySource()
-    const change = await transaction(result)
-    const compiled = await change
-      .add(
-        'pages/a.json',
-        new TextEncoder().encode(
-          JSON.stringify({_id: 'a', _type: 'Page', _index: 'a', title})
-        )
-      )
-      .compile()
-    await result.applyChanges({
-      fromSha: compiled.from.sha,
-      changes: compiled.changes
-    })
-    return result
-  }
-
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, 'empty')
-  const base = new EntryDatabase(config, db)
-  await base.syncWith(await source('Base'))
-  const remote = await source('Remote')
-  const overlay = await base.overlay(remote)
-  const remoteRevision = (await remote.getTree()).sha
-
-  const result = await overlay.apply(
-    [
-      {
-        op: 'update',
-        id: 'a',
-        locale: null,
-        status: 'published',
-        set: {title: 'Preview'}
-      }
-    ],
-    {source: remote}
-  )
-
-  expect(await base.resolve({select: Entry.title})).toEqual(['Base'])
-  expect(await overlay.resolve({select: Entry.title})).toEqual(['Preview'])
-  expect((await remote.getTree()).sha).toBe(remoteRevision)
-  expect(result.request.fromSha).toBe(remoteRevision)
-  await overlay.close()
-  await base.close()
 })
 
 test('database mutations enforce URL ownership and retain previous URLs', async () => {
@@ -978,11 +873,15 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
     // Bun bundles a SQLite that reads JSONB on Linux, not on macOS.
     const readsJsonb = await supportsJsonb(native)
     if (readsJsonb) {
-      const generated = await createGeneratedDatabase(config, native)
+      const generated = await createGeneratedDatabase(config, {
+        database: native
+      })
       expect(await generated.find({select: Entry.title})).toEqual(['Page'])
       await generated.close()
     } else {
-      await expect(createGeneratedDatabase(config, native)).rejects.toThrow(
+      await expect(
+        createGeneratedDatabase(config, {database: native})
+      ).rejects.toThrow(
         `Alinea's generated database stores JSONB, which requires SQLite 3.45.0 or newer (found ${version?.version})`
       )
     }

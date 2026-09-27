@@ -42,7 +42,7 @@ import type {
   UploadFileMutation
 } from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
-import type {EntryLayer} from './EntryLayer.js'
+import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
 type Op<T> = Omit<T, 'op'>
@@ -90,7 +90,7 @@ const {aliases, createdAt, createdBy, updatedAt, updatedBy, ...EntrySelection} =
  * in-memory entry index. SQLite rolls the full batch back on failure.
  */
 export class EntryTransaction implements AsyncDisposable {
-  #workingDatabase: EntryLayer
+  #workingDatabase: EntryDatabase
   #workingSource: OverlaySource
   #fromTree: ReadonlyTree
   #workingTree: ReadonlyTree
@@ -101,9 +101,9 @@ export class EntryTransaction implements AsyncDisposable {
   #changedEntryIds = new Set<string>()
   #closed = false
 
-  /** @internal Constructed by EntryLayer.apply. */
+  /** @internal Constructed by EntryDatabase.apply. */
   constructor(
-    workingDatabase: EntryLayer,
+    workingDatabase: EntryDatabase,
     workingSource: OverlaySource,
     sourceTransaction: SourceTransaction,
     from: ReadonlyTree,
@@ -674,9 +674,7 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   async close(): Promise<void> {
-    if (this.#closed) return
     this.#closed = true
-    await this.#workingDatabase.close()
   }
 
   [Symbol.asyncDispose](): Promise<void> {

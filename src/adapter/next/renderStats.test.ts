@@ -3,6 +3,7 @@ import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
@@ -85,7 +86,9 @@ test('statements count towards the request whose query ran them', async () => {
   const requests = new AsyncLocalStorage<RenderStats>()
   const store = await createGeneratedDatabase(
     config,
-    connect(new Database(file, {readonly: true}), {
+    await runtimeDatabase({
+      path: file,
+      overlay: true,
       logQuery: (_query, durationMs) =>
         requests.getStore()?.statement(durationMs)
     })

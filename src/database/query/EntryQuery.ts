@@ -47,12 +47,7 @@ import {
   compileFilter,
   jsonField
 } from './Condition.js'
-import {
-  EntrySearchTable,
-  searchableText,
-  searchQuery,
-  type EntrySearchTarget
-} from './Search.js'
+import {searchableText, searchQuery} from './Search.js'
 
 import {linkRelation, relationCondition} from './Relation.js'
 
@@ -94,20 +89,17 @@ class Expressions {
   fields: Array<FieldProjection> = []
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
-  #searchTable: EntrySearchTarget
   #entry: EntryIndexTarget
   #relation?: (query: EdgeQuery) => CompiledRelation
 
   constructor(
     scope: Scope,
     entry: EntryIndexTarget,
-    searchTable: EntrySearchTarget,
     search: ReturnType<typeof searchQuery> | undefined,
     relation?: (query: EdgeQuery) => CompiledRelation
   ) {
     this.#scope = scope
     this.#entry = entry
-    this.#searchTable = searchTable
     this.#search = search
     this.#relation = relation
   }
@@ -124,7 +116,7 @@ class Expressions {
   index(name: string, path?: Array<string>, selecting = false): HasSql {
     if (path) return this.data([...path, name], selecting)
     if (name === 'searchableText') {
-      const text = searchableText(this.#entry, this.#searchTable)
+      const text = searchableText(this.#entry)
       // Relations select fields by name.
       return selecting ? text.as(name) : text
     }
@@ -263,7 +255,6 @@ interface EntryQueryOptions {
   entry?: EntryIndexTarget
   depth?: number
   baseEntry?: EntryIndexTarget
-  searchTable?: EntrySearchTarget
 }
 
 export function compileEntryQuery(
@@ -275,14 +266,13 @@ export function compileEntryQuery(
     source,
     entry = EntryIndexTable,
     depth = 0,
-    baseEntry = entry,
-    searchTable = EntrySearchTable
+    baseEntry = entry
   } = options
-  const search = options.search ?? searchQuery(query.search, entry, searchTable)
+  const search = options.search ?? searchQuery(query.search, entry)
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const membership = new Expressions(scope, entry, searchTable, search)
+  const membership = new Expressions(scope, entry, search)
   const queryTypes: Array<Type> = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
@@ -418,8 +408,7 @@ export function compileEntryQuery(
         source: entry,
         entry: nestedEntry,
         depth: depth + 1,
-        baseEntry,
-        searchTable
+        baseEntry
       }
     )
     if (plan.count) {
@@ -436,13 +425,7 @@ export function compileEntryQuery(
       plan
     }
   }
-  const projection = new Expressions(
-    scope,
-    entry,
-    searchTable,
-    search,
-    relation
-  )
+  const projection = new Expressions(scope, entry, search, relation)
   const selection = query.count
     ? entry.versionId
     : projection.projection(

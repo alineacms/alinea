@@ -18,13 +18,15 @@ import {
   type HasSql,
   type Sql
 } from 'rado'
+import {DatabaseStateTable} from '../DatabaseTables.js'
 import {entryDataText} from '../entry/EntryData.js'
 import {
   EntryIndexColumns,
+  EntryIndexTable,
   type entryIndexRow,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
-import type {EntrySyncTarget} from './EntrySyncer.js'
+import {EntrySearchTable} from '../query/Search.js'
 
 export const sqliteBatchSize = 5000
 
@@ -102,11 +104,12 @@ export function insertEntryValues(row: ReturnType<typeof entryIndexRow>) {
 
 export function prepareSyncQueries(
   db: Database,
-  target: EntrySyncTarget,
   /** Store entry data as JSONB, on a SQLite that reads it. */
   jsonb: boolean
 ) {
-  const {entries, state, search} = target
+  const entries = EntryIndexTable
+  const state = DatabaseStateTable
+  const search = EntrySearchTable
   const storedVersion = or(
     inJson(entries.filePath, filePaths),
     inJson(entries.versionId, versionIds)

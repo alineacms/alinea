@@ -1,38 +1,100 @@
+import {readFile} from 'node:fs/promises'
+import {pathToFileURL} from 'node:url'
 import type {Database, DatabaseOptions} from 'rado'
+import type {DatabaseHandle} from './DatabaseHandle.js'
+import {openWasmDatabase} from './WasmDatabase.js'
 
 export interface RuntimeDatabaseOptions extends DatabaseOptions {
-  path?: string
-  data?: Uint8Array
-  readonly?: boolean
+  path: string
+  /** Keep every write in memory: the file is never written. */
+  overlay?: boolean
 }
 
-/** Select a native Node/Bun driver for files and WASM for byte buffers. */
+/**
+ * Open a SQLite file with the native Node/Bun driver. Overlays of the file
+ * keep their writes in memory and fork cheaply, through the native overlay
+ * VFS or else a WASM copy; a file opened for writing cannot fork.
+ */
 export async function runtimeDatabase(
-  options: RuntimeDatabaseOptions = {}
+  options: RuntimeDatabaseOptions
+): Promise<DatabaseHandle> {
+  const {path, overlay, ...rest} = options
+  if (!overlay) return {database: await openNative(path, rest)}
+  if (await loadOverlayVfs()) return overlayDatabase(path, rest)
+  return openWasmDatabase(await readFile(path), rest)
+}
+
+async function openNative(
+  path: string,
+  options: DatabaseOptions
 ): Promise<Database> {
-  if (options.path) {
-    if (typeof Bun !== 'undefined') {
-      const [{Database: BunDatabase}, {connect}] = await Promise.all([
-        import('bun:sqlite'),
-        import('rado/driver/bun-sqlite')
-      ])
-      return connect(
-        new BunDatabase(options.path, {
-          create: !options.readonly,
-          readonly: options.readonly
-        }),
-        options
-      )
-    }
-    const [{DatabaseSync}, {connect}] = await Promise.all([
-      import('node:sqlite'),
-      import('rado/driver/node-sqlite')
+  if (typeof Bun !== 'undefined') {
+    const [{Database: BunDatabase}, {connect}] = await Promise.all([
+      import('bun:sqlite'),
+      import('rado/driver/bun-sqlite')
     ])
-    const sqlite = new DatabaseSync(options.path, {
-      readOnly: options.readonly
-    })
-    return connect(sqlite as unknown as Parameters<typeof connect>[0], options)
+    return connect(new BunDatabase(path, {create: true}), options)
   }
-  const {wasmDatabase} = await import('./WasmDatabase.js')
-  return wasmDatabase(options.data)
+  const [{DatabaseSync}, {connect}] = await Promise.all([
+    import('node:sqlite'),
+    import('rado/driver/node-sqlite')
+  ])
+  const client = new DatabaseSync(path)
+  return connect(client as Parameters<typeof connect>[0], options)
+}
+
+let overlayVfs: Promise<boolean> | undefined
+
+/** Register the process-wide `overlay` VFS of the native SQLite extension. */
+function loadOverlayVfs(): Promise<boolean> {
+  return (overlayVfs ??= (async () => {
+    // Bun's SQLite neither parses file URIs nor loads extensions on macOS.
+    if (typeof Bun !== 'undefined') return false
+    try {
+      const [{DatabaseSync}, {overlayExtension}] = await Promise.all([
+        import('node:sqlite'),
+        import('@alinea/sqlite-wasm/native')
+      ])
+      const loader = new DatabaseSync(':memory:', {allowExtension: true})
+      try {
+        loader.loadExtension(overlayExtension())
+      } finally {
+        loader.close()
+      }
+      return true
+    } catch (error) {
+      console.warn(
+        `Alinea could not load its native SQLite extension and reads the generated database into memory instead: ${error instanceof Error ? error.message : error}`
+      )
+      return false
+    }
+  })())
+}
+
+/**
+ * Open a file through the native overlay VFS. Writers of the file are locked
+ * out while any overlay of it is open.
+ */
+async function overlayDatabase(
+  path: string,
+  options: DatabaseOptions
+): Promise<DatabaseHandle> {
+  const [{DatabaseSync}, {connect}] = await Promise.all([
+    import('node:sqlite'),
+    import('rado/driver/node-sqlite')
+  ])
+  const file = pathToFileURL(path).href
+  // Overlay names are shared by the whole process, including other copies
+  // of this module.
+  function open(from?: string): DatabaseHandle {
+    const name = `alinea_${crypto.randomUUID()}`
+    let uri = `${file}?vfs=overlay&overlay=${name}`
+    if (from) uri += `&from=${from}`
+    const client = new DatabaseSync(uri)
+    return {
+      database: connect(client as Parameters<typeof connect>[0], options),
+      fork: async () => open(name)
+    }
+  }
+  return open()
 }

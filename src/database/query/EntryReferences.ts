@@ -8,16 +8,16 @@ import {getScope} from '#/core/Scope.js'
 import {Type} from '#/core/Type.js'
 import {and, asc, eq, gt, type Database} from 'rado'
 import {entryDataText} from '../entry/EntryData.js'
-import {storedEntryData, type EntryIndexTarget} from '../entry/EntryTable.js'
+import {EntryIndexTable, storedEntryData} from '../entry/EntryTable.js'
 import {localeCondition, statusCondition} from './EntryQuery.js'
 
 /** Scan references in bounded pages on the caller's active transaction. */
 export async function queryEntryReferences(
   config: Config,
   db: Database,
-  entry: EntryIndexTarget,
   query: EntryReferenceQuery
 ): Promise<EntryReferenceResult> {
+  const entry = EntryIndexTable
   const conditions = [
     eq(entry.visible, true),
     statusCondition(entry, query.status)
