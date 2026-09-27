@@ -253,9 +253,7 @@ test('reports the bundled database revision and the last sync', async () => {
 
 test('reports the handler revision when queries are forwarded', async () => {
   process.env.NEXT_RUNTIME = 'edge'
-  handlerFetch = mock(async () =>
-    Response.json({sha: 'handler-content-hash', entries: []})
-  )
+  handlerFetch = mock(async () => Response.json('handler-content-hash'))
   const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
 
   expect(await cms.status()).toEqual({

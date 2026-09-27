@@ -1,5 +1,4 @@
 import type {Client} from '#/core/Client.js'
-import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {expect, mock, test} from 'bun:test'
 import {syncIfStale} from './syncCheck.js'
 
@@ -10,14 +9,11 @@ function dbWith(sha: string) {
 }
 
 function clientWith(sha: string | undefined) {
-  const getTreeIfDifferent = mock(async () => {
+  const getSha = mock(async () => {
     if (sha === undefined) throw new Error('unreachable')
-    return {sha} as unknown as ReadonlyTree
+    return sha
   })
-  return {
-    client: {getTreeIfDifferent} as unknown as Client,
-    getTreeIfDifferent
-  }
+  return {client: {getSha} as unknown as Client, getSha}
 }
 
 test('returns false when the latest sha cannot be determined', async () => {
@@ -28,22 +24,22 @@ test('returns false when the latest sha cannot be determined', async () => {
   expect(syncWith).not.toHaveBeenCalled()
 })
 
-test('forces sync when syncInterval is 0 without fetching the tree', async () => {
+test('forces sync when syncInterval is 0 without fetching the sha', async () => {
   const {db, syncWith} = dbWith('local')
-  const {client, getTreeIfDifferent} = clientWith('other')
+  const {client, getSha} = clientWith('other')
   const settled = await syncIfStale(db, client, 0)
   expect(settled).toBe(true)
   expect(syncWith).toHaveBeenCalledTimes(1)
-  expect(getTreeIfDifferent).not.toHaveBeenCalled()
+  expect(getSha).not.toHaveBeenCalled()
 })
 
 test('skips everything when sync is disabled', async () => {
   const {db, syncWith} = dbWith('local')
-  const {client, getTreeIfDifferent} = clientWith('other')
+  const {client, getSha} = clientWith('other')
   const settled = await syncIfStale(db, client, Number.POSITIVE_INFINITY)
   expect(settled).toBe(true)
   expect(syncWith).not.toHaveBeenCalled()
-  expect(getTreeIfDifferent).not.toHaveBeenCalled()
+  expect(getSha).not.toHaveBeenCalled()
 })
 
 test('syncs once when the isolate db is behind the shared sha', async () => {

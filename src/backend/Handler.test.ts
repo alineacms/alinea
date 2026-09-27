@@ -1459,3 +1459,37 @@ test('serves current content when a read cannot sync with the remote', async () 
     console.warn = warn
   }
 })
+
+test('responds with the content sha after syncing', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  await remoteDb.create({type: Page, set: {title: 'Home'}})
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(remoteDb, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?action=sha', {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  const sha = await response.json()
+  test.is(sha, await remoteDb.sha)
+  test.is(sha, await db.sha)
+})

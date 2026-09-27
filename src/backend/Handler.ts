@@ -442,6 +442,12 @@ export function createHandler({
         return compressResponse(request, Response.json(tree ?? null))
       }
 
+      if (action === HandleAction.Sha && request.method === 'GET') {
+        expectJson()
+        await syncForRead(cnx)
+        return Response.json(await local.sha)
+      }
+
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
         await periodicSync(cnx)

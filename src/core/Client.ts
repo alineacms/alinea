@@ -195,6 +195,12 @@ export class Client implements LocalConnection {
       .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
   }
 
+  getSha(): Promise<string> {
+    return this.#requestJson({action: HandleAction.Sha}).then<string>(
+      this.#failOnHttpError
+    )
+  }
+
   async *getBlobs(
     shas: ReadonlyArray<string>,
     options: GetBlobsOptions = {}

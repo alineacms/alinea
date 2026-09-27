@@ -13,7 +13,6 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
-import {ReadonlyTree} from '#/core/source/Tree.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import type {PreviewStat} from '#/preview/widget.js'
@@ -198,10 +197,8 @@ export class NextCMS<
       }
     }
     const client = createClient(this.config, context)
-    const tree = await client
-      .getTreeIfDifferent(ReadonlyTree.EMPTY.sha)
-      .catch(() => undefined)
-    return {source: 'handler', sha: tree?.sha, syncedAt: undefined}
+    const sha = await client.getSha().catch(() => undefined)
+    return {source: 'handler', sha, syncedAt: undefined}
   }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
