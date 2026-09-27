@@ -113,6 +113,11 @@ interface Sibling extends Pick<
   | 'locale'
 > {}
 
+/** Every version placed directly at a location. */
+function siblingsOf({parentId, workspace, root, locale}: EntryLocation) {
+  return {status: 'all', parentId, workspace, root, locale} as const
+}
+
 /**
  * Plans mutations inside the receiver's write transaction. Each mutation is
  * flushed so subsequent mutations query its result without retaining an
@@ -289,18 +294,18 @@ export class EntryTransaction implements AsyncDisposable {
         ),
       `Cannot create duplicate entry with id ${id}`
     )
-    const siblings = await this.#siblings({
-      parentId,
-      workspace,
-      root,
-      locale
-    })
     let index = existingMain?.index ?? existing.at(0)?.index
     if (!index) {
+      const location = {parentId, workspace, root, locale}
       const previous =
-        insertOrder === 'first' ? null : (siblings.at(-1) ?? null)
-      const next = insertOrder === 'last' ? null : (siblings.at(0) ?? null)
-      index = generateKeyBetween(previous?.index ?? null, next?.index ?? null)
+        insertOrder === 'first'
+          ? null
+          : await this.#siblingIndex(location, 'desc')
+      const next =
+        insertOrder === 'last'
+          ? null
+          : await this.#siblingIndex(location, 'asc')
+      index = generateKeyBetween(previous, next)
     }
     if (status === 'published') {
       for (const version of existing.filter(entry => entry.locale === locale))
@@ -790,14 +795,12 @@ export class EntryTransaction implements AsyncDisposable {
     path: string,
     location: EntryLocation & {id: string}
   ): Promise<string> {
-    const siblings = await this.#siblings(location)
-    const conflicting = siblings
-      .filter(
-        entry =>
-          entry.id !== location.id &&
-          (entry.path === path || entry.path.startsWith(`${path}-`))
-      )
-      .map(entry => entry.path)
+    const conflicting = await this.#workingDatabase.find({
+      ...siblingsOf(location),
+      id: {isNot: location.id},
+      path: {or: [path, {startsWith: `${path}-`}]},
+      select: Entry.path
+    })
     const suffix = pathSuffix(path, conflicting)
     return suffix === undefined ? path : `${path}-${suffix}`
   }
@@ -1083,12 +1086,26 @@ export class EntryTransaction implements AsyncDisposable {
 
   #siblings(location: EntryLocation): Promise<Array<Sibling>> {
     return this.#workingDatabase.find({
-      status: 'all',
-      parentId: location.parentId,
-      workspace: location.workspace,
-      root: location.root,
-      locale: location.locale,
+      ...siblingsOf(location),
       select: SiblingSelection
+    })
+  }
+
+  /** The index of the sibling at either end of the location's order. */
+  async #siblingIndex(
+    location: EntryLocation,
+    direction: 'asc' | 'desc'
+  ): Promise<string | null> {
+    // Sibling order (index, then file path), compared as stored
+    const orderBy = [Entry.index, Entry.filePath].map(field =>
+      direction === 'asc'
+        ? {asc: field, caseSensitive: true}
+        : {desc: field, caseSensitive: true}
+    )
+    return this.#workingDatabase.first({
+      ...siblingsOf(location),
+      orderBy,
+      select: Entry.index
     })
   }
 

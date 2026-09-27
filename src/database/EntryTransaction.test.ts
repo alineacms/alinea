@@ -248,6 +248,56 @@ test('assigns distinct order indexes to entries created in one batch', async () 
   test.ok(first.index < second.index)
 })
 
+test('create places entries first or last among their siblings', async () => {
+  const db = await createEmptyDb()
+  const create = (title: string, insertOrder?: 'first' | 'last') => ({
+    op: 'create' as const,
+    id: `order-${title}`,
+    type: 'Page',
+    locale: null,
+    root: 'pages',
+    insertOrder,
+    data: {title}
+  })
+  await db.mutate([create('b'), create('c')])
+  await db.mutate([create('a', 'first'), create('d', 'last')])
+  await db.mutate([create('0', 'first')])
+
+  const titles = await db.find({
+    root: 'pages',
+    status: 'all',
+    select: Entry.title
+  })
+  test.equal(titles, ['0', 'a', 'b', 'c', 'd'])
+})
+
+test('create suffixes a path taken by siblings at the same location', async () => {
+  const db = await createEmptyDb()
+  const create = (id: string, root: string, path: string) => ({
+    op: 'create' as const,
+    id,
+    type: 'Page',
+    locale: null,
+    root,
+    data: {title: id, path}
+  })
+  await db.mutate([
+    create('taken', 'pages', 'same'),
+    create('taken-1', 'pages', 'same-1'),
+    create('taken-2', 'pages', 'same-2'),
+    create('longer', 'pages', 'samesame'),
+    create('elsewhere', 'docs', 'same-3')
+  ])
+  await db.mutate([create('new', 'pages', 'same')])
+
+  const created = await db.first({
+    id: 'new',
+    status: 'all',
+    select: Entry.path
+  })
+  test.is(created, 'same-3')
+})
+
 test('resolves path collisions sequentially within one batch', async () => {
   const db = await createEmptyDb()
   await db.mutate([
