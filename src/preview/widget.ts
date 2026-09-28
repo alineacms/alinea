@@ -239,9 +239,13 @@ export function registerPreviewWidget() {
 
     #summary() {
       if (!this.#stats) return ''
-      const {rows, renderMs} = this.#stats
+      const {rows, statements, sqlMs, renderMs} = this.#stats
       const {queries, syncs} = split(rows)
-      let text = `${queries.length} ${queries.length === 1 ? 'query' : 'queries'} · ${Math.round(renderMs)} ms`
+      let text = `${queries.length} ${queries.length === 1 ? 'query' : 'queries'}`
+      // Queries the handler answers run no SQL here: show their wall time.
+      text += statements
+        ? ` · SQL ${Math.round(sqlMs)} ms`
+        : ` · ${Math.round(renderMs)} ms`
       if (syncs.length) text += ` · sync ${total(syncs)} ms`
       return text
     }
