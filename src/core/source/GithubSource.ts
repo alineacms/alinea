@@ -5,7 +5,7 @@ import {assert} from '../util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {ChangesBatch} from './Change.js'
 import type {GetBlobsOptions, Source} from './Source.js'
-import {ReadonlyTree} from './Tree.js'
+import {type FlatTree, Leaf, ReadonlyTree} from './Tree.js'
 
 export interface GithubSourceOptions {
   authToken: string
@@ -27,6 +27,9 @@ interface ShaCacheEntry {
  * against the rate limit.
  */
 const shaCache = new Map<string, ShaCacheEntry>()
+
+/** Directories GitHub truncated before, listed one level without retrying. */
+const truncatedTrees = new Set<string>()
 
 export function normalizeGithubSourceOptions<
   Options extends GithubSourceOptions
@@ -85,18 +88,48 @@ export class GithubSource implements Source {
   }
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
-    const {branch, owner, repo, authToken} = this.#options
-    const remoteSha = await this.shaAt(branch)
+    const remoteSha = await this.shaAt(this.#options.branch)
     if (remoteSha === sha) return undefined
-    const treeInfo = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${remoteSha}?recursive=true`,
-      {headers: {Authorization: `Bearer ${authToken}`}}
+    return this.#fetchTree(remoteSha, this.contentLocation)
+  }
+
+  /**
+   * GitHub truncates recursive listings above 100k entries or 7 MB, so a
+   * truncated tree is listed one level and each directory fetched on its own.
+   */
+  async #fetchTree(sha: string, location: string): Promise<ReadonlyTree> {
+    const {owner, repo, authToken} = this.#options
+    const key = `${owner}/${repo}:${location}`
+    const list = async (query: string) => {
+      const response = await this.#limit(() =>
+        fetch(
+          `https://api.github.com/repos/${owner}/${repo}/git/trees/${sha}${query}`,
+          {headers: {Authorization: `Bearer ${authToken}`}}
+        )
+      )
+      if (!response.ok) throw await githubError(response, 'Failed to get tree')
+      const data: FlatTree & {truncated: boolean} = await response.json()
+      return data
+    }
+    if (!truncatedTrees.has(key)) {
+      const flat = await list('?recursive=true')
+      if (!flat.truncated) return ReadonlyTree.fromFlat(flat)
+      truncatedTrees.add(key)
+    }
+    const level = await list('')
+    if (level.truncated)
+      throw new Error(`Tree ${sha} has too many entries for GitHub to list`)
+    const nodes = await Promise.all(
+      level.tree.map(
+        async (entry): Promise<[string, ReadonlyTree | Leaf]> => [
+          entry.path,
+          entry.type === 'tree'
+            ? await this.#fetchTree(entry.sha, paths.join(location, entry.path))
+            : new Leaf(entry)
+        ]
+      )
     )
-    if (!treeInfo.ok) throw await githubError(treeInfo, 'Failed to get tree')
-    const treeData = await treeInfo.json()
-    assert(treeData.truncated === false)
-    const tree = ReadonlyTree.fromFlat(treeData)
-    return tree
+    return ReadonlyTree.fromNodes(new Map(nodes), sha)
   }
 
   async *getBlobs(

@@ -34,7 +34,7 @@ import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
-import {isRedirectStatus, proxyMediaUrl} from './api/ProxyMedia.js'
+import {proxyMediaUrl} from './api/ProxyMedia.js'
 import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
@@ -183,11 +183,7 @@ export function createHandler({
           typeof previewUrl === 'string' && previewUrl
             ? new URL(previewUrl, request.url).href
             : undefined
-        async function proxyMedia(
-          source: string,
-          cacheControl: string,
-          isAllowed?: (url: URL) => boolean
-        ) {
+        async function proxyMedia(source: string, cacheControl: string) {
           const previewEntryId = uploadPreviewEntryId(
             source,
             context.handlerUrl
@@ -198,13 +194,13 @@ export function createHandler({
           } else {
             response = await proxyMediaUrl(
               request,
-              new URL(source, request.url),
-              isAllowed
+              new URL(source, request.url)
             )
           }
           return mediaResponse(request, response, cacheControl)
         }
-        if (!wasBuilt && previewSource) {
+        // In development every media file is on disk
+        if (!context.isDev && !wasBuilt && previewSource) {
           if (proxy) return proxyMedia(previewSource, 'private, no-store')
           return redirectFile(previewSource, 'private, no-store')
         }
@@ -216,22 +212,14 @@ export function createHandler({
         if (!source || source === requestedUrl)
           return new Response('Not found', {status: 404})
         if (!proxy) return redirectFile(source, 'public, max-age=60')
-        const configuredBase = Config.baseUrl(
-          cms.config,
-          context.isDev ? 'development' : 'production'
-        )
+        // The dev server serves the public dir itself
         const deliveryBase =
-          context.publicUrl ?? configuredBase ?? context.handlerUrl
-        const sourceUrl = new URL(source, deliveryBase)
-        const deliveryOrigin = new URL(deliveryBase).origin
-        const handlerPath = context.handlerUrl.pathname
+          context.publicUrl ??
+          ((!context.isDev && Config.baseUrl(cms.config, 'production')) ||
+            context.handlerUrl)
         return proxyMedia(
-          sourceUrl.href,
-          'public, max-age=60',
-          url =>
-            url.origin === deliveryOrigin &&
-            url.pathname !== handlerPath &&
-            !url.pathname.startsWith(`${handlerPath}/`)
+          new URL(source, deliveryBase).href,
+          'public, max-age=60'
         )
       }
 
@@ -455,6 +443,12 @@ export function createHandler({
         return compressResponse(request, Response.json(tree ?? null))
       }
 
+      if (action === HandleAction.Sha && request.method === 'GET') {
+        expectJson()
+        await syncForRead(cnx)
+        return Response.json(await local.sha)
+      }
+
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
         await periodicSync(cnx)
@@ -585,8 +579,6 @@ function mediaResponse(
   upstream: Response,
   cacheControl: string
 ): Response {
-  if (isRedirectStatus(upstream.status))
-    return new Response('Media backend returned a redirect', {status: 502})
   const responseHeaders = new Headers({
     'cache-control':
       upstream.ok || upstream.status === 304 ? cacheControl : 'no-store'

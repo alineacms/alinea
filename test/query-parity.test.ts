@@ -921,7 +921,7 @@ test('translations nested in a selection list the own language first', async () 
   // of its source entry.
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, advancedCms.config, ReadonlyTree.EMPTY.sha)
   const database = new EntryDatabase(advancedCms.config, db)
   await database.syncWith(
     await createEntrySource(advancedCms.config, advancedEntries)

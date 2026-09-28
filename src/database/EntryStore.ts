@@ -23,13 +23,12 @@ import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import {EntryDatabase} from './EntryDatabase.js'
-import type {EntryChangeListener, EntryLayer} from './EntryLayer.js'
-import {wasmDatabase} from './driver/WasmDatabase.js'
+import {EntryDatabase, type EntryChangeListener} from './EntryDatabase.js'
+import {openWasmDatabase} from './driver/WasmDatabase.js'
 import {DatabaseSource} from './DatabaseSource.js'
 
 interface PreviewOverlay {
-  database: EntryLayer
+  database: EntryDatabase
   /** The store revision, source tree and entry payload the overlay shows. */
   applied: string
 }
@@ -37,7 +36,6 @@ interface PreviewOverlay {
 export interface EntryStoreOptions {
   ownsDatabase?: boolean
   sourceFollowsDatabase?: boolean
-  close?: () => Promise<void>
 }
 
 /** Source and commit lifecycle around the transport-neutral SQLite database. */
@@ -47,11 +45,10 @@ export class EntryStore
 {
   /** Replaced only by a reindex, which derives every entry again. */
   config: Config
-  readonly database: EntryLayer
+  readonly database: EntryDatabase
   readonly source: Source
   #ownsDatabase: boolean
   #sourceFollowsDatabase: boolean
-  #close?: () => Promise<void>
   #queue = new TaskQueue()
   /** Serializes preview queries: each switches the overlay, then reads it. */
   #previewQueue = new TaskQueue()
@@ -59,7 +56,7 @@ export class EntryStore
 
   constructor(
     config: Config,
-    database: EntryLayer,
+    database: EntryDatabase,
     source: Source,
     options: EntryStoreOptions = {}
   ) {
@@ -69,14 +66,13 @@ export class EntryStore
     this.source = source
     this.#ownsDatabase = options.ownsDatabase ?? false
     this.#sourceFollowsDatabase = options.sourceFollowsDatabase ?? false
-    this.#close = options.close
   }
 
   static async memory(config: Config, source: Source): Promise<EntryStore> {
-    const db = await wasmDatabase()
+    const {database: db, fork} = await openWasmDatabase()
     try {
-      await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
-      const database = new EntryDatabase(config, db)
+      await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+      const database = new EntryDatabase(config, db, {fork})
       return new EntryStore(config, database, source, {ownsDatabase: true})
     } catch (error) {
       await db.close()
@@ -93,24 +89,26 @@ export class EntryStore
   }
 
   /**
-   * Preview queries share a single overlay, which each query first brings to
-   * its own payload over the current store revision. The overlay diffs from
-   * the tree it shows, so a switch restores the previously previewed entry and
-   * follows store syncs without copying the entries again.
+   * Preview queries resolve over the store with the previewed entry synced
+   * in. The last payload keeps its fork, so repeated queries of one preview
+   * sync once; another payload or store revision forks afresh. A database
+   * that cannot fork syncs each preview in a transaction it rolls back.
    */
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     const {preview, ...withoutPreview} = query
     if (!preview || !('entry' in preview)) return this.database.resolve(query)
-    return this.#previewQueue.run(async () => {
-      const database = await this.#switchPreview(preview.entry)
-      return database.resolve(withoutPreview as Query)
-    })
+    return this.#previewQueue.run(() =>
+      this.#resolvePreview(preview.entry, withoutPreview as Query)
+    )
   }
 
-  /** The layer showing the store with the entry's record at its file path. */
-  async #switchPreview(entry: Entry): Promise<EntryLayer> {
+  /** Resolve with the entry's record at its file path. */
+  async #resolvePreview<Query extends GraphQuery>(
+    entry: Entry,
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
     const contents = JSON.stringify(createRecord(entry, entry.status), null, 2)
     const revision = await this.database.getRevision()
     const tree = await this.source.getTree()
@@ -121,7 +119,8 @@ export class EntryStore
       entry.fileHash,
       contents
     ])
-    if (this.#preview?.applied === applied) return this.#preview.database
+    if (this.#preview?.applied === applied)
+      return this.#preview.database.resolve(query)
     const source = new OverlaySource(this.source, tree)
     await source.applyChanges({
       fromSha: tree.sha,
@@ -135,37 +134,21 @@ export class EntryStore
       ]
     })
     // An unchanged record previews the store itself.
-    if ((await source.getTree()).sha === revision) return this.database
-    const current = this.#preview
-    if (current) {
-      try {
-        const from = await current.database.getTree()
-        await current.database.syncWith(await changesSince(source, from))
-        current.applied = applied
-        return current.database
-      } catch {
-        // Some switches cannot be diffed in place, such as moving the entry
-        // to another file path: start over from a fresh copy.
-        await this.#closePreview()
-      }
-    }
-    const from = await this.database.getTree()
-    const database = await this.database.overlay(
-      await changesSince(source, from)
-    )
+    if ((await source.getTree()).sha === revision)
+      return this.database.resolve(query)
+    const changes = await changesSince(source, await this.database.getTree())
+    if (!this.database.forkable)
+      return this.database.resolveWith(changes, query)
+    await this.#closePreview()
+    const database = await this.database.overlay(changes)
     this.#preview = {database, applied}
-    return database
+    return database.resolve(query)
   }
 
   async #closePreview(): Promise<void> {
     const preview = this.#preview
     this.#preview = undefined
     await preview?.database.close()
-  }
-
-  /** Close the preview overlay, which keeps this store's database open. */
-  protected closePreviews(): Promise<void> {
-    return this.#previewQueue.run(() => this.#closePreview())
   }
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
@@ -221,32 +204,6 @@ export class EntryStore
       )
       await this.#seed()
       return this.database.getRevision()
-    })
-  }
-
-  /** Create a persistent copy-on-write session over this store. */
-  overlay(remote: RemoteSource): Promise<EntryStore> {
-    return this.#queue.run(async () => {
-      const source = await OverlaySource.create(this.source)
-      const localTree = await source.getTree()
-      const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
-      const database = await this.database.overlay(
-        remoteTree ? sourceAtTree(remote, remoteTree) : source
-      )
-      try {
-        if (remoteTree)
-          await source.applyChangesFrom(
-            new DatabaseSource(database),
-            localTree.diff(remoteTree),
-            remoteTree
-          )
-        return new EntryStore(this.config, database, source, {
-          ownsDatabase: true
-        })
-      } catch (error) {
-        await database.close()
-        throw error
-      }
     })
   }
 
@@ -311,9 +268,8 @@ export class EntryStore
 
   async close(): Promise<void> {
     await this.#queue.drain()
-    await this.closePreviews()
-    if (this.#close) await this.#close()
-    else if (this.#ownsDatabase) await this.database.close()
+    await this.#previewQueue.run(() => this.#closePreview())
+    if (this.#ownsDatabase) await this.database.close()
   }
 
   [Symbol.asyncDispose](): Promise<void> {
@@ -323,7 +279,7 @@ export class EntryStore
 
 /**
  * The source at its current tree, holding every file changed since `from`.
- * A layer synchronizes on the connection the store's own source may read
+ * A preview synchronizes on the connection the store's own source may read
  * blobs from, so the changed files are fetched before a sync starts.
  */
 async function changesSince(

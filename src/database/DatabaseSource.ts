@@ -1,13 +1,13 @@
 import type {ChangesBatch} from '#/core/source/Change.js'
 import type {GetBlobsOptions, Source} from '#/core/source/Source.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
-import type {EntryLayer} from './EntryLayer.js'
+import type {EntryDatabase} from './EntryDatabase.js'
 
 /** Read-only Source view backed by exact payload text in an entry database. */
 export class DatabaseSource implements Source {
-  #database: EntryLayer
+  #database: EntryDatabase
 
-  constructor(database: EntryLayer) {
+  constructor(database: EntryDatabase) {
     this.#database = database
   }
 

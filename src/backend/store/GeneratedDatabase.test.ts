@@ -42,8 +42,8 @@ function pages(titles: Record<string, string>): Promise<MemorySource> {
 
 /** Generate a database file the way the CLI does, with a built index. */
 async function generate(file: string, source: MemorySource) {
-  const db = await runtimeDatabase({path: file})
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  const {database: db} = await runtimeDatabase({path: file})
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const database = new EntryDatabase(config, db)
   await database.syncWith(source)
   await database.compact()
@@ -65,7 +65,7 @@ test('a readonly generated database takes mutations in its overlay', () =>
     await (
       await generate(file, await pages({a: 'Base A', b: 'Base B'}))
     ).close()
-    const reader = await runtimeDatabase({path: file, readonly: true})
+    const reader = await runtimeDatabase({path: file, overlay: true})
     const store = await createGeneratedDatabase(config, reader)
     try {
       expect(await store.find({search: 'Base', select: Entry.id})).toEqual([
@@ -98,7 +98,7 @@ test('overlay mutations leave the shared base search index untouched', () =>
     await (await generate(file, await pages({a: 'Base A'}))).close()
     const store = await createGeneratedDatabase(
       config,
-      await runtimeDatabase({path: file})
+      await runtimeDatabase({path: file, overlay: true})
     )
     try {
       await store.mutate([
@@ -113,7 +113,8 @@ test('overlay mutations leave the shared base search index untouched', () =>
     } finally {
       await store.close()
     }
-    const base = new EntryDatabase(config, await runtimeDatabase({path: file}))
+    const {database: baseDb} = await runtimeDatabase({path: file})
+    const base = new EntryDatabase(config, baseDb)
     try {
       expect(await base.find({search: 'Changed', select: Entry.id})).toEqual([])
       expect(await base.find({search: 'Base', select: Entry.id})).toEqual(['a'])
@@ -126,7 +127,7 @@ test('a readonly handler follows a dev server writing the same file', () =>
   withDirectory(async dir => {
     const file = join(dir, 'database.sqlite')
     const devServer = await generate(file, await pages({a: 'Base A'}))
-    const reader = await runtimeDatabase({path: file, readonly: true})
+    const reader = await runtimeDatabase({path: file, overlay: true})
     const store = await createGeneratedDatabase(config, reader)
     try {
       // The dev server commits an edit, then the handler syncs to it
@@ -162,7 +163,7 @@ test('a read-only generated database commits after searching', () =>
     const file = join(dir, 'db.sqlite')
     const sqlite = new Database(file)
     const db = connect(sqlite)
-    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
     const database = new EntryDatabase(config, db)
     const store = new EntryStore(config, database, new MemorySource())
     await store.mutate(
@@ -180,7 +181,7 @@ test('a read-only generated database commits after searching', () =>
 
     const generated = await createGeneratedDatabase(
       config,
-      connect(new Database(file, {readonly: true}))
+      await runtimeDatabase({path: file, overlay: true})
     )
     try {
       // A search first: writes must never reach the shared, read-only index.

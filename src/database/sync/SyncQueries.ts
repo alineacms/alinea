@@ -18,13 +18,16 @@ import {
   type HasSql,
   type Sql
 } from 'rado'
+import {DatabaseStateTable} from '../DatabaseTables.js'
 import {entryDataText} from '../entry/EntryData.js'
 import {
   EntryIndexColumns,
+  EntryIndexTable,
+  EntryReferenceTable,
   type entryIndexRow,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
-import type {EntrySyncTarget} from './EntrySyncer.js'
+import {EntrySearchTable} from '../query/Search.js'
 
 export const sqliteBatchSize = 5000
 
@@ -38,6 +41,7 @@ const from = sql.placeholder<string>('from')
 const to = sql.placeholder<string>('to')
 const revision = sql.placeholder<string>('revision')
 const treeSnapshot = sql.placeholder<string | null>('tree')
+const targets = sql.placeholder<string>('targets')
 
 /**
  * Match a column against a JSON array parameter, so one prepared statement
@@ -102,11 +106,13 @@ export function insertEntryValues(row: ReturnType<typeof entryIndexRow>) {
 
 export function prepareSyncQueries(
   db: Database,
-  target: EntrySyncTarget,
   /** Store entry data as JSONB, on a SQLite that reads it. */
   jsonb: boolean
 ) {
-  const {entries, state, search} = target
+  const entries = EntryIndexTable
+  const state = DatabaseStateTable
+  const search = EntrySearchTable
+  const references = EntryReferenceTable
   const storedVersion = or(
     inJson(entries.filePath, filePaths),
     inJson(entries.versionId, versionIds)
@@ -150,6 +156,23 @@ export function prepareSyncQueries(
         body: sql.placeholder<string>('body')
       })
       .prepare(undefined, db),
+    /** Record the entry ids a version references, under its rowid. */
+    insertReferences: builder
+      .insert(references)
+      .select(
+        builder
+          .select({
+            targetId: sql<string>`value`,
+            source: builder
+              .select(entries.rowid)
+              .from(entries)
+              .where(
+                eq(entries.versionId, sql.placeholder<string>('versionId'))
+              )
+          })
+          .from(sql`json_each(${targets})`)
+      )
+      .prepare(undefined, db),
     /** Versions stored at these file paths or under these version ids. */
     storedFiles: builder
       .select({
@@ -172,6 +195,16 @@ export function prepareSyncQueries(
       .where(
         inArray(
           search.rowid,
+          builder.select(entries.rowid).from(entries).where(storedVersion)
+        )
+      )
+      .prepare(undefined, db),
+    /** Delete the reference rows of those versions, before the versions. */
+    deleteReferences: builder
+      .delete(references)
+      .where(
+        inArray(
+          references.source,
           builder.select(entries.rowid).from(entries).where(storedVersion)
         )
       )

@@ -13,7 +13,6 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
-import {ReadonlyTree} from '#/core/source/Tree.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import type {PreviewStat} from '#/preview/widget.js'
@@ -198,10 +197,8 @@ export class NextCMS<
       }
     }
     const client = createClient(this.config, context)
-    const tree = await client
-      .getTreeIfDifferent(ReadonlyTree.EMPTY.sha)
-      .catch(() => undefined)
-    return {source: 'handler', sha: tree?.sha, syncedAt: undefined}
+    const sha = await client.getSha().catch(() => undefined)
+    return {source: 'handler', sha, syncedAt: undefined}
   }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
@@ -225,11 +222,17 @@ export class NextCMS<
       return timed(row, () => span(() => client.resolve(request)))
     }
     const db = await this.bundledDb
+    const stats = this.#render().stats
+    // Time the answer only: a sync it waited for has a row of its own.
+    const answer = () =>
+      stats && row
+        ? stats.executed(row, () => db.resolve(request))
+        : db.resolve(request)
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
     // A preview cookie already settled freshness through its content hash.
-    if (hasPreview) return timed(row, () => db.resolve(request))
+    if (hasPreview) return answer()
     if (!isBuild) {
       // In draft mode Next bypasses the `unstable_cache` behind `syncIfStale`,
       // so asking for the shared sha would cost an uncached request on every
@@ -237,7 +240,6 @@ export class NextCMS<
       // and the throttled sync keeps drafts fresh instead.
       // Route the sync syncIfStale may trigger through #syncDb so it counts
       // as this isolate's last sync.
-      const stats = this.#render().stats
       const tracked = {
         sha: db.sha,
         syncWith: () => this.#syncDb(db, client, stats)
@@ -247,8 +249,7 @@ export class NextCMS<
       if (!settled)
         await this.throttle(() => this.#syncDb(db, client, stats), syncInterval)
     }
-    // Time the answer only: a sync it waited for has a row of its own.
-    return timed(row, () => db.resolve(request))
+    return answer()
   }
 
   async #authenticatedClient() {

@@ -74,7 +74,7 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(source)
   for (const select of [
@@ -126,7 +126,7 @@ test('SQL references retain status and locale behavior', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(source)
 
@@ -141,6 +141,80 @@ test('SQL references retain status and locale behavior', async () => {
     expect(actual.total).toBe(expected.total)
     expect(actual.references).toEqual(expected.references)
   }
+  // The target row holds its own id in data but references nothing.
+  const {references} = await runtime.referencesTo({targetId: 'target'})
+  expect(references.map(reference => reference.sourceId)).toEqual(['source'])
+})
+
+test('indexed references follow updates, deletions and reindexes', async () => {
+  function pages(linked: boolean): Config {
+    // Stored as text, the same data references nothing.
+    const related = linked ? Field.entry('Related') : Field.text('Related')
+    const fields = {related}
+    return {
+      schema: {Page: ConfigBuilder.document('Page', {fields})},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+        })
+      }
+    }
+  }
+  const linked = pages(true)
+  const plain = pages(false)
+  const encode = (id: string, target?: string) =>
+    new TextEncoder().encode(
+      JSON.stringify({
+        _id: id,
+        _type: 'Page',
+        _index: id,
+        title: id,
+        related: target && {_type: 'entry', _id: `link-${id}`, _entry: target}
+      })
+    )
+  const source = new MemorySource()
+  const initial = await transaction(source)
+  initial.add('pages/a.json', encode('a', 'target'))
+  initial.add('pages/b.json', encode('b', 'target'))
+  initial.add('pages/target.json', encode('target'))
+  const compiled = await initial.compile()
+  await source.applyChanges({
+    fromSha: compiled.from.sha,
+    changes: compiled.changes
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, linked, ReadonlyTree.EMPTY.sha)
+  const runtime = new EntryDatabase(linked, db)
+  await runtime.syncWith(source)
+  async function sources(targetId: string) {
+    const {references} = await runtime.referencesTo({targetId})
+    return references.map(reference => reference.sourceId)
+  }
+  const indexed = () =>
+    db.get(sql`select count(*) as count from alinea_entry_reference`)
+  expect(await sources('target')).toEqual(['a', 'b'])
+
+  // One source links elsewhere, the other is deleted.
+  const change = await transaction(source)
+  change.add('pages/a.json', encode('a', 'other'))
+  change.remove('pages/b.json')
+  const next = await change.compile()
+  await source.applyChanges({fromSha: next.from.sha, changes: next.changes})
+  await runtime.syncWith(source)
+  expect(await sources('target')).toEqual([])
+  expect(await sources('other')).toEqual(['a'])
+  expect(await indexed()).toEqual({count: 1})
+
+  // Reindexing derives the references of the config it adopts.
+  await runtime.reindex(plain)
+  expect(await sources('other')).toEqual([])
+  expect(await indexed()).toEqual({count: 0})
+  await runtime.reindex(linked)
+  expect(await sources('other')).toEqual(['a'])
+  expect(await indexed()).toEqual({count: 1})
+  await runtime.close()
 })
 
 test('entry database returns source blobs by hash', async () => {
@@ -159,7 +233,7 @@ test('entry database returns source blobs by hash', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(source)
   const tree = await source.getTree()
@@ -218,7 +292,7 @@ test('cached trees follow revisions written by another database instance', async
     })
     using readSqlite = new Database(join(directory, 'entries.sqlite'))
     const db = connect(writeSqlite)
-    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(db, store.config, ReadonlyTree.EMPTY.sha)
     const writer = new EntryDatabase(store.config, db)
     const reader = new EntryDatabase(store.config, connect(readSqlite))
     await writer.syncWith(source)
@@ -271,7 +345,7 @@ test('syncing after another instance moved the revision on', async () => {
     })
     using secondSqlite = new Database(join(directory, 'entries.sqlite'))
     const db = connect(firstSqlite)
-    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(db, store.config, ReadonlyTree.EMPTY.sha)
     const first = new EntryDatabase(store.config, db)
     const second = new EntryDatabase(store.config, connect(secondSqlite))
     await second.syncWith(source)
@@ -287,7 +361,7 @@ test('syncing after another instance moved the revision on', async () => {
   }
 })
 
-test('generated database overlays copy their parent when they first sync', async () => {
+test('overlays are independent of their parent and of each other', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -315,10 +389,9 @@ test('generated database overlays copy their parent when they first sync', async
     return result
   }
 
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, 'empty')
-  const base = new EntryDatabase(config, db)
+  const {database: db, fork} = await openWasmDatabase()
+  await EntryDatabase.createSchema(db, config, 'empty')
+  const base = new EntryDatabase(config, db, {fork})
   await base.syncWith(
     await source([
       ['a', 'a', 'Base A'],
@@ -354,14 +427,6 @@ test('generated database overlays copy their parent when they first sync', async
       new TextDecoder().decode(encode('c', 'c', 'GitHub C'))
     ].sort()
   )
-  const preview = await github.overlay(
-    await source([
-      ['a', 'a', 'Preview A'],
-      ['b', 'b', 'Preview B'],
-      ['c', 'c', 'GitHub C']
-    ])
-  )
-
   expect(await base.resolve({select: Entry.title})).toEqual([
     'Base A',
     'Base B',
@@ -371,57 +436,22 @@ test('generated database overlays copy their parent when they first sync', async
     'GitHub A',
     'GitHub C'
   ])
-  expect(await preview.resolve({select: Entry.title})).toEqual([
-    'Preview A',
-    'Preview B',
-    'GitHub C'
-  ])
-  expect(
-    await preview.resolve({search: 'Preview', select: Entry.title})
-  ).toEqual(['Preview A', 'Preview B'])
-  await expect(github.close()).rejects.toThrow('active overlays')
-  await preview.close()
-  await github.close()
+  // Later syncs stay on the side that made them.
+  await base.syncWith(await source([['b', 'b', 'Later B']]))
+  await github.syncWith(await source([['c', 'c', 'Later C']]))
+  expect(await base.resolve({select: Entry.title})).toEqual(['Later B'])
+  expect(await github.resolve({select: Entry.title})).toEqual(['Later C'])
+  // Either side closes first without affecting the other.
   const replacement = await base.overlay(
     await source([['a', 'a', 'Replacement A']])
   )
+  await github.close()
+  expect(await base.resolve({select: Entry.title})).toEqual(['Later B'])
+  await base.close()
   expect(await replacement.resolve({select: Entry.title})).toEqual([
     'Replacement A'
   ])
   await replacement.close()
-})
-
-test('an unchanged overlay reuses the base search index', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const {source} = await createEntryStore(config, [
-    {id: 'page', type: 'Page', index: 'a', data: {title: 'Searchable'}}
-  ])
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
-  const base = new EntryDatabase(config, db)
-  await base.syncWith(source)
-  const overlay = await base.overlay(source)
-
-  expect(await overlay.find({search: 'Searchable', select: Entry.id})).toEqual([
-    'page'
-  ])
-  const temporarySearch = await db.get<{name: string}>(sql`
-    select name from sqlite_temp_master
-    where type = 'table' and name = 'alinea_overlay_1_search'
-  `)
-  expect(temporarySearch).toBeNull()
-  await overlay.close()
-  await base.close()
 })
 
 test('database mutations use one write transaction and commit one final tree', async () => {
@@ -441,7 +471,7 @@ test('database mutations use one write transaction and commit one final tree', a
   const initial = await source.getTree()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, initial.sha)
+  await EntryDatabase.createSchema(db, config, initial.sha)
   const database = new EntryDatabase(config, db)
 
   const result = await database.apply(
@@ -488,7 +518,7 @@ test('failed database mutation batches leave the receiver untouched', async () =
   const initial = await source.getTree()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, initial.sha)
+  await EntryDatabase.createSchema(db, config, initial.sha)
   const database = new EntryDatabase(config, db)
 
   await expect(
@@ -535,7 +565,7 @@ test('database mutations preserve authored status and hierarchy transitions', as
   const initial = await source.getTree()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, initial.sha)
+  await EntryDatabase.createSchema(db, config, initial.sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -620,67 +650,6 @@ test('database mutations preserve authored status and hierarchy transitions', as
   await database.close()
 })
 
-test('database mutations commit to the receiving overlay only', async () => {
-  const Page = ConfigBuilder.document('Page', {
-    fields: {title: Field.text('Title')}
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  async function source(title: string) {
-    const result = new MemorySource()
-    const change = await transaction(result)
-    const compiled = await change
-      .add(
-        'pages/a.json',
-        new TextEncoder().encode(
-          JSON.stringify({_id: 'a', _type: 'Page', _index: 'a', title})
-        )
-      )
-      .compile()
-    await result.applyChanges({
-      fromSha: compiled.from.sha,
-      changes: compiled.changes
-    })
-    return result
-  }
-
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, 'empty')
-  const base = new EntryDatabase(config, db)
-  await base.syncWith(await source('Base'))
-  const remote = await source('Remote')
-  const overlay = await base.overlay(remote)
-  const remoteRevision = (await remote.getTree()).sha
-
-  const result = await overlay.apply(
-    [
-      {
-        op: 'update',
-        id: 'a',
-        locale: null,
-        status: 'published',
-        set: {title: 'Preview'}
-      }
-    ],
-    {source: remote}
-  )
-
-  expect(await base.resolve({select: Entry.title})).toEqual(['Base'])
-  expect(await overlay.resolve({select: Entry.title})).toEqual(['Preview'])
-  expect((await remote.getTree()).sha).toBe(remoteRevision)
-  expect(result.request.fromSha).toBe(remoteRevision)
-  await overlay.close()
-  await base.close()
-})
-
 test('database mutations enforce URL ownership and retain previous URLs', async () => {
   const Page = ConfigBuilder.document('Page', {
     contains: ['Page'],
@@ -698,7 +667,7 @@ test('database mutations enforce URL ownership and retain previous URLs', async 
   const source = new MemorySource()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -774,7 +743,7 @@ test('database moves retain published URLs for an entire subtree', async () => {
   const source = new MemorySource()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -849,7 +818,7 @@ test('database mutations propagate shared fields between translations', async ()
   const source = new MemorySource()
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const database = new EntryDatabase(config, db)
   async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
     const result = await database.apply(mutations, {source})
@@ -915,7 +884,7 @@ test('sync writes search rows with the entry rows they index', async () => {
   })
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const base = new EntryDatabase(config, db)
   await base.syncWith(source)
   expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual(['a'])
@@ -967,7 +936,7 @@ test('a reopened database searches the index it persisted', async () => {
   const file = join(dir, 'database.sqlite')
   try {
     const initial = connect(new Database(file))
-    await EntryDatabase.createSchema(initial, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(initial, config, ReadonlyTree.EMPTY.sha)
     const first = new EntryDatabase(config, initial)
     await first.syncWith(source)
     expect(await first.find({search: 'Persisted', select: Entry.id})).toEqual([
@@ -1009,7 +978,11 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
       .from(EntryIndexTable)
   // Write JSONB with the WASM build, which always reads it.
   const handle = await openWasmDatabase()
-  await EntryDatabase.createSchema(handle.database, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(
+    handle.database,
+    config,
+    ReadonlyTree.EMPTY.sha
+  )
   const written = new EntryDatabase(config, handle.database)
   await written.syncWith(source)
   expect(await dataType(handle.database)).toEqual(['blob'])
@@ -1027,17 +1000,21 @@ test('JSONB databases are rebuilt or refused where SQLite cannot read them', asy
     // Bun bundles a SQLite that reads JSONB on Linux, not on macOS.
     const readsJsonb = await supportsJsonb(native)
     if (readsJsonb) {
-      const generated = await createGeneratedDatabase(config, native)
+      const generated = await createGeneratedDatabase(config, {
+        database: native
+      })
       expect(await generated.find({select: Entry.title})).toEqual(['Page'])
       await generated.close()
     } else {
-      await expect(createGeneratedDatabase(config, native)).rejects.toThrow(
+      await expect(
+        createGeneratedDatabase(config, {database: native})
+      ).rejects.toThrow(
         `Alinea's generated database stores JSONB, which requires SQLite 3.45.0 or newer (found ${version?.version})`
       )
     }
 
     const db = connect(new Database(file))
-    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
     expect(await dataType(db)).toEqual(readsJsonb ? ['blob'] : [])
     const reopened = new EntryDatabase(config, db)
     await reopened.syncWith(source)
@@ -1065,15 +1042,15 @@ test('databases written with an older layout are rebuilt', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   await new EntryDatabase(config, db).syncWith(source)
   const entries = () =>
     db.get(sql`select count(*) as count from alinea_entry_index`)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   expect(await entries()).toEqual({count: 1})
   // Layouts before version 4 did not record their version.
   await db.run(sql`alter table alinea_database_metadata drop column version`)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   expect(await entries()).toEqual({count: 0})
   expect(
     await db.get(sql`select version from alinea_database_metadata`)

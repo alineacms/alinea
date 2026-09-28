@@ -4,6 +4,8 @@ import type {GraphQuery} from '#/core/Graph.js'
 import {root} from '#/core/Root.js'
 import {type} from '#/core/Type.js'
 import {workspace} from '#/core/Workspace.js'
+import {date} from '#/field/date/DateField.js'
+import {number} from '#/field/number/NumberField.js'
 import {text} from '#/field/text/TextField.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
@@ -14,6 +16,7 @@ import {
   EntryIndexTable,
   entryIndexRow,
   entryIndexTable,
+  syncFieldIndexes,
   type IndexedEntry
 } from '../entry/EntryTable.js'
 import {compileEntryQuery} from './EntryQuery.js'
@@ -465,7 +468,7 @@ test('unique ordering avoids correlated stable-order queries', async () => {
   const details = JSON.stringify(explain)
   expect(details).toContain('alinea_entry_index_by_file_path')
   expect(details).not.toContain('CORRELATED SCALAR SUBQUERY')
-  expect(details).not.toContain('USE TEMP B-TREE FOR ORDER BY')
+  expect(details).not.toContain('TEMP B-TREE')
 })
 
 test('all relations compile into the containing SQL query', () => {
@@ -506,4 +509,92 @@ test('embedded sibling relations use the parent index', async () => {
     .prepare(`explain query plan ${statement.sql}`)
     .all(...(statement.params as Array<string | number | null>))
   expect(JSON.stringify(explain)).toContain('alinea_entry_index_by_parent')
+})
+
+const Dated = type('Dated', {
+  fields: {date: date('Date'), rank: number('Rank')}
+})
+const dated: Config = {schema: {Dated}, workspaces: {}}
+
+async function datedDatabase(sqlite: Database) {
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable)
+  const values: Array<
+    [string, string | undefined, number | null, number | undefined]
+  > = [
+    ['a', '2024-01-02', 2, 200],
+    ['b', undefined, null, undefined],
+    ['c', '2024-03-01', 10, 300],
+    ['d', '2023-12-31', 1, 100]
+  ]
+  await db.insert(EntryIndexTable).values(
+    values.map(([id, date, rank, createdAt]) =>
+      entryIndexRow(
+        entry(id, {
+          type: 'Dated',
+          data: {date, rank, metadata: {createdAt}}
+        })
+      )
+    )
+  )
+  return db
+}
+
+test('date and number fields order by value with nulls last', async () => {
+  using sqlite = new Database(':memory:')
+  const db = await datedDatabase(sqlite)
+  const ids = (query: GraphQuery) =>
+    compileEntryQuery(dated, {...query, select: Entry.id}).rows.all(db)
+  expect(await ids({orderBy: {desc: Dated.date}})).toEqual(['c', 'a', 'd', 'b'])
+  expect(await ids({orderBy: {asc: Dated.date}})).toEqual(['d', 'a', 'c', 'b'])
+  expect(await ids({orderBy: {desc: Dated.rank}})).toEqual(['c', 'a', 'd', 'b'])
+  expect(await ids({orderBy: {asc: Dated.rank}})).toEqual(['d', 'a', 'c', 'b'])
+  expect(await ids({orderBy: {desc: Entry.createdAt}})).toEqual([
+    'c',
+    'a',
+    'd',
+    'b'
+  ])
+  expect(await ids({orderBy: {asc: Entry.createdAt}})).toEqual([
+    'd',
+    'a',
+    'c',
+    'b'
+  ])
+})
+
+test('ordering by a date field walks its field index', async () => {
+  using sqlite = new Database(':memory:')
+  const db = await datedDatabase(sqlite)
+  await syncFieldIndexes(db, dated)
+  const statement = compileEntryQuery(dated, {
+    type: Dated,
+    orderBy: {desc: Dated.date},
+    take: 2,
+    select: Entry.id
+  }).rows.toSQL(db)
+  const explain = sqlite
+    .prepare(`explain query plan ${statement.sql}`)
+    .all(...(statement.params as Array<string | number | null>))
+  const details = JSON.stringify(explain)
+  expect(details).toContain('alinea_entry_index_by_field_date')
+  expect(details).not.toContain('TEMP B-TREE')
+})
+
+test('ordering by creation time walks its metadata index', async () => {
+  using sqlite = new Database(':memory:')
+  const db = await datedDatabase(sqlite)
+  await syncFieldIndexes(db, dated)
+  const statement = compileEntryQuery(dated, {
+    type: Dated,
+    orderBy: {desc: Entry.createdAt},
+    take: 2,
+    select: Entry.id
+  }).rows.toSQL(db)
+  const explain = sqlite
+    .prepare(`explain query plan ${statement.sql}`)
+    .all(...(statement.params as Array<string | number | null>))
+  const details = JSON.stringify(explain)
+  expect(details).toContain('alinea_entry_index_by_field_metadata.createdAt')
+  expect(details).not.toContain('TEMP B-TREE')
 })

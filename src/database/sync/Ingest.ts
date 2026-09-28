@@ -3,11 +3,14 @@ import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
-import {entryIndexRow, type IndexedEntry} from '../entry/EntryTable.js'
+import {accumulate} from '#/core/util/Async.js'
+import {entryIndexRow} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
 
 const changeBatchSize = 250
+/** Batches whose blobs are requested while an earlier batch is written. */
+const readAhead = 4
 
 /** What merging a source tree into the entry table changed. */
 export interface SyncChanges {
@@ -52,40 +55,28 @@ async function removeVersions(
     changes.childDirs.add(row.childrenDir)
   }
   await queries.deleteSearch.run(params)
+  await queries.deleteReferences.run(params)
   await queries.deleteFiles.run(params)
   return stored
 }
 
-async function parseFiles(
+function parseFiles(
   config: Config,
-  source: RemoteSource,
   tree: ReadonlyTree,
-  files: ReadonlyArray<FileRow>
+  files: ReadonlyArray<FileRow>,
+  blobs: ReadonlyMap<string, Uint8Array>
 ) {
-  const pathsByHash = new Map<string, Array<string>>()
-  for (const file of files) {
-    const paths = pathsByHash.get(file.fileHash) ?? []
-    paths.push(file.filePath)
-    pathsByHash.set(file.fileHash, paths)
-  }
-  const parsedEntries = Array<IndexedEntry>()
-  for await (const [fileHash, blob] of source.getBlobs([
-    ...pathsByHash.keys()
-  ])) {
-    // Files sharing a blob are parsed once, however often it is returned.
-    const paths = pathsByHash.get(fileHash)
-    if (!paths) continue
-    pathsByHash.delete(fileHash)
-    for (const filePath of paths)
-      parsedEntries.push(parseSourceEntry(config, filePath, fileHash, blob))
-  }
-  const [missing] = pathsByHash.keys()
-  assert(missing === undefined, `Source did not return blob ${missing}`)
-  return parsedEntries.map(entry => ({
-    ...entryIndexRow(entry),
-    childrenSha: sourceDirectorySha(tree, entry.childrenDir),
-    searchableText: entry.searchableText
-  }))
+  return files.map(file => {
+    const blob = blobs.get(file.fileHash)
+    assert(blob, `Source did not return blob ${file.fileHash}`)
+    const entry = parseSourceEntry(config, file.filePath, file.fileHash, blob)
+    return {
+      ...entryIndexRow(entry),
+      childrenSha: sourceDirectorySha(tree, entry.childrenDir),
+      searchableText: entry.searchableText,
+      references: entry.references
+    }
+  })
 }
 
 /** Record the source hash of every directory above a changed file. */
@@ -134,21 +125,38 @@ export async function mergeTrees(
     containers: new Set()
   }
   const diff = previousTree.diff(tree).changes
-  for (const batch of chunks(diff, changeBatchSize)) {
-    const deleted = batch.flatMap(change =>
+  const batches = Array.from(chunks(diff, changeBatchSize), batch => ({
+    deleted: batch.flatMap(change =>
       change.op === 'delete' ? [change.path] : []
+    ),
+    added: batch.flatMap(change =>
+      change.op === 'add' ? [{filePath: change.path, fileHash: change.sha}] : []
     )
+  }))
+  // Later batches' blobs arrive while earlier ones are written, instead of
+  // one request after another.
+  function read(files: ReadonlyArray<FileRow>) {
+    const shas = [...new Set(files.map(file => file.fileHash))]
+    const blobs = shas.length
+      ? accumulate(source.getBlobs(shas)).then(found => new Map(found))
+      : Promise.resolve(new Map<string, Uint8Array>())
+    // A failed read is thrown once its batch is written.
+    blobs.catch(() => {})
+    return blobs
+  }
+  const reads = batches.slice(0, readAhead).map(batch => read(batch.added))
+  for (const [index, {deleted, added}] of batches.entries()) {
+    const ahead = batches[index + readAhead]
+    if (ahead) reads.push(read(ahead.added))
+    const blobs = reads.shift()!
     if (deleted.length) {
       const stored = await removeVersions(queries, changes, deleted)
       const found = new Set(stored.map(row => row.filePath))
       for (const filePath of deleted)
         assert(found.has(filePath), `Missing version to delete: ${filePath}`)
     }
-    const added = batch.flatMap(change =>
-      change.op === 'add' ? [{filePath: change.path, fileHash: change.sha}] : []
-    )
     if (!added.length) continue
-    const rows = await parseFiles(config, source, tree, added)
+    const rows = parseFiles(config, tree, added, await blobs)
     await removeVersions(
       queries,
       changes,
@@ -161,11 +169,17 @@ export async function mergeTrees(
         title: row.title,
         body: row.searchableText
       })
+      if (row.references.length)
+        await queries.insertReferences.run({
+          versionId: row.versionId,
+          targets: JSON.stringify(row.references)
+        })
       changes.touched.add(row.id)
       changes.inserted.add(row.versionId)
       if (hasChildren(row.childrenSha)) changes.parents.add(row.id)
     }
   }
+
   await updateDirectoryHashes(
     queries,
     tree,

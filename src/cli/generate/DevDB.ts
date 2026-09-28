@@ -68,10 +68,13 @@ export class DevDB extends EntryStore {
     const source = new CachedFSSource(
       join(options.rootDir, Config.contentDir(options.config))
     )
-    const db = await runtimeDatabase({path: options.databasePath})
+    const {database: db} = await runtimeDatabase({
+      path: options.databasePath
+    })
     try {
       await EntryDatabase.createSchema(
         db,
+        options.config,
         ReadonlyTree.EMPTY.sha,
         options.configFingerprint
       )
@@ -112,8 +115,6 @@ export class DevDB extends EntryStore {
       )
     this.#options = {...this.#options, ...options}
     this.config = options.config
-    // Preview overlays hang off the database, which reindexes without any.
-    await this.closePreviews()
     await this.database.reindex(options.config, options.configFingerprint)
     // Files changed since the recorded tree are picked up by a normal sync.
     this.#persistedRevision = undefined

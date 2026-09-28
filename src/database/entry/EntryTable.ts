@@ -1,13 +1,18 @@
+import type {Config} from '#/core/Config.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {
   createRecord,
   parseRecord,
   type EntryRecord
 } from '#/core/EntryRecord.js'
+import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {index, table, temporaryTable, type Table} from 'rado'
+import {DateField} from '#/field/date/DateField.js'
+import {NumberField} from '#/field/number/NumberField.js'
+import {index, primaryKey, sql, table, type Database, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
+import {jsonField} from '../query/Condition.js'
 
 function entryVersionId(
   id: string,
@@ -21,7 +26,7 @@ function entryVersionId(
 export const EntryIndexColumns = {
   /**
    * Also the rowid of the version's full-text search row. Declared, so VACUUM
-   * and copies into overlay tables keep it.
+   * keeps it.
    */
   rowid: column.integer().primaryKey(),
   versionId: column.varchar(undefined, {length: 255}).notNull().unique(),
@@ -67,9 +72,8 @@ export const EntryIndexColumns = {
   data: column.text().notNull()
 }
 
-export function entryIndexTable(name: string, temporary = false) {
-  const create = temporary ? temporaryTable : table
-  return create(name, EntryIndexColumns, row => [
+export function entryIndexTable(name: string) {
+  return table(name, EntryIndexColumns, row => [
     index(`${name}_by_id`).on(row.id, row.locale, row.versionStatus),
     index(`${name}_by_url`).on(row.url),
     index(`${name}_by_type`).on(row.type, row.locale, row.workspace),
@@ -89,6 +93,64 @@ export function entryIndexTable(name: string, temporary = false) {
 export type EntryIndexTarget = Table<typeof EntryIndexColumns>
 
 export const EntryIndexTable = entryIndexTable('alinea_entry_index')
+
+/** The entry ids each entry version references, under the version's rowid. */
+export const EntryReferenceTable = table(
+  'alinea_entry_reference',
+  {
+    targetId: column.varchar(undefined, {length: 128}).notNull(),
+    source: column.integer().notNull()
+  },
+  row => [
+    primaryKey(row.targetId, row.source),
+    index('alinea_entry_reference_by_source').on(row.source)
+  ]
+)
+
+/** Fields whose queries order by their stored value, through a field index. */
+export function isOrderedField(field: unknown): boolean {
+  return field instanceof DateField || field instanceof NumberField
+}
+
+const fieldIndexPrefix = 'alinea_entry_index_by_field_'
+
+/** Metadata fields whose queries order by their stored value. */
+export const orderedMetadata = new Set(['createdAt', 'updatedAt'])
+
+/**
+ * Index the stored value of every ordered field in the config, per type, and
+ * of the ordered metadata. Field names are identifiers, so the dotted metadata
+ * names cannot collide with them.
+ */
+export async function syncFieldIndexes(
+  db: Database,
+  config: Config
+): Promise<void> {
+  const wanted = new Set<string>()
+  for (const name of orderedMetadata) wanted.add(`metadata.${name}`)
+  for (const type of Object.values(config.schema))
+    for (const [name, field] of Object.entries(Type.fields(type)))
+      if (isOrderedField(field)) wanted.add(name)
+  const rows = await db.all<{name: string}>(
+    sql`select name from sqlite_master where type = 'index'`
+  )
+  const existing = new Set<string>()
+  for (const {name} of rows)
+    if (name.startsWith(fieldIndexPrefix))
+      existing.add(name.slice(fieldIndexPrefix.length))
+  for (const name of existing)
+    if (!wanted.has(name))
+      await db.run(sql`drop index ${sql.identifier(fieldIndexPrefix + name)}`)
+  for (const name of wanted) {
+    if (existing.has(name)) continue
+    // Index expressions cannot name their table, but match the queries'
+    // qualified column all the same.
+    const value = jsonField(sql.identifier('data'), name.split('.'))
+    await db.run(sql`create index ${sql.identifier(fieldIndexPrefix + name)}
+      on ${EntryIndexTable}(${sql.identifier('type')}, ${value},
+        ${sql.identifier('index')}, ${sql.identifier('filePath')})`)
+  }
+}
 
 /** An Entry plus the physical-version and local-index fields. */
 export interface IndexedEntry extends Entry {

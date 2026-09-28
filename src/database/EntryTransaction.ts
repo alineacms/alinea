@@ -44,7 +44,7 @@ import type {
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {policyFieldOptions, validateEntry} from '#/core/Validation.js'
-import type {EntryLayer} from './EntryLayer.js'
+import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
 type Op<T> = Omit<T, 'op'>
@@ -87,12 +87,46 @@ const {aliases, createdAt, createdBy, updatedAt, updatedBy, ...EntrySelection} =
   Entry
 
 /**
+ * What placing an entry among its siblings reads: their order and paths, plus
+ * the fields a policy checks to reorder them. Skips parsing each sibling's data.
+ */
+const SiblingSelection = {
+  id: Entry.id,
+  index: Entry.index,
+  path: Entry.path,
+  main: Entry.main,
+  type: Entry.type,
+  workspace: Entry.workspace,
+  root: Entry.root,
+  parents: Entry.parents,
+  locale: Entry.locale
+}
+
+interface Sibling extends Pick<
+  Entry,
+  | 'id'
+  | 'index'
+  | 'path'
+  | 'main'
+  | 'type'
+  | 'workspace'
+  | 'root'
+  | 'parents'
+  | 'locale'
+> {}
+
+/** Every version placed directly at a location. */
+function siblingsOf({parentId, workspace, root, locale}: EntryLocation) {
+  return {status: 'all', parentId, workspace, root, locale} as const
+}
+
+/**
  * Plans mutations inside the receiver's write transaction. Each mutation is
  * flushed so subsequent mutations query its result without retaining an
  * in-memory entry index. SQLite rolls the full batch back on failure.
  */
 export class EntryTransaction implements AsyncDisposable {
-  #workingDatabase: EntryLayer
+  #workingDatabase: EntryDatabase
   #workingSource: OverlaySource
   #fromTree: ReadonlyTree
   #workingTree: ReadonlyTree
@@ -103,9 +137,9 @@ export class EntryTransaction implements AsyncDisposable {
   #changedEntryIds = new Set<string>()
   #closed = false
 
-  /** @internal Constructed by EntryLayer.apply. */
+  /** @internal Constructed by EntryDatabase.apply. */
   constructor(
-    workingDatabase: EntryLayer,
+    workingDatabase: EntryDatabase,
     workingSource: OverlaySource,
     sourceTransaction: SourceTransaction,
     from: ReadonlyTree,
@@ -282,18 +316,18 @@ export class EntryTransaction implements AsyncDisposable {
         ),
       `Cannot create duplicate entry with id ${id}`
     )
-    const siblings = await this.#siblings({
-      parentId,
-      workspace,
-      root,
-      locale
-    })
     let index = existingMain?.index ?? existing.at(0)?.index
     if (!index) {
+      const location = {parentId, workspace, root, locale}
       const previous =
-        insertOrder === 'first' ? null : (siblings.at(-1) ?? null)
-      const next = insertOrder === 'last' ? null : (siblings.at(0) ?? null)
-      index = generateKeyBetween(previous?.index ?? null, next?.index ?? null)
+        insertOrder === 'first'
+          ? null
+          : await this.#siblingIndex(location, 'desc')
+      const next =
+        insertOrder === 'last'
+          ? null
+          : await this.#siblingIndex(location, 'asc')
+      index = generateKeyBetween(previous, next)
     }
     if (status === 'published') {
       for (const version of existing.filter(entry => entry.locale === locale))
@@ -716,9 +750,7 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   async close(): Promise<void> {
-    if (this.#closed) return
     this.#closed = true
-    await this.#workingDatabase.close()
   }
 
   [Symbol.asyncDispose](): Promise<void> {
@@ -771,7 +803,7 @@ export class EntryTransaction implements AsyncDisposable {
    * Siblings with colliding indexes are reindexed first.
    */
   async #insertionIndex(
-    siblings: ReadonlyArray<TransactionEntry>,
+    siblings: ReadonlyArray<Sibling>,
     insertion: number,
     moving: ReadonlyArray<TransactionEntry>
   ): Promise<string> {
@@ -805,14 +837,12 @@ export class EntryTransaction implements AsyncDisposable {
     path: string,
     location: EntryLocation & {id: string}
   ): Promise<string> {
-    const siblings = await this.#siblings(location)
-    const conflicting = siblings
-      .filter(
-        entry =>
-          entry.id !== location.id &&
-          (entry.path === path || entry.path.startsWith(`${path}-`))
-      )
-      .map(entry => entry.path)
+    const conflicting = await this.#workingDatabase.find({
+      ...siblingsOf(location),
+      id: {isNot: location.id},
+      path: {or: [path, {startsWith: `${path}-`}]},
+      select: Entry.path
+    })
     const suffix = pathSuffix(path, conflicting)
     return suffix === undefined ? path : `${path}-${suffix}`
   }
@@ -1130,12 +1160,28 @@ export class EntryTransaction implements AsyncDisposable {
     })
   }
 
-  #siblings(location: EntryLocation): Promise<Array<TransactionEntry>> {
-    return this.#findEntries({
-      parentId: location.parentId,
-      workspace: location.workspace,
-      root: location.root,
-      locale: location.locale
+  #siblings(location: EntryLocation): Promise<Array<Sibling>> {
+    return this.#workingDatabase.find({
+      ...siblingsOf(location),
+      select: SiblingSelection
+    })
+  }
+
+  /** The index of the sibling at either end of the location's order. */
+  async #siblingIndex(
+    location: EntryLocation,
+    direction: 'asc' | 'desc'
+  ): Promise<string | null> {
+    // Sibling order (index, then file path), compared as stored
+    const orderBy = [Entry.index, Entry.filePath].map(field =>
+      direction === 'asc'
+        ? {asc: field, caseSensitive: true}
+        : {desc: field, caseSensitive: true}
+    )
+    return this.#workingDatabase.first({
+      ...siblingsOf(location),
+      orderBy,
+      select: Entry.index
     })
   }
 

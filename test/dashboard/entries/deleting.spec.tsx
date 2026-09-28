@@ -23,8 +23,8 @@ test('deletes an archived entry and lands on its parent overview', async ({
   await expect(app.page).toHaveURL(/workflow-ordered-folder$/)
   await expect(app.title).toHaveText('Ordered folder')
   const explorer = app.page.getByRole('treegrid', {name: 'Explorer entries'})
-  await expect(explorer.getByRole('row', {name: 'Apple apple'})).toBeVisible()
-  await expect(explorer.getByRole('row', {name: 'Zebra zebra'})).toHaveCount(0)
+  await expect(explorer.getByRole('row', {name: /^Apple /})).toBeVisible()
+  await expect(explorer.getByRole('row', {name: /^Zebra /})).toHaveCount(0)
 })
 
 test('deletes an unpublished entry and lands on its parent overview', async ({
@@ -50,6 +50,6 @@ test('deletes an unpublished entry and lands on its parent overview', async ({
   await expect(app.page).toHaveURL(/workflow-ordered-folder$/)
   await expect(app.title).toHaveText('Ordered folder')
   const explorer = app.page.getByRole('treegrid', {name: 'Explorer entries'})
-  await expect(explorer.getByRole('row', {name: 'Apple apple'})).toBeVisible()
-  await expect(explorer.getByRole('row', {name: 'Zebra zebra'})).toHaveCount(0)
+  await expect(explorer.getByRole('row', {name: /^Apple /})).toBeVisible()
+  await expect(explorer.getByRole('row', {name: /^Zebra /})).toHaveCount(0)
 })

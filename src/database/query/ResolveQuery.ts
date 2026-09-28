@@ -9,16 +9,13 @@ import type {
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
-import type {EntryIndexTarget} from '../entry/EntryTable.js'
 import {compileEntryQuery, type ProjectionPlan} from './EntryQuery.js'
-import type {EntrySearchTarget, SearchQuery} from './Search.js'
+import type {SearchQuery} from './Search.js'
 
 /** Query dependencies bound to one connection and its current transaction. */
 export interface EntryQueryContext {
   config: Config
   database: Database
-  entries: EntryIndexTarget
-  searchTable: EntrySearchTarget
   search(input: GraphQuery['search']): Promise<SearchQuery | undefined>
   includedAtBuild(filePath: string): boolean | Promise<boolean>
 }
@@ -27,11 +24,9 @@ export async function resolveEntryQuery(
   query: GraphQuery,
   context: EntryQueryContext
 ): Promise<unknown> {
-  const {database: db, config, entries, searchTable} = context
+  const {database: db, config} = context
   const {rows, plan} = compileEntryQuery(config, query, {
-    search: await context.search(query.search),
-    entry: entries,
-    searchTable
+    search: await context.search(query.search)
   })
   if (plan.count) return db.select(count()).from(rows.as('matches')).get()
   const result = await rows.all(db)

@@ -5,10 +5,10 @@ import {Config as ConfigBuilder, Field, Query} from '#/index.js'
 import {createEntrySource, type EntryFixtureEntry} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
-import {connect} from 'rado/driver/bun-sqlite'
-import {wasmDatabase} from '../driver/WasmDatabase.js'
+import {connect as connectNative} from 'rado/driver/bun-sqlite'
+import {connect} from 'rado/driver/sql.js'
+import {openWasmDatabase} from '../driver/WasmDatabase.js'
 import {EntryDatabase} from '../EntryDatabase.js'
-import type {EntryLayer} from '../EntryLayer.js'
 
 // Site navigation: many menu links, each reading its target's surroundings.
 const menus = Array.from({length: 8}, (_, i) => Field.entry(`Menu ${i}`))
@@ -83,16 +83,12 @@ const base: Array<PageInput> = [
   {id: 'history', index: 'a1', parents: ['home', 'about']},
   {id: 'blog', index: 'a1', parents: ['home']}
 ]
-// Edits, additions and deletions, so relations cross base and change rows.
+// Edits, additions and deletions of the base pages.
 const diverged: Array<PageInput> = [
   ...base.filter(page => page.id !== 'history' && page.id !== 'about'),
   {id: 'about', index: 'a0', parents: ['home'], data: aliases('/about-us')},
   {id: 'carol', index: 'a2', parents: ['home', 'about', 'team']},
   {id: 'faq', index: 'a2', parents: ['home', 'about']}
-]
-const nested: Array<PageInput> = [
-  ...diverged.filter(page => page.id !== 'bob'),
-  {id: 'dave', index: 'a0', parents: ['home', 'about', 'team', 'alice']}
 ]
 
 function team(select: GraphQuery['select']): GraphQuery {
@@ -189,21 +185,27 @@ function planProblems(plan: Array<PlanRow>): Array<string> {
 }
 
 /** Resolve every query and the references to one entry. */
-async function resolveAll(layer: EntryLayer, onQuery = (_: string) => {}) {
+async function resolveAll(
+  database: EntryDatabase,
+  onQuery = (_: string) => {}
+) {
   const results: Record<string, unknown> = {}
   for (const [name, query] of Object.entries(queries)) {
     onQuery(name)
-    results[name] = await layer.resolve(query)
+    results[name] = await database.resolve(query)
   }
   onQuery('references')
-  results.references = await layer.referencesTo({targetId: 'team'})
+  results.references = await database.referencesTo({targetId: 'team'})
   return results
 }
 
-function recordingDatabase() {
-  const sqlite = new Database(':memory:')
+/** A connection recording the entry reads on it. */
+async function recordingDatabase() {
+  const {default: init} = await import('@alinea/sqlite-wasm')
+  const {Database: WasmDatabase} = await init()
   const log = {reads: Array<string>()}
-  const executing = new Set<string | symbol>(['all', 'get', 'run', 'values'])
+  // Every run binds its parameters or runs the statement once.
+  const executing = new Set<string | symbol>(['bind', 'run'])
   // Record when statements run: rado reuses prepared statements.
   function recordRuns<T extends object>(statement: T, query: string): T {
     return new Proxy(statement, {
@@ -218,12 +220,12 @@ function recordingDatabase() {
       }
     })
   }
-  const recording = new Proxy(sqlite, {
+  const recording = new Proxy(new WasmDatabase(), {
     get(target, key) {
       if (key === 'prepare')
         return (query: string) => {
           const statement = target.prepare(query)
-          return /alinea_entry_index|alinea_overlay_\d+_entries/.test(query)
+          return query.includes('alinea_entry_index')
             ? recordRuns(statement, query)
             : statement
         }
@@ -231,32 +233,27 @@ function recordingDatabase() {
       return typeof value === 'function' ? value.bind(target) : value
     }
   })
-  return {sqlite, log, db: connect(recording)}
+  return {log, db: connect(recording)}
 }
 
-async function plainDatabase(inputs: Array<PageInput>) {
-  // The plain database stores JSONB, the overlaid one text.
-  const db = await wasmDatabase()
-  await EntryDatabase.createSchema(db, 'empty')
-  const database = new EntryDatabase(config, db)
-  await database.syncWith(await source(inputs))
-  return database
-}
-
-test('overlay queries read indexed tables and answer as a plain database', async () => {
-  const {sqlite, log, db} = recordingDatabase()
-  await EntryDatabase.createSchema(db, 'empty')
+test('queries read indexed tables, also after a sync changed the rows', async () => {
+  const {log, db} = await recordingDatabase()
+  await EntryDatabase.createSchema(db, config, 'empty')
   const database = new EntryDatabase(config, db)
   await database.syncWith(await source(base))
 
-  /** Resolve through a layer, recording the entry reads of every query. */
-  async function recorded(layer: EntryLayer) {
+  /** Resolve every query, recording its entry reads. */
+  async function recorded() {
     const reads: Record<string, Array<string>> = {}
-    const results = await resolveAll(layer, name => {
+    const results = await resolveAll(database, name => {
       log.reads = reads[name] = []
     })
     return {reads, results}
   }
+
+  // The WASM build omits EXPLAIN: plan the statements natively.
+  using planner = new Database(':memory:')
+  await EntryDatabase.createSchema(connectNative(planner), config, 'empty')
 
   /** Check the plan of every entry read. */
   function checkPlans(reads: Record<string, Array<string>>) {
@@ -264,7 +261,7 @@ test('overlay queries read indexed tables and answer as a plain database', async
       expect({name, reads: statements.length > 0}).toEqual({name, reads: true})
       if (scanning.has(name)) continue
       for (const statement of statements) {
-        const explain = sqlite.prepare(`explain query plan ${statement}`)
+        const explain = planner.prepare(`explain query plan ${statement}`)
         const plan = explain.all() as Array<PlanRow>
         explain.finalize()
         expect({name, problems: planProblems(plan)}).toEqual({
@@ -275,61 +272,18 @@ test('overlay queries read indexed tables and answer as a plain database', async
     }
   }
 
-  // Unwritten overlays, nested ones too, run the base database's statements.
-  // Written ones read a copy of their parent, with the same indexes.
-  const plain = await recorded(database)
-  checkPlans(plain.reads)
-  const empty = await database.overlay(await source(base))
-  const emptier = await empty.overlay(await source(base))
-  for (const layer of [empty, emptier]) {
-    const run = await recorded(layer)
-    expect(run.reads).toEqual(plain.reads)
-    expect(run.results).toEqual(plain.results)
-  }
-  await emptier.close()
+  checkPlans((await recorded()).reads)
 
-  const changed = await database.overlay(await source(diverged))
-  const preview = await changed.overlay(await source(nested))
-  for (const [inputs, layer] of [
-    [diverged, changed],
-    [nested, preview]
-  ] as const) {
-    const {reads, results} = await recorded(layer)
-    checkPlans(reads)
-    const plain = await plainDatabase(inputs)
-    expect(results).toEqual(await resolveAll(plain))
-    await plain.close()
-  }
+  // Edits, additions and deletions change the rows every query reads.
+  await database.syncWith(await source(diverged))
+  const {reads, results} = await recorded()
+  checkPlans(reads)
+  const {database: fresh} = await openWasmDatabase()
+  await EntryDatabase.createSchema(fresh, config, 'empty')
+  const plain = new EntryDatabase(config, fresh)
+  await plain.syncWith(await source(diverged))
+  expect(results).toEqual(await resolveAll(plain))
 
-  await preview.close()
-  await changed.close()
-  await empty.close()
-  await database.close()
-})
-
-test('an empty createOverlay() shows an apply() edit afterwards', async () => {
-  const database = await plainDatabase(base)
-  const overlay = await database.createOverlay()
-  const title = {
-    first: true,
-    id: 'team',
-    locale: 'en',
-    select: Entry.title
-  } as const
-  await overlay.database.apply(
-    [
-      {
-        op: 'update',
-        id: 'team',
-        locale: 'en',
-        status: 'published',
-        set: {title: 'Crew'}
-      }
-    ],
-    {source: overlay.source}
-  )
-  expect(await overlay.database.resolve(title)).toBe('Crew')
-  expect(await database.resolve(title)).toBe('team en')
-  await overlay.close()
+  await plain.close()
   await database.close()
 })

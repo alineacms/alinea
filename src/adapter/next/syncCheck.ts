@@ -1,7 +1,6 @@
 import type {Client} from '#/core/Client.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
-import {ReadonlyTree} from '#/core/source/Tree.js'
 
 interface SyncableDB {
   readonly sha: string | Promise<string>
@@ -14,12 +13,6 @@ interface SyncableDB {
 // that bypass the handler (direct cloud writes).
 export const CONTENT_SHA_TAG = 'alinea-content-sha'
 const SHA_REVALIDATE_SECONDS = 60
-
-// A sha that only matches an empty tree, so the handler answers with the
-// current tree (metadata only, no blobs) whenever there is any content and
-// we can read its sha. On an empty tree the answer is undefined, which the
-// caller treats as unknown and falls back to its throttled sync.
-const SENTINEL_SHA = ReadonlyTree.EMPTY.sha
 
 // In-flight dedup so concurrent renders share one sha fetch.
 let inflight: Promise<string | undefined> | undefined
@@ -40,10 +33,7 @@ async function loadLatestSha(client: Client): Promise<string | undefined> {
     // Sharing still works because the cache key derives from this
     // function's source plus keyParts, not its identity.
     const getSha = unstable_cache(
-      async () => {
-        const tree = await client.getTreeIfDifferent(SENTINEL_SHA)
-        return tree?.sha
-      },
+      () => client.getSha(),
       ['alinea-content-sha'],
       {revalidate: SHA_REVALIDATE_SECONDS, tags: [CONTENT_SHA_TAG]}
     )
@@ -51,8 +41,7 @@ async function loadLatestSha(client: Client): Promise<string | undefined> {
   } catch {
     // Outside Next runtime (tests, edge): direct fetch.
     try {
-      const tree = await client.getTreeIfDifferent(SENTINEL_SHA)
-      return tree?.sha
+      return await client.getSha()
     } catch {
       return undefined
     }

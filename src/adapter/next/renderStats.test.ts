@@ -3,6 +3,7 @@ import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
@@ -31,13 +32,43 @@ test('settles after queries that start later have finished', async () => {
 })
 
 test('settles without queries and stops waiting at the cap', async () => {
-  expect((await new RenderStats().settled(10)).rows).toEqual([])
+  expect(await new RenderStats().settled(10)).toMatchObject({
+    rows: [],
+    renderMs: 0
+  })
   const stats = new RenderStats()
   void stats.track({kind: 'sync', summary: 'sync'}, () => Bun.sleep(1000))
   const start = performance.now()
   const result = await stats.settled(10, 50)
   expect(performance.now() - start).toBeLessThan(500)
   expect(result.rows[0]).toMatchObject({kind: 'sync', durationMs: 0})
+})
+
+test('times queries that wait behind each other by their own execution', async () => {
+  const stats = new RenderStats()
+  // A connection that runs one query at a time, first in first out.
+  let queue = Promise.resolve()
+  function execute(ms: number) {
+    const done = queue.then(() => Bun.sleep(ms))
+    queue = done
+    return done
+  }
+  await Promise.all(
+    [40, 40, 40].map((ms, index) =>
+      stats.track({kind: 'query', summary: `q${index}`}, row =>
+        stats.executed(row, () => execute(ms))
+      )
+    )
+  )
+  const result = await stats.settled(10)
+  for (const row of result.rows) {
+    expect(row.durationMs).toBeGreaterThanOrEqual(35)
+    expect(row.durationMs).toBeLessThan(75)
+  }
+  // The render took as long as the queries in a row, not the sum of their
+  // waits: 40 + 80 + 120 ms from call to answer.
+  expect(result.renderMs).toBeGreaterThanOrEqual(115)
+  expect(result.renderMs).toBeLessThan(200)
 })
 
 test('summarizes a query by its mode and filters', () => {
@@ -66,7 +97,7 @@ test('statements count towards the request whose query ran them', async () => {
   const file = join(await mkdtemp(join(tmpdir(), 'alinea-stats-')), 'db')
   const sqlite = new Database(file)
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const database = new EntryDatabase(config, db)
   const seed = new EntryStore(config, database, new MemorySource())
   await seed.mutate(
@@ -85,7 +116,9 @@ test('statements count towards the request whose query ran them', async () => {
   const requests = new AsyncLocalStorage<RenderStats>()
   const store = await createGeneratedDatabase(
     config,
-    connect(new Database(file, {readonly: true}), {
+    await runtimeDatabase({
+      path: file,
+      overlay: true,
       logQuery: (_query, durationMs) =>
         requests.getStore()?.statement(durationMs)
     })

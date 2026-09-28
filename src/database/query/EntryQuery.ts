@@ -39,6 +39,8 @@ import {
 } from 'rado'
 import {
   EntryIndexTable,
+  isOrderedField,
+  orderedMetadata,
   storedEntryData,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
@@ -48,12 +50,7 @@ import {
   compileFilter,
   jsonField
 } from './Condition.js'
-import {
-  EntrySearchTable,
-  searchableText,
-  searchQuery,
-  type EntrySearchTarget
-} from './Search.js'
+import {searchableText, searchQuery} from './Search.js'
 
 import {linkRelation, relationCondition} from './Relation.js'
 
@@ -97,7 +94,6 @@ class Expressions {
   fields: Array<FieldProjection> = []
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
-  #searchTable: EntrySearchTarget
   #entry: EntryIndexTarget
   #relation?: (query: EdgeQuery) => CompiledRelation
   #scalar?: (query: EdgeQuery) => HasSql
@@ -105,14 +101,12 @@ class Expressions {
   constructor(
     scope: Scope,
     entry: EntryIndexTarget,
-    searchTable: EntrySearchTarget,
     search: ReturnType<typeof searchQuery> | undefined,
     relation?: (query: EdgeQuery) => CompiledRelation,
     scalar?: (query: EdgeQuery) => HasSql
   ) {
     this.#scope = scope
     this.#entry = entry
-    this.#searchTable = searchTable
     this.#search = search
     this.#relation = relation
     this.#scalar = scalar
@@ -130,7 +124,7 @@ class Expressions {
   index(name: string, path?: Array<string>, selecting = false): HasSql {
     if (path) return this.data([...path, name], selecting)
     if (name === 'searchableText') {
-      const text = searchableText(this.#entry, this.#searchTable)
+      const text = searchableText(this.#entry)
       // Relations select fields by name.
       return selecting ? text.as(name) : text
     }
@@ -285,7 +279,6 @@ interface EntryQueryOptions {
   entry?: EntryIndexTarget
   depth?: number
   baseEntry?: EntryIndexTarget
-  searchTable?: EntrySearchTarget
   /** Select the single expression of the query, to use it as a subquery */
   scalar?: boolean
 }
@@ -299,10 +292,9 @@ export function compileEntryQuery(
     source,
     entry = EntryIndexTable,
     depth = 0,
-    baseEntry = entry,
-    searchTable = EntrySearchTable
+    baseEntry = entry
   } = options
-  const search = options.search ?? searchQuery(query.search, entry, searchTable)
+  const search = options.search ?? searchQuery(query.search, entry)
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
@@ -318,7 +310,6 @@ export function compileEntryQuery(
         entry: alias(baseEntry, `alinea_scalar_${depth + 1}`),
         depth: depth + 1,
         baseEntry,
-        searchTable,
         scalar: true
       }
     )
@@ -327,7 +318,6 @@ export function compileEntryQuery(
   const membership = new Expressions(
     scope,
     entry,
-    searchTable,
     search,
     undefined,
     scalar
@@ -419,10 +409,10 @@ export function compileEntryQuery(
     throw new Error('groupBy must be a single field')
   const grouping = query.groupBy ? [membership.expr(query.groupBy)] : undefined
   const ordering: Array<HasSql> = []
-  const stableOrdering = links
-    ? [asc(links.ordinal)]
-    : [asc(entry.index), asc(entry.filePath)]
   let uniquelyOrdered = false
+  // Ties after a descending date or number follow its direction, so its field
+  // index covers the whole order and no rows need sorting.
+  let descendingTies = false
   if (query.orderBy) {
     for (const order of Array.isArray(query.orderBy)
       ? query.orderBy
@@ -434,6 +424,20 @@ export function compileEntryQuery(
       const ordersByFilePath =
         internal.type === 'entryField' && internal.name === 'filePath'
       const value = membership.expr(expression)
+      const ordersByIndex =
+        internal.type === 'field'
+          ? isOrderedField(expression)
+          : internal.type === 'entryField' &&
+            internal.path?.join() === 'metadata' &&
+            orderedMetadata.has(internal.name)
+      // The field index orders these as is: case folding cannot change the
+      // order of dates and numbers, and SQLite sorts nulls last for desc.
+      if (ordersByIndex) {
+        ordering.push(order.asc ? sql`${value} asc nulls last` : desc(value))
+        descendingTies = !order.asc
+        continue
+      }
+      descendingTies = false
       const collated = order.caseSensitive
         ? value
         : sql`${value} collate nocase`
@@ -456,6 +460,10 @@ export function compileEntryQuery(
       ? when([eq(entry.locale, source.locale), 0], 1)
       : undefined
   if (selfFirst) ordering.push(asc(sql.identifier('selfFirst')))
+  const tie = descendingTies ? desc : asc
+  const stableOrdering = links
+    ? [asc(links.ordinal)]
+    : [tie(entry.index), tie(entry.filePath)]
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
   function relation(relationQuery: EdgeQuery): CompiledRelation {
@@ -467,8 +475,7 @@ export function compileEntryQuery(
         source: entry,
         entry: nestedEntry,
         depth: depth + 1,
-        baseEntry,
-        searchTable
+        baseEntry
       }
     )
     if (plan.count) {
@@ -488,7 +495,6 @@ export function compileEntryQuery(
   const projection = new Expressions(
     scope,
     entry,
-    searchTable,
     search,
     relation,
     scalar
