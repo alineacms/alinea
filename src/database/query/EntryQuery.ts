@@ -257,6 +257,8 @@ interface EntryQueryOptions {
   entry?: EntryIndexTarget
   depth?: number
   baseEntry?: EntryIndexTarget
+  /** Wrap every row and carry its entry id next to the selection. */
+  withId?: boolean
 }
 
 export function compileEntryQuery(
@@ -517,7 +519,10 @@ export function compileEntryQuery(
   // Fields resolve their links in the locale of the entry they were read
   // from; the own language first is ordered by its selected column.
   const wrapped = Boolean(
-    projection.relations.length || projection.fields.length || selfFirst
+    options.withId ||
+    projection.relations.length ||
+    projection.fields.length ||
+    selfFirst
   )
   const plan: ProjectionPlan = {
     count: query.count === true,
@@ -532,6 +537,7 @@ export function compileEntryQuery(
         ? {
             value: selection,
             locale: entry.locale,
+            ...(options.withId ? {id: entry.id} : {}),
             ...(selfFirst ? {selfFirst} : {})
           }
         : selection
