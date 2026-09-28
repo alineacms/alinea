@@ -6,7 +6,7 @@ import path from 'node:path'
 
 const test = suite(import.meta)
 
-const helper = new URL('./RunForwarded.ts', import.meta.url).pathname
+const helper = new URL('./RunForwarded.ts', import.meta.url).href
 const forwarder = `
   import {runForwarded} from ${JSON.stringify(helper)}
   runForwarded(process.env.FORWARD_COMMAND)
@@ -58,7 +58,11 @@ async function waitFor<T>(check: () => T | undefined, timeout = 5000) {
   throw new Error('Timed out')
 }
 
-test('SIGTERM stops the whole tree', async () => {
+// Windows has neither signals to forward nor orphans: killing a process
+// terminates it at once, together with the children it started itself
+const treeTest = process.platform === 'win32' ? test.skip : test
+
+treeTest('SIGTERM stops the whole tree', async () => {
   const {child, pids} = startTree()
   const tree = await pids
   child.kill('SIGTERM')
@@ -66,7 +70,7 @@ test('SIGTERM stops the whole tree', async () => {
   await waitFor(() => !tree.some(isAlive), 3000)
 })
 
-test('stops the tree when the parent is killed', async () => {
+treeTest('stops the tree when the parent is killed', async () => {
   const {child, pids} = startTree({wrap: true})
   const tree = await pids
   child.kill('SIGKILL')
