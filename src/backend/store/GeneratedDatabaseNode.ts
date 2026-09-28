@@ -35,9 +35,6 @@ export function generatedDatabase(
         runtimeDatabase({
           path,
           overlay: true,
-          // During development the dev server keeps writing the file, which
-          // an overlay of it would lock; a copy syncs from the dev server.
-          copy: Boolean(process.env.ALINEA_DEV_SERVER),
           logQuery: (query, durationMs) =>
             loggers.get(config)?.(query, durationMs)
         })

@@ -8,11 +8,6 @@ export interface RuntimeDatabaseOptions extends DatabaseOptions {
   path: string
   /** Keep every write in memory: the file is never written. */
   overlay?: boolean
-  /**
-   * Overlay a copy of the file in memory instead of the file itself, for a
-   * file another connection writes: the native overlay locks writers out.
-   */
-  copy?: boolean
 }
 
 /**
@@ -23,10 +18,10 @@ export interface RuntimeDatabaseOptions extends DatabaseOptions {
 export async function runtimeDatabase(
   options: RuntimeDatabaseOptions
 ): Promise<DatabaseHandle> {
-  const {path, overlay, copy, ...rest} = options
+  const {path, overlay, ...rest} = options
   if (!overlay)
     return {database: await openNative(path, rest), driver: 'native'}
-  if (!copy && (await loadOverlayVfs())) return overlayDatabase(path, rest)
+  if (await loadOverlayVfs()) return overlayDatabase(path, rest)
   const {readFile} = await import('node:fs/promises')
   return openWasmDatabase(await readFile(path), rest)
 }

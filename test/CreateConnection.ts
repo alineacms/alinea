@@ -67,9 +67,6 @@ export function createTestConnection(
       users = users.filter(user => user.email?.toLowerCase() !== normalized)
       return Promise.resolve()
     },
-    write(request) {
-      return db.write(request)
-    },
     getTreeIfDifferent(sha) {
       return db.getTreeIfDifferent(sha)
     },

@@ -40,19 +40,10 @@ assert.equal(await count(fork), 2, 'a fork starts from committed state')
 await fork.database.run(sql`insert into items values (3)`)
 assert.equal(await count(overlay), 2, 'a fork writes only to itself')
 
-// An overlay locks writers of its file out until it closes.
+// An overlay locks writers of its file out until it closes: only the dev
+// server opens the file it writes.
 assert.throws(() => writer.exec('insert into items values (4)'), /locked/)
 await fork.database.close()
 await overlay.database.close()
 writer.exec('insert into items values (4)')
-
-// A copy of a file that is still written, as during development, leaves its
-// writer alone.
-const copy = await runtimeDatabase({path: file, overlay: true, copy: true})
-assert.equal(copy.driver, 'wasm')
-writer.exec('begin')
-writer.exec('insert into items values (5)')
-writer.exec('commit')
-assert.equal(await count(copy), 2, 'a copy keeps the state it read')
-await copy.database.close()
 writer.close()

@@ -12,6 +12,5 @@ export enum HandleAction {
   Upload = 'upload',
   Tree = 'tree',
   Sha = 'sha',
-  Commit = 'commit',
   Blob = 'blob'
 }

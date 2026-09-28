@@ -5,7 +5,10 @@ import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
-import {developmentKeyHeader} from '#/core/Connection.js'
+import {
+  developmentKeyHeader,
+  forwardedMutationHeader
+} from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
 import {fetch, Headers, Request, type Response} from '@alinea/iso'
 import type {BuildOptions} from 'esbuild'
@@ -182,11 +185,13 @@ export async function createDevServer(
   }
 }
 
-async function forwardMutation(
+export async function forwardMutation(
   request: Request,
   cms: CMS,
   apiKey: string
 ): Promise<Response | undefined> {
+  // The app ran its hooks and sent the mutation back to commit here.
+  if (request.headers.has(forwardedMutationHeader)) return
   const origin = forwardedRequestOrigin(request)
   if (!origin) return
   const source = new URL(request.url)

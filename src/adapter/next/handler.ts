@@ -7,16 +7,23 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
+import {HandleAction} from '#/backend/HandleAction.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
+import {Client} from '#/core/Client.js'
 import {Config} from '#/core/Config.js'
-import type {RequestContext} from '#/core/Connection.js'
+import {
+  developmentKeyHeader,
+  forwardedMutationHeader,
+  type RequestContext
+} from '#/core/Connection.js'
+import {HttpError} from '#/core/HttpError.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
-import {createDevRemote} from './DevRemote.js'
 import {revalidateContentSha} from './syncCheck.js'
 
 type Handler = (request: Request) => Promise<Response>
@@ -40,8 +47,7 @@ export function createHandlerWithDatabase(
       : options.backend
         ? backendFromOptions(options.backend)
         : (context: RequestContext) => new CloudRemote(context, config)
-  const remote = (context: RequestContext) =>
-    context.isDev ? createDevRemote(context, config) : backend(context, config)
+  const remote = (context: RequestContext) => backend(context, config)
   const span = trace(config, 'alinea.next.handler.db')
   const db = PLazy.from(() =>
     span(async () => {
@@ -56,19 +62,73 @@ export function createHandlerWithDatabase(
       return openGeneratedDatabase(config)
     })
   )
+  // Revalidate the shared content sha before the user-provided hook so page
+  // revalidation triggered there already sees the fresh sha when RSC renders
+  // resolve. Invalidation never throws (failures are swallowed inside
+  // revalidateContentSha).
+  const afterCommit: NonNullable<
+    HandlerHooks['afterCommit']
+  > = async context => {
+    await revalidateContentSha()
+    await options.afterCommit?.(context)
+  }
   const handleBackend = createCoreHandler({
     ...options,
     remote,
     db,
-    // Revalidate the shared content sha before the user-provided hook so
-    // page revalidation triggered there already sees the fresh sha when
-    // RSC renders resolve. Invalidation never throws (failures are
-    // swallowed inside revalidateContentSha).
-    afterCommit: async context => {
-      await revalidateContentSha()
-      await options.afterCommit?.(context)
-    }
+    afterCommit
   })
+
+  /**
+   * During development the dev server owns the database and answers the
+   * dashboard. It forwards mutations here only to run this app's commit
+   * hooks around them, and commits them itself.
+   */
+  async function handleDevelopment(
+    request: Request,
+    context: RequestContext
+  ): Promise<Response> {
+    const action = new URL(request.url).searchParams.get('action')
+    if (action !== HandleAction.Mutate || request.method !== 'POST')
+      return failure(404, 'Answered by the Alinea dev server')
+    const developmentKey = request.headers.get(developmentKeyHeader)
+    if (!context.apiKey || developmentKey !== context.apiKey)
+      return failure(401, 'Invalid development credentials')
+    let mutations: Array<Mutation>
+    try {
+      mutations = await request.json()
+    } catch {
+      return failure(400, 'Expected JSON')
+    }
+    if (!Array.isArray(mutations)) return failure(400, 'Expected mutations')
+    const adjusted = await options.beforeCommit?.({mutations})
+    if (adjusted) mutations = [...adjusted]
+    const devServer = new Client({
+      config,
+      url: context.handlerUrl.href,
+      applyAuth(init) {
+        const authorized = context.applyAuth?.(init) ?? init ?? {}
+        const headers = new Headers(authorized.headers)
+        // The dev server commits these itself instead of forwarding them.
+        headers.set(forwardedMutationHeader, 'true')
+        return {...authorized, headers}
+      }
+    })
+    let sha: string
+    try {
+      ;({sha} = await devServer.mutate(mutations))
+    } catch (error) {
+      // Report what the dev server rejected, such as a missing permission.
+      if (error instanceof HttpError) return failure(error.code, error.message)
+      throw error
+    }
+    try {
+      await afterCommit({mutations, sha})
+    } catch (error) {
+      console.error('Alinea afterCommit hook failed', error)
+    }
+    return Response.json({sha})
+  }
   const handle: Handler = async request => {
     const url = new URL(request.url)
     const context = await requestContext(config, request)
@@ -80,6 +140,12 @@ export function createHandlerWithDatabase(
         backendUrl.pathname = handlerPath
         backendUrl.searchParams.set('file', rewrittenFile)
         backendUrl.searchParams.set('delivery', 'proxy')
+        if (context.isDev) {
+          // The dev server serves media from the database it owns.
+          const devUrl = new URL(context.handlerUrl)
+          devUrl.search = backendUrl.search
+          return Response.redirect(devUrl, 307)
+        }
         return await handleBackend(new Request(backendUrl, request), context)
       }
       if (url.pathname !== handlerPath)
@@ -111,6 +177,7 @@ export function createHandlerWithDatabase(
           headers: {location: String(location)}
         })
       }
+      if (context.isDev) return await handleDevelopment(request, context)
       return await handleBackend(request, context)
     } catch (error) {
       console.error(error)
@@ -118,6 +185,11 @@ export function createHandlerWithDatabase(
     }
   }
   return handle
+}
+
+/** An error response in the shape the core handler answers with. */
+function failure(status: number, error: string): Response {
+  return Response.json({success: false, error}, {status})
 }
 
 export function handlerPathname(config: Config, requestUrl: URL): string {
