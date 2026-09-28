@@ -96,6 +96,12 @@ async function overlayDatabase(
     let uri = `${file}?vfs=overlay&overlay=${name}`
     if (from) uri += `&from=${from}`
     const client = new DatabaseSync(uri)
+    // Read the pages this overlay has not changed straight from the
+    // memory-mapped file: on a cold volume (a fresh serverless instance) this
+    // turns hundreds of small reads per render into a few large ones. The
+    // setting is per connection, so every fork sets it again. It is a
+    // ceiling, not an allocation: only the file's actual size is mapped.
+    client.exec('pragma mmap_size = 268435456')
     return {
       database: connect(client as Parameters<typeof connect>[0], options),
       driver: 'overlay',
