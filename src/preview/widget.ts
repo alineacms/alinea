@@ -11,6 +11,28 @@ export interface PreviewStat {
    * syncs and queries the handler answers.
    */
   durationMs: number
+  /** SQL statements this row's work ran, such as a preview's sync. */
+  statements?: number
+  sqlMs?: number
+}
+
+/** One of the slowest SQL statements of a render. */
+export interface PreviewStatement {
+  /** The statement, shortened */
+  sql: string
+  durationMs: number
+  /** Summary of the query or sync that ran it */
+  query?: string
+}
+
+/** The bundled database that answered the render's queries. */
+export interface PreviewDatabase {
+  /** The native overlay, the native file, or the WASM copy */
+  driver?: string
+  /** Time this process took to open it */
+  openMs: number
+  /** Whether this render waited for it to open */
+  cold: boolean
 }
 
 /** The CMS work of one render, shown in the widget. */
@@ -21,6 +43,8 @@ export interface PreviewStats {
   sqlMs: number
   /** Time from the first query or sync of the render until the last settled. */
   renderMs: number
+  slowest?: Array<PreviewStatement>
+  database?: PreviewDatabase
 }
 
 export function registerPreviewWidget() {
@@ -224,19 +248,37 @@ export function registerPreviewWidget() {
 
     #logStats = () => {
       if (!this.#stats) return
-      const {rows, statements, sqlMs, renderMs} = this.#stats
+      const {rows, statements, sqlMs, renderMs, slowest, database} = this.#stats
       const table: Array<Record<string, unknown>> = rows.map(row => ({
         type: row.kind,
         what: row.summary,
         source: row.source ?? '',
-        ms: round(row.durationMs)
+        ms: round(row.durationMs),
+        statements: row.statements ?? '',
+        sqlMs: row.sqlMs === undefined ? '' : round(row.sqlMs)
       }))
+      if (database)
+        table.push({
+          type: 'database',
+          what: `${database.driver ?? 'unknown driver'}, ${database.cold ? 'opened during this render' : 'already open'}`,
+          source: 'database',
+          ms: round(database.openMs)
+        })
+      for (const statement of slowest ?? [])
+        table.push({
+          type: 'slow sql',
+          what: statement.sql,
+          source: statement.query ?? '',
+          ms: round(statement.durationMs)
+        })
       if (statements)
         table.push({
           type: 'sql',
           what: `${statements} statements`,
           source: 'database',
-          ms: round(sqlMs)
+          ms: round(sqlMs),
+          statements,
+          sqlMs: round(sqlMs)
         })
       table.push({
         type: 'render',

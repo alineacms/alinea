@@ -19,7 +19,8 @@ export async function runtimeDatabase(
   options: RuntimeDatabaseOptions
 ): Promise<DatabaseHandle> {
   const {path, overlay, ...rest} = options
-  if (!overlay) return {database: await openNative(path, rest)}
+  if (!overlay)
+    return {database: await openNative(path, rest), driver: 'native'}
   if (await loadOverlayVfs()) return overlayDatabase(path, rest)
   const {readFile} = await import('node:fs/promises')
   return openWasmDatabase(await readFile(path), rest)
@@ -97,6 +98,7 @@ async function overlayDatabase(
     const client = new DatabaseSync(uri)
     return {
       database: connect(client as Parameters<typeof connect>[0], options),
+      driver: 'overlay',
       fork: async () => open(name)
     }
   }

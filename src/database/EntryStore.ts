@@ -24,6 +24,7 @@ import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {EntryDatabase, type EntryChangeListener} from './EntryDatabase.js'
+import type {DatabaseDriver} from './driver/DatabaseHandle.js'
 import {openWasmDatabase} from './driver/WasmDatabase.js'
 import {DatabaseSource} from './DatabaseSource.js'
 
@@ -36,6 +37,7 @@ interface PreviewOverlay {
 export interface EntryStoreOptions {
   ownsDatabase?: boolean
   sourceFollowsDatabase?: boolean
+  driver?: DatabaseDriver
 }
 
 /** Source and commit lifecycle around the transport-neutral SQLite database. */
@@ -47,6 +49,7 @@ export class EntryStore
   config: Config
   readonly database: EntryDatabase
   readonly source: Source
+  readonly driver?: DatabaseDriver
   #ownsDatabase: boolean
   #sourceFollowsDatabase: boolean
   #queue = new TaskQueue()
@@ -64,6 +67,7 @@ export class EntryStore
     this.config = config
     this.database = database
     this.source = source
+    this.driver = options.driver
     this.#ownsDatabase = options.ownsDatabase ?? false
     this.#sourceFollowsDatabase = options.sourceFollowsDatabase ?? false
   }

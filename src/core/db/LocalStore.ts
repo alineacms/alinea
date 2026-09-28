@@ -16,6 +16,8 @@ export interface SyncOptions {
  */
 export interface LocalStore extends WriteableGraph, RemoteSource {
   source: Source
+  /** How the store reads its database, when it is a SQLite connection. */
+  driver?: 'native' | 'overlay' | 'wasm'
   sha: string | Promise<string>
   sync(): Promise<string>
   syncWith(remote: RemoteSource, options?: SyncOptions): Promise<string>

@@ -55,6 +55,8 @@ export class NextCMS<
 > extends CMS<Definition> {
   bundledDb: PLazy<LocalStore>
   #syncedAt: number | undefined
+  /** How the bundled database opened, once it did. */
+  #opened?: {driver?: string; openMs: number; readyAt: number}
 
   constructor(config: Definition, openBundledDatabase?: OpenBundledDatabase) {
     super(config)
@@ -68,14 +70,21 @@ export class NextCMS<
           "A bundled database loader is required. Import createCMS from 'alinea/next'."
         )
       const span = trace(this.config, 'alinea.next.cms.db')
-      return span(() =>
+      const start = performance.now()
+      const db = await span(() =>
         openBundledDatabase(this.config, {
           // Statements run in the async context of the query that caused
           // them, which carries the React request of the render.
-          logQuery: (_query, durationMs) =>
-            this.#render().stats?.statement(durationMs)
+          logQuery: (query, durationMs) =>
+            this.#render().stats?.statement(durationMs, query.sql)
         })
       )
+      this.#opened = {
+        driver: db.driver,
+        openMs: performance.now() - start,
+        readyAt: Date.now()
+      }
+      return db
     })
   }
 
@@ -223,6 +232,13 @@ export class NextCMS<
     }
     const db = await this.bundledDb
     const stats = this.#render().stats
+    const opened = this.#opened
+    if (stats && opened)
+      stats.database ??= {
+        driver: opened.driver,
+        openMs: opened.openMs,
+        cold: opened.readyAt >= stats.startedAt
+      }
     // Time the answer only: a sync it waited for has a row of its own.
     const answer = () =>
       stats && row

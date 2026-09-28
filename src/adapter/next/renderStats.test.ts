@@ -14,7 +14,12 @@ import {mkdtemp} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {connect} from 'rado/driver/bun-sqlite'
-import {RenderStats, summarizeQuery, timed} from './renderStats.js'
+import {
+  RenderStats,
+  summarizeQuery,
+  summarizeSql,
+  timed
+} from './renderStats.js'
 
 test('settles after queries that start later have finished', async () => {
   const stats = new RenderStats()
@@ -150,4 +155,72 @@ test('statements count towards the request whose query ran them', async () => {
   } finally {
     await store.close()
   }
+})
+
+test('counts statements towards the row whose work ran them', async () => {
+  const stats = new RenderStats()
+  // A connection that runs one task at a time, first in first out, and
+  // logs its statements while it does.
+  let queue = Promise.resolve()
+  function execute(statements: Array<[number, string]>) {
+    const done = queue.then(async () => {
+      for (const [ms, sql] of statements) {
+        await Bun.sleep(1)
+        stats.statement(ms, sql)
+      }
+    })
+    queue = done
+    return done
+  }
+  await Promise.all([
+    // A sync the render waits for counts towards its own row.
+    stats.track({kind: 'sync', summary: 'sync'}, row =>
+      timed(row, () => execute([[8, 'insert into alinea_entry_index']]))
+    ),
+    stats.track({kind: 'query', summary: 'a'}, row =>
+      stats.executed(row, () =>
+        execute([
+          [1, 'select 1'],
+          [2, 'select 2']
+        ])
+      )
+    ),
+    stats.track({kind: 'query', summary: 'b'}, row =>
+      stats.executed(row, () => execute([[4, 'select 4']]))
+    )
+  ])
+  const result = await stats.settled(10)
+  expect(
+    result.rows.map(row => [row.summary, row.statements, row.sqlMs])
+  ).toEqual([
+    ['sync', 1, 8],
+    ['a', 2, 3],
+    ['b', 1, 4]
+  ])
+  expect(result.statements).toBe(4)
+  expect(result.slowest?.map(s => [s.durationMs, s.query])).toEqual([
+    [8, 'sync'],
+    [4, 'b'],
+    [2, 'a'],
+    [1, 'a']
+  ])
+})
+
+test('keeps only the slowest statements', () => {
+  const stats = new RenderStats()
+  for (const ms of [3, 9, 1, 7, 5, 8, 2]) stats.statement(ms, `select ${ms}`)
+  expect(stats.slowest.map(s => s.durationMs)).toEqual([9, 8, 7, 5, 3])
+})
+
+test('summarizes a statement by its tables and conditions', () => {
+  expect(
+    summarizeSql(`select "alinea_entry_index"."id" as "_id",
+      "alinea_entry_index"."data"->'$."title"' as "title"
+      from "alinea_entry_index"
+      where ("alinea_entry_index"."visible" = ? and "alinea_entry_index"."id" in (?, ?))
+      order by "alinea_entry_index"."index" asc`)
+  ).toBe(
+    `select … from alinea_entry_index where (visible = ? and id in (?, ?)) order by index asc`
+  )
+  expect(summarizeSql('x'.repeat(300))).toHaveLength(200)
 })

@@ -15,6 +15,7 @@ function wasmHandle(
 ): WasmDatabaseHandle {
   return {
     database: connect(sqlite, options),
+    driver: 'wasm',
     fork: async () => wasmHandle(sqlite.fork(), options),
     export: () => sqlite.export()
   }
