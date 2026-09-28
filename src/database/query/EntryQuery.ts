@@ -315,13 +315,7 @@ export function compileEntryQuery(
     )
     return sql`(${getQuery(rows)})`
   }
-  const membership = new Expressions(
-    scope,
-    entry,
-    search,
-    undefined,
-    scalar
-  )
+  const membership = new Expressions(scope, entry, search, undefined, scalar)
   const queryTypes: Array<Type> = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
@@ -492,13 +486,7 @@ export function compileEntryQuery(
       plan
     }
   }
-  const projection = new Expressions(
-    scope,
-    entry,
-    search,
-    relation,
-    scalar
-  )
+  const projection = new Expressions(scope, entry, search, relation, scalar)
   const selection = query.count
     ? entry.versionId
     : options.scalar
