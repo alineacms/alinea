@@ -9,7 +9,8 @@ const rootDir = resolve(fileURLToPath(new URL('..', import.meta.url)))
 export default defineConfig({
   testDir: rootDir,
   testMatch: ['src/**/*.spec.tsx', 'test/**/*.spec.tsx'],
-  testIgnore: ['**/private/**', '**/node_modules/**'],
+  // Worktrees of agents are checked out under .claude.
+  testIgnore: ['**/private/**', '**/node_modules/**', '**/.claude/**'],
   workers: 3,
   use: {
     ctTemplateDir: '.',
