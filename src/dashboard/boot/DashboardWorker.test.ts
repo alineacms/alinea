@@ -8,9 +8,8 @@ import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
 import {expect, test} from 'bun:test'
-import {indexedDB} from 'fake-indexeddb'
+import {IDBFactory, IDBKeyRange, indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
-import {versionedCacheName} from '#/database/Version.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
 test('loads local state without starting a remote sync', async () => {
@@ -642,12 +641,7 @@ async function createFailedMutationFixture() {
 }
 
 test('a sync queued on a superseded browser store syncs the replacement', async () => {
-  const previous = Object.getOwnPropertyDescriptor(globalThis, 'indexedDB')
-  Object.defineProperty(globalThis, 'indexedDB', {
-    value: indexedDB,
-    configurable: true,
-    writable: true
-  })
+  const restore = installIndexedDB()
   try {
     const fixture = new FSSource('test/fixtures/demo')
     const remoteDB = new LocalDB(cms.config, fixture)
@@ -692,18 +686,12 @@ test('a sync queued on a superseded browser store syncs the replacement', async 
     expect(sha).toBe(await worker.sha())
     expect(secondRemoteSyncs).toBeGreaterThanOrEqual(1)
   } finally {
-    if (previous) Object.defineProperty(globalThis, 'indexedDB', previous)
-    else delete (globalThis as {indexedDB?: unknown}).indexedDB
+    restore()
   }
 })
 
-test('a new dashboard build keeps the cached content and syncs an empty replacement first', async () => {
-  const previous = Object.getOwnPropertyDescriptor(globalThis, 'indexedDB')
-  Object.defineProperty(globalThis, 'indexedDB', {
-    value: indexedDB,
-    configurable: true,
-    writable: true
-  })
+test('a new dashboard build keeps the cached content', async () => {
+  const restore = installIndexedDB()
   try {
     const fixture = new FSSource('test/fixtures/demo')
     const remoteDB = new LocalDB(cms.config, fixture)
@@ -729,31 +717,61 @@ test('a new dashboard build keeps the cached content and syncs an empty replacem
     expect(await (await worker.db).get(query)).toMatchObject({
       title: 'Chocolate chip'
     })
-
-    // Without a cache the replacement syncs before it answers a query. The
-    // record is cleared rather than the database deleted, which would block
-    // on the store that still holds it open.
-    const cache = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(
-        versionedCacheName('alinea-entry-database')
-      )
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
-    await new Promise<void>((resolve, reject) => {
-      const transaction = cache.transaction('database', 'readwrite')
-      transaction.objectStore('database').delete('entries')
-      transaction.oncomplete = () => resolve()
-      transaction.onerror = () => reject(transaction.error)
-    })
-    cache.close()
-    await worker.load('build-3', cms.config, client)
-    expect(remoteSyncs).toBe(2)
-    expect(await (await worker.db).get(query)).toMatchObject({
-      title: 'Chocolate chip'
-    })
   } finally {
-    if (previous) Object.defineProperty(globalThis, 'indexedDB', previous)
-    else delete (globalThis as {indexedDB?: unknown}).indexedDB
+    restore()
   }
 })
+
+test('a new dashboard build syncs before replacing a store without content', async () => {
+  const restore = installIndexedDB()
+  try {
+    const fixture = new FSSource('test/fixtures/demo')
+    const remoteDB = new LocalDB(cms.config, fixture)
+    await remoteDB.sync()
+    const baseClient = createTestConnection(remoteDB)
+    let remoteSyncs = 0
+    const client: LocalConnection = {
+      ...baseClient,
+      getTreeIfDifferent(sha) {
+        remoteSyncs += 1
+        return baseClient.getTreeIfDifferent(sha)
+      }
+    }
+    const worker = new DashboardWorker()
+    // Replaced before it ever synced, the store hands over no content.
+    await worker.load('build-1', cms.config, client)
+    expect(remoteSyncs).toBe(0)
+    await worker.load('build-2', cms.config, client)
+    expect(remoteSyncs).toBe(1)
+    expect(
+      await (
+        await worker.db
+      ).get({
+        type: cms.schema.DemoRecipe,
+        path: 'chocolate-chip'
+      })
+    ).toMatchObject({title: 'Chocolate chip'})
+  } finally {
+    restore()
+  }
+})
+
+/** Install an empty IndexedDB as a worker has it, until the returned call. */
+function installIndexedDB(): () => void {
+  const globals = {indexedDB: new IDBFactory(), IDBKeyRange}
+  const previous = new Map<string, PropertyDescriptor | undefined>()
+  for (const [key, value] of Object.entries(globals)) {
+    previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
+    Object.defineProperty(globalThis, key, {
+      value,
+      configurable: true,
+      writable: true
+    })
+  }
+  return () => {
+    for (const [key, descriptor] of previous) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor)
+      else delete (globalThis as Record<string, unknown>)[key]
+    }
+  }
+}

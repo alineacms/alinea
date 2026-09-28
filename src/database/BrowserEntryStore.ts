@@ -5,111 +5,140 @@ import type {SyncOptions} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {TaskQueue} from '#/core/util/Async.js'
-import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
+import type {Storage} from '@alinea/sqlite-wasm/Database.js'
+import {indexedDBStorage} from '@alinea/sqlite-wasm/indexeddb'
+import {sql, type Database} from 'rado'
 import {versionedCacheName} from './Version.js'
 import {EntryDatabase} from './EntryDatabase.js'
 import {EntryStore} from './EntryStore.js'
 import {DatabaseSource} from './DatabaseSource.js'
 import {
-  openWasmDatabase,
+  syncWasmDatabase,
   type WasmDatabaseHandle
 } from './driver/WasmDatabase.js'
 
-const storeName = 'database'
-const databaseKey = 'entries'
-
-interface StoredDatabase {
-  revision: string
-  data: Uint8Array
-}
+/** The dashboard build that last derived the stored entries. */
+const buildTable = sql.identifier('alinea_dashboard_build')
 
 export interface BrowserEntryStoreOptions {
-  indexedDB: IDBFactory
   name: string
   revision: string
+  /**
+   * The store this one replaces, such as one of a previous dashboard build:
+   * its content carries over from memory instead of loading it again, and it
+   * stops storing without waiting for its work in flight.
+   */
+  replaces?: BrowserEntryStore
+  /** The IndexedDB implementation, the global one by default. */
+  indexedDB?: IDBFactory
+  IDBKeyRange?: typeof IDBKeyRange
 }
 
-/** WASM entry store persisted as one SQLite file in IndexedDB. */
+/**
+ * WASM entry store kept in IndexedDB: every commit stores the pages it
+ * changed.
+ */
 export class BrowserEntryStore extends EntryStore {
   #handle: WasmDatabaseHandle
-  #cache: IDBDatabase
   #indexedDB: IDBFactory
   #baseName: string
-  #cacheName: string
-  #revision: string
-  #persistedSha: string | undefined
+  #storageName: string
   #persistQueue = new TaskQueue()
   #closed = false
+  #detached = false
 
   static async open(
     config: Config,
-    options: BrowserEntryStoreOptions
+    options: BrowserEntryStoreOptions,
+    retried = false
   ): Promise<BrowserEntryStore> {
-    const cacheName = versionedCacheName(options.name)
-    const cache = await openCache(options.indexedDB, cacheName)
-    const stored = await readDatabase(cache)
-    const data = stored?.data
+    const factory = options.indexedDB ?? indexedDB
+    const storageName = storageNameOf(options.name)
+    const storage = indexedDBStorage(storageName, {
+      indexedDB: factory,
+      IDBKeyRange: options.IDBKeyRange ?? IDBKeyRange
+    })
     let handle: WasmDatabaseHandle | undefined
     try {
-      handle = await openWasmDatabase(data)
-      await EntryDatabase.createSchema(
-        handle.database,
-        config,
-        ReadonlyTree.EMPTY.sha
-      )
-      const database = new EntryDatabase(config, handle.database, {
-        fork: handle.fork
-      })
-      // A file persisted by another dashboard build keeps its content and
-      // derives it again with this build's config, instead of syncing every
-      // entry from the remote into an empty database.
-      const reused = stored?.revision === options.revision
-      if (data && !reused) await database.reindex(config)
+      handle = options.replaces
+        ? await options.replaces.#handOver(storage)
+        : await syncWasmDatabase(storage)
+      const db = handle.database
+      const stored = await storedBuild(db)
+      await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+      const database = new EntryDatabase(config, db, {fork: handle.fork})
+      // Content stored by another dashboard build is derived again with this
+      // build's config, instead of syncing every entry from the remote into
+      // an empty database.
+      if (stored !== undefined && stored !== options.revision)
+        await database.reindex(config)
+      if (stored !== options.revision)
+        await db.run(
+          sql`insert or replace into ${buildTable} (id, revision)
+            values (1, ${options.revision})`
+        )
+      await handle.flush()
       return new BrowserEntryStore(
         config,
         database,
         handle,
-        cache,
-        options.indexedDB,
+        factory,
         options.name,
-        cacheName,
-        options.revision,
-        reused ? await database.getRevision() : undefined
+        storageName
       )
     } catch (error) {
       if (handle) await handle.database.close()
-      if (data) {
-        await deleteDatabase(cache)
-        cache.close()
-        return BrowserEntryStore.open(config, options)
-      }
-      cache.close()
+      if (retried) throw error
+      // Start over from an empty database rather than keep one this build
+      // cannot read, such as a stored one that is corrupt (SQLITE_CORRUPT).
+      await storage.delete()
+      return BrowserEntryStore.open(
+        config,
+        {...options, replaces: undefined},
+        true
+      )
+    }
+  }
+
+  /**
+   * Copy this store's database for a replacement stored in `storage`, and
+   * stop storing this one. The replacement is stored once this store's
+   * commits so far are written.
+   */
+  async #handOver(storage: Storage): Promise<WasmDatabaseHandle> {
+    const copy = await this.database.whileIdle(() => this.#handle.fork())
+    this.#detach()
+    try {
+      await copy.attach(storage)
+      return copy
+    } catch (error) {
+      await copy.database.close()
       throw error
     }
+  }
+
+  #detach(): void {
+    if (this.#detached) return
+    this.#detached = true
+    this.#handle.detach()
   }
 
   private constructor(
     config: Config,
     database: EntryDatabase,
     handle: WasmDatabaseHandle,
-    cache: IDBDatabase,
-    indexedDB: IDBFactory,
+    factory: IDBFactory,
     baseName: string,
-    cacheName: string,
-    revision: string,
-    persistedSha: string | undefined
+    storageName: string
   ) {
     super(config, database, new DatabaseSource(database), {
       ownsDatabase: true,
       sourceFollowsDatabase: true
     })
     this.#handle = handle
-    this.#cache = cache
-    this.#indexedDB = indexedDB
+    this.#indexedDB = factory
     this.#baseName = baseName
-    this.#cacheName = cacheName
-    this.#revision = revision
-    this.#persistedSha = persistedSha
+    this.#storageName = storageName
   }
 
   override sync(): Promise<string> {
@@ -131,64 +160,67 @@ export class BrowserEntryStore extends EntryStore {
     return this.#persistAfter(() => super.write(request))
   }
 
-  /** Persist the SQLite file after a task that moved this store's revision. */
-  #persistAfter<T extends string | {sha: string}>(
-    task: () => Promise<T>
-  ): Promise<T> {
+  /** Resolve once the commits of a task that changed this store are stored. */
+  #persistAfter<T>(task: () => Promise<T>): Promise<T> {
     if (this.#closed)
       return Promise.reject(new Error('BrowserEntryStore is closed'))
     return this.#persistQueue.run(async () => {
       const result = await task()
-      await this.#save(typeof result === 'string' ? result : result.sha)
+      await this.#handle.flush()
       return result
     })
   }
 
-  async #save(sha: string): Promise<void> {
-    if (sha === this.#persistedSha) return
-    const record: StoredDatabase = {
-      revision: this.#revision,
-      data: this.#handle.export()
-    }
-    const transaction = this.#cache.transaction(storeName, 'readwrite')
-    transaction.objectStore(storeName).put(record, databaseKey)
-    await transactionComplete(transaction)
-    this.#persistedSha = sha
-  }
-
   override close(): Promise<void> {
-    return this.#shutdown(true)
-  }
-
-  /** Close a superseded store without persisting stale bytes over its
-   * replacement's cache. Supersede always implies a revision change, so the
-   * persisted revision would be discarded on the next open anyway. */
-  abandon(): Promise<void> {
-    return this.#shutdown(false)
-  }
-
-  #shutdown(persist: boolean): Promise<void> {
     if (this.#closed) return this.#persistQueue.drain()
     this.#closed = true
     return this.#persistQueue.run(async () => {
       try {
-        if (persist) await this.#save(await this.sha)
+        await super.close()
       } finally {
-        await this.#teardown()
+        await cleanupOldCaches(
+          this.#indexedDB,
+          this.#baseName,
+          this.#storageName
+        )
       }
     })
   }
 
-  async #teardown(): Promise<void> {
-    try {
-      await super.close()
-    } finally {
-      this.#cache.close()
-      await cleanupOldCaches(this.#indexedDB, this.#baseName, this.#cacheName)
-    }
+  /**
+   * Close a store that a replacement took over from: its work in flight
+   * changes only its memory copy, which is not stored.
+   */
+  abandon(): Promise<void> {
+    this.#detach()
+    if (this.#closed) return this.#persistQueue.drain()
+    this.#closed = true
+    return this.#persistQueue.run(() => super.close())
   }
 }
 
+function storageNameOf(name: string): string {
+  return `${versionedCacheName(name)}-pages`
+}
+
+async function storedBuild(db: Database): Promise<string | undefined> {
+  await db.run(sql`create table if not exists ${buildTable} (
+    id integer primary key,
+    revision text not null
+  )`)
+  const row = await db.get<{revision: string}>(
+    sql`select revision from ${buildTable} where id = 1`
+  )
+  if (row) return row.revision
+  // Entries without a recorded build were stored by an interrupted open.
+  const entries = await db.get<{count: number}>(
+    sql`select count(*) as count from sqlite_master
+      where type = 'table' and name = 'alinea_entry_index'`
+  )
+  return entries?.count ? '' : undefined
+}
+
+/** Delete the IndexedDB databases of other Alinea versions and layouts. */
 async function cleanupOldCaches(
   factory: IDBFactory,
   baseName: string,
@@ -213,25 +245,4 @@ function deleteCache(factory: IDBFactory, name: string): Promise<void> {
     request.onerror = () => resolve()
     request.onblocked = () => resolve()
   })
-}
-
-function openCache(factory: IDBFactory, name: string): Promise<IDBDatabase> {
-  const request = factory.open(name, 1)
-  request.onupgradeneeded = () => request.result.createObjectStore(storeName)
-  return requestResult(request)
-}
-
-function readDatabase(db: IDBDatabase): Promise<StoredDatabase | undefined> {
-  return requestResult<StoredDatabase | undefined>(
-    db
-      .transaction(storeName, 'readonly')
-      .objectStore(storeName)
-      .get(databaseKey)
-  )
-}
-
-function deleteDatabase(db: IDBDatabase): Promise<void> {
-  const transaction = db.transaction(storeName, 'readwrite')
-  transaction.objectStore(storeName).delete(databaseKey)
-  return transactionComplete(transaction)
 }

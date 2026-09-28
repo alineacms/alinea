@@ -51,6 +51,8 @@ export class DashboardWorker extends EventTarget {
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<LoadedDashboard>()
   #defer: (() => Promise<void>) | undefined
+  /** The store kept in IndexedDB, which a replacement takes over from. */
+  #stored: BrowserEntryStore | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
   #activities: Array<Activity> = []
@@ -339,19 +341,24 @@ export class DashboardWorker extends EventTarget {
     this.#localDB = undefined
     this.#localClient = undefined
     try {
+      // A replacement takes over the stored content from the replaced
+      // store's memory, which then stops storing without waiting for its
+      // work in flight.
       const db = globalThis.indexedDB
         ? await BrowserEntryStore.open(config, {
-            indexedDB: globalThis.indexedDB,
             name: 'alinea-entry-database',
-            revision
+            revision,
+            replaces: this.#stored
           })
         : await EntryStore.memory(config, this.#fallbackSource())
+      if (db instanceof BrowserEntryStore) this.#stored = db
       // The replaced store closes in the background: awaiting it here would
       // stall the replacement behind the old store's in-flight work.
       if (this.#defer)
         void this.#defer().catch(() => {
           // The replaced database finishes outstanding work before closing.
         })
+      this.#defer = undefined
       const cacheFailure = await this.#syncLocalIndex(db)
       // A replacement without cached content syncs before it takes over, so
       // the dashboard never swaps from a populated store to an empty one.
@@ -375,8 +382,7 @@ export class DashboardWorker extends EventTarget {
       })
       this.#defer = async () => {
         unsubscribe()
-        // A superseded store must not persist its stale bytes over the
-        // replacement's cache entry.
+        // A replacement took over storing from a superseded store.
         if (db instanceof BrowserEntryStore) await db.abandon()
         else await db.close()
       }
