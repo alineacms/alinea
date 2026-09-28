@@ -281,6 +281,8 @@ interface EntryQueryOptions {
   baseEntry?: EntryIndexTarget
   /** Select the single expression of the query, to use it as a subquery */
   scalar?: boolean
+  /** Wrap every row and carry its entry id next to the selection. */
+  withId?: boolean
 }
 
 export function compileEntryQuery(
@@ -563,7 +565,10 @@ export function compileEntryQuery(
   const wrapped =
     !options.scalar &&
     Boolean(
-      projection.relations.length || projection.fields.length || selfFirst
+      options.withId ||
+      projection.relations.length ||
+      projection.fields.length ||
+      selfFirst
     )
   const plan: ProjectionPlan = {
     count: query.count === true,
@@ -579,6 +584,7 @@ export function compileEntryQuery(
         ? {
             value: selection,
             locale: entry.locale,
+            ...(options.withId ? {id: entry.id} : {}),
             ...(selfFirst ? {selfFirst} : {})
           }
         : selection

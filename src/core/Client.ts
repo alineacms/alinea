@@ -14,7 +14,6 @@ import type {
   UploadMetadata,
   UploadResponse
 } from './Connection.js'
-import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
@@ -225,15 +224,6 @@ export class Client implements LocalConnection {
       )
     if (!response.body) throw new Error('Missing blob response body')
     yield* decodeBlobSequence(response.body, options)
-  }
-
-  // Commit
-
-  write(request: CommitRequest): Promise<{sha: string}> {
-    return this.#requestJson(
-      {action: HandleAction.Commit},
-      {method: 'POST', body: JSON.stringify(request)}
-    ).then<{sha: string}>(this.#failOnHttpError)
   }
 
   // Drafts

@@ -7,9 +7,9 @@ import {createCMS} from '#/core.js'
 import type {
   AuthOptions,
   AuthedContext,
-  RequestContext
+  RequestContext,
+  Revision
 } from '#/core/Connection.js'
-import {developmentKeyHeader, type Revision} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -970,77 +970,6 @@ test('retries a forwarded commit conflict by response status', async () => {
   test.is(afterCommits, 1)
 })
 
-test('accepts authenticated commits only in development', async () => {
-  const cms = createCMS({
-    schema: {Page},
-    workspaces: {main}
-  })
-  const db = new LocalDB(cms.config)
-  await db.sync()
-  const tree = await db.source.getTree()
-  const commit = {
-    fromSha: tree.sha,
-    intoSha: tree.sha,
-    description: 'Empty commit',
-    user: {roles: ['admin'], sub: 'spoofed'},
-    changes: []
-  }
-  let committedUser: User | undefined
-  const handle = createHandler({
-    cms,
-    db,
-    remote(context) {
-      return composeBackend(db, {
-        async verify(): Promise<AuthedContext> {
-          return {
-            ...context,
-            token: 'test',
-            user: {roles: ['admin'], sub: 'admin'}
-          }
-        },
-        async write(request) {
-          committedUser = request.user
-          return db.write(request)
-        }
-      })
-    }
-  })
-
-  const accepted = await handle(commitRequest(commit, 'test'), requestContext())
-  test.is(accepted.status, 200)
-  test.equal(committedUser, {roles: ['admin'], sub: 'admin'})
-
-  const rejected = await handle(commitRequest(commit), requestContext())
-  test.is(rejected.status, 401)
-
-  const production = await handle(commitRequest(commit, 'test'), {
-    ...requestContext(),
-    isDev: false
-  })
-  test.is(production.status, 400)
-  test.equal(await production.json(), {
-    success: false,
-    error: 'Commits are only accepted in development'
-  })
-
-  const withoutUser = createHandler({
-    cms,
-    db,
-    remote() {
-      return composeBackend(db, {
-        async verify(): Promise<AuthedContext> {
-          throw new MissingCredentialsError('Missing user credentials')
-        }
-      })
-    }
-  })
-  const unauthenticated = await withoutUser(
-    commitRequest(commit, 'test'),
-    requestContext()
-  )
-  test.is(unauthenticated.status, 401)
-})
-
 test('routes history requests with a file to revisions', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
@@ -1541,18 +1470,6 @@ function resolveRequest(query: object): Request {
       accept: 'application/json'
     },
     body: JSON.stringify(query)
-  })
-}
-
-function commitRequest(commit: unknown, apiKey?: string): Request {
-  return new Request('http://localhost/api?action=commit', {
-    method: 'POST',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      ...(apiKey ? {[developmentKeyHeader]: apiKey} : {})
-    },
-    body: JSON.stringify(commit)
   })
 }
 

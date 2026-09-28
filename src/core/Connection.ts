@@ -45,7 +45,9 @@ export interface BrowserConnection extends Connection {
   logout?(): Promise<void>
 }
 
-export interface LocalConnection extends Connection, CapabilitiesApi {
+/** A handler seen from the dashboard or an app: it commits by mutating. */
+export interface LocalConnection
+  extends SyncApi, HistoryApi, DraftsApi, UploadsApi, UserApi, CapabilitiesApi {
   mutate(mutations: Array<Mutation>): Promise<{sha: string}>
   previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(
@@ -104,6 +106,8 @@ export interface RequestContext {
 }
 
 export const developmentKeyHeader = 'x-alinea-dev-key'
+/** Marks a mutation an app sends back to the dev server after its hooks ran. */
+export const forwardedMutationHeader = 'x-alinea-forwarded'
 
 export interface AuthedContext extends RequestContext {
   user: User

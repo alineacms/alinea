@@ -179,7 +179,7 @@ test('shows the query totals of the render', async ({page, context}) => {
   const indicator = page.getByTitle(
     'Click to log the queries of this page to the browser console'
   )
-  await expect(indicator).toHaveText('2 queries · 132 ms · sync 120 ms')
+  await expect(indicator).toHaveText('2 queries · SQL 3 ms · sync 120 ms')
   const tables: Array<string> = []
   page.on('console', message => {
     if (message.type() === 'table') tables.push(message.text())
@@ -187,7 +187,7 @@ test('shows the query totals of the render', async ({page, context}) => {
   await indicator.click()
   await expect.poll(() => tables.length).toBe(1)
   await expect(indicator).toHaveText('Logged to console ↓')
-  await expect(indicator).toHaveText('2 queries · 132 ms · sync 120 ms')
+  await expect(indicator).toHaveText('2 queries · SQL 3 ms · sync 120 ms')
 })
 
 async function buildPreviewScript(

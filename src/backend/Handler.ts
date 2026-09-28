@@ -13,7 +13,6 @@ import type {
   RequestContext
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
-import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
@@ -400,24 +399,6 @@ export function createHandler({
         } catch (error) {
           console.error('Alinea afterCommit hook failed', error)
         }
-        return Response.json({sha})
-      }
-
-      if (action === HandleAction.Commit && request.method === 'POST') {
-        if (!context.isDev)
-          throw new HttpError(400, 'Commits are only accepted in development')
-        const developmentKey = request.headers.get(developmentKeyHeader)
-        if (!context.apiKey || developmentKey !== context.apiKey)
-          throw new HttpError(401, 'Invalid development commit credentials')
-        const user = expectUser()
-        expectJson()
-        const commit = {
-          ...((await body) as CommitRequest),
-          user: user.claims
-        }
-        let {sha} = await cnx.write(commit)
-        if (sha === commit.intoSha) await local.write(commit)
-        else sha = await local.syncWith(cnx)
         return Response.json({sha})
       }
 

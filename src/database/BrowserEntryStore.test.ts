@@ -6,8 +6,11 @@ import {versionedCacheName} from './Version.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
-import {indexedDB} from 'fake-indexeddb'
+import {IDBKeyRange, indexedDB} from 'fake-indexeddb'
 import {BrowserEntryStore} from './BrowserEntryStore.js'
+
+// The stores keep their pages in this IndexedDB implementation.
+const idb = {indexedDB, IDBKeyRange}
 
 test('browser entry stores reopen a persisted SQLite file', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
@@ -22,7 +25,7 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
   }
   const source = new MemorySource()
   const name = `alinea-browser-db-${crypto.randomUUID()}`
-  const options = {indexedDB, name, revision: 'config-1'}
+  const options = {...idb, name, revision: 'config-1'}
   const initial = await BrowserEntryStore.open(config, options)
   const mutation = initial.mutate([
     {
@@ -51,7 +54,7 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
   }
 })
 
-test('browser entry stores abandon a superseded revision without persisting', async () => {
+test('browser entry stores hand their storage to a replacement', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -64,29 +67,40 @@ test('browser entry stores abandon a superseded revision without persisting', as
   }
   const name = `alinea-browser-abandon-${crypto.randomUUID()}`
   const oldStore = await BrowserEntryStore.open(config, {
-    indexedDB,
     name,
-    revision: 'config-1'
+    revision: 'config-1',
+    ...idb
   })
-  // Dirty the old store past its persistence layer, as in-flight work can
-  // after a revision switch.
-  await oldStore.database.apply(
+  await oldStore.mutate([
+    {
+      op: 'create',
+      id: 'old-page',
+      type: 'Page',
+      locale: null,
+      data: {title: 'Old page'}
+    }
+  ])
+  // The replacement takes the content over from the old store's memory.
+  const nextStore = await BrowserEntryStore.open(config, {
+    name,
+    revision: 'config-2',
+    replaces: oldStore,
+    ...idb
+  })
+  // Work the old store finishes afterwards changes only its memory copy.
+  const late = oldStore.database.apply(
     [
       {
         op: 'create',
-        id: 'old-page',
+        id: 'late-page',
         type: 'Page',
         locale: null,
-        data: {title: 'Old page'}
+        data: {title: 'Late page'}
       }
     ],
     {source: oldStore.source}
   )
-  const nextStore = await BrowserEntryStore.open(config, {
-    indexedDB,
-    name,
-    revision: 'config-2'
-  })
+  const abandoned = late.then(() => oldStore.abandon())
   await nextStore.mutate([
     {
       op: 'create',
@@ -96,29 +110,27 @@ test('browser entry stores abandon a superseded revision without persisting', as
       data: {title: 'Next page'}
     }
   ])
-  await nextStore.close()
-  // A trailing close of the superseded store must not overwrite the
-  // replacement revision's cache entry.
-  await oldStore.abandon()
+  await Promise.all([late, abandoned, nextStore.close()])
   await expect(
     oldStore.mutate([
       {
         op: 'create',
-        id: 'late-page',
+        id: 'closed-page',
         type: 'Page',
         locale: null,
-        data: {title: 'Late page'}
+        data: {title: 'Closed page'}
       }
     ])
   ).rejects.toThrow()
 
   const reopened = await BrowserEntryStore.open(config, {
-    indexedDB,
     name,
-    revision: 'config-2'
+    revision: 'config-2',
+    ...idb
   })
   try {
-    expect(await reopened.find({select: Entry.id})).toEqual(['next-page'])
+    const ids = await reopened.find({select: Entry.id})
+    expect(ids.toSorted()).toEqual(['next-page', 'old-page'])
   } finally {
     await reopened.close()
   }
@@ -137,22 +149,23 @@ test('browser entry stores discard a corrupt persisted SQLite file', async () =>
   }
   const source = new MemorySource()
   const name = `alinea-browser-corrupt-${crypto.randomUUID()}`
-  const cache = await openCache(versionedCacheName(name))
-  const transaction = cache.transaction('database', 'readwrite')
-  transaction.objectStore('database').put(
-    {
-      revision: 'config-1',
-      data: new Uint8Array([1, 2, 3])
-    },
-    'entries'
-  )
+  // A stored page that is not a SQLite file, in the layout of the storage.
+  const request = indexedDB.open(`${versionedCacheName(name)}-pages`, 1)
+  request.onupgradeneeded = () => {
+    request.result.createObjectStore('chunks')
+    request.result.createObjectStore('meta')
+  }
+  const pages = await requestResult(request)
+  const transaction = pages.transaction(['chunks', 'meta'], 'readwrite')
+  transaction.objectStore('chunks').put(new Uint8Array(4096).fill(7), 0)
+  transaction.objectStore('meta').put({size: 4096, chunkSize: 4096}, 'database')
   await transactionComplete(transaction)
-  cache.close()
+  pages.close()
 
   const store = await BrowserEntryStore.open(config, {
-    indexedDB,
     name,
-    revision: 'config-1'
+    revision: 'config-1',
+    ...idb
   })
   try {
     expect(await store.sync()).toBe((await source.getTree()).sha)
@@ -162,7 +175,7 @@ test('browser entry stores discard a corrupt persisted SQLite file', async () =>
   }
 })
 
-test('browser entry stores clean up databases from other Alinea versions', async () => {
+test('browser entry stores clean up databases from other versions and layouts', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -175,34 +188,36 @@ test('browser entry stores clean up databases from other Alinea versions', async
   }
   const name = `alinea-browser-version-${crypto.randomUUID()}`
   const oldName = `${name}-old-version`
-  const cache = await openCache(oldName)
-  const transaction = cache.transaction('database', 'readwrite')
-  transaction.objectStore('database').put(
-    {
-      revision: 'config-1',
-      data: new Uint8Array([1, 2, 3])
-    },
-    'entries'
-  )
-  await transactionComplete(transaction)
-  cache.close()
+  // The file as one record, as this version stored it before.
+  const oldLayout = versionedCacheName(name)
+  for (const cacheName of [oldName, oldLayout]) {
+    const cache = await openCache(cacheName)
+    const transaction = cache.transaction('database', 'readwrite')
+    transaction.objectStore('database').put(
+      {
+        revision: 'config-1',
+        data: new Uint8Array([1, 2, 3])
+      },
+      'entries'
+    )
+    await transactionComplete(transaction)
+    cache.close()
+  }
 
   const store = await BrowserEntryStore.open(config, {
-    indexedDB,
     name,
-    revision: 'config-1'
+    revision: 'config-1',
+    ...idb
   })
   try {
     expect(await store.find({select: Entry.id})).toEqual([])
   } finally {
     await store.close()
   }
-  expect(
-    (await indexedDB.databases()).map(database => database.name)
-  ).toContain(versionedCacheName(name))
-  expect(
-    (await indexedDB.databases()).map(database => database.name)
-  ).not.toContain(oldName)
+  const names = (await indexedDB.databases()).map(database => database.name)
+  expect(names).toContain(`${versionedCacheName(name)}-pages`)
+  expect(names).not.toContain(oldName)
+  expect(names).not.toContain(oldLayout)
 })
 
 test('browser entry stores sync source rows in bounded batches', async () => {
@@ -227,9 +242,9 @@ test('browser entry stores sync source rows in bounded batches', async () => {
     }))
   )
   const store = await BrowserEntryStore.open(config, {
-    indexedDB,
     name: `alinea-browser-batched-${crypto.randomUUID()}`,
-    revision: 'config-1'
+    revision: 'config-1',
+    ...idb
   })
   try {
     await store.syncWith(source)
@@ -274,9 +289,9 @@ test('browser entry stores keep persisted content across dashboard builds', asyn
   ])
   const name = `alinea-browser-rebuild-${crypto.randomUUID()}`
   const first = await BrowserEntryStore.open(pages(false), {
-    indexedDB,
     name,
-    revision: 'build-1'
+    revision: 'build-1',
+    ...idb
   })
   await first.syncWith(source)
   expect(await first.find({search: 'needle', select: Entry.id})).toEqual([])
@@ -290,9 +305,9 @@ test('browser entry stores keep persisted content across dashboard builds', asyn
   }
   // The next build changes the config: the content is kept and derived again.
   const next = await BrowserEntryStore.open(pages(true), {
-    indexedDB,
     name,
-    revision: 'build-2'
+    revision: 'build-2',
+    ...idb
   })
   try {
     expect(await next.find({select: Entry.title})).toEqual(['Page'])

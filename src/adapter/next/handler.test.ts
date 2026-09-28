@@ -3,6 +3,10 @@ import {Config} from '#/index.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {sign} from '#/core/util/JWT.js'
 import {EntryStore} from '#/database/EntryStore.js'
+import {
+  developmentKeyHeader,
+  forwardedMutationHeader
+} from '#/core/Connection.js'
 import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
 const apiKey = 'preview-secret'
@@ -58,6 +62,138 @@ test('reconstructs a rewritten media request from its public pathname', async ()
   }
 })
 
+test('runs the commit hooks around mutations the dev server forwards', async () => {
+  const received: Array<{
+    action: string | null
+    body: unknown
+    cookie: string | null
+    key: string | null
+    forwarded: string | null
+  }> = []
+  const server = Bun.serve({
+    port: 0,
+    async fetch(request) {
+      const cookie = request.headers.get('cookie')
+      received.push({
+        action: new URL(request.url).searchParams.get('action'),
+        body: await request.json(),
+        cookie,
+        key: request.headers.get(developmentKeyHeader),
+        forwarded: request.headers.get(forwardedMutationHeader)
+      })
+      if (cookie === 'alinea.session=reader')
+        return new Response(
+          JSON.stringify({success: false, error: 'Not allowed'}),
+          {status: 403, headers: {'content-type': 'application/json'}}
+        )
+      return new Response(JSON.stringify({sha: 'committed'}), {
+        headers: {'content-type': 'application/json'}
+      })
+    }
+  })
+  const hooks: Array<unknown> = []
+  const devHandle = createHandlerWithDatabase(
+    {
+      cms,
+      beforeCommit({mutations}) {
+        hooks.push(['before', mutations.length])
+        return [...mutations, ...mutations]
+      },
+      afterCommit({sha}) {
+        hooks.push(['after', sha])
+      }
+    },
+    async () => {
+      throw new Error('The dev server owns the database')
+    }
+  )
+  const devHandlerUrl = new URL('/api', server.url)
+  nextMocks.devHandlerUrl = devHandlerUrl
+  try {
+    const mutation = {op: 'remove', entryId: 'page'}
+    const response = await devHandle(
+      new Request('https://example.com/api/cms?action=mutate', {
+        method: 'POST',
+        headers: {
+          cookie: 'alinea.session=1',
+          'content-type': 'application/json',
+          [developmentKeyHeader]: apiKey
+        },
+        body: JSON.stringify([mutation])
+      })
+    )
+    expect(await response.json()).toEqual({sha: 'committed'})
+    // The dev server commits what the hooks adjusted, for the same user.
+    expect(received).toEqual([
+      {
+        action: 'mutate',
+        body: [mutation, mutation],
+        cookie: 'alinea.session=1',
+        key: apiKey,
+        // Marked so the dev server commits it instead of forwarding again.
+        forwarded: 'true'
+      }
+    ])
+    expect(hooks).toEqual([
+      ['before', 1],
+      ['after', 'committed']
+    ])
+    // The dev server answers everything else itself.
+    const resolve = await devHandle(
+      new Request('https://example.com/api/cms?action=resolve', {
+        method: 'POST',
+        body: '{}'
+      })
+    )
+    expect(resolve.status).toBe(404)
+    // Forwarded mutations carry the development key.
+    const unsigned = await devHandle(
+      new Request('https://example.com/api/cms?action=mutate', {
+        method: 'POST',
+        body: '[]'
+      })
+    )
+    expect(unsigned.status).toBe(401)
+    const malformed = await devHandle(
+      new Request('https://example.com/api/cms?action=mutate', {
+        method: 'POST',
+        headers: {[developmentKeyHeader]: apiKey},
+        body: 'not json'
+      })
+    )
+    expect(malformed.status).toBe(400)
+    expect(received).toHaveLength(1)
+    // What the dev server rejects keeps its status, such as a missing role.
+    const denied = await devHandle(
+      new Request('https://example.com/api/cms?action=mutate', {
+        method: 'POST',
+        headers: {
+          cookie: 'alinea.session=reader',
+          [developmentKeyHeader]: apiKey
+        },
+        body: JSON.stringify([mutation])
+      })
+    )
+    expect(denied.status).toBe(403)
+    expect(await denied.json()).toMatchObject({success: false})
+    expect(hooks).toHaveLength(3)
+    // Media is served by the dev server, from the database it owns.
+    const media = await devHandle(
+      new Request('https://example.com/admin/file/company-a/photo.jpg')
+    )
+    expect(media.status).toBe(307)
+    const location = new URL(media.headers.get('location')!)
+    expect(location.origin + location.pathname).toBe(devHandlerUrl.href)
+    expect(Object.fromEntries(location.searchParams)).toEqual({
+      file: 'company-a/photo.jpg',
+      delivery: 'proxy'
+    })
+  } finally {
+    nextMocks.devHandlerUrl = undefined
+    server.stop(true)
+  }
+})
+
 test('rejects an unrelated pathname with media query parameters', async () => {
   const response = await handle(
     new Request(
@@ -89,6 +225,7 @@ beforeEach(() => {
   nextMocks.enableCalls = 0
   nextMocks.cookies = []
   nextMocks.handlerUrl = new URL('https://example.com/api/cms')
+  nextMocks.devHandlerUrl = undefined
   nextMocks.apiKey = apiKey
   consoleError = spyOn(console, 'error').mockImplementation(() => {})
 })

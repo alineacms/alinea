@@ -12,7 +12,7 @@ import {EntryStore} from '#/database/EntryStore.js'
  */
 export async function createGeneratedDatabase(
   config: Config,
-  {database: db, fork}: DatabaseHandle
+  {database: db, fork, driver}: DatabaseHandle
 ): Promise<EntryStore> {
   let initialTree: ReadonlyTree | undefined
   const database = new EntryDatabase(config, db, {
@@ -28,7 +28,8 @@ export async function createGeneratedDatabase(
     initialTree = await database.getTree()
     return new EntryStore(config, database, new DatabaseSource(database), {
       ownsDatabase: true,
-      sourceFollowsDatabase: true
+      sourceFollowsDatabase: true,
+      driver
     })
   } catch (error) {
     await database.close()

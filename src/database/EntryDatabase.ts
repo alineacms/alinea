@@ -144,6 +144,15 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   /**
+   * Run a task while no other task uses the connection, so no transaction
+   * is open: a fork of the connection then copies committed state.
+   */
+  whileIdle<T>(task: () => Promise<T>): Promise<T> {
+    this.#assertOpen()
+    return this.#queue.run(task)
+  }
+
+  /**
    * Fork the connection and synchronize the copy with a source. The overlay
    * shares every unchanged page with this database and is independent of it:
    * either can change or close without affecting the other.

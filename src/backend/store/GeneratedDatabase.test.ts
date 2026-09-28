@@ -184,6 +184,8 @@ test('a read-only generated database commits after searching', () =>
       await runtimeDatabase({path: file, overlay: true})
     )
     try {
+      // Bun's SQLite cannot load the overlay extension.
+      expect(generated.driver).toBe('wasm')
       // A search first: writes must never reach the shared, read-only index.
       expect(await generated.find({search: 'title', select: Entry.id})).toEqual(
         ['page', 'other']

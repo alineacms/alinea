@@ -32,13 +32,92 @@ export async function resolveEntryQuery(
   const result = await rows.all(db)
   if (query.get && !result.length) throw new Error('Entry not found')
   const status = query.status ?? 'published'
-  return projectRows(status, plan, result, context)
+  const links = createLinkBatcher(status, context)
+  return projectRows(status, plan, result, context, links)
+}
+
+/** Load the rows of linked entries, in query order, for one lookup. */
+interface LinkLoader {
+  (
+    projection: Projection,
+    ids: ReadonlyArray<string>,
+    locale: string | undefined
+  ): Promise<Array<unknown>>
+}
+
+interface LinkBatch {
+  ids: Set<string>
+  rows: Promise<Array<{id: string; value: unknown}>>
+}
+
+/**
+ * Run after the code that is running now. Rows reach their first lookups
+ * without awaiting anything, so one microtask sees the lookups of every row;
+ * waiting longer would hold the query's read transaction open for others.
+ */
+function nextTurn(): Promise<void> {
+  return new Promise(resolve => queueMicrotask(resolve))
+}
+
+/**
+ * Link fields resolve their targets row by row. Lookups with the same
+ * projection and locale that are requested while the rows project are
+ * answered by one query, so a page of results with a few links each costs a
+ * query per projection rather than one per link.
+ */
+function createLinkBatcher(
+  status: Status,
+  context: EntryQueryContext
+): LinkLoader {
+  const pending = new Map<Projection, Map<string | undefined, LinkBatch>>()
+  const load: LinkLoader = async (projection, ids, locale) => {
+    let byLocale = pending.get(projection)
+    if (!byLocale) pending.set(projection, (byLocale = new Map()))
+    let batch = byLocale.get(locale)
+    if (!batch) {
+      const requested = new Set<string>()
+      const group = byLocale
+      batch = {
+        ids: requested,
+        rows: nextTurn().then(() => {
+          // Lookups requested from here on start the next batch.
+          group.delete(locale)
+          if (!group.size) pending.delete(projection)
+          return loadLinks(projection, [...requested], locale)
+        })
+      }
+      byLocale.set(locale, batch)
+    }
+    for (const id of ids) batch.ids.add(id)
+    const wanted = new Set(ids)
+    const rows = await batch.rows
+    return rows.filter(row => wanted.has(row.id)).map(row => row.value)
+  }
+  async function loadLinks(
+    projection: Projection,
+    ids: Array<string>,
+    locale: string | undefined
+  ): Promise<Array<{id: string; value: unknown}>> {
+    const {rows, plan} = compileEntryQuery(
+      context.config,
+      {select: projection, id: {in: ids}, status, preferredLocale: locale},
+      {withId: true}
+    )
+    const result = await rows.all(context.database)
+    return Promise.all(
+      result.map(async row => ({
+        id: (row as {id: string}).id,
+        value: await projectRow(status, plan, row, context, load)
+      }))
+    )
+  }
+  return load
 }
 
 function createLinkResolver(
-  status: Status,
   locale: string | null,
-  context: EntryQueryContext
+  context: EntryQueryContext,
+  links: LinkLoader
 ): LinkResolver {
   const loader: LinkResolver = {
     config: context.config,
@@ -51,15 +130,9 @@ function createLinkResolver(
       ids: ReadonlyArray<string>,
       locale: string | null | undefined = loader.locale
     ): Promise<Array<InferProjection<P>>> {
-      return (await resolveEntryQuery(
-        {
-          select: projection,
-          id: {in: ids},
-          status,
-          preferredLocale: locale ?? undefined
-        },
-        context
-      )) as Array<InferProjection<P>>
+      return (await links(projection, ids, locale ?? undefined)) as Array<
+        InferProjection<P>
+      >
     },
     async resolveTargets<P extends Projection & {id: unknown}>(
       projection: P,
@@ -101,10 +174,13 @@ async function projectRows(
   plan: ProjectionPlan,
   result: Array<unknown>,
   context: EntryQueryContext,
+  links: LinkLoader,
   inheritedLocale: string | null = null
 ): Promise<unknown> {
   const rows = await Promise.all(
-    result.map(row => projectRow(status, plan, row, context, inheritedLocale))
+    result.map(row =>
+      projectRow(status, plan, row, context, links, inheritedLocale)
+    )
   )
   // A single result (first/get, parent, next, previous) is null when nothing
   // matches, both at the top level and for nested relations.
@@ -117,7 +193,8 @@ async function projectRow(
   plan: ProjectionPlan,
   row: unknown,
   context: EntryQueryContext,
-  inheritedLocale: string | null
+  links: LinkLoader,
+  inheritedLocale: string | null = null
 ): Promise<unknown> {
   if (!plan.wrapped) return row
   const projected = row as {value: unknown; locale: string | null}
@@ -127,7 +204,7 @@ async function projectRow(
   // entry the locale the query asked for, or else the locale of the entry
   // that selected it.
   const locale = projected.locale ?? plan.locale ?? inheritedLocale
-  const loader = createLinkResolver(status, locale, context)
+  const loader = createLinkResolver(locale, context, links)
   await Promise.all(
     plan.fields.map(async selected => {
       if (!selected.path.length) {
@@ -155,6 +232,7 @@ async function projectRow(
             relation.plan,
             relationRows(included, relation.plan.single),
             context,
+            links,
             locale
           )
       if (!relation.path.length) value = related

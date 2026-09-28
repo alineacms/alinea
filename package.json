@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "@alinea/iso": "^0.3.3",
-    "@alinea/sqlite-wasm": "0.2.0",
+    "@alinea/sqlite-wasm": "0.3.0",
     "esbuild": "^0.28.0"
   },
   "peerDependencies": {

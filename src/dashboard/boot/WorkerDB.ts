@@ -1,6 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {
-  Connection,
+  LocalConnection,
   UploadMetadata,
   UploadResponse
 } from '#/core/Connection.js'
@@ -18,12 +18,12 @@ import type {Activity} from './ActivityEvent.js'
 
 export class WorkerDB extends WriteableGraph {
   #worker: DashboardWorker
-  #client: Connection
+  #client: LocalConnection
 
   constructor(
     public config: Config,
     worker: DashboardWorker,
-    client: Connection,
+    client: LocalConnection,
     public events: EventTarget
   ) {
     super()
