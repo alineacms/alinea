@@ -49,8 +49,11 @@ export async function linkMediaFiles(
     )
     if (!exists) continue
     await fs.mkdir(path.dirname(link), {recursive: true})
-    // Relative, so the link survives the public dir being copied elsewhere
-    await fs.symlink(path.relative(path.dirname(link), target), link)
+    // Relative, so the link survives the public dir being copied elsewhere.
+    // Windows only allows symlinks with developer mode or admin rights.
+    await fs
+      .symlink(path.relative(path.dirname(link), target), link)
+      .catch(() => fs.copyFile(target, link))
     linked.add(link)
   }
   return linked.size
