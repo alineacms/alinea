@@ -242,13 +242,6 @@ export namespace Overview {
     return keys.length > 0 && keys.every(key => typeNames.has(key))
   }
 
-  /** Whether a value can be ordered by */
-  export function isSortValue(value: unknown): value is OverviewSortValue {
-    if (!isRecord(value)) return false
-    if (hasExpr(value)) return true
-    return 'edge' in value && isRecord(value.select) && hasExpr(value.select)
-  }
-
   /**
    * An expression to order by: expressions are used as is, linked entry
    * queries become a subquery and per type values a switch on the entry type

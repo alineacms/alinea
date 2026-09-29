@@ -961,10 +961,6 @@ export class EntryTransaction implements AsyncDisposable {
     return dataWithUrlAlias(type, candidate.data, previousUrl, currentUrl)
   }
 
-  /**
-   * Carry over the previous URL as an alias, share translated fields and
-   * guard URL uniqueness for an entry that is about to be published.
-   */
   /** Published versions must pass field validation, drafts may not yet */
   #assertValid(
     id: string,
@@ -977,7 +973,6 @@ export class EntryTransaction implements AsyncDisposable {
     assert(type, `Type not found: ${typeName}`)
     // Validate what an editor sees: stored values over initial values
     const errors = validateEntry(type, Type.withInitialValue(type, data), {
-      locale: resource.locale,
       fieldOptions: policyFieldOptions(config, this.#policy, {
         workspace: resource.workspace,
         root: resource.root,
@@ -992,6 +987,10 @@ export class EntryTransaction implements AsyncDisposable {
     throw new EntryValidationError({entryId: id, title, errors})
   }
 
+  /**
+   * Carry over the previous URL as an alias, share translated fields and
+   * guard URL uniqueness for an entry that is about to be published.
+   */
   async #publishedData(
     candidate: UrlCandidate,
     previous: Entry | undefined,

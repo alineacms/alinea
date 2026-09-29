@@ -83,10 +83,6 @@ export namespace Root {
     return getRoot(root).i18n?.locales[0]
   }
 
-  export function overview(root: Root): OverviewOptions | undefined {
-    return getRoot(root).overview
-  }
-
   /** The default order of children: `overview.sort`, or `orderChildrenBy` */
   export function childrenOrder(
     root: RootData
