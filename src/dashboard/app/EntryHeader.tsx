@@ -31,7 +31,12 @@ import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useSaveShortcut} from '#/dashboard/hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {ComponentType, useState, useTransition, type ReactNode} from 'react'
+import {
+  type ComponentType,
+  useState,
+  useTransition,
+  type ReactNode
+} from 'react'
 import {
   IcOutlineArchive,
   IcRoundArchive,

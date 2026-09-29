@@ -104,10 +104,6 @@
   line-height: 20px;
 }
 
-.DashboardModalSeparator {
-  border-top: 1px solid var(--alinea-border);
-}
-
 .DashboardModalForm {
   display: contents;
 }

@@ -1,7 +1,6 @@
 import {ToggleGroup, ToggleGroupItem} from '#/components.js'
-import {IcOutlineGridView, IcOutlineList} from '#/dashboard/icons.js'
-
-export type ExplorerView = 'card' | 'row'
+import type {ExplorerView} from '../atoms/explorer.js'
+import {IcOutlineGridView, IcOutlineList} from '../icons.js'
 
 interface ViewToggleProps {
   setView: (view: ExplorerView) => void
