@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {type ComponentProps, useState} from 'react'
 import {IcRoundAdd} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {
@@ -118,6 +118,35 @@ export function Sizes() {
         </Dialog>
       ))}
     </div>
+  )
+}
+
+function CustomButton(props: ComponentProps<'button'>) {
+  return <button type="button" {...props} />
+}
+
+export function AsChild() {
+  const [log, setLog] = useState<Array<string>>([])
+  const add = (entry: string) => () => setLog(log => [...log, entry])
+  return (
+    <>
+      <Dialog>
+        <DialogTrigger
+          asChild
+          className="custom-trigger"
+          aria-label="Open custom"
+          onClick={add('trigger')}
+        >
+          <CustomButton>Open</CustomButton>
+        </DialogTrigger>
+        <DialogContent aria-label="Custom" showCloseButton={false}>
+          <DialogClose asChild onClick={add('close')}>
+            <CustomButton>Done</CustomButton>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
+      <p data-testid="log">{log.join(' ')}</p>
+    </>
   )
 }
 

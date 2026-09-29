@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Controlled, Example, Sizes} from './Dialog.stories.js'
+import {AsChild, Controlled, Example, Sizes} from './Dialog.stories.js'
 
 test('opens from the trigger and closes with DialogClose', async ({
   mount,
@@ -59,4 +59,22 @@ test('sizes the content and closes with useDialog', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Open lg'}).click()
   await expect(content).toHaveAttribute('data-size', 'lg')
   await expect.poll(async () => (await content.boundingBox())!.width).toBe(640)
+})
+
+test('asChild triggers and close buttons keep their props', async ({
+  mount,
+  page
+}) => {
+  await mount(<AsChild />)
+  const trigger = page.getByRole('button', {name: 'Open custom'})
+  await expect(trigger).toHaveAttribute('data-slot', 'dialog-trigger')
+  await expect(trigger).toHaveClass('custom-trigger')
+  await trigger.click()
+  const dialog = page.getByRole('dialog', {name: 'Custom'})
+  await expect(dialog).toBeVisible()
+  const close = dialog.getByRole('button', {name: 'Done'})
+  await expect(close).toHaveAttribute('data-slot', 'dialog-close')
+  await close.click()
+  await expect(dialog).toBeHidden()
+  await expect(page.getByTestId('log')).toHaveText('trigger close')
 })
