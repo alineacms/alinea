@@ -1,29 +1,16 @@
-import styler from '@alinea/styler'
 import type {DateValue} from '@internationalized/date'
-import {
-  Button,
-  DateInput,
-  DatePicker as DatePickerPrimitive,
-  DateSegment,
-  Dialog,
-  Group
-} from 'react-aria-components'
-import {IcRoundDateRange} from '#/dashboard/icons.js'
+import {DatePicker as DatePickerPrimitive} from 'react-aria-components'
 import {Calendar} from './Calendar.js'
-import {Locale} from './internal/Locale.js'
-import css from './DatePicker.module.css'
 import {Field} from './Field.js'
-import {Icon} from './Icon.js'
+import {DateControl, DateControlInput} from './internal/DateControl.js'
 import {toCalendarDate} from './internal/DateValue.js'
-import {PopoverSurface} from './internal/PopoverSurface.js'
+import {Locale} from './internal/Locale.js'
 import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
   StyleProps
 } from './types.js'
-
-const styles = styler(css)
 
 export interface DatePickerProps
   extends FieldSharedProps, StyleProps, AriaProps, DataProps {
@@ -67,7 +54,7 @@ export function DatePicker({
       <DatePickerPrimitive
         data-slot="date-picker"
         {...props}
-        className={styles.DatePicker(styler.merge({className}))}
+        className={className}
         value={toCalendarDate(value)}
         defaultValue={toCalendarDate(defaultValue)}
         onChange={
@@ -94,43 +81,10 @@ export function DatePicker({
           icon={icon}
           shared={shared}
         >
-          <Group
-            data-slot="date-picker-control"
-            aria-disabled={disabled || undefined}
-            className={styles.DatePicker.control()}
-          >
-            <DateInput
-              data-slot="date-picker-input"
-              className={styles.DatePicker.input()}
-            >
-              {segment => (
-                <DateSegment
-                  data-slot="date-picker-segment"
-                  className={state =>
-                    styles.DatePicker.segment({
-                      placeholder: state.isPlaceholder
-                    })
-                  }
-                  segment={segment}
-                />
-              )}
-            </DateInput>
-            <Button
-              data-slot="date-picker-trigger"
-              className={styles.DatePicker.trigger()}
-            >
-              <Icon
-                icon={IcRoundDateRange}
-                className={styles.DatePicker.icon()}
-              />
-            </Button>
-          </Group>
+          <DateControl dataSlot="date-picker" calendar={<Calendar />}>
+            <DateControlInput dataSlot="date-picker" />
+          </DateControl>
         </Field>
-        <PopoverSurface data-slot="date-picker-content">
-          <Dialog className={styles.DatePicker.dialog()}>
-            <Calendar />
-          </Dialog>
-        </PopoverSurface>
       </DatePickerPrimitive>
     </Locale>
   )
