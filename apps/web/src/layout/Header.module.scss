@@ -17,6 +17,14 @@
     border-bottom: 1px solid var(--web-outline);
     // Docs pages sit on the surface colour, the header matches them
     background: var(--web-surface);
+
+    // Line the logo up with the start of the docs sidebar (its search box)
+    // below, which is inset 24px rather than the page gutter
+    @include l {
+      .menu {
+        padding-inline-start: 24px;
+      }
+    }
   }
 }
 
