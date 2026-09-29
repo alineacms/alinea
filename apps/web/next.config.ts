@@ -46,6 +46,18 @@ const nextConfig: NextConfig = {
       '../../dist/components/**/*.{d.ts,js}'
     ]
   },
+  async headers() {
+    // Playground links only run their code after a click, keep other sites
+    // from framing the page to trick visitors into that click
+    return [
+      {
+        source: '/playground',
+        headers: [
+          {key: 'Content-Security-Policy', value: "frame-ancestors 'self'"}
+        ]
+      }
+    ]
+  },
   async redirects() {
     return [
       {
