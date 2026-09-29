@@ -1,16 +1,12 @@
 import styler from '@alinea/styler'
-import type {
-  ComponentPropsWithoutRef,
-  ComponentType,
-  HTMLAttributes,
-  ReactNode
-} from 'react'
+import type {ComponentPropsWithoutRef, HTMLAttributes, ReactNode} from 'react'
 import {Button, type ButtonProps} from './Button.js'
 import {FieldDescription, FieldSharedBadge} from './Field.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import css from './List.module.css'
 import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
+import type {IconType} from './types.js'
 
 const styles = styler(css)
 
@@ -49,6 +45,7 @@ export function ListItem({
   children,
   onClick,
   selected,
+  className,
   ...props
 }: ListItemProps) {
   const headerContent = (
@@ -60,8 +57,9 @@ export function ListItem({
   )
   return (
     <SurfaceRow
+      data-slot="list-item"
       {...props}
-      className={styles.ListItem(styler.merge(props))}
+      className={styles.ListItem(styler.merge({className}))}
       data-has-leading={leading ? 'true' : undefined}
       data-selected={selected || undefined}
       role={props.role ?? 'listitem'}
@@ -69,7 +67,7 @@ export function ListItem({
       {onClick ? (
         <Button
           variant="ghost"
-          aria-pressed={selected || undefined}
+          aria-pressed={selected}
           className={styles.ListItem.header()}
           data-action="true"
           onClick={() => onClick()}
@@ -89,6 +87,7 @@ export interface ListItemVisualProps extends ComponentPropsWithoutRef<'span'> {}
 export function ListItemVisual({className, ...props}: ListItemVisualProps) {
   return (
     <span
+      data-slot="list-item-visual"
       {...props}
       className={styles.ListItemVisual(styler.merge({className}))}
     />
@@ -100,6 +99,7 @@ export interface ListItemTitleProps extends ComponentPropsWithoutRef<'span'> {}
 export function ListItemTitle({className, ...props}: ListItemTitleProps) {
   return (
     <span
+      data-slot="list-item-title"
       {...props}
       className={styles.ListItemTitle(styler.merge({className}))}
     />
@@ -114,6 +114,7 @@ export function ListItemDescription({
 }: ListItemDescriptionProps) {
   return (
     <span
+      data-slot="list-item-description"
       {...props}
       className={styles.ListItemDescription(styler.merge({className}))}
     />
@@ -150,7 +151,7 @@ export interface ListEmptyProps extends Omit<
   ComponentPropsWithoutRef<'div'>,
   'title'
 > {
-  icon?: ComponentType
+  icon?: IconType
   title: ReactNode
 }
 
@@ -162,10 +163,14 @@ export function ListEmpty({
   ...props
 }: ListEmptyProps) {
   return (
-    <div {...props} className={styles.ListEmpty(styler.merge({className}))}>
+    <div
+      data-slot="list-empty"
+      {...props}
+      className={styles.ListEmpty(styler.merge({className}))}
+    >
       {icon && (
         <ListItemVisual>
-          <Icon data-slot="icon" icon={icon} />
+          <Icon icon={icon} />
         </ListItemVisual>
       )}
       <div className={styles.ListEmpty.content()}>
@@ -180,13 +185,14 @@ export function ListEmpty({
 
 export interface ListLabelProps extends Omit<
   ButtonProps,
-  'variant' | 'children' | 'className' | 'size'
+  'variant' | 'children' | 'size'
 > {
   children: ReactNode
-  className?: string
   expanded: boolean
   hasRows?: boolean
   shared?: boolean
+  /** Marks the label with an asterisk, like a required field label */
+  required?: boolean
   showFold?: boolean
   description?: ReactNode
   inline?: boolean
@@ -197,6 +203,7 @@ export function ListLabel({
   expanded,
   hasRows,
   shared,
+  required,
   showFold = true,
   className,
   description,
@@ -204,9 +211,25 @@ export function ListLabel({
   ...props
 }: ListLabelProps) {
   if (inline && !showFold && !description && !shared) return null
+  const text = !inline && (
+    <span className={styles.ListLabel.title.text()}>
+      {children}
+      {required && (
+        <span
+          data-slot="list-label-required"
+          className={styles.ListLabel.required()}
+        >
+          {' *'}
+        </span>
+      )}
+    </span>
+  )
 
   return (
-    <div className={styles.ListLabel(styler.merge({className}))}>
+    <div
+      data-slot="list-label"
+      className={styles.ListLabel(styler.merge({className}))}
+    >
       {showFold ? (
         <Button
           {...props}
@@ -216,9 +239,7 @@ export function ListLabel({
           disabled={props.disabled ?? !hasRows}
         >
           <span className={styles.ListLabel.title()}>
-            {!inline && (
-              <span className={styles.ListLabel.title.text()}>{children}</span>
-            )}
+            {text}
             <FoldIcon
               aria-hidden
               className={styles.ListLabel.fold()}
@@ -228,11 +249,7 @@ export function ListLabel({
           </span>
         </Button>
       ) : (
-        !inline && (
-          <span className={styles.ListLabel.title()}>
-            <span className={styles.ListLabel.title.text()}>{children}</span>
-          </span>
-        )
+        text && <span className={styles.ListLabel.title()}>{text}</span>
       )}
       {description && <FieldDescription>{description}</FieldDescription>}
       {shared && <FieldSharedBadge />}
@@ -244,6 +261,10 @@ export interface ListErrorProps extends ComponentPropsWithoutRef<'div'> {}
 
 export function ListError({className, ...props}: ListErrorProps) {
   return (
-    <div {...props} className={styles.ListError(styler.merge({className}))} />
+    <div
+      data-slot="list-error"
+      {...props}
+      className={styles.ListError(styler.merge({className}))}
+    />
   )
 }
