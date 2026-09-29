@@ -8,8 +8,10 @@ import css from './Image.module.scss'
 const styles = styler(css)
 
 /** Renders an image link, eg. `<Image {...image} />` */
-export interface ImageProps
-  extends Pick<ImageLink, 'src' | 'width' | 'height' | 'thumbHash' | 'title'> {
+export interface ImageProps extends Pick<
+  ImageLink,
+  'src' | 'width' | 'height' | 'thumbHash' | 'title'
+> {
   fields?: {alt?: string}
   className?: string
   style?: CSSProperties

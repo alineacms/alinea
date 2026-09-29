@@ -45,7 +45,9 @@ export function MobileMenuProvider({children}: PropsWithChildren) {
   const pathname = usePathname()
   useEffect(() => setOpen(false), [pathname])
   return (
-    <MobileMenuState.Provider value={state}>{children}</MobileMenuState.Provider>
+    <MobileMenuState.Provider value={state}>
+      {children}
+    </MobileMenuState.Provider>
   )
 }
 

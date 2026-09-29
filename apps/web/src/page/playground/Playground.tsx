@@ -208,7 +208,9 @@ function codeFromUrl() {
 // Only our own pages may embed code that runs right away.
 function isEmbeddedBySite() {
   try {
-    return window.parent !== window && parent.location.origin === location.origin
+    return (
+      window.parent !== window && parent.location.origin === location.origin
+    )
   } catch {
     return false
   }
