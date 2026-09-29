@@ -1,4 +1,4 @@
-import type {CSSProperties, ReactNode} from 'react'
+import {type CSSProperties, type ReactNode, useState} from 'react'
 import {
   IcRoundArchive,
   IcRoundRefresh,
@@ -104,11 +104,16 @@ export function Loading() {
 }
 
 export function AsChild() {
+  const [clicks, setClicks] = useState(0)
   return (
     <div style={row}>
       <Button asChild variant="outline" icon={IcRoundArchive}>
         <a href="#archive">Link styled as a button</a>
       </Button>
+      <Button asChild disabled onClick={() => setClicks(clicks + 1)}>
+        <a href="#disabled">Disabled link</a>
+      </Button>
+      <span data-testid="clicks">{clicks}</span>
     </div>
   )
 }

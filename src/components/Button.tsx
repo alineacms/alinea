@@ -1,9 +1,16 @@
 import styler from '@alinea/styler'
-import type {MouseEvent, ReactElement, ReactNode, Ref} from 'react'
+import {
+  type MouseEvent,
+  type ReactElement,
+  type ReactNode,
+  type Ref,
+  cloneElement,
+  isValidElement
+} from 'react'
 import {Button as ButtonPrimitive} from 'react-aria-components'
 import css from './Button.module.css'
 import {Icon} from './Icon.js'
-import {Slot, type SlotProps} from './internal/Slot.js'
+import {Slot} from './internal/Slot.js'
 import {Spinner} from './Spinner.js'
 import type {AriaProps, DataProps, IconType, StyleProps} from './types.js'
 
@@ -67,9 +74,15 @@ export function Button({
         {...attributes}
         aria-keyshortcuts={ariaKeyShortcuts}
         aria-disabled={disabled || undefined}
-        onClick={onClick as SlotProps['onClick']}
+        onClick={event => {
+          if (disabled) event.preventDefault()
+          else onClick?.(event as MouseEvent<HTMLButtonElement>)
+        }}
       >
-        {children}
+        {/* A disabled link has no href, so it can't be followed or focused */}
+        {disabled && isValidElement(children)
+          ? cloneElement(children, {href: undefined})
+          : children}
       </Slot>
     )
   return (
