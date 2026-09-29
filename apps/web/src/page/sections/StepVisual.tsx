@@ -32,10 +32,11 @@ function EditorVisual() {
   )
 }
 
+// Formatted like the commits the dashboard writes: `(operation) Entry title`
 const commits = [
-  {hash: 'a1f3c9e', message: 'Publish "Introducing 2.0"'},
-  {hash: '7be204d', message: 'Update homepage hero'},
-  {hash: 'c90d11a', message: 'Add cover field'}
+  {hash: 'a1f3c9e', message: '(publish) Introducing Alinea 2.0'},
+  {hash: '7be204d', message: '(update) Homepage'},
+  {hash: 'c90d11a', message: '(create) Pricing'}
 ]
 
 function CommitsVisual() {
