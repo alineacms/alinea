@@ -16,6 +16,7 @@ export interface FoldIconProps extends Omit<
 export function FoldIcon({expanded, className, ...props}: FoldIconProps) {
   return (
     <Icon
+      data-slot="fold-icon"
       {...props}
       className={styles.FoldIcon(styler.merge({className}))}
       data-expanded={expanded ? 'true' : undefined}

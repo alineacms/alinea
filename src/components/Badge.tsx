@@ -37,8 +37,16 @@ export function Badge({
       data-status={status}
       className={styles.Badge(styler.merge({className}))}
     >
-      {icon && <Icon icon={icon} className={styles.Badge.icon()} />}
-      <span className={styles.Badge.label()}>{children}</span>
+      {icon && (
+        <Icon
+          icon={icon}
+          data-slot="badge-icon"
+          className={styles.Badge.icon()}
+        />
+      )}
+      <span data-slot="badge-label" className={styles.Badge.label()}>
+        {children}
+      </span>
     </span>
   )
 }

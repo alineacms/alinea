@@ -35,7 +35,13 @@ export function Alert({
       data-icon={icon ? true : undefined}
       className={styles.Alert(styler.merge({className}))}
     >
-      {icon && <Icon icon={icon} className={styles.Alert.icon()} />}
+      {icon && (
+        <Icon
+          icon={icon}
+          data-slot="alert-icon"
+          className={styles.Alert.icon()}
+        />
+      )}
       {children}
     </div>
   )

@@ -37,6 +37,7 @@ export function Spinner({
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
+        data-slot="spinner-icon"
         className={styles.Spinner.icon()}
       >
         <circle
@@ -57,6 +58,7 @@ export function Spinner({
           strokeDasharray="100 200"
           strokeDashoffset={100 - progress}
           strokeLinecap="round"
+          data-slot="spinner-indicator"
           className={styles.Spinner.indicator()}
         />
       </svg>

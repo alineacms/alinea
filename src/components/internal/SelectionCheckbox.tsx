@@ -30,6 +30,7 @@ export function SelectionCheckbox(props: SelectionCheckboxProps) {
           className={styles.SelectionCheckbox.box()}
         >
           <svg
+            data-slot="selection-checkbox-mark"
             className={styles.SelectionCheckbox.mark()}
             viewBox="0 0 18 18"
             aria-hidden="true"
