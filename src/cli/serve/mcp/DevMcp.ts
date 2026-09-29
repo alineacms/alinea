@@ -5,7 +5,7 @@ import type {User} from '#/core/User.js'
 import type {Request, Response} from '@alinea/iso'
 import pkg from '../../../../package.json' with {type: 'json'}
 import {McpGraph} from './McpGraph.js'
-import {McpServer} from './McpServer.js'
+import {McpServer, rejectRequest} from './McpServer.js'
 import {createContentTools, mcpInstructions} from './McpTools.js'
 
 export interface DevMcpOptions {
@@ -23,14 +23,15 @@ export function createDevMcp(
 ): (request: Request) => Promise<Response> {
   const {config, db, rootDir, user, handleApi} = options
   return async function handleMcp(request) {
+    const rejected = rejectRequest(request)
+    if (rejected) return rejected
     // Files may have changed on disk since the watcher last synced (edited by
     // hand, or by another process), read what is there now
-    if (request.method === 'POST')
-      await db.sync().catch(error => {
-        console.warn(
-          `Alinea MCP could not sync content from disk: ${error instanceof Error ? error.message : String(error)}`
-        )
-      })
+    await db.sync().catch(error => {
+      console.warn(
+        `Alinea MCP could not sync content from disk: ${error instanceof Error ? error.message : String(error)}`
+      )
+    })
     const graph = new McpGraph({
       config,
       db,
