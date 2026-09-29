@@ -1,17 +1,17 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {viewsAtom} from '#/dashboard/atoms/core.js'
+import {resolveView} from '#/core/View.js'
 import {DateField} from '#/field/date/DateField.js'
 import {
   LocalisedField,
   selectLocalisedValue
 } from '#/field/localiser/Localiser.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
-import {useMemo} from 'react'
 import {Badge, Button} from '#/components.js'
+import {viewsAtom} from '../atoms/core.js'
 import css from './CompactField.module.css'
 
 const styles = styler(css)
@@ -70,25 +70,16 @@ function unlocalise(
   )
 }
 
-function CompactFieldView({field, value, ...context}: CompactFieldProps) {
-  const customView = Field.compactView(field)
-  const resolvedViewAtom = useMemo(
-    () =>
-      atom(get =>
-        typeof customView === 'string'
-          ? (get(viewsAtom)[customView] as
-              | ComponentType<CompactFieldProps>
-              | undefined)
-          : undefined
-      ),
-    [customView]
-  )
-  const ResolvedView = useAtomValueRaw(resolvedViewAtom)
-  if (typeof customView === 'function')
-    return customView({field, value, ...context})
-  if (ResolvedView)
-    return <ResolvedView field={field} value={value} {...context} />
-  return <CompactFieldFallback field={field} value={value} {...context} />
+function CompactFieldView(props: CompactFieldProps) {
+  const views = useAtomValueRaw(viewsAtom)
+  const customView = Field.compactView(props.field)
+  const View = customView
+    ? (resolveView(views, customView) as
+        | ComponentType<CompactFieldProps>
+        | undefined)
+    : undefined
+  if (View) return <View {...props} />
+  return <CompactFieldFallback {...props} />
 }
 
 export interface CompactRecordFieldsProps extends CompactFieldContext {
