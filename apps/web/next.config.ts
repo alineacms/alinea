@@ -38,12 +38,17 @@ const nextConfig: NextConfig = {
     // We check types in plenty other places, no need to waste time here
     ignoreBuildErrors: true
   },
-  // The component pages read example sources and the published component
-  // declarations, also when a page renders on demand (eg. in a preview)
+  // Pages read these files at runtime, also when rendered on demand (eg. in
+  // a preview): example sources and component declarations for the component
+  // pages, the bundled declarations and demo content for the playground and
+  // the demo, and the changelog
   outputFileTracingIncludes: {
     '/**': [
       './src/page/catalog/examples/*.tsx',
-      '../../dist/components/**/*.{d.ts,js}'
+      '../../dist/components/**/*.{d.ts,js}',
+      '../../dist/bundled.d.ts',
+      './content/demo/**',
+      '../../changelog.md'
     ]
   },
   async headers() {
