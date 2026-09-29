@@ -29,7 +29,8 @@ const SERVER_TARGET = 'server'
 const CSS_ENTRY = 'css-entry'
 const JS_ENTRY = 'js-entry'
 
-const llmsHandbookUrl = 'https://alineacms.com/llms-full.txt'
+// The v2 docs live on v2.alineacms.com until 2.0 replaces the main site
+const llmsHandbookUrl = 'https://v2.alineacms.com/llms-full.txt'
 const llmsHandbookFile = 'llms-full.txt'
 
 const external = builtinModules
