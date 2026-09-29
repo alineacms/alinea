@@ -19,6 +19,7 @@ const base: EntryHeaderActionState = {
   },
   activeStatus: 'published',
   canDelete: true,
+  canMove: false,
   canPublishParents: true,
   draftsEnabled: true,
   isDirty: false,
@@ -39,6 +40,7 @@ interface ActionCase {
 const noActions: EntryHeaderActions = {
   archive: false,
   delete: false,
+  move: false,
   publish: false,
   removeDraft: false,
   replace: false,
@@ -145,6 +147,31 @@ const cases: Array<ActionCase> = [
     name: 'does not publish an archived entry with unpublishable parents',
     state: {activeStatus: 'archived', canPublishParents: false},
     expected: {delete: true}
+  },
+  {
+    name: 'moves an entry that can move',
+    state: {canMove: true},
+    expected: {archive: true, move: true, unpublish: true}
+  },
+  {
+    name: 'moves a media file',
+    state: {canMove: true, isMediaFile: true},
+    expected: {delete: true, move: true, replace: true}
+  },
+  {
+    name: 'moves a draft',
+    state: {activeStatus: 'draft', canMove: true},
+    expected: {move: true, removeDraft: true}
+  },
+  {
+    name: 'does not move while dirty',
+    state: {canMove: true, isDirty: true},
+    expected: {}
+  },
+  {
+    name: 'does not move a revision',
+    state: {canMove: true, isRevision: true},
+    expected: {}
   }
 ]
 

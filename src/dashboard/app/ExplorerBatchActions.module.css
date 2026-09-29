@@ -1,0 +1,31 @@
+.ExplorerBatchActionBar {
+  gap: 8px;
+  height: 48px;
+  padding: 0 12px 0 8px;
+  background: var(--alinea-bg);
+}
+
+.ExplorerBatchActionBar-toolbar {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.ExplorerBatchActionBar-count {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ExplorerBatchActionBar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ExplorerDeleteDialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}

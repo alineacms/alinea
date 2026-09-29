@@ -66,6 +66,13 @@ export interface TreeView {
   snapshot: TreeSnapshot
 }
 
+/** The entries a tree of the sidebar shows */
+export interface TreeSource {
+  expandedKeys: PrimitiveAtom<Set<string>>
+  view: Atom<TreeView>
+  selectedItem: Atom<RootTreeItem | undefined>
+}
+
 interface TreeCollapseState {
   selectedId: string | undefined
   keys: Set<string>
@@ -87,7 +94,7 @@ const emptyTreeView: TreeView = {
   snapshot: emptyTreeSnapshot
 }
 
-export class TreeAtoms {
+export class TreeAtoms implements TreeSource {
   expandedKeys: PrimitiveAtom<Set<string>>
   collapsedKeys: PrimitiveAtom<TreeCollapseState>
   #root: RootAtoms

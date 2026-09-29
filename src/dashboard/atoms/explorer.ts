@@ -1,4 +1,5 @@
 import type {DragTypes, DropTarget, Key} from '#/components.js'
+import type {Config} from '#/core/Config.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {filterChecker} from '#/core/Filter.js'
@@ -8,7 +9,7 @@ import type {Graph, GraphQuery} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
-import {Permission, type Resource} from '#/core/Role.js'
+import {Permission, type Policy, type Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {chunks} from '#/core/util/Arrays.js'
@@ -231,6 +232,8 @@ export interface ExplorerItemData {
   locale: string | null
   parentId: string | null
   parents: Array<string>
+  /** Set for entries seeded by the config, these can not move or be removed */
+  seeded?: string | null
   parentEntries?: Array<{
     id: string
     title: string
@@ -388,6 +391,33 @@ function explorerItemField(item: ExplorerItemData, name: string) {
   if (!name.startsWith('_')) return item.data[name]
   const entry = item as unknown as Record<string, unknown>
   return entry[name.slice(1)]
+}
+
+/** The selected entry can be moved to another parent */
+export function explorerItemCanMove(policy: Policy, item: ExplorerItemData) {
+  return !item.seeded && policy.canMove(item)
+}
+
+/**
+ * The selected entry can be deleted right away. Media is deleted directly,
+ * like the entry menu does other entries are archived before deleting them.
+ */
+export function explorerItemCanDelete(
+  config: Config,
+  policy: Policy,
+  item: ExplorerItemData
+) {
+  if (item.seeded || !policy.canDelete(item)) return false
+  const type = config.schema[item.type]
+  const isMedia = type === MediaFile || type === MediaLibrary
+  return isMedia || item.status === 'archived'
+}
+
+export interface ExplorerSelectionActions {
+  /** The selected entries that are listed */
+  items: Array<ExplorerItemData>
+  canMove: boolean
+  canDelete: boolean
 }
 
 export interface ExplorerRootData {
@@ -1055,6 +1085,36 @@ export class ExplorerAtoms {
         locale === undefined ? get(this.selectedLocale) : locale
       )
   })
+  /** The listed entries that are selected, and what can be done with them */
+  selectionActions = atom((get): ExplorerSelectionActions => {
+    const page = get(this.page)
+    const selection = get(this.selection)
+    const items = (page?.items ?? [])
+      .filter(entry => selection === 'all' || selection.has(entry.id))
+      .flatMap(entry => {
+        const {data} = get(entry.data)
+        return data ? [get(data.item)] : []
+      })
+    const config = get(configAtom)
+    const policy = get(policyAtom)
+    const some = items.length > 0
+    return {
+      items,
+      canMove: some && items.every(item => explorerItemCanMove(policy, item)),
+      canDelete:
+        some && items.every(item => explorerItemCanDelete(config, policy, item))
+    }
+  })
+  clearSelection = atom(null, (_get, set) => set(this.selection, new Set()))
+  /** Deletes the selected entries at once */
+  deleteSelection = atom(null, async (get, set) => {
+    const {items, canDelete} = get(this.selectionActions)
+    if (!canDelete) return
+    const policy = get(policyAtom)
+    for (const item of items) policy.assert(Permission.Delete, item)
+    await get(graphAtom).remove(...items.map(item => item.id))
+    set(this.selection, new Set())
+  })
   isExpanded = dispense((entry: ExplorerEntry) =>
     atom(get => get(this.expandedKeys).has(entry.id))
   )
@@ -1262,6 +1322,7 @@ const explorerItemSelect = {
   locale: Entry.locale,
   parentId: Entry.parentId,
   parents: Entry.parents,
+  seeded: Entry.seeded,
   parentEntries: parents({
     select: {
       id: Entry.id,
