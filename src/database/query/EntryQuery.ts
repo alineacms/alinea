@@ -179,18 +179,16 @@ class Expressions {
       case 'relation': {
         if (!this.#scalar)
           throw new Error('Relation expressions are not supported here')
-        const value = this.#scalar(internal.query)
-        return selecting ? getSql(value).forSelection() : value
+        return this.#scalar(internal.query)
       }
       case 'typeSwitch': {
         const branches = Object.entries(internal.cases).map(
           ([type, inner]) =>
             sql`when ${this.#entry.type} = ${sql.value(type)} then ${this.expr(inner)}`
         )
-        const value = branches.length
+        return branches.length
           ? sql`(case ${sql.join(branches, sql` `)} end)`
           : sql`null`
-        return selecting ? getSql(value).forSelection() : value
       }
       case 'call': {
         if (internal.method !== 'snippet')
@@ -426,21 +424,17 @@ export function compileEntryQuery(
           : internal.type === 'entryField' &&
             internal.path?.join() === 'metadata' &&
             orderedMetadata.has(internal.name)
-      // The field index orders these as is: case folding cannot change the
-      // order of dates and numbers, and SQLite sorts nulls last for desc.
-      if (ordersByIndex) {
-        ordering.push(order.asc ? sql`${value} asc nulls last` : desc(value))
-        descendingTies = !order.asc
-        continue
-      }
-      descendingTies = false
-      const collated = order.caseSensitive
-        ? value
-        : sql`${value} collate nocase`
-      // Match the original resolver: strings are case-insensitive unless the
-      // query opts in, and nulls sort last in either direction.
-      if (!ordersByFilePath) ordering.push(asc(isNull(collated)))
-      ordering.push(order.asc ? asc(collated) : desc(collated))
+      // Strings are case-insensitive unless the query opts in. The field index
+      // orders dates and numbers as is, which case folding cannot change.
+      const collated =
+        ordersByIndex || order.caseSensitive
+          ? value
+          : sql`${value} collate nocase`
+      // Nulls sort last in either direction, SQLite sorts them last for desc
+      ordering.push(
+        order.asc ? sql`${collated} asc nulls last` : desc(collated)
+      )
+      descendingTies = ordersByIndex && !order.asc
       uniquelyOrdered ||= ordersByFilePath
     }
   } else if (search) ordering.push(asc(search.rank))
@@ -493,7 +487,7 @@ export function compileEntryQuery(
   const selection = query.count
     ? entry.rowid
     : options.scalar
-      ? membership.expr(query.select as Expr, true)
+      ? membership.expr(query.select as Expr)
       : projection.projection(
           query.select ?? {
             ...Object.assign({}, ...queryTypes),

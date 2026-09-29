@@ -99,8 +99,7 @@ test('orders mixed lists per type, types without a value last', async () => {
   for (const direction of ['asc', 'desc'] as const) {
     const titles = await db.find({
       root: 'blog',
-      orderBy:
-        direction === 'asc' ? {asc: byAuthor} : {desc: byAuthor},
+      orderBy: direction === 'asc' ? {asc: byAuthor} : {desc: byAuthor},
       select: Entry.title
     })
     expect(titles).toEqual(
@@ -119,4 +118,44 @@ test('plain fields order across types by name', async () => {
     select: Entry.title
   })
   expect(titles).toEqual(['Table', 'Lamp', 'Chair'])
+})
+
+test('orders by a number of a linked entry, entries without a number last', async () => {
+  const db = new LocalDB(config)
+  await db.sync()
+  const product = (title: string, set: Record<string, unknown>) =>
+    db.create({
+      type: Product,
+      workspace: 'main',
+      root: 'products',
+      set: {title, ...set}
+    })
+  const nine = await product('Nine', {price: 9})
+  const ten = await product('Ten', {price: 10})
+  const none = await product('None', {price: null})
+  const linked = (title: string, target: string) =>
+    product(title, {brand: {_id: title, _type: 'entry', _entry: target}})
+  await linked('To none', none._id)
+  await linked('To ten', ten._id)
+  await linked('To nine', nine._id)
+  const byPrice = Overview.sortExpr(
+    Product.brand.first({select: Product.price})
+  )
+  const linkers = ['To none', 'To ten', 'To nine']
+  const asc = await db.find({
+    root: 'products',
+    type: Product,
+    filter: {title: {in: linkers}},
+    orderBy: {asc: byPrice},
+    select: Entry.title
+  })
+  expect(asc).toEqual(['To nine', 'To ten', 'To none'])
+  const desc = await db.find({
+    root: 'products',
+    type: Product,
+    filter: {title: {in: linkers}},
+    orderBy: {desc: byPrice},
+    select: Entry.title
+  })
+  expect(desc).toEqual(['To ten', 'To nine', 'To none'])
 })
