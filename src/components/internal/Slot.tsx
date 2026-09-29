@@ -6,6 +6,7 @@ import {
   isValidElement
 } from 'react'
 import {mergeProps} from 'react-aria'
+import {mergeRefs} from 'react-aria/mergeRefs'
 
 export interface SlotProps extends HTMLAttributes<HTMLElement> {
   ref?: Ref<HTMLElement>
@@ -20,13 +21,4 @@ export function Slot({children, ref, ...props}: SlotProps) {
     ...mergeProps(props, children.props),
     ref: ref && childRef ? mergeRefs(ref, childRef) : (ref ?? childRef)
   })
-}
-
-function mergeRefs<T>(...refs: Array<Ref<T>>): Ref<T> {
-  return value => {
-    for (const ref of refs) {
-      if (typeof ref === 'function') ref(value)
-      else if (ref) (ref as {current: T | null}).current = value
-    }
-  }
 }
