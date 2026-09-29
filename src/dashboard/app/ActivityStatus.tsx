@@ -106,6 +106,17 @@ export function ActivityStatus({
     activity.hasBlocked
   )
 
+  const icon = showSpinner ? (
+    <Spinner aria-label={label} className={styles.ActivityStatus.icon()} />
+  ) : activity.hasFailed ? (
+    <IcRoundWarning
+      aria-hidden="true"
+      className={styles.ActivityStatus.icon()}
+    />
+  ) : (
+    <IcRoundCheck aria-hidden="true" className={styles.ActivityStatus.icon()} />
+  )
+
   // Opening on a failed activity transition is an integration response to the
   // external activity stream, rather than derived rendering state.
   // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
@@ -135,39 +146,11 @@ export function ActivityStatus({
             >
               {children ? (
                 <span className={styles.ActivityStatus.label()}>
-                  {showSpinner ? (
-                    <Spinner
-                      aria-label={label}
-                      className={styles.ActivityStatus.icon()}
-                    />
-                  ) : activity.hasFailed ? (
-                    <IcRoundWarning
-                      aria-hidden="true"
-                      className={styles.ActivityStatus.icon()}
-                    />
-                  ) : (
-                    <IcRoundCheck
-                      aria-hidden="true"
-                      className={styles.ActivityStatus.icon()}
-                    />
-                  )}
+                  {icon}
                   {children}
                 </span>
-              ) : showSpinner ? (
-                <Spinner
-                  aria-label={label}
-                  className={styles.ActivityStatus.icon()}
-                />
-              ) : activity.hasFailed ? (
-                <IcRoundWarning
-                  aria-hidden="true"
-                  className={styles.ActivityStatus.icon()}
-                />
               ) : (
-                <IcRoundCheck
-                  aria-hidden="true"
-                  className={styles.ActivityStatus.icon()}
-                />
+                icon
               )}
             </Button>
           </TooltipTrigger>
@@ -182,10 +165,6 @@ export function ActivityStatus({
         side={popoverSide}
         align={popoverAlign}
         sideOffset={16}
-        style={{
-          padding: '0',
-          boxShadow: 'var(--alinea-shadow-tooltip)'
-        }}
       >
         <div className={styles.ActivityStatus.popover()}>
           <div className={styles.ActivityStatus.popover.header()}>

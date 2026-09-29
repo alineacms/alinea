@@ -14,7 +14,6 @@ import {startTransition, useMemo} from 'react'
 import {configAtom} from '../atoms/core.js'
 import type {
   DashboardEntry,
-  DashboardEntryData,
   DashboardExplorer,
   ExplorerItemData,
   ExplorerLinkedEntry,
@@ -59,8 +58,8 @@ interface ExplorerTableRowProps {
 }
 
 interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
-  item?: ExplorerItemData
-  links?: ReadonlyMap<string, ExplorerLinkedEntry>
+  item: ExplorerItemData
+  links: ReadonlyMap<string, ExplorerLinkedEntry>
   hasChildren: boolean
   icon: IconType
   isSelectable: boolean
@@ -104,19 +103,6 @@ interface ExplorerTableBreadcrumbProps {
 
 function ExplorerTableBreadcrumb({entry, index}: ExplorerTableBreadcrumbProps) {
   const {data} = useAtomValueRaw(entry.data)
-  if (!data) return null
-  return <ExplorerTableLoadedBreadcrumb data={data} index={index} />
-}
-
-interface ExplorerTableLoadedBreadcrumbProps {
-  data: DashboardEntryData
-  index: number
-}
-
-function ExplorerTableLoadedBreadcrumb({
-  data,
-  index
-}: ExplorerTableLoadedBreadcrumbProps) {
   const label = useAtomValueRaw(data.label)
   const root = useAtomValueRaw(data.root)
   const rootLabel = useAtomValueRaw(root.label)
@@ -156,9 +142,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
   } = props
   const config = useAtomValueRaw(configAtom)
   const columns = props.page.overview.columns
-  const isExpanded = useAtomValueRaw(
-    useMemo(() => explorer.isExpanded(entry), [explorer, entry])
-  )
+  const isExpanded = useAtomValueRaw(explorer.isExpanded(entry))
   const onAction = useSetAtom(explorer.onAction)
   const openLocation = useSetAtom(explorer.openLocation)
   const setExpandedKeys = useSetAtom(explorer.expandedKeys)
@@ -179,10 +163,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     startTransition(() => openLocation(entry))
   }
   const cellTexts = useMemo(
-    () =>
-      item
-        ? columns.map(column => overviewCellText(config, column, item, links))
-        : [],
+    () => columns.map(column => overviewCellText(config, column, item, links)),
     [columns, config, item, links]
   )
   const textValue = [label, ...cellTexts].filter(Boolean).join(' ')
@@ -226,7 +207,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
             align={column.align}
             title={cellTexts[index] || undefined}
           >
-            {item && <OverviewCell column={column} row={item} links={links} />}
+            <OverviewCell column={column} row={item} links={links} />
           </TableCell>
         ))}
     </TableRow>
@@ -235,10 +216,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
 
 function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
   const children = useAtomValueRawSync(
-    useMemo(
-      () => props.explorer.children(props.entry, props.locale),
-      [props.entry, props.explorer, props.locale]
-    )
+    props.explorer.children(props.entry, props.locale)
   )
   return children.map(child => (
     <ExplorerTableRow
@@ -254,28 +232,8 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
   ))
 }
 
-function ExplorerTableLoadingRow(props: ExplorerTableRowProps) {
-  return (
-    <ExplorerTableDisplayRow
-      {...props}
-      hasChildren={false}
-      icon={LucideFile}
-      isSelectable={false}
-      label="Loading entry"
-      parents={[]}
-    />
-  )
-}
-
-interface ExplorerTableLoadedRowProps extends ExplorerTableRowProps {
-  data: DashboardEntryData
-}
-
-function ExplorerTableLoadedRow({
-  data,
-  explorer,
-  ...props
-}: ExplorerTableLoadedRowProps) {
+function ExplorerTableRow({explorer, ...props}: ExplorerTableRowProps) {
+  const {data} = useAtomValueRaw(props.entry.data)
   const root = useAtomValueRaw(data.root)
   const rootLabel = useAtomValueRaw(root.label)
   const label = useAtomValueRaw(data.label)
@@ -284,9 +242,7 @@ function ExplorerTableLoadedRow({
   const item = useAtomValueRaw(data.item)
   const links = useAtomValueRaw(data.linked)
   const parents = useAtomValueRaw(data.parents)
-  const isSelectable = useAtomValueRaw(
-    useMemo(() => explorer.isSelectable(props.entry), [explorer, props.entry])
-  )
+  const isSelectable = useAtomValueRaw(explorer.isSelectable(props.entry))
   return (
     <ExplorerTableDisplayRow
       {...props}
@@ -305,12 +261,6 @@ function ExplorerTableLoadedRow({
       rootLabel={rootLabel}
     />
   )
-}
-
-function ExplorerTableRow(props: ExplorerTableRowProps) {
-  const {data, pending} = useAtomValueRaw(props.entry.data)
-  if (pending || !data) return <ExplorerTableLoadingRow {...props} />
-  return <ExplorerTableLoadedRow {...props} data={data} />
 }
 
 export interface ExplorerTableProps {
@@ -349,12 +299,9 @@ export function ExplorerTable({
     ? {column: page.sort.column.column, direction: page.sort.column.direction}
     : undefined
   const selectionMode = explorer.selectionMode
-  const search = useAtomValueRaw(explorer.search)
-  const isSearching = Boolean(search.trim())
   const breadcrumbs =
     explorer.breadcrumbs ||
     page.resultMode === 'matches' ||
-    isSearching ||
     page.searchesEverything
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls =
@@ -376,7 +323,7 @@ export function ExplorerTable({
         showHeader={!compact}
         sortDescriptor={sortDescriptor}
         onSortChange={
-          isSearching
+          page.search.trim()
             ? undefined
             : descriptor =>
                 startTransition(() =>

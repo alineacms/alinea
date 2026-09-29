@@ -12,11 +12,10 @@ import {
   useDialog
 } from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
-import {workspaceAtom, workspacesAtom} from '#/dashboard/atoms/config.js'
-import {createExplorerAtoms} from '#/dashboard/atoms/explorer.js'
-import type {Page} from '#/dashboard/atoms/nav.js'
-import {routeAtom} from '#/dashboard/atoms/nav.js'
-import type {RootAtoms} from '#/dashboard/atoms/root.js'
+import {workspaceAtom, workspacesAtom} from '../atoms/config.js'
+import {createExplorerAtoms} from '../atoms/explorer.js'
+import {routeAtom, type Page} from '../atoms/nav.js'
+import type {RootAtoms} from '../atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
@@ -48,7 +47,6 @@ interface WorkspaceMenuProps {
 interface WorkspaceAvatarProps {
   color: string
   icon?: ComponentType
-  size?: 'default' | 'large' | 'small'
 }
 
 interface WorkspaceSelectorMenuProps {
@@ -58,13 +56,9 @@ interface WorkspaceSelectorMenuProps {
   page: Page
 }
 
-function WorkspaceAvatar({
-  color,
-  icon,
-  size = 'default'
-}: WorkspaceAvatarProps) {
+function WorkspaceAvatar({color, icon}: WorkspaceAvatarProps) {
   return (
-    <span className={styles.WorkspaceMenu.avatar(size)}>
+    <span className={styles.WorkspaceMenu.avatar()}>
       <LogoShape
         background={color}
         icon={icon ?? AlineaLogo}
@@ -128,16 +122,13 @@ export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
   const workspaces = useAtomValueRaw(workspacesAtom)
   const setRoute = useSetAtom(routeAtom)
   const avatar = (
-    <WorkspaceAvatar
-      color={workspace.color}
-      icon={workspace.icon}
-      size="small"
-    />
+    <WorkspaceAvatar color={workspace.color} icon={workspace.icon} />
   )
   if (workspaces.length <= 1) {
     return (
       <div
         className={styles.WorkspaceMenu.avatarTrigger()}
+        role="img"
         aria-label={workspace.label}
       >
         {avatar}

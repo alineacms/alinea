@@ -6,9 +6,12 @@
   list-style: none;
 }
 
-.WorkspaceRoots-profile-popover-surface {
+/* Outranks the padding and shadow of the popover surface */
+.WorkspaceRoots-profile-popover-surface[data-slot] {
   overflow: hidden;
+  padding: 0;
   background: var(--alinea-bg);
+  box-shadow: var(--alinea-shadow-tooltip);
 }
 
 .WorkspaceRoots-profile-popover-user,

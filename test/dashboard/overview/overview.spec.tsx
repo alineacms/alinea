@@ -222,3 +222,25 @@ test('lists the products of a brand with an entry table', async ({
     .click()
   await expect(page.getByRole('heading', {level: 1})).toHaveText('Table')
 })
+
+test('keeps checked rows while typing in the search field', async ({
+  mount,
+  page
+}) => {
+  await open(page, '#/entry/main/products')
+  await mount(<OverviewScenarioMount />)
+  await expect.poll(() => titles(page)).toEqual(['Chair', 'Table', 'Lamp'])
+  for (const title of ['Chair', 'Table'])
+    await table(page)
+      .getByRole('checkbox', {name: `Select ${title}`})
+      .click({force: true})
+  const checked = table(page).getByRole('row', {selected: true})
+  await expect(checked).toHaveCount(2)
+  const search = page.getByRole('searchbox', {name: 'Search'})
+  await search.focus()
+  await search.press('ArrowDown')
+  await search.press('ArrowUp')
+  await search.press('Enter')
+  await expect(checked).toHaveCount(2)
+  await expect(page).toHaveURL(/#\/entry\/main\/products$/)
+})

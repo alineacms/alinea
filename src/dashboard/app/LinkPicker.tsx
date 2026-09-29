@@ -10,37 +10,24 @@ import {
   Text,
   useDialog
 } from '#/components.js'
-import {
-  createExplorerAtoms,
-  type DashboardEntry,
-  type DashboardExplorer,
-  type ExplorerLocation,
-  type ExplorerOptions,
-  type ExplorerReadyPage
-} from '#/dashboard/atoms/explorer.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {useDashboardContext} from '#/dashboard/hooks.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
-import {
-  Suspense,
-  useMemo,
-  useState,
-  type ReactNode,
-  type RefObject
-} from 'react'
+import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {Suspense, useState, type ReactNode, type RefObject} from 'react'
+import type {
+  DashboardEntry,
+  DashboardExplorer,
+  ExplorerOptions,
+  ExplorerReadyPage
+} from '../atoms/explorer.js'
+import {useDashboardContext} from '../hooks.js'
 import {IcRoundOpenInFull} from '../icons.js'
 import {ExplorerBody, ExplorerHeader, ExplorerSearch} from './Explorer.js'
+import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {
-  ExplorerModal,
-  ExplorerModalActions,
-  ExplorerModalFooter,
-  ExplorerModalSuspense
-} from './ExplorerModal.js'
-import {
-  createExplorerTree,
+  type createExplorerTree,
   ExplorerPickerContent,
-  normalizePickerLocale
+  ExplorerPickerFooter,
+  usePickerExplorer
 } from './ExplorerPickerContent.js'
 import css from './LinkPicker.module.css'
 import {
@@ -209,48 +196,12 @@ function LinkPickerReady({
 }
 
 function useLinkPickerExplorer(options: LinkPickerOptions) {
-  const {page, root} = useDashboardContext()
-  const location = options.location ?? {
-    workspace: root.workspace,
-    root: root.key
-  }
-  const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
-  const pickerI18n = useAtomValueRaw(pickerRoot.i18n)
-  const initialLocale = normalizePickerLocale(
-    location.locale ?? options.selectedLocale ?? page.locale,
-    pickerI18n?.locales ?? []
+  const {root} = useDashboardContext()
+  return usePickerExplorer(
+    options,
+    options.location ?? {workspace: root.workspace, root: root.key},
+    'row'
   )
-  const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const explorerIdentity = JSON.stringify([
-    initialLocation,
-    options.condition ?? null
-  ])
-  // Explorer atoms capture their initial options and reset only with this scope.
-  // oxlint-disable react-hooks/exhaustive-deps
-  const picker = useMemo(() => {
-    let explorer: ReturnType<typeof createExplorerAtoms>
-    const tree = createExplorerTree(() => explorer)
-    const currentRoot = (location: ExplorerLocation) =>
-      rootAtoms(location.workspace, location.root ?? root.key)
-    const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
-    explorer = createExplorerAtoms(initialLocation, {
-      ...options,
-      allowAllWorkspaces:
-        options.allowAllWorkspaces ??
-        (!options.limitLocations?.length && !options.pickChildren),
-      initialView: options.initialView ?? 'row',
-      rootData,
-      searchDepth: 'all',
-      selectedLocale: initialLocale,
-      treeItems: (locale, location) =>
-        tree(currentRoot(location), locale, location).items,
-      treeReady: (locale, location) =>
-        tree(currentRoot(location), locale, location).ready
-    })
-    return {explorer, tree}
-  }, [explorerIdentity])
-  // oxlint-enable react-hooks/exhaustive-deps
-  return picker
 }
 
 interface LinkPickerCompactProps {
@@ -356,9 +307,7 @@ function LinkPickerExpanded({
 }: LinkPickerExpandedProps) {
   const modal = useDialog()
   const onConfirm = useSetAtom(explorer.onConfirm)
-  const selection = useAtomValueRaw(explorer.selection)
   const setSelection = useSetAtom(explorer.selection)
-  const selectedItems = selection === 'all' ? 0 : selection.size
 
   function onSubmit() {
     onConfirm(page.locale)
@@ -391,17 +340,7 @@ function LinkPickerExpanded({
             page={page}
             tree={tree}
           />
-          <ExplorerModalFooter>
-            <Text color="muted">
-              {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </Text>
-            <ExplorerModalActions>
-              <Button onClick={modal.close}>Cancel</Button>
-              <Button color="primary" onClick={onSubmit}>
-                Select
-              </Button>
-            </ExplorerModalActions>
-          </ExplorerModalFooter>
+          <ExplorerPickerFooter explorer={explorer} onSubmit={onSubmit} />
         </ExplorerModal>
       </ExplorerModalSuspense>
     </DashboardModalDialog>

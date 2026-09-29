@@ -22,16 +22,21 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {FieldValidationError} from '#/core/Validation.js'
-import {activityAtom} from '#/dashboard/atoms/activity.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
-import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
-import {routeAtom} from '#/dashboard/atoms/nav.js'
-import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
-import {useSaveShortcut} from '#/dashboard/hook/UseSaveShortcut.js'
+import {activityAtom} from '../atoms/activity.js'
+import {configAtom} from '../atoms/core.js'
+import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
+import {routeAtom} from '../atoms/nav.js'
+import type {ReactiveNode} from '../atoms/ReactiveNode.js'
+import {policyAtom} from '../atoms/user.js'
+import {useSaveShortcut} from '../hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {ComponentType, useState, useTransition, type ReactNode} from 'react'
+import {
+  type ComponentType,
+  useState,
+  useTransition,
+  type ReactNode
+} from 'react'
 import {
   IcOutlineArchive,
   IcRoundArchive,
@@ -52,7 +57,10 @@ import {
   entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
-import {EntryValidationModal} from './EntryValidationModal.js'
+import {
+  type EntryValidationFailure,
+  EntryValidationModal
+} from './EntryValidationModal.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 import {
   DashboardModal,
@@ -128,11 +136,6 @@ function entryUrlConflictInfo(
       root: info.root
     }
   }
-}
-
-interface EntryValidationFailure {
-  errors?: Array<FieldValidationError>
-  message?: string
 }
 
 function entryValidationFailure(
@@ -534,8 +537,7 @@ export function EntryHeader({
         onClose={() => setUrlConflict(undefined)}
       />
       <EntryValidationModal
-        errors={invalid?.errors}
-        message={invalid?.message}
+        failure={invalid}
         onClose={() => setInvalid(undefined)}
       />
     </PageHeader>

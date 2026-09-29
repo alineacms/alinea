@@ -18,15 +18,14 @@ import {
   TooltipContent,
   TooltipTrigger
 } from '#/components.js'
-import type {Page} from '#/dashboard/atoms/nav.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {canLogoutAtom, logoutAtom} from '#/dashboard/atoms/dashboard.js'
-import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
-import {routeAtom} from '#/dashboard/atoms/nav.js'
-import {workspaceAtom} from '#/dashboard/atoms/config.js'
-import {setUserRolesAtom} from '#/dashboard/atoms/auth.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
-import {useUser} from '#/dashboard/hooks.js'
+import {rootAtoms} from '../atoms/root.js'
+import {canLogoutAtom, logoutAtom} from '../atoms/dashboard.js'
+import {configAtom, localAtom} from '../atoms/core.js'
+import {routeAtom, type Page} from '../atoms/nav.js'
+import {workspaceAtom} from '../atoms/config.js'
+import {setUserRolesAtom} from '../atoms/auth.js'
+import {policyAtom} from '../atoms/user.js'
+import {useUser} from '../hooks.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {
@@ -151,7 +150,6 @@ function WorkspaceProfileMenu({
         side="right"
         align="end"
         sideOffset={16}
-        style={{padding: '0', boxShadow: 'var(--alinea-shadow-tooltip)'}}
       >
         <ul className={styles.WorkspaceRoots.profile.popover()}>
           <li className={styles.WorkspaceRoots.profile.popover.user()}>

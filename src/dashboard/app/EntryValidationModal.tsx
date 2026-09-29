@@ -11,10 +11,14 @@ import {
 
 const styles = styler(css)
 
-export interface EntryValidationModalProps {
+export interface EntryValidationFailure {
   errors?: Array<FieldValidationError>
   /** Shown when the errors came back from the server without details */
   message?: string
+}
+
+export interface EntryValidationModalProps {
+  failure?: EntryValidationFailure
   onClose(): void
 }
 
@@ -33,11 +37,10 @@ function focusFirstInvalidField() {
 
 /** Explains why an entry cannot be published and lists the invalid fields */
 export function EntryValidationModal({
-  errors,
-  message,
+  failure,
   onClose
 }: EntryValidationModalProps) {
-  const isOpen = Boolean(errors || message)
+  const isOpen = Boolean(failure)
   function close() {
     onClose()
     requestAnimationFrame(focusFirstInvalidField)
@@ -55,9 +58,9 @@ export function EntryValidationModal({
             <Text as="p">
               This entry cannot be published until these fields are valid.
             </Text>
-            {errors && errors.length > 0 ? (
+            {failure?.errors?.length ? (
               <ul className={styles.EntryValidationModal.list()}>
-                {errors.map((error, index) => (
+                {failure.errors.map((error, index) => (
                   <li
                     key={index}
                     className={styles.EntryValidationModal.item()}
@@ -69,7 +72,7 @@ export function EntryValidationModal({
               </ul>
             ) : (
               <Text as="p" className={styles.EntryValidationModal.message()}>
-                {message}
+                {failure?.message}
               </Text>
             )}
           </DashboardModalContent>

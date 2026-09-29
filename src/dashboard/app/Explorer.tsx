@@ -25,9 +25,9 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {OverviewActionProps, OverviewSort} from '#/core/Overview.js'
 import {resolveView} from '#/core/View.js'
 import {slugify} from '#/core/util/Slugs.js'
-import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
+import {ViewToggle} from './ViewToggle.js'
+import {rootAtoms} from '../atoms/root.js'
+import {policyAtom} from '../atoms/user.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
@@ -44,7 +44,6 @@ import {
 import {configAtom, viewsAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
-  type DashboardEntryData,
   type DashboardExplorer,
   explorerPageIsPending,
   type ExplorerReadyPage,
@@ -140,12 +139,6 @@ interface ExplorerHeaderMainProps {
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
   page: ExplorerReadyPage
-  titleControls?: ReactNode
-}
-
-interface ExplorerHeaderLoadedParentMainProps {
-  data: DashboardEntryData
-  explorer: DashboardExplorer
   titleControls?: ReactNode
 }
 
@@ -288,7 +281,7 @@ export function ExplorerSearch({
   }
 
   function moveSelection(direction: 1 | -1) {
-    if (!explorer.hasSelection || items.length === 0) return
+    if (items.length === 0) return
     const current = selectedIndex()
     const next =
       current === -1
@@ -304,6 +297,9 @@ export function ExplorerSearch({
     if (event.key === 'Escape' && onEscape) {
       event.preventDefault()
       onEscape()
+    } else if (!isCombobox && explorer.selectionMode !== 'single') {
+      // A selection of many entries is kept, the keys stay in the field
+      return
     } else if (event.key === 'ArrowDown') {
       event.preventDefault()
       moveSelection(1)
@@ -427,11 +423,12 @@ function ExplorerResultMode({
   )
 }
 
-function ExplorerHeaderLoadedParentMain({
-  data,
+function ExplorerHeaderParentMain({
   explorer,
+  parent: current,
   titleControls
-}: ExplorerHeaderLoadedParentMainProps) {
+}: ExplorerHeaderParentMainProps) {
+  const {data} = useAtomValueRaw(current.data)
   const label = useAtomValueRaw(data.label)
   const parents = useAtomValueRaw(data.parents)
   const setLocation = useSetAtom(explorer.location)
@@ -505,30 +502,6 @@ function ExplorerLocationParents({
   parent
 }: ExplorerLocationParentsProps) {
   const {data} = useAtomValueRaw(parent.data)
-  if (!data) return null
-  return (
-    <ExplorerLoadedLocationParents
-      data={data}
-      explorer={explorer}
-      lockNavigation={lockNavigation}
-      parent={parent}
-    />
-  )
-}
-
-interface ExplorerLoadedLocationParentsProps {
-  data: DashboardEntryData
-  explorer: DashboardExplorer
-  lockNavigation: boolean
-  parent: DashboardEntry
-}
-
-function ExplorerLoadedLocationParents({
-  data,
-  explorer,
-  lockNavigation,
-  parent
-}: ExplorerLoadedLocationParentsProps) {
   const parents = useAtomValueRaw(data.parents)
   return [...parents, parent].map((entry, index, entries) => (
     <ExplorerLocationParent
@@ -555,33 +528,6 @@ function ExplorerLocationParent({
   lockNavigation
 }: ExplorerLocationParentProps) {
   const {data} = useAtomValueRaw(entry.data)
-  if (!data) return null
-  return (
-    <ExplorerLoadedLocationParent
-      current={current}
-      data={data}
-      entry={entry}
-      explorer={explorer}
-      lockNavigation={lockNavigation}
-    />
-  )
-}
-
-interface ExplorerLoadedLocationParentProps {
-  current: boolean
-  data: DashboardEntryData
-  entry: DashboardEntry
-  explorer: DashboardExplorer
-  lockNavigation: boolean
-}
-
-function ExplorerLoadedLocationParent({
-  current,
-  data,
-  entry,
-  explorer,
-  lockNavigation
-}: ExplorerLoadedLocationParentProps) {
   const label = useAtomValueRaw(data.label)
   const setLocation = useSetAtom(explorer.location)
   return (
@@ -807,22 +753,6 @@ function ExplorerLocationMenu({
         />
       )}
     </div>
-  )
-}
-
-function ExplorerHeaderParentMain({
-  explorer,
-  parent,
-  titleControls
-}: ExplorerHeaderParentMainProps) {
-  const {data} = useAtomValueRaw(parent.data)
-  if (!data) return null
-  return (
-    <ExplorerHeaderLoadedParentMain
-      data={data}
-      explorer={explorer}
-      titleControls={titleControls}
-    />
   )
 }
 

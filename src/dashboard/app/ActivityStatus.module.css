@@ -32,9 +32,12 @@
   max-width: calc(100vw - 32px);
 }
 
-.ActivityStatus-popover-surface {
+/* Outranks the padding and shadow of the popover surface */
+.ActivityStatus-popover-surface[data-slot] {
   overflow: hidden;
+  padding: 0;
   background: var(--alinea-bg);
+  box-shadow: var(--alinea-shadow-tooltip);
 }
 
 .ActivityStatus-popover-header {

@@ -128,11 +128,7 @@ export function DashboardModalContent({children}: PropsWithChildren) {
 }
 
 export function DashboardModalFooter({children}: PropsWithChildren) {
-  return (
-    <>
-      <footer className={styles.DashboardModalFooter()}>{children}</footer>
-    </>
-  )
+  return <footer className={styles.DashboardModalFooter()}>{children}</footer>
 }
 
 export function DashboardModalTitle({children}: PropsWithChildren) {
@@ -153,10 +149,6 @@ export function DashboardModalCloseButton() {
       icon={IcRoundClose}
     />
   )
-}
-
-export function DashboardModalSeparator() {
-  return <div className={styles.DashboardModalSeparator()} />
 }
 
 export interface DashboardModalFormProps extends ComponentProps<'form'> {}
