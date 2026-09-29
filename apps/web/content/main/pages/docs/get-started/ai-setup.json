@@ -56,7 +56,7 @@
         },
         {
           "_type": "text",
-          "text": ", fetch it when you need an API that is not covered here."
+          "text": ", fetch it when you need an API that is not covered here. Once Alinea is installed, `node_modules/alinea/docs/` holds the docs of the installed version as a Markdown file per page, start at `index.md`."
         }
       ]
     },
@@ -263,6 +263,20 @@
                 {
                   "_type": "text",
                   "text": "`.gitignore` entries for `/public/admin.html` and `/public/admin/`, where `alinea build` writes the dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`AGENTS.md`: a short Alinea section that points coding agents to the bundled docs and the MCP server. It is added to an existing `AGENTS.md` once, or creates the file."
                 }
               ]
             }
@@ -875,6 +889,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "Docs of the installed version: `node_modules/alinea/docs/index.md`"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "Complete documentation in one file",
                   "marks": [
                     {
@@ -882,6 +910,28 @@
                       "_id": "3JjtWperptVvR4RqKpCkbXoHMmy",
                       "_link": "url",
                       "href": "/llms-full.txt"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Index of all docs pages as Markdown",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3K14P4ZwtkbujtAqDLW4syZ03pr",
+                      "_link": "url",
+                      "href": "/llms.txt"
                     }
                   ]
                 }

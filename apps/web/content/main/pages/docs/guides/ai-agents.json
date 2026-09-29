@@ -103,7 +103,23 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "The "
+                  "text": "The docs that ship with the package: `node_modules/alinea/docs/` holds a Markdown file per docs page for the installed version, start at `index.md`. Online, "
+                },
+                {
+                  "_type": "text",
+                  "text": "llms.txt",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3K14P34q2nprAyBAXZSl6ihKiWQ",
+                      "_link": "url",
+                      "href": "/llms.txt"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " lists every page as Markdown and "
                 },
                 {
                   "_type": "text",
@@ -119,7 +135,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": " file holds all documentation (including this playbook). Use this as primary source of truth."
+                  "text": " holds all documentation in one file (including this playbook). Use these as primary source of truth."
                 }
               ]
             }
@@ -204,6 +220,16 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea init` adds a short Alinea section to the project's `AGENTS.md` that points agents to the bundled docs and the MCP server, so agents find them without being told."
         }
       ]
     },

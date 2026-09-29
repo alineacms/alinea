@@ -152,10 +152,12 @@ export default async function BlogPage() {
 
 ## Coding agents
 
-The npm package includes the full documentation in `llms-full.txt`, and
-`alinea dev` runs an MCP server (`http://localhost:4500/mcp`) so agents can
-read your schema and create, edit and publish entries through the same save
-path as the dashboard.
+The npm package includes the documentation of its version as Markdown in
+`node_modules/alinea/docs/` (start at `index.md`), and the website lists every
+page in [`/llms.txt`](https://v2.alineacms.com/llms.txt). `alinea init` adds a
+short section to your `AGENTS.md` that points agents to both. `alinea dev` runs
+an MCP server (`http://localhost:4500/mcp`) so agents can read your schema and
+create, edit and publish entries through the same save path as the dashboard.
 
 ```sh
 claude mcp add --transport http alinea http://localhost:4500/mcp

@@ -359,7 +359,7 @@
           "_type": "Feature",
           "icon": "StrokeSparkle",
           "title": "Ready for coding agents",
-          "text": "llms-full.txt ships with the package, so AI agents know the full API.",
+          "text": "The docs ship with the package as Markdown, so AI agents know the API of the installed version.",
           "tag": ""
         },
         {
