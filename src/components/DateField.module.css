@@ -2,7 +2,7 @@
   display: block;
 }
 
-.DateField-control {
+.DateField-input {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -38,11 +38,6 @@
     opacity: 0.5;
     pointer-events: none;
   }
-}
-
-.DateField-input {
-  flex: 1;
-  min-width: 0;
 }
 
 .DateField-segment {

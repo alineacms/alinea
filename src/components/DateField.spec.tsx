@@ -27,3 +27,11 @@ test('edits the ISO value', async ({mount, page}) => {
   await segments.first().press('ArrowUp')
   await expect(page.getByTestId('value')).toHaveText('2026-10-05')
 })
+
+test('renders a single labelled group', async ({mount, page}) => {
+  await mount(<Controlled />)
+  await expect(page.getByRole('group')).toHaveCount(1)
+  await expect(page.getByRole('group', {name: 'Start date'})).toHaveCount(1)
+  const ids = await page.locator('[id]').evaluateAll(els => els.map(el => el.id))
+  expect(new Set(ids).size).toBe(ids.length)
+})

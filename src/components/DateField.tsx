@@ -2,8 +2,7 @@ import styler from '@alinea/styler'
 import {
   DateInput,
   DateField as DateFieldPrimitive,
-  DateSegment,
-  Group
+  DateSegment
 } from 'react-aria-components'
 import {Locale} from './internal/Locale.js'
 import css from './DateField.module.css'
@@ -81,26 +80,20 @@ export function DateField({
           icon={icon}
           shared={shared}
         >
-          <Group
-            data-slot="date-field-control"
-            aria-disabled={disabled || undefined}
-            className={styles.DateField.control()}
+          <DateInput
+            data-slot="date-field-input"
+            className={styles.DateField.input()}
           >
-            <DateInput
-              data-slot="date-field-input"
-              className={styles.DateField.input()}
-            >
-              {segment => (
-                <DateSegment
-                  data-slot="date-field-segment"
-                  className={state =>
-                    styles.DateField.segment({placeholder: state.isPlaceholder})
-                  }
-                  segment={segment}
-                />
-              )}
-            </DateInput>
-          </Group>
+            {segment => (
+              <DateSegment
+                data-slot="date-field-segment"
+                className={state =>
+                  styles.DateField.segment({placeholder: state.isPlaceholder})
+                }
+                segment={segment}
+              />
+            )}
+          </DateInput>
         </Field>
       </DateFieldPrimitive>
     </Locale>
