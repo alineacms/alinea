@@ -105,6 +105,24 @@ function errorBody(id: RequestId | null, code: number, message: string) {
   return {jsonrpc: '2.0', id, error: {code, message}}
 }
 
+/** The response to requests the server does not answer: non-local or not POST */
+export function rejectRequest(request: Request): Response | undefined {
+  if (!isLocalRequest(request))
+    return json(
+      errorBody(
+        null,
+        JsonRpcError.InvalidRequest,
+        'Forbidden: non-local request'
+      ),
+      403
+    )
+  if (request.method !== 'POST')
+    return new Response('Method not allowed, POST JSON-RPC messages', {
+      status: 405,
+      headers: {allow: 'POST'}
+    })
+}
+
 /**
  * A stateless MCP server over the Streamable HTTP transport which answers
  * every request with a single JSON response.
@@ -117,20 +135,8 @@ export class McpServer {
   }
 
   async handle(request: Request): Promise<Response> {
-    if (!isLocalRequest(request))
-      return json(
-        errorBody(
-          null,
-          JsonRpcError.InvalidRequest,
-          'Forbidden: non-local request'
-        ),
-        403
-      )
-    if (request.method !== 'POST')
-      return new Response('Method not allowed, POST JSON-RPC messages', {
-        status: 405,
-        headers: {allow: 'POST'}
-      })
+    const rejected = rejectRequest(request)
+    if (rejected) return rejected
     const protocolHeader = request.headers.get('mcp-protocol-version')
     if (protocolHeader && !supportedProtocolVersions.includes(protocolHeader))
       return json(
@@ -146,20 +152,6 @@ export class McpServer {
       body = JSON.parse(await request.text())
     } catch {
       return json(errorBody(null, JsonRpcError.ParseError, 'Parse error'), 400)
-    }
-    if (Array.isArray(body)) {
-      if (body.length === 0)
-        return json(
-          errorBody(null, JsonRpcError.InvalidRequest, 'Empty batch'),
-          400
-        )
-      const responses = []
-      for (const message of body) {
-        const response = await this.message(message)
-        if (response) responses.push(response)
-      }
-      if (responses.length === 0) return new Response(undefined, {status: 202})
-      return json(responses)
     }
     const response = await this.message(body)
     if (!response) return new Response(undefined, {status: 202})

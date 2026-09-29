@@ -1558,16 +1558,24 @@ export function createContentTools(
         let contentType = 'application/octet-stream'
         if (localPath) {
           const location = path.resolve(rootDir, localPath)
-          const allowed = uploadRoots.filter(dir => {
-            const relative = path.relative(dir, location)
-            return !relative.startsWith('..') && !path.isAbsolute(relative)
+          // Follow symlinks, and refuse hidden files such as .env or .git/*
+          const real = await fs.realpath(location).catch(() => location)
+          const roots = await Promise.all(
+            uploadRoots.map(dir => fs.realpath(dir))
+          )
+          const allowed = roots.some(dir => {
+            const relative = path.relative(dir, real)
+            return (
+              !path.isAbsolute(relative) &&
+              relative.split(path.sep).every(part => !part.startsWith('.'))
+            )
           })
-          if (allowed.length === 0)
+          if (!allowed)
             fail(
-              `"${localPath}" resolves to ${location}, which is outside the directories files can be uploaded from: ${uploadRoots.join(', ')}. Relative paths resolve against the project directory ${rootDir}`
+              `"${localPath}" resolves to ${location}, which is outside the directories files can be uploaded from: ${uploadRoots.join(', ')}, or hidden. Relative paths resolve against the project directory ${rootDir}`
             )
           try {
-            bytes = new Uint8Array(await fs.readFile(location))
+            bytes = new Uint8Array(await fs.readFile(real))
           } catch (error) {
             fail(
               `Could not read ${location} (from "${localPath}"): ${error instanceof Error ? error.message : String(error)}`

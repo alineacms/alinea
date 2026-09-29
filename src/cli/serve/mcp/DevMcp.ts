@@ -5,7 +5,7 @@ import type {User} from '#/core/User.js'
 import type {Request, Response} from '@alinea/iso'
 import pkg from '../../../../package.json' with {type: 'json'}
 import {McpGraph} from './McpGraph.js'
-import {McpServer} from './McpServer.js'
+import {McpServer, rejectRequest} from './McpServer.js'
 import {createContentTools, mcpInstructions} from './McpTools.js'
 
 export interface DevMcpOptions {
@@ -13,6 +13,8 @@ export interface DevMcpOptions {
   db: LocalStore
   rootDir: string
   user: User
+  /** The dev server's key, the upload endpoint requires it without an Origin */
+  apiKey: string
   /** The dev server's api handler, writes go through it like the dashboard's */
   handleApi(request: Request): Promise<Response>
 }
@@ -21,21 +23,23 @@ export interface DevMcpOptions {
 export function createDevMcp(
   options: DevMcpOptions
 ): (request: Request) => Promise<Response> {
-  const {config, db, rootDir, user, handleApi} = options
+  const {config, db, rootDir, user, apiKey, handleApi} = options
   return async function handleMcp(request) {
+    const rejected = rejectRequest(request)
+    if (rejected) return rejected
     // Files may have changed on disk since the watcher last synced (edited by
     // hand, or by another process), read what is there now
-    if (request.method === 'POST')
-      await db.sync().catch(error => {
-        console.warn(
-          `Alinea MCP could not sync content from disk: ${error instanceof Error ? error.message : String(error)}`
-        )
-      })
+    await db.sync().catch(error => {
+      console.warn(
+        `Alinea MCP could not sync content from disk: ${error instanceof Error ? error.message : String(error)}`
+      )
+    })
     const graph = new McpGraph({
       config,
       db,
       handle: handleApi,
-      handlerUrl: new URL('/api', request.url).href
+      handlerUrl: new URL('/api', request.url).href,
+      apiKey
     })
     const server = new McpServer({
       name: 'alinea',
