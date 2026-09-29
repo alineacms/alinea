@@ -105,3 +105,41 @@ test('moves a child between expanded tree levels', async ({
     tree.getByRole('row', {name: 'Child', exact: true})
   ).toHaveAttribute('aria-level', '3')
 })
+
+test('reorders entries by dragging them in an overview', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
+  const rows = overview.getByRole('row')
+  await expect(rows.nth(0)).toHaveAccessibleName(/^Alpha/)
+  await expect(rows.nth(1)).toHaveAccessibleName(/^Beta/)
+
+  await overview
+    .getByRole('button', {name: 'Drag Beta'})
+    .dragTo(rows.nth(0), {force: true, targetPosition: {x: 100, y: 1}})
+
+  await expect(rows.nth(0)).toHaveAccessibleName(/^Beta/)
+  await expect(rows.nth(1)).toHaveAccessibleName(/^Alpha/)
+})
+
+test('moves an entry into a folder by dragging it in an overview', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
+  const folder = overview.getByRole('row', {name: /^Folder/})
+
+  await overview
+    .getByRole('button', {name: 'Drag Alpha'})
+    .dragTo(folder, {force: true})
+
+  await expect(overview.getByRole('row', {name: /^Alpha/})).toHaveCount(0)
+  await overview.getByRole('row', {name: /^Folder/}).click()
+  await expect(app.title).toHaveText('Folder')
+  await expect(overview.getByRole('row', {name: /^Alpha/})).toBeVisible()
+})

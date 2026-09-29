@@ -6,6 +6,7 @@ import {LocalDB} from '#/database/LocalDB.js'
 import {WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
+import {Entry} from '#/core/Entry.js'
 import {Config, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
@@ -19,6 +20,7 @@ import {
   explorerThumbnailId,
   type ExplorerItemData
 } from './explorer.js'
+import {syncAtom} from './graph.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 import {columnLinkIds, resolveOverview} from './overview.js'
 import {getRoot} from '#/core/Internal.js'
@@ -580,4 +582,85 @@ test('search results load thumbnails and linked entry titles', async () => {
     averageColor: '#524537'
   })
   expect(store.get(data.linked).get('author')?.title).toBe('Maya')
+})
+
+const Folder = Config.document('Folder', {
+  contains: ['Folder', 'Note'],
+  fields: {}
+})
+const Note = Config.document('Note', {fields: {}})
+const notesConfig = Config.create({
+  schema: {Folder, Note},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: '.',
+      roots: {notes: Config.root('Notes', {contains: ['Folder', 'Note']})}
+    })
+  }
+})
+
+async function notesFixture() {
+  const db = new LocalDB(notesConfig)
+  await db.sync()
+  const create = (title: string, type = Note, parentId?: string) =>
+    db.create({type, parentId, set: {title}})
+  const [a, b, c, folder] = [
+    await create('A'),
+    await create('B'),
+    await create('C'),
+    await create('Folder', Folder)
+  ]
+  const nested = await create('Nested', Note, folder._id)
+  const store = createDashboardStore(notesConfig, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'notes'},
+    {enableNavigation: true}
+  )
+  const titles = async () => {
+    await store.set(syncAtom)
+    return (await store.get(explorer.itemsReady(null))).map(item => item.title)
+  }
+  return {a, b, c, db, explorer, folder, nested, store, titles}
+}
+
+test('reordered entries keep the order they are listed in', async () => {
+  const {a, b, c, explorer, folder, store, titles} = await notesFixture()
+  expect(await titles()).toEqual(['A', 'B', 'C', 'Folder'])
+  await store.set(
+    explorer.reorder,
+    [a._id, c._id],
+    {key: folder._id, position: 'after'},
+    null
+  )
+  expect(await titles()).toEqual(['B', 'Folder', 'A', 'C'])
+  // Selected in reverse order
+  await store.set(
+    explorer.reorder,
+    [c._id, a._id],
+    {key: b._id, position: 'before'},
+    null
+  )
+  expect(await titles()).toEqual(['A', 'C', 'B', 'Folder'])
+})
+
+test('entries can be moved into listed containers by id', async () => {
+  const {a, db, explorer, folder, nested, store} = await notesFixture()
+  await store.get(explorer.itemsReady(null))
+  const types = new Set(['application/x-alinea-entry-id'])
+  const canDrop = (key: string) =>
+    store.set(explorer.canDrop, {key, position: 'on'}, types, null)
+  expect(canDrop(folder._id)).toBe(true)
+  // Notes hold no children
+  expect(canDrop(a._id)).toBe(false)
+  // The nested note is not listed but can still be moved
+  await store.set(explorer.moveInto, [nested._id, a._id], {
+    key: folder._id,
+    position: 'on'
+  })
+  const moved = await db.find({
+    id: {in: [nested._id, a._id]},
+    select: Entry.parentId
+  })
+  expect(moved).toEqual([folder._id, folder._id])
 })
