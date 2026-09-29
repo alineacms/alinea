@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, ReadOnly} from './MediaPreview.stories.js'
+import {Example, ReadOnly, Unset} from './MediaPreview.stories.js'
 
 test('moves the focal point with the pointer', async ({mount, page}) => {
   await mount(<Example />)
@@ -42,6 +42,15 @@ test('moves the focal point with the arrow keys', async ({mount, page}) => {
   )
   for (let i = 0; i < 6; i++) await page.keyboard.press('Shift+ArrowUp')
   await expect(page.getByText('Focus: 0.52, 0.00')).toBeVisible()
+})
+
+test('starts an unset focal point from the center', async ({mount, page}) => {
+  await mount(<Unset />)
+  await expect(page.getByText('Focus: none')).toBeVisible()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('slider', {name: 'Focus point'})).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByText('Focus: 0.51, 0.50')).toBeVisible()
 })
 
 test('a read-only preview shows the focal point', async ({mount, page}) => {
