@@ -1,4 +1,6 @@
 import {
+  Alert,
+  AlertDescription,
   Button,
   Field,
   Select,
@@ -25,12 +27,17 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
 import {
   Suspense,
+  useId,
   useMemo,
   useState,
   type FormEvent,
   type SetStateAction
 } from 'react'
-import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
+import {
+  IcBaselineErrorOutline,
+  IcRoundFirstPage,
+  IcRoundLastPage
+} from '../../icons.js'
 import {NodeEditor} from '../EntryFields.js'
 import {
   DashboardModalContent,
@@ -126,6 +133,8 @@ function CreateEntryForm() {
   const [selectedTypeOverride, setSelectedType] = useState<string | null>(null)
   const [insertOrder, setInsertOrder] = useState<'first' | 'last'>('last')
   const [isCreating, setIsCreating] = useState(false)
+  const [error, setError] = useState<string>()
+  const formId = useId()
   const containerTypes = useMemo(
     () =>
       Object.entries(config)
@@ -200,6 +209,7 @@ function CreateEntryForm() {
     const nextTitle = title.trim()
     if (isCreating || !selectedType || !nextTitle) return
     setIsCreating(true)
+    setError(undefined)
     try {
       await createEntry({
         workspace: root.workspace,
@@ -212,6 +222,8 @@ function CreateEntryForm() {
         insertOrder: showInsertOrder ? insertOrder : undefined
       })
       modal.close()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
       setIsCreating(false)
     }
@@ -221,7 +233,7 @@ function CreateEntryForm() {
 
   return (
     <DashboardModalDialog variant="explorer" label="Create entry">
-      <form onSubmit={onSubmit} id="submit">
+      <form onSubmit={onSubmit} id={formId}>
         <DashboardModalContent>
           <TextField
             autoFocus
@@ -282,6 +294,12 @@ function CreateEntryForm() {
           </div>
 
           <NodeEditor node={copyFrom.node} type={copyFrom.type} />
+
+          {error && (
+            <Alert variant="destructive" icon={IcBaselineErrorOutline}>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </DashboardModalContent>
       </form>
 
@@ -291,7 +309,7 @@ function CreateEntryForm() {
         </Button>
         <Button
           type="submit"
-          form="submit"
+          form={formId}
           color="primary"
           disabled={!canCreate}
           loading={isCreating}
