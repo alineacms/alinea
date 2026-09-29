@@ -25,7 +25,6 @@ const styles = styler(css)
 export interface PendingUploadChange {
   action?: PendingUploadAction
   edit?: ImageEdit
-  imageSize?: ImageSize
 }
 
 export interface PendingUploadsViewProps {
@@ -125,11 +124,11 @@ function PendingUploadRow({
   onRemove
 }: PendingUploadRowProps) {
   const {file, duplicate, conflict, action, edit, imageSize} = upload
-  const canEdit = upload.editable && imageSize && action !== 'existing'
+  const canEdit = imageSize && action !== 'existing'
   const hasChoice = !replacing && (duplicate || conflict)
   return (
     <li className={styles.PendingUploadsView.row()}>
-      <PendingUploadThumbnail upload={upload} onChange={onChange} />
+      <PendingUploadThumbnail upload={upload} />
       <div className={styles.PendingUploadsView.row.info()}>
         <Text as="span" weight="medium" truncate>
           {file.name}
@@ -208,13 +207,9 @@ function PendingUploadRow({
 
 interface PendingUploadThumbnailProps {
   upload: PendingUpload
-  onChange(change: PendingUploadChange): void
 }
 
-function PendingUploadThumbnail({
-  upload,
-  onChange
-}: PendingUploadThumbnailProps) {
+function PendingUploadThumbnail({upload}: PendingUploadThumbnailProps) {
   const {previewUrl, imageSize, edit} = upload
   if (previewUrl && imageSize && edit) {
     const rotated = rotatedSize(imageSize.width, imageSize.height, edit.rotate)
@@ -240,16 +235,6 @@ function PendingUploadThumbnail({
           alt=""
           src={previewUrl}
           className={styles.PendingUploadsView.row.thumbnail.image()}
-          onLoad={event => {
-            const image = event.currentTarget
-            if (!imageSize && image.naturalWidth)
-              onChange({
-                imageSize: {
-                  width: image.naturalWidth,
-                  height: image.naturalHeight
-                }
-              })
-          }}
         />
       </span>
     )

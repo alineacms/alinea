@@ -21,7 +21,11 @@ function photo(name: string, width: number, height: number, hue: number) {
   const [, data] = canvas.toDataURL('image/jpeg', 0.9).split(',')
   const bytes = Uint8Array.from(atob(data), char => char.charCodeAt(0))
   const file = new File([bytes], name, {type: 'image/jpeg'})
-  return {file, previewUrl: URL.createObjectURL(file)}
+  return {
+    file,
+    previewUrl: URL.createObjectURL(file),
+    imageSize: {width, height}
+  }
 }
 
 function pdf(name: string, size: number) {
@@ -42,13 +46,12 @@ function match(title: string): MediaMatch {
 
 function upload(
   id: string,
-  file: {file: File; previewUrl?: string},
+  file: Pick<PendingUpload, 'file' | 'previewUrl' | 'imageSize'>,
   extra: Partial<PendingUpload> = {}
 ): PendingUpload {
   return {
     id,
     ...file,
-    editable: Boolean(file.previewUrl),
     action: 'upload',
     ...extra
   }

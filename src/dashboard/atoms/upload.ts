@@ -1,6 +1,9 @@
 import {Entry} from '#/core/Entry.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
-import {imageEncodingType, type ImageEdit} from '#/core/media/ImageTransform.js'
+import {
+  isTransformableImage,
+  type ImageEdit
+} from '#/core/media/ImageTransform.js'
 import {isImage} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {transformImage} from '#/core/media/TransformImage.browser.js'
@@ -132,9 +135,10 @@ export interface PendingUpload {
   file: File
   /** An object url of images the browser can show */
   previewUrl?: string
-  /** Jpeg, png and webp images can be rotated and cropped */
-  editable: boolean
-  /** Dimensions of the image, once its preview loaded */
+  /**
+   * Dimensions of a jpeg, png or webp image, as the browser shows it. These
+   * images can be rotated and cropped.
+   */
   imageSize?: ImageSize
   /** A media file in the workspace with the same contents */
   duplicate?: MediaMatch
@@ -180,6 +184,7 @@ const matchSelection = {
   workspace: Entry.workspace,
   root: Entry.root,
   parentId: Entry.parentId,
+  parents: Entry.parents,
   url: Entry.url,
   path: Entry.path,
   extension: MediaFile.extension,
@@ -201,17 +206,24 @@ export const requestUploadsAtom = atom(
     if (files.length === 0) return []
     const {destination, replaceId} = request
     const graph = get(graphAtom)
-    get(policyAtom).assert(Permission.Upload, {
+    const policy = get(policyAtom)
+    policy.assert(Permission.Upload, {
       workspace: destination.workspace,
       root: destination.root,
       id: destination.parentId,
       parents: destination.parents
     })
-    const hashes = await Promise.all(
-      files.map(async file =>
-        createFileHash(new Uint8Array(await file.arrayBuffer()))
-      )
+    const scanned = await Promise.all(
+      files.map(async file => {
+        const bytes = new Uint8Array(await file.arrayBuffer())
+        const editable = isTransformableImage(file.name, bytes)
+        return {
+          hash: await createFileHash(bytes),
+          imageSize: editable ? await imageSize(file) : undefined
+        }
+      })
     )
+    const hashes = scanned.map(file => file.hash)
     const slugs = files.map(file =>
       slugify(basename(file.name, extname(file.name)))
     )
@@ -244,18 +256,29 @@ export const requestUploadsAtom = atom(
         : null
     ])
     const uploads = files.map((file, index): PendingUpload => {
-      const hash = hashes[index]
+      const {hash, imageSize} = scanned[index]
       const duplicate = duplicates.find(
         match =>
           match.id !== replaceId &&
           (match.hash === hash || match.sourceHash === hash)
       )
-      const conflict = siblings.find(match => match.path === slugs[index])
+      // Replacing a file with the same name needs permission to update it
+      const conflict = siblings.find(
+        match =>
+          match.path === slugs[index] &&
+          policy.canUpdate({
+            workspace: match.workspace,
+            root: match.root,
+            id: match.id,
+            parents: match.parents,
+            type: 'MediaFile'
+          })
+      )
       return {
         id: createId(),
         file,
         ...(isImage(file.name) ? {previewUrl: URL.createObjectURL(file)} : {}),
-        editable: imageEncodingType(file.name) !== undefined,
+        ...(imageSize ? {imageSize} : {}),
         ...(duplicate ? {duplicate: mediaMatch(duplicate)} : {}),
         ...(conflict ? {conflict: mediaMatch(conflict)} : {}),
         action: replaceId ? 'replace' : duplicate ? 'existing' : 'upload'
@@ -283,7 +306,7 @@ export const updatePendingUploadAtom = atom(
     get,
     set,
     id: string,
-    update: Partial<Pick<PendingUpload, 'action' | 'edit' | 'imageSize'>>
+    update: Partial<Pick<PendingUpload, 'action' | 'edit'>>
   ) => {
     const pending = get(pendingUploadsState)
     if (!pending) return
@@ -348,6 +371,18 @@ export const confirmPendingUploadsAtom = atom(null, async (get, set) => {
   })
   pending.resolve([...existing, ...uploaded])
 })
+
+/** The dimensions of an image, undefined if the browser can not decode it */
+async function imageSize(file: File): Promise<ImageSize | undefined> {
+  try {
+    const bitmap = await createImageBitmap(file)
+    const {width, height} = bitmap
+    bitmap.close()
+    return {width, height}
+  } catch {
+    return undefined
+  }
+}
 
 function releasePreviews(uploads: Array<PendingUpload>) {
   for (const upload of uploads)
