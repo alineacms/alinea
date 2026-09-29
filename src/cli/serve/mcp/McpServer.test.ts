@@ -150,17 +150,11 @@ test('json-rpc errors', async () => {
   test.is(invalid.id, 3)
 })
 
-test('batches', async () => {
-  const response = await post([
-    {jsonrpc: '2.0', id: 1, method: 'ping'},
-    {jsonrpc: '2.0', method: 'notifications/initialized'},
-    {jsonrpc: '2.0', id: 2, method: 'ping'}
-  ])
+test('rejects batches', async () => {
+  // MCP 2025-06-18 removed JSON-RPC batching
+  const response = await post([{jsonrpc: '2.0', id: 1, method: 'ping'}])
   const body = await response.json()
-  test.equal(
-    body.map((message: {id: number}) => message.id),
-    [1, 2]
-  )
+  test.is(body.error.code, -32600)
 })
 
 test('only POST is supported', async () => {

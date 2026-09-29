@@ -153,20 +153,6 @@ export class McpServer {
     } catch {
       return json(errorBody(null, JsonRpcError.ParseError, 'Parse error'), 400)
     }
-    if (Array.isArray(body)) {
-      if (body.length === 0)
-        return json(
-          errorBody(null, JsonRpcError.InvalidRequest, 'Empty batch'),
-          400
-        )
-      const responses = []
-      for (const message of body) {
-        const response = await this.message(message)
-        if (response) responses.push(response)
-      }
-      if (responses.length === 0) return new Response(undefined, {status: 202})
-      return json(responses)
-    }
     const response = await this.message(body)
     if (!response) return new Response(undefined, {status: 202})
     return json(response)
