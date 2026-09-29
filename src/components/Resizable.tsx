@@ -139,7 +139,9 @@ export function ResizablePanelGroup({
       .filter(
         ({panel, index}) => !targets.has(index) && panel.props.visible !== false
       )
-      .sort((a, b) => rank[priority(a.panel.props)] - rank[priority(b.panel.props)])
+      .sort(
+        (a, b) => rank[priority(a.panel.props)] - rank[priority(b.panel.props)]
+      )
     if (flexible.length > 0) next[flexible[0].index] += sum(current) - sum(next)
     allotment.current?.resize(next)
     return measure()
@@ -241,7 +243,10 @@ export function ResizablePanelGroup({
       sash.dataset.slot = 'resizable-handle'
       sash.classList.add(styles.ResizablePanelGroup.handle())
       sash.setAttribute('role', 'separator')
-      sash.setAttribute('aria-orientation', vertical ? 'horizontal' : 'vertical')
+      sash.setAttribute(
+        'aria-orientation',
+        vertical ? 'horizontal' : 'vertical'
+      )
       sash.tabIndex = 0
       if (handle?.props.withHandle) sash.dataset.withHandle = ''
       else delete sash.dataset.withHandle
@@ -250,7 +255,9 @@ export function ResizablePanelGroup({
 
   // Move a focused divider with the arrow keys along the group's axis
   function keyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const keys = vertical ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight']
+    const keys = vertical
+      ? ['ArrowUp', 'ArrowDown']
+      : ['ArrowLeft', 'ArrowRight']
     const step = [-10, 10][keys.indexOf(event.key)]
     const index = sashes().indexOf(event.target as HTMLElement)
     if (!step || index < 0) return

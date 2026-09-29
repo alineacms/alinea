@@ -72,11 +72,7 @@ export function Horizontal() {
             <Box muted>Content</Box>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel
-            data-testid="details"
-            defaultSize={240}
-            minSize={200}
-          >
+          <ResizablePanel data-testid="details" defaultSize={240} minSize={200}>
             <Box>Details</Box>
           </ResizablePanel>
         </ResizablePanelGroup>

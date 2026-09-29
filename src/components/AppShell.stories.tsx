@@ -76,9 +76,7 @@ export function Example() {
                 </SidebarHeader>
                 <SidebarContent scroll>
                   <SidebarGroup>
-                    <SidebarGroupLabel>
-                      {label}
-                    </SidebarGroupLabel>
+                    <SidebarGroupLabel>{label}</SidebarGroupLabel>
                     <Tree aria-label={label} defaultExpandedKeys={['blog']}>
                       <TreeItem id="home" title="Home" icon={LucideFile} />
                       <TreeItem id="blog" title="Blog" icon={LucideFolder}>
