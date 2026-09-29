@@ -8,6 +8,7 @@ import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
+import {resizeImage} from '#/core/media/ResizeImage.browser.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -638,6 +639,7 @@ export class EntryLocaleAtoms {
     await get(graphAtom).upload({
       file,
       createPreview,
+      resizeImage,
       replaceId: this.entry.id,
       parentId: entry.parentId,
       workspace: entry.workspace,

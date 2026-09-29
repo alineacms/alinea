@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
+import {resizeImage} from '#/core/media/ResizeImage.js'
 import type {User} from '#/core/User.js'
 import type {Request, Response} from '@alinea/iso'
 import pkg from '../../../../package.json' with {type: 'json'}
@@ -42,7 +43,14 @@ export function createDevMcp(
       title: 'Alinea CMS',
       version: pkg.version,
       instructions: mcpInstructions(rootDir),
-      tools: createContentTools({config, graph, rootDir, user, createPreview})
+      tools: createContentTools({
+        config,
+        graph,
+        rootDir,
+        user,
+        createPreview,
+        resizeImage
+      })
     })
     return server.handle(request)
   }

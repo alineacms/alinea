@@ -480,6 +480,26 @@
     },
     {
       "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`resizeImages`"
+        }
+      ],
+      "_anchor": "resizeimages"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Scale down JPEG, PNG and WebP uploads larger than `maxWidth` or `maxHeight` pixels before they are stored, for example `{maxWidth: 2560, maxHeight: 2560}`. The dashboard resizes in the browser, so large photos never travel to the server. `quality` sets the JPEG and WebP encoding quality between 0 and 1, `0.85` by default. When you upload with `cms.upload`, pass `resizeImage` from `alinea/core/media/ResizeImage` next to `createPreview`; it uses `sharp` on the server. The `maxUploadSize` limit applies to the resized image. Off by default."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {

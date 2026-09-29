@@ -40,6 +40,12 @@
       "worker": "./dist/core/media/CreatePreview.js",
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
+    },
+    "./core/media/ResizeImage": {
+      "edge-light": "./dist/core/media/ResizeImage.js",
+      "worker": "./dist/core/media/ResizeImage.js",
+      "browser": "./dist/core/media/ResizeImage.browser.js",
+      "default": "./dist/core/media/ResizeImage.js"
     }
   },
   "typesVersions": {

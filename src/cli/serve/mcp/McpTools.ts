@@ -3,14 +3,13 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {Config} from '#/core/Config.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import {UploadOperation} from '#/core/db/Operation.js'
+import {UploadOperation, type UploadQuery} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
 import type {GraphQuery, Status} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
 import type {ImagePreviewDetails} from '#/core/media/CreatePreview.js'
-import {isImage} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Root} from '#/core/Root.js'
@@ -50,6 +49,8 @@ export interface ContentToolsOptions {
   /** The user recorded in metadata fields */
   user?: User
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
+  /** Scales down images larger than the resizeImages option of the config */
+  resizeImage?: UploadQuery['resizeImage']
   fetch?: typeof globalThis.fetch
 }
 
@@ -1609,24 +1610,34 @@ export function createContentTools(
         const file = new File([bytes as BlobPart], fileName, {
           type: contentType
         })
-        let preview: ImagePreviewDetails | undefined
         let warning: string | undefined
-        if (isImage(fileName) && options.createPreview) {
-          try {
-            preview = await options.createPreview(file)
-          } catch (error) {
-            warning = `No image preview: ${error instanceof Error ? error.message : String(error)}`
-          }
-        }
-        // The dashboard's upload (and replace) operation: it stores the file
-        // and creates the media entry in one commit
+        const {createPreview, resizeImage} = options
+        // The dashboard's upload (and replace) operation: it scales down large
+        // images, stores the file and creates the media entry in one commit
         const operation = new UploadOperation({
           file,
           workspace,
           root: mediaRoot,
           parentId,
           ...(replace ? {replaceId: replace} : {}),
-          ...(preview ? {createPreview: async () => preview!} : {})
+          ...(resizeImage
+            ? {
+                resizeImage: (blob, fileName, resize) =>
+                  resizeImage(blob, fileName, resize).catch(error => {
+                    warning = `Image not resized: ${error instanceof Error ? error.message : String(error)}`
+                    return blob
+                  })
+              }
+            : {}),
+          ...(createPreview
+            ? {
+                createPreview: blob =>
+                  createPreview(blob).catch(error => {
+                    warning = `No image preview: ${error instanceof Error ? error.message : String(error)}`
+                    return undefined
+                  })
+              }
+            : {})
         })
         const mutations = await operation.task(graph)
         const withMetadata = mutations.map((mutation): Mutation => {

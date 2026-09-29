@@ -1,4 +1,5 @@
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
+import {resizeImage} from '#/core/media/ResizeImage.browser.js'
 import {createId} from '#/core/Id.js'
 import {Permission} from '#/core/Role.js'
 import {atom} from 'jotai'
@@ -34,7 +35,7 @@ export const uploadFilesAtom = atom(
       parentId: request.parentId
     }
     const invalidUploads = files.flatMap(file => {
-      const error = uploadSizeError(file, config.maxUploadSize)
+      const error = uploadSizeError(file, config)
       return error ? [{id: createId(), file, error}] : []
     })
     if (invalidUploads.length > 0)
@@ -54,6 +55,7 @@ export const uploadFilesAtom = atom(
           await graph.upload({
             file,
             createPreview,
+            resizeImage,
             parentId: request.parentId,
             workspace: request.workspace,
             root: request.root,

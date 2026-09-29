@@ -99,6 +99,7 @@ const localized = Config.workspace('Localized', {
 
 const config = Config.create({
   enableDrafts: true,
+  resizeImages: {maxWidth: 1000, maxHeight: 1000},
   schema: {Page: ScenarioPage},
   workspaces: {localized, main, references}
 })
