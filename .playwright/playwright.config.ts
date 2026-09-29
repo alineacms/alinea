@@ -12,8 +12,9 @@ export default defineConfig({
   testIgnore: [
     '**/private/**',
     '**/node_modules/**',
-    // Worktrees of agents are checked out under .claude.
-    '**/.claude/**',
+    // Worktrees of agents are checked out under .claude. Anchor to the root so
+    // a worktree, which itself lives under .claude, still finds its own specs.
+    `${rootDir}/.claude/**`,
     // Visual regression specs run with playwright.visual.config.ts
     '**/test/visual/**'
   ],
