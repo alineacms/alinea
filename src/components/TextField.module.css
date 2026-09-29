@@ -79,7 +79,9 @@
 
   .TextFieldGrow & {
     grid-area: 1 / 1 / 2 / 2;
-    overflow-x: auto;
+    /* The shadow copy sizes the field, a rounding difference would otherwise
+       show a scrollbar where scrollbars take up space (Windows) */
+    overflow: hidden;
     resize: none;
     white-space: pre-wrap;
     overflow-wrap: anywhere;

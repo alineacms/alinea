@@ -122,6 +122,8 @@
     justify-content: flex-start;
     width: auto;
     overflow-x: auto;
+    /* Scrolls sideways only, overflow-x alone would scroll vertically too */
+    overflow-y: hidden;
   }
 
   .NavRailFooter {

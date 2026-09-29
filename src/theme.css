@@ -118,13 +118,26 @@
   --alinea-success-subtle: color-mix(in oklab, var(--alinea-success) 16%, var(--alinea-bg));
   --alinea-success-subtle-fg: color-mix(in oklab, var(--alinea-success) 70%, var(--alinea-fg));
 
-  /* Entry statuses are more vivid than the subtle tones so they stand out */
-  --alinea-status-published: light-dark(var(--alinea-green-300), var(--alinea-green-800));
+  /* Entry statuses are more vivid than the subtle tones so they stand out,
+     in dark mode they are tints so they do not outshine the selection */
+  --alinea-status-published: light-dark(
+    var(--alinea-green-300),
+    color-mix(in oklab, var(--alinea-green-500) 30%, var(--alinea-bg))
+  );
   --alinea-status-published-fg: light-dark(var(--alinea-green-800), var(--alinea-green-100));
-  --alinea-status-draft: light-dark(var(--alinea-blue-50), var(--alinea-blue-800));
+  --alinea-status-draft: light-dark(
+    var(--alinea-blue-50),
+    color-mix(in oklab, var(--alinea-blue-500) 30%, var(--alinea-bg))
+  );
   --alinea-status-draft-fg: light-dark(var(--alinea-blue-800), var(--alinea-blue-50));
-  --alinea-status-unpublished: light-dark(var(--alinea-orange-50), var(--alinea-orange-800));
-  --alinea-status-unpublished-fg: light-dark(var(--alinea-orange-700), var(--alinea-orange-200));
+  --alinea-status-unpublished: light-dark(
+    var(--alinea-orange-50),
+    color-mix(in oklab, var(--alinea-orange-700) 30%, var(--alinea-bg))
+  );
+  --alinea-status-unpublished-fg: light-dark(
+    var(--alinea-orange-700),
+    color-mix(in oklab, var(--alinea-orange-700) 30%, var(--alinea-orange-200))
+  );
 
   --alinea-shadow-raised: 0 1px 3.5px rgb(0 0 0 / 8%);
   --alinea-shadow-muted:

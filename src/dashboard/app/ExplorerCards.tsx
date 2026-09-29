@@ -91,6 +91,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const icon = useAtomValueRaw(data.icon)
   const type = useAtomValueRaw(data.type)
   const canOpen = useAtomValueRaw(data.canOpen)
+  const hasChildren = useAtomValueRaw(data.hasChildren)
   const performAction = useSetAtom(explorer.onAction)
   const hasAction = explorer.hasRowAction || (!isSelectable && canOpen)
   function onAction() {
@@ -117,7 +118,8 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
           description: type.label
         }
       : {
-          icon: icon ?? (canOpen ? IcTwotoneFolder : IcTwotoneDescription),
+          // Like the tree and table, only entries with children are folders
+          icon: icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription),
           title: label,
           description: type.label
         }

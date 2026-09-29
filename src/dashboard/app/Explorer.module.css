@@ -151,9 +151,11 @@
   padding: 4px 8px;
 }
 
-.Sorting-button {
+/* Options read like menu items, the active one is marked by its color */
+.Explorer-popoverOption {
   width: 100%;
   display: flex;
+  font-weight: 500;
 
   & + & {
     margin-top: 2px;

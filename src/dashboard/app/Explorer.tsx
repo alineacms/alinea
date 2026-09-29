@@ -889,7 +889,7 @@ function ExplorerControlsPopover({
               variant="ghost"
               active={selectedFilter === filter.type}
               onClick={() => toggleFilter(filter.type)}
-              className={styles.Sorting.button()}
+              className={styles.Explorer.popoverOption()}
             >
               {filter.label}
               {selectedFilter === filter.type && <IcRoundClose />}
@@ -906,9 +906,10 @@ function ExplorerControlsPopover({
         Sort by
       </Text>
       <Button
-        variant={sort.requested ? 'ghost' : 'solid'}
+        variant="ghost"
+        active={!sort.requested}
         onClick={() => setSort(undefined)}
-        className={styles.Sorting.button()}
+        className={styles.Explorer.popoverOption()}
       >
         Default order
       </Button>
@@ -917,7 +918,8 @@ function ExplorerControlsPopover({
         return (
           <Button
             key={option.column}
-            variant={active ? 'solid' : 'ghost'}
+            variant="ghost"
+            active={active}
             onClick={() =>
               setSort({
                 column: option.column,
@@ -925,7 +927,7 @@ function ExplorerControlsPopover({
                   active && current?.direction === 'asc' ? 'desc' : 'asc'
               })
             }
-            className={styles.Sorting.button()}
+            className={styles.Explorer.popoverOption()}
           >
             {option.label}
             {active &&
