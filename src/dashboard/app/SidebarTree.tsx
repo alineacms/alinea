@@ -9,15 +9,15 @@ import {
   type Key,
   type Selection
 } from '#/components.js'
-import {typeAtoms} from '#/dashboard/atoms/config.js'
-import {nav, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
+import {typeAtoms} from '../atoms/config.js'
+import {nav, routeAtom, type Page} from '../atoms/nav.js'
 import type {
   RootAtoms,
   RootTreeItem,
   RootTreeNode,
   TreeAtoms,
   TreeSnapshot
-} from '#/dashboard/atoms/root.js'
+} from '../atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
 import {
