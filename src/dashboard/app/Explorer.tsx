@@ -62,6 +62,7 @@ import {
   IcRoundUploadFile
 } from '../icons.js'
 import css from './Explorer.module.css'
+import {ExplorerBatchActions} from './ExplorerBatchActions.js'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
@@ -1168,6 +1169,9 @@ export function Explorer({
         titleControls={titleControls}
       />
       <ExplorerBody explorer={explorer} page={page} />
+      {explorer.hasRowAction && explorer.selectionMode === 'multiple' && (
+        <ExplorerBatchActions explorer={explorer} locale={page.locale} />
+      )}
     </>
   )
 }

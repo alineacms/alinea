@@ -3,7 +3,7 @@ import {
   createDashboardStore
 } from '#test/DashboardFixture.js'
 import {LocalDB} from '#/database/LocalDB.js'
-import {WriteablePolicy} from '#/core/Role.js'
+import {Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
 import {Config, Field} from '#/index.js'
@@ -16,6 +16,8 @@ import {MediaFile} from '#/core/media/MediaTypes.js'
 import {
   createExplorerAtoms,
   ExplorerEntry,
+  explorerItemCanDelete,
+  explorerItemCanMove,
   explorerThumbnailId,
   type ExplorerItemData
 } from './explorer.js'
@@ -580,4 +582,69 @@ test('search results load thumbnails and linked entry titles', async () => {
     averageColor: '#524537'
   })
   expect(store.get(data.linked).get('author')?.title).toBe('Maya')
+})
+
+test('selection actions follow the selected listed entries', async () => {
+  const {parent, store} = await createDashboardAtomFixture()
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  await store.get(userPolicyReadyAtom)
+  const explorer = rootAtoms('main', 'pages').explorer
+  await store.get(explorer.pageReady)
+  store.sub(explorer.page, () => {})
+  await store.get(explorer.pageReady)
+
+  expect(store.get(explorer.selectionActions).items).toEqual([])
+  store.set(explorer.selection, new Set([parent._id, 'not-listed']))
+  const actions = store.get(explorer.selectionActions)
+  expect(actions.items.map(item => item.id)).toEqual([parent._id])
+  expect(actions.canMove).toBe(true)
+  // Published pages are archived before they are deleted
+  expect(actions.canDelete).toBe(false)
+
+  store.set(explorer.clearSelection)
+  expect(store.get(explorer.selectionActions).items).toEqual([])
+})
+
+test('media is deleted right away, other entries once archived', () => {
+  const config = Config.create({
+    schema: {},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {pages: Config.root('Pages'), media: Config.media()}
+      })
+    }
+  })
+  const item: ExplorerItemData = {
+    id: 'file',
+    title: 'File',
+    path: 'file',
+    type: 'MediaFile',
+    workspace: 'main',
+    root: 'media',
+    locale: null,
+    parentId: null,
+    parents: [],
+    index: 'a0',
+    data: {},
+    hasChildren: false,
+    status: 'published',
+    seeded: null
+  }
+  const policy = Policy.ALLOW_ALL
+  expect(explorerItemCanDelete(config, policy, item)).toBe(true)
+  expect(explorerItemCanMove(policy, item)).toBe(true)
+  const seeded = {...item, seeded: 'media/file.json'}
+  expect(explorerItemCanDelete(config, policy, seeded)).toBe(false)
+  expect(explorerItemCanMove(policy, seeded)).toBe(false)
+  const page = {...item, type: 'Page', root: 'pages'}
+  expect(explorerItemCanDelete(config, policy, page)).toBe(false)
+  expect(
+    explorerItemCanDelete(config, policy, {...page, status: 'archived'})
+  ).toBe(true)
+  const denied = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({id: 'file', deny: {delete: true, move: true}})
+  expect(explorerItemCanDelete(config, denied, item)).toBe(false)
+  expect(explorerItemCanMove(denied, item)).toBe(false)
 })
