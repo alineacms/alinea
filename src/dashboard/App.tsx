@@ -1,20 +1,21 @@
-import {ProgressCircle} from '#/components.js'
+import {Page as PageLayout, Spinner} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {User} from '#/core/User.js'
 import {styler} from '@alinea/styler'
 import {
   atom,
-  createStore,
   Provider,
   useAtom,
   useAtomValueRaw,
+  useAtomValueRawSync,
   type Getter
 } from 'jotai'
 import {
+  useDeferredValue,
   useEffect,
   useMemo,
-  useState,
   type ComponentType,
   type ReactNode
 } from 'react'
@@ -28,12 +29,11 @@ import {entryPage} from './app/pages/EntryPage.js'
 import {splashPage} from './app/pages/SplashPage.js'
 import {MissingRoot, rootPage} from './app/pages/RootPage.js'
 import {usersPage} from './app/pages/UsersPage.js'
-import {Rail} from './app/ui/Rail.js'
 import {activityAtom, activityPendingAtom} from './atoms/activity.js'
 import {authAtom} from './atoms/auth.js'
 import {themeAtom} from './atoms/dashboard.js'
 import {workspaceAtom, workspacesAtom} from './atoms/config.js'
-import {useInitAtoms} from './atoms/core.js'
+import {useDashboardStore} from './atoms/core.js'
 import {entryAtoms, MissingEntryError} from './atoms/entry.js'
 import {graphReadyAtom} from './atoms/graph.js'
 import {pageAtom, type Page} from './atoms/nav.js'
@@ -53,6 +53,8 @@ export interface AppProps {
   views: Record<string, ComponentType>
   local?: boolean
   alineaDev?: boolean
+  /** The user shown as signed in when the dashboard runs locally */
+  user?: User
 }
 
 export const appAtom = atomWithPending(
@@ -197,7 +199,7 @@ const authenticatedAtom = atom(async get => {
 })
 
 export function App(props: AppProps) {
-  const [store] = useState(createStore)
+  const store = useDashboardStore(props)
   const dashboard = useMemo(
     (): Dashboard => ({
       graph: props.graph,
@@ -221,26 +223,31 @@ export function App(props: AppProps) {
 }
 
 function DashboardApp(props: AppProps): ReactNode {
-  useInitAtoms(props)
-  const [appPending, app] = useAtomValueRaw(appAtom)
+  const [appPending, app] = useAtomValueRawSync(appAtom)
+  // The app atom resolves once the next page's data is loaded, but components
+  // on that page (a preview component, a custom field view) may still suspend
+  // while mounting. Render the swap in the background so the current page
+  // stays on screen until the next one is complete, instead of suspending to
+  // the nearest boundary above the dashboard.
+  const shown = useDeferredValue(app)
   const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
   // Mounting the theme applies the stored preference to the document
   useAtomValueRaw(themeAtom)
-  const pending = appPending || activity.isMutating
+  const pending = appPending || shown !== app || activity.isMutating
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])
-  return app ?? <AppLoading />
+  return shown ?? <AppLoading />
 }
 
 function AppLoading() {
   return (
-    <Rail main className={styles.AppLoading()}>
+    <PageLayout className={styles.AppLoading()}>
       <div className={styles.AppLoading.progress()}>
-        <ProgressCircle isIndeterminate aria-label="Loading dashboard" />
+        <Spinner aria-label="Loading dashboard" />
       </div>
-    </Rail>
+    </PageLayout>
   )
 }
 

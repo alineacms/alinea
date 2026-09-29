@@ -14,6 +14,7 @@ import {
   lte,
   ne,
   not,
+  or,
   sql,
   type Sql
 } from 'rado'
@@ -35,6 +36,25 @@ export function linkRelation(
   }
 }
 
+/**
+ * Entries on the same level as the source: children of the same parent, or
+ * for a top-level entry the other top-level entries of its workspace root.
+ */
+function sameParent(
+  entry: EntryIndexTarget,
+  source: EntryIndexTarget
+): Sql<boolean> {
+  // Children of a parent are found through the parent index, the location
+  // only narrows down top-level entries
+  return and(
+    sql<boolean>`${entry.parentId} is ${source.parentId}`,
+    or(
+      sql<boolean>`${source.parentId} is not null`,
+      and(eq(entry.workspace, source.workspace), eq(entry.root, source.root))
+    )
+  )
+}
+
 /** Restrict related identities in SQL before the query's own filters/paging. */
 export function relationCondition(
   entry: EntryIndexTarget,
@@ -47,7 +67,7 @@ export function relationCondition(
       return and(eq(entry.id, source.parentId), locale)
     case 'siblings':
       return and(
-        eq(entry.parentId, source.parentId),
+        sameParent(entry, source),
         locale,
         query.includeSelf ? sql.value(true) : ne(entry.id, source.id)
       )
@@ -117,7 +137,7 @@ export function relationCondition(
         .from(entry)
         .where(
           and(
-            eq(entry.parentId, source.parentId),
+            sameParent(entry, source),
             locale,
             next ? gt(entry.index, source.index) : lt(entry.index, source.index)
           )

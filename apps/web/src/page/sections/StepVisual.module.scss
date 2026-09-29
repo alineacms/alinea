@@ -1,0 +1,123 @@
+.root {
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border-radius: 14px;
+  background: var(--web-accent-soft);
+  overflow: hidden;
+
+  &.is-editor {
+    gap: 12px;
+  }
+
+  &.is-commits {
+    gap: 10px;
+    font-family: var(--web-mono-font);
+    font-size: 12.5px;
+  }
+
+  &-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--web-foreground);
+  }
+
+  &-input {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    font-size: 14px;
+    color: var(--web-foreground);
+    white-space: nowrap;
+    overflow: hidden;
+
+    &.is-multiline {
+      height: 64px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--web-foreground-faded);
+      white-space: normal;
+    }
+  }
+
+  &-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  &-publish {
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: var(--web-accent);
+    color: var(--web-accent-foreground);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  &-branch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 6px;
+
+    &-label {
+      padding: 3px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--web-outline);
+      background: var(--web-surface);
+      color: var(--web-foreground);
+    }
+
+    &-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--web-positive);
+    }
+
+    &-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 4px;
+      background: currentColor;
+    }
+  }
+
+  &-commit {
+    display: flex;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--web-surface);
+    white-space: nowrap;
+    overflow: hidden;
+
+    &-hash {
+      flex-shrink: 0;
+      color: var(--web-accent);
+    }
+
+    &-message {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--web-foreground);
+    }
+  }
+}

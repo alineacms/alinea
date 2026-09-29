@@ -1,0 +1,79 @@
+{
+  "_id": "3JmLPU4b74O4FUwwR3GzqMwOg0I",
+  "_type": "Doc",
+  "_index": "ab",
+  "title": "Popover",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Shows rich content in a panel next to its trigger, such as a few settings or a small form. DialogClose and useDialog work inside a popover too, to close it from its content."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPRfeDAYWBXd37J0125D1vYx",
+      "example": "Popover"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPS1MafHXkUa3AvNQRwHpikL",
+      "component": "Popover"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Focus moves into the popover when it opens and back to the trigger when it closes. A popover is modal by default: the rest of the page can't be reached until it closes. Set `modal={false}` to keep the page interactive."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261271,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261271,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

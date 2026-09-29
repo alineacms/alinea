@@ -1,0 +1,26 @@
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+// The inputs render at their size in the dashboard, larger ones are scaled
+// down to fit the card
+.root {
+  width: 260px;
+  animation: appear 0.25s ease-out;
+
+  &.is-richText,
+  &.is-list,
+  &.is-code,
+  &.is-object,
+  &.is-tabs {
+    width: 340px;
+    flex-shrink: 0;
+    zoom: 0.78;
+  }
+
+  &.is-list {
+    zoom: 0.62;
+  }
+}

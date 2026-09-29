@@ -1,0 +1,72 @@
+@use '@/style' as *;
+
+.root {
+  --changelog-gutter: var(--web-gutter, 80px);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(
+    var(--web-content-width, 1280px) + 2 * var(--changelog-gutter)
+  );
+  margin: 0 auto;
+  padding: 0 var(--changelog-gutter);
+  color: var(--web-foreground, #171a42);
+
+  @include sm {
+    --changelog-gutter: var(--web-gutter, 20px);
+  }
+}
+
+.header {
+  padding-top: 80px;
+
+  @include sm {
+    padding-top: 48px;
+  }
+
+  &-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font, Poppins, sans-serif);
+    font-weight: 600;
+    font-size: 64px;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+
+    @include sm {
+      font-size: 44px;
+    }
+  }
+
+  &-description {
+    margin: 0;
+    max-width: 560px;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--web-foreground-faded, #555a78);
+  }
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: start;
+  gap: 80px;
+  padding-top: 56px;
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-top: 28px;
+  }
+}
+
+.releases {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}

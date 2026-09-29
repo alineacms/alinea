@@ -15,6 +15,9 @@ import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
 export interface FileLink<InferredFields = undefined> extends EntryReference {
   title: string
+  /** Public url of the file */
+  url: string
+  /** Public url of the file, same as url */
   href: string
   extension: string
   size: number

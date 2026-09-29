@@ -75,6 +75,22 @@ export type Edge =
   | EdgeEntries
   | EdgeEntry
 
+/** Options that change a query result into a single entry or a count */
+export interface QueryModifiers {
+  first?: true
+  get?: true
+  count?: true
+}
+
+/**
+ * Keep the modifiers passed in a query as literal types, so a relation query
+ * with `first`, `get` or `count` infers a single entry or a number
+ */
+export type PickModifiers<Modifiers> = Pick<
+  Modifiers,
+  Extract<keyof Modifiers, keyof QueryModifiers>
+>
+
 export type EdgeQuery<
   Selection = unknown,
   Types = unknown,
@@ -226,8 +242,11 @@ export declare class QuerySettings {
   /** Return the first N results */
   take?: number
 
-  /** Group results by one or more fields */
-  groupBy?: Expr<any> | Array<Expr<any>>
+  /**
+   * Keep one entry per distinct value of this field: the first match in
+   * stored order, or the most relevant one when searching
+   */
+  groupBy?: Expr<any>
   /** Order results by one or more fields */
   orderBy?: Order | Array<Order>
 

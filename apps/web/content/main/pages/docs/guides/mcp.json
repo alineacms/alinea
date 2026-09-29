@@ -1,0 +1,2178 @@
+{
+  "_id": "3JjyQUq7OEXLa3wIwCkEgiRasxN",
+  "_type": "Doc",
+  "_index": "a8",
+  "title": "MCP server",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea dev` includes a "
+        },
+        {
+          "_type": "text",
+          "text": "Model Context Protocol",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyQQJfXZ3cOuKHF4PFXfAJvJo",
+              "_link": "url",
+              "href": "https://modelcontextprotocol.io"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " (MCP) server. Coding agents such as Claude Code, Cursor or Codex connect to it to read your schema and to find, create, edit, publish, move and delete entries and to upload media. This page covers setup, the workflow agents should follow, every tool and the value formats they accept."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Why use it"
+        }
+      ],
+      "_anchor": "why-use-it"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every Alinea entry is a JSON file in your repository, so an agent could write those files directly. In practice that is error prone: entries carry internal fields such as `_id`, `_index` and `_root`, list rows and rich text nodes need their own ids, links are stored as objects and media entries hold computed metadata such as dimensions, a thumbhash and a preview."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The MCP server takes those details off the agent's hands:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Writes take the same path as the dashboard: the dev server's API handler saves the change, so the result is a valid entry file, laid out exactly like one saved by an editor."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Internal fields are generated. Agents send plain values: Markdown for rich text, entry ids for links, rows without ids for lists."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Input is validated against your schema. Errors name the field path and what is expected, so the agent can correct its input and retry."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "An open dashboard updates live, so you can watch the changes come in and review them in the editor."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The files the tools write are ordinary content files: review them with `git diff` and commit them as usual."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "When it runs"
+        }
+      ],
+      "_anchor": "when-it-runs"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The MCP server is part of `alinea dev` only. It is not included in `alinea build`, in the generated dashboard or in the handler you deploy, so it never runs in production."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "It only accepts requests from the local machine: requests whose `Host` or `Origin` header is not `localhost`, `127.0.0.1` or `::1` are refused with a 403, which also blocks web pages from reaching it through DNS rebinding. There is no authentication beyond that: anything running on your machine can use it while `alinea dev` runs. Changes are recorded as the local dashboard user."
+        }
+      ]
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3JjyQUBVdcm4HJPlFhuTUSakVcp",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Before every call the server reads the content directory again, so it also sees files that changed on disk since the last save, for example after a `git pull` or a manual edit."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Connect your agent"
+        }
+      ],
+      "_anchor": "connect-your-agent"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Start your dev script (`alinea dev`, or `alinea dev -- next dev` in a Next.js project). The banner prints the url of the MCP server:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQUb3UCvHZjKGpiMnuwmvjId",
+      "code": "ɑ Alinea 2.0.0\n├ dev src/cms.tsx in 690ms (172 records)\n╰ MCP server:   http://localhost:4500/mcp",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The server listens on the port of the local dashboard, 4500 by default. When 4500 is taken the dev server moves to 4501 and up, and the printed url changes with it. `alinea dev --port 4600` (or `-p`) changes the port it starts from, but it still moves up when that port is taken, so check the banner when the tools don't connect. The endpoint speaks the Streamable HTTP transport: it answers JSON-RPC messages sent with `POST` and does not keep sessions."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Claude Code"
+        }
+      ],
+      "_anchor": "claude-code"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQRBJ7rZvizv2PR107I721s6",
+      "code": "claude mcp add --transport http alinea http://localhost:4500/mcp",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add `--scope project` to write the server to the project's `.mcp.json` instead of your local settings, so everyone working on the project gets it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Project .mcp.json"
+        }
+      ],
+      "_anchor": "project-mcp-json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Claude Code and other clients read MCP servers from a `.mcp.json` file in the project root. Commit it to share the setup with your team:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQUgQYOjW46Y0uBYlPNeAzHi",
+      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
+      "fileName": ".mcp.json",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Cursor"
+        }
+      ],
+      "_anchor": "cursor"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Cursor reads project servers from `.cursor/mcp.json`, where the `url` alone is enough:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQTdYa641fD7MbDsWHssqEhf",
+      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
+      "fileName": ".cursor/mcp.json",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Codex and other clients"
+        }
+      ],
+      "_anchor": "codex-and-other-clients"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Any client that supports remote (Streamable HTTP) MCP servers can connect: add an HTTP server named `alinea` with the url from the banner, following your client's documentation. Clients that only launch local stdio servers can reach it through a bridge such as "
+        },
+        {
+          "_type": "text",
+          "text": "mcp-remote",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyQQGHI9wROrC7bEMSJ7YfcrP",
+              "_link": "url",
+              "href": "https://www.npmjs.com/package/mcp-remote"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " (`npx mcp-remote http://localhost:4500/mcp`)."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most agents connect to MCP servers when a session starts. Start `alinea dev` first, and restart or reload the agent's session if the tools don't show up."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Recommended workflow"
+        }
+      ],
+      "_anchor": "recommended-workflow"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The server sends these steps to agents as its instructions when they connect:"
+        }
+      ]
+    },
+    {
+      "_type": "orderedList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Call `describe_schema` for the workspaces, roots, types and their fields, and the value format of each field kind."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Find content, parents and ids with `find_entries` and `get_entry`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Write with `create_entry` and `update_entry`, with `data` keyed by field name. Rich text is Markdown, links are entry ids. Upload images and files with `upload_file` first to get the media id for image and file fields."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Writes publish, pass `publish: false` to save a draft when drafts are enabled."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`get_entry` lists the entries linking to an entry, check them before deleting or moving it."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "After a batch of changes, check them in the dashboard or with `git diff`, and run your build to catch errors in the pages that render the content."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Tools"
+        }
+      ],
+      "_anchor": "tools"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The examples show the `arguments` of a `tools/call` request and the JSON the tool returns. Ids are shortened for readability."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "describe_schema"
+        }
+      ],
+      "_anchor": "describe-schema"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Describes the workspaces and roots (their locales and the types they accept), every entry type with its fields, and the value format of each field kind. Pass `type` to describe only that type."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Each field reads `kind[details] Label (flags)`. The label is left out when it matches the key, flags are `required`, `shared` and `readOnly`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`list[...]` and `richText[...]` name the `_type` of each row or block. `object[name]` and `fields: name` refer to `definitions`, which describe nested types once. A row type described under another name reads `Row=Definition`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`select[a|b]` lists the option keys, `link[entry|url]` the link types (`links` for multiple links) and `localised[en|nl] text` holds a value per locale."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQQfA0uEEJrCaQdXQazEpllw",
+      "code": "{}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQR8wJyZt0hzM0N8wM43Yyla",
+      "code": "{\n  \"enableDrafts\": false,\n  \"workspaces\": {\n    \"main\": {\n      \"pages\": {\"contains\": [\"Page\", \"Blog\"]},\n      \"media\": {\"media\": true, \"contains\": [\"MediaLibrary\"]}\n    }\n  },\n  \"types\": {\n    \"Blog\": {\n      \"contains\": [\"BlogPost\"],\n      \"fields\": {\"title\": \"text (required)\", \"path\": \"path (required)\", \"metadata\": \"object[metadata]\"}\n    },\n    \"BlogPost\": {\n      \"fields\": {\n        \"title\": \"text (required)\",\n        \"path\": \"path (required)\",\n        \"publishDate\": \"date\",\n        \"author\": \"link[entry]\",\n        \"cover\": \"link[image] Cover image\",\n        \"body\": \"richText\",\n        \"metadata\": \"object[metadata]\"\n      }\n    }\n  },\n  \"definitions\": {\n    \"metadata\": {\"title\": \"text\", \"description\": \"text\", \"openGraph\": \"object[openGraph]\", \"...\": \"...\"},\n    \"openGraph\": {\"image\": \"link[image]\", \"title\": \"text\", \"description\": \"text\"}\n  },\n  \"valueFormats\": \"...\"\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Describe a single type:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQTQMa5xSfKDyNpqe7CTKYnN",
+      "code": "{\"type\": \"BlogPost\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "find_entries"
+        }
+      ],
+      "_anchor": "find-entries"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Lists entries matching filters, with the `total` number of matches. With `parentId` the entries are in their sibling order, otherwise they are ordered by url, and with `search` by relevance. Each entry has a `children` count and the path of its `file`."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace`, `root`, `type`, `locale`: filter by location, type or translation."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`parentId`: only direct children of this entry, `null` for the top-level entries of a root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`search`: full text search terms."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`status`: which versions to return, one of `preferDraft` (the default, the latest version of each entry), `preferPublished`, `published`, `draft`, `archived` or `all`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`limit` (default 50) and `offset` for paging."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQV9vdBhm6lXHshfCEBIMQgD",
+      "code": "{\"type\": \"BlogPost\", \"limit\": 1}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQPS00ZAUtaWbYvqpRDs8UAq",
+      "code": "{\n  \"total\": 12,\n  \"entries\": [\n    {\n      \"id\": \"3JmZ4hN9\",\n      \"type\": \"BlogPost\",\n      \"title\": \"Hello world\",\n      \"url\": \"/blog/hello-world\",\n      \"parentId\": \"3JmZ1c0Y\",\n      \"locale\": null,\n      \"status\": \"published\",\n      \"workspace\": \"main\",\n      \"root\": \"pages\",\n      \"children\": 0,\n      \"file\": \"content/pages/blog/hello-world.json\"\n    }\n  ]\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "get_entry"
+        }
+      ],
+      "_anchor": "get-entry"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Reads one entry: its metadata, the path of its file, its versions, the entries linking to it (`referencedBy`) and its field data. Rich text is returned as Markdown, which `create_entry` and `update_entry` accept back. The stored JSON is in the entry's file."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`id` or `url`: the entry to read, for example `{\"url\": \"/blog/hello-world\"}`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: the translation to read, defaults to the root's default locale. `versions` lists the locale and status of every version."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQT8an1q4glgy3m2gEj0CBp8",
+      "code": "{\"id\": \"3JmZ4hN9\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQVXz51Nf8KZLVtmDPItIkhB",
+      "code": "{\n  \"id\": \"3JmZ4hN9\",\n  \"type\": \"BlogPost\",\n  \"title\": \"Hello world\",\n  \"url\": \"/blog/hello-world\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/hello-world.json\",\n  \"versions\": [{\"locale\": null, \"status\": \"published\"}],\n  \"referencedBy\": [\n    {\"id\": \"3JmZ5rE8\", \"title\": \"Choosing a CMS\", \"type\": \"BlogPost\", \"locale\": null, \"field\": \"body\"}\n  ],\n  \"data\": {\n    \"title\": \"Hello world\",\n    \"path\": \"hello-world\",\n    \"publishDate\": \"2026-09-23\",\n    \"author\": {\"_id\": \"3JmZ9kT2\", \"_type\": \"entry\", \"_entry\": \"3JmZ2aP5\"},\n    \"body\": \"Our first post, written by [Ada](entry:3JmZ2aP5).\",\n    \"metadata\": {\"title\": \"\", \"description\": \"\", \"openGraph\": {\"title\": \"\", \"image\": {}, \"description\": \"\"}}\n  }\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "create_entry"
+        }
+      ],
+      "_anchor": "create-entry"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Creates an entry, or a translation of an existing entry."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type`: the type name. It must be allowed in the parent (its `contains`) or, at the top level, in the root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`parentId`: the parent entry, leave it out to create the entry at the top level of a root. The entry is added after its siblings, unless the parent type sets an insert order."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace` and `root`: default to those of the parent, or to the first workspace and its first root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: the locale of the entry in a translated root, defaults to the root's default locale."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`translationOf` with `locale`: create the translation of an existing entry. Fields you don't pass are copied from the existing translation."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`data`: field values keyed by field name. `title` is required, `path` defaults to the slugified title."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`publish`: `true` by default, `false` saves a draft."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQRYGCPIGLeNGtO5AjuTkGCr",
+      "code": "{\n  \"type\": \"BlogPost\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"data\": {\n    \"title\": \"Choosing a CMS\",\n    \"publishDate\": \"2026-09-23\",\n    \"author\": \"3JmZ2aP5\",\n    \"cover\": \"3JmZ7xC4\",\n    \"body\": \"## Why git-based\\n\\nContent lives next to the code, see [our first post](entry:3JmZ4hN9).\"\n  }\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQTb1NmCEhLPQOrSwvI3i62F",
+      "code": "{\n  \"id\": \"3JmZ5rE8\",\n  \"type\": \"BlogPost\",\n  \"title\": \"Choosing a CMS\",\n  \"url\": \"/blog/choosing-a-cms\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/choosing-a-cms.json\"\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Translate an entry into another locale of its root:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQQ28BEIq54uFOhpdO85uome",
+      "code": "{\n  \"translationOf\": \"3JmZ5rE8\",\n  \"locale\": \"nl\",\n  \"data\": {\"title\": \"Een CMS kiezen\", \"body\": \"## Waarom git\\n\\n...\"}\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The parent must already exist in that locale. Media files can't be created this way, use `upload_file`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "update_entry"
+        }
+      ],
+      "_anchor": "update-entry"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Changes fields of an existing entry. Only the fields in `data` change, everything else stays as it is. Object and localised fields merge key by key, rich text and lists are replaced, and list rows that keep their `_id` keep their stored values (see "
+        },
+        {
+          "_type": "text",
+          "text": "Lists",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyQTQ5OBQIv18o9FdbsSwXmg7",
+              "_link": "url",
+              "href": "#lists"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ")."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`id`: the entry to change."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: the translation to change, defaults to the root's default locale."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`data`: the field values to change."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`publish`: `true` by default, `false` saves the change as a draft."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQWsTOF0w31pmeXj737RLU7e",
+      "code": "{\"id\": \"3JmZ5rE8\", \"data\": {\"title\": \"How to choose a CMS\", \"path\": \"how-to-choose-a-cms\"}}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQSiddtJt2rcl5RSAowtZ1tW",
+      "code": "{\n  \"id\": \"3JmZ5rE8\",\n  \"type\": \"BlogPost\",\n  \"title\": \"How to choose a CMS\",\n  \"url\": \"/blog/how-to-choose-a-cms\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/how-to-choose-a-cms.json\"\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When the data matches what is stored, nothing is written and the result says `\"note\": \"No changes\"`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "delete_entry"
+        }
+      ],
+      "_anchor": "delete-entry"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deletes an entry with its children, in all locales. Media files are removed from disk as well. It refuses while other entries link to the entry."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`id`: the entry to delete."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: only delete this translation."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`status`: only delete this version: `\"draft\"` discards the draft, `\"published\"` or `\"archived\"` remove that version."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`force`: delete even when other entries link to it, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "References and safe deletes",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjyQUT2oOdEvKQMWBmQEILU0eK",
+                      "_link": "url",
+                      "href": "#references-and-safe-deletes"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQWPPondI6A0viEnaRSSCRnM",
+      "code": "{\"id\": \"3JmZ5rE8\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQULNZVT12JlTUU86TDjrFET",
+      "code": "{\"deleted\": \"3JmZ5rE8\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "publish_entry"
+        }
+      ],
+      "_anchor": "publish-entry"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Publishes the draft of an entry, or restores an archived entry. With `archive: true` it archives the published entry instead: it is hidden from the site but kept, and publishing restores it. An already published entry is left alone and the result says `\"note\": \"Already published\"`."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`id`: the entry."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`locale`: the translation to publish."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`archive`: archive the entry instead of publishing it."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQQ0tzFwnkGaA9qZBCKeoeRq",
+      "code": "{\"id\": \"3JmZ5rE8\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQUJqIwqU7mJVM0hO0Bp3H48",
+      "code": "{\"id\": \"3JmZ5rE8\", \"locale\": null, \"status\": \"published\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Archive an entry:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQTnWfyFo0T801R2AGzSS7dE",
+      "code": "{\"id\": \"3JmZ5rE8\", \"archive\": true}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQSU3iINtuFB1i5jwcK8Rd4f",
+      "code": "{\"id\": \"3JmZ5rE8\", \"locale\": null, \"status\": \"archived\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "move_entry"
+        }
+      ],
+      "_anchor": "move-entry"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Moves an entry, with its children and translations. Pass exactly one of:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`after` or `before`: an entry id, places the entry right after or before that sibling, under the same parent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`parentId`: a new parent, the entry becomes its last child. `null` moves the entry to the top level of its root, or of another root in the same workspace given as `root`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The entry's type must be allowed in its new parent."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQUBeTqJ9UB5ep415BCcPS1v",
+      "code": "{\"id\": \"3JmZ5rE8\", \"before\": \"3JmZ4hN9\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The result is the entry's summary with its new `url` and `file`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "upload_file"
+        }
+      ],
+      "_anchor": "upload-file"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Adds a local file to a workspace's media library. Image dimensions, the average color, a thumbhash and a preview are computed, as in the dashboard. Images larger than the `resizeImages` option are scaled down first."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`path`: a local file, relative to the project directory (where `alinea dev` runs) or absolute inside the enclosing git repository. Hidden files such as `.env`, and files outside these directories, are refused."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`workspace`: the workspace to upload to, defaults to the first one. The file goes to the workspace's media root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`parentId`: a media folder (`MediaLibrary` entry) to upload into."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`title`: the title of the media entry, defaults to the file name."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alt`: the alt text, a string, or strings keyed by locale when the media root is translated."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`rotate`: turns a JPEG, PNG or WebP image clockwise by 90, 180 or 270 degrees before it is uploaded."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`crop`: the region of a JPEG, PNG or WebP image to keep, after rotating, as `{\"x\", \"y\", \"width\", \"height\"}` fractions from 0 to 1 of the image."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`replace`: the id of an existing media entry whose file to replace, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Media",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjyQT2Bu01Vzj7Jg4XGodmtmc7",
+                      "_link": "url",
+                      "href": "#media"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQW5I11CrvWZyy0mCkTcrVIg",
+      "code": "{\"path\": \"assets/cover.jpg\", \"title\": \"Cover\", \"alt\": \"A desk with a laptop\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQQTSNBax5hQ4MsvSLCFgYDH",
+      "code": "{\n  \"id\": \"3JmZ7xC4\",\n  \"type\": \"MediaFile\",\n  \"title\": \"Cover\",\n  \"url\": \"/admin/file/cover.jpg\",\n  \"parentId\": null,\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"media\",\n  \"file\": \"content/media/cover.json\",\n  \"location\": \"/cover.3JmZ7yD5.jpg\"\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use the returned `id` in image and file fields, or as `![alt](entry:3JmZ7xC4)` in rich text."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value formats"
+        }
+      ],
+      "_anchor": "value-formats"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`describe_schema` returns these formats as `valueFormats`, so agents can look them up while they work."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Text, code, path, date and time fields: a string. Dates are ISO dates (`\"2026-09-23\"`), times `\"14:30\"`. A path is the url slug and defaults to the slugified title."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Number: a number. Check: a boolean."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Select: an option key (not its label). Multiple select: an array of option keys."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Object fields, such as metadata: an object of nested fields, only the given keys change."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "JSON and hidden fields: any JSON value, stored as is."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Values are checked against the field kind: a value of the wrong type, an unknown option or an unknown field fails with an error naming the field."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rich text"
+        }
+      ],
+      "_anchor": "rich-text"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rich text fields accept Markdown: headings, `**bold**`, `*italic*`, `~~strike~~`, links, bullet and numbered lists, `>` quotes, `---`, tables, and images on their own line. `get_entry` returns rich text as Markdown too, so an agent can read a field, change it and send it back."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Link to an entry with `[text](entry:ID)`, or to an anchor on its page with `[text](entry:ID#anchor)`. Other urls become external links."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Insert an image from the media library with `![alt](entry:MEDIA_ID)` on its own line."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A fenced code block becomes the first block type of the field that has a `code` field, with the language and other fields in the info string. Keep the `id` of an existing block to keep that block:"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQQfMSOWuWHg2iBvVHNY8gFz",
+      "code": "```ts id=3JmZ6pQ1 fileName=cms.ts\nexport const cms = createCMS({...})\n```",
+      "fileName": "",
+      "language": "markdown"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Other blocks are written as an `alinea-block` fence holding the block's JSON:"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQQNCoZWVB926tfltbVxm5Hc",
+      "code": "```alinea-block\n{\"_type\": \"NoticeBlock\", \"level\": \"info\", \"body\": \"Drafts are enabled on this site.\"}\n```",
+      "fileName": "",
+      "language": "markdown"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Inline `` `code` `` stays text, including its backticks: rich text has no code mark."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "You can also pass stored TextDoc JSON, as found in the entry's file."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Links"
+        }
+      ],
+      "_anchor": "links"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Entry, image and file links: the id of the entry or media entry (`entry:ID` works too), or `{\"id\": \"...\", ...fields}` to fill the link's extra fields. Images and files are media entries, upload them with `upload_file` first."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Url links: a url, or `{\"url\": \"https://example.com\", \"title\": \"Example\", \"target\": \"_self\"}` (the target defaults to `_blank`)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Multiple links: an array of the above. `null` clears a single link."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The stored link objects that `get_entry` returns are accepted as they are."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every id is checked: linking to an entry that doesn't exist, or to an entry that isn't media where an image or file is expected, fails with an error naming the field."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Lists"
+        }
+      ],
+      "_anchor": "lists"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass an array of rows, which replaces the list. Each row is an object with the `_type` of its row type and its fields; `_type` can be left out when the list has a single row type. A row with the `_id` of a current row updates that row, so only send the fields that change. Rows without an `_id` are added, rows you leave out are removed, and the array order is the new order."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This changes the title of the first row, adds a row after it and keeps the third row, any other rows are removed:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQPrmM9NFwbdnvRnnAXQWQ9W",
+      "code": "{\n  \"id\": \"3JmZ1c0Y\",\n  \"data\": {\n    \"sections\": [\n      {\"_id\": \"3JmZ8qW1\", \"title\": \"New title\"},\n      {\"_type\": \"Cta\", \"title\": \"Get started\"},\n      {\"_id\": \"3JmZ8rT4\"}\n    ]\n  }\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Nested lists take the same form. A row's type can't be changed in place: leave the row out and add a new one."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Localised values and translations"
+        }
+      ],
+      "_anchor": "localised-values-and-translations"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries in a translated root exist once per locale. Tools read and write one translation at a time with `locale`, which defaults to the root's default locale, and `create_entry` with `translationOf` adds a translation. Fields declared as shared in the schema are copied to the other locales when they change."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Fields wrapped in "
+        },
+        {
+          "_type": "text",
+          "text": "Field.localiser",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyQSoPbMZi7AaaXwsxNhSmlPn",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " hold a value per locale in a single entry. Write them as an object keyed by locale, only the given locales change:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQQn2zLXkySH2s1502B2guuN",
+      "code": "{\"id\": \"3JmZ3uB6\", \"data\": {\"badge\": {\"en\": \"New\", \"nl\": \"Nieuw\"}}}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media"
+        }
+      ],
+      "_anchor": "media"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media files are entries of type `MediaFile` in a media root, created by `upload_file`. Their `alt` text is a string, or strings keyed by locale when the media root is translated, and their `focus` point (`{\"x\": 0.5, \"y\": 0.3}`, from 0 to 1) decides how images are cropped."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To swap the file of an existing media entry, for example a new version of a logo, pass its id as `replace`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQPHNtfU9NjYIIKzS51EvWTL",
+      "code": "{\"path\": \"assets/logo-2026.svg\", \"replace\": \"3JmZ7xC4\"}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The entry keeps its id, so every image field and rich text image that links to it keeps working. The new file gets a new location and the old file is removed. The title, alt text and focus point are kept, unless you pass a new title or alt text."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Change the title, alt text or focus point without a new file with `update_entry`: `{\"id\": \"3JmZ7xC4\", \"data\": {\"alt\": \"The new logo\", \"focus\": {\"x\": 0.5, \"y\": 0.3}}}`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Drafts and publishing"
+        }
+      ],
+      "_anchor": "drafts-and-publishing"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Writes are published by default. When the config sets `enableDrafts: true`, pass `publish: false` to `create_entry` or `update_entry` to save a draft instead: the published version stays live until the draft is published, from the dashboard or with `publish_entry`. Without drafts enabled `publish: false` fails. `describe_schema` reports `enableDrafts`, so agents know which to use."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every published change is a file change in your working tree. Nothing is committed or deployed until you commit and push, or until an editor publishes from a deployed dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "References and safe deletes"
+        }
+      ],
+      "_anchor": "references-and-safe-deletes"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries link to each other through link fields and rich text. Before deleting, moving or replacing content, check `referencedBy` in the result of `get_entry` to see what links to it."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`delete_entry` checks this itself: when other entries link to the entry it refuses, and lists every entry and field that holds a link:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyQRk0885BRE17Of8RFnOTXfi",
+      "code": "Entry \"3JmZ2aP5\" is linked from:\n- Hello world (3JmZ4hN9) field author\n- Choosing a CMS (3JmZ5rE8) field author\nChange those links or pass force: true",
+      "fileName": "",
+      "language": "text"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Update or remove those links first, or pass `force: true` to delete the entry anyway and leave the links pointing to a missing entry. Links from the entry's own children count as well. Deleting only a draft, or a single translation, isn't checked."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Limitations"
+        }
+      ],
+      "_anchor": "limitations"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The server only runs with `alinea dev` on your machine. To change content on a deployed site, edit in the dashboard, or change the files locally and deploy them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Changes are written to the working tree: the server doesn't commit, push or open pull requests."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Changes are recorded as the local dashboard user, not as the person who asked the agent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Uploaded files are stored in the workspace's `mediaDir` in your project, like uploads in the local dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Schema changes are made in code: the tools read the schema but can't change it. Save `cms.ts`, let the dev server rebuild and call `describe_schema` again."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For the shape of content files, when you do need to edit them by hand, see "
+        },
+        {
+          "_type": "text",
+          "text": "Working with AI agents",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyQQoIaF4qnK9qLgWx8Q9oXRb",
+              "_link": "entry",
+              "_entry": "3AQhECgi92uKhPrujJvzZq578C5"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". To have an agent set up Alinea in a new project, including this server, see "
+        },
+        {
+          "_type": "text",
+          "text": "Set up with an AI agent",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyQWjP7pq6cOePiopDaQOepHs",
+              "_link": "entry",
+              "_entry": "3JjtPxuJN2K4q6JhBgqfqIzNCX4"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "Connect Claude Code, Cursor or Codex to the MCP server in alinea dev and let them edit content through Alinea's own save path.",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790188754,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790197021,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

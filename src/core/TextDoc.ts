@@ -1,4 +1,15 @@
-export type TextDoc<T = {}> = Array<Node>
+declare const blocks: unique symbol
+
+/**
+ * Rich text content. `Blocks` is the schema of the blocks that can appear in
+ * the document, so rich text views such as `<RichText />` can infer which
+ * block components they accept. It only exists at the type level.
+ */
+export type TextDoc<Blocks = {}> = Array<Node> & {
+  // A method signature keeps documents with different block schemas
+  // assignable to each other (method parameters are bivariant)
+  [blocks]?(schema: Blocks): void
+}
 
 export type Node = TextNode | ElementNode | BlockNode
 

@@ -1,4 +1,4 @@
-const publicEnvKeys = ['NEXT_PUBLIC_', 'PUBLIC_', 'VITE_', 'GATSBY_']
+export const publicEnvKeys = ['NEXT_PUBLIC_', 'PUBLIC_', 'VITE_', 'GATSBY_']
 
 export function publicDefines(environment: typeof process.env) {
   return Object.fromEntries(

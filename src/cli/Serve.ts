@@ -14,7 +14,6 @@ const __dirname = dirname(import.meta.url)
 export interface ServeOptions {
   cmd: 'dev' | 'build'
   cwd?: string
-  base?: string
   staticDir?: string
   configFile?: string
   port?: number
@@ -27,7 +26,6 @@ export interface ServeOptions {
 export async function serve(options: ServeOptions): Promise<void> {
   const {
     cwd = process.cwd(),
-    base,
     staticDir = path.join(__dirname, 'static'),
     cmd
   } = options
@@ -43,7 +41,6 @@ export async function serve(options: ServeOptions): Promise<void> {
   try {
     devServer = await createDevServer(cwd, {
       cmd,
-      base,
       staticDir,
       configFile: options.configFile,
       alineaDev: options.alineaDev,
@@ -57,22 +54,25 @@ export async function serve(options: ServeOptions): Promise<void> {
         )
       },
       dashboardUrl,
-      onAfterGenerate(msg, config) {
+      onAfterGenerate(msg, config, databasePath) {
         dashboardUrl.then(url => {
           const version = gray(pkg.version)
           const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
-          const showUrl = cmd === 'dev' && !options.onAfterGenerate
-          const connector = gray(showUrl ? '├' : '╰')
+          const isDev = cmd === 'dev'
+          const showUrl = isDev && !options.onAfterGenerate
+          const connector = gray(isDev ? '├' : '╰')
           const details = `${connector} ${gray(msg)}\n`
-          const footer = showUrl
-            ? `${gray('╰')} Local CMS:    ${url}\n\n`
+          const cmsLine = showUrl ? `${gray('├')} Local CMS:    ${url}\n` : ''
+          const footer = isDev
+            ? `${cmsLine}${gray('╰')} MCP server:   ${url}/mcp\n\n`
             : '\n'
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({
             ALINEA_DEV_SERVER: url,
             ALINEA_ADMIN_PATH: Config.adminPath(config),
             ALINEA_HANDLER_URL: Config.handlerUrl(config),
-            ALINEA_API_KEY: apiKey
+            ALINEA_API_KEY: apiKey,
+            ALINEA_GENERATED_DATABASE: databasePath
           })
         })
       }

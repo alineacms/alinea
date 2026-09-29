@@ -1,36 +1,15 @@
 import {Surface, SurfaceContent} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
-import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import {memo, type PropsWithChildren} from 'react'
-import type {EditorNode} from '../atoms/editor.js'
+import {memo} from 'react'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
-import {
-  EditorScope,
-  useEditor,
-  useFieldOptions,
-  useFieldView,
-  useNodeEditor
-} from '../hooks.js'
+import {useEditor, useFieldOptions, useFieldView} from '../hooks.js'
 import css from './EntryFields.module.css'
 
 const styles = styler(css)
-
-interface NodeEditorProps extends PropsWithChildren {
-  node: EditorNode
-  readOnly?: boolean
-  type: Type
-}
-
-export function NodeEditor({children, node, readOnly, type}: NodeEditorProps) {
-  const editor = useNodeEditor(node, type, readOnly)
-  return (
-    <EditorScope editor={editor}>{children ?? <FieldsEditor />}</EditorScope>
-  )
-}
 
 export function FieldsEditor() {
   const editor = useEditor()
@@ -69,9 +48,14 @@ const EntryFormSection = memo(function EntryFormSection({
 })
 
 export interface EditFieldsProps {
+  /** The fields and sections to render, keyed by name */
   fields: Record<string, Field | Section>
 }
 
+/**
+ * Renders a set of fields and sections with their configured views, laid out
+ * like the default entry form (including each field's `width`).
+ */
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   return (
     <div className={styles.EditFields()}>
@@ -92,7 +76,8 @@ export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   )
 })
 
-interface EditFieldProps {
+export interface EditFieldProps {
+  /** The field to render, it must belong to the entry, row or object being edited */
   field: Field
 }
 
@@ -100,6 +85,10 @@ interface FieldLayoutOptions extends FieldOptions<unknown> {
   width?: number
 }
 
+/**
+ * Renders a field with its configured view, as the default entry form does.
+ * Renders nothing for hidden fields.
+ */
 export const EditField = memo(function EditField({field}: EditFieldProps) {
   const options = useFieldOptions(field) as FieldLayoutOptions
   const View = useFieldView(field)

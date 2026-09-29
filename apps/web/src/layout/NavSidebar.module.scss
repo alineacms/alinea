@@ -1,0 +1,30 @@
+@use '@/style' as *;
+
+.root {
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 300px;
+  max-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--web-surface);
+  @include scrollbar;
+
+  &.is-fluid {
+    width: auto;
+  }
+
+  &-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 32px 24px 32px 32px;
+    font-size: 14.5px;
+  }
+
+  @include sm {
+    display: none;
+  }
+}

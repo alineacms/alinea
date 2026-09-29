@@ -115,20 +115,20 @@ function createLinkBatcher(
 }
 
 function createLinkResolver(
-  sourceLocale: string | null,
+  locale: string | null,
   context: EntryQueryContext,
   links: LinkLoader
 ): LinkResolver {
   const loader: LinkResolver = {
     config: context.config,
-    locale: sourceLocale,
+    locale,
     includedAtBuild(filePath) {
       return context.includedAtBuild(filePath)
     },
     async resolveLinks<P extends Projection>(
       projection: P,
       ids: ReadonlyArray<string>,
-      locale: string | null | undefined = sourceLocale
+      locale: string | null | undefined = loader.locale
     ): Promise<Array<InferProjection<P>>> {
       return (await links(projection, ids, locale ?? undefined)) as Array<
         InferProjection<P>
@@ -175,16 +175,17 @@ async function projectRows(
   result: Array<unknown>,
   context: EntryQueryContext,
   links: LinkLoader,
-  nested = false
+  inheritedLocale: string | null = null
 ): Promise<unknown> {
   const rows = await Promise.all(
-    result.map(row => projectRow(status, plan, row, context, links))
+    result.map(row =>
+      projectRow(status, plan, row, context, links, inheritedLocale)
+    )
   )
-  // Graph's nested projection stage returns undefined for an absent single
-  // relation; only the public top-level first/get stage normalizes absence.
+  // A single result (first/get, parent, next, previous) is null when nothing
+  // matches, both at the top level and for nested relations.
   if (!plan.single) return rows
-  if (nested || rows.length) return rows[0]
-  return null
+  return rows.length ? rows[0] : null
 }
 
 async function projectRow(
@@ -192,13 +193,18 @@ async function projectRow(
   plan: ProjectionPlan,
   row: unknown,
   context: EntryQueryContext,
-  links: LinkLoader
+  links: LinkLoader,
+  inheritedLocale: string | null = null
 ): Promise<unknown> {
   if (!plan.wrapped) return row
   const projected = row as {value: unknown; locale: string | null}
   let value = projected.value
   if (!plan.relations.length && !plan.fields.length) return value
-  const loader = createLinkResolver(projected.locale, context, links)
+  // Field values resolve in the locale of their row, or for an untranslated
+  // entry the locale the query asked for, or else the locale of the entry
+  // that selected it.
+  const locale = projected.locale ?? plan.locale ?? inheritedLocale
+  const loader = createLinkResolver(locale, context, links)
   await Promise.all(
     plan.fields.map(async selected => {
       if (!selected.path.length) {
@@ -227,7 +233,7 @@ async function projectRow(
             relationRows(included, relation.plan.single),
             context,
             links,
-            true
+            locale
           )
       if (!relation.path.length) value = related
       else {

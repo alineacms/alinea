@@ -1,7 +1,6 @@
 import {cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, expect, mock, test} from 'bun:test'
-import {DialogTrigger} from 'react-aria-components'
-import {Button} from '#/components.js'
+import {Dialog, DialogTrigger} from '#/components.js'
 import {StoryProvider} from '../StoryProvider.js'
 import {ExternalLinkPicker} from './ExternalLinkPicker.js'
 
@@ -13,10 +12,10 @@ test.each(['#abc', '/about', 'https://example.org/path'])(
     const onConfirm = mock(() => {})
     render(
       <StoryProvider>
-        <DialogTrigger defaultOpen>
-          <Button>Open</Button>
+        <Dialog defaultOpen>
+          <DialogTrigger>Open</DialogTrigger>
           <ExternalLinkPicker selectionMode="single" onConfirm={onConfirm} />
-        </DialogTrigger>
+        </Dialog>
       </StoryProvider>
     )
     const url = screen.getByRole('textbox', {name: 'URL *'})

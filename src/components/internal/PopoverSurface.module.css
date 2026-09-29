@@ -1,0 +1,29 @@
+.PopoverSurface {
+  box-sizing: border-box;
+  outline: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  min-width: 240px;
+  max-width: 320px;
+  display: block;
+  min-height: unset;
+  max-height: inherit;
+  padding: 4px;
+  border-radius: var(--alinea-radius);
+  border: 1px solid var(--alinea-border);
+  /* In dark mode a floating surface is lifted above the page it covers */
+  background-color: light-dark(
+    var(--alinea-overlay),
+    color-mix(in oklab, var(--alinea-overlay) 96%, var(--alinea-fg))
+  );
+  box-shadow: var(--alinea-shadow-raised);
+
+  /* Dropdowns line up with their field, however wide it is, but stay inside
+     the 12px padding react-aria keeps from the viewport edges. Overflowing it
+     scrolls the page when the first option is scrolled into view, and that
+     scroll closes the popover again. */
+  &.is-matchTriggerWidth {
+    width: var(--alinea-trigger-width);
+    max-width: calc(100% - 24px);
+  }
+}

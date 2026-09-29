@@ -1,0 +1,21 @@
+{
+  "_id": "3JjYfsX65WvXQnkwJOVR2RxDPxD",
+  "_type": "MediaFile",
+  "_index": "a5",
+  "_root": "media",
+  "title": "Oak dining chair",
+  "location": "/oak-dining-chair.jpg",
+  "extension": ".jpg",
+  "size": 40926,
+  "hash": "fd915392",
+  "alt": "A light oak dining chair photographed on a white background",
+  "width": 2000,
+  "height": 1125,
+  "preview": "data:image/webp;base64,UklGRi4DAABXRUJQVlA4ICIDAADQEgCdASqgAFoAPm02l0ikIqIhI1K5yIANiWcA0pGVvH+kTbN87Np0nRfLeme/uAlbfhSh5MpZCcw9xes8l6eJGj56PlwGlYpz0+kc1amVzALgEbtHx8I/PBrTS9WDq/Ya1RJQVMIT5stcbiH2KbnKbHHyFUl4SdVUle5WwrmZ+dRdfdCR4HfSC1hJo7hVUcTytvYrfQiktXLYQlN784AA/vYDRHIrNR9JHcHanHxtmaCza8dzmM21dWOr4zFgyI1y1rZWB//QU1CP90mQfYh0e/P1fIzGslQGEr8JSfjVN7gH4h24YjuKMsPhgkpnwIi7AvUEYkBjl4AlnmFqJGkD0TrjOq+1Lc0AMg+uXJ0CsJXvR6LOoO6FATUBA7CP3PTOoFbs3s3eaI8ScZPzPCxmPrFGtgpWBcmBzgTmewVpq+5JSZkDN2IbnyTatjseg2LsY+ot/dnpw4v2prEA0Ep8We3DuSm+vPX7k4qXdJo0bJCzlgupkyCrvk283OiEYN59sB7xFTSfD0h+OOyGVcpiSsWFRkjhOCc4LVLQS0Fm7O/fjTBuYyT1tYzAr+f0o/0fzdsB4VQca9Qg8Xaf7AWUS9chjaRaGQAtdLvMaWD7Gh8b02ntqqTpJ8GocbFdgF+LFGRqWTtYcHrhDsYAAWG9dZbXV9HlvGxkGqDAYyYP5r7lQ3PfCBli25PRuZIbQNXYVXNoUxQvjysLOEVeNdQcWN18aciezSLzne1Xc996diIDzhZ39S9zkDl80SvhSO9aos77u9mNVe8C3bU6RGxL3F5xxq1+erddHcjvN76Sy64uMi3OznKvSYIUpWCwPBmBFJXvIjm+As5eQipuD1JZD613HiKl1EX3m4KlweWkJNrmS3uUcLT5aB3an4bGdPFXTW+xz/9hCqQ7ozyExOdq2OeHlwFrpikU1I4FZmP57aiBxcEN4A+8yJqtEdjuhXF614d8tnigSVSwgawiPBwCrhUcdd3OfHpf4FPJexPAVurpALxluqWsMZ6nAEWb25jc2B6JFjKE4QREJxn7KCljhBbgUMXxwygQoKcQwRuks6AA",
+  "averageColor": "#d3cfd5",
+  "focus": {
+    "x": 0.5,
+    "y": 0.55
+  },
+  "thumbHash": "9AcGDICwZ5eLiId3dogFiYNQVw=="
+}

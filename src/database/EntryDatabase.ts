@@ -40,7 +40,7 @@ import {resolveEntryQuery} from './query/ResolveQuery.js'
 import {
   createSearch,
   EntrySearchTable,
-  fuzzyDistance,
+  expandsToken,
   searchQuery,
   searchTokens,
   SearchVocabulary,
@@ -258,7 +258,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       this.#initialTree ??= tree
       const changedEntryIds = await this.#queue.run(async () => {
         const changed = await this.#syncer.sync(source, tree, current, {
-          previousTree: this.#tree,
+          // Another instance on the same database file (the dev server and
+          // the site, or a restarted process) may have moved the revision on,
+          // then the stored tree is the one to diff against
+          previousTree: this.#tree?.sha === current ? this.#tree : undefined,
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
           recordsTree: this.#recordsTree
@@ -620,9 +623,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   ): Promise<SearchQuery | undefined> {
     const tokens = searchTokens(input)
     if (!tokens) return undefined
-    // Short tokens only match as prefixes; the vocabulary stays unloaded.
-    if (!tokens.some(token => fuzzyDistance(token) > 0))
-      return searchQuery(input, EntryIndexTable)
+    // Short words only match as prefixes; the vocabulary stays unloaded.
+    if (!tokens.some(expandsToken)) return searchQuery(input, EntryIndexTable)
     await this.#vocabulary.load(db, await this.#getRevision(db))
     return searchQuery(input, EntryIndexTable, {
       alternatives: token => this.#vocabulary.alternatives(token)

@@ -1,3 +1,4 @@
+import {nextMocks} from '#test/NextMocks.js'
 import {JsonLoader} from '#/core/loader/JsonLoader.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
@@ -11,11 +12,12 @@ import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import * as iso from '@alinea/iso'
 import {afterEach, beforeEach, expect, mock, test} from 'bun:test'
 import PLazy from 'p-lazy'
+import {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
 const phase = process.env.NEXT_PHASE
 const runtime = process.env.NEXT_RUNTIME
-let previewCookies: Array<{name: string; value: string}> = []
-let handlerUrl = new URL('https://example.com/api/cms')
 type HandlerFetch = (
   ...args: Parameters<typeof iso.fetch>
 ) => ReturnType<typeof iso.fetch>
@@ -27,33 +29,19 @@ mock.module('@alinea/iso', () => ({
   fetch: (...args: Parameters<typeof iso.fetch>) => handlerFetch(...args)
 }))
 
-mock.module('./context.js', () => ({
-  requestContext: async () => ({
-    isDev: false,
-    handlerUrl,
-    apiKey: 'test-api-key'
-  })
-}))
-
 mock.module('next/constants.js', () => ({
   PHASE_PRODUCTION_SERVER: 'production-server',
   PHASE_PRODUCTION_BUILD: 'production-build'
-}))
-
-let isDraft = true
-
-mock.module('next/headers.js', () => ({
-  cookies: async () => ({getAll: () => previewCookies}),
-  draftMode: async () => ({isEnabled: isDraft})
 }))
 
 const {NextCMS} = await import('./cms.js')
 
 beforeEach(() => {
   process.env.NEXT_PHASE = 'production-server'
-  previewCookies = []
-  isDraft = true
-  handlerUrl = new URL('https://example.com/api/cms')
+  nextMocks.cookies = []
+  nextMocks.draftMode = true
+  nextMocks.handlerUrl = new URL('https://example.com/api/cms')
+  nextMocks.apiKey = 'test-api-key'
   handlerFetch = defaultFetch
 })
 
@@ -98,7 +86,7 @@ test('skips syncing a bundled database for a matching preview content hash', asy
     status: 'draft',
     patch: new Uint8Array()
   })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
+  nextMocks.cookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
   await cms.resolve({syncInterval: 0})
 
@@ -127,7 +115,7 @@ test('syncs a bundled database for a mismatched preview content hash', async () 
     status: 'draft',
     patch: new Uint8Array()
   })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
+  nextMocks.cookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
   await cms.resolve({syncInterval: 0})
 
@@ -190,7 +178,7 @@ test('syncs once for a stale preview content hash and still applies the patch', 
     status: entry.status,
     patch
   })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
+  nextMocks.cookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
   const results = await Promise.all([
     cms.first({id: entry.id, select: Entry}),
@@ -226,7 +214,7 @@ test('syncs without asking the handler for the shared sha in draft mode', async 
 })
 
 test('reports the bundled database revision and the last sync', async () => {
-  isDraft = false
+  nextMocks.draftMode = false
   const sha = 'synced-content-hash'
   const db = {
     sha: 'stale-content-hash',
@@ -264,7 +252,7 @@ test('reports the handler revision when queries are forwarded', async () => {
 })
 
 test('serves the bundled database when the handler cannot be synced', async () => {
-  isDraft = false
+  nextMocks.draftMode = false
   const db = {
     sha: 'bundled-content-hash',
     syncWith: mock(async () => {
@@ -286,4 +274,51 @@ test('serves the bundled database when the handler cannot be synced', async () =
   const status = await cms.status()
   expect(status.sha).toBe('bundled-content-hash')
   expect(status.syncedAt).toBeUndefined()
+})
+
+test('answers development queries from the dev server at every revision', async () => {
+  nextMocks.draftMode = false
+  nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
+  const database = process.env.ALINEA_GENERATED_DATABASE
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-'))
+  process.env.ALINEA_GENERATED_DATABASE = join(dir, 'alinea.db')
+  let title = 'First'
+  handlerFetch = mock(async input => {
+    expect(new URL(String(input)).origin).toBe('http://localhost:4500')
+    return Response.json([{title}])
+  })
+  try {
+    await writeFile(process.env.ALINEA_GENERATED_DATABASE, 'first')
+    const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+    expect(await cms.resolve({})).toEqual([{title: 'First'}])
+    title = 'Second'
+    await writeFile(process.env.ALINEA_GENERATED_DATABASE, 'second revision')
+    expect(await cms.resolve({})).toEqual([{title: 'Second'}])
+    expect(handlerFetch).toHaveBeenCalledTimes(2)
+  } finally {
+    nextMocks.devHandlerUrl = undefined
+    handlerFetch = defaultFetch
+    if (database === undefined) delete process.env.ALINEA_GENERATED_DATABASE
+    else process.env.ALINEA_GENERATED_DATABASE = database
+    await rm(dir, {recursive: true, force: true})
+  }
+})
+
+test('sends the dev key with uploads to the dev server only', async () => {
+  nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
+  let url = 'http://localhost:4500/?/upload&file=public%2Fa.jpg'
+  handlerFetch = mock(async () =>
+    Response.json({entryId: 'a', location: 'a.jpg', previewUrl: '', url})
+  )
+  try {
+    const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+    const local = await cms.prepareUpload('a.jpg')
+    expect(local.headers).toEqual({'x-alinea-dev-key': 'test-api-key'})
+    url = 'https://bucket.example.com/a.jpg?signature=1'
+    const remote = await cms.prepareUpload('a.jpg')
+    expect(remote.headers).toBeUndefined()
+  } finally {
+    nextMocks.devHandlerUrl = undefined
+    handlerFetch = defaultFetch
+  }
 })

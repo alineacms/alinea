@@ -1,41 +1,54 @@
 import {
+  Alert,
+  Badge,
+  AlertDescription,
+  AppShell,
+  AppShellContent,
   Button,
-  Cell,
-  Column,
+  Dialog,
   DialogTrigger,
-  Icon,
-  Menu,
-  MenuItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   MultipleSelect,
+  NavRail,
+  NavRailContent,
+  NavRailFooter,
+  NavRailItem,
+  Page as PageLayout,
+  PageHeader,
+  PageTitle,
   MultipleSelectItem,
-  ProgressCircle,
-  Row,
   SearchField,
   Table,
-  TableBody,
-  TableHeader,
-  Tag,
-  TextField
+  TableCell,
+  TableRow,
+  type TableColumn,
+  Text,
+  TextField,
+  useDialog
 } from '#/components.js'
 import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
-import {atom, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {useMemo, useState, type FormEvent, type Key} from 'react'
-import {useListData} from 'react-stately'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {useId, useMemo, useState, type FormEvent} from 'react'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
-import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../../icons.js'
+import {
+  IcBaselineErrorOutline,
+  IcRoundAdd,
+  IcRoundArrowBack,
+  IcRoundMoreHoriz,
+  IcRoundSearch
+} from '../../icons.js'
 import {ActivityStatus} from '../ActivityStatus.js'
-import {AppShell, AppShellContent, AppShellInner} from '../AppShell.js'
-import {Badge} from '../Badge.js'
 import {
   DashboardModal,
   DashboardModalContent,
   DashboardModalDialog,
-  DashboardModalFooter,
-  useDashboardModal
+  DashboardModalFooter
 } from '../ui/DashboardModal.js'
-import {SidebarHeader} from '../ui/Sidebar.js'
 import css from './UsersPage.module.css'
 
 const styles = styler(css)
@@ -45,80 +58,40 @@ interface RoleItem {
   name: string
 }
 
-interface UserColumn {
-  id: 'user' | 'roles'
-  name: string
-  isRowHeader?: boolean
-}
-
-const userColumns: Array<UserColumn> = [
-  {id: 'user', name: 'User', isRowHeader: true},
-  {id: 'roles', name: 'Roles'}
+const userColumns: Array<TableColumn> = [
+  {id: 'user', header: 'User', minWidth: 200},
+  {id: 'roles', header: 'Roles', minWidth: 160},
+  {id: 'actions', header: null, width: 52, align: 'end'}
 ]
 
-interface UsersState {
-  error?: string
-  status: 'loading' | 'loaded' | 'error'
-  users: Array<User>
-}
-
 type UsersAction =
-  | {type: 'load'}
   | {type: 'create'; user: UserInput}
   | {type: 'update'; user: UserInput}
   | {type: 'remove'; email: string}
 
-const usersStateAtom = atom<UsersState>({
-  status: 'loading',
-  users: []
-})
+const loadedUsersAtom = atom(get => get(clientAtom).listUsers())
+const editedUsersAtom = atom<Array<User> | undefined>(undefined)
 
+/** The listed users, loaded by the page and updated by the edits made on it */
 const usersAtom = atom(
-  get => get(usersStateAtom),
-  async (get, set, action: UsersAction): Promise<User | undefined> => {
+  async get => get(editedUsersAtom) ?? get(loadedUsersAtom),
+  async (get, set, action: UsersAction): Promise<void> => {
     const client = get(clientAtom)
-    if (action.type === 'load') {
-      const current = get(usersStateAtom)
-      set(usersStateAtom, {...current, error: undefined, status: 'loading'})
-      try {
-        const users = await client.listUsers()
-        set(usersStateAtom, {status: 'loaded', users})
-      } catch (cause) {
-        set(usersStateAtom, {
-          error: cause instanceof Error ? cause.message : String(cause),
-          status: 'error',
-          users: current.users
-        })
-      }
-      return undefined
-    }
+    const users = await get(usersAtom)
     if (action.type === 'remove') {
       await client.removeUser(action.email)
-      set(usersStateAtom, current => {
-        return {
-          status: 'loaded',
-          users: removeUser(current.users, action.email)
-        }
-      })
-      return undefined
+      set(editedUsersAtom, current =>
+        removeUser(current ?? users, action.email)
+      )
+      return
     }
     const saved =
       action.type === 'create'
         ? await client.createUser(action.user)
         : await client.updateUser(action.user)
-    set(usersStateAtom, current => {
-      return {
-        status: 'loaded',
-        users: upsertUser(current.users, saved)
-      }
-    })
-    return saved
+    set(editedUsersAtom, current => upsertUser(current ?? users, saved))
   }
 )
-
-usersAtom.onMount = dispatch => {
-  void dispatch({type: 'load'})
-}
 
 function upsertUser(users: Array<User>, user: User): Array<User> {
   const existing = users.findIndex(
@@ -135,26 +108,35 @@ function removeUser(users: Array<User>, email: string): Array<User> {
   return users.filter(user => user.email?.toLowerCase() !== normalized)
 }
 
-export const usersPage = page(page => {
+export const usersPage = page(async (page, get) => {
+  let users: Array<User> = []
+  let error: string | undefined
+  try {
+    users = await get(usersAtom)
+  } catch (cause) {
+    error = cause instanceof Error ? cause.message : String(cause)
+  }
   return (
     <AppShell>
-      <AppShellInner>
-        <UsersPageSidebar page={page} />
-        <AppShellContent>
-          <UsersPage />
-        </AppShellContent>
-      </AppShellInner>
+      <UsersPageSidebar page={page} />
+      <AppShellContent>
+        <UsersPage users={users} error={error} />
+      </AppShellContent>
     </AppShell>
   )
 })
 
-export function UsersPage() {
+export interface UsersPageProps {
+  users: Array<User>
+  /** Why the users could not be loaded */
+  error?: string
+}
+
+export function UsersPage({users, error}: UsersPageProps) {
   const config = useAtomValueRaw(configAtom)
-  const [usersState] = useAtom(usersAtom)
   const [query, setQuery] = useState('')
   const [editingUser, setEditingUser] = useState<User>()
   const [deletingUser, setDeletingUser] = useState<User>()
-  const users = usersState.users
 
   const filteredUsers = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -167,36 +149,34 @@ export function UsersPage() {
   }, [config.roles, query, users])
 
   return (
-    <div className={styles.UsersPage()}>
-      <SidebarHeader className={styles.UsersPage.header()}>
-        <div className={styles.UsersPage.header.title()}>Manage users</div>
+    <PageLayout className={styles.UsersPage()}>
+      <PageHeader className={styles.UsersPage.header()}>
+        <PageTitle>Manage users</PageTitle>
 
         <SearchField
           aria-label="Search users"
           placeholder="Search users"
-          hasIcon
+          icon={IcRoundSearch}
           value={query}
-          onChange={setQuery}
+          onValueChange={setQuery}
           className={styles.UsersPage.search()}
         />
-        <DialogTrigger>
-          <Button
-            intent="primary"
+        <Dialog>
+          <DialogTrigger
+            color="primary"
             icon={IcRoundAdd}
             className={styles.UsersPage.createButton()}
           >
             Create user
-          </Button>
+          </DialogTrigger>
           <DashboardModal>
             <UserModal />
           </DashboardModal>
-        </DialogTrigger>
-      </SidebarHeader>
+        </Dialog>
+      </PageHeader>
       <div className={styles.UsersPage.content()}>
-        {usersState.status === 'loading' ? (
-          <UsersPageStatus label="Loading users" pending />
-        ) : usersState.status === 'error' ? (
-          <UsersPageStatus label={usersState.error ?? 'Failed to load users'} />
+        {error !== undefined ? (
+          <UsersPageStatus label={error || 'Failed to load users'} />
         ) : (
           <UsersTable
             users={filteredUsers}
@@ -207,7 +187,7 @@ export function UsersPage() {
         )}
       </div>
       <DashboardModal
-        isOpen={editingUser !== undefined}
+        open={editingUser !== undefined}
         onOpenChange={isOpen => {
           if (!isOpen) setEditingUser(undefined)
         }}
@@ -215,14 +195,14 @@ export function UsersPage() {
         {editingUser && <UserModal user={editingUser} />}
       </DashboardModal>
       <DashboardModal
-        isOpen={deletingUser !== undefined}
+        open={deletingUser !== undefined}
         onOpenChange={isOpen => {
           if (!isOpen) setDeletingUser(undefined)
         }}
       >
         {deletingUser && <DeactivateUserModal user={deletingUser} />}
       </DashboardModal>
-    </div>
+    </PageLayout>
   )
 }
 
@@ -242,38 +222,29 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
   }
 
   return (
-    <aside className={styles.UsersPageSidebar()} aria-label="Users">
-      <nav className={styles.UsersPageSidebar.nav()}>
-        <Button
-          aria-label="Back to app"
-          appearance="plain"
-          className={styles.UsersPageSidebar.item()}
-          size="icon-nav"
-          onPress={handleBack}
-        >
-          <Icon
-            icon={IcRoundArrowBack}
-            className={styles.UsersPageSidebar.icon()}
-          />
-        </Button>
-      </nav>
-      <div className={styles.UsersPageSidebar.footer()}>
-        <ActivityStatus mobilePlacement="bottom right" />
-      </div>
-    </aside>
+    <NavRail aria-label="Users">
+      <NavRailContent>
+        <NavRailItem
+          icon={IcRoundArrowBack}
+          label="Back to app"
+          onClick={handleBack}
+        />
+      </NavRailContent>
+      <NavRailFooter>
+        <ActivityStatus mobileSide="bottom" mobileAlign="end" />
+      </NavRailFooter>
+    </NavRail>
   )
 }
 
 interface UsersPageStatusProps {
   label: string
-  pending?: boolean
 }
 
-function UsersPageStatus({label, pending}: UsersPageStatusProps) {
+function UsersPageStatus({label}: UsersPageStatusProps) {
   return (
     <div className={styles.UsersPage.status()}>
-      {pending && <ProgressCircle isIndeterminate aria-label={label} />}
-      <p className={styles.UsersPage.status.text()}>{label}</p>
+      <Text as="p">{label}</Text>
     </div>
   )
 }
@@ -287,87 +258,80 @@ interface UsersTableProps {
 
 function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
   return (
-    <Table aria-label="Users" className={styles.UsersPage.table()}>
-      <TableHeader columns={userColumns}>
-        {column => (
-          <Column id={column.id} isRowHeader={column.isRowHeader}>
-            {column.name}
-          </Column>
-        )}
-      </TableHeader>
-      <TableBody
-        items={users}
-        renderEmptyState={() => (
-          <span className={styles.UsersPage.empty()}>No users found</span>
-        )}
-      >
-        {user => (
-          <Row id={user.email ?? user.sub} columns={userColumns}>
-            {column => (
-              <Cell>
-                {renderUserCell(
-                  user,
-                  column.id,
-                  roleLabel,
-                  onEdit,
-                  onDeactivate
-                )}
-              </Cell>
-            )}
-          </Row>
-        )}
-      </TableBody>
+    <Table
+      aria-label="Users"
+      items={users}
+      columns={userColumns}
+      rowHeight={56}
+      className={styles.UsersPage.table()}
+      dependencies={[roleLabel, onEdit, onDeactivate]}
+      renderEmptyState={() => <Text color="muted">No users found</Text>}
+    >
+      {user => (
+        <TableRow
+          id={user.email ?? user.sub}
+          textValue={[user.name, user.email || user.sub]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <TableCell>
+            <UserIdentity user={user} />
+          </TableCell>
+          <TableCell>
+            <UserRoles user={user} roleLabel={roleLabel} />
+          </TableCell>
+          <TableCell align="end">
+            <UserActionsMenu
+              user={user}
+              onEdit={onEdit}
+              onDeactivate={onDeactivate}
+            />
+          </TableCell>
+        </TableRow>
+      )}
     </Table>
   )
 }
 
-function renderUserCell(
-  user: User,
-  column: UserColumn['id'],
-  roleLabel: (role: string) => string | undefined,
-  onEdit: (user: User) => void,
-  onDeactivate: (user: User) => void
-) {
-  if (column === 'user') {
-    return (
-      <span className={styles.UsersPage.identity()}>
-        <span className={styles.UsersPage.identity.text()}>
-          {user.name && (
-            <span className={styles.UsersPage.identity.title()}>
-              {user.name}
-            </span>
-          )}
-          <span className={styles.UsersPage.identity.email()}>
-            {user.email || user.sub}
-          </span>
-        </span>
-      </span>
-    )
-  }
+interface UserIdentityProps {
+  user: User
+}
+
+function UserIdentity({user}: UserIdentityProps) {
+  return (
+    <span className={styles.UsersPage.identity()}>
+      {user.name && (
+        <Text weight="semibold" truncate>
+          {user.name}
+        </Text>
+      )}
+      <Text color="muted" truncate>
+        {user.email || user.sub}
+      </Text>
+    </span>
+  )
+}
+
+interface UserRolesProps {
+  user: User
+  roleLabel: (role: string) => string | undefined
+}
+
+function UserRoles({user, roleLabel}: UserRolesProps) {
   const roles = (user.roles ?? [])
     .map(role => {
       const label = roleLabel(role)
       return label ? {id: role, label} : undefined
     })
     .filter((role): role is {id: string; label: string} => Boolean(role))
+  if (roles.length === 0) return <Text color="muted">No roles</Text>
   return (
-    <span className={styles.UsersPage.rolesCell()}>
-      {roles.length === 0 ? (
-        <span className={styles.UsersPage.noRoles()}>No roles</span>
-      ) : (
-        <span className={styles.UsersPage.roles()}>
-          {roles.map(role => (
-            <Badge key={role.id} size="small">
-              {role.label}
-            </Badge>
-          ))}
-        </span>
-      )}
-      <UserActionsMenu
-        user={user}
-        onEdit={onEdit}
-        onDeactivate={onDeactivate}
-      />
+    <span className={styles.UsersPage.roles()}>
+      {roles.map(role => (
+        <Badge key={role.id} size="sm">
+          {role.label}
+        </Badge>
+      ))}
     </span>
   )
 }
@@ -382,32 +346,21 @@ function UserActionsMenu({user, onDeactivate, onEdit}: UserActionsMenuProps) {
   const email = user.email
   const label = user.name || user.email || user.sub
 
-  function handleAction(key: Key) {
-    if (key === 'edit') {
-      onEdit(user)
-      return
-    }
-    if (key !== 'deactivate' || !email) return
-    onDeactivate(user)
-  }
-
   return (
-    <Menu
-      aria-label={`Actions for ${label}`}
-      label={
-        <Button
-          aria-label={`Actions for ${label}`}
-          appearance="plain"
-          size="icon-small"
-          icon={IcRoundMoreHoriz}
-        />
-      }
-      disabledKeys={email ? undefined : ['deactivate']}
-      onAction={handleAction}
-    >
-      <MenuItem id="edit">Edit</MenuItem>
-      <MenuItem id="deactivate">Deactivate account</MenuItem>
-    </Menu>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`Actions for ${label}`}
+        variant="ghost"
+        size="icon-sm"
+        icon={IcRoundMoreHoriz}
+      />
+      <DropdownMenuContent aria-label={`Actions for ${label}`} align="end">
+        <DropdownMenuItem onSelect={() => onEdit(user)}>Edit</DropdownMenuItem>
+        <DropdownMenuItem disabled={!email} onSelect={() => onDeactivate(user)}>
+          Deactivate account
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -417,7 +370,7 @@ interface DeactivateUserModalProps {
 
 function DeactivateUserModal({user}: DeactivateUserModalProps) {
   const saveUser = useSetAtom(usersAtom)
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string>()
   const email = user.email
@@ -441,32 +394,32 @@ function DeactivateUserModal({user}: DeactivateUserModalProps) {
     <DashboardModalDialog label="Deactivate account">
       <DashboardModalContent>
         <div className={styles.UsersPage.form.fields()}>
-          <p className={styles.UsersPage.confirmation()}>
+          <Text as="p">
             Are you sure you want to deactivate {label}? This will remove the
             user account and role assignments.
-          </p>
+          </Text>
           {error && (
-            <p className={styles.UsersPage.form.error()} role="alert">
-              {error}
-            </p>
+            <Alert variant="destructive" icon={IcBaselineErrorOutline}>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
         </div>
       </DashboardModalContent>
       <DashboardModalFooter>
         <Button
           type="button"
-          appearance="outline"
-          intent="secondary"
-          onPress={modal.close}
+          variant="outline"
+          color="secondary"
+          onClick={modal.close}
         >
           Cancel
         </Button>
         <Button
           type="button"
-          intent="danger"
-          isDisabled={!email}
-          isPending={isPending}
-          onPress={handleDeactivate}
+          color="destructive"
+          disabled={!email}
+          loading={isPending}
+          onClick={handleDeactivate}
         >
           Deactivate account
         </Button>
@@ -482,7 +435,8 @@ interface UserModalProps {
 function UserModal({user}: UserModalProps) {
   const config = useAtomValueRaw(configAtom)
   const saveUser = useSetAtom(usersAtom)
-  const modal = useDashboardModal()
+  const modal = useDialog()
+  const formId = useId()
   const isEditing = user !== undefined
   const [email, setEmail] = useState(user?.email ?? '')
   const [name, setName] = useState(user?.name ?? '')
@@ -493,11 +447,9 @@ function UserModal({user}: UserModalProps) {
       return {id, name: role.label ?? id}
     })
   }, [config.roles])
-  const selectedRoles = useListData<RoleItem>({
-    initialItems: (user?.roles ?? [])
-      .map(role => roleItems.find(item => item.id === role))
-      .filter((item): item is RoleItem => Boolean(item))
-  })
+  const [selectedRoles, setSelectedRoles] = useState<Array<string>>(() =>
+    (user?.roles ?? []).filter(role => roleItems.some(item => item.id === role))
+  )
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -513,7 +465,7 @@ function UserModal({user}: UserModalProps) {
       const request: UserInput = {
         email: userEmail,
         name: userName || undefined,
-        roles: selectedRoles.items.map(item => String(item.id))
+        roles: selectedRoles
       }
       await saveUser({
         type: isEditing ? 'update' : 'create',
@@ -529,50 +481,45 @@ function UserModal({user}: UserModalProps) {
 
   return (
     <DashboardModalDialog label={isEditing ? 'Edit user' : 'Create user'}>
-      <form onSubmit={handleSubmit} id="submit">
+      <form onSubmit={handleSubmit} id={formId}>
         <DashboardModalContent>
           <div className={styles.UsersPage.form.fields()}>
             <TextField
               label="Email"
               type="email"
               value={email}
-              onChange={setEmail}
-              isRequired
-              isDisabled={isEditing}
+              onValueChange={setEmail}
+              required
+              disabled={isEditing}
               autoFocus={!isEditing}
-              inputProps={{
-                autoComplete: 'off',
-                'data-1p-ignore': 'true'
-              }}
+              autoComplete="off"
+              inputProps={{'data-1p-ignore': 'true'}}
             />
             <TextField
               label="Name"
               value={name}
-              onChange={setName}
+              onValueChange={setName}
               autoFocus={isEditing}
-              inputProps={{
-                autoComplete: 'off',
-                'data-1p-ignore': 'true'
-              }}
+              autoComplete="off"
+              inputProps={{'data-1p-ignore': 'true'}}
             />
             <MultipleSelect
               label="Roles"
               placeholder="Select roles"
-              items={roleItems}
-              selectedItems={selectedRoles}
-              tag={item => <Tag data-shape="circle">{item.name}</Tag>}
-              renderEmptyState={() => 'No roles'}
+              value={selectedRoles}
+              onValueChange={setSelectedRoles}
+              emptyMessage="No roles"
             >
-              {item => (
-                <MultipleSelectItem id={item.id} textValue={item.name}>
+              {roleItems.map(item => (
+                <MultipleSelectItem key={item.id} value={item.id}>
                   {item.name}
                 </MultipleSelectItem>
-              )}
+              ))}
             </MultipleSelect>
             {error && (
-              <p className={styles.UsersPage.form.error()} role="alert">
-                {error}
-              </p>
+              <Alert variant="destructive" icon={IcBaselineErrorOutline}>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
           </div>
         </DashboardModalContent>
@@ -580,18 +527,13 @@ function UserModal({user}: UserModalProps) {
       <DashboardModalFooter>
         <Button
           type="button"
-          appearance="outline"
-          intent="secondary"
-          onPress={modal.close}
+          variant="outline"
+          color="secondary"
+          onClick={modal.close}
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          intent="primary"
-          isPending={isPending}
-          form="submit"
-        >
+        <Button type="submit" color="primary" loading={isPending} form={formId}>
           {isEditing ? 'Save changes' : 'Create user'}
         </Button>
       </DashboardModalFooter>

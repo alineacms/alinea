@@ -1,9 +1,14 @@
+import type {Config} from '#/core/Config.js'
+import {
+  imageEncodingType,
+  imageResizeOptions
+} from '#/core/media/ImageTransform.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
+import type {DragTypes, DropTarget, Key} from '#/components.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DeepMap} from '#/core/util/DeepMap.js'
-import type {DragItem, DragTypes} from '@react-types/shared'
 import {atom, type Atom, type WritableAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {Key} from 'react-aria-components'
 
 type RequiredAtom<Value> = WritableAtom<Value, [Value], void>
 
@@ -141,7 +146,7 @@ export function acceptsDashboardEntryDrag(types: DragTypes): boolean {
   return dashboardEntryDragTypes.some(type => types.has(type))
 }
 
-export function dashboardEntryDragItem(id: Key): DragItem {
+export function dashboardEntryDragItem(id: Key): Record<string, string> {
   const key = String(id)
   return {
     'text/plain': key,
@@ -149,10 +154,50 @@ export function dashboardEntryDragItem(id: Key): DragItem {
   }
 }
 
+/** Unique entry ids from the items dropped on an entry list */
+export function dashboardEntryDropIds(
+  items: Iterable<Record<string, string>>
+): Array<string> {
+  const ids = new Set<string>()
+  for (const item of items) {
+    const id = item[dashboardEntryDragType] ?? item['text/plain']
+    if (id) ids.add(id)
+  }
+  return [...ids]
+}
+
+/**
+ * Moves entries onto, before or after the target. Entries placed before or
+ * after it keep the order they are given in.
+ */
+export async function moveEntries(
+  graph: WriteableGraph,
+  ids: Iterable<string>,
+  target: DropTarget
+): Promise<void> {
+  let {position, key} = target
+  for (const id of ids) {
+    await graph.move({
+      id,
+      target: String(key),
+      targetType: 'entry',
+      dropPosition: position
+    })
+    if (position === 'on') continue
+    // The next entry follows the one just moved
+    position = 'after'
+    key = id
+  }
+}
+
 export function uploadSizeError(
   file: File,
-  maxUploadSize: number | undefined
+  config: Pick<Config, 'maxUploadSize' | 'resizeImages'>
 ): string | undefined {
+  const {maxUploadSize, resizeImages} = config
+  // Images scaled down before the upload are checked after resizing
+  if (imageResizeOptions(resizeImages) && imageEncodingType(file.name))
+    return undefined
   try {
     assertUploadSize(file.name, file.size, maxUploadSize)
   } catch (error) {

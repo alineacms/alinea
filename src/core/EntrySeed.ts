@@ -150,22 +150,24 @@ export async function seedMutations(
   return mutations
 }
 
-export function seedData(
+/**
+ * The configured seed an entry file points to with `_seeded`, or undefined
+ * when that seed was removed from the config (a stale marker).
+ */
+export function entrySeed(
   config: ConfigType,
   seedPath: string | null,
-  data: Record<string, unknown>,
   location: Pick<EntrySeed, 'workspace' | 'root' | 'locale'>
-): Record<string, unknown> {
-  if (!seedPath) return data
+): EntrySeed | undefined {
+  if (!seedPath) return undefined
   const node = withoutExtension(seedPath)
-  const seed = entrySeeds(config).find(
+  return entrySeeds(config).find(
     seed =>
       withoutExtension(seed.seedPath) === node &&
       seed.workspace === location.workspace &&
       seed.root === location.root &&
       seed.locale === location.locale
   )
-  return seed ? {...seed.data, ...data} : data
 }
 
 function withoutExtension(filePath: string): string {

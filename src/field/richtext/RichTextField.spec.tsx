@@ -2,7 +2,6 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
-  RichTextInlineStory,
   RichTextImageDisabledStory,
   RichTextImageStory,
   RichTextImportedListStory,
@@ -51,13 +50,13 @@ async function storedValue(page: Page): Promise<Array<StoredRichTextNode>> {
 }
 
 async function serveFixtureImages(page: Page) {
-  await page.route('**/landscape.*.jpg*', route =>
+  await page.route(/\/landscape(\.[^/]*)?\.jpg/, route =>
     route.fulfill({
       contentType: 'image/jpeg',
       path: 'apps/dev/public/landscape.2V4cZVLipKGYEYJTIK1GMBHJMY0.jpg'
     })
   )
-  await page.route('**/portrait.*.jpg*', route =>
+  await page.route(/\/portrait(\.[^/]*)?\.jpg/, route =>
     route.fulfill({
       contentType: 'image/jpeg',
       path: 'apps/dev/public/portrait.2V4cZWf1Mb18DtEjGBsOUyhLRDU.jpg'
@@ -438,7 +437,7 @@ test('edits nested rich text inside an embedded block', async ({
 
   const block = page.locator('[data-richtext-block="true"]')
   await expect(block).toHaveCSS('border-radius', '8px')
-  await expect(block).toHaveCSS('margin', '14px 0px')
+  await expect(block).toHaveCSS('margin', '16px 0px')
   await expect(block.locator('[data-richtext-block-editor="true"]')).toHaveCSS(
     'padding',
     '8px 16px 16px'
@@ -507,10 +506,7 @@ test('keeps the owning rich text toolbar open while focus moves', async ({
   await expect(toolbar).toHaveCSS('padding', '4px 12px')
   const boldButton = page.getByRole('button', {name: 'Bold'})
   await expect(boldButton).toHaveCSS('border-radius', '8px')
-  await expect(boldButton.locator('[data-slot="icon"]')).toHaveCSS(
-    'font-size',
-    '18px'
-  )
+  await expect(boldButton.locator('svg')).toHaveCSS('font-size', '18px')
   await expect(toolbar).toHaveAttribute(
     'data-richtext-toolbar-owner',
     outerOwner
@@ -550,6 +546,25 @@ test('keeps toolbar popouts open', async ({mount, page}) => {
   await page.getByRole('menuitem', {name: 'Heading 1'}).click()
   await expect(page.getByRole('menuitem', {name: 'Heading 1'})).toBeHidden()
   await expect(page.locator('[data-richtext-toolbar="true"]')).toBeVisible()
+})
+
+test('toolbar follows the selection within the editor', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextPlainStory />)
+  const editor = page.locator('.ProseMirror').first()
+
+  await editor.getByText('Select this text', {exact: false}).click()
+  await page.getByRole('button', {name: 'Normal text'}).click()
+  await page.getByRole('menuitem', {name: 'Heading 1'}).click()
+  await expect(page.getByRole('button', {name: 'Heading 1'})).toBeVisible()
+
+  // Moving the caret without leaving the editor updates the toolbar
+  await editor.getByText('Press Enter', {exact: false}).click()
+  await expect(page.getByRole('button', {name: 'Normal text'})).toBeVisible()
+  await editor.getByText('Select this text', {exact: false}).click()
+  await expect(page.getByRole('button', {name: 'Heading 1'})).toBeVisible()
 })
 
 test('duplicates and deletes embedded blocks', async ({mount, page}) => {

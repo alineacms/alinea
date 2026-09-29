@@ -1,0 +1,42 @@
+.DemoCollectionCard {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--demo-radius);
+  color: #fff;
+  text-decoration: none;
+}
+
+.DemoCollectionCard-image {
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  .DemoCollectionCard:hover & {
+    transform: scale(1.03);
+  }
+}
+
+.DemoCollectionCard-overlay {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 64px 22px 22px;
+  background: linear-gradient(to top, rgb(20 15 10 / 0.6), transparent);
+}
+
+.DemoCollectionCard-count {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.DemoCollectionCard-title {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(28px, 3.4cqi, 38px);
+  font-weight: 400;
+  line-height: 1.05;
+}

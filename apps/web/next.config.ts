@@ -1,0 +1,84 @@
+import {withAlinea} from 'alinea/next'
+import type {NextConfig} from 'next'
+
+// Docs urls that moved when the docs were regrouped for 2.0
+const docsRedirects: Array<[source: string, destination: string]> = [
+  // The framework picker is gone, only Next.js is documented
+  ['/docs\\:next', '/docs'],
+  ['/docs\\:next/:path*', '/docs/:path*'],
+  ['/docs/next', '/docs'],
+  ['/docs/next/:path*', '/docs/:path*'],
+  // Get started
+  ['/docs/getting-started', '/docs/quickstart'],
+  // Content model
+  ['/docs/configuration/schema', '/docs/schema'],
+  ['/docs/configuration/schema/:path*', '/docs/schema/:path*'],
+  ['/docs/configuration/fields/custom-fields', '/docs/custom-fields'],
+  ['/docs/configuration/fields', '/docs/fields'],
+  ['/docs/configuration/fields/:path*', '/docs/fields/:path*'],
+  ['/docs/configuration/workspaces', '/docs/workspaces'],
+  ['/docs/configuration/workspaces/:path*', '/docs/workspaces/:path*'],
+  ['/docs/content', '/docs/content-model'],
+  ['/docs/content/query', '/docs/query'],
+  ['/docs/content/query/:path*', '/docs/query/:path*'],
+  // Guides
+  ['/docs/content/live-previews', '/docs/live-previews'],
+  ['/docs/content/editing-content', '/docs/editing-content'],
+  ['/docs/content/typescript', '/docs/typescript'],
+  ['/docs/reference/internationalization', '/docs/internationalization'],
+  ['/docs/configuration/roles-permissions', '/docs/roles-permissions'],
+  ['/docs/reference/agents-playbook', '/docs/ai-agents'],
+  // Reference
+  ['/docs/reference/cli', '/docs/cli']
+]
+
+const nextConfig: NextConfig = {
+  reactStrictMode: false,
+  // Pages read these files at runtime, also when rendered on demand (eg. in
+  // a preview): example sources and component declarations for the component
+  // pages, the bundled declarations and demo content for the playground and
+  // the demo
+  outputFileTracingIncludes: {
+    '/**': [
+      './src/page/catalog/examples/*.tsx',
+      '../../dist/components/**/*.{d.ts,js}',
+      '../../dist/bundled.d.ts',
+      './content/demo/**'
+    ]
+  },
+  async headers() {
+    // Playground links only run their code after a click, keep other sites
+    // from framing the page to trick visitors into that click
+    return [
+      {
+        source: '/playground',
+        headers: [
+          {key: 'Content-Security-Policy', value: "frame-ancestors 'self'"}
+        ]
+      }
+    ]
+  },
+  async rewrites() {
+    // The Markdown version of every docs page, at its url plus .md
+    return [
+      {source: '/docs.md', destination: '/docs-md'},
+      {source: '/docs/:path(.+)\\.md', destination: '/docs-md/:path'}
+    ]
+  },
+  async redirects() {
+    return [
+      {
+        source: '/roadmap',
+        destination: 'https://github.com/alineacms/alinea/issues',
+        permanent: false
+      },
+      ...docsRedirects.map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: true
+      }))
+    ]
+  }
+}
+
+export default withAlinea(nextConfig)

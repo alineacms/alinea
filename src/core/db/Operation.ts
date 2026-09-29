@@ -5,9 +5,17 @@ import {HttpError} from '../HttpError.js'
 import {createId} from '../Id.js'
 import type {CreateInputRow, StoredRow} from '../Infer.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
+import {
+  hasImageEdit,
+  imageResizeOptions,
+  isTransformableImage,
+  type ImageEdit,
+  type ImageTransform
+} from '../media/ImageTransform.js'
 import {isImage} from '../media/IsImage.js'
 import {MediaLocation} from '../media/MediaLocation.js'
 import {assertUploadSize} from '../media/UploadLimits.js'
+import {assert} from '../util/Assert.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {createFileHash} from '../util/ContentHash.js'
@@ -200,7 +208,19 @@ export interface UploadQuery {
   workspace?: string
   root?: string
   parentId?: string | null
-  createPreview?(blob: Blob): Promise<ImagePreviewDetails>
+  createPreview?(blob: Blob): Promise<ImagePreviewDetails | undefined>
+  /** Rotate and crop the image before it is uploaded */
+  edit?: ImageEdit
+  /**
+   * Applies the edit and scales down images larger than the resizeImages
+   * option of the config: `alinea/core/media/TransformImage` does so in the
+   * browser or with sharp
+   */
+  transformImage?(
+    blob: Blob,
+    fileName: string,
+    transform: ImageTransform
+  ): Promise<Blob>
   onProgress?(progress: UploadProgress): void
   replaceId?: string
 }
@@ -216,17 +236,44 @@ export class UploadOperation extends Operation {
   constructor(query: UploadQuery) {
     super(async (db): Promise<Array<Mutation>> => {
       const entryId = this.id
-      const {file, createPreview} = query
+      const {file, createPreview, edit, transformImage} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const fileName = Array.isArray(file) ? file[0] : file.name
       const workspace = _workspace ?? Object.keys(db.config.workspaces)[0]
       const root =
         _root ?? Workspace.defaultMediaRoot(db.config.workspaces[workspace])
-      const fileSize = Array.isArray(file) ? file[1].byteLength : file.size
-      assertUploadSize(fileName, fileSize, db.config.maxUploadSize)
-      const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
-      const contentType =
+      let blob: Blob = Array.isArray(file)
+        ? new Blob([file[1] as BlobPart])
+        : file
+      let contentType =
         file instanceof Blob ? file.type : 'application/octet-stream'
+      const source = blob
+      const edited = hasImageEdit(edit)
+      assert(
+        !edited || transformImage,
+        'Editing an upload needs transformImage'
+      )
+      const resize = imageResizeOptions(db.config.resizeImages)
+      const bytes = new Uint8Array(await source.arrayBuffer())
+      if (
+        transformImage &&
+        (edited || resize) &&
+        isTransformableImage(fileName, bytes)
+      ) {
+        const transformed = await transformImage(blob, fileName, {edit, resize})
+        // Scaling down alone must make the file smaller
+        if (edited || transformed.size < blob.size) {
+          blob = transformed
+          contentType = transformed.type
+        }
+      }
+      // The hash of the file as picked, so uploading it again is recognized
+      // after it was scaled down
+      const sourceHash =
+        blob !== source && !edited ? await createFileHash(bytes) : undefined
+      const fileSize = blob.size
+      assertUploadSize(fileName, fileSize, db.config.maxUploadSize)
+      const body = await blob.arrayBuffer()
       const originalExtension = extname(fileName)
       const title = basename(fileName, originalExtension)
       const extension = originalExtension.toLowerCase()
@@ -240,11 +287,10 @@ export class UploadOperation extends Operation {
         size: fileSize
       })
       const previewData = isImage(fileName)
-        ? await createPreview?.(
-            file instanceof Blob ? file : new Blob([body as BlobPart])
-          )
+        ? await createPreview?.(blob)
         : undefined
       await sendUpload(info.url, info.method ?? 'POST', contentType, body, {
+        headers: info.headers,
         onProgress: query.onProgress
       })
       const hash = await createFileHash(new Uint8Array(body))
@@ -269,10 +315,12 @@ export class UploadOperation extends Operation {
         data: {
           title,
           location: fileLocation,
-          previewUrl: info.previewUrl,
+          // Local uploads have no preview url, leave the empty value out
+          ...(info.previewUrl ? {previewUrl: info.previewUrl} : {}),
           extension,
           size: body.byteLength,
           hash,
+          ...(sourceHash ? {sourceHash} : {}),
           ...previewData
         },
         overwrite: query.replaceId !== undefined
@@ -284,6 +332,7 @@ export class UploadOperation extends Operation {
 }
 
 interface UploadFileOptions {
+  headers?: Record<string, string>
   onProgress?(progress: UploadProgress): void
 }
 
@@ -294,14 +343,20 @@ async function sendUpload(
   body: ArrayBuffer | Uint8Array,
   options: UploadFileOptions
 ) {
-  const {onProgress} = options
+  const {headers = {}, onProgress} = options
   if (onProgress && typeof XMLHttpRequest !== 'undefined') {
-    await uploadFileWithProgress(url, method, contentType, body, onProgress)
+    await uploadFileWithProgress(
+      url,
+      method,
+      {...headers, 'Content-Type': contentType},
+      body,
+      onProgress
+    )
     return
   }
   await fetch(url, {
     method,
-    headers: {'Content-Type': contentType},
+    headers: {...headers, 'Content-Type': contentType},
     body: body as BodyInit
   }).then(result => {
     if (!result.ok)
@@ -312,14 +367,15 @@ async function sendUpload(
 function uploadFileWithProgress(
   url: string,
   method: string,
-  contentType: string,
+  headers: Record<string, string>,
   body: ArrayBuffer | Uint8Array,
   onProgress: (progress: UploadProgress) => void
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest()
     request.open(method, url)
-    request.setRequestHeader('Content-Type', contentType)
+    for (const [name, value] of Object.entries(headers))
+      request.setRequestHeader(name, value)
     request.upload.addEventListener('progress', event => {
       onProgress({
         loaded: event.loaded,

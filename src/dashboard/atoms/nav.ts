@@ -1,11 +1,13 @@
 import {Atom, atom, Getter} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
 import {getRoot} from '#/core/Internal.js'
+import type {OverviewSort} from '#/core/Overview.js'
 import type {EntryDefaultView} from '#/core/Type.js'
 import {ReactNode} from 'react'
 import {workspaceAtom, workspacesAtom} from './config.js'
 import {configAtom} from './core.js'
 import {policyAtom} from './user.js'
+import {dispense} from './utils.js'
 
 export interface RouteBlock {
   confirm: () => void | Promise<void>
@@ -21,6 +23,10 @@ export interface DashboardRoute {
   entry?: string
   locale?: string
   view?: EntryDefaultView
+  /** The column an overview is sorted by, eg. `price` or `-price` */
+  sort?: string
+  /** Replace the current history entry instead of adding one */
+  replace?: boolean
 }
 
 interface ResolvedDashboardRoute extends DashboardRoute {
@@ -39,13 +45,48 @@ export const nav = {
     root?: string,
     entryId?: string,
     locale?: string | null,
-    view?: EntryDefaultView
+    view?: EntryDefaultView,
+    sort?: string
   ) {
     const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
     const path = `/entry/${[workspace, rootPart, entryId].filter(Boolean).join('/')}`
-    return view ? `${path}?view=${view}` : path
+    const params = new URLSearchParams()
+    if (view) params.set('view', view)
+    if (sort) params.set('sort', sort)
+    const search = params.toString()
+    return search ? `${path}?${search}` : path
   }
 }
+
+/** The url parameter of an overview sort: the column, prefixed with - when descending */
+export function formatOverviewSort(sort?: OverviewSort): string | undefined {
+  if (!sort) return undefined
+  return sort.direction === 'desc' ? `-${sort.column}` : sort.column
+}
+
+export function parseOverviewSort(
+  value: string | undefined
+): OverviewSort | undefined {
+  if (!value) return undefined
+  const desc = value.startsWith('-')
+  const column = desc ? value.slice(1) : value
+  if (!column) return undefined
+  return {column, direction: desc ? 'desc' : 'asc'}
+}
+
+function listKey(
+  workspace: string | undefined,
+  root: string | undefined,
+  entry: string | undefined
+) {
+  return `${workspace ?? ''}/${root ?? ''}/${entry ?? ''}`
+}
+
+/**
+ * The sort of each overview visited in this session, so an overview keeps
+ * its sort when the editor returns to it
+ */
+const overviewSortMemoryAtom = atom(new Map<string, OverviewSort>())
 
 function routeFromHash(hash: string): ResolvedDashboardRoute {
   const [path, search = ''] = hash.slice(1).split('?')
@@ -55,7 +96,9 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
   const page =
     action === 'users' ? 'users' : action === 'entry' ? 'entry' : 'splash'
   const [root, locale] = rootPart.split(':')
-  const view = new URLSearchParams(search).get('view')
+  const params = new URLSearchParams(search)
+  const view = params.get('view')
+  const sort = params.get('sort')
   return {
     page,
     workspace: page === 'entry' ? workspace : undefined,
@@ -65,7 +108,8 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
     view:
       page === 'entry' && (view === 'edit' || view === 'overview')
         ? view
-        : undefined
+        : undefined,
+    sort: page === 'entry' && sort ? sort : undefined
   }
 }
 
@@ -78,7 +122,8 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
     root: update.root,
     entry: update.entry,
     locale: update.locale,
-    view: update.view
+    view: update.view,
+    sort: update.sort
   }
 }
 
@@ -92,7 +137,8 @@ function hashFromRoute(route: ResolvedDashboardRoute) {
           route.root,
           route.entry,
           route.locale,
-          route.view
+          route.view,
+          route.sort
         )}`
 }
 
@@ -116,6 +162,7 @@ let ignoredBrowserHash: string | undefined
 
 interface NavigationRequest {
   browser?: boolean
+  replace?: boolean
   route: ResolvedDashboardRoute
 }
 
@@ -127,11 +174,30 @@ export const routeAtom = Object.assign(
       const request =
         'route' in update
           ? update
-          : ({route: routeFromUpdate(update)} satisfies NavigationRequest)
-      const {route} = request
+          : ({
+              route: routeFromUpdate(update),
+              replace: update.replace
+            } satisfies NavigationRequest)
+      let {route} = request
+      const key = sortKey(get, request)
+      // The url is the source of truth for the sort of an overview, an
+      // explicit undefined sort resets it
+      const explicit =
+        request.browser || route.sort !== undefined || 'sort' in update
+      if (key && !explicit) {
+        const sort = get(overviewSortMemoryAtom).get(key)
+        if (sort) route = {...route, sort: formatOverviewSort(sort)}
+      }
       const previous = get(currentRouteAtom)
-      const commit = (replace = false, syncLocation = !request.browser) => {
+      const commit = (
+        replace = request.replace ?? false,
+        syncLocation = !request.browser
+      ) => {
         set(currentRouteAtom, route)
+        if (key)
+          set(overviewSortMemoryAtom, memory =>
+            remember(memory, key, route.sort)
+          )
         if (!syncLocation) return
         set(
           locationAtom,
@@ -181,6 +247,30 @@ export const routeAtom = Object.assign(
   }
 )
 
+/** The overview whose sort a navigation shows */
+function sortKey(get: Getter, {browser, route}: NavigationRequest) {
+  if (route.page !== 'entry') return undefined
+  if (route.workspace && route.root)
+    return listKey(route.workspace, route.root, route.entry)
+  // The browser can navigate before the dashboard is ready to resolve a page
+  if (browser) return undefined
+  const page = resolvePage(get, route)
+  return listKey(page.workspace, page.root, page.entry)
+}
+
+function remember(
+  memory: Map<string, OverviewSort>,
+  key: string,
+  value: string | undefined
+) {
+  if (formatOverviewSort(memory.get(key)) === value) return memory
+  const next = new Map(memory)
+  const sort = parseOverviewSort(value)
+  if (sort) next.set(key, sort)
+  else next.delete(key)
+  return next
+}
+
 export interface Page {
   type: 'splash' | 'users' | 'entry'
   workspace: string | undefined
@@ -191,8 +281,9 @@ export interface Page {
   view: EntryDefaultView | undefined
 }
 
-export const pageAtom = atom((get): Page => {
-  const route = get(routeAtom)
+export const pageAtom = atom(get => resolvePage(get, get(routeAtom)))
+
+function resolvePage(get: Getter, route: ResolvedDashboardRoute): Page {
   const config = get(configAtom)
   const policy = get(policyAtom)
   const workspaces = get(workspacesAtom)
@@ -210,7 +301,12 @@ export const pageAtom = atom((get): Page => {
         policy.canRead({workspace, root})
       )
     : []
-  const root = route.root && roots.includes(route.root) ? route.root : roots[0]
+  // Without a requested root, open the first root marked openByDefault
+  const defaultRoot =
+    roots.find(key => getRoot(workspaceConfig!.roots[key]).openByDefault) ??
+    roots[0]
+  const root =
+    route.root && roots.includes(route.root) ? route.root : defaultRoot
   const rootConfig = workspaceConfig?.roots[root]
   const i18n = rootConfig ? getRoot(rootConfig).i18n : undefined
   const locale =
@@ -226,7 +322,40 @@ export const pageAtom = atom((get): Page => {
     locale,
     view: route.view
   }
-})
+}
+
+/**
+ * The sort of the overview listing the children of an entry, or of a root
+ * when `entry` is null. The overview of the current page keeps it in the url.
+ */
+export const overviewSortAtom = dispense(
+  (workspace: string, root: string, entry: string | null) => {
+    const key = listKey(workspace, root, entry ?? undefined)
+    return atom(
+      get => get(overviewSortMemoryAtom).get(key),
+      (get, set, sort: OverviewSort | undefined) => {
+        const page = get(pageAtom)
+        const value = formatOverviewSort(sort)
+        if (
+          page.type !== 'entry' ||
+          listKey(page.workspace, page.root, page.entry) !== key
+        ) {
+          set(overviewSortMemoryAtom, memory => remember(memory, key, value))
+          return
+        }
+        set(routeAtom, {
+          workspace,
+          root,
+          entry: page.entry,
+          locale: page.locale ?? undefined,
+          view: page.view,
+          sort: value,
+          replace: true
+        })
+      }
+    )
+  }
+)
 
 export function page(
   render: (page: Page, get: Getter) => ReactNode | Promise<ReactNode>

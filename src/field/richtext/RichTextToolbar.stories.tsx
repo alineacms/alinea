@@ -14,15 +14,15 @@ const storyStyle: CSSProperties = {
 }
 
 const toolbarFrameStyle: CSSProperties = {
-  border: '1px solid var(--alinea-dashboard-surface-border)',
-  borderRadius: 6,
+  border: '1px solid var(--alinea-border)',
+  borderRadius: 'var(--alinea-radius)',
   overflow: 'hidden',
   background: 'var(--alinea-bg)'
 }
 
 const editorStyle: CSSProperties = {
-  border: '1px solid var(--alinea-dashboard-surface-border)',
-  borderRadius: 6,
+  border: '1px solid var(--alinea-border)',
+  borderRadius: 'var(--alinea-radius)',
   padding: 16,
   background: 'var(--alinea-bg)'
 }

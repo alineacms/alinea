@@ -481,3 +481,94 @@ test('localised rich text blocks receive newly added field defaults', () => {
     }
   })
 })
+
+const Settings = Config.document('Settings', {
+  fields: {
+    tagline: localise(Field.text('Tagline'))
+  }
+})
+
+const Home = Config.document('Home', {
+  fields: {
+    settings: Field.entry('Settings', {condition: {_type: 'Settings'}})
+  }
+})
+
+const mixedCms = createCMS({
+  schema: {Settings, Home},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content/main',
+      roots: {
+        pages: Config.root('Pages', {
+          i18n: {locales: ['en', 'de', 'fr']},
+          contains: ['Home']
+        }),
+        settings: Config.root('Settings', {contains: ['Settings']})
+      }
+    })
+  }
+})
+
+async function createMixedResolver() {
+  const {store} = await createEntryStore(mixedCms.config, [
+    {
+      id: 'settings',
+      type: 'Settings',
+      index: 'a0',
+      root: 'settings',
+      locale: null,
+      data: {tagline: {en: 'Hello', de: 'Hallo', fr: ''}}
+    },
+    {
+      id: 'home',
+      type: 'Home',
+      index: 'a0',
+      root: 'pages',
+      locale: 'de',
+      data: {
+        settings: {
+          [ListRow.id]: 'link',
+          [ListRow.type]: 'entry',
+          _entry: 'settings'
+        }
+      }
+    }
+  ])
+  return store
+}
+
+test('localised fields of untranslated entries follow the preferred locale', async () => {
+  const store = await createMixedResolver()
+  const tagline = await store.resolve({
+    first: true,
+    type: Settings,
+    preferredLocale: 'de',
+    select: Settings.tagline
+  })
+  test.is(tagline, 'Hallo')
+  const fallback = await store.resolve({
+    first: true,
+    type: Settings,
+    preferredLocale: 'fr',
+    select: Settings.tagline
+  })
+  test.is(fallback, 'Hallo')
+})
+
+test('localised fields of linked untranslated entries follow the linking entry', async () => {
+  const store = await createMixedResolver()
+  const settings = await store.resolve({
+    first: true,
+    type: Home,
+    locale: 'de',
+    select: {
+      edge: 'entrySingle',
+      first: true,
+      field: Home.settings,
+      type: Settings,
+      select: {tagline: Settings.tagline}
+    }
+  })
+  test.equal(settings, {tagline: 'Hallo'})
+})

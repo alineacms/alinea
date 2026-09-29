@@ -1,0 +1,13 @@
+.DemoContainer {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--demo-gutter);
+
+  &.is-wide {
+    max-width: var(--demo-max);
+  }
+
+  &.is-narrow {
+    max-width: calc(720px + var(--demo-gutter) * 2);
+  }
+}

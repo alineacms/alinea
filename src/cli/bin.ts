@@ -31,7 +31,6 @@ prog
   .option('-c, --config', 'Config file location')
   .option('-d, --dir', 'Root directory of the project')
   .option('-p, --port', 'Port to listen on')
-  .option('-b, --base', 'Base URL for previews')
   .option('--production', 'Use production backend')
   .option('--dev', 'Watch alinea sources')
   .action(async args => {
@@ -45,7 +44,6 @@ prog
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
-      base: args.base,
       onAfterGenerate,
       configFile: args.config,
       cmd: 'dev'
@@ -57,7 +55,6 @@ prog
   .describe('Generate types and content cache')
   .option('-c, --config', 'Config file location')
   .option('-d, --dir', 'Root directory of the project')
-  .option('-w, --watch', 'Watch for changes to source files')
   .option(
     '--fix',
     'Any missing or incorrect properties will be overwritten by their default'
@@ -70,9 +67,8 @@ prog
     if (args.fix) {
       const {generate} = await import('./Generate.js')
       for await (const _ of generate({
-        ...args,
+        fix: true,
         cwd: args.dir,
-        base: args.base,
         configFile: args.config,
         onAfterGenerate() {
           process.exit(0)

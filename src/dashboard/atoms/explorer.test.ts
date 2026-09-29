@@ -3,21 +3,30 @@ import {
   createDashboardStore
 } from '#test/DashboardFixture.js'
 import {LocalDB} from '#/database/LocalDB.js'
-import {WriteablePolicy} from '#/core/Role.js'
+import {Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
+import {Entry} from '#/core/Entry.js'
 import {Config, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
+import type {DropTarget} from '#/components.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {routeAtom} from './nav.js'
 import {rootAtoms} from './root.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {
   createExplorerAtoms,
   ExplorerEntry,
+  explorerItemCanDelete,
+  explorerItemCanMove,
+  explorerThumbnailId,
   type ExplorerItemData
 } from './explorer.js'
+import {syncAtom} from './graph.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
+import {columnLinkIds, resolveOverview} from './overview.js'
+import {getRoot} from '#/core/Internal.js'
 
 function folderEntry(value: ExplorerItemData) {
   const item = atom(value)
@@ -109,14 +118,19 @@ test('page explorers browse into media folders instead of editing them', () => {
   expect(store.get(explorer.location).parentId).toBe('images')
 })
 
-test('explorers default to index sorting', () => {
+test('explorers default to the stored order', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'media'},
     {}
   )
   const store = createStore()
 
-  expect(store.get(explorer.sort)).toEqual({sortBy: 'index', direction: 'asc'})
+  expect(store.get(explorer.requestedSort)).toBeUndefined()
+  store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
+  expect(store.get(explorer.requestedSort)).toEqual({
+    column: 'title',
+    direction: 'desc'
+  })
 })
 
 test('uses the locale from its initial location', () => {
@@ -420,4 +434,316 @@ test('picker preselects initial links by default', () => {
   const store = createStore()
 
   expect(store.get(explorer.selection)).toEqual(new Set(['linked-entry']))
+})
+
+test('the thumbnail is the first image in field order, including lists', () => {
+  const Block = Config.type('Block', {
+    fields: {photo: Field.image('Photo')}
+  })
+  const Product = Config.document('Product', {
+    fields: {
+      title: Field.text('Title'),
+      related: Field.entry('Related'),
+      gallery: Field.image.multiple('Gallery'),
+      blocks: Field.list('Blocks', {schema: {Block}}),
+      cover: Field.image('Cover')
+    }
+  })
+  const image = (id: string, entry: string) => ({
+    _id: id,
+    _index: 'a0',
+    _type: 'image',
+    _entry: entry
+  })
+  expect(
+    explorerThumbnailId(Product, {
+      related: {_id: 'r', _type: 'entry', _entry: 'page'},
+      gallery: [image('g1', 'first'), image('g2', 'second')],
+      cover: image('c', 'cover')
+    })
+  ).toBe('first')
+  expect(
+    explorerThumbnailId(Product, {
+      gallery: [],
+      blocks: [
+        {_id: 'b', _index: 'a0', _type: 'Block', photo: image('p', 'block')}
+      ],
+      cover: image('c', 'cover')
+    })
+  ).toBe('block')
+  expect(explorerThumbnailId(Product, {title: 'No images'})).toBeUndefined()
+})
+
+test('overview link ids only come from overview columns', () => {
+  const Page = Config.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      author: Field.entry('Author', {overview: true}),
+      cover: Field.image('Cover')
+    }
+  })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages', {contains: ['Page']})}
+      })
+    }
+  })
+  const overview = resolveOverview(config, {
+    kind: 'root',
+    data: getRoot(config.workspaces.main.pages)
+  })
+  expect(
+    columnLinkIds(config, overview, {
+      id: 'page',
+      type: 'Page',
+      title: 'Page',
+      path: 'page',
+      locale: null,
+      workspace: 'main',
+      root: 'pages',
+      parentId: null,
+      data: {
+        author: {_id: 'a', _type: 'entry', _entry: 'author-1'},
+        cover: {_id: 'c', _type: 'image', _entry: 'image-1'}
+      }
+    })
+  ).toEqual(['author-1'])
+})
+
+test('search results load thumbnails and linked entry titles', async () => {
+  const Author = Config.document('Author', {
+    fields: {title: Field.text('Title')}
+  })
+  const Product = Config.document('Product', {
+    fields: {
+      title: Field.text('Title'),
+      author: Field.entry('Author', {overview: true}),
+      gallery: Field.image.multiple('Gallery')
+    }
+  })
+  const config = Config.create({
+    schema: {Author, Product},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: Config.root('Pages', {contains: [Author, Product]}),
+          media: Config.media()
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  await db.create({
+    id: 'photo',
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Photo',
+      path: 'photo',
+      location: 'photo.jpg',
+      extension: '.jpg',
+      preview: 'data:image/webp;base64,preview',
+      averageColor: '#524537'
+    }
+  })
+  await db.create({
+    id: 'author',
+    type: Author,
+    root: 'pages',
+    set: {title: 'Maya'}
+  })
+  await db.create({
+    id: 'table',
+    type: Product,
+    root: 'pages',
+    set: {
+      title: 'Dining table',
+      author: {_id: 'l1', _type: 'entry', _entry: 'author'},
+      gallery: [{_id: 'g1', _index: 'a0', _type: 'image', _entry: 'photo'}]
+    }
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {mode: 'search'}
+  )
+  store.set(explorer.search, 'Dining')
+
+  const [item] = await store.get(explorer.itemsReady(null))
+  const {data} = store.get(item.data)
+
+  expect(store.get(data.thumbnail)).toEqual({
+    id: 'photo',
+    title: 'Photo',
+    preview: 'data:image/webp;base64,preview',
+    averageColor: '#524537'
+  })
+  expect(store.get(data.linked).get('author')?.title).toBe('Maya')
+})
+
+const Folder = Config.document('Folder', {
+  contains: ['Folder', 'Note'],
+  fields: {}
+})
+const Note = Config.document('Note', {fields: {}})
+const notesConfig = Config.create({
+  schema: {Folder, Note},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: '.',
+      roots: {notes: Config.root('Notes', {contains: ['Folder', 'Note']})}
+    })
+  }
+})
+
+async function notesFixture() {
+  const db = new LocalDB(notesConfig)
+  await db.sync()
+  const create = (title: string, type = Note, parentId?: string) =>
+    db.create({type, parentId, set: {title}})
+  const [a, b, c, folder] = [
+    await create('A'),
+    await create('B'),
+    await create('C'),
+    await create('Folder', Folder)
+  ]
+  const nested = await create('Nested', Note, folder._id)
+  const store = createDashboardStore(notesConfig, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'notes'},
+    {enableNavigation: true}
+  )
+  const titles = async () => {
+    await store.set(syncAtom)
+    return (await store.get(explorer.itemsReady(null))).map(item => item.title)
+  }
+  return {a, b, c, db, explorer, folder, nested, store, titles}
+}
+
+test('reordered entries keep the order they are listed in', async () => {
+  const {a, b, c, explorer, folder, store, titles} = await notesFixture()
+  expect(await titles()).toEqual(['A', 'B', 'C', 'Folder'])
+  await store.set(
+    explorer.reorder,
+    [a._id, c._id],
+    {key: folder._id, position: 'after'},
+    null
+  )
+  expect(await titles()).toEqual(['B', 'Folder', 'A', 'C'])
+  // Selected in reverse order
+  await store.set(
+    explorer.reorder,
+    [c._id, a._id],
+    {key: b._id, position: 'before'},
+    null
+  )
+  expect(await titles()).toEqual(['A', 'C', 'B', 'Folder'])
+})
+
+test('entries moved in the sidebar tree keep the order they are listed in', async () => {
+  const {a, b, c, folder, store, titles} = await notesFixture()
+  const root = rootAtoms('main', 'notes')
+  const tree = root.tree(null)
+  const move = async (keys: Array<string>, target: DropTarget) => {
+    await store.get(tree.ready)
+    await store.set(root.onMove, {keys: new Set(keys), target}, tree)
+  }
+  await move([a._id, c._id], {key: folder._id, position: 'after'})
+  expect(await titles()).toEqual(['B', 'Folder', 'A', 'C'])
+  // Selected in reverse order
+  await move([c._id, a._id], {key: b._id, position: 'before'})
+  expect(await titles()).toEqual(['A', 'C', 'B', 'Folder'])
+})
+
+test('entries can be moved into listed containers by id', async () => {
+  const {a, db, explorer, folder, nested, store} = await notesFixture()
+  await store.get(explorer.itemsReady(null))
+  const types = new Set(['application/x-alinea-entry-id'])
+  const canDrop = (key: string) =>
+    store.set(explorer.canDrop, {key, position: 'on'}, types, null)
+  expect(canDrop(folder._id)).toBe(true)
+  // Notes hold no children
+  expect(canDrop(a._id)).toBe(false)
+  // The nested note is not listed but can still be moved
+  await store.set(explorer.moveInto, [nested._id, a._id], {
+    key: folder._id,
+    position: 'on'
+  })
+  const moved = await db.find({
+    id: {in: [nested._id, a._id]},
+    select: Entry.parentId
+  })
+  expect(moved).toEqual([folder._id, folder._id])
+})
+
+test('selection actions follow the selected listed entries', async () => {
+  const {parent, store} = await createDashboardAtomFixture()
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  await store.get(userPolicyReadyAtom)
+  const explorer = rootAtoms('main', 'pages').explorer
+  await store.get(explorer.pageReady)
+  store.sub(explorer.page, () => {})
+  await store.get(explorer.pageReady)
+
+  expect(store.get(explorer.selectionActions).items).toEqual([])
+  store.set(explorer.selection, new Set([parent._id, 'not-listed']))
+  const actions = store.get(explorer.selectionActions)
+  expect(actions.items.map(item => item.id)).toEqual([parent._id])
+  expect(actions.canMove).toBe(true)
+  // Published pages are archived before they are deleted
+  expect(actions.canDelete).toBe(false)
+
+  store.set(explorer.clearSelection)
+  expect(store.get(explorer.selectionActions).items).toEqual([])
+})
+
+test('media is deleted right away, other entries once archived', () => {
+  const config = Config.create({
+    schema: {},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {pages: Config.root('Pages'), media: Config.media()}
+      })
+    }
+  })
+  const item: ExplorerItemData = {
+    id: 'file',
+    title: 'File',
+    path: 'file',
+    type: 'MediaFile',
+    workspace: 'main',
+    root: 'media',
+    locale: null,
+    parentId: null,
+    parents: [],
+    index: 'a0',
+    data: {},
+    hasChildren: false,
+    status: 'published',
+    seeded: null
+  }
+  const policy = Policy.ALLOW_ALL
+  expect(explorerItemCanDelete(config, policy, item)).toBe(true)
+  expect(explorerItemCanMove(policy, item)).toBe(true)
+  const seeded = {...item, seeded: 'media/file.json'}
+  expect(explorerItemCanDelete(config, policy, seeded)).toBe(false)
+  expect(explorerItemCanMove(policy, seeded)).toBe(false)
+  const page = {...item, type: 'Page', root: 'pages'}
+  expect(explorerItemCanDelete(config, policy, page)).toBe(false)
+  expect(
+    explorerItemCanDelete(config, policy, {...page, status: 'archived'})
+  ).toBe(true)
+  const denied = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({id: 'file', deny: {delete: true, move: true}})
+  expect(explorerItemCanDelete(config, denied, item)).toBe(false)
+  expect(explorerItemCanMove(denied, item)).toBe(false)
 })

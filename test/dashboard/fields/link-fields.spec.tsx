@@ -7,9 +7,7 @@ async function expandLinkPicker(page: Page): Promise<Locator> {
     name: 'Pick a link',
     exact: true
   })
-  await compactPicker
-    .getByRole('button', {name: 'Expand entry picker'})
-    .click()
+  await compactPicker.getByRole('button', {name: 'Expand entry picker'}).click()
   const expandedPicker = page.getByRole('dialog', {
     name: 'Pick a link in expanded view',
     exact: true
@@ -29,10 +27,7 @@ async function expectVerticallyUnclipped(locator: Locator) {
   )
 }
 
-test('opens entry fields in the compact picker', async ({
-  dashboard,
-  mount
-}) => {
+test('opens entry fields in the compact picker', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
   await app.page.evaluate(() => {
@@ -108,14 +103,10 @@ test('opens a functional location in another workspace and root', async ({
     name: 'Explorer results'
   })
   await expect(
-    resultModes
-      .getByRole('radio', {name: 'Browse'})
-      .locator('[data-slot="icon"]')
+    resultModes.getByRole('radio', {name: 'Browse'}).locator('svg')
   ).toHaveCount(1)
   await expect(
-    resultModes
-      .getByRole('radio', {name: 'Filtered'})
-      .locator('[data-slot="icon"]')
+    resultModes.getByRole('radio', {name: 'Filtered'}).locator('svg')
   ).toHaveCount(1)
 })
 
@@ -219,9 +210,9 @@ test('hides card navigation when picker locations are limited', async ({
       .getByRole('radiogroup', {name: 'Explorer results'})
       .getByRole('radio', {name: 'Browse'})
   ).toBeChecked()
-  await expect(
-    picker.getByRole('switch', {name: 'All locations'})
-  ).toHaveCount(0)
+  await expect(picker.getByRole('switch', {name: 'All locations'})).toHaveCount(
+    0
+  )
   await expect(
     picker.getByRole('checkbox', {name: 'Select Alpha'})
   ).toBeVisible()
@@ -1005,11 +996,9 @@ test('selects existing images and files', async ({dashboard, mount}) => {
       )
     )
     .toBe('false')
+  // A single image is picked as soon as it is clicked
   await imagePicker.getByText('Existing image', {exact: true}).click()
-  await expect(
-    imagePicker.getByRole('checkbox', {name: 'Select Existing image'})
-  ).toBeChecked()
-  await imagePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(imagePicker).toBeHidden()
   await expect(imageField).toContainText('Existing image')
 
   await fileField.getByRole('button', {name: 'File'}).click()
@@ -1031,11 +1020,32 @@ test('selects existing images and files', async ({dashboard, mount}) => {
     filePicker.getByRole('switch', {name: 'All locations'})
   ).toBeDisabled()
   await filePicker.getByText('Existing file', {exact: true}).click()
-  await expect(
-    filePicker.getByRole('checkbox', {name: 'Select Existing file'})
-  ).toBeChecked()
-  await filePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(filePicker).toBeHidden()
   await expect(fileField).toContainText('Existing file')
+})
+
+test('shows images and files picked into multiple link fields', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+  const gallery = app.page.getByRole('list', {name: 'Gallery'})
+  const attachments = app.page.getByRole('list', {name: 'Attachments'})
+
+  await gallery.getByRole('button', {name: 'Image'}).click()
+  const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
+  await imagePicker.getByText('Existing image', {exact: true}).click()
+  await imagePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(imagePicker).toBeHidden()
+  await expect(gallery.getByRole('listitem')).toHaveCount(1)
+  await expect(gallery).toContainText('Existing image')
+
+  await attachments.getByRole('button', {name: 'File'}).click()
+  const filePicker = app.page.getByRole('dialog', {name: 'Pick a file'})
+  await filePicker.getByText('Existing file', {exact: true}).click()
+  await filePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(filePicker).toBeHidden()
+  await expect(attachments).toContainText('Existing file')
 })
 
 test('card image picker browses directories and filters within them', async ({
@@ -1129,10 +1139,12 @@ test('uploads images and files from their picker modals', async ({
   const imageChooser = app.page.waitForEvent('filechooser')
   await imagePicker.getByRole('button', {name: 'Upload media'}).click()
   await (await imageChooser).setFiles('test/fixtures/example.jpg')
-  await imagePicker
-    .getByRole('checkbox', {name: 'Select example'})
-    .locator('xpath=ancestor::label')
-    .click()
+  const uploadDialog = app.page.getByRole('dialog', {name: 'Upload files'})
+  await uploadDialog.getByRole('button', {name: 'Upload 1 file'}).click()
+  // Uploaded files are selected in the picker
+  await expect(
+    imagePicker.getByRole('checkbox', {name: 'Select example'})
+  ).toBeChecked()
   await imagePicker.getByRole('button', {name: 'Select'}).click()
   await expect(imageField).toContainText('example')
 
@@ -1147,10 +1159,10 @@ test('uploads images and files from their picker modals', async ({
     mimeType: 'application/pdf',
     buffer: Buffer.from('%PDF-1.4 fixture')
   })
-  await filePicker
-    .getByRole('checkbox', {name: 'Select uploaded'})
-    .locator('xpath=ancestor::label')
-    .click()
+  await uploadDialog.getByRole('button', {name: 'Upload 1 file'}).click()
+  await expect(
+    filePicker.getByRole('checkbox', {name: 'Select uploaded'})
+  ).toBeChecked()
   await filePicker.getByRole('button', {name: 'Select'}).click()
   await expect(fileField).toContainText('uploaded')
 })

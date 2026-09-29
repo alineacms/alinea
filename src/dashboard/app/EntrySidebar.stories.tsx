@@ -7,7 +7,7 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {Badge} from './Badge.js'
+import {Badge} from '#/components.js'
 import {
   EntrySidebarVersionRow,
   type EntrySidebarVersionStatus
@@ -29,7 +29,7 @@ const sectionStyle: CSSProperties = {
 
 const headingStyle: CSSProperties = {
   margin: 0,
-  color: 'var(--alinea-content-secondary)',
+  color: 'var(--alinea-fg-muted)',
   fontSize: 'var(--alinea-font-size-base)',
   fontWeight: 500,
   lineHeight: 1
@@ -85,7 +85,7 @@ function VersionRows({selected, showEditing}: VersionRowsProps) {
           meta="Stijn Codeurs - Today at 10:40"
         >
           {showEditing && row.status === 'draft' && (
-            <Badge size="small">Editing</Badge>
+            <Badge size="sm">Editing</Badge>
           )}
         </EntrySidebarVersionRow>
       ))}

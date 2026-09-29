@@ -3,3 +3,9 @@ export * from '#/field/link/FileLink.js'
 export * from '#/field/link/ImageLink.js'
 export * from '#/field/link/Link.js'
 export * from '#/field/link/UrlLink.js'
+export type {
+  EditorInfo,
+  EditorLimitLocation,
+  EditorLocation,
+  EntryPickerConditions
+} from '#/picker/entry/EntryPicker.js'

@@ -1,21 +1,25 @@
 import {
+  Alert,
+  AlertDescription,
   Button,
-  Label,
+  Field,
   Select,
   SelectItem,
+  Text,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup
+  ToggleGroup,
+  ToggleGroupItem,
+  useDialog
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Reference} from '#/core/Reference.js'
 import {Schema} from '#/core/Schema.js'
 import {Type, type as createType} from '#/core/Type.js'
-import {createEntryAtom} from '#/dashboard/atoms/create.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
-import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
-import {useDashboardContext} from '#/dashboard/hooks.js'
+import {createEntryAtom} from '../../atoms/create.js'
+import {configAtom} from '../../atoms/core.js'
+import {ReactiveNode} from '../../atoms/ReactiveNode.js'
+import {policyAtom} from '../../atoms/user.js'
+import {useDashboardContext} from '../../hooks.js'
 import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
@@ -23,18 +27,22 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
 import {
   Suspense,
+  useId,
   useMemo,
   useState,
   type FormEvent,
   type SetStateAction
 } from 'react'
-import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {NodeEditor} from '../EntryFields.js'
+import {
+  IcBaselineErrorOutline,
+  IcRoundFirstPage,
+  IcRoundLastPage
+} from '../../icons.js'
+import {NodeEditor} from '../NodeEditor.js'
 import {
   DashboardModalContent,
   DashboardModalDialog,
-  DashboardModalFooter,
-  useDashboardModal
+  DashboardModalFooter
 } from '../ui/DashboardModal.js'
 import css from './CreateEntry.module.css'
 
@@ -101,17 +109,11 @@ function createLinkEditor(
 }
 
 function CreateEntryLoading() {
-  return (
-    <DashboardModalDialog
-      aria-label="Create entry"
-      variant="explorer"
-      isLoading
-    />
-  )
+  return <DashboardModalDialog variant="explorer" isLoading />
 }
 
 function CreateEntryForm() {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const {page, root} = useDashboardContext()
   const createEntry = useSetAtom(createEntryAtom)
   const config = useAtomValueRaw(configAtom).schema
@@ -131,6 +133,8 @@ function CreateEntryForm() {
   const [selectedTypeOverride, setSelectedType] = useState<string | null>(null)
   const [insertOrder, setInsertOrder] = useState<'first' | 'last'>('last')
   const [isCreating, setIsCreating] = useState(false)
+  const [error, setError] = useState<string>()
+  const formId = useId()
   const containerTypes = useMemo(
     () =>
       Object.entries(config)
@@ -205,6 +209,7 @@ function CreateEntryForm() {
     const nextTitle = title.trim()
     if (isCreating || !selectedType || !nextTitle) return
     setIsCreating(true)
+    setError(undefined)
     try {
       await createEntry({
         workspace: root.workspace,
@@ -217,6 +222,8 @@ function CreateEntryForm() {
         insertOrder: showInsertOrder ? insertOrder : undefined
       })
       modal.close()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
       setIsCreating(false)
     }
@@ -225,40 +232,34 @@ function CreateEntryForm() {
   const canCreate = Boolean(selectedType && title.trim())
 
   return (
-    <DashboardModalDialog
-      aria-label="Create entry"
-      variant="explorer"
-      label="Create entry"
-    >
-      <form onSubmit={onSubmit} id="submit">
+    <DashboardModalDialog variant="explorer" label="Create entry">
+      <form onSubmit={onSubmit} id={formId}>
         <DashboardModalContent>
           <TextField
             autoFocus
             value={title}
-            onChange={setTitle}
+            onValueChange={setTitle}
             label="Title"
-            isRequired
+            required
           />
 
           <Select
             label="Type"
-            selectedKey={selectedType}
-            onSelectionChange={key => {
-              setSelectedType(key ? String(key) : null)
-            }}
-            isRequired
+            value={selectedType}
+            onValueChange={setSelectedType}
+            required
           >
             {typeOptions.map(option => (
-              <SelectItem id={option.id} key={option.id}>
+              <SelectItem value={option.id} key={option.id}>
                 {option.label}
               </SelectItem>
             ))}
           </Select>
 
           {typeOptions.length === 0 && (
-            <p className={styles.CreateEntry.message()}>
+            <Text as="p" color="muted">
               No entry types are available at this location.
-            </p>
+            </Text>
           )}
 
           <div className={styles.CreateEntry.parentRow()}>
@@ -266,45 +267,52 @@ function CreateEntryForm() {
               <NodeEditor node={parent.node} type={parent.type} />
             </div>
             {showInsertOrder && (
-              <Label
+              <Field
                 label="Insert"
                 className={styles.CreateEntry.insertOrder()}
               >
-                <ToggleButtonGroup
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
                   aria-label="Insert"
-                  selectionMode="single"
-                  disallowEmptySelection
-                  selectedKeys={[insertOrder]}
-                  onSelectionChange={key => {
-                    if (key.has('first')) setInsertOrder('first')
-                    else if (key.has('last')) setInsertOrder('last')
+                  className={styles.CreateEntry.insertOrder.toggle()}
+                  value={insertOrder}
+                  onValueChange={value => {
+                    if (value === 'first' || value === 'last')
+                      setInsertOrder(value)
                   }}
                 >
-                  <ToggleButton id="first">
-                    <IcRoundFirstPage data-slot="icon" /> First
-                  </ToggleButton>
-                  <ToggleButton id="last">
-                    <IcRoundLastPage data-slot="icon" /> Last
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Label>
+                  <ToggleGroupItem value="first" icon={IcRoundFirstPage}>
+                    First
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="last" icon={IcRoundLastPage}>
+                    Last
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </Field>
             )}
           </div>
 
           <NodeEditor node={copyFrom.node} type={copyFrom.type} />
+
+          {error && (
+            <Alert variant="destructive" icon={IcBaselineErrorOutline}>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </DashboardModalContent>
       </form>
 
       <DashboardModalFooter>
-        <Button type="button" appearance="outline" onPress={modal.close}>
+        <Button type="button" variant="outline" onClick={modal.close}>
           Cancel
         </Button>
         <Button
           type="submit"
-          form="submit"
-          intent="primary"
-          isDisabled={!canCreate}
-          isPending={isCreating}
+          form={formId}
+          color="primary"
+          disabled={!canCreate}
+          loading={isCreating}
         >
           Create entry
         </Button>

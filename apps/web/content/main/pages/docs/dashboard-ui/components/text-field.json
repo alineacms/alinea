@@ -1,0 +1,154 @@
+{
+  "_id": "3JmLPkqTw3avW2TWZ2FmtLX7Wg4",
+  "_type": "Doc",
+  "_index": "aq",
+  "title": "TextField",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A text input with a label, help text and a validation message. Set `multiline` for a text area that grows with its content."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPnAqiajWBCcsHWlyqmi3E3V",
+      "example": "TextField"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "States"
+        }
+      ],
+      "_anchor": "states"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`description` tells editors what to enter, `error` shows a validation message instead and marks the input as invalid. Required fields show a marker next to their label, read-only fields can still be selected and copied."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPiKJEufJw4TkWybawHtKqtO",
+      "example": "TextFieldStates"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Multiline"
+        }
+      ],
+      "_anchor": "multiline"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A multiline field starts at `rows` lines and grows as editors type."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPfgXFEaexVoUkKaKo5GdEeQ",
+      "example": "TextFieldMultiline"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Icons"
+        }
+      ],
+      "_anchor": "icons"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`startIcon` and `endIcon` render inside the input, before and after the text."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPmfr0bp6JKsXjarlV6Y75qL",
+      "example": "TextFieldIcons"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPjuWcYjS61xO4DQZ3ECSURM",
+      "component": "TextField"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The label, description and error are linked to the input, so screen readers announce them together. An error sets `aria-invalid` on the input."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261273,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261273,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

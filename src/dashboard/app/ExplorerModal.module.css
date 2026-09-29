@@ -39,14 +39,6 @@
   justify-content: space-between;
   gap: 12px;
   padding: 0 12px;
-  border-top: 1px solid var(--alinea-border);
-  border-bottom: 0;
-}
-
-.ExplorerModalSelection {
-  color: var(--alinea-fg-muted);
-  font-size: 13px;
-  line-height: 20px;
 }
 
 .ExplorerModalActions {

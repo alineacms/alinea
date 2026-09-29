@@ -8,7 +8,6 @@ export interface SlugFieldProps {
   errorMessage?: ReactNode
   fieldValue?: string
   isDisabled?: boolean
-  isInvalid?: boolean
   isReadOnly?: boolean
   isRequired?: boolean
   label?: ReactNode
@@ -23,7 +22,6 @@ export function SlugField({
   errorMessage,
   fieldValue,
   isDisabled,
-  isInvalid,
   isReadOnly,
   isRequired,
   label,
@@ -49,15 +47,14 @@ export function SlugField({
   return (
     <TextField
       description={description}
-      errorMessage={errorMessage}
-      isDisabled={isDisabled}
-      isInvalid={isInvalid}
-      isReadOnly={isReadOnly}
-      isRequired={isRequired}
+      error={errorMessage}
+      disabled={isDisabled}
+      readOnly={isReadOnly}
+      required={isRequired}
       label={label}
       shared={shared}
       onBlur={handleBlur}
-      onChange={handleChange}
+      onValueChange={handleChange}
       value={inputValue}
     />
   )

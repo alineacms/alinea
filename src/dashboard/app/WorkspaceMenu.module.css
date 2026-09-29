@@ -14,11 +14,6 @@
   flex-shrink: 0;
 }
 
-.WorkspaceMenu-avatar-large {
-  width: 32px;
-  height: 32px;
-}
-
 .WorkspaceMenu-avatar-logo {
   width: 100%;
   height: 100%;
@@ -38,11 +33,10 @@
   align-items: center;
   gap: 8px;
   padding: 0 8px;
+  border: 0;
   margin-left: -8px;
   justify-content: space-between;
-  cursor: pointer;
   margin-right: auto;
-  outline: none;
 }
 
 .WorkspaceMenu-trigger-text {
@@ -57,9 +51,4 @@
 
 .WorkspaceMenu-search {
   flex-shrink: 0;
-}
-
-.WorkspaceMenu-menuItemIcon {
-  flex: 0 0 auto;
-  font-size: 16px;
 }

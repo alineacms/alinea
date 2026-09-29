@@ -19,7 +19,9 @@ import type {EntryReference} from '#/picker/entry/EntryReference.js'
 export interface ImageLink<InferredFields = undefined> extends EntryReference {
   title: string
   alt?: string
+  /** Public url of the image file, versioned by its hash */
   src: string
+  /** Same as src */
   url: string
   extension: string
   size: number
@@ -36,6 +38,7 @@ export namespace ImageLink {
   export const title = Entry.title
   export const alt = MediaFile.alt
   export const src = Entry.url
+  export const url = Entry.url
   export const extension = MediaFile.extension
   export const size = MediaFile.size
   export const hash = MediaFile.hash

@@ -1,0 +1,49 @@
+.DemoCollectionPage {
+  padding: clamp(28px, 5cqi, 64px) 0 clamp(64px, 10cqi, 140px);
+}
+
+.DemoCollectionPage-header {
+  display: grid;
+  gap: 28px;
+  margin-bottom: clamp(48px, 8cqi, 104px);
+
+  @container demo-site (min-width: 760px) {
+    grid-template-columns: 1fr 1.2fr;
+    align-items: end;
+    gap: clamp(40px, 6cqi, 96px);
+  }
+}
+
+.DemoCollectionPage-content {
+  padding-bottom: 8px;
+}
+
+.DemoCollectionPage-count {
+  margin: 0 0 14px;
+  color: var(--demo-accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.DemoCollectionPage-title {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(48px, 7cqi, 96px);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.DemoCollectionPage-intro {
+  max-width: 30em;
+  margin: 20px 0 0;
+  color: var(--demo-muted);
+  font-size: clamp(17px, 1.8cqi, 20px);
+  line-height: 1.5;
+}
+
+.DemoCollectionPage-cover {
+  border-radius: var(--demo-radius);
+}

@@ -1,0 +1,676 @@
+{
+  "_id": "267QuOShP41WnFxQFOcHZQoCsla",
+  "_type": "Doc",
+  "_index": "Zx",
+  "title": "Type",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A type describes one kind of entry: the fields editors fill in and how entries of that type behave in the dashboard. Create one with `Config.type(label, options)` and add it to the "
+        },
+        {
+          "_type": "text",
+          "text": "schema",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2aAy9jQj9cK5OR1RlFElYWSddy2",
+              "_link": "entry",
+              "_entry": "267KTV8uPHIdZgFUQvJf06sfm4h"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to make it available as an entry. For pages you'll usually reach for "
+        },
+        {
+          "_type": "text",
+          "text": "`Config.document`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0DcxHyE0gC3OG26xgBQtX6o",
+              "_link": "entry",
+              "_entry": "2aAyRD3ixey0IqznGhiPUjTd5Vp"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", which is a type with title, path and metadata fields included."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "267QyzM4851hQU1DihfoV3fSIFg",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Author = Config.type('Author', {\n  fields: {\n    title: Field.text('Name', {required: true, width: 0.5}),\n    path: Field.path('Path', {required: true, width: 0.5}),\n    bio: Field.text('Bio', {multiline: true})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The label (\"Author\") is what editors see. The name the type is stored under is its key in the schema."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "contains"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields` (required): the "
+                },
+                {
+                  "_type": "text",
+                  "text": "fields",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0AAH54d0uTq9Fjy2bcTOtXA",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " of the type, keyed by name. Field names must start with a letter and contain only letters, digits and underscores. Spread "
+                },
+                {
+                  "_type": "text",
+                  "text": "tabs",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF08IRxctrTZZ52c2sag7ULMc",
+                      "_link": "entry",
+                      "_entry": "268hnUNLntD1TbeY1WPh34VFVcM"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " or `Field.view(...)` sections in between to lay out the form."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`contains`: the types that can be created as children of this entry, by schema name or by reference. Without it, entries of this type can't have children."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`overview`: how the dashboard lists the children: columns, the default order (`sort`), the layout and actions. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Overviews",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm5njhHS4Q4ZgtzXFyaqstDd1",
+                      "_link": "entry",
+                      "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`insertOrder`: where new children are added: `'first'`, `'last'` or `'free'` (default), which lets the editor choose in the create dialog."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`entryUrl`: a function that computes the url of entries of this type, see below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`icon`: a React component shown next to entries of this type in the sidebar. Icon sets from "
+                },
+                {
+                  "_type": "text",
+                  "text": "Icones",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0CRXQcQaPLFYCktjKlkMMsP",
+                      "_link": "url",
+                      "href": "https://icones.js.org"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " can be copied as components."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`hidden`: set to `true` to leave entries of this type out of the sidebar tree. They can still be linked to and queried."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`defaultView`: `'edit'` opens the form when an entry is selected, `'overview'` shows a table of its children first. The default is `'overview'` for entries that have children and `'edit'` otherwise."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`preview`: turn "
+                },
+                {
+                  "_type": "text",
+                  "text": "live previews",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF09Zund0rxmR0XNsAMOtMhx4",
+                      "_link": "entry",
+                      "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " on or off for this type (`true`/`false`), or pass a React component that renders the preview. It overrides the setting of the root, workspace and config."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`view`: a React component, or a path to one, that replaces the entry editor for this type. It receives `{type}`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`orderChildrenBy` (deprecated): sort children by one or more fields. Use `overview.sort`, which still accepts the same value."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`summaryRow`, `summaryThumb` (deprecated): not used by the dashboard. Configure the columns and card image in the `overview` of the parent instead."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries need a title"
+        }
+      ],
+      "_anchor": "orderchildrenby"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every entry has a title: it's shown in the sidebar, used for search and returned as `Query.title`. A type that editors create entries of needs a `title` text field. Add a `path` field to let editors control the url segment, otherwise it's derived from the title. `Config.document` includes both."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Types that are only used as blocks in a "
+        },
+        {
+          "_type": "text",
+          "text": "List",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0DXHQI6UkWoSzk4GK33wG7d",
+              "_link": "entry",
+              "_entry": "268hhWIV6twxD4PMp03isLY6Pac"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " or "
+        },
+        {
+          "_type": "text",
+          "text": "Rich text",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0DTpXfXd6bmFNn2vyGzerTO",
+              "_link": "entry",
+              "_entry": "268hjH2OU9fiReg61Wov1SRbPD5"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " field don't need either."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Children"
+        }
+      ],
+      "_anchor": "icon"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`contains` turns a type into a container. Here a `Blog` holds posts, and new posts are added at the top of the list:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "28hmFQwpEgifAOoOnxkUe2FtXDJ",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date')\n  }\n})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  insertOrder: 'first',\n  fields: {}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use `overview.sort` when children should always be sorted by a field instead of by hand. The `overview` also sets the columns of the list of children:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "31mI5wJknHLsx1XB5EcjMbnMCrM",
+      "code": "import {Config, Field, Query} from 'alinea'\n\nexport const Event = Config.document('Event', {\n  fields: {date: Field.date('Date')}\n})\n\nexport const Agenda = Config.document('Agenda', {\n  contains: ['Event'],\n  fields: {},\n  overview: {\n    sort: [{desc: Event.date}, {asc: Query.title}],\n    columns: {\n      date: Config.column({header: 'Date', width: 140, select: Event.date})\n    }\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The sort and `insertOrder` only affect the dashboard. Queries return children in their stored order unless you pass an "
+        },
+        {
+          "_type": "text",
+          "text": "`orderBy`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0DEGjdxXV5aSaDngKxsl9ne",
+              "_link": "entry",
+              "_entry": "3AUAiIoQhl86EKefhuhZ6EThETv"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". See "
+        },
+        {
+          "_type": "text",
+          "text": "Overviews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm5sKnfI4nmyxL4erSW6kMAWy",
+              "_link": "entry",
+              "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for the other options."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Urls"
+        }
+      ],
+      "_anchor": "urls"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An entry's url is built from the paths of its parents and its own path, prefixed with the locale in translated roots: `/blog/hello-world` or `/fr/blog/hello-world`. A path of `index` is left out, so an `index` entry at the top of a root gets `/`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`entryUrl` replaces that url for a type. It receives the default url and the data it's built from: `path`, `parentPaths`, `locale`, `workspace`, `root`, `status`, `data` (the entry's field values) and `defaultUrl`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "aJxUeLtZdqDwmNG2_fSLq",
+      "code": "import {Config} from 'alinea'\n\nexport const NewsArticle = Config.document('News article', {\n  // Always /news/<path>, wherever the article sits in the tree\n  entryUrl({path, locale}) {\n    return locale ? `/${locale}/news/${path}` : `/news/${path}`\n  },\n  fields: {}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Urls are computed when content is saved and indexed, and stored with the entry. That's what lets you query by url (`cms.get({url})`) in a catch-all route. Keep them in line with your routes: a page that isn't served on its url shows up broken in previews and links."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Two entries in the same root can't be published on the same url: publishing the second one fails with a message naming the entry that already uses it. Keep that in mind when `entryUrl` drops the parent paths."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Fields must be unique"
+        }
+      ],
+      "_anchor": "fields-must-be-unique"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A field instance can be used only once: Alinea throws \"is already in use\" when the same field shows up twice in a type or in two types of your schema. Queries rely on this to know which type and name a field reference like `BlogPost.publishDate` points to. Create shared fields with a function so every use gets its own instance:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bMDZDXD2d1Am2Gq94E4xZREnPG",
+      "code": "import {Config, Field} from 'alinea'\n\n// Not allowed: the same instance in two places\n// const summary = Field.text('Summary')\n\n// Fine: every call creates a new field\nconst summary = () => Field.text('Summary', {multiline: true})\n\nexport const Article = Config.document('Article', {\n  fields: {summary: summary()}\n})\n\nexport const Event = Config.document('Event', {\n  fields: {summary: summary()}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Type references are fields"
+        }
+      ],
+      "_anchor": "type-references-are-fields"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A type exposes its fields as properties: `BlogPost.publishDate` is the field itself. Use these references to "
+        },
+        {
+          "_type": "text",
+          "text": "select, filter and sort",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2bMDWBN5BaC5E3OxgHCQZFHUp47",
+              "_link": "entry",
+              "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " in queries, in "
+        },
+        {
+          "_type": "text",
+          "text": "overviews",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jlm5urFRXGk1ZAcxuuUuaJmNFv",
+              "_link": "entry",
+              "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and in "
+        },
+        {
+          "_type": "text",
+          "text": "conditional options",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF07ZT7hx31orbU4PmgAjXI3H",
+              "_link": "entry",
+              "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". The TypeScript type of an entry is available with "
+        },
+        {
+          "_type": "text",
+          "text": "`Infer`",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0BwaiRWGwgEnujOVqjWpzBz",
+              "_link": "entry",
+              "_entry": "PzbIyWahkBmKgPac_X7FY"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790189129,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790243848,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

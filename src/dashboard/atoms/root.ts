@@ -1,29 +1,18 @@
 import type {EntryStatus} from '#/core/Entry.js'
-import type {Config} from '#/core/Config.js'
 import {Permission, type Resource} from '#/core/Role.js'
-import type {RootData, RootI18n} from '#/core/Root.js'
+import {Root, type RootData, type RootI18n} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
-import type {
-  DragItem,
-  DragTypes,
-  DropOperation,
-  DropTarget
-} from '@react-types/shared'
 import {
   createExplorerAtoms,
   type ExplorerAtoms
 } from '#/dashboard/atoms/explorer.js'
 import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import {selectAtom, unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
-import type {
-  DroppableCollectionInsertDropEvent,
-  DroppableCollectionOnItemDropEvent,
-  DroppableCollectionReorderEvent,
-  Key
-} from 'react-aria-components'
+import type {DragMoveEvent, DropItemsEvent, Key} from '#/components.js'
+import type {RootViewProps} from '../cms/ViewProps.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
@@ -35,18 +24,16 @@ import {
   type TreeEntrySummary
 } from './entry.js'
 import {shaAtom} from './graph.js'
-import {pageAtom} from './nav.js'
+import {overviewSortAtom, type Page, pageAtom} from './nav.js'
+import type {OverviewFilterSelection} from './overview.js'
 import {policyAtom} from './user.js'
 import {
-  acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
   dashboardEntryDragTypes,
-  dispense
+  dashboardEntryDropIds,
+  dispense,
+  moveEntries
 } from './utils.js'
-
-export interface RootViewProps {
-  root: RootData
-}
 
 export interface RootTreeItem {
   id: string
@@ -77,6 +64,13 @@ export interface TreeView {
   snapshot: TreeSnapshot
 }
 
+/** The entries a tree of the sidebar shows */
+export interface TreeSource {
+  expandedKeys: PrimitiveAtom<Set<string>>
+  view: Atom<TreeView>
+  selectedItem: Atom<RootTreeItem | undefined>
+}
+
 interface TreeCollapseState {
   selectedId: string | undefined
   keys: Set<string>
@@ -98,7 +92,7 @@ const emptyTreeView: TreeView = {
   snapshot: emptyTreeSnapshot
 }
 
-export class TreeAtoms {
+export class TreeAtoms implements TreeSource {
   expandedKeys: PrimitiveAtom<Set<string>>
   collapsedKeys: PrimitiveAtom<TreeCollapseState>
   #root: RootAtoms
@@ -176,18 +170,21 @@ export class TreeAtoms {
       Promise.all(expandedModels.map(model => get(model.raw(this.#locale))))
     ])
     const levels = [rootModels, ...childLevels]
-    const parentTypes: Array<string | null> = [
-      null,
-      ...parentEntries.map(entry => entry.type)
+    // Children of an ordered parent can not be reordered by hand
+    const orderedLevels: Array<boolean> = [
+      Boolean(Root.childrenOrder(get(this.#root.data))),
+      ...parentEntries.map(entry => {
+        const type = config.schema[entry.type]
+        return Boolean(type && Type.childrenOrder(type))
+      })
     ]
     const levelItems = await Promise.all(
       levels.map((level, index) =>
         Promise.all(
           level.map(async model =>
             rootTreeItem(
-              config,
               await get(model.summary(this.#locale)),
-              parentTypes[index] ?? null
+              orderedLevels[index] ?? false
             )
           )
         )
@@ -232,7 +229,11 @@ export class TreeAtoms {
       const parent = entry.parentId
         ? await get(treeEntryAtoms(entry.parentId).raw(this.#locale))
         : undefined
-      return rootTreeItem(config, entry, parent?.type ?? null)
+      const parentType = parent ? config.schema[parent.type] : undefined
+      const ordered = parent
+        ? Boolean(parentType && Type.childrenOrder(parentType))
+        : Boolean(Root.childrenOrder(get(this.#root.data)))
+      return rootTreeItem(entry, ordered)
     })
   )
   children = dispense((id: string) => treeEntryAtoms(id).children(this.#locale))
@@ -302,26 +303,21 @@ export class RootAtoms {
   readonly tree: (locale: string | null) => TreeAtoms
   explorer: ExplorerAtoms
 
-  #explorerLocaleState = atom<string | null>(null)
+  /**
+   * The last page shown within this root. Explorers keep reading it after
+   * navigating away, so the page that is still rendered while the next one
+   * loads does not reload in another locale.
+   */
+  #lastPage = selectAtom<Page, Page | undefined>(pageAtom, (page, previous) =>
+    page.workspace === this.workspace && page.root === this.key
+      ? page
+      : previous
+  )
+  /** Explorers list the locale of the page, which the route selects */
   #explorerLocale = atom(
-    get => {
-      if (get(this.data).isMediaRoot) return null
-      const page = get(pageAtom)
-      return page.workspace === this.workspace && page.root === this.key
-        ? page.locale
-        : get(this.#explorerLocaleState)
-    },
-    (get, set, update: SetStateAction<string | null>) => {
-      const page = get(pageAtom)
-      const current =
-        page.workspace === this.workspace && page.root === this.key
-          ? page.locale
-          : get(this.#explorerLocaleState)
-      set(
-        this.#explorerLocaleState,
-        typeof update === 'function' ? update(current) : update
-      )
-    }
+    get =>
+      get(this.data).isMediaRoot ? null : (get(this.#lastPage)?.locale ?? null),
+    (_get, _set, _update: SetStateAction<string | null>) => {}
   )
 
   constructor(
@@ -391,10 +387,23 @@ export class RootAtoms {
         get,
         {workspace: this.workspace, root: this.key, parentId: null},
         locale,
-        data.orderChildrenBy
+        Root.childrenOrder(data)
       )
     })
   )
+
+  /**
+   * The scroll offsets of the explorers of this root. The root explorer and
+   * the overview of an entry can list the same location, which then keeps its
+   * scroll offset when the editor returns to it through either of them.
+   */
+  explorerScrollOffset = dispense((_key: string) => atom(0))
+
+  /**
+   * The filters picked in the explorers of this root, kept while the editor
+   * opens entries and folders. Each overview applies the ones it declares.
+   */
+  #explorerFilters = atom<OverviewFilterSelection>({})
 
   children = dispense((parentId: string | null) =>
     createExplorerAtoms(
@@ -404,12 +413,11 @@ export class RootAtoms {
         parentId: parentId ?? undefined
       },
       {
-        defaultOrderBy:
-          parentId === null
-            ? atom(get => get(this.data).orderChildrenBy)
-            : undefined,
         enableNavigation: true,
+        sortState: overviewSortAtom(this.workspace, this.key, parentId),
         rootData: this.data,
+        filterState: this.#explorerFilters,
+        scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
         treeItems: locale => this.tree(locale).items,
         treeReady: locale => this.tree(locale).ready,
@@ -441,110 +449,57 @@ export class RootAtoms {
       : view
   })
   acceptedDragTypes = [...dashboardEntryDragTypes]
-  getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
-    return [...keys].map(dashboardEntryDragItem)
-  })
+  getItems = atom(
+    null,
+    (_get, _set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+      return [...keys].map(dashboardEntryDragItem)
+    }
+  )
   dragDisabled = atom(get => {
     const policy = get(policyAtom)
     const resource = {workspace: this.workspace, root: this.key}
     return !policy.canMove(resource) && !policy.canReorder(resource)
   })
-  getDropOperation = atom(
-    null,
-    (
-      _get,
-      _set,
-      _target: DropTarget,
-      types: DragTypes,
-      allowedOperations: Array<DropOperation>
-    ) => {
-      if (!acceptsDashboardEntryDrag(types)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    }
-  )
   onMove = atom(
     null,
-    async (
-      get,
-      _set,
-      event: DroppableCollectionReorderEvent,
-      tree: TreeAtoms
-    ) => {
-      const graph = get(graphAtom)
+    async (get, _set, event: DragMoveEvent, tree: TreeAtoms) => {
       const policy = get(policyAtom)
-      const moveTarget = event.target.key ? String(event.target.key) : this.key
-      const targetType = event.target.key ? 'entry' : 'root'
-      const items = get(tree.items)
-      for (const key of event.keys) {
-        const id = String(key)
-        const item = items.find(candidate => candidate.id === id)
-        if (!item || item.dragDisabled) continue
-        policy.assert(
-          event.target.dropPosition === 'on'
-            ? Permission.Move
-            : Permission.Reorder,
-          {
-            workspace: this.workspace,
-            root: this.key,
-            id,
-            type: item.type,
-            locale: item.locale,
-            parents: item.parents
-          }
-        )
-        await graph.move({
-          id,
-          target: moveTarget,
-          targetType,
-          dropPosition: event.target.dropPosition
+      const permission =
+        event.target.position === 'on' ? Permission.Move : Permission.Reorder
+      // Move entries in the order they are listed rather than selected
+      const moving = get(tree.items).filter(
+        item => event.keys.has(item.id) && !item.dragDisabled
+      )
+      for (const item of moving)
+        policy.assert(permission, {
+          workspace: this.workspace,
+          root: this.key,
+          id: item.id,
+          type: item.type,
+          locale: item.locale,
+          parents: item.parents
         })
-      }
+      await moveEntries(
+        get(graphAtom),
+        moving.map(item => item.id),
+        event.target
+      )
     }
   )
-  onDrop = atom(
-    null,
-    async (
-      get,
-      _set,
-      event:
-        | DroppableCollectionInsertDropEvent
-        | DroppableCollectionOnItemDropEvent
-    ) => {
-      const keys = new Set<Key>()
-      for (const item of event.items) {
-        if (item.kind !== 'text' || !item.types || !item.getText) continue
-        let id: string | null = null
-        if (item.types.has(dashboardEntryDragTypes[0]))
-          id = await item.getText(dashboardEntryDragTypes[0])
-        else if (item.types.has('text/plain'))
-          id = await item.getText('text/plain')
-        if (id) keys.add(id)
-      }
-      const graph = get(graphAtom)
-      const moveTarget = event.target.key ? String(event.target.key) : this.key
-      const targetType = event.target.key ? 'entry' : 'root'
-      for (const key of keys) {
-        const id = String(key)
-        await graph.move({
-          id,
-          target: moveTarget,
-          targetType,
-          dropPosition: event.target.dropPosition
-        })
-      }
-    }
-  )
+  onDrop = atom(null, async (get, _set, event: DropItemsEvent) => {
+    await moveEntries(
+      get(graphAtom),
+      dashboardEntryDropIds(event.items),
+      event.target
+    )
+  })
 }
 
 export const rootAtoms = dispense(
   (workspace: string, root: string) => new RootAtoms(workspace, root)
 )
 
-function rootTreeItem(
-  config: Config,
-  entry: TreeEntrySummary,
-  parentType: string | null
-): RootTreeItem {
+function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {
   return {
     id: entry.id,
     title: entry.title,
@@ -555,9 +510,7 @@ function rootTreeItem(
     parentId: entry.parentId,
     parents: entry.parents,
     hasChildren: entry.hasChildren,
-    dragDisabled: Boolean(
-      parentType && getType(config.schema[parentType]).orderChildrenBy
-    )
+    dragDisabled: ordered
   }
 }
 

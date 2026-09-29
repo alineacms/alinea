@@ -1,6 +1,7 @@
 import {Field, type FieldData, type FieldOptions} from '../Field.js'
 import {Type} from '../Type.js'
 import {entries, isRecord} from '../util/Objects.js'
+import {validateType} from '../Validation.js'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
@@ -40,11 +41,15 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
       fromYaml(value, {path}) {
         return isRecord(value) ? Type.fromYaml(type, value, path) : value
       },
+      nestedErrors(value, context) {
+        return validateType(type, value, context)
+      },
       references(value, context) {
         return Type.references(
           type,
           (value ?? {}) as Record<string, unknown>,
-          context.path
+          context.path,
+          context.labels
         )
       },
       anchors(value, context) {
@@ -52,7 +57,8 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
         return Type.anchors(
           type,
           value as Record<string, unknown>,
-          context.path
+          context.path,
+          context.labels
         )
       },
       normalizeAnchors(value, context) {

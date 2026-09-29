@@ -95,13 +95,13 @@ test('selects next', async () => {
   expect(nextId).toBe('uENumuMjqX0fSbGtrf2fj')
 })
 
-test('returns undefined when there is no next entry', async () => {
+test('returns null when there is no next entry', async () => {
   const nextId = await db.resolve({
     first: true,
     id: 'oi4qtV9YaXNRIUDT2s61Y',
     select: Query.next({select: Entry.id})
   })
-  expect(nextId).toBeUndefined()
+  expect(nextId).toBeNull()
 })
 
 test('selects previous', async () => {
@@ -418,6 +418,94 @@ async function withAdvancedStore<T>(run: (store: LocalDB) => Promise<T>) {
   }
 }
 
+test('absent single relations resolve to null', async () => {
+  await withAdvancedStore(async store => {
+    const selection = {
+      parent: Query.parent({select: Entry.id}),
+      next: Query.next({select: Entry.id}),
+      previous: Query.previous({}),
+      firstChild: Query.children({first: true, select: Entry.id}),
+      single: Article.single.first({select: Entry.id})
+    }
+    expect(await store.get({id: 'grand', select: selection})).toEqual({
+      parent: 'child-1',
+      next: null,
+      previous: null,
+      firstChild: null,
+      single: null
+    })
+    expect(
+      await store.first({id: 'grand', select: Query.next({select: Entry.id})})
+    ).toBeNull()
+    expect(
+      await store.first({id: 'grand', select: Query.previous({})})
+    ).toBeNull()
+    expect(
+      await store.first({
+        id: 'parent',
+        select: Query.parent({select: Entry.id})
+      })
+    ).toBeNull()
+    expect(await store.first({id: 'missing'})).toBeNull()
+  })
+})
+
+test('top-level entries are siblings within their workspace root', async () => {
+  const entries = [
+    ...advancedEntries,
+    {
+      id: 'second',
+      type: 'Article',
+      index: 'a2',
+      path: 'second',
+      data: {title: 'Second'}
+    },
+    {
+      id: 'other-root',
+      type: 'Article',
+      index: 'a0',
+      root: 'localized',
+      locale: 'en',
+      path: 'other-root',
+      data: {title: 'Other root'}
+    }
+  ]
+  const store = new LocalDB(advancedCms.config)
+  try {
+    await store.syncWith(await createEntrySource(advancedCms.config, entries))
+    const relations = {
+      siblings: Query.siblings({select: Entry.id}),
+      withSelf: Query.siblings({includeSelf: true, select: Entry.id}),
+      siblingCount: Query.siblings({includeSelf: true, count: true}),
+      next: Query.next({select: Entry.id}),
+      previous: Query.previous({select: Entry.id})
+    }
+    expect(await store.get({id: 'parent', select: relations})).toEqual({
+      siblings: ['second'],
+      withSelf: ['parent', 'second'],
+      siblingCount: 2,
+      next: 'second',
+      previous: null
+    })
+    expect(await store.get({id: 'second', select: relations})).toEqual({
+      siblings: ['parent'],
+      withSelf: ['parent', 'second'],
+      siblingCount: 2,
+      next: null,
+      previous: 'parent'
+    })
+    // Children only see their own parent's children
+    expect(
+      await store.get({
+        id: 'child-1',
+        select: Query.siblings({includeSelf: true, select: Entry.id})
+      })
+    ).toEqual(['child-1', 'child-2'])
+  } finally {
+    await store.close()
+  }
+})
+
 test('selects children by depth', async () => {
   await withAdvancedStore(async store => {
     async function children(depth: number) {
@@ -658,7 +746,11 @@ test('preserves paging, ordering, grouping and location behavior', async () => {
       4
     )
     await expect(
-      store.find({type: Article, groupBy: [Article.title]})
+      store.find({
+        type: Article,
+        // @ts-expect-error groupBy takes a single field
+        groupBy: [Article.title]
+      })
     ).rejects.toThrow('groupBy must be a single field')
     await expect(
       store.find({
@@ -829,7 +921,11 @@ test('translations nested in a selection list the own language first', async () 
   // of its source entry.
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, advancedCms.config, ReadonlyTree.EMPTY.sha)
+  await EntryDatabase.createSchema(
+    db,
+    advancedCms.config,
+    ReadonlyTree.EMPTY.sha
+  )
   const database = new EntryDatabase(advancedCms.config, db)
   await database.syncWith(
     await createEntrySource(advancedCms.config, advancedEntries)

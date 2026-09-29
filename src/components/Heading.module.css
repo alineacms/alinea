@@ -1,0 +1,42 @@
+.Heading {
+  margin: 0;
+  color: var(--alinea-fg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+
+  &[data-size='xs'] {
+    font-size: 0.8125rem;
+  }
+
+  &[data-size='sm'] {
+    font-size: 0.9375rem;
+  }
+
+  &[data-size='default'] {
+    font-size: 1.125rem;
+  }
+
+  &[data-size='lg'] {
+    font-size: 1.375rem;
+  }
+
+  &[data-size='xl'] {
+    font-size: 1.75rem;
+    letter-spacing: -0.02em;
+  }
+
+  &[data-weight='medium'] {
+    font-weight: 500;
+  }
+
+  &[data-weight='bold'] {
+    font-weight: 700;
+  }
+
+  &[data-truncate] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

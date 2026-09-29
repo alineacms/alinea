@@ -1,0 +1,43 @@
+import {promises as fs} from 'node:fs'
+import {createRequire} from 'node:module'
+import path from 'node:path'
+import {Loader} from '@/layout/Loader'
+import {FSSource} from 'alinea/core/source/FSSource'
+import {exportSource} from 'alinea/core/source/SourceExport'
+import type {Metadata, MetadataRoute, Viewport} from 'next'
+import {Suspense} from 'react'
+import {getMetadata} from '@/utils/metadata'
+import {PlaygroundDynamic} from './playground/Playground.dynamic'
+
+export const viewport: Viewport = {
+  themeColor: '#3f61e8'
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  return await getMetadata({
+    url: '/playground',
+    title: 'Playground',
+    description:
+      'Try out different field types and validation rules. Experiment, test, and preview field configurations in real-time.'
+  })
+}
+export default async function PlaygroundPage() {
+  // Resolve at runtime, alinea may be hoisted to the workspace root
+  const require = createRequire(path.join(process.cwd(), 'package.json'))
+  const alineaDir = path.dirname(require.resolve('alinea/package.json'))
+  const declarations = await fs.readFile(
+    path.join(alineaDir, 'dist/bundled.d.ts'),
+    'utf8'
+  )
+  // Previews use the demo content, so link fields have entries to pick
+  const exported = await exportSource(new FSSource('content/demo'))
+  return (
+    <Suspense fallback={<Loader absolute />}>
+      <PlaygroundDynamic declarations={declarations} exported={exported} />
+    </Suspense>
+  )
+}
+
+PlaygroundPage.sitemap = (): MetadataRoute.Sitemap => {
+  return [{url: '/playground', priority: 0.5}]
+}

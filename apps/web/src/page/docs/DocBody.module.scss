@@ -1,0 +1,232 @@
+@use '@/style' as *;
+
+// Spacing lives on the flow elements, not on the blocks they render: vertical
+// margins collapse, so the gap between two elements is the larger of the two
+// and a heading stays close to whatever follows it.
+
+@mixin heading($level) {
+  margin: var(--web-docs-space-#{$level}) 0
+    var(--web-docs-space-#{$level}-after);
+  font: var(--web-docs-font-#{$level});
+  letter-spacing: var(--web-docs-tracking-heading);
+  color: var(--web-foreground);
+  scroll-margin-top: calc(
+    var(--web-docs-offset, var(--web-header-height)) + 24px
+  );
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.root {
+  min-width: 0;
+  font: var(--web-docs-font-body);
+  color: var(--web-foreground-faded);
+
+  // On a wide page text keeps its measure, catalogs use the full width
+  &.is-wide :is(.p, .h2, .h3, .h4, .list, .blockquote, .block:not(.is-wide)) {
+    max-width: 760px;
+  }
+}
+
+.lead {
+  font: var(--web-docs-font-lead);
+  color: var(--web-foreground-faded);
+
+  & + & {
+    margin-top: var(--web-docs-space-flow);
+  }
+}
+
+.p {
+  margin: 0 0 var(--web-docs-space-flow);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.h2 {
+  @include heading(h2);
+}
+
+.h3 {
+  @include heading(h3);
+}
+
+.h4 {
+  @include heading(h4);
+}
+
+// A subheading right under its heading stays with it
+.h2 + .h3,
+.h2 + .h4,
+.h3 + .h4 {
+  margin-top: 0;
+}
+
+// Code, notices, images and other boxed blocks
+.block {
+  margin: var(--web-docs-space-block) 0;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .h2 + &,
+  .h3 + &,
+  .h4 + & {
+    margin-top: 0;
+  }
+}
+
+.anchor {
+  color: inherit;
+
+  &:hover {
+    color: var(--web-accent-strong);
+  }
+}
+
+.link {
+  color: var(--web-accent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--web-accent) 35%, transparent);
+  text-underline-offset: 0.2em;
+  transition: color 0.15s ease-out;
+
+  &:hover {
+    color: var(--web-accent-strong);
+    text-decoration-color: currentColor;
+  }
+}
+
+.list {
+  margin: 0 0 var(--web-docs-space-flow);
+  padding-left: 22px;
+  list-style-type: disc;
+
+  &.is-ordered {
+    list-style-type: decimal;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.listItem {
+  padding-left: 4px;
+
+  &::marker {
+    color: var(--web-foreground-muted);
+  }
+
+  & + & {
+    margin-top: var(--web-docs-space-list);
+  }
+
+  // Nested lists and follow-up paragraphs keep the list item rhythm
+  .list {
+    list-style-type: circle;
+  }
+
+  .list.is-ordered {
+    list-style-type: lower-alpha;
+  }
+
+  .list,
+  .p {
+    margin: var(--web-docs-space-list) 0 0;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+}
+
+.blockquote {
+  margin: 0 0 var(--web-docs-space-flow);
+  padding: 4px 16px;
+  border-left: 2px solid var(--web-outline);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  margin: var(--web-docs-space-h2) 0 0;
+  padding: 0;
+  list-style: none;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.step {
+  display: flex;
+  gap: 20px;
+
+  &-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    @include s {
+      display: none;
+    }
+  }
+
+  &-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--web-accent) 25%, transparent);
+    background: var(--web-surface);
+    color: var(--web-accent);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  &-line {
+    flex-grow: 1;
+    width: 1px;
+    background: var(--web-outline);
+  }
+
+  &:last-child &-line {
+    background: linear-gradient(var(--web-outline), transparent);
+  }
+
+  &-content {
+    flex-grow: 1;
+    min-width: 0;
+    padding-bottom: var(--web-docs-space-h2);
+  }
+
+  &:last-child &-content {
+    padding-bottom: 0;
+  }
+
+  &-title {
+    @include heading(h2);
+    // Its first line (32px) lines up with the step number
+    margin-top: 0;
+  }
+}

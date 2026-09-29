@@ -1,0 +1,109 @@
+{
+  "_id": "3JjYfxqJIBmzojJ0ZKFuR5tUVIA",
+  "_type": "DemoArticle",
+  "_index": "a3",
+  "title": "Why we still oil our oak by hand",
+  "intro": "Lacquer is faster and oil takes days. Here's why every table that leaves our workshop is still finished by hand.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A sprayed lacquer finish takes about an hour. Our oil finish takes three days. Every few months someone asks whether we have considered switching, and the answer is always the same: we have, and we won’t."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Three coats, three days"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "We sand every surface by hand to a fine grit, then work in a thin coat of hardwax oil with a pad. The oil soaks into the wood rather than sitting on top of it. After a day we buff away the excess and repeat, three times in total."
+        }
+      ]
+    },
+    {
+      "_type": "DemoArticleImage",
+      "_id": "3JjYfw4GecvWXLncyyWI29N7zb7",
+      "image": {
+        "_id": "3JjYfzsVg7lEvY65jQydvG98vLr",
+        "_type": "image",
+        "_entry": "3JjYftknfCFWvObLFvrW7HbhEun"
+      },
+      "caption": "An oiled Ferris tabletop, a few weeks into daily life. Photo by Mélyna Côté on Unsplash."
+    },
+    {
+      "_type": "DemoProductCallout",
+      "_id": "3JjYg1jlObbm79UXCPWDG8yO3Bx",
+      "product": {
+        "_id": "3JjYg2A0wZCJrqgd1ERUNv2nWOz",
+        "_type": "entry",
+        "_entry": "3JjYg1RR8ghz3NENJTrtX2QiHgP"
+      },
+      "note": "Every Ferris table gets three coats of hardwax oil and comes with a care kit for the years ahead."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Living with an oiled surface"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An oiled table feels like wood, not plastic. It will pick up marks, and that is the point: a scratch can be sanded out and re-oiled at home in ten minutes, while damaged lacquer has to be stripped and sprayed again."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Re-oil once or twice a year, more often if the table sees a lot of use. You will notice the grain deepen and the colour warm with every coat."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "Why we still oil our oak by hand",
+    "description": "Lacquer is faster and oil takes days. Here's why every table that leaves our workshop is still finished by hand.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "publishDate": "2026-03-12",
+  "category": "craft",
+  "author": {
+    "_id": "3JjYfvk2qMLCdixkwBVcVMnLWrg",
+    "_type": "entry",
+    "_entry": "3JjYfzEqX6TeclLFCDzds66HAWD"
+  },
+  "readingTime": 5,
+  "cover": {
+    "_id": "3JjYfyNCySGYgci8mgqzdrS28JF",
+    "_type": "image",
+    "_entry": "3JjYfp3rBdUkjtJoolX62xspWQK"
+  },
+  "coverCredit": "Photo by Dominik Scythe on Unsplash"
+}

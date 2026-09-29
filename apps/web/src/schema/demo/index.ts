@@ -1,0 +1,7 @@
+export {DemoArticle} from './DemoArticle'
+export {DemoAuthor} from './DemoAuthor'
+export {DemoCollection} from './DemoCollection'
+export {DemoCollections, DemoJournal, DemoProducts} from './DemoContainers'
+export {DemoHome} from './DemoHome'
+export {DemoPage} from './DemoPage'
+export {DemoProduct} from './DemoProduct'

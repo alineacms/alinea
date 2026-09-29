@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {ComponentProps} from 'react'
-import {IcRoundKeyboardArrowRight} from '../dashboard/icons.js'
+import {IcRoundKeyboardArrowRight} from '#/dashboard/icons.js'
 import {Icon} from './Icon.js'
 import css from './FoldIcon.module.css'
 
@@ -16,6 +16,7 @@ export interface FoldIconProps extends Omit<
 export function FoldIcon({expanded, className, ...props}: FoldIconProps) {
   return (
     <Icon
+      data-slot="fold-icon"
       {...props}
       className={styles.FoldIcon(styler.merge({className}))}
       data-expanded={expanded ? 'true' : undefined}

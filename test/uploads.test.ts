@@ -5,6 +5,9 @@ import {createCMS} from '#/core.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
+import {createFileHash} from '#/core/util/ContentHash.js'
+import {transformImage} from '#/core/media/TransformImage.js'
 
 const test = suite(import.meta)
 const Page = Config.document('Page', {
@@ -36,10 +39,7 @@ class DB extends LocalDB {
   }
 }
 
-function cmsWithMediaDir(
-  mediaDir?: string,
-  maxUploadSize?: number
-) {
+function cmsWithMediaDir(mediaDir?: string, maxUploadSize?: number) {
   const main = Config.workspace('Main', {
     source: 'content',
     mediaDir,
@@ -186,9 +186,7 @@ test('uploads use the mediaDir of the selected workspace', async () => {
     globalThis.fetch = fetch
   }
 
-  test.equal(db.preparedFiles, [
-    'public/media/secondary/example.jpg'
-  ])
+  test.equal(db.preparedFiles, ['public/media/secondary/example.jpg'])
 })
 
 test('media urls are prefixed per workspace mediaUrl', async () => {
@@ -312,4 +310,59 @@ test('uploads reject files over maxUploadSize before upload', async () => {
     })
   }, 'exceeds the configured limit')
   test.is(db.uploads, 0)
+})
+
+test('uploads scale down images larger than resizeImages', async () => {
+  const fetch = globalThis.fetch
+  const uploaded: Array<number> = []
+  globalThis.fetch = Object.assign(
+    async (_url: unknown, init?: RequestInit) => {
+      uploaded.push((init!.body as ArrayBuffer | Uint8Array).byteLength)
+      return new Response(null, {status: 204})
+    },
+    {preconnect: fetch.preconnect}
+  )
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {media: Config.media()}
+      })
+    },
+    resizeImages: {maxWidth: 40, maxHeight: 40},
+    // The original is larger, resizing happens before the limit applies
+    maxUploadSize: example.size - 1
+  })
+  const db = new DB(cms.config)
+  try {
+    const upload = await db.upload({
+      file: example,
+      createPreview,
+      transformImage
+    })
+    const media = await db.get({
+      id: upload._id,
+      select: {
+        width: MediaFile.width,
+        height: MediaFile.height,
+        size: MediaFile.size,
+        extension: MediaFile.extension,
+        hash: MediaFile.hash,
+        sourceHash: MediaFile.sourceHash
+      }
+    })
+    test.ok(Math.max(media.width!, media.height!) === 40)
+    test.ok(media.size < example.size)
+    test.is(media.extension, '.jpg')
+    test.equal(uploaded, [media.size])
+    // The hash of the original recognizes a second upload of the same file
+    test.is(
+      media.sourceHash,
+      await createFileHash(new Uint8Array(await example.arrayBuffer()))
+    )
+    test.ok(media.hash !== media.sourceHash)
+  } finally {
+    globalThis.fetch = fetch
+  }
 })

@@ -7,6 +7,8 @@
 }
 
 .AuthView-panel {
+  display: flex;
+  justify-content: center;
   width: min(100%, 520px);
   margin: auto;
   padding: 24px;
@@ -18,52 +20,13 @@
   min-height: 160px;
 }
 
-.AuthView-surface {
-  display: grid;
-  gap: 18px;
-  padding: 24px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 6%);
-}
-
-.AuthView-heading {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
 .AuthView-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 auto;
-  border-radius: 8px;
+  border-color: transparent;
   background: var(--alinea-primary);
   color: var(--alinea-primary-fg);
-  font-size: 24px;
-}
-
-.AuthView-title {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.2;
-  font-weight: 600;
-}
-
-.AuthView-text {
-  margin: 0;
-  color: var(--alinea-fg-muted);
-  font-size: 15px;
-  line-height: 1.6;
 }
 
 .AuthView-link {
   color: var(--alinea-primary);
   font-weight: 600;
-}
-
-.AuthView-actionRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }

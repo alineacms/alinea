@@ -5,6 +5,7 @@ import {type UnionMutator, UnionRow} from '../UnionRow.js'
 import {entries, isRecord} from '../util/Objects.js'
 import {stableId} from '../util/StableId.js'
 import {typedFromYaml, typedToYaml} from '../util/TypedYaml.js'
+import {validateType} from '../Validation.js'
 
 export class UnionField<
   StoredValue extends UnionRow,
@@ -58,18 +59,39 @@ export class UnionField<
           ...(type ? Type.fromYaml(type, data, path) : data)
         }
       },
+      nestedErrors(value, context) {
+        if (!value) return []
+        const type = schema?.[value[UnionRow.type]]
+        if (!type) return []
+        return validateType(type, value, {
+          ...context,
+          labels: [...context.labels, Type.label(type)]
+        })
+      },
       references(value, context) {
         const result = customReferences?.(value, context) ?? []
         if (!value) return result
         const type = schema?.[value[UnionRow.type]]
-        if (type) result.push(...Type.references(type, value, context.path))
+        if (type)
+          result.push(
+            ...Type.references(type, value, context.path, [
+              ...context.labels,
+              Type.label(type)
+            ])
+          )
         return result
       },
       anchors(value, context) {
         const result: ReturnType<typeof Type.anchors> = []
         if (!value) return result
         const type = schema?.[value[UnionRow.type]]
-        if (type) result.push(...Type.anchors(type, value, context.path))
+        if (type)
+          result.push(
+            ...Type.anchors(type, value, context.path, [
+              ...context.labels,
+              Type.label(type)
+            ])
+          )
         return result
       },
       normalizeAnchors(value, context) {

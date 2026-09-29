@@ -15,7 +15,7 @@ import {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
-import {Config} from '#/index.js'
+import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
 
 const test = suite(import.meta)
@@ -750,6 +750,79 @@ test('rejects create mutations without an id', async () => {
   }
 })
 
+test('rejects publishing entries with invalid fields', async () => {
+  const Article = Config.document('Article', {
+    fields: {
+      summary: Field.text('Summary', {required: true}),
+      code: Field.text('Code', {
+        validate: value => (value?.startsWith('A') ? true : 'Starts with A')
+      })
+    }
+  })
+  const cms = createCMS({
+    schema: {Article},
+    workspaces: {main},
+    enableDrafts: true
+  })
+  const db = new LocalDB(cms.config)
+  let writes = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async write(request) {
+          writes += 1
+          return db.write(request)
+        }
+      })
+    }
+  })
+  const create = (status: string, data: object) =>
+    handle(
+      mutationRequest([
+        {
+          op: 'create',
+          id: 'article',
+          type: 'Article',
+          locale: null,
+          status,
+          overwrite: true,
+          data: {title: 'Article', ...data}
+        }
+      ]),
+      requestContext()
+    )
+
+  const rejected = await create('published', {code: 'B'})
+  test.is(rejected.status, 422)
+  const {error} = (await rejected.json()) as {error: string}
+  test.ok(error.includes('- summary (Summary): Field is required'))
+  test.ok(error.includes('- code (Code): Starts with A'))
+  test.is(writes, 0)
+
+  // Drafts are work in progress and may be invalid
+  const draft = await create('draft', {code: 'B'})
+  test.is(draft.status, 200)
+  const publish = await handle(
+    mutationRequest([
+      {op: 'publish', id: 'article', locale: null, status: 'draft'}
+    ]),
+    requestContext()
+  )
+  test.is(publish.status, 422)
+
+  const valid = await create('published', {summary: 'Summary', code: 'A1'})
+  test.is(valid.status, 200)
+})
+
 test('does not report a committed mutation as failed when afterCommit throws', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
@@ -1159,6 +1232,79 @@ test('proxies built public media for the Next image optimizer', async () => {
     test.is(response.headers.get('content-type'), 'image/jpeg')
     test.is(response.headers.get('content-length'), '11')
     test.is(await response.text(), 'image bytes')
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('proxies built public media from the server of the build', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    mediaDir: 'public/media',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({
+    schema: {},
+    workspaces: {main: mediaWorkspace},
+    baseUrl: {production: 'https://example.com'}
+  })
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Image',
+      path: 'image',
+      extension: '.jpg',
+      location: '/stored.jpg'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+  const originalFetch = globalThis.fetch
+  const requested: Array<string> = []
+  globalThis.fetch = Object.assign(
+    async (input: Parameters<typeof fetch>[0]) => {
+      requested.push(String(input))
+      return new Response('image bytes', {
+        headers: {'content-type': 'image/jpeg'}
+      })
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  const production = {
+    apiKey: 'test',
+    handlerUrl: new URL('https://example.com/api'),
+    isDev: false
+  }
+
+  try {
+    // A deployment serves the files of its build on the origin that reached
+    // it, which is not necessarily the configured baseUrl (eg. a preview
+    // deployment), while `next start` serves the files of its build locally
+    for (const context of [
+      production,
+      {...production, publicUrl: new URL('http://localhost:3188')}
+    ]) {
+      const response = await handle(
+        new Request(
+          'https://preview-123.vercel.app/api?file=image.jpg&delivery=proxy'
+        ),
+        context
+      )
+      test.is(response.status, 200)
+    }
+    test.equal(requested, [
+      'https://preview-123.vercel.app/media/stored.jpg',
+      'http://localhost:3188/media/stored.jpg'
+    ])
   } finally {
     globalThis.fetch = originalFetch
   }

@@ -1,0 +1,477 @@
+{
+  "_id": "Xu4-sW6S0ynehY5zKR1VZ",
+  "_type": "Doc",
+  "_index": "a2g",
+  "title": "Image",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An image field links to an image in the "
+        },
+        {
+          "_type": "text",
+          "text": "media library",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzwRec2EJskObMJfI4yPaDs3",
+              "_link": "entry",
+              "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Queries return everything you need to render it well: the url, dimensions, alt text, the focal point the editor set and a tiny placeholder to show while it loads."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "YCDn4dBOi-_bHy32PAqzU",
+      "code": "import {Field} from 'alinea'\n\nField.image('Cover image')\n\nField.image.multiple('Gallery')",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "D6afYJyRzrcvfZy1mTq5L",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Image field', {\n  fields: {\n    image: Field.image('Cover image'),\n    imageMultiple: Field.image.multiple('Gallery')\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "textAlign": "start",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: extra fields stored on each image, such as a caption or a credit."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`max` (multiple only): the maximum number of images."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`location` and `limitLocations`: open the picker in, or limit it to, specific media roots or folders, like the "
+                },
+                {
+                  "_type": "text",
+                  "text": "Entry field",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzvgFiQAyiyBca8aHOa66CGz",
+                      "_link": "entry",
+                      "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`defaultView`: show the picker as `'thumb'` (default) or `'row'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzuL5BjjAOoGrEZE5QBOhKmC",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The picker only offers images: files with an extension such as `.jpg`, `.png`, `.webp`, `.gif`, `.avif` or `.svg`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each image is resolved to an `ImageLink`:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`src`: the url of the image on your site, such as `/admin/file/landscape.jpg?v=3f2a…`. It's served through your Alinea handler, and the `v` parameter changes when the file is replaced, so caches never serve an outdated copy."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`url`: the same as `src`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`width` and `height`: the dimensions in pixels."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alt`: the alt text editors enter in the media library, in the locale of the entry you queried when the media root is "
+                },
+                {
+                  "_type": "text",
+                  "text": "translated",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzt4sao78axU2LwzXUBdmUUe",
+                      "_link": "entry",
+                      "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`focus`: the focal point as `{x, y}`, each between 0 and 1. Use it as `object-position` when you crop the image."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`thumbHash` and `averageColor`: a compact placeholder and the average color (`'#aabbcc'`) to show while the image loads."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`title`, `extension`, `size` (bytes) and `hash`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: the values of your extra fields."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A single image field is `null` while it's empty, a multiple one is an array."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rendering with next/image"
+        }
+      ],
+      "_anchor": "rendering-with-next-image"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`withAlinea` allows the image urls in your Next.js image config, so you can pass them to `next/image` directly. `imageBlurUrl` from `alinea/ui` turns the thumbhash into a data url for the blur placeholder:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzz8NvCCTuwiOq5LLrzFVZka",
+      "code": "import type {ImageLink} from 'alinea'\nimport {imageBlurUrl} from 'alinea/ui'\nimport Image from 'next/image'\n\ninterface CmsImageProps {\n  image: ImageLink | null\n  sizes?: string\n}\n\nexport function CmsImage({image, sizes}: CmsImageProps) {\n  if (!image?.src) return null\n  const blurDataURL = imageBlurUrl(image) || undefined\n  return (\n    <Image\n      src={image.src}\n      width={image.width}\n      height={image.height}\n      alt={image.alt ?? ''}\n      sizes={sizes}\n      placeholder={blurDataURL ? 'blur' : 'empty'}\n      blurDataURL={blurDataURL}\n      style={{\n        objectFit: 'cover',\n        objectPosition: image.focus\n          ? `${image.focus.x * 100}% ${image.focus.y * 100}%`\n          : undefined\n      }}\n    />\n  )\n}",
+      "fileName": "components/CmsImage.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alt text and captions"
+        }
+      ],
+      "_anchor": "alt-text-and-captions"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`image.alt` is the alt text editors enter once, in the media library. When an image needs a description that depends on where it's used, or a caption or credit, add extra fields with the `fields` option. Editors fill them in next to the image they picked, and the values are stored with the link in your entry, not on the media file:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "31pPLpkxeStQvJH5kAmOJDPxzC0",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Article = Config.document('Article', {\n  fields: {\n    image: Field.image('Image', {\n      fields: {\n        alt: Field.text('Alt text', {required: true}),\n        caption: Field.text('Caption'),\n        credit: Field.text('Credit', {width: 0.5})\n      }\n    })\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options like `required`, `help` and `width` work on these fields as usual: an entry with an image but without its alt text can't be published."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query results keep the extra values on `image.fields`, next to the properties of the image. An extra field named `alt` does not replace the alt text of the media library: `image.alt` still holds that one, and `image.fields.alt` the one entered on this entry. `ImageLink` takes the type of the extra fields as its type parameter:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JztifK2wuFxXT7ny6mlk5371Fp",
+      "code": "import type {ImageLink} from 'alinea'\n\ninterface FigureProps {\n  image: ImageLink<{alt: string; caption: string; credit: string}> | null\n}\n\nexport function Figure({image}: FigureProps) {\n  if (!image?.src) return null\n  const {alt, caption, credit} = image.fields\n  return (\n    <figure>\n      <img\n        src={image.src}\n        width={image.width}\n        height={image.height}\n        alt={alt || image.alt || ''}\n      />\n      {caption && (\n        <figcaption>\n          {caption} {credit && <small>{credit}</small>}\n        </figcaption>\n      )}\n    </figure>\n  )\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a multiple image field every image gets its own values. The "
+        },
+        {
+          "_type": "text",
+          "text": "Link",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jztifu1WG2ZxdVG63aHuUfWMoH",
+              "_link": "entry",
+              "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", "
+        },
+        {
+          "_type": "text",
+          "text": "Entry",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jztieaa0n4IrDrMrVvs8hsgCNP",
+              "_link": "entry",
+              "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", File and Url fields take the same `fields` option and return the values on `link.fields` too."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "Image field - Alinea CMS",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790196931,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790236793,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

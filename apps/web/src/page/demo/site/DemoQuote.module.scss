@@ -1,0 +1,44 @@
+.DemoQuote {
+  padding: clamp(64px, 10cqi, 140px) 0 0;
+}
+
+.DemoQuote-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  text-align: center;
+}
+
+.DemoQuote-mark {
+  height: 0.5em;
+  color: var(--demo-accent);
+  font-family: var(--demo-serif);
+  font-size: 96px;
+  line-height: 1;
+}
+
+.DemoQuote-quote {
+  margin: 0;
+  font-family: var(--demo-serif);
+  font-size: clamp(28px, 4cqi, 44px);
+  font-style: italic;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.DemoQuote-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 28px;
+  font-size: 14px;
+}
+
+.DemoQuote-author {
+  font-weight: 600;
+}
+
+.DemoQuote-source {
+  color: var(--demo-muted);
+}

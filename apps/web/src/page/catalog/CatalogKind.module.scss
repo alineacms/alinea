@@ -1,0 +1,109 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  @include s {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  &-card {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    color: var(--web-foreground);
+    transition: border-color 0.15s;
+
+    @include s {
+      padding: 16px;
+      gap: 14px;
+    }
+
+    &:hover:not(.is-current) {
+      border-color: color-mix(
+        in srgb,
+        var(--web-accent) 45%,
+        var(--web-outline)
+      );
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--web-accent);
+      outline-offset: 2px;
+    }
+
+    &.is-current {
+      border-color: var(--web-accent);
+      box-shadow: inset 0 0 0 0.5px var(--web-accent);
+      background: color-mix(
+        in srgb,
+        var(--web-accent-soft) 50%,
+        var(--web-surface)
+      );
+    }
+  }
+
+  &-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--web-accent-soft);
+    color: var(--web-accent);
+    font-size: 20px;
+  }
+
+  &-card.is-current &-icon {
+    background: var(--web-accent);
+    color: var(--web-accent-foreground);
+  }
+
+  &-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
+    font: 600 18px/1.3 var(--web-title-font);
+  }
+
+  &-code {
+    font: 400 12.5px/1.3 var(--web-mono-font);
+    color: var(--web-accent);
+  }
+
+  &-text {
+    font: var(--web-docs-font-compact);
+    color: var(--web-foreground-faded);
+  }
+
+  &-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 13.5px/20px var(--web-body-font);
+    color: var(--web-accent);
+
+    &-icon {
+      font-size: 14px;
+    }
+  }
+
+  &-card.is-current &-link {
+    color: var(--web-accent-strong);
+  }
+}

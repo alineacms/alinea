@@ -1,11 +1,15 @@
 import type {Handler} from '#/backend/Handler.js'
 import {router} from '#/backend/router/Router.js'
 import type {CMS} from '#/core/CMS.js'
+import {developmentKeyHeader} from '#/core/Connection.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import {Config} from '#/core/Config.js'
 import {HttpError} from '#/core/HttpError.js'
 import {type Trigger, trigger} from '#/core/Trigger.js'
 import type {User} from '#/core/User.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
+import {keys} from '#/core/util/Objects.js'
 import {ReadableStream, Request, Response} from '@alinea/iso'
 import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
@@ -16,6 +20,7 @@ import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {reportFatal} from '../util/Report.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
+import {createDevMcp} from './mcp/DevMcp.js'
 import type {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
@@ -46,7 +51,8 @@ export function createLocalServer(
   }: ServeContext,
   cms: CMS,
   handleApi: Handler,
-  user: User
+  user: User,
+  db: LocalStore
 ): {
   close(): void
   handle(input: Request): Promise<Response>
@@ -58,6 +64,18 @@ export function createLocalServer(
       apiKey
     })
   }
+  // Coding agents edit content through MCP, only while developing locally
+  const handleMcp =
+    cmd === 'dev'
+      ? createDevMcp({
+          config: cms.config,
+          db,
+          rootDir,
+          user,
+          apiKey,
+          handleApi: devHandler
+        })
+      : undefined
   const devDir = path.join(staticDir, 'dev')
   const publicDir = path.join(rootDir, cms.config.publicDir ?? 'public')
   const adminPath = Config.adminPath(cms.config)
@@ -198,6 +216,13 @@ export function createLocalServer(
   }
 
   const httpRouter = router(
+    // Matched on the full pathname: the Next dev rewrite forwards adminPath
+    // requests from any network interface, those must never reach MCP
+    handleMcp &&
+      router
+        .matcher()
+        .all('/mcp')
+        .map(({request}) => handleMcp(request)),
     matcher.get('/~dev').map((): Response => {
       let heartbeat: ReturnType<typeof setInterval> | undefined
       let unregister: (() => void) | undefined
@@ -251,7 +276,7 @@ export function createLocalServer(
             status: 400,
             headers: uploadCorsHeaders(request)
           })
-        const file = url.searchParams.get('file')!
+        const file = url.searchParams.get('file') ?? ''
         const maxUploadSize = cms.config.maxUploadSize
         const contentLength = request.headers.get('content-length')
         assertUploadSize(
@@ -259,13 +284,27 @@ export function createLocalServer(
           contentLength ? Number(contentLength) : undefined,
           maxUploadSize
         )
-        const dir = path.join(rootDir, path.dirname(file))
-        await fs.promises.mkdir(dir, {recursive: true})
-        await writeUploadFile(
-          path.join(rootDir, file),
-          request.body,
-          maxUploadSize
-        )
+        // Uploads only write into a workspace's media dir
+        const location = path.join(rootDir, file)
+        const inMediaDir = keys(cms.config.workspaces).some(workspace => {
+          const dir = path.join(
+            rootDir,
+            MediaLocation.directory(cms.config, workspace)
+          )
+          const relative = path.relative(dir, location)
+          return (
+            relative !== '' &&
+            !path.isAbsolute(relative) &&
+            !relative.split(path.sep).includes('..')
+          )
+        })
+        if (!inMediaDir)
+          return new Response('Invalid upload location', {
+            status: 400,
+            headers: uploadCorsHeaders(request)
+          })
+        await fs.promises.mkdir(path.dirname(location), {recursive: true})
+        await writeUploadFile(location, request.body, maxUploadSize)
         return new Response('Upload ok', {headers: uploadCorsHeaders(request)})
       } catch (error) {
         if (error instanceof HttpError)
@@ -327,7 +366,8 @@ export function createLocalServer(
 
   function isAllowedUploadOrigin(request: Request) {
     const origin = request.headers.get('origin')
-    if (!origin) return true
+    // Browsers send an Origin, other callers (MCP uploads) the dev key
+    if (!origin) return request.headers.get(developmentKeyHeader) === apiKey
     try {
       return new URL(origin).hostname === new URL(request.url).hostname
     } catch {

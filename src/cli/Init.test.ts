@@ -1,4 +1,11 @@
-import {init} from '#/cli/Init.js'
+import {
+  detectPm,
+  init,
+  PM,
+  patchAgents,
+  patchGitignore,
+  patchPackageJson
+} from '#/cli/Init.js'
 import {suite} from '@alinea/suite'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -63,5 +70,73 @@ if (testPms) {
     test.ok(config.includes("adminPath: '/admin'"))
     test.ok(config.includes("mediaDir: 'public/media'"))
     test.is(config.includes('mediaUrl'), false)
+    test.is(config.includes('example.com'), false)
+    const gitignore = await fs.readFile(path.join(cwd, '.gitignore'), 'utf-8')
+    test.is(gitignore, '/public/admin.html\n/public/admin/\n')
+    const agents = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf-8')
+    test.ok(agents.startsWith('## Alinea\n'))
+    test.ok(agents.includes('`src/cms.ts`'))
+    test.ok(agents.includes('node_modules/alinea/docs/'))
   })
 }
+
+test('patchPackageJson keeps indentation', () => {
+  const source =
+    '{\n    "scripts": {\n        "dev": "next dev",\n        "build": "next build"\n    }\n}\n'
+  const patched = patchPackageJson(source)!
+  test.is(
+    patched.source,
+    '{\n    "scripts": {\n        "dev": "alinea dev -- next dev",\n        "build": "alinea build -- next build"\n    }\n}\n'
+  )
+})
+
+test('patchPackageJson handles minified package.json', () => {
+  const patched = patchPackageJson(
+    '{"dependencies":{"next":"15"},"scripts":{"dev":"next dev"}}'
+  )!
+  test.is(
+    patched.source,
+    '{"dependencies":{"next":"15"},"scripts":{"dev":"alinea dev -- next dev"}}'
+  )
+})
+
+test('patchPackageJson does not patch twice', () => {
+  const source = '{"scripts":{"dev":"alinea dev -- next dev"}}'
+  test.is(patchPackageJson(source)!.source, source)
+  test.is(patchPackageJson('not json'), undefined)
+})
+
+test('patchGitignore appends missing lines', () => {
+  const lines = ['/public/admin.html', '/public/admin/']
+  test.is(patchGitignore('', lines), '/public/admin.html\n/public/admin/\n')
+  test.is(
+    patchGitignore('node_modules\r\n/public/admin/', lines),
+    'node_modules\r\n/public/admin/\r\n/public/admin.html\r\n'
+  )
+  const source = '/public/admin/\n/public/admin.html\n'
+  test.is(patchGitignore(source, lines), source)
+})
+
+test('patchAgents appends the section once', () => {
+  const section = '## Alinea\n\nUse the docs.\n'
+  test.is(patchAgents('', section), section)
+  test.is(
+    patchAgents('# Project\n\nRules.\n', section),
+    '# Project\n\nRules.\n\n## Alinea\n\nUse the docs.\n'
+  )
+  test.is(
+    patchAgents('# Project\r\n', section),
+    '# Project\r\n\r\n## Alinea\r\n\r\nUse the docs.\r\n'
+  )
+  const source = '# Project\n\n## Alinea\n\nOur own notes.\n'
+  test.is(patchAgents(source, section), source)
+})
+
+test('detectPm detects bun.lock', async () => {
+  const cwd = path.join(process.cwd(), 'dist/.init-pm')
+  await fs.rm(cwd, {recursive: true}).catch(() => {})
+  await fs.mkdir(cwd, {recursive: true})
+  test.is(await detectPm(cwd), PM.NPM)
+  await fs.writeFile(path.join(cwd, 'bun.lock'), '')
+  test.is(await detectPm(cwd), PM.Bun)
+})

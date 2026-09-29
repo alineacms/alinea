@@ -1,0 +1,18 @@
+{
+  "_id": "3AOc3TeICwhbYULx3ksrvtdTJ5V",
+  "_type": "SiteLayout",
+  "_index": "a0",
+  "_seeded": "/settings.json",
+  "title": "Global settings",
+  "headerText": "My website",
+  "footerText": "Copyright 2026",
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

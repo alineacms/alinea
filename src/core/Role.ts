@@ -60,6 +60,11 @@ export interface Permissions {
   publish: boolean
   archive: boolean
   upload: boolean
+  /**
+   * @deprecated Never enforced. What a user can browse in the dashboard's
+   * entry tree and media library is controlled by `read`. Kept so existing
+   * roles keep type checking; it will be removed in a future major version.
+   */
   explore: boolean
   manageMembers: boolean
   all: boolean
@@ -303,6 +308,7 @@ export class Policy {
     return this.check(Permission.Upload, resource)
   }
 
+  /** @deprecated `explore` is never enforced, use `canRead` instead. */
   canExplore(resource?: Resource): boolean {
     return this.check(Permission.Explore, resource)
   }

@@ -1,6 +1,15 @@
 import {suite} from '@alinea/suite'
 import {Type, type} from '#/core/Type.js'
-import {entry, image, link, list, richText, select, text} from '#/field.js'
+import {
+  entry,
+  image,
+  link,
+  list,
+  object,
+  richText,
+  select,
+  text
+} from '#/field.js'
 import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
 import {ListRow} from './ListRow.js'
 
@@ -426,4 +435,63 @@ test('Localizes entry links to translated targets', () => {
     }),
     input
   )
+})
+
+test('references carry the labels of the fields leading to them', () => {
+  const Documents = type('Documents', {
+    fields: {links: link.multiple('Links')}
+  })
+  const Page = type('Page', {
+    fields: {
+      seo: object('Metadata', {
+        fields: {
+          openGraph: object('Open Graph', {fields: {image: image('Image')}})
+        }
+      }),
+      blocks: list('Blocks', {schema: {Documents}}),
+      body: richText('Body')
+    }
+  })
+  const references = Type.references(Page, {
+    seo: {openGraph: {image: {_type: 'image', _id: 'og', _entry: 'img'}}},
+    blocks: [
+      {
+        _type: 'Documents',
+        _id: 'row',
+        _index: 'a0',
+        links: [{_type: 'file', _id: 'l', _index: 'a0', _entry: 'pdf'}]
+      }
+    ],
+    body: [
+      {
+        [Node.type]: 'paragraph',
+        [ElementNode.content]: [
+          {
+            [Node.type]: 'text',
+            [TextNode.text]: 'Download',
+            [TextNode.marks]: [
+              {[Mark.type]: 'link', _id: 'm', _link: 'file', _entry: 'doc'}
+            ]
+          }
+        ]
+      }
+    ]
+  })
+  test.equal(
+    references.map(reference => [reference.targetId, reference.fieldLabels]),
+    [
+      ['img', ['Metadata', 'Open Graph', 'Image']],
+      ['pdf', ['Blocks', 'Documents', 'Links']],
+      ['doc', ['Body']]
+    ]
+  )
+})
+
+test('container types can leave out their fields', () => {
+  const Container = type('Container', {contains: ['Test']})
+  test.equal(Type.fields(Container), {})
+  test.equal(Type.contains(Container), ['Test'])
+  // @ts-expect-error Types without children need fields
+  const invalid = () => type('Invalid', {})
+  test.ok(invalid)
 })

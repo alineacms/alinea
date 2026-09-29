@@ -1,4 +1,5 @@
 import {entries, fromEntries, isRecord, values} from '#/core/util/Objects.js'
+import {withOrderKeys} from '#/core/util/OrderKeys.js'
 import type {Getter, PrimitiveAtom, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
@@ -78,6 +79,15 @@ function resolveUpdate<Value>(
     : update
 }
 
+/**
+ * List rows written by the editor get a fractional `_index` order key between
+ * their neighbours where theirs is missing or out of order, like the stored
+ * content expects. Rows with keys in order keep them.
+ */
+function ordered(value: unknown): unknown {
+  return isArray(value) ? withOrderKeys(value) : value
+}
+
 export class ReactiveNode<Value = unknown> {
   #initialValue: PrimitiveAtom<Value>
   readonly readOnly: boolean
@@ -102,8 +112,16 @@ export class ReactiveNode<Value = unknown> {
 
   #write = (get: Getter, set: Setter, update: SetStateAction<Value>) => {
     if (this.readOnly) return
-    const next = resolveUpdate(update, get(this.value))
-    this.#reconcile(get, set, next)
+    this.#assign(get, set, resolveUpdate(update, get(this.value)), true)
+  }
+
+  /**
+   * Editor writes (`order`) assign order keys to list rows, persisted data
+   * written through commit, rebase and reset is kept exactly as it is.
+   */
+  #assign(get: Getter, set: Setter, value: unknown, order: boolean) {
+    const next = order ? ordered(value) : value
+    this.#reconcile(get, set, next, order)
     set(this.#dirty, next !== get(this.#initialValue))
   }
 
@@ -143,7 +161,7 @@ export class ReactiveNode<Value = unknown> {
     return nodes
   }
 
-  #reconcile(get: Getter, set: Setter, next: unknown) {
+  #reconcile(get: Getter, set: Setter, next: unknown, order: boolean) {
     const current = get(this.nodes)
     if (isArray(next) && isArray<ReactiveNode>(current)) {
       let changed = current.length !== next.length
@@ -151,7 +169,7 @@ export class ReactiveNode<Value = unknown> {
       for (let index = 0; index < next.length; index++) {
         const node = current[index]
         if (node) {
-          set(node.value, next[index])
+          node.#assign(get, set, next[index], order)
           nextStructure.push(node)
         } else {
           changed = true
@@ -170,7 +188,7 @@ export class ReactiveNode<Value = unknown> {
           delete nextStructure[key]
           changed = true
         } else {
-          set(fields[key].value, next[key])
+          fields[key].#assign(get, set, next[key], order)
         }
       }
       for (const key of Object.keys(next)) {
@@ -186,12 +204,13 @@ export class ReactiveNode<Value = unknown> {
   }
 
   reset = atom(null, (get, set) => {
-    set(this.value, get(this.#initialValue))
+    if (!this.readOnly) this.#assign(get, set, get(this.#initialValue), false)
     set(this.isDirty, false)
   })
 
   commit = atom(null, (get, set, data?: Value): Value => {
-    if (data !== undefined) set(this.value, data)
+    if (data !== undefined && !this.readOnly)
+      this.#assign(get, set, data, false)
     for (const node of get(this.#inner)) set(node.commit)
     const value = get(this.value)
     set(this.#initialValue, value)
@@ -203,7 +222,8 @@ export class ReactiveNode<Value = unknown> {
     const edited = get(this.value)
     const rebased = rebaseValue(checkpoint, edited, saved)
     set(this.commit, saved)
-    if (rebased !== USE_SAVED) set(this.value, rebased as Value)
+    if (rebased !== USE_SAVED && !this.readOnly)
+      this.#assign(get, set, rebased, false)
     return get(this.value)
   })
 
@@ -224,7 +244,7 @@ export class ReactiveNode<Value = unknown> {
             const fields = structure as ReactiveObject
             if (fields[key]) set(fields[key].value, update)
             else {
-              const next = resolveUpdate(update, undefined)
+              const next = ordered(resolveUpdate(update, undefined))
               set(this.nodes, {
                 ...fields,
                 [key]: new ReactiveNode(next, this.readOnly)
@@ -233,30 +253,61 @@ export class ReactiveNode<Value = unknown> {
             }
             return
           }
-          const next = resolveUpdate(update, undefined)
+          const next = ordered(resolveUpdate(update, undefined))
           set(this.nodes, {[key]: new ReactiveNode(next, this.readOnly)})
           set(this.#dirty, true)
         }
       )
   )
 
+  /**
+   * Replace the list structure with `next`, giving the rows at `rekey` (the
+   * inserted or moved rows) a new order key between their neighbours. Rows
+   * whose key is missing or out of order are repaired, other rows keep theirs.
+   */
+  #restructure(
+    get: Getter,
+    set: Setter,
+    next: Array<ReactiveNode | {value: unknown}>,
+    rekey: ReadonlySet<number>
+  ) {
+    const rows = next.map(item =>
+      item instanceof ReactiveNode ? get(item.value) : item.value
+    )
+    const keyed = withOrderKeys(rows, rekey)
+    set(
+      this.nodes,
+      next.map((item, index) => {
+        if (!(item instanceof ReactiveNode))
+          return new ReactiveNode(keyed[index], this.readOnly)
+        if (keyed[index] !== rows[index])
+          set(item.field('_index'), (keyed[index] as {_index: string})._index)
+        return item
+      })
+    )
+    set(this.#dirty, true)
+  }
+
   push = atom(null, (get, set, value: unknown) => {
     if (this.readOnly) return
     const structure = get(this.nodes)
-    if (!isArray(structure)) return
-    set(this.nodes, [...structure, new ReactiveNode(value, this.readOnly)])
-    set(this.#dirty, true)
+    if (!isArray<ReactiveNode>(structure)) return
+    this.#restructure(
+      get,
+      set,
+      [...structure, {value}],
+      new Set([structure.length])
+    )
   })
 
   insert = atom(null, (get, set, index: number, value: unknown) => {
     if (this.readOnly) return
     const structure = get(this.nodes)
-    if (!isArray(structure)) return
-    const next = [...structure]
+    if (!isArray<ReactiveNode>(structure)) return
+    const next: Array<ReactiveNode | {value: unknown}> = [...structure]
     const insertAt = Math.max(0, Math.min(index, next.length))
-    next.splice(insertAt, 0, new ReactiveNode(value, this.readOnly))
-    set(this.nodes, next)
-    set(this.#dirty, true)
+    next.splice(insertAt, 0, {value})
+    this.#restructure(get, set, next, new Set([insertAt]))
   })
 
   remove = atom(null, (get, set, index: number) => {
@@ -273,12 +324,13 @@ export class ReactiveNode<Value = unknown> {
   move = atom(null, (get, set, from: number, to: number) => {
     if (this.readOnly) return
     const structure = get(this.nodes)
-    if (!isArray(structure)) return
+    if (!isArray<ReactiveNode>(structure)) return
     const next = [...structure]
     const [item] = next.splice(from, 1)
     if (item === undefined) return
-    next.splice(to, 0, item)
-    set(this.nodes, next)
-    set(this.#dirty, true)
+    const moveTo = Math.max(0, Math.min(to, next.length))
+    if (moveTo === from) return
+    next.splice(moveTo, 0, item)
+    this.#restructure(get, set, next, new Set([moveTo]))
   })
 }

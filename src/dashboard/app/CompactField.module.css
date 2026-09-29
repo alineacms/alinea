@@ -11,10 +11,6 @@
   white-space: nowrap;
 }
 
-.CompactField[data-empty] {
-  color: var(--alinea-fg-muted);
-}
-
 .CompactField[data-layout='footer'] {
   display: block;
   width: 100%;
@@ -121,4 +117,28 @@
 .CompactField-list-count {
   flex-shrink: 0;
   color: var(--alinea-fg-muted);
+}
+
+.CompactField-link {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.CompactField-link-preview {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--alinea-radius-sm);
+  object-fit: cover;
+}
+
+.CompactField-link-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

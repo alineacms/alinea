@@ -1,0 +1,31 @@
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: var(--web-docs-box-padding);
+  border-radius: var(--web-docs-radius);
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  color: var(--web-foreground);
+  transition:
+    border-color 0.15s ease-out,
+    color 0.15s ease-out;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--web-accent);
+    color: var(--web-accent-strong);
+  }
+
+  &-title {
+    font: var(--web-docs-font-compact);
+    font-weight: 600;
+  }
+
+  &-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    color: var(--web-accent);
+  }
+}

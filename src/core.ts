@@ -1,5 +1,8 @@
 export {createCMS} from './adapter/core/cms.js'
 export * from './core/Entry.js'
+export {MediaFile, MediaLibrary} from './core/media/MediaTypes.js'
+export {Node} from './core/TextDoc.js'
+export {slugify} from './core/util/Slugs.js'
 export * from './core/Field.js'
 export * from './core/db/EntryReference.js'
 export * from './core/field/ListField.js'

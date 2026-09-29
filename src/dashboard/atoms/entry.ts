@@ -1,12 +1,12 @@
 import {loaderFor} from '#/core/Loader.js'
 import {Config} from '#/core/Config.js'
 import type {EntryReference} from '#/core/db/EntryReference.js'
+import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
-import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -18,6 +18,11 @@ import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
+import {
+  type FieldValidationError,
+  policyFieldOptions,
+  validateEntry
+} from '#/core/Validation.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
@@ -27,6 +32,7 @@ import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
 import {ReactiveNode} from './ReactiveNode.js'
+import {requestUploadsAtom} from './upload.js'
 import {policyAtom, userAtom} from './user.js'
 import {atomWithPending, dispense, loader} from './utils.js'
 
@@ -420,6 +426,46 @@ export class EntryLocaleAtoms {
     })
   })
 
+  /**
+   * Field validation errors of the edited values. Publishing is blocked while
+   * there are any, drafts can be saved with errors.
+   */
+  errors = dispense((node: ReactiveNode<object>) =>
+    atom((get): Array<FieldValidationError> => {
+      if (node.readOnly) return []
+      const data = get(this.entry.data)
+      const config = get(configAtom)
+      const type = config.schema[data.type]
+      assert(type, `Type "${data.type}" not found in config`)
+      return validateEntry(type, get(node.value), {
+        fieldOptions: policyFieldOptions(config, get(policyAtom), {
+          workspace: data.workspace,
+          root: data.root,
+          type: data.type,
+          id: data.id,
+          parents: data.parents.map(parent => parent.id),
+          locale: this.requestedLocale
+        })
+      })
+    })
+  )
+
+  /** Whether the edited values have validation errors */
+  hasErrors = dispense((node: ReactiveNode<object>) =>
+    atom(get => get(this.errors(node)).length > 0)
+  )
+
+  #assertValid(get: Getter, node: ReactiveNode<object>) {
+    const errors = get(this.errors(node))
+    if (errors.length === 0) return
+    const title = (get(node.value) as Record<string, unknown>).title
+    throw new EntryValidationError({
+      entryId: this.entry.id,
+      title: typeof title === 'string' ? title : undefined,
+      errors
+    })
+  }
+
   saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const dataState = get(this.entry.data)
     const {id, type} = dataState
@@ -472,6 +518,7 @@ export class EntryLocaleAtoms {
       get(userAtom)
     )
     policy.assert(Permission.Publish, activeEntry)
+    this.#assertValid(get, node)
     const saved = await graph.create({
       type: typeConfig,
       id,
@@ -509,6 +556,7 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const type = config.schema[dataState.type]
     assert(type, `Type "${dataState.type}" not found in config`)
+    if (!config.enableDrafts) this.#assertValid(get, node)
     const {checkpoint, data} = prepareData(
       get,
       node,
@@ -593,15 +641,17 @@ export class EntryLocaleAtoms {
     const policy = get(policyAtom)
     policy.assert(Permission.Update, entry)
     policy.assert(Permission.Upload, entry)
-    await get(graphAtom).upload({
-      file,
-      createPreview,
-      replaceId: this.entry.id,
-      parentId: entry.parentId,
-      workspace: entry.workspace,
-      root: entry.root
+    const replaced = await set(requestUploadsAtom, {
+      files: [file],
+      destination: {
+        workspace: entry.workspace,
+        root: entry.root,
+        parentId: entry.parentId ?? undefined,
+        parents: entry.parents
+      },
+      replaceId: this.entry.id
     })
-    set(this.currentlyEditing, undefined)
+    if (replaced.length > 0) set(this.currentlyEditing, undefined)
   })
 }
 
@@ -864,10 +914,9 @@ const treeChildSelect = {
   root: Entry.root
 }
 
-function preferredTreeEntries<Item extends {id: string; locale: string | null}>(
-  items: Array<Item>,
-  locale: string | null
-): Array<Item> {
+export function preferredTreeEntries<
+  Item extends {id: string; locale: string | null}
+>(items: Array<Item>, locale: string | null): Array<Item> {
   const translated = new Set(
     items.filter(item => item.locale === locale).map(item => item.id)
   )
@@ -1016,7 +1065,7 @@ export class TreeEntryAtoms {
           parentId: this.id
         },
         locale,
-        getType(type).orderChildrenBy
+        Type.childrenOrder(type)
       )
     })
   )

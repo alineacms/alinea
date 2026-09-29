@@ -1,0 +1,104 @@
+{
+  "_id": "3JmLPYjvcJPmgJZkgmR83EMItew",
+  "_type": "Doc",
+  "_index": "am",
+  "title": "Table",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rows and columns of data with sorting, selection, nested rows and drag and drop. Describe the columns up front, then render a TableRow for every item."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPZNShOV4sYH0Z5Uk6oahakC",
+      "example": "Table"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Selection and sorting"
+        }
+      ],
+      "_anchor": "selection-and-sorting"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set a `selectionMode` to let editors select rows, `showSelectionControls` adds a checkbox to every row. Mark columns as `sortable` and sort the items in `onSortChange`."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPbROY6XFEkM2zKtHWnjow0U",
+      "example": "TableSelection"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPe0Tq2UlZqyftQlS4TLFsFv",
+      "component": "Table"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Built on the React Aria grid: the arrow keys move between rows, Space selects a row and Enter runs its action. Sortable column headers announce their sort direction."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261273,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261273,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

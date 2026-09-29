@@ -3,7 +3,7 @@ import {Client} from '#/core/Client.js'
 import type {BackendCapabilities} from '#/core/Connection.js'
 import {localUser, User} from '#/core/User.js'
 import {atom} from 'jotai'
-import {alineaDevAtom, clientAtom, localAtom} from './core.js'
+import {alineaDevAtom, clientAtom, localAtom, localUserAtom} from './core.js'
 
 export const authRequiredAtom = atom(get => {
   const forceAuth =
@@ -77,7 +77,8 @@ export const authAtom = Object.assign(
           (process.env.ALINEA_USER as string | undefined)
         return {
           status: 'authenticated',
-          user: userData ? JSON.parse(userData) : localUser
+          user:
+            get(localUserAtom) ?? (userData ? JSON.parse(userData) : localUser)
         }
       }
       return get(authState)

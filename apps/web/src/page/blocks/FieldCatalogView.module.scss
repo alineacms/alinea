@@ -1,0 +1,24 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+
+  &-more {
+    font: var(--web-docs-font-compact);
+    color: var(--web-foreground-faded);
+
+    &-code {
+      font: 400 13.5px/1 var(--web-mono-font);
+      color: var(--web-foreground);
+    }
+
+    &-link {
+      font-weight: 600;
+      color: var(--web-accent);
+
+      &:hover {
+        color: var(--web-accent-strong);
+      }
+    }
+  }
+}

@@ -21,6 +21,10 @@ test('replaces a media file from the entry actions', async ({
   const fileChooser = app.page.waitForEvent('filechooser')
   await app.runEntryAction('Replace')
   await (await fileChooser).setFiles('test/fixtures/example.jpg')
+  await app.page
+    .getByRole('dialog', {name: 'Upload files'})
+    .getByRole('button', {name: 'Replace file'})
+    .click()
 
   await expect.poll(() => uploadedBytes).toBe(21_005)
   await expect(app.title).toHaveText('example')

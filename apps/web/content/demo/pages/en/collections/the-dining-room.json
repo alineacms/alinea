@@ -1,0 +1,48 @@
+{
+  "_id": "3JjYg0OXixCbaQ50E6n7PRCP0Vq",
+  "_type": "DemoCollection",
+  "_index": "a0",
+  "title": "The dining room",
+  "intro": "A table to gather around, chairs to linger in and a sideboard for everything in between.",
+  "metadata": {
+    "title": "The dining room",
+    "description": "A table to gather around, chairs to linger in and a sideboard for everything in between.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "cover": {
+    "_id": "3JjYg0togHeV05NIWsGDLCJCVDt",
+    "_type": "image",
+    "_entry": "3JjYftknfCFWvObLFvrW7HbhEun"
+  },
+  "products": [
+    {
+      "_id": "3JjYg1MxburWGDS1BTmQuISyeyb",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYg1RR8ghz3NENJTrtX2QiHgP"
+    },
+    {
+      "_id": "3JjYfzT7MMpAnx5FLHCdUKCxJC7",
+      "_index": "a1",
+      "_type": "entry",
+      "_entry": "3JjYg0ezkcMXzEKuIo6leCH3Crn"
+    },
+    {
+      "_id": "3JjYg0h2uSxU3xCSOsz8svttl4Z",
+      "_index": "a2",
+      "_type": "entry",
+      "_entry": "3JjYfyD46Nvf6MOAzgsUIcVYJWw"
+    },
+    {
+      "_id": "3JjYg1tXA7YYToVjP6ChkQBqe0I",
+      "_index": "a3",
+      "_type": "entry",
+      "_entry": "3JjYfyc452e8aueFPS0SMYM90qi"
+    }
+  ]
+}

@@ -66,7 +66,9 @@ const ScenarioPage = Config.document('Page', {
       enableNavigation: true
     }),
     image: Field.image('Featured image'),
-    file: Field.file('Download')
+    file: Field.file('Download'),
+    gallery: Field.image.multiple('Gallery'),
+    files: Field.file.multiple('Attachments')
   }
 })
 
@@ -97,6 +99,7 @@ const localized = Config.workspace('Localized', {
 
 const config = Config.create({
   enableDrafts: true,
+  resizeImages: {maxWidth: 1000, maxHeight: 1000},
   schema: {Page: ScenarioPage},
   workspaces: {localized, main, references}
 })

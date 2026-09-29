@@ -1,7 +1,17 @@
 {
   "name": "alinea",
   "version": "0.0.0",
-  "description": "Headless git-based CMS",
+  "description": "Open source, Git-based headless CMS for Next.js",
+  "keywords": [
+    "cms",
+    "headless-cms",
+    "git-based-cms",
+    "nextjs",
+    "react",
+    "typescript",
+    "content-management"
+  ],
+  "homepage": "https://alineacms.com",
   "repository": "github:alineacms/alinea",
   "license": "MIT",
   "engines": {
@@ -10,7 +20,8 @@
   "sideEffects": false,
   "type": "module",
   "workspaces": [
-    "apps/dev"
+    "apps/dev",
+    "apps/web"
   ],
   "imports": {
     "#/*": {
@@ -39,6 +50,12 @@
       "worker": "./dist/core/media/CreatePreview.js",
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
+    },
+    "./core/media/TransformImage": {
+      "edge-light": "./dist/core/media/TransformImage.js",
+      "worker": "./dist/core/media/TransformImage.js",
+      "browser": "./dist/core/media/TransformImage.browser.js",
+      "default": "./dist/core/media/TransformImage.js"
     }
   },
   "typesVersions": {
@@ -51,6 +68,7 @@
   "bin": "./dist/cli.js",
   "files": [
     "dist",
+    "docs",
     "llms-full.txt"
   ],
   "scripts": {
@@ -60,14 +78,17 @@
     "dev": "run-p dev:run",
     "dev:check": "tsc -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
-    "format": "oxfmt --write src",
-    "format:check": "oxfmt --check src",
+    "docs": "bun apps/web/scripts/docs.ts",
+    "format": "oxfmt --write src test apps/web/src",
+    "format:check": "oxfmt --check src test apps/web/src",
     "lint": "oxlint",
-    "prepublishOnly": "bun run build",
+    "prepublishOnly": "bun run build && bun run docs",
+    "screenshots": "bun apps/web/scripts/screenshots.ts",
     "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "bunx --bun ladle serve",
     "tag": "bun tag.js",
     "spec": "playwright test -c .playwright/playwright.config.ts",
+    "spec:visual": "playwright test -c .playwright/playwright.visual.config.ts",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "type": "tsc --diagnostics",
     "web": "run-p dev:check web:run",
@@ -94,7 +115,7 @@
     "@floating-ui/dom": "^1.8.0",
     "@happy-dom/global-registrator": "^20.8.3",
     "@hyrious/esbuild-plugin-commonjs": "^0.2.6",
-    "@internationalized/date": "3.12.1",
+    "@internationalized/date": "3.12.2",
     "@ladle/react": "^4.1.2",
     "@playwright/experimental-ct-react": "1.61.1",
     "@react-stately/virtualizer": "^4.5.0",
@@ -173,11 +194,13 @@
     "sade": "^1.8.1",
     "sass": "^1.63.4",
     "shared-event-source": "^0.1.3",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.5",
+    "signal-exit": "^4.1.0",
     "smartcrop": "^2.0.5",
     "speedscope": "^1.14.0",
     "symlink-dir": "^6.0.5",
     "thumbhash": "^0.1.1",
+    "tree-kill": "^1.2.2",
     "typescript": "^7.0.1-rc",
     "typescript-plugin-css-modules": "^5.2.0",
     "use-error-boundary": "^2.0.6",

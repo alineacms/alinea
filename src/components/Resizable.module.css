@@ -1,0 +1,46 @@
+.ResizablePanelGroup {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+
+  /* Allotment's theming variables for the dividers */
+  --focus-border: var(--alinea-primary);
+  --separator-border: var(--alinea-border);
+}
+
+.ResizablePanelGroup-handle[data-with-handle]::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 6px;
+  height: 24px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 3px;
+  background: var(--alinea-bg);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.ResizablePanelGroup-handle[aria-orientation='horizontal'][data-with-handle]::after {
+  width: 24px;
+  height: 6px;
+}
+
+.ResizablePanelGroup-handle:focus-visible {
+  outline: 2px solid var(--alinea-primary);
+}
+
+.ResizablePanelGroup-view {
+  display: flex;
+}
+
+.ResizablePanel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}

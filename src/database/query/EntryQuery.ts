@@ -24,6 +24,7 @@ import {
   eq,
   exists,
   getSql,
+  getQuery,
   inArray,
   include,
   isNull,
@@ -76,6 +77,8 @@ export interface ProjectionPlan {
   single: boolean
   /** Rows carry the selection as `value`, next to the columns they need. */
   wrapped: boolean
+  /** The locale the query asked for, for rows of untranslated entries */
+  locale: string | null
   relations: Array<RelationProjection>
   fields: Array<FieldProjection>
 }
@@ -93,17 +96,20 @@ class Expressions {
   #search: ReturnType<typeof searchQuery>
   #entry: EntryIndexTarget
   #relation?: (query: EdgeQuery) => CompiledRelation
+  #scalar?: (query: EdgeQuery) => HasSql
 
   constructor(
     scope: Scope,
     entry: EntryIndexTarget,
     search: ReturnType<typeof searchQuery> | undefined,
-    relation?: (query: EdgeQuery) => CompiledRelation
+    relation?: (query: EdgeQuery) => CompiledRelation,
+    scalar?: (query: EdgeQuery) => HasSql
   ) {
     this.#scope = scope
     this.#entry = entry
     this.#search = search
     this.#relation = relation
+    this.#scalar = scalar
   }
 
   /** A stored value; selected, an absent key reads as undefined. */
@@ -170,6 +176,20 @@ class Expressions {
       }
       case 'value':
         return sql.value(internal.value)
+      case 'relation': {
+        if (!this.#scalar)
+          throw new Error('Relation expressions are not supported here')
+        return this.#scalar(internal.query)
+      }
+      case 'typeSwitch': {
+        const branches = Object.entries(internal.cases).map(
+          ([type, inner]) =>
+            sql`when ${this.#entry.type} = ${sql.value(type)} then ${this.expr(inner)}`
+        )
+        return branches.length
+          ? sql`(case ${sql.join(branches, sql` `)} end)`
+          : sql`null`
+      }
       case 'call': {
         if (internal.method !== 'snippet')
           throw new Error(`Unsupported SQL function: ${internal.method}`)
@@ -257,6 +277,8 @@ interface EntryQueryOptions {
   entry?: EntryIndexTarget
   depth?: number
   baseEntry?: EntryIndexTarget
+  /** Select the single expression of the query, to use it as a subquery */
+  scalar?: boolean
   /** Wrap every row and carry its entry id next to the selection. */
   withId?: boolean
 }
@@ -276,7 +298,24 @@ export function compileEntryQuery(
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const membership = new Expressions(scope, entry, search)
+  // A related entry's value, eg. to order by the title of a linked entry
+  function scalar(relationQuery: EdgeQuery): HasSql {
+    if (!isRecord(relationQuery.select) || !hasExpr(relationQuery.select))
+      throw new Error('A relation expression must select a single expression')
+    const {rows} = compileEntryQuery(
+      config,
+      {...relationQuery, status: query.status ?? 'published'},
+      {
+        source: entry,
+        entry: alias(baseEntry, `alinea_scalar_${depth + 1}`),
+        depth: depth + 1,
+        baseEntry,
+        scalar: true
+      }
+    )
+    return sql`(${getQuery(rows)})`
+  }
+  const membership = new Expressions(scope, entry, search, undefined, scalar)
   const queryTypes: Array<Type> = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
@@ -385,21 +424,17 @@ export function compileEntryQuery(
           : internal.type === 'entryField' &&
             internal.path?.join() === 'metadata' &&
             orderedMetadata.has(internal.name)
-      // The field index orders these as is: case folding cannot change the
-      // order of dates and numbers, and SQLite sorts nulls last for desc.
-      if (ordersByIndex) {
-        ordering.push(order.asc ? sql`${value} asc nulls last` : desc(value))
-        descendingTies = !order.asc
-        continue
-      }
-      descendingTies = false
-      const collated = order.caseSensitive
-        ? value
-        : sql`${value} collate nocase`
-      // Match the original resolver: strings are case-insensitive unless the
-      // query opts in, and nulls sort last in either direction.
-      if (!ordersByFilePath) ordering.push(asc(isNull(collated)))
-      ordering.push(order.asc ? asc(collated) : desc(collated))
+      // Strings are case-insensitive unless the query opts in. The field index
+      // orders dates and numbers as is, which case folding cannot change.
+      const collated =
+        ordersByIndex || order.caseSensitive
+          ? value
+          : sql`${value} collate nocase`
+      // Nulls sort last in either direction, SQLite sorts them last for desc
+      ordering.push(
+        order.asc ? sql`${collated} asc nulls last` : desc(collated)
+      )
+      descendingTies = ordersByIndex && !order.asc
       uniquelyOrdered ||= ordersByFilePath
     }
   } else if (search) ordering.push(asc(search.rank))
@@ -447,17 +482,19 @@ export function compileEntryQuery(
       plan
     }
   }
-  const projection = new Expressions(scope, entry, search, relation)
+  const projection = new Expressions(scope, entry, search, relation, scalar)
   // Counts select the rowid, which every index covers
   const selection = query.count
     ? entry.rowid
-    : projection.projection(
-        query.select ?? {
-          ...Object.assign({}, ...queryTypes),
-          ...EntryFields,
-          ...(isRecord(query.include) ? query.include : {})
-        }
-      )
+    : options.scalar
+      ? membership.expr(query.select as Expr)
+      : projection.projection(
+          query.select ?? {
+            ...Object.assign({}, ...queryTypes),
+            ...EntryFields,
+            ...(isRecord(query.include) ? query.include : {})
+          }
+        )
   for (const [key, value] of [
     ['skip', query.skip],
     ['take', query.take]
@@ -494,6 +531,7 @@ export function compileEntryQuery(
     )
   }
   const single = Boolean(
+    options.scalar ||
     query.first ||
     query.get ||
     edge?.edge === 'parent' ||
@@ -520,16 +558,19 @@ export function compileEntryQuery(
 
   // Fields resolve their links in the locale of the entry they were read
   // from; the own language first is ordered by its selected column.
-  const wrapped = Boolean(
-    options.withId ||
-    projection.relations.length ||
-    projection.fields.length ||
-    selfFirst
-  )
+  const wrapped =
+    !options.scalar &&
+    Boolean(
+      options.withId ||
+      projection.relations.length ||
+      projection.fields.length ||
+      selfFirst
+    )
   const plan: ProjectionPlan = {
     count: query.count === true,
     single,
     wrapped,
+    locale: query.locale ?? query.preferredLocale ?? null,
     relations: projection.relations,
     fields: projection.fields
   }

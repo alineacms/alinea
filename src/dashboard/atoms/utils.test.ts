@@ -5,6 +5,7 @@ import {
   dashboardEntryDragItem,
   dashboardEntryDragType,
   dashboardEntryDragTypes,
+  dashboardEntryDropIds,
   dispense,
   pendingTimerAtom,
   requiredAtom,
@@ -105,6 +106,19 @@ test('creates dashboard entry drag data with a plain text fallback', () => {
   ])
 })
 
+test('reads unique entry ids from dropped items', () => {
+  expect(
+    dashboardEntryDropIds([
+      dashboardEntryDragItem('a'),
+      {'text/plain': 'b'},
+      {[dashboardEntryDragType]: 'c', 'text/plain': 'ignored'},
+      {'application/json': '{}'},
+      {'text/plain': ''},
+      dashboardEntryDragItem('a')
+    ])
+  ).toEqual(['a', 'b', 'c'])
+})
+
 test('accepts dashboard entry and plain text drag types', () => {
   expect(
     acceptsDashboardEntryDrag(new Set([dashboardEntryDragType]))
@@ -116,7 +130,20 @@ test('accepts dashboard entry and plain text drag types', () => {
 test('reports files that exceed the configured upload limit', () => {
   const file = new File(['oversized'], 'photo.jpg')
 
-  expect(uploadSizeError(file, file.size - 1)).toContain('photo.jpg')
-  expect(uploadSizeError(file, file.size)).toBeUndefined()
-  expect(uploadSizeError(file, undefined)).toBeUndefined()
+  const pdf = new File(['oversized'], 'brochure.pdf')
+  expect(uploadSizeError(pdf, {maxUploadSize: pdf.size - 1})).toContain(
+    'brochure.pdf'
+  )
+  expect(
+    uploadSizeError(file, {maxUploadSize: file.size - 1, resizeImages: false})
+  ).toContain('photo.jpg')
+  expect(uploadSizeError(file, {maxUploadSize: file.size})).toBeUndefined()
+  expect(uploadSizeError(file, {})).toBeUndefined()
+  // Images are checked once they are scaled down
+  expect(
+    uploadSizeError(file, {
+      maxUploadSize: file.size - 1,
+      resizeImages: {maxWidth: 100}
+    })
+  ).toBeUndefined()
 })

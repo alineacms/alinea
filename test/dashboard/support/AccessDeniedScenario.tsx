@@ -28,7 +28,9 @@ async function createAccessDeniedScenario(policy: Policy) {
 }
 
 export function AccessDeniedScenario() {
-  const [scenario] = useState(() => createAccessDeniedScenario(Policy.ALLOW_NONE))
+  const [scenario] = useState(() =>
+    createAccessDeniedScenario(Policy.ALLOW_NONE)
+  )
   const {client, db} = use(scenario)
   return (
     <App

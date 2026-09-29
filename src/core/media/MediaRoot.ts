@@ -1,5 +1,6 @@
 import {LucideImage} from '#/dashboard/icons.js'
 import type {Page} from '../Page.js'
+import {mediaOverview} from './MediaTypes.js'
 import {type Root, root, RootOptions} from '../Root.js'
 
 export type MediaRoot<Children extends Record<string, Page>> = Root<Children>
@@ -10,6 +11,7 @@ export function createMediaRoot<Children extends Record<string, Page>>(
   const rootOptions = {
     icon: LucideImage,
     contains: ['MediaLibrary'],
+    overview: mediaOverview(),
     ...options,
     isMediaRoot: true,
     i18n: undefined,

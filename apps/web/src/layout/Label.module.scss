@@ -1,0 +1,32 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--web-body-font);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+
+  &.is-accent {
+    color: var(--web-accent-strong);
+    background: var(--web-accent-soft);
+  }
+
+  &.is-neutral {
+    color: var(--web-foreground-faded);
+    background: var(--web-neutral-soft);
+  }
+
+  &.is-positive {
+    color: var(--web-positive);
+    background: var(--web-positive-soft);
+  }
+
+  &.is-small {
+    padding: 3px 10px;
+    font-size: 12.5px;
+  }
+}

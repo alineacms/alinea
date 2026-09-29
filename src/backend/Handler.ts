@@ -211,10 +211,11 @@ export function createHandler({
         if (!source || source === requestedUrl)
           return new Response('Not found', {status: 404})
         if (!proxy) return redirectFile(source, 'public, max-age=60')
-        // The dev server serves the public dir itself
+        // The dev server serves the public dir itself, a deployment serves
+        // the files of its own build on the origin that reached it
         const deliveryBase =
-          (!context.isDev && Config.baseUrl(cms.config, 'production')) ||
-          context.handlerUrl
+          context.publicUrl ??
+          (context.isDev ? context.handlerUrl : new URL(request.url))
         return proxyMedia(
           new URL(source, deliveryBase).href,
           'public, max-age=60'

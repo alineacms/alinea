@@ -13,6 +13,7 @@ import {
 import {type HasType, getType, hasType, internalType} from './Internal.js'
 import type {Label} from './Label.js'
 import type {OrderBy} from './OrderBy.js'
+import {Overview, type OverviewOptions} from './Overview.js'
 import type {Preview} from './Preview.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
@@ -59,6 +60,18 @@ export namespace Type {
     return getType(type).insertOrder ?? 'free'
   }
 
+  export function overview(type: Type): OverviewOptions | undefined {
+    return getType(type).overview
+  }
+
+  /** The default order of children: `overview.sort`, or `orderChildrenBy` */
+  export function childrenOrder(
+    type: Type
+  ): OrderBy | Array<OrderBy> | undefined {
+    const {overview, orderChildrenBy} = getType(type)
+    return overview?.sort ?? orderChildrenBy
+  }
+
   export function isHidden(type: Type): boolean {
     return Boolean(getType(type).hidden)
   }
@@ -75,13 +88,16 @@ export namespace Type {
   export function anchors(
     type: Type,
     value: Record<string, unknown>,
-    path: Array<string> = []
+    path: Array<string> = [],
+    labels: Array<string> = []
   ): Array<EntryAnchorTarget> {
     const self = value || {}
     return entries(fields(type)).flatMap(([key, field]) => {
+      const label = Field.label(field)
       return Field.anchors(field, self[key], {
         path: [...path, key],
-        label: Field.label(field)
+        label,
+        labels: [...labels, label]
       })
     })
   }
@@ -89,13 +105,16 @@ export namespace Type {
   export function references(
     type: Type,
     value: Record<string, unknown>,
-    path: Array<string> = []
+    path: Array<string> = [],
+    labels: Array<string> = []
   ): Array<EntryReferenceTarget> {
     const self = value || {}
     return entries(fields(type)).flatMap(([key, field]) => {
+      const label = Field.label(field)
       return Field.references(field, self[key], {
         path: [...path, key],
-        label: Field.label(field)
+        label,
+        labels: [...labels, label]
       })
     })
   }
@@ -279,11 +298,12 @@ export namespace Type {
   }
 
   export function referencedViews(type: Type): Array<string> {
-    const {view, summaryRow, summaryThumb} = getType(type)
+    const {view, summaryRow, summaryThumb, overview} = getType(type)
     return [
       view,
       summaryRow,
       summaryThumb,
+      ...Overview.referencedViews(overview),
       ...viewsOfDefinition(getType(type).fields)
     ].filter(v => typeof v === 'string')
   }
@@ -326,7 +346,12 @@ export interface TypeConfig<Definition> {
   fields: Definition
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
-  /** Order children entries in the sidebar content tree */
+  /** How the dashboard lists the children of entries of this type */
+  overview?: OverviewOptions
+  /**
+   * Order children entries in the sidebar content tree
+   * @deprecated Use `overview.sort`
+   */
   orderChildrenBy?: OrderBy | Array<OrderBy>
   /** Entries do not show up in the sidebar content tree */
   hidden?: true
@@ -337,9 +362,17 @@ export interface TypeConfig<Definition> {
   view?: View<{type: Type}>
   /** The default dashboard view for entries of this type */
   defaultView?: EntryDefaultView
-  /** A React component used to view a row of this type in the dashboard */
+  /**
+   * A React component used to view a row of this type in the dashboard
+   * @deprecated Not used by the dashboard, configure the columns of the
+   * parent's overview with `overview.columns`
+   */
   summaryRow?: View<SummaryProps>
-  /** A React component used to view a thumbnail of this type in the dashboard */
+  /**
+   * A React component used to view a thumbnail of this type in the dashboard
+   * @deprecated Not used by the dashboard, configure the card image of the
+   * parent's overview with `overview.thumbnail`
+   */
   summaryThumb?: View<SummaryProps>
 
   /** The position where new children will be inserted */
@@ -350,6 +383,16 @@ export interface TypeConfig<Definition> {
   preview?: Preview
 }
 
+/** Types that only hold children can leave out their fields */
+export interface ContainerTypeConfig<Definition> extends Omit<
+  TypeConfig<Definition>,
+  'fields' | 'contains'
+> {
+  fields?: Definition
+  /** Accepts entries of these types as children */
+  contains: Array<string | Type>
+}
+
 export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   label: string
   allFields: Record<string, Field>
@@ -357,18 +400,21 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
 }
 
 /** Create a new type */
-export function type<Fields extends FieldsDefinition>(
+export function type<Fields extends FieldsDefinition = {}>(
   label: string,
-  config: TypeConfig<Fields>
+  config: TypeConfig<Fields> | ContainerTypeConfig<Fields>
 ): Type<Fields> {
   const instance = createType(label, config)
   Type.validate(instance)
   return instance
 }
 
-export function createType<Fields extends FieldsDefinition>(
+export function createType<Fields extends FieldsDefinition = {}>(
   label: string,
-  config: TypeConfig<Fields>
+  {
+    fields: definition = {} as Fields,
+    ...config
+  }: TypeConfig<Fields> | ContainerTypeConfig<Fields>
 ): Type<Fields> {
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
@@ -377,10 +423,10 @@ export function createType<Fields extends FieldsDefinition>(
     current = {}
   }
   const fields: Array<[string, Field]> = []
-  if (typeof config.fields !== 'object') {
+  if (typeof definition !== 'object') {
     throw new Error('Type fields must be an object')
   }
-  for (const [key, value] of entries(config.fields)) {
+  for (const [key, value] of entries(definition)) {
     if (Field.isField(value)) {
       current[key] = value
       fields.push([key, value])
@@ -398,6 +444,7 @@ export function createType<Fields extends FieldsDefinition>(
     ...allFields,
     [internalType]: {
       ...config,
+      fields: definition,
       allFields,
       sections,
       label

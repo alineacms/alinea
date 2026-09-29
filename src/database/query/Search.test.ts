@@ -268,6 +268,35 @@ for (const driver of ['native', 'wasm'] as const)
     }
   })
 
+test('numbers match indexed numbers with leading zeros or letters in front', async () => {
+  const db = connect(new Database(':memory:'))
+  try {
+    const source = new MemorySource()
+    await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
+    const runtime = new EntryDatabase(config, db)
+    const change = await transaction(source)
+    await applySourceChange(
+      source,
+      await change
+        .add('pages/a.json', entry('a', 'Brochure 098'))
+        .add('pages/b.json', entry('b', 'IMG0098'))
+        .add('pages/c.json', entry('c', 'Report 980'))
+        .add('pages/d.json', entry('d', 'Invoice 198'))
+        .add('pages/e.json', entry('e', 'Scan 2098'))
+        .compile()
+    )
+    await runtime.syncWith(source)
+    const search = async (term: string) =>
+      (await runtime.resolve({search: term, select: Entry.id})).sort()
+    expect(await search('98')).toEqual(['a', 'b', 'c'])
+    expect(await search('098')).toEqual(['a', 'b', 'c'])
+    expect(await search('brochure 98')).toEqual(['a'])
+    await runtime.close()
+  } finally {
+    await db.close()
+  }
+})
+
 async function sourceWith(
   entries: Record<string, [title: string, body?: string]>
 ): Promise<MemorySource> {

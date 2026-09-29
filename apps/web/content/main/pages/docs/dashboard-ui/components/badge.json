@@ -1,0 +1,111 @@
+{
+  "_id": "3JmLOwH6gQ0jHg3BI7twpM0q4DT",
+  "_type": "Doc",
+  "_index": "a3",
+  "title": "Badge",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A small label for a status or a category. With `status` it takes the color the dashboard uses for that entry status."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLOwnj7G8wk7IN9DSVLYJUI4y",
+      "example": "Badge"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Statuses"
+        }
+      ],
+      "_anchor": "statuses"
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLOvn55nFYod43uYCZ03dWYFy",
+      "example": "BadgeStatuses"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Icons and sizes"
+        }
+      ],
+      "_anchor": "icons-and-sizes"
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLOuxXFZBnPeSAh8QACe827um",
+      "example": "BadgeIcons"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLP27Iqp2D7d1CQ9uNFtXD8dm",
+      "component": "Badge"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A badge is plain text. When its color carries meaning, make sure the text says the same."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261268,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261268,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

@@ -1,7 +1,9 @@
 import {useDashboardContext} from '../hooks.js'
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ *
+ * @deprecated Use `useLocale` from 'alinea/cms'.
  */
 export function useLocale(): string | null {
   return useDashboardContext().page.locale

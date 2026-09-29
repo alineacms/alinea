@@ -1,0 +1,13 @@
+// Inline code sits in the line without changing its height
+.code {
+  padding: 0.15em 0.35em;
+  border-radius: 6px;
+  background: var(--web-neutral-soft);
+  color: var(--web-foreground);
+  font-family: var(--web-mono-font);
+  font-size: 0.875em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}

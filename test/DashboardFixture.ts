@@ -32,10 +32,7 @@ export const dashboardTestConfig = Config.create({
   workspaces: {main}
 })
 
-export function createDashboardStore(
-  config: ConfigDefinition,
-  db: LocalDB
-) {
+export function createDashboardStore(config: ConfigDefinition, db: LocalDB) {
   const store = createStore()
   store.set(configAtom, config)
   store.set(graphAtom, db)

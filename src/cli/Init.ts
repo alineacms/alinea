@@ -2,40 +2,109 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {createId} from '#/core/Id.js'
 import {outcome} from '#/core/Outcome.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 import {reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
-export type InitOptions = {
+export interface InitOptions {
   cwd?: string
   quiet?: boolean
   next?: boolean
 }
 
-enum PM {
+export enum PM {
   NPM = 'npm',
   Yarn = 'yarn',
   PNPM = 'pnpm',
   Bun = 'bun'
 }
 
-const lockfiles = {
-  [PM.Bun]: 'bun.lockb',
-  [PM.PNPM]: 'pnpm-lock.yaml',
-  [PM.Yarn]: 'yarn.lock',
-  [PM.NPM]: 'package-lock.json'
-}
+const lockfiles: Array<[PM, string]> = [
+  [PM.Bun, 'bun.lock'],
+  [PM.Bun, 'bun.lockb'],
+  [PM.PNPM, 'pnpm-lock.yaml'],
+  [PM.Yarn, 'yarn.lock'],
+  [PM.NPM, 'package-lock.json']
+]
 
-async function detectPm(): Promise<PM> {
-  for (const [pm, lockFile] of Object.entries(lockfiles)) {
-    const [, error] = await outcome(fs.stat(lockFile))
-    if (!error) {
-      return pm as PM
-    }
+export async function detectPm(cwd = process.cwd()): Promise<PM> {
+  for (const [pm, lockFile] of lockfiles) {
+    const [, error] = await outcome(fs.stat(path.join(cwd, lockFile)))
+    if (!error) return pm
   }
   return PM.NPM
+}
+
+function detectIndent(source: string): string {
+  // A minified package.json (no indented lines) stays minified
+  return source.match(/\n([ \t]+)\S/)?.[1] ?? ''
+}
+
+export interface PatchedPackageJson {
+  source: string
+  pkg: Record<string, unknown>
+}
+
+/**
+ * Prefix the dev and build scripts of a package.json with the alinea
+ * commands, keeping the original indentation. Returns the new source and the
+ * parsed package, or undefined if the source is not valid JSON.
+ */
+export function patchPackageJson(
+  source: string
+): PatchedPackageJson | undefined {
+  let pkg: unknown
+  try {
+    pkg = JSON.parse(source)
+  } catch {
+    return undefined
+  }
+  if (!isRecord(pkg)) return undefined
+  const scripts = pkg.scripts
+  if (isRecord(scripts)) {
+    for (const name of ['dev', 'build'] as const) {
+      const script = scripts[name]
+      if (typeof script !== 'string' || script.includes('alinea ')) continue
+      scripts[name] = `alinea ${name} -- ${script}`
+    }
+  }
+  const newline = source.includes('\r\n') ? '\r\n' : '\n'
+  let result = JSON.stringify(pkg, null, detectIndent(source))
+  if (newline !== '\n') result = result.replaceAll('\n', newline)
+  if (source.endsWith(newline)) result += newline
+  return {source: result, pkg}
+}
+
+const dashboardOutput = ['/public/admin.html', '/public/admin/']
+
+/**
+ * Append the lines that are not yet in a .gitignore source, keeping its line
+ * endings.
+ */
+export function patchGitignore(source: string, lines: Array<string>): string {
+  const existing = new Set(source.split(/\r?\n/).map(line => line.trim()))
+  const missing = lines.filter(line => !existing.has(line))
+  if (missing.length === 0) return source
+  const newline = source.includes('\r\n') ? '\r\n' : '\n'
+  const separator = source && !source.endsWith('\n') ? newline : ''
+  return source + separator + missing.join(newline) + newline
+}
+
+/**
+ * Append a section to an AGENTS.md source, unless it already has a line with
+ * the heading the section starts with.
+ */
+export function patchAgents(source: string, section: string): string {
+  const [heading] = section.split('\n')
+  const lines = source.split(/\r?\n/).map(line => line.trim())
+  if (lines.includes(heading)) return source
+  if (!source.trim()) return section
+  const newline = source.includes('\r\n') ? '\r\n' : '\n'
+  const body = section.replaceAll('\n', newline)
+  return `${source.trimEnd()}${newline}${newline}${body}`
 }
 
 export async function init(options: InitOptions) {
@@ -65,19 +134,15 @@ export async function init(options: InitOptions) {
     path.join(__dirname, 'static/init/cms.js'),
     'utf-8'
   )
-  const pm = await detectPm()
+  const pm = await detectPm(cwd)
   const runner = pm === 'npm' ? 'npx' : pm
-  let [pkg] = await outcome(
-    fs.readFile(path.join(cwd, 'package.json'), 'utf-8')
-  )
-  if (pkg) {
-    pkg = pkg.replace('"dev": "', '"dev": "alinea dev -- ')
-    pkg = pkg.replace('"build": "', '"build": "alinea build -- ')
-    await fs.writeFile(path.join(cwd, 'package.json'), pkg)
-    try {
-      const isNext = JSON.parse(pkg).dependencies?.next
-      if (isNext) options.next = true
-    } catch {}
+  const packageFile = path.join(cwd, 'package.json')
+  const [source] = await outcome(fs.readFile(packageFile, 'utf-8'))
+  const patched = source ? patchPackageJson(source) : undefined
+  if (patched) {
+    await fs.writeFile(packageFile, patched.source)
+    const dependencies = patched.pkg.dependencies
+    if (isRecord(dependencies) && dependencies.next) options.next = true
   }
   const isNext = options.next ?? false
   const configFileContents = isNext
@@ -102,9 +167,35 @@ export async function init(options: InitOptions) {
     await fs.mkdir(path.dirname(routeLocation), {recursive: true})
     await fs.writeFile(routeLocation, handlerFile)
   }
+  // Point coding agents to the docs and the MCP server
+  const agentsFile = path.join(cwd, 'AGENTS.md')
+  const [agents = ''] = await outcome(fs.readFile(agentsFile, 'utf-8'))
+  const agentsSection = await fs.readFile(
+    path.join(__dirname, 'static/init/agents.md'),
+    'utf-8'
+  )
+  const cmsFile = path.relative(cwd, configFileLocation).replaceAll('\\', '/')
+  const patchedAgents = patchAgents(
+    agents,
+    agentsSection.replace('{cmsFile}', cmsFile)
+  )
+  if (patchedAgents !== agents) await fs.writeFile(agentsFile, patchedAgents)
+  // alinea build writes the dashboard to the public folder
+  const gitignoreFile = path.join(cwd, '.gitignore')
+  const [gitignore = ''] = await outcome(fs.readFile(gitignoreFile, 'utf-8'))
+  const patchedGitignore = patchGitignore(gitignore, dashboardOutput)
+  if (patchedGitignore !== gitignore)
+    await fs.writeFile(gitignoreFile, patchedGitignore)
+  if (quiet) return
   const command = `${runner} alinea dev`
-  if (!quiet)
+  console.info(
+    `Alinea initialized. You can open the dashboard with \`${command}\``
+  )
+  if (isNext)
     console.info(
-      `Alinea initialized. You can open the dashboard with \`${command}\``
+      "Wrap your Next.js config with `withAlinea` from 'alinea/next' to serve the dashboard on /admin"
     )
+  console.info(
+    'Set `baseUrl.production` in cms.ts to the URL of your site, on Vercel it is read from the environment'
+  )
 }

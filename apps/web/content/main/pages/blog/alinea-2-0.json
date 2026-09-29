@@ -1,0 +1,434 @@
+{
+  "_id": "JSjx9iG3CVkp9TZdqoXDnvaOlxU",
+  "_type": "BlogPost",
+  "_index": "Zv",
+  "title": "Alinea 2.0",
+  "publishDate": "2026-09-23",
+  "category": "release",
+  "author": {
+    "name": "Ben Merckx",
+    "url": {
+      "_id": "318YDs0q2fZXu8XLuQaYSKsElgA",
+      "_type": "url",
+      "_url": "https://github.com/benmerckx",
+      "_title": "",
+      "_target": "_self"
+    },
+    "avatar": {
+      "_id": "318YESE8ys6teeGPncK6ITHvAKY",
+      "_type": "url",
+      "_url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
+      "_title": "",
+      "_target": "_self"
+    }
+  },
+  "introduction": "A dashboard rebuilt on React Aria, publishing that no longer waits for a deploy, and the dashboard components, now yours to build with.",
+  "coverText": "2.0",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea 2.0 is out. It is the biggest release since 1.0: the dashboard was rebuilt from the ground up, publishing no longer waits for a deploy, and the components the dashboard is made of are now yours to use. Content still lives in your repository as JSON, your schema is still plain TypeScript, and the query API you know hasn't changed."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Publish, and it's live"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every publish is still a git commit, but your site no longer has to rebuild before editors see their change. The site syncs the new content straight after the commit, so the next request renders the latest version."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content-only commits don't need a new deployment either. On Vercel, one line in "
+        },
+        {
+          "_type": "text",
+          "text": "vercel.json"
+        },
+        {
+          "_type": "text",
+          "text": " skips the build when nothing outside your content directory changed:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "lzNnj2m42MHIYqykc0JaXE8n9Gb",
+      "code": "{\n  \"ignoreCommand\": \"git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
+      "fileName": "vercel.json",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pair it with the new "
+        },
+        {
+          "_type": "text",
+          "text": "afterCommit"
+        },
+        {
+          "_type": "text",
+          "text": " hook to revalidate static pages, and publishing takes seconds instead of a full build. The "
+        },
+        {
+          "_type": "text",
+          "text": "instant publishing guide",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "JRn80EAoFv0PJm3uTrJY2X8LmEG",
+              "_link": "url",
+              "href": "/docs/instant-publishing"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " walks through the setup."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "A dashboard rebuilt on React Aria"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The dashboard is rebuilt on React Aria Components. Keyboard navigation, focus management and screen reader support now work throughout: in the entry tree, in forms, in dialogs and in the rich text editor. We also took the chance to tidy up the interface, so it feels calmer and more consistent from the sidebar to the preview."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Build with the dashboard's own components"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The components the dashboard is built from are now public, in "
+        },
+        {
+          "_type": "text",
+          "text": "alinea/components"
+        },
+        {
+          "_type": "text",
+          "text": ". Buttons, form controls, tables, trees, dialogs, menus and layout components: all accessible, themeable and driven by plain React props. Use them to build custom field views and whole dashboard sections that look and behave like the rest of Alinea."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "7veZMi5SwYbpcXp16wmKNsyTiL6",
+      "code": "import {Button, Dialog, Table} from 'alinea/components'",
+      "fileName": "",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Browse them in the "
+        },
+        {
+          "_type": "text",
+          "text": "components catalog",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "ZFbo6NbWjLaE9g18a7QkWO5TDLv",
+              "_link": "url",
+              "href": "/docs/components"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Translations per field"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Field.localiser"
+        },
+        {
+          "_type": "text",
+          "text": " keeps every locale of a value in a single field, with fallbacks. It sits next to fully translated pages, so you can translate a whole page where that makes sense and just a label or a slug where it doesn't. See "
+        },
+        {
+          "_type": "text",
+          "text": "internationalization",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "CD917VB8cLlahPHro7G1OpLS2CU",
+              "_link": "url",
+              "href": "/docs/internationalization"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for both approaches."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "URL aliases and backlinks"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When an editor renames a page, its old URL is kept as an alias, so you can redirect visitors instead of serving a 404. And every entry now shows what links to it, which makes it safe to change or remove content that other pages depend on."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Commit hooks"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The handler takes two new hooks. "
+        },
+        {
+          "_type": "text",
+          "text": "beforeCommit"
+        },
+        {
+          "_type": "text",
+          "text": " can inspect and rewrite changes before they are written to your repository. "
+        },
+        {
+          "_type": "text",
+          "text": "afterCommit"
+        },
+        {
+          "_type": "text",
+          "text": " runs once they are: revalidate pages, send a notification or kick off a deploy."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "gVsNopCw7Aq6otYR6O37KeV63Cv",
+      "code": "const handler = createHandler({\n  cms,\n  afterCommit() {\n    revalidatePath('/', 'layout')\n  }\n})",
+      "fileName": "app/api/cms/route.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Still small"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For all that, Alinea still installs just 4 packages. Other CMSs pull in hundreds, so installs stay fast, your lockfile stays short and there is far less to audit. The dashboard ships with your app and runs wherever Next.js runs."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea Cloud"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "If you'd rather not host the backend yourself, "
+        },
+        {
+          "_type": "text",
+          "text": "Alinea Cloud",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "rKnKe0MQQo91ph7vOZX2JGmptvW",
+              "_link": "url",
+              "href": "/cloud"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " connects to your GitHub repository, handles sign-in for your editors and commits published content back to the repository. It's free while in beta."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Upgrading"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Coming from 1.x? The "
+        },
+        {
+          "_type": "text",
+          "text": "upgrade guide",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "JrL9hxKIhhiURzVIktTGHvKZNE0",
+              "_link": "url",
+              "href": "/docs/upgrading"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " covers what changed and how to move your project over. If you're new, the "
+        },
+        {
+          "_type": "text",
+          "text": "quickstart",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "C09fJwvGntdbWm1mD4pWcjZQchG",
+              "_link": "url",
+              "href": "/docs/quickstart"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " gets Alinea running in a Next.js project in a few minutes."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Thanks to everyone who tested the previews, reported issues and sent pull requests. Tell us what you build with 2.0 on "
+        },
+        {
+          "_type": "text",
+          "text": "GitHub",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "BlFx6QEUFKtJ3WbEE9WxcDD5xcg",
+              "_link": "url",
+              "href": "https://github.com/alineacms/alinea"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

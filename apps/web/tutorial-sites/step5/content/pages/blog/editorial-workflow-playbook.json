@@ -1,0 +1,37 @@
+{
+  "_id": "3Aqk3xu6wf9LLWf8BPnDE1l3shx",
+  "_type": "Post",
+  "_index": "a1",
+  "title": "Editorial workflow playbook",
+  "path": "editorial-workflow-playbook",
+  "excerpt": "A practical checklist for drafting, reviewing, and publishing content.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A strong content workflow starts with clear ownership between writers, editors, and reviewers."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Draft early, review in short cycles, and keep each publication tied to a simple quality checklist."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

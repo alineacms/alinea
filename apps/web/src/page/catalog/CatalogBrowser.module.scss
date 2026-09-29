@@ -1,0 +1,214 @@
+@use '@/style' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    @include sm {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  &-tabs {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+
+    @include sm {
+      // Scroll the tabs sideways instead of wrapping them on small screens,
+      // with room for the focus ring
+      overflow-x: auto;
+      margin: -4px calc(-1 * var(--web-gutter));
+      padding: 4px var(--web-gutter);
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+  }
+
+  &-tab {
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    color: var(--web-foreground-faded);
+    font: 500 14px/1 var(--web-body-font);
+    cursor: pointer;
+    transition:
+      border-color 0.15s,
+      color 0.15s,
+      background 0.15s;
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--web-foreground) 30%, transparent);
+      color: var(--web-foreground);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--web-accent);
+      outline-offset: 2px;
+    }
+
+    &.is-selected {
+      border-color: var(--web-foreground);
+      background: var(--web-foreground);
+      color: var(--web-background);
+      font-weight: 600;
+    }
+  }
+
+  &-search {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 240px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    color: var(--web-foreground-muted);
+    cursor: text;
+    transition: border-color 0.15s;
+
+    &:focus-within {
+      border-color: var(--web-accent);
+      outline: 3px solid var(--web-accent-soft);
+    }
+
+    @include sm {
+      width: 100%;
+    }
+
+    &-icon {
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    &-input {
+      flex-grow: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--web-foreground);
+      font: 400 14px/1 var(--web-body-font);
+
+      &::placeholder {
+        color: var(--web-foreground-muted);
+      }
+    }
+  }
+
+  &-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  &-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  &-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &-heading {
+    font: var(--web-docs-font-h3);
+    letter-spacing: var(--web-docs-tracking-heading);
+    color: var(--web-foreground);
+  }
+
+  &-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    list-style: none;
+
+    @media (max-width: 1279.999px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @include s {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &-item {
+    display: flex;
+    min-width: 0;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 48px 24px;
+    border-radius: var(--web-docs-radius);
+    border: 1px dashed var(--web-outline);
+    font: var(--web-docs-font-compact);
+    color: var(--web-foreground-faded);
+    text-align: center;
+
+    &-clear {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 10px;
+      border: 1px solid var(--web-outline);
+      background: var(--web-surface);
+      color: var(--web-foreground);
+      font: 500 14px/1 var(--web-body-font);
+      cursor: pointer;
+
+      &:hover {
+        border-color: color-mix(
+          in srgb,
+          var(--web-foreground) 30%,
+          transparent
+        );
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--web-accent);
+        outline-offset: 2px;
+      }
+
+      &-icon {
+        font-size: 14px;
+      }
+    }
+  }
+}

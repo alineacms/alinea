@@ -1,0 +1,10 @@
+{
+  "_id": "3JjYfzEqX6TeclLFCDzds66HAWD",
+  "_type": "DemoAuthor",
+  "_index": "a1",
+  "_root": "authors",
+  "title": "Tom Verbeke",
+  "role": "Head of the workshop",
+  "email": "tom@oakandloom.example",
+  "bio": "Tom has been making furniture for twenty years. He runs the workshop, looks after the machines and knows every board in the timber store by name."
+}

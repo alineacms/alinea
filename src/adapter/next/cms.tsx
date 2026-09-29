@@ -7,12 +7,18 @@ import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import type {RequestContext, UploadResponse} from '#/core/Connection.js'
+import {
+  type RequestContext,
+  type UploadMetadata,
+  type UploadResponse,
+  withDevelopmentKey
+} from '#/core/Connection.js'
 import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
+import {getScope} from '#/core/Scope.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import type {PreviewStat} from '#/preview/widget.js'
@@ -22,6 +28,7 @@ import PLazy from 'p-lazy'
 import type {DatabaseOptions} from 'rado'
 import {cache} from 'react'
 import {requestContext} from './context.js'
+import {cachedResolve, developmentRevision} from './devCache.js'
 import {RenderStats, summarizeQuery, timed} from './renderStats.js'
 import {syncIfStale} from './syncCheck.js'
 
@@ -96,9 +103,16 @@ export class NextCMS<
    */
   #render = cache((): {stats?: RenderStats} => ({}))
 
+  /** One content revision per render, see `developmentRevision`. */
+  #devRevision = cache(() => developmentRevision())
+
   #isDraft = cache(async () => {
-    const {draftMode} = await import('next/headers.js')
+    const {cookies, draftMode} = await import('next/headers.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
+    // Draft renders read the preview cookie and the clock for their stats.
+    // With Cache Components Next.js only allows the clock after request data,
+    // so read the cookies before any stats are taken.
+    if (isDraft) await outcome(cookies)
     return Boolean(isDraft)
   })
 
@@ -228,7 +242,14 @@ export class NextCMS<
     if (row) row.source = useLocalDb ? 'database' : 'handler'
     if (!useLocalDb) {
       const span = trace(this.config, 'alinea.cms.resolve.client')
-      return timed(row, () => span(() => client.resolve(request)))
+      const answer = () => client.resolve(request)
+      // Draft renders are dynamic and answered fresh, the data cache would
+      // be bypassed in draft mode regardless.
+      const revision = context.isDev && !isDraft && this.#devRevision()
+      if (!revision) return timed(row, () => span(answer))
+      const key = [context.handlerUrl.href, revision]
+      const body = getScope(this.config).stringify(request)
+      return span(() => cachedResolve(key, body, answer))
     }
     const db = await this.bundledDb
     const stats = this.#render().stats
@@ -306,9 +327,14 @@ export class NextCMS<
     return client.mutate(mutations)
   }
 
-  async prepareUpload(file: string): Promise<UploadResponse> {
+  async prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse> {
+    const context = await requestContext(this.config)
     const client = await this.#authenticatedClient()
-    return client.prepareUpload(file)
+    const upload = await client.prepareUpload(file, metadata)
+    return context.isDev ? withDevelopmentKey(upload, context.apiKey) : upload
   }
 
   previews = async ({
@@ -321,17 +347,19 @@ export class NextCMS<
     if (!stats) return null
     const {default: dynamic} = await import('next/dynamic.js')
     const {isDev, handlerUrl} = await requestContext(this.config)
-    let file = `${Config.adminPath(this.config)}.html`
-    if (!file.startsWith('/')) file = `/${file}`
+    let adminPath = Config.adminPath(this.config)
+    if (!adminPath.startsWith('/')) adminPath = `/${adminPath}`
+    // In development the site proxies the admin path to the dev server, link
+    // to the dashboard as the site serves it, resolved against its origin
     const dashboardUrl = isDev
-      ? new URL('/', handlerUrl)
-      : new URL(file, handlerUrl)
+      ? adminPath
+      : new URL(`${adminPath}.html`, handlerUrl).href
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
     return (
       <NextPreviews
-        dashboardUrl={dashboardUrl.href}
+        dashboardUrl={dashboardUrl}
         widget={widget}
         stats={widget && showStats ? stats.settled() : undefined}
         workspace={workspace}

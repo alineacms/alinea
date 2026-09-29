@@ -1,4 +1,4 @@
-import {NumberField as RacNumberField} from '#/components.js'
+import {NumberField as NumberFieldInput} from '#/components.js'
 import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {NumberField} from '#/field/number.js'
 
@@ -11,22 +11,21 @@ export function NumberFieldView({field}: NumberFieldViewProps) {
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   return (
-    <RacNumberField
+    <NumberFieldInput
       description={options.help}
-      errorMessage={error}
-      isDisabled={options.readOnly}
-      isRequired={options.required}
-      aria-label={options.inline ? options.label : undefined}
-      label={options.inline ? undefined : options.label}
-      placeholder={
-        options.placeholder ?? (options.inline ? options.label : undefined)
-      }
+      error={error}
+      disabled={options.readOnly}
+      required={options.required}
+      // A number means little without its label, so inline fields keep it
+      // like date and time fields
+      label={options.label}
+      placeholder={options.placeholder}
       shared={options.shared}
-      maxValue={options.maxValue}
-      minValue={options.minValue}
-      onChange={next => setValue(Number.isNaN(next) ? null : next)}
+      max={options.maxValue}
+      min={options.minValue}
+      onValueChange={setValue}
       step={options.step || 1}
-      value={typeof value === 'number' ? value : Number.NaN}
+      value={typeof value === 'number' ? value : null}
     />
   )
 }

@@ -1,7 +1,7 @@
-import {Button, Label, Surface, SurfaceContent} from '#/components.js'
+import {Button, Field, Surface, SurfaceContent, Text} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
 import {Section} from '#/core/Section.js'
-import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {
   useFieldError,
   useFieldNode,
@@ -37,11 +37,11 @@ export function MetadataTimestampFieldView({
   const error = useFieldError(field)
   const displayValue = formatAuditTimestamp(value)
   return (
-    <Label label={options.label} errorMessage={error} shared={options.shared}>
+    <Field label={options.label} error={error} shared={options.shared}>
       <div className={styles.MetadataTimestampFieldView()}>
         {displayValue || 'Not available'}
       </div>
-    </Label>
+    </Field>
   )
 }
 
@@ -56,7 +56,7 @@ export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
   const name = value?.name || 'Unknown user'
   const email = value?.email
   return (
-    <Label label={options.label} errorMessage={error} shared={options.shared}>
+    <Field label={options.label} error={error} shared={options.shared}>
       <div className={styles.MetadataUserFieldView()}>
         <div className={styles.MetadataUserFieldView.person()}>{name}</div>
         {email && (
@@ -65,7 +65,7 @@ export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
           </div>
         )}
       </div>
-    </Label>
+    </Field>
   )
 }
 
@@ -124,16 +124,17 @@ interface MetadataPreviewProps {
 function MetadataPreview({metadata, origin}: MetadataPreviewProps) {
   if (!metadata)
     return (
-      <Label
-        label="Open preview mode to display a metadata preview"
-        style={{marginTop: '32px'}}
-      />
+      <Field label="Metadata previews" style={{marginTop: '32px'}}>
+        <Text as="p" color="muted">
+          Open preview mode to display a metadata preview
+        </Text>
+      </Field>
     )
   return (
-    <Label label="Metadata previews" style={{marginTop: '32px'}}>
+    <Field label="Metadata previews" style={{marginTop: '32px'}}>
       <SearchEnginePreview metadata={metadata} origin={origin} />
       <OpenGraphPreview metadata={metadata} origin={origin} />
-    </Label>
+    </Field>
   )
 }
 
@@ -144,7 +145,7 @@ interface MetadataProps {
 
 function OpenGraphPreview({metadata, origin}: MetadataProps) {
   return (
-    <Label label="Open Graph Preview (Social Share)">
+    <Field label="Open Graph Preview (Social Share)">
       <Surface className={styles.OpenGraphPreview()}>
         <div className={styles.OpenGraphPreview.image()}>
           {metadata['og:image'] ? (
@@ -167,7 +168,7 @@ function OpenGraphPreview({metadata, origin}: MetadataProps) {
           )} */}
         </SurfaceContent>
       </Surface>
-    </Label>
+    </Field>
   )
 }
 
@@ -178,7 +179,7 @@ function SearchEnginePreview({metadata, origin}: MetadataProps) {
       : metadata['og:url']
 
   return (
-    <Label
+    <Field
       label="Search Engine Preview"
       className={styles.SearchEnginePreview()}
     >
@@ -201,6 +202,6 @@ function SearchEnginePreview({metadata, origin}: MetadataProps) {
           </p>
         </SurfaceContent>
       </Surface>
-    </Label>
+    </Field>
   )
 }

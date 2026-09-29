@@ -1,0 +1,19 @@
+.root {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--web-accent);
+  color: var(--web-accent-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateY(calc(-100% - 24px));
+
+  &:focus-visible {
+    transform: none;
+    outline: 2px solid var(--web-foreground);
+    outline-offset: 2px;
+  }
+}

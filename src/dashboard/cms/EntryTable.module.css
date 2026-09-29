@@ -1,0 +1,16 @@
+.EntryTable {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.EntryTable-table {
+  height: 100%;
+}
+
+.EntryTable-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}

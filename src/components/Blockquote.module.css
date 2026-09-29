@@ -1,0 +1,8 @@
+.Blockquote {
+  margin: 0;
+  padding-inline-start: 12px;
+  border-inline-start: 3px solid var(--alinea-border);
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-style: italic;
+}

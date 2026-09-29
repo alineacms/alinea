@@ -27,6 +27,8 @@ export function check(
 ): CheckField {
   return new CheckField({
     options: {overview: true, ...options, label},
-    view: viewKeys.CheckInput
+    view: viewKeys.CheckInput,
+    // A required checkbox must be checked, eg. to accept terms
+    isEmpty: value => !value
   })
 }

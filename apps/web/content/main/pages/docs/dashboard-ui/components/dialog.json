@@ -1,0 +1,129 @@
+{
+  "_id": "3JmLPBKZIL5sK74npgc0DlIbKvQ",
+  "_type": "Doc",
+  "_index": "aK",
+  "title": "Dialog",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A modal window on top of the page that asks for a decision or collects input. DialogTrigger opens it and DialogClose closes it."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPBIF5gz3x3D3blVFXddPfQE",
+      "example": "Dialog"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Confirm a destructive action"
+        }
+      ],
+      "_anchor": "confirm-a-destructive-action"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use `role=\"alertdialog\"` for a decision editors have to make. With `dismissable={false}` a click outside the dialog doesn't close it."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPHEbDZfe7KXohCYXJPB0dJK",
+      "example": "DialogAlert"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Controlled"
+        }
+      ],
+      "_anchor": "controlled"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass `open` and `onOpenChange` to open a dialog from anywhere, and close it once a change is saved. `useDialog` gives the content of a dialog its open state and a `close` function."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPDrYIcLHVsc5c38THXsBEUq",
+      "example": "DialogForm"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPEm92wSgFgjAHZBWd68xihe",
+      "component": "Dialog"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Focus moves into the dialog when it opens and returns to the trigger when it closes. Focus stays inside while it is open, Escape closes it and the page behind it is hidden from screen readers."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261270,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261270,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

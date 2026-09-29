@@ -18,6 +18,7 @@ import {entries, isRecord} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
 import {stableId} from '../util/StableId.js'
 import {typedFromYaml, typedToYaml} from '../util/TypedYaml.js'
+import {validateType} from '../Validation.js'
 
 export interface ListMutator<Row> {
   replace(id: string, row: Row): void
@@ -119,6 +120,18 @@ export class ListFieldBase<
           }
         })
       },
+      nestedErrors(value, context) {
+        const rows = Array.isArray(value) ? value : []
+        return rows.flatMap((row, index) => {
+          const type = schema[row[ListRow.type]]
+          if (!type) return []
+          return validateType(type, row, {
+            ...context,
+            path: [...context.path, index],
+            labels: [...context.labels, Type.label(type)]
+          })
+        })
+      },
       references(value, context) {
         const result = customReferences?.(value, context) ?? []
         const rows = Array.isArray(value) ? value : []
@@ -127,10 +140,12 @@ export class ListFieldBase<
           if (!type) continue
           const segment = row[ListRow.id] || String(rows.indexOf(row))
           result.push(
-            ...Type.references(type, row as Record<string, unknown>, [
-              ...context.path,
-              segment
-            ])
+            ...Type.references(
+              type,
+              row as Record<string, unknown>,
+              [...context.path, segment],
+              [...context.labels, Type.label(type)]
+            )
           )
         }
         return result
@@ -217,10 +232,12 @@ export class ListField<
           const type = schema[row[ListRow.type]]
           if (type)
             result.push(
-              ...Type.anchors(type, row as Record<string, unknown>, [
-                ...context.path,
-                segment
-              ])
+              ...Type.anchors(
+                type,
+                row as Record<string, unknown>,
+                [...context.path, segment],
+                [...context.labels, Type.label(type)]
+              )
             )
         })
         return result

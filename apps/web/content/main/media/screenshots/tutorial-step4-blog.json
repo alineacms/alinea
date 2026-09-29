@@ -1,0 +1,20 @@
+{
+  "_id": "3JzvYOUy9dWvKZrCTWMB7lshyNP",
+  "_type": "MediaFile",
+  "_index": "aH",
+  "title": "tutorial-step4-blog",
+  "location": "/tutorial-step4-blog.3JzvYOYI9kvkjlczibn2JhC2Lxy.webp",
+  "extension": ".webp",
+  "size": 56112,
+  "hash": "aacff03c",
+  "alt": "The blog entry in the Pages root, listing the posts created under it",
+  "width": 2560,
+  "height": 1120,
+  "thumbHash": "/vcBA4ASN0KChwZVIJhj1X8=",
+  "averageColor": "#f8fcfe",
+  "preview": "data:image/webp;base64,UklGRk4CAABXRUJQVlA4IEICAACwDwCdASqgAEYAPm00lkkkIqIiIfVZsIANiWkA1wWA/5z3ASNNBf4QAuvCAYwDy4s0vJ2gvOfHbI86Ar69HdN2HWy6Jqr3ABs5xfbyeGv5OWoVAJ6M+wvOiBnMdFH4X6LQRL/z4X0anejbcCxB19ZZoXloPhywJlESA2h5YDAPuiunvhryAAD+/ojm9WIYdmnPxR2eZln/Av7Qu3y82FbcUeGCSPf4QZYeNU+qUInrxgW285ojxQlC3rYNAsB3+AhItIUk5tUrfC958aaAGH+0HNN6517P+zlv9YD38vt63oA2KFuaRdwF5auRJp3QcPwZEc5qEDgahtaORpsDDbixeckpE/U/lBDAreEr6u1tdEzJ4pFqavaAgXY37TkhBnmQkMPl1gDM8zyXSP8+rOCegtCfkOv69a5r5w875WBYs5aKPccpC1LcNle0gq5PscuEcpvXLSk6d8I0zhYOS7d/QQhnQXT9IWXvLG/D2lzxqo9eG9Mld7HxavOCXg9L9D2akpH/YBODG9Dk2bsArValc/H1FoTCAwYkwwDBX/EnBBDPct1sBix245clGnvgm86R/PVo8X5bMylhRUJF/ULHL8F+wDlPmdoaRum4/NMJpcH4yGm0fsKNFby/P68/AAq0TZLebjh7rwnLUSK2IWyhtiNGWRk5b2Bfy5Ffte8EhCtK8uoCuHONUzscgNZezxXov/sk/Yo3vHcuKIbLcCpH0UsRqZeKW0F0cDRjrKQcK9oJnFMy8P/KjhdS3j1tyQAAAA==",
+  "focus": {
+    "x": 0.5,
+    "y": 0.5
+  }
+}

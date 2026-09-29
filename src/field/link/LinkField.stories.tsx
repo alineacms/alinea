@@ -1,4 +1,4 @@
-import {Button, DialogTrigger} from '#/components.js'
+import {Dialog, DialogTrigger} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/ListRow.js'
@@ -190,17 +190,17 @@ interface ExternalPickerStoryProps {
 function ExternalPickerStory({selectionMode}: ExternalPickerStoryProps) {
   return (
     <div style={pickerStoryStyle}>
-      <DialogTrigger defaultOpen>
-        <Button>
+      <Dialog defaultOpen>
+        <DialogTrigger>
           {selectionMode === 'multiple'
             ? 'Pick external links'
             : 'Pick external link'}
-        </Button>
+        </DialogTrigger>
         <ExternalLinkPicker
           selectionMode={selectionMode}
           onConfirm={value => console.info(value)}
         />
-      </DialogTrigger>
+      </Dialog>
     </div>
   )
 }
@@ -231,8 +231,8 @@ function ExplorerPickerStory({
       views={views}
     >
       <div style={pickerStoryStyle}>
-        <DialogTrigger>
-          <Button>{label}</Button>
+        <Dialog>
+          <DialogTrigger>{label}</DialogTrigger>
           {picker === 'entry' ? (
             <LinkPicker
               location={location}
@@ -249,7 +249,7 @@ function ExplorerPickerStory({
               onConfirm={selection => console.info(selection)}
             />
           )}
-        </DialogTrigger>
+        </Dialog>
       </div>
     </StoryProvider>
   )

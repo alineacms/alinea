@@ -97,6 +97,11 @@ export interface RequestContext {
   isDev: boolean
   handlerUrl: URL
   apiKey: string
+  /**
+   * Origin serving the public files of this build when it is not the
+   * configured baseUrl, such as the local server of `next start`
+   */
+  publicUrl?: URL
   applyAuth?(init?: RequestInit): RequestInit
 }
 
@@ -130,6 +135,23 @@ export interface UploadMetadata {
 export interface UploadResponse extends UploadDestination {
   url: string
   method?: string
+  /** Extra headers to send with the upload */
+  headers?: Record<string, string>
+}
+
+/**
+ * Adds the development key to an upload to the dev server, which requires it
+ * from callers that send no Origin, such as server code (browsers send one)
+ */
+export function withDevelopmentKey(
+  upload: UploadResponse,
+  apiKey: string
+): UploadResponse {
+  if (!new URL(upload.url).search.startsWith('?/upload')) return upload
+  return {
+    ...upload,
+    headers: {...upload.headers, [developmentKeyHeader]: apiKey}
+  }
 }
 
 export interface DraftTransport {

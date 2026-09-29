@@ -7,7 +7,9 @@ export interface DashboardRoot extends RootData {
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ *
+ * @deprecated Use `useEntry` from 'alinea/cms' for the root name of the current entry (`entry.root`).
  */
 export function useRoot(): DashboardRoot {
   const {root} = useDashboardContext()

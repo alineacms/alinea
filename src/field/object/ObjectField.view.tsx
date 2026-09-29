@@ -1,5 +1,6 @@
-import {Label} from '#/components.js'
-import {EntryFields, NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {Field} from '#/components.js'
+import {EntryFields} from '#/dashboard/app/EntryFields.js'
+import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   useFieldError,
@@ -7,10 +8,6 @@ import {
   useFieldOptions
 } from '#/dashboard/hooks.js'
 import {ObjectField} from '#/field/object.js'
-import {styler} from '@alinea/styler'
-import css from './ObjectFieldView.module.css'
-
-const styles = styler(css)
 
 export interface ObjectFieldViewProps {
   field: ObjectField<object>
@@ -21,14 +18,16 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const error = useFieldError(field)
   const node = useFieldNode(field)
   return (
-    <Label
+    <Field
       label={options.inline ? undefined : options.label}
+      description={options.help}
+      required={options.required}
+      error={error}
       shared={options.shared}
     >
       <NodeEditor node={node as ReactiveNode<object>} type={options.fields}>
         <EntryFields />
       </NodeEditor>
-      {error && <div className={styles.ObjectFieldView.error()}>{error}</div>}
-    </Label>
+    </Field>
   )
 }

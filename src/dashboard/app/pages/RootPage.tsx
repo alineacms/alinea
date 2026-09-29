@@ -1,19 +1,16 @@
+import {Page as PageLayout, PageContent} from '#/components.js'
 import type {RootData} from '#/core/Root.js'
 import {assert} from '#/core/util/Assert.js'
 import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {page, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
-import {
-  rootAtoms,
-  type RootAtoms,
-  type RootViewProps
-} from '#/dashboard/atoms/root.js'
+import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
+import type {RootViewProps} from '#/dashboard/cms/ViewProps.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ComponentType} from 'react'
 import {Explorer} from '../Explorer.js'
 import {CreateEntryButton} from '../DashboardLayout.js'
 import {NotFoundPanel} from './EntryPage.js'
-import {Rail, RailBody} from '../ui/Rail.js'
 import css from './RootPage.module.css'
 
 const styles = styler(css)
@@ -46,11 +43,11 @@ function RootEditor({data, explorerPage, root, view: View}: RootEditorProps) {
   if (View) {
     const rootData = {...data, name: root.key}
     return (
-      <Rail main>
-        <RailBody className={styles.RootPage.customView()}>
+      <PageLayout>
+        <PageContent className={styles.RootPage.customView()}>
           <View root={rootData} />
-        </RailBody>
-      </Rail>
+        </PageContent>
+      </PageLayout>
     )
   }
   assert(explorerPage, 'Explorer page expected')
@@ -64,7 +61,7 @@ interface RootBrowserProps {
 
 function RootBrowser({page, root}: RootBrowserProps) {
   return (
-    <Rail main>
+    <PageLayout>
       <Explorer
         controls={
           <div className={styles.RootPage.mobileActions()}>
@@ -74,7 +71,7 @@ function RootBrowser({page, root}: RootBrowserProps) {
         explorer={root.explorer}
         page={page}
       />
-    </Rail>
+    </PageLayout>
   )
 }
 

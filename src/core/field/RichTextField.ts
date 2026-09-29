@@ -1,5 +1,8 @@
 import {Parser} from 'htmlparser2'
-import type {EntryReferenceTarget} from '../db/EntryReference.js'
+import type {
+  EntryReferenceTarget,
+  FieldReferenceContext
+} from '../db/EntryReference.js'
 import {referenceFieldPath} from '../db/EntryReference.js'
 import {Entry} from '../Entry.js'
 import {
@@ -28,6 +31,7 @@ import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
 import {richTextFromYaml, richTextToYaml} from './RichTextYaml.js'
+import {validateType} from '../Validation.js'
 
 export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
@@ -102,20 +106,32 @@ export class RichTextField<
       fromYaml(value, context) {
         return richTextFromYaml(schema, value, context.path)
       },
+      isEmpty(value) {
+        return !Array.isArray(value) || isEmptyDoc(value)
+      },
+      nestedErrors(value, context) {
+        const doc = Array.isArray(value) ? value : []
+        return doc.flatMap((row, index) => {
+          if (!schema || !Node.isBlock(row)) return []
+          const type = schema[row[Node.type]]
+          if (!type) return []
+          return validateType(type, row, {
+            ...context,
+            path: [...context.path, index],
+            labels: [...context.labels, Type.label(type)]
+          })
+        })
+      },
       references(value, context) {
         const doc = Array.isArray(value) ? value : []
         const result = customReferences?.(value, context) ?? []
-        result.push(
-          ...richTextReferences(schema, doc, context.path, context.label)
-        )
+        result.push(...richTextReferences(schema, doc, context))
         return result
       },
       anchors(value, context) {
         const doc = Array.isArray(value) ? value : []
         const result = []
-        result.push(
-          ...richTextAnchors(schema, doc, context.path, context.label)
-        )
+        result.push(...richTextAnchors(schema, doc, context))
         return result
       },
       normalizeAnchors(value, context) {
@@ -148,6 +164,25 @@ export class RichTextField<
       }
     })
   }
+}
+
+// Elements which only wrap text, a document of these without text is empty
+const textContainers = new Set([
+  'paragraph',
+  'heading',
+  'blockquote',
+  'bulletList',
+  'orderedList',
+  'listItem'
+])
+
+function isEmptyDoc(doc: TextDoc<unknown>): boolean {
+  return doc.every(node => {
+    if (Node.isText(node)) return !node.text?.trim()
+    if (!Node.isElement(node) || !textContainers.has(node[Node.type]))
+      return false
+    return isEmptyDoc(node.content ?? [])
+  })
 }
 
 function normalizeRichTextAnchors<Blocks>(
@@ -242,11 +277,11 @@ function normalizeRichTextAnchors<Blocks>(
   return next
 }
 
-function localizeRichTextLinks(
+function localizeRichTextLinks<Blocks>(
   schema: Schema | undefined,
-  doc: TextDoc,
+  doc: TextDoc<Blocks>,
   context: FieldLocalizeContext
-): TextDoc {
+): TextDoc<Blocks> {
   let next = doc
   doc.forEach((node, index) => {
     const localized = localizeRichTextNode(schema, node, context)
@@ -303,9 +338,9 @@ function textContent(node: Node): string {
 function richTextAnchors<Blocks>(
   schema: Schema | undefined,
   doc: TextDoc<Blocks>,
-  path: Array<string>,
-  label?: string
+  context: FieldReferenceContext
 ): Array<EntryAnchorTarget> {
+  const {path, label, labels} = context
   const result: Array<EntryAnchorTarget> = []
   const anchors = new Set<string>()
   iterNodes(doc, (node, nodePath) => {
@@ -340,10 +375,12 @@ function richTextAnchors<Blocks>(
     const type = schema[row[Node.type]]
     if (!type) return
     result.push(
-      ...Type.anchors(type, row as Record<string, unknown>, [
-        ...path,
-        row._id ?? String(index)
-      ])
+      ...Type.anchors(
+        type,
+        row as Record<string, unknown>,
+        [...path, row._id ?? String(index)],
+        [...labels, Type.label(type)]
+      )
     )
   })
   return result
@@ -352,9 +389,9 @@ function richTextAnchors<Blocks>(
 function richTextReferences<Blocks>(
   schema: Schema | undefined,
   doc: TextDoc<Blocks>,
-  path: Array<string>,
-  label?: string
+  context: FieldReferenceContext
 ): Array<EntryReferenceTarget> {
+  const {path, label, labels} = context
   const result: Array<EntryReferenceTarget> = []
   iterMarks(doc, mark => {
     if (mark[Mark.type] !== 'link') return
@@ -369,6 +406,7 @@ function richTextReferences<Blocks>(
         typeof linkId === 'string' ? [...path, linkId] : path
       ),
       fieldLabel: label,
+      fieldLabels: labels,
       linkId,
       linkType
     })
@@ -383,6 +421,7 @@ function richTextReferences<Blocks>(
           : [...path, String(index)]
       ),
       fieldLabel: label,
+      fieldLabels: labels,
       linkId: node._id,
       linkType: 'image'
     })
@@ -392,10 +431,12 @@ function richTextReferences<Blocks>(
     const type = schema[row[Node.type]]
     if (!type) return
     result.push(
-      ...Type.references(type, row as Record<string, unknown>, [
-        ...path,
-        row._id ?? String(index)
-      ])
+      ...Type.references(
+        type,
+        row as Record<string, unknown>,
+        [...path, row._id ?? String(index)],
+        [...labels, Type.label(type)]
+      )
     )
   })
   return result

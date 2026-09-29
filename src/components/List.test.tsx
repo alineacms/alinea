@@ -6,7 +6,8 @@ import {
   ListItem,
   ListItemDescription,
   ListItemTitle,
-  ListItemVisual
+  ListItemVisual,
+  ListLabel
 } from './List.js'
 
 afterEach(cleanup)
@@ -45,10 +46,10 @@ test('ListItem renders leading, trailing and inner content', () => {
 })
 
 test('ListItem renders its content as a button when it is actionable', () => {
-  const onPress = mock(() => undefined)
+  const onClick = mock(() => undefined)
   render(
     <List>
-      <ListItem onPress={onPress}>
+      <ListItem onClick={onClick}>
         <ListItemTitle>Open entry</ListItemTitle>
       </ListItem>
     </List>
@@ -56,7 +57,7 @@ test('ListItem renders its content as a button when it is actionable', () => {
 
   fireEvent.click(screen.getByRole('button', {name: 'Open entry'}))
 
-  expect(onPress).toHaveBeenCalledTimes(1)
+  expect(onClick).toHaveBeenCalledTimes(1)
 })
 
 test('ListEmpty describes an empty list', () => {
@@ -72,6 +73,35 @@ test('ListEmpty describes an empty list', () => {
   expect(screen.getByRole('status').textContent).toBe(
     'No resultsTry another filter.'
   )
+})
+
+test('ListLabel without a fold renders the label as plain text', () => {
+  render(
+    <ListLabel aria-label="No links to fold" expanded={false} showFold={false}>
+      Gallery
+    </ListLabel>
+  )
+
+  expect(screen.queryByRole('button')).toBeNull()
+  expect(screen.getByText('Gallery')).toBeTruthy()
+})
+
+test('ListLabel with a fold toggles all rows', () => {
+  const onClick = mock(() => undefined)
+  render(
+    <ListLabel
+      aria-label="Expand all items"
+      expanded={false}
+      hasRows
+      onClick={onClick}
+    >
+      Sections
+    </ListLabel>
+  )
+
+  fireEvent.click(screen.getByRole('button', {name: 'Expand all items'}))
+
+  expect(onClick).toHaveBeenCalledTimes(1)
 })
 
 function EmptyIcon() {

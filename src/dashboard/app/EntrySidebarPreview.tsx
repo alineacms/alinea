@@ -1,4 +1,5 @@
-import {Button, List, ListEmpty, ProgressCircle} from '#/components.js'
+import {List, ListEmpty, PreviewFrame, PreviewToolbar} from '#/components.js'
+import type {Entry} from '#/core/Entry.js'
 import type {Preview} from '#/core/Preview.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
@@ -6,26 +7,22 @@ import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
 import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {
-  IcRoundArrowBack,
-  IcRoundArrowForward,
-  IcRoundOpenInNew,
-  IcRoundRefresh,
-  IcRoundVisibilityOff
-} from '../icons.js'
+import {IcRoundVisibilityOff} from '../icons.js'
 import css from './EntrySidebarPreview.module.css'
-import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
+  /** The preview entry loaded by the page atom */
+  previewEntry?: Entry
 }
 
 export function EntrySidebarPreview({
   entry,
-  localeData
+  localeData,
+  previewEntry
 }: EntrySidebarPreviewProps) {
   const preview = useAtomValueRaw(entry.preview)
   if (!preview)
@@ -37,20 +34,29 @@ export function EntrySidebarPreview({
   if (preview === true)
     return <EntrySidebarBrowserPreview localeData={localeData} />
   return (
-    <EntrySidebarComponentPreview localeData={localeData} preview={preview} />
+    <EntrySidebarComponentPreview
+      localeData={localeData}
+      preview={preview}
+      previewEntry={previewEntry}
+    />
   )
 }
 
 interface EntrySidebarComponentPreviewProps {
   localeData: EntryLocaleAtoms
   preview: Exclude<Preview, boolean>
+  previewEntry?: Entry
 }
 
 function EntrySidebarComponentPreview({
   localeData,
-  preview: Component
+  preview: Component,
+  previewEntry: loadedEntry
 }: EntrySidebarComponentPreviewProps) {
-  const previewEntry = useAtomValueRaw(localeData.previewEntry)
+  // The unwrapped atom is empty on its first read, render the entry the page
+  // loaded until it catches up so the preview mounts with the page
+  const previewEntry =
+    useAtomValueRawSync(localeData.previewEntry) ?? loadedEntry
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage title="Preview unavailable">
@@ -85,63 +91,6 @@ function EntrySidebarPreviewMessage({
         </List>
       </div>
     </div>
-  )
-}
-
-interface EntrySidebarBrowserPreviewHeaderProps {
-  canOpenPreview: boolean
-  reloadLabel: string
-  onPrevious?: () => void
-  onNext?: () => void
-  onReload?: () => void
-  onOpen?: () => void
-}
-
-function EntrySidebarBrowserPreviewHeader({
-  canOpenPreview,
-  reloadLabel,
-  onPrevious,
-  onNext,
-  onReload,
-  onOpen
-}: EntrySidebarBrowserPreviewHeaderProps) {
-  return (
-    <RailHeader className={styles.EntrySidebarPreview.subheader()}>
-      <div className={styles.EntrySidebarPreview.controls()}>
-        <Button
-          appearance="plain"
-          size="icon"
-          icon={IcRoundArrowBack}
-          aria-label="Go back in preview"
-          isDisabled={!canOpenPreview}
-          onPress={onPrevious}
-        />
-        <Button
-          appearance="plain"
-          size="icon"
-          icon={IcRoundArrowForward}
-          aria-label="Go forward in preview"
-          isDisabled={!canOpenPreview}
-          onPress={onNext}
-        />
-        <Button
-          appearance="plain"
-          size="icon"
-          icon={IcRoundRefresh}
-          aria-label={reloadLabel}
-          isDisabled={!onReload}
-          onPress={onReload}
-        />
-      </div>
-      <Button
-        appearance="plain"
-        size="icon"
-        icon={IcRoundOpenInNew}
-        aria-label="Open preview in new tab"
-        isDisabled={!canOpenPreview}
-        onPress={onOpen}
-      />
-    </RailHeader>
   )
 }
 
@@ -289,36 +238,24 @@ export function EntrySidebarBrowserPreview({
 
   return (
     <div className={styles.EntrySidebarPreview()}>
-      <EntrySidebarBrowserPreviewHeader
-        canOpenPreview={Boolean(previewUrl)}
-        reloadLabel={previewUrl ? 'Reload preview' : 'Retry preview'}
-        onPrevious={() => post(PreviewAction.Previous)}
-        onNext={() => post(PreviewAction.Next)}
+      <PreviewToolbar
+        labels={{reload: previewUrl ? 'Reload preview' : 'Retry preview'}}
+        onBack={previewUrl ? () => post(PreviewAction.Previous) : undefined}
+        onForward={previewUrl ? () => post(PreviewAction.Next) : undefined}
         onReload={reloadPreview}
-        onOpen={openPreview}
+        onOpen={previewUrl ? openPreview : undefined}
       />
-      <div className={styles.EntrySidebarPreview.browser()}>
-        {((previewUrl && loading) || (!previewUrl && previewUrlPending)) && (
-          <div className={styles.EntrySidebarPreview.loading()}>
-            <ProgressCircle isIndeterminate aria-label="Loading preview" />
-          </div>
-        )}
-        {previewUrl ? (
-          <iframe
-            key={`${previewUrl}:${frameVersion}`}
-            ref={iframe}
-            className={styles.EntrySidebarPreview.iframe()}
-            allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-            sandbox="allow-top-navigation allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
-            src={previewUrl}
-            onLoad={() => setLoading(false)}
-          />
-        ) : previewUrlPending ? null : (
-          <p className={styles.EntrySidebarPreview.browserMessage()}>
-            Preview is currently unavailable.
-          </p>
-        )}
-      </div>
+      <PreviewFrame
+        key={`${previewUrl}:${frameVersion}`}
+        ref={iframe}
+        title="Preview"
+        src={previewUrl}
+        loading={Boolean(previewUrl ? loading : previewUrlPending)}
+        unavailable="Preview is currently unavailable."
+        allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+        sandbox="allow-top-navigation allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
+        onLoad={() => setLoading(false)}
+      />
     </div>
   )
 }

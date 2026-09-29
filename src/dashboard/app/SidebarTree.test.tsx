@@ -1,10 +1,9 @@
-import {Tree} from '#/components.js'
+import {Tree, type Key} from '#/components.js'
 import type {RootTreeItem, RootTreeNode} from '#/dashboard/atoms/root.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
 import {useMemo, useState} from 'react'
-import {Collection, type Key} from 'react-aria-components'
 import {cms} from '../fixture/cms.js'
 import {SidebarTreeItem} from './SidebarTree.js'
 
@@ -80,7 +79,7 @@ function SidebarTreeFixture({
         item={item}
         locale={null}
       >
-        <Collection items={item.children}>{renderItem}</Collection>
+        {renderItem}
       </SidebarTreeItem>
     )
   }
@@ -89,7 +88,6 @@ function SidebarTreeFixture({
       <Tree
         aria-label="Content tree"
         items={rootItems}
-        dependencies={[expandedKeys]}
         expandedKeys={expandedKeys}
         onExpandedChange={setExpandedKeys}
       >

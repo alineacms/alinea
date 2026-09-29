@@ -1,3 +1,4 @@
+import type {ImageResizeOptions} from '#/core/media/ImageTransform.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'
@@ -36,6 +37,12 @@ export interface Config {
   syncInterval?: number
   /** Maximum file upload size in bytes */
   maxUploadSize?: number
+  /**
+   * Scale down jpeg, png and webp uploads larger than these dimensions before
+   * they are stored, the dashboard resizes them in the browser. Defaults to
+   * 2560 by 2560 pixels, false keeps uploads as they are.
+   */
+  resizeImages?: ImageResizeOptions | false
 
   /** The base url of the application */
   baseUrl?: string | {development?: string; production?: string}

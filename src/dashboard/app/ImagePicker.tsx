@@ -1,34 +1,22 @@
 // oxlint-disable jsx_a11y/no-autofocus
-import {Button} from '#/components.js'
+import {useDialog} from '#/components.js'
 import {getRoot} from '#/core/Internal.js'
-import {
-  createExplorerAtoms,
-  type ExplorerLocation,
-  type ExplorerOptions
-} from '#/dashboard/atoms/explorer.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
-import {useDashboardContext} from '#/dashboard/hooks.js'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {Suspense, startTransition, useMemo, type ReactNode} from 'react'
+import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {Suspense, startTransition, type ReactNode} from 'react'
+import type {DashboardEntry, ExplorerOptions} from '../atoms/explorer.js'
+import {policyAtom} from '../atoms/user.js'
+import {useDashboardContext} from '../hooks.js'
 import {ExplorerHeader} from './Explorer.js'
+import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {
-  ExplorerModal,
-  ExplorerModalActions,
-  ExplorerModalFooter,
-  ExplorerModalSelection,
-  ExplorerModalSuspense
-} from './ExplorerModal.js'
-import {
-  createExplorerTree,
   ExplorerPickerContent,
-  normalizePickerLocale
+  ExplorerPickerFooter,
+  usePickerExplorer
 } from './ExplorerPickerContent.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
-  DashboardModalDialog,
-  useDashboardModal
+  DashboardModalDialog
 } from './ui/DashboardModal.js'
 
 export interface ImagePickerOptions extends ExplorerOptions {
@@ -38,85 +26,43 @@ export interface ImagePickerOptions extends ExplorerOptions {
 export function ImagePicker(options: ImagePickerOptions) {
   const label = String(options.label ?? 'Pick media')
   return (
-    <DashboardModal size="explorer">
+    <DashboardModal size="explorer" aria-label={label}>
       <Suspense
-        fallback={
-          <DashboardModalDialog
-            aria-label={label}
-            variant="explorer"
-            isLoading
-          />
-        }
+        fallback={<DashboardModalDialog variant="explorer" isLoading />}
       >
-        <ImagePickerModalContent options={options} label={label} />
+        <ImagePickerModalContent options={options} />
       </Suspense>
     </DashboardModal>
   )
 }
 
 interface ExplorerModalProps {
-  label: string
   options: ImagePickerOptions
 }
 
-function ImagePickerModalContent({label, options}: ExplorerModalProps) {
-  const modal = useDashboardModal()
-  const {page, root, workspace} = useDashboardContext()
+function ImagePickerModalContent({options}: ExplorerModalProps) {
+  const modal = useDialog()
+  const {root, workspace} = useDashboardContext()
   const policy = useAtomValueRaw(policyAtom)
   const mediaRoot = Object.entries(workspace.roots).find(
     ([key, value]) =>
       policy.canRead({workspace: root.workspace, root: key}) &&
       Boolean(getRoot(value).isMediaRoot)
   )?.[0]
-  const location = options.location ?? {
-    workspace: root.workspace,
-    root: mediaRoot ?? root.key
-  }
-  const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
-  const pickerI18n = useAtomValueRaw(pickerRoot.i18n)
-  const initialLocale = normalizePickerLocale(
-    location.locale ?? options.selectedLocale ?? page.locale,
-    pickerI18n?.locales ?? []
+  const {explorer, tree} = usePickerExplorer(
+    options,
+    options.location ?? {
+      workspace: root.workspace,
+      root: mediaRoot ?? root.key
+    },
+    'card'
   )
-  const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const explorerIdentity = JSON.stringify([
-    initialLocation,
-    options.condition ?? null
-  ])
-  // Explorer atoms capture their initial options and reset only with this scope.
-  // oxlint-disable react-hooks/exhaustive-deps
-  const {explorer, tree} = useMemo(() => {
-    let explorer: ReturnType<typeof createExplorerAtoms>
-    const tree = createExplorerTree(() => explorer)
-    const currentRoot = (location: ExplorerLocation) =>
-      rootAtoms(location.workspace, location.root ?? root.key)
-    const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
-    explorer = createExplorerAtoms(initialLocation, {
-      ...options,
-      allowAllWorkspaces:
-        options.allowAllWorkspaces ??
-        (!options.limitLocations?.length && !options.pickChildren),
-      initialView: options.initialView ?? 'card',
-      rootData,
-      searchDepth: 'all',
-      selectedLocale: initialLocale,
-      treeItems: (locale, location) =>
-        tree(currentRoot(location), locale, location).items,
-      treeReady: (locale, location) =>
-        tree(currentRoot(location), locale, location).ready
-    })
-    return {explorer, tree}
-  }, [explorerIdentity])
-  // oxlint-enable react-hooks/exhaustive-deps
-  const explorerPage = useAtomValueRaw(explorer.page)
+  const explorerPage = useAtomValueRawSync(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
-  const selection = useAtomValueRaw(explorer.selection)
-  const selectedItems = selection === 'all' ? 0 : selection.size
+  const setSelection = useSetAtom(explorer.selection)
 
   if (!explorerPage)
-    return (
-      <DashboardModalDialog aria-label={label} variant="explorer" isLoading />
-    )
+    return <DashboardModalDialog variant="explorer" isLoading />
 
   function onSubmit() {
     startTransition(() => {
@@ -125,8 +71,14 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     })
   }
 
+  // A single file is picked as soon as it is clicked
+  function onPick(entry: DashboardEntry) {
+    setSelection(new Set([entry.id]))
+    onSubmit()
+  }
+
   return (
-    <DashboardModalDialog aria-label={label} variant="explorer">
+    <DashboardModalDialog variant="explorer">
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
@@ -139,21 +91,12 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
           <ExplorerPickerContent
             explorer={explorer}
             navigationLabel="Media folders"
+            onPick={explorer.selectionMode === 'single' ? onPick : undefined}
             options={options}
             page={explorerPage}
             tree={tree}
           />
-          <ExplorerModalFooter>
-            <ExplorerModalSelection>
-              {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </ExplorerModalSelection>
-            <ExplorerModalActions>
-              <Button onPress={modal.close}>Cancel</Button>
-              <Button intent="primary" onPress={onSubmit}>
-                Select
-              </Button>
-            </ExplorerModalActions>
-          </ExplorerModalFooter>
+          <ExplorerPickerFooter explorer={explorer} onSubmit={onSubmit} />
         </ExplorerModal>
       </ExplorerModalSuspense>
     </DashboardModalDialog>

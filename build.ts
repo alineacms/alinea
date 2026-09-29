@@ -14,13 +14,13 @@ import {
   type CSSModuleExports,
   type CSSModuleReference
 } from 'lightningcss'
-import {spawn} from 'node:child_process'
 import fs from 'node:fs'
 import {builtinModules} from 'node:module'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import sade from 'sade'
 import {sync} from 'symlink-dir'
+import {runForwarded, watchParent} from './src/cli/util/RunForwarded.js'
 
 sync('.', 'node_modules/alinea')
 
@@ -28,9 +28,6 @@ const BROWSER_TARGET = 'browser'
 const SERVER_TARGET = 'server'
 const CSS_ENTRY = 'css-entry'
 const JS_ENTRY = 'js-entry'
-
-const llmsHandbookUrl = 'https://alineacms.com/llms-full.txt'
-const llmsHandbookFile = 'llms-full.txt'
 
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
@@ -141,6 +138,73 @@ const bundleTs: Plugin = {
         )}\n}\n\n`
       }
       fs.writeFileSync('./dist/bundled.d.ts', declaration)
+    })
+  }
+}
+
+// Public entry points must not expose react-aria, allotment or jotai in their
+// types: consumers do not have them installed and they stay implementation
+// details we bundle.
+const publicTypeEntries = ['components', 'cms']
+const internalTypePackages =
+  /^(react-aria-components|react-aria|react-stately|allotment|jotai|@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/)/
+
+function findInternalTypeImports(root: string): Array<string> {
+  const violations: Array<string> = []
+  const seen = new Set<string>()
+  const queue = publicTypeEntries.map(entry => ({
+    file: path.join(root, `${entry}.d.ts`),
+    chain: [entry]
+  }))
+  while (queue.length > 0) {
+    const {file, chain} = queue.shift()!
+    if (seen.has(file)) continue
+    seen.add(file)
+    if (!fs.existsSync(file)) {
+      violations.push(`${chain.join(' > ')} is missing`)
+      continue
+    }
+    const contents = fs.readFileSync(file, 'utf-8')
+    const specifiers = contents.matchAll(
+      /(?:from\s+|import\s*\(\s*)['"]([^'"]+)['"]/g
+    )
+    for (const [, specifier] of specifiers) {
+      if (internalTypePackages.test(specifier)) {
+        violations.push(`${chain.join(' > ')} imports ${specifier}`)
+        continue
+      }
+      const target = specifier.startsWith('.')
+        ? path.join(path.dirname(file), specifier)
+        : specifier === 'alinea'
+          ? path.join(root, 'index')
+          : specifier.startsWith('alinea/')
+            ? path.join(root, specifier.slice('alinea/'.length))
+            : specifier.startsWith('#/')
+              ? path.join(root, specifier.slice('#/'.length))
+              : undefined
+      if (!target) continue
+      const declaration = `${target.replace(/\.js$/, '')}.d.ts`
+      queue.push({
+        file: declaration,
+        chain: [...chain, path.relative(root, declaration)]
+      })
+    }
+  }
+  return violations
+}
+
+// Only `bun run build` emits declarations (tsc) before bundling, so watch
+// builds would check whatever stale declarations are left in dist
+const publicTypes: Plugin = {
+  name: 'public-types',
+  setup(build) {
+    build.onEnd(() => {
+      const violations = findInternalTypeImports('./dist')
+      if (violations.length === 0) return
+      console.error(
+        `Public types expose bundled packages or missing declarations:\n  ${violations.join('\n  ')}`
+      )
+      process.exitCode = 1
     })
   }
 }
@@ -268,10 +332,7 @@ const externalize: Plugin = {
   setup(build) {
     const cwd = process.cwd()
     const src = path.join(cwd, 'src')
-    let modules: Set<string>
-    build.onStart(() => {
-      modules = new Set()
-    })
+    build.initialOptions.metafile = true
     build.onResolve({filter: /^(\.|#)/}, args => {
       if (args.kind === 'entry-point') return
       if (
@@ -280,19 +341,7 @@ const externalize: Plugin = {
         args.path.endsWith('.woff2')
       )
         return
-      if (!args.resolveDir.startsWith(src)) {
-        if (args.resolveDir.includes('node_modules')) {
-          const folder = args.resolveDir
-            .replaceAll('\\', '/')
-            .split('node_modules/')[1]
-          const segments = folder.split('/')
-          const module = folder.startsWith('@')
-            ? segments.slice(0, 2)
-            : segments.slice(0, 1)
-          modules.add(module.join('/'))
-        }
-        return
-      }
+      if (!args.resolveDir.startsWith(src)) return
       if (args.path.endsWith('.cjs')) return
       if (!args.path.endsWith('.js') && !args.path.endsWith('.mjs')) {
         console.error(`Missing file extension on local import: ${args.path}`)
@@ -305,10 +354,28 @@ const externalize: Plugin = {
       }
       return {path: args.path, external: true}
     })
-    build.onEnd(() => {
+    build.onEnd(result => {
+      if (!result.metafile) return
+      // The package folders that contribute code to any of the outputs,
+      // mapped to their package name
+      const modules = new Map<string, string>()
+      for (const output of Object.values(result.metafile.outputs)) {
+        for (const [input, {bytesInOutput}] of Object.entries(output.inputs)) {
+          if (bytesInOutput === 0) continue
+          const marker = input.lastIndexOf('node_modules/')
+          if (marker === -1) continue
+          const index = marker + 'node_modules/'.length
+          const segments = input.slice(index).split('/')
+          const module = segments
+            .slice(0, segments[0].startsWith('@') ? 2 : 1)
+            .join('/')
+          modules.set(input.slice(0, index) + module, module)
+        }
+      }
       let licenses = ''
-      for (const module of modules) {
-        const target = path.join(cwd, 'node_modules', module)
+      const folders = [...modules].sort(([a], [b]) => a.localeCompare(b))
+      for (const [folder, module] of folders) {
+        const target = path.join(cwd, folder)
         const pkg = JSON.parse(
           fs.readFileSync(path.join(target, 'package.json'), 'utf-8')
         )
@@ -349,6 +416,10 @@ function jsEntry({
     commonjs({
       filter: /node_modules[\\/]use-sync-external-store[\\/].*\.js$/,
       only: ['react']
+    }),
+    commonjs({
+      filter: /node_modules[\\/]tree-kill[\\/].*\.js$/,
+      only: ['child_process']
     }),
     cssModulesJsPlugin,
     internalPlugin,
@@ -478,20 +549,27 @@ function forwardCmd() {
   return command.join(' ')
 }
 
+let buildContext: BuildContext | undefined
+
 const runPlugin: Plugin = {
   name: 'run',
   setup(build) {
+    const cmd = forwardCmd()
+    if (!cmd) return
+    // Exit if our parent disappears before the command is started
+    const stopWatching = watchParent(() => process.exit(129))
     let isStarted = false
     build.onEnd(res => {
       if (isStarted) return
       if (res.errors.length > 0) return
-      const cmd = forwardCmd()
-      if (!cmd) return
-      spawn(cmd, {
-        stdio: 'inherit',
-        shell: true
-      })
       isStarted = true
+      stopWatching()
+      // Stop watching once the forwarded command exits
+      runForwarded(cmd, process.env, code => {
+        Promise.resolve(buildContext?.dispose()).finally(() =>
+          process.exit(code)
+        )
+      })
     })
   }
 }
@@ -546,24 +624,13 @@ async function build({
   test: boolean
   report: boolean
 }): Promise<void> {
-  if (!watch && !fs.existsSync(llmsHandbookFile)) {
-    const response = await fetch(llmsHandbookUrl)
-    if (!response.ok) {
-      throw new Error(
-        `Failed to refresh ${llmsHandbookFile}: ` +
-          `${response.status} ${response.statusText}`
-      )
-    }
-    const handbook = await response.text()
-    fs.writeFileSync(llmsHandbookFile, handbook)
-    console.info(`Refreshed ${llmsHandbookFile} from ${llmsHandbookUrl}`)
-  }
   const plugins = [
     cssEntry,
     cssModulesPlugin,
     cleanup,
     jsEntry({watch, test, report}),
     bundleTs,
+    ...(watch ? [] : [publicTypes]),
     ReporterPlugin.configure({name: 'alinea'}),
     runPlugin,
     cjsModules
@@ -581,6 +648,7 @@ async function build({
     sourcemap: Boolean(watch),
     plugins
   })
+  buildContext = context
 
   return watch
     ? context.watch()

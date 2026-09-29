@@ -6,6 +6,11 @@ import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
 import type {User} from './User.js'
+import {isEmptyValue} from './util/Objects.js'
+import type {
+  FieldValidationContext,
+  FieldValidationError
+} from './Validation.js'
 import type {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
@@ -13,7 +18,11 @@ export interface FieldOptions<StoredValue> {
   label: string
   /** Hide this field in the dashboard */
   hidden?: boolean
-  /** Display this field in overview listings */
+  /**
+   * Display this field in overview listings
+   * @deprecated Define the columns on the parent with `overview.columns`.
+   * Still used as columns when the parent defines none.
+   */
   overview?: boolean
   /** Mark this field as read-only */
   readOnly?: boolean
@@ -111,6 +120,23 @@ export interface FieldData<
   toYaml?: (value: StoredValue) => unknown
   /** Decode a value encoded by toYaml, values of another shape are kept */
   fromYaml?: (value: unknown, context: FieldYamlContext) => unknown
+  /** Whether the value counts as missing for the `required` option */
+  isEmpty?: (value: StoredValue) => boolean
+  /** Validate fields nested in the value (list rows, object fields, blocks) */
+  nestedErrors?: (
+    value: StoredValue,
+    context: FieldValidationContext
+  ) => Array<FieldValidationError>
+  /**
+   * Validate a field that holds several values of another field, such as one
+   * per locale. Replaces the field's own checks: its required, min, max and
+   * validate options apply to each of the values instead.
+   */
+  valueErrors?: (
+    value: StoredValue,
+    options: FieldOptions<unknown>,
+    context: FieldValidationContext
+  ) => Array<FieldValidationError>
 }
 
 export interface FieldInternal extends FieldData<any, any, any, any> {
@@ -243,6 +269,34 @@ export namespace Field {
   ): string {
     const data = getField(field)
     return data.searchableText?.(value) ?? ''
+  }
+
+  export function isEmpty(field: HasField, value: unknown): boolean {
+    const data = getField(field)
+    if (data.isEmpty) return data.isEmpty(value)
+    return isEmptyValue(value)
+  }
+
+  export function nestedErrors(
+    field: HasField,
+    value: unknown,
+    context: FieldValidationContext
+  ): Array<FieldValidationError> {
+    return getField(field).nestedErrors?.(value, context) ?? []
+  }
+
+  /** Errors of a field holding several values, undefined for other fields */
+  export function valueErrors(
+    field: HasField,
+    value: unknown,
+    options: FieldOptions<unknown>,
+    context: FieldValidationContext
+  ): Array<FieldValidationError> | undefined {
+    return getField(field).valueErrors?.(value, options, context)
+  }
+
+  export function hasValueErrors(field: HasField): boolean {
+    return Boolean(getField(field).valueErrors)
   }
 
   export function references<StoredValue, QueryValue, Mutator, Options>(

@@ -43,3 +43,25 @@ test('shows the selected source language when copying a translation', () => {
   ).toBeNull()
   expect(screen.queryByText('Start from')).toBeNull()
 })
+
+test('asks to translate the parent entry first', () => {
+  render(
+    <EntryTranslationBanner
+      copyFromSource
+      parentNeedsTranslation
+      sourceLocale="en"
+      sourceLocales={['en', 'fr']}
+      onCopyFromSourceChange={() => {}}
+      onSourceLocaleChange={() => {}}
+    />
+  )
+
+  const banner = screen.getByRole('status')
+  expect(banner.dataset.variant).toBe('warning')
+  expect(
+    screen.getByText(
+      'Translate the parent entry first before creating this translation.'
+    )
+  ).toBeDefined()
+  expect(screen.queryByRole('checkbox')).toBeNull()
+})

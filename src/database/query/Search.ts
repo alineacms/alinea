@@ -101,12 +101,26 @@ export function searchQuery(
 const fuzzyFactor = 0.1
 const maxFuzzyDistance = 6
 const maxAlternatives = 10
+const maxNumberMatches = 50
 const vocabulary = 'alinea_entry_search_vocab'
 
 /** The edits a token may be away from an indexed term: none below five
  * characters, one up to fourteen, then one more per ten. */
 export function fuzzyDistance(token: string): number {
   return Math.min(maxFuzzyDistance, Math.round(token.length * fuzzyFactor))
+}
+
+/** The digits of a number without its leading zeros, undefined for tokens
+ * that are not a number or are all zeros. */
+function significantDigits(token: string): string | undefined {
+  if (!/^[0-9]+$/.test(token)) return undefined
+  return token.replace(/^0+/, '') || undefined
+}
+
+/** Whether a token needs the vocabulary: a number matches indexed terms
+ * with leading zeros or letters in front, a longer token close spellings. */
+export function expandsToken(token: string): boolean {
+  return fuzzyDistance(token) > 0 || significantDigits(token) !== undefined
 }
 
 interface VocabularyTerm {
@@ -152,6 +166,7 @@ function withinDistance(a: string, b: string, max: number): boolean {
 export class SearchVocabulary {
   #loaded: string | undefined
   #byLength = new Map<number, Array<VocabularyTerm>>()
+  #numbered: Array<VocabularyTerm> = []
 
   async load(db: Database, revision: string): Promise<void> {
     if (this.#loaded === revision) return
@@ -166,12 +181,16 @@ export class SearchVocabulary {
       sql`select term, cnt from temp.${sql.identifier(vocabulary)}`
     )
     const byLength = new Map<number, Array<VocabularyTerm>>()
+    const numbered: Array<VocabularyTerm> = []
     for (const row of rows) {
+      const term = {term: row.term, count: row.cnt}
       const terms = byLength.get(row.term.length) ?? []
-      terms.push({term: row.term, count: row.cnt})
+      terms.push(term)
       byLength.set(row.term.length, terms)
+      if (/[0-9]/.test(row.term)) numbered.push(term)
     }
     this.#byLength = byLength
+    this.#numbered = numbered
     this.#loaded = revision
   }
 
@@ -179,6 +198,26 @@ export class SearchVocabulary {
    * token are left to the prefix match. */
   alternatives(token: string): Array<string> {
     const query = normalizeToken(token)
+    return [...this.#numberMatches(query), ...this.#closeSpellings(query)]
+  }
+
+  /** Indexed terms containing a number that starts with the digits of a
+   * number token, ignoring leading zeros: 98 finds 098 and img098. */
+  #numberMatches(query: string): Array<string> {
+    const digits = significantDigits(query)
+    if (!digits) return []
+    const matches = this.#numbered.filter(
+      candidate =>
+        !candidate.term.startsWith(query) &&
+        candidate.term
+          .match(/[0-9]+/g)!
+          .some(run => run.replace(/^0+/, '').startsWith(digits))
+    )
+    matches.sort((a, b) => b.count - a.count)
+    return matches.slice(0, maxNumberMatches).map(match => match.term)
+  }
+
+  #closeSpellings(query: string): Array<string> {
     const distance = fuzzyDistance(query)
     if (!distance) return []
     const matches: Array<VocabularyTerm> = []

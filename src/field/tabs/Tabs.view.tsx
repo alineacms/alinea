@@ -3,10 +3,10 @@ import {
   Surface,
   SurfaceContent,
   SurfaceHeader,
-  Tab,
-  TabList,
-  TabPanel,
-  Tabs
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Section} from '#/core/Section.js'
@@ -23,26 +23,26 @@ export function TabsView({section}: TabsViewProps) {
   const visibleTypes = tabs.types.filter(type => !Type.isHidden(type))
   if (!visibleTypes.length) return null
   return (
-    <Tabs>
+    <Tabs defaultValue="0">
       <Surface>
         <SurfaceHeader>
-          <TabList>
+          <TabsList>
             {visibleTypes.map((type, i) => {
               const {icon} = getType(type)
               return (
-                <Tab key={i} id={i}>
+                <TabsTrigger key={i} value={String(i)}>
                   {icon && <Icon icon={icon} />}
                   {Type.label(type)}
-                </Tab>
+                </TabsTrigger>
               )
             })}
-          </TabList>
+          </TabsList>
         </SurfaceHeader>
         <SurfaceContent>
           {visibleTypes.map((type, i) => (
-            <TabPanel key={i} id={i}>
+            <TabsContent key={i} value={String(i)}>
               <EditFields fields={getType(type).fields} />
-            </TabPanel>
+            </TabsContent>
           ))}
         </SurfaceContent>
       </Surface>
