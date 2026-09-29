@@ -77,6 +77,21 @@ export function States() {
   )
 }
 
+export function ReadOnly() {
+  return (
+    <form data-testid="form">
+      <MultipleSelect
+        label="Read only"
+        name="fruits"
+        readOnly
+        defaultValue={['apple', 'banana']}
+      >
+        {fruitItems()}
+      </MultipleSelect>
+    </form>
+  )
+}
+
 export default {
   title: 'Pure components / MultipleSelect'
 }

@@ -37,9 +37,6 @@
 
   &:has(.SelectTrigger-button:disabled) {
     pointer-events: none;
-  }
-
-  &:not([data-readonly]):has(.SelectTrigger-button:disabled) {
     opacity: 0.5;
   }
 }

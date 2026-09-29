@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, Groups, States} from './Select.stories.js'
+import {Example, Groups, ReadOnly, States} from './Select.stories.js'
 
 test('selects and clears a value', async ({mount, page}) => {
   await mount(<Example />)
@@ -80,4 +80,25 @@ test('the list is as wide as the trigger with its clear button', async ({
   // The list follows wide fields, narrow ones get at least 240 pixels
   const expected = Math.max(240, triggerBox!.width)
   expect(Math.abs(contentBox!.width - expected)).toBeLessThanOrEqual(1)
+})
+
+test('a read only select can be focused and submits its value', async ({
+  mount,
+  page
+}) => {
+  await mount(<ReadOnly />)
+  const trigger = page.getByRole('button', {name: /Read only/})
+  await expect(trigger).toBeEnabled()
+  await expect(trigger).toHaveAttribute('aria-readonly', 'true')
+  await trigger.click()
+  await expect(trigger).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.type('f')
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('listbox')).toHaveCount(0)
+  await expect(trigger).toContainText('Sketch')
+  const data = await page
+    .getByTestId('form')
+    .evaluate(form => [...new FormData(form as HTMLFormElement)])
+  expect(data).toEqual([['software', 'sketch']])
 })

@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {type PointerEvent, type ReactNode, useRef} from 'react'
+import {type MouseEvent, type ReactNode, useRef, useState} from 'react'
 import {
   Autocomplete,
   Button,
@@ -42,7 +42,7 @@ export interface MultipleSelectProps
   placeholder?: string
   /** Shown in the list when no item matches the search, defaults to "No options" */
   emptyMessage?: ReactNode
-  /** Name of the hidden form input carrying the comma separated values */
+  /** Name of the hidden form input carrying the values */
   name?: string
   /** MultipleSelectItem elements */
   children: ReactNode
@@ -69,7 +69,6 @@ export function MultipleSelect({
   onOpenChange,
   placeholder,
   emptyMessage = 'No options',
-  name,
   className,
   style,
   children,
@@ -77,13 +76,11 @@ export function MultipleSelect({
 }: MultipleSelectProps) {
   const triggerRef = useRef<HTMLDivElement | null>(null)
   const triggerButtonRef = useRef<HTMLButtonElement | null>(null)
+  const [isOpen, setOpen] = useState(defaultOpen ?? false)
   const {contains} = useFilter({sensitivity: 'base'})
-  const ariaLabel =
-    props['aria-label'] ??
-    (typeof label === 'string' ? label : 'Available items')
   const locked = disabled || readOnly
 
-  function onFieldPointerDown(event: PointerEvent<HTMLDivElement>) {
+  function onFieldClick(event: MouseEvent<HTMLDivElement>) {
     if (!(event.target instanceof Element)) return
     if (event.target.closest('button, [role="row"]')) return
     triggerButtonRef.current?.click()
@@ -92,18 +89,22 @@ export function MultipleSelect({
   return (
     <SelectPrimitive
       data-slot="multiple-select"
+      aria-label={label ? undefined : 'Available items'}
       {...props}
-      aria-label={ariaLabel}
       className={styles.MultipleSelect(styler.merge({className}))}
       style={style}
       selectionMode="multiple"
       value={value}
       defaultValue={defaultValue}
       onChange={keys => onValueChange?.(keys.map(String))}
-      isOpen={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-      isDisabled={locked}
+      // A read only select can be focused but not opened
+      isOpen={!readOnly && (open ?? isOpen)}
+      onOpenChange={next => {
+        if (readOnly) return
+        setOpen(next)
+        onOpenChange?.(next)
+      }}
+      isDisabled={disabled}
       isRequired={required}
       isInvalid={error ? true : undefined}
     >
@@ -119,12 +120,11 @@ export function MultipleSelect({
       >
         <Group
           ref={triggerRef}
-          aria-label={ariaLabel}
           data-slot="multiple-select-trigger"
           data-invalid={error ? true : undefined}
           data-readonly={readOnly || undefined}
           className={styles.MultipleSelectTrigger()}
-          onPointerDown={onFieldPointerDown}
+          onClick={onFieldClick}
         >
           <SelectValue className={styles.MultipleSelectTrigger.value()}>
             {({state}) => (
@@ -181,6 +181,12 @@ export function MultipleSelect({
           <Button
             ref={triggerButtonRef}
             className={styles.MultipleSelectTrigger.button()}
+            render={
+              readOnly
+                ? // react-aria does not pass aria-readonly on to the element
+                  props => <button {...props} aria-readonly />
+                : undefined
+            }
           >
             <Icon
               icon={IcRoundKeyboardArrowDown}
@@ -233,27 +239,7 @@ export function MultipleSelect({
           </Autocomplete>
         </PopoverSurface>
       </Field>
-      {name && <SelectHiddenInput name={name} />}
     </SelectPrimitive>
-  )
-}
-
-interface SelectHiddenInputProps {
-  name: string
-}
-
-function SelectHiddenInput({name}: SelectHiddenInputProps) {
-  return (
-    <SelectValue className={styles.MultipleSelectHidden()}>
-      {({state}) => (
-        <input
-          hidden
-          readOnly
-          name={name}
-          value={state.selectedItems.map(item => item.key).join(',')}
-        />
-      )}
-    </SelectValue>
   )
 }
 

@@ -37,9 +37,6 @@
 
   &:has(.MultipleSelectTrigger-button:disabled) {
     pointer-events: none;
-  }
-
-  &:not([data-readonly]):has(.MultipleSelectTrigger-button:disabled) {
     opacity: 0.5;
   }
 }
@@ -238,8 +235,4 @@
   .MultipleSelectSearch-input:placeholder-shown + & {
     visibility: hidden;
   }
-}
-
-.MultipleSelectHidden {
-  display: none;
 }
