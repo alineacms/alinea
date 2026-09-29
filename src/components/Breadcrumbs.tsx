@@ -141,7 +141,6 @@ export function BreadcrumbEllipsis({
       className={styles.BreadcrumbEllipsis(styler.merge({className}))}
     >
       <IcRoundMoreHoriz className={styles.BreadcrumbEllipsis.icon()} />
-      <span className={styles.BreadcrumbEllipsis.label()}>More</span>
     </span>
   )
 }
