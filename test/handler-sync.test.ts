@@ -94,9 +94,9 @@ test('handler syncs a readonly database through an overlay', async () => {
         'b',
         'd'
       ])
-      expect(
-        await store.get({id: 'b', select: {title: Doc.title}})
-      ).toEqual({title: 'Beta 2'})
+      expect(await store.get({id: 'b', select: {title: Doc.title}})).toEqual({
+        title: 'Beta 2'
+      })
       // A second sync in the same handler picks up incremental changes.
       await store.syncWith(
         await remoteWith([
@@ -105,9 +105,9 @@ test('handler syncs a readonly database through an overlay', async () => {
           {id: 'd', title: 'Delta 2'}
         ])
       )
-      expect(
-        await store.get({id: 'd', select: {title: Doc.title}})
-      ).toEqual({title: 'Delta 2'})
+      expect(await store.get({id: 'd', select: {title: Doc.title}})).toEqual({
+        title: 'Delta 2'
+      })
       expect(await store.find({type: Doc, select: Entry.id})).toEqual([
         'a',
         'b',

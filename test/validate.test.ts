@@ -57,7 +57,13 @@ async function remoteWith(docs: Array<DocInput>) {
       const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
       return {
         op: 'add' as const,
-        path: ConfigUtils.filePath(cms.config, 'main', 'pages', null, `${doc.id}${suffix}.json`),
+        path: ConfigUtils.filePath(
+          cms.config,
+          'main',
+          'pages',
+          null,
+          `${doc.id}${suffix}.json`
+        ),
         sha: await hashBlob(contents),
         contents
       }
@@ -74,9 +80,14 @@ test('failed validation rolls back the sync', async () => {
   const sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await EntryDatabase.createSchema(db, cms.config, ReadonlyTree.EMPTY.sha)
-  const store = new EntryStore(cms.config, new EntryDatabase(cms.config, db), new MemorySource(), {
-    ownsDatabase: true
-  })
+  const store = new EntryStore(
+    cms.config,
+    new EntryDatabase(cms.config, db),
+    new MemorySource(),
+    {
+      ownsDatabase: true
+    }
+  )
   try {
     const sha = await store.syncWith(
       await remoteWith([

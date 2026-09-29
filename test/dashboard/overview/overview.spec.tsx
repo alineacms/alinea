@@ -34,7 +34,13 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
   await mount(<OverviewScenarioMount />)
   const header = page.locator('[data-slot="table-header"]')
   await expect(header).toContainText('Title')
-  for (const column of ['Status', 'Article number', 'Categories', 'Brand', 'Price'])
+  for (const column of [
+    'Status',
+    'Article number',
+    'Categories',
+    'Brand',
+    'Price'
+  ])
     await expect(header.getByText(column, {exact: true})).toBeVisible()
   // The article number is placed before the built-in columns
   await expect
@@ -43,7 +49,14 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
         .locator('[data-slot="table-head"]')
         .evaluateAll(cells => cells.map(cell => cell.textContent?.trim()))
     )
-    .toEqual(['Title', 'Article number', 'Status', 'Categories', 'Brand', 'Price'])
+    .toEqual([
+      'Title',
+      'Article number',
+      'Status',
+      'Categories',
+      'Brand',
+      'Price'
+    ])
   // All products share a type and no product stores audit data
   for (const column of ['Type', 'Updated', 'Author'])
     await expect(header.getByText(column, {exact: true})).toHaveCount(0)
@@ -56,7 +69,9 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
     table(page).getByRole('row', {name: /^Table/})
   ).toHaveAccessibleName(/Chairs, Tables/)
   // Toolbar actions of the overview
-  await expect(page.getByRole('button', {name: 'Export products'})).toBeVisible()
+  await expect(
+    page.getByRole('button', {name: 'Export products'})
+  ).toBeVisible()
 })
 
 test('search results show the columns that tell them apart', async ({
@@ -147,9 +162,9 @@ test('lists mixed children with per type columns and card thumbnails', async ({
   await mount(<OverviewScenarioMount />)
   // The blog overview defaults to cards with the cover as image
   const cards = page.getByRole('grid', {name: 'Explorer entries'})
-  await expect(
-    cards.locator(`img[src="${overviewPhotoPreview}"]`)
-  ).toHaveCount(1)
+  await expect(cards.locator(`img[src="${overviewPhotoPreview}"]`)).toHaveCount(
+    1
+  )
   await page.getByRole('radio', {name: 'Row view'}).click()
   const header = page.locator('[data-slot="table-header"]')
   await expect(header.getByText('Type', {exact: true})).toBeVisible()
@@ -157,9 +172,9 @@ test('lists mixed children with per type columns and card thumbnails', async ({
   await expect(header.getByText('Status', {exact: true})).toHaveCount(0)
   // Ordered by the default sort: newest first
   await expect.poll(() => titles(page)).toEqual(['Meetup', 'Post'])
-  await expect(
-    table(page).getByRole('row', {name: /^Meetup/})
-  ).toContainText('Ann')
+  await expect(table(page).getByRole('row', {name: /^Meetup/})).toContainText(
+    'Ann'
+  )
   await expect(table(page).getByRole('row', {name: /^Post/})).toContainText(
     'Bob'
   )

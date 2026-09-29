@@ -99,8 +99,7 @@ test('orders mixed lists per type, types without a value last', async () => {
   for (const direction of ['asc', 'desc'] as const) {
     const titles = await db.find({
       root: 'blog',
-      orderBy:
-        direction === 'asc' ? {asc: byAuthor} : {desc: byAuthor},
+      orderBy: direction === 'asc' ? {asc: byAuthor} : {desc: byAuthor},
       select: Entry.title
     })
     expect(titles).toEqual(

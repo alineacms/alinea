@@ -64,10 +64,9 @@ test('moves media files from an overview into a media directory card', async ({
   ).toHaveCount(0)
   await explorer
     .getByRole('button', {name: 'Drag Existing image'})
-    .dragTo(
-      explorer.getByRole('row', {name: 'Media directory', exact: true}),
-      {force: true}
-    )
+    .dragTo(explorer.getByRole('row', {name: 'Media directory', exact: true}), {
+      force: true
+    })
 
   await expect(
     explorer.getByRole('row', {name: 'Existing image', exact: true})

@@ -36,10 +36,7 @@ class DB extends LocalDB {
   }
 }
 
-function cmsWithMediaDir(
-  mediaDir?: string,
-  maxUploadSize?: number
-) {
+function cmsWithMediaDir(mediaDir?: string, maxUploadSize?: number) {
   const main = Config.workspace('Main', {
     source: 'content',
     mediaDir,
@@ -186,9 +183,7 @@ test('uploads use the mediaDir of the selected workspace', async () => {
     globalThis.fetch = fetch
   }
 
-  test.equal(db.preparedFiles, [
-    'public/media/secondary/example.jpg'
-  ])
+  test.equal(db.preparedFiles, ['public/media/secondary/example.jpg'])
 })
 
 test('media urls are prefixed per workspace mediaUrl', async () => {
