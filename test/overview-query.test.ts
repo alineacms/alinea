@@ -111,11 +111,33 @@ test('orders mixed lists per type, types without a value last', async () => {
 })
 
 test('plain fields order across types by name', async () => {
-  const db = await catalogue()
+  const db = new LocalDB(config)
+  await db.sync()
+  const create = (
+    type: typeof BlogPost | typeof Event,
+    title: string,
+    publishDate: string
+  ) =>
+    db.create({
+      type,
+      workspace: 'main',
+      root: 'blog',
+      set: {title, publishDate}
+    })
+  await create(BlogPost, 'Spring post', '2026-03-01')
+  await create(Event, 'Winter meetup', '2026-01-15')
+  await create(BlogPost, 'Summer post', '2026-06-01')
+  await create(Event, 'Autumn meetup', '2026-10-01')
+  // BlogPost.publishDate also reads the publishDate field of events
   const titles = await db.find({
-    root: 'products',
-    orderBy: {asc: Overview.sortExpr(Product.price)},
+    root: 'blog',
+    orderBy: {asc: Overview.sortExpr(BlogPost.publishDate)},
     select: Entry.title
   })
-  expect(titles).toEqual(['Table', 'Lamp', 'Chair'])
+  expect(titles).toEqual([
+    'Winter meetup',
+    'Spring post',
+    'Summer post',
+    'Autumn meetup'
+  ])
 })
