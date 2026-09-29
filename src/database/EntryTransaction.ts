@@ -295,7 +295,15 @@ export class EntryTransaction implements AsyncDisposable {
     if (existingPath && existingPath !== path && status === 'published')
       await this.#rename(id, locale, path)
 
-    if (overwrite && existingMain?.type === 'MediaFile') {
+    // Only a replace, which uploads the new file in this same commit, removes
+    // the previous file. Saving other changes with a location from before a
+    // replace (eg. a stale editor) must not remove the current file.
+    const replacesFile =
+      typeof data.location === 'string' &&
+      this.#uploadedFile(
+        MediaLocation.storagePath(config, workspace, data.location)
+      )
+    if (overwrite && replacesFile && existingMain?.type === 'MediaFile') {
       const previousLocation = existingMain.data.location
       if (
         previousLocation !== data.location &&
@@ -738,6 +746,12 @@ export class EntryTransaction implements AsyncDisposable {
   uploadFile(mutation: Op<UploadFileMutation>): void {
     this.#policy.assert(Permission.Upload)
     this.#fileChanges.push({op: 'uploadFile', ...mutation})
+  }
+
+  #uploadedFile(location: string): boolean {
+    return this.#fileChanges.some(
+      change => change.op === 'uploadFile' && change.location === location
+    )
   }
 
   #description(): string {

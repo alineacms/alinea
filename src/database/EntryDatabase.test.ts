@@ -505,7 +505,8 @@ test('database mutations use one write transaction and commit one final tree', a
   await database.close()
 })
 
-test('discarding a media draft keeps the file of the published version', async () => {
+/** A database with a media root, applying mutations returns removed files */
+async function mediaDatabase() {
   const {config} = createCMS({
     schema: {},
     enableDrafts: true,
@@ -518,24 +519,35 @@ test('discarding a media draft keeps the file of the published version', async (
     }
   })
   const source = new MemorySource()
-  using sqlite = new Database(':memory:')
+  const sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
   const database = new EntryDatabase(config, db)
-  const file = {
-    title: 'Brochure',
-    location: '/brochure.pdf',
-    extension: '.pdf',
-    size: 1024,
-    hash: 'hash'
+  return {
+    async removedFiles(mutations: Array<Mutation>) {
+      const {request} = await database.apply(mutations, {source})
+      await source.applyChanges(sourceChanges(request))
+      return request.changes.flatMap(change =>
+        change.op === 'removeFile' ? [change.location] : []
+      )
+    },
+    async [Symbol.asyncDispose]() {
+      await database.close()
+      sqlite.close()
+    }
   }
-  const removedFiles = async (mutations: Array<Mutation>) => {
-    const {request} = await database.apply(mutations, {source})
-    await source.applyChanges(sourceChanges(request))
-    return request.changes.flatMap(change =>
-      change.op === 'removeFile' ? [change.location] : []
-    )
-  }
+}
+
+const brochure = {
+  title: 'Brochure',
+  location: '/brochure.pdf',
+  extension: '.pdf',
+  size: 1024,
+  hash: 'hash'
+}
+
+test('discarding a media draft keeps the file of the published version', async () => {
+  await using media = await mediaDatabase()
   const versions = (status: 'draft' | 'published'): Array<Mutation> => [
     {
       op: 'create',
@@ -552,21 +564,53 @@ test('discarding a media draft keeps the file of the published version', async (
       type: 'MediaFile',
       locale: null,
       status,
-      data: file
+      data: brochure
     }
   ]
-  await removedFiles(versions('published'))
-  await removedFiles(versions('draft'))
+  await media.removedFiles(versions('published'))
+  await media.removedFiles(versions('draft'))
   expect(
-    await removedFiles([{op: 'remove', id: 'file', status: 'draft'}])
+    await media.removedFiles([{op: 'remove', id: 'file', status: 'draft'}])
   ).toEqual([])
   expect(
-    await removedFiles([{op: 'remove', id: 'dir', status: 'draft'}])
+    await media.removedFiles([{op: 'remove', id: 'dir', status: 'draft'}])
   ).toEqual([])
-  expect(await removedFiles([{op: 'remove', id: 'file'}])).toEqual([
+  expect(await media.removedFiles([{op: 'remove', id: 'file'}])).toEqual([
     'public/brochure.pdf'
   ])
-  await database.close()
+})
+
+test('saving a media file only removes its previous file when replaced', async () => {
+  await using media = await mediaDatabase()
+  const save = (
+    data: Record<string, unknown>,
+    status: 'draft' | 'published' = 'published'
+  ): Mutation => ({
+    op: 'create',
+    id: 'file',
+    type: 'MediaFile',
+    locale: null,
+    status,
+    data,
+    overwrite: true
+  })
+  await media.removedFiles([save(brochure)])
+  // Replacing uploads the new file and removes the previous one
+  const replaced = {...brochure, location: '/brochure-v2.pdf', hash: 'v2'}
+  expect(
+    await media.removedFiles([
+      {op: 'uploadFile', url: '', location: 'public/brochure-v2.pdf'},
+      save(replaced)
+    ])
+  ).toEqual(['public/brochure.pdf'])
+  // An editor still showing the file from before the replace saves a new
+  // focus point: the current file must stay
+  const focus = {x: 0.2, y: 0.8}
+  expect(await media.removedFiles([save({...brochure, focus})])).toEqual([])
+  expect(
+    await media.removedFiles([save({...replaced, focus}, 'draft')])
+  ).toEqual([])
+  expect(await media.removedFiles([save({...replaced, focus})])).toEqual([])
 })
 
 test('failed database mutation batches leave the receiver untouched', async () => {
