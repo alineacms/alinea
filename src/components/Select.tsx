@@ -154,6 +154,7 @@ function SelectTrigger({
     >
       <Button
         ref={buttonRef}
+        data-slot="select-button"
         className={styles.SelectTrigger.button()}
         render={
           readOnly

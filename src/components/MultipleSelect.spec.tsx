@@ -69,7 +69,7 @@ test('a read only select does not open and submits its values', async ({
   page
 }) => {
   await mount(<ReadOnly />)
-  const button = page.locator('[data-slot="multiple-select-trigger"] button')
+  const button = page.locator('[data-slot="multiple-select-button"]')
   await expect(button).toBeEnabled()
   await expect(button).toHaveAttribute('aria-readonly', 'true')
   await page.locator('[data-slot="multiple-select-trigger"]').click()

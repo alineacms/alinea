@@ -144,6 +144,7 @@ export function MultipleSelect({
                 }
               >
                 <TagList
+                  data-slot="multiple-select-tag-list"
                   className={styles.MultipleSelectTrigger.tags.list()}
                   items={state.selectedItems}
                   renderEmptyState={() => (
@@ -180,6 +181,7 @@ export function MultipleSelect({
           </SelectValue>
           <Button
             ref={triggerButtonRef}
+            data-slot="multiple-select-button"
             className={styles.MultipleSelectTrigger.button()}
             render={
               readOnly
@@ -210,14 +212,17 @@ export function MultipleSelect({
             >
               <Icon
                 icon={IcRoundSearch}
+                data-slot="multiple-select-search-icon"
                 className={styles.MultipleSelectSearch.icon()}
               />
               <Input
+                data-slot="multiple-select-search-input"
                 placeholder="Search"
                 className={styles.MultipleSelectSearch.input()}
               />
               <Button
                 aria-label="Clear search"
+                data-slot="multiple-select-search-clear"
                 className={styles.MultipleSelectSearch.clear()}
               >
                 <Icon icon={IcRoundClose} />

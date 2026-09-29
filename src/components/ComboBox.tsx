@@ -240,6 +240,7 @@ function ComboBoxTrigger({
       >
         <Icon
           icon={IcRoundKeyboardArrowDown}
+          data-slot="combobox-icon"
           className={styles.ComboBoxTrigger.arrow()}
         />
       </Button>
