@@ -20,18 +20,17 @@ export function Icon({
   icon: IconView,
   'aria-label': ariaLabel,
   'aria-hidden': ariaHidden,
+  className,
   ...props
 }: IconProps) {
   const view = typeof IconView === 'function' ? <IconView /> : IconView
   if (!isValidElement<SVGProps<SVGSVGElement>>(view)) return null
-  const className =
-    typeof props.className === 'string' ? props.className : undefined
   return cloneElement(view, {
     focusable: 'false',
     'aria-label': ariaLabel,
     'aria-hidden': ariaLabel ? ariaHidden || undefined : true,
     role: 'img',
-    className: styles.Icon(styler.merge({className})),
-    ...props
+    ...props,
+    className: styles.Icon(styler.merge({className}))
   })
 }
