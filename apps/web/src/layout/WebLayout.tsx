@@ -1,5 +1,4 @@
 import {cms} from '@/cms'
-import '@/global.scss'
 import styler from '@alinea/styler'
 import type {Metadata, Viewport} from 'next'
 import type {PropsWithChildren} from 'react'

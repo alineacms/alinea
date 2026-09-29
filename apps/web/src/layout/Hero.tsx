@@ -9,32 +9,20 @@ import {WebTypo} from './WebTypo'
 
 const styles = styler(css)
 
-const BG_HEIGHT = 80
-
 export function Hero({children}: PropsWithChildren<{}>) {
   return (
     <PageContainer>
       <div className={styles.root.inner()}>{children}</div>
-      {/*<svg
-        className={styles.root.bg()}
-        width="1440"
-        height={BG_HEIGHT}
-        viewBox={`0 0 1440 ${BG_HEIGHT}`}
-        preserveAspectRatio="none"
-      >
-        <path d={`M0 ${BG_HEIGHT}L1440 0V${BG_HEIGHT}H0Z`} />
-    </svg>*/}
     </PageContainer>
   )
 }
 
 export namespace Hero {
-  export function Title(props: PropsWithChildren<HTMLProps<HTMLElement>>) {
+  export function Title(
+    props: PropsWithChildren<HTMLProps<HTMLHeadingElement>>
+  ) {
     return (
-      <WebTypo.H1
-        {...(props as any)}
-        className={styles.title.mergeProps(props)()}
-      />
+      <WebTypo.H1 {...props} className={styles.title.mergeProps(props)()} />
     )
   }
 
@@ -51,22 +39,6 @@ export namespace Hero {
     outline,
     ...props
   }: PropsWithChildren<LinkProps & {target?: string; outline?: boolean}>) {
-    {
-      ;[
-        '_entry',
-        '_id',
-        '_index',
-        '_target',
-        '_title',
-        '_type',
-        '_url',
-        'entryId',
-        'entryType',
-        'path',
-        'url'
-      ].forEach(key => delete (props as any)[key])
-    }
-
     return (
       <Link
         {...props}

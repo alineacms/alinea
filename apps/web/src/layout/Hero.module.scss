@@ -11,16 +11,6 @@
     align-items: center;
     flex-grow: 1;
   }
-
-  &-bg {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    width: 100%;
-    fill: var(--web-background);
-    transform: translateY(-100%);
-  }
 }
 
 .title {
