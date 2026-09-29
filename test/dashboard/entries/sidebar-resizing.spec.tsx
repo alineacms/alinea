@@ -97,7 +97,9 @@ test('restores the saved sidebar width after navigating away and back while clos
   await expect(divider(app.page, 'right')).toHaveCount(0)
   await app.page.getByRole('button', {name: 'Open entry sidebar'}).click()
   await expect.poll(() => width(right)).toBe(400)
-  await expect(app.page.getByRole('tablist', {name: 'Entry sidebar'})).toBeVisible()
+  await expect(
+    app.page.getByRole('tablist', {name: 'Entry sidebar'})
+  ).toBeVisible()
 })
 
 test('keeps mobile panels usable and the editor mounted across breakpoints', async ({

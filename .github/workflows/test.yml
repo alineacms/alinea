@@ -23,6 +23,8 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun i --frozen-lockfile
+      # Type check, including the type level assertions in tests
+      - run: bun type
       - run: bunx playwright install --with-deps chromium
       # - name: Check cycles
       # run: bun cycles

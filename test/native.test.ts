@@ -24,7 +24,9 @@ for (const script of scripts)
       logLevel: 'error'
     })
     const run = Bun.spawnSync(['node', outfile], {stderr: 'pipe'})
-    const output = run.stderr.toString().replace(/^.*ExperimentalWarning.*\n?/gm, '')
+    const output = run.stderr
+      .toString()
+      .replace(/^.*ExperimentalWarning.*\n?/gm, '')
     expect(output).not.toMatch(/Error/)
     expect(run.exitCode).toBe(0)
   }, 30_000)

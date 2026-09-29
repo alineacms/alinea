@@ -7,9 +7,7 @@ async function expandLinkPicker(page: Page): Promise<Locator> {
     name: 'Pick a link',
     exact: true
   })
-  await compactPicker
-    .getByRole('button', {name: 'Expand entry picker'})
-    .click()
+  await compactPicker.getByRole('button', {name: 'Expand entry picker'}).click()
   const expandedPicker = page.getByRole('dialog', {
     name: 'Pick a link in expanded view',
     exact: true
@@ -29,10 +27,7 @@ async function expectVerticallyUnclipped(locator: Locator) {
   )
 }
 
-test('opens entry fields in the compact picker', async ({
-  dashboard,
-  mount
-}) => {
+test('opens entry fields in the compact picker', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
   await app.page.evaluate(() => {
@@ -108,14 +103,10 @@ test('opens a functional location in another workspace and root', async ({
     name: 'Explorer results'
   })
   await expect(
-    resultModes
-      .getByRole('radio', {name: 'Browse'})
-      .locator('svg')
+    resultModes.getByRole('radio', {name: 'Browse'}).locator('svg')
   ).toHaveCount(1)
   await expect(
-    resultModes
-      .getByRole('radio', {name: 'Filtered'})
-      .locator('svg')
+    resultModes.getByRole('radio', {name: 'Filtered'}).locator('svg')
   ).toHaveCount(1)
 })
 
@@ -219,9 +210,9 @@ test('hides card navigation when picker locations are limited', async ({
       .getByRole('radiogroup', {name: 'Explorer results'})
       .getByRole('radio', {name: 'Browse'})
   ).toBeChecked()
-  await expect(
-    picker.getByRole('switch', {name: 'All locations'})
-  ).toHaveCount(0)
+  await expect(picker.getByRole('switch', {name: 'All locations'})).toHaveCount(
+    0
+  )
   await expect(
     picker.getByRole('checkbox', {name: 'Select Alpha'})
   ).toBeVisible()

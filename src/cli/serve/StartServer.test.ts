@@ -19,11 +19,22 @@ async function freePort(): Promise<number> {
   return address.port
 }
 
-async function occupyRange(start: number, count: number) {
-  const servers: Array<net.Server> = []
-  for (let i = 0; i < count; i++) servers.push(await occupy(start + i))
-  return () => {
-    for (const server of servers) server.close()
+// Occupies `count` consecutive ports, starting over from another free port
+// when one of them is already taken
+async function occupyRange(count: number) {
+  for (let attempt = 1; ; attempt++) {
+    const port = await freePort()
+    const servers: Array<net.Server> = []
+    const release = () => {
+      for (const server of servers) server.close()
+    }
+    try {
+      for (let i = 0; i < count; i++) servers.push(await occupy(port + i))
+      return {port, release}
+    } catch (error) {
+      release()
+      if (attempt === 10) throw error
+    }
   }
 }
 
@@ -32,8 +43,7 @@ for (const [name, start] of [
   ['node', startNodeServer]
 ] as const) {
   test(`${name}: retries the next port`, async () => {
-    const port = await freePort()
-    const release = await occupyRange(port, 2)
+    const {port, release} = await occupyRange(2)
     try {
       const server = await start(port, 0, true)
       test.is(server.port, port + 2)
@@ -44,8 +54,7 @@ for (const [name, start] of [
   })
 
   test(`${name}: gives up after a limited number of attempts`, async () => {
-    const port = await freePort()
-    const release = await occupyRange(port, 12)
+    const {port, release} = await occupyRange(12)
     try {
       const error = await start(port, 0, true).then(
         server => {

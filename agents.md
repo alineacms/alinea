@@ -88,7 +88,12 @@ file reaches `react-aria-components`, `react-aria`, `react-stately`,
   `color-mix()` and opacity (disabled is `opacity: 0.5`) instead of defining
   per-state variables.
 - Helpers that are only for our own components live in
-  `src/components/internal/` and are not exported. Dashboard and field code
-  may use react-aria directly where the public API cannot express something.
+  `src/components/internal/` and are not exported.
+- Code in `src/dashboard`, `src/field`, `src/ui` and `src/preview` must not
+  import `react-aria-components`, `react-aria`, `react-stately`,
+  `@react-aria/*`, `@react-stately/*`, `@react-types/*` or
+  `@internationalized/*` (enforced by `bun lint`; tests and stories are
+  exempt). Use the public components from `#/components.js` and add what is
+  missing there instead.
 - Finished components get a Ladle story under `title: 'Pure components / X'`
   and a Playwright spec (`X.spec.tsx`) mounting those stories.
