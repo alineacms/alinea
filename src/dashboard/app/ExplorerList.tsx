@@ -12,9 +12,11 @@ import {
 } from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
+import {useLayoutEffect, useRef} from 'react'
 import {
   explorerPageIsPending,
+  explorerScrollKey,
   type DashboardExplorer,
   type DashboardRoot,
   type ExplorerReadyPage
@@ -89,6 +91,78 @@ function SearchIdleState() {
   )
 }
 
+/** Frames to wait for virtualized results to size before giving up */
+const scrollRestoreFrames = 30
+/** Frames the restored offset has to hold before scrolling is recorded again */
+const scrollSettleFrames = 3
+
+/**
+ * Keeps the scroll offset of the results of a page and restores it when a
+ * page with the same results is shown again, eg. after returning from an
+ * entry opened from the list
+ */
+function useScrollRestoration(
+  explorer: DashboardExplorer,
+  page: ExplorerReadyPage
+) {
+  const store = useStore()
+  const container = useRef<HTMLDivElement>(null)
+  const scrollOffset = explorer.scrollOffset(explorerScrollKey(page))
+  useLayoutEffect(() => {
+    const element = container.current
+    if (!element) return
+    const scroller = element.querySelector<HTMLElement>(
+      '[role="grid"], [role="treegrid"]'
+    )
+    const target = store.get(scrollOffset)
+    let restoring = scroller !== null
+    let frame = 0
+    let frames = 0
+    let settled = 0
+    // Virtualized results size their contents after rendering and apply the
+    // offset they last knew once they did, keep scrolling until it holds
+    function restore() {
+      if (!scroller || !restoring) return
+      scroller.scrollTop = target
+      settled = Math.abs(scroller.scrollTop - target) < 1 ? settled + 1 : 0
+      if (settled >= scrollSettleFrames || ++frames > scrollRestoreFrames) {
+        restoring = false
+        return
+      }
+      frame = requestAnimationFrame(restore)
+    }
+    function stopRestoring() {
+      restoring = false
+      cancelAnimationFrame(frame)
+    }
+    // Scroll events do not bubble, listen while capturing so the results
+    // can be rendered again without losing the listener
+    function onScroll(event: Event) {
+      if (restoring) return
+      const scrolled = event.target
+      if (!(scrolled instanceof HTMLElement)) return
+      const role = scrolled.getAttribute('role')
+      if (role !== 'grid' && role !== 'treegrid') return
+      store.set(scrollOffset, scrolled.scrollTop)
+    }
+    element.addEventListener('scroll', onScroll, {capture: true, passive: true})
+    element.addEventListener('wheel', stopRestoring, {passive: true})
+    element.addEventListener('touchstart', stopRestoring, {passive: true})
+    element.addEventListener('pointerdown', stopRestoring)
+    element.addEventListener('keydown', stopRestoring)
+    restore()
+    return () => {
+      stopRestoring()
+      element.removeEventListener('scroll', onScroll, {capture: true})
+      element.removeEventListener('wheel', stopRestoring)
+      element.removeEventListener('touchstart', stopRestoring)
+      element.removeEventListener('pointerdown', stopRestoring)
+      element.removeEventListener('keydown', stopRestoring)
+    }
+  }, [scrollOffset, store])
+  return container
+}
+
 export interface ExplorerListProps {
   compactTable?: boolean
   explorer: DashboardExplorer
@@ -103,6 +177,7 @@ export function ExplorerList({
   page
 }: ExplorerListProps) {
   const showResults = explorer.mode !== 'search' || Boolean(page.search.trim())
+  const container = useScrollRestoration(explorer, page)
   const getDragData = useSetAtom(explorer.getDragData)
   const canDrop = useSetAtom(explorer.canDrop)
   const moveInto = useSetAtom(explorer.moveInto)
@@ -172,6 +247,7 @@ export function ExplorerList({
   )
   return (
     <div
+      ref={container}
       className={styles.ExplorerList()}
       data-reorderable={canReorder || undefined}
     >

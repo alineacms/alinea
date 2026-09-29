@@ -397,6 +397,13 @@ export class RootAtoms {
     })
   )
 
+  /**
+   * The scroll offsets of the explorers of this root. The root explorer and
+   * the overview of an entry can list the same location, which then keeps its
+   * scroll offset when the editor returns to it through either of them.
+   */
+  explorerScrollOffset = dispense((_key: string) => atom(0))
+
   children = dispense((parentId: string | null) =>
     createExplorerAtoms(
       {
@@ -417,6 +424,7 @@ export class RootAtoms {
             set(sortPageOverviewAtom, sort)
         ),
         rootData: this.data,
+        scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
         treeItems: locale => this.tree(locale).items,
         treeReady: locale => this.tree(locale).ready,

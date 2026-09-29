@@ -104,6 +104,12 @@ export interface ExplorerOptions {
   nestedNavigation?: boolean
   pickChildren?: boolean
   rootData?: Atom<RootData>
+  /**
+   * Keeps the scroll offset of the listed results by `explorerScrollKey`,
+   * share it between explorers that list the same locations. Defaults to state
+   * kept by the explorer.
+   */
+  scrollOffset?: (key: string) => PrimitiveAtom<number>
   treeItems?: (
     locale: string | null,
     location: ExplorerLocation
@@ -190,6 +196,24 @@ export function explorerPageIsPending(
     page.location.root !== location.root ||
     page.location.parentId !== location.parentId
   )
+}
+
+/**
+ * Identifies the listed results of a page: pages with the same key list the
+ * same entries in the same way and share their scroll offset
+ */
+export function explorerScrollKey(page: ExplorerReadyPage) {
+  const {location} = page
+  return JSON.stringify([
+    location.workspace,
+    location.root ?? null,
+    location.parentId ?? null,
+    page.locale,
+    page.view,
+    page.resultMode,
+    page.searchScope,
+    page.search.trim()
+  ])
 }
 
 export interface ExplorerItemData {
@@ -512,6 +536,11 @@ export class ExplorerAtoms {
   items: (locale: string | null) => Atom<Array<ExplorerEntry>>
   pageReady: Atom<Promise<ExplorerReadyPage>>
   page: Atom<ExplorerReadyPage | undefined>
+  /**
+   * The scroll offset of the results of a page by its `explorerScrollKey`,
+   * restored when a page with the same key is shown again
+   */
+  scrollOffset: (key: string) => PrimitiveAtom<number>
   #options: ExplorerOptions
   #uploadResource = dispense(
     (location: ExplorerLocation, locale: string | null) =>
@@ -565,6 +594,8 @@ export class ExplorerAtoms {
         set(this.#selectedResultMode, resultMode)
     )
     this.#selectedView = atom(options.initialView)
+    this.scrollOffset =
+      options.scrollOffset ?? dispense((_key: string) => atom(0))
     this.requestedSort =
       options.sortState ?? atom<OverviewSort | undefined>(undefined)
     this.mode = options.mode ?? 'browse'
