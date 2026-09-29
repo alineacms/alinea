@@ -15,9 +15,9 @@
     "link": {
       "_id": "30YJx1K3eqhYawLeqsesPCgm2Nl",
       "_type": "url",
-      "_url": "https://alineacms.com/demo",
+      "_url": "/demo",
       "_title": "",
-      "_target": "_blank",
+      "_target": "_self",
       "label": "Try the demo"
     },
     "command": "npx alinea init",
@@ -804,9 +804,9 @@
           "_id": "2zjF046cGtCTwPONsqQAFfm5UWL",
           "_index": "a1",
           "_type": "url",
-          "_url": "https://alineacms.com/demo",
+          "_url": "/demo",
           "_title": "Demo",
-          "_target": "_blank",
+          "_target": "_self",
           "label": "Demo"
         },
         {
