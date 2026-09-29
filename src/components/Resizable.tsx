@@ -3,6 +3,7 @@ import {Allotment, type AllotmentHandle, LayoutPriority} from 'allotment'
 import {
   Children,
   isValidElement,
+  type KeyboardEvent,
   type ReactElement,
   type ReactNode,
   useEffect,
@@ -20,7 +21,10 @@ export interface ResizablePanelGroupProps
   direction?: Orientation
   /** The size of every panel in px, after the user resized them */
   onLayout?: (sizes: Array<number>) => void
-  /** ResizablePanel elements separated by ResizableHandle elements */
+  /**
+   * ResizablePanel elements separated by ResizableHandle elements. The
+   * dividers can also be moved with the arrow keys.
+   */
   children: ReactNode
 }
 
@@ -88,16 +92,21 @@ export function ResizablePanelGroup({
 }: ResizablePanelGroupProps) {
   const root = useRef<HTMLDivElement>(null)
   const allotment = useRef<AllotmentHandle>(null)
-  const nodes = Children.toArray(children)
-  const panels = nodes.filter(isPanel)
-  const handles = nodes.filter(isHandle)
-  const latest = useRef({panels, handles, onLayout})
+  const panels: Array<PanelElement> = []
+  // A handle marks the divider after the panel before it
+  const handles: Array<HandleElement | undefined> = []
+  for (const node of Children.toArray(children)) {
+    if (isPanel(node)) panels.push(node)
+    else if (isHandle(node) && panels.length > 0)
+      handles[panels.length - 1] = node
+  }
+  const vertical = direction === 'vertical'
+  const latest = useRef({panels, handles, onLayout, vertical})
   const dragStart = useRef<Array<number>>([])
   const sizes = useRef(new Map<string, number | undefined>())
-  const vertical = direction === 'vertical'
 
   useLayoutEffect(() => {
-    latest.current = {panels, handles, onLayout}
+    latest.current = {panels, handles, onLayout, vertical}
   })
 
   function views() {
@@ -196,12 +205,12 @@ export function ResizablePanelGroup({
 
   // Allotment renders the dividers itself, mark them as our handles. New
   // dividers are picked up by the observer below.
-  const handleLayout = handles
-    .map(handle => (handle.props.withHandle ? 'grip' : 'plain'))
-    .join()
+  const handleLayout = Array.from(handles, handle =>
+    handle?.props.withHandle ? 'grip' : 'plain'
+  ).join()
   useLayoutEffect(() => {
     decorate()
-  }, [handleLayout])
+  }, [handleLayout, vertical])
   useEffect(() => {
     const container = root.current?.querySelector(
       ':scope > .split-view > .sash-container'
@@ -212,16 +221,45 @@ export function ResizablePanelGroup({
     return () => observer.disconnect()
   }, [])
 
-  function decorate() {
-    const sashes = root.current?.querySelectorAll<HTMLElement>(
-      ':scope > .split-view > .sash-container > .sash'
+  function sashes() {
+    return Array.from(
+      root.current?.querySelectorAll<HTMLElement>(
+        ':scope > .split-view > .sash-container > .sash'
+      ) ?? []
     )
-    sashes?.forEach((sash, index) => {
-      const handle = latest.current.handles[index]
+  }
+
+  function decorate() {
+    const {handles, vertical} = latest.current
+    sashes().forEach((sash, index) => {
+      const handle = handles[index]
       sash.dataset.slot = 'resizable-handle'
+      sash.classList.add(styles.ResizablePanelGroup.handle())
+      sash.setAttribute('role', 'separator')
+      sash.setAttribute('aria-orientation', vertical ? 'horizontal' : 'vertical')
+      sash.tabIndex = 0
       if (handle?.props.withHandle) sash.dataset.withHandle = ''
       else delete sash.dataset.withHandle
     })
+  }
+
+  // Move a focused divider with the arrow keys along the group's axis
+  function keyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const keys = vertical ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight']
+    const step = [-10, 10][keys.indexOf(event.key)]
+    const index = sashes().indexOf(event.target as HTMLElement)
+    if (!step || index < 0) return
+    event.preventDefault()
+    const current = measure()
+    dragStart.current = current
+    dragEnd(
+      resize(
+        new Map([
+          [index, current[index] + step],
+          [index + 1, current[index + 1] - step]
+        ])
+      )
+    )
   }
 
   return (
@@ -231,6 +269,7 @@ export function ResizablePanelGroup({
       ref={root}
       data-direction={direction}
       className={styles.ResizablePanelGroup(styler.merge({className}))}
+      onKeyDown={keyDown}
     >
       <Allotment
         ref={allotment}
