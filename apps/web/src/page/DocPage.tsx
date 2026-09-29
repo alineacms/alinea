@@ -5,6 +5,7 @@ import type {Metadata, MetadataRoute} from 'next'
 import Link from 'next/link'
 import {cms} from '@/cms'
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
+import {JsonLd} from '@/layout/JsonLd'
 import {CopyMarkdownButton} from '@/page/docs/CopyMarkdownButton'
 import {
   DocBody,
@@ -19,7 +20,7 @@ import {renderNodes} from '@/page/docs/DocMarkdown'
 import {docsPages, getDocsTree} from '@/page/docs/DocsTree'
 import {DocToc} from '@/page/docs/DocToc'
 import {Doc} from '@/schema/Doc'
-import {getMetadata} from '@/utils/metadata'
+import {describeText, getMetadata, siteUrl} from '@/utils/metadata'
 import css from './DocPage.module.scss'
 
 const styles = styler(css)
@@ -61,10 +62,15 @@ export async function generateMetadata({
   params
 }: DocPageProps): Promise<Metadata> {
   const doc = await getDoc(params)
+  // Pages nested below a section, such as a single field or component, get
+  // their section in the title to tell them apart (eg. "Select - Components")
+  const [, , ...sections] = doc.parents
+  const section = sections.at(-1)
   return await getMetadata({
     url: doc._url,
-    title: doc.title,
-    metadata: doc.metadata
+    title: section ? `${doc.title} - ${section.title}` : doc.title,
+    metadata: doc.metadata,
+    description: describeText(doc.body)
   })
 }
 
@@ -93,8 +99,23 @@ export default async function DocPage({params}: DocPageProps) {
   const markdown = [`# ${title}`, renderNodes(doc.body, tree.urls, new Map())]
     .filter(Boolean)
     .join('\n\n')
+  const trail = [
+    {title: 'Docs', url: tree.root.url},
+    ...parents,
+    {title: doc.navigationTitle || doc.title, url: doc._url}
+  ]
+  const breadcrumbList = {
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.title,
+      item: `${siteUrl}${item.url}`
+    }))
+  }
   return (
     <div className={styles.root({wide})}>
+      {!isIndex && <JsonLd data={breadcrumbList} />}
       <article className={styles.root.article()}>
         <div className={styles.root.top()}>
           <Breadcrumbs

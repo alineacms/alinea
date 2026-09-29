@@ -4,9 +4,10 @@ import {Entry} from 'alinea/core/Entry'
 import type {Metadata, MetadataRoute} from 'next'
 import Link from 'next/link'
 import {cms} from '@/cms'
+import {JsonLd} from '@/layout/JsonLd'
 import {Section} from '@/layout/Section'
 import {BlogPost} from '@/schema/BlogPost'
-import {getMetadata} from '@/utils/metadata'
+import {getMetadata, siteUrl} from '@/utils/metadata'
 import css from './BlogPostPage.module.scss'
 import {BlogAvatar} from './blog/BlogAvatar'
 import {BlogCover} from './blog/BlogCover'
@@ -41,15 +42,23 @@ export async function generateMetadata({
       url: Query.url,
       title: BlogPost.title,
       metadata: BlogPost.metadata,
-      introduction: BlogPost.introduction
+      introduction: BlogPost.introduction,
+      publishDate: BlogPost.publishDate,
+      author: BlogPost.author,
+      cover: BlogPost.cover
     }
   })
   if (!page) return await getMetadata(null)
+  const author = page.author?.url?._url || page.author?.name
   return await getMetadata({
-    ...page,
-    metadata: {
-      ...page.metadata,
-      description: page.metadata?.description || page.introduction
+    url: page.url,
+    title: page.title,
+    metadata: page.metadata,
+    description: page.introduction,
+    image: page.cover,
+    article: {
+      publishedTime: page.publishDate,
+      authors: author ? [author] : undefined
     }
   })
 }
@@ -70,8 +79,20 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
     .slice(0, 2)
   const author = page.author?.name ? page.author : undefined
   const authorUrl = author?.url?._url
+  const blogPosting = {
+    '@type': 'BlogPosting',
+    headline: page.title,
+    description: page.introduction || undefined,
+    url: `${siteUrl}${page.url}`,
+    mainEntityOfPage: `${siteUrl}${page.url}`,
+    datePublished: page.publishDate || undefined,
+    image: page.cover?.src ? new URL(page.cover.src, siteUrl).href : undefined,
+    author: author && {'@type': 'Person', name: author.name, url: authorUrl},
+    publisher: {'@type': 'Organization', name: 'Alinea', url: siteUrl}
+  }
   return (
-    <div className={styles.root()}>
+    <main className={styles.root()}>
+      <JsonLd data={blogPosting} />
       <article>
         <header className={styles.root.header()}>
           <Link href="/blog" className={styles.root.header.back()}>
@@ -154,11 +175,18 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
           </div>
         </Section>
       )}
-    </div>
+    </main>
   )
 }
 
 BlogPostPage.sitemap = async (): Promise<MetadataRoute.Sitemap> => {
-  const pages = await generateStaticParams()
-  return pages.map(page => ({url: `/blog/${page.slug}`, priority: 0.9}))
+  const posts = await cms.find({
+    type: BlogPost,
+    select: {url: Query.url, publishDate: BlogPost.publishDate}
+  })
+  return posts.map(post => ({
+    url: post.url,
+    lastModified: post.publishDate || undefined,
+    priority: 0.7
+  }))
 }

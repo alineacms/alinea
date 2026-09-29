@@ -965,8 +965,8 @@
     }
   ],
   "metadata": {
-    "title": "Alinea - Open source headless CMS",
-    "description": "Alinea is a open source headless CMS with minimal setup. Fully typed content right in your repository.",
+    "title": "Alinea - Open source, Git-based headless CMS for Next.js",
+    "description": "Alinea is an open source, Git-based headless CMS for Next.js. Your content lives in your repository as fully typed files, edited in a fast dashboard.",
     "openGraph": {
       "image": {},
       "title": "",

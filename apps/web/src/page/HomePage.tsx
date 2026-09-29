@@ -5,11 +5,12 @@ import {cms} from '@/cms'
 import {Button} from '@/layout/Button'
 import {CopyPrompt} from '@/layout/CopyPrompt'
 import {InstallCommand} from '@/layout/InstallCommand'
+import {JsonLd} from '@/layout/JsonLd'
 import WebLayout from '@/layout/WebLayout'
 import {type LabeledLink, resolveLink} from '@/page/sections/links'
 import {Sections} from '@/page/sections/Sections'
 import {Home} from '@/schema/Home'
-import {getMetadata} from '@/utils/metadata'
+import {getMetadata, siteName, siteUrl} from '@/utils/metadata'
 import css from './HomePage.module.scss'
 
 const styles = styler(css)
@@ -88,10 +89,52 @@ function HomeHero({
   )
 }
 
+const repository = 'https://github.com/alineacms/alinea'
+
+/** Describes Alinea, its makers and this website for search engines */
+function homeStructuredData(description?: string) {
+  const organization = {
+    '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
+    name: 'Alinea',
+    url: siteUrl,
+    logo: `${siteUrl}/icon.svg`,
+    sameAs: ['https://github.com/alineacms']
+  }
+  return {
+    '@graph': [
+      organization,
+      {
+        '@type': 'WebSite',
+        '@id': `${siteUrl}/#website`,
+        name: siteName,
+        alternateName: 'Alinea',
+        url: siteUrl,
+        description,
+        publisher: {'@id': organization['@id']}
+      },
+      {
+        '@type': 'SoftwareApplication',
+        name: 'Alinea',
+        alternateName: siteName,
+        description,
+        url: siteUrl,
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'Cross-platform',
+        license: `${repository}/blob/main/LICENSE`,
+        offers: {'@type': 'Offer', price: 0, priceCurrency: 'USD'},
+        sameAs: [repository, 'https://www.npmjs.com/package/alinea'],
+        author: {'@id': organization['@id']}
+      }
+    ]
+  }
+}
+
 export default async function HomePage() {
   const home = await cms.get({type: Home})
   return (
     <WebLayout>
+      <JsonLd data={homeStructuredData(home.metadata?.description)} />
       <main className={styles.home()}>
         <HomeHero {...home.hero} />
         <Sections sections={home.sections} />

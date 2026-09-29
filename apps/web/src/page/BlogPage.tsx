@@ -24,13 +24,17 @@ export async function generateMetadata(): Promise<Metadata> {
     }
   })
   if (!page) return await getMetadata(null)
-  return await getMetadata(page)
+  return await getMetadata({
+    ...page,
+    description:
+      'Releases, guides and notes from the people building Alinea, the open source headless CMS for Next.js.'
+  })
 }
 
 export default async function BlogPage() {
   const [featured, ...posts] = await findBlogPosts()
   return (
-    <div className={styles.root()}>
+    <main className={styles.root()}>
       <Section flush>
         <header className={styles.root.header()}>
           <div className={styles.root.header.intro()}>
@@ -64,7 +68,7 @@ export default async function BlogPage() {
       <Section flush className={styles.root.newsletter()}>
         <Newsletter variant="panel" />
       </Section>
-    </div>
+    </main>
   )
 }
 

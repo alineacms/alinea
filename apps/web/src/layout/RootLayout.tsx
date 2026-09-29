@@ -1,9 +1,12 @@
 import '@/global.scss'
 import type {Metadata, Viewport} from 'next'
 import type {PropsWithChildren} from 'react'
+import {siteName, siteUrl} from '@/utils/metadata'
 
 export const metadata: Metadata = {
-  title: 'Alinea CMS'
+  metadataBase: new URL(siteUrl),
+  title: siteName,
+  applicationName: siteName
 }
 
 export const viewport: Viewport = {

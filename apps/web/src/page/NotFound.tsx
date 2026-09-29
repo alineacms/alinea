@@ -21,7 +21,7 @@ export default async function NotFound() {
           <main className={styles.notfound()}>
             <NextImage
               src={heroBg.src}
-              alt="Background"
+              alt=""
               fill
               priority
               placeholder="blur"

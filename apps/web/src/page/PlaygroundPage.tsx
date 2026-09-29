@@ -6,7 +6,7 @@ import {FSSource} from 'alinea/core/source/FSSource'
 import {exportSource} from 'alinea/core/source/SourceExport'
 import type {Metadata, MetadataRoute, Viewport} from 'next'
 import {Suspense} from 'react'
-import {getMetadata, type MetadataProps} from '@/utils/metadata'
+import {getMetadata} from '@/utils/metadata'
 import {PlaygroundDynamic} from './playground/Playground.dynamic'
 
 export const viewport: Viewport = {
@@ -17,11 +17,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return await getMetadata({
     url: '/playground',
     title: 'Playground',
-    metadata: {
-      description:
-        'Try out different field types and validation rules. Experiment, test, and preview field configurations in real-time.'
-    }
-  } as MetadataProps)
+    description:
+      'Try out different field types and validation rules. Experiment, test, and preview field configurations in real-time.'
+  })
 }
 export default async function PlaygroundPage() {
   // Resolve at runtime, alinea may be hoisted to the workspace root

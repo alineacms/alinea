@@ -5,7 +5,7 @@ import type {Metadata, MetadataRoute} from 'next'
 import {ChangelogNav} from '@/page/changelog/ChangelogNav'
 import {ChangelogReleaseRow} from '@/page/changelog/ChangelogReleaseRow'
 import {parseChangelog} from '@/page/changelog/parseChangelog'
-import {getMetadata, type MetadataProps} from '@/utils/metadata'
+import {getMetadata} from '@/utils/metadata'
 import css from './ChangelogPage.module.scss'
 
 const styles = styler(css)
@@ -13,8 +13,10 @@ const styles = styler(css)
 export async function generateMetadata(): Promise<Metadata> {
   return await getMetadata({
     url: '/changelog',
-    title: 'Changelog'
-  } as MetadataProps)
+    title: 'Changelog',
+    description:
+      'Every release of Alinea, the open source headless CMS for Next.js: what changed and why it matters.'
+  })
 }
 
 export const dynamic = 'force-static'
@@ -28,7 +30,7 @@ export default async function Changelog() {
   )
   const releases = parseChangelog(doc)
   return (
-    <div className={styles.root()}>
+    <main className={styles.root()}>
       <header className={styles.header()}>
         <div className={styles.header.intro()}>
           <h1 className={styles.header.title()}>What's new</h1>
@@ -51,7 +53,7 @@ export default async function Changelog() {
           ))}
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 
