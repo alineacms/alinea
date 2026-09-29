@@ -349,12 +349,9 @@ export function ExplorerTable({
     ? {column: page.sort.column.column, direction: page.sort.column.direction}
     : undefined
   const selectionMode = explorer.selectionMode
-  const search = useAtomValueRaw(explorer.search)
-  const isSearching = Boolean(search.trim())
   const breadcrumbs =
     explorer.breadcrumbs ||
     page.resultMode === 'matches' ||
-    isSearching ||
     page.searchesEverything
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls =
@@ -376,7 +373,7 @@ export function ExplorerTable({
         showHeader={!compact}
         sortDescriptor={sortDescriptor}
         onSortChange={
-          isSearching
+          page.search.trim()
             ? undefined
             : descriptor =>
                 startTransition(() =>
