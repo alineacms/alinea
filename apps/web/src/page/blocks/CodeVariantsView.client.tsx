@@ -1,18 +1,40 @@
 'use client'
 
 import styler from '@alinea/styler'
-import {useAtom} from 'jotai'
-import {atomWithStorage} from 'jotai/utils'
-import {useId} from 'react'
+import {useId, useSyncExternalStore} from 'react'
 import css from './CodeVariantsView.module.scss'
 import {CodeCopyButton} from './code/CodeCopyButton'
 
 const styles = styler(css)
 
-const preferenceAtom = atomWithStorage<string | undefined>(
-  `@alinea/codevariant`,
-  undefined
-)
+// The chosen variant (eg. a package manager) is shared by every tab set on
+// the page and remembered in this browser
+const preferenceKey = '@alinea/codevariant'
+const listeners = new Set<() => void>()
+
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function getPreference() {
+  try {
+    return localStorage.getItem(preferenceKey)
+  } catch {
+    return null
+  }
+}
+
+function setPreference(name: string) {
+  try {
+    localStorage.setItem(preferenceKey, name)
+  } catch {
+    // Without storage the choice is not remembered
+  }
+  for (const listener of listeners) listener()
+}
 
 export interface CodeVariant {
   id: string
@@ -27,7 +49,7 @@ export interface CodeVariantTabsProps {
 
 export function CodeVariantTabs({variants}: CodeVariantTabsProps) {
   const id = useId()
-  const [preference, setPreference] = useAtom(preferenceAtom)
+  const preference = useSyncExternalStore(subscribe, getPreference, () => null)
   const selected =
     variants.find(variant => variant.name === preference) ?? variants[0]
   return (
