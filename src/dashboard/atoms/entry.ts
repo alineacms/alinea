@@ -908,10 +908,9 @@ const treeChildSelect = {
   root: Entry.root
 }
 
-function preferredTreeEntries<Item extends {id: string; locale: string | null}>(
-  items: Array<Item>,
-  locale: string | null
-): Array<Item> {
+export function preferredTreeEntries<
+  Item extends {id: string; locale: string | null}
+>(items: Array<Item>, locale: string | null): Array<Item> {
   const translated = new Set(
     items.filter(item => item.locale === locale).map(item => item.id)
   )

@@ -10,12 +10,13 @@ import {
 } from '#/components.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {nav, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
-import type {
-  RootAtoms,
-  RootTreeItem,
-  RootTreeNode,
+import {
   TreeAtoms,
-  TreeSnapshot
+  type RootAtoms,
+  type RootTreeItem,
+  type RootTreeNode,
+  type TreeSnapshot,
+  type TreeSource
 } from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
@@ -53,7 +54,7 @@ export interface SidebarTreeExplorerProps {
   root: RootAtoms
   rootSelected?: boolean
   selectedLocale: WritableAtom<string | null, [string], unknown>
-  tree: TreeAtoms
+  tree: TreeSource
 }
 
 interface SidebarStatusDisplay {
@@ -240,14 +241,15 @@ function useScrollSelectedIntoView(
 /** Drag entries within the tree and drop entries from elsewhere on it */
 function useRootTreeDragDrop(
   root: RootAtoms,
-  tree: TreeAtoms,
+  tree: TreeSource,
   disabled = false
 ): DragDropProps {
   const dragDisabled = useAtomValueRaw(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
   const drop = useSetAtom(root.onDrop)
   const move = useSetAtom(root.onMove)
-  if (disabled || dragDisabled) return {}
+  // Only the entries of the root itself can be dragged
+  if (disabled || dragDisabled || !(tree instanceof TreeAtoms)) return {}
   const moveInTree = (event: DragMoveEvent) => move(event, tree)
   return {
     acceptedDragTypes: root.acceptedDragTypes,
