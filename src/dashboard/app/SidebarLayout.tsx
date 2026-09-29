@@ -39,7 +39,6 @@ export function SidebarLayout({
       defaultSize={defaultWidth}
       minSize={isMobile ? 0 : side === 'left' ? 200 : 300}
       maxSize={isMobile ? Infinity : side === 'left' ? 480 : 640}
-      priority="low"
       onSizeChange={size => {
         if (!isMobile) setWidth(size)
       }}
@@ -54,7 +53,6 @@ export function SidebarLayout({
       <ResizablePanel
         key="content"
         minSize={isMobile ? 0 : side === 'left' ? 500 : 200}
-        priority="high"
         visible={!isMobile || side === 'left' || !sidebarVisible}
       >
         {children}

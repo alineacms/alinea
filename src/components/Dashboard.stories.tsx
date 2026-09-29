@@ -433,8 +433,8 @@ function ContentSidebar({selected, onSelect}: ContentSidebarProps) {
         <SearchDialog />
       </SidebarHeader>
       <SidebarContent scroll>
-        <SidebarGroup aria-labelledby="dashboard-root-label">
-          <SidebarGroupLabel id="dashboard-root-label">Pages</SidebarGroupLabel>
+        <SidebarGroup>
+          <SidebarGroupLabel>Pages</SidebarGroupLabel>
           <SidebarGroupAction>
             <DropdownMenu>
               <DropdownMenuTrigger variant="ghost" size="sm">
@@ -1023,7 +1023,6 @@ export function Composition() {
               defaultSize={280}
               minSize={220}
               maxSize={420}
-              priority="low"
             >
               <ContentSidebar
                 selected={selected}
@@ -1035,10 +1034,10 @@ export function Composition() {
               />
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel key="main" minSize={480} priority="high">
+            <ResizablePanel key="main" minSize={480}>
               <SidebarInset>
                 <ResizablePanelGroup>
-                  <ResizablePanel key="page" minSize={400} priority="high">
+                  <ResizablePanel key="page" minSize={400}>
                     <Page>
                       <EditorHeader
                         page={page}
@@ -1076,7 +1075,6 @@ export function Composition() {
                       defaultSize={320}
                       minSize={280}
                       maxSize={560}
-                      priority="low"
                     >
                       <EntryAside page={page} />
                     </ResizablePanel>
