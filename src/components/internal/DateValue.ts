@@ -10,16 +10,23 @@ import type {DateRange} from '../types.js'
 // @internationalized/date objects. An undefined value keeps a react-aria
 // component uncontrolled, anything that does not parse clears it.
 
-export function toCalendarDate(
-  value: string | null | undefined
-): CalendarDate | null | undefined {
+function parseOrClear<T>(
+  value: string | null | undefined,
+  parse: (value: string) => T
+): T | null | undefined {
   if (value === undefined) return undefined
   if (!value) return null
   try {
-    return parseDate(value)
+    return parse(value)
   } catch {
     return null
   }
+}
+
+export function toCalendarDate(
+  value: string | null | undefined
+): CalendarDate | null | undefined {
+  return parseOrClear(value, parseDate)
 }
 
 export function toCalendarRange(
@@ -35,13 +42,7 @@ export function toCalendarRange(
 export function toTime(
   value: string | null | undefined
 ): Time | null | undefined {
-  if (value === undefined) return undefined
-  if (!value) return null
-  try {
-    return parseTime(value)
-  } catch {
-    return null
-  }
+  return parseOrClear(value, parseTime)
 }
 
 interface TimeParts {
