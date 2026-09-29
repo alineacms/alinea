@@ -9,7 +9,7 @@ export async function requestContext(
 ): Promise<RequestContext> {
   const apiKey =
     process.env.ALINEA_API_KEY ||
-    (process.env.NODE_ENV === 'development' ? 'dev' : await generatedRelease)
+    (process.env.NODE_ENV === 'development' ? 'dev' : await generatedRelease())
   const dev = process.env.ALINEA_DEV_SERVER
   if (dev) {
     return {
