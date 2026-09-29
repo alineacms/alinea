@@ -36,7 +36,11 @@ export function Timestamp({
   const now = useNow(format === 'relative')
   const value = date instanceof Date ? date : new Date(date)
   if (Number.isNaN(value.getTime())) return null
-  const full = formatter(lang, 'datetime').format(value)
+  // A date without a time is midnight UTC. Server rendering and hydration
+  // format in UTC as well, the client renders its own time zone afterwards.
+  const dateOnly = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+  const timeZone = dateOnly || now === undefined ? 'UTC' : undefined
+  const full = formatter(lang, 'datetime', timeZone).format(value)
   return (
     <time
       data-slot="timestamp"
@@ -46,11 +50,13 @@ export function Timestamp({
       data-format={format}
       className={styles.Timestamp(styler.merge({className}))}
     >
-      {format === 'relative'
-        ? formatRelative(lang, value, now)
-        : format === 'datetime'
-          ? full
-          : formatter(lang, format).format(value)}
+      {format === 'datetime'
+        ? full
+        : format !== 'relative'
+          ? formatter(lang, format, timeZone).format(value)
+          : now === undefined
+            ? formatter(lang, 'date', timeZone).format(value)
+            : formatRelative(lang, value, now, timeZone)}
     </time>
   )
 }
@@ -67,11 +73,15 @@ const options: Record<
 
 const formatters = new Map<string, Intl.DateTimeFormat>()
 
-function formatter(locale: string, style: keyof typeof options) {
-  const key = `${locale}|${style}`
+function formatter(
+  locale: string,
+  style: keyof typeof options,
+  timeZone?: string
+) {
+  const key = `${locale}|${style}|${timeZone}`
   let result = formatters.get(key)
   if (!result) {
-    result = new Intl.DateTimeFormat(locale, options[style])
+    result = new Intl.DateTimeFormat(locale, {...options[style], timeZone})
     formatters.set(key, result)
   }
   return result
@@ -91,7 +101,12 @@ function relativeFormatter(locale: string) {
   return result
 }
 
-function formatRelative(locale: string, date: Date, now: number) {
+function formatRelative(
+  locale: string,
+  date: Date,
+  now: number,
+  timeZone?: string
+) {
   const relative = relativeFormatter(locale)
   const seconds = Math.round((date.getTime() - now) / 1000)
   if (Math.abs(seconds) < 60) return relative.format(seconds, 'second')
@@ -102,7 +117,7 @@ function formatRelative(locale: string, date: Date, now: number) {
   const days = Math.round(hours / 24)
   if (Math.abs(days) < 7) return relative.format(days, 'day')
   const sameYear = date.getFullYear() === new Date(now).getFullYear()
-  return formatter(locale, sameYear ? 'day' : 'date').format(date)
+  return formatter(locale, sameYear ? 'day' : 'date', timeZone).format(date)
 }
 
 // Relative timestamps share a single clock that ticks while any is mounted
@@ -132,7 +147,23 @@ function getTick() {
   return Math.floor(Date.now() / tickInterval)
 }
 
+function getStatic() {
+  return 0
+}
+
+function getHydrating() {
+  return undefined
+}
+
+/**
+ * The current time, which updates every tick while `live`. It is undefined
+ * while server rendering and hydrating, which must render the same markup.
+ */
 function useNow(live: boolean) {
-  useSyncExternalStore(live ? subscribe : subscribeNever, getTick, getTick)
-  return live ? Date.now() : 0
+  const tick = useSyncExternalStore(
+    live ? subscribe : subscribeNever,
+    live ? getTick : getStatic,
+    getHydrating
+  )
+  return tick === undefined ? undefined : Date.now()
 }
