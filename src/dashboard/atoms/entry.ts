@@ -436,7 +436,6 @@ export class EntryLocaleAtoms {
       const type = config.schema[data.type]
       assert(type, `Type "${data.type}" not found in config`)
       return validateEntry(type, get(node.value), {
-        locale: this.requestedLocale,
         fieldOptions: policyFieldOptions(config, get(policyAtom), {
           workspace: data.workspace,
           root: data.root,
