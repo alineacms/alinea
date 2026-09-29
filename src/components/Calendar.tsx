@@ -154,7 +154,7 @@ function CalendarBody() {
         data-slot="calendar-grid"
         className={styles.Calendar.grid()}
       >
-        <CalendarGridHeader>
+        <CalendarGridHeader data-slot="calendar-grid-header">
           {day => (
             <CalendarHeaderCell
               data-slot="calendar-weekday"
@@ -164,7 +164,7 @@ function CalendarBody() {
             </CalendarHeaderCell>
           )}
         </CalendarGridHeader>
-        <CalendarGridBody>
+        <CalendarGridBody data-slot="calendar-grid-body">
           {date => {
             const day = getDayOfWeek(date, locale)
             return (

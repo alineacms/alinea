@@ -78,7 +78,7 @@
   cursor: pointer;
   transition: var(--alinea-transition);
 
-  &:hover,
+  &:hover:not([aria-disabled='true']),
   &:focus-visible {
     background-color: var(--alinea-muted);
   }
@@ -130,11 +130,13 @@
 /* A range fills the days between its ends and rounds the week edges */
 .Calendar[data-range] .Calendar-day.is-selected {
   border-radius: 0;
-  background-color: var(--alinea-primary-subtle);
-  color: var(--alinea-primary-subtle-fg);
 
-  &.is-rangeStart,
-  &.is-rangeEnd {
+  &:not([aria-invalid='true']) {
+    background-color: var(--alinea-primary-subtle);
+    color: var(--alinea-primary-subtle-fg);
+  }
+
+  &:not([aria-invalid='true']):is(.is-rangeStart, .is-rangeEnd) {
     background-color: var(--alinea-primary);
     color: var(--alinea-primary-fg);
   }
