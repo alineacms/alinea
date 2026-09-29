@@ -11,7 +11,11 @@ export const overviewScenarioIds = {
   blog: 'overview-blog',
   post: 'overview-blog-post',
   event: 'overview-blog-event',
-  photo: 'overview-media-photo'
+  photo: 'overview-media-photo',
+  annualReport: 'overview-media-annual-report',
+  letter: 'overview-media-letter',
+  notes: 'overview-media-notes',
+  mediaFolder: 'overview-media-folder'
 }
 
 /** A one pixel image, the preview of the scenario's photo */
