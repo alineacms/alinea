@@ -2,10 +2,6 @@
 [![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
 [![license](https://img.shields.io/npm/l/alinea.svg)](LICENSE)
 
-<a href="https://vercel.com/oss">
-  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
-</a>
-
 # [Alinea CMS](https://alineacms.com)
 
 Alinea is an open source, Git-based headless CMS for Next.js. You define your
