@@ -1,7 +1,7 @@
 .CreateEntry-parentRow {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 16px;
 }
 
@@ -10,6 +10,16 @@
   min-width: min(320px, 100%);
 }
 
+/* Stretch to the height of the parent field so the toggle group lines up
+   with its link row */
 .CreateEntry-insertOrder {
+  display: flex;
   flex: 0 0 auto;
+  flex-direction: column;
+}
+
+.CreateEntry-insertOrder-toggle[data-variant] {
+  flex: 1;
+  align-items: stretch;
+  height: auto;
 }
