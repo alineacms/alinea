@@ -1,7 +1,6 @@
 import styler from '@alinea/styler'
 import {
   type ComponentPropsWithoutRef,
-  type ComponentType,
   createContext,
   type DOMAttributes,
   type ReactNode,
@@ -23,7 +22,7 @@ import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import css from './SortableList.module.css'
 import {Surface, type SurfaceProps} from './Surface.js'
-import type {DragMoveEvent, DropTarget, Key} from './types.js'
+import type {DragMoveEvent, DropTarget, IconType, Key} from './types.js'
 
 const styles = styler(css)
 
@@ -36,6 +35,7 @@ interface ItemDropTarget extends DropTarget {
 }
 
 interface SortableListContextValue {
+  reorderable: boolean
   dragType: string
   draggingKey: Key | null
   dropTarget: ItemDropTarget | null
@@ -88,9 +88,9 @@ export function SortableList({
   const reorderRef = useRef(onReorder)
   reorderRef.current = onReorder
   const reorderable = Boolean(onReorder)
-  const context = useMemo<SortableListContextValue | null>(() => {
-    if (!reorderable) return null
+  const context = useMemo<SortableListContextValue>(() => {
     return {
+      reorderable,
       dragType,
       draggingKey,
       dropTarget,
@@ -188,6 +188,7 @@ function SortableListItemElement({
   return (
     <div
       data-slot="sortable-list-item"
+      role="listitem"
       {...props}
       className={styles.SortableListItem(styler.merge({className}))}
       data-dragging={dragging || undefined}
@@ -211,8 +212,9 @@ function ReorderableItem({
   const handle = useRef<HTMLSpanElement>(null)
   const preview = useRef<DragPreviewRenderer | null>(null)
   const nativeDrag = useRef(false)
-  const {dragType, draggingKey, dropTarget} = list
+  const {reorderable, dragType, draggingKey, dropTarget} = list
   const {dragProps, isDragging} = useDrag({
+    isDisabled: !reorderable,
     getItems() {
       return [{'text/plain': String(id), [dragType]: String(id)}]
     },
@@ -285,9 +287,12 @@ function ReorderableItem({
     }
   })
   const active = dropTarget?.key === id ? dropTarget.position : undefined
-  const itemContext = useMemo<SortableListItemContextValue>(
-    () => ({dragProps: handleDragProps, dragging: isDragging, handle}),
-    [handleDragProps, isDragging]
+  const itemContext = useMemo<SortableListItemContextValue | null>(
+    () =>
+      reorderable
+        ? {dragProps: handleDragProps, dragging: isDragging, handle}
+        : null,
+    [reorderable, handleDragProps, isDragging]
   )
   return (
     <SortableListItemContext.Provider value={itemContext}>
@@ -423,9 +428,8 @@ export function SortableListItemActions({
 
 export interface SortableListItemToggleProps extends Omit<
   ButtonProps,
-  'variant' | 'children' | 'className' | 'size'
+  'variant' | 'children' | 'size'
 > {
-  className?: string
   /** Whether the item content is shown, rotates the fold icon */
   expanded: boolean
 }
@@ -508,7 +512,7 @@ export function SortableListItemSettings({
 }
 
 export interface SortableListDragPreviewProps extends ComponentPropsWithoutRef<'div'> {
-  icon?: ComponentType
+  icon?: IconType
   label: ReactNode
 }
 
