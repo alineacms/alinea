@@ -58,7 +58,7 @@ export function NavRailContent({className, ...props}: NavRailContentProps) {
 
 export interface NavRailItemProps extends StyleProps, DataProps {
   icon: IconType
-  /** Shown in a tooltip and used as the accessible name */
+  /** Shown in a tooltip and used as the accessible name, with the badge count */
   label: string
   /** Marks the item as the current section */
   active?: boolean
@@ -82,13 +82,15 @@ export function NavRailItem({
   onClick,
   ...props
 }: NavRailItemProps) {
+  const count =
+    typeof badge === 'number' || typeof badge === 'string' ? badge : undefined
   const attributes = {
     'data-slot': 'nav-rail-item',
     ...props,
-    'aria-label': label,
+    'aria-label': count === undefined ? label : `${label} (${count})`,
     'aria-current': active ? ('page' as const) : undefined,
     className: styles.NavRailItem(styler.merge({className})),
-    onClick
+    onClick: disabled ? undefined : onClick
   }
   const content = (
     <>
@@ -112,12 +114,13 @@ export function NavRailItem({
           <a {...attributes} href={href}>
             {content}
           </a>
-        ) : href ? (
-          <a {...attributes} aria-disabled>
-            {content}
-          </a>
         ) : (
-          <button {...attributes} type="button" disabled={disabled}>
+          // Stays focusable and hoverable when disabled to show its tooltip
+          <button
+            {...attributes}
+            type="button"
+            aria-disabled={disabled || undefined}
+          >
             {content}
           </button>
         )}

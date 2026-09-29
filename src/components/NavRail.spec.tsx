@@ -45,7 +45,14 @@ test('renders links, badges and disabled items', async ({mount, page}) => {
       .getByRole('button', {name: 'Settings'})
       .locator('[data-slot="nav-rail-item-badge"]')
   ).toHaveAttribute('data-dot', 'true')
-  await expect(page.getByRole('button', {name: 'Archive'})).toBeDisabled()
+  await expect(media).toHaveAccessibleName('Media (3)')
+  const archive = page.getByRole('button', {name: 'Archive'})
+  await expect(archive).toBeDisabled()
+  // A disabled item can still be reached to read its label
+  await link.focus()
+  await page.keyboard.press('Tab')
+  await expect(archive).toBeFocused()
+  await expect(page.getByRole('tooltip')).toHaveText('Archive')
 })
 
 test('turns horizontal on small screens', async ({mount, page}) => {
