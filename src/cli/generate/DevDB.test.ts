@@ -325,3 +325,71 @@ test('reconfigures the open database when the config changes', async () => {
     await rm(rootDir, {recursive: true, force: true})
   }
 })
+
+test('migrates every content file to another format and back', async () => {
+  const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-migrate-'))
+  const pages = join(rootDir, 'content/pages')
+  let db: DevDB | undefined
+  const Page = Config.document('Page', {
+    fields: {body: Field.richText('Body')}
+  })
+  const config = createConfig({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages', {contains: ['Page']})}
+      })
+    }
+  })
+  const record = {
+    _id: 'page',
+    _type: 'Page',
+    _index: 'a0',
+    title: 'Page',
+    body: [
+      {
+        _type: 'paragraph',
+        content: [{_type: 'text', text: 'First sentence. Second sentence.'}]
+      }
+    ]
+  }
+  await mkdir(pages, {recursive: true})
+  await writeFile(join(pages, 'page.json'), JSON.stringify(record, null, 2))
+  try {
+    db = await DevDB.create({
+      config,
+      rootDir,
+      databasePath: join(rootDir, 'database.sqlite'),
+      dashboardUrl: undefined
+    })
+    test.is(await db.migrate('.yaml'), 1)
+    test.equal(await fs.readdir(pages), ['page.yaml'])
+    test.is(
+      await readFile(join(pages, 'page.yaml'), 'utf8'),
+      [
+        '_id: page',
+        '_type: Page',
+        '_index: a0',
+        'title: Page',
+        '',
+        'body:',
+        '  - p: |',
+        '      First sentence.',
+        '      Second sentence.',
+        ''
+      ].join('\n')
+    )
+    test.equal(await db.get({id: 'page', select: Entry.title}), 'Page')
+    test.is(await db.migrate('.yaml'), 0)
+    test.is(await db.migrate('.json'), 1)
+    test.equal(await fs.readdir(pages), ['page.json'])
+    test.equal(
+      JSON.parse(await readFile(join(pages, 'page.json'), 'utf8')),
+      record
+    )
+  } finally {
+    await db?.close()
+    await rm(rootDir, {recursive: true, force: true})
+  }
+})

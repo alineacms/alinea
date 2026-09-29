@@ -1,9 +1,9 @@
-import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {loaderFor} from '#/core/Loader.js'
+import {contentFileVersions} from '#/core/util/EntryFilenames.js'
 import {execGit} from '#/backend/util/ExecGit.js'
 import type {Config} from '#/core/Config.js'
 import type {HistoryApi, Revision} from '#/core/Connection.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
-import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {parseCoAuthoredBy} from '../util/CommitMessage.js'
 
 const encoder = new TextEncoder()
@@ -15,45 +15,45 @@ export class GitHistory implements HistoryApi {
   ) {}
 
   async revisions(file: string): Promise<Array<Revision>> {
-    const versions = fileVersions(file)
-    const results = Array<Revision>()
-    for (const versioned of versions) {
-      const output = await execGit(this.rootDir, [
-        '-c',
-        'core.quotePath=false',
-        'log',
-        '--follow',
-        '--name-status',
-        '--pretty=format:%H%n%at%n%s%n%ae%n%an%n%f',
-        '--',
-        versioned
-      ])
-      const revisions = output
-        .split('\n\n')
-        .filter(entry => {
-          return entry.includes('\n')
-        })
-        .map(entry => {
-          const [ref, timestamp, message, email, name, changedFile, ...rest] =
-            entry.split('\n')
-          const fileLocation = rest.length
-            ? rest[rest.length - 1].split('\t').pop()!.trim()
-            : versioned
-          const user = parseCoAuthoredBy(message) ?? {name, email}
-          return {
-            ref,
-            createdAt: Number.parseInt(timestamp) * 1000,
-            description: message,
-            file: fileLocation,
-            user
-          }
-        })
-      results.push(...revisions)
-    }
+    const versions = contentFileVersions(file)
+    const lists = await Promise.all(
+      versions.map(async versioned => {
+        const output = await execGit(this.rootDir, [
+          '-c',
+          'core.quotePath=false',
+          'log',
+          '--follow',
+          '--name-status',
+          '--pretty=format:%H%n%at%n%s%n%ae%n%an%n%f',
+          '--',
+          versioned
+        ])
+        return output
+          .split('\n\n')
+          .filter(entry => {
+            return entry.includes('\n')
+          })
+          .map(entry => {
+            const [ref, timestamp, message, email, name, changedFile, ...rest] =
+              entry.split('\n')
+            const fileLocation = rest.length
+              ? rest[rest.length - 1].split('\t').pop()!.trim()
+              : versioned
+            const user = parseCoAuthoredBy(message) ?? {name, email}
+            return {
+              ref,
+              createdAt: Number.parseInt(timestamp) * 1000,
+              description: message,
+              file: fileLocation,
+              user
+            }
+          })
+      })
+    )
 
     // de-duplicate revisions by ref
     const uniqueRevisions = new Map<string, Revision>()
-    for (const revision of results) {
+    for (const revision of lists.flat()) {
       const existing = uniqueRevisions.get(revision.ref)
       if (!existing) uniqueRevisions.set(revision.ref, revision)
     }
@@ -72,7 +72,7 @@ export class GitHistory implements HistoryApi {
       '--format=%B'
     ])
     try {
-      return JsonLoader.parse(config.schema, encoder.encode(data))
+      return loaderFor(file).parse(config.schema, encoder.encode(data))
     } catch (cause) {
       throw new Error(`Failed to parse revision ${ref} of ${file}`, {
         cause

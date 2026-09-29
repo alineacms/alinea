@@ -1,3 +1,4 @@
+import {contentLoaders, defaultLoader} from '../Loader.js'
 import * as paths from '#/core/util/Paths.js'
 import {Config} from '../Config.js'
 import {
@@ -39,7 +40,8 @@ export interface EntryFileLocation {
 
 /**
  * Read back the layout `Config.filePath` and `entryChildrenDir` write:
- * `[workspace/]root/[locale/]...parents/path[.status].json`.
+ * `[workspace/]root/[locale/]...parents/path[.status].<extension>`, where the
+ * extension selects the content file format (see `loaderFor`).
  */
 export function parseEntryFilePath(
   config: Config,
@@ -122,12 +124,16 @@ export function entryChildrenDir(
     .join('/')}`
 }
 
-/** The `<childrenDir>[.status].json` file holding a single entry version. */
+/**
+ * The `<childrenDir>[.status]<extension>` file holding a single entry version.
+ * The extension includes its dot, eg. `.json`.
+ */
 export function entryVersionFile(
   childrenDir: string,
-  status: EntryStatus
+  status: EntryStatus,
+  extension: string
 ): string {
-  return `${childrenDir}${status === 'published' ? '' : `.${status}`}.json`
+  return `${childrenDir}${status === 'published' ? '' : `.${status}`}${extension}`
 }
 
 export function entryFilepath(
@@ -139,14 +145,16 @@ export function entryFilepath(
     path: string
     status: EntryStatus
   },
-  parentPaths: Array<string>
+  parentPaths: Array<string>,
+  extension = defaultLoader(config).extension
 ): string {
   const {status} = entry
   if (!entryStatuses.includes(status))
     throw new Error(`Entry has unknown phase: ${status}`)
   const location = entryVersionFile(
     entryChildrenDir(config, entry, parentPaths),
-    status
+    status,
+    extension
   ).toLowerCase()
   const workspace = config.workspaces[entry.workspace]
   if (!workspace)
@@ -165,13 +173,14 @@ export function entryFileName(
     path: string
     status: EntryStatus
   },
-  parentPaths: Array<string>
+  parentPaths: Array<string>,
+  extension = defaultLoader(config).extension
 ): string {
   const workspace = config.workspaces[entry.workspace]
   if (!workspace)
     throw new Error(`Workspace "${entry.workspace}" does not exist`)
   const {source: contentDir} = Workspace.data(workspace)
-  return join(contentDir, entryFilepath(config, entry, parentPaths))
+  return join(contentDir, entryFilepath(config, entry, parentPaths, extension))
 }
 
 export function entryFile(config: Config, entry: Entry) {
@@ -213,13 +222,24 @@ export function applySuffix(path: string, suffix: number) {
   return `${path}-${suffix}`
 }
 
+/** Every version file of the entry stored in `file`, in the same format. */
 export function fileVersions(file: string) {
   const dir = paths.dirname(file)
-  const base = paths.basename(file, '.json')
+  const extension = paths.extname(file)
+  const base = paths.basename(file, extension)
   const [name] = entryInfo(base)
-  return [
-    `${dir}/${name}.json`,
-    `${dir}/${name}.draft.json`,
-    `${dir}/${name}.archived.json`
-  ]
+  return (['published', ...ALT_STATUS] as const).map(status =>
+    entryVersionFile(`${dir}/${name}`, status, extension)
+  )
+}
+
+/**
+ * Every file an entry version could be stored in: each status in each
+ * content file format. A migration renames files in a way git can't follow.
+ */
+export function contentFileVersions(file: string): Array<string> {
+  const base = file.slice(0, file.length - paths.extname(file).length)
+  return contentLoaders.flatMap(loader =>
+    fileVersions(`${base}${loader.extension}`)
+  )
 }

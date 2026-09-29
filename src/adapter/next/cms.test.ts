@@ -1,4 +1,4 @@
-import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {JsonLoader} from '#/core/loader/JsonLoader.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'

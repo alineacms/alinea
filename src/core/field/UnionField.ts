@@ -2,7 +2,9 @@ import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {type UnionMutator, UnionRow} from '../UnionRow.js'
-import {entries} from '../util/Objects.js'
+import {entries, isRecord} from '../util/Objects.js'
+import {stableId} from '../util/StableId.js'
+import {typedFromYaml, typedToYaml} from '../util/TypedYaml.js'
 
 export class UnionField<
   StoredValue extends UnionRow,
@@ -37,6 +39,24 @@ export class UnionField<
         if (!value) return ''
         const type = schema?.[value[UnionRow.type]]
         return type ? Type.searchableText(type, value) : ''
+      },
+      toYaml(value) {
+        const row: unknown = value
+        if (!isRecord(row) || typeof row._type !== 'string') return value
+        const {_id, _index, _type, ...data} = row
+        const type = schema?.[_type]
+        return typedToYaml(_type, type ? Type.toYaml(type, data) : data)
+      },
+      fromYaml(value, {path}) {
+        const typed = typedFromYaml(value)
+        if (!typed) return value
+        const [_type, data] = typed
+        const type = schema?.[_type]
+        return {
+          [UnionRow.id]: stableId(path),
+          [UnionRow.type]: _type,
+          ...(type ? Type.fromYaml(type, data, path) : data)
+        }
       },
       references(value, context) {
         const result = customReferences?.(value, context) ?? []

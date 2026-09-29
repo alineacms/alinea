@@ -146,6 +146,7 @@
     "jotai": "3.0.0",
     "jotai-family": "^1.1.0",
     "jotai-location": "^0.6.2",
+    "js-yaml": "^5.4.2",
     "knip": "^6.4.1",
     "lightningcss": "^1.32.0",
     "lolight": "^1.4.1",

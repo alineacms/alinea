@@ -27,6 +27,11 @@ export interface Config {
   preview?: Preview
   /** Every edit will pass through a draft status before being published */
   enableDrafts?: boolean
+  /**
+   * The file format of new content files, defaults to json. Existing files
+   * keep their format, `alinea migrate` converts them all.
+   */
+  contentFormat?: 'json' | 'yaml'
   /** Fallback interval in seconds for polling content updates (freshness is primarily sha-driven) */
   syncInterval?: number
   /** Maximum file upload size in bytes */

@@ -1,6 +1,6 @@
 import {Field, type FieldData, type FieldOptions} from '../Field.js'
 import {Type} from '../Type.js'
-import {entries} from '../util/Objects.js'
+import {entries, isRecord} from '../util/Objects.js'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
@@ -33,6 +33,12 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
       searchableText(value) {
         const text = Type.searchableText(type, value)
         return text ? ` ${text}` : ''
+      },
+      toYaml(value) {
+        return isRecord(value) ? Type.toYaml(type, value) : value
+      },
+      fromYaml(value, {path}) {
+        return isRecord(value) ? Type.fromYaml(type, value, path) : value
       },
       references(value, context) {
         return Type.references(

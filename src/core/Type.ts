@@ -100,6 +100,40 @@ export namespace Type {
     })
   }
 
+  /**
+   * Encode entry data for the YAML file format: keys starting with an
+   * underscore first, then the fields in definition order, then other keys
+   */
+  export function toYaml(
+    type: Type,
+    value: Record<string, unknown>
+  ): Record<string, unknown> {
+    const result: Record<string, unknown> = {}
+    for (const [key, data] of entries(value))
+      if (key.startsWith('_')) result[key] = data
+    for (const [key, field] of entries(fields(type)))
+      if (Object.hasOwn(value, key))
+        result[key] = Field.toYaml(field, value[key])
+    for (const [key, data] of entries(value))
+      if (!Object.hasOwn(result, key)) result[key] = data
+    return result
+  }
+
+  export function fromYaml(
+    type: Type,
+    value: Record<string, unknown>,
+    path: Array<string> = []
+  ): Record<string, unknown> {
+    const definition = fields(type)
+    const result: Record<string, unknown> = {}
+    for (const [key, data] of entries(value)) {
+      result[key] = Object.hasOwn(definition, key)
+        ? Field.fromYaml(definition[key], data, {path: [...path, key]})
+        : data
+    }
+    return result
+  }
+
   export function fields(type: Type): Record<string, Field> {
     return getType(type).allFields
   }

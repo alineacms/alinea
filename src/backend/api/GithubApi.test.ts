@@ -1,9 +1,11 @@
+import type {Config} from '#/core/Config.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {suite} from '@alinea/suite'
 import {GithubApi} from './GithubApi.js'
 
 const test = suite(import.meta)
+const config: Config = {schema: {}, workspaces: {}}
 
 test('uses commit request user for co-authored-by trailer', async () => {
   const originalFetch = globalThis.fetch
@@ -54,14 +56,17 @@ test('uses commit request user for co-authored-by trailer', async () => {
   globalThis.fetch = mockFetch
 
   try {
-    const api = new GithubApi({
-      authToken: 'token',
-      owner: 'owner',
-      repo: 'repo',
-      branch: 'main',
-      rootDir: '',
-      contentDir: 'content'
-    })
+    const api = new GithubApi(
+      {
+        authToken: 'token',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'main',
+        rootDir: '',
+        contentDir: 'content'
+      },
+      config
+    )
     const request: CommitRequest = {
       description: 'Alinea content update',
       user: {
@@ -122,14 +127,17 @@ test('uses repository-relative media paths in commits', async () => {
   globalThis.fetch = mockFetch
 
   try {
-    const api = new GithubApi({
-      authToken: 'token',
-      owner: 'owner',
-      repo: 'repo',
-      branch: 'main',
-      rootDir: '/',
-      contentDir: '/content'
-    })
+    const api = new GithubApi(
+      {
+        authToken: 'token',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'main',
+        rootDir: '/',
+        contentDir: '/content'
+      },
+      config
+    )
     const request: CommitRequest = {
       description: 'Update media',
       fromSha,

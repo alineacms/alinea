@@ -1,5 +1,5 @@
-import type {EntryRecord} from '#/core/EntryRecord.js'
-import type {Schema} from '#/core/Schema.js'
+import type {EntryRecord} from '../EntryRecord.js'
+import type {Schema} from '../Schema.js'
 import type {Loader} from '../Loader.js'
 
 const encoder = new TextEncoder()

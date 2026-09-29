@@ -1,4 +1,4 @@
-import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {loaderFor} from '../Loader.js'
 import type {Config} from '../Config.js'
 import type {EntryStatus} from '../Entry.js'
 import type {Entry} from '../Entry.js'
@@ -12,7 +12,8 @@ export async function createEntryRow<T extends Entry>(
   status: EntryStatus
 ): Promise<T> {
   const record = createRecord(input, status)
-  const fileContents = JsonLoader.format(config.schema, record)
+  // Hash the file as it is written, in the format of the entry's own file
+  const fileContents = loaderFor(input.filePath).format(config.schema, record)
   const fileHash = await createFileHash(fileContents)
   const rowHash = await createRowHash({...input, fileHash})
   const type = config.schema[input.type]

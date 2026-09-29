@@ -1,3 +1,4 @@
+import {loaderFor} from '#/core/Loader.js'
 import type {Config} from '#/core/Config.js'
 import type {
   GetBlobsOptions,
@@ -113,7 +114,12 @@ export class EntryStore
     entry: Entry,
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const contents = JSON.stringify(createRecord(entry, entry.status), null, 2)
+    const contents = new TextDecoder().decode(
+      loaderFor(entry.filePath).format(
+        this.config.schema,
+        createRecord(entry, entry.status)
+      )
+    )
     const revision = await this.database.getRevision()
     const tree = await this.source.getTree()
     const applied = JSON.stringify([

@@ -1,3 +1,4 @@
+import {JsonLoader} from '#/core/loader/JsonLoader.js'
 import type {Config} from '#/core/Config.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {
@@ -8,6 +9,7 @@ import {
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {extname} from '#/core/util/Paths.js'
 import {DateField} from '#/field/date/DateField.js'
 import {NumberField} from '#/field/number/NumberField.js'
 import {index, primaryKey, sql, table, type Database, type Table} from 'rado'
@@ -63,11 +65,15 @@ export const EntryIndexColumns = {
   rowHash: column.varchar(undefined, {length: 128}).notNull(),
   /** Hash of this entry's child directory in the synced source tree. */
   childrenSha: column.varchar(undefined, {length: 128}),
-  /** Exact source blob for seeded rows whose expanded data differs. */
+  /**
+   * Exact source blob where data differs from it: for seeded rows, whose data
+   * is expanded, and for files that are not JSON.
+   */
   payload: column.text(),
   /**
-   * Exact source JSON, or expanded JSON for seeded rows. Stored as JSONB where
-   * SQLite supports it; read it as text with `entryDataText`.
+   * The source record as JSON: the exact source of JSON files, or expanded
+   * JSON for seeded rows. Stored as JSONB where SQLite supports it; read it as
+   * text with `entryDataText`.
    */
   data: column.text().notNull()
 }
@@ -164,6 +170,8 @@ export interface IndexedEntry extends Entry {
   versionStatus: EntryStatus
   /** Exact source text matching fileHash. */
   payload?: string
+  /** The source record as JSON text, the payload itself for a JSON file. */
+  recordText?: string
   /** False for authored versions suppressed by inherited status in normal queries. */
   visible?: boolean
   /** First source-directory segment below the content root (not the URL slug). */
@@ -173,9 +181,13 @@ export interface IndexedEntry extends Entry {
 }
 
 export function entryIndexRow(entry: IndexedEntry) {
-  const payload =
-    entry.payload ??
+  const record =
+    entry.recordText ??
     JSON.stringify(createRecord(entry, entry.versionStatus), null, 2)
+  // The data column holds JSON, so keep the source apart when it differs
+  const storesSource =
+    Boolean(entry.seeded) ||
+    extname(entry.filePath).toLowerCase() !== JsonLoader.extension
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
     id: entry.id,
@@ -207,8 +219,8 @@ export function entryIndexRow(entry: IndexedEntry) {
     seeded: entry.seeded,
     rowHash: entry.rowHash,
     childrenSha: entry.childrenSha ?? null,
-    payload: entry.seeded ? payload : null,
-    data: entry.seeded ? JSON.stringify(entry.data) : payload
+    payload: storesSource ? (entry.payload ?? record) : null,
+    data: entry.seeded ? JSON.stringify(entry.data) : record
   }
 }
 

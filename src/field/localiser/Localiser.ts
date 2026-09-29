@@ -1,6 +1,7 @@
 import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
+import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 
 export type LocalisedValue<Locale extends string, Value> = Record<Locale, Value>
@@ -105,6 +106,24 @@ export function localiser<const Locale extends string>({
           return locales
             .map(locale => Field.searchableText(field, record[locale]))
             .join('')
+        },
+        toYaml(value) {
+          if (!isRecord(value)) return value
+          return fromEntries(
+            entries(value).map(([locale, data]) => [
+              locale,
+              Field.toYaml(field, data)
+            ])
+          )
+        },
+        fromYaml(value, {path}) {
+          if (!isRecord(value)) return value
+          return fromEntries(
+            entries(value).map(([locale, data]) => [
+              locale,
+              Field.fromYaml(field, data, {path: [...path, locale]})
+            ])
+          )
         },
         references(value, context) {
           const record = value ?? initialValue()

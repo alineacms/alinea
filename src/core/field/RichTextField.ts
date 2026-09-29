@@ -27,6 +27,7 @@ import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
+import {richTextFromYaml, richTextToYaml} from './RichTextYaml.js'
 
 export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
@@ -94,6 +95,12 @@ export class RichTextField<
       searchableText(value) {
         if (!meta.options.searchable) return ''
         return richTextSearchableText(schema, value)
+      },
+      toYaml(value) {
+        return richTextToYaml(schema, value)
+      },
+      fromYaml(value, context) {
+        return richTextFromYaml(schema, value, context.path)
       },
       references(value, context) {
         const doc = Array.isArray(value) ? value : []

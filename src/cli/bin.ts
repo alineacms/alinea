@@ -98,4 +98,17 @@ prog
     })
   })
 
+  .command('migrate <format>')
+  .describe('Convert all content files to a format: json or yaml')
+  .option('-c, --config', 'Config file location')
+  .option('-d, --dir', 'Root directory of the project')
+  .action(async (format, args) => {
+    ensureNode()
+    ensureLibs(libs)
+    ensureEnv(args.dir)
+    const {migrate} = await import('./Migrate.js')
+    await migrate({format, cwd: args.dir, configFile: args.config})
+    process.exit(0)
+  })
+
 prog.parse(process.argv)

@@ -1,3 +1,5 @@
+import {loaderFor} from '#/core/Loader.js'
+import {JsonLoader} from '#/core/loader/JsonLoader.js'
 import type {Config} from '#/core/Config.js'
 import {seedData} from '#/core/EntrySeed.js'
 import {parseRecord, type EntryRecord} from '#/core/EntryRecord.js'
@@ -19,15 +21,17 @@ export function parseSourceEntry(
   fileHash: string,
   blob: Uint8Array
 ): ParsedEntry {
-  const text = new TextDecoder().decode(blob)
+  const loader = loaderFor(filePath)
+  const payload = new TextDecoder().decode(blob)
   let raw: unknown
   try {
-    raw = JSON.parse(text)
-  } catch {
-    throw new Error(`Invalid JSON entry: ${filePath}`)
+    raw = loader.parse(config.schema, blob)
+  } catch (cause) {
+    throw new Error(`Invalid ${loader.extension} entry: ${filePath}`, {cause})
   }
   assert(isRecord(raw), `Invalid entry record: ${filePath}`)
-  const {meta, data: authoredData} = parseRecord(raw as EntryRecord)
+  const record = raw as EntryRecord
+  const {meta, data: authoredData} = parseRecord(record)
   assert(typeof meta.id === 'string', `Entry is missing an id: ${filePath}`)
   assert(typeof meta.type === 'string', `Entry is missing a type: ${filePath}`)
   assert(
@@ -89,7 +93,10 @@ export function parseSourceEntry(
     active: false,
     main: false,
     visible: true,
-    payload: text,
+    payload,
+    // A JSON file is its own record text
+    recordText:
+      loader === JsonLoader ? payload : JSON.stringify(record, null, 2),
     searchableText: Type.searchableText(type, data),
     references: Array.from(
       new Set(Type.references(type, data).map(target => target.targetId))
