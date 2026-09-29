@@ -118,7 +118,7 @@
           "_index": "a1",
           "_type": "BarsCard",
           "title": "A tiny footprint",
-          "text": "Alinea installs 4 packages. Other CMSs pull in hundreds, which means slower installs, bigger lockfiles and more to audit.",
+          "text": "Alinea installs 4 packages. Other CMSs pull in hundreds.",
           "bars": [
             {
               "_id": "3JjOvkRHDxmSnS4HVC09CQgDtjD",
@@ -401,7 +401,7 @@
       "_index": "a7",
       "_type": "CompareCards",
       "title": "Host it your way",
-      "description": "Alinea runs inside your Next.js app. Keep everything on your own infrastructure, or let Alinea Cloud take care of sign-in and publishing.",
+      "description": "",
       "cards": [
         {
           "_id": "3JjOvooJfHNU03xyZ1cwKPYKNOo",
@@ -594,7 +594,23 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "No. Content is stored as JSON files in your repository. Alinea builds an SQLite index from those files for querying and search, so there is no database server to run."
+                  "text": "Not for your content. It is stored as JSON files in your repository, and Alinea builds an SQLite index from those files for querying and search. With Alinea Cloud there is no database to run at all. If you "
+                },
+                {
+                  "_type": "text",
+                  "text": "self-host the backend",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JzmWGmWpG16BgxBcTPTkkYlsE3",
+                      "_link": "entry",
+                      "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ", you do need one for the dashboard's users and roles and for uploads until they are committed: PostgreSQL, MySQL, SQLite or PGlite."
                 }
               ]
             }
