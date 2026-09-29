@@ -38,6 +38,8 @@ export function Field({
   return (
     <div
       data-slot="field"
+      // Lets the dashboard find the first invalid field to focus
+      data-invalid={error ? true : undefined}
       className={styles.Field(styler.merge({className}))}
       style={style}
     >
