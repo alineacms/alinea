@@ -11,10 +11,6 @@
   white-space: nowrap;
 }
 
-.CompactField[data-empty] {
-  color: var(--alinea-fg-muted);
-}
-
 .CompactField[data-layout='footer'] {
   display: block;
   width: 100%;

@@ -149,7 +149,7 @@ function compactResolvedText(
 
 function CompactFieldFallback({field, value, ...context}: CompactFieldProps) {
   return (
-    <span className={styles.CompactField()} data-empty={isEmptyValue(value)}>
+    <span className={styles.CompactField()}>
       {renderCompactValue(field, value, context)}
     </span>
   )
