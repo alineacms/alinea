@@ -11,6 +11,9 @@ test('labels the input and reports its value', async ({mount, page}) => {
     'Initial name'
   )
   await expect(page.getByText('Shared', {exact: true})).toBeVisible()
+  await expect(
+    page.getByRole('textbox', {name: 'With description'})
+  ).toHaveAccessibleDescription('Shown next to the label.')
   await expect(page.getByLabel('Email')).toHaveAttribute('type', 'email')
   await expect(page.getByLabel('Password')).toHaveAttribute('type', 'password')
 })
@@ -38,6 +41,7 @@ test('reflects required, invalid, disabled and read-only', async ({
   await expect(username).toHaveAttribute('aria-invalid', 'true')
   await expect(username).toHaveAttribute('required', '')
   await expect(page.getByRole('alert')).toHaveText('Username already exists')
+  await expect(username).toHaveAccessibleDescription('Username already exists')
   await expect(page.getByRole('textbox', {name: 'Disabled'})).toBeDisabled()
   await expect(page.getByRole('textbox', {name: 'Read-only'})).toHaveAttribute(
     'readonly',

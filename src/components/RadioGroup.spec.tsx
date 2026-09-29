@@ -9,6 +9,11 @@ test('labels the group and selects the default item', async ({mount, page}) => {
   await expect(
     page.getByRole('radiogroup', {name: 'Horizontal'})
   ).toHaveAttribute('aria-orientation', 'horizontal')
+  const plan = page.getByRole('radiogroup', {name: 'Plan'})
+  await expect(plan).toHaveAccessibleDescription('Choose a plan')
+  await expect(
+    plan.getByRole('radio', {name: /Free/})
+  ).toHaveAccessibleDescription('Up to 3 projects Choose a plan')
 })
 
 test('changes the value by click and keyboard', async ({mount, page}) => {

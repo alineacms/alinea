@@ -1,8 +1,9 @@
 import styler from '@alinea/styler'
-import type {ReactNode} from 'react'
+import {type ReactNode, useId} from 'react'
 import {
   RadioGroup as RadioGroupPrimitive,
-  Radio as RadioPrimitive
+  Radio as RadioPrimitive,
+  TextContext
 } from 'react-aria-components'
 import {Field, FieldDescription} from './Field.js'
 import css from './RadioGroup.module.css'
@@ -94,12 +95,18 @@ export function RadioGroupItem({
   description,
   className,
   children,
+  'aria-describedby': ariaDescribedBy,
   ...props
 }: RadioGroupItemProps) {
+  const id = useId()
+  const descriptionId = description ? `${id}-description` : undefined
   return (
     <RadioPrimitive
       data-slot="radio-group-item"
       {...props}
+      aria-describedby={
+        [descriptionId, ariaDescribedBy].filter(Boolean).join(' ') || undefined
+      }
       // react-aria focuses the hidden input from script, so :focus-visible
       // also matches after a pointer press; isFocusVisible follows the modality
       className={({isFocusVisible}) =>
@@ -127,7 +134,13 @@ export function RadioGroupItem({
               {children}
             </span>
           )}
-          {description && <FieldDescription>{description}</FieldDescription>}
+          {description && (
+            <TextContext.Provider
+              value={{slots: {description: {id: descriptionId}}}}
+            >
+              <FieldDescription>{description}</FieldDescription>
+            </TextContext.Provider>
+          )}
         </span>
       )}
     </RadioPrimitive>

@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {ReactNode} from 'react'
-import {Label as LabelPrimitive} from 'react-aria-components'
+import {Label as LabelPrimitive, Text} from 'react-aria-components'
 import {Badge} from './Badge.js'
 import {IcRoundPublic} from '#/dashboard/icons.js'
 import css from './Field.module.css'
@@ -26,7 +26,6 @@ export function Field({
   error,
   required,
   disabled,
-  readOnly,
   icon,
   shared,
   htmlFor,
@@ -39,15 +38,21 @@ export function Field({
   return (
     <div
       data-slot="field"
-      data-disabled={disabled || undefined}
-      data-readonly={readOnly || undefined}
-      data-invalid={error ? true : undefined}
       className={styles.Field(styler.merge({className}))}
       style={style}
     >
       {hasHeader && (
-        <div className={styles.FieldHeader()}>
-          {icon && <Icon icon={icon} className={styles.FieldHeader.icon()} />}
+        <div
+          data-slot="field-header"
+          className={styles.FieldHeader({disabled})}
+        >
+          {icon && (
+            <Icon
+              icon={icon}
+              data-slot="field-icon"
+              className={styles.FieldHeader.icon()}
+            />
+          )}
           {label && (
             <FieldLabel htmlFor={htmlFor} required={required}>
               {label}
@@ -82,7 +87,14 @@ export function FieldLabel({
       className={styles.FieldLabel(styler.merge({className}))}
     >
       {children}
-      {required && <span className={styles.FieldLabel.required()}> *</span>}
+      {required && (
+        <span
+          data-slot="field-required"
+          className={styles.FieldLabel.required()}
+        >
+          {' *'}
+        </span>
+      )}
     </LabelPrimitive>
   )
 }
@@ -91,9 +103,12 @@ export interface FieldDescriptionProps extends StyleProps {
   children: ReactNode
 }
 
+/** Inside a react-aria field its id is added to the control's aria-describedby */
 export function FieldDescription({className, ...props}: FieldDescriptionProps) {
   return (
-    <div
+    <Text
+      slot="description"
+      elementType="div"
       data-slot="field-description"
       {...props}
       className={styles.FieldDescription(styler.merge({className}))}
@@ -105,9 +120,12 @@ export interface FieldErrorProps extends StyleProps {
   children: ReactNode
 }
 
+/** Inside a react-aria field its id is added to the control's aria-describedby */
 export function FieldError({className, ...props}: FieldErrorProps) {
   return (
-    <div
+    <Text
+      slot="errorMessage"
+      elementType="div"
       data-slot="field-error"
       role="alert"
       {...props}
