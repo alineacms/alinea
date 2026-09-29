@@ -307,21 +307,11 @@ export class RootAtoms {
       ? page
       : previous
   )
-  #explorerLocaleState = atom<string | null>(null)
+  /** Explorers list the locale of the page, which the route selects */
   #explorerLocale = atom(
-    get => {
-      if (get(this.data).isMediaRoot) return null
-      const page = get(this.#lastPage)
-      return page ? page.locale : get(this.#explorerLocaleState)
-    },
-    (get, set, update: SetStateAction<string | null>) => {
-      const page = get(this.#lastPage)
-      const current = page ? page.locale : get(this.#explorerLocaleState)
-      set(
-        this.#explorerLocaleState,
-        typeof update === 'function' ? update(current) : update
-      )
-    }
+    get =>
+      get(this.data).isMediaRoot ? null : (get(this.#lastPage)?.locale ?? null),
+    (_get, _set, _update: SetStateAction<string | null>) => {}
   )
 
   constructor(
