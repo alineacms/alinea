@@ -19,7 +19,11 @@ import {
 import {placement} from './internal/Placement.js'
 import {PopoverSurface} from './internal/PopoverSurface.js'
 import {Slot} from './internal/Slot.js'
-import {Trigger, type TriggerProps} from './internal/Trigger.js'
+import {
+  OptionalTrigger,
+  Trigger,
+  type TriggerProps
+} from './internal/Trigger.js'
 import css from './Popover.module.css'
 import type {
   AriaProps,
@@ -67,6 +71,7 @@ export function Popover({
         defaultOpen={defaultOpen}
         onOpenChange={onOpenChange}
       >
+        <OptionalTrigger />
         {children}
       </DialogTrigger>
     </PopoverStateContext.Provider>

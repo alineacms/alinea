@@ -602,7 +602,6 @@ function LinkPickerDialog({
   if (type === 'url') {
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <Button style={{display: 'none'}}>Replace link</Button>
         <ExternalLinkPicker
           key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
@@ -672,7 +671,6 @@ function LinkPickerDialog({
   if (type === 'file' || type === 'image') {
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <Button style={{display: 'none'}}>Replace link</Button>
         <ImagePicker
           {...pickerProps}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
@@ -682,7 +680,6 @@ function LinkPickerDialog({
   }
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <Button style={{display: 'none'}}>Replace link</Button>
       <LinkPickerModal {...pickerProps} />
     </Dialog>
   )
