@@ -629,16 +629,20 @@ async function build({
   report: boolean
 }): Promise<void> {
   if (!watch && !fs.existsSync(llmsHandbookFile)) {
-    const response = await fetch(llmsHandbookUrl)
-    if (!response.ok) {
-      throw new Error(
-        `Failed to refresh ${llmsHandbookFile}: ` +
-          `${response.status} ${response.statusText}`
-      )
+    try {
+      const response = await fetch(llmsHandbookUrl)
+      if (!response.ok)
+        throw new Error(`${response.status} ${response.statusText}`)
+      fs.writeFileSync(llmsHandbookFile, await response.text())
+      console.info(`Refreshed ${llmsHandbookFile} from ${llmsHandbookUrl}`)
+    } catch (error) {
+      const message = `Failed to refresh ${llmsHandbookFile}: ${error}`
+      // Only the published package needs it, other builds (CI, the website)
+      // should not depend on the website being reachable
+      if (process.env.npm_lifecycle_event === 'prepublishOnly')
+        throw new Error(message)
+      console.warn(message)
     }
-    const handbook = await response.text()
-    fs.writeFileSync(llmsHandbookFile, handbook)
-    console.info(`Refreshed ${llmsHandbookFile} from ${llmsHandbookUrl}`)
   }
   const plugins = [
     cssEntry,
