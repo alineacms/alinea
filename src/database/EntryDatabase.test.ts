@@ -531,6 +531,15 @@ async function mediaDatabase() {
         change.op === 'removeFile' ? [change.location] : []
       )
     },
+    /** The stored data of the media file, its draft if there is one */
+    file() {
+      return database.resolve({
+        id: 'file',
+        status: 'preferDraft',
+        first: true,
+        select: Entry.data
+      })
+    },
     async [Symbol.asyncDispose]() {
       await database.close()
       sqlite.close()
@@ -594,23 +603,32 @@ test('saving a media file only removes its previous file when replaced', async (
     data,
     overwrite: true
   })
-  await media.removedFiles([save(brochure)])
-  // Replacing uploads the new file and removes the previous one
-  const replaced = {...brochure, location: '/brochure-v2.pdf', hash: 'v2'}
+  const focus = {x: 0.2, y: 0.8}
+  await media.removedFiles([save({...brochure, alt: 'Cover', focus})])
+  // Replacing uploads the new file and removes the previous one, it keeps
+  // what the editor entered
+  const upload = {
+    title: 'Brochure',
+    location: '/brochure-v2.pdf',
+    extension: '.pdf',
+    size: 2048,
+    hash: 'v2'
+  }
   expect(
     await media.removedFiles([
       {op: 'uploadFile', url: '', location: 'public/brochure-v2.pdf'},
-      save(replaced)
+      save(upload)
     ])
   ).toEqual(['public/brochure.pdf'])
+  const current = {...upload, alt: 'Cover', focus}
+  expect(await media.file()).toMatchObject(current)
   // An editor still showing the file from before the replace saves a new
-  // focus point: the current file must stay
-  const focus = {x: 0.2, y: 0.8}
-  expect(await media.removedFiles([save({...brochure, focus})])).toEqual([])
-  expect(
-    await media.removedFiles([save({...replaced, focus}, 'draft')])
-  ).toEqual([])
-  expect(await media.removedFiles([save({...replaced, focus})])).toEqual([])
+  // alt text: the entry keeps pointing at the current file
+  const stale = {...brochure, alt: 'Front cover', focus}
+  expect(await media.removedFiles([save(stale, 'draft')])).toEqual([])
+  expect(await media.file()).toMatchObject({...current, alt: 'Front cover'})
+  expect(await media.removedFiles([save(stale)])).toEqual([])
+  expect(await media.file()).toMatchObject({...current, alt: 'Front cover'})
 })
 
 test('failed database mutation batches leave the receiver untouched', async () => {

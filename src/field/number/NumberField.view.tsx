@@ -16,11 +16,10 @@ export function NumberFieldView({field}: NumberFieldViewProps) {
       error={error}
       disabled={options.readOnly}
       required={options.required}
-      aria-label={options.inline ? options.label : undefined}
-      label={options.inline ? undefined : options.label}
-      placeholder={
-        options.placeholder ?? (options.inline ? options.label : undefined)
-      }
+      // A number means little without its label, so inline fields keep it
+      // like date and time fields
+      label={options.label}
+      placeholder={options.placeholder}
       shared={options.shared}
       max={options.maxValue}
       min={options.minValue}

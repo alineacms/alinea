@@ -41,6 +41,7 @@ test('required rejects missing values of each kind', () => {
     messages(type, {
       text: '',
       number: null,
+      check: false,
       select: null,
       list: [],
       link: {},
@@ -60,7 +61,7 @@ test('required rejects missing values of each kind', () => {
     messages(type, {
       text: 'a',
       number: 0,
-      check: false,
+      check: true,
       select: 'a',
       list: [{_id: 'r', _type: 'Row', _index: 'a0'}],
       link: {_id: 'l', _type: 'entry', _index: 'a0', _entry: 'x'},

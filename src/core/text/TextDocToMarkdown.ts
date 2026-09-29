@@ -1,5 +1,5 @@
-import type {Mark, Node, TextDoc, TextNode} from '../TextDoc.js'
-import {isRecord} from '../util/Objects.js'
+import {Node, type Mark, type TextDoc, type TextNode} from '../TextDoc.js'
+import {isEmptyValue, isRecord} from '../util/Objects.js'
 import {markdownBlockLanguage} from './MarkdownToTextDoc.js'
 
 export interface TextDocToMarkdownOptions {
@@ -115,7 +115,7 @@ class MarkdownWriter {
       case 'text':
         return this.inline([node])
     }
-    if (isBlock(node)) {
+    if (Node.isBlock(node)) {
       const custom = this.#options.block?.(record)
       if (custom !== undefined) return custom
       return defaultBlock(record)
@@ -317,11 +317,6 @@ function backticks(value: unknown): number {
   return count
 }
 
-function isBlock(node: Node): boolean {
-  const first = node._type[0]
-  return first !== undefined && first === first.toUpperCase()
-}
-
 function defaultBlock(block: Record<string, unknown>): string {
   const {_type, _id, code, language, ...rest} = block
   const info: Array<string> = []
@@ -354,14 +349,6 @@ function defaultBlock(block: Record<string, unknown>): string {
     return `${fence}${info.join(' ')}\n${source}\n${fence}`
   }
   return `\`\`\`${markdownBlockLanguage}\n${JSON.stringify(block, null, 2)}\n\`\`\``
-}
-
-function isEmptyValue(value: unknown): boolean {
-  if (value === undefined || value === null || value === '' || value === false)
-    return true
-  if (Array.isArray(value)) return value.length === 0
-  if (isRecord(value)) return Object.values(value).every(isEmptyValue)
-  return false
 }
 
 function imageSrc(node: Record<string, unknown>): string {

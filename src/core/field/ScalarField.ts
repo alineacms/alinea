@@ -1,4 +1,4 @@
-import {Field, type FieldMeta} from '../Field.js'
+import {Field, type FieldData} from '../Field.js'
 
 export class ScalarField<Value, Options> extends Field<
   Value,
@@ -6,7 +6,7 @@ export class ScalarField<Value, Options> extends Field<
   (value: Value) => void,
   Options
 > {
-  constructor(meta: FieldMeta<Value, Value, (value: Value) => void, Options>) {
+  constructor(meta: FieldData<Value, Value, (value: Value) => void, Options>) {
     super({
       referencedViews: [],
       defaultValue() {

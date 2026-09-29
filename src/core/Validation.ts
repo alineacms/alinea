@@ -31,11 +31,11 @@ export interface FieldValidationContext {
   labels: Array<string>
   /** The records enclosing the field, outermost first, to resolve trackers */
   scopes: Array<ValidationScope>
-  locale: string | null
   fieldOptions?: FieldOptionsResolver
 }
 
 export interface ValidateEntryOptions {
+  /** @deprecated Unused, validation does not depend on the locale */
   locale?: string | null
   fieldOptions?: FieldOptionsResolver
 }
@@ -168,7 +168,6 @@ export function validateEntry(
     path: [],
     labels: [],
     scopes: [],
-    locale: options.locale ?? null,
     fieldOptions: options.fieldOptions
   })
 }

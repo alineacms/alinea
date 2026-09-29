@@ -6,7 +6,7 @@ import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
 import type {User} from './User.js'
-import {isRecord, values} from './util/Objects.js'
+import {isEmptyValue} from './util/Objects.js'
 import type {
   FieldValidationContext,
   FieldValidationError
@@ -132,13 +132,6 @@ export interface FieldData<
 
 export interface FieldInternal extends FieldData<any, any, any, any> {
   ref: symbol
-}
-
-function isEmptyValue(value: unknown): boolean {
-  if (value === undefined || value === null || value === '') return true
-  if (Array.isArray(value)) return value.length === 0
-  if (isRecord(value)) return values(value).every(isEmptyValue)
-  return false
 }
 
 declare const brand: unique symbol

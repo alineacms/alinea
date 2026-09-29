@@ -10,6 +10,7 @@ import {
   SortableListItemTitle,
   SortableListAdd,
   SortableListDragPreview,
+  ListError,
   ListLabel,
   SortableListItem,
   SortableListItemActions,
@@ -56,6 +57,7 @@ import {nav} from '#/dashboard/atoms/nav.js'
 import {
   useEntry,
   useField,
+  useFieldError,
   useFieldNode,
   useFieldOptions,
   useNodes,
@@ -1628,6 +1630,7 @@ export interface SingleLinkFieldViewProps {
 export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const [value] = useField(field)
   const options = useFieldOptions(field)
+  const error = useFieldError(field)
   const node = useFieldNode(field)
   const nodeIsEmpty = useAtomValueRaw(node.isEmpty)
   const selectedValue = isLinkFieldRow(value) ? value : undefined
@@ -1655,6 +1658,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
       description={options.help}
       label={options.inline ? undefined : options.label}
       required={options.required}
+      error={error}
       shared={options.shared}
     >
       {content}
@@ -1669,6 +1673,7 @@ export interface MultipleLinksFieldViewProps {
 export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const [value] = useField(field)
   const options = useFieldOptions(field)
+  const error = useFieldError(field)
   const list = useFieldNode<Array<LinkFieldRow>>(field)
   const links = value ?? []
   const nodes = useNodes(list) ?? []
@@ -1778,6 +1783,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         {options.label}
       </ListLabel>
       {content}
+      {error && <ListError>{error}</ListError>}
     </>
   )
 }

@@ -790,11 +790,7 @@ test('publish preserves the previous public MediaFile URL as an alias', async ()
     root: 'media',
     status: 'draft',
     overwrite: true,
-    set: {
-      ...mediaFileData('One', 'two', []),
-      extension: '.png',
-      location: '/replacement.png'
-    }
+    set: mediaFileData('One', 'two', [])
   })
 
   await db.publish({
@@ -809,7 +805,7 @@ test('publish preserves the previous public MediaFile URL as an alias', async ()
       aliases: Entry.aliases
     }
   })
-  test.is(result.url, '/admin/file/two.png')
+  test.is(result.url, '/admin/file/two.jpg')
   test.equal(aliasUrls(result.aliases), ['/admin/file/one.jpg'])
 })
 
