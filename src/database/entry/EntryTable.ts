@@ -76,7 +76,14 @@ export function entryIndexTable(name: string) {
   return table(name, EntryIndexColumns, row => [
     index(`${name}_by_id`).on(row.id, row.locale, row.versionStatus),
     index(`${name}_by_url`).on(row.url),
-    index(`${name}_by_type`).on(row.type, row.locale, row.workspace),
+    index(`${name}_by_path`).on(row.path, row.type),
+    index(`${name}_by_type`).on(
+      row.type,
+      row.locale,
+      row.workspace,
+      row.status,
+      row.visible
+    ),
     index(`${name}_by_parent`).on(row.parentId, row.locale, row.index),
     index(`${name}_by_children_dir`).on(row.childrenDir),
     index(`${name}_by_location`).on(

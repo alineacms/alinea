@@ -36,6 +36,27 @@ export function jsonField(
   )
 }
 
+/**
+ * Match a column against a JSON array parameter, so one prepared statement
+ * takes any number of values and SQLite still searches the column's index.
+ */
+export function inJson(column: HasSql, values: HasSql<string>): Sql<boolean> {
+  return sql<boolean>`${column} in (select value from json_each(${values}))`
+}
+
+/**
+ * Longer lists are bound as one JSON array: every bound value grows the SQL,
+ * and the WASM build fails to prepare statements of some 40 kB, while the
+ * planner weighs a short list of values better than a JSON array.
+ */
+const boundListLimit = 200
+
+function inValues(field: HasSql, values: Array<unknown>): Sql<boolean> {
+  return values.length > boundListLimit
+    ? inJson(field, sql.value(JSON.stringify(values)))
+    : inArray(field, values)
+}
+
 function equals(field: HasSql, value: unknown): Sql<boolean> {
   return value === null ? isNull(field) : eq(field, value)
 }
@@ -96,7 +117,7 @@ function conditionSql(
       const matches = node.values.length
         ? or(
             node.values.includes(null) ? isNull(field) : undefined,
-            nonNull.length ? inArray(field, nonNull) : undefined
+            nonNull.length ? inValues(field, nonNull) : undefined
           )
         : sql.value(false)
       return node.op === 'in' ? matches : not(matches)

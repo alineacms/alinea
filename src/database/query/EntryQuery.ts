@@ -448,8 +448,9 @@ export function compileEntryQuery(
     }
   }
   const projection = new Expressions(scope, entry, search, relation)
+  // Counts select the rowid, which every index covers
   const selection = query.count
-    ? entry.versionId
+    ? entry.rowid
     : projection.projection(
         query.select ?? {
           ...Object.assign({}, ...queryTypes),
@@ -503,9 +504,10 @@ export function compileEntryQuery(
     let rows = builder.select(selection).from(entry).where(sql.value(true))
     if (search) rows = rows.innerJoin(search.target, search.identity)
     if (links) rows = rows.innerJoin(links.target, eq(entry.id, links.id))
-    rows = rows
-      .where(and(...conditions, ...(grouped ? [grouped] : [])))
-      .orderBy(...ordering)
+    rows = rows.where(and(...conditions, ...(grouped ? [grouped] : [])))
+    // Counting every match needs no order, which would sort all of them
+    if (!query.count || query.skip || query.take)
+      rows = rows.orderBy(...ordering)
     if (query.skip) rows = rows.offset(query.skip)
     if (query.take) rows = rows.limit(query.take)
     else if (query.skip)
