@@ -1005,11 +1005,9 @@ test('selects existing images and files', async ({dashboard, mount}) => {
       )
     )
     .toBe('false')
+  // A single image is picked as soon as it is clicked
   await imagePicker.getByText('Existing image', {exact: true}).click()
-  await expect(
-    imagePicker.getByRole('checkbox', {name: 'Select Existing image'})
-  ).toBeChecked()
-  await imagePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(imagePicker).toBeHidden()
   await expect(imageField).toContainText('Existing image')
 
   await fileField.getByRole('button', {name: 'File'}).click()
@@ -1031,10 +1029,7 @@ test('selects existing images and files', async ({dashboard, mount}) => {
     filePicker.getByRole('switch', {name: 'All locations'})
   ).toBeDisabled()
   await filePicker.getByText('Existing file', {exact: true}).click()
-  await expect(
-    filePicker.getByRole('checkbox', {name: 'Select Existing file'})
-  ).toBeChecked()
-  await filePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(filePicker).toBeHidden()
   await expect(fileField).toContainText('Existing file')
 })
 
