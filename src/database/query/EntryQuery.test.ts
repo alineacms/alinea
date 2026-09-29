@@ -598,3 +598,55 @@ test('ordering by creation time walks its metadata index', async () => {
   expect(details).toContain('alinea_entry_index_by_field_metadata.createdAt')
   expect(details).not.toContain('TEMP B-TREE')
 })
+
+test('long value lists bind one parameter, which the WASM build prepares', async () => {
+  const db = await wasmDatabase()
+  await db.create(EntryIndexTable)
+  await db
+    .insert(EntryIndexTable)
+    .values([
+      entryIndexRow(entry('parent')),
+      entryIndexRow(
+        entry('child', {level: 1, parentId: 'parent', parents: ['parent']})
+      )
+    ])
+  // A listing of ten thousand entries asks which of them have children
+  const ids = Array.from({length: 20_000}, (_, i) => `entry-${i}`)
+  const plan = compileEntryQuery(config, {
+    parentId: {in: [...ids, 'parent']},
+    groupBy: Entry.parentId,
+    select: Entry.parentId
+  })
+  expect(plan.rows.toSQL(db).sql.length).toBeLessThan(5_000)
+  expect(await plan.rows.all(db)).toEqual(['parent'])
+  expect(
+    await compileEntryQuery(config, {
+      id: {notIn: [...ids, 'parent']},
+      select: Entry.id
+    }).rows.all(db)
+  ).toEqual(['child'])
+  db.close()
+})
+
+test('path lookups and counts read an index', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable)
+  function details(query: GraphQuery) {
+    const statement = compileEntryQuery(config, query).rows.toSQL(db)
+    const explain = sqlite
+      .prepare(`explain query plan ${statement.sql}`)
+      .all(...(statement.params as Array<string | number | null>))
+    return JSON.stringify(explain)
+  }
+  expect(details({first: true, type: Page, path: 'slug'})).toContain(
+    'alinea_entry_index_by_path (path=? AND type=?)'
+  )
+  expect(details({first: true, parentId: null, path: 'slug'})).toContain(
+    'alinea_entry_index_by_path (path=?)'
+  )
+  // Counts read only the index and leave the matches unsorted
+  const count = details({count: true, type: Page})
+  expect(count).toContain('COVERING INDEX alinea_entry_index_by_type')
+  expect(count).not.toContain('TEMP B-TREE')
+})

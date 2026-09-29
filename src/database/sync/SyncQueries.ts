@@ -15,7 +15,6 @@ import {
   when,
   Builder,
   type Database,
-  type HasSql,
   type Sql
 } from 'rado'
 import {DatabaseStateTable} from '../DatabaseTables.js'
@@ -27,6 +26,7 @@ import {
   type entryIndexRow,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
+import {inJson} from '../query/Condition.js'
 import {EntrySearchTable} from '../query/Search.js'
 
 export const sqliteBatchSize = 5000
@@ -42,14 +42,6 @@ const to = sql.placeholder<string>('to')
 const revision = sql.placeholder<string>('revision')
 const treeSnapshot = sql.placeholder<string | null>('tree')
 const targets = sql.placeholder<string>('targets')
-
-/**
- * Match a column against a JSON array parameter, so one prepared statement
- * takes any number of values and SQLite still searches the column's index.
- */
-function inJson(column: HasSql, values: Sql<string>): Sql<boolean> {
-  return sql<boolean>`${column} in (select value from json_each(${values}))`
-}
 
 /** The columns of an entry version that deriving reads and writes. */
 function versionFields(entries: EntryIndexTarget) {
