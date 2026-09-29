@@ -1,0 +1,37 @@
+{
+  "_id": "3Aqk3xYSjTNmUfuTf3rc6TOY4oH",
+  "_type": "Post",
+  "_index": "a2",
+  "title": "Content modeling basics",
+  "path": "content-modeling-basics",
+  "excerpt": "How to pick the right fields and structure for maintainable content.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good content models are specific enough for consistency and flexible enough for real-world editing."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Start with required title and path fields, then add only the body and metadata fields your team truly needs."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

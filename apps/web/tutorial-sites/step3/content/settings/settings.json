@@ -4,8 +4,8 @@
   "_index": "a0",
   "_seeded": "/settings.json",
   "title": "Global settings",
-  "headerText": "Tutorial Step 3",
-  "footerText": "Demo footer for local testing",
+  "headerText": "My website",
+  "footerText": "Copyright 2026",
   "metadata": {
     "title": "",
     "description": "",

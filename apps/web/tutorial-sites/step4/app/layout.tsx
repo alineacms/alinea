@@ -1,6 +1,7 @@
 import {cms} from '@/cms'
 import {SiteFooter, SiteHeader} from '@/entries/settings/SiteLayout'
 import {SiteLayout} from '@/entries/settings/SiteLayout.schema'
+import './globals.css'
 
 export default async function RootLayout({
   children
