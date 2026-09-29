@@ -6,6 +6,7 @@ import {
   TreeItem,
   type DragDropProps,
   type DragMoveEvent,
+  type Key,
   type Selection
 } from '#/components.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
@@ -143,7 +144,10 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
             role="img"
             title={displayStatus.label}
           >
-            <Icon icon={displayStatus.icon} />
+            <Icon
+              icon={displayStatus.icon}
+              className={styles.SidebarTree.status.icon()}
+            />
           </span>
         ) : undefined
       }
@@ -258,36 +262,44 @@ function useRootTreeDragDrop(
   }
 }
 
-export const SidebarTree = memo(function SidebarTree({
-  page,
-  root
-}: SidebarTreeProps) {
-  const {locale} = page
-  const tree = root.tree(locale)
+interface SidebarTreeViewProps {
+  ariaLabel: string
+  dragDrop: DragDropProps
+  entryLink?: (entry: RootTreeItem) => SidebarTreeLink
+  locale: string | null
+  onExpandedChange?: (keys: Set<string>) => void
+  onLocaleChange: (locale: string) => void
+  onRootPress?: () => void
+  onSelectionChange: (keys: ReadonlySet<Key>) => void
+  root: RootAtoms
+  rootSelected: boolean
+  tree: TreeAtoms
+}
+
+/** The root button and entry tree shared by the sidebar and the pickers */
+function SidebarTreeView({
+  ariaLabel,
+  dragDrop,
+  entryLink,
+  locale,
+  onExpandedChange,
+  onLocaleChange,
+  onRootPress,
+  onSelectionChange,
+  root,
+  rootSelected,
+  tree
+}: SidebarTreeViewProps) {
+  const label = useAtomValueRaw(root.label)
+  const icon = useAtomValueRaw(root.icon)
+  const i18n = useAtomValueRaw(root.i18n)
+  const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const view = useAtomValueRaw(tree.view)
   const {snapshot} = view
   const treeRef = useRef<HTMLDivElement>(null)
   useScrollSelectedIntoView(treeRef, snapshot)
   const selectedItem = useAtomValueRaw(tree.selectedItem)
   const groupEnd = lastVisibleDescendant(snapshot.items, selectedItem?.id)
-  const label = useAtomValueRaw(root.label)
-  const icon = useAtomValueRaw(root.icon)
-  const i18n = useAtomValueRaw(root.i18n)
-  const setRoute = useSetAtom(routeAtom)
-  const setExpandedKeys = useSetAtom(tree.expandedKeys)
-  const [collapsed, setCollapsed] = useAtom(tree.collapsedKeys)
-  const dragDrop = useRootTreeDragDrop(root, tree)
-  function entryLink(entry: RootTreeItem): SidebarTreeLink {
-    return {
-      href: nav.entry(
-        root.workspace,
-        root.key,
-        entry.id,
-        page.locale,
-        entry.type === 'MediaLibrary' ? undefined : 'edit'
-      )
-    }
-  }
   function renderItem(item: RootTreeNode): ReactNode {
     const data = view.entries.get(item.id)
     if (!data) return null
@@ -310,143 +322,12 @@ export const SidebarTree = memo(function SidebarTree({
       <div className={styles.SidebarTree.tree()}>
         <div className={styles.SidebarTree.root()}>
           <div
-            className={styles.SidebarTree.rootButton({selected: !page.entry})}
-          >
-            <Button
-              variant="ghost"
-              aria-current={!page.entry ? 'page' : undefined}
-              className={styles.SidebarTree.rootButton.action()}
-              icon={icon}
-              onClick={() =>
-                setRoute({
-                  workspace: root.workspace,
-                  root: root.key,
-                  locale: page.locale ?? undefined
-                })
-              }
-            >
-              <span className={styles.SidebarTree.rootButton.label()}>
-                {label}
-              </span>
-            </Button>
-            {i18n && i18n.locales.length > 0 && (
-              <span className={styles.SidebarTree.rootButton.locale()}>
-                <LocaleMenu
-                  root={root}
-                  locale={locale}
-                  onLocaleChange={locale =>
-                    setRoute({
-                      workspace: root.workspace,
-                      root: root.key,
-                      entry: page.entry,
-                      locale
-                    })
-                  }
-                />
-              </span>
-            )}
-          </div>
-        </div>
-        <div className={styles.SidebarTree.tree.viewport()}>
-          <Tree
-            ref={treeRef}
-            aria-label="Content tree"
-            items={snapshot.items}
-            {...dragDrop}
-            virtualized
-            rowHeight={treeRowHeight}
-            selectionMode="single"
-            expandedKeys={snapshot.expandedKeys}
-            onExpandedChange={keys => {
-              const next = new Set([...keys].map(String))
-              setExpandedKeys(current =>
-                equalStringSets(current, next) ? current : next
-              )
-              setCollapsed(current => {
-                const result = new Set(
-                  current.selectedId === selectedItem?.id ? current.keys : []
-                )
-                for (const id of next) result.delete(id)
-                for (const id of selectedItem?.parents ?? []) {
-                  if (!next.has(id)) result.add(id)
-                }
-                const selectedId = selectedItem?.id
-                return current.selectedId === selectedId &&
-                  equalStringSets(current.keys, result)
-                  ? current
-                  : {selectedId, keys: result}
-              })
-            }}
-            selectedKeys={snapshot.selectedKeys}
-            onSelectionChange={keys => {
-              if (keys === 'all') return
-              const [entry] = keys
-              if (!entry || String(entry) === page.entry) return
-              setExpandedKeys(current => new Set(current).add(String(entry)))
-              setRoute({
-                workspace: root.workspace,
-                root: root.key,
-                entry: String(entry),
-                locale: page.locale ?? undefined,
-                view: 'edit'
-              })
-            }}
-          >
-            {renderItem}
-          </Tree>
-        </div>
-      </div>
-    </SidebarContent>
-  )
-})
-
-export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
-  ariaLabel = 'Explorer folders',
-  disableDragAndDrop = true,
-  onRootPress,
-  onSelectionChange,
-  root,
-  rootSelected = false,
-  selectedLocale,
-  tree
-}: SidebarTreeExplorerProps) {
-  const [locale, setLocale] = useAtom(selectedLocale)
-  const label = useAtomValueRaw(root.label)
-  const icon = useAtomValueRaw(root.icon)
-  const i18n = useAtomValueRaw(root.i18n)
-  const setExpandedKeys = useSetAtom(tree.expandedKeys)
-  const view = useAtomValueRaw(tree.view)
-  const {snapshot} = view
-  const treeRef = useRef<HTMLDivElement>(null)
-  useScrollSelectedIntoView(treeRef, snapshot)
-  const selectedItem = useAtomValueRaw(tree.selectedItem)
-  const groupEnd = lastVisibleDescendant(snapshot.items, selectedItem?.id)
-  const dragDrop = useRootTreeDragDrop(root, tree, disableDragAndDrop)
-  function renderItem(item: RootTreeNode): ReactNode {
-    const data = view.entries.get(item.id)
-    if (!data) return null
-    return (
-      <SidebarTreeItem
-        data={data}
-        groupEnd={item.id === groupEnd}
-        item={item}
-        locale={locale}
-        selectedItem={selectedItem}
-      >
-        {renderItem}
-      </SidebarTreeItem>
-    )
-  }
-
-  return (
-    <SidebarContent>
-      <div className={styles.SidebarTree.tree()}>
-        <div className={styles.SidebarTree.root()}>
-          <div
             className={styles.SidebarTree.rootButton({selected: rootSelected})}
           >
             <Button
               variant="ghost"
+              // Entries link to their page, so the selected root is the page
+              aria-current={entryLink && rootSelected ? 'page' : undefined}
               className={styles.SidebarTree.rootButton.action()}
               icon={icon}
               onClick={onRootPress}
@@ -460,7 +341,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
                 <LocaleMenu
                   root={root}
                   locale={locale}
-                  onLocaleChange={setLocale}
+                  onLocaleChange={onLocaleChange}
                 />
               </span>
             )}
@@ -481,16 +362,11 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
               setExpandedKeys(current =>
                 equalStringSets(current, next) ? current : next
               )
+              onExpandedChange?.(next)
             }}
             selectedKeys={snapshot.selectedKeys}
             onSelectionChange={keys => {
-              if (keys === 'all') return
-              const [selected] = keys
-              if (selected)
-                setExpandedKeys(current =>
-                  new Set(current).add(String(selected))
-                )
-              onSelectionChange?.(keys)
+              if (keys !== 'all') onSelectionChange(keys)
             }}
           >
             {renderItem}
@@ -498,5 +374,116 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
         </div>
       </div>
     </SidebarContent>
+  )
+}
+
+export const SidebarTree = memo(function SidebarTree({
+  page,
+  root
+}: SidebarTreeProps) {
+  const {locale} = page
+  const tree = root.tree(locale)
+  const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const setRoute = useSetAtom(routeAtom)
+  const setExpandedKeys = useSetAtom(tree.expandedKeys)
+  const setCollapsed = useSetAtom(tree.collapsedKeys)
+  const dragDrop = useRootTreeDragDrop(root, tree)
+  function entryLink(entry: RootTreeItem): SidebarTreeLink {
+    return {
+      href: nav.entry(
+        root.workspace,
+        root.key,
+        entry.id,
+        page.locale,
+        entry.type === 'MediaLibrary' ? undefined : 'edit'
+      )
+    }
+  }
+  return (
+    <SidebarTreeView
+      ariaLabel="Content tree"
+      dragDrop={dragDrop}
+      entryLink={entryLink}
+      locale={locale}
+      root={root}
+      rootSelected={!page.entry}
+      tree={tree}
+      onRootPress={() =>
+        setRoute({
+          workspace: root.workspace,
+          root: root.key,
+          locale: page.locale ?? undefined
+        })
+      }
+      onLocaleChange={locale =>
+        setRoute({
+          workspace: root.workspace,
+          root: root.key,
+          entry: page.entry,
+          locale
+        })
+      }
+      onExpandedChange={next =>
+        setCollapsed(current => {
+          const result = new Set(
+            current.selectedId === selectedItem?.id ? current.keys : []
+          )
+          for (const id of next) result.delete(id)
+          for (const id of selectedItem?.parents ?? []) {
+            if (!next.has(id)) result.add(id)
+          }
+          const selectedId = selectedItem?.id
+          return current.selectedId === selectedId &&
+            equalStringSets(current.keys, result)
+            ? current
+            : {selectedId, keys: result}
+        })
+      }
+      onSelectionChange={keys => {
+        const [entry] = keys
+        if (!entry || String(entry) === page.entry) return
+        setExpandedKeys(current => new Set(current).add(String(entry)))
+        setRoute({
+          workspace: root.workspace,
+          root: root.key,
+          entry: String(entry),
+          locale: page.locale ?? undefined,
+          view: 'edit'
+        })
+      }}
+    />
+  )
+})
+
+export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
+  ariaLabel = 'Explorer folders',
+  disableDragAndDrop = true,
+  onRootPress,
+  onSelectionChange,
+  root,
+  rootSelected = false,
+  selectedLocale,
+  tree
+}: SidebarTreeExplorerProps) {
+  const [locale, setLocale] = useAtom(selectedLocale)
+  const setExpandedKeys = useSetAtom(tree.expandedKeys)
+  const dragDrop = useRootTreeDragDrop(root, tree, disableDragAndDrop)
+  return (
+    <SidebarTreeView
+      ariaLabel={ariaLabel}
+      dragDrop={dragDrop}
+      locale={locale}
+      root={root}
+      rootSelected={rootSelected}
+      tree={tree}
+      onRootPress={onRootPress}
+      onLocaleChange={setLocale}
+      onSelectionChange={keys => {
+        const [selected] = keys
+        if (selected)
+          setExpandedKeys(current => new Set(current).add(String(selected)))
+        onSelectionChange?.(keys)
+      }}
+    />
   )
 })
