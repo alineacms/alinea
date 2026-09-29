@@ -146,7 +146,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONCAa2Rl2v6v1rbhieBd2wvdb",
-      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production:\n      process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ??\n      'http://localhost:3000'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
       "fileName": "cms.tsx",
       "language": "tsx",
       "compact": false
@@ -156,7 +156,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Set `baseUrl.production` to the URL your site will be deployed at: `alinea build` refuses to run without it. See "
+          "text": "`baseUrl.production` is read from `NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL`, which Vercel sets during the build. Replace it with the URL of your site when you deploy elsewhere. See "
         },
         {
           "_type": "text",

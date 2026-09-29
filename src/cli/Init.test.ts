@@ -1,4 +1,10 @@
-import {detectPm, init, PM, patchPackageJson} from '#/cli/Init.js'
+import {
+  detectPm,
+  init,
+  PM,
+  patchGitignore,
+  patchPackageJson
+} from '#/cli/Init.js'
 import {suite} from '@alinea/suite'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -63,6 +69,9 @@ if (testPms) {
     test.ok(config.includes("adminPath: '/admin'"))
     test.ok(config.includes("mediaDir: 'public/media'"))
     test.is(config.includes('mediaUrl'), false)
+    test.is(config.includes('example.com'), false)
+    const gitignore = await fs.readFile(path.join(cwd, '.gitignore'), 'utf-8')
+    test.is(gitignore, '/public/admin.html\n/public/admin/\n')
   })
 }
 
@@ -90,6 +99,17 @@ test('patchPackageJson does not patch twice', () => {
   const source = '{"scripts":{"dev":"alinea dev -- next dev"}}'
   test.is(patchPackageJson(source)!.source, source)
   test.is(patchPackageJson('not json'), undefined)
+})
+
+test('patchGitignore appends missing lines', () => {
+  const lines = ['/public/admin.html', '/public/admin/']
+  test.is(patchGitignore('', lines), '/public/admin.html\n/public/admin/\n')
+  test.is(
+    patchGitignore('node_modules\r\n/public/admin/', lines),
+    'node_modules\r\n/public/admin/\r\n/public/admin.html\r\n'
+  )
+  const source = '/public/admin/\n/public/admin.html\n'
+  test.is(patchGitignore(source, lines), source)
 })
 
 test('detectPm detects bun.lock', async () => {

@@ -78,6 +78,21 @@ export function patchPackageJson(
   return {source: result, pkg}
 }
 
+const dashboardOutput = ['/public/admin.html', '/public/admin/']
+
+/**
+ * Append the lines that are not yet in a .gitignore source, keeping its line
+ * endings.
+ */
+export function patchGitignore(source: string, lines: Array<string>): string {
+  const existing = new Set(source.split(/\r?\n/).map(line => line.trim()))
+  const missing = lines.filter(line => !existing.has(line))
+  if (missing.length === 0) return source
+  const newline = source.includes('\r\n') ? '\r\n' : '\n'
+  const separator = source && !source.endsWith('\n') ? newline : ''
+  return source + separator + missing.join(newline) + newline
+}
+
 export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
   const configLocation = findConfigFile(cwd)
@@ -138,9 +153,22 @@ export async function init(options: InitOptions) {
     await fs.mkdir(path.dirname(routeLocation), {recursive: true})
     await fs.writeFile(routeLocation, handlerFile)
   }
+  // alinea build writes the dashboard to the public folder
+  const gitignoreFile = path.join(cwd, '.gitignore')
+  const [gitignore = ''] = await outcome(fs.readFile(gitignoreFile, 'utf-8'))
+  const patchedGitignore = patchGitignore(gitignore, dashboardOutput)
+  if (patchedGitignore !== gitignore)
+    await fs.writeFile(gitignoreFile, patchedGitignore)
+  if (quiet) return
   const command = `${runner} alinea dev`
-  if (!quiet)
+  console.info(
+    `Alinea initialized. You can open the dashboard with \`${command}\``
+  )
+  if (isNext)
     console.info(
-      `Alinea initialized. You can open the dashboard with \`${command}\``
+      "Wrap your Next.js config with `withAlinea` from 'alinea/next' to serve the dashboard on /admin"
     )
+  console.info(
+    'Set `baseUrl.production` in cms.ts to the URL of your site, on Vercel it is read from the environment'
+  )
 }

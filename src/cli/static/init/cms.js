@@ -29,8 +29,10 @@ export const cms = createCMS({
   baseUrl: {
     // Point to your local website
     development: 'http://localhost:3000',
-    // The production URL of your website
-    production: 'https://example.com'
+    // The production URL of your website, Vercel provides this variable
+    production:
+      process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ??
+      'http://localhost:3000'
   },
 
   // Enable live previews after adding <cms.previews widget /> to your layout

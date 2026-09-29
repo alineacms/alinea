@@ -247,7 +247,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`cms.ts` (in `src/` if your project has a `src` directory) holds your schema, workspaces and settings such as `baseUrl`, `handlerUrl: '/api/cms'` and `adminPath: '/admin'`."
+                  "text": "`cms.ts` (in `src/` if your project has a `src` directory) holds your schema, workspaces and settings such as `baseUrl`, `handlerUrl: '/api/cms'` and `adminPath: '/admin'`. The production `baseUrl` is read from `NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL`, which Vercel sets during the build. Replace it with the URL of your site when you deploy elsewhere."
                 }
               ]
             }
@@ -290,6 +290,20 @@
                 {
                   "_type": "text",
                   "text": "The `dev` and `build` scripts in `package.json` are rewritten to run through Alinea: `next dev` becomes `alinea dev -- next dev` and `next build` becomes `alinea build -- next build`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`/public/admin.html` and `/public/admin/` are added to `.gitignore`: `alinea build` writes the dashboard there."
                 }
               ]
             }

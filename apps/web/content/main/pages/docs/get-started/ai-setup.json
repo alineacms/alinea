@@ -262,6 +262,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`.gitignore` entries for `/public/admin.html` and `/public/admin/`, where `alinea build` writes the dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "It prefixes the `dev` and `build` scripts in `package.json` with `alinea dev --` and `alinea build --`."
                 }
               ]
@@ -352,7 +366,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`alinea build` writes the dashboard to `public/admin.html` and `public/admin/`. Add `/public/admin*` to `.gitignore`."
+          "text": "`alinea build` writes the dashboard to `public/admin.html` and `public/admin/`. Check that `.gitignore` lists `/public/admin.html` and `/public/admin/` (`alinea init` adds them)."
         }
       ]
     },
@@ -388,7 +402,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The dashboard now shows the page next to the editor and updates it while the user types. Remove the `widget` prop to hide the small preview toolbar on the page. Ask the user for the production URL of the site and set it as `baseUrl.production` in `cms.ts`."
+          "text": "The dashboard now shows the page next to the editor and updates it while the user types. Remove the `widget` prop to hide the small preview toolbar on the page. `baseUrl.production` in `cms.ts` is read from `NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL`, which Vercel sets during the build. Ask the user where the site is deployed: if it is not on Vercel, ask for its production URL and set it as `baseUrl.production`."
         }
       ]
     },
@@ -697,7 +711,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3Jjtj7SbusnRCTceDmXvuRQnFAf",
-      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nexport const Page = Config.document('Page', {\n  fields: {\n    intro: Field.text('Intro', {multiline: true}),\n    body: Field.richText('Body')\n  }\n})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {\n    intro: Field.text('Intro', {multiline: true})\n  }\n})\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date'),\n    image: Field.image('Image'),\n    body: Field.richText('Body')\n  }\n})\n\nexport const cms = createCMS({\n  schema: {Page, Blog, BlogPost},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog']\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  preview: true,\n  handlerUrl: '/api/cms',\n  adminPath: '/admin'\n})",
+      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nexport const Page = Config.document('Page', {\n  fields: {\n    intro: Field.text('Intro', {multiline: true}),\n    body: Field.richText('Body')\n  }\n})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {\n    intro: Field.text('Intro', {multiline: true})\n  }\n})\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date'),\n    image: Field.image('Image'),\n    body: Field.richText('Body')\n  }\n})\n\nexport const cms = createCMS({\n  schema: {Page, Blog, BlogPost},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog']\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production:\n      process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ??\n      'http://localhost:3000'\n  },\n  preview: true,\n  handlerUrl: '/api/cms',\n  adminPath: '/admin'\n})",
       "fileName": "cms.ts",
       "language": "tsx"
     },

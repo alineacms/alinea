@@ -89,7 +89,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Creates `cms.ts` (in `src/` when the project has a `src` directory) with an example schema and workspace."
+                  "text": "Creates `cms.ts` (in `src/` when the project has a `src` directory) with an example schema and workspace. Its production `baseUrl` is read from `NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL`, which Vercel sets, and falls back to `http://localhost:3000`."
                 }
               ]
             }
@@ -131,7 +131,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "In a Next.js project (`next` in `dependencies`), creates the API route `app/(alinea)/api/cms/route.ts`."
+                  "text": "In a Next.js project (`next` in `dependencies`), creates the API route `app/(alinea)/api/cms/route.ts` and reminds you to wrap your Next.js config with `withAlinea`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Adds `/public/admin.html` and `/public/admin/`, where `alinea build` writes the dashboard, to `.gitignore`."
                 }
               ]
             }
@@ -316,7 +330,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Indexes your content into the `@alinea/generated` package your site reads its content from, and writes the dashboard to your public folder: `public/admin.html` and a `public/admin/` asset folder for the default `adminPath`. Add `/public/admin*` to `.gitignore`. Pass your own build command after `--` and it runs once the content is generated; `alinea build` exits with that command's exit code, so a failing `next build` fails your CI."
+          "text": "Indexes your content into the `@alinea/generated` package your site reads its content from, and writes the dashboard to your public folder: `public/admin.html` and a `public/admin/` asset folder for the default `adminPath`. `alinea init` adds both to `.gitignore`. Pass your own build command after `--` and it runs once the content is generated; `alinea build` exits with that command's exit code, so a failing `next build` fails your CI."
         }
       ]
     },

@@ -162,14 +162,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "The build writes the dashboard to your public folder: an `admin.html` file and an `admin` folder with its assets, named after `adminPath`. They are generated on every build, so leave them out of git:"
+          "text": "The build writes the dashboard to your public folder: an `admin.html` file and an `admin` folder with its assets, named after `adminPath`. They are generated on every build, so leave them out of git (`alinea init` adds these lines to `.gitignore`):"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "2eM0q5z6cky9xrlPsHoH5ltj1A6",
-      "code": "/public/admin*",
+      "code": "/public/admin.html\n/public/admin/",
       "fileName": ".gitignore",
       "language": "text"
     },
