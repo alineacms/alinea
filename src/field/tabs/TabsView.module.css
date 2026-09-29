@@ -1,0 +1,3 @@
+.TabsView-header {
+  background: color-mix(in oklab, var(--alinea-fg) 3%, transparent);
+}

@@ -16,8 +16,8 @@
   max-width: 100%;
   height: 100%;
   overflow-x: auto;
-  /* The line indicator overhangs the list by a pixel, which would otherwise
-     scroll vertically where scrollbars take up space (Windows) */
+  /* Overflowing on one axis makes the other scroll too, which would show a
+     vertical scrollbar where scrollbars take up space (Windows) */
   overflow-y: hidden;
   white-space: nowrap;
   scrollbar-width: thin;
@@ -39,7 +39,7 @@
   }
 
   .Tabs[data-variant='line'] & {
-    gap: 16px;
+    gap: 20px;
   }
 
   .Tabs[data-variant='subtle'] & {
@@ -96,20 +96,31 @@
   }
 
   .Tabs[data-variant='line'] & {
-    padding: 10px 0;
+    padding: 10px 2px;
+    font-weight: 500;
 
     &::before {
       content: '';
       position: absolute;
       right: 0;
-      bottom: -1px;
+      bottom: 0;
       left: 0;
-      height: 0;
-      background-color: var(--alinea-primary);
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+      background-color: transparent;
+      transition: background-color var(--alinea-transition);
+    }
+
+    &:hover:not([aria-disabled='true'])::before {
+      background-color: var(--alinea-border-strong);
+    }
+
+    &[aria-selected='true'] {
+      font-weight: 600;
     }
 
     &[aria-selected='true']::before {
-      height: 2px;
+      background-color: var(--alinea-primary);
     }
   }
 
