@@ -65,6 +65,21 @@ test('clamps panels to their minimum and maximum size', async ({
   await expect.poll(() => size(navigation)).toBe(150)
 })
 
+test('moves a divider with the arrow keys', async ({mount, page}) => {
+  await mount(<Horizontal />)
+  const navigation = page.getByTestId('navigation')
+  const handle = page.getByRole('separator').first()
+  await expect(handle).toHaveAttribute('aria-orientation', 'vertical')
+  await expect.poll(() => size(navigation)).toBe(200)
+  await handle.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(() => size(navigation)).toBe(210)
+  await expect(page.getByLabel('Layout')).toHaveText(/^210 \/ \d+ \/ 240$/)
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('ArrowLeft')
+  await expect.poll(() => size(navigation)).toBe(190)
+})
+
 test('restores default sizes on double click', async ({mount, page}) => {
   await mount(<Horizontal />)
   const navigation = page.getByTestId('navigation')
@@ -82,6 +97,7 @@ test('lays out panels vertically', async ({mount, page}) => {
   const bottom = page.getByTestId('bottom')
   await expect.poll(() => size(bottom, 'height')).toBe(160)
   const handle = page.locator('[data-slot="resizable-handle"]')
+  await expect(handle).toHaveAttribute('aria-orientation', 'horizontal')
   await drag(page, handle, 0, -60)
   await expect.poll(() => size(bottom, 'height')).toBe(220)
 })

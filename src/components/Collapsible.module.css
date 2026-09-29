@@ -17,7 +17,7 @@
   font: inherit;
   font-size: var(--alinea-font-size-base);
   font-weight: 500;
-  text-align: left;
+  text-align: start;
   appearance: none;
   outline: none;
   cursor: pointer;
@@ -55,8 +55,4 @@
 
 .CollapsibleContent {
   min-width: 0;
-}
-
-.CollapsibleContent[hidden] {
-  display: none;
 }

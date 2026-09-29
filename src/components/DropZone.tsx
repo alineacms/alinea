@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {createContext, type ReactNode, useContext, useState} from 'react'
+import {createContext, type ReactNode, useContext} from 'react'
 import {
   DropZone as DropZonePrimitive,
   isFileDropItem
@@ -7,6 +7,7 @@ import {
 import {Button, type ButtonProps} from './Button.js'
 import css from './DropZone.module.css'
 import {FileTrigger} from './FileTrigger.js'
+import {acceptsFile} from './internal/Accept.js'
 import type {AriaProps, DataProps, StyleProps} from './types.js'
 
 const styles = styler(css)
@@ -46,7 +47,6 @@ export function DropZone({
   children,
   ...props
 }: DropZoneProps) {
-  const [dragOver, setDragOver] = useState(false)
   function receive(files: Array<File>) {
     const accepted = files.filter(file => acceptsFile(accept, file))
     const result = multiple ? accepted : accepted.slice(0, 1)
@@ -59,17 +59,17 @@ export function DropZone({
       <DropZonePrimitive
         data-slot="drop-zone"
         {...props}
-        data-drag-over={dragOver || undefined}
-        data-disabled={disabled || undefined}
         isDisabled={disabled}
-        className={styles.DropZone(styler.merge({className}))}
+        className={({isDropTarget}) =>
+          styles.DropZone(
+            {dropTarget: isDropTarget, disabled},
+            styler.merge({className})
+          )
+        }
         getDropOperation={types =>
           acceptsTypes(accept, types) ? 'copy' : 'cancel'
         }
-        onDropEnter={() => setDragOver(true)}
-        onDropExit={() => setDragOver(false)}
         onDrop={async event => {
-          setDragOver(false)
           const files = await Promise.all(
             event.items.filter(isFileDropItem).map(item => item.getFile())
           )
@@ -129,16 +129,4 @@ function acceptsTypes(
     // Wildcards and extensions can only be checked once the files are dropped
     type => type.startsWith('.') || type.endsWith('/*') || types.has(type)
   )
-}
-
-function acceptsFile(accept: Array<string> | undefined, file: File) {
-  if (!accept || accept.length === 0) return true
-  const name = file.name.toLowerCase()
-  const mime = file.type.toLowerCase()
-  return accept.some(pattern => {
-    const type = pattern.trim().toLowerCase()
-    if (type.startsWith('.')) return name.endsWith(type)
-    if (type.endsWith('/*')) return mime.startsWith(type.slice(0, -1))
-    return mime === type
-  })
 }

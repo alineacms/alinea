@@ -50,8 +50,8 @@ export function Example() {
           />
         </SidebarHeader>
         <SidebarContent scroll>
-          <SidebarGroup aria-labelledby="pages-label">
-            <SidebarGroupLabel id="pages-label">Pages</SidebarGroupLabel>
+          <SidebarGroup>
+            <SidebarGroupLabel>Pages</SidebarGroupLabel>
             <SidebarGroupAction>
               <DropdownMenu>
                 <DropdownMenuTrigger variant="ghost" size="sm">

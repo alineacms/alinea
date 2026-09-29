@@ -22,6 +22,13 @@ test('passes accept and multiple to the input', async ({mount, page}) => {
   const input = page.locator('[data-slot="file-trigger-input"]')
   await expect(input).toHaveAttribute('accept', 'image/png,image/jpeg')
   await expect(input).not.toHaveAttribute('multiple')
+  // The file browser may still offer other files, they are left out
+  await input.setInputFiles({
+    name: 'notes.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('x')
+  })
+  await expect(page.getByTestId('file')).toBeEmpty()
   const chooser = page.waitForEvent('filechooser')
   await page.getByRole('button', {name: 'Pick an image'}).click()
   await (

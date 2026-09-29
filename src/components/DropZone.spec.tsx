@@ -31,7 +31,7 @@ async function dropFiles(page: Page, files: Array<[string, string]>) {
     )
   await dispatch('dragenter')
   await dispatch('dragover')
-  await expect(zone).toHaveAttribute('data-drag-over', 'true')
+  await expect(zone).toHaveClass(/is-dropTarget/)
   await dispatch('drop')
 }
 
@@ -67,8 +67,8 @@ test('receives dropped files', async ({mount, page}) => {
   await mount(<Example />)
   await dropFiles(page, [['dropped.pdf', 'application/pdf']])
   await expect(page.getByTestId('files')).toHaveText('dropped.pdf')
-  await expect(page.locator('[data-slot="drop-zone"]')).not.toHaveAttribute(
-    'data-drag-over'
+  await expect(page.locator('[data-slot="drop-zone"]')).not.toHaveClass(
+    /is-dropTarget/
   )
 })
 

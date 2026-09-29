@@ -1,22 +1,14 @@
-import styler from '@alinea/styler'
-import {
-  DateInput,
-  DateField as DateFieldPrimitive,
-  DateSegment,
-  Group
-} from 'react-aria-components'
-import {Locale} from './internal/Locale.js'
-import css from './DateField.module.css'
+import {DateField as DateFieldPrimitive} from 'react-aria-components'
 import {Field} from './Field.js'
+import {DateControlInput} from './internal/DateControl.js'
 import {toCalendarDate} from './internal/DateValue.js'
+import {Locale} from './internal/Locale.js'
 import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
   StyleProps
 } from './types.js'
-
-const styles = styler(css)
 
 export interface DateFieldProps
   extends FieldSharedProps, StyleProps, AriaProps, DataProps {
@@ -57,7 +49,7 @@ export function DateField({
       <DateFieldPrimitive
         data-slot="date-field"
         {...props}
-        className={styles.DateField(styler.merge({className}))}
+        className={className}
         value={toCalendarDate(value)}
         defaultValue={toCalendarDate(defaultValue)}
         onChange={
@@ -81,26 +73,7 @@ export function DateField({
           icon={icon}
           shared={shared}
         >
-          <Group
-            data-slot="date-field-control"
-            aria-disabled={disabled || undefined}
-            className={styles.DateField.control()}
-          >
-            <DateInput
-              data-slot="date-field-input"
-              className={styles.DateField.input()}
-            >
-              {segment => (
-                <DateSegment
-                  data-slot="date-field-segment"
-                  className={state =>
-                    styles.DateField.segment({placeholder: state.isPlaceholder})
-                  }
-                  segment={segment}
-                />
-              )}
-            </DateInput>
-          </Group>
+          <DateControlInput dataSlot="date-field" framed />
         </Field>
       </DateFieldPrimitive>
     </Locale>

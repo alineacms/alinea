@@ -140,6 +140,7 @@ export function PreviewToolbar({
           variant="ghost"
           size="icon"
           icon={IcRoundArrowBack}
+          data-slot="preview-toolbar-back"
           aria-label={labels?.back ?? 'Go back in preview'}
           disabled={!onBack}
           onClick={onBack}
@@ -148,6 +149,7 @@ export function PreviewToolbar({
           variant="ghost"
           size="icon"
           icon={IcRoundArrowForward}
+          data-slot="preview-toolbar-forward"
           aria-label={labels?.forward ?? 'Go forward in preview'}
           disabled={!onForward}
           onClick={onForward}
@@ -156,6 +158,7 @@ export function PreviewToolbar({
           variant="ghost"
           size="icon"
           icon={IcRoundRefresh}
+          data-slot="preview-toolbar-reload"
           aria-label={labels?.reload ?? 'Reload preview'}
           disabled={!onReload}
           loading={reloading}
@@ -167,6 +170,7 @@ export function PreviewToolbar({
         variant="ghost"
         size="icon"
         icon={IcRoundOpenInNew}
+        data-slot="preview-toolbar-open"
         aria-label={labels?.open ?? 'Open preview in new tab'}
         className={styles.PreviewToolbar.open()}
         disabled={!onOpen}

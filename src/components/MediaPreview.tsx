@@ -97,6 +97,8 @@ export function MediaPreview({
     const area = areaRef.current
     const image = imageRef.current
     if (!area || !image) return
+    // An image that loaded before hydration fires no load event
+    if (image.complete) setLoadedSrc(src)
     function update() {
       if (area && image) setBounds(measure(area, image))
     }
@@ -120,15 +122,14 @@ export function MediaPreview({
     }
   }
 
-  function release(event: PointerEvent<HTMLDivElement>) {
-    if (event.currentTarget.hasPointerCapture(event.pointerId))
-      event.currentTarget.releasePointerCapture(event.pointerId)
-  }
+  // An editable preview without a focal point starts from the center
+  const marker = dragFocus ?? focus ?? (editable ? {x: 0.5, y: 0.5} : undefined)
+  const percent = (value: number) => `${Math.round(value * 100)}%`
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (!focus || !onFocusChange) return
+    if (!marker || !onFocusChange) return
     const step = event.shiftKey ? 0.1 : 0.01
-    let {x, y} = focus
+    let {x, y} = marker
     switch (event.key) {
       case 'ArrowLeft':
         x -= step
@@ -148,9 +149,6 @@ export function MediaPreview({
     event.preventDefault()
     onFocusChange({x: round(clamp(x)), y: round(clamp(y))})
   }
-
-  const marker = dragFocus ?? focus
-  const percent = (value: number) => `${Math.round(value * 100)}%`
 
   return (
     <div
@@ -190,13 +188,11 @@ export function MediaPreview({
           if (!dragFocus) return
           const point = locate(event)
           setDragFocus(null)
-          release(event)
           onFocusChange?.(point)
           onFocusHover?.(point)
         }}
-        onPointerCancel={event => {
+        onPointerCancel={() => {
           setDragFocus(null)
-          release(event)
           onFocusHover?.(null)
         }}
         onPointerLeave={() => {
@@ -247,8 +243,14 @@ export function MediaPreview({
             }
             onKeyDown={editable ? handleKeyDown : undefined}
           >
-            <span className={styles.MediaPreview.focus.ring()} />
-            <span className={styles.MediaPreview.focus.dot()} />
+            <span
+              data-slot="media-preview-focus-ring"
+              className={styles.MediaPreview.focus.ring()}
+            />
+            <span
+              data-slot="media-preview-focus-dot"
+              className={styles.MediaPreview.focus.dot()}
+            />
           </div>
         )}
       </div>

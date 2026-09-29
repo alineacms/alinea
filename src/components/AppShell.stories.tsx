@@ -69,17 +69,14 @@ export function Example() {
               defaultSize={280}
               minSize={200}
               maxSize={400}
-              priority="low"
             >
               <Sidebar aria-label="Navigation">
                 <SidebarHeader>
                   <Text weight="semibold">Main site</Text>
                 </SidebarHeader>
                 <SidebarContent scroll>
-                  <SidebarGroup aria-labelledby="root-label">
-                    <SidebarGroupLabel id="root-label">
-                      {label}
-                    </SidebarGroupLabel>
+                  <SidebarGroup>
+                    <SidebarGroupLabel>{label}</SidebarGroupLabel>
                     <Tree aria-label={label} defaultExpandedKeys={['blog']}>
                       <TreeItem id="home" title="Home" icon={LucideFile} />
                       <TreeItem id="blog" title="Blog" icon={LucideFolder}>
@@ -104,10 +101,10 @@ export function Example() {
               </Sidebar>
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel minSize={320} priority="high">
+            <ResizablePanel minSize={320}>
               <SidebarInset>
                 <ResizablePanelGroup>
-                  <ResizablePanel key="page" minSize={240} priority="high">
+                  <ResizablePanel key="page" minSize={240}>
                     <Page>
                       <PageHeader>
                         <PageTitle>Launch</PageTitle>
@@ -149,7 +146,6 @@ export function Example() {
                       data-testid="details"
                       defaultSize={300}
                       minSize={240}
-                      priority="low"
                     >
                       <Sidebar side="right" aria-label="Details">
                         <SidebarHeader>

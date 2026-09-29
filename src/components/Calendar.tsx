@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {type DateValue, getDayOfWeek, parseDate} from '@internationalized/date'
+import {type DateValue, getDayOfWeek} from '@internationalized/date'
 import {useLocale} from 'react-aria'
 import {
   Button,
@@ -154,7 +154,7 @@ function CalendarBody() {
         data-slot="calendar-grid"
         className={styles.Calendar.grid()}
       >
-        <CalendarGridHeader>
+        <CalendarGridHeader data-slot="calendar-grid-header">
           {day => (
             <CalendarHeaderCell
               data-slot="calendar-weekday"
@@ -164,10 +164,9 @@ function CalendarBody() {
             </CalendarHeaderCell>
           )}
         </CalendarGridHeader>
-        <CalendarGridBody>
+        <CalendarGridBody data-slot="calendar-grid-body">
           {date => {
-            // react-aria ships its own copy of @internationalized/date
-            const day = getDayOfWeek(parseDate(date.toString()), locale)
+            const day = getDayOfWeek(date, locale)
             return (
               <CalendarCell
                 data-slot="calendar-day"

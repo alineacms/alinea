@@ -15,6 +15,7 @@ test('navigates, reloads and opens the preview', async ({mount, page}) => {
   const back = page.getByRole('button', {name: 'Go back in preview'})
   const forward = page.getByRole('button', {name: 'Go forward in preview'})
   await expect(back).toBeDisabled()
+  await expect(back).toHaveAttribute('data-slot', 'preview-toolbar-back')
   await forward.click()
   await expect(body).toHaveText('About')
   await expect(page.getByText('Page 2 of 3')).toBeVisible()

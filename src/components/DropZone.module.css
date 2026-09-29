@@ -17,13 +17,13 @@
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
-  &[data-drag-over] {
+  &.is-dropTarget {
     border-color: var(--alinea-primary);
     background-color: var(--alinea-primary-subtle);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
-  &[data-disabled] {
+  &.is-disabled {
     opacity: 0.5;
   }
 }

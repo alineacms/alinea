@@ -69,10 +69,9 @@
     box-shadow: var(--alinea-shadow-raised);
   }
 
-  &:disabled,
   &[aria-disabled='true'] {
     opacity: 0.5;
-    pointer-events: none;
+    cursor: not-allowed;
   }
 }
 
@@ -85,7 +84,7 @@
 .NavRailItem-badge {
   position: absolute;
   top: -4px;
-  right: -4px;
+  inset-inline-end: -4px;
   display: grid;
   place-items: center;
   min-width: 16px;
@@ -100,7 +99,7 @@
 
   &[data-dot] {
     top: 2px;
-    right: 2px;
+    inset-inline-end: 2px;
     min-width: 8px;
     height: 8px;
     padding: 0;

@@ -107,7 +107,7 @@
     "@floating-ui/dom": "^1.8.0",
     "@happy-dom/global-registrator": "^20.8.3",
     "@hyrious/esbuild-plugin-commonjs": "^0.2.6",
-    "@internationalized/date": "3.12.1",
+    "@internationalized/date": "3.12.2",
     "@ladle/react": "^4.1.2",
     "@playwright/experimental-ct-react": "1.61.1",
     "@react-stately/virtualizer": "^4.5.0",

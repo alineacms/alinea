@@ -38,6 +38,24 @@ export function Example() {
   )
 }
 
+/** Without a focal point the marker starts in the center */
+export function Unset() {
+  const [focus, setFocus] = useState<FocusPoint | null>(null)
+  return (
+    <div>
+      <MediaPreview
+        style={previewStyle}
+        src={image}
+        width={640}
+        height={400}
+        focus={focus ?? undefined}
+        onFocusChange={setFocus}
+      />
+      <Text style={{marginInline: 24}}>Focus: {format(focus)}</Text>
+    </div>
+  )
+}
+
 export function ReadOnly() {
   return (
     <MediaPreview

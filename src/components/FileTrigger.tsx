@@ -5,9 +5,10 @@ import {
   type ReactNode,
   useRef
 } from 'react'
+import {acceptsFile} from './internal/Accept.js'
 
 export interface FileTriggerProps {
-  /** Called with the picked files, never with an empty list */
+  /** Called with the picked files that match `accept`, never with an empty list */
   onSelect: (files: Array<File>) => void
   /**
    * Accepted mime types (`image/png`, `image/*`) or file extensions (`.pdf`),
@@ -60,7 +61,9 @@ export function FileTrigger({
         multiple={multiple}
         {...directoryProps}
         onChange={event => {
-          const files = Array.from(event.currentTarget.files ?? [])
+          const files = Array.from(event.currentTarget.files ?? []).filter(
+            file => acceptsFile(accept, file)
+          )
           event.currentTarget.value = ''
           if (files.length > 0) onSelect(files)
         }}

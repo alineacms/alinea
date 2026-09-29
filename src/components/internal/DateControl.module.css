@@ -1,11 +1,5 @@
-.DateField {
-  display: block;
-}
-
-.DateField-control {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.DateControl,
+.DateControl-input.is-framed {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--alinea-border);
@@ -23,12 +17,13 @@
     outline-color: var(--alinea-muted);
   }
 
-  &:focus-within {
+  &:focus-within,
+  &:has(.DateControl-trigger[aria-expanded='true']) {
     border-color: var(--alinea-primary);
     outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
-  &:has(.DateField-segment[aria-invalid='true']) {
+  &:has(.DateControl-segment[aria-invalid='true']) {
     border-color: var(--alinea-danger);
     outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
@@ -40,12 +35,13 @@
   }
 }
 
-.DateField-input {
-  flex: 1;
-  min-width: 0;
+.DateControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.DateField-segment {
+.DateControl-segment {
   padding-inline: 1px;
   transition: var(--alinea-transition);
 
@@ -59,4 +55,50 @@
     color: var(--alinea-primary);
     outline: none;
   }
+}
+
+.DateControl-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--alinea-fg-muted);
+  outline: none;
+  cursor: pointer;
+  transition: var(--alinea-transition);
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--alinea-radius-sm);
+    background-color: transparent;
+    transition: var(--alinea-transition);
+  }
+
+  &:hover::before,
+  &:focus-visible::before {
+    background-color: var(--alinea-muted);
+  }
+
+  &[aria-expanded='true'] {
+    color: var(--alinea-primary-subtle-fg);
+
+    &::before {
+      background-color: var(--alinea-primary-subtle);
+    }
+  }
+}
+
+.DateControl-icon {
+  position: relative;
+}
+
+.DateControl-dialog {
+  outline: none;
 }
