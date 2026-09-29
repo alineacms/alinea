@@ -190,19 +190,19 @@ function findInternalTypeImports(root: string): Array<string> {
   return violations
 }
 
-function publicTypes({watch}: {watch: boolean}): Plugin {
-  return {
-    name: 'public-types',
-    setup(build) {
-      build.onEnd(() => {
-        const violations = findInternalTypeImports('./dist')
-        if (violations.length === 0) return
-        console.error(
-          `Public types expose bundled packages:\n  ${violations.join('\n  ')}`
-        )
-        if (!watch) process.exitCode = 1
-      })
-    }
+// Only `bun run build` emits declarations (tsc) before bundling, so watch
+// builds would check whatever stale declarations are left in dist
+const publicTypes: Plugin = {
+  name: 'public-types',
+  setup(build) {
+    build.onEnd(() => {
+      const violations = findInternalTypeImports('./dist')
+      if (violations.length === 0) return
+      console.error(
+        `Public types expose bundled packages:\n  ${violations.join('\n  ')}`
+      )
+      process.exitCode = 1
+    })
   }
 }
 
@@ -636,7 +636,7 @@ async function build({
     cleanup,
     jsEntry({watch, test, report}),
     bundleTs,
-    publicTypes({watch}),
+    ...(watch ? [] : [publicTypes]),
     ReporterPlugin.configure({name: 'alinea'}),
     runPlugin,
     cjsModules
