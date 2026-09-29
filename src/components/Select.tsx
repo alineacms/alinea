@@ -117,7 +117,6 @@ export function Select({
         />
         <PopoverSurface
           data-slot="select-content"
-          className={styles.SelectContent()}
           triggerRef={triggerRef}
           matchTriggerWidth
         >
@@ -240,7 +239,7 @@ export function SelectGroup({label, children, ...props}: SelectGroupProps) {
       className={styles.SelectGroup()}
     >
       {label && (
-        <Header data-slot="select-label" className={styles.SelectLabel()}>
+        <Header data-slot="select-label" className={styles.SelectGroup.label()}>
           {label}
         </Header>
       )}

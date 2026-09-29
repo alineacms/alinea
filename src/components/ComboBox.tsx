@@ -127,7 +127,6 @@ export function ComboBox({
         />
         <PopoverSurface
           data-slot="combobox-content"
-          className={styles.ComboBoxContent()}
           triggerRef={triggerRef}
           matchTriggerWidth
         >

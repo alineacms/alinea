@@ -44,6 +44,13 @@ test('renders groups, separators and disabled items', async ({mount, page}) => {
   await expect(
     page.locator('[data-slot="select-item-description"]')
   ).toHaveText('Configure the workspace')
+  // The trigger shows the selected option without its description
+  await page.getByRole('option', {name: /Settings/}).click()
+  const trigger = page.locator('[data-slot="select-trigger"]')
+  await expect(trigger).toContainText('Settings')
+  await expect(
+    trigger.locator('[data-slot="select-item-description"]')
+  ).toBeHidden()
 })
 
 test('required, disabled and invalid states', async ({mount, page}) => {

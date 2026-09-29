@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import type {ReactElement, ReactNode} from 'react'
+import type {CSSProperties, ReactElement, ReactNode} from 'react'
 import {ListBoxItem, Text} from 'react-aria-components'
 import {IcRoundCheck} from '#/dashboard/icons.js'
 import {Icon} from '../Icon.js'
@@ -17,6 +17,7 @@ export interface ListBoxOptionProps {
   icon?: IconType | ReactElement
   description?: ReactNode
   className?: string
+  style?: CSSProperties
   children: ReactNode
 }
 
@@ -33,6 +34,7 @@ export function ListBoxOption({
   icon,
   description,
   className,
+  style,
   children
 }: ListBoxOptionProps) {
   const text =
@@ -47,6 +49,7 @@ export function ListBoxOption({
       textValue={text}
       isDisabled={disabled}
       data-slot={slot}
+      style={style}
       className={({isFocused}) =>
         styles.ListBoxOption(
           {highlighted: isFocused},
