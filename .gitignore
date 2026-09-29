@@ -17,5 +17,5 @@ node_modules
 .next
 /.playwright/.cache
 /test-results
-llms-full.txt
+/llms-full.txt
 .zed
