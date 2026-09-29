@@ -25,19 +25,19 @@
   }
 
   &[data-status='published'] {
-    background: var(--alinea-success-subtle);
-    color: var(--alinea-success-subtle-fg);
+    background: var(--alinea-status-published);
+    color: var(--alinea-status-published-fg);
   }
 
   &[data-status='draft'],
   &[data-status='untranslated'] {
-    background: var(--alinea-primary-subtle);
-    color: var(--alinea-primary-subtle-fg);
+    background: var(--alinea-status-draft);
+    color: var(--alinea-status-draft-fg);
   }
 
   &[data-status='unpublished'] {
-    background: var(--alinea-warning-subtle);
-    color: var(--alinea-warning-subtle-fg);
+    background: var(--alinea-status-unpublished);
+    color: var(--alinea-status-unpublished-fg);
   }
 }
 

@@ -32,6 +32,11 @@ export function Example() {
         <AlertDescription>
           This translation can be created once its parent is translated.
         </AlertDescription>
+        <AlertActions>
+          <Button size="sm" variant="outline" color="warning">
+            Go to parent
+          </Button>
+        </AlertActions>
       </Alert>
       <Alert variant="destructive" icon={IcBaselineErrorOutline}>
         <AlertTitle>Could not save the user</AlertTitle>
@@ -39,7 +44,7 @@ export function Example() {
           The email address is already in use.
         </AlertDescription>
         <AlertActions>
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" color="destructive">
             Try again
           </Button>
         </AlertActions>

@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import {IcRoundAdd} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
 import {
   Dialog,
@@ -16,18 +17,23 @@ import {TextField} from './TextField.js'
 export function Example() {
   return (
     <Dialog>
-      <DialogTrigger color="primary">Edit profile</DialogTrigger>
+      <DialogTrigger color="primary" icon={IcRoundAdd}>
+        Create user
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
+          <DialogTitle>Create user</DialogTitle>
           <DialogDescription>
-            Make changes to your profile here.
+            New users sign in with their email address.
           </DialogDescription>
         </DialogHeader>
-        <TextField label="Name" defaultValue="Ada Lovelace" autoFocus />
+        <TextField label="Email" type="email" required autoFocus />
+        <TextField label="Name" />
         <DialogFooter>
-          <DialogClose variant="ghost">Cancel</DialogClose>
-          <DialogClose color="primary">Save</DialogClose>
+          <DialogClose variant="outline" color="secondary">
+            Cancel
+          </DialogClose>
+          <DialogClose color="primary">Create user</DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -38,24 +44,51 @@ export function Controlled() {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Open from outside</Button>
+      <Button onClick={() => setOpen(true)}>Deactivate Ada Lovelace</Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent role="alertdialog" dismissable={false}>
           <DialogHeader>
-            <DialogTitle>Discard changes?</DialogTitle>
-            <DialogDescription>This cannot be undone.</DialogDescription>
+            <DialogTitle>Deactivate account</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to deactivate Ada Lovelace? This will remove
+              the user account and role assignments.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              Keep editing
+            <Button
+              variant="outline"
+              color="secondary"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
             </Button>
             <Button color="destructive" onClick={() => setOpen(false)}>
-              Discard
+              Deactivate account
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+export function Notice() {
+  return (
+    <Dialog>
+      <DialogTrigger>Save entry</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>URL already in use</DialogTitle>
+          <DialogDescription>
+            The URL /about is already defined on another entry. Change the entry
+            path or remove this alias, then try again.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose color="primary">OK</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

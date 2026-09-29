@@ -62,7 +62,7 @@ test('the list is as wide as the trigger with its clear button', async ({
   page
 }) => {
   await mount(
-    <div style={{width: 280}}>
+    <div style={{width: 600}}>
       <Example />
     </div>
   )
@@ -77,7 +77,7 @@ test('the list is as wide as the trigger with its clear button', async ({
     .locator('[data-slot="select-trigger"]')
     .boundingBox()
   const contentBox = await content.boundingBox()
-  // The list is clamped between 240 and 320 pixels
-  const expected = Math.min(320, Math.max(240, triggerBox!.width))
+  // The list follows wide fields, narrow ones get at least 240 pixels
+  const expected = Math.max(240, triggerBox!.width)
   expect(Math.abs(contentBox!.width - expected)).toBeLessThanOrEqual(1)
 })

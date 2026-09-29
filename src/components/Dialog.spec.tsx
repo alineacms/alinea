@@ -6,19 +6,19 @@ test('opens from the trigger and closes with DialogClose', async ({
   page
 }) => {
   await mount(<Example />)
-  await page.getByRole('button', {name: 'Edit profile'}).click()
-  const dialog = page.getByRole('dialog', {name: 'Edit profile'})
+  await page.getByRole('button', {name: 'Create user'}).click()
+  const dialog = page.getByRole('dialog', {name: 'Create user'})
   await expect(dialog).toBeVisible()
   await expect(
-    dialog.getByRole('heading', {level: 2, name: 'Edit profile'})
+    dialog.getByRole('heading', {level: 2, name: 'Create user'})
   ).toBeVisible()
-  await dialog.getByRole('button', {name: 'Save'}).click()
+  await dialog.getByRole('button', {name: 'Create user'}).click()
   await expect(dialog).toBeHidden()
 })
 
 test('closes with the close button and escape', async ({mount, page}) => {
   await mount(<Example />)
-  const trigger = page.getByRole('button', {name: 'Edit profile'})
+  const trigger = page.getByRole('button', {name: 'Create user'})
   await trigger.click()
   await page.getByRole('button', {name: 'Close'}).click()
   await expect(page.getByRole('dialog')).toBeHidden()
@@ -32,12 +32,12 @@ test('controlled alert dialog is not dismissed by clicking outside', async ({
   page
 }) => {
   await mount(<Controlled />)
-  await page.getByRole('button', {name: 'Open from outside'}).click()
-  const dialog = page.getByRole('alertdialog', {name: 'Discard changes?'})
+  await page.getByRole('button', {name: 'Deactivate Ada Lovelace'}).click()
+  const dialog = page.getByRole('alertdialog', {name: 'Deactivate account'})
   await expect(dialog).toBeVisible()
   await page.mouse.click(5, 5)
   await expect(dialog).toBeVisible()
-  await dialog.getByRole('button', {name: 'Discard'}).click()
+  await dialog.getByRole('button', {name: 'Deactivate account'}).click()
   await expect(dialog).toBeHidden()
 })
 

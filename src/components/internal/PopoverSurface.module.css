@@ -16,4 +16,9 @@
   border: 1px solid var(--alinea-border);
   background-color: var(--alinea-input);
   box-shadow: var(--alinea-shadow-raised);
+
+  /* Dropdowns line up with their field, however wide it is */
+  &.is-matchTriggerWidth {
+    max-width: none;
+  }
 }

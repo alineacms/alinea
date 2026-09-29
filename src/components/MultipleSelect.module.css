@@ -140,7 +140,6 @@
 
 .MultipleSelectContent[data-slot] {
   width: var(--alinea-trigger-width, var(--trigger-width));
-  max-width: none;
   display: flex;
   flex-direction: column;
   overflow-y: hidden;
@@ -164,16 +163,15 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  margin: 4px 4px 8px;
+  /* Spans the popover edge to edge, pulled over its 4px padding */
+  margin: -4px -4px 4px;
   overflow: hidden;
-  border: 1px solid var(--alinea-border);
-  border-radius: var(--alinea-radius);
-  background: var(--alinea-input);
+  border-bottom: 1px solid var(--alinea-border);
 }
 
 .MultipleSelectSearch-icon {
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 12px;
   margin-right: -4px;
   color: var(--alinea-fg-muted);
   font-size: 20px;
@@ -182,7 +180,7 @@
 .MultipleSelectSearch-input {
   width: 100%;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: none;
   outline: none;
   background: none;

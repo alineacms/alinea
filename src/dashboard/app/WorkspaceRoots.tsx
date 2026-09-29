@@ -19,7 +19,7 @@ import {
   TooltipTrigger
 } from '#/components.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
-import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {canLogoutAtom, logoutAtom} from '#/dashboard/atoms/dashboard.js'
 import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
@@ -45,14 +45,9 @@ const styles = styler(css)
 export interface WorkspaceRootsProps {
   canManageMembers: boolean
   page: Page
-  root: RootAtoms
 }
 
-export function WorkspaceRoots({
-  canManageMembers,
-  page,
-  root: currentRoot
-}: WorkspaceRootsProps) {
+export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
   const policy = useAtomValueRaw(policyAtom)
   const workspace = page.workspace!
   const settings = useAtomValueRaw(workspaceAtom(workspace))
@@ -62,7 +57,7 @@ export function WorkspaceRoots({
   return (
     <NavRail aria-label="Workspace roots">
       <NavRailHeader>
-        <WorkspaceAvatarMenu page={page} root={currentRoot} />
+        <WorkspaceAvatarMenu page={page} />
       </NavRailHeader>
       <NavRailContent>
         {roots.map(root => (

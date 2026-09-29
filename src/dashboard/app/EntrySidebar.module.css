@@ -48,8 +48,7 @@
 
 .EntrySidebar-disclosureTrigger {
   padding-bottom: 0;
-  font-size: 14px;
-  line-height: 1.2;
+  line-height: 1;
 
   &:focus-visible {
     outline: none;

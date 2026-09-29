@@ -84,6 +84,8 @@ interface SidebarTreeItemProps {
   children?: (item: RootTreeNode) => ReactNode
   data: RootTreeItem
   entryLink?: (entry: RootTreeItem) => SidebarTreeLink
+  /** The last visible row within the selected entry */
+  groupEnd?: boolean
   item: RootTreeNode
   locale: string | null
   selectedItem?: RootTreeItem
@@ -93,6 +95,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   children,
   data,
   entryLink,
+  groupEnd,
   item,
   locale,
   selectedItem
@@ -125,6 +128,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
       href={link ? dashboardHref(link.href) : undefined}
       className={styles.SidebarTree.item({
         archived: isArchived,
+        groupEnd: groupEnd && selectedAncestor !== undefined,
         parentSelected: selectedAncestor !== undefined,
         unpublished: isUnpublished,
         untranslated: isUntranslated
@@ -172,6 +176,23 @@ function equalStringSets(left: Set<string>, right: Set<string>): boolean {
 }
 
 const treeRowHeight = 32
+
+/** The last visible descendant of an entry, if it is expanded */
+function lastVisibleDescendant(
+  items: Array<RootTreeNode>,
+  id: string | undefined
+): string | undefined {
+  for (const item of items) {
+    if (item.id === id) {
+      let last = item.children.at(-1)
+      while (last?.children.length) last = last.children.at(-1)
+      return last?.id
+    }
+    const found = lastVisibleDescendant(item.children, id)
+    if (found) return found
+  }
+  return undefined
+}
 
 function visibleRowIds(items: Array<RootTreeNode>): Array<string> {
   return items.flatMap(item => [item.id, ...visibleRowIds(item.children)])
@@ -248,6 +269,7 @@ export const SidebarTree = memo(function SidebarTree({
   const treeRef = useRef<HTMLDivElement>(null)
   useScrollSelectedIntoView(treeRef, snapshot)
   const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const groupEnd = lastVisibleDescendant(snapshot.items, selectedItem?.id)
   const label = useAtomValueRaw(root.label)
   const icon = useAtomValueRaw(root.icon)
   const i18n = useAtomValueRaw(root.i18n)
@@ -273,6 +295,7 @@ export const SidebarTree = memo(function SidebarTree({
       <SidebarTreeItem
         data={data}
         entryLink={entryLink}
+        groupEnd={item.id === groupEnd}
         item={item}
         locale={locale}
         selectedItem={selectedItem}
@@ -397,6 +420,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   const treeRef = useRef<HTMLDivElement>(null)
   useScrollSelectedIntoView(treeRef, snapshot)
   const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const groupEnd = lastVisibleDescendant(snapshot.items, selectedItem?.id)
   const dragDrop = useRootTreeDragDrop(root, tree, disableDragAndDrop)
   function renderItem(item: RootTreeNode): ReactNode {
     const data = view.entries.get(item.id)
@@ -404,6 +428,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
     return (
       <SidebarTreeItem
         data={data}
+        groupEnd={item.id === groupEnd}
         item={item}
         locale={locale}
         selectedItem={selectedItem}

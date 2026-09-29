@@ -57,7 +57,10 @@ export function PopoverSurface({
           ? {...style, ...widthStyle}
           : style
       }
-      className={styles.PopoverSurface(styler.merge({className}))}
+      className={styles.PopoverSurface(
+        {matchTriggerWidth},
+        styler.merge({className})
+      )}
     />
   )
 }

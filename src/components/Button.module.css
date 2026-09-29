@@ -70,6 +70,16 @@
     --alinea-button-accent-fg: var(--alinea-warning-fg);
   }
 
+  /* Without a fill the accent is text, which needs the readable shade that
+     alerts and badges of the same color use */
+  &[data-color='destructive']:not([data-variant='solid']) {
+    --alinea-button-accent: var(--alinea-danger-subtle-fg);
+  }
+
+  &[data-color='warning']:not([data-variant='solid']) {
+    --alinea-button-accent: var(--alinea-warning-subtle-fg);
+  }
+
   &[data-color='primary'],
   &[data-color='destructive'],
   &[data-color='warning'] {

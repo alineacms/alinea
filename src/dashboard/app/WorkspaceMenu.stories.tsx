@@ -39,7 +39,7 @@ export function SingleWorkspaceAvatarStory() {
   }
   return (
     <StoryProvider config={config}>
-      <WorkspaceAvatarMenu page={page} root={rootAtoms('simple', 'pages')} />
+      <WorkspaceAvatarMenu page={page} />
     </StoryProvider>
   )
 }

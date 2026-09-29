@@ -9,12 +9,13 @@
     align-items: stretch;
   }
 
+  /* A segmented control: the pressed item is raised out of a muted track */
   &[data-variant='outline'] {
     height: 32px;
     padding: 2px;
-    border: 1px solid var(--alinea-border);
+    border: 1px solid transparent;
     border-radius: var(--alinea-radius);
-    background-color: var(--alinea-bg);
+    background-color: var(--alinea-muted);
 
     &[data-size='sm'] {
       border-radius: calc(var(--alinea-radius) - 1px);

@@ -121,14 +121,12 @@ function WorkspaceSelectorMenu({
 
 interface WorkspaceAvatarMenuProps {
   page: Page
-  root: RootAtoms
 }
 
-export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
+export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
   const workspace = useAtomValueRaw(workspaceAtom(page.workspace!))
   const workspaces = useAtomValueRaw(workspacesAtom)
   const setRoute = useSetAtom(routeAtom)
-  const setExplorerLocale = useSetAtom(root.explorer.selectedLocale)
   const avatar = (
     <WorkspaceAvatar
       color={workspace.color}
@@ -147,7 +145,6 @@ export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
     )
   }
   function showWorkspaces() {
-    setExplorerLocale(page.locale)
     setRoute({page: 'splash'})
   }
   return (

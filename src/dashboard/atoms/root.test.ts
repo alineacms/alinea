@@ -125,7 +125,6 @@ test('root explorers follow route locales and keep media unlocalized', async () 
   ])
 
   // Preserve the rendered explorer locale while an async replacement page loads.
-  store.set(root.explorer.selectedLocale, 'fr')
   store.set(routeAtom, {browser: true, route: {page: 'splash'}})
   expect(store.get(root.children('french-root-entry').selectedLocale)).toBe(
     'fr'
@@ -146,6 +145,11 @@ test('root explorers follow route locales and keep media unlocalized', async () 
   })
   const mediaRoot = rootAtoms(workspace, 'legacy_media')
   const mediaPage = await store.get(mediaRoot.explorer.pageReady)
+  // The explorer of the previous root keeps its locale and rows
+  const previousPage = await store.get(root.explorer.pageReady)
+
+  expect(previousPage.locale).toBe('en')
+  expect(previousPage.items.map(item => item.title)).toEqual(['English entry'])
 
   expect(store.get(mediaRoot.i18n)).toBeUndefined()
   expect(mediaPage.locale).toBeNull()

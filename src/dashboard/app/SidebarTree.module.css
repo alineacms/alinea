@@ -107,7 +107,7 @@
 }
 
 .SidebarTree-item.is-unpublished {
-  color: var(--alinea-warning-subtle-fg);
+  color: var(--alinea-status-unpublished-fg);
 }
 
 .SidebarTree-item.is-archived:hover,
@@ -117,22 +117,29 @@
 
 .SidebarTree-item.is-unpublished:hover,
 .SidebarTree-item.is-unpublished[aria-selected='true'] {
-  background: var(--alinea-warning-subtle);
+  background: var(--alinea-status-unpublished);
+}
+
+/* The selected entry and its visible descendants read as one block */
+.SidebarTree-item.is-parentSelected {
+  border-radius: 0;
+}
+
+.SidebarTree-item.is-parentSelected.is-groupEnd {
+  border-bottom-left-radius: var(--alinea-radius);
+  border-bottom-right-radius: var(--alinea-radius);
 }
 
 .SidebarTree-item.is-parentSelected:not(:hover):not([aria-selected='true']) {
   background: color-mix(in oklab, var(--alinea-selected), var(--alinea-bg) 60%);
-  border-radius: 0;
 }
 
+/* Archived and unpublished rows keep their own hover color */
 .SidebarTree-item.is-parentSelected:hover:not([aria-selected='true']):not(
-  .SidebarTree-item.is-archived
-),
-.SidebarTree-item.is-parentSelected:hover:not([aria-selected='true']):not(
-  .SidebarTree-item.is-unpublished
+  .is-archived,
+  .is-unpublished
 ) {
   background: var(--alinea-selected);
-  border-radius: 0;
 }
 
 .SidebarTree-item.is-parentSelected.is-archived:not(:hover):not([aria-selected='true']) {
@@ -140,7 +147,7 @@
 }
 
 .SidebarTree-item.is-parentSelected.is-unpublished:not(:hover):not([aria-selected='true']) {
-  background: color-mix(in srgb, var(--alinea-warning-subtle) 54%, transparent);
+  background: color-mix(in srgb, var(--alinea-status-unpublished) 54%, transparent);
 }
 
 .SidebarTree-item.is-archived [data-slot='tree-item-label'],
@@ -170,13 +177,13 @@
 }
 
 .SidebarTree-status.is-draft {
-  color: var(--alinea-primary-subtle-fg);
-  background: var(--alinea-primary-subtle);
+  color: var(--alinea-status-draft-fg);
+  background: var(--alinea-status-draft);
 }
 
 .SidebarTree-status.is-unpublished {
-  color: var(--alinea-warning-subtle-fg);
-  background: var(--alinea-warning-subtle);
+  color: var(--alinea-status-unpublished-fg);
+  background: var(--alinea-status-unpublished);
 }
 
 .SidebarTree-status.is-archived,

@@ -10,7 +10,7 @@ import {
   type ExplorerAtoms
 } from '#/dashboard/atoms/explorer.js'
 import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import {selectAtom, unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
 import type {DragMoveEvent, DropItemsEvent, Key} from '#/components.js'
 import {IcOutlineDescription} from '../icons.js'
@@ -24,7 +24,7 @@ import {
   type TreeEntrySummary
 } from './entry.js'
 import {shaAtom} from './graph.js'
-import {pageAtom, sortPageOverviewAtom} from './nav.js'
+import {type Page, pageAtom, sortPageOverviewAtom} from './nav.js'
 import {policyAtom} from './user.js'
 import {
   dashboardEntryDragItem,
@@ -298,21 +298,26 @@ export class RootAtoms {
   readonly tree: (locale: string | null) => TreeAtoms
   explorer: ExplorerAtoms
 
+  /**
+   * The last page shown within this root. Explorers keep reading it after
+   * navigating away, so the page that is still rendered while the next one
+   * loads does not reload in another locale or order.
+   */
+  #lastPage = selectAtom<Page, Page | undefined>(pageAtom, (page, previous) =>
+    page.workspace === this.workspace && page.root === this.key
+      ? page
+      : previous
+  )
   #explorerLocaleState = atom<string | null>(null)
   #explorerLocale = atom(
     get => {
       if (get(this.data).isMediaRoot) return null
-      const page = get(pageAtom)
-      return page.workspace === this.workspace && page.root === this.key
-        ? page.locale
-        : get(this.#explorerLocaleState)
+      const page = get(this.#lastPage)
+      return page ? page.locale : get(this.#explorerLocaleState)
     },
     (get, set, update: SetStateAction<string | null>) => {
-      const page = get(pageAtom)
-      const current =
-        page.workspace === this.workspace && page.root === this.key
-          ? page.locale
-          : get(this.#explorerLocaleState)
+      const page = get(this.#lastPage)
+      const current = page ? page.locale : get(this.#explorerLocaleState)
       set(
         this.#explorerLocaleState,
         typeof update === 'function' ? update(current) : update
@@ -404,11 +409,8 @@ export class RootAtoms {
         // The overview of the current page keeps its sort in the url
         sortState: atom(
           get => {
-            const page = get(pageAtom)
-            const current =
-              page.workspace === this.workspace &&
-              page.root === this.key &&
-              (page.entry ?? null) === parentId
+            const page = get(this.#lastPage)
+            const current = page && (page.entry ?? null) === parentId
             return current ? page.sort : undefined
           },
           (_get, set, sort: OverviewSort | undefined) =>
