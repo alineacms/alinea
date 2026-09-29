@@ -321,7 +321,7 @@ function EntryEditorContent({
   const setSourceLocale = useSetAtom(localeData.translationSourceLocale)
   const saveDraft = useSetAtom(localeData.saveDraft)
   const publishEdits = useSetAtom(localeData.publishEdits)
-  const hasErrors = useAtomValueRaw(localeData.errors(node)).length > 0
+  const hasErrors = useAtomValueRaw(localeData.hasErrors(node))
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)

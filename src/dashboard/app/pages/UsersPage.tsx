@@ -20,7 +20,6 @@ import {
   PageHeader,
   PageTitle,
   MultipleSelectItem,
-  Spinner,
   SearchField,
   Table,
   TableCell,
@@ -32,8 +31,8 @@ import {
 } from '#/components.js'
 import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
-import {atom, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {useMemo, useState, type FormEvent} from 'react'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {useId, useMemo, useState, type FormEvent} from 'react'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
 import {
@@ -65,69 +64,34 @@ const userColumns: Array<TableColumn> = [
   {id: 'actions', header: null, width: 52, align: 'end'}
 ]
 
-interface UsersState {
-  error?: string
-  status: 'loading' | 'loaded' | 'error'
-  users: Array<User>
-}
-
 type UsersAction =
-  | {type: 'load'}
   | {type: 'create'; user: UserInput}
   | {type: 'update'; user: UserInput}
   | {type: 'remove'; email: string}
 
-const usersStateAtom = atom<UsersState>({
-  status: 'loading',
-  users: []
-})
+const loadedUsersAtom = atom(get => get(clientAtom).listUsers())
+const editedUsersAtom = atom<Array<User> | undefined>(undefined)
 
+/** The listed users, loaded by the page and updated by the edits made on it */
 const usersAtom = atom(
-  get => get(usersStateAtom),
-  async (get, set, action: UsersAction): Promise<User | undefined> => {
+  async get => get(editedUsersAtom) ?? get(loadedUsersAtom),
+  async (get, set, action: UsersAction): Promise<void> => {
     const client = get(clientAtom)
-    if (action.type === 'load') {
-      const current = get(usersStateAtom)
-      set(usersStateAtom, {...current, error: undefined, status: 'loading'})
-      try {
-        const users = await client.listUsers()
-        set(usersStateAtom, {status: 'loaded', users})
-      } catch (cause) {
-        set(usersStateAtom, {
-          error: cause instanceof Error ? cause.message : String(cause),
-          status: 'error',
-          users: current.users
-        })
-      }
-      return undefined
-    }
+    const users = await get(usersAtom)
     if (action.type === 'remove') {
       await client.removeUser(action.email)
-      set(usersStateAtom, current => {
-        return {
-          status: 'loaded',
-          users: removeUser(current.users, action.email)
-        }
-      })
-      return undefined
+      set(editedUsersAtom, current =>
+        removeUser(current ?? users, action.email)
+      )
+      return
     }
     const saved =
       action.type === 'create'
         ? await client.createUser(action.user)
         : await client.updateUser(action.user)
-    set(usersStateAtom, current => {
-      return {
-        status: 'loaded',
-        users: upsertUser(current.users, saved)
-      }
-    })
-    return saved
+    set(editedUsersAtom, current => upsertUser(current ?? users, saved))
   }
 )
-
-usersAtom.onMount = dispatch => {
-  void dispatch({type: 'load'})
-}
 
 function upsertUser(users: Array<User>, user: User): Array<User> {
   const existing = users.findIndex(
@@ -144,24 +108,35 @@ function removeUser(users: Array<User>, email: string): Array<User> {
   return users.filter(user => user.email?.toLowerCase() !== normalized)
 }
 
-export const usersPage = page(page => {
+export const usersPage = page(async (page, get) => {
+  let users: Array<User> = []
+  let error: string | undefined
+  try {
+    users = await get(usersAtom)
+  } catch (cause) {
+    error = cause instanceof Error ? cause.message : String(cause)
+  }
   return (
     <AppShell>
       <UsersPageSidebar page={page} />
       <AppShellContent>
-        <UsersPage />
+        <UsersPage users={users} error={error} />
       </AppShellContent>
     </AppShell>
   )
 })
 
-export function UsersPage() {
+export interface UsersPageProps {
+  users: Array<User>
+  /** Why the users could not be loaded */
+  error?: string
+}
+
+export function UsersPage({users, error}: UsersPageProps) {
   const config = useAtomValueRaw(configAtom)
-  const [usersState] = useAtom(usersAtom)
   const [query, setQuery] = useState('')
   const [editingUser, setEditingUser] = useState<User>()
   const [deletingUser, setDeletingUser] = useState<User>()
-  const users = usersState.users
 
   const filteredUsers = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -200,10 +175,8 @@ export function UsersPage() {
         </Dialog>
       </PageHeader>
       <div className={styles.UsersPage.content()}>
-        {usersState.status === 'loading' ? (
-          <UsersPageStatus label="Loading users" pending />
-        ) : usersState.status === 'error' ? (
-          <UsersPageStatus label={usersState.error ?? 'Failed to load users'} />
+        {error !== undefined ? (
+          <UsersPageStatus label={error || 'Failed to load users'} />
         ) : (
           <UsersTable
             users={filteredUsers}
@@ -266,13 +239,11 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
 
 interface UsersPageStatusProps {
   label: string
-  pending?: boolean
 }
 
-function UsersPageStatus({label, pending}: UsersPageStatusProps) {
+function UsersPageStatus({label}: UsersPageStatusProps) {
   return (
     <div className={styles.UsersPage.status()}>
-      {pending && <Spinner aria-label={label} />}
       <Text as="p">{label}</Text>
     </div>
   )
@@ -465,6 +436,7 @@ function UserModal({user}: UserModalProps) {
   const config = useAtomValueRaw(configAtom)
   const saveUser = useSetAtom(usersAtom)
   const modal = useDialog()
+  const formId = useId()
   const isEditing = user !== undefined
   const [email, setEmail] = useState(user?.email ?? '')
   const [name, setName] = useState(user?.name ?? '')
@@ -509,7 +481,7 @@ function UserModal({user}: UserModalProps) {
 
   return (
     <DashboardModalDialog label={isEditing ? 'Edit user' : 'Create user'}>
-      <form onSubmit={handleSubmit} id="submit">
+      <form onSubmit={handleSubmit} id={formId}>
         <DashboardModalContent>
           <div className={styles.UsersPage.form.fields()}>
             <TextField
@@ -561,7 +533,7 @@ function UserModal({user}: UserModalProps) {
         >
           Cancel
         </Button>
-        <Button type="submit" color="primary" loading={isPending} form="submit">
+        <Button type="submit" color="primary" loading={isPending} form={formId}>
           {isEditing ? 'Save changes' : 'Create user'}
         </Button>
       </DashboardModalFooter>

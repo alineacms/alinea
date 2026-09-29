@@ -16,7 +16,7 @@ import {
 } from '#/dashboard/atoms/overview.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
-import type {ReactNode} from 'react'
+import {type ReactNode, startTransition} from 'react'
 import {
   CompactField,
   type CompactFieldLink,
@@ -134,7 +134,7 @@ export function OverviewCell({column, row, links}: OverviewCellProps) {
   const openEntry = useSetAtom(openEntryAtom)
   const locale = row.locale
   function onOpenEntry(id: string) {
-    void openEntry(id, locale)
+    startTransition(() => openEntry(id, locale))
   }
   if (column.builtin)
     return <OverviewBuiltinCell column={column} config={config} row={row} />

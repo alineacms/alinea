@@ -1,5 +1,6 @@
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
-import type {DragTypes, Key} from '#/components.js'
+import type {DragTypes, DropTarget, Key} from '#/components.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DeepMap} from '#/core/util/DeepMap.js'
 import {atom, type Atom, type WritableAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -158,6 +159,30 @@ export function dashboardEntryDropIds(
     if (id) ids.add(id)
   }
   return [...ids]
+}
+
+/**
+ * Moves entries onto, before or after the target. Entries placed before or
+ * after it keep the order they are given in.
+ */
+export async function moveEntries(
+  graph: WriteableGraph,
+  ids: Iterable<string>,
+  target: DropTarget
+): Promise<void> {
+  let {position, key} = target
+  for (const id of ids) {
+    await graph.move({
+      id,
+      target: String(key),
+      targetType: 'entry',
+      dropPosition: position
+    })
+    if (position === 'on') continue
+    // The next entry follows the one just moved
+    position = 'after'
+    key = id
+  }
 }
 
 export function uploadSizeError(

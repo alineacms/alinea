@@ -30,7 +30,7 @@ import type {ReactiveNode} from '../atoms/ReactiveNode.js'
 import {policyAtom} from '../atoms/user.js'
 import {useSaveShortcut} from '../hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
 import {
   type ComponentType,
   useState,
@@ -196,6 +196,7 @@ export function EntryHeader({
   parentNeedsTranslation,
   selectedEntry
 }: EntryHeaderProps) {
+  const store = useStore()
   const config = useAtomValueRaw(configAtom)
   const activity = useAtomValueRaw(activityAtom)
   const policy = useAtomValueRaw(policyAtom)
@@ -248,7 +249,6 @@ export function EntryHeader({
   const [isPending, startTransition] = useTransition()
   const isActionDisabled = isPending || activity.isMutating
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
-  const errors = useAtomValueRaw(localeData.errors(node))
   const [invalid, setInvalid] = useState<EntryValidationFailure>()
 
   function runAction(action: () => void | Promise<void>) {
@@ -267,6 +267,8 @@ export function EntryHeader({
 
   // Publishing requires valid fields, drafts are work in progress
   function runPublish(action: () => void | Promise<void>) {
+    // Validated when publishing, not on every edit
+    const errors = store.get(localeData.errors(node))
     if (errors.length > 0) setInvalid({errors})
     else runAction(action)
   }

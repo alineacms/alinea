@@ -121,9 +121,7 @@ export function MultipleSelect({
         <Group
           ref={triggerRef}
           data-slot="multiple-select-trigger"
-          data-invalid={error ? true : undefined}
-          data-readonly={readOnly || undefined}
-          className={styles.MultipleSelectTrigger()}
+          className={styles.MultipleSelectTrigger({invalid: Boolean(error)})}
           onClick={onFieldClick}
         >
           <SelectValue className={styles.MultipleSelectTrigger.value()}>

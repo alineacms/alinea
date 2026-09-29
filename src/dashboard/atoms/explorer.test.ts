@@ -9,6 +9,7 @@ import {localUser} from '#/core/User.js'
 import {Entry} from '#/core/Entry.js'
 import {Config, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
+import type {DropTarget} from '#/components.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {routeAtom} from './nav.js'
@@ -641,6 +642,21 @@ test('reordered entries keep the order they are listed in', async () => {
     {key: b._id, position: 'before'},
     null
   )
+  expect(await titles()).toEqual(['A', 'C', 'B', 'Folder'])
+})
+
+test('entries moved in the sidebar tree keep the order they are listed in', async () => {
+  const {a, b, c, folder, store, titles} = await notesFixture()
+  const root = rootAtoms('main', 'notes')
+  const tree = root.tree(null)
+  const move = async (keys: Array<string>, target: DropTarget) => {
+    await store.get(tree.ready)
+    await store.set(root.onMove, {keys: new Set(keys), target}, tree)
+  }
+  await move([a._id, c._id], {key: folder._id, position: 'after'})
+  expect(await titles()).toEqual(['B', 'Folder', 'A', 'C'])
+  // Selected in reverse order
+  await move([c._id, a._id], {key: b._id, position: 'before'})
   expect(await titles()).toEqual(['A', 'C', 'B', 'Folder'])
 })
 

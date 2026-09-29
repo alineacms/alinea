@@ -30,7 +30,7 @@
     outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
-  &[data-invalid] {
+  &.is-invalid {
     border-color: var(--alinea-danger);
     outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
