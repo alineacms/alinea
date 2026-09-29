@@ -79,9 +79,11 @@ themed(() => {
       hash: routes.home,
       title: 'Home'
     })
-    const group = app.page.getByRole('group', {name: 'Audiences'})
-    await reveal(group)
-    await group.getByRole('button').last().click()
+    const field = app.page
+      .locator('[data-slot="multiple-select"]')
+      .filter({hasText: 'Audiences'})
+    await reveal(field)
+    await field.locator('[data-slot="multiple-select-button"]').click()
     await expect(app.page.getByRole('listbox')).toBeVisible()
     await app.shot('field-multiselect-open')
   })
