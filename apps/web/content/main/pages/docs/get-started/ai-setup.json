@@ -580,7 +580,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The tools are `describe_schema`, `find_entries`, `get_entry`, `create_entry`, `update_entry`, `delete_entry`, `publish_entry`, `archive_entry`, `move_entry`, `upload_file` and `find_references`. Call `describe_schema` first. The "
+          "text": "The tools are `describe_schema`, `find_entries`, `get_entry`, `create_entry`, `update_entry`, `publish_entry`, `delete_entry`, `move_entry` and `upload_file`. Call `describe_schema` first. The "
         },
         {
           "_type": "text",
