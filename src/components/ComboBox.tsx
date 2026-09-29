@@ -1,9 +1,10 @@
 import styler from '@alinea/styler'
 import {
+  type MutableRefObject,
   type ReactNode,
   type RefObject,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useRef
 } from 'react'
 import {
@@ -78,6 +79,7 @@ export function ComboBox({
   ...props
 }: ComboBoxProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
+  const syncing = useRef(false)
   return (
     <ComboBoxPrimitive
       data-slot="combobox"
@@ -92,7 +94,9 @@ export function ComboBox({
       inputValue={inputValue}
       defaultInputValue={defaultInputValue}
       onInputChange={onInputValueChange}
-      onOpenChange={isOpen => onOpenChange?.(isOpen)}
+      onOpenChange={isOpen => {
+        if (!syncing.current) onOpenChange?.(isOpen)
+      }}
       isDisabled={disabled}
       isReadOnly={readOnly}
       isRequired={required}
@@ -109,7 +113,11 @@ export function ComboBox({
         icon={icon}
         shared={shared}
       >
-        <ComboBoxOpenState open={open} defaultOpen={defaultOpen} />
+        <ComboBoxOpenState
+          open={open}
+          defaultOpen={defaultOpen}
+          syncing={syncing}
+        />
         <ComboBoxTrigger
           triggerRef={triggerRef}
           placeholder={placeholder}
@@ -145,26 +153,37 @@ export function ComboBox({
 interface ComboBoxOpenStateProps {
   open?: boolean
   defaultOpen?: boolean
+  /** Set while syncing, so the change is not reported back to the parent */
+  syncing: MutableRefObject<boolean>
 }
 
 /** React-aria's ComboBox has no controlled open state, sync it here */
-function ComboBoxOpenState({open, defaultOpen}: ComboBoxOpenStateProps) {
+function ComboBoxOpenState({
+  open,
+  defaultOpen,
+  syncing
+}: ComboBoxOpenStateProps) {
   const state = useContext(ComboBoxStateContext)
   const isOpen = Boolean(state?.isOpen)
+  function sync(open: boolean) {
+    syncing.current = true
+    if (open) state?.open(null, 'manual')
+    else state?.close()
+    syncing.current = false
+  }
   // The open state lives inside react-aria, so it can only be synced from an
-  // effect rather than set from an event handler
-  useEffect(() => {
+  // effect, a layout effect so it is not painted in the wrong state first
+  useLayoutEffect(() => {
     // oxlint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
-    if (defaultOpen) state?.open(null, 'manual')
+    if (defaultOpen) sync(true)
     // Only on mount
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  useEffect(() => {
+  useLayoutEffect(() => {
     // oxlint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
-    if (open === undefined || !state || open === isOpen) return
-    if (open) state.open(null, 'manual')
-    else state.close()
-  }, [open, isOpen, state])
+    if (open !== undefined && open !== isOpen) sync(open)
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isOpen])
   return null
 }
 
