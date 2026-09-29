@@ -1,16 +1,31 @@
-import type {Key, Selection} from '#/components.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {atom, useSetAtom} from 'jotai'
+import {
+  Button,
+  type Key,
+  type Selection,
+  Text,
+  useDialog
+} from '#/components.js'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {startTransition, useMemo} from 'react'
-import type {
-  DashboardEntry,
-  DashboardExplorer,
-  ExplorerLocation,
-  ExplorerReadyPage
+import {
+  createExplorerAtoms,
+  type DashboardEntry,
+  type DashboardExplorer,
+  type ExplorerLocation,
+  type ExplorerOptions,
+  type ExplorerReadyPage,
+  type ExplorerView
 } from '../atoms/explorer.js'
+import {rootAtoms} from '../atoms/root.js'
 import {dispense} from '../atoms/utils.js'
+import {useDashboardContext} from '../hooks.js'
 import {ExplorerBody} from './Explorer.js'
-import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
+import {
+  ExplorerModalActions,
+  ExplorerModalContent,
+  ExplorerModalFooter,
+  ExplorerModalNavigation
+} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
 
 export function createExplorerTree(explorer: () => DashboardExplorer) {
@@ -32,6 +47,82 @@ export function createExplorerTree(explorer: () => DashboardExplorer) {
         current.sidebarExpandedKeys
       )
     }
+  )
+}
+
+/**
+ * The explorer of a picker opened at `location`, it starts over when the
+ * location or condition changes
+ */
+export function usePickerExplorer(
+  options: ExplorerOptions,
+  location: ExplorerLocation,
+  initialView: ExplorerView
+) {
+  const {page, root} = useDashboardContext()
+  const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
+  const pickerI18n = useAtomValueRaw(pickerRoot.i18n)
+  const initialLocale = normalizePickerLocale(
+    location.locale ?? options.selectedLocale ?? page.locale,
+    pickerI18n?.locales ?? []
+  )
+  const initialLocation = {...location, locale: initialLocale ?? undefined}
+  const explorerIdentity = JSON.stringify([
+    initialLocation,
+    options.condition ?? null
+  ])
+  // Explorer atoms capture their initial options and reset only with this scope.
+  // oxlint-disable react-hooks/exhaustive-deps
+  return useMemo(() => {
+    let explorer: DashboardExplorer
+    const tree = createExplorerTree(() => explorer)
+    const currentRoot = (location: ExplorerLocation) =>
+      rootAtoms(location.workspace, location.root ?? root.key)
+    const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
+    explorer = createExplorerAtoms(initialLocation, {
+      ...options,
+      allowAllWorkspaces:
+        options.allowAllWorkspaces ??
+        (!options.limitLocations?.length && !options.pickChildren),
+      initialView: options.initialView ?? initialView,
+      rootData,
+      searchDepth: 'all',
+      selectedLocale: initialLocale,
+      treeItems: (locale, location) =>
+        tree(currentRoot(location), locale, location).items,
+      treeReady: (locale, location) =>
+        tree(currentRoot(location), locale, location).ready
+    })
+    return {explorer, tree}
+  }, [explorerIdentity])
+  // oxlint-enable react-hooks/exhaustive-deps
+}
+
+export interface ExplorerPickerFooterProps {
+  explorer: DashboardExplorer
+  onSubmit: () => void
+}
+
+/** Counts the selected entries and confirms or cancels the picker */
+export function ExplorerPickerFooter({
+  explorer,
+  onSubmit
+}: ExplorerPickerFooterProps) {
+  const modal = useDialog()
+  const selection = useAtomValueRaw(explorer.selection)
+  const selectedItems = selection === 'all' ? 0 : selection.size
+  return (
+    <ExplorerModalFooter>
+      <Text color="muted">
+        {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
+      </Text>
+      <ExplorerModalActions>
+        <Button onClick={modal.close}>Cancel</Button>
+        <Button color="primary" onClick={onSubmit}>
+          Select
+        </Button>
+      </ExplorerModalActions>
+    </ExplorerModalFooter>
   )
 }
 
