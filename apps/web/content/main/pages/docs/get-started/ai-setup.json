@@ -14,13 +14,13 @@
         },
         {
           "_type": "text",
-          "text": "alineacms.com/start.md",
+          "text": "/start.md",
           "marks": [
             {
               "_type": "link",
               "_id": "3JjtWnQaQZndMzGtNpUJHeO8qxq",
               "_link": "url",
-              "href": "https://alineacms.com/start.md"
+              "href": "/start.md"
             }
           ]
         },
@@ -33,7 +33,7 @@
     {
       "_type": "CopyPromptBlock",
       "_id": "3JjtPueeJhQgj5w6vH06wc97ZME",
-      "prompt": "Read https://alineacms.com/start.md and help me add Alinea to my Next.js project"
+      "prompt": "Read {site}/start.md and help me add Alinea to my Next.js project"
     },
     {
       "_type": "paragraph",
@@ -44,13 +44,13 @@
         },
         {
           "_type": "text",
-          "text": "alineacms.com/llms-full.txt",
+          "text": "/llms-full.txt",
           "marks": [
             {
               "_type": "link",
               "_id": "3JjtWskGPi6CFBfWMaho61JdI8J",
               "_link": "url",
-              "href": "https://alineacms.com/llms-full.txt"
+              "href": "/llms-full.txt"
             }
           ]
         },
@@ -531,13 +531,13 @@
         },
         {
           "_type": "text",
-          "text": "alineacms.com/start.md",
+          "text": "/start.md",
           "marks": [
             {
               "_type": "link",
               "_id": "3JjtWqqY4AZv50zpNT05WrleMrq",
               "_link": "url",
-              "href": "https://alineacms.com/start.md"
+              "href": "/start.md"
             }
           ]
         },
@@ -562,7 +562,7 @@
               "_type": "link",
               "_id": "3JjyfL3WX7Gull7LOmmjP7oSYOm",
               "_link": "url",
-              "href": "https://alineacms.com/docs/mcp"
+              "href": "/docs/mcp"
             }
           ]
         },
@@ -578,7 +578,7 @@
               "_type": "link",
               "_id": "3JjtWtvRmGtjcuUl8oebOyOsh7k",
               "_link": "url",
-              "href": "https://alineacms.com/docs/ai-agents"
+              "href": "/docs/ai-agents"
             }
           ]
         },
@@ -666,7 +666,7 @@
                       "_type": "link",
                       "_id": "3JjtWptIjxPHYcaaYXsNSGtkU39",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/fields"
+                      "href": "/docs/fields"
                     }
                   ]
                 },
@@ -779,7 +779,7 @@
               "_type": "link",
               "_id": "3JjtWs9jBIZmr0lc82FWgS7uwug",
               "_link": "url",
-              "href": "https://alineacms.com/docs/query"
+              "href": "/docs/query"
             }
           ]
         },
@@ -831,7 +831,7 @@
               "_type": "link",
               "_id": "3JjtWtHxI4qk8wEBM8D4axSwp2i",
               "_link": "url",
-              "href": "https://alineacms.com/docs/deploy"
+              "href": "/docs/deploy"
             }
           ]
         },
@@ -867,7 +867,7 @@
                       "_type": "link",
                       "_id": "3JjtWperptVvR4RqKpCkbXoHMmy",
                       "_link": "url",
-                      "href": "https://alineacms.com/llms-full.txt"
+                      "href": "/llms-full.txt"
                     }
                   ]
                 }
@@ -889,7 +889,7 @@
                       "_type": "link",
                       "_id": "3JjtWtBB1DjNYsCAV6PtMnTxejs",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/configuration"
+                      "href": "/docs/configuration"
                     }
                   ]
                 }
@@ -911,7 +911,7 @@
                       "_type": "link",
                       "_id": "3JjtWuIV6eQHuSE9SsfGK5Y08Zz",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/schema"
+                      "href": "/docs/schema"
                     }
                   ]
                 },
@@ -927,7 +927,7 @@
                       "_type": "link",
                       "_id": "3JjtWrnZ76ITpIghQhxm9xkuOvk",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/fields"
+                      "href": "/docs/fields"
                     }
                   ]
                 }
@@ -949,7 +949,7 @@
                       "_type": "link",
                       "_id": "3JjtWnD9ddQhbxGTklo4pQLMXNV",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/query"
+                      "href": "/docs/query"
                     }
                   ]
                 }
@@ -971,7 +971,7 @@
                       "_type": "link",
                       "_id": "3JjtWpoPzQjxzVC6xRJSAmCbRjM",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/live-previews"
+                      "href": "/docs/live-previews"
                     }
                   ]
                 }
@@ -993,7 +993,7 @@
                       "_type": "link",
                       "_id": "3JjyfGdXwemMOJgWdNmUMiVhkra",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/mcp"
+                      "href": "/docs/mcp"
                     }
                   ]
                 }
@@ -1015,7 +1015,7 @@
                       "_type": "link",
                       "_id": "3JjtWtvRmGtjcuUl8oebOyOsh7k",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/ai-agents"
+                      "href": "/docs/ai-agents"
                     }
                   ]
                 }
@@ -1037,7 +1037,7 @@
                       "_type": "link",
                       "_id": "3JjtWr3JsNfgeajblyV7odmNKc3",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/cli"
+                      "href": "/docs/cli"
                     }
                   ]
                 }
@@ -1059,7 +1059,7 @@
                       "_type": "link",
                       "_id": "3JjtWqTjWZUzTc4gGhPQxLcWD2f",
                       "_link": "url",
-                      "href": "https://alineacms.com/docs/deploy"
+                      "href": "/docs/deploy"
                     }
                   ]
                 }

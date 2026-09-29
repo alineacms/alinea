@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import {Query} from 'alinea'
 import type {Metadata, MetadataRoute} from 'next'
-import {cms} from '@/cms'
+import {cms, withSiteUrl} from '@/cms'
 import {Button} from '@/layout/Button'
 import {CopyPrompt} from '@/layout/CopyPrompt'
 import {InstallCommand} from '@/layout/InstallCommand'
@@ -80,7 +80,7 @@ function HomeHero({
       </div>
       {prompt && (
         <CopyPrompt
-          prompt={prompt}
+          prompt={withSiteUrl(prompt)}
           align="center"
           className={styles.hero.prompt()}
         />

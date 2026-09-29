@@ -34,7 +34,7 @@
     {
       "_type": "CopyPromptBlock",
       "_id": "3JjtxQAWdy9VI3aU1YeY0iajumi",
-      "prompt": "Read https://alineacms.com/start.md and help me add Alinea to my Next.js project"
+      "prompt": "Read {site}/start.md and help me add Alinea to my Next.js project"
     },
     {
       "_type": "heading",

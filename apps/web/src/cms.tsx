@@ -6,6 +6,11 @@ import * as schema from '@/schema'
 /** Canonical origin of the website, also on preview and local deploys */
 export const siteUrl = 'https://v2.alineacms.com'
 
+/** Content refers to the site origin as `{site}`, eg. in copy prompts */
+export function withSiteUrl(text: string) {
+  return text.replaceAll('{site}', siteUrl)
+}
+
 const pages = Config.root('Pages', {
   contains: ['Page', 'Home', 'Landing'],
   children: {

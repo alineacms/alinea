@@ -1,6 +1,6 @@
 import {Query} from 'alinea'
 import {Entry} from 'alinea/core/Entry'
-import {cms} from '@/cms'
+import {cms, siteUrl} from '@/cms'
 import {renderNodes} from '@/page/docs/DocMarkdown'
 import {Doc} from '@/schema/Doc'
 
@@ -63,7 +63,7 @@ export async function GET() {
     .sort((a, b) => a.url.localeCompare(b.url))
     .forEach(entry => {
       const title = entry.navigationTitle || entry.title || 'Untitled'
-      output.push(`### ${title} (${entry.url})`)
+      output.push(`### ${title} (${siteUrl}${entry.url})`)
       const body = renderNodes(entry.body, entryMap, mediaMap)
       if (body) output.push(body)
       output.push('')
