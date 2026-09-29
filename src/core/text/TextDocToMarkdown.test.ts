@@ -142,6 +142,13 @@ test('keeps other code block fields in the info string', () => {
   test.ok(textDocToMarkdown(nested).startsWith('```alinea-block\n'))
 })
 
+test('keeps false code block fields', () => {
+  const doc: TextDoc = [
+    {_type: 'CodeBlock', _id: 'c1', code: 'x', language: 'ts', compact: false}
+  ]
+  test.equal(markdownToTextDoc(textDocToMarkdown(doc)), doc)
+})
+
 test('writes code spans in text as they are', () => {
   const doc: TextDoc = [
     {
