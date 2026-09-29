@@ -153,6 +153,42 @@
       "content": [
         {
           "_type": "text",
+          "text": "Renamed and moved pages"
+        }
+      ],
+      "_anchor": "renamed-and-moved-pages"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When an entry is published on a new url, because its path changed or it moved to another parent, its previous url is added to `metadata.aliases`. Links between entries keep working, since they point to the entry rather than its url. For visitors who arrive on an old url, look up the entry by its alias and redirect to where it lives now, for example in the catch-all route that renders your pages:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JzngXaPEqDWG7ze1r5HswpNTIn",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\nimport {notFound, permanentRedirect} from 'next/navigation'\n\n// No page was found at `url`, check if one used to live there\nconst moved = await cms.first({\n  alias: url,\n  select: Query.url\n})\nif (moved) permanentRedirect(moved)\nnotFound()",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The dashboard shows the other side: the References tab in the side panel of an entry lists every entry that links to it, so editors can see what is affected before they rename, move or delete a page."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Options"
         }
       ],

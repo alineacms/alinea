@@ -243,6 +243,42 @@
     },
     {
       "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Commit hooks"
+        }
+      ],
+      "_anchor": "commit-hooks"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Two hooks on the handler run for every commit, whatever it contains. `beforeCommit` receives the changes before they are committed: inspect or rewrite them and return the mutations to commit, or return nothing to keep them as they are. `afterCommit` runs once the commit is made, with the mutations and the `sha` of the new commit: revalidate pages, notify your team or trigger a deploy."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JzngSfwhhn4Bxsitzy4zdMLp4J",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidatePath} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({sha}) {\n    revalidatePath('/', 'layout')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Both hooks can be async. Errors thrown in `afterCommit` are logged and don't fail the commit."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {
