@@ -448,6 +448,11 @@ export class EntryLocaleAtoms {
     })
   )
 
+  /** Whether the edited values have validation errors */
+  hasErrors = dispense((node: ReactiveNode<object>) =>
+    atom(get => get(this.errors(node)).length > 0)
+  )
+
   #assertValid(get: Getter, node: ReactiveNode<object>) {
     const errors = get(this.errors(node))
     if (errors.length === 0) return
