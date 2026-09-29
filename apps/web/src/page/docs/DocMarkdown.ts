@@ -28,6 +28,10 @@ function absoluteUrl(url: string) {
   return url.startsWith('/') ? `${siteUrl}${url}` : url
 }
 
+function absoluteLinks(markdown: string) {
+  return markdown.replaceAll('](/', `](${siteUrl}/`)
+}
+
 function renderInline(
   nodes: Array<RichNode> | undefined,
   entryMap: DocEntryMap
@@ -149,9 +153,9 @@ function renderNode(
       return prompt ? `> ${prompt}` : ''
     }
     case 'FieldCatalogBlock':
-      return fieldCatalogMarkdown()
+      return absoluteLinks(fieldCatalogMarkdown())
     case 'ComponentCatalogBlock':
-      return componentCatalogMarkdown()
+      return absoluteLinks(componentCatalogMarkdown())
     case 'ComponentExampleBlock':
       return componentExampleMarkdown(asString(node.example))
     case 'ComponentPropsBlock':
@@ -183,9 +187,11 @@ function renderNode(
       const title = normalizeText(asString(linkObj.title)).trim()
       const description = normalizeText(asString(linkObj.description)).trim()
       const label = title || 'Chapter link'
-      const details = [label, url ? `(${absoluteUrl(url)})` : '', description].filter(
-        Boolean
-      )
+      const details = [
+        label,
+        url ? `(${absoluteUrl(url)})` : '',
+        description
+      ].filter(Boolean)
       return details.join(' ').trim()
     }
     default:
