@@ -1086,7 +1086,10 @@ export function Explorer({
   titleControls
 }: ExplorerProps) {
   const resolvedPage = useAtomValueRawSync(explorer.page)
-  const page = resolvedPage ?? loadedPage
+  // The explorer shows its own updates, such as a new search, but keeps the
+  // locale of the page until the page of another locale replaces it
+  const page =
+    resolvedPage?.locale === loadedPage.locale ? resolvedPage : loadedPage
   return (
     <>
       <ExplorerHeader
