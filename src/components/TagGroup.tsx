@@ -28,6 +28,7 @@ type TagShape = 'square' | 'circle'
 interface TagAppearance {
   variant?: TagVariant
   shape?: TagShape
+  disabled?: boolean
 }
 
 const TagAppearanceContext = createContext<TagAppearance>({})
@@ -73,9 +74,8 @@ export function TagGroup({
     <TagGroupPrimitive
       data-slot="tag-group"
       {...props}
-      data-disabled={disabled || undefined}
-      data-readonly={readOnly || undefined}
-      className={styles.TagGroup(styler.merge({className}))}
+      // react-aria drops aria-readonly on the tag list
+      className={styles.TagGroup({readOnly}, styler.merge({className}))}
       selectionMode={selectionMode}
       selectedKeys={selectedKeys ?? internal}
       onSelectionChange={keys => {
@@ -96,7 +96,7 @@ export function TagGroup({
         icon={icon}
         shared={shared}
       >
-        <TagAppearanceContext.Provider value={{variant, shape}}>
+        <TagAppearanceContext.Provider value={{variant, shape, disabled}}>
           <TagListPrimitive
             data-slot="tag-group-list"
             className={styles.TagGroup.list()}
@@ -141,8 +141,14 @@ export function Tag({
       textValue={
         textValue ?? (typeof children === 'string' ? children : undefined)
       }
-      isDisabled={disabled}
-      className={styles.Tag(styler.merge({className}))}
+      isDisabled={disabled || appearance.disabled}
+      // Disabled tags drop aria-selected, keep showing their selection
+      className={({selectionMode, isSelected}) =>
+        styles.Tag(
+          {selectable: selectionMode !== 'none', selected: isSelected},
+          styler.merge({className})
+        )
+      }
     >
       {({allowsRemoving}) => (
         <>
