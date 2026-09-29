@@ -34,10 +34,6 @@ const docsRedirects: Array<[source: string, destination: string]> = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
-  typescript: {
-    // We check types in plenty other places, no need to waste time here
-    ignoreBuildErrors: true
-  },
   // Pages read these files at runtime, also when rendered on demand (eg. in
   // a preview): example sources and component declarations for the component
   // pages, the bundled declarations and demo content for the playground and
