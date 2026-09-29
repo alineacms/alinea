@@ -5,6 +5,7 @@ import {HttpError} from '../HttpError.js'
 import {createId} from '../Id.js'
 import type {CreateInputRow, StoredRow} from '../Infer.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
+import {hasImageEdit, type ImageEdit} from '../media/ImageEdit.js'
 import {
   imageResizeOptions,
   isResizableImage,
@@ -13,6 +14,7 @@ import {
 import {isImage} from '../media/IsImage.js'
 import {MediaLocation} from '../media/MediaLocation.js'
 import {assertUploadSize} from '../media/UploadLimits.js'
+import {assert} from '../util/Assert.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {createFileHash} from '../util/ContentHash.js'
@@ -215,6 +217,13 @@ export interface UploadQuery {
     fileName: string,
     options: ImageResizeOptions
   ): Promise<Blob>
+  /** Rotate and crop an image before it is uploaded, see editImage */
+  edit?: ImageEdit
+  /**
+   * Apply the edit of the query, `alinea/core/media/EditImage` edits images
+   * in the browser or with sharp
+   */
+  editImage?(blob: Blob, fileName: string, edit: ImageEdit): Promise<Blob>
   onProgress?(progress: UploadProgress): void
   replaceId?: string
 }
@@ -230,7 +239,7 @@ export class UploadOperation extends Operation {
   constructor(query: UploadQuery) {
     super(async (db): Promise<Array<Mutation>> => {
       const entryId = this.id
-      const {file, createPreview, resizeImage} = query
+      const {file, createPreview, resizeImage, edit, editImage} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const fileName = Array.isArray(file) ? file[0] : file.name
       const workspace = _workspace ?? Object.keys(db.config.workspaces)[0]
@@ -241,6 +250,13 @@ export class UploadOperation extends Operation {
         : file
       let contentType =
         file instanceof Blob ? file.type : 'application/octet-stream'
+      const edited = hasImageEdit(edit) && isResizableImage(fileName)
+      if (edited) {
+        assert(editImage, 'Editing an upload requires the editImage option')
+        blob = await editImage(blob, fileName, edit)
+        contentType = blob.type
+      }
+      const source = blob
       const resizeOptions = imageResizeOptions(db.config.resizeImages)
       if (resizeOptions && resizeImage && isResizableImage(fileName)) {
         const resized = await resizeImage(blob, fileName, resizeOptions)
@@ -249,6 +265,12 @@ export class UploadOperation extends Operation {
           contentType = resized.type
         }
       }
+      // The hash of the file as picked, so uploading it again is recognized
+      // after it was scaled down
+      const sourceHash =
+        blob !== source && !edited
+          ? await createFileHash(new Uint8Array(await source.arrayBuffer()))
+          : undefined
       const fileSize = blob.size
       assertUploadSize(fileName, fileSize, db.config.maxUploadSize)
       const body = await blob.arrayBuffer()
@@ -297,6 +319,7 @@ export class UploadOperation extends Operation {
           extension,
           size: body.byteLength,
           hash,
+          ...(sourceHash ? {sourceHash} : {}),
           ...previewData
         },
         overwrite: query.replaceId !== undefined

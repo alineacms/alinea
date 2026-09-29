@@ -38,11 +38,17 @@ export function imageResizeOptions(
   return option ?? defaultImageResize
 }
 
+/** The mime type a raster image is encoded with when it is resized or
+ * edited, undefined for vector and animated formats */
+export function imageEncodingType(fileName: string): string | undefined {
+  const extension = fileName.toLowerCase().match(/\.[^.]+$/)?.[0]
+  return extension ? resizableTypes[extension] : undefined
+}
+
 /** Whether uploads of this file are scaled down, vector and animated
  * formats are left as they are. */
 export function isResizableImage(fileName: string): boolean {
-  const extension = fileName.toLowerCase().match(/\.[^.]+$/)?.[0]
-  return Boolean(extension && extension in resizableTypes)
+  return imageEncodingType(fileName) !== undefined
 }
 
 /** The dimensions and encoding an image scales down to, undefined when it
@@ -53,8 +59,7 @@ export function imageResizeTarget(
   height: number,
   options: ImageResizeOptions
 ): ImageResizeTarget | undefined {
-  const extension = fileName.toLowerCase().match(/\.[^.]+$/)?.[0]
-  const type = extension && resizableTypes[extension]
+  const type = imageEncodingType(fileName)
   if (!type || !width || !height) return undefined
   const scale = Math.min(
     1,

@@ -36,6 +36,8 @@ export const MediaFile = type('Media file', {
     extension: hidden<string>('Extension'),
     size: hidden<number>('File size'),
     hash: hidden<string>('Hash'),
+    /** The hash of the file as uploaded, before it was scaled down */
+    sourceHash: hidden<string>('Source hash'),
     alt: mediaAlt('Alt text', {
       multiline: true,
       help: 'Describe the image for screen readers and SEO'

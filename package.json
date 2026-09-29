@@ -46,6 +46,12 @@
       "worker": "./dist/core/media/ResizeImage.js",
       "browser": "./dist/core/media/ResizeImage.browser.js",
       "default": "./dist/core/media/ResizeImage.js"
+    },
+    "./core/media/EditImage": {
+      "edge-light": "./dist/core/media/EditImage.js",
+      "worker": "./dist/core/media/EditImage.js",
+      "browser": "./dist/core/media/EditImage.browser.js",
+      "default": "./dist/core/media/EditImage.js"
     }
   },
   "typesVersions": {

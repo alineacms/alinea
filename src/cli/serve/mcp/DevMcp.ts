@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
+import {editImage} from '#/core/media/EditImage.js'
 import {resizeImage} from '#/core/media/ResizeImage.js'
 import type {User} from '#/core/User.js'
 import type {Request, Response} from '@alinea/iso'
@@ -49,7 +50,8 @@ export function createDevMcp(
         rootDir,
         user,
         createPreview,
-        resizeImage
+        resizeImage,
+        editImage
       })
     })
     return server.handle(request)

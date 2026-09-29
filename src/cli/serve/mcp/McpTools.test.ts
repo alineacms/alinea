@@ -669,6 +669,19 @@ test('upload_file creates a media entry', async () => {
       replace: page.id
     })
     test.ok(notMedia.text.includes('is not a media file entry'))
+    // Images rotate and crop with sharp before they are uploaded
+    const edited = await env.ok('upload_file', {
+      path: 'red.png',
+      title: 'edited',
+      rotate: 90,
+      crop: {x: 0, y: 0, width: 1, height: 0.5}
+    })
+    test.equal([edited.width, edited.height], [10, 10])
+    const invalidCrop = await env.call('upload_file', {
+      path: 'red.png',
+      crop: {x: 0.5, y: 0, width: 0.8, height: 1}
+    })
+    test.ok(invalidCrop.text.includes('inside the image'))
   } finally {
     globalThis.fetch = fetch
   }

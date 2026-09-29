@@ -10,6 +10,12 @@ import type {Field} from '#/core/Field.js'
 import type {GraphQuery, Status} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
 import type {ImagePreviewDetails} from '#/core/media/CreatePreview.js'
+import {
+  hasImageEdit,
+  isImageRotation,
+  type ImageCrop,
+  type ImageEdit
+} from '#/core/media/ImageEdit.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Root} from '#/core/Root.js'
@@ -51,6 +57,8 @@ export interface ContentToolsOptions {
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
   /** Scales down images larger than the resizeImages option of the config */
   resizeImage?: UploadQuery['resizeImage']
+  /** Rotates and crops images before uploading */
+  editImage?: UploadQuery['editImage']
   fetch?: typeof globalThis.fetch
 }
 
@@ -1466,6 +1474,24 @@ export function createContentTools(
             },
             required: ['x', 'y'],
             additionalProperties: false
+          },
+          rotate: {
+            description:
+              'Rotate a jpeg, png or webp image clockwise before uploading, in degrees',
+            enum: [0, 90, 180, 270]
+          },
+          crop: {
+            type: 'object',
+            description:
+              'Crop a jpeg, png or webp image before uploading (after rotating): the region to keep, x, y, width and height from 0 to 1 of the image',
+            properties: {
+              x: {type: 'number', minimum: 0, maximum: 1},
+              y: {type: 'number', minimum: 0, maximum: 1},
+              width: {type: 'number', minimum: 0, maximum: 1},
+              height: {type: 'number', minimum: 0, maximum: 1}
+            },
+            required: ['x', 'y', 'width', 'height'],
+            additionalProperties: false
           }
         },
         additionalProperties: false
@@ -1497,6 +1523,28 @@ export function createContentTools(
           )
         )
           fail('focus: expected {"x": number, "y": number} between 0 and 1')
+        const rotate = args.rotate ?? 0
+        if (!isImageRotation(rotate)) fail('rotate: expected 0, 90, 180 or 270')
+        const crop = args.crop
+        if (
+          crop !== undefined &&
+          !(
+            isRecord(crop) &&
+            [crop.x, crop.y, crop.width, crop.height].every(
+              value => typeof value === 'number' && value >= 0 && value <= 1
+            ) &&
+            (crop.width as number) > 0 &&
+            (crop.height as number) > 0 &&
+            (crop.x as number) + (crop.width as number) <= 1 &&
+            (crop.y as number) + (crop.height as number) <= 1
+          )
+        )
+          fail(
+            'crop: expected {"x", "y", "width", "height"} between 0 and 1, inside the image'
+          )
+        const edit: ImageEdit = {rotate, crop: crop as ImageCrop | undefined}
+        if (hasImageEdit(edit) && !options.editImage)
+          fail('Editing images is not available on this server')
         let workspace: string
         let mediaRoot: string
         let parentId: string | null = stringArg(args, 'parentId') ?? null
@@ -1611,7 +1659,7 @@ export function createContentTools(
           type: contentType
         })
         let warning: string | undefined
-        const {createPreview, resizeImage} = options
+        const {createPreview, resizeImage, editImage} = options
         // The dashboard's upload (and replace) operation: it scales down large
         // images, stores the file and creates the media entry in one commit
         const operation = new UploadOperation({
@@ -1620,6 +1668,7 @@ export function createContentTools(
           root: mediaRoot,
           parentId,
           ...(replace ? {replaceId: replace} : {}),
+          ...(hasImageEdit(edit) ? {edit, editImage} : {}),
           ...(resizeImage
             ? {
                 resizeImage: (blob, fileName, resize) =>
