@@ -15,9 +15,7 @@
   height: 100%;
   overflow: hidden;
   border-radius: var(--alinea-radius);
-  box-shadow:
-    lch(0 0 0 / 0.02) 0px 3px 6px -2px,
-    lch(0 0 0 / 0.04) 0px 1px 1px;
+  box-shadow: var(--alinea-shadow-raised);
 }
 
 @media (max-width: 768px) {
