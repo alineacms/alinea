@@ -1,5 +1,8 @@
 import {Parser} from 'htmlparser2'
-import type {EntryReferenceTarget} from '../db/EntryReference.js'
+import type {
+  EntryReferenceTarget,
+  FieldReferenceContext
+} from '../db/EntryReference.js'
 import {referenceFieldPath} from '../db/EntryReference.js'
 import {Entry} from '../Entry.js'
 import {
@@ -115,17 +118,13 @@ export class RichTextField<
       references(value, context) {
         const doc = Array.isArray(value) ? value : []
         const result = customReferences?.(value, context) ?? []
-        result.push(
-          ...richTextReferences(schema, doc, context.path, context.label)
-        )
+        result.push(...richTextReferences(schema, doc, context))
         return result
       },
       anchors(value, context) {
         const doc = Array.isArray(value) ? value : []
         const result = []
-        result.push(
-          ...richTextAnchors(schema, doc, context.path, context.label)
-        )
+        result.push(...richTextAnchors(schema, doc, context))
         return result
       },
       normalizeAnchors(value, context) {
@@ -332,9 +331,9 @@ function textContent(node: Node): string {
 function richTextAnchors<Blocks>(
   schema: Schema | undefined,
   doc: TextDoc<Blocks>,
-  path: Array<string>,
-  label?: string
+  context: FieldReferenceContext
 ): Array<EntryAnchorTarget> {
+  const {path, label, labels} = context
   const result: Array<EntryAnchorTarget> = []
   const anchors = new Set<string>()
   iterNodes(doc, (node, nodePath) => {
@@ -369,10 +368,12 @@ function richTextAnchors<Blocks>(
     const type = schema[row[Node.type]]
     if (!type) return
     result.push(
-      ...Type.anchors(type, row as Record<string, unknown>, [
-        ...path,
-        row._id ?? String(index)
-      ])
+      ...Type.anchors(
+        type,
+        row as Record<string, unknown>,
+        [...path, row._id ?? String(index)],
+        [...labels, Type.label(type)]
+      )
     )
   })
   return result
@@ -381,9 +382,9 @@ function richTextAnchors<Blocks>(
 function richTextReferences<Blocks>(
   schema: Schema | undefined,
   doc: TextDoc<Blocks>,
-  path: Array<string>,
-  label?: string
+  context: FieldReferenceContext
 ): Array<EntryReferenceTarget> {
+  const {path, label, labels} = context
   const result: Array<EntryReferenceTarget> = []
   iterMarks(doc, mark => {
     if (mark[Mark.type] !== 'link') return
@@ -398,6 +399,7 @@ function richTextReferences<Blocks>(
         typeof linkId === 'string' ? [...path, linkId] : path
       ),
       fieldLabel: label,
+      fieldLabels: labels,
       linkId,
       linkType
     })
@@ -412,6 +414,7 @@ function richTextReferences<Blocks>(
           : [...path, String(index)]
       ),
       fieldLabel: label,
+      fieldLabels: labels,
       linkId: node._id,
       linkType: 'image'
     })
@@ -421,10 +424,12 @@ function richTextReferences<Blocks>(
     const type = schema[row[Node.type]]
     if (!type) return
     result.push(
-      ...Type.references(type, row as Record<string, unknown>, [
-        ...path,
-        row._id ?? String(index)
-      ])
+      ...Type.references(
+        type,
+        row as Record<string, unknown>,
+        [...path, row._id ?? String(index)],
+        [...labels, Type.label(type)]
+      )
     )
   })
   return result

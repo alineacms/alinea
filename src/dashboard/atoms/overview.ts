@@ -546,9 +546,11 @@ export function columnLinkIds(
     const resolved = columnField(config, column, row.type)
     if (!resolved) return []
     const [name, field] = resolved
+    const label = Field.label(field)
     return Field.references(field, row.data[name], {
       path: [name],
-      label: Field.label(field)
+      label,
+      labels: [label]
     }).map(reference => reference.targetId)
   })
 }

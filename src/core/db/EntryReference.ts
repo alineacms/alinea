@@ -7,6 +7,8 @@ export interface EntryReferenceTarget {
   targetId: string
   fieldPath: string
   fieldLabel?: string
+  /** Labels of the fields (and row types) along the path to the field */
+  fieldLabels?: Array<string>
   linkId?: string
   linkType?: EntryReferenceLinkType
 }
@@ -22,6 +24,8 @@ export interface EntryReference {
   sourceMain: boolean
   fieldPath: string
   fieldLabel?: string
+  /** Labels of the fields (and row types) along the path to the field */
+  fieldLabels?: Array<string>
   linkId?: string
   linkType?: EntryReferenceLinkType
 }
@@ -40,6 +44,8 @@ export interface EntryReferenceResult {
 export interface FieldReferenceContext {
   path: Array<string>
   label?: string
+  /** Labels of the fields (and row types) along the path, ending in label */
+  labels: Array<string>
 }
 
 export function referenceFieldPath(path: Array<string>): string {

@@ -16,10 +16,11 @@ import type {
   EntryReferenceSource,
   EntryReferenceWithSource
 } from '#/dashboard/atoms/entry.js'
+import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
-import {useAtomValueRawSync, useSetAtom} from 'jotai'
-import {IcRoundImage, IcRoundInsertDriveFile, IcRoundLink} from '../icons.js'
+import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {IcRoundLink, LucideFile} from '../icons.js'
 import css from './EntryReferences.module.css'
 
 const styles = styler(css)
@@ -33,16 +34,44 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
   const data = useAtomValueRawSync(entry.incomingReferences)
   const setRoute = useSetAtom(routeAtom)
   if (!data) return null
-  const selectedLocale = localeData.requestedLocale
+  return (
+    <EntryReferenceList
+      references={data.references}
+      locale={localeData.requestedLocale}
+      onSelect={(source, locale) => {
+        setRoute({
+          workspace: source.workspace,
+          root: source.root,
+          entry: source.id,
+          locale: locale ?? undefined
+        })
+      }}
+    />
+  )
+}
+
+export interface EntryReferenceListProps {
+  references: Array<EntryReferenceWithSource>
+  /** The locale being edited, null for entries without languages */
+  locale: string | null
+  onSelect(source: EntryReferenceSource, locale: string | null): void
+}
+
+/** The entries linking to an entry, grouped per entry and language */
+export function EntryReferenceList({
+  references,
+  locale,
+  onSelect
+}: EntryReferenceListProps) {
   // Entries in roots without languages (such as media) can be referenced
   // from any locale
-  const showAllLocales = selectedLocale === null
+  const showAllLocales = locale === null
   const currentReferences = showAllLocales
-    ? data.references
-    : data.references.filter(item => matchesLocale(item, selectedLocale))
+    ? references
+    : references.filter(item => matchesLocale(item, locale))
   const otherReferences = showAllLocales
     ? []
-    : data.references.filter(item => !matchesLocale(item, selectedLocale))
+    : references.filter(item => !matchesLocale(item, locale))
   const groups = groupReferences(currentReferences)
   const otherSummary = formatOtherLocales(groupReferences(otherReferences))
   if (groups.length === 0) {
@@ -50,7 +79,7 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
       <div className={styles.EntryReferences()}>
         <List aria-label="References" empty>
           <ListEmpty icon={IcRoundLink} title="No references">
-            {formatEmpty(selectedLocale, otherSummary)}
+            {formatEmpty(locale, otherSummary)}
           </ListEmpty>
         </List>
         {otherSummary && (
@@ -68,14 +97,7 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
           <EntryReferenceItem
             item={item}
             key={item.key}
-            onClick={() => {
-              setRoute({
-                workspace: item.source.workspace,
-                root: item.source.root,
-                entry: item.source.id,
-                locale: item.locale ?? undefined
-              })
-            }}
+            onClick={() => onSelect(item.source, item.locale)}
           />
         ))}
       </List>
@@ -94,12 +116,13 @@ interface EntryReferenceItemProps {
 }
 
 function EntryReferenceItem({item, onClick}: EntryReferenceItemProps) {
-  const {linkType, source} = item
+  const {source} = item
+  const typeIcon = useAtomValueRaw(typeAtoms(source.type)).icon
   return (
     <ListItem
       leading={
         <ListItemVisual>
-          <Icon data-slot="icon" icon={referenceIcon(linkType)} />
+          <Icon data-slot="icon" icon={typeIcon ?? LucideFile} />
         </ListItemVisual>
       }
       onClick={onClick}
@@ -128,7 +151,6 @@ interface EntryReferenceGroup {
   locale: string | null
   fields: Array<string>
   statuses: Array<EntryStatus>
-  linkType: EntryReferenceWithSource['reference']['linkType']
 }
 
 function groupReferences(
@@ -139,7 +161,7 @@ function groupReferences(
     const {reference, source} = item
     const locale = reference.sourceLocale
     const key = `${source.workspace}\0${source.root}\0${source.id}\0${locale ?? ''}`
-    const field = reference.fieldLabel ?? reference.fieldPath
+    const field = formatFieldLabels(reference)
     const group = groups.get(key)
     if (group) {
       if (!group.fields.includes(field)) group.fields.push(field)
@@ -147,7 +169,6 @@ function groupReferences(
         group.statuses.push(reference.sourceStatus)
         group.statuses.sort(compareStatuses)
       }
-      group.linkType ??= reference.linkType
       continue
     }
     groups.set(key, {
@@ -155,8 +176,7 @@ function groupReferences(
       source,
       locale,
       fields: [field],
-      statuses: [reference.sourceStatus],
-      linkType: reference.linkType
+      statuses: [reference.sourceStatus]
     })
   }
   return Array.from(groups.values())
@@ -193,17 +213,13 @@ function formatOtherLocales(
   }
 }
 
-function referenceIcon(
-  linkType: EntryReferenceWithSource['reference']['linkType']
-) {
-  switch (linkType) {
-    case 'image':
-      return IcRoundImage
-    case 'file':
-      return IcRoundInsertDriveFile
-    default:
-      return IcRoundLink
-  }
+/** The labels of the fields leading to the reference, eg. "Metadata › Open
+ * Graph › Image" */
+function formatFieldLabels(
+  reference: EntryReferenceWithSource['reference']
+): string {
+  if (reference.fieldLabels?.length) return reference.fieldLabels.join(' › ')
+  return reference.fieldLabel ?? reference.fieldPath
 }
 
 function statusLabel(status: EntryStatus): string {

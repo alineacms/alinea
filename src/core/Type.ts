@@ -88,13 +88,16 @@ export namespace Type {
   export function anchors(
     type: Type,
     value: Record<string, unknown>,
-    path: Array<string> = []
+    path: Array<string> = [],
+    labels: Array<string> = []
   ): Array<EntryAnchorTarget> {
     const self = value || {}
     return entries(fields(type)).flatMap(([key, field]) => {
+      const label = Field.label(field)
       return Field.anchors(field, self[key], {
         path: [...path, key],
-        label: Field.label(field)
+        label,
+        labels: [...labels, label]
       })
     })
   }
@@ -102,13 +105,16 @@ export namespace Type {
   export function references(
     type: Type,
     value: Record<string, unknown>,
-    path: Array<string> = []
+    path: Array<string> = [],
+    labels: Array<string> = []
   ): Array<EntryReferenceTarget> {
     const self = value || {}
     return entries(fields(type)).flatMap(([key, field]) => {
+      const label = Field.label(field)
       return Field.references(field, self[key], {
         path: [...path, key],
-        label: Field.label(field)
+        label,
+        labels: [...labels, label]
       })
     })
   }

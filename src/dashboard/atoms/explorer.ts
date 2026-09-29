@@ -307,9 +307,11 @@ function cardThumbnailId(
   const configured = thumbnailField(config, overview, item.type)
   if (!configured) return explorerThumbnailId(type, item.data)
   const [name, field] = configured
+  const label = Field.label(field)
   return Field.references(field, item.data[name], {
     path: [name],
-    label: Field.label(field)
+    label,
+    labels: [label]
   }).find(reference => reference.linkType === 'image')?.targetId
 }
 

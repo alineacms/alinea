@@ -52,14 +52,26 @@ export class UnionField<
         const result = customReferences?.(value, context) ?? []
         if (!value) return result
         const type = schema?.[value[UnionRow.type]]
-        if (type) result.push(...Type.references(type, value, context.path))
+        if (type)
+          result.push(
+            ...Type.references(type, value, context.path, [
+              ...context.labels,
+              Type.label(type)
+            ])
+          )
         return result
       },
       anchors(value, context) {
         const result: ReturnType<typeof Type.anchors> = []
         if (!value) return result
         const type = schema?.[value[UnionRow.type]]
-        if (type) result.push(...Type.anchors(type, value, context.path))
+        if (type)
+          result.push(
+            ...Type.anchors(type, value, context.path, [
+              ...context.labels,
+              Type.label(type)
+            ])
+          )
         return result
       },
       normalizeAnchors(value, context) {
