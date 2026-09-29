@@ -13,10 +13,6 @@ import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {EditFields} from '#/dashboard/app/EntryFields.js'
 import {TabsSection} from '#/field/tabs.js'
-import styler from '@alinea/styler'
-import css from './TabsView.module.css'
-
-const styles = styler(css)
 
 interface TabsViewProps {
   section: Section
@@ -29,7 +25,7 @@ export function TabsView({section}: TabsViewProps) {
   return (
     <Tabs defaultValue="0">
       <Surface>
-        <SurfaceHeader className={styles.TabsView.header()}>
+        <SurfaceHeader>
           <TabsList>
             {visibleTypes.map((type, i) => {
               const {icon} = getType(type)
