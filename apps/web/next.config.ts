@@ -41,14 +41,13 @@ const nextConfig: NextConfig = {
   // Pages read these files at runtime, also when rendered on demand (eg. in
   // a preview): example sources and component declarations for the component
   // pages, the bundled declarations and demo content for the playground and
-  // the demo, and the changelog
+  // the demo
   outputFileTracingIncludes: {
     '/**': [
       './src/page/catalog/examples/*.tsx',
       '../../dist/components/**/*.{d.ts,js}',
       '../../dist/bundled.d.ts',
-      './content/demo/**',
-      '../../changelog.md'
+      './content/demo/**'
     ]
   },
   async headers() {
