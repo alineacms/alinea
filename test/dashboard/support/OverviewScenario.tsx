@@ -1,3 +1,4 @@
+import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {App} from '#/dashboard/App.js'
 import {views} from '#/field/views.js'
@@ -121,8 +122,35 @@ async function createOverviewScenario() {
         preview: overviewPhotoPreview,
         averageColor: '#777777'
       }
-    }
+    },
+    ...[
+      [ids.annualReport, 'Annual report', '.pdf', 4096],
+      [ids.letter, 'Letter', '.PDF', 2048],
+      [ids.notes, 'Notes', '.docx', 512]
+    ].map(([id, title, extension, size]) => ({
+      op: 'create' as const,
+      id: String(id),
+      type: 'MediaFile',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      data: {
+        title,
+        path: String(id),
+        location: `${id}${extension}`,
+        extension,
+        size,
+        hash: String(id)
+      }
+    }))
   ])
+  await db.create({
+    ...main,
+    id: ids.mediaFolder,
+    type: MediaLibrary,
+    root: 'media',
+    set: {title: 'Archive'}
+  })
   await db.create({
     ...main,
     id: ids.blog,

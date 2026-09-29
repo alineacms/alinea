@@ -12,6 +12,8 @@ export interface EntryHeaderActionState {
   access: EntryHeaderAccess
   activeStatus: EntryStatus
   canDelete: boolean
+  /** The entry can be moved to another parent */
+  canMove: boolean
   canPublishParents: boolean
   draftsEnabled: boolean
   isDirty: boolean
@@ -49,6 +51,7 @@ export interface EntryHeaderPrimaryActions {
 export interface EntryHeaderActions {
   archive: boolean
   delete: boolean
+  move: boolean
   publish: boolean
   removeDraft: boolean
   replace: boolean
@@ -99,6 +102,7 @@ export function entryHeaderActions({
   access,
   activeStatus,
   canDelete,
+  canMove,
   canPublishParents,
   draftsEnabled,
   isDirty,
@@ -112,12 +116,14 @@ export function entryHeaderActions({
   const actions: EntryHeaderActions = {
     archive: false,
     delete: false,
+    move: false,
     publish: false,
     removeDraft: false,
     replace: false,
     unpublish: false
   }
   if (isRevision || isDirty || untranslated) return actions
+  actions.move = canMove
 
   if (activeStatus === 'draft') {
     if (!isUnpublished) {

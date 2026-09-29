@@ -132,6 +132,7 @@ const mediaFileFields = new Set([
   'extension',
   'size',
   'hash',
+  'sourceHash',
   'width',
   'height',
   'preview',

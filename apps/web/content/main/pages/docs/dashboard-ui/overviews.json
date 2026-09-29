@@ -196,6 +196,66 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`sorts`: the orders editors can pick in the filter and sort menu, keyed by name. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Sort options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3K0LeNIDZ7yVF7sMy5cuAfGYU2R",
+                      "_link": "url",
+                      "href": "#sort-options"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`filters`: filters editors can apply in the filter and sort menu, keyed by name. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Filters",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3K0LeKLxITX5ivixJE4cYBUL97o",
+                      "_link": "url",
+                      "href": "#filters"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`layout`: `'table'` or `'cards'`, the layout the overview opens in. Editors can still switch."
                 }
               ]
@@ -827,6 +887,85 @@
     },
     {
       "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sort options"
+        }
+      ],
+      "_anchor": "sort-options"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The filter and sort menu lists the title and the sortable columns. Declare `sorts` to list your own orders instead. Each takes a `label`, `by`: a value like a column's `sortBy` or an array of them, where later values order the entries that share the earlier ones, and `direction`: `'asc'` (the default) or `'desc'`. Picking an option again reverses it, unless it sets `reversible: false` because its label names the direction, such as \"Title Z–A\". One option can set `default: true` to order the children until the editor picks another, like `sort`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3K0LeKJnPITr4PLgrBk66uKis34",
+      "code": "import {Config, Query} from 'alinea'\nimport {Event} from './Event'\n\nexport const Events = Config.document('Events', {\n  contains: ['Event'],\n  overview: {\n    sorts: {\n      upcoming: {\n        label: 'Upcoming',\n        by: Event.date,\n        reversible: false,\n        default: true\n      },\n      title: {label: 'Title', by: Query.title},\n      venue: {label: 'Venue', by: [Event.city, Event.venue]}\n    }\n  },\n  fields: {}\n})",
+      "fileName": "schema/Events.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The key of an option is kept in the url (`?sort=venue`). An option keyed like a column also orders that column when its header is clicked, other columns stay sortable by their header."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Filters"
+        }
+      ],
+      "_anchor": "filters"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`filters` adds filters to the filter and sort menu. Each has a `label` and `options`, keyed by name, with a `label` and a `filter`: a query "
+        },
+        {
+          "_type": "text",
+          "text": "filter",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3K0LeJw5m1oP0yahxZGMvNdayKK",
+              "_link": "entry",
+              "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " on the fields of the listed entries. Editors pick one option of a filter, or several with `multiple: true`: entries then match any of them. Entries match every filter that is applied, and the search terms. Rows can't be reordered while a filter applies."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3K0Li5NGq7IcVGHrOjdKhMvyFZH",
+      "code": "import {Config} from 'alinea'\n\nexport const Products = Config.document('Products', {\n  contains: ['Product'],\n  overview: {\n    filters: {\n      availability: {\n        label: 'Availability',\n        options: {\n          inStock: {label: 'In stock', filter: {stock: {gt: 0}}},\n          soldOut: {label: 'Sold out', filter: {stock: 0}}\n        }\n      },\n      price: {\n        label: 'Price',\n        multiple: true,\n        options: {\n          low: {label: 'Under €50', filter: {price: {lt: 50}}},\n          mid: {label: '€50 to €200', filter: {price: {gte: 50, lt: 200}}},\n          high: {label: '€200 and up', filter: {price: {gte: 200}}}\n        }\n      }\n    }\n  },\n  fields: {}\n})",
+      "fileName": "schema/Products.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {
@@ -1134,6 +1273,15 @@
         {
           "_type": "text",
           "text": " root and its folders list a preview, the dimensions (\"1200 × 800 px\"), the file size and the file type of each file, without the status, type, updated and author columns. Pass an `overview` to `Config.media({overview})` to replace these columns."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Its menu sorts by title (A–Z and Z–A), size, dimensions and file type, and filters on files or folders and on the kind of file: images, PDF, documents, spreadsheets, presentations, archives, video and audio. Folders stay listed while a file type is picked, so editors can still open them."
         }
       ]
     },

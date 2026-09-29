@@ -83,11 +83,14 @@ export namespace Root {
     return getRoot(root).i18n?.locales[0]
   }
 
-  /** The default order of children: `overview.sort`, or `orderChildrenBy` */
+  /**
+   * The default order of children: `overview.sort`, the default sort option
+   * of the overview, or `orderChildrenBy`
+   */
   export function childrenOrder(
     root: RootData
   ): OrderBy | Array<OrderBy> | undefined {
-    return root.overview?.sort ?? root.orderChildrenBy
+    return Overview.defaultOrder(root.overview) ?? root.orderChildrenBy
   }
 
   export function isRoot(value: any): value is Root {

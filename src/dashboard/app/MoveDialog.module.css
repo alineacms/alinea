@@ -1,0 +1,23 @@
+.MoveDialog {
+  display: flex;
+  flex-direction: column;
+  height: min(420px, 60vh);
+  min-height: 0;
+  margin-top: -16px;
+  margin-bottom: -24px;
+}
+
+.MoveDialog-status {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.MoveDialog-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}

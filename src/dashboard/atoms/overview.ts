@@ -5,6 +5,8 @@ import {Field, type FieldOptions} from '#/core/Field.js'
 import type {Graph, Order, Projection} from '#/core/Graph.js'
 import {getWorkspace, hasField} from '#/core/Internal.js'
 import type {OrderBy} from '#/core/OrderBy.js'
+import type {EntryFields} from '#/core/EntryFields.js'
+import type {OpenFilter} from '#/core/Filter.js'
 import {
   Overview,
   type OverviewActionProps,
@@ -13,9 +15,12 @@ import {
   type OverviewColumnAlign,
   type OverviewColumnWidth,
   type OverviewEntry,
+  type OverviewFilter,
   type OverviewFormatContext,
   type OverviewOptions,
-  type OverviewSort
+  type OverviewSort,
+  type OverviewSortDirection,
+  type OverviewSortOption
 } from '#/core/Overview.js'
 import {Root, type RootData} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
@@ -71,10 +76,49 @@ export interface OverviewSelection {
   byType?: Record<string, Projection>
 }
 
+/** An order editors can pick, resolved against the schema */
+export interface OverviewSortState {
+  key: string
+  label: string
+  /** The values to order by, in order */
+  by: Array<Expr<any>>
+  /** The direction the order is picked in */
+  direction: OverviewSortDirection
+  /** Picking the order again reverses it */
+  reversible: boolean
+}
+
+/** A choice of an overview filter */
+export interface OverviewFilterOptionState {
+  key: string
+  label: string
+  filter: OpenFilter<EntryFields>
+}
+
+/** A filter editors can apply, resolved against the schema */
+export interface OverviewFilterState {
+  key: string
+  label: string
+  multiple: boolean
+  options: Array<OverviewFilterOptionState>
+}
+
+/** The keys of the options editors picked, by the key of their filter */
+export interface OverviewFilterSelection {
+  [filter: string]: ReadonlyArray<string>
+}
+
 /** An overview resolved against the schema */
 export interface OverviewState {
   /** The columns after the title, in order */
   columns: Array<OverviewColumnState>
+  /**
+   * The orders editors can pick: the declared `overview.sorts`, or the title
+   * and the sortable columns
+   */
+  sorts: Array<OverviewSortState>
+  /** The filters editors can apply */
+  filters: Array<OverviewFilterState>
   /** The order children are listed in when the editor did not sort */
   sort?: OrderBy | Array<OrderBy>
   layout?: 'table' | 'cards'
@@ -282,6 +326,14 @@ export function resolveOverviewOptions(
       columns.push(column)
   return {
     columns,
+    sorts: overview?.sorts
+      ? Object.entries(overview.sorts).map(([key, option]) =>
+          sortOptionState(key, option)
+        )
+      : columnSorts(columns),
+    filters: Object.entries(overview?.filters ?? {}).map(([key, filter]) =>
+      filterState(key, filter)
+    ),
     sort,
     layout: overview?.layout,
     thumbnail: overview?.thumbnail
@@ -298,6 +350,51 @@ function selection(
 ): OverviewSelection {
   if (Overview.isSelectByType(select, typeNames)) return {byType: select}
   return {all: select as Projection}
+}
+
+function sortOptionState(
+  key: string,
+  option: OverviewSortOption
+): OverviewSortState {
+  return {
+    key,
+    label: option.label,
+    by: Overview.sortValues(option),
+    direction: option.direction ?? 'asc',
+    reversible: option.reversible ?? true
+  }
+}
+
+/** The orders of an overview without declared sorts: its sortable columns */
+function columnSorts(
+  columns: Array<OverviewColumnState>
+): Array<OverviewSortState> {
+  return [titleColumn, ...columns].flatMap(column =>
+    column.sortBy
+      ? [
+          {
+            key: column.key,
+            label: column.header,
+            by: [column.sortBy],
+            direction: 'asc' as const,
+            reversible: true
+          }
+        ]
+      : []
+  )
+}
+
+function filterState(key: string, filter: OverviewFilter): OverviewFilterState {
+  return {
+    key,
+    label: filter.label,
+    multiple: filter.multiple ?? false,
+    options: Object.entries(filter.options).map(([key, option]) => ({
+      key,
+      label: option.label,
+      filter: option.filter
+    }))
+  }
 }
 
 function customColumn(
@@ -453,32 +550,48 @@ export function thumbnailField(
   return name && field ? [name, field] : undefined
 }
 
-/** The column the editor sorted by, or undefined if it is not sortable */
-export function sortColumn(
+/**
+ * The order the editor picked: an option of the overview, or a sortable
+ * column whose header was clicked. Undefined if it can not be ordered by.
+ */
+export function pickedSort(
   overview: OverviewState,
   sort: OverviewSort | undefined
-): {header: string; sortBy: Expr} | undefined {
+): OverviewSortState | undefined {
   if (!sort) return undefined
-  if (sort.column === titleColumn.key) return titleColumn
-  const column = overview.columns.find(column => column.key === sort.column)
-  if (!column?.sortBy) return undefined
-  return {header: column.header, sortBy: column.sortBy}
+  const option = overview.sorts.find(option => option.key === sort.column)
+  if (option) return option
+  return columnSorts(overview.columns).find(
+    option => option.key === sort.column
+  )
 }
 
 /**
- * The order of a list: the column the editor sorted by, or the parent's
- * default order, or undefined for the stored (manual) order
+ * The order of a list: the order the editor picked, or the parent's default
+ * order, or undefined for the stored (manual) order
  */
 export function overviewOrder(
   overview: OverviewState,
   sort: OverviewSort | undefined
 ): Order | Array<Order> | undefined {
-  const column = sortColumn(overview, sort)
-  if (column && sort)
-    return sort.direction === 'asc'
-      ? {asc: column.sortBy}
-      : {desc: column.sortBy}
-  return overview.sort
+  const picked = pickedSort(overview, sort)
+  if (!picked || !sort) return overview.sort
+  const orders = picked.by.map(expr =>
+    sort.direction === 'asc' ? {asc: expr} : {desc: expr}
+  )
+  return orders.length === 1 ? orders[0] : orders
+}
+
+/** The column that orders by the same value as a picked order */
+function columnOf(
+  overview: OverviewState,
+  picked: OverviewSortState
+): string | undefined {
+  const columns = [titleColumn, ...overview.columns]
+  if (columns.some(column => column.key === picked.key && column.sortBy))
+    return picked.key
+  const [expr] = picked.by
+  return columns.find(column => column.sortBy === expr)?.key
 }
 
 /** The column shown as sorted: the requested one or the default order */
@@ -486,7 +599,11 @@ export function sortedColumn(
   overview: OverviewState,
   sort: OverviewSort | undefined
 ): OverviewSort | undefined {
-  if (sortColumn(overview, sort)) return sort
+  const picked = pickedSort(overview, sort)
+  if (picked && sort) {
+    const column = columnOf(overview, picked)
+    return column ? {column, direction: sort.direction} : undefined
+  }
   const [first] = Array.isArray(overview.sort)
     ? overview.sort
     : overview.sort
@@ -498,6 +615,47 @@ export function sortedColumn(
   if (expr === titleColumn.sortBy) return {column: titleColumn.key, direction}
   const column = overview.columns.find(column => column.sortBy === expr)
   return column ? {column: column.key, direction} : undefined
+}
+
+/**
+ * The options the editor picked that apply to an overview: options of its
+ * filters, at most one for filters that do not allow several
+ */
+export function pickedFilters(
+  overview: OverviewState,
+  selection: OverviewFilterSelection
+): OverviewFilterSelection {
+  const picked: Record<string, Array<string>> = {}
+  for (const filter of overview.filters) {
+    const keys = filter.options
+      .filter(option => selection[filter.key]?.includes(option.key))
+      .map(option => option.key)
+    if (keys.length === 0) continue
+    picked[filter.key] = filter.multiple ? keys : keys.slice(0, 1)
+  }
+  return picked
+}
+
+/**
+ * The condition of the picked filters: entries match every filter, and any
+ * of the options picked of a filter. Undefined when nothing is picked.
+ */
+export function overviewFilter(
+  overview: OverviewState,
+  selection: OverviewFilterSelection
+): OpenFilter<EntryFields> | undefined {
+  const picked = pickedFilters(overview, selection)
+  const conditions = overview.filters.flatMap(filter => {
+    const options = filter.options.filter(option =>
+      picked[filter.key]?.includes(option.key)
+    )
+    if (options.length === 0) return []
+    if (options.length === 1) return [options[0].filter]
+    return [{or: options.map(option => option.filter)}]
+  })
+  if (conditions.length === 0) return undefined
+  if (conditions.length === 1) return conditions[0]
+  return {and: conditions}
 }
 
 /** The rows an overview renders, as loaded by the explorer or an EntryTable */
@@ -542,9 +700,11 @@ export function columnLinkIds(
     const resolved = columnField(config, column, row.type)
     if (!resolved) return []
     const [name, field] = resolved
+    const label = Field.label(field)
     return Field.references(field, row.data[name], {
       path: [name],
-      label: Field.label(field)
+      label,
+      labels: [label]
     }).map(reference => reference.targetId)
   })
 }

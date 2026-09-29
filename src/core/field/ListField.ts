@@ -109,10 +109,12 @@ export class ListFieldBase<
           if (!type) continue
           const segment = row[ListRow.id] || String(rows.indexOf(row))
           result.push(
-            ...Type.references(type, row as Record<string, unknown>, [
-              ...context.path,
-              segment
-            ])
+            ...Type.references(
+              type,
+              row as Record<string, unknown>,
+              [...context.path, segment],
+              [...context.labels, Type.label(type)]
+            )
           )
         }
         return result
@@ -199,10 +201,12 @@ export class ListField<
           const type = schema[row[ListRow.type]]
           if (type)
             result.push(
-              ...Type.anchors(type, row as Record<string, unknown>, [
-                ...context.path,
-                segment
-              ])
+              ...Type.anchors(
+                type,
+                row as Record<string, unknown>,
+                [...context.path, segment],
+                [...context.labels, Type.label(type)]
+              )
             )
         })
         return result

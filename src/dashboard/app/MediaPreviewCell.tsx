@@ -1,7 +1,7 @@
 import {isImage} from '#/core/media/IsImage.js'
 import type {OverviewCellProps} from '#/core/Overview.js'
 import styler from '@alinea/styler'
-import {LucideFile} from '../icons.js'
+import {fileKind, fileKindColor, fileKindIcon} from './FileKind.js'
 import css from './MediaPreviewCell.module.css'
 
 const styles = styler(css)
@@ -27,9 +27,15 @@ export function MediaPreviewCell({
         <img alt="" className={styles.MediaPreviewCell.image()} src={preview} />
       </span>
     )
+  if (!extension) return <span className={styles.MediaPreviewCell()} />
+  const kind = fileKind(extension)
+  const Icon = fileKindIcon(kind)
   return (
-    <span className={styles.MediaPreviewCell({file: Boolean(extension)})}>
-      {extension && <LucideFile className={styles.MediaPreviewCell.icon()} />}
+    <span
+      className={styles.MediaPreviewCell({file: true})}
+      style={{background: fileKindColor(kind)}}
+    >
+      <Icon className={styles.MediaPreviewCell.icon()} />
     </span>
   )
 }

@@ -138,21 +138,6 @@
   }
 }
 
-.Explorer-popoverLabel {
-  padding: 4px 8px;
-}
-
-/* Options read like menu items, the active one is marked by its color */
-.Explorer-popoverOption {
-  width: 100%;
-  display: flex;
-  font-weight: 500;
-
-  & + & {
-    margin-top: 2px;
-  }
-}
-
 .Explorer-locationBreadcrumbs {
   display: flex;
   flex: 0 1 auto;

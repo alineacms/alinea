@@ -1,3 +1,5 @@
+import type {Config} from '#/core/Config.js'
+import {imageResizeOptions, isResizableImage} from '#/core/media/ImageResize.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import type {DragTypes, DropTarget, Key} from '#/components.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -187,8 +189,12 @@ export async function moveEntries(
 
 export function uploadSizeError(
   file: File,
-  maxUploadSize: number | undefined
+  config: Pick<Config, 'maxUploadSize' | 'resizeImages'>
 ): string | undefined {
+  const {maxUploadSize, resizeImages} = config
+  // Images scaled down before the upload are checked after resizing
+  if (imageResizeOptions(resizeImages) && isResizableImage(file.name))
+    return undefined
   try {
     assertUploadSize(file.name, file.size, maxUploadSize)
   } catch (error) {

@@ -42,7 +42,8 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
         return Type.references(
           type,
           (value ?? {}) as Record<string, unknown>,
-          context.path
+          context.path,
+          context.labels
         )
       },
       anchors(value, context) {
@@ -50,7 +51,8 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
         return Type.anchors(
           type,
           value as Record<string, unknown>,
-          context.path
+          context.path,
+          context.labels
         )
       },
       normalizeAnchors(value, context) {

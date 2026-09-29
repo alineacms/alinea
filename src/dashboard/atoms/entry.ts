@@ -7,7 +7,6 @@ import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
-import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -33,6 +32,7 @@ import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
 import {ReactiveNode} from './ReactiveNode.js'
+import {requestUploadsAtom} from './upload.js'
 import {policyAtom, userAtom} from './user.js'
 import {atomWithPending, dispense, loader} from './utils.js'
 
@@ -639,15 +639,17 @@ export class EntryLocaleAtoms {
     const policy = get(policyAtom)
     policy.assert(Permission.Update, entry)
     policy.assert(Permission.Upload, entry)
-    await get(graphAtom).upload({
-      file,
-      createPreview,
-      replaceId: this.entry.id,
-      parentId: entry.parentId,
-      workspace: entry.workspace,
-      root: entry.root
+    const replaced = await set(requestUploadsAtom, {
+      files: [file],
+      destination: {
+        workspace: entry.workspace,
+        root: entry.root,
+        parentId: entry.parentId ?? undefined,
+        parents: entry.parents
+      },
+      replaceId: this.entry.id
     })
-    set(this.currentlyEditing, undefined)
+    if (replaced.length > 0) set(this.currentlyEditing, undefined)
   })
 }
 
@@ -910,10 +912,9 @@ const treeChildSelect = {
   root: Entry.root
 }
 
-function preferredTreeEntries<Item extends {id: string; locale: string | null}>(
-  items: Array<Item>,
-  locale: string | null
-): Array<Item> {
+export function preferredTreeEntries<
+  Item extends {id: string; locale: string | null}
+>(items: Array<Item>, locale: string | null): Array<Item> {
   const translated = new Set(
     items.filter(item => item.locale === locale).map(item => item.id)
   )

@@ -95,6 +95,7 @@ export function createLink<StoredValue extends Reference, QueryValue>(
           targetId: entryId,
           fieldPath: referenceFieldPath(context.path),
           fieldLabel: context.label,
+          fieldLabels: context.labels,
           linkId: value[Reference.id],
           linkType: entryLinkType(value[Reference.type])
         }
@@ -195,6 +196,7 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
             rowId ? [...context.path, rowId] : context.path
           ),
           fieldLabel: context.label,
+          fieldLabels: context.labels,
           linkId: row[Reference.id],
           linkType: entryLinkType(row[Reference.type])
         })

@@ -40,7 +40,7 @@ import {resolveEntryQuery} from './query/ResolveQuery.js'
 import {
   createSearch,
   EntrySearchTable,
-  fuzzyDistance,
+  expandsToken,
   searchQuery,
   searchTokens,
   SearchVocabulary,
@@ -623,9 +623,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   ): Promise<SearchQuery | undefined> {
     const tokens = searchTokens(input)
     if (!tokens) return undefined
-    // Short tokens only match as prefixes; the vocabulary stays unloaded.
-    if (!tokens.some(token => fuzzyDistance(token) > 0))
-      return searchQuery(input, EntryIndexTable)
+    // Short words only match as prefixes; the vocabulary stays unloaded.
+    if (!tokens.some(expandsToken)) return searchQuery(input, EntryIndexTable)
     await this.#vocabulary.load(db, await this.#getRevision(db))
     return searchQuery(input, EntryIndexTable, {
       alternatives: token => this.#vocabulary.alternatives(token)

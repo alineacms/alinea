@@ -1,4 +1,5 @@
 import type {DragTypes, DropTarget, Key} from '#/components.js'
+import type {Config} from '#/core/Config.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {filterChecker} from '#/core/Filter.js'
@@ -8,7 +9,7 @@ import type {Graph, GraphQuery} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
-import {Permission, type Resource} from '#/core/Role.js'
+import {Permission, type Policy, type Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {chunks} from '#/core/util/Arrays.js'
@@ -30,17 +31,21 @@ import {
   columnLinkIds,
   loadColumnValues,
   loadOverviewParent,
+  overviewFilter,
+  type OverviewFilterSelection,
+  type OverviewFilterState,
   overviewOrder,
   type OverviewState,
+  pickedFilters,
+  pickedSort,
   resolveOverview,
-  sortColumn,
   sortedColumn,
   summarizeRows,
   thumbnailField
 } from './overview.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
-import {uploadFilesAtom} from './upload.js'
+import {requestUploadsAtom} from './upload.js'
 import {policyAtom} from './user.js'
 import {
   acceptsDashboardEntryDrag,
@@ -53,7 +58,6 @@ import {
 export const searchResultLimit = 100
 
 export type ExplorerView = 'card' | 'row'
-export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
 
 export interface ExplorerLocation {
   workspace: string
@@ -136,6 +140,11 @@ export interface ExplorerOptions {
     [OverviewSort | undefined],
     void
   >
+  /**
+   * The filter options the editor picked, defaults to state kept by the
+   * explorer. The explorers of a root share them.
+   */
+  filterState?: PrimitiveAtom<OverviewFilterSelection>
   showSelectionControls?: boolean
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
@@ -160,7 +169,7 @@ type ExplorerQuery = GraphQuery<undefined, Type | undefined, undefined>
 export interface ExplorerSortState {
   /** The column the editor sorted by */
   requested?: OverviewSort
-  /** The header of the column the editor sorted by */
+  /** The label of the order the editor picked */
   label?: string
   /** The column shown as sorted, also for the parent's default order */
   column?: OverviewSort
@@ -170,6 +179,8 @@ export interface ExplorerSortState {
 
 export interface ExplorerReadyPage {
   canUpload: boolean
+  /** The filter options the listed entries match, by filter key */
+  filters: OverviewFilterSelection
   isMedia: boolean
   items: Array<ExplorerEntry>
   locale: string | null
@@ -213,7 +224,8 @@ export function explorerScrollKey(page: ExplorerReadyPage) {
     page.view,
     page.resultMode,
     page.searchScope,
-    page.search.trim()
+    page.search.trim(),
+    page.filters
   ])
 }
 
@@ -232,6 +244,8 @@ export interface ExplorerItemData {
   locale: string | null
   parentId: string | null
   parents: Array<string>
+  /** Set for entries seeded by the config, these can not move or be removed */
+  seeded?: string | null
   parentEntries?: Array<{
     id: string
     title: string
@@ -308,9 +322,11 @@ function cardThumbnailId(
   const configured = thumbnailField(config, overview, item.type)
   if (!configured) return explorerThumbnailId(type, item.data)
   const [name, field] = configured
+  const label = Field.label(field)
   return Field.references(field, item.data[name], {
     path: [name],
-    label: Field.label(field)
+    label,
+    labels: [label]
   }).find(reference => reference.linkType === 'image')?.targetId
 }
 
@@ -388,6 +404,33 @@ function explorerItemField(item: ExplorerItemData, name: string) {
   if (!name.startsWith('_')) return item.data[name]
   const entry = item as unknown as Record<string, unknown>
   return entry[name.slice(1)]
+}
+
+/** The selected entry can be moved to another parent */
+export function explorerItemCanMove(policy: Policy, item: ExplorerItemData) {
+  return !item.seeded && policy.canMove(item)
+}
+
+/**
+ * The selected entry can be deleted right away. Media is deleted directly,
+ * like the entry menu does other entries are archived before deleting them.
+ */
+export function explorerItemCanDelete(
+  config: Config,
+  policy: Policy,
+  item: ExplorerItemData
+) {
+  if (item.seeded || !policy.canDelete(item)) return false
+  const type = config.schema[item.type]
+  const isMedia = type === MediaFile || type === MediaLibrary
+  return isMedia || item.status === 'archived'
+}
+
+export interface ExplorerSelectionActions {
+  /** The selected entries that are listed */
+  items: Array<ExplorerItemData>
+  canMove: boolean
+  canDelete: boolean
 }
 
 export interface ExplorerRootData {
@@ -523,7 +566,11 @@ export class ExplorerAtoms {
     [OverviewSort | undefined],
     void
   >
-  #selectedFilter = atom<ExplorerTypeFilters>()
+  /**
+   * The options the editor picked of the filters of the overview, by filter
+   * key. The page lists the ones that apply to its overview.
+   */
+  requestedFilters: PrimitiveAtom<OverviewFilterSelection>
   selectedLocale: WritableAtom<
     string | null,
     [SetStateAction<string | null>],
@@ -600,6 +647,8 @@ export class ExplorerAtoms {
       options.scrollOffset ?? dispense((_key: string) => atom(0))
     this.requestedSort =
       options.sortState ?? atom<OverviewSort | undefined>(undefined)
+    this.requestedFilters =
+      options.filterState ?? atom<OverviewFilterSelection>({})
     this.mode = options.mode ?? 'browse'
     this.hasRowAction =
       options.onAction !== undefined ||
@@ -751,6 +800,7 @@ export class ExplorerAtoms {
       const searchScope = get(this.searchScope)
       const searchesEverything = get(this.searchesEverything)
       const isMedia = get(this.isMedia)
+      const requestedFilters = get(this.requestedFilters)
       const requestedRoot = get(this.root)
       const root = {
         icon: atom(get(requestedRoot.icon)),
@@ -790,9 +840,12 @@ export class ExplorerAtoms {
         }
       )
       const requested = get(this.requestedSort)
-      const sorted = search.trim() ? undefined : sortColumn(shown, requested)
+      const sorted = search.trim() ? undefined : pickedSort(shown, requested)
+      const filters = pickedFilters(shown, requestedFilters)
+      const filtered = Object.keys(filters).length > 0
       return {
         canUpload,
+        filters,
         isMedia,
         items,
         locale,
@@ -809,9 +862,10 @@ export class ExplorerAtoms {
         searchesEverything,
         sort: {
           requested: sorted ? requested : undefined,
-          label: sorted?.header,
+          label: sorted?.label,
           column: search.trim() ? undefined : sortedColumn(shown, requested),
-          manual: !search.trim() && !sorted && !shown.sort
+          // Entries can not be reordered between hidden ones
+          manual: !search.trim() && !sorted && !shown.sort && !filtered
         },
         view
       }
@@ -875,15 +929,29 @@ export class ExplorerAtoms {
         })
       )
   )
-  filter = atom(
-    get => get(this.#selectedFilter),
-    (get, set, filter: ExplorerTypeFilters) => {
+  /**
+   * Picks an option of a filter, or unpicks it when picked. Options of
+   * filters that allow one replace the picked option.
+   */
+  toggleFilter = atom(
+    null,
+    (get, set, filter: OverviewFilterState, option: string) => {
+      const {[filter.key]: current = [], ...others} = get(this.requestedFilters)
+      const picked = current.includes(option)
+        ? current.filter(key => key !== option)
+        : filter.multiple
+          ? [...current, option]
+          : [option]
       set(
-        this.#selectedFilter,
-        get(this.#selectedFilter) === filter ? undefined : filter
+        this.requestedFilters,
+        picked.length > 0 ? {...others, [filter.key]: picked} : others
       )
     }
   )
+  /** Unpicks the options of every filter */
+  clearFilters = atom(null, (_get, set) => {
+    set(this.requestedFilters, {})
+  })
   get limitLocations() {
     return this.#options.limitLocations
   }
@@ -916,13 +984,27 @@ export class ExplorerAtoms {
       if (treeReady) await get(treeReady)
       const resource = get(this.#uploadResource(location, locale))
       get(policyAtom).assert(Permission.Upload, resource)
-      await set(uploadFilesAtom, {
+      const ids = await set(requestUploadsAtom, {
         files,
-        workspace: location.workspace,
-        root: location.root,
-        parentId: location.parentId,
-        parents: resource.parents
+        destination: {
+          workspace: location.workspace,
+          root: location.root,
+          parentId: location.parentId,
+          parents: resource.parents
+        }
       })
+      // Pickers select the files that were uploaded or picked instead
+      if (ids.length === 0 || !this.#options.onConfirm) return
+      if (this.selectionMode === 'single') {
+        set(this.selection, new Set([ids[0]]))
+        return
+      }
+      if (this.selectionMode !== 'multiple') return
+      const selected = get(this.selection)
+      set(
+        this.selection,
+        new Set([...(selected === 'all' ? [] : selected), ...ids])
+      )
     }
   )
   getDragData = atom(
@@ -1041,6 +1123,36 @@ export class ExplorerAtoms {
         locale === undefined ? get(this.selectedLocale) : locale
       )
   })
+  /** The listed entries that are selected, and what can be done with them */
+  selectionActions = atom((get): ExplorerSelectionActions => {
+    const page = get(this.page)
+    const selection = get(this.selection)
+    const items = (page?.items ?? [])
+      .filter(entry => selection === 'all' || selection.has(entry.id))
+      .flatMap(entry => {
+        const {data} = get(entry.data)
+        return data ? [get(data.item)] : []
+      })
+    const config = get(configAtom)
+    const policy = get(policyAtom)
+    const some = items.length > 0
+    return {
+      items,
+      canMove: some && items.every(item => explorerItemCanMove(policy, item)),
+      canDelete:
+        some && items.every(item => explorerItemCanDelete(config, policy, item))
+    }
+  })
+  clearSelection = atom(null, (_get, set) => set(this.selection, new Set()))
+  /** Deletes the selected entries at once */
+  deleteSelection = atom(null, async (get, set) => {
+    const {items, canDelete} = get(this.selectionActions)
+    if (!canDelete) return
+    const policy = get(policyAtom)
+    for (const item of items) policy.assert(Permission.Delete, item)
+    await get(graphAtom).remove(...items.map(item => item.id))
+    set(this.selection, new Set())
+  })
   isExpanded = dispense((entry: ExplorerEntry) =>
     atom(get => get(this.expandedKeys).has(entry.id))
   )
@@ -1062,15 +1174,14 @@ export class ExplorerAtoms {
       if (!data || !get(data.hasChildren)) return []
       const config = get(configAtom)
       const graph = get(graphAtom)
-      const filter = get(this.filter)
+      const requestedFilters = get(this.requestedFilters)
       const overview = await get(this.overview)
       const entries = await graph.find({
         workspace: entry.workspace,
         root: entry.root,
         parentId: entry.id,
         locale,
-        filter: undefined,
-        type: filter,
+        filter: overviewFilter(overview, requestedFilters),
         status: 'preferDraft',
         groupBy: Entry.id,
         orderBy: overviewOrder(overview, get(this.requestedSort)),
@@ -1119,8 +1230,14 @@ export class ExplorerAtoms {
       if (!searchesEverything && !location.root && this.rootScope === 'current')
         return undefined
       if (this.mode === 'search' && !search) return undefined
+      const requestedFilters = get(this.requestedFilters)
       const overview = await get(this.overview)
       const flatList = resultMode === 'matches'
+      const condition = flatList ? this.#options.condition : undefined
+      const picked = overviewFilter(overview, requestedFilters)
+      // The search terms, the picker's condition and the picked filters apply
+      const filter =
+        condition && picked ? {and: [condition, picked]} : (condition ?? picked)
       return {
         workspace: searchesEverything ? undefined : location.workspace,
         root:
@@ -1136,8 +1253,7 @@ export class ExplorerAtoms {
               : (location.parentId ?? null),
         locale: searchesMultipleRoots ? undefined : locale,
         search: search || undefined,
-        filter: flatList ? this.#options.condition : undefined,
-        type: get(this.filter),
+        filter,
         status: 'preferDraft',
         orderBy: search
           ? undefined
@@ -1248,6 +1364,7 @@ const explorerItemSelect = {
   locale: Entry.locale,
   parentId: Entry.parentId,
   parents: Entry.parents,
+  seeded: Entry.seeded,
   parentEntries: parents({
     select: {
       id: Entry.id,

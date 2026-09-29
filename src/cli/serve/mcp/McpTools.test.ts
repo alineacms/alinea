@@ -710,6 +710,19 @@ test('upload_file creates and replaces media entries', async () => {
     replace: page.id
   })
   test.ok(notMedia.text.includes('is not a MediaFile entry'))
+  // Images rotate and crop with sharp before they are uploaded
+  const edited = await env.ok('upload_file', {
+    path: 'red.png',
+    rotate: 90,
+    crop: {x: 0, y: 0, width: 1, height: 0.5}
+  })
+  const editedData = await env.readEntry(edited.file)
+  test.equal([editedData.width, editedData.height], [10, 10])
+  const invalidCrop = await env.call('upload_file', {
+    path: 'red.png',
+    crop: {x: 0.5, y: 0, width: 2, height: 1}
+  })
+  test.ok(invalidCrop.text.includes('crop: expected'))
 })
 
 test('writes match the dashboard for the same edit', async () => {

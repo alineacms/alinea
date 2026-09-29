@@ -6,8 +6,14 @@ import {path} from '#/field/path/PathField.js'
 import {text} from '#/field/text/TextField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import prettyBytes from 'pretty-bytes'
-import {column, type OverviewOptions} from '../Overview.js'
+import {Entry} from '../Entry.js'
+import {
+  column,
+  type OverviewFilterOption,
+  type OverviewOptions
+} from '../Overview.js'
 import {type Type, type} from '../Type.js'
+import {type MediaFileKind, storedExtensions} from './FileKinds.js'
 import {mediaAlt} from './MediaAltField.js'
 import {MediaLocation} from './MediaLocation.js'
 
@@ -36,6 +42,8 @@ export const MediaFile = type('Media file', {
     extension: hidden<string>('Extension'),
     size: hidden<number>('File size'),
     hash: hidden<string>('Hash'),
+    /** The hash of the file as uploaded, before it was scaled down */
+    sourceHash: hidden<string>('Source hash'),
     alt: mediaAlt('Alt text', {
       multiline: true,
       help: 'Describe the image for screen readers and SEO'
@@ -62,12 +70,72 @@ export const MediaLibrary = type('Media directory', {
 })
 
 /**
- * The columns of the media library: a preview, the dimensions, size and type
- * of each file
+ * Picks media files of a kind. Folders always match, so editors can still
+ * browse into them while the filter applies.
+ */
+function fileKindOption(
+  label: string,
+  kind: MediaFileKind
+): OverviewFilterOption {
+  return {
+    label,
+    filter: {
+      or: [
+        {_type: 'MediaLibrary'},
+        {_type: 'MediaFile', extension: {in: storedExtensions(kind)}}
+      ]
+    }
+  }
+}
+
+/**
+ * The overview of the media library: a preview, the dimensions, size and type
+ * of each file, orders and filters on those
  */
 export function mediaOverview(): OverviewOptions {
   return {
     builtins: {type: false, status: false, updated: false, author: false},
+    // Media files do not store when they were uploaded yet, so they can not
+    // be listed newest first
+    sorts: {
+      title: {label: 'Title A–Z', by: Entry.title, reversible: false},
+      titleDesc: {
+        label: 'Title Z–A',
+        by: Entry.title,
+        direction: 'desc',
+        reversible: false
+      },
+      size: {label: 'Size', by: MediaFile.size, direction: 'desc'},
+      dimensions: {
+        label: 'Dimensions',
+        by: [MediaFile.width, MediaFile.height],
+        direction: 'desc'
+      },
+      fileType: {label: 'File type', by: [MediaFile.extension, Entry.title]}
+    },
+    filters: {
+      show: {
+        label: 'Show',
+        options: {
+          files: {label: 'Files', filter: {_type: 'MediaFile'}},
+          folders: {label: 'Folders', filter: {_type: 'MediaLibrary'}}
+        }
+      },
+      fileType: {
+        label: 'File type',
+        multiple: true,
+        options: {
+          image: fileKindOption('Images', 'image'),
+          pdf: fileKindOption('PDF', 'pdf'),
+          document: fileKindOption('Documents', 'document'),
+          spreadsheet: fileKindOption('Spreadsheets', 'spreadsheet'),
+          presentation: fileKindOption('Presentations', 'presentation'),
+          archive: fileKindOption('Archives', 'archive'),
+          video: fileKindOption('Video', 'video'),
+          audio: fileKindOption('Audio', 'audio')
+        }
+      }
+    },
     columns: {
       preview: column({
         header: 'Preview',

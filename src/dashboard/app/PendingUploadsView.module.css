@@ -1,0 +1,71 @@
+.PendingUploadsView {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.PendingUploadsView-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--alinea-radius);
+
+  &:hover {
+    background: var(--alinea-bg-muted);
+  }
+}
+
+.PendingUploadsView-row-thumbnail {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: var(--alinea-radius-sm);
+  background: var(--alinea-bg-muted);
+  box-shadow: inset 0 0 0 1px var(--alinea-border);
+  color: var(--alinea-fg-muted);
+}
+
+.PendingUploadsView-row-thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.PendingUploadsView-row-thumbnail-icon {
+  font-size: 24px;
+}
+
+.PendingUploadsView-row-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.PendingUploadsView-row-notice {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 0;
+  color: var(--alinea-fg-muted);
+}
+
+.PendingUploadsView-row-choice {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.PendingUploadsView-row-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+}

@@ -2,11 +2,12 @@ import {existsSync} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {Config} from '#/core/Config.js'
-import {UploadOperation} from '#/core/db/Operation.js'
+import {UploadOperation, type UploadQuery} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry} from '#/core/Entry.js'
 import type {Status} from '#/core/Graph.js'
 import type {ImagePreviewDetails} from '#/core/media/CreatePreview.js'
+import {isImageCrop, isImageRotation} from '#/core/media/ImageEdit.js'
 import {Root} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
@@ -28,6 +29,10 @@ export interface ContentToolsOptions {
   /** The user recorded in metadata fields */
   user?: User
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
+  /** Scales down images larger than the resizeImages option of the config */
+  resizeImage?: UploadQuery['resizeImage']
+  /** Rotates and crops images before uploading */
+  editImage?: UploadQuery['editImage']
 }
 
 /** The git repository root enclosing a directory, if any */
@@ -615,6 +620,22 @@ export function createContentTools(
           alt: {
             type: ['string', 'object'],
             description: 'Alt text, or alt texts by locale'
+          },
+          rotate: {
+            description: 'Rotate an image clockwise before uploading',
+            enum: [0, 90, 180, 270]
+          },
+          crop: {
+            type: 'object',
+            description:
+              'Crop an image before uploading, after rotating: the region to keep as fractions (0 to 1) of the width and height',
+            properties: {
+              x: {type: 'number'},
+              y: {type: 'number'},
+              width: {type: 'number'},
+              height: {type: 'number'}
+            },
+            required: ['x', 'y', 'width', 'height']
           }
         },
         ['path']
@@ -638,6 +659,10 @@ export function createContentTools(
           fail(
             `"${file}" resolves to ${location}, which is hidden or outside ${uploadRoots.join(', ')}`
           )
+        const {rotate = 0, crop} = args
+        if (!isImageRotation(rotate)) fail('rotate: expected 0, 90, 180 or 270')
+        if (crop !== undefined && !isImageCrop(crop))
+          fail('crop: expected {x, y, width, height} between 0 and 1')
         const bytes = new Uint8Array(await fs.readFile(real))
         const replace = str(args, 'replace')
         const parentId = str(args, 'parentId') ?? null
@@ -671,7 +696,10 @@ export function createContentTools(
             ),
           parentId: replace ? existing!.parentId : parentId,
           replaceId: replace,
-          createPreview: options.createPreview
+          createPreview: options.createPreview,
+          resizeImage: options.resizeImage,
+          edit: {rotate, crop},
+          editImage: options.editImage
         })
         // The dashboard's upload: store the file and create the media entry
         const mutations = await operation.task(graph)

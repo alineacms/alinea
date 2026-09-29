@@ -25,6 +25,7 @@ import {
 } from './entry.js'
 import {shaAtom} from './graph.js'
 import {overviewSortAtom, type Page, pageAtom} from './nav.js'
+import type {OverviewFilterSelection} from './overview.js'
 import {policyAtom} from './user.js'
 import {
   dashboardEntryDragItem,
@@ -63,6 +64,13 @@ export interface TreeView {
   snapshot: TreeSnapshot
 }
 
+/** The entries a tree of the sidebar shows */
+export interface TreeSource {
+  expandedKeys: PrimitiveAtom<Set<string>>
+  view: Atom<TreeView>
+  selectedItem: Atom<RootTreeItem | undefined>
+}
+
 interface TreeCollapseState {
   selectedId: string | undefined
   keys: Set<string>
@@ -84,7 +92,7 @@ const emptyTreeView: TreeView = {
   snapshot: emptyTreeSnapshot
 }
 
-export class TreeAtoms {
+export class TreeAtoms implements TreeSource {
   expandedKeys: PrimitiveAtom<Set<string>>
   collapsedKeys: PrimitiveAtom<TreeCollapseState>
   #root: RootAtoms
@@ -391,6 +399,12 @@ export class RootAtoms {
    */
   explorerScrollOffset = dispense((_key: string) => atom(0))
 
+  /**
+   * The filters picked in the explorers of this root, kept while the editor
+   * opens entries and folders. Each overview applies the ones it declares.
+   */
+  #explorerFilters = atom<OverviewFilterSelection>({})
+
   children = dispense((parentId: string | null) =>
     createExplorerAtoms(
       {
@@ -402,6 +416,7 @@ export class RootAtoms {
         enableNavigation: true,
         sortState: overviewSortAtom(this.workspace, this.key, parentId),
         rootData: this.data,
+        filterState: this.#explorerFilters,
         scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
         treeItems: locale => this.tree(locale).items,

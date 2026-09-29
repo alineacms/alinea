@@ -10,7 +10,7 @@ export interface JsonSchema {
   properties?: Record<string, JsonSchema>
   required?: Array<string>
   items?: JsonSchema
-  enum?: Array<string>
+  enum?: Array<string | number>
   additionalProperties?: boolean | JsonSchema
 }
 
