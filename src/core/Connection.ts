@@ -135,6 +135,23 @@ export interface UploadMetadata {
 export interface UploadResponse extends UploadDestination {
   url: string
   method?: string
+  /** Extra headers to send with the upload */
+  headers?: Record<string, string>
+}
+
+/**
+ * Adds the development key to an upload to the dev server, which requires it
+ * from callers that send no Origin, such as server code (browsers send one)
+ */
+export function withDevelopmentKey(
+  upload: UploadResponse,
+  apiKey: string
+): UploadResponse {
+  if (!new URL(upload.url).search.startsWith('?/upload')) return upload
+  return {
+    ...upload,
+    headers: {...upload.headers, [developmentKeyHeader]: apiKey}
+  }
 }
 
 export interface DraftTransport {

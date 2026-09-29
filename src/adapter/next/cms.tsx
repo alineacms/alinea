@@ -7,10 +7,11 @@ import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import type {
-  RequestContext,
-  UploadMetadata,
-  UploadResponse
+import {
+  type RequestContext,
+  type UploadMetadata,
+  type UploadResponse,
+  withDevelopmentKey
 } from '#/core/Connection.js'
 import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -330,8 +331,10 @@ export class NextCMS<
     file: string,
     metadata?: UploadMetadata
   ): Promise<UploadResponse> {
+    const context = await requestContext(this.config)
     const client = await this.#authenticatedClient()
-    return client.prepareUpload(file, metadata)
+    const upload = await client.prepareUpload(file, metadata)
+    return context.isDev ? withDevelopmentKey(upload, context.apiKey) : upload
   }
 
   previews = async ({

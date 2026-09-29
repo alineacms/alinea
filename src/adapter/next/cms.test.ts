@@ -303,3 +303,22 @@ test('answers development queries from the dev server at every revision', async 
     await rm(dir, {recursive: true, force: true})
   }
 })
+
+test('sends the dev key with uploads to the dev server only', async () => {
+  nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
+  let url = 'http://localhost:4500/?/upload&file=public%2Fa.jpg'
+  handlerFetch = mock(async () =>
+    Response.json({entryId: 'a', location: 'a.jpg', previewUrl: '', url})
+  )
+  try {
+    const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+    const local = await cms.prepareUpload('a.jpg')
+    expect(local.headers).toEqual({'x-alinea-dev-key': 'test-api-key'})
+    url = 'https://bucket.example.com/a.jpg?signature=1'
+    const remote = await cms.prepareUpload('a.jpg')
+    expect(remote.headers).toBeUndefined()
+  } finally {
+    nextMocks.devHandlerUrl = undefined
+    handlerFetch = defaultFetch
+  }
+})

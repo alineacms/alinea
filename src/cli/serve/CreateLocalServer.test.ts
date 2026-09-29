@@ -81,26 +81,47 @@ test('serves MCP only on its own path', async () => {
   test.is(proxied.status, 404)
 })
 
+function upload(
+  env: {handle(request: Request): Promise<Response>},
+  file: string,
+  headers: Record<string, string> = {'x-alinea-dev-key': 'dev'},
+  path = '/admin'
+) {
+  return env.handle(
+    new Request(
+      `http://localhost:4500${path}?/upload&file=${encodeURIComponent(file)}`,
+      {method: 'POST', headers, body: 'file'}
+    )
+  )
+}
+
 test('uploads only into a media dir', async () => {
   await using env = await setup()
-  function upload(file: string) {
-    return env.handle(
-      new Request(
-        `http://localhost:4500/admin?/upload&file=${encodeURIComponent(file)}`,
-        {method: 'POST', body: 'file'}
-      )
-    )
-  }
   for (const file of ['../escape.txt', 'public/media/../../x.txt', 'cms.ts']) {
-    const response = await upload(file)
+    const response = await upload(env, file)
     test.is(response.status, 400)
   }
   test.not.ok(existsSync(join(env.rootDir, '..', 'escape.txt')))
   test.not.ok(existsSync(join(env.rootDir, 'cms.ts')))
-  const ok = await upload('public/media/..photo.jpg')
+  const ok = await upload(env, 'public/media/..photo.jpg')
   test.is(ok.status, 200)
   test.is(
     await readFile(join(env.rootDir, 'public/media/..photo.jpg'), 'utf8'),
     'file'
   )
+})
+
+test('uploads come from a browser on this host or carry the dev key', async () => {
+  await using env = await setup()
+  const file = 'public/media/photo.jpg'
+  // A LAN client through the Next dev rewrite sends neither
+  test.is((await upload(env, file, {})).status, 403)
+  test.is((await upload(env, file, {'x-alinea-dev-key': 'nope'})).status, 403)
+  const lan = {origin: 'http://192.168.1.2:3000'}
+  test.is((await upload(env, file, lan)).status, 403)
+  // The dashboard served by the dev server, and by Next through its rewrite
+  const direct = {origin: 'http://localhost:4500'}
+  test.is((await upload(env, file, direct, '/')).status, 200)
+  const next = {origin: 'http://localhost:3000'}
+  test.is((await upload(env, file, next)).status, 200)
 })

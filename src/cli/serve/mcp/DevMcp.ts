@@ -13,6 +13,8 @@ export interface DevMcpOptions {
   db: LocalStore
   rootDir: string
   user: User
+  /** The dev server's key, the upload endpoint requires it without an Origin */
+  apiKey: string
   /** The dev server's api handler, writes go through it like the dashboard's */
   handleApi(request: Request): Promise<Response>
 }
@@ -21,7 +23,7 @@ export interface DevMcpOptions {
 export function createDevMcp(
   options: DevMcpOptions
 ): (request: Request) => Promise<Response> {
-  const {config, db, rootDir, user, handleApi} = options
+  const {config, db, rootDir, user, apiKey, handleApi} = options
   return async function handleMcp(request) {
     const rejected = rejectRequest(request)
     if (rejected) return rejected
@@ -36,7 +38,8 @@ export function createDevMcp(
       config,
       db,
       handle: handleApi,
-      handlerUrl: new URL('/api', request.url).href
+      handlerUrl: new URL('/api', request.url).href,
+      apiKey
     })
     const server = new McpServer({
       name: 'alinea',

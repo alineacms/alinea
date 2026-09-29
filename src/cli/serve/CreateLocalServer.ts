@@ -1,6 +1,7 @@
 import type {Handler} from '#/backend/Handler.js'
 import {router} from '#/backend/router/Router.js'
 import type {CMS} from '#/core/CMS.js'
+import {developmentKeyHeader} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import {Config} from '#/core/Config.js'
 import {HttpError} from '#/core/HttpError.js'
@@ -71,6 +72,7 @@ export function createLocalServer(
           db,
           rootDir,
           user,
+          apiKey,
           handleApi: devHandler
         })
       : undefined
@@ -364,7 +366,8 @@ export function createLocalServer(
 
   function isAllowedUploadOrigin(request: Request) {
     const origin = request.headers.get('origin')
-    if (!origin) return true
+    // Browsers send an Origin, other callers (MCP uploads) the dev key
+    if (!origin) return request.headers.get(developmentKeyHeader) === apiKey
     try {
       return new URL(origin).hostname === new URL(request.url).hostname
     } catch {

@@ -171,6 +171,7 @@ async function setup() {
     db,
     rootDir,
     user,
+    apiKey: 'dev',
     handleApi
   })
   // Writes the way the dashboard does, for comparisons
@@ -178,7 +179,8 @@ async function setup() {
     config: cms.config,
     db,
     handle: handleApi,
-    handlerUrl: `${origin}/api`
+    handlerUrl: `${origin}/api`,
+    apiKey: 'dev'
   })
   let id = 0
   async function call(
@@ -539,6 +541,8 @@ test('upload_file creates a media entry', async () => {
   globalThis.fetch = Object.assign(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = new URL(String(input))
+      // The dev server's upload endpoint requires the key without an Origin
+      test.is(new Headers(init?.headers).get('x-alinea-dev-key'), 'dev')
       const file = url.searchParams.get('file')!
       const location = join(env.rootDir, file)
       await mkdir(dirname(location), {recursive: true})

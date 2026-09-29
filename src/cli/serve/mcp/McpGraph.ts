@@ -1,6 +1,10 @@
 import {HandleAction} from '#/backend/HandleAction.js'
 import type {Config} from '#/core/Config.js'
-import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
+import {
+  type UploadMetadata,
+  type UploadResponse,
+  withDevelopmentKey
+} from '#/core/Connection.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
@@ -21,6 +25,8 @@ export interface McpGraphOptions {
   handle(request: Request): Promise<Response>
   /** The url the api handler is served on */
   handlerUrl: string
+  /** The dev server's key, its upload endpoint requires it */
+  apiKey: string
 }
 
 /**
@@ -52,14 +58,15 @@ export class McpGraph extends WriteableGraph {
     return this.#post(HandleAction.Mutate, mutations) as Promise<{sha: string}>
   }
 
-  prepareUpload(
+  async prepareUpload(
     file: string,
     metadata?: UploadMetadata
   ): Promise<UploadResponse> {
-    return this.#post(HandleAction.Upload, {
+    const upload = (await this.#post(HandleAction.Upload, {
       filename: file,
       ...metadata
-    }) as Promise<UploadResponse>
+    })) as UploadResponse
+    return withDevelopmentKey(upload, this.#options.apiKey)
   }
 
   async #post(action: HandleAction, body: unknown): Promise<unknown> {

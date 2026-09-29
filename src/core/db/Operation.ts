@@ -245,6 +245,7 @@ export class UploadOperation extends Operation {
           )
         : undefined
       await sendUpload(info.url, info.method ?? 'POST', contentType, body, {
+        headers: info.headers,
         onProgress: query.onProgress
       })
       const hash = await createFileHash(new Uint8Array(body))
@@ -285,6 +286,7 @@ export class UploadOperation extends Operation {
 }
 
 interface UploadFileOptions {
+  headers?: Record<string, string>
   onProgress?(progress: UploadProgress): void
 }
 
@@ -295,14 +297,20 @@ async function sendUpload(
   body: ArrayBuffer | Uint8Array,
   options: UploadFileOptions
 ) {
-  const {onProgress} = options
+  const {headers = {}, onProgress} = options
   if (onProgress && typeof XMLHttpRequest !== 'undefined') {
-    await uploadFileWithProgress(url, method, contentType, body, onProgress)
+    await uploadFileWithProgress(
+      url,
+      method,
+      {...headers, 'Content-Type': contentType},
+      body,
+      onProgress
+    )
     return
   }
   await fetch(url, {
     method,
-    headers: {'Content-Type': contentType},
+    headers: {...headers, 'Content-Type': contentType},
     body: body as BodyInit
   }).then(result => {
     if (!result.ok)
@@ -313,14 +321,15 @@ async function sendUpload(
 function uploadFileWithProgress(
   url: string,
   method: string,
-  contentType: string,
+  headers: Record<string, string>,
   body: ArrayBuffer | Uint8Array,
   onProgress: (progress: UploadProgress) => void
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest()
     request.open(method, url)
-    request.setRequestHeader('Content-Type', contentType)
+    for (const [name, value] of Object.entries(headers))
+      request.setRequestHeader(name, value)
     request.upload.addEventListener('progress', event => {
       onProgress({
         loaded: event.loaded,
