@@ -143,7 +143,7 @@
               "_type": "link",
               "_id": "o4XauEOqb4gRCdGGpisfp",
               "_link": "url",
-              "href": "https://alineacms.com/demo",
+              "href": "/demo",
               "target": "_blank"
             }
           ]
@@ -399,7 +399,7 @@
       "link": {
         "_id": "ETNJb5lOS8bZ0EZmTcOuh",
         "_type": "entry",
-        "_entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
+        "_entry": "docs",
         "description": "Read the docs"
       }
     }

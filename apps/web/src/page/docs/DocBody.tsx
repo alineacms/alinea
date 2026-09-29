@@ -48,12 +48,31 @@ function isH2(node: DocBodyNode) {
   return node._type === 'heading' && 'level' in node && node.level === 2
 }
 
+function headingText(node: DocBodyNode) {
+  return textContent('content' in node ? node.content : undefined)
+}
+
+/**
+ * Anchors every heading to a unique slug of its text, the "On this page"
+ * navigation links to these
+ */
+export function withHeadingAnchors(body: DocBodyDoc): DocBodyDoc {
+  const seen = new Map<string, number>()
+  return body.map(node => {
+    if (node._type !== 'heading') return node
+    const slug = slugify(headingText(node))
+    const count = (seen.get(slug) ?? 0) + 1
+    seen.set(slug, count)
+    return {...node, _anchor: count > 1 ? `${slug}-${count}` : slug}
+  })
+}
+
 function headingOf(node: DocBodyNode): DocHeading {
-  const text = textContent('content' in node ? node.content : undefined)
+  const text = headingText(node)
   const plain = text.replaceAll('`', '').trim()
   const match = plain.match(stepPattern)
   return {
-    id: slugify(text),
+    id: '_anchor' in node ? String(node._anchor) : slugify(text),
     title: match ? match[2] : plain,
     step: match ? Number(match[1]) : undefined
   }

@@ -1583,7 +1583,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": ": `npm install alinea` and `npx alinea init` create the config, the API route and a first entry, and rewrite the `dev` and `build` scripts. `init` leaves the production URL at `https://example.com`; until you change it, the production server checks that URL for new content on every query, which made each query about 60 ms slower in our first run."
+                  "text": ": `npm install alinea@preview` and `npx alinea@preview init` create the config, the API route and a first entry, and rewrite the `dev` and `build` scripts. `init` leaves the production URL at `https://example.com`; until you change it, the production server checks that URL for new content on every query, which made each query about 60 ms slower in our first run."
                 }
               ]
             }

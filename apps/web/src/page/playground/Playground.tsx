@@ -195,6 +195,27 @@ function SourceEditor({
 
 const ts = trigger<typeof typescript>()
 
+function codeFromUrl() {
+  const [code] = outcome(() =>
+    lzstring.decompressFromEncodedURIComponent(
+      location.hash.slice('#code/'.length)
+    )
+  )
+  return code
+}
+
+// Anyone can craft a link with code, which runs with access to this site.
+// Only our own pages may embed code that runs right away.
+function isEmbeddedBySite() {
+  try {
+    return (
+      window.parent !== window && parent.location.origin === location.origin
+    )
+  } catch {
+    return false
+  }
+}
+
 type PlaygroundView = 'both' | 'preview' | 'source'
 
 export interface PlaygroundProps {
@@ -211,11 +232,7 @@ export default function Playground({declarations, exported}: PlaygroundProps) {
   })
   const persistenceId = '@alinea/web/playground'
   const [code, storeCode] = useState<string>(() => {
-    const [fromUrl] = outcome(() =>
-      lzstring.decompressFromEncodedURIComponent(
-        location.hash.slice('#code/'.length)
-      )
-    )
+    const fromUrl = codeFromUrl()
     if (fromUrl) return fromUrl
     const [fromStorage] = outcome(() =>
       window.localStorage.getItem(persistenceId)
@@ -223,6 +240,9 @@ export default function Playground({declarations, exported}: PlaygroundProps) {
     if (fromStorage) return fromStorage
     return defaultValue
   })
+  const [canRun, setCanRun] = useState(
+    () => !codeFromUrl() || isEmbeddedBySite()
+  )
   function setCode(code: string) {
     outcome(() => window.localStorage.setItem(persistenceId, code))
     storeCode(code)
@@ -283,11 +303,12 @@ export default function Playground({declarations, exported}: PlaygroundProps) {
   }
   function handleReset() {
     setCode(defaultValue)
+    setCanRun(true)
     window.location.hash = ''
   }
   useEffect(() => {
-    compile(code)
-  }, [code])
+    if (canRun) compile(code)
+  }, [code, canRun])
   if (state.error) console.error(state.error)
   return (
     <>
@@ -314,7 +335,24 @@ export default function Playground({declarations, exported}: PlaygroundProps) {
               />
             )}
 
-            {view !== 'source' && (
+            {view !== 'source' && !canRun && (
+              <div className={styles.root.previewPane()}>
+                <div className={styles.root.consent()}>
+                  <p>
+                    This link contains code that runs in your browser. Review it
+                    in the editor before you run it.
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.root.consent.button()}
+                    onClick={() => setCanRun(true)}
+                  >
+                    Run code
+                  </button>
+                </div>
+              </div>
+            )}
+            {view !== 'source' && canRun && (
               <Suspense fallback={<Loader absolute />}>
                 <PreviewProvider demo={demo}>
                   <div className={styles.root.previewPane()}>

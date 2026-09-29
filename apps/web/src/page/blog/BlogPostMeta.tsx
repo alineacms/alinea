@@ -33,9 +33,9 @@ export function BlogPostMeta({
           {label}
         </Label>
       )}
-      <time dateTime={publishDate ?? undefined}>
-        {formatPublishDate(publishDate)}
-      </time>
+      {publishDate && (
+        <time dateTime={publishDate}>{formatPublishDate(publishDate)}</time>
+      )}
       {readingTime !== undefined && (
         <>
           <span aria-hidden="true">·</span>

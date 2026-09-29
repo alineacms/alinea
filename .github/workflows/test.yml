@@ -32,6 +32,9 @@ jobs:
       - run: bun spec
       - run: bun lint
       - run: bun format:check
+      - run: bun run build
+      - name: Type check the website
+        run: bunx next typegen apps/web && bunx tsc -p apps/web --noEmit
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}

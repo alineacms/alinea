@@ -22,10 +22,7 @@ export async function GET() {
       select: {id: Entry.id, url: Entry.url}
     })
   ])
-  // Agents read this file raw, so internal links need absolute urls
-  const entryMap = new Map(
-    docs.map(doc => [doc.id, {url: `${siteUrl}${doc.url}`}])
-  )
+  const entryMap = new Map(docs.map(doc => [doc.id, {url: doc.url}]))
   // The copy prompt block points to this file, leave it out of it
   const body = guide.body.filter(node => node._type !== 'CopyPromptBlock')
   const markdown = [

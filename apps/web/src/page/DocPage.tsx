@@ -11,6 +11,7 @@ import {
   DocBody,
   DocLead,
   docHeadings,
+  withHeadingAnchors,
   hasCatalog,
   splitLead
 } from '@/page/docs/DocBody'
@@ -92,7 +93,7 @@ export default async function DocPage({params}: DocPageProps) {
       ? [{id: firstGroup.id, title: firstGroup.title, url: firstGroup.url}]
       : []
     : doc.parents.filter(parent => parent.id !== tree.root.id)
-  const {lead, rest} = splitLead(doc.body)
+  const {lead, rest} = splitLead(withHeadingAnchors(doc.body))
   const headings = docHeadings(rest)
   // A catalog lists the children of the page already, and needs the room
   const wide = hasCatalog(rest)

@@ -34,14 +34,13 @@ export async function findBlogPosts() {
   )
 }
 
-export function formatPublishDate(publishDate: string | null | undefined) {
-  const date = publishDate ? new Date(publishDate) : new Date()
+export function formatPublishDate(publishDate: string) {
   return new Intl.DateTimeFormat('en-GB', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     timeZone: 'UTC'
-  }).format(date)
+  }).format(new Date(publishDate))
 }
 
 function countWords(value: unknown): number {

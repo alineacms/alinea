@@ -38,11 +38,5 @@ next-env.d.ts
 
 /public/admin*
 /tutorial-sites/*/public/admin*
-/src/page/playground/alinea.d.ts.txt
 .env
 .cache/
-
-# Keep the alinea CLI shim, tracked despite the root `bin` rule
-/bin/
-!/bin/
-!/bin/alinea

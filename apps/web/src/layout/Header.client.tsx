@@ -3,14 +3,15 @@
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
 import {isDocsPath} from '@/utils/docs'
 import styler from '@alinea/styler'
-import {HStack, VStack} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import {IcRoundSearch} from '@/icons'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 import {
+  type ButtonHTMLAttributes,
+  createContext,
   Fragment,
-  HTMLAttributes,
-  PropsWithChildren,
+  type PropsWithChildren,
   Suspense,
   memo,
   use,
@@ -34,24 +35,73 @@ export function HeaderRoot({children}: PropsWithChildren) {
   )
 }
 
-export function MobileMenu({
-  children,
-  ...props
-}: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
+const MobileMenuState = createContext<
+  [open: boolean, setOpen: (open: boolean) => void]
+>([false, () => {}])
+
+export function MobileMenuProvider({children}: PropsWithChildren) {
+  const state = useState(false)
+  const [, setOpen] = state
   const pathname = usePathname()
-  useEffect(() => {
-    const checkbox = document.getElementById('mobilemenu')! as HTMLInputElement
-    checkbox.checked = false
-  }, [pathname])
-  return <div {...props}>{children}</div>
+  useEffect(() => setOpen(false), [pathname, setOpen])
+  return (
+    <MobileMenuState.Provider value={state}>
+      {children}
+    </MobileMenuState.Provider>
+  )
 }
 
-const resultsCache = new Map<string, any>()
+export function MobileMenu({children}: PropsWithChildren) {
+  const [open, setOpen] = use(MobileMenuState)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    // The menu covers the page, move focus into it and back once it closes
+    const previous = document.activeElement
+    ref.current?.querySelector<HTMLElement>('[aria-controls]')?.focus()
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => {
+      window.removeEventListener('keydown', handleEsc)
+      if (previous instanceof HTMLElement) previous.focus()
+    }
+  }, [open, setOpen])
+  return (
+    <div ref={ref} id="mobilemenu" className={styles.mobilemenu({open})}>
+      {children}
+    </div>
+  )
+}
+
+export function MobileMenuButton(
+  props: ButtonHTMLAttributes<HTMLButtonElement>
+) {
+  const [open, setOpen] = use(MobileMenuState)
+  return (
+    <button
+      type="button"
+      aria-label="Menu"
+      aria-expanded={open}
+      aria-controls="mobilemenu"
+      onClick={() => setOpen(!open)}
+      {...props}
+    />
+  )
+}
+
+const resultsCache = new Map<string, Promise<Array<SearchResult>>>()
 function searchResults(searchTerm: string): Promise<Array<SearchResult>> {
-  if (resultsCache.has(searchTerm)) return resultsCache.get(searchTerm)
-  const res = fetch(`/api/search?query=${searchTerm}`)
-    .then(res => res.json())
-    .catch(() => [])
+  const cached = resultsCache.get(searchTerm)
+  if (cached) return cached
+  const res = fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`)
+    .then(res => (res.ok ? res.json() : Promise.reject(res)))
+    .catch(() => {
+      // Try again next time
+      resultsCache.delete(searchTerm)
+      return []
+    })
   resultsCache.set(searchTerm, res)
   return res
 }
@@ -103,19 +153,13 @@ const SearchResults = memo(function SearchResults({
     return <p className={styles.results()}>No results</p>
   return (
     <ul ref={ref} className={styles.results()}>
-      {results.map((result: SearchResult) => {
+      {results.map(result => {
         return (
           <li key={result.url} className={styles.results.row()}>
-            <Link href={result.url}>
-              <VStack gap={6}>
-                <header>
-                  {result.parents && (
-                    <Breadcrumbs flat parents={result.parents} />
-                  )}
-                  <h3>{result.title}</h3>
-                </header>
-                <Snippet snippet={result.snippet} />
-              </VStack>
+            <Breadcrumbs flat parents={result.parents} />
+            <Link href={result.url} className={styles.results.row.link()}>
+              <h3>{result.title}</h3>
+              <Snippet snippet={result.snippet} />
             </Link>
           </li>
         )
@@ -140,8 +184,21 @@ function SearchModal({onClose}: SearchModalProps) {
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
   }, [onClose])
+  // Return focus to where it was once closed, read while rendering since
+  // the input takes focus before effects run
+  const [opener] = useState(() => document.activeElement)
+  useEffect(() => {
+    return () => {
+      if (opener instanceof HTMLElement) opener.focus()
+    }
+  }, [opener])
   return createPortal(
-    <div className={styles.searchmodal()}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search"
+      className={styles.searchmodal()}
+    >
       <div className={styles.searchmodal.backdrop()} onClick={onClose} />
       <div className={styles.searchmodal.container()}>
         <HStack

@@ -20,8 +20,8 @@
       "_target": "_self",
       "label": "Try the demo"
     },
-    "command": "npx alinea init",
-    "prompt": "Read https://alineacms.com/start.md and help me add Alinea to my Next.js project"
+    "command": "npx alinea@preview init",
+    "prompt": "Read {site}/start.md and help me add Alinea to my Next.js project"
   },
   "sections": [
     {
@@ -785,7 +785,7 @@
         "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
         "label": "Get started"
       },
-      "command": "npx alinea init",
+      "command": "npx alinea@preview init",
       "background": "gradient",
       "anchor": ""
     }

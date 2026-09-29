@@ -16,17 +16,14 @@
   "dependencies": {
     "@alinea/styler": "^1.0.3",
     "@monaco-editor/react": "^4.4.5",
-    "@vercel/postgres": "^0.10.0",
     "alinea": "../..",
-    "jotai": "^2.12.5",
     "lz-string": "^1.4.4",
     "next": "^16.1.6",
-    "p-lazy": "^5.0.0",
+    "p-lazy": "^4.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-string-replace": "^1.0.0",
     "remark": "^14.0.2",
-    "remark-html": "^15.0.1",
     "shiki": "^0.10.1",
     "use-clipboard-copy": "^0.2.0"
   },

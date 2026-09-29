@@ -5,7 +5,13 @@ import {cms} from '@/cms'
 import {IcRoundClose, IcRoundHamburger, IcRoundSearch} from '@/icons'
 import {Home} from '../schema/Home'
 import {Logo} from './branding/Logo'
-import {HeaderRoot, MobileMenu, SearchButton} from './Header.client'
+import {
+  HeaderRoot,
+  MobileMenu,
+  MobileMenuButton,
+  MobileMenuProvider,
+  SearchButton
+} from './Header.client'
 import css from './Header.module.scss'
 import {Link} from './nav/Link'
 import {NavTree} from './nav/NavTree'
@@ -25,13 +31,8 @@ export async function Header({badge}: HeaderProps) {
     select: Home.links
   })
   return (
-    <>
-      <input
-        type="checkbox"
-        id="mobilemenu"
-        className={styles.mobilemenu.check()}
-      />
-      <MobileMenu className={styles.mobilemenu()}>
+    <MobileMenuProvider>
+      <MobileMenu>
         <div className={styles.mobilemenu.container()}>
           <div className={styles.mobilemenu.top()}>
             <Menu links={links} badge={badge} />
@@ -44,7 +45,7 @@ export async function Header({badge}: HeaderProps) {
       <HeaderRoot>
         <Menu links={links} badge={badge} />
       </HeaderRoot>
-    </>
+    </MobileMenuProvider>
   )
 }
 
@@ -126,14 +127,10 @@ function Menu({links, badge}: MenuProps) {
         <Link href="/docs/quickstart" className={styles.menu.cta()}>
           Get started
         </Link>
-        <label
-          htmlFor="mobilemenu"
-          className={styles.menu.mobileButton()}
-          aria-label="Toggle menu"
-        >
+        <MobileMenuButton className={styles.menu.mobileButton()}>
           <IcRoundHamburger className={styles.menu.mobileButton.hamburger()} />
           <IcRoundClose className={styles.menu.mobileButton.close()} />
-        </label>
+        </MobileMenuButton>
       </div>
     </div>
   )

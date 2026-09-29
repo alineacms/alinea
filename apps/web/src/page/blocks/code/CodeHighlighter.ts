@@ -1,8 +1,16 @@
 import PLazy from 'p-lazy'
+import type {ILanguageRegistration} from 'shiki'
 import languageCss from 'shiki/languages/css.tmLanguage.json'
-import languageShellScript from './ShikiBashLanguage'
+import languageShellScript from 'shiki/languages/shellscript.tmLanguage.json'
+import languageTsx from 'shiki/languages/tsx.tmLanguage.json'
 import {theme} from './ShikiTheme'
-import languageTsx from './ShikiTsxLanguage'
+
+type Grammar = NonNullable<ILanguageRegistration['grammar']>
+
+// The grammar files are typed as plain JSON
+function grammar(json: object) {
+  return json as Grammar
+}
 
 export const codeHighlighter = PLazy.from(async () => {
   const {getHighlighter} = await import('shiki')
@@ -19,13 +27,13 @@ export const codeHighlighter = PLazy.from(async () => {
       }
     },
     langs: [
-      {id: 'tsx', scopeName: 'source.tsx', grammar: languageTsx},
+      {id: 'tsx', scopeName: 'source.tsx', grammar: grammar(languageTsx)},
       {
         id: 'shellscript',
         scopeName: 'source.shell',
-        grammar: languageShellScript
+        grammar: grammar(languageShellScript)
       },
-      {id: 'css', scopeName: 'source.css', grammar: languageCss}
+      {id: 'css', scopeName: 'source.css', grammar: grammar(languageCss)}
     ]
   })
 })

@@ -16,7 +16,8 @@ export async function GET(request: Request) {
       parents: Query.parents({
         select: {
           id: Query.id,
-          title: Query.title
+          title: Query.title,
+          url: Query.url
         }
       })
     }
