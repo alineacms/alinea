@@ -1,5 +1,5 @@
 import {Entry} from 'alinea/core/Entry'
-import {cms} from '@/cms'
+import {cms, siteUrl} from '@/cms'
 import {renderNodes} from '@/page/docs/DocMarkdown'
 import {Doc} from '@/schema/Doc'
 
@@ -10,8 +10,6 @@ export const dynamic = 'force-static'
 // The setup guide coding agents are pointed to by the "Copy prompt" boxes.
 // Its content is the "Set up with an AI agent" doc, served as Markdown.
 const guideUrl = '/docs/ai-setup'
-
-const siteUrl = 'https://alineacms.com'
 
 export async function GET() {
   const [guide, docs] = await Promise.all([

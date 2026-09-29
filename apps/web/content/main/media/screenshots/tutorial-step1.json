@@ -1,0 +1,20 @@
+{
+  "_id": "3JzvYDHEfnrRYoaiqZCSIJikZah",
+  "_type": "MediaFile",
+  "_index": "aB",
+  "title": "tutorial-step1",
+  "location": "/tutorial-step1.3JzvYDwrqhIVNqRvJh2E4MIn4Ot.webp",
+  "extension": ".webp",
+  "size": 52128,
+  "hash": "459ae241",
+  "alt": "The landing page entry in the dashboard, with its title previewed beside the form",
+  "width": 2560,
+  "height": 1600,
+  "thumbHash": "/vcBBIDlRCCVhDhRg2kihjDCHw==",
+  "averageColor": "#f8fcfe",
+  "preview": "data:image/webp;base64,UklGRg4DAABXRUJQVlA4IAIDAAAQEwCdASqgAGQAPm0wlUkkIqGhI1JKCIANiWkA1UisJS/0iONlkaTJpDeAAE61lF9l8UiT1RIB2e9WlApQbABB8FgMb0p/qRG0/hJPivmPVTLU2VcKl1VJcqjiZ/Gfl51KOXIYjDhkMPm/rz08HiO2nbWbV+v+fbpZBayumaN1Xv3SZHhgH4gXThDBmZ1ohYlzuxWt0vRaxR7JH7CbdJoiAAD+/tjJs8Nm/KbvvHd7MHJ8oPfvP+grTQ+9YyySPfZBiuPE2PFNwd28MdHruqAwPAXL7BLv4YjvaAA2MXW13gptkPFP5os9h9yR4OPXytJ/VjJ77M/1gPfy+3reiN/cm7Az0AGwm6OHhyV/5jrjok07oOH4MiOc1B6CqXfCbtJzN4ZpGFwtkySqrW4Fg6DwK9it3M8jq65qTpH3KoJp5bHvQvU417paHvEZslO67JLWeHHVVN37qwUKZ0VPnWmPx8/Pm/9FhlohR3tupTNWA0NOf758K9G+2IPdAo0BTbK3OoRiEpa5x+WNBFCoBsZFbd4zux/IdXncGwTRBPFAot6YtdqaTU/7jjrn3DBfXe7ZPyffJFdlxeGkn/qNqdrdLlgG90dROe71x+SU677G+wkgLX/X05e5TWcL3OubwmV14s8hGbcGzVvpINbXq0JrjKq2Wk0JGUrowu9iLaXV0zXdjOMi7fUeg/k4gaweHY6Wfx+GZJTr2heMIzWi4jNIWx5Ou2GYSC0lYPF5eR/yQ59M6oj/eRtnD+7PiRtXziLA4iXecwP8Qfa4FGPfz01isGck+xHF8356Da/bBJd01BbWeZuvfUB+M332oqSEAjB8vnABEpDv0akAAAB6/hAi3ek4T+wc9uplJC2D5TOyG78aTQu6lT8JQAGOw2828sIAVM3BmQkDzQjgLEladbRiiYt0CJkDBMNgQnr6R6d0vZ/C7j7bVbcMYMHNfn4XFm+Q3Ur024+h/6JFT8HW9wWGb6sHw58OwFNLg9XVJV+qNCa//kbcYK64i7AO8BLKuQAAAA==",
+  "focus": {
+    "x": 0.5,
+    "y": 0.5
+  }
+}

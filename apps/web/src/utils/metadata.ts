@@ -1,10 +1,9 @@
 import type {ImageLink} from 'alinea'
 import type {Metadata} from 'next'
-import {cms} from '@/cms'
+import {cms, siteUrl} from '@/cms'
 import {Home} from '@/schema/Home'
 
-/** Canonical origin of the website, also on preview and local deploys */
-export const siteUrl = 'https://alineacms.com'
+export {siteUrl}
 export const siteName = 'Alinea CMS'
 
 const defaultImage = {src: '/opengraph-image.png', width: 1200, height: 630}

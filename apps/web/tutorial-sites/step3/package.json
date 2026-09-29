@@ -2,8 +2,8 @@
   "name": "tutorial-step3",
   "private": true,
   "scripts": {
-    "dev": "../../node_modules/.bin/alinea dev -- ../../node_modules/.bin/next dev -p 3103",
-    "build": "../../node_modules/.bin/alinea build -- ../../node_modules/.bin/next build",
-    "start": "../../node_modules/.bin/next start -p 3103"
+    "dev": "node ../../../../dist/cli.js dev --port 4603 -- next dev -p 3103",
+    "build": "node ../../../../dist/cli.js build -- next build",
+    "start": "next start -p 3103"
   }
 }

@@ -17,26 +17,36 @@
     },
     {
       "_type": "ImageBlock",
-      "_id": "3AqkfUsy6IOg8JFgEvl6Ieq0Odq",
+      "_id": "3Jzvk5jBCoonUAlxKLARM38Upmp",
       "image": {
-        "_id": "3Aqkgs689Me1soJDuKUsXvMQKgT",
+        "_id": "3Jzvk4FUeTAIXd9IljMvcta6kRN",
         "_type": "image",
-        "_entry": "3AqkgwgLWo4ia71hyLTYtQy4CE4"
+        "_entry": "3JzvYOUy9dWvKZrCTWMB7lshyNP"
+      },
+      "darkImage": {
+        "_id": "3Jzvjz8vLf90BwLY43jbaA8KKpc",
+        "_type": "image",
+        "_entry": "3JzvYIlnbzNbbPL89TovLf6erps"
       }
     },
     {
       "_type": "ImageBlock",
-      "_id": "3AqkhM8RYr6sTedxlGDH11syups",
+      "_id": "3Jzvk31y8Dt0EQhJfpgf2nfELhH",
       "image": {
-        "_id": "3Aqki9W9TGjKGAT97r4ac9ylqYK",
+        "_id": "3Jzvk4txhrQQf5oOggArtjz6g1d",
         "_type": "image",
-        "_entry": "3Aqki7ijhngO2I1acqFuBVtIVUr"
+        "_entry": "3JzvYRjphT8PP2nskEYe48LT4n8"
+      },
+      "darkImage": {
+        "_id": "3Jzvk46wePE9llN3VMae1Y2upSP",
+        "_type": "image",
+        "_entry": "3JzvYW62cam2KISOil0tlvhYIxI"
       }
     },
     {
       "_type": "CodeBlock",
       "_id": "3AONyq914KorM1VYG7dLQ7qNeaP",
-      "code": "app/\n├ page.tsx\n├ layout.tsx\n├ blog/page.tsx\n╰ blog/[slug]/page.tsx\n\nentries/\n├ landing/\n│ ├ LandingPage.tsx\n│ ╰ LandingPage.schema.tsx\n├ blog/\n│ ├ Blog.tsx\n│ ╰ Blog.schema.tsx\n├ post/\n│ ├ Post.tsx\n│ ╰ Post.schema.tsx\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
+      "code": "app/\n├ (alinea)/api/cms/route.ts\n├ page.tsx\n├ layout.tsx\n├ globals.css\n├ blog/page.tsx\n╰ blog/[slug]/page.tsx\n\nentries/\n├ landing/\n│ ├ LandingPage.tsx\n│ ╰ LandingPage.schema.tsx\n├ blog/\n│ ├ Blog.tsx\n│ ╰ Blog.schema.tsx\n├ post/\n│ ├ Post.tsx\n│ ╰ Post.schema.tsx\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
       "fileName": "project structure",
       "language": "",
       "compact": false
@@ -123,7 +133,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The post view finds the post by URL, then loads the posts under the blog to link to the previous and next one. `cms.find` returns an array, in content tree order. The metadata helper falls back from the Metadata tab to the excerpt and then to the text of the body."
+          "text": "The post view finds the post by URL, then loads the posts under the blog to link to the previous and next one. `cms.find` returns an array, in content tree order. The metadata helper falls back from the SEO tab to the excerpt and then to the text of the body."
         }
       ]
     },

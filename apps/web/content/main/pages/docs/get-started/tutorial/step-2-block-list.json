@@ -33,11 +33,16 @@
     },
     {
       "_type": "ImageBlock",
-      "_id": "3Ao2F2GYJfBJFQr2gXZCRGdPAvu",
+      "_id": "3JzvjzS3CGASkXjIfYS8rE9ulse",
       "image": {
-        "_id": "3Ao2FQHjbCXFc3fYZTuIzKKFk0v",
+        "_id": "3Jzvk4toWMGsQ5YIRH9HVp40OYo",
         "_type": "image",
-        "_entry": "3Ao2DMyEA0Vp4FSWAdEGSiO87Zr"
+        "_entry": "3JzvYHaAfg1DNMCNMMKTG2JLq5V"
+      },
+      "darkImage": {
+        "_id": "3Jzvk24MH0UElmu57UtPr8W4YYI",
+        "_type": "image",
+        "_entry": "3JzvYBlVTI9x0SXHwpQevBKHy14"
       }
     },
     {
@@ -52,7 +57,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONynxdbatHNaFXlDRzzKGpfAh",
-      "code": "app/\n├ page.tsx\n╰ layout.tsx\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\nblocks/\n├ text/\n│ ├ TextBlock.tsx\n│ ╰ TextBlock.schema.tsx\n├ image/\n│ ├ ImageBlock.tsx\n│ ╰ ImageBlock.schema.tsx\n╰ weather/\n  ├ WeatherBlock.tsx\n  ╰ WeatherBlock.schema.tsx\n\ncms.tsx",
+      "code": "app/\n├ (alinea)/api/cms/route.ts\n├ page.tsx\n├ layout.tsx\n╰ globals.css\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\nblocks/\n├ text/\n│ ├ TextBlock.tsx\n│ ╰ TextBlock.schema.tsx\n├ image/\n│ ├ ImageBlock.tsx\n│ ╰ ImageBlock.schema.tsx\n╰ weather/\n  ├ WeatherBlock.tsx\n  ╰ WeatherBlock.schema.tsx\n\ncms.tsx",
       "fileName": "project structure",
       "language": "",
       "compact": false
@@ -293,7 +298,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Render each block by checking its `_type`: TypeScript narrows `block` to the matching block type inside each branch. `generateMetadata` now falls back to the text of the first text block when the Metadata tab has no description. `plainText` walks the rich text nodes to collect the text."
+          "text": "Render each block by checking its `_type`: TypeScript narrows `block` to the matching block type inside each branch. `generateMetadata` now falls back to the text of the first text block when the SEO tab has no description. `plainText` walks the rich text nodes to collect the text."
         }
       ]
     },
@@ -372,7 +377,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Without a description in the Metadata tab, the page description is the text of the first text block."
+                      "text": "Without a description in the SEO tab, the page description is the text of the first text block."
                     }
                   ]
                 }

@@ -4,7 +4,7 @@
   "_index": "a1",
   "_seeded": "/blog.json",
   "title": "Blog",
-  "intro": "Create posts under this page to publish them on /blog/[slug].",
+  "intro": "Latest posts",
   "metadata": {
     "title": "",
     "description": "",

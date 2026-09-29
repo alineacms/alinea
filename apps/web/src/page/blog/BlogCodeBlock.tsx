@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {codeHighlighter} from '@/page/blocks/code/CodeHighlighter'
+import {codeHighlighter, codeLanguage} from '@/page/blocks/code/CodeHighlighter'
 import type {CodeBlock} from '@/schema/blocks/CodeBlock'
 import css from './BlogCodeBlock.module.scss'
 
@@ -14,8 +14,9 @@ export async function BlogCodeBlock({
 }: Infer<typeof CodeBlock>) {
   if (!code) return null
   const {codeToHtml} = await codeHighlighter
-  const isShell = language === 'shellscript'
-  const html = codeToHtml(code, {lang: isShell ? 'shellscript' : 'tsx'})
+  const lang = codeLanguage(language)
+  const isShell = lang === 'shellscript'
+  const html = codeToHtml(code, {lang})
   const label = fileName || (isShell ? 'Terminal' : 'Code')
   return (
     <div className={styles.root({compact})}>

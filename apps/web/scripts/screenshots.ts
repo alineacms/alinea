@@ -5,10 +5,16 @@
  *   bun screenshots dashboard-product   capture only the named shots
  *   bun screenshots --scheme light      capture one color scheme
  *   bun screenshots --publish           capture, then upload to the cms media
+ *   bun screenshots --tutorial          capture the tutorial steps instead
  *
  * Expects the website dev server to run (`bun run web:run`). Set
  * SCREENSHOTS_BASE_URL (default http://localhost:3000) and, for --publish,
  * ALINEA_MCP_URL (default http://localhost:4500/mcp).
+ *
+ * Tutorial shots capture the dashboards of the apps in
+ * apps/web/tutorial-sites. The script starts the dev server of each step on
+ * its own port (3101 for step 1, ...) unless it already runs, and stops the
+ * ones it started.
  *
  * Captures land in apps/web/.cache/screenshots as WebP. Publishing uploads
  * them through the alinea dev MCP server into the "Screenshots" folder of the
@@ -25,6 +31,7 @@
  * fails with the name of the shot when the dashboard changed underneath it.
  */
 
+import {spawn, spawnSync} from 'node:child_process'
 import {mkdir, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -49,6 +56,8 @@ interface Shot {
   name: string
   /** Dashboard location, the part after `#` */
   hash: string
+  /** Capture the dashboard of this tutorial step app instead of the demo */
+  tutorialStep?: number
   /** Alt text of the published media entry */
   alt: string
   viewport?: {width: number; height: number}
@@ -222,6 +231,78 @@ const shots: Array<Shot> = [
   }
 ]
 
+/** Waits for the page the preview panel renders */
+function previewText(page: Page, text: string) {
+  return page.frameLocator('iframe').first().getByText(text).first()
+}
+
+const tutorialShots: Array<Shot> = [
+  {
+    name: 'tutorial-step1',
+    tutorialStep: 1,
+    alt: 'The landing page entry in the dashboard, with its title previewed beside the form',
+    hash: '/entry/main/pages/3AOateRQezPAp5Ofli2Qam6X05N',
+    ready: page => page.getByRole('tab', {name: 'Preview'}),
+    async prepare(page) {
+      await openTab(page, 'Preview')
+      await previewText(page, 'Welcome').waitFor()
+    }
+  },
+  {
+    name: 'tutorial-step2',
+    tutorialStep: 2,
+    alt: 'The landing page with a list of text, image and weather blocks, previewed beside the form',
+    hash: '/entry/main/pages/3AObPZG4JKh7YBgJ1aEbonntdos',
+    ready: page => page.getByRole('tab', {name: 'Preview'}),
+    async prepare(page) {
+      await openTab(page, 'Preview')
+      await previewText(page, 'Current weather').waitFor()
+    }
+  },
+  {
+    name: 'tutorial-step3',
+    tutorialStep: 3,
+    alt: 'The Global settings entry in the Settings root, with the header and footer text',
+    hash: '/entry/main/settings/3AOc3TeICwhbYULx3ksrvtdTJ5V',
+    viewport: {width: 1280, height: 560},
+    ready: page => page.getByRole('textbox', {name: 'Footer text'})
+  },
+  {
+    name: 'tutorial-step4-blog',
+    tutorialStep: 4,
+    alt: 'The blog entry in the Pages root, listing the posts created under it',
+    hash: '/entry/main/pages/3AOc3Rq1MN4c18g8oHCVqxa7G2b',
+    // Three posts fill the table, a taller window only adds empty space
+    viewport: {width: 1280, height: 560},
+    ready: page => page.getByText('Content modeling basics').first()
+  },
+  {
+    name: 'tutorial-step4-post',
+    tutorialStep: 4,
+    alt: 'A blog post with its excerpt and body, previewed with links to the previous and next post',
+    hash: '/entry/main/pages/3Aqk3xu6wf9LLWf8BPnDE1l3shx',
+    ready: page => page.getByRole('tab', {name: 'Preview'}),
+    async prepare(page) {
+      await openTab(page, 'Preview')
+      await previewText(page, 'Next: Content modeling basics').waitFor()
+    }
+  },
+  {
+    name: 'tutorial-step5',
+    tutorialStep: 5,
+    alt: 'The Team page nested below About in the content tree, previewed at its nested url',
+    hash: '/entry/main/pages/3Cstep5TeamPage000000000001',
+    ready: page => page.getByRole('tab', {name: 'Preview'}),
+    async prepare(page) {
+      await openTab(page, 'Preview')
+      await previewText(
+        page,
+        'Team is a child page nested under About.'
+      ).waitFor()
+    }
+  }
+]
+
 const baseUrl = process.env.SCREENSHOTS_BASE_URL ?? 'http://localhost:3000'
 const mcpUrl = process.env.ALINEA_MCP_URL ?? 'http://localhost:4500/mcp'
 const webDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -346,7 +427,10 @@ async function capture(
   try {
     const page = await context.newPage()
     await page.addInitScript(() => sessionStorage.clear())
-    await page.goto(`${baseUrl}/demo?screenshot#${shot.hash}`)
+    const url = shot.tutorialStep
+      ? `${tutorialUrl(shot.tutorialStep)}/admin#${shot.hash}`
+      : `${baseUrl}/demo?screenshot#${shot.hash}`
+    await page.goto(url)
     await page.addStyleTag({content: captureCss})
     try {
       await shot.ready(page).waitFor({timeout: 60_000})
@@ -362,6 +446,10 @@ async function capture(
       await shot.prepare(page)
       await settle(page)
     }
+    // The preview panel renders the site, which shows its own dev overlay
+    for (const frame of page.frames())
+      if (frame !== page.mainFrame())
+        await frame.addStyleTag({content: captureCss}).catch(() => {})
     await calm(page, shot.keepFocus ?? false)
     await settle(page)
     const png = await page.screenshot({animations: 'disabled', clip: shot.clip})
@@ -393,6 +481,53 @@ interface Capture {
 
 function fileName(name: string, scheme: Scheme) {
   return scheme === 'light' ? `${name}.webp` : `${name}-dark.webp`
+}
+
+// --- Tutorial step apps ---
+
+function tutorialUrl(step: number) {
+  return `http://localhost:${3100 + step}`
+}
+
+interface TutorialServer {
+  step: number
+  stop(): void
+}
+
+async function isUp(url: string) {
+  try {
+    return (await fetch(url)).ok
+  } catch {
+    return false
+  }
+}
+
+/** Starts the dev server of a tutorial step, unless it already runs */
+async function startTutorial(step: number): Promise<TutorialServer> {
+  const url = `${tutorialUrl(step)}/admin`
+  if (await isUp(url)) return {step, stop() {}}
+  const child = spawn('bun', ['run', 'dev'], {
+    cwd: path.join(webDir, 'tutorial-sites', `step${step}`),
+    shell: true,
+    // A process group on posix, so stopping it also stops next and alinea
+    detached: process.platform !== 'win32',
+    stdio: 'ignore'
+  })
+  const stop = () => {
+    if (child.exitCode !== null || !child.pid) return
+    if (process.platform === 'win32')
+      spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'])
+    else process.kill(-child.pid)
+  }
+  const started = Date.now()
+  while (!(await isUp(url))) {
+    if (child.exitCode !== null || Date.now() - started > 120_000) {
+      stop()
+      throw new Error(`The dev server of tutorial step ${step} did not start`)
+    }
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+  return {step, stop}
 }
 
 // --- Publishing through the alinea dev MCP server ---
@@ -513,6 +648,7 @@ async function publish(item: Capture, folderId: string) {
 
 const args = process.argv.slice(2)
 const shouldPublish = args.includes('--publish')
+const available = args.includes('--tutorial') ? tutorialShots : shots
 const schemeIndex = args.indexOf('--scheme')
 const schemes: Array<Scheme> =
   schemeIndex >= 0 ? [args[schemeIndex + 1] as Scheme] : ['light', 'dark']
@@ -520,22 +656,29 @@ const names = args.filter(
   (arg, index) => !arg.startsWith('--') && args[index - 1] !== '--scheme'
 )
 const selected = names.length
-  ? shots.filter(shot => names.includes(shot.name))
-  : shots
+  ? available.filter(shot => names.includes(shot.name))
+  : available
 if (names.length && selected.length !== names.length) {
-  const known = shots.map(shot => shot.name).join(', ')
+  const known = available.map(shot => shot.name).join(', ')
   throw new Error(`Unknown shot name, choose from: ${known}`)
 }
 
 await mkdir(outDir, {recursive: true})
 const browser = await chromium.launch()
 const captures: Array<Capture> = []
+let server: TutorialServer | undefined
 try {
   const encoder = await (await browser.newContext()).newPage()
-  for (const shot of selected)
+  for (const shot of selected) {
+    if (shot.tutorialStep && server?.step !== shot.tutorialStep) {
+      server?.stop()
+      server = await startTutorial(shot.tutorialStep)
+    }
     for (const scheme of schemes)
       captures.push(await capture(browser, encoder, shot, scheme))
+  }
 } finally {
+  server?.stop()
   await browser.close()
 }
 

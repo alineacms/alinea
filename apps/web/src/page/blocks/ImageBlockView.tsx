@@ -22,7 +22,9 @@ function ImageBlockImage({image, variant}: ImageBlockImageProps) {
         light: variant === 'light',
         dark: variant === 'dark'
       })}
-      alt={image.title}
+      // Without alt text on the media file the image is left unlabeled, a
+      // caption is already announced through the figcaption
+      alt={image.alt || ''}
       src={image.src}
       // Images are uploaded at twice their display size
       style={{maxWidth: image.width * 0.5}}

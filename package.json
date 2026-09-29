@@ -1,7 +1,17 @@
 {
   "name": "alinea",
   "version": "0.0.0",
-  "description": "Headless git-based CMS",
+  "description": "Open source, Git-based headless CMS for Next.js",
+  "keywords": [
+    "cms",
+    "headless-cms",
+    "git-based-cms",
+    "nextjs",
+    "react",
+    "typescript",
+    "content-management"
+  ],
+  "homepage": "https://alineacms.com",
   "repository": "github:alineacms/alinea",
   "license": "MIT",
   "engines": {

@@ -1,0 +1,37 @@
+{
+  "_id": "3Aqk3wRnIwt6izIgsDPM07G8D6w",
+  "_type": "Post",
+  "_index": "a0",
+  "title": "Platform launch notes",
+  "path": "platform-launch-notes",
+  "excerpt": "A quick walkthrough of what shipped this week and what is coming next.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This week we shipped our first public beta for the platform."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The release includes faster page rendering, cleaner editor navigation, and clearer publishing feedback."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

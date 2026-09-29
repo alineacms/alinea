@@ -4,7 +4,7 @@
   "_index": "a2",
   "_seeded": "/blog.json",
   "title": "Blog",
-  "intro": "Catch-all route demo blog index.",
+  "intro": "Latest posts",
   "metadata": {
     "title": "",
     "description": "",

@@ -1,0 +1,56 @@
+/* A few base styles so the pages are easy to read, replace them with your own */
+
+body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  font-family:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1f2328;
+  background: #fff;
+}
+
+h1,
+h2,
+h3 {
+  margin: 1.5em 0 0.5em;
+  line-height: 1.25;
+}
+
+h1 {
+  margin-top: 0.5em;
+  font-size: 2.25rem;
+}
+
+p,
+ul,
+ol {
+  margin: 0 0 1em;
+}
+
+a {
+  color: #2458d3;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+header,
+footer {
+  padding: 16px 0;
+  color: #59636e;
+}
+
+header {
+  border-bottom: 1px solid #d1d9e0;
+}
+
+footer {
+  margin-top: 48px;
+  border-top: 1px solid #d1d9e0;
+}

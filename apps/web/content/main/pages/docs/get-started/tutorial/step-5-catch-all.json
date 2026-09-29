@@ -17,11 +17,16 @@
     },
     {
       "_type": "ImageBlock",
-      "_id": "3B4cqeHyHIWgKqjxeCD6bmUpjBx",
+      "_id": "3Jzvk2FGsSW12Wtt4qQ3qNEdO3P",
       "image": {
-        "_id": "3B4crO98ByKupE3sYenv0maaC3A",
+        "_id": "3Jzvk5VZAJo4dxca5zroD6HssnA",
         "_type": "image",
-        "_entry": "3B4crJPW80hyfXZHjdAlW95AbnW"
+        "_entry": "3JzvYUOKQ191voHE5DAG7rJj4Dy"
+      },
+      "darkImage": {
+        "_id": "3Jzvk5g3b4YtzAlsQMGFb56xwy9",
+        "_type": "image",
+        "_entry": "3JzvYSXRixvUpAhJ0PrdaLiWyyL"
       }
     },
     {
@@ -37,7 +42,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONyof32uSAsVKwWOVlZSoYACo",
-      "code": "app/\n├ layout.tsx\n╰ [[...slug]]/page.tsx\n\nentries/\n├ page/\n│ ├ Page.tsx\n│ ╰ Page.schema.tsx\n├ blog/\n│ ├ Blog.tsx\n│ ╰ Blog.schema.tsx\n├ post/\n│ ├ Post.tsx\n│ ╰ Post.schema.tsx\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
+      "code": "app/\n├ (alinea)/api/cms/route.ts\n├ layout.tsx\n├ globals.css\n╰ [[...slug]]/page.tsx\n\nentries/\n├ page/\n│ ├ Page.tsx\n│ ╰ Page.schema.tsx\n├ blog/\n│ ├ Blog.tsx\n│ ╰ Blog.schema.tsx\n├ post/\n│ ├ Post.tsx\n│ ╰ Post.schema.tsx\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
       "fileName": "project structure",
       "language": "",
       "compact": false

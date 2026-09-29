@@ -8,6 +8,12 @@ test('opens for the current folder without showing a suspense loader', async ({
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
     entry: 'folder'
   })
+  // When the initial load is slow the activity spinner keeps spinning for its
+  // minimum duration after the dashboard shows, wait until it has settled so
+  // only progress shown while opening the dialog is detected
+  await expect(
+    app.page.getByRole('button', {name: 'Content is up to date'})
+  ).toBeVisible()
 
   await app.page.evaluate(() => {
     document.documentElement.dataset.suspenseLoaderSeen = 'false'

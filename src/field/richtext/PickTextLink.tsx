@@ -182,7 +182,6 @@ function PickRichTextImage({picker}: PickTextLinkProps) {
         if (!isOpen && !confirming.current) picker.cancel()
       }}
     >
-      <Button style={{display: 'none'}}>Pick image</Button>
       <ImagePicker
         condition={richTextImageCondition}
         initialSelection={initialSelection}

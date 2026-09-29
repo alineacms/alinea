@@ -293,6 +293,109 @@
       "content": [
         {
           "_type": "text",
+          "text": "Create translations"
+        }
+      ],
+      "_anchor": "create-translations"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a translated root, all translations of an entry share its id. To translate an entry, call `cms.create` with the `id` of the existing entry and the new `locale`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JztiZN8Rso3jA5X81G2fvcCBdN",
+      "code": "const post = await cms.create({\n  type: BlogPost,\n  root: 'pages',\n  locale: 'en',\n  set: {title: 'Hello world', intro: 'My first post'}\n})\n\nawait cms.create({\n  type: BlogPost,\n  id: post._id,\n  locale: 'fr',\n  set: {title: 'Bonjour le monde', intro: 'Mon premier article'}\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`type` and `set` are required as for any new entry, including a `title`. The path is derived from the translated title unless you set one."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The translation is created in the workspace and root of the entry's other locales, so you can leave out `workspace` and `root`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Pass the `parentId` of a child entry as well. Its parent needs a translation in that locale first."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "When the translation is published, fields with `shared: true` that you leave out of `set` are copied from a published translation."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A locale that already has a translation can't be created again: change it with `cms.update` and its `locale` instead."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Commit several changes at once"
         }
       ],
@@ -644,7 +747,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Validation from your schema (`required`, `validate`) runs in the dashboard, not on `cms.create` or `cms.update`: check your data before you commit it."
+                  "text": "Validation from your schema (`required`, `validate`) also runs when you publish from code: `cms.create` and `cms.update` throw when a published version has invalid fields. Drafts (`status: 'draft'`) are not validated."
                 }
               ]
             }

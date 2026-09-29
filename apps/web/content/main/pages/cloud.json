@@ -14,7 +14,7 @@
     "button": {
       "_id": "3JjQ4CEpKOohXckkmKmjF2W8zMr",
       "_type": "url",
-      "_url": "https://alinea.cloud/dashboard",
+      "_url": "https://www.alinea.cloud/app",
       "_title": "",
       "_target": "_self",
       "label": "Go to Alinea Cloud"
@@ -177,7 +177,7 @@
       "link": {
         "_id": "3JjQ45kzs1yMmEsGE5SwuRd24pO",
         "_type": "url",
-        "_url": "https://alinea.cloud/dashboard",
+        "_url": "https://www.alinea.cloud/app",
         "_title": "",
         "_target": "_self",
         "label": "Go to Alinea Cloud"

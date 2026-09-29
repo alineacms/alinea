@@ -12,7 +12,11 @@ import {IcRoundClose} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 import css from './Dialog.module.css'
 import {Slot} from './internal/Slot.js'
-import {Trigger, type TriggerProps} from './internal/Trigger.js'
+import {
+  OptionalTrigger,
+  Trigger,
+  type TriggerProps
+} from './internal/Trigger.js'
 import type {AriaProps, DataProps, OpenStateProps, StyleProps} from './types.js'
 
 const styles = styler(css)
@@ -33,6 +37,7 @@ export function Dialog({
       defaultOpen={defaultOpen}
       onOpenChange={onOpenChange}
     >
+      <OptionalTrigger />
       {children}
     </DialogTriggerPrimitive>
   )

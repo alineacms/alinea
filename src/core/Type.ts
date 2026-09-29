@@ -352,6 +352,16 @@ export interface TypeConfig<Definition> {
   preview?: Preview
 }
 
+/** Types that only hold children can leave out their fields */
+export interface ContainerTypeConfig<Definition> extends Omit<
+  TypeConfig<Definition>,
+  'fields' | 'contains'
+> {
+  fields?: Definition
+  /** Accepts entries of these types as children */
+  contains: Array<string | Type>
+}
+
 export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   label: string
   allFields: Record<string, Field>
@@ -359,18 +369,21 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
 }
 
 /** Create a new type */
-export function type<Fields extends FieldsDefinition>(
+export function type<Fields extends FieldsDefinition = {}>(
   label: string,
-  config: TypeConfig<Fields>
+  config: TypeConfig<Fields> | ContainerTypeConfig<Fields>
 ): Type<Fields> {
   const instance = createType(label, config)
   Type.validate(instance)
   return instance
 }
 
-export function createType<Fields extends FieldsDefinition>(
+export function createType<Fields extends FieldsDefinition = {}>(
   label: string,
-  config: TypeConfig<Fields>
+  {
+    fields: definition = {} as Fields,
+    ...config
+  }: TypeConfig<Fields> | ContainerTypeConfig<Fields>
 ): Type<Fields> {
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
@@ -379,10 +392,10 @@ export function createType<Fields extends FieldsDefinition>(
     current = {}
   }
   const fields: Array<[string, Field]> = []
-  if (typeof config.fields !== 'object') {
+  if (typeof definition !== 'object') {
     throw new Error('Type fields must be an object')
   }
-  for (const [key, value] of entries(config.fields)) {
+  for (const [key, value] of entries(definition)) {
     if (Field.isField(value)) {
       current[key] = value
       fields.push([key, value])
@@ -400,6 +413,7 @@ export function createType<Fields extends FieldsDefinition>(
     ...allFields,
     [internalType]: {
       ...config,
+      fields: definition,
       allFields,
       sections,
       label

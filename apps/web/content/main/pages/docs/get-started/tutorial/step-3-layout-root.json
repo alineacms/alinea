@@ -89,11 +89,16 @@
     },
     {
       "_type": "ImageBlock",
-      "_id": "3AqbcywjiFrA0Y4UEbP5RjkWaFs",
+      "_id": "3Jzvk53gdOGSgoi8KZMuEWiiAUh",
       "image": {
-        "_id": "3AqbeJublMI8eJ3CCk7rxo090JJ",
+        "_id": "3Jzvk4BM9LczZu49mZWWSa2FQsR",
         "_type": "image",
-        "_entry": "3AqbeIxAhMeqetSVy4wlfYdwbT3"
+        "_entry": "3JzvYMYlLSMp31xmxgGI0cQE2Rs"
+      },
+      "darkImage": {
+        "_id": "3Jzvk2kNvYwJIVtVyPKhl1CWRoD",
+        "_type": "image",
+        "_entry": "3JzvYNh5sDJVk4AlKjODen7FJO8"
       }
     },
     {
@@ -108,7 +113,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONylyqe1NxVsqSoHXkI14ZVIb",
-      "code": "app/\n├ page.tsx\n╰ layout.tsx\n\nentries/\n├ landing/\n│ ╰ ...\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
+      "code": "app/\n├ (alinea)/api/cms/route.ts\n├ page.tsx\n├ layout.tsx\n╰ globals.css\n\nentries/\n├ landing/\n│ ╰ ...\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
       "fileName": "project structure",
       "language": "",
       "compact": false
@@ -130,14 +135,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "This entry has no page of its own, so it uses `Config.type` instead of `Config.document`: no Metadata tab. The dashboard lists entries by their `title` and stores them under their `path`, so we add both fields ourselves and make the path read-only. `preview: false` hides the live preview for this type, since there is no page to show."
+          "text": "This entry has no page of its own, so it uses `Config.type` instead of `Config.document`: no SEO tab. The dashboard lists entries by their `title` and stores them under their `path`, so we add both fields ourselves and make the path read-only. `preview: false` hides the live preview for this type, since there is no page to show."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3AONCBs88Rae2Yvlxuo1F6kMkwe",
-      "code": "import {Config, Field} from 'alinea'\n\nexport const SiteLayout = Config.type('Site layout', {\n  preview: false,\n  fields: {\n    title: Field.text('Entry title', {initialValue: 'Global settings', width: 0.5}),\n    path: Field.path('Path', {readOnly: true, initialValue: 'settings', width: 0.5}),\n    headerText: Field.text('Header text', {required: true}),\n    footerText: Field.text('Footer text', {required: true})\n  }\n})\n",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const SiteLayout = Config.type('Site layout', {\n  preview: false,\n  fields: {\n    title: Field.text('Entry title', {\n      initialValue: 'Global settings',\n      width: 0.5\n    }),\n    path: Field.path('Path', {\n      readOnly: true,\n      initialValue: 'settings',\n      width: 0.5\n    }),\n    headerText: Field.text('Header text', {required: true}),\n    footerText: Field.text('Footer text', {required: true})\n  }\n})",
       "fileName": "entries/settings/SiteLayout.schema.tsx",
       "language": "tsx",
       "compact": false
@@ -155,7 +160,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AOUDJmY1EjT6xeGANpfPNmFMMP",
-      "code": "import type {Infer} from 'alinea'\nimport {SiteLayout as SiteLayoutEntry} from './SiteLayout.schema'\n\ntype SiteLayoutProps = Infer.Entry<typeof SiteLayoutEntry>\n\nexport function SiteHeader({settings}: {settings: SiteLayoutProps}) {\n  return <header>{settings.headerText}</header>\n}\n\nexport function SiteFooter({settings}: {settings: SiteLayoutProps}) {\n  return <footer>{settings.footerText}</footer>\n}",
+      "code": "import type {Infer} from 'alinea'\nimport type {SiteLayout as SiteLayoutEntry} from './SiteLayout.schema'\n\ntype SiteLayoutProps = Infer.Entry<typeof SiteLayoutEntry>\n\nexport function SiteHeader({settings}: {settings: SiteLayoutProps}) {\n  return <header>{settings.headerText}</header>\n}\n\nexport function SiteFooter({settings}: {settings: SiteLayoutProps}) {\n  return <footer>{settings.footerText}</footer>\n}",
       "fileName": "entries/settings/SiteLayout.tsx",
       "language": "tsx",
       "compact": false
@@ -213,7 +218,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONCCI4IpWHubFkjlGk0LP4Kaa",
-      "code": "import {cms} from '@/cms'\nimport {SiteFooter, SiteHeader} from '@/entries/settings/SiteLayout'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport default async function RootLayout({children}: {children: React.ReactNode}) {\n  const settings = await cms.get({\n    root: cms.workspaces.main.settings,\n    type: SiteLayout\n  })\n\n  return (\n    <html lang='en'>\n      <body>\n        <SiteHeader settings={settings} />\n        {children}\n        <SiteFooter settings={settings} />\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
+      "code": "import {cms} from '@/cms'\nimport {SiteFooter, SiteHeader} from '@/entries/settings/SiteLayout'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\nimport './globals.css'\n\nexport default async function RootLayout({\n  children\n}: {\n  children: React.ReactNode\n}) {\n  const settings = await cms.get({\n    root: cms.workspaces.main.settings,\n    type: SiteLayout\n  })\n\n  return (\n    <html lang=\"en\">\n      <body>\n        <SiteHeader settings={settings} />\n        {children}\n        <SiteFooter settings={settings} />\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
       "fileName": "app/layout.tsx",
       "language": "tsx",
       "compact": false
