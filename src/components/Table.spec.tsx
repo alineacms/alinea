@@ -28,11 +28,11 @@ test('custom root view with thumbnails, custom columns and headers', async ({
   await page.getByRole('button', {name: 'Title'}).click()
   await expect(rows.first()).toContainText('2025 in twelve highlights')
 
-  // Row action, then selection: once rows are selected a click toggles
-  await table.getByRole('row', {name: 'Photonics on a chip, explained'}).click()
-  await expect(
-    page.getByText(/Opened Photonics on a chip, explained/)
-  ).toBeVisible()
+  // Row action, then selection: once rows are selected a click toggles.
+  // Use a row in view: rows ignore pointer events while the virtualized body
+  // scrolls, so a click that scrolls first can miss.
+  await table.getByRole('row', {name: '2025 in twelve highlights'}).click()
+  await expect(page.getByText(/Opened 2025 in twelve highlights/)).toBeVisible()
   const row = table.getByRole('row', {
     name: 'A flexible sensor that repairs itself'
   })
