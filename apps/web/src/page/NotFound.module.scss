@@ -5,7 +5,9 @@
   position: relative;
   padding: 80px 24px;
   border-radius: 24px;
-  background-color: var(--background);
+  background-color: var(--web-accent);
+  // The card sits on a dark gradient image in both themes
+  color: #ffffff;
 
   @include l {
     padding: 128px 96px;
