@@ -8,9 +8,10 @@ import {IcRoundSearch} from '@/icons'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 import {
+  type ButtonHTMLAttributes,
+  createContext,
   Fragment,
-  HTMLAttributes,
-  PropsWithChildren,
+  type PropsWithChildren,
   Suspense,
   memo,
   use,
@@ -34,16 +35,58 @@ export function HeaderRoot({children}: PropsWithChildren) {
   )
 }
 
-export function MobileMenu({
-  children,
-  ...props
-}: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
+const MobileMenuState = createContext<
+  [open: boolean, setOpen: (open: boolean) => void]
+>([false, () => {}])
+
+export function MobileMenuProvider({children}: PropsWithChildren) {
+  const state = useState(false)
+  const [, setOpen] = state
   const pathname = usePathname()
+  useEffect(() => setOpen(false), [pathname])
+  return (
+    <MobileMenuState.Provider value={state}>{children}</MobileMenuState.Provider>
+  )
+}
+
+export function MobileMenu({children}: PropsWithChildren) {
+  const [open, setOpen] = use(MobileMenuState)
+  const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const checkbox = document.getElementById('mobilemenu')! as HTMLInputElement
-    checkbox.checked = false
-  }, [pathname])
-  return <div {...props}>{children}</div>
+    if (!open) return
+    // The menu covers the page, move focus into it and back once it closes
+    const previous = document.activeElement
+    ref.current?.querySelector<HTMLElement>('[aria-controls]')?.focus()
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => {
+      window.removeEventListener('keydown', handleEsc)
+      if (previous instanceof HTMLElement) previous.focus()
+    }
+  }, [open])
+  return (
+    <div ref={ref} id="mobilemenu" className={styles.mobilemenu({open})}>
+      {children}
+    </div>
+  )
+}
+
+export function MobileMenuButton(
+  props: ButtonHTMLAttributes<HTMLButtonElement>
+) {
+  const [open, setOpen] = use(MobileMenuState)
+  return (
+    <button
+      type="button"
+      aria-label="Menu"
+      aria-expanded={open}
+      aria-controls="mobilemenu"
+      onClick={() => setOpen(!open)}
+      {...props}
+    />
+  )
 }
 
 const resultsCache = new Map<string, any>()

@@ -229,10 +229,6 @@
     display: none !important;
   }
 
-  &-check {
-    display: none;
-  }
-
   &-container {
     height: 100%;
     display: flex;
@@ -254,7 +250,7 @@
     padding: 0 var(--web-gutter) 30px;
   }
 
-  :global(#mobilemenu:checked) + & {
+  &.is-open {
     display: block;
   }
 }
