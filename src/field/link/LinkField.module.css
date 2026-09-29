@@ -175,6 +175,11 @@
   padding: 0;
 }
 
+/* The whole row opens the link settings, only its action buttons highlight */
+.LinkFieldView-rowAction[data-variant]:hover {
+  background: transparent;
+}
+
 .LinkFieldView-settingsSeparator {
   height: 1px;
   margin: 4px 8px;
