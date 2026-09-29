@@ -377,14 +377,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Alt text belongs to the image and is edited once, in the media library. When the same image needs a different description or a caption in a specific place, add it as an extra field:"
+          "text": "`image.alt` is the alt text editors enter once, in the media library. When an image needs a description that depends on where it's used, or a caption or credit, add extra fields with the `fields` option. Editors fill them in next to the image they picked, and the values are stored with the link in your entry, not on the media file:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "31pPLpkxeStQvJH5kAmOJDPxzC0",
-      "code": "import {Field} from 'alinea'\n\nField.image('Image', {\n  fields: {\n    caption: Field.text('Caption'),\n    credit: Field.text('Credit', {width: 0.5})\n  }\n})",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Article = Config.document('Article', {\n  fields: {\n    image: Field.image('Image', {\n      fields: {\n        alt: Field.text('Alt text', {required: true}),\n        caption: Field.text('Caption'),\n        credit: Field.text('Credit', {width: 0.5})\n      }\n    })\n  }\n})",
       "fileName": "",
       "language": "tsx"
     },
@@ -393,7 +393,64 @@
       "content": [
         {
           "_type": "text",
-          "text": "Then render `image.fields.caption` below the image."
+          "text": "Options like `required`, `help` and `width` work on these fields as usual: an entry with an image but without its alt text can't be published."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query results keep the extra values on `image.fields`, next to the properties of the image. An extra field named `alt` does not replace the alt text of the media library: `image.alt` still holds that one, and `image.fields.alt` the one entered on this entry. `ImageLink` takes the type of the extra fields as its type parameter:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JztifK2wuFxXT7ny6mlk5371Fp",
+      "code": "import type {ImageLink} from 'alinea'\n\ninterface FigureProps {\n  image: ImageLink<{alt: string; caption: string; credit: string}> | null\n}\n\nexport function Figure({image}: FigureProps) {\n  if (!image?.src) return null\n  const {alt, caption, credit} = image.fields\n  return (\n    <figure>\n      <img\n        src={image.src}\n        width={image.width}\n        height={image.height}\n        alt={alt || image.alt || ''}\n      />\n      {caption && (\n        <figcaption>\n          {caption} {credit && <small>{credit}</small>}\n        </figcaption>\n      )}\n    </figure>\n  )\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a multiple image field every image gets its own values. The "
+        },
+        {
+          "_type": "text",
+          "text": "Link",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jztifu1WG2ZxdVG63aHuUfWMoH",
+              "_link": "entry",
+              "_entry": "24yE79dE2ssYPDQQHFFgT0eg2tH"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", "
+        },
+        {
+          "_type": "text",
+          "text": "Entry",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jztieaa0n4IrDrMrVvs8hsgCNP",
+              "_link": "entry",
+              "_entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", File and Url fields take the same `fields` option and return the values on `link.fields` too."
         }
       ]
     }
