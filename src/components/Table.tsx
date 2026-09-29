@@ -39,6 +39,8 @@ import type {
 
 const styles = styler(css)
 
+function noop() {}
+
 /** Width of the selection checkbox column in pixels */
 const selectionWidth = 30
 
@@ -56,7 +58,7 @@ export interface TableColumn {
 }
 
 export interface TableProps<T extends object>
-  extends StyleProps, AriaProps, SelectionProps, DragDropProps {
+  extends StyleProps, AriaProps, DataProps, SelectionProps, DragDropProps {
   items: Iterable<T>
   columns: ReadonlyArray<TableColumn>
   /** Show the column headers, defaults to true */
@@ -75,8 +77,8 @@ export interface TableProps<T extends object>
   showSelectionControls?: boolean
   /** `plain` drops the rounded surface, eg. when the table fills a panel */
   variant?: 'surface' | 'plain'
-  expandedKeys?: ReadonlySet<Key>
-  defaultExpandedKeys?: ReadonlySet<Key>
+  expandedKeys?: Iterable<Key>
+  defaultExpandedKeys?: Iterable<Key>
   onExpandedChange?: (keys: Set<Key>) => void
   sortDescriptor?: SortDescriptor
   onSortChange?: (descriptor: SortDescriptor) => void
@@ -98,8 +100,8 @@ interface TableContextValue {
   columns: ReadonlyArray<TableColumn>
   expandable: boolean
   selectable: boolean
-  /** Rows can be selected or activated */
-  interactive: boolean
+  selectionMode: SelectionProps['selectionMode']
+  onRowAction?: (key: Key) => void
 }
 
 const TableContext = createContext<TableContextValue | null>(null)
@@ -195,10 +197,9 @@ export function Table<T extends object>({
   const selectable =
     selectionMode !== 'none' &&
     (showSelectionControls ?? selectionMode === 'multiple')
-  const interactive = selectionMode !== 'none' || Boolean(onRowAction)
   const context = useMemo(
-    () => ({columns, expandable, selectable, interactive}),
-    [columns, selectable, expandable, interactive]
+    () => ({columns, expandable, selectable, selectionMode, onRowAction}),
+    [columns, selectable, expandable, selectionMode, onRowAction]
   )
   const dnd = useDragDrop<T>({
     getDragData,
@@ -210,11 +211,8 @@ export function Table<T extends object>({
     onDropFiles,
     renderDragPreview,
     dropIndicatorSlot: 'table-drop-indicator',
-    dropIndicatorClassName: active => styles.TableDropIndicator({active})
+    dropIndicatorClassName: active => styles.Table.dropIndicator({active})
   })
-  // Materialise once so one-shot iterables survive the emptiness check
-  const list = useMemo(() => Array.from(items), [items])
-  const isEmpty = list.length === 0
   return (
     <TableContext.Provider value={context}>
       <Surface
@@ -249,7 +247,7 @@ export function Table<T extends object>({
           <Tree
             {...props}
             key={dnd.key}
-            items={list}
+            items={items}
             dependencies={[context, ...dependencies]}
             selectionMode={selectionMode}
             selectionBehavior={selectionBehavior}
@@ -261,18 +259,32 @@ export function Table<T extends object>({
             expandedKeys={expandedKeys}
             defaultExpandedKeys={defaultExpandedKeys}
             onExpandedChange={onExpandedChange}
-            onAction={onRowAction}
+            // Rows run the action so their own onAction can replace it, this
+            // only keeps react-aria from expanding parent rows on press
+            onAction={onRowAction && noop}
             dragAndDropHooks={dnd.dragAndDropHooks}
-            className={styles.Table.body()}
+            renderEmptyState={
+              renderEmptyState
+                ? () => (
+                    <div
+                      data-slot="table-empty"
+                      className={styles.Table.empty()}
+                    >
+                      {renderEmptyState()}
+                    </div>
+                  )
+                : undefined
+            }
+            className={values =>
+              styles.Table.body({
+                // Set by react-aria but missing from its TreeRenderProps type
+                dropTarget: (values as {isDropTarget?: boolean}).isDropTarget
+              })
+            }
           >
             {children}
           </Tree>
         </Virtualizer>
-        {isEmpty && renderEmptyState && (
-          <div data-slot="table-empty" className={styles.Table.empty()}>
-            {renderEmptyState()}
-          </div>
-        )}
       </Surface>
     </TableContext.Provider>
   )
@@ -283,11 +295,16 @@ interface TableHeaderProps {
   onSortChange?: (descriptor: SortDescriptor) => void
 }
 
+const sortDescriptions = {
+  asc: 'sorted ascending',
+  desc: 'sorted descending'
+}
+
 function TableHeader({sortDescriptor, onSortChange}: TableHeaderProps) {
   const {columns, expandable, selectable} = useTable()
   return (
     <div data-slot="table-header" className={styles.TableHeader()}>
-      {selectable && <span />}
+      {selectable && <span data-slot="table-header-spacer" />}
       {columns.map((column, index) => {
         const sorted =
           sortDescriptor?.column === column.id
@@ -321,8 +338,8 @@ function TableHeader({sortDescriptor, onSortChange}: TableHeaderProps) {
             {column.sortable && onSortChange ? (
               <button
                 type="button"
-                className={styles.TableHeader.sort()}
-                aria-pressed={Boolean(sorted)}
+                className={styles.TableHeader.sort({sorted: Boolean(sorted)})}
+                aria-description={sorted && sortDescriptions[sorted]}
                 onClick={() =>
                   onSortChange({
                     column: column.id,
@@ -388,9 +405,13 @@ export function TableRow({
     columns,
     expandable,
     selectable: showSelection,
-    interactive
+    selectionMode,
+    onRowAction
   } = useTable()
   const cells = Children.toArray(children)
+  const action = onAction ?? (onRowAction && (() => onRowAction(id)))
+  // react-aria ignores presses on rows it cannot select or activate
+  const clickAction = !action && selectionMode === 'none' ? onClick : undefined
   return (
     <TreeItem
       data-slot="table-row"
@@ -401,13 +422,14 @@ export function TableRow({
       isDisabled={!selectable}
       data-unselectable={!selectable || undefined}
       data-highlighted={highlighted || undefined}
-      onAction={onAction}
-      onPress={onClick}
+      onAction={action ?? clickAction}
+      onPress={clickAction ? undefined : onClick}
       onDoubleClick={onDoubleClick}
       className={({isDropTarget, isDragging}) =>
         styles.TableRow({
           highlighted,
-          static: !interactive && !onAction && !onClick && !onDoubleClick,
+          static:
+            selectionMode === 'none' && !action && !onClick && !onDoubleClick,
           dropTarget: isDropTarget,
           dragging: isDragging
         })
@@ -418,9 +440,12 @@ export function TableRow({
           <TableRowContext.Provider
             value={{textValue, allowsDragging: Boolean(allowsDragging)}}
           >
-            <div role="presentation" className={styles.TableRow.grid()}>
+            <div data-slot="table-row-grid" className={styles.TableRow.grid()}>
               {showSelection && (
-                <div role="gridcell" className={styles.TableRow.selection()}>
+                <div
+                  data-slot="table-row-selection"
+                  className={styles.TableRow.selection()}
+                >
                   {selectable && (
                     <SelectionCheckbox aria-label={`Select ${textValue}`} />
                   )}
@@ -433,13 +458,17 @@ export function TableRow({
                 >
                   {index === 0 ? (
                     <div
+                      data-slot="table-row-first"
                       className={styles.TableRow.first()}
                       style={{
                         paddingInlineStart: `calc(var(--alinea-table-indent) + ${(level - 1) * 20}px)`
                       }}
                     >
                       {(expandable || level > 1) && (
-                        <span className={styles.TableRow.chevron()}>
+                        <span
+                          data-slot="table-row-chevron"
+                          className={styles.TableRow.chevron()}
+                        >
                           {hasChildren && (
                             <ButtonPrimitive
                               slot="chevron"
@@ -490,15 +519,20 @@ export function TableCell({
   return (
     <div
       data-slot="table-cell"
-      role="gridcell"
       data-align={align}
       data-collapsible={useCollapsible()}
       title={title}
       className={styles.TableCell(styler.merge({className}))}
       style={style}
     >
-      {label && <span className={styles.TableCell.label()}>{label}</span>}
-      <span className={styles.TableCell.value()}>{children}</span>
+      {label && (
+        <span data-slot="table-cell-label" className={styles.TableCell.label()}>
+          {label}
+        </span>
+      )}
+      <span data-slot="table-cell-value" className={styles.TableCell.value()}>
+        {children}
+      </span>
     </div>
   )
 }
@@ -518,7 +552,6 @@ export function TableThumbnail({
   return (
     <div
       data-slot="table-thumbnail"
-      role="gridcell"
       data-collapsible={useCollapsible()}
       className={styles.TableThumbnail(styler.merge({className}))}
       style={style}
@@ -555,7 +588,6 @@ export function TableTitle({
   return (
     <div
       data-slot="table-title"
-      role="gridcell"
       data-collapsible={useCollapsible()}
       className={styles.TableTitle(styler.merge({className}))}
       style={style}
@@ -577,9 +609,17 @@ export function TableTitle({
         ) : (
           <Icon aria-hidden icon={icon} className={styles.TableTitle.icon()} />
         ))}
-      <span className={styles.TableTitle.text()}>
-        {label && <span className={styles.TableTitle.label()}>{label}</span>}
+      <span data-slot="table-title-text" className={styles.TableTitle.text()}>
+        {label && (
+          <span
+            data-slot="table-title-label"
+            className={styles.TableTitle.label()}
+          >
+            {label}
+          </span>
+        )}
         <span
+          data-slot="table-title-title"
           className={styles.TableTitle.title()}
           title={typeof title === 'string' ? title : undefined}
         >

@@ -175,6 +175,50 @@ export function Empty() {
   )
 }
 
+/** A card's own onAction replaces onItemAction, onClick works without either */
+export function ItemHandlers() {
+  const [log, setLog] = useState<Array<string>>([])
+  const add = (line: string) => setLog(log => [...log, line])
+  const items = photos.slice(0, 2)
+  return (
+    <div>
+      <div style={{height: 240}}>
+        <ContentGrid
+          aria-label="Actions"
+          items={items}
+          onItemAction={key => add(`Opened ${key}`)}
+        >
+          {photo => (
+            <ContentGridItem
+              id={photo.id}
+              textValue={photo.title}
+              onAction={
+                photo.id === 'photo-1' ? () => add('Edited photo-1') : undefined
+              }
+            >
+              <ContentCard title={photo.title} />
+            </ContentGridItem>
+          )}
+        </ContentGrid>
+      </div>
+      <div style={{height: 240}}>
+        <ContentGrid aria-label="Clicks" items={items}>
+          {photo => (
+            <ContentGridItem
+              id={photo.id}
+              textValue={photo.title}
+              onClick={() => add(`Clicked ${photo.id}`)}
+            >
+              <ContentCard title={photo.title} />
+            </ContentGridItem>
+          )}
+        </ContentGrid>
+      </div>
+      <output data-testid="log">{log.join('. ')}</output>
+    </div>
+  )
+}
+
 export default {
   title: 'Pure components / ContentGrid'
 }

@@ -460,6 +460,53 @@ export function IterableItems() {
   )
 }
 
+/** A row's own onAction replaces onRowAction, onClick works without either */
+export function RowHandlers() {
+  const [log, setLog] = useState<Array<string>>([])
+  const add = (line: string) => setLog(log => [...log, line])
+  const columns = memberColumns.slice(0, 2)
+  return (
+    <div>
+      <div style={{height: 140}}>
+        <Table
+          aria-label="Actions"
+          items={members}
+          columns={columns}
+          onRowAction={key => add(`Opened ${key}`)}
+        >
+          {member => (
+            <TableRow
+              id={member.id}
+              textValue={member.name}
+              onAction={
+                member.id === 'bob' ? () => add('Reviewed bob') : undefined
+              }
+            >
+              <TableCell>{member.name}</TableCell>
+              <TableCell>{member.role}</TableCell>
+            </TableRow>
+          )}
+        </Table>
+      </div>
+      <div style={{height: 140}}>
+        <Table aria-label="Clicks" items={members} columns={columns}>
+          {member => (
+            <TableRow
+              id={member.id}
+              textValue={member.name}
+              onClick={() => add(`Clicked ${member.id}`)}
+            >
+              <TableCell>{member.name}</TableCell>
+              <TableCell>{member.role}</TableCell>
+            </TableRow>
+          )}
+        </Table>
+      </div>
+      <output data-testid="log">{log.join('. ')}</output>
+    </div>
+  )
+}
+
 export default {
   title: 'Pure components / Table'
 }

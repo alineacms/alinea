@@ -1,5 +1,10 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {CustomRootView, Empty, ExplorerStyle} from './ContentGrid.stories.js'
+import {
+  CustomRootView,
+  Empty,
+  ExplorerStyle,
+  ItemHandlers
+} from './ContentGrid.stories.js'
 
 test('image cards with selection and actions', async ({mount, page}) => {
   await mount(<CustomRootView />)
@@ -50,4 +55,23 @@ test('explorer style cards with skeletons and drag and drop', async ({
 test('empty state', async ({mount, page}) => {
   await mount(<Empty />)
   await expect(page.getByText('No photos yet')).toBeVisible()
+})
+
+test('a card action replaces the grid action and clicks work without either', async ({
+  mount,
+  page
+}) => {
+  await mount(<ItemHandlers />)
+  const log = page.getByTestId('log')
+  const actions = page.getByRole('grid', {name: 'Actions'})
+  await actions.getByRole('row', {name: 'Harbour at dawn'}).click()
+  await actions.getByRole('row', {name: 'Forest trail'}).click()
+  await expect(log).toHaveText('Opened photo-0. Edited photo-1')
+  await page
+    .getByRole('grid', {name: 'Clicks'})
+    .getByRole('row', {name: 'Forest trail'})
+    .click()
+  await expect(log).toHaveText(
+    'Opened photo-0. Edited photo-1. Clicked photo-1'
+  )
 })

@@ -214,9 +214,7 @@ test('opens a compact entry picker and selects immediately', async ({
   await expect(picker.getByRole('checkbox')).toHaveCount(0)
 
   const home = picker.getByRole('row', {name: /^Home /})
-  await expect(home.locator('[role="gridcell"] [role="gridcell"]')).toHaveCount(
-    1
-  )
+  await expect(home.locator('[data-slot="table-row-grid"] > *')).toHaveCount(1)
   await expect
     .poll(() =>
       page.evaluate(
