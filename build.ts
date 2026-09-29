@@ -335,10 +335,7 @@ const externalize: Plugin = {
   setup(build) {
     const cwd = process.cwd()
     const src = path.join(cwd, 'src')
-    let modules: Set<string>
-    build.onStart(() => {
-      modules = new Set()
-    })
+    build.initialOptions.metafile = true
     build.onResolve({filter: /^(\.|#)/}, args => {
       if (args.kind === 'entry-point') return
       if (
@@ -347,19 +344,7 @@ const externalize: Plugin = {
         args.path.endsWith('.woff2')
       )
         return
-      if (!args.resolveDir.startsWith(src)) {
-        if (args.resolveDir.includes('node_modules')) {
-          const folder = args.resolveDir
-            .replaceAll('\\', '/')
-            .split('node_modules/')[1]
-          const segments = folder.split('/')
-          const module = folder.startsWith('@')
-            ? segments.slice(0, 2)
-            : segments.slice(0, 1)
-          modules.add(module.join('/'))
-        }
-        return
-      }
+      if (!args.resolveDir.startsWith(src)) return
       if (args.path.endsWith('.cjs')) return
       if (!args.path.endsWith('.js') && !args.path.endsWith('.mjs')) {
         console.error(`Missing file extension on local import: ${args.path}`)
@@ -372,10 +357,28 @@ const externalize: Plugin = {
       }
       return {path: args.path, external: true}
     })
-    build.onEnd(() => {
+    build.onEnd(result => {
+      if (!result.metafile) return
+      // The package folders that contribute code to any of the outputs,
+      // mapped to their package name
+      const modules = new Map<string, string>()
+      for (const output of Object.values(result.metafile.outputs)) {
+        for (const [input, {bytesInOutput}] of Object.entries(output.inputs)) {
+          if (bytesInOutput === 0) continue
+          const marker = input.lastIndexOf('node_modules/')
+          if (marker === -1) continue
+          const index = marker + 'node_modules/'.length
+          const segments = input.slice(index).split('/')
+          const module = segments
+            .slice(0, segments[0].startsWith('@') ? 2 : 1)
+            .join('/')
+          modules.set(input.slice(0, index) + module, module)
+        }
+      }
       let licenses = ''
-      for (const module of modules) {
-        const target = path.join(cwd, 'node_modules', module)
+      const folders = [...modules].sort(([a], [b]) => a.localeCompare(b))
+      for (const [folder, module] of folders) {
+        const target = path.join(cwd, folder)
         const pkg = JSON.parse(
           fs.readFileSync(path.join(target, 'package.json'), 'utf-8')
         )
