@@ -1,7 +1,7 @@
 import {isImage} from '#/core/media/IsImage.js'
 import type {OverviewCellProps} from '#/core/Overview.js'
 import styler from '@alinea/styler'
-import {fileKind, fileKindColor, fileKindIcon} from './FileKind.js'
+import {fileKindVisual} from './FileKind.js'
 import css from './MediaPreviewCell.module.css'
 
 const styles = styler(css)
@@ -28,12 +28,11 @@ export function MediaPreviewCell({
       </span>
     )
   if (!extension) return <span className={styles.MediaPreviewCell()} />
-  const kind = fileKind(extension)
-  const Icon = fileKindIcon(kind)
+  const {icon: Icon, color} = fileKindVisual(extension)
   return (
     <span
       className={styles.MediaPreviewCell({file: true})}
-      style={{background: fileKindColor(kind)}}
+      style={{background: color}}
     >
       <Icon className={styles.MediaPreviewCell.icon()} />
     </span>

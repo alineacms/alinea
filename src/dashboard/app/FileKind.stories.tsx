@@ -1,7 +1,7 @@
 import {ContentCard, ContentGrid, ContentGridItem} from '#/components.js'
 import type {OverviewEntry} from '#/core/Overview.js'
 import type {CSSProperties} from 'react'
-import {fileKind, fileKindColor, fileKindIcon} from './FileKind.js'
+import {fileKindVisual} from './FileKind.js'
 import {MediaPreviewCell} from './MediaPreviewCell.js'
 
 interface ExampleFile {
@@ -36,21 +36,17 @@ function formatExtension(extension: string) {
 export function Cards() {
   return (
     <ContentGrid aria-label="Files" items={files} style={{padding: 16}}>
-      {file => {
-        const kind = fileKind(file.extension)
-        return (
-          <ContentGridItem id={file.id} textValue={file.title}>
-            <ContentCard
-              variant="media"
-              icon={fileKindIcon(kind)}
-              color={fileKindColor(kind)}
-              title={file.title}
-              description={formatExtension(file.extension)}
-              details={file.size}
-            />
-          </ContentGridItem>
-        )
-      }}
+      {file => (
+        <ContentGridItem id={file.id} textValue={file.title}>
+          <ContentCard
+            variant="media"
+            {...fileKindVisual(file.extension)}
+            title={file.title}
+            description={formatExtension(file.extension)}
+            details={file.size}
+          />
+        </ContentGridItem>
+      )}
     </ContentGrid>
   )
 }

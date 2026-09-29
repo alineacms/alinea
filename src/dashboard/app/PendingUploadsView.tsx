@@ -7,11 +7,12 @@ import type {
   PendingUploads
 } from '#/dashboard/atoms/upload.js'
 import styler from '@alinea/styler'
+import {extname} from '#/core/util/Paths.js'
 import prettyBytes from 'pretty-bytes'
 import {useState} from 'react'
 import {IcRoundClose, IcRoundCrop, IcRoundInfo} from '../icons.js'
 import {CroppedImage} from './CroppedImage.js'
-import {fileKind, fileKindColor, fileKindIcon} from './FileKind.js'
+import {fileKindVisual} from './FileKind.js'
 import {ImageEditor} from './ImageEditor.js'
 import css from './PendingUploadsView.module.css'
 import {
@@ -238,14 +239,14 @@ function PendingUploadThumbnail({upload}: PendingUploadThumbnailProps) {
         />
       </span>
     )
-  const kind = fileKind(upload.file.name.match(/\.[^.]+$/)?.[0])
+  const {icon, color} = fileKindVisual(extname(upload.file.name))
   return (
     <span
       className={styles.PendingUploadsView.row.thumbnail()}
-      style={{background: fileKindColor(kind)}}
+      style={{background: color}}
     >
       <Icon
-        icon={fileKindIcon(kind)}
+        icon={icon}
         className={styles.PendingUploadsView.row.thumbnail.icon()}
       />
     </span>

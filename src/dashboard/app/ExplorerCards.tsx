@@ -22,7 +22,7 @@ import type {
   ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
-import {fileKind, fileKindColor, fileKindIcon} from './FileKind.js'
+import {fileKindVisual} from './FileKind.js'
 import css from './ExplorerCards.module.css'
 
 const styles = styler(css)
@@ -212,12 +212,6 @@ export function ExplorerCards({
       </ContentGrid>
     </div>
   )
-}
-
-/** The icon and color of a file without an image preview */
-function fileKindVisual(extension?: string) {
-  const kind = fileKind(extension)
-  return {icon: fileKindIcon(kind), color: fileKindColor(kind)}
 }
 
 function formatExtension(extension?: string) {

@@ -139,17 +139,6 @@
     color-mix(in oklab, var(--alinea-orange-700) 30%, var(--alinea-orange-200))
   );
 
-  /* Placeholders behind the icons of files in the media library */
-  --alinea-file-pdf: color-mix(in oklab, var(--alinea-red-500) 16%, var(--alinea-bg));
-  --alinea-file-document: color-mix(in oklab, var(--alinea-blue-500) 18%, var(--alinea-bg));
-  --alinea-file-spreadsheet: color-mix(in oklab, var(--alinea-green-500) 18%, var(--alinea-bg));
-  --alinea-file-presentation: color-mix(in oklab, var(--alinea-orange-700) 16%, var(--alinea-bg));
-  --alinea-file-archive: color-mix(in oklab, var(--alinea-yellow-500) 22%, var(--alinea-bg));
-  --alinea-file-video: var(--alinea-bg-muted);
-  --alinea-file-audio: var(--alinea-bg-muted);
-  --alinea-file-code: var(--alinea-bg-muted);
-  --alinea-file-other: var(--alinea-bg-muted);
-
   --alinea-shadow-raised: 0 1px 3.5px rgb(0 0 0 / 8%);
   --alinea-shadow-muted:
     0 1px 3.5px rgb(0 0 0 / 10%), 0 1px 1px rgb(0 0 0 / 6%),
