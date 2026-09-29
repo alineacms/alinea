@@ -161,8 +161,12 @@ function findInternalTypeImports(root: string): Array<string> {
   }))
   while (queue.length > 0) {
     const {file, chain} = queue.shift()!
-    if (seen.has(file) || !fs.existsSync(file)) continue
+    if (seen.has(file)) continue
     seen.add(file)
+    if (!fs.existsSync(file)) {
+      violations.push(`${chain.join(' > ')} is missing`)
+      continue
+    }
     const contents = fs.readFileSync(file, 'utf-8')
     const specifiers = contents.matchAll(
       /(?:from\s+|import\s*\(\s*)['"]([^'"]+)['"]/g
@@ -174,11 +178,13 @@ function findInternalTypeImports(root: string): Array<string> {
       }
       const target = specifier.startsWith('.')
         ? path.join(path.dirname(file), specifier)
-        : specifier.startsWith('alinea/')
-          ? path.join(root, specifier.slice('alinea/'.length))
-          : specifier.startsWith('#/')
-            ? path.join(root, specifier.slice('#/'.length))
-            : undefined
+        : specifier === 'alinea'
+          ? path.join(root, 'index')
+          : specifier.startsWith('alinea/')
+            ? path.join(root, specifier.slice('alinea/'.length))
+            : specifier.startsWith('#/')
+              ? path.join(root, specifier.slice('#/'.length))
+              : undefined
       if (!target) continue
       const declaration = `${target.replace(/\.js$/, '')}.d.ts`
       queue.push({
@@ -199,7 +205,7 @@ const publicTypes: Plugin = {
       const violations = findInternalTypeImports('./dist')
       if (violations.length === 0) return
       console.error(
-        `Public types expose bundled packages:\n  ${violations.join('\n  ')}`
+        `Public types expose bundled packages or missing declarations:\n  ${violations.join('\n  ')}`
       )
       process.exitCode = 1
     })
