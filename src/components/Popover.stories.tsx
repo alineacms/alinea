@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from './Popover.js'
+import {Select, SelectItem} from './Select.js'
 
 export function Example() {
   return (
@@ -73,11 +74,29 @@ export function VirtualAnchor() {
   )
 }
 
-export function KeepOpen() {
+export function Nested() {
+  return (
+    <Popover modal={false}>
+      <PopoverTrigger>Filters</PopoverTrigger>
+      <PopoverContent side="right" aria-label="Filters">
+        <Select label="Status" defaultValue="draft">
+          <SelectItem value="draft">Draft</SelectItem>
+          <SelectItem value="published">Published</SelectItem>
+        </Select>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+interface KeepOpenProps {
+  modal?: boolean
+}
+
+export function KeepOpen({modal = false}: KeepOpenProps) {
   const [outside, setOutside] = useState(0)
   return (
     <div style={{padding: 24}}>
-      <Popover modal={false}>
+      <Popover modal={modal}>
         <PopoverTrigger>Stays open</PopoverTrigger>
         <PopoverContent
           side="right"

@@ -115,7 +115,12 @@ export function PopoverAnchor({
   if (virtualRef) return children
   if (asChild)
     return (
-      <Slot data-slot="popover-anchor" {...props} ref={ref}>
+      <Slot
+        data-slot="popover-anchor"
+        {...props}
+        ref={ref}
+        className={className}
+      >
         {children}
       </Slot>
     )
@@ -129,8 +134,9 @@ export function PopoverAnchor({
 export interface PopoverContentProps
   extends StyleProps, AriaProps, DataProps, PositionProps {
   /**
-   * Called on a pointer or focus interaction outside of the popover, call
-   * `event.preventDefault()` to keep the popover open
+   * Called on a click outside of the popover, call `event.preventDefault()`
+   * to keep the popover open. The page is covered while a modal popover is
+   * open, so `event.target` is that cover rather than the element below it.
    */
   onInteractOutside?: (event: Event) => void
   children: ReactNode
@@ -155,43 +161,41 @@ export function PopoverContent({
   const state = useContext(OverlayTriggerStateContext)
   const trigger = useSlottedContext(PopoverContext)?.triggerRef
   const ref = useRef<HTMLElement>(null)
-  // The trigger toggles the popover itself
-  const isTrigger = (target: EventTarget | null) =>
-    target instanceof Node && Boolean(trigger?.current?.contains(target))
-  // Modal popovers are dismissed by react-aria (only the top-most overlay),
-  // non-modal popovers are not, so dismiss them here as Radix does
+  // The trigger toggles the popover itself, and overlays portaled after this
+  // one were opened from it (a Select, a Dialog), so neither is outside
+  const isInside = (target: EventTarget | null) =>
+    target instanceof Node &&
+    Boolean(
+      trigger?.current?.contains(target) ||
+      (ref.current &&
+        ref.current.compareDocumentPosition(target) &
+          Node.DOCUMENT_POSITION_FOLLOWING)
+    )
+  // Dismiss here rather than through react-aria, which asks twice per click
+  // and only sees the underlay covering the page of a modal popover
   useInteractOutside({
     ref,
-    isDisabled: modal || !state?.isOpen,
+    isDisabled: !state?.isOpen,
     onInteractOutside(event) {
-      if (isTrigger(event.target)) return
+      if (isInside(event.target)) return
       onInteractOutside?.(event)
       if (!event.defaultPrevented) state?.close()
     }
   })
-  // Called by react-aria for interaction outside modal popovers and for focus
-  // moving outside of any popover
-  function shouldCloseOnInteractOutside(element: Element) {
-    if (isTrigger(element)) return false
-    if (!onInteractOutside) return true
-    const event = new Event('interactoutside', {cancelable: true})
-    element.dispatchEvent(event)
-    onInteractOutside(event)
-    return !event.defaultPrevented
-  }
   return (
     <PopoverSurface
       data-slot="popover-content"
       {...props}
       ref={ref}
-      {...(anchor ? {triggerRef: anchor} : {})}
-      className={styles.PopoverContent(styler.merge({className}))}
+      triggerRef={anchor ?? undefined}
+      className={className}
       style={style}
       placement={placement(side, align)}
       offset={sideOffset}
       crossOffset={alignOffset}
       isNonModal={!modal}
-      shouldCloseOnInteractOutside={shouldCloseOnInteractOutside}
+      // react-aria still closes non-modal popovers when focus moves out
+      shouldCloseOnInteractOutside={element => !modal && !isInside(element)}
     >
       <Dialog
         id={id}

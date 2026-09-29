@@ -3,6 +3,7 @@ import {
   Anchored,
   Example,
   KeepOpen,
+  Nested,
   NonModal,
   VirtualAnchor
 } from './Popover.stories.js'
@@ -69,5 +70,37 @@ test('onInteractOutside can keep the popover open', async ({mount, page}) => {
   await expect(page.getByTestId('outside')).toHaveText('1')
   await expect(popover).toBeVisible()
   await page.getByRole('button', {name: 'Stays open'}).click()
+  await expect(popover).toBeHidden()
+})
+
+test('onInteractOutside is called once per click on a modal popover', async ({
+  mount,
+  page
+}) => {
+  await mount(<KeepOpen modal />)
+  await page.getByRole('button', {name: 'Stays open'}).click()
+  const popover = page.getByRole('dialog', {name: 'Sticky'})
+  await expect(popover).toBeVisible()
+  await page.mouse.click(600, 700)
+  await expect(page.getByTestId('outside')).toHaveText('1')
+  await expect(popover).toBeVisible()
+})
+
+test('stays open while using an overlay opened from it', async ({
+  mount,
+  page
+}) => {
+  await mount(<Nested />)
+  await page.getByRole('button', {name: 'Filters'}).click()
+  const popover = page.getByRole('dialog', {name: 'Filters'})
+  await expect(popover).toBeVisible()
+  await page.getByRole('button', {name: /Status/}).click()
+  await page.getByRole('option', {name: 'Published'}).click()
+  await expect(page.getByRole('listbox')).toBeHidden()
+  await expect(popover).toBeVisible()
+  await expect(page.getByRole('button', {name: /Status/})).toContainText(
+    'Published'
+  )
+  await page.mouse.click(600, 700)
   await expect(popover).toBeHidden()
 })
