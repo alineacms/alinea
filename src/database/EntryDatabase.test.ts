@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -6,6 +7,7 @@ import {transaction} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntryStore} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
@@ -500,6 +502,70 @@ test('database mutations use one write transaction and commit one final tree', a
   expect(result.changedEntryIds).toEqual(['a'])
   expect(result.request.changes).toHaveLength(1)
   await source.applyChanges(sourceChanges(result.request))
+  await database.close()
+})
+
+test('discarding a media draft keeps the file of the published version', async () => {
+  const {config} = createCMS({
+    schema: {},
+    enableDrafts: true,
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        mediaDir: 'public',
+        roots: {media: ConfigBuilder.media()}
+      })
+    }
+  })
+  const source = new MemorySource()
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
+  const database = new EntryDatabase(config, db)
+  const file = {
+    title: 'Brochure',
+    location: '/brochure.pdf',
+    extension: '.pdf',
+    size: 1024,
+    hash: 'hash'
+  }
+  const removedFiles = async (mutations: Array<Mutation>) => {
+    const {request} = await database.apply(mutations, {source})
+    await source.applyChanges(sourceChanges(request))
+    return request.changes.flatMap(change =>
+      change.op === 'removeFile' ? [change.location] : []
+    )
+  }
+  const versions = (status: 'draft' | 'published'): Array<Mutation> => [
+    {
+      op: 'create',
+      id: 'dir',
+      type: 'MediaLibrary',
+      locale: null,
+      status,
+      data: {title: 'Dir'}
+    },
+    {
+      op: 'create',
+      id: 'file',
+      parentId: 'dir',
+      type: 'MediaFile',
+      locale: null,
+      status,
+      data: file
+    }
+  ]
+  await removedFiles(versions('published'))
+  await removedFiles(versions('draft'))
+  expect(
+    await removedFiles([{op: 'remove', id: 'file', status: 'draft'}])
+  ).toEqual([])
+  expect(
+    await removedFiles([{op: 'remove', id: 'dir', status: 'draft'}])
+  ).toEqual([])
+  expect(await removedFiles([{op: 'remove', id: 'file'}])).toEqual([
+    'public/brochure.pdf'
+  ])
   await database.close()
 })
 
