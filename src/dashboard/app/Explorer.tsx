@@ -11,9 +11,6 @@ import {
   PageContent,
   PageHeader,
   PageTitle,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   SearchField,
   Switch,
   Text,
@@ -21,10 +18,8 @@ import {
   ToggleGroupItem
 } from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import type {OverviewActionProps, OverviewSort} from '#/core/Overview.js'
+import type {OverviewActionProps} from '#/core/Overview.js'
 import {resolveView} from '#/core/View.js'
-import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
@@ -47,22 +42,17 @@ import {
   type DashboardEntryData,
   type DashboardExplorer,
   explorerPageIsPending,
-  type ExplorerReadyPage,
-  type ExplorerSortState,
-  type ExplorerTypeFilters
+  type ExplorerReadyPage
 } from '../atoms/explorer.js'
-import {titleColumn} from '../atoms/overview.js'
 import {
   IcRoundAccountTree,
-  IcRoundArrowDownward,
-  IcRoundArrowUpward,
-  IcRoundClose,
   IcRoundFilterList,
   IcRoundSearch,
   IcRoundUploadFile
 } from '../icons.js'
 import css from './Explorer.module.css'
 import {ExplorerBatchActions} from './ExplorerBatchActions.js'
+import {ExplorerControls} from './ExplorerControls.js'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
@@ -831,122 +821,6 @@ interface ExplorerToolbarProps {
   explorer: DashboardExplorer
   page: ExplorerReadyPage
 }
-const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
-  {type: MediaFile, label: 'File'},
-  {type: MediaLibrary, label: 'Folder'}
-]
-interface ExplorerSortOption {
-  column: string
-  label: string
-}
-
-interface ExplorerControlsProps {
-  isMedia: boolean | undefined
-  sort: ExplorerSortState
-  sortOptions: Array<ExplorerSortOption>
-  selectedFilter: ExplorerTypeFilters | undefined
-  setSort: (sort: OverviewSort | undefined) => void
-  toggleFilter: (filterBy: ExplorerTypeFilters) => void
-}
-
-function ExplorerControlsButton(props: ExplorerControlsProps) {
-  return (
-    <Popover>
-      <PopoverTrigger
-        aria-label="Filter and sort"
-        variant="outline"
-        active={Boolean(props.selectedFilter || props.sort.requested)}
-        icon={IcRoundFilterList}
-        size="icon-lg"
-      />
-      <PopoverContent aria-label="Filter and sort" side="bottom" align="end">
-        <ExplorerControlsPopover {...props} />
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-function ExplorerControlsPopover({
-  isMedia,
-  sort,
-  sortOptions,
-  selectedFilter,
-  setSort,
-  toggleFilter
-}: ExplorerControlsProps) {
-  const current = sort.column
-  return (
-    <>
-      {isMedia && (
-        <>
-          <Text
-            as="p"
-            size="sm"
-            color="muted"
-            className={styles.Explorer.popoverLabel()}
-          >
-            Filter by
-          </Text>
-          {filters.map(filter => (
-            <Button
-              key={slugify(filter.label)}
-              variant="ghost"
-              active={selectedFilter === filter.type}
-              onClick={() => toggleFilter(filter.type)}
-              className={styles.Explorer.popoverOption()}
-            >
-              {filter.label}
-              {selectedFilter === filter.type && <IcRoundClose />}
-            </Button>
-          ))}
-        </>
-      )}
-      <Text
-        as="p"
-        size="sm"
-        color="muted"
-        className={styles.Explorer.popoverLabel()}
-      >
-        Sort by
-      </Text>
-      <Button
-        variant="ghost"
-        active={!sort.requested}
-        onClick={() => setSort(undefined)}
-        className={styles.Explorer.popoverOption()}
-      >
-        Default order
-      </Button>
-      {sortOptions.map(option => {
-        const active = sort.requested?.column === option.column
-        return (
-          <Button
-            key={option.column}
-            variant="ghost"
-            active={active}
-            onClick={() =>
-              setSort({
-                column: option.column,
-                direction:
-                  active && current?.direction === 'asc' ? 'desc' : 'asc'
-              })
-            }
-            className={styles.Explorer.popoverOption()}
-          >
-            {option.label}
-            {active &&
-              (current?.direction === 'asc' ? (
-                <IcRoundArrowUpward />
-              ) : (
-                <IcRoundArrowDownward />
-              ))}
-          </Button>
-        )
-      })}
-    </>
-  )
-}
-
 interface ExplorerSortedByProps {
   explorer: DashboardExplorer
   page: ExplorerReadyPage
@@ -1012,7 +886,8 @@ function ExplorerActions({page}: ExplorerActionsProps) {
 function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const setView = useSetAtom(explorer.view)
   const setSort = useSetAtom(explorer.sort)
-  const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
+  const toggleFilter = useSetAtom(explorer.toggleFilter)
+  const clearFilters = useSetAtom(explorer.clearFilters)
   const [, startTransition] = useTransition()
   const requestedLocation = useAtomValueRaw(explorer.location)
   const selectedLocale = useAtomValueRaw(explorer.selectedLocale)
@@ -1026,12 +901,6 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const uploadCount = uploads.length
   const uploadLabel =
     uploadCount === 1 ? '1 file uploading' : `${uploadCount} files uploading`
-  const sortOptions: Array<ExplorerSortOption> = [
-    {column: titleColumn.key, label: titleColumn.header},
-    ...page.overview.columns
-      .filter(column => column.sortBy)
-      .map(column => ({column: column.key, label: column.header}))
-  ]
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
@@ -1042,13 +911,16 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       )}
       <ExplorerSortedBy explorer={explorer} page={page} />
       <ExplorerActions page={page} />
-      <ExplorerControlsButton
-        isMedia={page.isMedia}
-        sort={page.sort}
-        sortOptions={page.search.trim() ? [] : sortOptions}
-        selectedFilter={selectedFilter}
-        setSort={sort => startTransition(() => setSort(sort))}
-        toggleFilter={toggleFilter}
+      <ExplorerControls
+        sorts={page.search.trim() ? [] : page.overview.sorts}
+        sort={page.sort.requested}
+        filters={page.overview.filters}
+        picked={page.filters}
+        onSort={sort => startTransition(() => setSort(sort))}
+        onToggleFilter={(filter, option) =>
+          startTransition(() => toggleFilter(filter, option))
+        }
+        onClearFilters={() => startTransition(() => clearFilters())}
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />

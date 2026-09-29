@@ -24,6 +24,7 @@ import {
   type TreeEntrySummary
 } from './entry.js'
 import {shaAtom} from './graph.js'
+import type {OverviewFilterSelection} from './overview.js'
 import {type Page, pageAtom, sortPageOverviewAtom} from './nav.js'
 import {policyAtom} from './user.js'
 import {
@@ -411,6 +412,12 @@ export class RootAtoms {
    */
   explorerScrollOffset = dispense((_key: string) => atom(0))
 
+  /**
+   * The filters picked in the explorers of this root, kept while the editor
+   * opens entries and folders. Each overview applies the ones it declares.
+   */
+  #explorerFilters = atom<OverviewFilterSelection>({})
+
   children = dispense((parentId: string | null) =>
     createExplorerAtoms(
       {
@@ -431,6 +438,7 @@ export class RootAtoms {
             set(sortPageOverviewAtom, sort)
         ),
         rootData: this.data,
+        filterState: this.#explorerFilters,
         scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
         treeItems: locale => this.tree(locale).items,

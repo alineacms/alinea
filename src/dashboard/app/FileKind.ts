@@ -1,4 +1,5 @@
 import type {IconType} from '#/components/types.js'
+import {fileKindExtensions, type MediaFileKind} from '#/core/media/FileKinds.js'
 import {
   IcRoundAudioFile,
   IcRoundCode,
@@ -12,31 +13,14 @@ import {
 } from '../icons.js'
 
 /** Groups of file extensions that share an icon and color in the media library */
-export type FileKind =
-  | 'pdf'
-  | 'document'
-  | 'spreadsheet'
-  | 'presentation'
-  | 'archive'
-  | 'video'
-  | 'audio'
-  | 'code'
-  | 'other'
+export type FileKind = Exclude<MediaFileKind, 'image'> | 'other'
 
-const kinds: Record<Exclude<FileKind, 'other'>, Array<string>> = {
-  pdf: ['pdf'],
-  document: ['doc', 'docx', 'odt', 'rtf', 'txt', 'md', 'pages'],
-  spreadsheet: ['xls', 'xlsx', 'ods', 'csv', 'tsv', 'numbers'],
-  presentation: ['ppt', 'pptx', 'odp', 'key'],
-  archive: ['zip', 'rar', '7z', 'gz', 'tgz', 'tar'],
-  video: ['mp4', 'mov', 'webm', 'avi', 'mkv', 'm4v'],
-  audio: ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'],
-  code: ['json', 'xml', 'html', 'css', 'js', 'ts', 'yml', 'yaml']
-}
-
+// Images show their preview, other files the icon of their kind
 const kindOfExtension = new Map(
-  Object.entries(kinds).flatMap(([kind, extensions]) =>
-    extensions.map(extension => [extension, kind as FileKind])
+  Object.entries(fileKindExtensions).flatMap(([kind, extensions]) =>
+    kind === 'image'
+      ? []
+      : extensions.map(extension => [extension, kind as FileKind])
   )
 )
 

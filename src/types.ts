@@ -8,9 +8,14 @@ export type {
   OverviewCellProps,
   OverviewColumn,
   OverviewEntry,
+  OverviewFilter,
+  OverviewFilterOption,
   OverviewFormatContext,
   OverviewOptions,
-  OverviewSort
+  OverviewSort,
+  OverviewSortBy,
+  OverviewSortDirection,
+  OverviewSortOption
 } from '#/core/Overview.js'
 export type {Root} from '#/core/Root.js'
 export type {Schema} from '#/core/Schema.js'

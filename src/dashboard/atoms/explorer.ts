@@ -31,10 +31,14 @@ import {
   columnLinkIds,
   loadColumnValues,
   loadOverviewParent,
+  overviewFilter,
+  type OverviewFilterSelection,
+  type OverviewFilterState,
   overviewOrder,
   type OverviewState,
+  pickedFilters,
+  pickedSort,
   resolveOverview,
-  sortColumn,
   sortedColumn,
   summarizeRows,
   thumbnailField
@@ -53,7 +57,6 @@ import {
 export const searchResultLimit = 100
 
 export type ExplorerView = 'card' | 'row'
-export type ExplorerTypeFilters = typeof MediaFile | typeof MediaLibrary
 
 export interface ExplorerLocation {
   workspace: string
@@ -136,6 +139,11 @@ export interface ExplorerOptions {
     [OverviewSort | undefined],
     void
   >
+  /**
+   * The filter options the editor picked, defaults to state kept by the
+   * explorer. The explorers of a root share them.
+   */
+  filterState?: PrimitiveAtom<OverviewFilterSelection>
   showSelectionControls?: boolean
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
@@ -160,7 +168,7 @@ type ExplorerQuery = GraphQuery<undefined, Type | undefined, undefined>
 export interface ExplorerSortState {
   /** The column the editor sorted by */
   requested?: OverviewSort
-  /** The header of the column the editor sorted by */
+  /** The label of the order the editor picked */
   label?: string
   /** The column shown as sorted, also for the parent's default order */
   column?: OverviewSort
@@ -170,6 +178,8 @@ export interface ExplorerSortState {
 
 export interface ExplorerReadyPage {
   canUpload: boolean
+  /** The filter options the listed entries match, by filter key */
+  filters: OverviewFilterSelection
   isMedia: boolean
   items: Array<ExplorerEntry>
   locale: string | null
@@ -213,7 +223,8 @@ export function explorerScrollKey(page: ExplorerReadyPage) {
     page.view,
     page.resultMode,
     page.searchScope,
-    page.search.trim()
+    page.search.trim(),
+    page.filters
   ])
 }
 
@@ -553,7 +564,11 @@ export class ExplorerAtoms {
     [OverviewSort | undefined],
     void
   >
-  #selectedFilter = atom<ExplorerTypeFilters>()
+  /**
+   * The options the editor picked of the filters of the overview, by filter
+   * key. The page lists the ones that apply to its overview.
+   */
+  requestedFilters: PrimitiveAtom<OverviewFilterSelection>
   selectedLocale: WritableAtom<
     string | null,
     [SetStateAction<string | null>],
@@ -630,6 +645,8 @@ export class ExplorerAtoms {
       options.scrollOffset ?? dispense((_key: string) => atom(0))
     this.requestedSort =
       options.sortState ?? atom<OverviewSort | undefined>(undefined)
+    this.requestedFilters =
+      options.filterState ?? atom<OverviewFilterSelection>({})
     this.mode = options.mode ?? 'browse'
     this.hasRowAction =
       options.onAction !== undefined ||
@@ -781,6 +798,7 @@ export class ExplorerAtoms {
       const searchScope = get(this.searchScope)
       const searchesEverything = get(this.searchesEverything)
       const isMedia = get(this.isMedia)
+      const requestedFilters = get(this.requestedFilters)
       const requestedRoot = get(this.root)
       const root = {
         icon: atom(get(requestedRoot.icon)),
@@ -820,9 +838,12 @@ export class ExplorerAtoms {
         }
       )
       const requested = get(this.requestedSort)
-      const sorted = search.trim() ? undefined : sortColumn(shown, requested)
+      const sorted = search.trim() ? undefined : pickedSort(shown, requested)
+      const filters = pickedFilters(shown, requestedFilters)
+      const filtered = Object.keys(filters).length > 0
       return {
         canUpload,
+        filters,
         isMedia,
         items,
         locale,
@@ -839,9 +860,10 @@ export class ExplorerAtoms {
         searchesEverything,
         sort: {
           requested: sorted ? requested : undefined,
-          label: sorted?.header,
+          label: sorted?.label,
           column: search.trim() ? undefined : sortedColumn(shown, requested),
-          manual: !search.trim() && !sorted && !shown.sort
+          // Entries can not be reordered between hidden ones
+          manual: !search.trim() && !sorted && !shown.sort && !filtered
         },
         view
       }
@@ -909,15 +931,29 @@ export class ExplorerAtoms {
         })
       )
   )
-  filter = atom(
-    get => get(this.#selectedFilter),
-    (get, set, filter: ExplorerTypeFilters) => {
+  /**
+   * Picks an option of a filter, or unpicks it when picked. Options of
+   * filters that allow one replace the picked option.
+   */
+  toggleFilter = atom(
+    null,
+    (get, set, filter: OverviewFilterState, option: string) => {
+      const {[filter.key]: current = [], ...others} = get(this.requestedFilters)
+      const picked = current.includes(option)
+        ? current.filter(key => key !== option)
+        : filter.multiple
+          ? [...current, option]
+          : [option]
       set(
-        this.#selectedFilter,
-        get(this.#selectedFilter) === filter ? undefined : filter
+        this.requestedFilters,
+        picked.length > 0 ? {...others, [filter.key]: picked} : others
       )
     }
   )
+  /** Unpicks the options of every filter */
+  clearFilters = atom(null, (_get, set) => {
+    set(this.requestedFilters, {})
+  })
   get limitLocations() {
     return this.#options.limitLocations
   }
@@ -1136,15 +1172,14 @@ export class ExplorerAtoms {
       if (!data || !get(data.hasChildren)) return []
       const config = get(configAtom)
       const graph = get(graphAtom)
-      const filter = get(this.filter)
+      const requestedFilters = get(this.requestedFilters)
       const overview = await get(this.overview)
       const entries = await graph.find({
         workspace: entry.workspace,
         root: entry.root,
         parentId: entry.id,
         locale,
-        filter: undefined,
-        type: filter,
+        filter: overviewFilter(overview, requestedFilters),
         status: 'preferDraft',
         groupBy: Entry.id,
         orderBy: overviewOrder(overview, get(this.requestedSort)),
@@ -1193,8 +1228,14 @@ export class ExplorerAtoms {
       if (!searchesEverything && !location.root && this.rootScope === 'current')
         return undefined
       if (this.mode === 'search' && !search) return undefined
+      const requestedFilters = get(this.requestedFilters)
       const overview = await get(this.overview)
       const flatList = resultMode === 'matches'
+      const condition = flatList ? this.#options.condition : undefined
+      const picked = overviewFilter(overview, requestedFilters)
+      // The search terms, the picker's condition and the picked filters apply
+      const filter =
+        condition && picked ? {and: [condition, picked]} : (condition ?? picked)
       return {
         workspace: searchesEverything ? undefined : location.workspace,
         root:
@@ -1210,8 +1251,7 @@ export class ExplorerAtoms {
               : (location.parentId ?? null),
         locale: searchesMultipleRoots ? undefined : locale,
         search: search || undefined,
-        filter: flatList ? this.#options.condition : undefined,
-        type: get(this.filter),
+        filter,
         status: 'preferDraft',
         orderBy: search
           ? undefined

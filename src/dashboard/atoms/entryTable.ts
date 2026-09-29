@@ -74,6 +74,8 @@ export const entryTableRowsAtom = dispense((key: string) =>
         select: column.select,
         format: column.formatted ? String : undefined
       })),
+      sorts: [],
+      filters: [],
       actions: [],
       types: []
     }
