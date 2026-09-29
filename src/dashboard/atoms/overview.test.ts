@@ -24,10 +24,9 @@ import {
 import {createExplorerAtoms} from './explorer.js'
 import {
   formatOverviewSort,
-  pageAtom,
+  overviewSortAtom,
   parseOverviewSort,
-  routeAtom,
-  sortPageOverviewAtom
+  routeAtom
 } from './nav.js'
 import {
   columnField,
@@ -411,19 +410,49 @@ test('overview sorts live in the url of the page', () => {
   expect(parseOverviewSort('-')).toBeUndefined()
   const store = createDashboardStore(config, new LocalDB(config))
   store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  const products = overviewSortAtom('main', 'products', null)
   store.set(routeAtom, {workspace: 'main', root: 'products'})
-  store.set(sortPageOverviewAtom, {column: 'price', direction: 'desc'})
+  store.set(products, {column: 'price', direction: 'desc'})
   expect(store.get(routeAtom).sort).toBe('-price')
-  expect(store.get(pageAtom).sort).toEqual({column: 'price', direction: 'desc'})
+  expect(store.get(products)).toEqual({column: 'price', direction: 'desc'})
   // Returning to the overview restores its sort
   store.set(routeAtom, {workspace: 'main', root: 'brands'})
   expect(store.get(routeAtom).sort).toBeUndefined()
   store.set(routeAtom, {workspace: 'main', root: 'products'})
   expect(store.get(routeAtom).sort).toBe('-price')
-  store.set(sortPageOverviewAtom, undefined)
+  // Also through a route that leaves out the default root
+  store.set(routeAtom, {workspace: 'main', root: 'brands'})
+  store.set(routeAtom, {workspace: 'main'})
+  expect(store.get(routeAtom).sort).toBe('-price')
+  store.set(products, undefined)
   store.set(routeAtom, {workspace: 'main', root: 'brands'})
   store.set(routeAtom, {workspace: 'main', root: 'products'})
   expect(store.get(routeAtom).sort).toBeUndefined()
+})
+
+test('an overview keeps its sort while the next page loads', () => {
+  const store = createDashboardStore(config, new LocalDB(config))
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  const products = overviewSortAtom('main', 'products', null)
+  store.set(routeAtom, {workspace: 'main', root: 'products', sort: '-price'})
+  const sort = store.get(products)
+  expect(sort).toEqual({column: 'price', direction: 'desc'})
+  // Showing the same list in another view keeps the sort as is
+  store.set(routeAtom, {
+    workspace: 'main',
+    root: 'products',
+    view: 'overview',
+    sort: '-price'
+  })
+  expect(store.get(products)).toBe(sort)
+  // The overview that is still shown while an entry opens keeps its order
+  store.set(routeAtom, {workspace: 'main', root: 'products', entry: 'chair'})
+  expect(store.get(products)).toBe(sort)
+  // Sorting it does not sort the page that replaces it
+  store.set(products, {column: 'title', direction: 'asc'})
+  expect(store.get(routeAtom)).toMatchObject({entry: 'chair', sort: undefined})
+  store.set(routeAtom, {workspace: 'main', root: 'products'})
+  expect(store.get(routeAtom).sort).toBe('title')
 })
 
 test('entry tables load their rows by query, sorted by a column', async () => {

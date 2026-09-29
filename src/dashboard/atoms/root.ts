@@ -1,5 +1,4 @@
 import type {EntryStatus} from '#/core/Entry.js'
-import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Resource} from '#/core/Role.js'
 import {Root, type RootData, type RootI18n} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
@@ -24,7 +23,7 @@ import {
   type TreeEntrySummary
 } from './entry.js'
 import {shaAtom} from './graph.js'
-import {type Page, pageAtom, sortPageOverviewAtom} from './nav.js'
+import {overviewSortAtom, type Page, pageAtom} from './nav.js'
 import {policyAtom} from './user.js'
 import {
   dashboardEntryDragItem,
@@ -301,7 +300,7 @@ export class RootAtoms {
   /**
    * The last page shown within this root. Explorers keep reading it after
    * navigating away, so the page that is still rendered while the next one
-   * loads does not reload in another locale or order.
+   * loads does not reload in another locale.
    */
   #lastPage = selectAtom<Page, Page | undefined>(pageAtom, (page, previous) =>
     page.workspace === this.workspace && page.root === this.key
@@ -413,16 +412,7 @@ export class RootAtoms {
       },
       {
         enableNavigation: true,
-        // The overview of the current page keeps its sort in the url
-        sortState: atom(
-          get => {
-            const page = get(this.#lastPage)
-            const current = page && (page.entry ?? null) === parentId
-            return current ? page.sort : undefined
-          },
-          (_get, set, sort: OverviewSort | undefined) =>
-            set(sortPageOverviewAtom, sort)
-        ),
+        sortState: overviewSortAtom(this.workspace, this.key, parentId),
         rootData: this.data,
         scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
