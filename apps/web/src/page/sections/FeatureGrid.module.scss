@@ -49,6 +49,42 @@
     flex-shrink: 0;
   }
 
+  // A crop of a screenshot between the header and the items
+  &-banner {
+    position: relative;
+    aspect-ratio: 16 / 6;
+    border-radius: 16px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-background);
+    overflow: hidden;
+    // Fade out the cut through the screenshot
+    mask-image: linear-gradient(to bottom, #000 72%, transparent);
+
+    @include s {
+      aspect-ratio: 4 / 3;
+      border-radius: 12px;
+    }
+
+    &-image {
+      position: absolute;
+      inset: 0;
+
+      &.is-dark {
+        display: none;
+      }
+
+      @include theme-dark {
+        &.is-light {
+          display: none;
+        }
+
+        &.is-dark {
+          display: block;
+        }
+      }
+    }
+  }
+
   &-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -113,6 +149,16 @@
     margin-left: auto;
   }
 
+  &.is-link {
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.2s ease-out;
+
+    &:is(:hover, :focus-visible) {
+      border-color: color-mix(in srgb, var(--web-accent) 45%, transparent);
+    }
+  }
+
   &-title {
     margin: 4px 0 0;
     font-family: var(--web-title-font);
@@ -133,6 +179,24 @@
     font-size: 15.5px;
     line-height: 1.55;
     color: var(--web-foreground-faded);
+  }
+
+  &-more {
+    margin-top: auto;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--web-accent);
+  }
+
+  &-arrow {
+    display: inline-block;
+    margin-left: 6px;
+    color: var(--web-accent);
+    transition: transform 0.2s ease-out;
+  }
+
+  &.is-link:is(:hover, :focus-visible) &-arrow {
+    transform: translateX(2px);
   }
 }
 

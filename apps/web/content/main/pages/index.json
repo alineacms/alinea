@@ -184,8 +184,8 @@
       "_id": "3JjOvpBS8UrfUJTzZjBaGOzAN9B",
       "_index": "a3",
       "_type": "FeatureGrid",
-      "title": "Rebuilt from the dashboard down",
-      "label": "New in 2.0",
+      "title": "Introducing Alinea 2.0",
+      "label": "",
       "link": {
         "_id": "3JjOvlfY4VngeP5sMzODVgQbMNP",
         "_type": "url",
@@ -195,6 +195,16 @@
         "label": "Full changelog"
       },
       "panel": true,
+      "image": {
+        "_id": "3Jznga0fk8MfKnFPwnYnnhIBucn",
+        "_type": "image",
+        "_entry": "3JmLmq1F4JhphD6g2eEfkrvsJew"
+      },
+      "darkImage": {
+        "_id": "3JzngTg50bcu2E1fGLRpUKHCPBk",
+        "_type": "image",
+        "_entry": "3JmLmuz6geh1YDFRslG10otkEQ1"
+      },
       "items": [
         {
           "_id": "3JjOvnvK9XRwTsawyRdzLbZ9yo5",
@@ -203,7 +213,15 @@
           "icon": "StrokeAccessibility",
           "tag": "Since 2.0",
           "title": "An accessible dashboard",
-          "text": "Rebuilt on React Aria Components: keyboard navigation, focus management and screen reader support throughout."
+          "text": "Rebuilt on React Aria Components: keyboard navigation, focus management and screen reader support throughout.",
+          "link": {
+            "_id": "3Jznga3DLzC81On88aETZ9hHxHn",
+            "_type": "url",
+            "_url": "/docs/upgrading#dashboard",
+            "_title": "",
+            "_target": "_self",
+            "label": ""
+          }
         },
         {
           "_id": "3JjOvkmcC5yUV3DmvbY58mCBD7u",
@@ -212,7 +230,13 @@
           "icon": "StrokeShieldCheck",
           "tag": "Since 1.7",
           "title": "Roles and permissions",
-          "text": "Decide who can create, edit, publish or upload, scoped by workspace, root, type, field, entry and locale."
+          "text": "Decide who can create, edit, publish or upload, scoped by workspace, root, type, field, entry and locale.",
+          "link": {
+            "_id": "3JzngXVIHyTJbrby11d8LbHaHMo",
+            "_type": "entry",
+            "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG",
+            "label": ""
+          }
         },
         {
           "_id": "3JjOvoiAnzcMvCIBO6zZKNTABGL",
@@ -221,7 +245,13 @@
           "icon": "StrokeCode",
           "tag": "Since 2.0",
           "title": "Dashboard components",
-          "text": "Build custom views with the same accessible React components the dashboard is made of, from alinea/components."
+          "text": "Build custom views with the same accessible React components the dashboard is made of, from alinea/components.",
+          "link": {
+            "_id": "3JzngTfrgIcpHnEFn2QaqmtXLLB",
+            "_type": "entry",
+            "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ",
+            "label": ""
+          }
         },
         {
           "_id": "3JjOvokVrTZ2MOsYh300FtAvO0s",
@@ -230,7 +260,15 @@
           "icon": "StrokeGlobe",
           "tag": "Since 2.0",
           "title": "Per-field translations",
-          "text": "Field.localiser keeps every locale of a value in one field, with fallbacks, next to fully translated pages."
+          "text": "Field.localiser keeps every locale of a value in one field, with fallbacks, next to fully translated pages.",
+          "link": {
+            "_id": "3JzngY8mkAF3nY48WA6MnFzfra4",
+            "_type": "url",
+            "_url": "/docs/internationalization#localised-fields",
+            "_title": "",
+            "_target": "_self",
+            "label": ""
+          }
         },
         {
           "_id": "3JjOvkXeanXOYct2uInKsrn0EAl",
@@ -239,7 +277,15 @@
           "icon": "StrokeLink",
           "tag": "Since 2.0",
           "title": "URL aliases and backlinks",
-          "text": "Renamed pages keep their old URLs for redirects, and every entry shows what links to it."
+          "text": "Renamed pages keep their old URLs for redirects, and every entry shows what links to it.",
+          "link": {
+            "_id": "3JzngXDnGPj2262rHVXXSevwM4u",
+            "_type": "url",
+            "_url": "/docs/schema/document#renamed-and-moved-pages",
+            "_title": "",
+            "_target": "_self",
+            "label": ""
+          }
         },
         {
           "_id": "3JjOvodD38gOiQ0SOFYo0dFpQ7r",
@@ -248,7 +294,15 @@
           "icon": "StrokeHook",
           "tag": "Since 2.0",
           "title": "Commit hooks",
-          "text": "Rewrite changes before they are committed, or revalidate, notify and deploy after."
+          "text": "Rewrite changes before they are committed, or revalidate, notify and deploy after.",
+          "link": {
+            "_id": "3JzngVPyiorJ5JUCXjNAxBF5dpW",
+            "_type": "url",
+            "_url": "/docs/deploy#commit-hooks",
+            "_title": "",
+            "_target": "_self",
+            "label": ""
+          }
         }
       ],
       "description": "",

@@ -10,6 +10,14 @@ export const FeatureGrid = Config.type('Feature grid', {
     panel: Field.check('Panel', {
       description: 'Render inside a bordered panel with muted cards'
     }),
+    image: Field.image('Image', {
+      width: 0.5,
+      help: 'Optional screenshot shown above the items, cropped to a banner'
+    }),
+    darkImage: Field.image('Dark image', {
+      width: 0.5,
+      help: 'Optional, shown instead when the site uses its dark theme'
+    }),
     items: Field.list('Items', {
       schema: {
         Feature: Config.type('Feature', {
@@ -17,7 +25,9 @@ export const FeatureGrid = Config.type('Feature grid', {
             icon: Field.select('Icon', {width: 0.5, options: iconOptions}),
             tag: Field.text('Tag', {width: 0.5}),
             title: Field.text('Title'),
-            text: Field.text('Text', {multiline: true})
+            text: Field.text('Text', {multiline: true}),
+            // The whole item links here, a label is optional
+            link: labeledLink('Link')
           }
         })
       }
