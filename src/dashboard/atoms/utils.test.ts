@@ -130,9 +130,13 @@ test('accepts dashboard entry and plain text drag types', () => {
 test('reports files that exceed the configured upload limit', () => {
   const file = new File(['oversized'], 'photo.jpg')
 
-  expect(uploadSizeError(file, {maxUploadSize: file.size - 1})).toContain(
-    'photo.jpg'
+  const pdf = new File(['oversized'], 'brochure.pdf')
+  expect(uploadSizeError(pdf, {maxUploadSize: pdf.size - 1})).toContain(
+    'brochure.pdf'
   )
+  expect(
+    uploadSizeError(file, {maxUploadSize: file.size - 1, resizeImages: false})
+  ).toContain('photo.jpg')
   expect(uploadSizeError(file, {maxUploadSize: file.size})).toBeUndefined()
   expect(uploadSizeError(file, {})).toBeUndefined()
   // Images are checked once they are scaled down

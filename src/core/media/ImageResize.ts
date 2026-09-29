@@ -24,6 +24,20 @@ const resizableTypes: Record<string, string> = {
 
 const defaultQuality = 0.85
 
+/** Uploads are scaled down to fit these dimensions unless configured */
+export const defaultImageResize: ImageResizeOptions = {
+  maxWidth: 2560,
+  maxHeight: 2560
+}
+
+/** The resize options of the config, undefined when resizing is disabled */
+export function imageResizeOptions(
+  option: ImageResizeOptions | false | undefined
+): ImageResizeOptions | undefined {
+  if (option === false) return undefined
+  return option ?? defaultImageResize
+}
+
 /** Whether uploads of this file are scaled down, vector and animated
  * formats are left as they are. */
 export function isResizableImage(fileName: string): boolean {

@@ -34,9 +34,10 @@ export interface Config {
   maxUploadSize?: number
   /**
    * Scale down jpeg, png and webp uploads larger than these dimensions before
-   * they are stored, the dashboard resizes them in the browser
+   * they are stored, the dashboard resizes them in the browser. Defaults to
+   * 2560 by 2560 pixels, false keeps uploads as they are.
    */
-  resizeImages?: ImageResizeOptions
+  resizeImages?: ImageResizeOptions | false
 
   /** The base url of the application */
   baseUrl?: string | {development?: string; production?: string}

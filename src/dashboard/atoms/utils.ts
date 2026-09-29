@@ -1,5 +1,5 @@
 import type {Config} from '#/core/Config.js'
-import {isResizableImage} from '#/core/media/ImageResize.js'
+import {imageResizeOptions, isResizableImage} from '#/core/media/ImageResize.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import type {DragTypes, Key} from '#/components.js'
 import {DeepMap} from '#/core/util/DeepMap.js'
@@ -168,7 +168,8 @@ export function uploadSizeError(
 ): string | undefined {
   const {maxUploadSize, resizeImages} = config
   // Images scaled down before the upload are checked after resizing
-  if (resizeImages && isResizableImage(file.name)) return undefined
+  if (imageResizeOptions(resizeImages) && isResizableImage(file.name))
+    return undefined
   try {
     assertUploadSize(file.name, file.size, maxUploadSize)
   } catch (error) {

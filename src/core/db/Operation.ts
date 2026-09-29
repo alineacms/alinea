@@ -6,6 +6,7 @@ import {createId} from '../Id.js'
 import type {CreateInputRow, StoredRow} from '../Infer.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
 import {
+  imageResizeOptions,
   isResizableImage,
   type ImageResizeOptions
 } from '../media/ImageResize.js'
@@ -240,7 +241,7 @@ export class UploadOperation extends Operation {
         : file
       let contentType =
         file instanceof Blob ? file.type : 'application/octet-stream'
-      const resizeOptions = db.config.resizeImages
+      const resizeOptions = imageResizeOptions(db.config.resizeImages)
       if (resizeOptions && resizeImage && isResizableImage(fileName)) {
         const resized = await resizeImage(blob, fileName, resizeOptions)
         if (resized.size < blob.size) {
