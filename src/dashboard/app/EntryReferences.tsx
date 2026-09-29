@@ -99,7 +99,7 @@ function EntryReferenceItem({item, onClick}: EntryReferenceItemProps) {
     <ListItem
       leading={
         <ListItemVisual>
-          <Icon data-slot="icon" icon={referenceIcon(linkType)} />
+          <Icon icon={referenceIcon(linkType)} />
         </ListItemVisual>
       }
       onClick={onClick}

@@ -1395,7 +1395,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
 
   return (
     <>
-      <SortableListItem aria-label="Link item 1" role="listitem">
+      <SortableListItem aria-label="Link item 1">
         <SortableListItemHeader className={styles.LinkFieldView.inputHeader()}>
           {options.readOnly ? (
             rowContent
@@ -1512,7 +1512,6 @@ function MultipleLinkRow({
           />
         }
         id={itemId}
-        role="listitem"
       >
         <SortableListItemHeader>
           {!readOnly && (
@@ -1764,6 +1763,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   return (
     <>
       <ListLabel
+        required={options.required}
         aria-label={
           hasRows
             ? allExpanded

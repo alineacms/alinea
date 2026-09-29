@@ -255,7 +255,7 @@ function ActivityItem({activity}: ActivityItemProps) {
               className={styles.ActivityStatus.icon()}
             />
           ) : (
-            <Icon data-slot="icon" icon={activityStatusIcon(activity.status)} />
+            <Icon icon={activityStatusIcon(activity.status)} />
           )}
         </ListItemVisual>
       }

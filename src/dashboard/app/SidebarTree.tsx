@@ -122,7 +122,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   return (
     <TreeItem
       id={item.id}
-      draggable={!data.dragDisabled}
+      hideDragHandle={data.dragDisabled}
       title={data.title}
       hasChildItems={data.hasChildren}
       icon={configuredIcon ?? (data.hasChildren ? LucideFolder : LucideFile)}
@@ -179,7 +179,7 @@ function equalStringSets(left: Set<string>, right: Set<string>): boolean {
   )
 }
 
-const treeRowHeight = 32
+const treeRowHeight = 34
 
 /** The last visible descendant of an entry, if it is expanded */
 function lastVisibleDescendant(

@@ -227,6 +227,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
   return (
     <ListFieldDepthContext.Provider value={depth + 1}>
       <ListLabel
+        required={options.required}
         aria-label={
           hasRows
             ? allExpanded
@@ -498,7 +499,6 @@ const ListFieldRow = memo(function ListFieldRow({
       aria-label={`${label} item ${index + 1}`}
       dragPreview={<SortableListDragPreview icon={typeIcon} label={label} />}
       id={itemId}
-      role="listitem"
     >
       <ListFieldRowHeader
         canInsert={canCreate}

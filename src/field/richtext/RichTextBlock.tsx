@@ -61,7 +61,7 @@ export const RichTextBlock = memo(function RichTextBlock({
       data-read-only={readOnly || undefined}
       data-richtext-block="true"
     >
-      <SortableListItem role="listitem" tabIndex={0}>
+      <SortableListItem tabIndex={0}>
         <SortableListItemHeader data-richtext-block-header="true">
           {!readOnly && (
             <SortableListHandle

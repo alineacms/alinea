@@ -379,7 +379,7 @@ export function EntrySidebarVersionRow({
       data-status={status}
       leading={
         <ListItemVisual>
-          <Icon data-slot="icon" icon={icon} />
+          <Icon icon={icon} />
         </ListItemVisual>
       }
       onClick={onClick}

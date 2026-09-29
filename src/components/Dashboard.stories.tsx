@@ -678,7 +678,6 @@ function EditorForm({page, onChange}: {page: StoryPage; onChange: () => void}) {
                   key={section.id}
                   id={section.id}
                   aria-label={section.label}
-                  role="listitem"
                   dragPreview={
                     <SortableListDragPreview
                       icon={section.icon}
