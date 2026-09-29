@@ -131,6 +131,7 @@ export function SearchField({
           {loading && (
             <Spinner
               aria-label="Loading results"
+              data-slot="search-field-spinner"
               className={styles.SearchFieldSpinner()}
             />
           )}
@@ -140,6 +141,7 @@ export function SearchField({
           >
             <Icon
               icon={IcRoundClose}
+              data-slot="search-field-clear-icon"
               className={styles.SearchFieldClear.icon()}
             />
           </Button>

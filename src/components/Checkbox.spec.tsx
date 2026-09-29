@@ -21,6 +21,9 @@ test('renders default and indeterminate states', async ({mount, page}) => {
     page.getByRole('checkbox', {name: 'Indeterminate'})
   ).toHaveJSProperty('indeterminate', true)
   await expect(page.locator('[data-slot="checkbox"]').first()).toBeVisible()
+  await expect(
+    page.getByRole('checkbox', {name: /Notifications/})
+  ).toHaveAccessibleDescription('Receive an email when someone mentions you.')
 })
 
 test('disabled, read-only and invalid states', async ({mount, page}) => {
@@ -31,10 +34,13 @@ test('disabled, read-only and invalid states', async ({mount, page}) => {
   const invalid = page.getByRole('checkbox', {name: 'Invalid'})
   await expect(invalid).toHaveAttribute('aria-invalid', 'true')
   await expect(page.getByRole('alert')).toHaveText('You must accept the terms')
+  await expect(invalid).toHaveAccessibleDescription('You must accept the terms')
   const readOnly = page.getByRole('checkbox', {name: 'Read-only and checked'})
   await expect(readOnly).toBeChecked()
   await readOnly.focus()
   await readOnly.press('Space')
+  await expect(readOnly).toBeChecked()
+  await page.getByText('Read-only and checked').click()
   await expect(readOnly).toBeChecked()
   await expect(page.getByRole('checkbox', {name: 'Required'})).toHaveAttribute(
     'required',

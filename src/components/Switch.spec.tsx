@@ -22,6 +22,8 @@ test('default, disabled and read-only states', async ({mount, page}) => {
   await readOnly.focus()
   await readOnly.press('Space')
   await expect(readOnly).toBeChecked()
+  await page.getByText('Read-only').click()
+  await expect(readOnly).toBeChecked()
 })
 
 test('shows no focus ring when toggled with the pointer', async ({

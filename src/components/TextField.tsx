@@ -149,6 +149,7 @@ export function TextField({
               />
               <div
                 aria-hidden="true"
+                data-slot="text-field-shadow"
                 className={styles.TextFieldControl({
                   ...adornments,
                   shadow: true

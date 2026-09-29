@@ -9,13 +9,13 @@
   cursor: pointer;
   forced-color-adjust: none;
 
-  &:has(:disabled),
-  &:has([aria-readonly='true']) {
+  &:has(:disabled) {
     pointer-events: none;
+    opacity: 0.5;
   }
 
-  &:has(:disabled) {
-    opacity: 0.5;
+  &:has([aria-readonly='true']) {
+    cursor: default;
   }
 }
 

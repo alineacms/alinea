@@ -25,13 +25,13 @@
   cursor: pointer;
   forced-color-adjust: none;
 
-  &:has(:disabled),
-  .RadioGroup[aria-readonly='true'] & {
+  &:has(:disabled) {
     pointer-events: none;
+    opacity: 0.5;
   }
 
-  &:has(:disabled) {
-    opacity: 0.5;
+  .RadioGroup[aria-readonly='true'] & {
+    cursor: default;
   }
 
   &:has(.RadioGroupItem-content) {

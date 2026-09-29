@@ -9,6 +9,10 @@
   gap: 4px 8px;
   padding-bottom: 8px;
   line-height: 1;
+
+  &.is-disabled {
+    opacity: 0.5;
+  }
 }
 
 .FieldHeader-icon {
