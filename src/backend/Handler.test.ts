@@ -1286,20 +1286,23 @@ test('proxies built public media from the server of the build', async () => {
   }
 
   try {
-    // A deployment serves its files on the configured baseUrl, while
-    // `next start` serves the files of its build locally
+    // A deployment serves the files of its build on the origin that reached
+    // it, which is not necessarily the configured baseUrl (eg. a preview
+    // deployment), while `next start` serves the files of its build locally
     for (const context of [
       production,
       {...production, publicUrl: new URL('http://localhost:3188')}
     ]) {
       const response = await handle(
-        new Request('http://localhost/api?file=image.jpg&delivery=proxy'),
+        new Request(
+          'https://preview-123.vercel.app/api?file=image.jpg&delivery=proxy'
+        ),
         context
       )
       test.is(response.status, 200)
     }
     test.equal(requested, [
-      'https://example.com/media/stored.jpg',
+      'https://preview-123.vercel.app/media/stored.jpg',
       'http://localhost:3188/media/stored.jpg'
     ])
   } finally {

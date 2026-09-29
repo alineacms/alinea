@@ -11,6 +11,11 @@ export function proxyMediaUrl(request: Request, source: URL) {
     const value = request.headers.get(name)
     if (value) headers.set(name, value)
   }
+  // Protected deployments (eg. Vercel previews) only serve their own files to
+  // the visitor that is signed in to them
+  const cookie = request.headers.get('cookie')
+  if (cookie && source.origin === new URL(request.url).origin)
+    headers.set('cookie', cookie)
   return fetch(source, {
     method: request.method,
     headers,
