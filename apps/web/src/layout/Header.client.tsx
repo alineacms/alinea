@@ -184,13 +184,14 @@ function SearchModal({onClose}: SearchModalProps) {
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
   }, [onClose])
-  // Return focus to where it was once closed
+  // Return focus to where it was once closed, read while rendering since
+  // the input takes focus before effects run
+  const [opener] = useState(() => document.activeElement)
   useEffect(() => {
-    const previous = document.activeElement
     return () => {
-      if (previous instanceof HTMLElement) previous.focus()
+      if (opener instanceof HTMLElement) opener.focus()
     }
-  }, [])
+  }, [opener])
   return createPortal(
     <div
       role="dialog"
