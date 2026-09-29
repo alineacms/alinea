@@ -27,7 +27,8 @@
   gap: 24px 48px;
   padding: 48px 56px;
   border-radius: 24px;
-  border: 1px solid var(--web-cloud-outline);
+  border: 1px solid var(--web-code-outline);
+  // A navy block in both themes, like code blocks
   background: var(--web-code-background);
   color: var(--web-code-foreground);
 
@@ -60,7 +61,7 @@
     margin: 0;
     font-size: 16px;
     line-height: 1.55;
-    color: var(--web-cloud-foreground-faded);
+    color: color-mix(in srgb, var(--web-code-foreground) 75%, transparent);
   }
 
   &-form {
@@ -96,20 +97,24 @@
       height: 48px;
       padding: 0 16px;
       border-radius: 12px;
-      border: 1px solid var(--web-cloud-outline);
-      background: var(--web-cloud-surface);
+      border: 1px solid var(--web-code-outline);
+      background: color-mix(
+        in srgb,
+        var(--web-code-foreground) 6%,
+        transparent
+      );
       color: var(--web-code-foreground);
       font-family: inherit;
       font-size: 15px;
 
       &::placeholder {
-        color: var(--web-cloud-foreground-faded);
-        opacity: 0.7;
+        color: var(--web-code-muted);
+        opacity: 1;
       }
 
       &:focus {
         outline: none;
-        border-color: var(--web-cloud-accent);
+        border-color: var(--web-accent);
       }
 
       @include sm {
@@ -122,8 +127,10 @@
     height: 48px;
     padding: 0 22px;
     border-radius: 12px;
-    background: var(--web-code-foreground);
-    color: var(--web-cloud-background);
+    border: 0;
+    // Same as the call to action button in the header
+    background: var(--web-accent);
+    color: var(--web-accent-foreground);
     font-family: inherit;
     font-size: 15px;
     font-weight: 600;
@@ -131,7 +138,7 @@
     transition: background-color 0.2s ease-out;
 
     &:is(:hover, :focus-visible) {
-      background: var(--web-cloud-foreground-faded);
+      background: var(--web-accent-strong);
     }
   }
 }
