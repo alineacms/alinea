@@ -1,0 +1,129 @@
+{
+  "_id": "3JmLPUiWBOnafgK1A0QZuE2czJJ",
+  "_type": "Doc",
+  "_index": "ag",
+  "title": "Select",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Picks a single value from a list of options. The value is the `value` of the chosen SelectItem, and editors can clear it unless the field is required."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPQN7pnG4umYt15IxIrlVYp2",
+      "example": "Select"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Groups"
+        }
+      ],
+      "_anchor": "groups"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Group related options under a label and divide groups with SelectSeparator. Items can show an icon and a description below their label."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPViSoRsgy3H6QTkzjE8cJ2r",
+      "example": "SelectGroups"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "States"
+        }
+      ],
+      "_anchor": "states"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A placeholder shows while nothing is selected. Like the other form controls, a select takes `description`, `error`, `required`, `disabled` and `readOnly`."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPSXOMQ7T4rjt9QVUMifjR3S",
+      "example": "SelectStates"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPWWU7t7fupAPzEsSHo10L5v",
+      "component": "Select"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The list opens with Enter, Space or the arrow keys and supports typeahead: typing jumps to the first matching option. The options are announced as a listbox with the selected one marked."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261272,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261272,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

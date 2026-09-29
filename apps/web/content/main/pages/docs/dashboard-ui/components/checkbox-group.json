@@ -1,0 +1,59 @@
+{
+  "_id": "3JmLP6BtJuCqAIzcEuViCvTQ1Co",
+  "_type": "Doc",
+  "_index": "a8",
+  "title": "CheckboxGroup",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A labelled group of checkboxes for several values."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLP4rSpntOkY74RsduKJu3IVw",
+      "example": "CheckboxGroup"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLP7EC09KNc8XTwNUkBZrHM4k",
+      "component": "CheckboxGroup"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261268,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261268,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

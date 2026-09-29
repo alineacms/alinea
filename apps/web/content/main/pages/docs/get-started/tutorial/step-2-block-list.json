@@ -1,0 +1,410 @@
+{
+  "_id": "3AONCBGWB01JivtUHVnGHF3ICYf",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "Step 2: Add a list of blocks",
+  "navigationTitle": "Step 2: Content blocks",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most pages are built from a stack of blocks: a text section, an image, a call to action. In this step editors get a list of blocks on the landing page that they can add, reorder and remove: text blocks, image blocks and a weather block that loads data from an external API. The "
+        },
+        {
+          "_type": "text",
+          "text": "list field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Ao09gvuOFzSTPN6m519QoqGXnI",
+              "_link": "entry",
+              "_entry": "268hhWIV6twxD4PMp03isLY6Pac"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " models this: each item in the list has one of the types you allow."
+        }
+      ]
+    },
+    {
+      "_type": "ImageBlock",
+      "_id": "3JzvjzS3CGASkXjIfYS8rE9ulse",
+      "image": {
+        "_id": "3Jzvk4toWMGsQ5YIRH9HVp40OYo",
+        "_type": "image",
+        "_entry": "3JzvYHaAfg1DNMCNMMKTG2JLq5V"
+      },
+      "darkImage": {
+        "_id": "3Jzvk24MH0UElmu57UtPr8W4YYI",
+        "_type": "image",
+        "_entry": "3JzvYBlVTI9x0SXHwpQevBKHy14"
+      }
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Just like page types, every block type gets a folder with a schema file and a view component."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONynxdbatHNaFXlDRzzKGpfAh",
+      "code": "app/\n├ (alinea)/api/cms/route.ts\n├ page.tsx\n├ layout.tsx\n╰ globals.css\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\nblocks/\n├ text/\n│ ├ TextBlock.tsx\n│ ╰ TextBlock.schema.tsx\n├ image/\n│ ├ ImageBlock.tsx\n│ ╰ ImageBlock.schema.tsx\n╰ weather/\n  ├ WeatherBlock.tsx\n  ╰ WeatherBlock.schema.tsx\n\ncms.tsx",
+      "fileName": "project structure",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Text block"
+        }
+      ],
+      "_anchor": "text-block"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Block types are defined with `Config.type`, not `Config.document`: they don't have a URL, title or metadata of their own. The text block has one "
+        },
+        {
+          "_type": "text",
+          "text": "rich text field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Aq3QJSYKtWxBeIC2HJXAkq4e25",
+              "_entry": "268hjH2OU9fiReg61Wov1SRbPD5",
+              "_link": "entry"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". `inline: true` shows a minimal editor without the field label, which keeps a block with a single field compact."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONCE5z57fJ5wQNqFZAuwbuTw3",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const TextBlock = Config.type('Text block', {\n  fields: {\n    body: Field.richText('Text', {inline: true})\n  }\n})",
+      "fileName": "blocks/text/TextBlock.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `RichText` component from `alinea/ui` renders rich text as React elements, without `dangerouslySetInnerHTML`. Pass a component or element per tag to change how it renders: here every `a` becomes a Next.js `Link`, so internal links navigate client-side. `Infer.ListItem<typeof TextBlock>` gives the type of one list item of this block type, including `_id` and `_type`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep2TextView0000000000001",
+      "code": "import type {Infer} from 'alinea'\nimport {RichText} from 'alinea/ui'\nimport NextLink from 'next/link'\nimport type {TextBlock} from './TextBlock.schema'\n\ntype TextBlockData = Infer.ListItem<typeof TextBlock>\n\nfunction Link({href, ...props}: {href?: string; [key: string]: any}) {\n  if (!href) return <a {...props} />\n  return <NextLink href={href!} {...props} />\n}\n\nexport function TextBlockView({block}: {block: TextBlockData}) {\n  return <RichText doc={block.body} a={Link} />\n}\n",
+      "fileName": "blocks/text/TextBlock.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Image block"
+        }
+      ],
+      "_anchor": "image-block"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The image block has an image field and an alt text."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep2ImageSchema0000000001",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const ImageBlock = Config.type('Image block', {\n  fields: {\n    image: Field.image('Image', {required: true, width: 0.5}),\n    alt: Field.text('Alt text', {width: 0.5})\n  }\n})\n",
+      "fileName": "blocks/image/ImageBlock.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An image field returns an object with `src`, `width` and `height` (among others), or `undefined` when no image is picked. `withAlinea` allows the image URLs in `images.localPatterns`, so they work with the "
+        },
+        {
+          "_type": "text",
+          "text": "Next.js Image component",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Aq6xW17o31fQ6OPb1EhIGNrEfV",
+              "_link": "url",
+              "href": "https://nextjs.org/docs/app/api-reference/components/image"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", which resizes and optimizes them."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep2ImageView000000000001",
+      "code": "import type {Infer} from 'alinea'\nimport Image from 'next/image'\nimport type {ImageBlock} from './ImageBlock.schema'\n\ntype ImageBlockData = Infer.ListItem<typeof ImageBlock>\n\nexport function ImageBlockView({block}: {block: ImageBlockData}) {\n  if (!block.image) return null\n\n  const {src, width, height} = block.image\n  return (\n    <Image\n      src={src}\n      width={width}\n      height={height}\n      alt={block.alt || ''}\n      style={{width: '300px', height: 'auto'}}\n    />\n  )\n}\n",
+      "fileName": "blocks/image/ImageBlock.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Weather block"
+        }
+      ],
+      "_anchor": "weather-block"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Blocks can load their own data too. Editors enter a region, and the block shows the current weather there. The `help` option adds a description below the field."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep2WeatherSchema00000001",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const WeatherBlock = Config.type('Weather block', {\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    region: Field.text('Region', {\n      required: true,\n      width: 0.5,\n      help: 'City or region name, for example: Brussels or New York'\n    })\n  }\n})",
+      "fileName": "blocks/weather/WeatherBlock.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The view is an async server component that fetches the weather from "
+        },
+        {
+          "_type": "text",
+          "text": "Open-Meteo",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkCIsDDNblelUmCXsCsXzMLeN0",
+              "_link": "url",
+              "href": "https://open-meteo.com/"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". The `'use cache'` directive caches `getCurrentWeather` per region, and `cacheLife` keeps each result for 15 minutes, so a page with this block doesn't call the API on every request."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep2WeatherView0000000001",
+      "code": "import type {Infer} from 'alinea'\nimport {cacheLife} from 'next/cache'\nimport type {WeatherBlock} from './WeatherBlock.schema'\n\ntype WeatherBlockData = Infer.ListItem<typeof WeatherBlock>\n\ntype GeocodingResponse = {\n  results?: Array<{\n    name: string\n    country?: string\n    latitude: number\n    longitude: number\n  }>\n}\n\ntype ForecastResponse = {\n  current?: {\n    temperature_2m?: number\n    weather_code?: number\n  }\n  current_units?: {\n    temperature_2m?: string\n  }\n}\n\nconst weatherCodeLabels: Record<number, string> = {\n  0: 'Clear sky',\n  1: 'Mainly clear',\n  2: 'Partly cloudy',\n  3: 'Overcast',\n  45: 'Fog',\n  48: 'Depositing rime fog',\n  51: 'Light drizzle',\n  53: 'Moderate drizzle',\n  55: 'Dense drizzle',\n  61: 'Slight rain',\n  63: 'Moderate rain',\n  65: 'Heavy rain',\n  71: 'Slight snowfall',\n  73: 'Moderate snowfall',\n  75: 'Heavy snowfall',\n  80: 'Rain showers',\n  81: 'Rain showers',\n  82: 'Violent rain showers',\n  95: 'Thunderstorm'\n}\n\nasync function getCurrentWeather(region: string) {\n  'use cache'\n  cacheLife({stale: 900, revalidate: 900, expire: 900})\n\n  const geocoding = await fetch(\n    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(region)}&count=1`\n  )\n  if (!geocoding.ok) return null\n\n  const geocodingData = (await geocoding.json()) as GeocodingResponse\n  const result = geocodingData.results?.[0]\n  if (!result) return null\n\n  const forecast = await fetch(\n    `https://api.open-meteo.com/v1/forecast?latitude=${result.latitude}&longitude=${result.longitude}&current=temperature_2m,weather_code&timezone=auto`\n  )\n  if (!forecast.ok) return null\n\n  const forecastData = (await forecast.json()) as ForecastResponse\n  if (!forecastData.current) return null\n\n  return {\n    location: result.country\n      ? `${result.name}, ${result.country}`\n      : result.name,\n    temperature: forecastData.current.temperature_2m,\n    unit: forecastData.current_units?.temperature_2m ?? '°C',\n    summary:\n      weatherCodeLabels[forecastData.current.weather_code ?? -1] ??\n      'Current weather'\n  }\n}\n\nexport async function WeatherBlockView({block}: {block: WeatherBlockData}) {\n  const weather = await getCurrentWeather(block.region)\n\n  return (\n    <section>\n      <h2>{block.title}</h2>\n      {!weather ? (\n        <p>Could not load weather for {block.region}.</p>\n      ) : (\n        <p>\n          {weather.location}: {weather.temperature}\n          {weather.unit} ({weather.summary})\n        </p>\n      )}\n    </section>\n  )\n}",
+      "fileName": "blocks/weather/WeatherBlock.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`'use cache'` and `cacheLife` are part of Cache Components, which Next.js doesn't enable by default. Turn it on in `next.config.ts`. Next.js then prerenders the page at build time with the cached weather in it, and renders it again once the 15 minutes are up:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jk3JxD8CvJacyN4dnwylZXmzXH",
+      "code": "import {withAlinea} from 'alinea/next'\nimport type {NextConfig} from 'next'\n\nconst nextConfig: NextConfig = {\n  cacheComponents: true\n}\n\nexport default withAlinea(nextConfig)",
+      "fileName": "next.config.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add the list to the landing page"
+        }
+      ],
+      "_anchor": "add-the-list-to-the-landing-page"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add a `blocks` list field to the landing page. The keys of `schema` become the `_type` of each item."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONCCDEGYojdWJsNBkgIGBTklH",
+      "code": "import {Config, Field} from 'alinea'\nimport {ImageBlock} from '@/blocks/image/ImageBlock.schema'\nimport {TextBlock} from '@/blocks/text/TextBlock.schema'\nimport {WeatherBlock} from '@/blocks/weather/WeatherBlock.schema'\n\nexport const LandingPage = Config.document('Landing page', {\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    path: Field.path('Path', {readOnly: true, width: 0.5, initialValue: ''}),\n    blocks: Field.list('Blocks', {\n      schema: {\n        TextBlock,\n        ImageBlock,\n        WeatherBlock\n      }\n    })\n  }\n})",
+      "fileName": "entries/landing/LandingPage.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render each block by checking its `_type`: TypeScript narrows `block` to the matching block type inside each branch. `generateMetadata` now falls back to the text of the first text block when the SEO tab has no description. `plainText` walks the rich text nodes to collect the text."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONCAjBNZ0oQZzXlZgUAVLJeYf",
+      "code": "import type {TextDoc} from 'alinea'\nimport {Node} from 'alinea/core/TextDoc'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport {ImageBlockView} from '@/blocks/image/ImageBlock'\nimport {TextBlockView} from '@/blocks/text/TextBlock'\nimport {WeatherBlockView} from '@/blocks/weather/WeatherBlock'\nimport {cms} from '@/cms'\nimport {LandingPage} from './LandingPage.schema'\n\nexport async function LandingPageView() {\n  const page = await cms.first({url: '/', type: LandingPage})\n  if (!page) notFound()\n\n  return (\n    <main>\n      <h1>{page.title}</h1>\n      {page.blocks.map(block => {\n        if (block._type === 'TextBlock') return <TextBlockView key={block._id} block={block} />\n        if (block._type === 'ImageBlock') return <ImageBlockView key={block._id} block={block} />\n        if (block._type === 'WeatherBlock') return <WeatherBlockView key={block._id} block={block} />\n        return null\n      })}\n    </main>\n  )\n}\n\nexport async function generateMetadata(): Promise<Metadata> {\n  const page = await cms.first({url: '/', type: LandingPage})\n  if (!page) return {}\n\n  let fallbackDescription = ''\n  for (const block of page.blocks) {\n    if (block._type === 'TextBlock') {\n      fallbackDescription = plainText(block.body)\n      break\n    }\n  }\n\n  return {\n    title: page.metadata.title || page.title,\n    description: page.metadata?.description || fallbackDescription,\n    openGraph: {\n      title: page.metadata.openGraph.title || page.metadata.title || page.title,\n      description: page.metadata.openGraph.description || page.metadata?.description,\n      images: page.metadata?.openGraph.image\n        ? [page.metadata?.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n\nexport function plainText(value: TextDoc<any> | string | undefined): string {\n  if (!value) return ''\n  if (typeof value === 'string') return value\n\n  if (!Array.isArray(value)) return ''\n  const result = value\n    .reduce((acc, node) => {\n      return acc + textOf(node)\n    }, '')\n    .trim()\n  return result.replace(/ +(?= )/g, '')\n}\n\nfunction textOf(node: Node): string {\n  if (node._type === 'hardBreak') return '\\n'\n  if (Node.isText(node)) {\n    return node.text ? ' ' + node.text : ''\n  } else if (Node.isElement(node) && node.content) {\n    return node.content.reduce((acc, node) => {\n      return acc + textOf(node)\n    }, '')\n  }\n  return ''\n}",
+      "fileName": "entries/landing/LandingPage.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3AqJsH36wrGYetAENOBNSN2GBTM",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Check that:"
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "The landing page has a Blocks field where you can add, drag to reorder and remove text, image and weather blocks."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Text blocks render with their formatting and links."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "A weather block shows the current weather for its region."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Without a description in the SEO tab, the page description is the text of the first text block."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790188890,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790195602,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

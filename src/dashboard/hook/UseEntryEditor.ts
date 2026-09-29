@@ -28,6 +28,9 @@ export interface EntryEditor {
 /**
  * Returns the consumer-facing entry editor shape. Only the fields declared by
  * EntryEditor are supported; dashboard atoms remain an internal detail.
+ *
+ * @deprecated Use `useEntry` from 'alinea/cms': it returns the entry being
+ * edited with its `id`, `locale`, `path`, `title`, `type` and `status`.
  */
 export function useEntryEditor(): EntryEditor | undefined {
   const entry = useEntry()

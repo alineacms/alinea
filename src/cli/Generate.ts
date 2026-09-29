@@ -3,7 +3,6 @@ import {Config} from '#/core/Config.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
-import {generatedDatabaseFile} from '#/database/Version.js'
 import {createRequire} from 'node:module'
 import * as fsp from 'node:fs/promises'
 import path from 'node:path'
@@ -13,6 +12,7 @@ import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {DevDB} from './generate/DevDB.js'
 import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
+import {generatedPaths} from './generate/GeneratedPaths.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
 import {dirname} from './util/Dirname.js'
 import type {Emitter} from './util/Emitter.js'
@@ -32,7 +32,11 @@ export interface GenerateOptions {
   fix?: boolean
   wasmCache?: boolean
   quiet?: boolean
-  onAfterGenerate?: (buildMessage: string, config: Config) => void
+  onAfterGenerate?: (
+    buildMessage: string,
+    config: Config,
+    databasePath: string
+  ) => void
   dashboardUrl?: Promise<string>
 }
 
@@ -73,9 +77,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const rootDir = path.resolve(cwd)
   const configDir = path.dirname(configLocation)
 
-  const nodeModules = alineaPackageDir.includes('node_modules')
-    ? path.join(alineaPackageDir, '..')
-    : path.join(alineaPackageDir, 'node_modules')
+  const {packageDir, outDir, databasePath} = generatedPaths({
+    alineaPackageDir,
+    rootDir,
+    configLocation
+  })
 
   const context: GenerateContext = {
     cmd,
@@ -86,7 +92,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(nodeModules, '@alinea/generated')
+    packageDir,
+    outDir
   }
   await copyStaticFiles(context)
   let indexing!: Emitter<DevDB>
@@ -117,7 +124,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const databaseOptions = {
         config: cms.config,
         rootDir,
-        databasePath: join(context.outDir, generatedDatabaseFile),
+        databasePath,
         configFingerprint: await hashBlob(
           await fsp.readFile(join(context.outDir, 'config.js'))
         ),
@@ -161,7 +168,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           await write(recordCount ?? 0).then(
             message => {
               afterGenerateCalled = true
-              onAfterGenerate(message, cms.config)
+              onAfterGenerate(message, cms.config, databasePath)
             },
             () => {
               reportFatal('Alinea failed to write dashboard files')

@@ -1,0 +1,59 @@
+{
+  "_id": "3JmLPE6xJgs5fsLLv8pSdfEiSvM",
+  "_type": "Doc",
+  "_index": "aH",
+  "title": "DateField",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Types a date segment by segment."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPHVWKetbTmdtGTI9QuePRt4",
+      "example": "DateField"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPDX957Y9M2lwFWMOvTpc7sC",
+      "component": "DateField"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261269,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261269,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

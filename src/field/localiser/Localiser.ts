@@ -1,7 +1,9 @@
 import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
+import {fieldError} from '#/core/Validation.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {selectLocale} from './SelectLocale.js'
 
 export type LocalisedValue<Locale extends string, Value> = Record<Locale, Value>
 
@@ -125,7 +127,9 @@ export function localiser<const Locale extends string>({
           )
         },
         normalizeAnchors(value, context) {
-          const record = value ?? initialValue()
+          // Leave a missing value missing, anchors only live in stored values
+          if (value === undefined || value === null) return value
+          const record = value
           let next = record
           for (const locale of locales) {
             const before = record[locale]
@@ -135,6 +139,31 @@ export function localiser<const Locale extends string>({
             next[locale] = after
           }
           return next
+        },
+        isEmpty(value) {
+          if (value === undefined || value === null) return true
+          return locales.every(locale => Field.isEmpty(field, value[locale]))
+        },
+        valueErrors(value, options, context) {
+          // Each locale is edited in its own tab and has to be valid by
+          // itself, eg. a required field needs a value in every locale
+          const record = (value ?? {}) as Partial<
+            LocalisedValue<Locale, StoredValue>
+          >
+          return locales.flatMap(locale => {
+            const path = [...context.path, locale]
+            const labels = [...context.labels, locale.toUpperCase()]
+            const localeValue = record[locale]
+            const message = fieldError(field, options, localeValue)
+            return [
+              ...(message ? [{path, labels, message}] : []),
+              ...Field.nestedErrors(field, localeValue, {
+                ...context,
+                path,
+                labels
+              })
+            ]
+          })
         },
         async queryValue(value, loader) {
           const selected = selectLocalisedValue<Locale, StoredValue>({
@@ -180,16 +209,6 @@ export function selectLocalisedValue<Locale extends string, Value>({
   return directValue === undefined && defaultValue !== undefined
     ? defaultValue
     : (directValue as Value)
-}
-
-function selectLocale<Locale extends string>(
-  locale: string | null,
-  locales: ReadonlyArray<Locale>
-): Locale {
-  const matchingLocale = locales.find(
-    candidate => candidate.toLowerCase() === locale?.toLowerCase()
-  )
-  return matchingLocale ?? locales[0]
 }
 
 function isAvailable<Value>(value: Value | undefined): value is Value {

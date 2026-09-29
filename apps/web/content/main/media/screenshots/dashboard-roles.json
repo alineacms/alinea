@@ -1,0 +1,23 @@
+{
+  "_id": "3Jjg25g3yx9TK9S96LEVcsIMsXg",
+  "_type": "MediaFile",
+  "_index": "a7",
+  "title": "dashboard-roles",
+  "location": "/dashboard-roles.3JmLmvyGYHo4kYiIzck0BdwoAR8.webp",
+  "extension": ".webp",
+  "size": 39326,
+  "hash": "f75e3de4",
+  "width": 2560,
+  "height": 800,
+  "thumbHash": "/vcBAoAEJomkpWVsDNFRUDo=",
+  "averageColor": "#f8fcfe",
+  "preview": "data:image/webp;base64,UklGRvgBAABXRUJQVlA4IOwBAACwDACdASqgADIAPm02lkgkIyIhJbbZOIANiWkA1uyrHUX2UsHYhYcXbRNwFOKo9rfogd8i5Pa1kZrcyi0UN1CD1HEIwdALS+r8u0XhJfFJW6esvwY6RVS+Pabwvk1npjeufRZg4pWX8ctFvPV3QAD+/0IcNUMN9AayysX6tL4Y2Ww7blUlE7sVRhIUeeUVSBrTGeMSFAJuXXs9hGxPhLKbR0igNUFq7IFF8tgh99PxHe1OByXk2I5BpK0dC1yUG53/U2qhsdyn7zcgA/FN0Qfih1M9a9Q/iZnFm4l/6w9lsuMTvzL/ecvCb/hywIZ5dzobncHJ1jy2jxBg8rg3AnAy6eTCByxP/ZOf1A+P+09GQ6nZ7YH4afYy5OsOOZMWIGX2R0DEhlulMrMs3abRcfVf7oHpOsQTXHEgIWa8sL5mZbILKQX46w524ARIE2Mhp4DDSOuLcIM4dFsSp0Q+7Hryyz9igoOZsdUJBSz/Ih9tw/BYeNipwET5oABQN5oic4ynNPbLaSI4zqs5vUEyIdTWNhHoJQl30Ns+8TaUpHkNLb05+iLhwHyXWf3SjGA6tGEErijP/lgRTSJPyc5A5g/96msAu0SDS6Tx0P5MxaxMDualOPgcyqe9jLeZFzFYaCBSX0e6g80v+fgAAAA=",
+  "focus": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "alt": "The users screen with an admin, editor, translator and viewer, each with their role",
+  "metadata": {
+    "aliases": []
+  }
+}

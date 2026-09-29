@@ -4,6 +4,11 @@ import {useAtomValueRaw, useSetAtom} from 'jotai'
 import type {EditorField} from '../atoms/editor.js'
 import {useEditor} from '../hooks.js'
 
+/**
+ * The result of the deprecated object-returning `useField`.
+ *
+ * @deprecated Use the tuple `useField` from 'alinea/cms'.
+ */
 export interface UseFieldResult<StoredValue, Mutator, Options> {
   fieldKey: string
   label: string
@@ -23,7 +28,10 @@ function useFieldInfo(field: Field | string): EditorField {
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ * Also accepts the field's key instead of the field.
+ *
+ * @deprecated Use the tuple `useField` from 'alinea/cms' (`const [value, setValue] = useField(field)`) with `useFieldOptions` and `useFieldError`.
  */
 export function useField<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
@@ -44,7 +52,10 @@ export function useField<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ * Also accepts the field's key instead of the field.
+ *
+ * @deprecated Use `useFieldKey` from 'alinea/cms'.
  */
 export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
@@ -53,7 +64,10 @@ export function useFieldKey<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ * Also accepts the field's key instead of the field.
+ *
+ * @deprecated Use `useFieldOptions` from 'alinea/cms'.
  */
 export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
@@ -63,7 +77,10 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ * Also accepts the field's key instead of the field.
+ *
+ * @deprecated Use `useFieldError` from 'alinea/cms'.
  */
 export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
@@ -73,7 +90,10 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ * Also accepts the field's key instead of the field.
+ *
+ * @deprecated Use `useFieldValue` from 'alinea/cms'.
  */
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
@@ -83,7 +103,10 @@ export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ * Also accepts the field's key instead of the field.
+ *
+ * @deprecated Use `useFieldSetter` from 'alinea/cms'.
  */
 export function useFieldMutator<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string

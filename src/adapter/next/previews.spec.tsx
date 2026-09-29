@@ -9,7 +9,7 @@ test('shows the connection state in the full-page widget', async ({
   page,
   context
 }) => {
-  const script = await buildPreviewScript('http://127.0.0.1:4500/admin')
+  const script = await buildPreviewScript('/admin')
   await context.route('http://preview.example/**', route =>
     route.fulfill({
       contentType: 'text/html',
@@ -59,11 +59,11 @@ test('shows the connection state in the full-page widget', async ({
   await expect(preview.locator('alinea-preview .is-warning')).toHaveCount(1)
   await expect(preview.getByTitle('Admin panel')).toHaveAttribute(
     'href',
-    'http://127.0.0.1:4500/admin'
+    'http://preview.example/admin'
   )
   await expect(preview.getByTitle('Edit content')).toHaveAttribute(
     'href',
-    'http://127.0.0.1:4500/admin#/edit?url=%2Fpreview'
+    'http://preview.example/admin#/edit?url=%2Fpreview'
   )
   await preview.evaluate(() =>
     window.opener.postMessage('disconnect', location.origin)

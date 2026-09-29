@@ -1,0 +1,882 @@
+{
+  "_id": "3AhqfX37Pijf2zOEwYVVU4NmdHG",
+  "_type": "Doc",
+  "_index": "a4",
+  "title": "Roles and permissions",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Roles decide what a signed-in user can see and change in the dashboard. Every project has an `admin` role with full access to all content and to user management. Add your own roles to give editors less than that."
+        }
+      ]
+    },
+    {
+      "_id": "3JjflOnZVNWqDyvVAQQD6WHPFT3",
+      "_type": "ImageBlock",
+      "image": {
+        "_id": "3Jjg46elZbWsbEunGMdjKi7L7Nx",
+        "_type": "image",
+        "_entry": "3Jjg25g3yx9TK9S96LEVcsIMsXg"
+      },
+      "darkImage": {
+        "_id": "3Jjg45NAYthflNPc3o0tAbkMwFe",
+        "_type": "image",
+        "_entry": "3Jjg22DCeoJV5TIl5n8Lsa8x1oe"
+      },
+      "caption": "The users screen of the demo, with a role for each user: Admin, Editor, Translator and Viewer."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Define a role"
+        }
+      ],
+      "_anchor": "setting-up-roles"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Create a role with `Config.role` and register it under `roles` in your "
+        },
+        {
+          "_type": "text",
+          "text": "CMS config",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0eNQ0LqzhHPSHTYsLpBm5jF",
+              "_link": "entry",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". The `permissions` function receives a policy to fill in:"
+        }
+      ]
+    },
+    {
+      "_id": "3Ai3jSucgSlqqmzWcHlRroHEtak",
+      "_type": "CodeBlock",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nconst editor = Config.role('Editor', {\n  description: 'Edits and publishes content, cannot change settings',\n  permissions(policy) {\n    policy.set(\n      {\n        allow: {\n          read: true,\n          create: true,\n          update: true,\n          publish: true,\n          archive: true,\n          reorder: true,\n          move: true,\n          upload: true\n        }\n      },\n      {\n        root: cms.workspaces.main.settings,\n        deny: {create: true, update: true, publish: true, archive: true}\n      }\n    )\n  }\n})\n\nexport const cms = createCMS({\n  roles: {editor},\n  // schema, workspaces ...\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The key in `roles` (`editor`) is the name stored on users. `label` and `description` are shown in the dashboard. The permissions function runs when a user's policy is built, so it can refer to `cms.workspaces` even though `cms` is defined below it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Assign roles to users"
+        }
+      ],
+      "_anchor": "available-actions"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Local development",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": you are signed in as a local admin. Open the profile menu at the bottom of the sidebar and pick one or more roles under "
+                },
+                {
+                  "_type": "text",
+                  "text": "Role",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " to see the dashboard as that user would."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Self-hosted",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": with a "
+                },
+                {
+                  "_type": "text",
+                  "text": "database",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0dh3gi2HP05UUKZNxinDt0x",
+                      "_link": "entry",
+                      "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " in your backend, users with the `manageMembers` permission (admins) get a "
+                },
+                {
+                  "_type": "text",
+                  "text": "Manage users",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " screen in the profile menu to add users by email and give them roles. Users that are not in that list keep the roles from their sign-in: from the token claims with OAuth2, or from what your `auth.basic` function returns (returning `true` signs the user in as admin)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Alinea Cloud",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": users and their access are managed in "
+                },
+                {
+                  "_type": "text",
+                  "text": "Alinea Cloud",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkF0fJcekIv8jkdtKc0eeyI5cZ",
+                      "_link": "entry",
+                      "_entry": "c1qjY2L4hq8JWfscRb_dD"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A user can have several roles. Their policy combines the rules of all of them, see "
+        },
+        {
+          "_type": "text",
+          "text": "Combining roles",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF0f362Vj3Khk4Cb3IUPPw4zP",
+              "_link": "url",
+              "href": "#combining-roles"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Write rules"
+        }
+      ],
+      "_anchor": "understanding-grants"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`policy.set` takes one or more rules. A rule has a target, the actions it allows or denies, and optionally a `grant` mode:"
+        }
+      ]
+    },
+    {
+      "_id": "3JkF0hDYPBWLMGly3Q1V7yFt4yR",
+      "_type": "CodeBlock",
+      "code": "policy.set(\n  // No target: applies to everything\n  {allow: {read: true}},\n  // A workspace or root, as defined in your config\n  {root: cms.workspaces.main.pages, allow: {update: true}},\n  // Every entry of a type, or one field of a type\n  {type: BlogPost, allow: {create: true}},\n  {field: BlogPost.price, deny: {update: true}},\n  // One entry (and everything below it)\n  {id: entryId, allow: {all: true}},\n  // Every entry in a locale, null for untranslated entries\n  {locale: 'fr', allow: {update: true}}\n)",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A rule has one target. Setting a rule for the same target again replaces the earlier one. `policy.allowAll()` grants everything, like the admin role."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Actions"
+        }
+      ],
+      "_anchor": "explicit-granular-access"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`read`: see the workspace, root, entry or field in the dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`create`: create entries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`update`: edit entries. Denying `update` on a field makes it read-only."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`publish`: publish drafts and archived entries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`archive`: archive entries."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`delete`: delete entries and media files."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`reorder`: change the order of entries within their parent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`move`: move entries to another parent or root."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`upload`: upload media files. Uploads are checked against rules without a target, so allow it at the top level."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`manageMembers`: manage users and their roles."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`explore`: deprecated and never checked. What a role can browse in the entry tree and media library follows `read`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`all`: every action above."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "How rules combine"
+        }
+      ],
+      "_anchor": "dynamic-query-based-permissions"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For an entry, the policy walks from broad to specific: the rules without a target, then the workspace, the root, the parent entries, the type (and field), the locale and finally the entry itself. Each level adds its allows to what it inherited."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Deny wins.",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " A denied action stays denied for everything below it, and an allow further down can't undo it. Put denies on the most specific target you can."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Explicit grants.",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " With `grant: 'explicit'`, the allows of a level and the levels above it apply to that level only, not to what is below it. Children, and the entries of a root, then need their own allow. Denies still flow down."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "3AiAlR79kfrcrHvH4mVGHL8PvNU",
+      "_type": "NoticeBlock",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Creating an entry checks `create` twice: on the new entry's workspace, root and type, and on its parent entry. To let a role add posts to a blog, allow `create` on the post type and on the blog entry."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Combining roles"
+        }
+      ],
+      "_anchor": "combining-roles"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A user with several roles gets the union of their rules: an action allowed by any role is allowed. Denies are combined the same way, so a deny in one role also blocks what another role allows. Keep denies in roles that are meant to restrict."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "What permissions protect"
+        }
+      ],
+      "_anchor": "what-permissions-protect"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Your handler checks the policy on every save, so a user can't create, update, publish, archive, move, reorder, delete or upload beyond their roles, even outside the dashboard. `read` hides workspaces, roots, entries and fields in the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Permissions don't make content secret. Your content lives in your git repository and the dashboard syncs all of it to the browser, so treat `read` as a way to keep the dashboard focused, not as access control for confidential data."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Examples"
+        }
+      ],
+      "_anchor": "examples"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Read-only access"
+        }
+      ],
+      "_anchor": "read-only-access"
+    },
+    {
+      "_id": "3Ai3GxZihQfZjdQtywffg7mB1Eo",
+      "_type": "CodeBlock",
+      "code": "const viewer = Config.role('Viewer', {\n  permissions(policy) {\n    policy.set({allow: {read: true}})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Translators"
+        }
+      ],
+      "_anchor": "translators"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Allow editing in one locale. The rest of the content stays visible for reference:"
+        }
+      ]
+    },
+    {
+      "_id": "3Ahwa7yMlETIJ4wuAZEMy6pdx5E",
+      "_type": "CodeBlock",
+      "code": "const translator = Config.role('Translator', {\n  description: 'Translates pages into French',\n  permissions(policy) {\n    policy.set(\n      {allow: {read: true}},\n      {locale: 'fr', allow: {create: true, update: true, publish: true}}\n    )\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rules for a locale apply to creating entries too: with `create` allowed in `fr`, this role can start the French translation of a page. Leave it out to limit translators to French versions that already exist."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Read-only fields"
+        }
+      ],
+      "_anchor": "read-only-fields"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors see the price but can't change it:"
+        }
+      ]
+    },
+    {
+      "_id": "3JkF0cN5O7MFXpyBIkpVnjya2oj",
+      "_type": "CodeBlock",
+      "code": "const editor = Config.role('Editor', {\n  permissions(policy) {\n    policy.set(\n      {allow: {read: true, update: true, publish: true}},\n      {field: BlogPost.price, deny: {update: true}}\n    )\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deny `read` on a field to hide it from the role."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Access to specific entries"
+        }
+      ],
+      "_anchor": "access-to-specific-entries"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use `grant: 'explicit'` to show a workspace and root without opening up everything inside them, then allow the entries the role works on:"
+        }
+      ]
+    },
+    {
+      "_id": "3Ai3DJiqX2CO5U4ugw1QszvRqlh",
+      "_type": "CodeBlock",
+      "code": "const landingPageEditor = Config.role('Landing page editor', {\n  permissions(policy) {\n    policy.set(\n      {\n        workspace: cms.workspaces.main,\n        allow: {read: true},\n        grant: 'explicit'\n      },\n      {\n        root: cms.workspaces.main.pages,\n        allow: {read: true},\n        grant: 'explicit'\n      },\n      {\n        id: landingPageId,\n        allow: {all: true}\n      }\n    )\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The dashboard's content tree only shows entries the role can read. If the entry is nested, allow `read` on its parents too, or the editor can't navigate to it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Permissions from your content"
+        }
+      ],
+      "_anchor": "permissions-from-your-content"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The second argument of `permissions` is a graph to query your content, so rules can follow your data instead of hardcoded ids. This role lets authors edit the posts that link to them, and picks up new posts automatically:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ai34341S0rJQ1xXiauCpkPo35K",
+      "code": "import {Config, Query} from 'alinea'\n\nconst guestAuthor = Config.role('Guest author', {\n  async permissions(policy, graph) {\n    const posts = await graph.find({\n      type: BlogPost,\n      filter: {author: {has: {_entry: guestAuthorId}}},\n      select: Query.id\n    })\n    policy.set(\n      {workspace: cms.workspaces.main, allow: {read: true}, grant: 'explicit'},\n      {root: cms.workspaces.main.pages, allow: {read: true}, grant: 'explicit'}\n    )\n    for (const id of posts) policy.set({id, allow: {read: true, update: true}})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The query runs whenever a policy is built, so keep it small."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Test your roles"
+        }
+      ],
+      "_anchor": "test-your-roles"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`cms.createPolicy` builds the policy for a list of role names, which makes roles easy to unit test:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF0dIgb689cdvcTVL9ctfyUpC",
+      "code": "import {expect, test} from 'bun:test'\nimport {cms} from '@/cms'\n\ntest('editors cannot change settings', async () => {\n  const policy = await cms.createPolicy(['editor'])\n  expect(policy.canUpdate({workspace: 'main', root: 'pages'})).toBe(true)\n  expect(policy.canUpdate({workspace: 'main', root: 'settings'})).toBe(false)\n})",
+      "fileName": "roles.test.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The policy has a `can*` method for every action (`canRead`, `canCreate`, `canUpdate`, ...), which takes the workspace, root, type, field, entry id, parent ids and locale to check."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Good to know"
+        }
+      ],
+      "_anchor": "good-to-know"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Defining your own role named `admin` replaces the built-in one."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Users without any role can sign in but can't see or change anything."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1790179547,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790233273,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

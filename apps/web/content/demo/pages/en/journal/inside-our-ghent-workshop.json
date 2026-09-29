@@ -1,0 +1,109 @@
+{
+  "_id": "3JjYfvne5ZnEstnjwY8R7Xqm5Wy",
+  "_type": "DemoArticle",
+  "_index": "a0",
+  "title": "Inside our Ghent workshop",
+  "intro": "A former textile mill, seven makers and one very old bandsaw. A walk through the place where every piece begins.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The building on the Oude Beestenmarkt was a linen mill for almost a century. When we moved in, the floors were still stained with dye and the windows were painted shut. We scraped them clean, and now they fill the workshop with the kind of soft northern light you only notice once you have worked in it for a while."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "The timber store"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Everything starts at the back, in the timber store. Oak and walnut arrive as whole boards and rest there for at least three months, so the wood can settle to the humidity of the room before we cut a single joint. Wood that is rushed moves later, and we would rather it moved here than in your dining room."
+        }
+      ]
+    },
+    {
+      "_type": "DemoArticleImage",
+      "_id": "3JjYg0c8aimeiLsc4zrT7gAuNkp",
+      "image": {
+        "_id": "3JjYfyIerqh0T9227iFMqEutys3",
+        "_type": "image",
+        "_entry": "3JjYfsyCks2BAi4ccPyKgtCGGRb"
+      },
+      "caption": "Marking out a tenon on a leg for the Ferris table. Photo by Craft Kitties on Unsplash."
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Nothing goes to waste"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Offcuts are sorted by size on the day they are made. The longest become shelves and frames, the shorter ones end up as the seats and legs of our stools. What is left heats the workshop in winter."
+        }
+      ]
+    },
+    {
+      "_type": "DemoProductCallout",
+      "_id": "3JjYg2ClVr1MXZxlgW0wPlmJqyB",
+      "product": {
+        "_id": "3JjYg1S4QRCi14KsChY34bzjbEW",
+        "_type": "entry",
+        "_entry": "3JjYfyc452e8aueFPS0SMYM90qi"
+      },
+      "note": "Every Otto stool is made from offcuts of our larger pieces, so no two have quite the same grain."
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Once a month we open the doors on a Saturday morning. Come and have a look, ask anything, and bring a piece that needs repairing: we are always happy to see where our furniture has been."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "Inside our Ghent workshop",
+    "description": "A former textile mill, seven makers and one very old bandsaw. A walk through the place where every piece begins.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "publishDate": "2026-08-27",
+  "category": "studio",
+  "author": {
+    "_id": "3JjYfviw3r99rjHdguCl3luVk7w",
+    "_type": "entry",
+    "_entry": "3JjYfzEqX6TeclLFCDzds66HAWD"
+  },
+  "readingTime": 6,
+  "cover": {
+    "_id": "3JjYfzrhJuixLjF1UY9ryk0l5TF",
+    "_type": "image",
+    "_entry": "3JjYfr7FCvc5P9ZTCmOgHBwJZaG"
+  },
+  "coverCredit": "Photo by Adam Patterson on Unsplash"
+}

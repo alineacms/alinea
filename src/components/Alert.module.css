@@ -1,0 +1,67 @@
+.Alert {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 12px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius-lg);
+  background: var(--alinea-bg);
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+
+  &[data-icon] {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  &[data-variant='destructive'] {
+    border-color: color-mix(in oklab, var(--alinea-danger) 30%, transparent);
+    background: var(--alinea-danger-subtle);
+    color: var(--alinea-danger-subtle-fg);
+  }
+
+  &[data-variant='warning'] {
+    border-color: color-mix(in oklab, var(--alinea-warning) 45%, transparent);
+    background: var(--alinea-warning-subtle);
+    color: var(--alinea-warning-subtle-fg);
+  }
+}
+
+.Alert-icon {
+  grid-row: span 3;
+  font-size: 16px;
+  /* Centers the icon on the first line of text */
+  margin-top: calc((1lh - 16px) / 2);
+}
+
+.AlertTitle {
+  grid-column-start: -2;
+  min-width: 0;
+  font-weight: 600;
+
+  .Alert[data-variant='default'] & {
+    color: var(--alinea-fg-strong);
+  }
+}
+
+.AlertDescription {
+  grid-column-start: -2;
+  min-width: 0;
+
+  .Alert[data-variant='default'] & {
+    color: var(--alinea-fg-muted);
+  }
+}
+
+.AlertActions {
+  grid-column-start: -2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+  margin-top: 8px;
+}

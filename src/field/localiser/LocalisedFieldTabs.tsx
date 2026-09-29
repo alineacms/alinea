@@ -1,4 +1,4 @@
-import {Tab, TabList, TabPanel, Tabs} from '#/components.js'
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '#/components.js'
 import {styler} from '@alinea/styler'
 import type {ReactNode} from 'react'
 import css from './LocalisedFieldTabs.module.css'
@@ -20,21 +20,21 @@ export function LocalisedFieldTabs({
 }: LocalisedFieldTabsProps) {
   return (
     <Tabs
-      selectedKey={selectedLocale}
-      onSelectionChange={key => onSelectedLocaleChange(String(key))}
+      value={selectedLocale}
+      onValueChange={onSelectedLocaleChange}
       className={styles.LocalisedFieldTabs()}
     >
-      <TabList>
+      <TabsList>
         {locales.map(locale => (
-          <Tab id={locale} key={locale}>
+          <TabsTrigger value={locale} key={locale}>
             {locale.toUpperCase()}
-          </Tab>
+          </TabsTrigger>
         ))}
-      </TabList>
+      </TabsList>
       {locales.map(locale => (
-        <TabPanel id={locale} key={locale}>
+        <TabsContent value={locale} key={locale}>
           {children(locale)}
-        </TabPanel>
+        </TabsContent>
       ))}
     </Tabs>
   )

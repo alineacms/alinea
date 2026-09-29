@@ -1,0 +1,160 @@
+.DemoHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--demo-line);
+  background: color-mix(in srgb, var(--demo-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.DemoHeader-inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'logo locales'
+    'nav nav';
+  align-items: center;
+  gap: 4px 16px;
+  max-width: var(--demo-max);
+  margin: 0 auto;
+  padding: 14px var(--demo-gutter) 0;
+
+  @container demo-site (min-width: 760px) {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'logo nav locales';
+    gap: 32px;
+    padding-block: 20px;
+  }
+}
+
+.DemoHeader-logo {
+  grid-area: logo;
+  color: var(--demo-ink);
+  font-family: var(--demo-serif);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.DemoHeader-logo-amp {
+  color: var(--demo-accent);
+  font-style: italic;
+}
+
+// Below the wide layout the links scroll sideways. The edges fade out to
+// show there is more, driven by the scroll position where supported so the
+// first and last link are fully visible once scrolled to.
+@property --demo-nav-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --demo-nav-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 32px;
+}
+
+@keyframes DemoHeader-nav-fade {
+  0% {
+    --demo-nav-fade-start: 0px;
+    --demo-nav-fade-end: 32px;
+  }
+  10%,
+  90% {
+    --demo-nav-fade-start: 32px;
+    --demo-nav-fade-end: 32px;
+  }
+  100% {
+    --demo-nav-fade-start: 32px;
+    --demo-nav-fade-end: 0px;
+  }
+}
+
+.DemoHeader-nav {
+  grid-area: nav;
+  display: flex;
+  gap: 20px;
+  margin: 0 calc(var(--demo-gutter) * -1);
+  padding: 10px var(--demo-gutter) 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--demo-nav-fade-start),
+    #000 calc(100% - var(--demo-nav-fade-end)),
+    transparent
+  );
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    animation: DemoHeader-nav-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
+
+  @container demo-site (min-width: 760px) {
+    justify-content: center;
+    gap: 32px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    mask-image: none;
+    animation: none;
+  }
+}
+
+.DemoHeader-nav-link {
+  flex-shrink: 0;
+  color: var(--demo-muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+
+  &:hover,
+  &.is-active {
+    color: var(--demo-ink);
+  }
+
+  &.is-active {
+    text-decoration: underline;
+    text-decoration-color: var(--demo-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
+  }
+}
+
+.DemoHeader-locales {
+  grid-area: locales;
+  display: flex;
+  gap: 2px;
+}
+
+.DemoHeader-locales-link {
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--demo-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+
+  &:hover {
+    color: var(--demo-ink);
+  }
+
+  &.is-active {
+    background: var(--demo-ink);
+    color: var(--demo-bg);
+  }
+}

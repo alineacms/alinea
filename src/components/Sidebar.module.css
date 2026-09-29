@@ -1,0 +1,90 @@
+.Sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  background: var(--alinea-bg);
+}
+
+.SidebarHeader {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px;
+  overflow-y: hidden;
+  border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg);
+}
+
+.SidebarContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+
+  &[data-scroll] {
+    overflow: auto;
+  }
+}
+
+.SidebarFooter {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.SidebarGroup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px;
+}
+
+.SidebarGroupLabel {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 8px;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  white-space: nowrap;
+
+  .SidebarGroup:has(> .SidebarGroupAction) > & {
+    padding-right: 48px;
+  }
+}
+
+.SidebarGroupAction {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  height: 32px;
+}
+
+.SidebarInset {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .Sidebar {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+  }
+}

@@ -2,6 +2,7 @@
 export {createMediaRoot as media} from '#/core/media/MediaRoot.js'
 export {createConfig as create} from './core/Config.js'
 export {document} from './core/Document.js'
+export {column} from './core/Overview.js'
 export {page} from './core/Page.js'
 export {snippet} from './core/pages/Snippet.js'
 export {root} from './core/Root.js'

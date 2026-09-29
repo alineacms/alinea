@@ -1,58 +1,59 @@
-import {endOfYear, getLocalTimeZone, today} from '@internationalized/date'
 import {useState} from 'react'
-import type {DateRange} from 'react-aria-components'
-import {I18nProvider} from 'react-aria-components'
-import {DateRangePicker} from '../components/DateRangePicker.js'
+import {DateRangePicker} from './DateRangePicker.js'
+import type {DateRange} from './types.js'
 
-export const Basic = () => {
+export function Example() {
   return (
-    <I18nProvider locale="en-UK">
-      <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
-        <DateRangePicker label="Default" />
-        <DateRangePicker
-          label="With Description"
-          description="Select a date range for your event"
-        />
-        <DateRangePicker
-          label="minValue (today)"
-          minValue={today(getLocalTimeZone())}
-        />
-        <DateRangePicker
-          label="maxValue (endOfYear)"
-          maxValue={endOfYear(today(getLocalTimeZone()))}
-        />
-        <DateRangePicker
-          label="With Error"
-          isRequired
-          isInvalid
-          errorMessage="Date range is required"
-        />
-        <DateRangePicker label="Disabled" isDisabled />
-      </div>
-    </I18nProvider>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
+      <DateRangePicker label="Default" />
+      <DateRangePicker
+        label="With description"
+        description="Select a date range for your event"
+      />
+      <DateRangePicker
+        label="Only September 2026"
+        min="2026-09-01"
+        max="2026-09-30"
+      />
+      <DateRangePicker
+        label="With error"
+        required
+        error="Date range is required"
+      />
+      <DateRangePicker
+        label="Disabled"
+        defaultValue={{start: '2026-09-07', end: '2026-09-11'}}
+        disabled
+      />
+    </div>
   )
 }
 
-export const CustomValidation = () => {
+function days(range: DateRange) {
+  const start = Date.parse(`${range.start}T00:00:00Z`)
+  const end = Date.parse(`${range.end}T00:00:00Z`)
+  return (end - start) / 86_400_000
+}
+
+export function Controlled() {
   const [range, setRange] = useState<DateRange | null>({
-    start: today(getLocalTimeZone()),
-    end: today(getLocalTimeZone()).add({weeks: 1})
+    start: '2026-09-07',
+    end: '2026-09-11'
   })
-  const isInvalid = range?.end && range.end.compare(range.start) > 7
-  const errorMessage =
-    range?.end && range.end.compare(range.start) > 7
-      ? 'Maximum booking duration is 1 week.'
-      : undefined
-
+  const tooLong = range && days(range) > 7
   return (
-    <DateRangePicker
-      label="Custom validation (1 week max)"
-      value={range}
-      onChange={setRange}
-      isInvalid={isInvalid}
-      errorMessage={errorMessage}
-    />
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <DateRangePicker
+        label="Booking (1 week max)"
+        value={range}
+        onValueChange={setRange}
+        error={tooLong ? 'Maximum booking duration is 1 week.' : undefined}
+      />
+      <output data-testid="value">
+        {range ? `${range.start} – ${range.end}` : 'null'}
+      </output>
+    </div>
   )
 }
 
-export default {title: 'Components / DateRangePicker'}
+export default {title: 'Pure components / DateRangePicker'}

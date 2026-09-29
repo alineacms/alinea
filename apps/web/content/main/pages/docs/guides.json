@@ -1,0 +1,28 @@
+{
+  "_id": "3JjNWk16A8EWOWftM6cJEVyCnIP",
+  "_type": "Docs",
+  "_index": "a2",
+  "title": "Guides",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Guides for the features you reach for after the basics: previews, publishing, editing, translations, permissions and deploying to production."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

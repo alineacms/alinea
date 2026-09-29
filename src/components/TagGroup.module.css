@@ -1,89 +1,93 @@
 .TagGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: small;
   color: var(--alinea-fg);
+  font-size: small;
+}
 
-  .TagGroup-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.TagGroup-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .TagGroup[data-disabled] & {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .TagGroup[data-readonly] & {
+    pointer-events: none;
   }
 }
 
 .Tag {
-  cursor: default;
-  outline: none;
   display: flex;
   align-items: center;
   padding: 4px 8px;
-  border-radius: 4px;
-  background-color: var(--alinea-primary-subtle);
+  border-radius: var(--alinea-radius-sm);
+  background: var(--alinea-primary-subtle);
   color: var(--alinea-primary-subtle-fg);
   font-size: var(--alinea-font-size-base);
+  outline: none;
+  cursor: default;
   transition: var(--alinea-transition);
   transition-property: background-color, border-color, color;
 
-  .TagGroup[data-intent='secondary'] & {
-    background-color: var(--alinea-muted);
+  &[data-variant='secondary'] {
+    background: var(--alinea-muted);
     color: var(--alinea-fg);
   }
 
-  .TagGroup[data-shape='circle'] & {
-    border-radius: 50px;
+  &[data-shape='circle'] {
     padding-inline: 12px;
+    border-radius: 50px;
   }
 
-  &[data-selection-mode] {
-    cursor: pointer;
+  &[aria-selected] {
     padding-block: 2px;
     border: 1px solid var(--alinea-border);
-    background-color: var(--alinea-muted);
+    background: var(--alinea-muted);
     color: var(--alinea-fg);
+    cursor: pointer;
   }
 
-  &[data-hovered] {
-    border-color: var(--alinea-border-hover);
+  &[aria-selected]:hover {
+    border-color: var(--alinea-border-strong);
   }
 
-  &[data-focus-visible] {
-    outline: 2px solid var(--alinea-ring);
-    outline-offset: 2px;
-  }
-
-  &[data-selected] {
+  &[aria-selected='true'] {
     border-color: var(--alinea-primary);
     background: var(--alinea-primary);
     color: var(--alinea-primary-fg);
   }
 
-  &[data-disabled] {
-    color: var(--alinea-fg-disabled);
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: 2px;
+  }
+
+  &[aria-disabled='true'] {
+    opacity: 0.5;
     pointer-events: none;
   }
+}
 
-  [slot='remove'] {
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-    margin-left: 8px;
-    color: var(--alinea-fg-muted);
-    transition: color 200ms;
-    outline: none;
-    font-size: 0.95em;
-    display: flex;
-    align-items: center;
+.Tag-remove {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--alinea-fg-muted);
+  font-size: 0.95em;
+  outline: none;
+  cursor: pointer;
+  transition: color 200ms;
 
-    &[data-hovered] {
-      color: var(--alinea-fg-hover);
-    }
+  &:hover {
+    color: var(--alinea-fg-strong);
   }
 
-  &[data-selected] {
-    [slot='remove'] {
-      color: inherit;
-    }
+  .Tag[aria-selected='true'] & {
+    color: inherit;
   }
 }

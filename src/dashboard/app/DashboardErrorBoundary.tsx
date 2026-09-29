@@ -1,4 +1,13 @@
-import {Button, Icon, Surface} from '#/components.js'
+import {
+  Button,
+  Code,
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  Icon
+} from '#/components.js'
 import {MissingEntryError} from '#/dashboard/atoms/entry.js'
 import {routeAtom, routeGuardAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
@@ -51,22 +60,25 @@ function DashboardRouteErrorBoundary({
     const message = errorMessage(error)
     return (
       <div className={styles.DashboardErrorBoundary()}>
-        <Surface className={styles.DashboardErrorBoundary.card()}>
-          <div className={styles.DashboardErrorBoundary.heading()}>
-            <Icon icon={IcRoundWarning} />
-            <h1 className={styles.DashboardErrorBoundary.title()}>
-              Oops, something went wrong
-            </h1>
-          </div>
-          <pre className={styles.DashboardErrorBoundary.message()}>
-            {message}
-          </pre>
-          <div className={styles.DashboardErrorBoundary.actions()}>
-            <Button intent="primary" onPress={reloadDashboard}>
+        <Empty variant="card">
+          <EmptyHeader>
+            <EmptyMedia
+              variant="icon"
+              className={styles.DashboardErrorBoundary.media()}
+            >
+              <Icon icon={IcRoundWarning} />
+            </EmptyMedia>
+            <EmptyTitle as="h1">Oops, something went wrong</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Code block className={styles.DashboardErrorBoundary.message()}>
+              {message}
+            </Code>
+            <Button color="primary" onClick={reloadDashboard}>
               Reload dashboard
             </Button>
-          </div>
-        </Surface>
+          </EmptyContent>
+        </Empty>
       </div>
     )
   }

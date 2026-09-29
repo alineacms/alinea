@@ -1,0 +1,102 @@
+@use '@/style' as *;
+
+.root {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 96px 80px;
+  border-radius: 32px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  overflow: hidden;
+  text-align: center;
+
+  @include sm {
+    padding: 56px 24px;
+    border-radius: 24px;
+  }
+
+  // The gradient image looks the same in both themes, so the text and
+  // actions on top of it use fixed light colors
+  &.is-gradient {
+    --web-foreground: #ffffff;
+    --web-foreground-faded: rgba(255, 255, 255, 0.88);
+    --web-foreground-muted: rgba(255, 255, 255, 0.7);
+    --web-accent: #ffffff;
+    --web-accent-strong: rgba(255, 255, 255, 0.9);
+    --web-accent-foreground: #2c47c0;
+    --web-command-background: rgba(255, 255, 255, 0.16);
+    --web-positive: #ffffff;
+
+    border-color: transparent;
+    background: transparent;
+    color: var(--web-foreground);
+  }
+
+  &-background {
+    z-index: -2;
+    object-fit: cover;
+    transform: scaleX(-1);
+  }
+
+  &-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgba(23, 34, 140, 0.35);
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+
+    @include sm {
+      gap: 18px;
+    }
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 60px;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    color: var(--web-foreground);
+
+    @include sm {
+      font-size: 34px;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+  }
+
+  &-text {
+    max-width: 560px;
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--web-foreground-faded);
+
+    @include sm {
+      font-size: 17px;
+    }
+  }
+
+  &-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-top: 8px;
+  }
+
+  &.is-gradient &-command {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  }
+}

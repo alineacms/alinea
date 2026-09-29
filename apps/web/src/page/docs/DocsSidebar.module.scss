@@ -1,0 +1,39 @@
+@use '@/style' as *;
+
+.root {
+  position: sticky;
+  top: var(--web-header-height);
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 280px;
+  height: calc(100dvh - var(--web-header-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease-out;
+
+  &:hover,
+  &:focus-within {
+    scrollbar-color: color-mix(in srgb, var(--web-foreground) 18%, transparent)
+      transparent;
+  }
+
+  &-top {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 28px 20px 12px 24px;
+    background: var(--web-surface);
+  }
+
+  &-inner {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 20px 48px 24px;
+  }
+
+  @include sm {
+    display: none;
+  }
+}

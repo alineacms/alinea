@@ -1,0 +1,31 @@
+.root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 2em;
+
+  &-absolute {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  &-inner {
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    border: 0.18em solid currentColor;
+    border-top-color: transparent;
+    animation: alinea-web-loader-spin 0.8s linear infinite;
+    color: var(--web-foreground);
+    opacity: 0.6;
+  }
+}
+
+@keyframes alinea-web-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -2,6 +2,8 @@ import {Entry} from '#/core/Entry.js'
 import type {
   GraphQuery,
   IncludeGuard,
+  PickModifiers,
+  QueryModifiers,
   SelectionGuard,
   TypeGuard
 } from '#/core/Graph.js'
@@ -23,58 +25,95 @@ export const updatedAt = Entry.updatedAt
 
 export {snippet} from '#/core/pages/Snippet.js'
 
+/** A relation query, see PickModifiers */
+type RelationQuery<Edge extends string, Selection, Type, Include, Modifiers> = {
+  edge: Edge
+} & GraphQuery<NoInfer<Selection>, NoInfer<Type>, NoInfer<Include>> &
+  PickModifiers<NoInfer<Modifiers>>
+
 export function children<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include> & {depth?: number}) {
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> & Modifiers & {depth?: number}
+): RelationQuery<'children', Selection, Type, Include, Modifiers> & {
+  depth?: number
+} {
   return {edge: 'children' as const, ...query}
 }
 
 export function parents<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include> & {depth?: number}) {
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> & Modifiers & {depth?: number}
+): RelationQuery<'parents', Selection, Type, Include, Modifiers> & {
+  depth?: number
+} {
   return {edge: 'parents' as const, ...query}
 }
 
 export function translations<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include> & {includeSelf?: boolean}) {
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> &
+    Modifiers & {includeSelf?: boolean}
+): RelationQuery<'translations', Selection, Type, Include, Modifiers> & {
+  includeSelf?: boolean
+} {
   return {edge: 'translations' as const, ...query}
 }
 
 export function siblings<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include> & {includeSelf?: boolean}) {
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> &
+    Modifiers & {includeSelf?: boolean}
+): RelationQuery<'siblings', Selection, Type, Include, Modifiers> & {
+  includeSelf?: boolean
+} {
   return {edge: 'siblings' as const, ...query}
 }
 
 export function parent<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include>) {
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> & Modifiers
+): RelationQuery<'parent', Selection, Type, Include, Modifiers> {
   return {edge: 'parent' as const, ...query}
 }
 
 export function next<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include>) {
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> & Modifiers
+): RelationQuery<'next', Selection, Type, Include, Modifiers> {
   return {edge: 'next' as const, ...query}
 }
 
 export function previous<
   Selection extends SelectionGuard = undefined,
   Type extends TypeGuard = undefined,
-  Include extends IncludeGuard = undefined
->(query: GraphQuery<Selection, Type, Include>) {
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> & Modifiers
+): RelationQuery<'previous', Selection, Type, Include, Modifiers> {
   return {edge: 'previous' as const, ...query}
 }

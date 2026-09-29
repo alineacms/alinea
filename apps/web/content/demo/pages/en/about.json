@@ -1,0 +1,108 @@
+{
+  "_id": "3JjYfy8P1cHTxmyI3jgaMrUQhMn",
+  "_type": "DemoPage",
+  "_index": "a4",
+  "_root": "pages",
+  "title": "About us",
+  "intro": "A small furniture studio in Ghent, making pieces for homes that are lived in.",
+  "blocks": [
+    {
+      "_id": "3JjYfyA3KGtTM6pM9xFfLP6BOCf",
+      "_index": "a0",
+      "_type": "DemoHeroBlock",
+      "eyebrow": "Since 2014",
+      "layout": "split",
+      "title": "We make furniture the long way round",
+      "text": "What began as a single workbench in a garage is now a workshop of seven makers. The approach hasn't changed: good wood, honest joints, no shortcuts.",
+      "image": {
+        "_id": "3JjYfyCGF9ypeEi0ZhRn8YPR5Ld",
+        "_type": "image",
+        "_entry": "3JjYfr7FCvc5P9ZTCmOgHBwJZaG"
+      },
+      "credit": "Photo by Adam Patterson on Unsplash"
+    },
+    {
+      "_id": "3JjYfxLLEGnuHQqfri83qZk0beU",
+      "_index": "a1",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Materials",
+      "imagePosition": "right",
+      "title": "Wood with a story we can trace",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Our oak and walnut come from sawmills in the Ardennes and northern France that we have worked with for years. We buy whole boards, let them rest for months and use the offcuts for stools and small pieces."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfxQLhXyTN6JxnpNhgqmFEQK",
+        "_type": "image",
+        "_entry": "3JjYfwTpBKMhQrRvsv5zqeyxE5n"
+      },
+      "credit": "Photo by The Cleveland Museum of Art on Unsplash"
+    },
+    {
+      "_id": "3JjYg3BdxUS140pL8LJP8F292ui",
+      "_index": "a2",
+      "_type": "DemoStoryBlock",
+      "eyebrow": "Craft",
+      "imagePosition": "left",
+      "title": "Finished by hand, repaired for life",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Every surface is sanded and oiled by hand: three coats, with a day of rest in between. If something ever needs attention, bring it back. We repair everything we make, for as long as we're around."
+            }
+          ]
+        }
+      ],
+      "image": {
+        "_id": "3JjYfzgDckgYLzsh9CunYoRytvH",
+        "_type": "image",
+        "_entry": "3JjYfp3rBdUkjtJoolX62xspWQK"
+      },
+      "credit": "Photo by Dominik Scythe on Unsplash",
+      "link": {
+        "_id": "3JjYfy9RRBQvdUfm1mfUFZD4Qit",
+        "_type": "entry",
+        "_entry": "3JjYfxqJIBmzojJ0ZKFuR5tUVIA",
+        "label": "Why we still oil our oak by hand"
+      }
+    },
+    {
+      "_id": "3JjYfxlfTb9T8bwsrUkD7JkRhjK",
+      "_index": "a3",
+      "_type": "DemoQuoteBlock",
+      "quote": "We would rather make a hundred tables that last fifty years than a thousand that last five.",
+      "author": "Maya Janssens",
+      "source": "Co-founder"
+    },
+    {
+      "_id": "3JjYfzkTv4wDcbIMmnxNvHivu87",
+      "_index": "a4",
+      "_type": "DemoNewsletterBlock",
+      "title": "Letters from the workshop",
+      "text": "A short note every season: new pieces, workshop open days and the occasional story about wood.",
+      "buttonLabel": "Subscribe",
+      "note": "No spam. Unsubscribe at any time."
+    }
+  ],
+  "metadata": {
+    "title": "About us",
+    "description": "A small furniture studio in Ghent, making pieces for homes that are lived in.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

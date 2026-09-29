@@ -1,0 +1,358 @@
+{
+  "_id": "3AONC8bWerkI4aXNcgz4fOm5Mxe",
+  "_type": "Doc",
+  "_index": "a0",
+  "title": "Step 1: Simple landing page",
+  "navigationTitle": "Step 1: Landing page",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Start with a homepage served at `/` that shows a title editors can change in the dashboard, with SEO metadata and a live preview."
+        }
+      ]
+    },
+    {
+      "_type": "ImageBlock",
+      "_id": "3Jzvk1y5L8yLODFHHlaxonaQXsj",
+      "image": {
+        "_id": "3Jzvk45qH3ma1MLKZjbNjSzvPpc",
+        "_type": "image",
+        "_entry": "3JzvYDHEfnrRYoaiqZCSIJikZah"
+      },
+      "darkImage": {
+        "_id": "3JzvjzqAChrn4Xki19vQlUwuGzw",
+        "_type": "image",
+        "_entry": "3JzvYDzqOODXX1g4GNBJsFTWtm1"
+      }
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The landing page gets its own folder with two files: `LandingPage.schema.tsx` defines the fields editors fill in, `LandingPage.tsx` renders them."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONylaqcfOBvfq6SBaJh9zwYEP",
+      "code": "app/\n├ (alinea)/api/cms/route.ts\n├ page.tsx\n├ layout.tsx\n╰ globals.css\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\ncms.tsx",
+      "fileName": "project structure",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Define the schema"
+        }
+      ],
+      "_anchor": "define-the-schema"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.document` creates a type for entries that have a page of their own. Every document gets a `title` and a `path` field, an SEO tab with the metadata fields and a Details tab that shows who created and last changed the entry. Here we redefine `path` to make it read-only with an empty initial value, so a landing page created in the dashboard always resolves to `/`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONC7AhYb0QcGKsM21ZfmIN3VT",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const LandingPage = Config.document('Landing page', {\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    path: Field.path('Path', {readOnly: true, width: 0.5, initialValue: ''})\n  }\n})\n",
+      "fileName": "entries/landing/LandingPage.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render the page"
+        }
+      ],
+      "_anchor": "render-the-page"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The view is an async server component that queries its own entry. `cms.first` returns the first entry that matches, or `null` when there is none, so a missing page renders the Next.js 404 page. (`cms.get` throws instead, which suits entries that must exist.) Passing `type: LandingPage` both filters on the type and types the result."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The same file exports `generateMetadata`, which reads the fields of the SEO tab and falls back to the title."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AOUDOgAFF32REsMW4F1kxhQqG3",
+      "code": "import type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport {cms} from '@/cms'\nimport {LandingPage} from './LandingPage.schema'\n\nexport async function LandingPageView() {\n  const page = await cms.first({url: '/', type: LandingPage})\n  if (!page) notFound()\n\n  return (\n    <main>\n      <h1>{page.title}</h1>\n    </main>\n  )\n}\n\nexport async function generateMetadata(): Promise<Metadata> {\n  const page = await cms.first({url: '/', type: LandingPage})\n  if (!page) return {}\n\n  return {\n    title: page.metadata.title || page.title,\n    description: page.metadata?.description,\n    openGraph: {\n      title: page.metadata.openGraph.title || page.metadata.title || page.title,\n      description: page.metadata.openGraph.description || page.metadata?.description,\n      images: page.metadata?.openGraph.image\n        ? [page.metadata?.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n",
+      "fileName": "entries/landing/LandingPage.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Register the type"
+        }
+      ],
+      "_anchor": "register-the-type"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Replace the generated config with this `cms.tsx`. The type goes in `schema`, and the Pages root lists it in `contains` so editors can create landing pages there."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.page` seeds an entry: Alinea creates it in your content folder when it doesn't exist yet, and editors can't delete it from the dashboard. The key becomes the entry's path, and `index` is a special path that resolves to the parent's URL, `/` in this case. Seeding is optional, editors can also create the page themselves."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONCAa2Rl2v6v1rbhieBd2wvdb",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\n\nexport const cms = createCMS({\n  schema: {LandingPage},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage'],\n          children: {\n            // Optionally seed this page, alternatively you can simply create the page from the CMS directly\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome'\n              }\n            })\n          }\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  handlerUrl: '/api/cms',\n  adminPath: '/admin',\n  preview: true\n})",
+      "fileName": "cms.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set `baseUrl.production` to the URL your site will be deployed at: `alinea build` refuses to run without it. See "
+        },
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkCIqkrcvpMFtpgFM7H593i1wp",
+              "_link": "entry",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for all options."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wire up Next.js"
+        }
+      ],
+      "_anchor": "wire-up-next-js"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wrap your Next.js config with `withAlinea` so the dashboard is served on `/admin`. The API route for `/api/cms` (`app/(alinea)/api/cms/route.ts`) was created by `alinea init`, see the "
+        },
+        {
+          "_type": "text",
+          "text": "Quickstart",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jjye0AkAdfGks1l9ofMLpMqAJ3",
+              "_link": "entry",
+              "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jjye2FSzyfM3XNzIeAPLNlGnt7",
+      "code": "import {withAlinea} from 'alinea/next'\nimport type {NextConfig} from 'next'\n\nconst nextConfig: NextConfig = {}\n\nexport default withAlinea(nextConfig)",
+      "fileName": "next.config.ts",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The route file only renders the view and re-exports its metadata:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONC9dl0liqkbFKz98iCvPT083",
+      "code": "import {LandingPageView} from '@/entries/landing/LandingPage'\n\nexport {generateMetadata} from '@/entries/landing/LandingPage'\n\nexport default function Page() {\n  return <LandingPageView />\n}\n",
+      "fileName": "app/page.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render `cms.previews` in the root layout. It enables live previews in the dashboard, and the `widget` prop adds a small toolbar to your pages to switch to the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AnwTjJc907Wdxzne9oVGaVjCny",
+      "code": "import {cms} from '@/cms'\nimport './globals.css'\n\nexport default function RootLayout({children}: {children: React.ReactNode}) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
+      "fileName": "app/layout.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The layout also imports `globals.css`: a few base styles so the pages, and the preview next to the editor, are easy to read. Replace them with your own styles, nothing in the tutorial depends on them."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jzvk3sXOZo5KSUd9veoXEbtnFM",
+      "code": "/* A few base styles so the pages are easy to read, replace them with your own */\n\nbody {\n  max-width: 720px;\n  margin: 0 auto;\n  padding: 32px 24px;\n  font-family:\n    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,\n    sans-serif;\n  font-size: 16px;\n  line-height: 1.6;\n  color: #1f2328;\n  background: #fff;\n}\n\nh1,\nh2,\nh3 {\n  margin: 1.5em 0 0.5em;\n  line-height: 1.25;\n}\n\nh1 {\n  margin-top: 0.5em;\n  font-size: 2.25rem;\n}\n\np,\nul,\nol {\n  margin: 0 0 1em;\n}\n\na {\n  color: #2458d3;\n}\n\nimg {\n  max-width: 100%;\n  height: auto;\n}\n\nheader,\nfooter {\n  padding: 16px 0;\n  color: #59636e;\n}\n\nheader {\n  border-bottom: 1px solid #d1d9e0;\n}\n\nfooter {\n  margin-top: 48px;\n  border-top: 1px solid #d1d9e0;\n}",
+      "fileName": "app/globals.css",
+      "language": "css",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3Anz9HhlIGXj1yRUTTnA7o2E362",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Run `npm run dev` and check that:"
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "The Pages root in the dashboard at `/admin` contains one landing page entry."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Editing the title updates the preview next to the editor while you type."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Values you enter in the SEO tab show up in the page's `<title>` and meta tags."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790188863,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790237009,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

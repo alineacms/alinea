@@ -27,6 +27,7 @@ import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
+import {validateType} from '../Validation.js'
 
 export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
@@ -95,6 +96,22 @@ export class RichTextField<
         if (!meta.options.searchable) return ''
         return richTextSearchableText(schema, value)
       },
+      isEmpty(value) {
+        return !Array.isArray(value) || isEmptyDoc(value)
+      },
+      nestedErrors(value, context) {
+        const doc = Array.isArray(value) ? value : []
+        return doc.flatMap((row, index) => {
+          if (!schema || !Node.isBlock(row)) return []
+          const type = schema[row[Node.type]]
+          if (!type) return []
+          return validateType(type, row, {
+            ...context,
+            path: [...context.path, index],
+            labels: [...context.labels, Type.label(type)]
+          })
+        })
+      },
       references(value, context) {
         const doc = Array.isArray(value) ? value : []
         const result = customReferences?.(value, context) ?? []
@@ -141,6 +158,25 @@ export class RichTextField<
       }
     })
   }
+}
+
+// Elements which only wrap text, a document of these without text is empty
+const textContainers = new Set([
+  'paragraph',
+  'heading',
+  'blockquote',
+  'bulletList',
+  'orderedList',
+  'listItem'
+])
+
+function isEmptyDoc(doc: TextDoc<unknown>): boolean {
+  return doc.every(node => {
+    if (Node.isText(node)) return !node.text?.trim()
+    if (!Node.isElement(node) || !textContainers.has(node[Node.type]))
+      return false
+    return isEmptyDoc(node.content ?? [])
+  })
 }
 
 function normalizeRichTextAnchors<Blocks>(
@@ -235,11 +271,11 @@ function normalizeRichTextAnchors<Blocks>(
   return next
 }
 
-function localizeRichTextLinks(
+function localizeRichTextLinks<Blocks>(
   schema: Schema | undefined,
-  doc: TextDoc,
+  doc: TextDoc<Blocks>,
   context: FieldLocalizeContext
-): TextDoc {
+): TextDoc<Blocks> {
   let next = doc
   doc.forEach((node, index) => {
     const localized = localizeRichTextNode(schema, node, context)

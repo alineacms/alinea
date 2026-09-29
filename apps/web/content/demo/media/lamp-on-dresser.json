@@ -1,0 +1,21 @@
+{
+  "_id": "3JjYfptmEfmnIiqFLDEYxPf7pVW",
+  "_type": "MediaFile",
+  "_index": "a9",
+  "_root": "media",
+  "title": "Lamp on dresser",
+  "location": "/lamp-on-dresser.jpg",
+  "extension": ".jpg",
+  "size": 210393,
+  "hash": "f14f98d7",
+  "alt": "A table lamp with a white shade on a dark wooden dresser",
+  "width": 2000,
+  "height": 2854,
+  "preview": "data:image/webp;base64,UklGRlYDAABXRUJQVlA4IEoDAADwFwCdASpwAKAAPm02lUckIychKTgJIOANiWcG+Oj9yjf2ywgdFVVOLXOBG1H91A3eGznr+hgaWw9Ws+MnKVtdHapJEyDESMKLiJh0pevh+dpIgG0BuljoZUAKYSq5oWbEiaPKCPckAfM23PuNPXXU8adI6yGnLMsFfOyPxaXMIj1Fi8l6OpRk0P3sbei59rqmuJg5T5DLS7h7SESnT1ZWPwopWsFskfPiJclzKvhCWYJlbwDoPly6MqeOamB82oV1mVabIkAFKAD+9dwbJcn6xNpyV2rE0wJKIDjdtkRjL4fsSIQzPU4Rg4dkkjJ5+o7queWEZFqpbtpGMxeheHZTJeXvYvEflKHAyprI/vuJ+9tz4x2ApF56KjIaB+fwOeOuR6iMgB4asItJNI0llbT73ueS4/eYECD/F2sr5gGbXPmym9O4lCJwERcj+PPeHsxKobNsklFPwyT5S+hm1Qj/wpTe77xA+eJl1otFhzEUouQsKvniXCfdkaP8GBBeMRDLAc/u/Cgr7Dg0hq5JVrEKdO7W7yvlr4B54iClPN1HW29CKh3x9QWqwF3bHLGre5C9wERLzmyn7UgSNWpUkj7NWBlV6VAAN8uK5diHIX73Y/q2Un1Xa/FJKVWNLsRtqvuL1+lQOYQfX/9uX3+KHiH+onxMsVxykRG/8NDxG0W8ERm/7oH7CVihzinofYNL8d43YoTM5l6lLzKhhDH9RYyerlxEUoGGQld8N81n8mgcysyu4N4plWr2TbJnQH2kFMC0TOo+/5yyc6bIW3B8dZl3yYNkACkAAa4awWIaAlcOIAE112tOu0mZaN3sNcwDGkRiWHXf5BWTSJRng73MaNAs3ShhvIlFgamgE2zWspPGowSc1HUW0+UdX8U9fdBxTFkvSBrM5W9z3NISVr0Y1bihfQpJzjzu+UWx1PSg8YShi4fDomPFk8Ocu/y9ZgVt94FQUKcn/9S0lPv9blZtCSJ/gPd9P2AOphQNifukRub4riPaQuuPNF5lI8equnPvaePz93dUre9F7m9Q5/ZgzbE1aCvlFn+EDkg2I/Ki/UDkBcyLhvgXGg8wrRmEW5fkIxID+tfzgdjPO/PrDeuv4RlV1QfHzS8o8FkMAA==",
+  "averageColor": "#bbafa1",
+  "focus": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "thumbHash": "qxgSFQSXeH92OIiYh3hniHmAjgfZ"
+}

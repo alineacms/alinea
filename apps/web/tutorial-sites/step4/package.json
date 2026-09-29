@@ -1,0 +1,9 @@
+{
+  "name": "tutorial-step4",
+  "private": true,
+  "scripts": {
+    "dev": "node ../../../../dist/cli.js dev --port 4604 -- next dev -p 3104",
+    "build": "node ../../../../dist/cli.js build -- next build",
+    "start": "next start -p 3104"
+  }
+}

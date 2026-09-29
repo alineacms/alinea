@@ -1,8 +1,9 @@
+import type {Key, Selection} from '#/components.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {atom, useSetAtom} from 'jotai'
 import {startTransition, useMemo} from 'react'
-import type {Key, Selection} from 'react-aria-components'
 import type {
+  DashboardEntry,
   DashboardExplorer,
   ExplorerLocation,
   ExplorerReadyPage
@@ -37,6 +38,8 @@ export function createExplorerTree(explorer: () => DashboardExplorer) {
 export interface ExplorerPickerContentProps {
   explorer: DashboardExplorer
   navigationLabel: string
+  /** Picks a single entry as soon as it is clicked */
+  onPick?: (entry: DashboardEntry) => void
   options: {pickChildren?: boolean}
   page: ExplorerReadyPage
   tree: ReturnType<typeof createExplorerTree>
@@ -45,6 +48,7 @@ export interface ExplorerPickerContentProps {
 export function ExplorerPickerContent({
   explorer,
   navigationLabel,
+  onPick,
   options,
   page,
   tree
@@ -92,7 +96,7 @@ export function ExplorerPickerContent({
             onSelectionChange={onSelectionChange}
           />
         )}
-      <ExplorerBody explorer={explorer} page={page} />
+      <ExplorerBody explorer={explorer} onPick={onPick} page={page} />
     </ExplorerModalContent>
   )
 }

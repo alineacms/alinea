@@ -33,7 +33,6 @@ interface LocalServer {
 
 export interface CreateDevServerOptions {
   cmd: 'dev' | 'build'
-  base?: string
   staticDir?: string
   configFile?: string
   buildOptions?: BuildOptions
@@ -41,7 +40,11 @@ export interface CreateDevServerOptions {
   production?: boolean
   apiKey?: string
   dashboardUrl: Promise<string>
-  onAfterGenerate?: (message: string, config: Config) => void
+  onAfterGenerate?: (
+    message: string,
+    config: Config,
+    databasePath: string
+  ) => void
 }
 
 export interface DevServer {
@@ -55,7 +58,6 @@ export async function createDevServer(
 ): Promise<DevServer> {
   const {
     cmd,
-    base,
     configFile,
     staticDir = path.join(__dirname, '..', 'static'),
     alineaDev = false,
@@ -77,7 +79,6 @@ export async function createDevServer(
     cmd,
     configLocation,
     rootDir,
-    base,
     staticDir,
     alineaDev,
     buildOptions: options.buildOptions || {},
@@ -142,7 +143,8 @@ export async function createDevServer(
           context,
           cms,
           handleApi,
-          await user
+          await user,
+          db
         )
 
         currentServer?.close()

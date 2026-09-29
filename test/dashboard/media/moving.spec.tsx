@@ -18,7 +18,7 @@ test('opens a media directory overview from its sidebar icon', async ({
     exact: true
   })
 
-  await directory.locator('[data-slot="icon"]').click()
+  await directory.locator('[data-slot="tree-item-icon"]').click()
 
   await expect(app.page).toHaveURL(/workflow-media-directory$/)
   await expect(app.title).toHaveText('Media directory')

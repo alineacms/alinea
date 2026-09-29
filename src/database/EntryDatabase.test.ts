@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -6,6 +7,7 @@ import {transaction} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntryStore} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
@@ -312,6 +314,55 @@ test('cached trees follow revisions written by another database instance', async
   }
 })
 
+test('syncing after another instance moved the revision on', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const {source, store} = await createEntryStore(
+    {
+      schema: {Page},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+        })
+      }
+    },
+    [
+      {id: 'one', type: 'Page', index: 'a', data: {title: 'One'}},
+      {id: 'two', type: 'Page', index: 'b', data: {title: 'Two'}}
+    ]
+  )
+  await store.close()
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-tree-sync-'))
+  const remove = async (file: string) => {
+    const edit = await transaction(source)
+    const compiled = await edit.remove(file).compile()
+    await source.applyChanges({
+      fromSha: compiled.from.sha,
+      changes: compiled.changes
+    })
+  }
+  try {
+    using firstSqlite = new Database(join(directory, 'entries.sqlite'), {
+      create: true
+    })
+    using secondSqlite = new Database(join(directory, 'entries.sqlite'))
+    const db = connect(firstSqlite)
+    await EntryDatabase.createSchema(db, store.config, ReadonlyTree.EMPTY.sha)
+    const first = new EntryDatabase(store.config, db)
+    const second = new EntryDatabase(store.config, connect(secondSqlite))
+    await second.syncWith(source)
+    await remove('pages/one.json')
+    await first.syncWith(source)
+    // The second instance still caches the first tree
+    await remove('pages/two.json')
+    const result = await second.syncWith(source)
+    expect(result.revision).toBe((await source.getTree()).sha)
+    expect(await second.count({})).toBe(0)
+  } finally {
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
 test('overlays are independent of their parent and of each other', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
@@ -452,6 +503,114 @@ test('database mutations use one write transaction and commit one final tree', a
   expect(result.request.changes).toHaveLength(1)
   await source.applyChanges(sourceChanges(result.request))
   await database.close()
+})
+
+/** A database with a media root, applying mutations returns removed files */
+async function mediaDatabase() {
+  const {config} = createCMS({
+    schema: {},
+    enableDrafts: true,
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        mediaDir: 'public',
+        roots: {media: ConfigBuilder.media()}
+      })
+    }
+  })
+  const source = new MemorySource()
+  const sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
+  const database = new EntryDatabase(config, db)
+  return {
+    async removedFiles(mutations: Array<Mutation>) {
+      const {request} = await database.apply(mutations, {source})
+      await source.applyChanges(sourceChanges(request))
+      return request.changes.flatMap(change =>
+        change.op === 'removeFile' ? [change.location] : []
+      )
+    },
+    async [Symbol.asyncDispose]() {
+      await database.close()
+      sqlite.close()
+    }
+  }
+}
+
+const brochure = {
+  title: 'Brochure',
+  location: '/brochure.pdf',
+  extension: '.pdf',
+  size: 1024,
+  hash: 'hash'
+}
+
+test('discarding a media draft keeps the file of the published version', async () => {
+  await using media = await mediaDatabase()
+  const versions = (status: 'draft' | 'published'): Array<Mutation> => [
+    {
+      op: 'create',
+      id: 'dir',
+      type: 'MediaLibrary',
+      locale: null,
+      status,
+      data: {title: 'Dir'}
+    },
+    {
+      op: 'create',
+      id: 'file',
+      parentId: 'dir',
+      type: 'MediaFile',
+      locale: null,
+      status,
+      data: brochure
+    }
+  ]
+  await media.removedFiles(versions('published'))
+  await media.removedFiles(versions('draft'))
+  expect(
+    await media.removedFiles([{op: 'remove', id: 'file', status: 'draft'}])
+  ).toEqual([])
+  expect(
+    await media.removedFiles([{op: 'remove', id: 'dir', status: 'draft'}])
+  ).toEqual([])
+  expect(await media.removedFiles([{op: 'remove', id: 'file'}])).toEqual([
+    'public/brochure.pdf'
+  ])
+})
+
+test('saving a media file only removes its previous file when replaced', async () => {
+  await using media = await mediaDatabase()
+  const save = (
+    data: Record<string, unknown>,
+    status: 'draft' | 'published' = 'published'
+  ): Mutation => ({
+    op: 'create',
+    id: 'file',
+    type: 'MediaFile',
+    locale: null,
+    status,
+    data,
+    overwrite: true
+  })
+  await media.removedFiles([save(brochure)])
+  // Replacing uploads the new file and removes the previous one
+  const replaced = {...brochure, location: '/brochure-v2.pdf', hash: 'v2'}
+  expect(
+    await media.removedFiles([
+      {op: 'uploadFile', url: '', location: 'public/brochure-v2.pdf'},
+      save(replaced)
+    ])
+  ).toEqual(['public/brochure.pdf'])
+  // An editor still showing the file from before the replace saves a new
+  // focus point: the current file must stay
+  const focus = {x: 0.2, y: 0.8}
+  expect(await media.removedFiles([save({...brochure, focus})])).toEqual([])
+  expect(
+    await media.removedFiles([save({...replaced, focus}, 'draft')])
+  ).toEqual([])
+  expect(await media.removedFiles([save({...replaced, focus})])).toEqual([])
 })
 
 test('failed database mutation batches leave the receiver untouched', async () => {

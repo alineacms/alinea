@@ -1,0 +1,354 @@
+@use '@/style' as *;
+
+.root {
+  position: relative;
+  flex-shrink: 0;
+  height: var(--web-header-height);
+  z-index: 7;
+  color: var(--web-foreground);
+  // Same colour as the page, the header reads as part of it
+  background: var(--web-background);
+
+  // Docs pages keep the header in view, their sidebar sticks below it; the
+  // border keeps content that scrolls underneath separated from the nav
+  &.is-sticky {
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid var(--web-outline);
+    // Docs pages sit on the surface colour, the header matches them
+    background: var(--web-surface);
+
+    // Line the logo up with the start of the docs sidebar (its search box)
+    // below, which is inset 24px rather than the page gutter
+    @include l {
+      .menu {
+        padding-inline-start: 24px;
+      }
+    }
+  }
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  width: 100%;
+  height: 100%;
+  max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
+  margin-inline: auto;
+  padding-inline: var(--web-gutter);
+
+  @include sm {
+    gap: 16px;
+  }
+
+  &-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    color: var(--web-foreground);
+
+    // The wordmark's baseline sits at 90% of its box, lower than the
+    // baseline of the vertically centered 15px nav labels: shift it up so
+    // both share one baseline. Without nav labels (mobile) it stays centered.
+    &-mark {
+      width: 68px;
+      transform: translateY(-3px);
+
+      @include sm {
+        width: 62px;
+        transform: none;
+      }
+    }
+
+    &-badge {
+      padding: 3px 9px;
+      border-radius: 7px;
+      background: color-mix(in srgb, var(--web-foreground) 14%, transparent);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+  }
+
+  &-nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+
+    @include sm {
+      display: none;
+    }
+
+    &-link {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--web-foreground-faded);
+      white-space: nowrap;
+      transition: color 0.2s ease-out;
+
+      &:is(:hover, :focus-visible),
+      &[aria-current] {
+        color: var(--web-foreground);
+      }
+    }
+  }
+
+  &-extra {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-left: auto;
+
+    @include sm {
+      gap: 8px;
+    }
+  }
+
+  &-search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-right: -8px;
+    border-radius: 10px;
+    color: var(--web-foreground-faded);
+    cursor: pointer;
+    transition:
+      color 0.2s ease-out,
+      background 0.2s ease-out;
+
+    @include sm {
+      width: 44px;
+      height: 44px;
+      margin-right: 0;
+    }
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-foreground);
+      background: var(--web-highlight);
+    }
+
+    &-icon {
+      display: block;
+      font-size: 20px;
+    }
+  }
+
+  &-github {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--web-foreground-faded);
+    white-space: nowrap;
+    transition: color 0.2s ease-out;
+
+    @include sm {
+      display: none;
+    }
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-foreground);
+    }
+  }
+
+  &-cta {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--web-accent-foreground);
+    background: var(--web-accent);
+    white-space: nowrap;
+    transition: background 0.2s ease-out;
+
+    @include sm {
+      display: none;
+    }
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent-foreground);
+      background: var(--web-accent-strong);
+    }
+  }
+
+  &-mobileButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--web-outline);
+    border-radius: 12px;
+    font-size: 22px;
+    color: var(--web-foreground);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s ease-out;
+
+    &:hover {
+      background: var(--web-highlight);
+    }
+
+    @include l {
+      display: none !important;
+    }
+
+    &-hamburger {
+      display: block;
+
+      .mobilemenu & {
+        display: none;
+      }
+    }
+
+    &-close {
+      display: none;
+
+      .mobilemenu & {
+        display: block;
+      }
+    }
+  }
+}
+
+.mobilemenu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 8;
+  display: none;
+  background: var(--web-background);
+
+  @include l {
+    display: none !important;
+  }
+
+  &-check {
+    display: none;
+  }
+
+  &-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  &-top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    flex-shrink: 0;
+    height: var(--web-header-height);
+    background: var(--web-background);
+  }
+
+  &-nav {
+    flex-grow: 1;
+    padding: 0 var(--web-gutter) 30px;
+  }
+
+  :global(#mobilemenu:checked) + & {
+    display: block;
+  }
+}
+
+.searchmodal {
+  position: fixed;
+  // Portaled to <body>, which the dashboard stylesheet gives its own font
+  font-family: var(--web-body-font);
+  display: flex;
+  align-items: flex-start;
+  inset: 0;
+  z-index: 10;
+  padding: 60px;
+
+  @include s {
+    padding: 20px;
+  }
+
+  &-header {
+    position: sticky;
+    top: 0;
+    background: var(--web-surface);
+    border-bottom: 1px solid var(--web-outline);
+    z-index: 1;
+    padding: 8px 20px;
+
+    &-icon {
+      font-size: 22px;
+      &.is-pending {
+        animation: glow 0.5s ease-in-out infinite alternate;
+      }
+    }
+
+    &-input {
+      background: none;
+      border: none;
+      font-size: 18px;
+      height: 40px;
+      width: 100%;
+      flex: 1;
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+
+  &-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(13, 16, 48, 0.45);
+  }
+
+  &-container {
+    position: relative;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 566px;
+    background: var(--web-surface);
+    color: var(--web-foreground);
+    border: 1px solid var(--web-outline);
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(16, 24, 90, 0.25);
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.results {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 8px 20px 20px 16px;
+  max-height: 100%;
+  overflow: auto;
+
+  &-row {
+    border-radius: 12px;
+    padding: 8px 12px;
+
+    &:hover {
+      color: var(--web-foreground);
+      background: var(--web-highlight);
+    }
+  }
+}
+
+@keyframes glow {
+  from {
+    color: var(--web-foreground);
+  }
+  to {
+    color: var(--web-accent);
+  }
+}

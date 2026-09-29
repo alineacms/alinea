@@ -1,0 +1,131 @@
+{
+  "_id": "3JjNWhIOOARLjiO2HjeVoVyVN48",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "Instant publishing",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content goes live on every commit, without a rebuild. When an editor publishes, Alinea commits the change to your repository and your site starts serving it right away."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "How it works"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every publish in the dashboard is a git commit. After the commit, the site syncs the new content sha from its own handler, so the next request that renders content reads the latest version. No build or redeploy has to finish before editors see their changes on the live site."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Skip builds for content-only commits"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when nothing outside the `content` directory changed:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjNWfZKlJJcGLyuGry1Hl8DMVK",
+      "code": "{\n  \"ignoreCommand\": \"git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
+      "fileName": "vercel.json",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3JjNWeNM6LEvGr4SFqKGSakxQnm",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Adjust `content` if your content lives in a different directory."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Revalidate pages after a commit"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pages that are rendered at request time pick up new content immediately. Static pages were rendered ahead of time and keep serving the old content until they are revalidated. Use the handler's `afterCommit` hook to revalidate them whenever content is published:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjNWi9SZuCF5XeSSkFjDXzvTu4",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidatePath} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  afterCommit() {\n    revalidatePath('/', 'layout')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "fileName": "app/api/cms/route.ts",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`revalidatePath('/', 'layout')` marks every page as stale, so the next visit to any page renders it with the new content. Narrow it down to specific paths if you only want to revalidate the pages that changed."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

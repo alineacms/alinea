@@ -1,0 +1,283 @@
+{
+  "_id": "3AZY63OxjiPWzVM4siKRVbqLNF1",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "Examples",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Complete queries for pages most sites have. They use the "
+        },
+        {
+          "_type": "text",
+          "text": "example schema",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF03vBdOUz3E2CscdOzzJ5Njp",
+              "_link": "entry",
+              "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and the Next.js App Router, and assume a pages root without i18n unless noted."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "A page for every url"
+        }
+      ],
+      "_anchor": "filtering-by-linked-references"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A catch-all route that renders whatever entry lives at the requested url, and prerenders all of them at build time:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF06GrsZ9LUS8xH3MmUu3AtD6",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\nimport {notFound} from 'next/navigation'\n\ninterface PageProps {\n  params: Promise<{slug?: Array<string>}>\n}\n\nexport async function generateStaticParams() {\n  const urls = await cms.find({\n    root: cms.workspaces.main.pages,\n    select: Query.url\n  })\n  return urls.map(url => ({slug: url.split('/').filter(Boolean)}))\n}\n\nexport default async function Page({params}: PageProps) {\n  const {slug = []} = await params\n  const page = await cms.first({\n    root: cms.workspaces.main.pages,\n    url: `/${slug.join('/')}`,\n    select: {type: Query.type, title: Query.title}\n  })\n  if (!page) notFound()\n  return <h1>{page.title}</h1>\n}",
+      "fileName": "app/[[...slug]]/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render a different component per `page.type`, each fetching the data it needs by id or url."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Blog overview with pagination"
+        }
+      ],
+      "_anchor": "blog-overview-with-pagination"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZuCIlq3RXaKdbztvaz5rVCIsA",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst perPage = 10\n\ninterface BlogPageProps {\n  searchParams: Promise<{page?: string}>\n}\n\nexport default async function BlogPage({searchParams}: BlogPageProps) {\n  const page = Math.max(1, Number((await searchParams).page) || 1)\n  const [posts, total] = await Promise.all([\n    cms.find({\n      type: BlogPost,\n      select: {\n        title: Query.title,\n        url: Query.url,\n        date: BlogPost.publishDate,\n        intro: BlogPost.intro\n      },\n      orderBy: {desc: BlogPost.publishDate},\n      skip: (page - 1) * perPage,\n      take: perPage\n    }),\n    cms.count({type: BlogPost})\n  ])\n  const pageCount = Math.ceil(total / perPage)\n  return (\n    <main>\n      {posts.map(post => (\n        <a key={post.url} href={post.url}>\n          <h2>{post.title}</h2>\n          <p>{post.intro}</p>\n        </a>\n      ))}\n      <p>\n        Page {page} of {pageCount}\n      </p>\n    </main>\n  )\n}",
+      "fileName": "app/blog/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Related posts"
+        }
+      ],
+      "_anchor": "related-posts"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Posts that share at least one category with the current post, newest first, without the post itself:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ahe5K3PePHW5DZopeFrS9LCUiJ",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nexport async function relatedPosts(postId: string) {\n  const post = await cms.get({\n    type: BlogPost,\n    id: postId,\n    select: {categories: BlogPost.categories}\n  })\n  const categoryIds = post.categories.map(category => category.entryId)\n  if (categoryIds.length === 0) return []\n  return cms.find({\n    type: BlogPost,\n    id: {isNot: postId},\n    filter: {categories: {includes: {_entry: {in: categoryIds}}}},\n    select: {title: Query.title, url: Query.url},\n    orderBy: {desc: BlogPost.publishDate},\n    take: 3\n  })\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To require all categories instead of any, combine one `includes` per category with `and`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZi7kjJLXFnA21Agey2DjkAmhD",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\n\nexport function postsInAllCategories(categoryIds: Array<string>) {\n  return cms.find({\n    type: BlogPost,\n    filter: {\n      and: categoryIds.map(id => ({categories: {includes: {_entry: id}}}))\n    }\n  })\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Filtering a listing from the url"
+        }
+      ],
+      "_anchor": "filtering-a-listing-from-the-url"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Optional filters from search params, skipped when they're empty:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZiyHPw7uDo7kI54QMwdWu6Gnu",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\ninterface Filters {\n  category?: string\n  q?: string\n}\n\nexport function filteredPosts({category, q}: Filters) {\n  return cms.find({\n    type: BlogPost,\n    search: q || undefined,\n    filter: {\n      categories: category ? {includes: {_entry: category}} : undefined\n    },\n    select: {title: Query.title, url: Query.url},\n    // Sort by date unless the visitor searched, then by relevance\n    orderBy: q ? undefined : {desc: BlogPost.publishDate}\n  })\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Redirect old urls"
+        }
+      ],
+      "_anchor": "redirect-old-urls"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When an editor changes the path of a published document, or moves it, its previous url is kept in its metadata aliases. Look it up when nothing matches, and redirect:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF02oEJ7HEnSttMgDkbgCBOVh",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\nimport {notFound, permanentRedirect} from 'next/navigation'\n\nexport async function findPage(url: string) {\n  const page = await cms.first({url, select: {title: Query.title}})\n  if (page) return page\n  const moved = await cms.first({alias: url, select: Query.url})\n  if (moved) permanentRedirect(moved)\n  notFound()\n}",
+      "fileName": "app/[[...slug]]/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sitemap"
+        }
+      ],
+      "_anchor": "sitemap"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every page with its translations, for `app/sitemap.ts`. This one uses a translated pages root:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkF01uH9iBonsXOdVXGstf17N3",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\nimport type {MetadataRoute} from 'next'\n\nconst baseUrl = 'https://example.com'\n\nexport default async function sitemap(): Promise<MetadataRoute.Sitemap> {\n  const pages = await cms.find({\n    root: cms.workspaces.main.pages,\n    locale: 'en',\n    select: {\n      url: Query.url,\n      updatedAt: Query.updatedAt,\n      translations: Query.translations({\n        includeSelf: true,\n        select: {locale: Query.locale, url: Query.url}\n      })\n    }\n  })\n  return pages.map(page => ({\n    url: baseUrl + page.url,\n    lastModified: page.updatedAt ? new Date(page.updatedAt * 1000) : undefined,\n    alternates: {\n      languages: Object.fromEntries(\n        page.translations.map(t => [t.locale, baseUrl + t.url])\n      )\n    }\n  }))\n}",
+      "fileName": "app/sitemap.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Site settings"
+        }
+      ],
+      "_anchor": "site-settings"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Settings that appear on every page, like the footer, fit in a seeded entry in their own root (see "
+        },
+        {
+          "_type": "text",
+          "text": "Roots",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkF06gglxirXVw32u6TZ5k4WlQ",
+              "_link": "entry",
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "). There's exactly one, so query it by type with `get`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzzFeSTCjBcbOcSxeKMWrNHN",
+      "code": "import {cms} from '@/cms'\nimport {Settings} from '@/schema'\n\nexport async function Footer() {\n  const settings = await cms.get({type: Settings})\n  return <footer>{settings.title}</footer>\n}",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a translated settings root, pass the `locale` too, otherwise `get` returns whichever translation comes first."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790189232,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790196932,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

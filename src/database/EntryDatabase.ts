@@ -258,7 +258,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       this.#initialTree ??= tree
       const changedEntryIds = await this.#queue.run(async () => {
         const changed = await this.#syncer.sync(source, tree, current, {
-          previousTree: this.#tree,
+          // Another instance on the same database file (the dev server and
+          // the site, or a restarted process) may have moved the revision on,
+          // then the stored tree is the one to diff against
+          previousTree: this.#tree?.sha === current ? this.#tree : undefined,
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
           recordsTree: this.#recordsTree

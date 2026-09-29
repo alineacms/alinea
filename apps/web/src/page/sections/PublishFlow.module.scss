@@ -1,0 +1,112 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &-row {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    border-radius: 18px;
+    background: var(--web-background);
+
+    &.is-alinea {
+      background: var(--web-accent-soft);
+      box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--web-accent) 16%, transparent);
+    }
+  }
+
+  &-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--web-foreground-muted);
+  }
+
+  &-row.is-alinea &-title {
+    color: var(--web-accent-strong);
+  }
+
+  &-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  &-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    color: var(--web-foreground);
+
+    &.is-waiting {
+      flex-grow: 1;
+      border-color: transparent;
+      background: repeating-linear-gradient(
+        135deg,
+        var(--web-neutral-soft) 0 10px,
+        var(--web-outline) 10px 20px
+      );
+      color: var(--web-foreground-faded);
+    }
+
+    &.is-muted {
+      color: var(--web-foreground-muted);
+    }
+
+    &.is-live {
+      gap: 6px;
+      border-color: color-mix(in srgb, var(--web-positive) 35%, transparent);
+      background: var(--web-positive-soft);
+      color: var(--web-positive);
+    }
+
+    &.is-skipped {
+      border: 1px dashed color-mix(in srgb, var(--web-accent) 35%, transparent);
+      background: transparent;
+      color: var(--web-foreground-muted);
+      text-decoration: line-through;
+    }
+  }
+
+  &-row.is-alinea &-step:not(.is-live, .is-skipped) {
+    border-color: color-mix(in srgb, var(--web-accent) 16%, transparent);
+  }
+
+  &-arrow {
+    color: var(--web-foreground-muted);
+  }
+
+  &-row.is-alinea &-arrow {
+    color: var(--web-accent);
+  }
+
+  &-icon {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+  }
+
+  &-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 4px;
+    background: currentColor;
+  }
+
+  &-spacer {
+    flex-grow: 1;
+  }
+}

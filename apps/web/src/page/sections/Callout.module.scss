@@ -1,0 +1,63 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 48px;
+  padding: 56px;
+  border-radius: 28px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: 28px;
+    padding: 40px;
+  }
+
+  @include s {
+    padding: 28px 20px;
+    border-radius: 22px;
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 14px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 40px;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--web-foreground);
+
+    @include sm {
+      font-size: 32px;
+    }
+  }
+
+  &-text {
+    max-width: 640px;
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--web-foreground-faded);
+  }
+
+  &-action {
+    flex-shrink: 0;
+  }
+}

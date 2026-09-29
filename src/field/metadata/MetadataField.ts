@@ -106,10 +106,7 @@ export function metadata(
       title: text('Title'),
       description: text('Description', {
         multiline: true,
-        help: 'Optimal length: 120–160 characters',
-        validate(value) {
-          if (value.length > 160) return 'Too many characters.'
-        }
+        help: 'Optimal length: 120–160 characters'
       }),
       openGraph: object('Open Graph', {
         fields: {

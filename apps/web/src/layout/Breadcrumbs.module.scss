@@ -1,0 +1,36 @@
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--web-foreground-muted);
+
+  &.is-flat {
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  &:empty {
+    display: none;
+  }
+
+  &-link {
+    color: inherit;
+    transition: color 0.15s ease-out;
+
+    &:hover {
+      color: var(--web-accent);
+    }
+  }
+
+  &-separator {
+    color: var(--web-foreground-muted);
+  }
+
+  &-current {
+    color: var(--web-foreground);
+  }
+}

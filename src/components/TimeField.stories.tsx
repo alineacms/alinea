@@ -1,37 +1,41 @@
-import {Button} from './Button.js'
+import {useState} from 'react'
 import {TimeField} from './TimeField.js'
 
-export const Example = () => {
+export function Example() {
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
       <TimeField label="Event time" />
-
-      <form
-        onSubmit={e => {
-          e.preventDefault()
-        }}
-      >
-        <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-          <TimeField
-            isRequired
-            label="Event time with error"
-            errorMessage="time is required"
-          />
-          <Button type="submit">Submit</Button>
-        </div>
-      </form>
-
-      <TimeField label="Event time (24h mode)" hourCycle={24} />
-
+      <TimeField required label="With error" error="Time is required" />
+      <TimeField label="24 hour clock" hourCycle={24} />
       <TimeField
-        label="Event time"
+        label="With description"
         hourCycle={24}
-        description="(24h mode) with description"
+        description="Opening hours start"
       />
+      <TimeField label="Disabled" defaultValue="09:30" disabled />
     </div>
   )
 }
 
-export default {
-  title: 'Components / TimeField'
+export function Controlled() {
+  const [value, setValue] = useState<string | null>('14:30')
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <TimeField
+        label="Start time"
+        hourCycle={24}
+        value={value}
+        onValueChange={setValue}
+      />
+      <TimeField
+        label="With seconds"
+        hourCycle={24}
+        granularity="second"
+        defaultValue="08:15:30"
+      />
+      <output data-testid="value">{String(value)}</output>
+    </div>
+  )
 }
+
+export default {title: 'Pure components / TimeField'}

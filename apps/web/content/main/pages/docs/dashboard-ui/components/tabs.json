@@ -1,0 +1,129 @@
+{
+  "_id": "3JmLPaaUQRcT2pqRcXJdyTccAzu",
+  "_type": "Doc",
+  "_index": "an",
+  "title": "Tabs",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Splits content into sections that are shown one at a time. TabsTrigger and TabsContent are matched by their `value`."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPbVI6GhdHjcmf5DrIK3DaMo",
+      "example": "Tabs"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Variants"
+        }
+      ],
+      "_anchor": "variants"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`line` underlines the selected tab, `subtle` gives it a background and `enclosed` sets the tabs in a track, like a segmented control."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPc9z0aS0VXcYGf8fI26KRW4",
+      "example": "TabsVariants"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Vertical"
+        }
+      ],
+      "_anchor": "vertical"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With `orientation=\"vertical\"` the tabs stand next to their content, which suits settings with many sections."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPdImHx7MirkT7VEtPZybEcK",
+      "example": "TabsVertical"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPZ7h0qjT6sWiaq1r8DZilFX",
+      "component": "Tabs"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The arrow keys move between tabs, Home and End jump to the first and last one. Only the selected tab is in the tab order, so Tab moves on to its content."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261273,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261273,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

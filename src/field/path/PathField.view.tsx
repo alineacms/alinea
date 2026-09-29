@@ -27,7 +27,6 @@ export const PathFieldView = memo(function PathFieldView({
       description={options.help}
       errorMessage={error}
       fieldValue={fieldValue}
-      isInvalid={Boolean(error)}
       isReadOnly={options.readOnly}
       isRequired={options.required}
       label={options.label}

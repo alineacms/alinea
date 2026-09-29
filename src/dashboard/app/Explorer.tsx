@@ -1,61 +1,71 @@
 import {
   Button,
-  Menu,
-  MenuItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  FileTrigger,
+  type Key,
+  PageBack,
+  PageContent,
+  PageHeader,
+  PageTitle,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
   SearchField,
   Switch,
-  ToggleButton,
-  ToggleButtonGroup
+  Text,
+  ToggleGroup,
+  ToggleGroupItem
 } from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {OverviewActionProps, OverviewSort} from '#/core/Overview.js'
+import {resolveView} from '#/core/View.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
   useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {
-  DialogTrigger,
-  FileTrigger,
-  type Key,
-  type Selection
-} from 'react-aria-components'
-import {configAtom} from '../atoms/core.js'
+import {configAtom, viewsAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
   type DashboardEntryData,
   type DashboardExplorer,
   explorerPageIsPending,
   type ExplorerReadyPage,
-  type ExplorerSort,
-  type ExplorerSortBy,
+  type ExplorerSortState,
   type ExplorerTypeFilters
 } from '../atoms/explorer.js'
+import {titleColumn} from '../atoms/overview.js'
 import {
   IcRoundAccountTree,
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundClose,
   IcRoundFilterList,
+  IcRoundSearch,
   IcRoundUploadFile
 } from '../icons.js'
-import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
-import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -77,6 +87,8 @@ export interface ExplorerHeaderEntry {
 export interface ExplorerHeaderProps {
   canBrowse?: boolean
   autoFocusSearch?: boolean
+  /** Called when escape is pressed in the search field */
+  onSearchEscape?: () => void
   controls?: ReactNode
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
@@ -89,7 +101,11 @@ export interface ExplorerHeaderProps {
 export interface ExplorerBodyProps {
   compactTable?: boolean
   explorer: DashboardExplorer
-  onSelectionChange?: (selection: Selection) => void
+  /**
+   * Called when a selectable entry is clicked, pickers that select a single
+   * entry confirm it right away
+   */
+  onPick?: (entry: DashboardEntry) => void
   page: ExplorerReadyPage
 }
 
@@ -97,7 +113,27 @@ interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: DashboardExplorer
   onEntryAction?: (entry: DashboardEntry) => void
+  onEscape?: () => void
   page: ExplorerReadyPage
+}
+
+/** The closest element that scrolls vertically, starting at `element` */
+function scrollParent(element: HTMLElement): HTMLElement | undefined {
+  let current: HTMLElement | null = element
+  while (current) {
+    const {overflowY} = getComputedStyle(current)
+    if (
+      (overflowY === 'auto' || overflowY === 'scroll') &&
+      current.scrollHeight > current.clientHeight
+    )
+      return current
+    current = current.parentElement
+  }
+  return undefined
+}
+
+function findResult(results: HTMLElement | null, key: string) {
+  return results?.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`)
 }
 
 interface ExplorerHeaderMainProps {
@@ -123,6 +159,7 @@ export function ExplorerSearch({
   autoFocus,
   explorer,
   onEntryAction,
+  onEscape,
   page
 }: ExplorerSearchProps) {
   const items = page.items
@@ -132,6 +169,16 @@ export function ExplorerSearch({
   const performAction = useSetAtom(explorer.onAction)
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
+  const inputId = useId()
+
+  // Focus natively rather than through react-aria's autoFocus: it defers
+  // focus until transitions end for screen reader users, by which time an
+  // opening dialog has moved focus to itself
+  useEffect(() => {
+    // Focusing on mount is not an event handler
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
+    if (autoFocus) document.getElementById(inputId)?.focus()
+  }, [autoFocus, inputId])
 
   function selectEntry(entry: DashboardEntry | undefined) {
     if (!entry) return
@@ -149,6 +196,8 @@ export function ExplorerSearch({
   // after the result set changes.
   // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-disable react-you-might-not-need-an-effect/no-event-handler
+  // A new query starts at its best match.
+  const selectedForSearch = useRef(page.search)
   useEffect(() => {
     if (!explorer.autoSelectFirstItem || !explorer.hasSelection) return
     if (items.length === 0) {
@@ -156,17 +205,75 @@ export function ExplorerSearch({
         setSelection(new Set<Key>())
       return
     }
-    if (!selectedEntry) setSelection(new Set<Key>([items[0].id]))
+    const searchChanged = selectedForSearch.current !== page.search
+    selectedForSearch.current = page.search
+    if (!selectedEntry || searchChanged)
+      setSelection(new Set<Key>([items[0].id]))
   }, [
     explorer.autoSelectFirstItem,
     explorer.hasSelection,
     items,
+    page.search,
     selectedEntry,
     selection,
     setSelection
   ])
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
+
+  // In search mode the field is a combobox: focus stays in the field while
+  // the arrow keys move the active result, announced by its element id
+  const isCombobox = explorer.mode === 'search' && explorer.hasSelection
+  const showsResults = isCombobox && Boolean(page.search.trim())
+  const [combobox, setCombobox] = useState<{
+    controls?: string
+    active?: string
+  }>({})
+  const revealActive = useRef(false)
+  // Result rows are virtualized, their elements exist only after rendering
+  useLayoutEffect(() => {
+    if (!isCombobox) return
+    const results = document
+      .getElementById(explorer.resultsId)
+      ?.querySelector<HTMLElement>('[role="treegrid"], [role="grid"]')
+    const key = showsResults ? selectedEntry?.id : undefined
+    const controls = showsResults ? results?.id || undefined : undefined
+    function update(row: HTMLElement | null | undefined) {
+      const active = row?.id || undefined
+      setCombobox(current =>
+        current.controls === controls && current.active === active
+          ? current
+          : {controls, active}
+      )
+    }
+    if (!key || !results) return update(undefined)
+    const reveal = revealActive.current
+    revealActive.current = false
+    const row = findResult(results, key)
+    if (row) {
+      if (reveal) row.scrollIntoView({block: 'nearest'})
+      return update(row)
+    }
+    update(undefined)
+    if (reveal) {
+      // Scroll to the estimated position so the row gets rendered
+      const scroller = scrollParent(results)
+      const index = items.findIndex(item => item.id === key)
+      if (scroller && index > -1)
+        scroller.scrollTop =
+          (index / items.length) * scroller.scrollHeight -
+          scroller.clientHeight / 2
+    }
+    const observer = new MutationObserver(() => {
+      const rendered = findResult(results, key)
+      if (!rendered) return
+      observer.disconnect()
+      if (reveal) rendered.scrollIntoView({block: 'nearest'})
+      update(rendered)
+    })
+    observer.observe(results, {childList: true, subtree: true})
+    return () => observer.disconnect()
+  }, [explorer.resultsId, isCombobox, items, page, selectedEntry, showsResults])
 
   function onSearchChange(value: string) {
     setInputValue(value)
@@ -189,11 +296,15 @@ export function ExplorerSearch({
           ? 0
           : items.length - 1
         : Math.max(0, Math.min(items.length - 1, current + direction))
+    revealActive.current = true
     selectEntry(items[next])
   }
 
   function onSearchKeyDown(event: KeyboardEvent) {
-    if (event.key === 'ArrowDown') {
+    if (event.key === 'Escape' && onEscape) {
+      event.preventDefault()
+      onEscape()
+    } else if (event.key === 'ArrowDown') {
       event.preventDefault()
       moveSelection(1)
     } else if (event.key === 'ArrowUp') {
@@ -211,15 +322,23 @@ export function ExplorerSearch({
 
   return (
     <SearchField
+      id={inputId}
       aria-label="Search"
-      autoFocus={autoFocus}
       className={styles.Explorer.search()}
-      hasIcon
-      isPending={isPending || inputValue !== page.search}
+      icon={IcRoundSearch}
+      loading={isPending || inputValue !== page.search}
       placeholder="Search..."
       value={inputValue}
-      onChange={onSearchChange}
+      onValueChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
+      {...(isCombobox && {
+        role: 'combobox' as const,
+        'aria-autocomplete': 'list' as const,
+        'aria-haspopup': 'grid' as const,
+        'aria-controls': combobox.controls,
+        'aria-expanded': showsResults,
+        'aria-activedescendant': combobox.active
+      })}
     />
   )
 }
@@ -242,9 +361,9 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
   return (
     <Switch
       className={styles.Explorer.searchScope()}
-      isDisabled={isDisabled}
-      isSelected={searchScope === 'everything'}
-      onChange={selected =>
+      disabled={isDisabled}
+      checked={searchScope === 'everything'}
+      onCheckedChange={selected =>
         startTransition(() =>
           setSearchScope(selected ? 'everything' : 'workspace')
         )
@@ -275,30 +394,36 @@ function ExplorerResultMode({
   const canBrowse =
     navigationEnabled && !explorer.pickChildren && !search.trim()
   return (
-    <ToggleButtonGroup
+    <ToggleGroup
+      type="single"
       aria-label="Explorer results"
       className={styles.Explorer.resultMode()}
-      disallowEmptySelection
-      selectedKeys={[resultMode]}
-      selectionMode="single"
-      variant="compact"
-      onSelectionChange={(keys: Set<Key>) => {
-        const next = keys.has('matches') ? 'matches' : 'browse'
-        if (!canBrowse && next === 'browse') return
+      value={resultMode}
+      variant="outline"
+      size="sm"
+      onValueChange={value => {
+        if (value !== 'browse' && value !== 'matches') return
+        if (!canBrowse && value === 'browse') return
         startTransition(() => {
-          setResultMode(next)
+          setResultMode(value)
         })
       }}
     >
-      <ToggleButton id="browse" isDisabled={!canBrowse}>
-        <IcRoundAccountTree aria-hidden data-slot="icon" />
+      <ToggleGroupItem
+        value="browse"
+        icon={IcRoundAccountTree}
+        disabled={!canBrowse}
+      >
         Browse
-      </ToggleButton>
-      <ToggleButton id="matches" isDisabled={!canShowFiltered}>
-        <IcRoundFilterList aria-hidden data-slot="icon" />
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="matches"
+        icon={IcRoundFilterList}
+        disabled={!canShowFiltered}
+      >
         Filtered
-      </ToggleButton>
-    </ToggleButtonGroup>
+      </ToggleGroupItem>
+    </ToggleGroup>
   )
 }
 
@@ -313,16 +438,16 @@ function ExplorerHeaderLoadedParentMain({
   const parent = parents.at(-1)
   return (
     <div className={styles.ExplorerHeader.main()}>
-      <EditorBackButton
+      <PageBack
         label={parent ? 'Back to parent entry' : 'Back to root'}
-        onPress={() => {
+        onClick={() => {
           setLocation(location => ({
             ...location,
             parentId: parent?.id
           }))
         }}
       />
-      <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
+      <PageTitle>{label}</PageTitle>
       {titleControls}
     </div>
   )
@@ -338,11 +463,11 @@ function ExplorerHeaderMain({
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
-        <EditorBackButton
+        <PageBack
           label={headerEntry.backLabel}
-          onPress={headerEntry.onBack}
+          onClick={() => headerEntry.onBack()}
         />
-        <h1 className={styles.ExplorerHeader.title()}>{headerEntry.title}</h1>
+        <PageTitle>{headerEntry.title}</PageTitle>
         {titleControls}
       </div>
     )
@@ -479,9 +604,9 @@ function ExplorerLoadedLocationParent({
         </span>
       ) : (
         <Button
-          appearance="plain"
+          variant="ghost"
           className={styles.Explorer.locationBreadcrumbs.parentAction()}
-          onPress={() =>
+          onClick={() =>
             setLocation(location => ({...location, parentId: entry.id}))
           }
         >
@@ -575,34 +700,39 @@ function ExplorerLocationMenu({
     <div className={styles.Explorer.locationBreadcrumbs()}>
       <div className={styles.Explorer.locationBreadcrumbs.item()}>
         {workspaces.length > 1 && !lockNavigation ? (
-          <Menu
-            appearance="plain"
-            label={selected?.workspaceLabel ?? location.workspace}
-            selectionMode="single"
-            selectedKeys={[location.workspace]}
-            onAction={key => {
-              const workspace = String(key)
-              const next =
-                locations.find(
-                  candidate =>
-                    candidate.workspace === workspace &&
-                    candidate.root === location.root
-                ) ??
-                locations.find(candidate => candidate.workspace === workspace)
-              if (!next) return
-              selectLocation(next)
-            }}
-          >
-            {workspaces.map(workspace => (
-              <MenuItem
-                id={workspace.key}
-                key={workspace.key}
-                textValue={workspace.label}
+          <DropdownMenu>
+            <DropdownMenuTrigger variant="ghost">
+              {selected?.workspaceLabel ?? location.workspace}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuRadioGroup
+                value={location.workspace}
+                onValueChange={workspace => {
+                  const next =
+                    locations.find(
+                      candidate =>
+                        candidate.workspace === workspace &&
+                        candidate.root === location.root
+                    ) ??
+                    locations.find(
+                      candidate => candidate.workspace === workspace
+                    )
+                  if (!next) return
+                  selectLocation(next)
+                }}
               >
-                {workspace.label}
-              </MenuItem>
-            ))}
-          </Menu>
+                {workspaces.map(workspace => (
+                  <DropdownMenuRadioItem
+                    key={workspace.key}
+                    value={workspace.key}
+                    textValue={workspace.label}
+                  >
+                    {workspace.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <span className={styles.Explorer.locationBreadcrumbs.value()}>
             {selected?.workspaceLabel}
@@ -618,27 +748,32 @@ function ExplorerLocationMenu({
       <div className={styles.Explorer.locationBreadcrumbs.root()}>
         <div className={styles.Explorer.locationBreadcrumbs.item()}>
           {roots.length > 1 && !lockNavigation ? (
-            <Menu
-              appearance="plain"
-              label={selected?.rootLabel ?? location.root ?? 'Select root'}
-              selectionMode="single"
-              selectedKeys={location.root ? [location.root] : []}
-              onAction={key => {
-                const root = String(key)
-                const next = roots.find(candidate => candidate.root === root)
-                if (next) selectLocation(next)
-              }}
-            >
-              {roots.map(root => (
-                <MenuItem
-                  id={root.root}
-                  key={root.root}
-                  textValue={root.rootLabel}
+            <DropdownMenu>
+              <DropdownMenuTrigger variant="ghost">
+                {selected?.rootLabel ?? location.root ?? 'Select root'}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuRadioGroup
+                  value={location.root ?? null}
+                  onValueChange={root => {
+                    const next = roots.find(
+                      candidate => candidate.root === root
+                    )
+                    if (next) selectLocation(next)
+                  }}
                 >
-                  {root.rootLabel}
-                </MenuItem>
-              ))}
-            </Menu>
+                  {roots.map(root => (
+                    <DropdownMenuRadioItem
+                      key={root.root}
+                      value={root.root}
+                      textValue={root.rootLabel}
+                    >
+                      {root.rootLabel}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <span className={styles.Explorer.locationBreadcrumbs.value()}>
               {selected?.rootLabel ?? location.root ?? 'Select root'}
@@ -655,6 +790,7 @@ function ExplorerLocationMenu({
               </span>
             ) : (
               <LocaleMenu
+                size="lg"
                 root={localeRoot}
                 locale={selectedLocale}
                 onLocaleChange={selectLocale}
@@ -698,66 +834,65 @@ const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},
   {type: MediaLibrary, label: 'Folder'}
 ]
-const sortingOptions: Array<{id: ExplorerSortBy; label: string}> = [
-  {id: 'index', label: 'Index'},
-  {id: 'title', label: 'Title'},
-  {id: 'id', label: 'Creation date'},
-  {id: 'size', label: 'Size'}
-]
+interface ExplorerSortOption {
+  column: string
+  label: string
+}
 
 interface ExplorerControlsProps {
   isMedia: boolean | undefined
-  sort: ExplorerSort
+  sort: ExplorerSortState
+  sortOptions: Array<ExplorerSortOption>
   selectedFilter: ExplorerTypeFilters | undefined
-  setSort: (sortBy: ExplorerSortBy) => void
+  setSort: (sort: OverviewSort | undefined) => void
   toggleFilter: (filterBy: ExplorerTypeFilters) => void
 }
 
-function ExplorerControlsButton({
-  isMedia,
-  sort,
-  selectedFilter,
-  setSort,
-  toggleFilter
-}: ExplorerControlsProps) {
+function ExplorerControlsButton(props: ExplorerControlsProps) {
   return (
-    <DialogTrigger>
-      <Button
+    <Popover>
+      <PopoverTrigger
         aria-label="Filter and sort"
-        appearance={selectedFilter ? 'active' : 'outline'}
+        variant="outline"
+        active={Boolean(props.selectedFilter || props.sort.requested)}
         icon={IcRoundFilterList}
-        size="icon-nav"
+        size="icon-lg"
       />
-      <Popover placement="bottom left">
-        <ExplorerControlsPopover
-          isMedia={isMedia}
-          sort={sort}
-          selectedFilter={selectedFilter}
-          setSort={setSort}
-          toggleFilter={toggleFilter}
-        />
-      </Popover>
-    </DialogTrigger>
+      <PopoverContent aria-label="Filter and sort" side="bottom" align="end">
+        <ExplorerControlsPopover {...props} />
+      </PopoverContent>
+    </Popover>
   )
 }
+
 function ExplorerControlsPopover({
   isMedia,
   sort,
+  sortOptions,
   selectedFilter,
   setSort,
   toggleFilter
 }: ExplorerControlsProps) {
+  const current = sort.column
   return (
     <>
       {isMedia && (
         <>
-          <p className={styles.Popover.Label()}>Filter by</p>
+          <Text
+            as="p"
+            size="sm"
+            color="muted"
+            className={styles.Explorer.popoverLabel()}
+          >
+            Filter by
+          </Text>
           {filters.map(filter => (
             <Button
               key={slugify(filter.label)}
-              appearance={selectedFilter === filter.type ? 'active' : 'plain'}
-              onPress={() => toggleFilter(filter.type)}
-              className={styles.Sorting.button()}
+              variant="ghost"
+              active={selectedFilter === filter.type}
+              onClick={() => toggleFilter(filter.type)}
+              className={styles.Explorer.popoverOption()}
             >
               {filter.label}
               {selectedFilter === filter.type && <IcRoundClose />}
@@ -765,33 +900,119 @@ function ExplorerControlsPopover({
           ))}
         </>
       )}
-      <p className={styles.Popover.Label()}>Sort by</p>
-      {sortingOptions.map(option =>
-        !isMedia && option.id === 'size' ? null : (
+      <Text
+        as="p"
+        size="sm"
+        color="muted"
+        className={styles.Explorer.popoverLabel()}
+      >
+        Sort by
+      </Text>
+      <Button
+        variant="ghost"
+        active={!sort.requested}
+        onClick={() => setSort(undefined)}
+        className={styles.Explorer.popoverOption()}
+      >
+        Default order
+      </Button>
+      {sortOptions.map(option => {
+        const active = sort.requested?.column === option.column
+        return (
           <Button
-            key={option.id}
-            appearance={sort.sortBy === option.id ? 'solid' : 'plain'}
-            onPress={() => setSort(option.id)}
-            className={styles.Sorting.button()}
+            key={option.column}
+            variant="ghost"
+            active={active}
+            onClick={() =>
+              setSort({
+                column: option.column,
+                direction:
+                  active && current?.direction === 'asc' ? 'desc' : 'asc'
+              })
+            }
+            className={styles.Explorer.popoverOption()}
           >
             {option.label}
-            {sort.sortBy === option.id &&
-              (sort.direction === 'asc' ? (
+            {active &&
+              (current?.direction === 'asc' ? (
                 <IcRoundArrowUpward />
               ) : (
                 <IcRoundArrowDownward />
               ))}
           </Button>
         )
-      )}
+      })}
     </>
   )
 }
 
+interface ExplorerSortedByProps {
+  explorer: DashboardExplorer
+  page: ExplorerReadyPage
+}
+
+/** Tells the editor the list is sorted by a column rather than its order */
+function ExplorerSortedBy({explorer, page}: ExplorerSortedByProps) {
+  const sort = useSetAtom(explorer.sort)
+  const [, startTransition] = useTransition()
+  if (!page.sort.requested || !page.sort.label) return null
+  return (
+    <div className={styles.Explorer.sortedBy()} data-slot="explorer-sorted-by">
+      <Text
+        size="sm"
+        color="muted"
+        className={styles.Explorer.sortedBy.label()}
+      >
+        Sorted by {page.sort.label}
+      </Text>
+      <span aria-hidden="true" className={styles.Explorer.sortedBy.separator()}>
+        ·
+      </span>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={styles.Explorer.sortedBy.reset()}
+        onClick={() => startTransition(() => sort(undefined))}
+      >
+        Reset
+      </Button>
+    </div>
+  )
+}
+
+interface ExplorerActionsProps {
+  page: ExplorerReadyPage
+}
+
+/** The actions configured with `overview.actions` */
+function ExplorerActions({page}: ExplorerActionsProps) {
+  const views = useAtomValueRaw(viewsAtom)
+  const {location, overview} = page
+  if (overview.actions.length === 0 || !location.root) return null
+  const props: OverviewActionProps = {
+    workspace: location.workspace,
+    root: location.root,
+    parentId: location.parentId ?? null,
+    locale: page.locale,
+    search: page.search,
+    sort: page.sort.requested,
+    query: page.query
+  }
+  return (
+    <div className={styles.Explorer.actions()} data-slot="explorer-actions">
+      {overview.actions.map((view, index) => {
+        const Action = resolveView<OverviewActionProps>(views, view)
+        return Action ? <Action key={index} {...props} /> : null
+      })}
+    </div>
+  )
+}
+
 function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
-  const [, setView] = useAtom(explorer.view)
-  const [sort, setSort] = useAtom(explorer.sort)
+  const setView = useSetAtom(explorer.view)
+  const setSort = useSetAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
+  const [, startTransition] = useTransition()
   const requestedLocation = useAtomValueRaw(explorer.location)
   const selectedLocale = useAtomValueRaw(explorer.selectedLocale)
   const locationIsPending = explorerPageIsPending(
@@ -804,31 +1025,35 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const uploadCount = uploads.length
   const uploadLabel =
     uploadCount === 1 ? '1 file uploading' : `${uploadCount} files uploading`
+  const sortOptions: Array<ExplorerSortOption> = [
+    {column: titleColumn.key, label: titleColumn.header},
+    ...page.overview.columns
+      .filter(column => column.sortBy)
+      .map(column => ({column: column.key, label: column.header}))
+  ]
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
       {page.isMedia && uploadCount > 0 && (
-        <ActivityStatus ariaLabel={uploadLabel} placement="bottom">
+        <ActivityStatus ariaLabel={uploadLabel} side="bottom">
           {uploadCount}
         </ActivityStatus>
       )}
+      <ExplorerSortedBy explorer={explorer} page={page} />
+      <ExplorerActions page={page} />
       <ExplorerControlsButton
         isMedia={page.isMedia}
-        sort={sort}
+        sort={page.sort}
+        sortOptions={page.search.trim() ? [] : sortOptions}
         selectedFilter={selectedFilter}
-        setSort={setSort}
+        setSort={sort => startTransition(() => setSort(sort))}
         toggleFilter={toggleFilter}
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />
         {page.isMedia && page.canUpload && !locationIsPending && (
-          <FileTrigger
-            allowsMultiple
-            onSelect={files => {
-              if (files) upload(files)
-            }}
-          >
-            <Button icon={IcRoundUploadFile} intent="primary">
+          <FileTrigger multiple onSelect={files => upload(files)}>
+            <Button icon={IcRoundUploadFile} color="primary">
               Upload media
             </Button>
           </FileTrigger>
@@ -841,6 +1066,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
 export function ExplorerHeader({
   canBrowse = true,
   autoFocusSearch,
+  onSearchEscape,
   controls,
   explorer,
   headerEntry,
@@ -850,7 +1076,7 @@ export function ExplorerHeader({
   titleControls
 }: ExplorerHeaderProps) {
   return (
-    <RailHeader className={styles.ExplorerHeader({navigation: navigate})}>
+    <PageHeader className={styles.ExplorerHeader({navigation: navigate})}>
       <div className={styles.ExplorerHeader.content()}>
         <div className={styles.ExplorerHeader.primary()}>
           {!navigate && (
@@ -866,6 +1092,7 @@ export function ExplorerHeader({
             <ExplorerSearch
               autoFocus={autoFocusSearch}
               explorer={explorer}
+              onEscape={onSearchEscape}
               page={page}
             />
             <ExplorerSearchScope explorer={explorer} page={page} />
@@ -896,27 +1123,27 @@ export function ExplorerHeader({
           </div>
         )}
       </div>
-    </RailHeader>
+    </PageHeader>
   )
 }
 
 export function ExplorerBody({
   compactTable,
   explorer,
-  onSelectionChange,
+  onPick,
   page
 }: ExplorerBodyProps) {
   return (
-    <RailBody>
+    <PageContent>
       <div className={styles.Explorer.viewport()}>
         <ExplorerList
           compactTable={compactTable}
           explorer={explorer}
-          onSelectionChange={onSelectionChange}
+          onPick={onPick}
           page={page}
         />
       </div>
-    </RailBody>
+    </PageContent>
   )
 }
 
@@ -928,7 +1155,7 @@ export function Explorer({
   readOnly,
   titleControls
 }: ExplorerProps) {
-  const resolvedPage = useAtomValueRaw(explorer.page)
+  const resolvedPage = useAtomValueRawSync(explorer.page)
   const page = resolvedPage ?? loadedPage
   return (
     <>

@@ -1,0 +1,9 @@
+.root {
+  position: relative;
+}
+
+.item {
+  &:hover {
+    text-decoration: underline;
+  }
+}

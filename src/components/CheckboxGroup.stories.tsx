@@ -1,47 +1,60 @@
+import {useState} from 'react'
 import {Checkbox} from './Checkbox.js'
 import {CheckboxGroup} from './CheckboxGroup.js'
 
-export const Example = (args: any) => (
-  <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-    <CheckboxGroup label="Favorite sport">
-      <Checkbox value="soccer">Soccer</Checkbox>
-      <Checkbox value="baseball">Baseball</Checkbox>
-      <Checkbox value="basketball">Basketball</Checkbox>
-    </CheckboxGroup>
-    <CheckboxGroup
-      label="Favorite codeurs member"
-      description="Who is your favorite codeurs member?"
-    >
-      <Checkbox value="ben">Ben</Checkbox>
-      <Checkbox value="stijn">Stijn</Checkbox>
-      <Checkbox value="brecht">Brecht</Checkbox>
-      <Checkbox value="dimi">Dimi</Checkbox>
-      <Checkbox value="david">David</Checkbox>
-    </CheckboxGroup>
-    <CheckboxGroup
-      label="favorite juice"
-      isDisabled
-      description="What is your favorite juice?"
-    >
-      <Checkbox value="apple">Apple</Checkbox>
-      <Checkbox value="orange">Orange</Checkbox>
-      <Checkbox value="grape">Grape</Checkbox>
-    </CheckboxGroup>
-    <form action="submit">
-      <CheckboxGroup
-        label="favorite tv series"
-        isRequired
-        description="What is your favorite tv series?"
-      >
-        <Checkbox value="breakingbad">Breaking Bad</Checkbox>
-        <Checkbox value="gameofthrones">Game of Thrones</Checkbox>
-        <Checkbox value="theoffice">The Office</Checkbox>
+export function Example() {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+      <CheckboxGroup label="Favorite sports" defaultValue={['soccer']}>
+        <Checkbox value="soccer">Soccer</Checkbox>
+        <Checkbox value="baseball">Baseball</Checkbox>
+        <Checkbox value="basketball">Basketball</Checkbox>
       </CheckboxGroup>
-      <button type="submit">submit</button>
-    </form>
-  </div>
-)
+      <CheckboxGroup
+        label="Horizontal"
+        description="Items laid out in a row"
+        orientation="horizontal"
+      >
+        <Checkbox value="a">Option A</Checkbox>
+        <Checkbox value="b">Option B</Checkbox>
+        <Checkbox value="c">Option C</Checkbox>
+      </CheckboxGroup>
+    </div>
+  )
+}
+
+export function Controlled() {
+  const [value, setValue] = useState<Array<string>>(['apple'])
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <CheckboxGroup label="Fruit" value={value} onValueChange={setValue}>
+        <Checkbox value="apple">Apple</Checkbox>
+        <Checkbox value="orange">Orange</Checkbox>
+        <Checkbox value="grape">Grape</Checkbox>
+      </CheckboxGroup>
+      <p data-testid="state">{value.join(',')}</p>
+    </div>
+  )
+}
+
+export function States() {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+      <CheckboxGroup label="Disabled" disabled defaultValue={['apple']}>
+        <Checkbox value="apple">Apple</Checkbox>
+        <Checkbox value="orange">Orange</Checkbox>
+      </CheckboxGroup>
+      <CheckboxGroup label="Invalid" required error="Pick at least one">
+        <Checkbox value="apple">Apple</Checkbox>
+        <Checkbox value="orange">Orange</Checkbox>
+      </CheckboxGroup>
+      <CheckboxGroup label="Shared" shared description="Shared between locales">
+        <Checkbox value="apple">Apple</Checkbox>
+      </CheckboxGroup>
+    </div>
+  )
+}
 
 export default {
-  title: 'Components / CheckboxGroup'
+  title: 'Pure components / CheckboxGroup'
 }

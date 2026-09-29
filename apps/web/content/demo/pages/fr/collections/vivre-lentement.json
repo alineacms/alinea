@@ -1,0 +1,54 @@
+{
+  "_id": "3JjYfwkDH6zRr6exXS99ijOXLx8",
+  "_type": "DemoCollection",
+  "_index": "a1",
+  "title": "Vivre lentement",
+  "intro": "Des fauteuils bas, une lumière chaude et des livres à portée de main. Tout pour la pièce où la journée se termine en douceur.",
+  "metadata": {
+    "title": "Vivre lentement",
+    "description": "Des fauteuils bas, une lumière chaude et des livres à portée de main. Tout pour la pièce où la journée se termine en douceur.",
+    "aliases": [],
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  },
+  "cover": {
+    "_id": "3JjYfyNcRnqhivu61IiqMTo4754",
+    "_type": "image",
+    "_entry": "3JjYfp4WjZzQ5kqDgIC15WfK1xR"
+  },
+  "products": [
+    {
+      "_id": "3JjYg2X1pZTMjaSC8edNEvvMXKx",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "3JjYfzPTVtmPWs2O84iAvy3gHyO"
+    },
+    {
+      "_id": "3JjYg0lSq7dW203ZOhhXnQUqfDX",
+      "_index": "a1",
+      "_type": "entry",
+      "_entry": "3JjYfyvVP2Whv4D7Geo0qLGlo0S"
+    },
+    {
+      "_id": "3JjYg0lgNqOAOfCDZCZw2sBmFLv",
+      "_index": "a2",
+      "_type": "entry",
+      "_entry": "3JjYfyz12LRO4vdvD9NV5MnQVa4"
+    },
+    {
+      "_id": "3JjYg2pMRM3G8PAJfvFoi5JVgOd",
+      "_index": "a3",
+      "_type": "entry",
+      "_entry": "3JjYfvsYj0CE2WT29KwtYkIOFxg"
+    },
+    {
+      "_id": "3JjYfyHbyelzg9K2ekAzD1S59C6",
+      "_index": "a4",
+      "_type": "entry",
+      "_entry": "3JjYfxETiSEJFpJd6V8X7wREiez"
+    }
+  ]
+}

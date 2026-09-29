@@ -1,59 +1,10 @@
 .UsersPage {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-  min-height: 0;
   background: var(--alinea-bg);
-}
-
-.UsersPageSidebar {
-  display: flex;
-  flex: 0 0 32px;
-  flex-direction: column;
-  width: 32px;
-  height: 100%;
-  padding: 12px 0;
-}
-
-.UsersPageSidebar-nav {
-  display: grid;
-  justify-items: center;
-}
-
-.UsersPageSidebar-footer {
-  display: grid;
-  justify-items: center;
-  margin-top: auto;
-}
-
-.UsersPageSidebar-item {
-  color: var(--alinea-fg-muted);
-}
-
-.UsersPageSidebar-icon {
-  flex: 0 0 auto;
-  font-size: 18px;
 }
 
 .UsersPage-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--alinea-border);
-  background: var(--alinea-bg);
+  height: 48px;
   padding: 8px 16px;
-}
-
-.UsersPage-header-title {
-  font-size: 13px;
-  font-weight: 600;
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .UsersPage-search {
@@ -80,60 +31,16 @@
 }
 
 .UsersPage-identity {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  gap: 8px;
-}
-
-.UsersPage-identity-text {
   display: grid;
   min-width: 0;
-  gap: 2px;
-}
-
-.UsersPage-identity-title {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--alinea-fg);
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.UsersPage-identity-email {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--alinea-fg-muted);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.UsersPage-rolesCell {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-width: 0;
-  gap: 10px;
 }
 
 .UsersPage-roles {
   display: flex;
   min-width: 0;
   flex: 1;
-  flex-wrap: wrap;
+  overflow: hidden;
   gap: 6px;
-}
-
-.UsersPage-noRoles {
-  flex: 1;
-  color: var(--alinea-fg-muted);
-}
-
-.UsersPage-empty {
-  color: var(--alinea-fg-muted);
 }
 
 .UsersPage-status {
@@ -145,48 +52,12 @@
   color: var(--alinea-fg-muted);
 }
 
-.UsersPage-status-text {
-  margin: 0;
-  font-size: 14px;
-}
-
 .UsersPage-form-fields {
   display: grid;
   gap: 16px;
 }
 
-.UsersPage-form-error {
-  margin: 0;
-  color: var(--alinea-danger-subtle-fg);
-  font-size: 13px;
-}
-
-.UsersPage-confirmation {
-  margin: 0;
-  color: var(--alinea-fg);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
 @media (max-width: 720px) {
-  .UsersPageSidebar {
-    flex: 0 0 48px;
-    flex-direction: row;
-    width: 100%;
-    height: 48px;
-    padding: 8px;
-  }
-
-  .UsersPageSidebar-nav,
-  .UsersPageSidebar-footer {
-    display: flex;
-  }
-
-  .UsersPageSidebar-footer {
-    margin-top: 0;
-    margin-left: auto;
-  }
-
   .UsersPage-header {
     align-items: stretch;
     flex-direction: column;

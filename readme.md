@@ -1,104 +1,178 @@
 [![npm](https://img.shields.io/npm/v/alinea.svg)](https://npmjs.org/package/alinea)
 [![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
-
-<br />
-<a href="https://vercel.com/oss">
-  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
-</a>
-<br />
+[![license](https://img.shields.io/npm/l/alinea.svg)](LICENSE)
 
 # [Alinea CMS](https://alineacms.com)
 
-Alinea is a modern content management system.
+Alinea is an open source, Git-based headless CMS for Next.js. You define your
+content model in TypeScript, editors work in a dashboard that ships with your
+app, and every entry is stored as a JSON file in your repository.
 
-- Content is stored in flat files and committed to your repository
-- Content is easily queryable through an in-memory database
-- Content is fully typed
+[Docs](https://alineacms.com/docs) ·
+[Demo](https://alineacms.com/demo) ·
+[Alinea Cloud](https://www.alinea.cloud/app) ·
+[Changelog](changelog.md)
 
-## Get started
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/alineacms/alinea/main/.github/assets/dashboard-product-dark.webp" />
+  <img alt="The Alinea dashboard editing a product entry, with a live preview of the page next to the form" src="https://raw.githubusercontent.com/alineacms/alinea/main/.github/assets/dashboard-product.webp" />
+</picture>
 
-Install Alinea in your project directory
+- **Content in git**: every entry is a JSON file in your repository. Review,
+  branch and roll back content like code.
+- **Typed, no codegen**: query types come straight from your schema.
+- **No database server for content**: content is indexed in SQLite and bundled
+  with your site, with full text search in the dashboard.
+- **Live previews**: add one component to your layout and pages preview drafts
+  as editors type, rendered by your server components.
+- **Instant publishing**: every publish is a git commit, and deployed sites
+  pick up new content without waiting for a rebuild.
+- **An accessible dashboard**: built on React Aria Components, with dark mode,
+  entry history, roles and permissions, and per-field translations.
+- **Self-host or Cloud**: run the backend on your own database, or let
+  [Alinea Cloud](https://www.alinea.cloud/app) handle sign-in and publishing.
+
+## Quick start
+
+Alinea requires Node.js 24 or higher, React 19 and the Next.js App Router.
+In a Next.js project:
 
 ```sh
 npm install alinea
-```
-
-Initialize Alinea's config file
-
-```sh
 npx alinea init
 ```
 
-Open the dashboard to have a look around
+`alinea init` creates `cms.ts` with your schema and settings, the API route
+the dashboard talks to (`app/(alinea)/api/cms/route.ts`), a first entry in
+`content/pages`, and rewrites your `dev` and `build` scripts to run through
+Alinea. Then wrap your Next.js config:
 
-```sh
-npx alinea dev
+```ts
+// next.config.ts
+import {withAlinea} from 'alinea/next'
+
+export default withAlinea({
+  // Your Next.js options
+})
 ```
 
-[Start configuring types and fields →](https://alineacms.com/docs/configuration)
+Start the dev server with `npm run dev` and open the dashboard at
+http://localhost:3000/admin.
 
-## Coding agents
+[Read the full quickstart →](https://alineacms.com/docs/quickstart)
 
-If you are working in a project that depends on `alinea`, a handbook is included in the npm distribution at `./llms-full.txt`.
+## Define your content
 
-## Configure
+Types and fields are plain TypeScript in `cms.ts`. Every document gets a
+title and a path.
 
-Configure Alinea in `cms.ts`
-
-```tsx
+```ts
+// cms.ts
 import {Config, Field} from 'alinea'
+import {createCMS} from 'alinea/next'
 
-const BlogPost = Config.document('Blog post', {
+export const BlogPost = Config.document('Blog post', {
   fields: {
-    title: Field.text('Blog entry title'),
-    body: Field.richText('Body text')
+    publishDate: Field.date('Publish date'),
+    cover: Field.image('Cover image'),
+    body: Field.richText('Body')
   }
 })
 
-const Blog = Config.document('Blog', {
+export const Blog = Config.document('Blog', {
   contains: [BlogPost]
+})
+
+export const cms = createCMS({
+  schema: {Blog, BlogPost},
+  workspaces: {
+    main: Config.workspace('My site', {
+      source: 'content',
+      mediaDir: 'public/media',
+      roots: {
+        pages: Config.root('Pages', {contains: [Blog]}),
+        media: Config.media()
+      }
+    })
+  },
+  baseUrl: {
+    development: 'http://localhost:3000',
+    production: 'https://example.com'
+  },
+  handlerUrl: '/api/cms',
+  adminPath: '/admin'
 })
 ```
 
-[Type options and fields →](https://alineacms.com/docs/configuration)
+[Schema and fields →](https://alineacms.com/docs/schema)
 
-## Query
+## Query it
 
-Retrieve content fully-typed and filter, order, limit as needed.  
-Select only the fields you need.
+Query content in server components. Results are typed from your schema, and
+`select` returns exactly the shape you ask for, including related entries.
 
 ```tsx
+// app/blog/page.tsx
+import {Blog, BlogPost, cms} from '@/cms'
 import {Query} from 'alinea'
 
-console.log(
-  await cms.get({
+export default async function BlogPage() {
+  const blog = await cms.get({
     type: Blog,
     select: {
-      title: Blog.title,
+      title: Query.title,
       posts: Query.children({
         type: BlogPost,
-        select: {
-          title: BlogPost.title
-        }
+        select: {title: Query.title, url: Query.url, date: BlogPost.publishDate},
+        orderBy: {desc: BlogPost.publishDate}
       })
     }
   })
-)
+  return (
+    <main>
+      <h1>{blog.title}</h1>
+      {blog.posts.map(post => (
+        <a key={post.url} href={post.url}>
+          {post.title}
+        </a>
+      ))}
+    </main>
+  )
+}
 ```
 
-[See the full api →](https://alineacms.com/docs/content/query)
+[Queries →](https://alineacms.com/docs/query) ·
+[Live previews →](https://alineacms.com/docs/live-previews) ·
+[Deploy →](https://alineacms.com/docs/deploy)
 
-Content is available during static site generation and when server side querying.  
-Content is bundled with your code and can be queried with zero network overhead.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/alineacms/alinea/main/.github/assets/dashboard-overview-dark.webp" />
+  <img alt="The Alinea dashboard listing products in a sortable table with image, price, material and stock columns" src="https://raw.githubusercontent.com/alineacms/alinea/main/.github/assets/dashboard-overview.webp" />
+</picture>
 
-[How alinea bundles content →](https://alineacms.com/docs/content)
+## Coding agents
 
-## Deploy anywhere
+The npm package includes the full documentation in `llms-full.txt`, and
+`alinea dev` runs an MCP server (`http://localhost:4500/mcp`) so agents can
+read your schema and create, edit and publish entries through the same save
+path as the dashboard.
 
-Alinea supports custom backends that can be hosted as a simple Node.js process or on serverless runtimes.
+```sh
+claude mcp add --transport http alinea http://localhost:4500/mcp
+```
 
-[Setup your backend →](https://alineacms.com/docs/deploy)
+[AI agents →](https://alineacms.com/docs/ai-agents)
 
-## How to contribute to this project
+## Upgrading from 1.x
 
-Have a question or an idea? Found a bug? Read how to [contribute](contributing.md).
+See the [upgrade guide](https://alineacms.com/docs/upgrading) and the
+[changelog](changelog.md).
+
+## Contributing
+
+Have a question or an idea? Found a bug? Read how to
+[contribute](contributing.md).
+
+## License
+
+[MIT](LICENSE)

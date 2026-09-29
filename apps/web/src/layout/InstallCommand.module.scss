@@ -1,0 +1,42 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 15px 18px;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--web-mono-font);
+  font-size: 14px;
+  line-height: 1.25;
+  color: var(--web-foreground);
+  background: var(--web-command-background);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease-out;
+
+  &-command {
+    display: block;
+  }
+
+  &-prompt {
+    color: var(--web-foreground-muted);
+    user-select: none;
+  }
+
+  &-icon {
+    display: block;
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--web-foreground-muted);
+    transition: color 0.2s ease-out;
+  }
+
+  &:is(:hover, :focus-visible) &-icon {
+    color: var(--web-foreground);
+  }
+
+  &.is-copied &-icon {
+    color: var(--web-positive);
+  }
+}

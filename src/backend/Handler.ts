@@ -213,8 +213,9 @@ export function createHandler({
         if (!proxy) return redirectFile(source, 'public, max-age=60')
         // The dev server serves the public dir itself
         const deliveryBase =
-          (!context.isDev && Config.baseUrl(cms.config, 'production')) ||
-          context.handlerUrl
+          context.publicUrl ??
+          ((!context.isDev && Config.baseUrl(cms.config, 'production')) ||
+            context.handlerUrl)
         return proxyMedia(
           new URL(source, deliveryBase).href,
           'public, max-age=60'

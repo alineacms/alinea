@@ -1,0 +1,36 @@
+.DemoStockOverview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.DemoStockOverview-stats {
+  padding: 14px 16px;
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-bg-muted);
+}
+
+.DemoStockOverview-value {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.DemoStockOverview-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.DemoStockOverview-finish {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.DemoStockOverview-finish-swatch {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+}

@@ -66,3 +66,33 @@ test('keeps workspace context on the users page', () => {
     workspace: 'main'
   })
 })
+
+test('opens the root marked openByDefault without a requested root', () => {
+  const config = Config.create({
+    schema: {Page: DashboardTestPage},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content/main',
+        roots: {
+          pages: Config.root('Pages', {contains: ['Page']}),
+          articles: Config.root('Articles', {
+            contains: ['Page'],
+            openByDefault: true
+          })
+        }
+      })
+    }
+  })
+  const store = createDashboardStore(config, new LocalDB(config))
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  store.set(routeAtom, {
+    browser: true,
+    route: {page: 'entry', workspace: 'main'}
+  })
+  expect(store.get(pageAtom).root).toBe('articles')
+  store.set(routeAtom, {
+    browser: true,
+    route: {page: 'entry', workspace: 'main', root: 'pages'}
+  })
+  expect(store.get(pageAtom).root).toBe('pages')
+})

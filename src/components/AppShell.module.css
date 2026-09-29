@@ -1,0 +1,33 @@
+.AppShell {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  background: var(--alinea-backdrop);
+}
+
+.AppShellContent {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--alinea-radius);
+  box-shadow:
+    lch(0 0 0 / 0.02) 0px 3px 6px -2px,
+    lch(0 0 0 / 0.04) 0px 1px 1px;
+}
+
+@media (max-width: 768px) {
+  .AppShell {
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+  }
+
+  .AppShellContent {
+    border-radius: 0;
+  }
+}

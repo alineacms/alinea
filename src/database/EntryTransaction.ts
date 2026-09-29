@@ -4,7 +4,7 @@ import {createRecord} from '#/core/EntryRecord.js'
 import type {QuerySettings} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {Permission, type Policy} from '#/core/Role.js'
+import {Permission, type Policy, type Resource} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import type {ChangesBatch} from '#/core/source/Change.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
@@ -42,6 +42,8 @@ import type {
   UploadFileMutation
 } from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
+import {EntryValidationError} from '#/core/db/EntryValidationError.js'
+import {policyFieldOptions, validateEntry} from '#/core/Validation.js'
 import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
@@ -225,6 +227,19 @@ export class EntryTransaction implements AsyncDisposable {
         `Cannot create entry with id ${id} in root ${root}, already exists in ${existingMain.root}`
       )
     }
+    // A child lives in the workspace and root of its parent
+    const parentEntry = parentId
+      ? await this.#firstEntry({id: parentId, main: true})
+      : undefined
+    if (parentId) {
+      assert(parentEntry, `Parent not found: ${parentId}`)
+      workspace ??= parentEntry.workspace
+      root ??= parentEntry.root
+      assert(
+        parentEntry.workspace === workspace && parentEntry.root === root,
+        `Cannot create entry in ${workspace}/${root}, its parent ${parentId} lives in ${parentEntry.workspace}/${parentEntry.root}`
+      )
+    }
     // A new translation lives in the same workspace and root as the entry's
     // other locales
     const sibling = existing[0]
@@ -244,7 +259,14 @@ export class EntryTransaction implements AsyncDisposable {
     )
     const rootConfig = config.workspaces[workspace][root]
     assert(rootConfig, 'Invalid root')
-    this.#policy.assert(Permission.Create, {workspace, root, type})
+    this.#policy.assert(Permission.Create, {
+      workspace,
+      root,
+      type,
+      id,
+      locale,
+      parents: parentEntry ? [...parentEntry.parents, parentEntry.id] : []
+    })
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
@@ -273,7 +295,15 @@ export class EntryTransaction implements AsyncDisposable {
     if (existingPath && existingPath !== path && status === 'published')
       await this.#rename(id, locale, path)
 
-    if (overwrite && existingMain?.type === 'MediaFile') {
+    // Only a replace, which uploads the new file in this same commit, removes
+    // the previous file. Saving other changes with a location from before a
+    // replace (eg. a stale editor) must not remove the current file.
+    const replacesFile =
+      typeof data.location === 'string' &&
+      this.#uploadedFile(
+        MediaLocation.storagePath(config, workspace, data.location)
+      )
+    if (overwrite && replacesFile && existingMain?.type === 'MediaFile') {
       const previousLocation = existingMain.data.location
       if (
         previousLocation !== data.location &&
@@ -326,9 +356,27 @@ export class EntryTransaction implements AsyncDisposable {
       if (from) {
         const typeInstance = config.schema[type]
         assert(typeInstance, `Type not found: ${type}`)
-        data = {...Type.sharedData(typeInstance, from.data), ...data}
+        // Fill in shared fields missing from data without moving its keys
+        const shared = Type.sharedData(typeInstance, from.data) ?? {}
+        const missing = entries(shared).filter(
+          ([key]) => data[key] === undefined
+        )
+        if (missing.length > 0) data = {...data, ...fromEntries(missing)}
       }
     }
+    // Seeds are placeholders an editor fills in later
+    if (status === 'published' && !fromSeed)
+      this.#assertValid(
+        id,
+        type,
+        {...data, title, path},
+        {
+          workspace,
+          root,
+          locale,
+          parents: parent ? [...parent.parents, parent.id] : []
+        }
+      )
     if (status === 'published')
       data = await this.#publishedData(
         {id, type, path, parentId, workspace, root, locale, data},
@@ -395,6 +443,7 @@ export class EntryTransaction implements AsyncDisposable {
     const filePath = entryVersionFile(childrenDir, entry.versionStatus)
     if (entry.versionStatus === 'published') {
       this.#policy.assert(Permission.Publish, entry)
+      this.#assertValid(id, entry.type, {...data, path}, entry)
       if (filePath !== entry.filePath) await this.#rename(id, locale, path)
       data = await this.#publishedData(
         {
@@ -443,6 +492,7 @@ export class EntryTransaction implements AsyncDisposable {
         locale
       }
     )
+    this.#assertValid(id, entry.type, {...entry.data, path}, entry)
     const childrenDir = paths.join(entry.parentDir, path)
     const data = await this.#publishedData(
       {
@@ -645,15 +695,31 @@ export class EntryTransaction implements AsyncDisposable {
 
   async remove({id, locale, status}: Op<RemoveMutation>): Promise<void> {
     assert(id, 'Remove mutation is missing an id')
-    const found = (await this.#versions(id, locale)).filter(
+    const versions = await this.#versions(id, locale)
+    const found = versions.filter(
       entry => status === undefined || entry.versionStatus === status
+    )
+    // Files of the versions that remain stay: discarding the draft of a media
+    // file must not remove the file its published version points to
+    const skipLocations = new Set(
+      versions
+        .filter(entry => !found.includes(entry))
+        .map(entry => entry.data.location)
     )
     for (const entry of found) {
       if (entry.versionStatus === 'published')
         assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       this.#sourceTransaction.remove(entry.filePath)
-      if (entry.versionStatus !== 'draft')
-        this.#sourceTransaction.remove(entry.childrenDir)
+      if (
+        entry.type === 'MediaFile' &&
+        !skipLocations.has(entry.data.location)
+      ) {
+        skipLocations.add(entry.data.location)
+        this.#removeMediaFile(entry)
+      }
+      // Drafts share their children with the other versions
+      if (entry.versionStatus === 'draft') continue
+      this.#sourceTransaction.remove(entry.childrenDir)
       if (entry.type === 'MediaLibrary') {
         const files = await this.#mediaFiles({
           workspace: entry.workspace,
@@ -661,7 +727,7 @@ export class EntryTransaction implements AsyncDisposable {
           filePathPrefix: `${entry.childrenDir}/`
         })
         for (const file of files) this.#removeMediaFile(file)
-      } else if (entry.type === 'MediaFile') this.#removeMediaFile(entry)
+      }
     }
     const info = found[0]
     if (info) {
@@ -680,6 +746,12 @@ export class EntryTransaction implements AsyncDisposable {
   uploadFile(mutation: Op<UploadFileMutation>): void {
     this.#policy.assert(Permission.Upload)
     this.#fileChanges.push({op: 'uploadFile', ...mutation})
+  }
+
+  #uploadedFile(location: string): boolean {
+    return this.#fileChanges.some(
+      change => change.op === 'uploadFile' && change.location === location
+    )
   }
 
   #description(): string {
@@ -866,6 +938,33 @@ export class EntryTransaction implements AsyncDisposable {
    * Carry over the previous URL as an alias, share translated fields and
    * guard URL uniqueness for an entry that is about to be published.
    */
+  /** Published versions must pass field validation, drafts may not yet */
+  #assertValid(
+    id: string,
+    typeName: string,
+    data: Record<string, unknown>,
+    resource: Pick<Resource, 'workspace' | 'root' | 'locale' | 'parents'>
+  ): void {
+    const config = this.#workingDatabase.config
+    const type = config.schema[typeName]
+    assert(type, `Type not found: ${typeName}`)
+    // Validate what an editor sees: stored values over initial values
+    const errors = validateEntry(type, Type.withInitialValue(type, data), {
+      locale: resource.locale,
+      fieldOptions: policyFieldOptions(config, this.#policy, {
+        workspace: resource.workspace,
+        root: resource.root,
+        locale: resource.locale,
+        parents: resource.parents,
+        type: typeName,
+        id
+      })
+    })
+    if (errors.length === 0) return
+    const title = typeof data.title === 'string' ? data.title : undefined
+    throw new EntryValidationError({entryId: id, title, errors})
+  }
+
   async #publishedData(
     candidate: UrlCandidate,
     previous: Entry | undefined,
@@ -937,7 +1036,13 @@ export class EntryTransaction implements AsyncDisposable {
     const translations = (await this.#versions(id)).filter(
       entry => entry.locale !== locale
     )
-    for (const translation of translations)
+    for (const translation of translations) {
+      // Leave translations alone unless a shared value actually changed
+      const changed = entries(shared).some(
+        ([key, value]) =>
+          JSON.stringify(value) !== JSON.stringify(translation.data[key])
+      )
+      if (!changed) continue
       this.#addRecord(
         translation.filePath,
         createRecord(
@@ -952,6 +1057,7 @@ export class EntryTransaction implements AsyncDisposable {
           translation.versionStatus
         )
       )
+    }
   }
 
   async #moveUrlAliasUpdates(

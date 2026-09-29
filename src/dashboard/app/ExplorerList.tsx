@@ -1,19 +1,30 @@
-import {Button, Icon} from '#/components.js'
+import {
+  Button,
+  type DragDropProps,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  Icon
+} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {
-  isFileDropItem,
-  useDragAndDrop
-} from 'react-aria-components/useDragAndDrop'
-import type {Selection} from 'react-aria-components'
+import {atom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
+import {useLayoutEffect, useRef} from 'react'
 import {
   explorerPageIsPending,
+  explorerScrollKey,
   type DashboardEntry,
   type DashboardExplorer,
   type DashboardRoot,
   type ExplorerReadyPage
 } from '../atoms/explorer.js'
+import {
+  acceptsDashboardEntryDrag,
+  dashboardEntryDropIds
+} from '../atoms/utils.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -37,64 +48,144 @@ function EmptyResults({explorer, page, root}: EmptyResultsProps) {
     page.searchScope === 'workspace' &&
     (explorer.mode === 'search' || page.resultMode === 'matches')
   return (
-    <div className={styles.ExplorerList.empty()}>
-      <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
-      <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>
-          No results found
-        </div>
-        <div className={styles.ExplorerList.empty.text()}>
+    <Empty className={styles.ExplorerList.empty()}>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon icon={icon} />
+        </EmptyMedia>
+        <EmptyTitle>No results found</EmptyTitle>
+        <EmptyDescription>
           {canSearchAll
             ? 'Try different search terms or search all workspaces.'
             : 'Try different search terms.'}
-        </div>
-        {canSearchAll && (
+        </EmptyDescription>
+      </EmptyHeader>
+      {canSearchAll && (
+        <EmptyContent>
           <Button
-            appearance="plain"
-            intent="primary"
-            size="small"
+            variant="ghost"
+            color="primary"
+            size="sm"
             className={styles.ExplorerList.empty.button()}
-            onPress={() => setSearchScope('everything')}
+            onClick={() => setSearchScope('everything')}
           >
             Try searching all workspaces
           </Button>
-        )}
-      </div>
-    </div>
+        </EmptyContent>
+      )}
+    </Empty>
   )
 }
 
 function SearchIdleState() {
   return (
-    <div className={styles.ExplorerList.empty()}>
-      <Icon icon={IcRoundSearch} className={styles.ExplorerList.empty.icon()} />
-      <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>Search</div>
-        <div className={styles.ExplorerList.empty.text()}>
-          Type to find a page.
-        </div>
-      </div>
-    </div>
+    <Empty className={styles.ExplorerList.empty()}>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon icon={IcRoundSearch} />
+        </EmptyMedia>
+        <EmptyTitle>Search</EmptyTitle>
+        <EmptyDescription>Type to find a page.</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   )
+}
+
+/** Frames to wait for virtualized results to size before giving up */
+const scrollRestoreFrames = 30
+/** Frames the restored offset has to hold before scrolling is recorded again */
+const scrollSettleFrames = 3
+
+/**
+ * Keeps the scroll offset of the results of a page and restores it when a
+ * page with the same results is shown again, eg. after returning from an
+ * entry opened from the list
+ */
+function useScrollRestoration(
+  explorer: DashboardExplorer,
+  page: ExplorerReadyPage
+) {
+  const store = useStore()
+  const container = useRef<HTMLDivElement>(null)
+  const scrollOffset = explorer.scrollOffset(explorerScrollKey(page))
+  useLayoutEffect(() => {
+    const element = container.current
+    if (!element) return
+    const scroller = element.querySelector<HTMLElement>(
+      '[role="grid"], [role="treegrid"]'
+    )
+    const target = store.get(scrollOffset)
+    let restoring = scroller !== null
+    let frame = 0
+    let frames = 0
+    let settled = 0
+    // Virtualized results size their contents after rendering and apply the
+    // offset they last knew once they did, keep scrolling until it holds
+    function restore() {
+      if (!scroller || !restoring) return
+      scroller.scrollTop = target
+      settled = Math.abs(scroller.scrollTop - target) < 1 ? settled + 1 : 0
+      if (settled >= scrollSettleFrames || ++frames > scrollRestoreFrames) {
+        restoring = false
+        return
+      }
+      frame = requestAnimationFrame(restore)
+    }
+    function stopRestoring() {
+      restoring = false
+      cancelAnimationFrame(frame)
+    }
+    // Scroll events do not bubble, listen while capturing so the results
+    // can be rendered again without losing the listener
+    function onScroll(event: Event) {
+      if (restoring) return
+      const scrolled = event.target
+      if (!(scrolled instanceof HTMLElement)) return
+      const role = scrolled.getAttribute('role')
+      if (role !== 'grid' && role !== 'treegrid') return
+      store.set(scrollOffset, scrolled.scrollTop)
+    }
+    element.addEventListener('scroll', onScroll, {capture: true, passive: true})
+    element.addEventListener('wheel', stopRestoring, {passive: true})
+    element.addEventListener('touchstart', stopRestoring, {passive: true})
+    element.addEventListener('pointerdown', stopRestoring)
+    element.addEventListener('keydown', stopRestoring)
+    restore()
+    return () => {
+      stopRestoring()
+      element.removeEventListener('scroll', onScroll, {capture: true})
+      element.removeEventListener('wheel', stopRestoring)
+      element.removeEventListener('touchstart', stopRestoring)
+      element.removeEventListener('pointerdown', stopRestoring)
+      element.removeEventListener('keydown', stopRestoring)
+    }
+  }, [scrollOffset, store])
+  return container
 }
 
 export interface ExplorerListProps {
   compactTable?: boolean
   explorer: DashboardExplorer
-  onSelectionChange?: (selection: Selection) => void
+  /**
+   * Called when a selectable entry is clicked, pickers that select a single
+   * entry confirm it right away
+   */
+  onPick?: (entry: DashboardEntry) => void
   page: ExplorerReadyPage
 }
 
 export function ExplorerList({
   compactTable,
   explorer,
-  onSelectionChange,
+  onPick,
   page
 }: ExplorerListProps) {
   const showResults = explorer.mode !== 'search' || Boolean(page.search.trim())
-  const getItems = useSetAtom(explorer.getItems)
-  const getDropOperation = useSetAtom(explorer.getDropOperation)
-  const dropOnItem = useSetAtom(explorer.onItemDrop)
+  const container = useScrollRestoration(explorer, page)
+  const getDragData = useSetAtom(explorer.getDragData)
+  const canDrop = useSetAtom(explorer.canDrop)
+  const moveInto = useSetAtom(explorer.moveInto)
+  const reorder = useSetAtom(explorer.reorder)
   const requestedLocation = useAtomValueRaw(explorer.location)
   const selectedLocale = useAtomValueRaw(explorer.selectedLocale)
   const locationIsPending = explorerPageIsPending(
@@ -103,32 +194,41 @@ export function ExplorerList({
     selectedLocale
   )
   const upload = useSetAtom(explorer.upload)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
-    acceptedDragTypes:
-      page.isMedia && page.canUpload && !locationIsPending ? 'all' : [],
-    getItems,
-    getDropOperation(target, types, allowedOperations) {
-      const operation = getDropOperation(target, types, allowedOperations)
-      if (operation !== 'cancel') return operation
-      if (
-        !page.isMedia ||
-        !page.canUpload ||
-        locationIsPending ||
-        target.type !== 'root'
+  const acceptsDrops = page.isMedia && page.canUpload && !locationIsPending
+  // Entries in their stored order can be reordered, sorting only changes
+  // the view
+  const canReorder =
+    explorer.hasRowAction &&
+    page.sort.manual &&
+    page.resultMode === 'browse' &&
+    !locationIsPending
+  const dragDrop: DragDropProps = {
+    getDragData,
+    acceptedDragTypes: acceptsDrops ? undefined : [],
+    canDrop(target, types) {
+      if (target.position === 'on') return canDrop(target, types)
+      return canReorder && acceptsDashboardEntryDrag(types)
+    },
+    onReorder: canReorder
+      ? event => reorder([...event.keys].map(String), event.target, page.locale)
+      : undefined,
+    onMove(event) {
+      return moveInto([...event.keys].map(String), event.target, page.locale)
+    },
+    onDropItems(event) {
+      return moveInto(
+        dashboardEntryDropIds(event.items),
+        event.target,
+        page.locale
       )
-        return 'cancel'
-      return allowedOperations.includes('copy') ? 'copy' : 'cancel'
     },
-    onItemDrop(event) {
-      dropOnItem(event, page.locale)
-    },
-    async onRootDrop(event) {
-      if (locationIsPending) return
-      const files = await Promise.all(
-        event.items.filter(isFileDropItem).map(item => item.getFile())
-      )
-      if (files.length > 0) await upload(files)
-    },
+    onDropFiles: acceptsDrops
+      ? async event => {
+          // Files can only be dropped on the list itself, not on an entry
+          if (event.target || locationIsPending) return
+          await upload(event.files)
+        }
+      : undefined,
     renderDragPreview(items) {
       return (
         <div className={styles.ExplorerList.drag.preview()}>
@@ -138,7 +238,7 @@ export function ExplorerList({
         </div>
       )
     }
-  })
+  }
   if (!showResults)
     return (
       <div className={styles.ExplorerList()}>
@@ -150,13 +250,18 @@ export function ExplorerList({
     'ExplorerList requires a root'
   )
   return (
-    <div className={styles.ExplorerList()}>
+    <div
+      ref={container}
+      className={styles.ExplorerList()}
+      data-reorderable={canReorder || undefined}
+    >
       {page.view === 'card' ? (
         <ExplorerCards
-          dragAndDropHooks={dragAndDropHooks}
+          dragDrop={dragDrop}
           explorer={explorer}
           items={page.items}
           locale={page.locale}
+          onPick={onPick}
           page={page}
           renderEmptyState={() => (
             <EmptyResults explorer={explorer} page={page} root={page.root} />
@@ -165,11 +270,11 @@ export function ExplorerList({
       ) : (
         <ExplorerTable
           compact={compactTable}
-          dragAndDropHooks={dragAndDropHooks}
+          dragDrop={dragDrop}
           explorer={explorer}
           items={page.items}
           locale={page.locale}
-          onSelectionChange={onSelectionChange}
+          onPick={onPick}
           page={page}
           renderEmptyState={() => (
             <EmptyResults explorer={explorer} page={page} root={page.root} />

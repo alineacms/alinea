@@ -1,0 +1,51 @@
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../../../../../../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../../../../../../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2')
+    format('woff2');
+}
+
+.DemoSite {
+  --demo-bg: #f7f3ed;
+  --demo-surface: #efe8de;
+  --demo-surface-strong: #e6dccf;
+  --demo-ink: #2b2521;
+  --demo-muted: #75695e;
+  --demo-line: #e1d7ca;
+  --demo-accent: #8c5b36;
+  --demo-accent-strong: #6b4327;
+  --demo-dark: #26201c;
+  --demo-dark-ink: #f4ede4;
+  --demo-serif: 'Instrument Serif', 'Times New Roman', serif;
+  --demo-sans: 'Instrument Sans', system-ui, sans-serif;
+  --demo-gutter: clamp(20px, 5cqi, 64px);
+  --demo-max: 1320px;
+  --demo-radius: 4px;
+
+  container: demo-site / inline-size;
+  min-height: 100%;
+  background: var(--demo-bg);
+  color: var(--demo-ink);
+  font-family: var(--demo-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+  text-align: left;
+}
+
+.DemoSite-main {
+  display: flex;
+  flex-direction: column;
+}

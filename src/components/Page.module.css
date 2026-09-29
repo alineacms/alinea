@@ -1,0 +1,68 @@
+.Page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  background: var(--alinea-bg-muted);
+}
+
+.PageHeader {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  overflow-y: hidden;
+  border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg);
+
+  &[data-size='lg'] {
+    min-height: 48px;
+  }
+}
+
+.PageBack {
+  flex-shrink: 0;
+}
+
+.PageTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.PageActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.PageContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.PageContent-container {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: 960px;
+  margin-inline: auto;
+}
+
+.PageFooter {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 16px;
+  border-top: 1px solid var(--alinea-border);
+}

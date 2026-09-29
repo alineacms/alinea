@@ -5,6 +5,7 @@ import {
   dashboardEntryDragItem,
   dashboardEntryDragType,
   dashboardEntryDragTypes,
+  dashboardEntryDropIds,
   dispense,
   pendingTimerAtom,
   requiredAtom,
@@ -103,6 +104,19 @@ test('creates dashboard entry drag data with a plain text fallback', () => {
     dashboardEntryDragType,
     'text/plain'
   ])
+})
+
+test('reads unique entry ids from dropped items', () => {
+  expect(
+    dashboardEntryDropIds([
+      dashboardEntryDragItem('a'),
+      {'text/plain': 'b'},
+      {[dashboardEntryDragType]: 'c', 'text/plain': 'ignored'},
+      {'application/json': '{}'},
+      {'text/plain': ''},
+      dashboardEntryDragItem('a')
+    ])
+  ).toEqual(['a', 'b', 'c'])
 })
 
 test('accepts dashboard entry and plain text drag types', () => {

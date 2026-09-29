@@ -1,0 +1,181 @@
+/* Mirrors the dashboard explorer cards, the body shows the grid item's fill */
+.ContentCard {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--alinea-fg);
+
+  &.is-skeleton {
+    pointer-events: none;
+  }
+}
+
+.ContentCard-media {
+  position: relative;
+  display: flex;
+  flex: 0 0 124px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--alinea-fg) 74%, transparent);
+
+  .ContentCard:not([data-variant='media']) & {
+    background: var(--alinea-bg-muted);
+    box-shadow: inset 0 -1px var(--alinea-border);
+  }
+
+  /* Selected cards tint their top */
+  [aria-selected='true'] .ContentCard:not([data-variant='media']) & {
+    background: color-mix(in oklab, var(--alinea-bg-muted) 72%, var(--alinea-primary));
+  }
+
+  .ContentCard[data-variant='media'] &:not(:has(.ContentCard-image)) {
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--alinea-bg) 18%, transparent),
+      color-mix(in srgb, var(--alinea-border) 24%, transparent)
+    );
+  }
+}
+
+.ContentCard-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  background-size: 1.25rem 1.25rem;
+  background-position:
+    0px 0px,
+    0.625rem 0.625rem;
+  background-image:
+    linear-gradient(
+      45deg,
+      var(--alinea-muted) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--alinea-muted) 75%,
+      var(--alinea-muted) 100%
+    ),
+    linear-gradient(
+      45deg,
+      var(--alinea-muted) 25%,
+      var(--alinea-bg) 25% 75%,
+      var(--alinea-muted) 75% 100%
+    );
+}
+
+.ContentCard-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+  font-size: 48px;
+
+  .ContentCard[data-variant='media'] & {
+    opacity: 1;
+    font-size: 56px;
+  }
+}
+
+.ContentCard-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px 11px;
+  overflow: hidden;
+
+  .ContentCard.is-breadcrumbs & {
+    gap: 2px;
+    padding: 5px 12px 6px;
+  }
+}
+
+.ContentCard-breadcrumbs {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ContentCard-breadcrumbs-separator {
+  flex: 0 0 auto;
+  font-size: 14px;
+}
+
+.ContentCard-title {
+  flex: 0 0 auto;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ContentCard-description {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.ContentCard-description-text {
+  flex-shrink: 0;
+}
+
+.ContentCard-details {
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ContentCard-skeleton {
+  width: 42%;
+  height: 10px;
+  border-radius: var(--alinea-radius-sm);
+  background: color-mix(in srgb, var(--alinea-fg-muted) 18%, transparent);
+  animation: ContentCard-pulse 1100ms ease-in-out infinite;
+
+  &.is-wide {
+    width: 72%;
+  }
+
+  &.is-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--alinea-radius);
+  }
+}
+
+@keyframes ContentCard-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}

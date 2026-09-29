@@ -1,56 +1,73 @@
 import styler from '@alinea/styler'
+import type {ReactNode} from 'react'
 import {
-  ColorSwatchPicker as AriaColorSwatchPicker,
-  ColorSwatchPickerItem as AriaColorSwatchPickerItem,
-  type ColorSwatchPickerItemProps,
-  type ColorSwatchPickerProps
+  ColorSwatchPicker as ColorSwatchPickerPrimitive,
+  ColorSwatchPickerItem as ColorSwatchPickerItemPrimitive
 } from 'react-aria-components'
 import {ColorSwatch} from './ColorSwatch.js'
 import css from './ColorSwatchPicker.module.css'
+import type {AriaProps, DataProps, StyleProps} from './types.js'
 
 const styles = styler(css)
 
+export interface ColorSwatchPickerProps
+  extends StyleProps, AriaProps, DataProps {
+  /** The selected color */
+  value?: string
+  defaultValue?: string
+  onValueChange?: (color: string) => void
+  /** Lay the swatches out in a wrapping row, or a column */
+  layout?: 'grid' | 'stack'
+  children?: ReactNode
+}
+
+/** A list of color swatches to pick one color from */
 export function ColorSwatchPicker({
-  children,
+  value,
+  defaultValue,
+  onValueChange,
+  layout = 'grid',
+  className,
   ...props
 }: ColorSwatchPickerProps) {
-  const {className, ...rest} = props
   return (
-    <AriaColorSwatchPicker
-      {...rest}
-      className={renderProps =>
-        styles.ColorSwatchPicker(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
+    <ColorSwatchPickerPrimitive
+      data-slot="color-swatch-picker"
+      {...props}
+      value={value}
+      defaultValue={defaultValue}
+      onChange={color =>
+        onValueChange?.(
+          color.toString(color.getChannelValue('alpha') < 1 ? 'hexa' : 'hex')
         )
       }
-    >
-      {children}
-    </AriaColorSwatchPicker>
+      layout={layout}
+      className={styles.ColorSwatchPicker(styler.merge({className}))}
+    />
   )
 }
 
-export function ColorSwatchPickerItem(props: ColorSwatchPickerItemProps) {
-  const {className, ...rest} = props
+export interface ColorSwatchPickerItemProps
+  extends StyleProps, AriaProps, DataProps {
+  color: string
+  disabled?: boolean
+}
+
+export function ColorSwatchPickerItem({
+  color,
+  disabled,
+  className,
+  ...props
+}: ColorSwatchPickerItemProps) {
   return (
-    <AriaColorSwatchPickerItem
-      {...rest}
-      className={renderProps =>
-        styles.ColorSwatchPickerItem(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
+    <ColorSwatchPickerItemPrimitive
+      data-slot="color-swatch-picker-item"
+      {...props}
+      color={color}
+      isDisabled={disabled}
+      className={styles.ColorSwatchPickerItem(styler.merge({className}))}
     >
-      <ColorSwatch />
-    </AriaColorSwatchPickerItem>
+      <ColorSwatch color={color} />
+    </ColorSwatchPickerItemPrimitive>
   )
 }

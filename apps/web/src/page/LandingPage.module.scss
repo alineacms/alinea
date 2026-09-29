@@ -1,0 +1,80 @@
+@use '@/style' as *;
+
+.root {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--web-section-gap);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
+  margin-inline: auto;
+  padding: 80px var(--web-gutter) 0;
+  text-align: center;
+
+  @include sm {
+    gap: 18px;
+    padding-top: 40px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 88px;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    white-space: pre-line;
+    color: var(--web-foreground);
+
+    @include sm {
+      font-size: 60px;
+      line-height: 1.04;
+    }
+
+    @include s {
+      font-size: 44px;
+    }
+  }
+
+  &-accent {
+    color: var(--web-accent);
+  }
+
+  &-text {
+    max-width: 660px;
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.5;
+    white-space: pre-line;
+    color: var(--web-foreground-faded);
+
+    @include sm {
+      font-size: 17px;
+    }
+  }
+
+  &-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-top: 8px;
+
+    @include s {
+      flex-direction: column;
+      align-items: stretch;
+      align-self: stretch;
+      gap: 10px;
+      padding-top: 6px;
+    }
+  }
+}

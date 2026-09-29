@@ -56,18 +56,6 @@
   min-width: 0;
 }
 
-.ExplorerHeader-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.2;
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .Explorer-toolbar {
   display: flex;
   gap: 12px;
@@ -93,11 +81,6 @@
   flex-shrink: 0;
 }
 
-.Explorer-breadcrumbs {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 .Explorer-searchSlot {
   display: flex;
   flex: 1;
@@ -120,33 +103,59 @@
   flex: 0 0 auto;
 }
 
-.Explorer-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .Explorer-viewport {
   min-height: 0;
   flex: 1;
   height: 100%;
 }
 
-.Popover {
+.Explorer-sortedBy {
   display: flex;
-  flex-direction: column;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
-.Popover-Label {
+.Explorer-sortedBy-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.Explorer-sortedBy-separator {
+  color: var(--alinea-fg-muted);
+}
+
+.Explorer-sortedBy-reset {
+  flex-shrink: 0;
+}
+
+.Explorer-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .Explorer-sortedBy-label,
+  .Explorer-sortedBy-separator {
+    display: none;
+  }
+}
+
+.Explorer-popoverLabel {
   padding: 4px 8px;
-  color: var(--alinea-fg-subtle);
-  font-size: 12px;
 }
 
-.Sorting-button {
+/* Options read like menu items, the active one is marked by its color */
+.Explorer-popoverOption {
   width: 100%;
   display: flex;
+  font-weight: 500;
 
   & + & {
     margin-top: 2px;
@@ -193,10 +202,6 @@
 }
 
 .Explorer-locationBreadcrumbs-root-locale {
-  --alinea-locale-height: 30px;
-  --alinea-locale-font-size: var(--alinea-font-size-base);
-  --alinea-locale-line-height: 24px;
-
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;

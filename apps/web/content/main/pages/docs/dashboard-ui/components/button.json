@@ -1,0 +1,179 @@
+{
+  "_id": "3JmL9hprwqQ2T059DrT7q9kzfSO",
+  "_type": "Doc",
+  "_index": "a5V",
+  "title": "Button",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Triggers an action. Buttons come in solid, outline, ghost and link variants, in five colors and with sizes for toolbars and icon-only buttons."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmL9fgLj37Jan06A2kxiF4XiuI",
+      "example": "Button"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Variants"
+        }
+      ],
+      "_anchor": "variants"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Solid is the default. Use outline for secondary actions, ghost inside toolbars and dense rows, and link for an action that sits in a line of text."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmL9gUihA69TA3qrrt6bt0GmfW",
+      "example": "ButtonVariants"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Colors"
+        }
+      ],
+      "_anchor": "colors"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Primary marks the main action of a screen. Destructive and warning are for actions that remove or overwrite content."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmL9cQSZRxSOsA5VB9idgpl8ji",
+      "example": "ButtonColors"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sizes"
+        }
+      ],
+      "_anchor": "sizes"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Small fits toolbars and table rows, large suits empty states. The icon sizes render a square button without a label: give it an `aria-label`."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmL9cPYEhfZP39UwGsq3a8YEbp",
+      "example": "ButtonSizes"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Icons and loading"
+        }
+      ],
+      "_anchor": "icons-and-loading"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass an icon component to show it before the label. While `loading` is set the button shows a spinner and can't be pressed again."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmL9dcvK1yGeiAUW0dziXHMvSY",
+      "example": "ButtonIcons"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmL9co2rH0X4lVqnPidHLb1v4R",
+      "component": "Button"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Built on the React Aria button: it responds to Enter and Space, shows a focus ring for keyboard users only and handles presses the same way for mouse, touch and keyboard. With `asChild` the styling moves onto its child, such as a link, which then takes care of its own semantics."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261146,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261146,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

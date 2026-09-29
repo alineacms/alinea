@@ -1,168 +1,153 @@
 .Calendar {
-  --alinea-border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: var(--alinea-font-size-base);
+}
 
+.Calendar-header {
   display: flex;
   align-items: center;
-  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
 
-  .Calendar-header {
-    width: 100%;
-    gap: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 4px;
-    padding-bottom: 8px;
+.Calendar-heading {
+  flex: 1;
+  margin: 0;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
+  text-align: center;
+}
+
+.Calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--alinea-radius-sm);
+  background: transparent;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  cursor: pointer;
+  transition: var(--alinea-transition);
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--alinea-muted);
   }
 
-  .Calendar-heading {
-    flex: 1;
-    margin: 0;
-    font-size: var(--alinea-font-size-base);
-    text-align: center;
-    font-weight: 500;
+  &:focus-visible {
+    outline-color: var(--alinea-border);
   }
 
-  .Calendar-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    background-color: transparent;
-    outline: 2px solid transparent;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.Calendar-grid {
+  border-spacing: 0 4px;
+}
+
+.Calendar-weekday {
+  color: var(--alinea-fg-muted);
+  font-weight: 400;
+}
+
+.Calendar-day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--alinea-radius);
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--alinea-transition);
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--alinea-muted);
+  }
+
+  &:focus-visible {
+    outline-color: var(--alinea-border);
+  }
+
+  &.is-today::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
+
+  &.is-today:not(.is-selected)::after {
+    background-color: var(--alinea-primary);
+  }
+
+  &.is-selected {
+    background-color: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
+  }
+
+  &.is-selected:focus-visible {
+    outline-color: var(--alinea-primary);
     outline-offset: 2px;
-    transition: var(--alinea-transition);
-    color: var(--alinea-fg-muted);
-    font-size: var(--alinea-font-size-base);
-
-    &[data-hovered],
-    &[data-focus-visible] {
-      background-color: var(--alinea-muted);
-      color: var(--alinea-fg-muted);
-    }
-
-    &[data-focus-visible] {
-      outline-color: var(--alinea-border);
-    }
-
-    &[data-disabled] {
-      cursor: not-allowed;
-      color: var(--alinea-fg-disabled);
-      opacity: 0.5;
-    }
   }
 
-  .Calendar-grid {
-    border-spacing: 0 4px;
-    font-size: var(--alinea-font-size-base);
+  &[aria-disabled='true'],
+  &.is-unavailable {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
-  .Calendar-cell {
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--alinea-border-radius);
-    outline: 2px solid transparent;
-    outline-offset: -2px;
-    font-size: var(--alinea-font-size-base);
-    text-align: center;
-    transition: var(--alinea-transition);
-
-    &[data-today] {
-      position: relative;
-
-      &:after {
-        content: '';
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background-color: var(--alinea-primary);
-        position: absolute;
-        bottom: 4px;
-      }
-    }
-
-    &[data-hovered],
-    &[data-focus-visible] {
-      background-color: var(--alinea-muted);
-    }
-
-    &[data-focus-visible] {
-      outline-color: var(--alinea-border);
-    }
-
-    &[data-selected] {
-      background-color: var(--alinea-primary);
-      color: var(--alinea-primary-fg);
-    }
-
-    &[data-selected][data-today]:after {
-      background-color: var(--alinea-primary-fg);
-    }
-
-    &[data-selected][data-focus-visible] {
-      outline-color: var(--alinea-primary);
-      outline-offset: 2px;
-    }
-
-    &[data-disabled] {
-      cursor: not-allowed;
-      color: var(--alinea-fg-disabled);
-      opacity: 0.5;
-    }
-
-    &[data-invalid] {
-      background-color: var(--alinea-danger);
-      color: var(--alinea-danger-fg);
-    }
+  &.is-unavailable {
+    text-decoration: line-through;
   }
 
-  &:has(.Calendar-cell[data-selection-start]),
-  &:has(.Calendar-cell[data-selection-end]) {
-    .Calendar-cell {
-      &[data-selected] {
-        background-color: var(--alinea-primary-overlay);
-        color: var(--alinea-primary);
-        border-radius: 0;
+  &[aria-invalid='true'] {
+    background-color: var(--alinea-danger);
+    color: var(--alinea-danger-fg);
+  }
+}
 
-        &[data-selection-start],
-        &[data-selection-end] {
-          background-color: var(--alinea-primary);
-          color: var(--alinea-primary-fg);
-        }
+/* A range fills the days between its ends and rounds the week edges */
+.Calendar[data-range] .Calendar-day.is-selected {
+  border-radius: 0;
+  background-color: var(--alinea-primary-subtle);
+  color: var(--alinea-primary-subtle-fg);
 
-        &[data-selection-start] {
-          border-start-start-radius: var(--alinea-border-radius);
-          border-end-start-radius: var(--alinea-border-radius);
-        }
+  &.is-rangeStart,
+  &.is-rangeEnd {
+    background-color: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
+  }
 
-        &[data-selection-end] {
-          border-start-end-radius: var(--alinea-border-radius);
-          border-end-end-radius: var(--alinea-border-radius);
-        }
-      }
-    }
+  &.is-rangeStart,
+  &.is-weekStart {
+    border-start-start-radius: var(--alinea-radius);
+    border-end-start-radius: var(--alinea-radius);
+  }
 
-    td:first-child {
-      .Calendar-cell {
-        border-start-start-radius: var(--alinea-border-radius);
-        border-end-start-radius: var(--alinea-border-radius);
-      }
-    }
-
-    td:last-child {
-      .Calendar-cell {
-        border-start-end-radius: var(--alinea-border-radius);
-        border-end-end-radius: var(--alinea-border-radius);
-      }
-    }
+  &.is-rangeEnd,
+  &.is-weekEnd {
+    border-start-end-radius: var(--alinea-radius);
+    border-end-end-radius: var(--alinea-radius);
   }
 }

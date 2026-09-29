@@ -1,0 +1,37 @@
+.root {
+  display: flex;
+  gap: 14px;
+  padding: var(--web-docs-box-padding);
+  border-radius: var(--web-docs-radius);
+  border: 1px solid color-mix(in srgb, var(--web-accent) 16%, transparent);
+  background: var(--web-accent-soft);
+  color: var(--web-foreground);
+  font: var(--web-docs-font-compact);
+
+  &.is-warning {
+    border-color: var(--web-outline);
+    background: var(--web-neutral-soft);
+  }
+
+  &-icon {
+    flex-shrink: 0;
+    // Centered on the first line of text (15px * 1.6)
+    margin-top: 3px;
+    font-size: 18px;
+    color: var(--web-accent);
+  }
+
+  &.is-warning &-icon {
+    color: var(--web-foreground-faded);
+  }
+
+  &-body {
+    min-width: 0;
+  }
+
+  &-text {
+    & + & {
+      margin-top: 12px;
+    }
+  }
+}

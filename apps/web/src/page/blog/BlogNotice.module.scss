@@ -1,0 +1,48 @@
+.root {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--web-accent) 18%, transparent);
+  background: var(--web-accent-soft);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--web-foreground);
+
+  &.is-warning {
+    border-color: var(--web-outline);
+    background: var(--web-neutral-soft);
+  }
+
+  &-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    color: var(--web-accent);
+  }
+
+  &.is-warning &-icon {
+    color: var(--web-foreground-faded);
+  }
+
+  &-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &-paragraph {
+    margin: 0;
+  }
+
+  &-link {
+    font-weight: 600;
+    color: var(--web-accent);
+
+    &:hover {
+      color: var(--web-accent-strong);
+    }
+  }
+}

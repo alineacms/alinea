@@ -1,0 +1,142 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  &.is-attached {
+    padding-top: 48px;
+  }
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+
+    &.is-attached {
+      padding-top: 24px;
+    }
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 48px;
+  border-radius: 28px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+
+  @include sm {
+    padding: 32px;
+    border-radius: 22px;
+  }
+
+  @include s {
+    padding: 24px 20px;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    color: var(--web-foreground);
+
+    @include sm {
+      font-size: 26px;
+    }
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: var(--web-foreground-faded);
+  }
+
+  &-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  &-footnote {
+    margin: auto 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--web-foreground-muted);
+  }
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+
+  &-row {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr) 120px;
+    align-items: center;
+    gap: 14px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--web-foreground-faded);
+
+    @include s {
+      grid-template-columns: 76px minmax(0, 1fr) auto;
+      gap: 10px;
+      font-size: 13.5px;
+    }
+
+    &.is-highlight {
+      font-weight: 700;
+      color: var(--web-foreground);
+    }
+  }
+
+  &-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-track {
+    height: 12px;
+    border-radius: 6px;
+    background: var(--web-neutral-soft);
+    overflow: hidden;
+  }
+
+  &-fill {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+    background: color-mix(
+      in srgb,
+      var(--web-foreground-muted) 40%,
+      transparent
+    );
+  }
+
+  &-row.is-highlight &-fill {
+    background: var(--web-accent);
+  }
+
+  &-value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  &-size {
+    font-weight: 400;
+    color: var(--web-foreground-muted);
+  }
+}

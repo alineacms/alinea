@@ -1,0 +1,29 @@
+.ToggleGroup {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 2px;
+
+  &[data-orientation='vertical'] {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* A segmented control: the pressed item is raised out of a muted track */
+  &[data-variant='outline'] {
+    height: 32px;
+    padding: 2px;
+    border: 1px solid transparent;
+    border-radius: var(--alinea-radius);
+    background-color: var(--alinea-muted);
+
+    &[data-size='sm'] {
+      border-radius: calc(var(--alinea-radius) - 1px);
+    }
+
+    &[data-orientation='vertical'] {
+      height: auto;
+      padding: 3px;
+    }
+  }
+}

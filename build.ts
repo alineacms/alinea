@@ -14,13 +14,13 @@ import {
   type CSSModuleExports,
   type CSSModuleReference
 } from 'lightningcss'
-import {spawn} from 'node:child_process'
 import fs from 'node:fs'
 import {builtinModules} from 'node:module'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import sade from 'sade'
 import {sync} from 'symlink-dir'
+import {runForwarded, watchParent} from './src/cli/util/RunForwarded.js'
 
 sync('.', 'node_modules/alinea')
 
@@ -141,6 +141,67 @@ const bundleTs: Plugin = {
         )}\n}\n\n`
       }
       fs.writeFileSync('./dist/bundled.d.ts', declaration)
+    })
+  }
+}
+
+// Public entry points must not expose react-aria or allotment in their types:
+// consumers do not have them installed and they stay implementation details
+// we bundle.
+const publicTypeEntries = ['components', 'cms']
+const internalTypePackages =
+  /^(react-aria-components|react-aria|react-stately|allotment|@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/)/
+
+function findInternalTypeImports(root: string): Array<string> {
+  const violations: Array<string> = []
+  const seen = new Set<string>()
+  const queue = publicTypeEntries.map(entry => ({
+    file: path.join(root, `${entry}.d.ts`),
+    chain: [entry]
+  }))
+  while (queue.length > 0) {
+    const {file, chain} = queue.shift()!
+    if (seen.has(file) || !fs.existsSync(file)) continue
+    seen.add(file)
+    const contents = fs.readFileSync(file, 'utf-8')
+    const specifiers = contents.matchAll(
+      /(?:from\s+|import\s*\(\s*)['"]([^'"]+)['"]/g
+    )
+    for (const [, specifier] of specifiers) {
+      if (internalTypePackages.test(specifier)) {
+        violations.push(`${chain.join(' > ')} imports ${specifier}`)
+        continue
+      }
+      const target = specifier.startsWith('.')
+        ? path.join(path.dirname(file), specifier)
+        : specifier.startsWith('alinea/')
+          ? path.join(root, specifier.slice('alinea/'.length))
+          : specifier.startsWith('#/')
+            ? path.join(root, specifier.slice('#/'.length))
+            : undefined
+      if (!target) continue
+      const declaration = `${target.replace(/\.js$/, '')}.d.ts`
+      queue.push({
+        file: declaration,
+        chain: [...chain, path.relative(root, declaration)]
+      })
+    }
+  }
+  return violations
+}
+
+// Only `bun run build` emits declarations (tsc) before bundling, so watch
+// builds would check whatever stale declarations are left in dist
+const publicTypes: Plugin = {
+  name: 'public-types',
+  setup(build) {
+    build.onEnd(() => {
+      const violations = findInternalTypeImports('./dist')
+      if (violations.length === 0) return
+      console.error(
+        `Public types expose bundled packages:\n  ${violations.join('\n  ')}`
+      )
+      process.exitCode = 1
     })
   }
 }
@@ -350,6 +411,10 @@ function jsEntry({
       filter: /node_modules[\\/]use-sync-external-store[\\/].*\.js$/,
       only: ['react']
     }),
+    commonjs({
+      filter: /node_modules[\\/]tree-kill[\\/].*\.js$/,
+      only: ['child_process']
+    }),
     cssModulesJsPlugin,
     internalPlugin,
     externalize,
@@ -478,20 +543,27 @@ function forwardCmd() {
   return command.join(' ')
 }
 
+let buildContext: BuildContext | undefined
+
 const runPlugin: Plugin = {
   name: 'run',
   setup(build) {
+    const cmd = forwardCmd()
+    if (!cmd) return
+    // Exit if our parent disappears before the command is started
+    const stopWatching = watchParent(() => process.exit(129))
     let isStarted = false
     build.onEnd(res => {
       if (isStarted) return
       if (res.errors.length > 0) return
-      const cmd = forwardCmd()
-      if (!cmd) return
-      spawn(cmd, {
-        stdio: 'inherit',
-        shell: true
-      })
       isStarted = true
+      stopWatching()
+      // Stop watching once the forwarded command exits
+      runForwarded(cmd, process.env, code => {
+        Promise.resolve(buildContext?.dispose()).finally(() =>
+          process.exit(code)
+        )
+      })
     })
   }
 }
@@ -564,6 +636,7 @@ async function build({
     cleanup,
     jsEntry({watch, test, report}),
     bundleTs,
+    ...(watch ? [] : [publicTypes]),
     ReporterPlugin.configure({name: 'alinea'}),
     runPlugin,
     cjsModules
@@ -581,6 +654,7 @@ async function build({
     sourcemap: Boolean(watch),
     plugins
   })
+  buildContext = context
 
   return watch
     ? context.watch()

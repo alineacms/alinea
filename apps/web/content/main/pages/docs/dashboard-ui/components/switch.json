@@ -1,0 +1,95 @@
+{
+  "_id": "3JmLPZGAnhgSVL6PDk69nLBjH54",
+  "_type": "Doc",
+  "_index": "al",
+  "title": "Switch",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Turns a setting on or off, with an immediate effect. For choices that are saved later, as part of a form, use a Checkbox."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPcc41U4lWDAh6SEJ2llRUCh",
+      "example": "Switch"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "States"
+        }
+      ],
+      "_anchor": "states"
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3JmLPexGwV7QIWP47JxzlbOqUqe",
+      "example": "SwitchStates"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3JmLPZpQvXCFXNs0F4e5c6TF5tT",
+      "component": "Switch"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Accessibility"
+        }
+      ],
+      "_anchor": "accessibility"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Announced as a switch with its on or off state. Space toggles it and clicking the label does too."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790261273,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261273,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

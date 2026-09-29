@@ -1,5 +1,6 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
+  EntryPickerMultiple,
   EntryPickerSingle,
   Example,
   FilteredEntryFieldWithoutEntryScope,
@@ -101,8 +102,8 @@ test('keeps a link selected while filtering the picker', async ({
   mount,
   page
 }) => {
-  await mount(<EntryPickerSingle />)
-  await page.getByRole('button', {name: 'Pick an entry'}).click()
+  await mount(<EntryPickerMultiple />)
+  await page.getByRole('button', {name: 'Pick entries'}).click()
   await page.getByRole('button', {name: 'Expand entry picker'}).click()
 
   const search = page.getByRole('searchbox', {name: 'Search'})
@@ -113,6 +114,55 @@ test('keeps a link selected while filtering the picker', async ({
   await search.fill('About')
   await expect(page.getByText('About', {exact: true})).toBeVisible()
   await expect(page.getByText('1 item selected')).toBeVisible()
+})
+
+test('picks a single link in the expanded picker right away', async ({
+  mount,
+  page
+}) => {
+  await mount(<EntryPickerSingle />)
+  await page.getByRole('button', {name: 'Pick an entry'}).click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  const confirmed = page.waitForEvent(
+    'console',
+    message => message.type() === 'info'
+  )
+  await picker.getByRole('row', {name: /^Home /}).click()
+  await expect(picker).toBeHidden()
+  await confirmed
+})
+
+test('picks a single image right away', async ({mount, page}) => {
+  await mount(<ImagePickerSingle />)
+  await page.getByRole('button', {name: 'Pick an image'}).click()
+
+  const picker = page.getByRole('dialog', {name: 'Pick an image'})
+  const image = picker
+    .getByRole('grid', {name: 'Explorer entries'})
+    .getByRole('row')
+    .filter({hasText: 'landscape'})
+  await image.click()
+  await expect(picker).toBeHidden()
+})
+
+test('keeps the picker open while picking multiple links', async ({
+  mount,
+  page
+}) => {
+  await mount(<EntryPickerMultiple />)
+  await page.getByRole('button', {name: 'Pick entries'}).click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  await picker.getByRole('row', {name: /^Home /}).click()
+  await expect(picker.getByText('1 item selected')).toBeVisible()
+  await expect(picker).toBeVisible()
 })
 
 test('opens a compact entry picker and selects immediately', async ({
@@ -242,7 +292,8 @@ test('allows duplicate generic links by default', async ({mount, page}) => {
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   const home = picker.getByRole('row', {name: /^Home /})
   await expect(home).not.toHaveAttribute('aria-selected', 'true')
-  await expect(home).toHaveClass(/is-linked/)
+  // Rows that are already linked are highlighted
+  await expect(home).toHaveAttribute('data-highlighted', 'true')
   await home.click()
   await picker.getByRole('row', {name: /^About /}).click()
   await expect(picker).toBeVisible()
@@ -329,4 +380,41 @@ test('truncates long link labels', async ({mount, page}) => {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
   })
+})
+
+test('reorders multiple links by dragging the handle', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  const resources = page.getByRole('list', {name: 'Resources'})
+  const first = resources.getByRole('listitem', {name: 'Link item 1'})
+  const second = resources.getByRole('listitem', {name: 'Link item 2'})
+  await expect(second).toContainText('Alinea documentation')
+  // Hover the row header to reveal the drag handle
+  await second.hover({position: {x: 40, y: 10}})
+  await second.getByRole('button', {name: 'Drag link item 2'}).dragTo(first, {
+    sourcePosition: {x: 10, y: 6},
+    targetPosition: {x: 40, y: 4}
+  })
+  await expect(
+    resources.getByRole('listitem', {name: 'Link item 1'})
+  ).toContainText('Alinea documentation')
+})
+
+test('reorders multiple links with the keyboard', async ({mount, page}) => {
+  await mount(<Example />)
+  const resources = page.getByRole('list', {name: 'Resources'})
+  const handle = resources.getByRole('button', {name: 'Drag link item 1'})
+  await handle.focus()
+  await page.keyboard.press('Enter')
+  await expect(handle).not.toBeFocused()
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Enter')
+  await expect(
+    resources.getByRole('listitem', {name: 'Link item 1'})
+  ).toContainText('Alinea documentation')
+  await expect(
+    resources.getByRole('button', {name: 'Drag link item 2'})
+  ).toBeFocused()
 })

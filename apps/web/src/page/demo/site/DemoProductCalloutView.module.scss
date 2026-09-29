@@ -1,0 +1,62 @@
+.DemoProductCalloutView {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  margin: 2em 0;
+  padding: 14px;
+  border: 1px solid var(--demo-line);
+  border-radius: 6px;
+  background: var(--demo-surface);
+
+  @container demo-site (min-width: 640px) {
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+
+.DemoProductCalloutView-media {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--demo-radius);
+}
+
+.DemoProductCalloutView-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.DemoProductCalloutView-title {
+  color: var(--demo-ink);
+  font-family: var(--demo-serif);
+  font-size: 24px;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.DemoProductCalloutView-note {
+  margin: 0;
+  color: var(--demo-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.DemoProductCalloutView-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.DemoProductCalloutView-link {
+  color: var(--demo-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

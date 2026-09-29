@@ -22,9 +22,13 @@ export async function requestContext(
   const nodeEnv = process.env.NODE_ENV
   const baseUrl = Config.baseUrl(config, nodeEnv)
   if (!baseUrl) throw new Error(`Missing baseUrl in config for ${nodeEnv}`)
+  // Next sets this for the server it starts (`next start`, standalone), which
+  // serves the files of this build, rather than the deployed baseUrl
+  const localOrigin = process.env.__NEXT_PRIVATE_ORIGIN
   return {
     isDev: false,
     handlerUrl: new URL(Config.handlerUrl(config), baseUrl),
-    apiKey
+    apiKey,
+    publicUrl: localOrigin ? new URL(localOrigin) : undefined
   }
 }

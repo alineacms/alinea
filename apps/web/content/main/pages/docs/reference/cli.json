@@ -1,0 +1,429 @@
+{
+  "_id": "m5KGP-I5smg2S8o4A-j15",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "CLI",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `alinea` command line tool generates your content cache and runs the local dashboard. Run it through your package manager, for example `npx alinea dev` or `pnpm alinea dev`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "-DXbyOqvbfbUVwbH8CNuJ",
+      "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Initialize a new Alinea project in the current directory\n  dev      Start a development dashboard\n  build    Generate types and content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea init --help\n  $ alinea dev --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The CLI requires Node.js 24 or higher (or Bun), and React 19 in the project. It loads environment variables from `.env.local`, or from `.env` when there is no `.env.local`, looking in the project directory and then its parents. Variables already set in the environment take precedence."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Commands"
+        }
+      ],
+      "_anchor": "commands"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "alinea init"
+        }
+      ],
+      "_anchor": "alinea-init"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sets up Alinea in the current directory. Run once during setup, see the "
+        },
+        {
+          "_type": "text",
+          "text": "Quickstart",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjyxpTgADosn3KPmIrbLOwtqMA",
+              "_link": "entry",
+              "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". It fails when a config file already exists."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Creates `cms.ts` (in `src/` when the project has a `src` directory) with an example schema and workspace."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Creates a first entry in `content/pages/welcome.json` and a `content/media` folder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Prefixes the `dev` and `build` scripts in `package.json` with `alinea dev --` and `alinea build --`. Scripts that already run alinea are left alone, and the formatting of `package.json` is kept."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "In a Next.js project (`next` in `dependencies`), creates the API route `app/(alinea)/api/cms/route.ts`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Detects your package manager from the lockfile (`bun.lock` or `bun.lockb`, `pnpm-lock.yaml`, `yarn.lock` or `package-lock.json`, falling back to npm) and prints the command that starts the dashboard, such as `bun alinea dev` or `npx alinea dev`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "alinea dev"
+        }
+      ],
+      "_anchor": "alinea-dev"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Starts the local dashboard, by default on http://localhost:4500, moving to the next free port when that one is taken. It watches your config and content: changes to `cms.ts` are recompiled and the dashboard reloads. It also serves the "
+        },
+        {
+          "_type": "text",
+          "text": "MCP server",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Jjyxi4Wru95997LwWNQTCgI3e0",
+              "_link": "entry",
+              "_entry": "3JjyQUq7OEXLa3wIwCkEgiRasxN"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for coding agents at `/mcp` on the same port."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "There is no login during development: you are signed in as the name and email of your git config, and edits are written straight to the JSON files in your content folder, ready to review and commit."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass another command after `--` to run it alongside the dashboard. It is started once the config is compiled and receives the environment variables `withAlinea` needs to serve the dashboard on your site's `adminPath`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "XeX5lTJqsjNbbd4OwYOzD",
+      "code": "# Start the dashboard and the Next.js development server\nalinea dev -- next dev",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "P1sIdtOUVmGJBcPNDrfmU",
+      "code": "Aliases\n  $ alinea serve\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  -p, --port      Port to listen on\n  --production    Use production backend\n  --dev           Watch alinea sources",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--config`: the config file, relative to the project directory. Without it Alinea looks for `cms.ts`, `cms.tsx`, `cms.js` or `cms.jsx` in the project directory and its `src` folder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--dir`: the project directory, defaults to the current directory."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--port`: the port of the local dashboard and MCP server, defaults to 4500."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--production`: runs the local dashboard with `NODE_ENV=production`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--dev` is only used when working on Alinea itself."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "alinea build"
+        }
+      ],
+      "_anchor": "alinea-build"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Indexes your content into the `@alinea/generated` package your site reads its content from, and writes the dashboard to your public folder: `public/admin.html` and a `public/admin/` asset folder for the default `adminPath`. Add `/public/admin*` to `.gitignore`. Pass your own build command after `--` and it runs once the content is generated; `alinea build` exits with that command's exit code, so a failing `next build` fails your CI."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjyxlNgkdw8eF7s9Tw1Xzb8LTD",
+      "code": "# Generate content, then build the Next.js site\nalinea build -- next build",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "KipDFk3xI6h94TjE3Mhc_",
+      "code": "Aliases\n  $ alinea generate\n\nOptions\n  -c, --config    Config file location\n  -d, --dir       Root directory of the project\n  --fix           Any missing or incorrect properties will be overwritten by their default",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and exits without running the command after `--`. Commit the result."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The build stops with an error when the config can't be loaded, when `handlerUrl` is missing or when `baseUrl` has no production URL, see "
+        },
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkBBnIVQf1VsD7StpIq677yFdr",
+              "_link": "entry",
+              "_entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deploying"
+        }
+      ],
+      "_anchor": "deploying"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Make sure your hosting platform runs the `build` script from `package.json`, not `next build` directly. `withAlinea` gets the `adminPath` and `handlerUrl` from the CLI; when Next.js runs without it, it logs `Alinea dashboard settings were not provided; dashboard routing is disabled` and neither the dashboard nor media URLs are served. The same goes for development: run `alinea dev -- next dev`, not `next dev` on its own. See "
+        },
+        {
+          "_type": "text",
+          "text": "Deploy",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkBBk1arF1R96K0u1UTOcmzW8B",
+              "_link": "entry",
+              "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for setting up a backend."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    },
+    "createdAt": 1790189019,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790236677,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

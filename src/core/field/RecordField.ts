@@ -1,6 +1,7 @@
 import {Field, type FieldData, type FieldOptions} from '../Field.js'
 import {Type} from '../Type.js'
 import {entries} from '../util/Objects.js'
+import {validateType} from '../Validation.js'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
@@ -33,6 +34,9 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
       searchableText(value) {
         const text = Type.searchableText(type, value)
         return text ? ` ${text}` : ''
+      },
+      nestedErrors(value, context) {
+        return validateType(type, value, context)
       },
       references(value, context) {
         return Type.references(

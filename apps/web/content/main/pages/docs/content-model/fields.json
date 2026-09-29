@@ -1,0 +1,477 @@
+{
+  "_id": "24yE2mu6Xq959jrP135Sdb4e3lG",
+  "_type": "Docs",
+  "_index": "a1",
+  "title": "Fields",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Fields make data editable. Every field is created with a `Field` function that takes a label and an options object, and is added to the `fields` of a "
+        },
+        {
+          "_type": "text",
+          "text": "Type",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2afa4s8NMzAW23BBRN7R7TZzpE2",
+              "_link": "entry",
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " under the name its value is stored as. Pick a field below for its options and the value it stores, or try them all in the playground further down. If none fits, you can write a "
+        },
+        {
+          "_type": "text",
+          "text": "custom field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "2YklnbZpfpvE0AR4C7PRVp22UEX",
+              "_link": "entry",
+              "_entry": "286iEJsjhd8R9NxN6EVg59fELyd"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "FieldCatalogBlock",
+      "_id": "3JmLMp5aqp4naxAU7bWK7eQSW20",
+      "showKind": true
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Try them"
+        }
+      ],
+      "_anchor": "try-them"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every field type in one form, edit the code to see the dashboard change."
+        }
+      ]
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "2YklqLFpIIeyPugEBoAD6iZSvtr",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Kitchen sink', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Basic fields', {\n        fields: {\n          title: Field.text('Text field'),\n          path: Field.path('Path field', {\n            help: 'Creates a slug of the value of another field'\n          }),\n          richText: Field.richText('Rich text field'),\n          select: Field.select('Select field', {\n            options: {\n              a: 'Option a',\n              b: 'Option b'\n            }\n          }),\n          number: Field.number('Number field', {\n            minValue: 0,\n            maxValue: 10\n          }),\n          check: Field.check('Check field', {description: 'Check me please'}),\n          date: Field.date('Date field', {width: 0.5}),\n          time: Field.time('Time field', {width: 0.5}),\n          code: Field.code('Code field')\n        }\n      }),\n      Field.tab('Link fields', {\n        fields: {\n          externalLink: Field.url('External link'),\n          entry: Field.entry('Internal link'),\n          linkMultiple: Field.link.multiple('Mixed links, multiple'),\n          image: Field.image('Image link'),\n          file: Field.file('File link')\n        }\n      }),\n      Field.tab('List fields', {\n        fields: {\n          list: Field.list('My list field', {\n            schema: {\n              Text: Config.type('Text', {\n                fields: {\n                  title: Field.text('Item title'),\n                  text: Field.richText('Item body text')\n                }\n              }),\n              Image: Config.type('Image', {\n                fields: {\n                  image: Field.image('Image')\n                }\n              })\n            }\n          })\n        }\n      }),\n      Field.tab('Inline fields', {\n        fields: {\n          street: Field.text('Street', {width: 0.6, inline: true}),\n          streetNr: Field.text('Number', {width: 0.2, inline: true}),\n          box: Field.text('Box', {width: 0.2, inline: true}),\n          zip: Field.text('Zipcode', {width: 0.2, inline: true}),\n          city: Field.text('City', {width: 0.4, inline: true}),\n          country: Field.text('Country', {width: 0.4, inline: true})\n        }\n      })\n    )\n  }\n})\n"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Common options"
+        }
+      ],
+      "_anchor": "initialvalue"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most fields accept these options next to their own. The field pages list the exceptions."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`help`: instructions shown below the label. Plain text or a React node."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`width`: a number between 0 and 1 to make the field take part of a row, `0.5` puts two fields side by side."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`inline`: a compact version of the field: the label is hidden and used as placeholder where the input allows it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`initialValue`: the value of the field when an entry or list row is created."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`required`: the field must have a value. Empty strings, `null`, empty lists, empty links and rich text without text count as missing."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`validate`: a function that receives the value and returns an error message to show, `false` for a generic \"Field is invalid\", or `true`/`undefined` when the value is fine."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`readOnly`: show the value but don't allow editing."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`hidden`: don't show the field in the dashboard. Its value is kept and can still be queried or set with a "
+                },
+                {
+                  "_type": "text",
+                  "text": "conditional option",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEzwlECT7RIN54SAjGZp7dzZ8",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`shared`: in a translated root, keep the same value in every locale, see below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`overview` (deprecated): `true` shows the field as a column in the list of the parent's children. It's only used when the parent's "
+                },
+                {
+                  "_type": "text",
+                  "text": "`overview`",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Jlm9WQcsyDIsN40oTymymy0Oy7",
+                      "_link": "entry",
+                      "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " defines no `columns`, for up to five fields. Define `overview.columns` on the parent instead."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2bOzOm5x9az8v36Esr3rHzjSmKT",
+      "code": "import {Field} from 'alinea'\n\nField.text('Discount code', {\n  help: 'Uppercase letters and digits only',\n  width: 0.5,\n  required: true,\n  validate(value) {\n    if (!/^[A-Z0-9]*$/.test(value)) return 'Use uppercase letters and digits'\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Required fields and validation messages are shown on the field while an editor works on the entry. An entry can't be published while a field fails these checks: the dashboard lists the invalid fields, and publishing through the API or the MCP server is rejected with the field paths and messages. Drafts can be saved with errors, and hidden or read-only fields are not checked."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Shared fields"
+        }
+      ],
+      "_anchor": "example"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a root with "
+        },
+        {
+          "_type": "text",
+          "text": "i18n",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEztdvurPKs5BLo5ypyRIIQVW",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", set `shared: true` on fields that should be the same in every language, such as a price, a date or a product image. When the entry is published, its shared values are copied to the other translations, and new translations start with them."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2arMRXdHMiPwRAv9LYGf8LF4HQW",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    // Translated per locale\n    description: Field.richText('Description'),\n    // The same in every locale\n    price: Field.number('Price', {shared: true}),\n    image: Field.image('Image', {shared: true})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`shared` only works on fields at the top level of a type, not on fields inside an object, list or rich text block. It isn't supported on path fields. To translate a single value while sharing the rest of an entry, use `Field.localiser` instead."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Conditional options"
+        }
+      ],
+      "_anchor": "conditional-options"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options can depend on the values of other fields. Wrap a field in `Config.track.options` with a function that reads values through `get` and returns the options to change. It runs again whenever a value it reads changes, and has to return synchronously."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2afaVBuZZzzvIuZ6Zk5btTJfhTq",
+      "code": "import {Config, Field} from 'alinea'\n\nconst linkType = Field.select('Link to', {\n  initialValue: 'page',\n  options: {page: 'A page', external: 'An external url'}\n})\n\nexport const CallToAction = Config.type('Call to action', {\n  fields: {\n    label: Field.text('Label'),\n    linkType,\n    page: Config.track.options(Field.entry('Page'), get => ({\n      hidden: get(linkType) !== 'page'\n    })),\n    url: Config.track.options(Field.url('Url'), get => ({\n      hidden: get(linkType) !== 'external'\n    }))\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`get` reads fields of the entry being edited, including top-level fields from inside a list row. Hidden fields keep their value, so check the controlling field when you render the entry too."
+        }
+      ]
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "2afb22WA7fkOOxeH0rRyxzaee9S",
+      "code": "import {Config, Field} from 'alinea'\n\nconst Example = Config.type('Conditional example', {\n  fields: {\n    textField: Field.text('Text field'),\n    readOnly: Field.check('Make read-only'),\n    hidden: Field.check('Hide field')\n  }\n})\n\nConfig.track.options(Example.textField, get => {\n  const textField = get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly,\n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Layout"
+        }
+      ],
+      "_anchor": "layout"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Fields appear in the order you define them. Besides `width` and "
+        },
+        {
+          "_type": "text",
+          "text": "tabs",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzxrclOJ26Kyq1SOJnHDcLpE",
+              "_link": "entry",
+              "_entry": "268hnUNLntD1TbeY1WPh34VFVcM"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", `Field.view` places a React element between fields, such as a divider or a note for editors. Spread it into `fields` like tabs:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JkEzulQJQ3a3XinDkE9DkzCzpj",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Settings = Config.type('Settings', {\n  fields: {\n    title: Field.text('Site name'),\n    ...Field.view(<hr />),\n    analyticsId: Field.text('Analytics id', {help: 'Leave empty to disable'})\n  }\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To hide or lock fields for some editors, set field permissions on a role, see "
+        },
+        {
+          "_type": "text",
+          "text": "Roles and permissions",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzyDSUWpiVdsnGfd6eV0QmtG",
+              "_link": "entry",
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790189129,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790261250,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

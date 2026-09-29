@@ -1,0 +1,39 @@
+@use '@/style' as *;
+
+.root {
+  display: flex;
+  align-items: center;
+  padding: 30px;
+  gap: 60px;
+  border-radius: 24px;
+  background-color: var(--web-background-variant);
+
+  &.is-right {
+    flex-direction: row-reverse;
+  }
+
+  @include sm {
+    flex-direction: column;
+    padding: 20px;
+    gap: 30px;
+  }
+
+  > * {
+    flex: 1 0 0;
+  }
+
+  &-illustration {
+    max-width: 480px;
+
+    @include l {
+      max-width: 100%;
+    }
+
+    img {
+      display: block;
+      height: auto;
+      max-width: 100%;
+      border-radius: 8px;
+    }
+  }
+}

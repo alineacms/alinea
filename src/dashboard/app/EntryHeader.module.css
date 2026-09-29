@@ -1,55 +1,9 @@
-.EntryHeader {
-  height: 48px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--alinea-border);
-  overflow-y: hidden;
-  background: var(--alinea-bg);
-}
-
-.EntryHeader-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  height: 100%;
-}
-
-.EntryHeader-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.EntryHeader-title {
-  font-size: 13px;
-  font-weight: 600;
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.EntryHeader-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-
-  button {
-    white-space: nowrap;
-  }
-}
-
 @media (max-width: 768px) {
   .EntryHeader {
+    gap: 4px;
     padding: 0 8px;
   }
 
-  .EntryHeader-content,
-  .EntryHeader-main,
   .EntryHeader-actions {
     gap: 4px;
   }
@@ -60,21 +14,15 @@
   }
 
   .EntryHeader.is-dirty {
-    height: auto;
+    flex-wrap: wrap;
     padding-block: 8px;
     overflow: visible;
   }
 
-  .EntryHeader.is-dirty .EntryHeader-content {
-    height: auto;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .EntryHeader.is-dirty .EntryHeader-actions {
-    width: 100%;
-    justify-content: flex-end;
     flex-wrap: wrap;
+    justify-content: flex-end;
+    width: 100%;
   }
 
   .EntryHeader.is-dirty .EntryHeader-sidebarToggle {

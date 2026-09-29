@@ -1,6 +1,8 @@
 import {cleanup, render, screen, within} from '#test/react.js'
 import type {TextDoc} from '#/core/TextDoc.js'
-import {afterEach, expect, test} from 'bun:test'
+import type {Infer} from '#/core/Infer.js'
+import {Config, Field} from '#/index.js'
+import {afterEach, expect, expectTypeOf, test} from 'bun:test'
 import type {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
 import {RichText, type RichTextProps} from './RichText.js'
 
@@ -376,4 +378,35 @@ test('RichText renders nothing for invalid docs and unknown blocks', () => {
 
   rerender(<RichText doc={[{_type: 'Unknown', _id: '1'}]} />)
   expect(container.textContent).toBe('')
+})
+
+test('RichText infers block views from the queried document type', () => {
+  const Quote = Config.type('Quote', {
+    fields: {text: Field.text('Text')}
+  })
+  const blocks = {Quote}
+  const Post = Config.document('Post', {
+    fields: {body: Field.richText('Body', {schema: blocks})}
+  })
+  type Body = Infer<typeof Post>['body']
+  const body = [
+    {_type: 'Quote', _id: 'quote-1', text: 'Quoted'}
+  ] as unknown as Body
+  function QuoteView({text}: {text: string}) {
+    return <blockquote data-testid="quote">{text}</blockquote>
+  }
+  // No explicit <RichText<typeof blocks>> needed, blocks flow from the doc
+  render(<RichText doc={body} Quote={QuoteView} />)
+  expect(screen.getByTestId('quote').textContent).toBe('Quoted')
+  function WrongView({text}: {text: number}) {
+    return <span>{text}</span>
+  }
+  // @ts-expect-error The Quote block has a string text field
+  void (<RichText doc={body} Quote={WrongView} />)
+  // Documents with different block schemas stay assignable to each other
+  const plain: TextDoc = body
+  const typed: Body = plain
+  void typed
+  // The block schema is part of the type, not only of its alias
+  expectTypeOf<Body>().not.toEqualTypeOf<TextDoc>()
 })

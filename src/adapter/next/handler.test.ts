@@ -1,3 +1,4 @@
+import {nextMocks} from '#test/NextMocks.js'
 import {Config} from '#/index.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {sign} from '#/core/util/JWT.js'
@@ -6,42 +7,9 @@ import {
   developmentKeyHeader,
   forwardedMutationHeader
 } from '#/core/Connection.js'
-import {afterEach, beforeEach, expect, mock, spyOn, test} from 'bun:test'
-import {forwardDevelopmentCredentials} from './ForwardCredentials.js'
+import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 
 const apiKey = 'preview-secret'
-let draftEnabled = false
-let enableCalls = 0
-/** The dev server's handler, while a test runs under `alinea dev`. */
-let devHandlerUrl: URL | undefined
-
-mock.module('./context.js', () => ({
-  requestContext: async (_config: unknown, request?: Request) =>
-    devHandlerUrl
-      ? {
-          isDev: true,
-          handlerUrl: devHandlerUrl,
-          apiKey,
-          applyAuth: (init: RequestInit) =>
-            forwardDevelopmentCredentials(request, apiKey, init)
-        }
-      : {
-          isDev: false,
-          handlerUrl: new URL('https://example.com/api/cms'),
-          apiKey
-        }
-}))
-
-mock.module('next/headers', () => ({
-  draftMode: async () => ({
-    get isEnabled() {
-      return draftEnabled
-    },
-    enable() {
-      enableCalls += 1
-    }
-  })
-}))
 
 const [{createCMS}, {createHandlerWithDatabase, handlerPathname}] =
   await Promise.all([import('./cms.js'), import('./handler.js')])
@@ -139,7 +107,8 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
       throw new Error('The dev server owns the database')
     }
   )
-  devHandlerUrl = new URL('/api', server.url)
+  const devHandlerUrl = new URL('/api', server.url)
+  nextMocks.devHandlerUrl = devHandlerUrl
   try {
     const mutation = {op: 'remove', entryId: 'page'}
     const response = await devHandle(
@@ -220,7 +189,7 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
       delivery: 'proxy'
     })
   } finally {
-    devHandlerUrl = undefined
+    nextMocks.devHandlerUrl = undefined
     server.stop(true)
   }
 })
@@ -252,8 +221,12 @@ test('rejects non-read requests on the public media pathname', async () => {
 })
 
 beforeEach(() => {
-  draftEnabled = false
-  enableCalls = 0
+  nextMocks.draftMode = false
+  nextMocks.enableCalls = 0
+  nextMocks.cookies = []
+  nextMocks.handlerUrl = new URL('https://example.com/api/cms')
+  nextMocks.devHandlerUrl = undefined
+  nextMocks.apiKey = apiKey
   consoleError = spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -266,24 +239,24 @@ test('rejects an invalid preview token without a draft session', async () => {
 
   expect(response.status).toBe(500)
   expect(response.headers.get('location')).toBeNull()
-  expect(enableCalls).toBe(0)
+  expect(nextMocks.enableCalls).toBe(0)
 })
 
 test('accepts an expired preview token with an existing draft session', async () => {
-  draftEnabled = true
+  nextMocks.draftMode = true
   const response = await previewRequest(await expiredToken(), '/articles/one')
 
   expect(response.status).toBe(302)
   expect(response.headers.get('location')).toBe(
     'https://example.com/articles/one'
   )
-  expect(enableCalls).toBe(1)
+  expect(nextMocks.enableCalls).toBe(1)
 })
 
 test.each([false, true])(
   'rejects cross-origin preview redirects when draft mode is %s',
   async isDraftEnabled => {
-    draftEnabled = isDraftEnabled
+    nextMocks.draftMode = isDraftEnabled
     const token = isDraftEnabled ? await expiredToken() : await validToken()
 
     for (const returnTo of [
@@ -294,7 +267,7 @@ test.each([false, true])(
       expect(response.status).toBe(500)
       expect(response.headers.get('location')).toBeNull()
     }
-    expect(enableCalls).toBe(0)
+    expect(nextMocks.enableCalls).toBe(0)
   }
 )
 

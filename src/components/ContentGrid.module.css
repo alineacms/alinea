@@ -1,0 +1,132 @@
+/* Mirrors the dashboard explorer card view */
+.ContentGrid {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+
+  /* Files dragged over the grid */
+  &:has(.ContentGrid-list.is-dropTarget)::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--alinea-bg) 74%, transparent);
+    outline: 2px dashed var(--alinea-primary);
+    outline-offset: -10px;
+  }
+
+  &[data-drop-label]:has(.ContentGrid-list.is-dropTarget)::after {
+    content: attr(data-drop-label);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 11;
+    padding: 10px 14px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    color: var(--alinea-fg);
+    background: var(--alinea-overlay);
+    border: 1px solid var(--alinea-border);
+    border-radius: var(--alinea-radius);
+    box-shadow: var(--alinea-shadow-raised);
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+.ContentGrid-list {
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  outline: none;
+}
+
+.ContentGrid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--alinea-fg-muted);
+}
+
+.ContentGridDropIndicator {
+  pointer-events: none;
+
+  &.is-active {
+    outline: 2px solid var(--alinea-ring);
+    border-radius: var(--alinea-radius);
+  }
+}
+
+.ContentGridItem {
+  position: relative;
+  display: block;
+  min-width: 0;
+  outline: none;
+
+  &.is-dragging {
+    opacity: 0.5;
+  }
+}
+
+.ContentGridItem-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+}
+
+/* Keeps the drag handle reachable for keyboards and assistive tech */
+.ContentGridItem-drag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ContentGridItem-card {
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--alinea-content-grid-item-height);
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-overlay);
+  box-shadow: var(--alinea-shadow-raised);
+  font-size: var(--alinea-font-size-base);
+  cursor: pointer;
+
+  .ContentGridItem:hover & {
+    background: var(--alinea-bg-muted);
+  }
+
+  .ContentGridItem[aria-selected='true'] & {
+    background: var(--alinea-selected);
+  }
+
+  .ContentGridItem:focus-visible & {
+    border-color: var(--alinea-ring);
+  }
+
+  .ContentGridItem.is-dropTarget & {
+    border-color: var(--alinea-ring);
+    box-shadow: 0 0 0 1px var(--alinea-ring);
+  }
+}

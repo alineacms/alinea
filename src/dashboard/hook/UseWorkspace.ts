@@ -6,7 +6,9 @@ export interface DashboardWorkspace extends WorkspaceInternal {
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions.
+ * Compatibility hook for dashboard extensions written for Alinea 1.x.
+ *
+ * @deprecated Use `useEntry` from 'alinea/cms' for the workspace name of the current entry (`entry.workspace`).
  */
 export function useWorkspace(): DashboardWorkspace {
   return useDashboardContext().workspace

@@ -1,12 +1,15 @@
 import {
   Button,
+  Dialog,
   DialogTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Icon,
-  Icon as IconComp,
-  Menu,
-  MenuItem,
-  MenuSeparator,
-  type PopoverProps
+  useDialog
 } from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {workspaceAtom, workspacesAtom} from '#/dashboard/atoms/config.js'
@@ -15,9 +18,12 @@ import type {Page} from '#/dashboard/atoms/nav.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
-import {Button as AriaButton} from 'react-aria-components'
+import {
+  searchShortcutKeys,
+  useSearchShortcut
+} from '../hook/UseSearchShortcut.js'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
@@ -26,8 +32,7 @@ import {LogoShape} from './LogoShape.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
-  DashboardModalDialog,
-  useDashboardModal
+  DashboardModalDialog
 } from './ui/DashboardModal.js'
 import css from './WorkspaceMenu.module.css'
 
@@ -51,7 +56,6 @@ interface WorkspaceSelectorMenuProps {
   includeUsersLink?: boolean
   label: ReactNode
   page: Page
-  popoverProps?: Omit<PopoverProps, 'children'>
 }
 
 function WorkspaceAvatar({
@@ -76,55 +80,53 @@ function WorkspaceSelectorMenu({
   ariaLabel,
   includeUsersLink,
   label,
-  page,
-  popoverProps
+  page
 }: WorkspaceSelectorMenuProps) {
   const setRoute = useSetAtom(routeAtom)
   const workspaces = useAtomValueRaw(workspacesAtom)
   if (workspaces.length <= 1 && !includeUsersLink) return label
+  const selected = page.type === 'users' ? 'users' : page.workspace!
+  function select(key: string) {
+    if (key === 'users') {
+      setRoute({page: 'users'})
+      return
+    }
+    setRoute({workspace: key, root: undefined})
+  }
   return (
-    <Menu
-      label={label}
-      aria-label={ariaLabel}
-      selectionMode="single"
-      selectedKeys={[page.type === 'users' ? 'users' : page.workspace!]}
-      onAction={key => {
-        if (key === 'users') {
-          setRoute({page: 'users'})
-          return
-        }
-        const workspace = String(key)
-        setRoute({workspace, root: undefined})
-      }}
-      popoverProps={popoverProps}
-    >
-      {workspaces.map(workspace => (
-        <WorkspaceItem key={workspace} workspace={workspace} />
-      ))}
-      {includeUsersLink && <MenuSeparator />}
-      {includeUsersLink && (
-        <MenuItem id="users" textValue="Manage users">
-          <Icon
-            icon={IcOutlineSettings}
-            className={styles.WorkspaceMenu.menuItemIcon()}
-          />
-          Manage users
-        </MenuItem>
-      )}
-    </Menu>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{label}</DropdownMenuTrigger>
+      <DropdownMenuContent aria-label={ariaLabel}>
+        <DropdownMenuRadioGroup value={selected} onValueChange={select}>
+          {workspaces.map(workspace => (
+            <WorkspaceItem key={workspace} workspace={workspace} />
+          ))}
+        </DropdownMenuRadioGroup>
+        {includeUsersLink && <DropdownMenuSeparator />}
+        {includeUsersLink && (
+          <DropdownMenuRadioGroup value={selected} onValueChange={select}>
+            <DropdownMenuRadioItem
+              value="users"
+              icon={IcOutlineSettings}
+              textValue="Manage users"
+            >
+              Manage users
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
 interface WorkspaceAvatarMenuProps {
   page: Page
-  root: RootAtoms
 }
 
-export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
+export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
   const workspace = useAtomValueRaw(workspaceAtom(page.workspace!))
   const workspaces = useAtomValueRaw(workspacesAtom)
   const setRoute = useSetAtom(routeAtom)
-  const setExplorerLocale = useSetAtom(root.explorer.selectedLocale)
   const avatar = (
     <WorkspaceAvatar
       color={workspace.color}
@@ -143,16 +145,15 @@ export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
     )
   }
   function showWorkspaces() {
-    setExplorerLocale(page.locale)
     setRoute({page: 'splash'})
   }
   return (
     <Button
-      size="icon-nav"
-      appearance="plain"
+      size="icon-lg"
+      variant="ghost"
       className={styles.WorkspaceMenu.avatarTrigger()}
       aria-label="Back to workspaces"
-      onPress={showWorkspaces}
+      onClick={showWorkspaces}
     >
       {avatar}
     </Button>
@@ -171,7 +172,7 @@ interface GlobalSearchProps {
 }
 
 function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const setRoute = useSetAtom(routeAtom)
   const [explorer] = useState(() =>
     createExplorerAtoms(
@@ -198,23 +199,18 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
       }
     )
   )
-  const explorerPage = useAtomValueRaw(explorer.page)
+  const explorerPage = useAtomValueRawSync(explorer.page)
   if (!explorerPage)
-    return (
-      <DashboardModalDialog
-        aria-label="Search entries"
-        variant="explorer"
-        isLoading
-      />
-    )
+    return <DashboardModalDialog variant="explorer" isLoading />
   return (
-    <DashboardModalDialog aria-label="Search entries" variant="explorer">
+    <DashboardModalDialog variant="explorer">
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
             autoFocusSearch
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            onSearchEscape={modal.close}
             page={explorerPage}
           />
           <ExplorerBody explorer={explorer} page={explorerPage} />
@@ -224,28 +220,30 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
   )
 }
 
+/** Opens the entry search from its trigger or with ⌘K / Ctrl+K */
 export function GlobalSearch({
   children,
   initialSearchScope,
   root
 }: GlobalSearchProps) {
+  const [open, setOpen] = useState(false)
+  useSearchShortcut(() => {
+    if (open) return setOpen(false)
+    // Leave other modals, eg. a link picker, in charge of the keyboard
+    if (document.querySelector('[data-slot="dialog-content"]')) return
+    setOpen(true)
+  })
   return (
-    <DialogTrigger>
-      {children}
-      <DashboardModal size="explorer">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DashboardModal size="explorer" aria-label="Search entries">
         <Suspense
-          fallback={
-            <DashboardModalDialog
-              aria-label="Search entries"
-              variant="explorer"
-              isLoading
-            />
-          }
+          fallback={<DashboardModalDialog variant="explorer" isLoading />}
         >
           <SearchPopup initialSearchScope={initialSearchScope} root={root} />
         </Suspense>
       </DashboardModal>
-    </DialogTrigger>
+    </Dialog>
   )
 }
 
@@ -263,12 +261,12 @@ export function WorkspaceMenu({
         ariaLabel="Workspace"
         includeUsersLink={canManageMembers}
         label={
-          <AriaButton className={styles.WorkspaceMenu.trigger()}>
+          <Button variant="ghost" className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>
               {workspace.label}
             </span>
             <Icon icon={IcRoundUnfoldMore} fontSize={12} />
-          </AriaButton>
+          </Button>
         }
       />
     ) : (
@@ -284,12 +282,12 @@ export function WorkspaceMenu({
       <GlobalSearch root={root}>
         <Button
           size="icon"
-          appearance="plain"
+          variant="ghost"
+          icon={IcRoundSearch}
           className={styles.WorkspaceMenu.search()}
           aria-label="Search entries"
-        >
-          <IconComp icon={IcRoundSearch} data-slot="icon" />
-        </Button>
+          aria-keyshortcuts={searchShortcutKeys}
+        />
       </GlobalSearch>
     </div>
   )
@@ -302,8 +300,8 @@ interface WorkspaceItemProps {
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
   const data = useAtomValueRaw(workspaceAtom(workspace))
   return (
-    <MenuItem key={workspace} id={workspace} textValue={data.label}>
+    <DropdownMenuRadioItem value={workspace} textValue={data.label}>
       {data.label}
-    </MenuItem>
+    </DropdownMenuRadioItem>
   )
 }

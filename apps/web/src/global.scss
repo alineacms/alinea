@@ -1,0 +1,286 @@
+@use '@/style' as *;
+
+@mixin light-theme {
+  color-scheme: light;
+  --web-foreground: #171a42;
+  --web-foreground-faded: #555a78;
+  --web-foreground-muted: #7c80a0;
+  --web-background: #f7f7fa;
+  --web-surface: #ffffff;
+  --web-outline: #e8e9f2;
+  --web-accent: #3f61e8;
+  --web-accent-strong: #2c47c0;
+  --web-accent-soft: #eef0fd;
+  --web-accent-foreground: #ffffff;
+  --web-code-background: #14173a;
+  --web-code-outline: #262a55;
+  --web-code-muted: #8d92b8;
+  --web-code-keyword: #9da3fa;
+  --web-code-string: #7fe0b8;
+  --web-positive: #007a55;
+  --web-positive-soft: #ecfdf5;
+  --web-neutral-soft: #f1f2f7;
+  --web-command-background: #eaecf7;
+
+  // Legacy tokens, kept for pages that have not been restyled yet
+  --web-accent-hsl: 230, 77%, 60%;
+  --web-accent-light: hsl(230, 77%, 65%);
+  --web-background-variant: var(--web-surface);
+  --web-selected: var(--web-accent-soft);
+  --web-selected-foreground: var(--web-accent);
+  --web-highlight: #ebecf3;
+  --web-negative-hsl: 235, 48%, 17%;
+  --web-section1-background: #f1f3fd;
+  --web-code-inline-background: #eff0f9;
+  --web-code-inline-foreground: #1e232a;
+}
+
+@mixin dark-theme {
+  color-scheme: dark;
+  --web-foreground: #ffffff;
+  --web-foreground-faded: #c9ceee;
+  --web-foreground-muted: #8f96c4;
+  --web-background: #0d1030;
+  --web-surface: #161b4a;
+  --web-outline: #262c63;
+  --web-accent: #8b9cff;
+  --web-accent-strong: #aab6ff;
+  --web-accent-soft: rgba(139, 156, 255, 0.14);
+  --web-accent-foreground: #0d1030;
+  // Darker than the page background so code stands out on it and on surfaces
+  --web-code-background: #0a0c26;
+  --web-code-outline: #2e3570;
+  --web-code-muted: #8d92b8;
+  --web-code-keyword: #9da3fa;
+  --web-code-string: #7fe0b8;
+  --web-positive: #34d399;
+  --web-positive-soft: rgba(52, 211, 153, 0.14);
+  --web-neutral-soft: rgba(255, 255, 255, 0.08);
+  --web-command-background: #1d2358;
+
+  // Legacy tokens, kept for pages that have not been restyled yet
+  --web-accent-hsl: 230, 100%, 77%;
+  --web-accent-light: #aab6ff;
+  --web-background-variant: var(--web-surface);
+  --web-selected: #232a66;
+  --web-selected-foreground: #ffffff;
+  --web-highlight: #1e2458;
+  --web-negative-hsl: 0, 0%, 100%;
+  --web-section1-background: var(--web-surface);
+  --web-code-inline-background: var(--web-outline);
+  --web-code-inline-foreground: #ffffff;
+}
+
+:root {
+  --web-title-font: 'Poppins', sans-serif;
+  --web-body-font: 'Instrument Sans', sans-serif;
+  --web-mono-font: 'JetBrains Mono', monospace;
+  --web-header-height: 100px;
+  --web-gutter: 80px;
+  --web-content-width: 1280px;
+  --web-section-gap: 128px;
+  --web-code-highlight: var(--web-accent);
+  --web-code-foreground: #fbfbfe;
+
+  // Docs type scale, every text role on docs pages uses one of these
+  --web-docs-font-title: 600 40px/1.15 var(--web-title-font);
+  --web-docs-font-h2: 500 24px/1.35 var(--web-title-font);
+  --web-docs-font-h3: 500 19px/1.45 var(--web-title-font);
+  --web-docs-font-h4: 500 16px/1.5 var(--web-title-font);
+  --web-docs-font-lead: 400 18px/1.65 var(--web-body-font);
+  --web-docs-font-body: 400 16px/1.75 var(--web-body-font);
+  // Text in boxed blocks: notices, cards, prompts
+  --web-docs-font-compact: 400 15px/1.6 var(--web-body-font);
+  // Sidebar, table of contents, breadcrumbs, captions
+  --web-docs-font-nav: 400 14px/20px var(--web-body-font);
+  // Labels, legal
+  --web-docs-font-small: 400 13px/1.5 var(--web-body-font);
+  --web-docs-font-code: 400 14px/1.7 var(--web-mono-font);
+  // Code block file names and tabs
+  --web-docs-font-code-label: 400 12.5px/20px var(--web-mono-font);
+  --web-docs-tracking-title: -0.025em;
+  --web-docs-tracking-heading: -0.015em;
+
+  // Vertical rhythm, margins collapse so the larger side wins
+  --web-docs-space-flow: 20px;
+  --web-docs-space-block: 28px;
+  --web-docs-space-list: 8px;
+  --web-docs-space-h2: 48px;
+  --web-docs-space-h3: 36px;
+  --web-docs-space-h4: 28px;
+  --web-docs-space-h2-after: 16px;
+  --web-docs-space-h3-after: 12px;
+  --web-docs-space-h4-after: 8px;
+  --web-docs-space-header: 32px;
+  --web-docs-space-footer: 64px;
+
+  // Boxed blocks: code, notices, examples, prompts, links and cards
+  --web-docs-radius: 14px;
+  --web-docs-box-padding: 16px 20px;
+  --web-docs-code-bar: 44px;
+
+  // Navigation rows in the sidebar and the table of contents
+  --web-docs-nav-row: 32px;
+
+  @include dark-theme;
+
+  @media (prefers-color-scheme: light) {
+    @include light-theme;
+  }
+
+  @include sm {
+    --web-header-height: 76px;
+    --web-gutter: 40px;
+    --web-section-gap: 72px;
+    --web-docs-font-title: 600 32px/1.2 var(--web-title-font);
+    --web-docs-font-h2: 500 22px/1.35 var(--web-title-font);
+    --web-docs-font-h3: 500 18px/1.45 var(--web-title-font);
+    --web-docs-font-lead: 400 17px/1.65 var(--web-body-font);
+    --web-docs-space-h2: 40px;
+    --web-docs-space-h3: 32px;
+    --web-docs-space-header: 28px;
+    --web-docs-space-footer: 56px;
+  }
+
+  @include s {
+    --web-gutter: 20px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  &.is-light {
+    @include light-theme;
+  }
+
+  &.is-dark {
+    @include dark-theme;
+  }
+}
+
+// Forces the dark palette, eg. on dark landing pages. Applied to the document
+// too, so the page background is dark edge to edge (also on overscroll) and
+// portals such as the search modal pick up the same tokens.
+.theme-dark,
+html:has(.theme-dark) {
+  @include dark-theme;
+}
+
+body {
+  color: var(--web-foreground);
+  background: var(--web-background);
+  font-size: 16px;
+  line-height: 1.55;
+  font-family: var(--web-body-font);
+}
+
+svg,
+img {
+  display: block;
+}
+
+a {
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+}
+
+button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 500;
+  src: url('../../../node_modules/@fontsource/poppins/files/poppins-latin-500-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('../../../node_modules/@fontsource/poppins/files/poppins-latin-600-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url('../../../node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-400-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: block;
+  font-weight: 500;
+  src: url('../../../node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('../../../node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-600-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url('../../../node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: block;
+  font-weight: 700;
+  src: url('../../../node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('../../../node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url('../../../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2')
+    format('woff2');
+}

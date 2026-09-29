@@ -1,7 +1,8 @@
 import {
-  Disclosure,
-  DisclosureHeader,
-  DisclosurePanel,
+  Badge,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   Icon,
   List,
   ListEmpty,
@@ -9,14 +10,19 @@ import {
   ListItemDescription,
   ListItemTitle,
   ListItemVisual,
-  ProgressCircle,
-  Tab,
-  TabList,
-  TabPanel,
-  Tabs
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  Spinner,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Text,
+  Timestamp
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
-import type {EntryStatus} from '#/core/Entry.js'
+import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
@@ -26,7 +32,14 @@ import {localAtom} from '#/dashboard/atoms/core.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
-import {atom, type Getter, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {
+  atom,
+  type Getter,
+  useAtom,
+  useAtomValueRaw,
+  useAtomValueRawSync,
+  useSetAtom
+} from 'jotai'
 import {type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
@@ -36,13 +49,10 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {Badge} from './Badge.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
-import {RailHeader} from './ui/Rail.js'
-import {Sidebar, SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
@@ -51,6 +61,8 @@ export interface EntrySidebarProps {
   localeData: EntryLocaleAtoms
   selectedTab: EntrySidebarTab
   previousVersionsOpen: boolean
+  /** The entry a preview component renders, loaded with the page */
+  previewEntry?: Entry
   onOpenChange?: (isOpen: boolean) => void
 }
 
@@ -74,11 +86,12 @@ export async function entrySidebar(
   const previousVersionsOpen =
     selectedTab === 'history' ? get(entry.previousVersionsOpen) : false
   if (!isOpen) return {entry, localeData, selectedTab, previousVersionsOpen}
+  let previewEntry: Entry | undefined
   switch (selectedTab) {
     case 'preview': {
       const preview = get(entry.preview)
       if (preview === true) void get(localeData.previewUrlReady)
-      else if (preview) await get(localeData.previewEntryReady)
+      else if (preview) previewEntry = await get(localeData.previewEntryReady)
       break
     }
     case 'history':
@@ -92,7 +105,7 @@ export async function entrySidebar(
       await get(entry.incomingReferencesReady)
       break
   }
-  return {entry, localeData, selectedTab, previousVersionsOpen}
+  return {entry, localeData, selectedTab, previousVersionsOpen, previewEntry}
 }
 
 function entrySidebarTabs(type: Type): Array<EntrySidebarTab> {
@@ -106,6 +119,7 @@ export function EntrySidebar({
   localeData,
   selectedTab,
   previousVersionsOpen,
+  previewEntry,
   onOpenChange
 }: EntrySidebarProps) {
   const typeName = useAtomValueRaw(entry.type)
@@ -116,37 +130,41 @@ export function EntrySidebar({
   const hasPreview = !isMediaFile && !isMediaLibrary
   const allowedTabs = entrySidebarTabs(type)
   return (
-    <Sidebar>
+    <Sidebar side="right">
       <Tabs
         className={styles.EntrySidebar.tabs()}
-        selectedKey={selectedTab}
-        onSelectionChange={key => {
-          const next = key as EntrySidebarTab
+        value={selectedTab}
+        onValueChange={value => {
+          const next = value as EntrySidebarTab
           if (allowedTabs.includes(next)) setSelectedTab(next)
         }}
       >
-        <RailHeader className={styles.EntrySidebar.header()}>
-          <TabList aria-label="Entry sidebar">
-            {hasPreview && <Tab id="preview">Preview</Tab>}
-            {!isMediaFile && <Tab id="history">History</Tab>}
-            <Tab id="references">References</Tab>
-          </TabList>
+        <SidebarHeader>
+          <TabsList aria-label="Entry sidebar">
+            {hasPreview && <TabsTrigger value="preview">Preview</TabsTrigger>}
+            {!isMediaFile && <TabsTrigger value="history">History</TabsTrigger>}
+            <TabsTrigger value="references">References</TabsTrigger>
+          </TabsList>
           {onOpenChange && (
             <EntrySidebarToggle isOpen={true} onOpenChange={onOpenChange} />
           )}
-        </RailHeader>
-        <SidebarBody className={styles.EntrySidebar.body()}>
+        </SidebarHeader>
+        <SidebarContent className={styles.EntrySidebar.body()}>
           {hasPreview && (
-            <TabPanel
-              id="preview"
+            <TabsContent
+              value="preview"
               className={styles.EntrySidebar.previewPanel()}
             >
-              <EntrySidebarPreview entry={entry} localeData={localeData} />
-            </TabPanel>
+              <EntrySidebarPreview
+                entry={entry}
+                localeData={localeData}
+                previewEntry={previewEntry}
+              />
+            </TabsContent>
           )}
           {!isMediaFile && (
-            <TabPanel
-              id="history"
+            <TabsContent
+              value="history"
               className={styles.EntrySidebar.historyPanel()}
             >
               <EntrySidebarHistory
@@ -154,15 +172,15 @@ export function EntrySidebar({
                 localeData={localeData}
                 previousVersionsOpen={previousVersionsOpen}
               />
-            </TabPanel>
+            </TabsContent>
           )}
-          <TabPanel
-            id="references"
+          <TabsContent
+            value="references"
             className={styles.EntrySidebar.referencesPanel()}
           >
             <EntryReferences entry={entry} localeData={localeData} />
-          </TabPanel>
-        </SidebarBody>
+          </TabsContent>
+        </SidebarContent>
       </Tabs>
     </Sidebar>
   )
@@ -184,7 +202,11 @@ function EntrySidebarHistory({
   return (
     <div className={styles.EntrySidebar.history()}>
       <section className={styles.EntrySidebar.section()}>
-        <h2 className={styles.EntrySidebar.sectionTitle()}>Current versions</h2>
+        <Text asChild color="muted" weight="medium">
+          <h2 className={styles.EntrySidebar.sectionTitle()}>
+            Current versions
+          </h2>
+        </Text>
         <List aria-label="Current versions">
           {statuses.map(status => (
             <EntrySidebarStatusItem
@@ -197,19 +219,21 @@ function EntrySidebarHistory({
         </List>
       </section>
       <section className={styles.EntrySidebar.section()}>
-        <Disclosure
+        <Collapsible
           key={entry.id}
           className={styles.EntrySidebar.disclosure()}
-          isExpanded={previousVersionsOpen}
-          onExpandedChange={setPreviousVersionsOpen}
+          open={previousVersionsOpen}
+          onOpenChange={setPreviousVersionsOpen}
         >
-          <DisclosureHeader>Previous versions</DisclosureHeader>
-          <DisclosurePanel className={styles.EntrySidebar.disclosurePanel()}>
-            {previousVersionsOpen && (
-              <EntrySidebarPreviousVersions localeData={localeData} />
-            )}
-          </DisclosurePanel>
-        </Disclosure>
+          <CollapsibleTrigger
+            className={styles.EntrySidebar.disclosureTrigger()}
+          >
+            Previous versions
+          </CollapsibleTrigger>
+          <CollapsibleContent className={styles.EntrySidebar.disclosurePanel()}>
+            <EntrySidebarPreviousVersions localeData={localeData} />
+          </CollapsibleContent>
+        </Collapsible>
       </section>
     </div>
   )
@@ -222,14 +246,11 @@ interface EntrySidebarPreviousVersionsProps {
 function EntrySidebarPreviousVersions({
   localeData
 }: EntrySidebarPreviousVersionsProps) {
-  const [pending, history = []] = useAtomValueRaw(localeData.historyState)
+  const [pending, history = []] = useAtomValueRawSync(localeData.historyState)
   if (pending && history.length === 0)
     return (
       <div className={styles.EntrySidebar.loading()}>
-        <ProgressCircle
-          isIndeterminate
-          aria-label="Loading previous versions"
-        />
+        <Spinner aria-label="Loading previous versions" />
       </div>
     )
   if (history.length === 0)
@@ -290,9 +311,9 @@ function EntrySidebarStatusItem({
       icon={getVersionStatusIcon(rowStatus)}
       title={formatStatus(status)}
       meta={meta}
-      onPress={() => setSelectedVersion({type: 'status', status})}
+      onClick={() => setSelectedVersion({type: 'status', status})}
     >
-      {isEditing && <Badge size="small">Editing</Badge>}
+      {isEditing && <Badge size="sm">Editing</Badge>}
     </EntrySidebarVersionRow>
   )
 }
@@ -319,9 +340,9 @@ function EntrySidebarRevisionItem({
       selected={selected}
       status={revisionKind.status}
       icon={revisionKind.icon}
-      title={formatTime(revision.createdAt)}
+      title={<Timestamp date={revision.createdAt} />}
       meta={revision.user?.name}
-      onPress={() =>
+      onClick={() =>
         setSelectedVersion({
           type: 'history',
           file: revision.file,
@@ -341,7 +362,7 @@ export interface EntrySidebarVersionRowProps {
   title: ReactNode
   meta: ReactNode
   children?: ReactNode
-  onPress?: () => void
+  onClick?: () => void
 }
 
 export function EntrySidebarVersionRow({
@@ -351,7 +372,7 @@ export function EntrySidebarVersionRow({
   title,
   meta,
   children,
-  onPress
+  onClick
 }: EntrySidebarVersionRowProps) {
   return (
     <ListItem
@@ -361,7 +382,7 @@ export function EntrySidebarVersionRow({
           <Icon data-slot="icon" icon={icon} />
         </ListItemVisual>
       }
-      onPress={onPress}
+      onClick={onClick}
       selected={selected}
       trailing={children}
     >
@@ -418,26 +439,20 @@ function formatStatus(status: EntryStatus) {
   return status[0].toUpperCase() + status.slice(1)
 }
 
-function formatTime(timestamp: number) {
-  const date = new Date(timestamp)
-  if (isNaN(date.getTime())) {
-    return 'Invalid Date'
-  }
-  const ddmmyyyy = date.toLocaleDateString('nl-BE')
-  const time = date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-  return `${ddmmyyyy} - ${time}`
-}
-
 function formatMetadata(metadata: unknown) {
   if (!isMetadata(metadata) || typeof metadata.updatedAt !== 'number') {
     return undefined
   }
-  const updatedAt = formatTime(metadata.updatedAt * 1000)
+  const updatedAt = (
+    <Timestamp date={metadata.updatedAt * 1000} format="relative" />
+  )
   const updatedBy = metadata.updatedBy.name
-  return updatedBy ? `${updatedBy} ${updatedAt}` : updatedAt
+  if (!updatedBy) return updatedAt
+  return (
+    <>
+      {updatedBy} · {updatedAt}
+    </>
+  )
 }
 
 function isMetadata(value: unknown): value is Metadata {

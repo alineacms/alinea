@@ -110,12 +110,12 @@ test('opens a functional location in another workspace and root', async ({
   await expect(
     resultModes
       .getByRole('radio', {name: 'Browse'})
-      .locator('[data-slot="icon"]')
+      .locator('svg')
   ).toHaveCount(1)
   await expect(
     resultModes
       .getByRole('radio', {name: 'Filtered'})
-      .locator('[data-slot="icon"]')
+      .locator('svg')
   ).toHaveCount(1)
 })
 
@@ -1005,11 +1005,9 @@ test('selects existing images and files', async ({dashboard, mount}) => {
       )
     )
     .toBe('false')
+  // A single image is picked as soon as it is clicked
   await imagePicker.getByText('Existing image', {exact: true}).click()
-  await expect(
-    imagePicker.getByRole('checkbox', {name: 'Select Existing image'})
-  ).toBeChecked()
-  await imagePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(imagePicker).toBeHidden()
   await expect(imageField).toContainText('Existing image')
 
   await fileField.getByRole('button', {name: 'File'}).click()
@@ -1031,11 +1029,32 @@ test('selects existing images and files', async ({dashboard, mount}) => {
     filePicker.getByRole('switch', {name: 'All locations'})
   ).toBeDisabled()
   await filePicker.getByText('Existing file', {exact: true}).click()
-  await expect(
-    filePicker.getByRole('checkbox', {name: 'Select Existing file'})
-  ).toBeChecked()
-  await filePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(filePicker).toBeHidden()
   await expect(fileField).toContainText('Existing file')
+})
+
+test('shows images and files picked into multiple link fields', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+  const gallery = app.page.getByRole('list', {name: 'Gallery'})
+  const attachments = app.page.getByRole('list', {name: 'Attachments'})
+
+  await gallery.getByRole('button', {name: 'Image'}).click()
+  const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
+  await imagePicker.getByText('Existing image', {exact: true}).click()
+  await imagePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(imagePicker).toBeHidden()
+  await expect(gallery.getByRole('listitem')).toHaveCount(1)
+  await expect(gallery).toContainText('Existing image')
+
+  await attachments.getByRole('button', {name: 'File'}).click()
+  const filePicker = app.page.getByRole('dialog', {name: 'Pick a file'})
+  await filePicker.getByText('Existing file', {exact: true}).click()
+  await filePicker.getByRole('button', {name: 'Select'}).click()
+  await expect(filePicker).toBeHidden()
+  await expect(attachments).toContainText('Existing file')
 })
 
 test('card image picker browses directories and filters within them', async ({

@@ -1,0 +1,38 @@
+@use '@/style' as *;
+
+.root {
+  position: relative;
+  gap: 32px 64px;
+  display: flex;
+  flex-direction: column;
+
+  @include l {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    &.is-right {
+      flex-direction: row-reverse;
+    }
+  }
+
+  &-image,
+  &-content {
+    flex-basis: 50%;
+  }
+
+  &-image {
+    position: relative;
+
+    // @include l {
+    //   flex-basis: 50%;
+    // }
+
+    img {
+      height: auto;
+      display: block;
+      max-width: 100%;
+      border-radius: 8px;
+    }
+  }
+}

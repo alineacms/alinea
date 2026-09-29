@@ -1,6 +1,14 @@
 .RichTextBlock {
-  margin: 14px 0;
+  margin: 16px 0;
   outline: 3px solid transparent;
+}
+
+:global([data-richtext-block-host]:first-child) > .RichTextBlock {
+  margin-top: 0;
+}
+
+:global([data-richtext-block-host]:last-child) > .RichTextBlock {
+  margin-bottom: 0;
 }
 
 .RichTextBlock-dragHandle {

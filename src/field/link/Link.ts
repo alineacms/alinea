@@ -42,7 +42,7 @@ export function link<Fields>(
         selection: EntryLink
       }),
       url: urlPicker<Fields>(options),
-      file: filePicker(false, {...options, location: undefined})
+      file: filePicker(false, {fields: options.fields})
     }
   })
 }
@@ -62,7 +62,7 @@ export namespace link {
           selection: EntryLink
         }),
         url: urlPicker<Fields>(options),
-        file: filePicker(true, {...options, location: undefined})
+        file: filePicker(true, {fields: options.fields})
       }
     })
   }

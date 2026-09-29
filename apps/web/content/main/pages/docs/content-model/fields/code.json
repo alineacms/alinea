@@ -1,0 +1,156 @@
+{
+  "_id": "BUQj_NQqEq7YYO1nevx1o",
+  "_type": "Doc",
+  "_index": "a2C",
+  "title": "Code",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A code field is a monospace editor with syntax highlighting, for snippets, embed codes or small bits of markup that editors paste in. It stores the text as is."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "itHNQSxP3U_KYZ77Q3vIC",
+      "code": "import {Field} from 'alinea'\n\nField.code('Embed code', {\n  help: 'Paste the embed code from your video provider'\n})",
+      "fileName": "",
+      "language": "tsx"
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "qsJHS5HxiYf1Hs8eUOG6M",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Code field', {\n  fields: {\n    code: Field.code('Embed code', {\n      help: 'Paste the embed code from your video provider',\n      initialValue: '<iframe src=\"https://example.com/embed\"></iframe>'\n    })\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`language`: the language of the code, such as `'ts'` or `'css'`. The editor highlights code with a language-agnostic tokenizer and exposes the language as a `data-language` attribute; use `'text'` (or `'plaintext'`) to turn highlighting off."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The "
+                },
+                {
+                  "_type": "text",
+                  "text": "common options",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JkEztU20GeZJ2h283mjVW9hpQH",
+                      "_link": "entry",
+                      "_entry": "24yE2mu6Xq959jrP135Sdb4e3lG"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " `help`, `width`, `inline`, `initialValue`, `required`, `validate`, `readOnly`, `hidden` and `shared`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A string, including line breaks and indentation. It's empty until an editor enters something, unless you set an `initialValue`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea doesn't sanitize the value. If you render it as HTML (`dangerouslySetInnerHTML`), anyone who can edit the entry can add scripts to your site: limit the field to trusted editors with "
+        },
+        {
+          "_type": "text",
+          "text": "roles",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JkEzyFnqi9R0HeqEGpxRZ5dbr2",
+              "_link": "entry",
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", or validate what's allowed."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "Code field - Alinea CMS",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790196930,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790236724,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}
