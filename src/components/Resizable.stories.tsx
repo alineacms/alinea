@@ -64,12 +64,11 @@ export function Horizontal() {
             defaultSize={200}
             minSize={150}
             maxSize={300}
-            priority="low"
           >
             <Box>Navigation (150 - 300)</Box>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel data-testid="content" minSize={200} priority="high">
+          <ResizablePanel data-testid="content" minSize={200}>
             <Box muted>Content</Box>
           </ResizablePanel>
           <ResizableHandle withHandle />
@@ -77,7 +76,6 @@ export function Horizontal() {
             data-testid="details"
             defaultSize={240}
             minSize={200}
-            priority="low"
           >
             <Box>Details</Box>
           </ResizablePanel>
@@ -91,7 +89,7 @@ export function Vertical() {
   return (
     <div style={{...frame, height: 480}}>
       <ResizablePanelGroup direction="vertical">
-        <ResizablePanel data-testid="top" minSize={100} priority="high">
+        <ResizablePanel data-testid="top" minSize={100}>
           <Box>Editor</Box>
         </ResizablePanel>
         <ResizableHandle withHandle />
@@ -100,7 +98,6 @@ export function Vertical() {
           defaultSize={160}
           minSize={80}
           maxSize={320}
-          priority="low"
         >
           <Box muted>Console</Box>
         </ResizablePanel>
@@ -125,7 +122,6 @@ export function HiddenPanel() {
             data-testid="sidebar"
             defaultSize={240}
             minSize={160}
-            priority="low"
             visible={visible}
           >
             <Box>
@@ -133,7 +129,7 @@ export function HiddenPanel() {
             </Box>
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel data-testid="content" minSize={200} priority="high">
+          <ResizablePanel data-testid="content" minSize={200}>
             <Box muted>Content</Box>
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -164,12 +160,11 @@ export function Controlled() {
             defaultSize={240}
             minSize={200}
             maxSize={480}
-            priority="low"
           >
             <Box>Double click the divider to reset to 240</Box>
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel minSize={200} priority="high">
+          <ResizablePanel minSize={200}>
             <Box muted>Content</Box>
           </ResizablePanel>
         </ResizablePanelGroup>

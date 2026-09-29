@@ -44,7 +44,7 @@ export interface ResizablePanelProps extends StyleProps, AriaProps, DataProps {
   visible?: boolean
   /**
    * Panels with a higher priority grow and shrink first when the group is
-   * resized, defaults to normal
+   * resized, defaults to high for a panel without a size and low otherwise
    */
   priority?: 'low' | 'normal' | 'high'
   children: ReactNode
@@ -72,6 +72,10 @@ function isPanel(node: ReactNode): node is PanelElement {
 
 function isHandle(node: ReactNode): node is HandleElement {
   return isValidElement(node) && node.type === ResizableHandle
+}
+
+function priority({priority, size, defaultSize}: ResizablePanelProps) {
+  return priority ?? ((size ?? defaultSize) === undefined ? 'high' : 'low')
 }
 
 function sum(sizes: Array<number>) {
@@ -135,11 +139,7 @@ export function ResizablePanelGroup({
       .filter(
         ({panel, index}) => !targets.has(index) && panel.props.visible !== false
       )
-      .sort(
-        (a, b) =>
-          rank[a.panel.props.priority ?? 'normal'] -
-          rank[b.panel.props.priority ?? 'normal']
-      )
+      .sort((a, b) => rank[priority(a.panel.props)] - rank[priority(b.panel.props)])
     if (flexible.length > 0) next[flexible[0].index] += sum(current) - sum(next)
     allotment.current?.resize(next)
     return measure()
@@ -192,7 +192,12 @@ export function ResizablePanelGroup({
       return [{index, size}]
     })
     sizes.current = new Map(
-      panels.map(panel => [String(panel.key), panel.props.size])
+      panels.map(panel => {
+        const key = String(panel.key)
+        // A hidden panel is resized once it is visible again
+        const hidden = panel.props.visible === false && previous.has(key)
+        return [key, hidden ? previous.get(key) : panel.props.size]
+      })
     )
     // Only measure the panes once a controlled size actually changed
     if (changed.length === 0) return
@@ -294,7 +299,7 @@ export function ResizablePanelGroup({
             minSize={panel.props.minSize ?? 0}
             maxSize={panel.props.maxSize ?? Infinity}
             preferredSize={panel.props.size ?? panel.props.defaultSize}
-            priority={priorities[panel.props.priority ?? 'normal']}
+            priority={priorities[priority(panel.props)]}
             visible={panel.props.visible !== false}
           >
             {panel}
