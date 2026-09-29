@@ -3,15 +3,19 @@ import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {afterEach, expect, test} from 'bun:test'
-import {useAtomValueRaw} from 'jotai'
+import {atom, useAtomValueRaw} from 'jotai'
 import {EntryEditor} from './atoms/editor.js'
+import {EntryAtoms} from './atoms/entry.js'
 import {ReactiveNode} from './atoms/ReactiveNode.js'
 import {configAtom} from './atoms/core.js'
 import {
   DashboardScopeInternal,
   EditorScope,
+  EntryScope,
+  type EntryScopeProps,
   useDashboard,
-  useField
+  useField,
+  useLocale
 } from './hooks.js'
 
 const titleField = Field.text('Title')
@@ -86,4 +90,27 @@ test('dashboard scopes preserve the public model and isolate atom state', () => 
 
   expect(screen.getByText('same:first')).toBeDefined()
   expect(screen.getByText('same:second')).toBeDefined()
+})
+
+function CurrentLocale() {
+  return <span>locale:{useLocale()}</span>
+}
+
+test('useLocale returns the locale an untranslated entry is opened in', () => {
+  const entry = new EntryAtoms('entry-id', atom({} as never))
+  // The entry is shown in its English source while opened in French
+  const selectedEntry = {locale: 'en'} as EntryScopeProps['selectedEntry']
+
+  render(
+    <EntryScope
+      entry={entry}
+      localeData={entry.locales('fr')}
+      richTextImages={new Map()}
+      selectedEntry={selectedEntry}
+    >
+      <CurrentLocale />
+    </EntryScope>
+  )
+
+  expect(screen.getByText('locale:fr')).toBeDefined()
 })

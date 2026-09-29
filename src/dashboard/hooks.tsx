@@ -428,7 +428,8 @@ export function useEntry(): EntryRecord<Record<string, unknown>> | null {
 export function useLocale(): string | null {
   const entry = useContext(entryContext)
   const dashboard = useContext(dashboardContext)
-  if (entry) return entry.selectedEntry.locale
+  // An untranslated entry shows its translation source in another locale
+  if (entry) return entry.localeData.requestedLocale
   return dashboard?.page.locale ?? null
 }
 
