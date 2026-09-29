@@ -1135,10 +1135,18 @@ export class ExplorerAtoms {
       })
     const config = get(configAtom)
     const policy = get(policyAtom)
+    const [first] = items
     const some = items.length > 0
+    // Entries move within their root, search results can span roots
+    const oneRoot = items.every(
+      item => item.workspace === first.workspace && item.root === first.root
+    )
     return {
       items,
-      canMove: some && items.every(item => explorerItemCanMove(policy, item)),
+      canMove:
+        some &&
+        oneRoot &&
+        items.every(item => explorerItemCanMove(policy, item)),
       canDelete:
         some && items.every(item => explorerItemCanDelete(config, policy, item))
     }

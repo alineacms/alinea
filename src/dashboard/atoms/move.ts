@@ -12,6 +12,7 @@ import {preferredTreeEntries} from './entry.js'
 import type {RootTreeItem, RootTreeNode, TreeSource, TreeView} from './root.js'
 import {rootAtoms} from './root.js'
 import {policyAtom} from './user.js'
+import {moveEntries} from './utils.js'
 
 /** An entry that is about to be moved */
 export interface MoveSubject {
@@ -262,10 +263,7 @@ const moveTargetSelect = {
   parents: Entry.parents
 }
 
-/**
- * Loads where the subjects can be moved to. The subjects are moved within the
- * root of the first one.
- */
+/** Loads where the subjects, all of one root, can be moved to */
 export const loadMoveTreeAtom = atom(
   null,
   async (
@@ -277,9 +275,6 @@ export const loadMoveTreeAtom = atom(
     const [first] = subjects
     if (!first) throw new Error('Nothing to move')
     const {workspace, root} = first
-    const inRoot = subjects.filter(
-      subject => subject.workspace === workspace && subject.root === root
-    )
     const config = get(configAtom)
     const policy = get(policyAtom)
     const containers = entries(config.schema)
@@ -302,7 +297,7 @@ export const loadMoveTreeAtom = atom(
       rootData: get(rootAtoms(workspace, root).data),
       workspace,
       root,
-      subjects: inRoot,
+      subjects,
       candidates: rows.filter(row => policy.canRead({workspace, root, ...row}))
     })
     return new MoveTree(targets, locale)
@@ -313,22 +308,14 @@ export const loadMoveTreeAtom = atom(
 export const moveEntriesAtom = atom(null, async (get, _set, tree: MoveTree) => {
   const target = get(tree.target)
   if (!canMoveTo(tree.targets, target)) return
-  const {workspace, root, subjects} = tree.targets
+  const {root, subjects} = tree.targets
+  const moving = subjects.filter(subject => subject.parentId !== target)
   const policy = get(policyAtom)
+  for (const subject of moving) policy.assert(Permission.Move, subject)
   const graph = get(graphAtom)
-  for (const subject of subjects) {
-    if (subject.parentId === target) continue
-    policy.assert(Permission.Move, subject)
-    await graph.move(
-      target === null
-        ? {id: subject.id, target: root, targetType: 'root', dropPosition: 'on'}
-        : {
-            id: subject.id,
-            target,
-            targetType: 'entry',
-            dropPosition: 'on'
-          }
-    )
-  }
-  return {workspace, root, target}
+  const ids = moving.map(subject => subject.id)
+  if (target !== null)
+    return moveEntries(graph, ids, {key: target, position: 'on'})
+  for (const id of ids)
+    await graph.move({id, target: root, targetType: 'root', dropPosition: 'on'})
 })
