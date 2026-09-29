@@ -31,7 +31,7 @@ import {
   type SetStateAction
 } from 'react'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {NodeEditor} from '../EntryFields.js'
+import {NodeEditor} from '../NodeEditor.js'
 import {
   DashboardModalContent,
   DashboardModalDialog,

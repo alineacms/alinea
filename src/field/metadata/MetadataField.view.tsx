@@ -1,7 +1,7 @@
 import {Button, Field, Surface, SurfaceContent, Text} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
 import {Section} from '#/core/Section.js'
-import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {
   useFieldError,
   useFieldNode,

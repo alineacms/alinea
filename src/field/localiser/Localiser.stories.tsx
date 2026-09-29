@@ -1,5 +1,5 @@
 import {Type, type} from '#/core/Type.js'
-import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {localiser} from '#/field/localiser.js'

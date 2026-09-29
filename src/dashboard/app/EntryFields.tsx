@@ -1,36 +1,15 @@
 import {Surface, SurfaceContent} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
-import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import {memo, type PropsWithChildren} from 'react'
-import type {EditorNode} from '../atoms/editor.js'
+import {memo} from 'react'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
-import {
-  EditorScope,
-  useEditor,
-  useFieldOptions,
-  useFieldView,
-  useNodeEditor
-} from '../hooks.js'
+import {useEditor, useFieldOptions, useFieldView} from '../hooks.js'
 import css from './EntryFields.module.css'
 
 const styles = styler(css)
-
-interface NodeEditorProps extends PropsWithChildren {
-  node: EditorNode
-  readOnly?: boolean
-  type: Type
-}
-
-export function NodeEditor({children, node, readOnly, type}: NodeEditorProps) {
-  const editor = useNodeEditor(node, type, readOnly)
-  return (
-    <EditorScope editor={editor}>{children ?? <FieldsEditor />}</EditorScope>
-  )
-}
 
 export function FieldsEditor() {
   const editor = useEditor()

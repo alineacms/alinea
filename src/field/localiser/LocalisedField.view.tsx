@@ -1,6 +1,6 @@
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '#/components.js'
 import {createType} from '#/core/Type.js'
-import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {useFieldNode, useOptionalEntryAtoms} from '#/dashboard/hooks.js'
 import {type LocalisedField} from '#/field/localiser.js'
