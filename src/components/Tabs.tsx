@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {createContext, type ReactNode, useContext} from 'react'
+import type {ReactNode} from 'react'
 import {
   TabList as TabListPrimitive,
   TabPanel as TabPanelPrimitive,
@@ -10,8 +10,6 @@ import css from './Tabs.module.css'
 import type {AriaProps, DataProps, Orientation, StyleProps} from './types.js'
 
 const styles = styler(css)
-
-const TabsOrientationContext = createContext<Orientation>('horizontal')
 
 export interface TabsProps extends StyleProps, DataProps {
   value?: string
@@ -38,10 +36,9 @@ export function Tabs({
 }: TabsProps) {
   return (
     <TabsPrimitive
+      data-slot="tabs"
       {...props}
-      data-slot={props['data-slot'] ?? 'tabs'}
       data-variant={variant}
-      data-orientation={orientation}
       className={styles.Tabs(styler.merge({className}))}
       selectedKey={value}
       defaultSelectedKey={defaultValue}
@@ -49,9 +46,7 @@ export function Tabs({
       orientation={orientation}
       isDisabled={disabled}
     >
-      <TabsOrientationContext.Provider value={orientation}>
-        {children}
-      </TabsOrientationContext.Provider>
+      {children}
     </TabsPrimitive>
   )
 }
@@ -70,7 +65,6 @@ export function TabsList({
   children,
   ...props
 }: TabsListProps) {
-  const orientation = useContext(TabsOrientationContext)
   return (
     <div
       data-slot="tabs-list"
@@ -80,7 +74,6 @@ export function TabsList({
       <TabListPrimitive
         data-slot="tabs-list-items"
         {...props}
-        data-orientation={orientation}
         className={styles.TabsList.list()}
       >
         {children}

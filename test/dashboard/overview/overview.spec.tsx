@@ -128,7 +128,7 @@ test('opens an overview sorted by the column in its url', async ({
   await expect.poll(() => titles(page)).toEqual(['Table', 'Chair', 'Lamp'])
   await expect(
     page.getByRole('button', {name: 'Brand', exact: true})
-  ).toHaveAttribute('aria-pressed', 'true')
+  ).toHaveAttribute('aria-description', 'sorted ascending')
 })
 
 test('keeps the sort when returning to the overview', async ({mount, page}) => {

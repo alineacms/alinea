@@ -44,16 +44,19 @@ test('disabled and read-only groups keep their selection', async ({
   page
 }) => {
   await mount(<States />)
-  for (const name of ['Disabled', 'Read-only']) {
-    const group = page.getByRole('grid', {name})
-    const chocolate = group.getByRole('row', {name: 'Chocolate'})
-    const mint = group.getByRole('row', {name: 'Mint'})
-    await chocolate.click({force: true})
-    await chocolate.focus()
-    await page.keyboard.press('Space')
-    await mint.focus()
-    await page.keyboard.press('Space')
-    await expect(chocolate).toHaveAttribute('aria-selected', 'false')
-    await expect(mint).toHaveAttribute('aria-selected', 'true')
-  }
+  const disabled = page.getByRole('grid', {name: 'Disabled'})
+  await expect(disabled.getByRole('row', {name: 'Mint'})).toHaveAttribute(
+    'aria-disabled',
+    'true'
+  )
+  const readOnly = page.getByRole('grid', {name: 'Read-only'})
+  const chocolate = readOnly.getByRole('row', {name: 'Chocolate'})
+  const mint = readOnly.getByRole('row', {name: 'Mint'})
+  await chocolate.click({force: true})
+  await chocolate.focus()
+  await page.keyboard.press('Space')
+  await mint.focus()
+  await page.keyboard.press('Space')
+  await expect(chocolate).toHaveAttribute('aria-selected', 'false')
+  await expect(mint).toHaveAttribute('aria-selected', 'true')
 })

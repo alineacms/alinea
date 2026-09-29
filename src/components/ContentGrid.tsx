@@ -29,7 +29,7 @@ import type {
 const styles = styler(css)
 
 export interface ContentGridProps<T extends object>
-  extends StyleProps, AriaProps, SelectionProps, DragDropProps {
+  extends StyleProps, AriaProps, DataProps, SelectionProps, DragDropProps {
   items: Iterable<T>
   /**
    * How pointer clicks select cards. With `toggle` (the default) a click runs
@@ -68,10 +68,13 @@ export interface ContentGridProps<T extends object>
 
 interface ContentGridContextValue {
   showSelectionControls: boolean
+  selectionMode: SelectionProps['selectionMode']
+  onItemAction?: (key: Key) => void
 }
 
 const ContentGridContext = createContext<ContentGridContextValue>({
-  showSelectionControls: false
+  showSelectionControls: false,
+  selectionMode: 'none'
 })
 
 export function ContentGrid<T extends object>({
@@ -109,9 +112,11 @@ export function ContentGrid<T extends object>({
     () => ({
       showSelectionControls:
         selectionMode !== 'none' &&
-        (showSelectionControls ?? selectionMode === 'multiple')
+        (showSelectionControls ?? selectionMode === 'multiple'),
+      selectionMode,
+      onItemAction
     }),
-    [selectionMode, showSelectionControls]
+    [selectionMode, showSelectionControls, onItemAction]
   )
   const layoutOptions = useMemo(
     () => ({
@@ -133,7 +138,7 @@ export function ContentGrid<T extends object>({
     onDropFiles,
     renderDragPreview,
     dropIndicatorSlot: 'content-grid-drop-indicator',
-    dropIndicatorClassName: active => styles.ContentGridDropIndicator({active})
+    dropIndicatorClassName: active => styles.ContentGrid.dropIndicator({active})
   })
   return (
     <ContentGridContext.Provider value={context}>
@@ -160,7 +165,6 @@ export function ContentGrid<T extends object>({
             onSelectionChange={onSelectionChange}
             disabledKeys={disabledKeys}
             disabledBehavior="selection"
-            onAction={onItemAction}
             dragAndDropHooks={dnd.dragAndDropHooks}
             renderEmptyState={
               renderEmptyState
@@ -215,7 +219,11 @@ export function ContentGridItem({
   children,
   ...props
 }: ContentGridItemProps) {
-  const {showSelectionControls} = useContext(ContentGridContext)
+  const {showSelectionControls, selectionMode, onItemAction} =
+    useContext(ContentGridContext)
+  const action = onAction ?? (onItemAction && (() => onItemAction(id)))
+  // react-aria ignores presses on cards it cannot select or activate
+  const clickAction = !action && selectionMode === 'none' ? onClick : undefined
   return (
     <GridListItem
       data-slot="content-grid-item"
@@ -224,8 +232,8 @@ export function ContentGridItem({
       textValue={textValue}
       isDisabled={!selectable}
       data-unselectable={!selectable || undefined}
-      onAction={onAction}
-      onPress={onClick}
+      onAction={action ?? clickAction}
+      onPress={clickAction ? undefined : onClick}
       onDoubleClick={onDoubleClick}
       className={({isDropTarget, isDragging}) =>
         styles.ContentGridItem({dropTarget: isDropTarget, dragging: isDragging})
@@ -234,7 +242,10 @@ export function ContentGridItem({
       {({allowsDragging}) => (
         <>
           {showSelectionControls && selectable && (
-            <div className={styles.ContentGridItem.checkbox()}>
+            <div
+              data-slot="content-grid-item-checkbox"
+              className={styles.ContentGridItem.checkbox()}
+            >
               <SelectionCheckbox aria-label={`Select ${textValue}`} />
             </div>
           )}

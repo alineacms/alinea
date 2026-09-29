@@ -76,15 +76,11 @@
   color: var(--alinea-fg-muted);
   display: inline-flex;
   flex: 0 0 auto;
-  font-size: 16px;
+  /* Sizes 1em icons */
+  font-size: 14px;
   height: 28px;
   justify-content: center;
   width: 28px;
-}
-
-.ListItemVisual [data-slot='icon'] {
-  height: 14px;
-  width: 14px;
 }
 
 .ListItemTitle,
@@ -209,6 +205,10 @@
   font-size: var(--alinea-font-size-base);
   font-weight: 600;
   transition: color var(--alinea-transition);
+}
+
+.ListLabel-required {
+  color: var(--alinea-danger-subtle-fg);
 }
 
 /* A toggle without rows to fold still labels the field: keep the label

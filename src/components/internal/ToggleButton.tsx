@@ -47,14 +47,17 @@ export function ToggleButton({
   const inGroup = value !== undefined
   return (
     <ToggleButtonPrimitive
+      data-slot="toggle"
       {...props}
       id={inGroup ? value : props.id}
       isSelected={inGroup ? undefined : pressed}
       defaultSelected={inGroup ? undefined : defaultPressed}
       onChange={inGroup ? undefined : onPressedChange}
       isDisabled={disabled}
-      className={styles.ToggleButton(styler.merge({className}))}
-      data-slot={props['data-slot'] ?? 'toggle'}
+      className={styles.ToggleButton(
+        {grouped: inGroup},
+        styler.merge({className})
+      )}
       data-variant={variant}
       data-size={size}
       data-icon-only={(icon && !children) || undefined}

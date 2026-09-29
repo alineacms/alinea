@@ -37,7 +37,7 @@ export function Basic() {
         Sections
       </ListLabel>
       <SortableList aria-label="Sections" data-depth="muted">
-        <SortableListItem aria-label="Hero item 1" role="listitem">
+        <SortableListItem aria-label="Hero item 1">
           <SortableListItemHeader>
             <SortableListItemTitle>
               <SortableListItemToggle
@@ -84,7 +84,7 @@ export function Basic() {
             </SortableListItemContent>
           )}
         </SortableListItem>
-        <SortableListItem aria-label="Quote item 2" role="listitem">
+        <SortableListItem aria-label="Quote item 2">
           <SortableListItemHeader>
             <SortableListItemTitle>
               <SortableListItemToggle
@@ -193,7 +193,6 @@ export function Reorderable() {
             }
             id={item.id}
             key={item.id}
-            role="listitem"
           >
             <SortableListItemHeader>
               <SortableListHandle aria-label={`Drag ${item.label}`} />
@@ -207,6 +206,31 @@ export function Reorderable() {
         ))}
       </SortableList>
       <p data-testid="order">{items.map(item => item.label).join(', ')}</p>
+    </div>
+  )
+}
+
+/** Items keep their state when reordering is switched off and on */
+export function ToggleReorder() {
+  const [readOnly, setReadOnly] = useState(false)
+  return (
+    <div style={{maxWidth: 480}}>
+      <Button onClick={() => setReadOnly(!readOnly)}>
+        {readOnly ? 'Edit' : 'Lock'}
+      </Button>
+      <SortableList
+        aria-label="Sections"
+        onReorder={readOnly ? undefined : () => {}}
+      >
+        {reorderItems.map(item => (
+          <SortableListItem aria-label={item.label} id={item.id} key={item.id}>
+            <SortableListItemHeader>
+              <SortableListHandle aria-label={`Drag ${item.label}`} />
+              <input aria-label={`${item.label} title`} />
+            </SortableListItemHeader>
+          </SortableListItem>
+        ))}
+      </SortableList>
     </div>
   )
 }

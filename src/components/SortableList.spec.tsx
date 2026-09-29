@@ -1,5 +1,10 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Basic, Empty, Reorderable} from './SortableList.stories.js'
+import {
+  Basic,
+  Empty,
+  Reorderable,
+  ToggleReorder
+} from './SortableList.stories.js'
 import {ListLabel} from './List.js'
 
 test('reorders items by dragging the handle', async ({mount, page}) => {
@@ -146,4 +151,20 @@ test('a list label without rows to fold keeps its full color', async ({
   const toggle = page.getByRole('button', {name: 'No list items to fold'})
   await expect(toggle).toBeDisabled()
   await expect(toggle).toHaveCSS('opacity', '1')
+})
+
+test('keeps item state when reordering is switched off', async ({
+  mount,
+  page
+}) => {
+  await mount(<ToggleReorder />)
+  const title = page.getByRole('textbox', {name: 'Hero title'})
+  await title.fill('Welcome')
+  await expect(page.getByRole('button', {name: 'Drag Hero'})).toHaveCount(1)
+  await page.getByRole('button', {name: 'Lock'}).click()
+  await expect(page.getByRole('button', {name: 'Drag Hero'})).toHaveCount(0)
+  await expect(title).toHaveValue('Welcome')
+  await page.getByRole('button', {name: 'Edit'}).click()
+  await expect(title).toHaveValue('Welcome')
+  await expect(page.getByRole('button', {name: 'Drag Hero'})).toHaveCount(1)
 })

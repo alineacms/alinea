@@ -8,12 +8,7 @@
   flex-wrap: wrap;
   gap: 8px;
 
-  .TagGroup[data-disabled] & {
-    opacity: 0.5;
-    pointer-events: none;
-  }
-
-  .TagGroup[data-readonly] & {
+  .TagGroup.is-readOnly & {
     pointer-events: none;
   }
 }
@@ -41,7 +36,7 @@
     border-radius: 50px;
   }
 
-  &[aria-selected] {
+  &.is-selectable {
     padding-block: 2px;
     border: 1px solid var(--alinea-border);
     background: var(--alinea-muted);
@@ -49,11 +44,11 @@
     cursor: pointer;
   }
 
-  &[aria-selected]:hover {
+  &.is-selectable:hover {
     border-color: var(--alinea-border-strong);
   }
 
-  &[aria-selected='true'] {
+  &.is-selected {
     border-color: var(--alinea-primary);
     background: var(--alinea-primary);
     color: var(--alinea-primary-fg);
@@ -87,7 +82,7 @@
     color: var(--alinea-fg-strong);
   }
 
-  .Tag[aria-selected='true'] & {
+  .Tag.is-selected & {
     color: inherit;
   }
 }

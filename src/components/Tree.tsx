@@ -39,12 +39,17 @@ export interface TreeProps<T extends object>
   expandedKeys?: Iterable<Key>
   defaultExpandedKeys?: Iterable<Key>
   onExpandedChange?: (keys: Set<Key>) => void
-  /** Called when an item is activated (clicked or Enter) */
+  /**
+   * Called when an item is activated with a click or Enter. With single
+   * selection a click selects the item and a double click or Enter activates
+   * it, with multiple selection a click toggles the item once items are
+   * selected.
+   */
   onAction?: (key: Key) => void
   renderEmptyState?: () => ReactNode
   /** Only render the rows in view, every row must be `rowHeight` tall */
   virtualized?: boolean
-  /** Row height in pixels when virtualized, defaults to 32 */
+  /** Row height in pixels when virtualized, defaults to 34 */
   rowHeight?: number
   ref?: Ref<HTMLDivElement>
 }
@@ -65,7 +70,7 @@ export function Tree<T extends object>({
   onAction,
   renderEmptyState,
   virtualized,
-  rowHeight = 32,
+  rowHeight = 34,
   getDragData,
   acceptedDragTypes,
   canDrop,
@@ -87,7 +92,7 @@ export function Tree<T extends object>({
     onDropFiles,
     renderDragPreview,
     dropIndicatorSlot: 'tree-drop-indicator',
-    dropIndicatorClassName: active => styles.TreeDropIndicator({active})
+    dropIndicatorClassName: active => styles.Tree.dropIndicator({active})
   })
   const tree = (
     <AriaTree
@@ -147,8 +152,11 @@ export interface TreeItemProps<T extends object = object>
   suffix?: ReactNode
   /** Shows the expand button, set when children load lazily */
   hasChildItems?: boolean
-  /** Set to false to hide the drag handle of this item */
-  draggable?: boolean
+  /**
+   * Hides the drag handle of this item. Its row can still be dragged with a
+   * pointer, reject drops of the item with `canDrop`.
+   */
+  hideDragHandle?: boolean
   /** Child items to render with the `children` function */
   items?: Iterable<T>
   /** Nested tree items, or a function rendering each of `items` */
@@ -163,7 +171,7 @@ export function TreeItem<T extends object = object>({
   href,
   suffix,
   hasChildItems,
-  draggable = true,
+  hideDragHandle,
   items,
   children,
   className,
@@ -210,13 +218,11 @@ export function TreeItem<T extends object = object>({
               data-slot="tree-item-controls"
               className={styles.TreeItem.controls()}
             >
-              {allowsDragging && draggable && (
+              {allowsDragging && !hideDragHandle && (
                 <Button
                   slot="drag"
                   data-slot="tree-item-drag-handle"
-                  className={styles.TreeItem.dragHandle({
-                    invisible: !isDragging
-                  })}
+                  className={styles.TreeItem.dragHandle()}
                 >
                   ≡
                 </Button>

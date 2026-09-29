@@ -29,9 +29,8 @@ export function Toolbar({
 }: ToolbarProps) {
   return (
     <ToolbarPrimitive
+      data-slot="toolbar"
       {...props}
-      data-slot={props['data-slot'] ?? 'toolbar'}
-      data-orientation={orientation}
       orientation={orientation}
       className={styles.Toolbar(styler.merge({className}))}
     >

@@ -69,11 +69,10 @@ export function ToggleGroup({
 }: ToggleGroupProps) {
   return (
     <ToggleButtonGroup
+      data-slot="toggle-group"
       {...props}
-      data-slot={props['data-slot'] ?? 'toggle-group'}
       data-variant={variant}
       data-size={size}
-      data-orientation={orientation}
       className={styles.ToggleGroup(styler.merge({className}))}
       selectionMode={type}
       selectedKeys={value === undefined ? undefined : toKeys(value)}

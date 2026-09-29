@@ -7,7 +7,8 @@ import {
   ExplorerStyle,
   IterableItems,
   NestedRows,
-  RowActions
+  RowActions,
+  RowHandlers
 } from './Table.stories.js'
 
 test('custom root view with thumbnails, custom columns and headers', async ({
@@ -142,4 +143,21 @@ test('narrow tables keep fixed columns in view', async ({mount, page}) => {
   expect(actionBox!.x + actionBox!.width).toBeLessThanOrEqual(
     tableBox!.x + tableBox!.width
   )
+})
+
+test('a row action replaces the table action and clicks work without either', async ({
+  mount,
+  page
+}) => {
+  await mount(<RowHandlers />)
+  const log = page.getByTestId('log')
+  const actions = page.getByRole('treegrid', {name: 'Actions'})
+  await actions.getByRole('row', {name: 'Alice Editor'}).click()
+  await actions.getByRole('row', {name: 'Bob Reviewer'}).click()
+  await expect(log).toHaveText('Opened alice. Reviewed bob')
+  await page
+    .getByRole('treegrid', {name: 'Clicks'})
+    .getByRole('row', {name: 'Bob Reviewer'})
+    .click()
+  await expect(log).toHaveText('Opened alice. Reviewed bob. Clicked bob')
 })

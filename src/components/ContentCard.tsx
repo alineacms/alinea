@@ -61,14 +61,20 @@ export function ContentCard({
         style={{backgroundColor: color || undefined}}
       >
         {image ? (
-          <img src={image} alt="" className={styles.ContentCard.image()} />
-        ) : variant === 'media' ? (
-          <Icon
-            icon={icon ?? IcRoundInsertDriveFile}
-            className={styles.ContentCard.icon()}
+          <img
+            data-slot="content-card-image"
+            src={image}
+            alt=""
+            className={styles.ContentCard.image()}
           />
         ) : (
-          icon && <Icon icon={icon} className={styles.ContentCard.icon()} />
+          (icon || variant === 'media') && (
+            <Icon
+              data-slot="content-card-icon"
+              icon={icon ?? IcRoundInsertDriveFile}
+              className={styles.ContentCard.icon()}
+            />
+          )
         )}
       </div>
       <div data-slot="content-card-body" className={styles.ContentCard.body()}>
@@ -82,6 +88,7 @@ export function ContentCard({
                 {index > 0 && (
                   <IcRoundKeyboardArrowRight
                     aria-hidden
+                    data-slot="content-card-separator"
                     className={styles.ContentCard.breadcrumbs.separator()}
                   />
                 )}
@@ -133,12 +140,24 @@ export function ContentCardSkeleton({
       )}
       style={style}
     >
-      <div className={styles.ContentCard.media()}>
-        <div className={styles.ContentCard.skeleton({icon: true})} />
+      <div
+        data-slot="content-card-media"
+        className={styles.ContentCard.media()}
+      >
+        <div
+          data-slot="content-card-skeleton-icon"
+          className={styles.ContentCard.skeleton({icon: true})}
+        />
       </div>
-      <div className={styles.ContentCard.body()}>
-        <div className={styles.ContentCard.skeleton({wide: true})} />
-        <div className={styles.ContentCard.skeleton()} />
+      <div data-slot="content-card-body" className={styles.ContentCard.body()}>
+        <div
+          data-slot="content-card-skeleton-line"
+          className={styles.ContentCard.skeleton({wide: true})}
+        />
+        <div
+          data-slot="content-card-skeleton-line"
+          className={styles.ContentCard.skeleton()}
+        />
       </div>
     </div>
   )

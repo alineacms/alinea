@@ -62,8 +62,8 @@ export function useDragDrop<T extends object = object>({
       for (const type of item.types) record[type] = await item.getText(type)
       data.push(record)
     }
-    if (target && data.length > 0) onDropItems?.({items: data, target})
-    if (files.length > 0) onDropFiles?.({files, target})
+    if (target && data.length > 0) await onDropItems?.({items: data, target})
+    if (files.length > 0) await onDropFiles?.({files, target})
   }
   const {dragAndDropHooks} = useDragAndDrop<T>({
     isDisabled: !draggable && !droppable,
@@ -97,8 +97,8 @@ export function useDragDrop<T extends object = object>({
       onMove(event) {
         const target = dropTarget(event.target)!
         const move = {keys: event.keys, target}
-        if (target.position === 'on') onMove?.(move)
-        else onReorder?.(move)
+        // Return the promise so react-aria awaits it
+        return target.position === 'on' ? onMove?.(move) : onReorder?.(move)
       },
       onInsert(event) {
         return drop(event.items, dropTarget(event.target))
