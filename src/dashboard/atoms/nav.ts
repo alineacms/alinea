@@ -7,6 +7,7 @@ import {ReactNode} from 'react'
 import {workspaceAtom, workspacesAtom} from './config.js'
 import {configAtom} from './core.js'
 import {policyAtom} from './user.js'
+import {dispense} from './utils.js'
 
 export interface RouteBlock {
   confirm: () => void | Promise<void>
@@ -85,7 +86,7 @@ function listKey(
  * The sort of each overview visited in this session, so an overview keeps
  * its sort when the editor returns to it
  */
-const overviewSortMemoryAtom = atom(new Map<string, string>())
+const overviewSortMemoryAtom = atom(new Map<string, OverviewSort>())
 
 function routeFromHash(hash: string): ResolvedDashboardRoute {
   const [path, search = ''] = hash.slice(1).split('?')
@@ -178,21 +179,14 @@ export const routeAtom = Object.assign(
               replace: update.replace
             } satisfies NavigationRequest)
       let {route} = request
-      const memory = get(overviewSortMemoryAtom)
-      const key = listKey(route.workspace, route.root, route.entry)
-      if (route.page === 'entry') {
-        if (request.browser) {
-          // The url is the source of truth for the sort of an overview
-          if (route.sort || memory.has(key))
-            set(overviewSortMemoryAtom, remember(memory, key, route.sort))
-        } else if ('sort' in route && route.sort !== undefined) {
-          set(overviewSortMemoryAtom, remember(memory, key, route.sort))
-        } else if (update !== request && 'sort' in update) {
-          // An explicit undefined sort resets the overview
-          set(overviewSortMemoryAtom, remember(memory, key, undefined))
-        } else if (memory.has(key)) {
-          route = {...route, sort: memory.get(key)}
-        }
+      const key = sortKey(get, request)
+      // The url is the source of truth for the sort of an overview, an
+      // explicit undefined sort resets it
+      const explicit =
+        request.browser || route.sort !== undefined || 'sort' in update
+      if (key && !explicit) {
+        const sort = get(overviewSortMemoryAtom).get(key)
+        if (sort) route = {...route, sort: formatOverviewSort(sort)}
       }
       const previous = get(currentRouteAtom)
       const commit = (
@@ -200,6 +194,10 @@ export const routeAtom = Object.assign(
         syncLocation = !request.browser
       ) => {
         set(currentRouteAtom, route)
+        if (key)
+          set(overviewSortMemoryAtom, memory =>
+            remember(memory, key, route.sort)
+          )
         if (!syncLocation) return
         set(
           locationAtom,
@@ -249,12 +247,25 @@ export const routeAtom = Object.assign(
   }
 )
 
+/** The overview whose sort a navigation shows */
+function sortKey(get: Getter, {browser, route}: NavigationRequest) {
+  if (route.page !== 'entry') return undefined
+  if (route.workspace && route.root)
+    return listKey(route.workspace, route.root, route.entry)
+  // The browser can navigate before the dashboard is ready to resolve a page
+  if (browser) return undefined
+  const page = resolvePage(get, route)
+  return listKey(page.workspace, page.root, page.entry)
+}
+
 function remember(
-  memory: Map<string, string>,
+  memory: Map<string, OverviewSort>,
   key: string,
-  sort: string | undefined
+  value: string | undefined
 ) {
+  if (formatOverviewSort(memory.get(key)) === value) return memory
   const next = new Map(memory)
+  const sort = parseOverviewSort(value)
   if (sort) next.set(key, sort)
   else next.delete(key)
   return next
@@ -268,12 +279,11 @@ export interface Page {
   entry: string | undefined
   locale: string | null
   view: EntryDefaultView | undefined
-  /** The column the overview on this page is sorted by */
-  sort?: OverviewSort
 }
 
-export const pageAtom = atom((get): Page => {
-  const route = get(routeAtom)
+export const pageAtom = atom(get => resolvePage(get, get(routeAtom)))
+
+function resolvePage(get: Getter, route: ResolvedDashboardRoute): Page {
   const config = get(configAtom)
   const policy = get(policyAtom)
   const workspaces = get(workspacesAtom)
@@ -310,28 +320,40 @@ export const pageAtom = atom((get): Page => {
     requestedRoot: route.root,
     entry: route.entry,
     locale,
-    view: route.view,
-    sort: parseOverviewSort(route.sort)
+    view: route.view
   }
-})
+}
 
 /**
- * Sorts the overview of the current page, reflected in the url. Pass
- * undefined to return to the default order.
+ * The sort of the overview listing the children of an entry, or of a root
+ * when `entry` is null. The overview of the current page keeps it in the url.
  */
-export const sortPageOverviewAtom = atom(
-  null,
-  (get, set, sort: OverviewSort | undefined) => {
-    const page = get(pageAtom)
-    set(routeAtom, {
-      workspace: page.workspace,
-      root: page.root,
-      entry: page.entry,
-      locale: page.locale ?? undefined,
-      view: page.view,
-      sort: formatOverviewSort(sort),
-      replace: true
-    })
+export const overviewSortAtom = dispense(
+  (workspace: string, root: string, entry: string | null) => {
+    const key = listKey(workspace, root, entry ?? undefined)
+    return atom(
+      get => get(overviewSortMemoryAtom).get(key),
+      (get, set, sort: OverviewSort | undefined) => {
+        const page = get(pageAtom)
+        const value = formatOverviewSort(sort)
+        if (
+          page.type !== 'entry' ||
+          listKey(page.workspace, page.root, page.entry) !== key
+        ) {
+          set(overviewSortMemoryAtom, memory => remember(memory, key, value))
+          return
+        }
+        set(routeAtom, {
+          workspace,
+          root,
+          entry: page.entry,
+          locale: page.locale ?? undefined,
+          view: page.view,
+          sort: value,
+          replace: true
+        })
+      }
+    )
   }
 )
 

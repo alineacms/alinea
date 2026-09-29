@@ -1,5 +1,7 @@
 import '#test/react.js'
 import {Entry} from '#/core/Entry.js'
+import type {EntryFields} from '#/core/EntryFields.js'
+import type {OpenFilter} from '#/core/Filter.js'
 import {getExpr, getRoot} from '#/core/Internal.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
@@ -16,18 +18,13 @@ import {
 } from '#test/overview.js'
 import {expect, test} from 'bun:test'
 import {atom} from 'jotai'
-import {
-  entryTableKey,
-  entryTableRowsAtom,
-  type EntryTableRequest
-} from './entryTable.js'
+import {loadEntryTableRows} from './entryTable.js'
 import {createExplorerAtoms} from './explorer.js'
 import {
   formatOverviewSort,
-  pageAtom,
+  overviewSortAtom,
   parseOverviewSort,
-  routeAtom,
-  sortPageOverviewAtom
+  routeAtom
 } from './nav.js'
 import {
   columnField,
@@ -41,7 +38,6 @@ import {
   summarizeRows
 } from './overview.js'
 import {syncAtom} from './graph.js'
-import {getScope} from '#/core/Scope.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 import {Policy} from '#/core/Role.js'
 import {localUser} from '#/core/User.js'
@@ -384,7 +380,7 @@ test('explorers order by the column the editor sorts by', async () => {
   const titles = async () =>
     (await store.get(explorer.itemsReady(null))).map(item => item.title)
   expect(await titles()).toEqual(['Chair', 'Table', 'Lamp'])
-  store.set(explorer.sort, {column: 'price', direction: 'desc'})
+  store.set(explorer.requestedSort, {column: 'price', direction: 'desc'})
   expect(await titles()).toEqual(['Chair', 'Lamp', 'Table'])
   const page = await store.get(explorer.pageReady)
   expect(page.sort).toEqual({
@@ -394,9 +390,9 @@ test('explorers order by the column the editor sorts by', async () => {
     manual: false
   })
   expect(page.query.orderBy).toEqual({desc: Product.price})
-  store.set(explorer.sort, {column: 'brand', direction: 'asc'})
+  store.set(explorer.requestedSort, {column: 'brand', direction: 'asc'})
   expect(await titles()).toEqual(['Chair', 'Table', 'Lamp'])
-  store.set(explorer.sort, undefined)
+  store.set(explorer.requestedSort, undefined)
   expect((await store.get(explorer.pageReady)).sort.manual).toBe(true)
 })
 
@@ -411,50 +407,73 @@ test('overview sorts live in the url of the page', () => {
   expect(parseOverviewSort('-')).toBeUndefined()
   const store = createDashboardStore(config, new LocalDB(config))
   store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  const products = overviewSortAtom('main', 'products', null)
   store.set(routeAtom, {workspace: 'main', root: 'products'})
-  store.set(sortPageOverviewAtom, {column: 'price', direction: 'desc'})
+  store.set(products, {column: 'price', direction: 'desc'})
   expect(store.get(routeAtom).sort).toBe('-price')
-  expect(store.get(pageAtom).sort).toEqual({column: 'price', direction: 'desc'})
+  expect(store.get(products)).toEqual({column: 'price', direction: 'desc'})
   // Returning to the overview restores its sort
   store.set(routeAtom, {workspace: 'main', root: 'brands'})
   expect(store.get(routeAtom).sort).toBeUndefined()
   store.set(routeAtom, {workspace: 'main', root: 'products'})
   expect(store.get(routeAtom).sort).toBe('-price')
-  store.set(sortPageOverviewAtom, undefined)
+  // Also through a route that leaves out the default root
+  store.set(routeAtom, {workspace: 'main', root: 'brands'})
+  store.set(routeAtom, {workspace: 'main'})
+  expect(store.get(routeAtom).sort).toBe('-price')
+  store.set(products, undefined)
   store.set(routeAtom, {workspace: 'main', root: 'brands'})
   store.set(routeAtom, {workspace: 'main', root: 'products'})
   expect(store.get(routeAtom).sort).toBeUndefined()
+})
+
+test('an overview keeps its sort while the next page loads', () => {
+  const store = createDashboardStore(config, new LocalDB(config))
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  const products = overviewSortAtom('main', 'products', null)
+  store.set(routeAtom, {workspace: 'main', root: 'products', sort: '-price'})
+  const sort = store.get(products)
+  expect(sort).toEqual({column: 'price', direction: 'desc'})
+  // Showing the same list in another view keeps the sort as is
+  store.set(routeAtom, {
+    workspace: 'main',
+    root: 'products',
+    view: 'overview',
+    sort: '-price'
+  })
+  expect(store.get(products)).toBe(sort)
+  // The overview that is still shown while an entry opens keeps its order
+  store.set(routeAtom, {workspace: 'main', root: 'products', entry: 'chair'})
+  expect(store.get(products)).toBe(sort)
+  // Sorting it does not sort the page that replaces it
+  store.set(products, {column: 'title', direction: 'asc'})
+  expect(store.get(routeAtom)).toMatchObject({entry: 'chair', sort: undefined})
+  store.set(routeAtom, {workspace: 'main', root: 'products'})
+  expect(store.get(routeAtom).sort).toBe('title')
 })
 
 test('entry tables load their rows by query, sorted by a column', async () => {
   const {db, brand} = await catalogue()
   const store = createDashboardStore(config, db)
   await store.get(userPolicyReadyAtom)
-  const scope = getScope(config)
-  const overview = resolveOverview(config, rootParent('products'))
-  const price = overview.columns.find(column => column.key === 'price')!
-  const request = {
-    query: {
-      type: Product,
-      filter: {
-        brand: {has: {_entry: brand._id}}
-      } as EntryTableRequest['query']['filter'],
-      orderBy: overviewOrder(overview, {column: 'price', direction: 'asc'}),
-      status: 'preferDraft' as const
-    },
-    columns: [{key: 'price', select: price.select, formatted: true}]
+  const products = resolveOverview(config, rootParent('products'))
+  const price = products.columns.find(column => column.key === 'price')!
+  // A formatted column is queried instead of read from the entry data
+  const overview = {...products, columns: [{...price, format: String}]}
+  const query = {
+    type: Product,
+    filter: {brand: {has: {_entry: brand._id}}} as OpenFilter<EntryFields>,
+    orderBy: overviewOrder(overview, {column: 'price', direction: 'asc'}),
+    status: 'preferDraft' as const
   }
-  const key = entryTableKey(scope, request)
-  const rows = await store.get(entryTableRowsAtom(key))
+  const rows = await store.get(
+    atom(get => loadEntryTableRows(get, query, overview))
+  )
   expect(rows.map(row => [row.title, row.columns?.price])).toEqual([
     ['Table', 5],
     ['Lamp', 12],
     ['Chair', 20]
   ])
-  // Equal requests share their rows
-  expect(entryTableRowsAtom(entryTableKey(scope, request))).toBe(
-    entryTableRowsAtom(key)
-  )
 })
 
 test('updated and author columns only show when entries store audit data', () => {
@@ -702,7 +721,7 @@ test('explorer columns follow the children as the content changes', async () => 
   // One type, all published, no audit data: only the Note fields
   expect(await keys()).toEqual(['path', 'summary'])
   // Sorting keeps the columns
-  store.set(explorer.sort, {column: 'title', direction: 'desc'})
+  store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
   expect(await keys()).toEqual(['path', 'summary'])
   await db.create({
     type: Note,

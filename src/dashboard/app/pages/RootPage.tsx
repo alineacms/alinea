@@ -3,11 +3,8 @@ import type {RootData} from '#/core/Root.js'
 import {assert} from '#/core/util/Assert.js'
 import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {page, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
-import {
-  rootAtoms,
-  type RootAtoms,
-  type RootViewProps
-} from '#/dashboard/atoms/root.js'
+import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
+import type {RootViewProps} from '#/dashboard/cms/ViewProps.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ComponentType} from 'react'

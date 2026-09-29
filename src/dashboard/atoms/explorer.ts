@@ -320,7 +320,8 @@ function cardThumbnailId(
 export async function withLinkedEntries<Item extends ExplorerItemData>(
   get: Getter,
   overview: OverviewState,
-  items: Array<Item>
+  items: Array<Item>,
+  thumbnails = true
 ): Promise<Array<Item>> {
   const config = get(configAtom)
   const schema = config.schema
@@ -329,7 +330,7 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
     if (!type || type === MediaFile || type === MediaLibrary)
       return {thumbnail: undefined, links: []}
     return {
-      thumbnail: cardThumbnailId(get, overview, item),
+      thumbnail: thumbnails ? cardThumbnailId(get, overview, item) : undefined,
       links: columnLinkIds(config, overview, item)
     }
   })
@@ -515,7 +516,7 @@ export class ExplorerAtoms {
   sidebarExpandedKeys = atom(new Set<string>())
   #selectedResultMode: PrimitiveAtom<ExplorerResultMode>
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
-  /** The column the editor sorted by */
+  /** The column the editor sorted by, undefined for the default order */
   requestedSort: WritableAtom<
     OverviewSort | undefined,
     [OverviewSort | undefined],
@@ -824,10 +825,6 @@ export class ExplorerAtoms {
     get => get(this.#selectedView) ?? (get(this.isMedia) ? 'card' : 'row'),
     (_get, set, view: ExplorerView) => set(this.#selectedView, view)
   )
-  /** Sorts by a column, or returns to the default order */
-  sort = atom(null, (_get, set, sort: OverviewSort | undefined) => {
-    set(this.requestedSort, sort)
-  })
   /** The parent of the listed children, undefined for search results */
   #listedParent = atom(get => {
     const location = get(this.location)
@@ -933,30 +930,43 @@ export class ExplorerAtoms {
       return [...keys].map(dashboardEntryDragItem)
     }
   )
-  /** Entries can be dropped on other entries */
-  canDrop = atom(null, (_get, _set, target: DropTarget, types: DragTypes) => {
-    return target.position === 'on' && acceptsDashboardEntryDrag(types)
-  })
-  /** Moves the dragged entries of this explorer into the target entry */
-  moveInto = atom(
+  /** Entries can be dropped on a listed entry that holds children */
+  canDrop = atom(
     null,
-    async (
+    (
       get,
       _set,
-      ids: Iterable<string>,
       target: DropTarget,
+      types: DragTypes,
       locale: string | null
     ) => {
-      const entries = get(this.items(locale))
-      const policy = get(policyAtom)
+      if (target.position !== 'on' || !acceptsDashboardEntryDrag(types))
+        return false
+      const expandedKeys = get(this.expandedKeys)
+      const find = (
+        entries: Array<ExplorerEntry>
+      ): ExplorerEntry | undefined => {
+        for (const entry of entries) {
+          if (entry.id === String(target.key)) return entry
+          if (!expandedKeys.has(entry.id)) continue
+          const child = find(get(this.children(entry, locale)))
+          if (child) return child
+        }
+      }
+      const entry = find(get(this.items(locale)))
+      if (!entry) return false
+      const {data} = get(entry.data)
+      const type = get(configAtom).schema[get(data.item).type]
+      return Boolean(type && Type.isContainer(type))
+    }
+  )
+  /** Moves entries into the target entry */
+  moveInto = atom(
+    null,
+    async (get, _set, ids: Iterable<string>, target: DropTarget) => {
       const graph = get(graphAtom)
       for (const id of ids) {
-        const entry = entries.find(entry => entry.id === id)
-        if (!entry) continue
-        const {data} = get(entry.data)
-        if (!data) continue
-        const item = get(data.item)
-        policy.assert(Permission.Move, item)
+        if (id === String(target.key)) continue
         await graph.move({
           id,
           target: String(target.key),
@@ -966,7 +976,9 @@ export class ExplorerAtoms {
       }
     }
   )
-  /** Moves the dragged entries of this explorer before or after the target */
+  /**
+   * Moves entries before or after the target, in the order they are listed
+   */
   reorder = atom(
     null,
     async (
@@ -977,21 +989,22 @@ export class ExplorerAtoms {
       locale: string | null
     ) => {
       if (target.position === 'on') return
-      const entries = get(this.items(locale))
-      const policy = get(policyAtom)
       const graph = get(graphAtom)
-      for (const id of ids) {
-        const entry = entries.find(entry => entry.id === id)
-        if (!entry || String(target.key) === id) continue
-        const {data} = get(entry.data)
-        if (!data) continue
-        policy.assert(Permission.Reorder, get(data.item))
+      const listed = get(this.items(locale)).map(entry => entry.id)
+      const moving = [...ids]
+        .filter(id => id !== String(target.key))
+        .sort((a, b) => listed.indexOf(a) - listed.indexOf(b))
+      let {position, key} = target
+      for (const id of moving) {
         await graph.move({
           id,
-          target: String(target.key),
+          target: String(key),
           targetType: 'entry',
-          dropPosition: target.position
+          dropPosition: position
         })
+        // The next entry follows the one just moved
+        position = 'after'
+        key = id
       }
     }
   )

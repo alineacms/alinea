@@ -1,5 +1,4 @@
 import type {EntryStatus} from '#/core/Entry.js'
-import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Resource} from '#/core/Role.js'
 import {Root, type RootData, type RootI18n} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
@@ -13,6 +12,7 @@ import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
 import type {DragMoveEvent, DropItemsEvent, Key} from '#/components.js'
+import type {RootViewProps} from '../cms/ViewProps.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
@@ -24,7 +24,7 @@ import {
   type TreeEntrySummary
 } from './entry.js'
 import {shaAtom} from './graph.js'
-import {type Page, pageAtom, sortPageOverviewAtom} from './nav.js'
+import {overviewSortAtom, type Page, pageAtom} from './nav.js'
 import {policyAtom} from './user.js'
 import {
   dashboardEntryDragItem,
@@ -32,10 +32,6 @@ import {
   dashboardEntryDropIds,
   dispense
 } from './utils.js'
-
-export interface RootViewProps {
-  root: RootData
-}
 
 export interface RootTreeItem {
   id: string
@@ -301,28 +297,18 @@ export class RootAtoms {
   /**
    * The last page shown within this root. Explorers keep reading it after
    * navigating away, so the page that is still rendered while the next one
-   * loads does not reload in another locale or order.
+   * loads does not reload in another locale.
    */
   #lastPage = selectAtom<Page, Page | undefined>(pageAtom, (page, previous) =>
     page.workspace === this.workspace && page.root === this.key
       ? page
       : previous
   )
-  #explorerLocaleState = atom<string | null>(null)
+  /** Explorers list the locale of the page, which the route selects */
   #explorerLocale = atom(
-    get => {
-      if (get(this.data).isMediaRoot) return null
-      const page = get(this.#lastPage)
-      return page ? page.locale : get(this.#explorerLocaleState)
-    },
-    (get, set, update: SetStateAction<string | null>) => {
-      const page = get(this.#lastPage)
-      const current = page ? page.locale : get(this.#explorerLocaleState)
-      set(
-        this.#explorerLocaleState,
-        typeof update === 'function' ? update(current) : update
-      )
-    }
+    get =>
+      get(this.data).isMediaRoot ? null : (get(this.#lastPage)?.locale ?? null),
+    (_get, _set, _update: SetStateAction<string | null>) => {}
   )
 
   constructor(
@@ -413,16 +399,7 @@ export class RootAtoms {
       },
       {
         enableNavigation: true,
-        // The overview of the current page keeps its sort in the url
-        sortState: atom(
-          get => {
-            const page = get(this.#lastPage)
-            const current = page && (page.entry ?? null) === parentId
-            return current ? page.sort : undefined
-          },
-          (_get, set, sort: OverviewSort | undefined) =>
-            set(sortPageOverviewAtom, sort)
-        ),
+        sortState: overviewSortAtom(this.workspace, this.key, parentId),
         rootData: this.data,
         scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,

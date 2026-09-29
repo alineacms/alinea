@@ -17,7 +17,7 @@ export {
   useFieldSetter,
   useFieldValue,
   useSiblingFieldValue
-} from './dashboard/hooks.js'
+} from './dashboard/cms/hooks.js'
 
 // Entry and dashboard context
 export {
@@ -29,7 +29,7 @@ export {
   usePolicy,
   usePreviewMetadata,
   useUser
-} from './dashboard/hooks.js'
+} from './dashboard/cms/hooks.js'
 export type {Policy} from './core/Role.js'
 export type {PreviewMetadata} from './core/Preview.js'
 export type {User} from './core/User.js'

@@ -30,13 +30,14 @@ import type {Root} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {getScope} from '#/core/Scope.js'
 import {Type} from '#/core/Type.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
 import {
-  entryTableKey,
-  entryTableRowsAtom,
-  type EntryTableRequest
-} from '#/dashboard/atoms/entryTable.js'
-import type {ExplorerItemData} from '#/dashboard/atoms/explorer.js'
+  OverviewCell,
+  overviewCellText,
+  overviewTableColumn
+} from '../app/OverviewCell.js'
+import {configAtom} from '../atoms/core.js'
+import {loadEntryTableRows} from '../atoms/entryTable.js'
+import type {ExplorerItemData} from '../atoms/explorer.js'
 import {
   openEntryAtom,
   overviewOrder,
@@ -45,14 +46,9 @@ import {
   sortedColumn,
   titleColumn,
   summarizeRows
-} from '#/dashboard/atoms/overview.js'
-import {
-  OverviewCell,
-  overviewCellText,
-  overviewTableColumn
-} from '#/dashboard/app/OverviewCell.js'
-import {useLocale} from '#/dashboard/hooks.js'
-import {LucideFile} from '#/dashboard/icons.js'
+} from '../atoms/overview.js'
+import {useLocale} from '../hooks.js'
+import {LucideFile} from '../icons.js'
 import styler from '@alinea/styler'
 import {
   atom,
@@ -208,43 +204,39 @@ function EntryTableContent(props: EntryTableProps) {
     props.sort ?? configured?.sort ?? {asc: Entry.title},
     {mixed: types.length !== 1}
   )
-  const scope = getScope(config)
-  const request: EntryTableRequest = {
-    query: {
-      type: props.type,
-      filter: props.filter,
-      workspace: props.workspace,
-      root: props.root,
-      parentId: props.parentId,
-      preferredLocale: locale ?? undefined,
-      take: props.limit,
-      status: 'preferDraft'
-    },
+  const query = {
+    type: props.type,
+    filter: props.filter,
+    workspace: props.workspace,
+    root: props.root,
+    parentId: props.parentId,
+    preferredLocale: locale ?? undefined,
+    take: props.limit,
+    status: 'preferDraft' as const
+  }
+  // Everything the rows depend on: the query, the columns whose values are
+  // loaded and the orders the table can sort by
+  const key = getScope(config).stringify({
+    query,
     columns: overview.columns
       .filter(column => !column.builtin)
       .map(column => ({
         key: column.key,
         select: column.select,
         formatted: Boolean(column.format || column.view)
-      }))
-  }
-  const sorts = [overview.sort, ...overview.columns.map(c => c.sortBy)]
-  const key = scope.stringify({request, sorts})
+      })),
+    sorts: [overview.sort, ...overview.columns.map(c => c.sortBy)]
+  })
   const atoms = useMemo(() => {
     const requested = atom<OverviewSort | undefined>(undefined)
-    const ready = atom(get => {
-      const sort = get(requested)
-      return get(
-        entryTableRowsAtom(
-          entryTableKey(scope, {
-            ...request,
-            query: {...request.query, orderBy: overviewOrder(overview, sort)}
-          })
-        )
+    const ready = atom(get =>
+      loadEntryTableRows(
+        get,
+        {...query, orderBy: overviewOrder(overview, get(requested))},
+        overview
       )
-    })
+    )
     return {requested, ready, rows: unwrap(ready, previous => previous)}
-    // The key holds everything the request depends on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
   const requested = useAtomValueRaw(atoms.requested)
@@ -299,7 +291,7 @@ function EntryTableContent(props: EntryTableProps) {
         }
         onRowAction={key => {
           const row = rows.find(row => row.id === key)
-          void openEntry(String(key), row?.locale ?? locale)
+          startTransition(() => openEntry(String(key), row?.locale ?? locale))
         }}
         renderEmptyState={() => (
           <Empty>

@@ -15,7 +15,7 @@ import {
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/components.js'
-import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   IcBaselineContentCopy,

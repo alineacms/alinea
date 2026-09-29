@@ -195,33 +195,31 @@ export function ExplorerList({
   )
   const upload = useSetAtom(explorer.upload)
   const acceptsDrops = page.isMedia && page.canUpload && !locationIsPending
+  // Explorers of the dashboard move entries, pickers do not
+  const canMove = explorer.hasRowAction && !locationIsPending
   // Entries in their stored order can be reordered, sorting only changes
   // the view
-  const canReorder =
-    explorer.hasRowAction &&
-    page.sort.manual &&
-    page.resultMode === 'browse' &&
-    !locationIsPending
+  const canReorder = canMove && page.sort.manual && page.resultMode === 'browse'
   const dragDrop: DragDropProps = {
     getDragData,
-    acceptedDragTypes: acceptsDrops ? undefined : [],
     canDrop(target, types) {
-      if (target.position === 'on') return canDrop(target, types)
+      if (target.position === 'on')
+        return canMove && canDrop(target, types, page.locale)
       return canReorder && acceptsDashboardEntryDrag(types)
     },
     onReorder: canReorder
       ? event => reorder([...event.keys].map(String), event.target, page.locale)
       : undefined,
-    onMove(event) {
-      return moveInto([...event.keys].map(String), event.target, page.locale)
-    },
-    onDropItems(event) {
-      return moveInto(
-        dashboardEntryDropIds(event.items),
-        event.target,
-        page.locale
-      )
-    },
+    onMove: canMove
+      ? event => moveInto([...event.keys].map(String), event.target)
+      : undefined,
+    onDropItems: canMove
+      ? event => {
+          const ids = dashboardEntryDropIds(event.items)
+          if (event.target.position === 'on') return moveInto(ids, event.target)
+          return reorder(ids, event.target, page.locale)
+        }
+      : undefined,
     onDropFiles: acceptsDrops
       ? async event => {
           // Files can only be dropped on the list itself, not on an entry

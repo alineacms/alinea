@@ -51,7 +51,8 @@ import {
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
-import {EntryFields, NodeEditor} from './../EntryFields.js'
+import {EntryFields} from './../EntryFields.js'
+import {NodeEditor} from './../NodeEditor.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {entryDirtyActions} from './../EntryHeaderActions.js'
 import {

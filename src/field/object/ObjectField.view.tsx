@@ -1,5 +1,6 @@
 import {Field} from '#/components.js'
-import {EntryFields, NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {EntryFields} from '#/dashboard/app/EntryFields.js'
+import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   useFieldError,

@@ -96,3 +96,30 @@ test('moves media files from an overview into a sidebar media directory', async 
     explorer.getByRole('row', {name: 'Existing image', exact: true})
   ).toHaveCount(0)
 })
+
+test('only drops media files on media directories', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
+    routeEntry: dashboardLinkScenarioIds.mediaDirectory,
+    routeRoot: 'media',
+    title: 'Media directory'
+  })
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+
+  const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
+  const image = explorer.getByRole('row', {name: 'Existing image', exact: true})
+  const drag = explorer.getByRole('button', {name: 'Drag Existing image'})
+  // A file holds no children, dropping on it does nothing
+  await drag.dragTo(
+    explorer.getByRole('row', {name: 'Existing file', exact: true}),
+    {force: true}
+  )
+  await expect(image).toBeVisible()
+  await drag.dragTo(
+    explorer.getByRole('row', {name: 'Media directory', exact: true}),
+    {force: true}
+  )
+  await expect(image).toHaveCount(0)
+})

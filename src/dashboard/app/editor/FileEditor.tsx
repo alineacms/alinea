@@ -23,7 +23,7 @@ import {useAtomValueRaw} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
 import {thumbHashToDataURL} from 'thumbhash'
-import {NodeEditor} from '../EntryFields.js'
+import {NodeEditor} from '../NodeEditor.js'
 import css from './FileEditor.module.css'
 import {FilePreview, type FocusPoint} from './FilePreview.js'
 
