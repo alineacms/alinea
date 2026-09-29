@@ -16,11 +16,16 @@
     },
     {
       "_type": "ImageBlock",
-      "_id": "3Anq6LCiXl12kFfHgytQAYdl5cO",
+      "_id": "3Jzvk1y5L8yLODFHHlaxonaQXsj",
       "image": {
-        "_id": "3Anq6t99XZhoTpgwt43afQsUmfk",
+        "_id": "3Jzvk45qH3ma1MLKZjbNjSzvPpc",
         "_type": "image",
-        "_entry": "3Anq0ll2U8o6fYfLX2n5OknthUJ"
+        "_entry": "3JzvYDHEfnrRYoaiqZCSIJikZah"
+      },
+      "darkImage": {
+        "_id": "3JzvjzqAChrn4Xki19vQlUwuGzw",
+        "_type": "image",
+        "_entry": "3JzvYDzqOODXX1g4GNBJsFTWtm1"
       }
     },
     {
@@ -36,7 +41,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3AONylaqcfOBvfq6SBaJh9zwYEP",
-      "code": "app/\n├ page.tsx\n╰ layout.tsx\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\ncms.tsx",
+      "code": "app/\n├ (alinea)/api/cms/route.ts\n├ page.tsx\n├ layout.tsx\n╰ globals.css\n\nentries/\n╰ landing/\n  ├ LandingPage.tsx\n  ╰ LandingPage.schema.tsx\n\ncms.tsx",
       "fileName": "project structure",
       "language": "",
       "compact": false
@@ -58,7 +63,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Config.document` creates a type for entries that have a page of their own. It adds a `title` field, a `path` field and a Metadata tab with SEO fields to every document. Here we redefine `path` to make it read-only with an empty initial value, so a landing page created in the dashboard always resolves to `/`."
+          "text": "`Config.document` creates a type for entries that have a page of their own. Every document gets a `title` and a `path` field, an SEO tab with the metadata fields and a Details tab that shows who created and last changed the entry. Here we redefine `path` to make it read-only with an empty initial value, so a landing page created in the dashboard always resolves to `/`."
         }
       ]
     },
@@ -96,7 +101,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The same file exports `generateMetadata`, which reads the fields of the Metadata tab and falls back to the title."
+          "text": "The same file exports `generateMetadata`, which reads the fields of the SEO tab and falls back to the title."
         }
       ]
     },
@@ -245,9 +250,27 @@
     {
       "_type": "CodeBlock",
       "_id": "3AnwTjJc907Wdxzne9oVGaVjCny",
-      "code": "import {cms} from '@/cms'\n\nexport default function RootLayout({children}: {children: React.ReactNode}) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
+      "code": "import {cms} from '@/cms'\nimport './globals.css'\n\nexport default function RootLayout({children}: {children: React.ReactNode}) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
       "fileName": "app/layout.tsx",
       "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The layout also imports `globals.css`: a few base styles so the pages, and the preview next to the editor, are easy to read. Replace them with your own styles, nothing in the tutorial depends on them."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jzvk3sXOZo5KSUd9veoXEbtnFM",
+      "code": "/* A few base styles so the pages are easy to read, replace them with your own */\n\nbody {\n  max-width: 720px;\n  margin: 0 auto;\n  padding: 32px 24px;\n  font-family:\n    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,\n    sans-serif;\n  font-size: 16px;\n  line-height: 1.6;\n  color: #1f2328;\n  background: #fff;\n}\n\nh1,\nh2,\nh3 {\n  margin: 1.5em 0 0.5em;\n  line-height: 1.25;\n}\n\nh1 {\n  margin-top: 0.5em;\n  font-size: 2.25rem;\n}\n\np,\nul,\nol {\n  margin: 0 0 1em;\n}\n\na {\n  color: #2458d3;\n}\n\nimg {\n  max-width: 100%;\n  height: auto;\n}\n\nheader,\nfooter {\n  padding: 16px 0;\n  color: #59636e;\n}\n\nheader {\n  border-bottom: 1px solid #d1d9e0;\n}\n\nfooter {\n  margin-top: 48px;\n  border-top: 1px solid #d1d9e0;\n}",
+      "fileName": "app/globals.css",
+      "language": "css",
+      "compact": false
     },
     {
       "_type": "NoticeBlock",
@@ -302,7 +325,7 @@
                   "content": [
                     {
                       "_type": "text",
-                      "text": "Values you enter in the Metadata tab show up in the page's `<title>` and meta tags."
+                      "text": "Values you enter in the SEO tab show up in the page's `<title>` and meta tags."
                     }
                   ]
                 }
