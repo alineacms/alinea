@@ -43,7 +43,7 @@ export function MobileMenuProvider({children}: PropsWithChildren) {
   const state = useState(false)
   const [, setOpen] = state
   const pathname = usePathname()
-  useEffect(() => setOpen(false), [pathname])
+  useEffect(() => setOpen(false), [pathname, setOpen])
   return (
     <MobileMenuState.Provider value={state}>
       {children}
@@ -67,7 +67,7 @@ export function MobileMenu({children}: PropsWithChildren) {
       window.removeEventListener('keydown', handleEsc)
       if (previous instanceof HTMLElement) previous.focus()
     }
-  }, [open])
+  }, [open, setOpen])
   return (
     <div ref={ref} id="mobilemenu" className={styles.mobilemenu({open})}>
       {children}
@@ -176,15 +176,18 @@ function SearchModal({onClose}: SearchModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const searching = useDeferredValue(searchTerm)
   const isPending = searchTerm && searchTerm !== searching
-  // Close on esc, and return focus to where it was
+  // Close on esc
   useEffect(() => {
-    const previous = document.activeElement
     function handleEsc(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+  // Return focus to where it was once closed
+  useEffect(() => {
+    const previous = document.activeElement
     return () => {
-      window.removeEventListener('keydown', handleEsc)
       if (previous instanceof HTMLElement) previous.focus()
     }
   }, [])
