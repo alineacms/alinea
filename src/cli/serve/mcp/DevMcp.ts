@@ -43,7 +43,6 @@ export function createDevMcp(
     })
     const server = new McpServer({
       name: 'alinea',
-      title: 'Alinea CMS',
       version: pkg.version,
       instructions: mcpInstructions(rootDir),
       tools: createContentTools({config, graph, rootDir, user, createPreview})
