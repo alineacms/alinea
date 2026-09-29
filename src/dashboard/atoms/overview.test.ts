@@ -1,5 +1,7 @@
 import '#test/react.js'
 import {Entry} from '#/core/Entry.js'
+import type {EntryFields} from '#/core/EntryFields.js'
+import type {OpenFilter} from '#/core/Filter.js'
 import {getExpr, getRoot} from '#/core/Internal.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
@@ -16,11 +18,7 @@ import {
 } from '#test/overview.js'
 import {expect, test} from 'bun:test'
 import {atom} from 'jotai'
-import {
-  entryTableKey,
-  entryTableRowsAtom,
-  type EntryTableRequest
-} from './entryTable.js'
+import {loadEntryTableRows} from './entryTable.js'
 import {createExplorerAtoms} from './explorer.js'
 import {
   formatOverviewSort,
@@ -40,7 +38,6 @@ import {
   summarizeRows
 } from './overview.js'
 import {syncAtom} from './graph.js'
-import {getScope} from '#/core/Scope.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 import {Policy} from '#/core/Role.js'
 import {localUser} from '#/core/User.js'
@@ -459,31 +456,24 @@ test('entry tables load their rows by query, sorted by a column', async () => {
   const {db, brand} = await catalogue()
   const store = createDashboardStore(config, db)
   await store.get(userPolicyReadyAtom)
-  const scope = getScope(config)
-  const overview = resolveOverview(config, rootParent('products'))
-  const price = overview.columns.find(column => column.key === 'price')!
-  const request = {
-    query: {
-      type: Product,
-      filter: {
-        brand: {has: {_entry: brand._id}}
-      } as EntryTableRequest['query']['filter'],
-      orderBy: overviewOrder(overview, {column: 'price', direction: 'asc'}),
-      status: 'preferDraft' as const
-    },
-    columns: [{key: 'price', select: price.select, formatted: true}]
+  const products = resolveOverview(config, rootParent('products'))
+  const price = products.columns.find(column => column.key === 'price')!
+  // A formatted column is queried instead of read from the entry data
+  const overview = {...products, columns: [{...price, format: String}]}
+  const query = {
+    type: Product,
+    filter: {brand: {has: {_entry: brand._id}}} as OpenFilter<EntryFields>,
+    orderBy: overviewOrder(overview, {column: 'price', direction: 'asc'}),
+    status: 'preferDraft' as const
   }
-  const key = entryTableKey(scope, request)
-  const rows = await store.get(entryTableRowsAtom(key))
+  const rows = await store.get(
+    atom(get => loadEntryTableRows(get, query, overview))
+  )
   expect(rows.map(row => [row.title, row.columns?.price])).toEqual([
     ['Table', 5],
     ['Lamp', 12],
     ['Chair', 20]
   ])
-  // Equal requests share their rows
-  expect(entryTableRowsAtom(entryTableKey(scope, request))).toBe(
-    entryTableRowsAtom(key)
-  )
 })
 
 test('updated and author columns only show when entries store audit data', () => {

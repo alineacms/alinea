@@ -320,7 +320,8 @@ function cardThumbnailId(
 export async function withLinkedEntries<Item extends ExplorerItemData>(
   get: Getter,
   overview: OverviewState,
-  items: Array<Item>
+  items: Array<Item>,
+  thumbnails = true
 ): Promise<Array<Item>> {
   const config = get(configAtom)
   const schema = config.schema
@@ -329,7 +330,7 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
     if (!type || type === MediaFile || type === MediaLibrary)
       return {thumbnail: undefined, links: []}
     return {
-      thumbnail: cardThumbnailId(get, overview, item),
+      thumbnail: thumbnails ? cardThumbnailId(get, overview, item) : undefined,
       links: columnLinkIds(config, overview, item)
     }
   })
