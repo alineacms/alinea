@@ -25,13 +25,25 @@ function startTree(parentOptions?: {wrap: boolean}) {
         stdio: 'ignore'
       })
     : spawn(process.execPath, ['-e', forwarder], {env, stdio: 'ignore'})
-  const pids = waitFor(() => {
-    const lines = fs.existsSync(pidFile)
-      ? fs.readFileSync(pidFile, 'utf8').trim().split('\n')
+  const readPids = () =>
+    fs.existsSync(pidFile)
+      ? fs.readFileSync(pidFile, 'utf8').trim().split('\n').map(Number)
       : []
-    return lines.length === 3 ? lines.map(Number) : undefined
+  const pids = waitFor(() => {
+    const written = readPids()
+    return written.length === 3 ? written : undefined
   })
-  return {child, pids}
+  // Kills whatever is left of the tree and removes the temporary directory
+  function cleanup() {
+    child.kill('SIGKILL')
+    for (const pid of readPids()) {
+      try {
+        if (pid) process.kill(pid, 'SIGKILL')
+      } catch {}
+    }
+    fs.rmSync(dir, {recursive: true, force: true})
+  }
+  return {child, pids, cleanup}
 }
 
 function exited(child: ChildProcess): Promise<number | null> {
@@ -63,18 +75,26 @@ async function waitFor<T>(check: () => T | undefined, timeout = 5000) {
 const treeTest = process.platform === 'win32' ? test.skip : test
 
 treeTest('SIGTERM stops the whole tree', async () => {
-  const {child, pids} = startTree()
-  const tree = await pids
-  child.kill('SIGTERM')
-  await exited(child)
-  await waitFor(() => !tree.some(isAlive), 3000)
+  const {child, pids, cleanup} = startTree()
+  try {
+    const tree = await pids
+    child.kill('SIGTERM')
+    await exited(child)
+    await waitFor(() => !tree.some(isAlive), 3000)
+  } finally {
+    cleanup()
+  }
 })
 
 treeTest('stops the tree when the parent is killed', async () => {
-  const {child, pids} = startTree({wrap: true})
-  const tree = await pids
-  child.kill('SIGKILL')
-  await waitFor(() => !tree.some(isAlive), 5000)
+  const {child, pids, cleanup} = startTree({wrap: true})
+  try {
+    const tree = await pids
+    child.kill('SIGKILL')
+    await waitFor(() => !tree.some(isAlive), 5000)
+  } finally {
+    cleanup()
+  }
 })
 
 test('exits with the exit code of the command', async () => {
