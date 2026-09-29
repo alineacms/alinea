@@ -19,6 +19,7 @@ import {createUniqueAnchor, usedAnchors} from '#/core/util/Anchors.js'
 import {slugify} from '#/core/util/Slugs.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/core'
+import {useEditorState} from '@tiptap/react'
 import {useMemo, type ReactNode} from 'react'
 import type {
   PickRichTextImageFunc,
@@ -65,6 +66,9 @@ export function RichTextToolbar({
   toolbar,
   onFocusChange
 }: RichTextToolbarProps) {
+  // Active states read the editor while rendering, re-render when its
+  // selection or content changes so they follow the caret
+  useEditorState({editor, selector: ({transactionNumber}) => transactionNumber})
   const config = useMemo(
     () => toolbar ?? defaultToolbar({enableImages, enableTables}),
     [enableImages, enableTables, toolbar]

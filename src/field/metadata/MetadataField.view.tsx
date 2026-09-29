@@ -1,4 +1,4 @@
-import {Button, Field, Surface, SurfaceContent} from '#/components.js'
+import {Button, Field, Surface, SurfaceContent, Text} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
 import {Section} from '#/core/Section.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
@@ -124,10 +124,11 @@ interface MetadataPreviewProps {
 function MetadataPreview({metadata, origin}: MetadataPreviewProps) {
   if (!metadata)
     return (
-      <Field
-        label="Open preview mode to display a metadata preview"
-        style={{marginTop: '32px'}}
-      />
+      <Field label="Metadata previews" style={{marginTop: '32px'}}>
+        <Text as="p" color="muted">
+          Open preview mode to display a metadata preview
+        </Text>
+      </Field>
     )
   return (
     <Field label="Metadata previews" style={{marginTop: '32px'}}>
