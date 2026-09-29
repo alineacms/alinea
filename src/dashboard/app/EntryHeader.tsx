@@ -52,7 +52,10 @@ import {
   entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
-import {EntryValidationModal} from './EntryValidationModal.js'
+import {
+  type EntryValidationFailure,
+  EntryValidationModal
+} from './EntryValidationModal.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 import {
   DashboardModal,
@@ -128,11 +131,6 @@ function entryUrlConflictInfo(
       root: info.root
     }
   }
-}
-
-interface EntryValidationFailure {
-  errors?: Array<FieldValidationError>
-  message?: string
 }
 
 function entryValidationFailure(
@@ -534,8 +532,7 @@ export function EntryHeader({
         onClose={() => setUrlConflict(undefined)}
       />
       <EntryValidationModal
-        errors={invalid?.errors}
-        message={invalid?.message}
+        failure={invalid}
         onClose={() => setInvalid(undefined)}
       />
     </PageHeader>
