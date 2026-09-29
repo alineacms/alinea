@@ -62,6 +62,7 @@
   "bin": "./dist/cli.js",
   "files": [
     "dist",
+    "docs",
     "llms-full.txt"
   ],
   "scripts": {
@@ -71,10 +72,11 @@
     "dev": "run-p dev:run",
     "dev:check": "tsc -w",
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
+    "docs": "bun apps/web/scripts/docs.ts",
     "format": "oxfmt --write src test apps/web/src",
     "format:check": "oxfmt --check src test apps/web/src",
     "lint": "oxlint",
-    "prepublishOnly": "bun run build",
+    "prepublishOnly": "bun run build && bun run docs",
     "screenshots": "bun apps/web/scripts/screenshots.ts",
     "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "bunx --bun ladle serve",

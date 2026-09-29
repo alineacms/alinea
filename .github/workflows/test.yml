@@ -45,6 +45,7 @@ jobs:
         run: |
           bun bump 0.0.0-$SHA
           bun run build
+          bun run docs
           bun run pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
         run: bun bump ${GITHUB_REF#refs/tags/v}

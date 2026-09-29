@@ -29,10 +29,6 @@ const SERVER_TARGET = 'server'
 const CSS_ENTRY = 'css-entry'
 const JS_ENTRY = 'js-entry'
 
-// The v2 docs live on v2.alineacms.com until 2.0 replaces the main site
-const llmsHandbookUrl = 'https://v2.alineacms.com/llms-full.txt'
-const llmsHandbookFile = 'llms-full.txt'
-
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   // The builtin list depends on the runtime running this build; newer
@@ -628,22 +624,6 @@ async function build({
   test: boolean
   report: boolean
 }): Promise<void> {
-  if (!watch && !fs.existsSync(llmsHandbookFile)) {
-    try {
-      const response = await fetch(llmsHandbookUrl)
-      if (!response.ok)
-        throw new Error(`${response.status} ${response.statusText}`)
-      fs.writeFileSync(llmsHandbookFile, await response.text())
-      console.info(`Refreshed ${llmsHandbookFile} from ${llmsHandbookUrl}`)
-    } catch (error) {
-      const message = `Failed to refresh ${llmsHandbookFile}: ${error}`
-      // Only the published package needs it, other builds (CI, the website)
-      // should not depend on the website being reachable
-      if (process.env.npm_lifecycle_event === 'prepublishOnly')
-        throw new Error(message)
-      console.warn(message)
-    }
-  }
   const plugins = [
     cssEntry,
     cssModulesPlugin,
