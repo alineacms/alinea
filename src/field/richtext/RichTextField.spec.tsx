@@ -437,7 +437,7 @@ test('edits nested rich text inside an embedded block', async ({
 
   const block = page.locator('[data-richtext-block="true"]')
   await expect(block).toHaveCSS('border-radius', '8px')
-  await expect(block).toHaveCSS('margin', '14px 0px')
+  await expect(block).toHaveCSS('margin', '16px 0px')
   await expect(block.locator('[data-richtext-block-editor="true"]')).toHaveCSS(
     'padding',
     '8px 16px 16px'
