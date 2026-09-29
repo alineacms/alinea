@@ -38,8 +38,8 @@ Alinea requires Node.js 24 or higher, React 19 and the Next.js App Router.
 In a Next.js project:
 
 ```sh
-npm install alinea
-npx alinea init
+npm install alinea@preview
+npx alinea@preview init
 ```
 
 `alinea init` creates `cms.ts` with your schema and settings, the API route

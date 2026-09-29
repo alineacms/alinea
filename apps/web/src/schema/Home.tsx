@@ -30,8 +30,7 @@ export const Home = Config.document('Home', {
                 }
               }),
               command: Field.text('Command', {
-                initialValue: 'npx alinea init',
-                help: 'Install command shown next to the buttons'
+                help: 'Install command shown next to the buttons, defaults to the init command'
               }),
               prompt: Field.text('Agent prompt', {
                 help: 'One-line prompt visitors copy into their coding agent, shown below the buttons'

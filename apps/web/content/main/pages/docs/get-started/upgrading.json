@@ -51,7 +51,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Update the package: `npm install alinea@latest` (or `pnpm add`, `yarn add`, `bun add`)."
+                  "text": "Update the package: `npm install alinea@preview` (or `pnpm add`, `yarn add`, `bun add`)."
                 }
               ]
             }

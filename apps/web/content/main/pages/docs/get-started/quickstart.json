@@ -124,7 +124,7 @@
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
-          "code": "npm install alinea"
+          "code": "npm install alinea@preview"
         },
         {
           "_id": "2YcqyQsBjtLQbXB3v9l7AtdcH3U",
@@ -132,7 +132,7 @@
           "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
-          "code": "yarn add alinea"
+          "code": "yarn add alinea@preview"
         },
         {
           "_id": "2YcqzHpnfHK43fhtMEY6r7Wrpf1",
@@ -140,7 +140,7 @@
           "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
-          "code": "pnpm add alinea"
+          "code": "pnpm add alinea@preview"
         },
         {
           "_id": "2nvByMUmxNTiXafJjyx1NimzTVv",
@@ -148,7 +148,7 @@
           "_type": "Variant",
           "name": "bun",
           "language": "shellscript",
-          "code": "bun add alinea"
+          "code": "bun add alinea@preview"
         }
       ]
     },
@@ -199,7 +199,7 @@
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
-          "code": "npx alinea init"
+          "code": "npx alinea@preview init"
         },
         {
           "_id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
