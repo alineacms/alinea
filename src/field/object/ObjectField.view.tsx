@@ -7,10 +7,6 @@ import {
   useFieldOptions
 } from '#/dashboard/hooks.js'
 import {ObjectField} from '#/field/object.js'
-import {styler} from '@alinea/styler'
-import css from './ObjectFieldView.module.css'
-
-const styles = styler(css)
 
 export interface ObjectFieldViewProps {
   field: ObjectField<object>
@@ -23,12 +19,14 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   return (
     <Field
       label={options.inline ? undefined : options.label}
+      description={options.help}
+      required={options.required}
+      error={error}
       shared={options.shared}
     >
       <NodeEditor node={node as ReactiveNode<object>} type={options.fields}>
         <EntryFields />
       </NodeEditor>
-      {error && <div className={styles.ObjectFieldView.error()}>{error}</div>}
     </Field>
   )
 }
