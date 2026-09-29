@@ -21,6 +21,7 @@ import {SidebarLayout} from './SidebarLayout.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 import {CreateEntry} from './modals/CreateEntry.js'
+import {PendingUploadsDialog} from './PendingUploadsDialog.js'
 import {DashboardModal} from './ui/DashboardModal.js'
 import css from './DashboardLayout.module.css'
 
@@ -66,6 +67,7 @@ export function DashboardLayout({
           </SidebarLayout>
         </AppShellContent>
       </AppShell>
+      <PendingUploadsDialog />
     </DashboardScope>
   )
 }

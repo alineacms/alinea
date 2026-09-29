@@ -1153,10 +1153,12 @@ test('uploads images and files from their picker modals', async ({
   const imageChooser = app.page.waitForEvent('filechooser')
   await imagePicker.getByRole('button', {name: 'Upload media'}).click()
   await (await imageChooser).setFiles('test/fixtures/example.jpg')
-  await imagePicker
-    .getByRole('checkbox', {name: 'Select example'})
-    .locator('xpath=ancestor::label')
-    .click()
+  const uploadDialog = app.page.getByRole('dialog', {name: 'Upload files'})
+  await uploadDialog.getByRole('button', {name: 'Upload 1 file'}).click()
+  // Uploaded files are selected in the picker
+  await expect(
+    imagePicker.getByRole('checkbox', {name: 'Select example'})
+  ).toBeChecked()
   await imagePicker.getByRole('button', {name: 'Select'}).click()
   await expect(imageField).toContainText('example')
 
@@ -1171,10 +1173,10 @@ test('uploads images and files from their picker modals', async ({
     mimeType: 'application/pdf',
     buffer: Buffer.from('%PDF-1.4 fixture')
   })
-  await filePicker
-    .getByRole('checkbox', {name: 'Select uploaded'})
-    .locator('xpath=ancestor::label')
-    .click()
+  await uploadDialog.getByRole('button', {name: 'Upload 1 file'}).click()
+  await expect(
+    filePicker.getByRole('checkbox', {name: 'Select uploaded'})
+  ).toBeChecked()
   await filePicker.getByRole('button', {name: 'Select'}).click()
   await expect(fileField).toContainText('uploaded')
 })

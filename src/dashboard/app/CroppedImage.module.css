@@ -1,0 +1,19 @@
+.CroppedImage {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.CroppedImage-frame {
+  position: absolute;
+  display: block;
+}
+
+.CroppedImage-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  max-width: none;
+  user-select: none;
+}

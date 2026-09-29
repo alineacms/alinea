@@ -40,7 +40,7 @@ import {
 } from './overview.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
-import {uploadFilesAtom} from './upload.js'
+import {requestUploadsAtom} from './upload.js'
 import {policyAtom} from './user.js'
 import {
   acceptsDashboardEntryDrag,
@@ -920,13 +920,27 @@ export class ExplorerAtoms {
       if (treeReady) await get(treeReady)
       const resource = get(this.#uploadResource(location, locale))
       get(policyAtom).assert(Permission.Upload, resource)
-      await set(uploadFilesAtom, {
+      const ids = await set(requestUploadsAtom, {
         files,
-        workspace: location.workspace,
-        root: location.root,
-        parentId: location.parentId,
-        parents: resource.parents
+        destination: {
+          workspace: location.workspace,
+          root: location.root,
+          parentId: location.parentId,
+          parents: resource.parents
+        }
       })
+      // Pickers select the files that were uploaded or picked instead
+      if (ids.length === 0 || !this.#options.onConfirm) return
+      if (this.selectionMode === 'single') {
+        set(this.selection, new Set([ids[0]]))
+        return
+      }
+      if (this.selectionMode !== 'multiple') return
+      const selected = get(this.selection)
+      set(
+        this.selection,
+        new Set([...(selected === 'all' ? [] : selected), ...ids])
+      )
     }
   )
   getDragData = atom(

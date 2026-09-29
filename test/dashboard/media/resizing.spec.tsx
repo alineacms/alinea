@@ -34,6 +34,10 @@ test('scales down large images in the browser before uploading', async ({
     mimeType: 'image/jpeg',
     buffer: photo
   })
+  await app.page
+    .getByRole('dialog', {name: 'Upload files'})
+    .getByRole('button', {name: 'Replace file'})
+    .click()
 
   await expect.poll(() => uploaded?.byteLength ?? 0).toBeGreaterThan(0)
   expect(uploaded!.byteLength).toBeLessThan(photo.byteLength)

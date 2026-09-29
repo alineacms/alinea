@@ -1,0 +1,140 @@
+.ImageEditor {
+  --alinea-image-editor-height: min(56vh, 520px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ImageEditor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ImageEditor-aspect {
+  width: 180px;
+}
+
+.ImageEditor-size {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.ImageEditor-canvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--alinea-image-editor-height);
+  padding: 16px;
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-bg-muted);
+  box-shadow: inset 0 0 0 1px var(--alinea-border);
+}
+
+.ImageEditor-stage {
+  position: relative;
+  max-height: 100%;
+  touch-action: none;
+}
+
+.ImageEditor-image {
+  width: 100%;
+}
+
+.ImageEditor-shade {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Dims the image outside of the crop */
+.ImageEditor-shade-hole {
+  position: absolute;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 52%);
+}
+
+.ImageEditor-crop {
+  position: absolute;
+  box-sizing: border-box;
+  cursor: move;
+  outline: 1px solid white;
+  touch-action: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+  }
+}
+
+.ImageEditor-crop-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 45%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 45%) 1px, transparent 1px);
+  background-size: calc(100% / 3) calc(100% / 3);
+  background-position: calc(100% / 3) calc(100% / 3);
+  mask-image: linear-gradient(black, black);
+}
+
+.ImageEditor-crop-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--alinea-primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
+  touch-action: none;
+
+  &.is-nw {
+    top: 0;
+    left: 0;
+    cursor: nwse-resize;
+  }
+  &.is-ne {
+    top: 0;
+    left: 100%;
+    cursor: nesw-resize;
+  }
+  &.is-se {
+    top: 100%;
+    left: 100%;
+    cursor: nwse-resize;
+  }
+  &.is-sw {
+    top: 100%;
+    left: 0;
+    cursor: nesw-resize;
+  }
+  &.is-n {
+    top: 0;
+    left: 50%;
+    cursor: ns-resize;
+  }
+  &.is-e {
+    top: 50%;
+    left: 100%;
+    cursor: ew-resize;
+  }
+  &.is-s {
+    top: 100%;
+    left: 50%;
+    cursor: ns-resize;
+  }
+  &.is-w {
+    top: 50%;
+    left: 0;
+    cursor: ew-resize;
+  }
+}
+
+.ImageEditor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
