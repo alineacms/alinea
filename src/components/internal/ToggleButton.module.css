@@ -51,7 +51,7 @@
   }
 
   /* The outline toggle group draws the track, the pressed item is raised */
-  &[data-slot='toggle-group-item'][data-variant='outline'] {
+  &.is-grouped[data-variant='outline'] {
     border-color: transparent;
 
     @media (hover: hover) {
