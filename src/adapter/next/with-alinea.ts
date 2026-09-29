@@ -140,16 +140,15 @@ function createRewrites(
     }
     return {
       ...rewrites,
-      beforeFiles: [
-        ...rewrites.beforeFiles,
+      afterFiles: [
+        ...rewrites.afterFiles,
         {
+          // The build links media files on disk into the public dir, so only
+          // files synced after it reach the handler.
           source: `${adminPath}/file/:file*`,
           // Next's internal image optimizer does not follow redirects.
           destination: `${handlerUrl}?file=:file*&delivery=proxy`
-        }
-      ],
-      afterFiles: [
-        ...rewrites.afterFiles,
+        },
         {
           source: adminPath,
           destination: `${adminPath}.html`

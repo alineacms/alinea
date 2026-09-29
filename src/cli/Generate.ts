@@ -14,6 +14,7 @@ import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
 import {generatedPaths} from './generate/GeneratedPaths.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
+import {linkMediaFiles} from './generate/LinkMediaFiles.js'
 import {dirname} from './util/Dirname.js'
 import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
@@ -142,7 +143,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const write = async (recordCount: number) => {
         let dbSize = 0
         if (dashboard)
-          [, dbSize] = await Promise.all([dashboard, current.finalize()])
+          [, dbSize] = await Promise.all([
+            dashboard,
+            current.finalize(),
+            linkMediaFiles(rootDir, current)
+          ])
         let message = `${cmd} ${location} in `
         const duration = performance.now() - now
         if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`

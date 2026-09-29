@@ -37,13 +37,12 @@ test('routes files through the handler and keeps the default local images', asyn
   })
   const rewrites = await config.rewrites!()
   test.equal(rewrites, {
-    beforeFiles: [
+    beforeFiles: [],
+    afterFiles: [
       {
         source: '/cms/file/:file*',
         destination: '/api/alinea?file=:file*&delivery=proxy'
-      }
-    ],
-    afterFiles: [
+      },
       {
         source: '/cms',
         destination: '/cms.html'
