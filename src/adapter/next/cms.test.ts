@@ -12,6 +12,9 @@ import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import * as iso from '@alinea/iso'
 import {afterEach, beforeEach, expect, mock, test} from 'bun:test'
 import PLazy from 'p-lazy'
+import {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 
 const phase = process.env.NEXT_PHASE
 const runtime = process.env.NEXT_RUNTIME
@@ -271,4 +274,32 @@ test('serves the bundled database when the handler cannot be synced', async () =
   const status = await cms.status()
   expect(status.sha).toBe('bundled-content-hash')
   expect(status.syncedAt).toBeUndefined()
+})
+
+test('answers development queries from the dev server at every revision', async () => {
+  nextMocks.draftMode = false
+  nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
+  const database = process.env.ALINEA_GENERATED_DATABASE
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-'))
+  process.env.ALINEA_GENERATED_DATABASE = join(dir, 'alinea.db')
+  let title = 'First'
+  handlerFetch = mock(async input => {
+    expect(new URL(String(input)).origin).toBe('http://localhost:4500')
+    return Response.json([{title}])
+  })
+  try {
+    await writeFile(process.env.ALINEA_GENERATED_DATABASE, 'first')
+    const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+    expect(await cms.resolve({})).toEqual([{title: 'First'}])
+    title = 'Second'
+    await writeFile(process.env.ALINEA_GENERATED_DATABASE, 'second revision')
+    expect(await cms.resolve({})).toEqual([{title: 'Second'}])
+    expect(handlerFetch).toHaveBeenCalledTimes(2)
+  } finally {
+    nextMocks.devHandlerUrl = undefined
+    handlerFetch = defaultFetch
+    if (database === undefined) delete process.env.ALINEA_GENERATED_DATABASE
+    else process.env.ALINEA_GENERATED_DATABASE = database
+    await rm(dir, {recursive: true, force: true})
+  }
 })
