@@ -335,25 +335,28 @@ export default function Playground({declarations, exported}: PlaygroundProps) {
               />
             )}
 
-            {view !== 'source' && (
+            {view !== 'source' && !canRun && (
+              <div className={styles.root.previewPane()}>
+                <div className={styles.root.consent()}>
+                  <p>
+                    This link contains code that runs in your browser. Review it
+                    in the editor before you run it.
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.root.consent.button()}
+                    onClick={() => setCanRun(true)}
+                  >
+                    Run code
+                  </button>
+                </div>
+              </div>
+            )}
+            {view !== 'source' && canRun && (
               <Suspense fallback={<Loader absolute />}>
                 <PreviewProvider demo={demo}>
                   <div className={styles.root.previewPane()}>
-                    {!canRun ? (
-                      <div className={styles.root.consent()}>
-                        <p>
-                          This link contains code that runs in your browser.
-                          Review it in the editor before you run it.
-                        </p>
-                        <button
-                          type="button"
-                          className={styles.root.consent.button()}
-                          onClick={() => setCanRun(true)}
-                        >
-                          Run code
-                        </button>
-                      </div>
-                    ) : state.error ? (
+                    {state.error ? (
                       <PreviewError error={state.error} />
                     ) : (
                       <PreviewBoundary result={state.result}>
