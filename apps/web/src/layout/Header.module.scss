@@ -337,6 +337,12 @@
       color: var(--web-foreground);
       background: var(--web-highlight);
     }
+
+    &-link {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
   }
 }
 

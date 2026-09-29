@@ -3,7 +3,7 @@
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
 import {isDocsPath} from '@/utils/docs'
 import styler from '@alinea/styler'
-import {HStack, VStack} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
 import {IcRoundSearch} from '@/icons'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
@@ -89,12 +89,17 @@ export function MobileMenuButton(
   )
 }
 
-const resultsCache = new Map<string, any>()
+const resultsCache = new Map<string, Promise<Array<SearchResult>>>()
 function searchResults(searchTerm: string): Promise<Array<SearchResult>> {
-  if (resultsCache.has(searchTerm)) return resultsCache.get(searchTerm)
-  const res = fetch(`/api/search?query=${searchTerm}`)
-    .then(res => res.json())
-    .catch(() => [])
+  const cached = resultsCache.get(searchTerm)
+  if (cached) return cached
+  const res = fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`)
+    .then(res => (res.ok ? res.json() : Promise.reject(res)))
+    .catch(() => {
+      // Try again next time
+      resultsCache.delete(searchTerm)
+      return []
+    })
   resultsCache.set(searchTerm, res)
   return res
 }
@@ -146,19 +151,13 @@ const SearchResults = memo(function SearchResults({
     return <p className={styles.results()}>No results</p>
   return (
     <ul ref={ref} className={styles.results()}>
-      {results.map((result: SearchResult) => {
+      {results.map(result => {
         return (
           <li key={result.url} className={styles.results.row()}>
-            <Link href={result.url}>
-              <VStack gap={6}>
-                <header>
-                  {result.parents && (
-                    <Breadcrumbs flat parents={result.parents} />
-                  )}
-                  <h3>{result.title}</h3>
-                </header>
-                <Snippet snippet={result.snippet} />
-              </VStack>
+            <Breadcrumbs flat parents={result.parents} />
+            <Link href={result.url} className={styles.results.row.link()}>
+              <h3>{result.title}</h3>
+              <Snippet snippet={result.snippet} />
             </Link>
           </li>
         )
@@ -175,16 +174,25 @@ function SearchModal({onClose}: SearchModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const searching = useDeferredValue(searchTerm)
   const isPending = searchTerm && searchTerm !== searching
-  // Close on esc
+  // Close on esc, and return focus to where it was
   useEffect(() => {
+    const previous = document.activeElement
     function handleEsc(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleEsc)
-    return () => window.removeEventListener('keydown', handleEsc)
-  }, [onClose])
+    return () => {
+      window.removeEventListener('keydown', handleEsc)
+      if (previous instanceof HTMLElement) previous.focus()
+    }
+  }, [])
   return createPortal(
-    <div className={styles.searchmodal()}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search"
+      className={styles.searchmodal()}
+    >
       <div className={styles.searchmodal.backdrop()} onClick={onClose} />
       <div className={styles.searchmodal.container()}>
         <HStack
