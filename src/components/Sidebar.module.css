@@ -61,14 +61,14 @@
   white-space: nowrap;
 
   .SidebarGroup:has(> .SidebarGroupAction) > & {
-    padding-right: 48px;
+    padding-inline-end: 48px;
   }
 }
 
 .SidebarGroupAction {
   position: absolute;
   top: 8px;
-  right: 8px;
+  inset-inline-end: 8px;
   display: flex;
   align-items: center;
   height: 32px;

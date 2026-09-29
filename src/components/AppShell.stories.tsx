@@ -75,8 +75,8 @@ export function Example() {
                   <Text weight="semibold">Main site</Text>
                 </SidebarHeader>
                 <SidebarContent scroll>
-                  <SidebarGroup aria-labelledby="root-label">
-                    <SidebarGroupLabel id="root-label">
+                  <SidebarGroup>
+                    <SidebarGroupLabel>
                       {label}
                     </SidebarGroupLabel>
                     <Tree aria-label={label} defaultExpandedKeys={['blog']}>
