@@ -12,8 +12,9 @@ const styles = styler(css)
 
 export interface ProductShotProps extends Infer<typeof ProductShotSchema> {}
 
-// The screenshot is shown at most this wide, see ProductShot.module.scss
-const imageSizes = '(max-width: 439px) 640px, (max-width: 1023px) 880px, 1120px'
+// The screenshot is captured at twice the 1120px it is shown at, see
+// scripts/screenshots.ts, and served as is: resizing and re-encoding it
+// through the image optimizer blurs the interface text
 const imageStyle = {display: 'block', width: '100%', height: 'auto'}
 
 export function ProductShot({image, darkImage}: ProductShotProps) {
@@ -35,14 +36,14 @@ export function ProductShot({image, darkImage}: ProductShotProps) {
           <div className={styles.root.frame()}>
             <Image
               {...image}
-              sizes={imageSizes}
+              unoptimized
               style={imageStyle}
               className={styles.root.image({light: hasDarkImage})}
             />
             {hasDarkImage && (
               <Image
                 {...darkImage}
-                sizes={imageSizes}
+                unoptimized
                 style={imageStyle}
                 className={styles.root.image('dark')}
               />

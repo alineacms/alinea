@@ -52,6 +52,11 @@ interface Shot {
   /** Alt text of the published media entry */
   alt: string
   viewport?: {width: number; height: number}
+  /** Width in CSS pixels the site shows the capture at, when it is shown at
+   * one fixed size. The capture is then rendered at exactly twice that width,
+   * so it stays sharp on high density screens without being resampled.
+   * Defaults to twice the viewport width */
+  displayWidth?: number
   /** Capture only this region of the viewport, in CSS pixels */
   clip?: Clip
   /** Earlier name of the shot, its media entry is reused when renamed */
@@ -91,6 +96,8 @@ const shots: Array<Shot> = [
     name: 'dashboard-product',
     alt: 'The Alinea dashboard editing a product, with a live preview of the page beside the form',
     hash: `/entry/demo/pages:en/${ferris}`,
+    // The homepage shows it at most 1120px wide, see ProductShot.module.scss
+    displayWidth: 1120,
     ready: page => page.getByRole('tab', {name: 'Preview'}),
     async prepare(page) {
       await openTab(page, 'Preview')
@@ -296,7 +303,7 @@ async function calm(page: Page, keepFocus: boolean) {
 /** Encodes a PNG as WebP in the browser, lowering quality to fit maxBytes */
 async function toWebp(encoder: Page, png: Buffer) {
   const dataUrl = `data:image/png;base64,${png.toString('base64')}`
-  for (const quality of [0.9, 0.85, 0.8, 0.75, 0.7, 0.6]) {
+  for (const quality of [0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.6]) {
     const webp = await encoder.evaluate(
       async ({dataUrl, quality}) => {
         const image = new Image()
@@ -327,7 +334,10 @@ async function capture(
   // resets the demo session to the committed content
   const context: BrowserContext = await browser.newContext({
     viewport,
-    deviceScaleFactor: 2,
+    // Render at twice the display size rather than scaling the capture
+    deviceScaleFactor: shot.displayWidth
+      ? (2 * shot.displayWidth) / viewport.width
+      : 2,
     reducedMotion: 'reduce',
     colorScheme: scheme,
     locale: 'en-US',
