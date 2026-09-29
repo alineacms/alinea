@@ -85,8 +85,9 @@ export function DialogContent({
 }: DialogContentProps) {
   return (
     <ModalOverlay
+      data-slot="dialog-overlay"
       isDismissable={dismissable}
-      className={styles.DialogOverlay()}
+      className={styles.DialogContent.overlay()}
     >
       <Modal
         data-slot="dialog-content"
