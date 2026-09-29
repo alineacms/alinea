@@ -8,6 +8,14 @@ import {
 
 export type DocEntryMap = Map<string, {url: string}>
 export type DocMediaMap = Map<string, {title: string; location: string}>
+/** Turns a site path, eg. `/docs/fields#text`, into the link to render */
+export type DocLink = (path: string) => string
+
+interface RenderContext {
+  entryMap: DocEntryMap
+  mediaMap: DocMediaMap
+  link: DocLink
+}
 
 type RichNode = Record<string, unknown> & {_type?: string}
 
@@ -23,19 +31,22 @@ function normalizeText(input: string) {
   return input
 }
 
-// The Markdown is read outside of the site, so links need the site origin
-function absoluteUrl(url: string) {
+/**
+ * The Markdown is read outside of the site, so links need the site origin.
+ * Links to the pages on the site by default.
+ */
+export function siteLink(url: string) {
   return url.startsWith('/') ? `${siteUrl}${url}` : url
 }
 
-function absoluteLinks(markdown: string) {
-  return markdown.replaceAll('](/', `](${siteUrl}/`)
+function resolveLinks(markdown: string, link: DocLink) {
+  return markdown.replace(
+    /\]\((\/[^)\s]*)\)/g,
+    (_, path: string) => `](${link(path)})`
+  )
 }
 
-function renderInline(
-  nodes: Array<RichNode> | undefined,
-  entryMap: DocEntryMap
-) {
+function renderInline(nodes: Array<RichNode> | undefined, ctx: RenderContext) {
   if (!Array.isArray(nodes)) return ''
   return nodes
     .map(node => {
@@ -50,8 +61,9 @@ function renderInline(
             const href =
               (typeof linkMark.href === 'string' && linkMark.href) ||
               (typeof linkMark._entry === 'string' &&
-                entryMap.get(linkMark._entry)?.url)
-            if (href) text = `[${text}](${absoluteUrl(href)})`
+                ctx.entryMap.get(linkMark._entry)?.url)
+            if (href)
+              text = `[${text}](${href.startsWith('/') ? ctx.link(href) : href})`
           }
         }
         return normalizeText(text)
@@ -62,46 +74,38 @@ function renderInline(
     .join('')
 }
 
-function renderListItem(
-  node: RichNode,
-  entryMap: DocEntryMap,
-  mediaMap: DocMediaMap
-) {
+function renderListItem(node: RichNode, ctx: RenderContext) {
   const content = asArray(node.content) || []
   const parts: Array<string> = []
   for (const child of content) {
     if (!child) continue
     if (child._type === 'paragraph') {
-      const text = renderInline(asArray(child.content), entryMap).trim()
+      const text = renderInline(asArray(child.content), ctx).trim()
       if (text) parts.push(text)
     } else if (child._type === 'bulletList' || child._type === 'orderedList') {
-      const nested = renderNode(child, entryMap, mediaMap)
+      const nested = renderNode(child, ctx)
       if (nested) parts.push(nested.replace(/\n+/g, ' '))
     }
   }
   return parts.join(' ').trim()
 }
 
-function renderNode(
-  node: RichNode,
-  entryMap: DocEntryMap,
-  mediaMap: DocMediaMap
-) {
+function renderNode(node: RichNode, ctx: RenderContext): string {
   if (!node) return ''
   switch (node._type) {
     case 'paragraph': {
-      return renderInline(asArray(node.content), entryMap).trim()
+      return renderInline(asArray(node.content), ctx).trim()
     }
     case 'heading': {
       const level = Math.max(1, Math.min(6, Number(node.level) || 2))
       const prefix = '#'.repeat(level)
-      const text = renderInline(asArray(node.content), entryMap).trim()
+      const text = renderInline(asArray(node.content), ctx).trim()
       return text ? `${prefix} ${text}` : ''
     }
     case 'bulletList': {
       const items = (asArray(node.content) || [])
         .map(item => {
-          const text = renderListItem(item, entryMap, mediaMap)
+          const text = renderListItem(item, ctx)
           return text ? `- ${text}` : ''
         })
         .filter(Boolean)
@@ -110,7 +114,7 @@ function renderNode(
     case 'orderedList': {
       const items = (asArray(node.content) || [])
         .map((item, index) => {
-          const text = renderListItem(item, entryMap, mediaMap)
+          const text = renderListItem(item, ctx)
           return text ? `${index + 1}. ${text}` : ''
         })
         .filter(Boolean)
@@ -145,7 +149,7 @@ function renderNode(
     }
     case 'NoticeBlock': {
       const level = normalizeText(asString(node.level) || 'info').trim()
-      const body = renderNodes(node.body, entryMap, mediaMap).trim()
+      const body = renderBlocks(node.body, ctx).trim()
       return body ? `Note (${level}): ${body}` : `Note (${level})`
     }
     case 'CopyPromptBlock': {
@@ -153,9 +157,9 @@ function renderNode(
       return prompt ? `> ${prompt}` : ''
     }
     case 'FieldCatalogBlock':
-      return absoluteLinks(fieldCatalogMarkdown())
+      return resolveLinks(fieldCatalogMarkdown(), ctx.link)
     case 'ComponentCatalogBlock':
-      return absoluteLinks(componentCatalogMarkdown())
+      return resolveLinks(componentCatalogMarkdown(), ctx.link)
     case 'ComponentExampleBlock':
       return componentExampleMarkdown(asString(node.example))
     case 'ComponentPropsBlock':
@@ -168,10 +172,10 @@ function renderNode(
       const entryId = image ? (image._entry as string | undefined) : undefined
       const caption = normalizeText(asString(node.caption)).trim()
       if (typeof entryId === 'string') {
-        const image = mediaMap.get(entryId)
+        const image = ctx.mediaMap.get(entryId)
         if (image) {
           const title = caption || normalizeText(image.title || '').trim()
-          const location = absoluteUrl(image.location || '').trim()
+          const location = siteLink(image.location || '').trim()
           if (title && location) return `Image: ${title} (${location})`
           if (location) return `Image: ${location}`
         }
@@ -183,13 +187,13 @@ function renderNode(
       if (!link || typeof link !== 'object') return ''
       const linkObj = link as Record<string, unknown>
       const entryId = asString(linkObj._entry)
-      const url = entryId ? entryMap.get(entryId)?.url : null
+      const url = entryId ? ctx.entryMap.get(entryId)?.url : null
       const title = normalizeText(asString(linkObj.title)).trim()
       const description = normalizeText(asString(linkObj.description)).trim()
       const label = title || 'Chapter link'
       const details = [
         label,
-        url ? `(${absoluteUrl(url)})` : '',
+        url ? `(${ctx.link(url)})` : '',
         description
       ].filter(Boolean)
       return details.join(' ').trim()
@@ -199,16 +203,21 @@ function renderNode(
   }
 }
 
-export function renderNodes(
-  nodes: unknown,
-  entryMap: DocEntryMap,
-  mediaMap: DocMediaMap
-) {
+function renderBlocks(nodes: unknown, ctx: RenderContext) {
   if (!Array.isArray(nodes)) return ''
   const blocks: Array<string> = []
   for (const node of nodes) {
-    const rendered = renderNode(node, entryMap, mediaMap)
+    const rendered = renderNode(node, ctx)
     if (rendered) blocks.push(rendered)
   }
   return blocks.join('\n\n')
+}
+
+export function renderNodes(
+  nodes: unknown,
+  entryMap: DocEntryMap,
+  mediaMap: DocMediaMap,
+  link: DocLink = siteLink
+) {
+  return renderBlocks(nodes, {entryMap, mediaMap, link})
 }

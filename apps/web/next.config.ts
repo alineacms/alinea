@@ -58,13 +58,15 @@ const nextConfig: NextConfig = {
       }
     ]
   },
+  async rewrites() {
+    // The Markdown version of every docs page, at its url plus .md
+    return [
+      {source: '/docs.md', destination: '/docs-md'},
+      {source: '/docs/:path(.+)\\.md', destination: '/docs-md/:path'}
+    ]
+  },
   async redirects() {
     return [
-      {
-        source: '/llms.txt',
-        destination: '/llms-full.txt',
-        permanent: true
-      },
       {
         source: '/roadmap',
         destination: 'https://github.com/alineacms/alinea/issues',

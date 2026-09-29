@@ -1,4 +1,5 @@
 import {Entry} from 'alinea/core/Entry'
+import type {Graph} from 'alinea/core/Graph'
 import {cache} from 'react'
 import {cms} from '@/cms'
 import {Doc} from '@/schema/Doc'
@@ -24,51 +25,51 @@ export interface DocsTree {
  * /docs are the sidebar groups, the docs index is listed in the first group.
  * Cached per request, both the docs layout and the page read it.
  */
-export const getDocsTree = cache(
-  async function getDocsTree(): Promise<DocsTree> {
-    const [root, entries] = await Promise.all([
-      cms.get({url: '/docs', select: navSelect}),
-      cms.find({location: cms.workspaces.main.pages.docs, select: navSelect})
-    ])
-    const byParent = new Map<string, typeof entries>()
-    for (const entry of entries) {
-      const siblings = byParent.get(entry.parent ?? root.id) ?? []
-      siblings.push(entry)
-      byParent.set(entry.parent ?? root.id, siblings)
-    }
-    for (const siblings of byParent.values())
-      siblings.sort((a, b) =>
-        a.index < b.index ? -1 : a.index > b.index ? 1 : 0
-      )
-    function toItem(entry: (typeof entries)[number]): DocsNavItem {
-      return {
-        id: entry.id,
-        title: entry.navigationTitle || entry.title,
-        url: entry.url,
-        children: (byParent.get(entry.id) ?? []).map(toItem)
-      }
-    }
-    const rootItem: DocsNavItem = {
-      id: root.id,
-      title: root.navigationTitle || root.title,
-      url: root.url,
-      children: []
-    }
-    const groups = (byParent.get(root.id) ?? []).map((group, i) => {
-      const {children} = toItem(group)
-      return {
-        id: group.id,
-        title: group.navigationTitle || group.title,
-        url: group.url,
-        items: i === 0 ? [rootItem, ...children] : children
-      }
-    })
-    const urls = new Map(
-      [root, ...entries].map(entry => [entry.id, {url: entry.url}])
-    )
-    return {root: rootItem, groups, urls}
+export const getDocsTree = cache(async function getDocsTree(
+  graph: Graph = cms
+): Promise<DocsTree> {
+  const [root, entries] = await Promise.all([
+    graph.get({url: '/docs', select: navSelect}),
+    graph.find({location: cms.workspaces.main.pages.docs, select: navSelect})
+  ])
+  const byParent = new Map<string, typeof entries>()
+  for (const entry of entries) {
+    const siblings = byParent.get(entry.parent ?? root.id) ?? []
+    siblings.push(entry)
+    byParent.set(entry.parent ?? root.id, siblings)
   }
-)
+  for (const siblings of byParent.values())
+    siblings.sort((a, b) =>
+      a.index < b.index ? -1 : a.index > b.index ? 1 : 0
+    )
+  function toItem(entry: (typeof entries)[number]): DocsNavItem {
+    return {
+      id: entry.id,
+      title: entry.navigationTitle || entry.title,
+      url: entry.url,
+      children: (byParent.get(entry.id) ?? []).map(toItem)
+    }
+  }
+  const rootItem: DocsNavItem = {
+    id: root.id,
+    title: root.navigationTitle || root.title,
+    url: root.url,
+    children: []
+  }
+  const groups = (byParent.get(root.id) ?? []).map((group, i) => {
+    const {children} = toItem(group)
+    return {
+      id: group.id,
+      title: group.navigationTitle || group.title,
+      url: group.url,
+      items: i === 0 ? [rootItem, ...children] : children
+    }
+  })
+  const urls = new Map(
+    [root, ...entries].map(entry => [entry.id, {url: entry.url}])
+  )
+  return {root: rootItem, groups, urls}
+})
 
 export function flattenDocsNav(item: DocsNavItem): Array<DocsNavItem> {
   return [item, ...item.children.flatMap(flattenDocsNav)]

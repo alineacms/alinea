@@ -1,7 +1,5 @@
-import {Entry} from 'alinea/core/Entry'
-import {cms, siteUrl} from '@/cms'
-import {renderNodes} from '@/page/docs/DocMarkdown'
-import {Doc} from '@/schema/Doc'
+import {siteUrl} from '@/cms'
+import {exportDocs} from '@/page/docs/DocsExport'
 
 export const runtime = 'nodejs'
 
@@ -12,23 +10,15 @@ export const dynamic = 'force-static'
 const guideUrl = '/docs/ai-setup'
 
 export async function GET() {
-  const [guide, docs] = await Promise.all([
-    cms.get({
-      url: guideUrl,
-      select: {title: Entry.title, body: Doc.body}
-    }),
-    cms.find({
-      location: cms.workspaces.main.pages.docs,
-      select: {id: Entry.id, url: Entry.url}
-    })
-  ])
-  const entryMap = new Map(docs.map(doc => [doc.id, {url: doc.url}]))
+  const docs = await exportDocs()
+  const guide = docs.pages.find(page => page.url === guideUrl)
+  if (!guide) throw new Error(`Missing the setup guide at ${guideUrl}`)
   // The copy prompt block points to this file, leave it out of it
   const body = guide.body.filter(node => node._type !== 'CopyPromptBlock')
   const markdown = [
     `# ${guide.title}`,
     `Source: ${siteUrl}${guideUrl}`,
-    renderNodes(body, entryMap, new Map())
+    docs.render({body})
   ].join('\n\n')
   return new Response(`${markdown}\n`, {
     headers: {
