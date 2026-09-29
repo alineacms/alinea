@@ -380,7 +380,7 @@ test('explorers order by the column the editor sorts by', async () => {
   const titles = async () =>
     (await store.get(explorer.itemsReady(null))).map(item => item.title)
   expect(await titles()).toEqual(['Chair', 'Table', 'Lamp'])
-  store.set(explorer.sort, {column: 'price', direction: 'desc'})
+  store.set(explorer.requestedSort, {column: 'price', direction: 'desc'})
   expect(await titles()).toEqual(['Chair', 'Lamp', 'Table'])
   const page = await store.get(explorer.pageReady)
   expect(page.sort).toEqual({
@@ -390,9 +390,9 @@ test('explorers order by the column the editor sorts by', async () => {
     manual: false
   })
   expect(page.query.orderBy).toEqual({desc: Product.price})
-  store.set(explorer.sort, {column: 'brand', direction: 'asc'})
+  store.set(explorer.requestedSort, {column: 'brand', direction: 'asc'})
   expect(await titles()).toEqual(['Chair', 'Table', 'Lamp'])
-  store.set(explorer.sort, undefined)
+  store.set(explorer.requestedSort, undefined)
   expect((await store.get(explorer.pageReady)).sort.manual).toBe(true)
 })
 
@@ -721,7 +721,7 @@ test('explorer columns follow the children as the content changes', async () => 
   // One type, all published, no audit data: only the Note fields
   expect(await keys()).toEqual(['path', 'summary'])
   // Sorting keeps the columns
-  store.set(explorer.sort, {column: 'title', direction: 'desc'})
+  store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
   expect(await keys()).toEqual(['path', 'summary'])
   await db.create({
     type: Note,

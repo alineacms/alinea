@@ -123,7 +123,7 @@ test('explorers default to the stored order', () => {
   const store = createStore()
 
   expect(store.get(explorer.requestedSort)).toBeUndefined()
-  store.set(explorer.sort, {column: 'title', direction: 'desc'})
+  store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
   expect(store.get(explorer.requestedSort)).toEqual({
     column: 'title',
     direction: 'desc'

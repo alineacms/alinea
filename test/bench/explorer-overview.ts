@@ -148,9 +148,9 @@ await time('count children (a scan of the children)', () =>
   })
 )
 await time('sort change and back', async () => {
-  store.set(explorer.sort, {column: 'title', direction: 'desc'})
+  store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
   await store.get(explorer.pageReady)
-  store.set(explorer.sort, undefined)
+  store.set(explorer.requestedSort, undefined)
   await store.get(explorer.pageReady)
 })
 await db.close()

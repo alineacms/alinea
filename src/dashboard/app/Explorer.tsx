@@ -953,7 +953,7 @@ interface ExplorerSortedByProps {
 
 /** Tells the editor the list is sorted by a column rather than its order */
 function ExplorerSortedBy({explorer, page}: ExplorerSortedByProps) {
-  const sort = useSetAtom(explorer.sort)
+  const sort = useSetAtom(explorer.requestedSort)
   const [, startTransition] = useTransition()
   if (!page.sort.requested || !page.sort.label) return null
   return (
@@ -1010,7 +1010,7 @@ function ExplorerActions({page}: ExplorerActionsProps) {
 
 function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const setView = useSetAtom(explorer.view)
-  const setSort = useSetAtom(explorer.sort)
+  const setSort = useSetAtom(explorer.requestedSort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
   const [, startTransition] = useTransition()
   const requestedLocation = useAtomValueRaw(explorer.location)

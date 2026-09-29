@@ -12,6 +12,7 @@ import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
 import type {DragMoveEvent, DropItemsEvent, Key} from '#/components.js'
+import type {RootViewProps} from '../cms/ViewProps.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
@@ -31,10 +32,6 @@ import {
   dashboardEntryDropIds,
   dispense
 } from './utils.js'
-
-export interface RootViewProps {
-  root: RootData
-}
 
 export interface RootTreeItem {
   id: string

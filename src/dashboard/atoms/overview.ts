@@ -60,10 +60,10 @@ export interface OverviewColumnState {
   collapsible: boolean
   /** The projection per type name, `all` applies to entries of any type */
   select?: OverviewSelection
-  format?: (value: any, context: OverviewFormatContext) => string
-  view?: View<OverviewCellProps<any>>
+  format?: (value: unknown, context: OverviewFormatContext) => string
+  view?: View<OverviewCellProps<unknown>>
   /** The expression to order by, undefined if the column is not sortable */
-  sortBy?: Expr<any>
+  sortBy?: Expr
 }
 
 export interface OverviewSelection {
@@ -327,7 +327,7 @@ function customColumn(
  * Whether values of an expression can be ordered: expressions on the entry
  * and fields holding a single value, not links, lists or rich text
  */
-function isSortable(value: unknown): value is Expr<any> {
+function isSortable(value: unknown): value is Expr {
   if (!Overview.isPlainExpr(value)) return false
   if (!hasField(value)) return true
   const field = value as Field
@@ -345,7 +345,7 @@ function isSortable(value: unknown): value is Expr<any> {
 function columnSortBy(
   column: OverviewColumn,
   select: OverviewSelection | undefined
-): Expr<any> | undefined {
+): Expr | undefined {
   if (column.sortable === false) return undefined
   if (column.sortBy) return Overview.sortExpr(column.sortBy)
   if (!select) return undefined
@@ -353,9 +353,7 @@ function columnSortBy(
     return isSortable(select.all) ? select.all : undefined
   const cases = Object.entries(select.byType ?? {})
   if (!cases.every(([, value]) => isSortable(value))) return undefined
-  return Overview.sortExpr(
-    Object.fromEntries(cases) as Record<string, Expr<any>>
-  )
+  return Overview.sortExpr(Object.fromEntries(cases) as Record<string, Expr>)
 }
 
 /**
@@ -404,9 +402,7 @@ function fieldColumns(
         collapsible: true,
         select,
         sortBy: Object.values(column.byType).every(isSortable)
-          ? Overview.sortExpr(
-              column.byType as unknown as Record<string, Expr<any>>
-            )
+          ? Overview.sortExpr(column.byType as unknown as Record<string, Expr>)
           : undefined
       }
     })
@@ -461,7 +457,7 @@ export function thumbnailField(
 export function sortColumn(
   overview: OverviewState,
   sort: OverviewSort | undefined
-): {header: string; sortBy: Expr<any>} | undefined {
+): {header: string; sortBy: Expr} | undefined {
   if (!sort) return undefined
   if (sort.column === titleColumn.key) return titleColumn
   const column = overview.columns.find(column => column.key === sort.column)

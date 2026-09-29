@@ -340,7 +340,7 @@ export function ExplorerTable({
 }: ExplorerTableProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
-  const sort = useSetAtom(explorer.sort)
+  const sort = useSetAtom(explorer.requestedSort)
   const columns = useMemo(
     () => [titleColumn, ...page.overview.columns.map(overviewTableColumn)],
     [page.overview]

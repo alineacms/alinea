@@ -516,7 +516,7 @@ export class ExplorerAtoms {
   sidebarExpandedKeys = atom(new Set<string>())
   #selectedResultMode: PrimitiveAtom<ExplorerResultMode>
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
-  /** The column the editor sorted by */
+  /** The column the editor sorted by, undefined for the default order */
   requestedSort: WritableAtom<
     OverviewSort | undefined,
     [OverviewSort | undefined],
@@ -825,10 +825,6 @@ export class ExplorerAtoms {
     get => get(this.#selectedView) ?? (get(this.isMedia) ? 'card' : 'row'),
     (_get, set, view: ExplorerView) => set(this.#selectedView, view)
   )
-  /** Sorts by a column, or returns to the default order */
-  sort = atom(null, (_get, set, sort: OverviewSort | undefined) => {
-    set(this.requestedSort, sort)
-  })
   /** The parent of the listed children, undefined for search results */
   #listedParent = atom(get => {
     const location = get(this.location)
