@@ -1,4 +1,5 @@
-import {mkdtemp, rm} from 'node:fs/promises'
+import {existsSync} from 'node:fs'
+import {mkdtemp, readFile, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {createCMS} from '#/core.js'
@@ -78,4 +79,28 @@ test('serves MCP only on its own path', async () => {
     })
   )
   test.is(proxied.status, 404)
+})
+
+test('uploads only into a media dir', async () => {
+  await using env = await setup()
+  function upload(file: string) {
+    return env.handle(
+      new Request(
+        `http://localhost:4500/admin?/upload&file=${encodeURIComponent(file)}`,
+        {method: 'POST', body: 'file'}
+      )
+    )
+  }
+  for (const file of ['../escape.txt', 'public/media/../../x.txt', 'cms.ts']) {
+    const response = await upload(file)
+    test.is(response.status, 400)
+  }
+  test.not.ok(existsSync(join(env.rootDir, '..', 'escape.txt')))
+  test.not.ok(existsSync(join(env.rootDir, 'cms.ts')))
+  const ok = await upload('public/media/..photo.jpg')
+  test.is(ok.status, 200)
+  test.is(
+    await readFile(join(env.rootDir, 'public/media/..photo.jpg'), 'utf8'),
+    'file'
+  )
 })

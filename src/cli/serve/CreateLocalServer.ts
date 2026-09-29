@@ -6,7 +6,9 @@ import {Config} from '#/core/Config.js'
 import {HttpError} from '#/core/HttpError.js'
 import {type Trigger, trigger} from '#/core/Trigger.js'
 import type {User} from '#/core/User.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
+import {keys} from '#/core/util/Objects.js'
 import {ReadableStream, Request, Response} from '@alinea/iso'
 import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
@@ -272,7 +274,7 @@ export function createLocalServer(
             status: 400,
             headers: uploadCorsHeaders(request)
           })
-        const file = url.searchParams.get('file')!
+        const file = url.searchParams.get('file') ?? ''
         const maxUploadSize = cms.config.maxUploadSize
         const contentLength = request.headers.get('content-length')
         assertUploadSize(
@@ -280,13 +282,27 @@ export function createLocalServer(
           contentLength ? Number(contentLength) : undefined,
           maxUploadSize
         )
-        const dir = path.join(rootDir, path.dirname(file))
-        await fs.promises.mkdir(dir, {recursive: true})
-        await writeUploadFile(
-          path.join(rootDir, file),
-          request.body,
-          maxUploadSize
-        )
+        // Uploads only write into a workspace's media dir
+        const location = path.join(rootDir, file)
+        const inMediaDir = keys(cms.config.workspaces).some(workspace => {
+          const dir = path.join(
+            rootDir,
+            MediaLocation.directory(cms.config, workspace)
+          )
+          const relative = path.relative(dir, location)
+          return (
+            relative !== '' &&
+            !path.isAbsolute(relative) &&
+            !relative.split(path.sep).includes('..')
+          )
+        })
+        if (!inMediaDir)
+          return new Response('Invalid upload location', {
+            status: 400,
+            headers: uploadCorsHeaders(request)
+          })
+        await fs.promises.mkdir(path.dirname(location), {recursive: true})
+        await writeUploadFile(location, request.body, maxUploadSize)
         return new Response('Upload ok', {headers: uploadCorsHeaders(request)})
       } catch (error) {
         if (error instanceof HttpError)
