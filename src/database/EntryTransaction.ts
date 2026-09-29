@@ -125,6 +125,23 @@ function siblingsOf({parentId, workspace, root, locale}: EntryLocation) {
  * flushed so subsequent mutations query its result without retaining an
  * in-memory entry index. SQLite rolls the full batch back on failure.
  */
+/** Fields of a media file an upload sets */
+const mediaFileFields = new Set([
+  'location',
+  'previewUrl',
+  'extension',
+  'size',
+  'hash',
+  'width',
+  'height',
+  'preview',
+  'averageColor',
+  'thumbHash'
+])
+
+/** Fields of a media file editors fill in, kept when its file is replaced */
+const mediaEditedFields = new Set(['alt', 'focus', 'metadata'])
+
 export class EntryTransaction implements AsyncDisposable {
   #workingDatabase: EntryDatabase
   #workingSource: OverlaySource
@@ -295,27 +312,37 @@ export class EntryTransaction implements AsyncDisposable {
     if (existingPath && existingPath !== path && status === 'published')
       await this.#rename(id, locale, path)
 
-    // Only a replace, which uploads the new file in this same commit, removes
-    // the previous file. Saving other changes with a location from before a
-    // replace (eg. a stale editor) must not remove the current file.
-    const replacesFile =
-      typeof data.location === 'string' &&
-      this.#uploadedFile(
-        MediaLocation.storagePath(config, workspace, data.location)
-      )
-    if (overwrite && replacesFile && existingMain?.type === 'MediaFile') {
-      const previousLocation = existingMain.data.location
-      if (
-        previousLocation !== data.location &&
-        typeof previousLocation === 'string'
-      )
-        this.removeFile({
-          location: MediaLocation.storagePath(
-            config,
-            existingMain.workspace,
-            previousLocation
-          )
-        })
+    if (overwrite && existingMain?.type === 'MediaFile') {
+      const stored = existingMain.data
+      // Only a replace uploads the new file in this same commit
+      const replacesFile =
+        typeof data.location === 'string' &&
+        this.#uploadedFile(
+          MediaLocation.storagePath(config, workspace, data.location)
+        )
+      if (replacesFile) {
+        if (
+          typeof stored.location === 'string' &&
+          stored.location !== data.location
+        )
+          this.removeFile({
+            location: MediaLocation.storagePath(
+              config,
+              existingMain.workspace,
+              stored.location
+            )
+          })
+        const edited = entries(stored).filter(
+          ([key]) => mediaEditedFields.has(key) && data[key] === undefined
+        )
+        data = {...data, ...fromEntries(edited)}
+      } else {
+        // Other saves keep the current file, whatever file the editor showed
+        // (eg. one from before a replace)
+        const other = entries(data).filter(([key]) => !mediaFileFields.has(key))
+        const file = entries(stored).filter(([key]) => mediaFileFields.has(key))
+        data = {...fromEntries(other), ...fromEntries(file)}
+      }
     }
     assert(
       overwrite ||
