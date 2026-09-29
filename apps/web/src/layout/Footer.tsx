@@ -55,8 +55,8 @@ export async function Footer() {
           </div>
         </div>
         <div className={styles.root.bottom()}>
+          <span>© {new Date().getFullYear()} Alinea</span>
           <span>MIT licensed</span>
-          <span>Part of the Vercel Open Source Program</span>
         </div>
       </div>
     </footer>

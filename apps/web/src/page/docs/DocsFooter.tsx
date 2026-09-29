@@ -46,8 +46,7 @@ export function DocsFooter({prev, next}: DocsFooterProps) {
         </nav>
       )}
       <p className={styles.root.legal()}>
-        © {new Date().getFullYear()} Alinea · MIT licensed · Part of the Vercel
-        Open Source Program
+        © {new Date().getFullYear()} Alinea · MIT licensed
       </p>
     </footer>
   )
