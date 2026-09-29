@@ -64,15 +64,12 @@ export namespace Type {
     return getType(type).overview
   }
 
-  /**
-   * The default order of children: `overview.sort`, the default sort option
-   * of the overview, or `orderChildrenBy`
-   */
+  /** The default order of children: `overview.sort`, or `orderChildrenBy` */
   export function childrenOrder(
     type: Type
   ): OrderBy | Array<OrderBy> | undefined {
     const {overview, orderChildrenBy} = getType(type)
-    return Overview.defaultOrder(overview) ?? orderChildrenBy
+    return overview?.sort ?? orderChildrenBy
   }
 
   export function isHidden(type: Type): boolean {

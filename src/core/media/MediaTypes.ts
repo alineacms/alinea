@@ -98,13 +98,7 @@ export function mediaOverview(): OverviewOptions {
     // Media files do not store when they were uploaded yet, so they can not
     // be listed newest first
     sorts: {
-      title: {label: 'Title A–Z', by: Entry.title, reversible: false},
-      titleDesc: {
-        label: 'Title Z–A',
-        by: Entry.title,
-        direction: 'desc',
-        reversible: false
-      },
+      title: {label: 'Title', by: Entry.title},
       size: {label: 'Size', by: MediaFile.size, direction: 'desc'},
       dimensions: {
         label: 'Dimensions',

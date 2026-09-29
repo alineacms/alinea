@@ -82,10 +82,8 @@ export interface OverviewSortState {
   label: string
   /** The values to order by, in order */
   by: Array<Expr<any>>
-  /** The direction the order is picked in */
+  /** The direction the order is first picked in */
   direction: OverviewSortDirection
-  /** Picking the order again reverses it */
-  reversible: boolean
 }
 
 /** A choice of an overview filter */
@@ -359,9 +357,10 @@ function sortOptionState(
   return {
     key,
     label: option.label,
-    by: Overview.sortValues(option),
-    direction: option.direction ?? 'asc',
-    reversible: option.reversible ?? true
+    by: (Array.isArray(option.by) ? option.by : [option.by]).map(
+      Overview.sortExpr
+    ),
+    direction: option.direction ?? 'asc'
   }
 }
 
@@ -376,8 +375,7 @@ function columnSorts(
             key: column.key,
             label: column.header,
             by: [column.sortBy],
-            direction: 'asc' as const,
-            reversible: true
+            direction: 'asc' as const
           }
         ]
       : []
@@ -582,27 +580,18 @@ export function overviewOrder(
   return orders.length === 1 ? orders[0] : orders
 }
 
-/** The column that orders by the same value as a picked order */
-function columnOf(
-  overview: OverviewState,
-  picked: OverviewSortState
-): string | undefined {
-  const columns = [titleColumn, ...overview.columns]
-  if (columns.some(column => column.key === picked.key && column.sortBy))
-    return picked.key
-  const [expr] = picked.by
-  return columns.find(column => column.sortBy === expr)?.key
-}
-
 /** The column shown as sorted: the requested one or the default order */
 export function sortedColumn(
   overview: OverviewState,
   sort: OverviewSort | undefined
 ): OverviewSort | undefined {
-  const picked = pickedSort(overview, sort)
-  if (picked && sort) {
-    const column = columnOf(overview, picked)
-    return column ? {column, direction: sort.direction} : undefined
+  // A picked option keyed like a sortable column shows on its header
+  if (sort && pickedSort(overview, sort)) {
+    const columns = [titleColumn, ...overview.columns]
+    const sortable = columns.some(
+      column => column.key === sort.column && column.sortBy
+    )
+    return sortable ? sort : undefined
   }
   const [first] = Array.isArray(overview.sort)
     ? overview.sort

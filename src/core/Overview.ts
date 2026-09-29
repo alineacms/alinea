@@ -113,26 +113,18 @@ export type OverviewSortBy = OverviewSortValue | OverviewSortByType
 
 /** An order editors can pick in the "Filter and sort" menu of an overview */
 export interface OverviewSortOption {
-  /** Shown in the menu, eg. `Title A–Z` */
+  /** Shown in the menu, eg. `Size` */
   label: string
   /**
    * The value to order by, or several: later values order the entries that
    * share the earlier ones. Values are the same as a column's `sortBy`.
    */
   by: OverviewSortBy | Array<OverviewSortBy>
-  /** The direction the option orders in when picked, defaults to `asc` */
+  /**
+   * The direction the option orders in when picked, defaults to `asc`.
+   * Picking it again reverses the direction.
+   */
   direction?: OverviewSortDirection
-  /**
-   * Picking the option again reverses its direction, defaults to true. Set to
-   * false for options that name their direction, eg. `Title Z–A`.
-   */
-  reversible?: boolean
-  /**
-   * List the children in this order until the editor picks another. Like
-   * `overview.sort`, which takes precedence, children can then not be
-   * reordered by hand.
-   */
-  default?: boolean
 }
 
 /** One choice of an overview filter */
@@ -323,35 +315,6 @@ export namespace Overview {
     for (const [typeName, inner] of Object.entries(value as OverviewSortByType))
       cases[typeName] = sortExpr(inner)
     return new Expr({type: 'typeSwitch', cases})
-  }
-
-  /** The values a sort option orders by, in order */
-  export function sortValues(option: OverviewSortOption): Array<Expr<any>> {
-    const by = Array.isArray(option.by) ? option.by : [option.by]
-    return by.map(sortExpr)
-  }
-
-  /** The order of a sort option in a direction, defaults to its own */
-  export function sortOrder(
-    option: OverviewSortOption,
-    direction: OverviewSortDirection = option.direction ?? 'asc'
-  ): Array<OrderBy> {
-    return sortValues(option).map(expr =>
-      direction === 'asc' ? {asc: expr} : {desc: expr}
-    )
-  }
-
-  /**
-   * The default order of the children: `overview.sort`, or the sort option
-   * marked as default
-   */
-  export function defaultOrder(
-    overview: OverviewOptions | undefined
-  ): OrderBy | Array<OrderBy> | undefined {
-    if (!overview) return undefined
-    if (overview.sort) return overview.sort
-    const option = values(overview.sorts ?? {}).find(option => option.default)
-    return option ? sortOrder(option) : undefined
   }
 
   /** Whether an expression reads the entry, rather than a linked entry */

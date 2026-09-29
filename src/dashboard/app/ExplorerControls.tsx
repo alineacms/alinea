@@ -16,7 +16,6 @@ import type {
 import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
-  IcRoundCheck,
   IcRoundFilterList
 } from '../icons.js'
 import css from './ExplorerControls.module.css'
@@ -149,37 +148,24 @@ interface ExplorerSortOptionProps {
   onSort(sort: OverviewSort): void
 }
 
-/**
- * An order in the menu. Reversible orders flip their direction when picked
- * again, the others name their direction and stay put.
- */
+/** An order in the menu, picking it again reverses its direction */
 function ExplorerSortOption({option, sort, onSort}: ExplorerSortOptionProps) {
   const current = sort?.column === option.key ? sort.direction : undefined
-  const active = Boolean(
-    current && (option.reversible || current === option.direction)
-  )
-  const direction =
-    current && option.reversible
-      ? current === 'asc'
-        ? 'desc'
-        : 'asc'
-      : option.direction
+  const direction = current
+    ? current === 'asc'
+      ? 'desc'
+      : 'asc'
+    : option.direction
   return (
     <Button
       variant="ghost"
-      active={active}
+      active={Boolean(current)}
       onClick={() => onSort({column: option.key, direction})}
       className={styles.ExplorerControls.sortOption()}
     >
       {option.label}
-      {active &&
-        (!option.reversible ? (
-          <IcRoundCheck />
-        ) : current === 'asc' ? (
-          <IcRoundArrowUpward />
-        ) : (
-          <IcRoundArrowDownward />
-        ))}
+      {current === 'asc' && <IcRoundArrowUpward />}
+      {current === 'desc' && <IcRoundArrowDownward />}
     </Button>
   )
 }

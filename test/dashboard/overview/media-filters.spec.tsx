@@ -49,12 +49,15 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
     .toEqual(expect.arrayContaining(['Annual report', 'Letter', 'Archive']))
   await expect.poll(async () => (await titles(page)).length).toBe(3)
 
-  await menu.getByRole('button', {name: 'Title Z–A'}).click()
-  await expect(page).toHaveURL(/\?sort=-titleDesc$/)
+  // Picking an order again reverses it
+  await menu.getByRole('button', {name: 'Title', exact: true}).click()
+  await expect(page).toHaveURL(/\?sort=title$/)
+  await menu.getByRole('button', {name: 'Title', exact: true}).click()
+  await expect(page).toHaveURL(/\?sort=-title$/)
   await expect
     .poll(() => titles(page))
     .toEqual(['Letter', 'Archive', 'Annual report'])
-  await expect(page.getByText('Sorted by Title Z–A')).toBeVisible()
+  await expect(page.getByText('Sorted by Title')).toBeVisible()
 
   // The filter stays while the editor opens a folder and comes back
   await page.keyboard.press('Escape')

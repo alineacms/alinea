@@ -901,14 +901,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "The filter and sort menu lists the title and the sortable columns. Declare `sorts` to list your own orders instead. Each takes a `label`, `by`: a value like a column's `sortBy` or an array of them, where later values order the entries that share the earlier ones, and `direction`: `'asc'` (the default) or `'desc'`. Picking an option again reverses it, unless it sets `reversible: false` because its label names the direction, such as \"Title Z–A\". One option can set `default: true` to order the children until the editor picks another, like `sort`."
+          "text": "The filter and sort menu lists the title and the sortable columns. Declare `sorts` to list your own orders instead. Each takes a `label`, `by`: a value like a column's `sortBy` or an array of them, where later values order the entries that share the earlier ones, and `direction`: `'asc'` (the default) or `'desc'`. Picking an option again reverses it."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3K0LeKJnPITr4PLgrBk66uKis34",
-      "code": "import {Config, Query} from 'alinea'\nimport {Event} from './Event'\n\nexport const Events = Config.document('Events', {\n  contains: ['Event'],\n  overview: {\n    sorts: {\n      upcoming: {\n        label: 'Upcoming',\n        by: Event.date,\n        reversible: false,\n        default: true\n      },\n      title: {label: 'Title', by: Query.title},\n      venue: {label: 'Venue', by: [Event.city, Event.venue]}\n    }\n  },\n  fields: {}\n})",
+      "code": "import {Config, Query} from 'alinea'\nimport {Event} from './Event'\n\nexport const Events = Config.document('Events', {\n  contains: ['Event'],\n  overview: {\n    sort: {asc: Event.date},\n    sorts: {\n      date: {label: 'Date', by: Event.date},\n      title: {label: 'Title', by: Query.title},\n      venue: {label: 'Venue', by: [Event.city, Event.venue]}\n    }\n  },\n  fields: {}\n})",
       "fileName": "schema/Events.ts",
       "language": "tsx"
     },
@@ -1281,7 +1281,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Its menu sorts by title (A–Z and Z–A), size, dimensions and file type, and filters on files or folders and on the kind of file: images, PDF, documents, spreadsheets, presentations, archives, video and audio. Folders stay listed while a file type is picked, so editors can still open them."
+          "text": "Its menu sorts by title, size, dimensions and file type, and filters on files or folders and on the kind of file: images, PDF, documents, spreadsheets, presentations, archives, video and audio. Folders stay listed while a file type is picked, so editors can still open them."
         }
       ]
     },

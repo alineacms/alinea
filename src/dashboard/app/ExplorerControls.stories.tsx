@@ -76,7 +76,7 @@ export function MediaLibrary() {
 /** Filtered to PDF and documents, listed Z–A */
 export function MediaLibraryFiltered() {
   const controls = useControls(media, {
-    initialSort: {column: 'titleDesc', direction: 'desc'},
+    initialSort: {column: 'title', direction: 'desc'},
     initialFilters: {fileType: ['pdf', 'document'], show: ['files']}
   })
   return (

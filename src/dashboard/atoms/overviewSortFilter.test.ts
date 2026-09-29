@@ -2,7 +2,6 @@ import '#test/react.js'
 import {Entry} from '#/core/Entry.js'
 import {getRoot} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {Type} from '#/core/Type.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config} from '#/index.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
@@ -44,23 +43,19 @@ test('without declared sorts the title and sortable columns sort', () => {
 test('the media library declares its sorts and filters', () => {
   const media = resolveOverview(config, rootParent('media'))
   expect(media.sorts.map(sort => [sort.key, sort.label])).toEqual([
-    ['title', 'Title A–Z'],
-    ['titleDesc', 'Title Z–A'],
+    ['title', 'Title'],
     ['size', 'Size'],
     ['dimensions', 'Dimensions'],
     ['fileType', 'File type']
   ])
   expect(media.filters.map(filter => filter.key)).toEqual(['show', 'fileType'])
-  expect(
-    overviewOrder(media, {column: 'titleDesc', direction: 'desc'})
-  ).toEqual({desc: Entry.title})
+  expect(overviewOrder(media, {column: 'title', direction: 'desc'})).toEqual({
+    desc: Entry.title
+  })
   expect(
     overviewOrder(media, {column: 'dimensions', direction: 'desc'})
   ).toEqual([{desc: MediaFile.width}, {desc: MediaFile.height}])
-  // Declared orders mark the column that orders by the same value
-  expect(sortedColumn(media, {column: 'titleDesc', direction: 'desc'})).toEqual(
-    {column: 'title', direction: 'desc'}
-  )
+  // Declared orders keyed like a column mark that column
   expect(sortedColumn(media, {column: 'size', direction: 'asc'})).toEqual({
     column: 'size',
     direction: 'asc'
@@ -92,25 +87,6 @@ test('options of a filter match any, filters match all', () => {
   })
   expect(overviewFilter(media, {fileType: ['pdf']})).toEqual(option('pdf'))
   expect(overviewFilter(media, {})).toBeUndefined()
-})
-
-test('a sort option marked default orders the children', () => {
-  const Folder = Config.document('Folder', {
-    contains: ['Folder'],
-    fields: {},
-    overview: {
-      sorts: {
-        title: {label: 'Title', by: Entry.title},
-        newest: {
-          label: 'Newest',
-          by: Entry.createdAt,
-          direction: 'desc',
-          default: true
-        }
-      }
-    }
-  })
-  expect(Type.childrenOrder(Folder)).toEqual([{desc: Entry.createdAt}])
 })
 
 async function mediaLibrary() {
@@ -160,12 +136,12 @@ test('explorers filter media by file type, keeping folders', async () => {
   const show = media.filters.find(filter => filter.key === 'show')!
 
   store.set(explorer.toggleFilter, fileType, 'pdf')
-  store.set(explorer.requestedSort, {column: 'titleDesc', direction: 'desc'})
+  store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
   // Extensions match in either case, folders stay to browse into
   expect(await titles()).toEqual(['Scanned letter', 'Folder', 'Annual report'])
   const page = await store.get(explorer.pageReady)
   expect(page.filters).toEqual({fileType: ['pdf']})
-  expect(page.sort.label).toBe('Title Z–A')
+  expect(page.sort.label).toBe('Title')
   expect(page.sort.manual).toBe(false)
   expect(page.query.filter).toEqual(fileType.options[1].filter)
 
