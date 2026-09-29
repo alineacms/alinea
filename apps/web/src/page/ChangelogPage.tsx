@@ -1,3 +1,5 @@
+import {readFile} from 'node:fs/promises'
+import path from 'node:path'
 import styler from '@alinea/styler'
 import type {Metadata, MetadataRoute} from 'next'
 import {ChangelogNav} from '@/page/changelog/ChangelogNav'
@@ -18,14 +20,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export const dynamic = 'force-static'
 
 export default async function Changelog() {
-  const doc = await fetch(
-    'https://raw.githubusercontent.com/alineacms/alinea/refs/heads/main/changelog.md',
-    {
-      next: {
-        revalidate: 60 * 60 // 1 hour
-      }
-    }
-  ).then(res => res.text())
+  // The changelog at the root of the monorepo, read when the page is built
+  // so it always matches the release being deployed
+  const doc = await readFile(
+    path.join(process.cwd(), '../../changelog.md'),
+    'utf8'
+  )
   const releases = parseChangelog(doc)
   return (
     <div className={styles.root()}>

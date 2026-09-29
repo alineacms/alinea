@@ -1,8 +1,8 @@
 'use client'
 
 import styler from '@alinea/styler'
-import {useEffect, useId, useRef, useState, useSyncExternalStore} from 'react'
-import {IcRoundKeyboardArrowDown, IcRoundKeyboardArrowRight} from '@/icons'
+import {useEffect, useId, useRef, useSyncExternalStore} from 'react'
+import {IcRoundKeyboardArrowDown} from '@/icons'
 import css from './ChangelogNav.module.scss'
 import {
   type ChangelogRelease,
@@ -13,8 +13,6 @@ import {
 
 const styles = styler(css)
 
-/** Series holding one of this many latest releases start expanded */
-const RECENT_RELEASES = 3
 /**
  * A release becomes current once it scrolls within this distance of where a
  * link to it lands (its scroll margin)
@@ -31,33 +29,19 @@ export interface ChangelogNavProps {
 }
 
 /**
- * Releases grouped per major.minor series. The series of the latest releases
- * and the series of the release in view are expanded, the others fold their
- * patch releases away until opened. On small screens the list becomes a
- * select that jumps to a release.
+ * One entry per major.minor series, linking to its newest release. Point
+ * releases are listed on the page but not in the nav. On small screens the
+ * list becomes a select that jumps to a series.
  */
 export function ChangelogNav({releases}: ChangelogNavProps) {
   const series = groupReleasesBySeries(releases)
-  const latest = releases[0]?.version
+  const latest = series[0]?.name
   const active = useActiveRelease(releases)
-  const activeSeries = active ? releaseSeries(active) : undefined
-  const recentSeries = new Set(
-    releases
-      .slice(0, RECENT_RELEASES)
-      .map(release => releaseSeries(release.version))
-  )
-  // Series the visitor opened or closed themselves
-  const [toggled, setToggled] = useState(new Map<string, boolean>())
+  const activeSeries = active ? releaseSeries(active) : latest
   const listRef = useRef<HTMLUListElement>(null)
   const selectId = useId()
 
-  function isOpen(name: string) {
-    return (
-      toggled.get(name) ?? (recentSeries.has(name) || name === activeSeries)
-    )
-  }
-
-  // Keep the current release in view within the list's own scroll area,
+  // Keep the current series in view within the list's own scroll area,
   // only when it changes so browsing the list by hand is left alone
   useEffect(() => {
     const list = listRef.current
@@ -68,30 +52,7 @@ export function ChangelogNav({releases}: ChangelogNavProps) {
     if (rect.top < bounds.top) list.scrollTop += rect.top - bounds.top - 8
     else if (rect.bottom > bounds.bottom)
       list.scrollTop += rect.bottom - bounds.bottom + 8
-  }, [active])
-
-  function renderLink(release: ChangelogNavRelease) {
-    const isCurrent = release.version === active
-    return (
-      <a
-        href={`#${release.version}`}
-        className={styles.link()}
-        aria-current={isCurrent ? 'location' : undefined}
-        data-current={isCurrent || undefined}
-      >
-        <span className={styles.link.version()}>{release.version}</span>
-        {release.version === latest ? (
-          <span className={styles.link.latest()}>Latest</span>
-        ) : (
-          release.date && (
-            <span className={styles.link.date()}>
-              {formatReleaseDate(release.date, true)}
-            </span>
-          )
-        )}
-      </a>
-    )
-  }
+  }, [activeSeries])
 
   return (
     <div className={styles.root()}>
@@ -99,54 +60,28 @@ export function ChangelogNav({releases}: ChangelogNavProps) {
         <span className={styles.nav.title()}>Releases</span>
         <ul ref={listRef} className={styles.list()}>
           {series.map(group => {
-            if (group.releases.length === 1)
-              return (
-                <li key={group.name} className={styles.list.item()}>
-                  {renderLink(group.releases[0])}
-                </li>
-              )
-            const open = isOpen(group.name)
-            const holdsCurrent = group.name === activeSeries
+            const isCurrent = group.name === activeSeries
+            // The minor release that started the series, eg. 1.6.0
+            const date = group.releases.at(-1)?.date
             return (
               <li key={group.name} className={styles.list.item()}>
-                <details
-                  className={styles.series()}
-                  open={open}
-                  onToggle={event => {
-                    const next = event.currentTarget.open
-                    // Ignore the toggle events caused by our own open prop
-                    if (next === open) return
-                    setToggled(toggled =>
-                      new Map(toggled).set(group.name, next)
-                    )
-                  }}
+                <a
+                  href={`#${group.releases[0].version}`}
+                  className={styles.link()}
+                  aria-current={isCurrent ? 'location' : undefined}
+                  data-current={isCurrent || undefined}
                 >
-                  <summary
-                    className={styles.series.summary()}
-                    data-current={(holdsCurrent && !open) || undefined}
-                  >
-                    <span className={styles.series.summary.label()}>
-                      {group.name}
-                    </span>
-                    <span className={styles.series.summary.count()}>
-                      {group.releases.length} releases
-                    </span>
-                    <IcRoundKeyboardArrowRight
-                      aria-hidden
-                      className={styles.series.summary.icon()}
-                    />
-                  </summary>
-                  <ul className={styles.series.list()}>
-                    {group.releases.map(release => (
-                      <li
-                        key={release.version}
-                        className={styles.series.list.item()}
-                      >
-                        {renderLink(release)}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
+                  <span className={styles.link.version()}>{group.name}</span>
+                  {group.name === latest ? (
+                    <span className={styles.link.latest()}>Latest</span>
+                  ) : (
+                    date && (
+                      <span className={styles.link.date()}>
+                        {formatReleaseDate(date, true)}
+                      </span>
+                    )
+                  )}
+                </a>
               </li>
             )
           })}
@@ -166,22 +101,19 @@ export function ChangelogNav({releases}: ChangelogNavProps) {
           <select
             id={selectId}
             className={styles.jump.select()}
-            value={active}
-            onChange={event => jumpTo(event.currentTarget.value)}
+            value={activeSeries}
+            onChange={event => {
+              const group = series.find(
+                group => group.name === event.currentTarget.value
+              )
+              if (group) jumpTo(group.releases[0].version)
+            }}
           >
             {series.map(group => (
-              <optgroup key={group.name} label={`${group.name}.x`}>
-                {group.releases.map(release => (
-                  <option key={release.version} value={release.version}>
-                    {release.version}
-                    {release.version === latest
-                      ? ' (latest)'
-                      : release.date
-                        ? ` · ${formatReleaseDate(release.date, true)}`
-                        : ''}
-                  </option>
-                ))}
-              </optgroup>
+              <option key={group.name} value={group.name}>
+                {group.name}
+                {group.name === latest ? ' (latest)' : ''}
+              </option>
             ))}
           </select>
           <IcRoundKeyboardArrowDown

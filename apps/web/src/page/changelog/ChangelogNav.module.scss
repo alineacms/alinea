@@ -70,10 +70,10 @@
   }
 }
 
-.link,
-.series-summary {
+.link {
   display: flex;
   align-items: baseline;
+  justify-content: space-between;
   gap: 12px;
   padding: 7px 12px;
   border-radius: 8px;
@@ -92,10 +92,6 @@
     outline: 2px solid var(--web-accent);
     outline-offset: -2px;
   }
-}
-
-.link {
-  justify-content: space-between;
 
   &[aria-current] {
     background: var(--web-accent-soft);
@@ -118,65 +114,6 @@
     font-weight: 400;
     color: var(--web-foreground-muted);
     white-space: nowrap;
-  }
-}
-
-.series {
-  display: block;
-
-  &-summary {
-    align-items: center;
-    gap: 6px;
-    padding-right: 8px;
-    list-style: none;
-    cursor: pointer;
-    user-select: none;
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-
-    // The current release sits in this collapsed series
-    &[data-current] {
-      color: var(--web-accent-strong);
-      font-weight: 600;
-    }
-
-    &-icon {
-      flex-shrink: 0;
-      font-size: 18px;
-      color: var(--web-foreground-muted);
-      transition: rotate 0.15s ease-out;
-
-      .series[open] & {
-        rotate: 90deg;
-      }
-    }
-
-    &-label {
-      font-variant-numeric: tabular-nums;
-    }
-
-    &-count {
-      margin-left: auto;
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--web-foreground-muted);
-    }
-  }
-
-  &-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin: 2px 0 4px 12px;
-    padding-left: 8px;
-    border-left: 1px solid var(--web-outline);
-    list-style: none;
-
-    &-item {
-      display: block;
-    }
   }
 }
 
