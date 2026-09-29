@@ -4,7 +4,7 @@ import {
   type ImageCrop,
   type ImageEdit,
   type ImageRotation
-} from '#/core/media/ImageEdit.js'
+} from '#/core/media/ImageTransform.js'
 import styler from '@alinea/styler'
 import {useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import {IcRoundRotateLeft, IcRoundRotateRight, IcRoundUndo} from '../icons.js'

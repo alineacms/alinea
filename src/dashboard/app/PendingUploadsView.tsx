@@ -1,5 +1,5 @@
 import {Button, Icon, Text, ToggleGroup, ToggleGroupItem} from '#/components.js'
-import {rotatedSize, type ImageEdit} from '#/core/media/ImageEdit.js'
+import {rotatedSize, type ImageEdit} from '#/core/media/ImageTransform.js'
 import type {
   ImageSize,
   PendingUpload,

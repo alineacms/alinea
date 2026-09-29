@@ -7,7 +7,7 @@ import {LocalDB} from '#/database/LocalDB.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {createFileHash} from '#/core/util/ContentHash.js'
-import {resizeImage} from '#/core/media/ResizeImage.js'
+import {transformImage} from '#/core/media/TransformImage.js'
 
 const test = suite(import.meta)
 const Page = Config.document('Page', {
@@ -336,7 +336,11 @@ test('uploads scale down images larger than resizeImages', async () => {
   })
   const db = new DB(cms.config)
   try {
-    const upload = await db.upload({file: example, createPreview, resizeImage})
+    const upload = await db.upload({
+      file: example,
+      createPreview,
+      transformImage
+    })
     const media = await db.get({
       id: upload._id,
       select: {

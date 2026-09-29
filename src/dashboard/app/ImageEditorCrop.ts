@@ -1,4 +1,4 @@
-import type {ImageCrop} from '#/core/media/ImageEdit.js'
+import type {ImageCrop} from '#/core/media/ImageTransform.js'
 
 /** Handles on the edges and corners of the crop area */
 export type CropHandle = 'n' | 'e' | 's' | 'w' | 'ne' | 'se' | 'sw' | 'nw'

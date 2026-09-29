@@ -1,11 +1,9 @@
 import {Entry} from '#/core/Entry.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
-import {editImage} from '#/core/media/EditImage.browser.js'
-import type {ImageEdit} from '#/core/media/ImageEdit.js'
-import {isResizableImage} from '#/core/media/ImageResize.js'
+import {imageEncodingType, type ImageEdit} from '#/core/media/ImageTransform.js'
 import {isImage} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
-import {resizeImage} from '#/core/media/ResizeImage.browser.js'
+import {transformImage} from '#/core/media/TransformImage.browser.js'
 import {createId} from '#/core/Id.js'
 import {Permission} from '#/core/Role.js'
 import {createFileHash} from '#/core/util/ContentHash.js'
@@ -75,8 +73,8 @@ export const uploadFilesAtom = atom(
           const entry = await graph.upload({
             file,
             createPreview,
-            resizeImage,
-            ...(edit ? {edit, editImage} : {}),
+            transformImage,
+            edit,
             ...(replaceId ? {replaceId} : {}),
             parentId: request.parentId,
             workspace: request.workspace,
@@ -257,7 +255,7 @@ export const requestUploadsAtom = atom(
         id: createId(),
         file,
         ...(isImage(file.name) ? {previewUrl: URL.createObjectURL(file)} : {}),
-        editable: isResizableImage(file.name),
+        editable: imageEncodingType(file.name) !== undefined,
         ...(duplicate ? {duplicate: mediaMatch(duplicate)} : {}),
         ...(conflict ? {conflict: mediaMatch(conflict)} : {}),
         action: replaceId ? 'replace' : duplicate ? 'existing' : 'upload'

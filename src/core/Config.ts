@@ -1,4 +1,4 @@
-import type {ImageResizeOptions} from '#/core/media/ImageResize.js'
+import type {ImageResizeOptions} from '#/core/media/ImageTransform.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'

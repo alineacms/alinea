@@ -1,4 +1,4 @@
-import type {ImageEdit} from '#/core/media/ImageEdit.js'
+import type {ImageEdit} from '#/core/media/ImageTransform.js'
 import {useState, type CSSProperties} from 'react'
 import {CroppedImage} from './CroppedImage.js'
 import {ImageEditor} from './ImageEditor.js'

@@ -1324,7 +1324,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Adds a local file to a workspace's media library. Image dimensions, the average color, a thumbhash and a preview are computed, as in the dashboard."
+          "text": "Adds a local file to a workspace's media library. Image dimensions, the average color, a thumbhash and a preview are computed, as in the dashboard. Images larger than the `resizeImages` option are scaled down first."
         }
       ]
     },
@@ -1396,6 +1396,34 @@
                 {
                   "_type": "text",
                   "text": "`alt`: the alt text, a string, or strings keyed by locale when the media root is translated."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`rotate`: turns a JPEG, PNG or WebP image clockwise by 90, 180 or 270 degrees before it is uploaded."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`crop`: the region of a JPEG, PNG or WebP image to keep, after rotating, as `{\"x\", \"y\", \"width\", \"height\"}` fractions from 0 to 1 of the image."
                 }
               ]
             }

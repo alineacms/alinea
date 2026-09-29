@@ -1,5 +1,4 @@
-import type {ImageEdit} from '#/core/media/ImageEdit.js'
-import {rotatedSize} from '#/core/media/ImageEdit.js'
+import {rotatedSize, type ImageEdit} from '#/core/media/ImageTransform.js'
 import styler from '@alinea/styler'
 import type {CSSProperties} from 'react'
 import css from './CroppedImage.module.css'
@@ -18,7 +17,7 @@ export interface CroppedImageProps {
 }
 
 /**
- * Shows an image rotated and cropped with css, the way editImage encodes it.
+ * Shows an image rotated and cropped with css, the way transformImage encodes it.
  * The element takes the aspect ratio of the crop, size it with css.
  */
 export function CroppedImage({

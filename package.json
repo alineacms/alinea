@@ -51,17 +51,11 @@
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
     },
-    "./core/media/ResizeImage": {
-      "edge-light": "./dist/core/media/ResizeImage.js",
-      "worker": "./dist/core/media/ResizeImage.js",
-      "browser": "./dist/core/media/ResizeImage.browser.js",
-      "default": "./dist/core/media/ResizeImage.js"
-    },
-    "./core/media/EditImage": {
-      "edge-light": "./dist/core/media/EditImage.js",
-      "worker": "./dist/core/media/EditImage.js",
-      "browser": "./dist/core/media/EditImage.browser.js",
-      "default": "./dist/core/media/EditImage.js"
+    "./core/media/TransformImage": {
+      "edge-light": "./dist/core/media/TransformImage.js",
+      "worker": "./dist/core/media/TransformImage.js",
+      "browser": "./dist/core/media/TransformImage.browser.js",
+      "default": "./dist/core/media/TransformImage.js"
     }
   },
   "typesVersions": {
