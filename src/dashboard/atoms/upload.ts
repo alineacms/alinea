@@ -285,16 +285,35 @@ export const requestUploadsAtom = atom(
       }
     })
     const previous = get(pendingUploadsState)
-    if (previous) {
-      releasePreviews(previous.uploads)
-      previous.resolve([])
+    if (!previous)
+      return new Promise(resolve => {
+        set(pendingUploadsState, {
+          destination,
+          ...(replaced ? {replace: mediaMatch(replaced)} : {}),
+          uploads,
+          resolve
+        })
+      })
+    // Files added while the dialog is open join the listed files, a replace
+    // or another folder can not share the dialog
+    const joins =
+      !replaceId &&
+      !previous.replace &&
+      previous.destination.workspace === destination.workspace &&
+      previous.destination.root === destination.root &&
+      previous.destination.parentId === destination.parentId
+    if (!joins) {
+      releasePreviews(uploads)
+      return []
     }
     return new Promise(resolve => {
       set(pendingUploadsState, {
-        destination,
-        ...(replaced ? {replace: mediaMatch(replaced)} : {}),
-        uploads,
-        resolve
+        ...previous,
+        uploads: [...previous.uploads, ...uploads],
+        resolve(ids) {
+          previous.resolve(ids)
+          resolve(ids)
+        }
       })
     })
   }

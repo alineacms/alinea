@@ -98,6 +98,40 @@ test('explorer uploads wait for the upload dialog', async () => {
   expect(store.get(pendingUploadsAtom)).toBeUndefined()
 })
 
+test('files added while the dialog is open join the listed files', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const upload = spyOn(db, 'upload').mockImplementation(
+    async query => ({_id: (query.file as File).name}) as never
+  )
+  const destination = {workspace: 'main', root: 'pages'}
+  const request = (name: string, parentId?: string) =>
+    store.set(requestUploadsAtom, {
+      files: [new File(['pdf'], name)],
+      destination: {...destination, parentId}
+    })
+  const first = request('first.pdf')
+  await dialogOpened(store)
+  const second = request('second.pdf')
+  await new Promise<void>(resolve => {
+    const unsubscribe = store.sub(pendingUploadsAtom, () => {
+      if (store.get(pendingUploadsAtom)?.uploads.length !== 2) return
+      unsubscribe()
+      resolve()
+    })
+  })
+  // Files for another folder can not join, the listed files stay
+  expect(await request('elsewhere.pdf', 'folder')).toEqual([])
+  const names = store
+    .get(pendingUploadsAtom)!
+    .uploads.map(upload => upload.file.name)
+  expect(names).toEqual(['first.pdf', 'second.pdf'])
+  await store.set(confirmPendingUploadsAtom)
+  expect(await first).toEqual(['first.pdf', 'second.pdf'])
+  expect(await second).toEqual(['first.pdf', 'second.pdf'])
+  expect(upload).toHaveBeenCalledTimes(2)
+})
+
 test('files already in the media library are offered instead of uploaded', async () => {
   const config = Config.create({
     schema: {Page: DashboardTestPage},
