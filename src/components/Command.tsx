@@ -1,12 +1,9 @@
 import styler from '@alinea/styler'
 import {
   Children,
-  createContext,
   isValidElement,
   type ReactElement,
-  type ReactNode,
-  useContext,
-  useRef
+  type ReactNode
 } from 'react'
 import {useFilter} from 'react-aria'
 import {
@@ -24,11 +21,6 @@ import {SearchField} from './SearchField.js'
 import type {AriaProps, DataProps, IconType, StyleProps} from './types.js'
 
 const styles = styler(css)
-
-/** Keywords of the rendered items, keyed by item value */
-const CommandKeywordsContext = createContext<Map<string, Array<string>>>(
-  new Map()
-)
 
 export interface CommandProps extends StyleProps, AriaProps, DataProps {
   /** CommandInput and CommandList */
@@ -64,10 +56,14 @@ export function Command({
   ...props
 }: CommandProps) {
   const {contains} = useFilter({sensitivity: 'base'})
-  const keywords = useRef(new Map<string, Array<string>>()).current
-  function matches(textValue: string, search: string, key: string) {
+  function matches(
+    textValue: string,
+    search: string,
+    key: string,
+    keywords: Array<string> = []
+  ) {
     if (!search) return true
-    const words = [textValue, ...(keywords.get(key) ?? [])]
+    const words = [textValue, ...keywords]
     if (filter) {
       const score = filter(key, search, words)
       return typeof score === 'number' ? score > 0 : score
@@ -80,18 +76,22 @@ export function Command({
       {...props}
       className={styles.Command(styler.merge({className}))}
     >
-      <CommandKeywordsContext.Provider value={keywords}>
-        <Autocomplete
-          filter={
-            shouldFilter
-              ? (textValue, search, node) =>
-                  matches(textValue, search, String(node.key))
-              : undefined
-          }
-        >
-          {children}
-        </Autocomplete>
-      </CommandKeywordsContext.Provider>
+      <Autocomplete
+        filter={
+          shouldFilter
+            ? // CommandItem passes its keywords on to the ListBoxItem
+              (textValue, search, node) =>
+                matches(
+                  textValue,
+                  search,
+                  String(node.key),
+                  node.props?.keywords
+                )
+            : undefined
+        }
+      >
+        {children}
+      </Autocomplete>
     </div>
   )
 }
@@ -219,9 +219,6 @@ export function CommandItem({
   className,
   ...props
 }: CommandItemProps) {
-  const registry = useContext(CommandKeywordsContext)
-  if (keywords) registry.set(value, keywords)
-  else registry.delete(value)
   const text =
     textValue ?? (typeof children === 'string' ? children : undefined)
   if (text === undefined)
@@ -232,6 +229,7 @@ export function CommandItem({
     <ListBoxItem
       data-slot="command-item"
       {...props}
+      {...{keywords}}
       id={value}
       textValue={text}
       isDisabled={disabled}
@@ -248,7 +246,12 @@ export function CommandItem({
           className={styles.CommandItem.icon()}
         />
       )}
-      <span className={styles.CommandItem.label()}>{children}</span>
+      <span
+        data-slot="command-item-label"
+        className={styles.CommandItem.label()}
+      >
+        {children}
+      </span>
     </ListBoxItem>
   )
 }
