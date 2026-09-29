@@ -48,7 +48,6 @@ interface WorkspaceMenuProps {
 interface WorkspaceAvatarProps {
   color: string
   icon?: ComponentType
-  size?: 'default' | 'large' | 'small'
 }
 
 interface WorkspaceSelectorMenuProps {
@@ -58,13 +57,9 @@ interface WorkspaceSelectorMenuProps {
   page: Page
 }
 
-function WorkspaceAvatar({
-  color,
-  icon,
-  size = 'default'
-}: WorkspaceAvatarProps) {
+function WorkspaceAvatar({color, icon}: WorkspaceAvatarProps) {
   return (
-    <span className={styles.WorkspaceMenu.avatar(size)}>
+    <span className={styles.WorkspaceMenu.avatar()}>
       <LogoShape
         background={color}
         icon={icon ?? AlineaLogo}
@@ -128,16 +123,13 @@ export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
   const workspaces = useAtomValueRaw(workspacesAtom)
   const setRoute = useSetAtom(routeAtom)
   const avatar = (
-    <WorkspaceAvatar
-      color={workspace.color}
-      icon={workspace.icon}
-      size="small"
-    />
+    <WorkspaceAvatar color={workspace.color} icon={workspace.icon} />
   )
   if (workspaces.length <= 1) {
     return (
       <div
         className={styles.WorkspaceMenu.avatarTrigger()}
+        role="img"
         aria-label={workspace.label}
       >
         {avatar}
