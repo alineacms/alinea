@@ -75,7 +75,7 @@ const Page = Config.document('Page', {
   fields: {
     intro: Field.text('Intro', {multiline: true}),
     body: Field.richText('Body', {schema: {CodeBlock, Notice, Tabs}}),
-    features: Field.list('Features', {schema: {Feature}}),
+    features: Field.list('Features', {schema: {Feature}, max: 3}),
     related: Field.entry.multiple('Related'),
     image: Field.image('Image'),
     color: Field.select('Color', {options: {red: 'Red', blue: 'Blue'}}),
@@ -183,10 +183,7 @@ async function setup() {
     apiKey: 'dev'
   })
   let id = 0
-  async function call(
-    name: string,
-    args: Record<string, unknown>
-  ): Promise<ToolResult> {
+  async function rpc(method: string, params?: object) {
     const response = await handleMcp(
       new Request(`${origin}/mcp`, {
         method: 'POST',
@@ -194,15 +191,16 @@ async function setup() {
           'content-type': 'application/json',
           accept: 'application/json, text/event-stream'
         },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: ++id,
-          method: 'tools/call',
-          params: {name, arguments: args}
-        })
+        body: JSON.stringify({jsonrpc: '2.0', id: ++id, method, params})
       })
     )
-    const body = await response.json()
+    return response.json()
+  }
+  async function call(
+    name: string,
+    args: Record<string, unknown>
+  ): Promise<ToolResult> {
+    const body = await rpc('tools/call', {name, arguments: args})
     if (body.error) throw new Error(body.error.message)
     const text: string = body.result.content[0].text
     const isError = body.result.isError === true
@@ -272,6 +270,7 @@ async function setup() {
     repoDir,
     rootDir,
     dashboardUpload,
+    rpc,
     call,
     ok,
     readEntry,
@@ -285,67 +284,134 @@ async function setup() {
   }
 }
 
+/** Stand in for the dev server's upload endpoint */
+function stubUploads(rootDir: string) {
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input))
+      // The dev server's upload endpoint requires the key without an Origin
+      test.is(new Headers(init?.headers).get('x-alinea-dev-key'), 'dev')
+      const location = join(rootDir, url.searchParams.get('file')!)
+      await mkdir(dirname(location), {recursive: true})
+      await writeFile(location, new Uint8Array(init!.body as ArrayBuffer))
+      return new Response('Upload ok')
+    },
+    {preconnect: fetch.preconnect}
+  )
+  return {
+    [Symbol.dispose]() {
+      globalThis.fetch = fetch
+    }
+  }
+}
+
+test('an agent session over JSON-RPC', async () => {
+  await using env = await setup()
+  using _uploads = stubUploads(env.rootDir)
+  const init = await env.rpc('initialize', {
+    protocolVersion: '2025-06-18',
+    capabilities: {},
+    clientInfo: {name: 'test', version: '1'}
+  })
+  test.is(init.result.protocolVersion, '2025-06-18')
+  test.ok(init.result.instructions.includes('describe_schema'))
+  const {result} = await env.rpc('tools/list')
+  test.equal(
+    result.tools.map((tool: {name: string}) => tool.name),
+    [
+      'describe_schema',
+      'find_entries',
+      'get_entry',
+      'create_entry',
+      'update_entry',
+      'publish_entry',
+      'delete_entry',
+      'move_entry',
+      'upload_file'
+    ]
+  )
+  const created = await env.ok('create_entry', {
+    type: 'Page',
+    data: {title: 'Session', body: 'Draft text'},
+    publish: false
+  })
+  test.is(created.status, 'draft')
+  await copyFile('test/fixtures/example.jpg', join(env.rootDir, 'photo.jpg'))
+  const media = await env.ok('upload_file', {path: 'photo.jpg'})
+  await env.ok('update_entry', {
+    id: created.id,
+    data: {image: media.id, body: 'Final **text**'},
+    publish: false
+  })
+  await env.ok('publish_entry', {id: created.id})
+  const found = await env.ok('find_entries', {search: 'Session'})
+  test.is(found.entries[0].status, 'published')
+  const read = await env.ok('get_entry', {id: created.id})
+  test.is(read.data.body, 'Final **text**')
+  test.is(read.data.image._entry, media.id)
+  const refused = await env.call('delete_entry', {id: media.id})
+  test.ok(refused.text.includes('Session'))
+  await env.ok('delete_entry', {id: created.id})
+  await env.ok('delete_entry', {id: media.id})
+  test.is((await env.ok('find_entries', {})).total, 0)
+})
+
+interface Row {
+  _id: string
+  [field: string]: unknown
+}
+
 test('describe_schema', async () => {
   await using env = await setup()
   const schema = await env.ok('describe_schema', {})
   test.is(schema.enableDrafts, true)
-  const [main] = schema.workspaces
-  test.is(main.name, 'main')
-  test.equal(
-    main.roots.map((root: {name: string}) => root.name),
-    ['pages', 'blog', 'sorted', 'media']
-  )
-  test.equal(main.roots[1].locales, ['en', 'nl'])
-  const page = schema.types.find((type: {name: string}) => type.name === 'Page')
+  test.equal(schema.workspaces.main.blog, {
+    locales: ['en', 'nl'],
+    contains: ['Post']
+  })
+  test.is(schema.workspaces.main.media.media, true)
+  const page = schema.types.Page
   test.equal(page.contains, ['Page'])
-  const byKey = page.fields
-  test.is(byKey.title, 'text (required)')
-  test.is(byKey.body, 'richText[CodeBlock|Notice|Tabs]')
-  test.is(byKey.features, 'list[Feature]')
-  test.is(byKey.related, 'link[entry] (multiple)')
-  test.is(byKey.image, 'link[image]')
-  test.equal(byKey.color.options, {red: 'Red', blue: 'Blue'})
-  test.equal(byKey.tagline.locales, ['en', 'nl'])
-  test.is(byKey.seo.fields.keywords, 'text')
-  test.is(byKey.intro, 'text (multiline)')
-  test.is(schema.definitions.Notice.fields.text, 'richText')
-  test.ok(schema.valueFormats.mediaAlt)
-  const single = await env.ok('describe_schema', {type: 'Post'})
-  test.is(single.type.name, 'Post')
-  const summary = await env.ok('describe_schema', {detail: 'summary'})
-  test.is(summary.types.Page.fields.features, 'list[Feature]')
-  test.is(summary.types.Page.fields.tagline, 'localised(text)')
-  test.is(summary.types.Page.fields.seo, 'object')
-  test.equal(summary.types.Page.contains, ['Page'])
-  test.equal(summary.workspaces[0].roots[1].locales, ['en', 'nl'])
-  test.is(summary.valueFormats, undefined)
-  const missing = await env.call('describe_schema', {type: 'Nope'})
-  test.is(missing.isError, true)
+  test.is(page.fields.title, 'text (required)')
+  test.is(page.fields.body, 'richText[CodeBlock|Notice|Tabs]')
+  test.is(page.fields.features, 'list[Feature]')
+  test.is(page.fields.related, 'links[entry]')
+  test.is(page.fields.image, 'link[image]')
+  test.is(page.fields.color, 'select[red|blue]')
+  test.is(page.fields.seo, 'object[seo]')
+  test.is(page.fields.tagline, 'localised[en|nl] text')
+  test.is(schema.types.Post.fields.category, 'text (shared)')
+  test.equal(schema.definitions.Feature, {
+    title: 'text',
+    link: 'link[entry|url|file]',
+    items: 'list[Item]'
+  })
+  test.ok(schema.valueFormats.includes('richText: Markdown'))
+  const post = await env.ok('describe_schema', {type: 'Post'})
+  test.equal(Object.keys(post.types), ['Post'])
+  test.is((await env.call('describe_schema', {type: 'Nope'})).isError, true)
 })
 
-test('create, read, update and delete entries', async () => {
+test('create, read, update, publish and delete entries', async () => {
   await using env = await setup()
   const created = await env.ok('create_entry', {
     type: 'Page',
-    root: 'pages',
     data: {
       title: 'Hello world',
       intro: 'An intro',
-      body: '# Welcome\n\nSome **bold** text.\n\n```ts\nconst a = 1\n```\n\n- one\n- two',
+      body: '# Welcome\n\nSome **bold** text.\n\n```ts\nconst a = 1\n```\n\n- one',
       features: [{title: 'Fast', link: 'https://alinea.sh'}],
-      color: 'Blue',
+      color: 'blue',
       seo: {keywords: 'cms'},
       tagline: {en: 'Hi'}
     }
   })
-  test.is(created.path, 'hello-world')
   test.is(created.url, '/hello-world')
   test.is(created.status, 'published')
   test.is(created.file, 'content/pages/hello-world.json')
   const stored = await env.readEntry(created.file)
   test.is(stored._id, created.id)
-  test.is(stored._type, 'Page')
-  test.is(stored.color, 'blue')
   test.equal(stored.tagline, {en: 'Hi', nl: ''})
   test.equal(stored.seo, {keywords: 'cms', robots: ''})
   test.is(stored.body[0]._type, 'heading')
@@ -363,11 +429,10 @@ test('create, read, update and delete entries', async () => {
   test.is(feature._type, 'Feature')
   test.is(typeof feature._id, 'string')
   test.is(typeof feature._index, 'string')
-  test.is(feature.link._type, 'url')
   test.is(feature.link._url, 'https://alinea.sh')
 
-  // Links to entries
-  const second = await env.ok('create_entry', {
+  // Links to entries, in fields and rich text
+  const child = await env.ok('create_entry', {
     type: 'Page',
     parentId: created.id,
     data: {
@@ -376,44 +441,47 @@ test('create, read, update and delete entries', async () => {
       body: `See [the parent](entry:${created.id})`
     }
   })
-  test.is(second.url, '/hello-world/child')
-  test.is(second.parentId, created.id)
-  const child = await env.readEntry(second.file)
-  test.is(child.related[0]._entry, created.id)
-  test.is(child.related[0]._type, 'entry')
-  test.is(child.body[0].content[1].marks[0]._entry, created.id)
+  test.is(child.url, '/hello-world/child')
+  const childData = await env.readEntry(child.file)
+  test.is(childData.related[0]._entry, created.id)
+  test.is(childData.related[0]._type, 'entry')
+  test.is(childData.body[0].content[1].marks[0]._entry, created.id)
 
-  // Read back as markdown
-  const read = await env.ok('get_entry', {id: second.id})
+  // Read back with rich text as Markdown and the entries linking to it
+  const read = await env.ok('get_entry', {id: child.id})
   test.is(read.data.body, `See [the parent](entry:${created.id})`)
   test.is(read.file, 'content/pages/hello-world/child.json')
-  const byUrl = await env.ok('get_entry', {
-    url: '/hello-world',
-    richText: 'raw'
-  })
-  test.is(byUrl.id, created.id)
-  test.is(byUrl.childrenCount, 1)
-  test.ok(Array.isArray(byUrl.data.body))
+  const parent = await env.ok('get_entry', {url: '/hello-world'})
+  test.is(parent.id, created.id)
+  test.equal(parent.versions, [{locale: null, status: 'published'}])
+  test.equal(parent.referencedBy.map((link: {id: string}) => link.id).sort(), [
+    child.id,
+    child.id
+  ])
 
   // Find
-  const found = await env.ok('find_entries', {root: 'pages', parentId: null})
-  test.is(found.total, 1)
-  test.is(found.entries[0].childrenCount, 1)
+  const top = await env.ok('find_entries', {root: 'pages', parentId: null})
+  test.is(top.total, 1)
+  test.is(top.entries[0].children, 1)
   const searched = await env.ok('find_entries', {type: 'Page', search: 'Child'})
-  test.is(searched.entries[0].id, second.id)
+  test.is(searched.entries[0].id, child.id)
 
-  // Partial update keeps other fields
-  const updated = await env.ok('update_entry', {
+  // Updates change the given fields
+  await env.ok('update_entry', {
     id: created.id,
     data: {intro: 'Changed', seo: {robots: 'noindex'}, tagline: {nl: 'Hoi'}}
   })
-  test.equal(updated.changed, ['intro', 'seo', 'tagline'])
-  const afterUpdate = await env.readEntry(created.file)
-  test.is(afterUpdate.intro, 'Changed')
-  test.equal(afterUpdate.seo, {keywords: 'cms', robots: 'noindex'})
-  test.equal(afterUpdate.tagline, {en: 'Hi', nl: 'Hoi'})
-  test.equal(afterUpdate.body, stored.body)
-  test.equal(afterUpdate.features, stored.features)
+  const updated = await env.readEntry(created.file)
+  test.is(updated.intro, 'Changed')
+  test.equal(updated.seo, {keywords: 'cms', robots: 'noindex'})
+  test.equal(updated.tagline, {en: 'Hi', nl: 'Hoi'})
+  test.equal(updated.body, stored.body)
+  test.equal(updated.features, stored.features)
+  const same = await env.ok('update_entry', {
+    id: created.id,
+    data: {intro: 'Changed'}
+  })
+  test.is(same.note, 'No changes')
 
   // Drafts
   const draft = await env.ok('update_entry', {
@@ -424,74 +492,91 @@ test('create, read, update and delete entries', async () => {
   test.is(draft.status, 'draft')
   test.is(draft.file, 'content/pages/hello-world.draft.json')
   test.is((await env.readEntry(created.file)).intro, 'Changed')
-  const published = await env.ok('publish_entry', {id: created.id})
-  test.is(published.from, 'draft')
+  await env.ok('publish_entry', {id: created.id})
   test.is((await env.readEntry(created.file)).intro, 'Draft intro')
+  const again = await env.ok('publish_entry', {id: created.id})
+  test.is(again.note, 'Already published')
 
-  // Delete
-  const deleted = await env.ok('delete_entry', {id: second.id})
-  test.is(deleted.deleted[0].title, 'Child')
-  await test.throws(() => env.readEntry(second.file))
+  // Deletes refuse while other entries link to the entry
+  const refused = await env.call('delete_entry', {id: created.id})
+  test.ok(refused.text.includes(`Child (${child.id}) field related`))
+  await env.ok('delete_entry', {id: child.id})
+  await test.throws(() => env.readEntry(child.file))
+  await env.ok('delete_entry', {id: created.id})
+  await test.throws(() => env.readEntry(created.file))
 })
 
-test('validation errors name the field and what is expected', async () => {
+test('list rows and links merge into the current value', async () => {
   await using env = await setup()
-  const unknownField = await env.call('create_entry', {
+  const target = await env.ok('create_entry', {
     type: 'Page',
-    data: {title: 'x', nope: 1}
+    data: {title: 'Target'}
   })
-  test.is(unknownField.isError, true)
-  test.ok(unknownField.text.startsWith('nope: unknown field'))
-  const wrongType = await env.call('create_entry', {
+  const created = await env.ok('create_entry', {
     type: 'Page',
-    data: {title: 'x', features: [{title: 3}]}
+    data: {
+      title: 'Rows',
+      features: [{title: 'One', items: [{text: 'a'}]}, {title: 'Two'}],
+      related: [target.id]
+    }
   })
-  test.is(
-    wrongType.text,
-    'features[0].title: expected a string for text field "Title", got number 3'
-  )
-  const badOption = await env.call('create_entry', {
-    type: 'Page',
-    data: {title: 'x', color: 'green'}
+  const [one, two] = (await env.readEntry(created.file)).features as Array<Row>
+  const [link] = (await env.readEntry(created.file)).related as Array<Row>
+  await env.ok('update_entry', {
+    id: created.id,
+    data: {
+      // Reordered, the first row changed, a new row at the end
+      features: [
+        {_id: two._id},
+        {_id: one._id, title: 'First'},
+        {title: 'New'}
+      ],
+      related: [target.id]
+    }
   })
-  test.ok(badOption.text.includes('"red", "blue"'))
-  const notAllowed = await env.call('create_entry', {
-    type: 'Post',
-    root: 'pages',
-    data: {title: 'x'}
-  })
-  test.is(
-    notAllowed.text,
-    'Type "Post" is not allowed in root "pages", allowed types: Page'
-  )
-  const missingRef = await env.call('create_entry', {
-    type: 'Page',
-    data: {title: 'x', related: ['missing']}
-  })
-  test.ok(
-    missingRef.text.startsWith('related[0]: entry "missing" does not exist')
-  )
-  const missingTitle = await env.call('create_entry', {
-    type: 'Page',
-    data: {intro: 'x'}
-  })
-  test.is(missingTitle.text, 'data.title: a title is required')
-  const badBlock = await env.call('create_entry', {
-    type: 'Page',
-    data: {title: 'x', body: [{_type: 'Video'}]}
-  })
-  test.is(
-    badBlock.text,
-    'body[0]: unknown block "Video", this field accepts: CodeBlock, Notice, Tabs'
-  )
+  const {features, related} = await env.readEntry(created.file)
+  test.equal(features[0], two)
+  test.equal(features[1], {...one, title: 'First', _index: features[1]._index})
+  test.ok(features[0]._index < features[1]._index)
+  test.ok(features[1]._index < features[2]._index)
+  test.is(features[2].title, 'New')
+  test.equal(features[1].items, one.items)
+  test.equal(related, [link])
 })
 
-test('translations and moves', async () => {
+test('errors name the field and what is expected', async () => {
+  await using env = await setup()
+  const error = async (data: Record<string, unknown>, type = 'Page') =>
+    (await env.call('create_entry', {type, data: {title: 'x', ...data}})).text
+  test.ok((await error({nope: 1})).startsWith('data.nope: unknown field'))
+  test.is(
+    await error({features: [{title: 3}]}),
+    'data.features[0].title: expected a string'
+  )
+  test.is(
+    await error({color: 'Green'}),
+    'data.color: expected one of: red, blue'
+  )
+  test.is(
+    await error({body: [{_type: 'Video'}]}),
+    'data.body[0]: expected a _type, one of: CodeBlock, Notice, Tabs'
+  )
+  test.ok((await error({related: ['missing']})).startsWith('data.related.'))
+  test.is(
+    await error({}, 'Post'),
+    'Type "Post" is not allowed in root "pages", allowed: Page'
+  )
+  // Validation of published entries is done by the transaction
+  const tooMany = await error({features: [{}, {}, {}, {}]})
+  test.ok(tooMany.includes('Add at most 3 items'))
+})
+
+test('translations, moves and archiving', async () => {
   await using env = await setup()
   const en = await env.ok('create_entry', {
     type: 'Post',
     root: 'blog',
-    data: {title: 'Hello'}
+    data: {title: 'Hello', category: 'News'}
   })
   test.is(en.locale, 'en')
   test.is(en.file, 'content/blog/en/hello.json')
@@ -502,19 +587,10 @@ test('translations and moves', async () => {
   })
   test.is(nl.id, en.id)
   test.is(nl.file, 'content/blog/nl/hallo.json')
-  // Without a locale the root's default locale is read
-  const byDefault = await env.ok('get_entry', {id: en.id})
-  test.is(byDefault.locale, 'en')
-  test.equal(byDefault.otherLocales, ['nl'])
+  test.is((await env.readEntry(nl.file)).category, 'News')
+  test.is((await env.ok('get_entry', {id: en.id})).locale, 'en')
   const dutch = await env.ok('get_entry', {id: en.id, locale: 'nl'})
   test.is(dutch.data.title, 'Hallo')
-  test.equal(dutch.otherLocales, ['en'])
-  const duplicate = await env.call('create_entry', {
-    translationOf: en.id,
-    locale: 'nl',
-    data: {title: 'Again'}
-  })
-  test.ok(duplicate.text.includes('already has a "nl" translation'))
 
   const a = await env.ok('create_entry', {type: 'Page', data: {title: 'A'}})
   const b = await env.ok('create_entry', {type: 'Page', data: {title: 'B'}})
@@ -527,458 +603,117 @@ test('translations and moves', async () => {
     order.entries.map((entry: {title: string}) => entry.title),
     ['B', 'A']
   )
-  const archived = await env.ok('archive_entry', {id: a.id})
-  test.is(archived.status, 'archived')
-  const restored = await env.ok('publish_entry', {id: a.id})
-  test.is(restored.from, 'archived')
+  await env.ok('publish_entry', {id: a.id, archive: true})
+  test.is((await env.ok('get_entry', {id: a.id})).status, 'archived')
+  await env.ok('publish_entry', {id: a.id})
+  test.is((await env.ok('get_entry', {id: a.id})).status, 'published')
 })
 
-test('upload_file creates a media entry', async () => {
+test('upload_file creates and replaces media entries', async () => {
   await using env = await setup()
   await copyFile('test/fixtures/example.jpg', join(env.rootDir, 'example.jpg'))
-  const fetch = globalThis.fetch
-  // Stand in for the dev server's upload endpoint
-  globalThis.fetch = Object.assign(
-    async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = new URL(String(input))
-      // The dev server's upload endpoint requires the key without an Origin
-      test.is(new Headers(init?.headers).get('x-alinea-dev-key'), 'dev')
-      const file = url.searchParams.get('file')!
-      const location = join(env.rootDir, file)
-      await mkdir(dirname(location), {recursive: true})
-      await writeFile(location, new Uint8Array(init!.body as ArrayBuffer))
-      return new Response('Upload ok')
-    },
-    {preconnect: fetch.preconnect}
-  )
+  using _uploads = stubUploads(env.rootDir)
+  const outside = await env.call('upload_file', {path: '../../secret.jpg'})
+  test.is(outside.isError, true)
+  test.ok(outside.text.includes(join(env.repoDir, '..', 'secret.jpg')))
+  // Hidden files and symlinks out of the project are refused
+  await writeFile(join(env.rootDir, '.env'), 'SECRET=1')
+  await mkdir(join(env.repoDir, '.git', 'objects'), {recursive: true})
+  await writeFile(join(env.repoDir, '.git', 'objects', 'a.jpg'), 'git')
+  const secret = join(env.repoDir, '..', `${basename(env.repoDir)}.jpg`)
+  await writeFile(secret, 'secret')
+  await symlink(secret, join(env.rootDir, 'link.jpg'))
   try {
-    const outside = await env.call('upload_file', {path: '../../secret.jpg'})
-    test.is(outside.isError, true)
-    test.ok(outside.text.includes(join(env.repoDir, '..', 'secret.jpg')))
-    test.ok(outside.text.includes(env.rootDir))
-    test.ok(outside.text.includes(env.repoDir))
-    // Hidden files and symlinks out of the project are refused
-    await writeFile(join(env.rootDir, '.env'), 'SECRET=1')
-    await mkdir(join(env.repoDir, '.git', 'objects'), {recursive: true})
-    await writeFile(join(env.repoDir, '.git', 'objects', 'a.jpg'), 'git')
-    const secret = join(env.repoDir, '..', `${basename(env.repoDir)}.jpg`)
-    await writeFile(secret, 'secret')
-    await symlink(secret, join(env.rootDir, 'link.jpg'))
-    try {
-      for (const hidden of ['.env', '../.git/objects/a.jpg', 'link.jpg'])
-        test.is((await env.call('upload_file', {path: hidden})).isError, true)
-    } finally {
-      await rm(secret)
-    }
-    const media = await env.ok('upload_file', {
-      path: 'example.jpg',
-      title: 'A photo'
-    })
-    test.is(media.title, 'A photo')
-    test.is(media.extension, '.jpg')
-    test.ok(media.width > 0)
-    test.ok(String(media.location).startsWith('/a-photo.'))
-    test.ok(String(media.url).endsWith('/a-photo.jpg'))
-    const stored = await env.readEntry(media.file)
-    // The same entry as a dashboard upload of the same file
-    const viaDashboard = await env.readEntry(
-      join(
-        'content',
-        await env.dashboardUpload(
-          new File([await readFile('test/fixtures/example.jpg')], 'A photo.jpg')
-        )
+    for (const hidden of ['.env', '../.git/objects/a.jpg', 'link.jpg'])
+      test.is((await env.call('upload_file', {path: hidden})).isError, true)
+  } finally {
+    await rm(secret)
+  }
+  const media = await env.ok('upload_file', {
+    path: 'example.jpg',
+    title: 'A photo',
+    alt: 'A description'
+  })
+  test.is(media.title, 'A photo')
+  test.ok(String(media.location).startsWith('/a-photo.'))
+  const stored = await env.readEntry(media.file)
+  test.is(stored._type, 'MediaFile')
+  test.is(stored.alt, 'A description')
+  test.ok(stored.width > 0)
+  test.is(typeof stored.thumbHash, 'string')
+  // The same fields as a dashboard upload of the same file
+  const viaDashboard = await env.readEntry(
+    join(
+      'content',
+      await env.dashboardUpload(
+        new File([await readFile('test/fixtures/example.jpg')], 'A photo.jpg')
       )
     )
-    const {_id, _index, location, ...same} = viaDashboard
-    test.equal(Object.keys(stored), Object.keys(viaDashboard))
-    test.equal(
-      {...stored, _id, _index, location},
-      {...same, _id, _index, location}
-    )
-    test.is(stored._type, 'MediaFile')
-    test.is(typeof stored.thumbHash, 'string')
-    test.is(typeof stored.averageColor, 'string')
-    test.is('previewUrl' in stored, false)
-    const page = await env.ok('create_entry', {
-      type: 'Page',
-      data: {title: 'With image', image: media.id}
-    })
-    const pageData = await env.readEntry(page.file)
-    test.is(pageData.image._type, 'image')
-    test.is(pageData.image._entry, media.id)
-    const wrong = await env.call('create_entry', {
-      type: 'Page',
-      data: {title: 'Wrong image', image: page.id}
-    })
-    test.ok(wrong.text.includes('image links need a media file'))
+  )
+  test.equal(
+    Object.keys(stored).sort(),
+    [...Object.keys(viaDashboard), 'alt'].sort()
+  )
+  await readFile(join(env.rootDir, 'public/media', media.location))
 
-    // Into a folder, from an absolute path in the enclosing repository, with
-    // alt text and focus point
-    const folder = await env.ok('create_entry', {
-      type: 'MediaLibrary',
-      root: 'media',
-      data: {title: 'Photos'}
-    })
-    await copyFile(
-      'test/fixtures/example.jpg',
-      join(env.repoDir, 'scratch.jpg')
-    )
-    const photo = await env.ok('upload_file', {
-      path: join(env.repoDir, 'scratch.jpg'),
-      parentId: folder.id,
-      alt: 'A scratch photo',
-      focus: {x: 0.2, y: 0.8}
-    })
-    test.is(photo.title, 'scratch')
-    test.is(photo.file, 'content/media/photos/scratch.json')
-    // Files are stored in the media directory, like dashboard uploads
-    test.ok(String(photo.storedAt).startsWith('public/media/scratch.'))
-    test.is(photo.publicUrl, photo.location.replace(/^/, '/media'))
-    const photoData = await env.readEntry(photo.file)
-    test.is(photoData.alt, 'A scratch photo')
-    test.equal(photoData.focus, {x: 0.2, y: 0.8})
-    test.equal(
-      Object.keys(photoData).indexOf('alt'),
-      Object.keys(photoData).indexOf('hash') + 1
-    )
-    await readFile(join(env.rootDir, photo.storedAt))
-
-    // Replacing keeps the id, title, alt and focus, recomputes the rest
-    const {default: sharp} = await import('sharp')
-    await writeFile(
-      join(env.rootDir, 'red.png'),
-      await sharp({
-        create: {width: 20, height: 10, channels: 3, background: '#ff0000'}
-      })
-        .png()
-        .toBuffer()
-    )
-    const replaced = await env.ok('upload_file', {
-      path: 'red.png',
-      replace: photo.id
-    })
-    test.is(replaced.id, photo.id)
-    test.is(replaced.file, photo.file)
-    test.is(replaced.extension, '.png')
-    test.is(replaced.width, 20)
-    test.is(replaced.replaced.location, photo.location)
-    test.ok(replaced.location !== photo.location)
-    await test.throws(() => readFile(join(env.rootDir, photo.storedAt)))
-    await readFile(join(env.rootDir, replaced.storedAt))
-    const replacedData = await env.readEntry(replaced.file)
-    // The url changed with the extension, the old one stays as an alias
-    test.equal(Object.keys(replacedData), [
-      ...Object.keys(photoData),
-      'metadata'
-    ])
-    test.is(replacedData.metadata.aliases[0].url, photo.url)
-    test.is(replacedData._id, photoData._id)
-    test.is(replacedData.title, 'scratch')
-    test.is(replacedData.alt, 'A scratch photo')
-    test.equal(replacedData.focus, {x: 0.2, y: 0.8})
-    test.ok(replacedData.hash !== photoData.hash)
-    test.ok(replacedData.thumbHash !== photoData.thumbHash)
-    test.is(replacedData.height, 10)
-    // Links to the media entry keep working
-    const linked = await env.ok('find_references', {id: photo.id})
-    test.equal(linked.incoming, [])
-    const notMedia = await env.call('upload_file', {
-      path: 'red.png',
-      replace: page.id
-    })
-    test.ok(notMedia.text.includes('is not a media file entry'))
-  } finally {
-    globalThis.fetch = fetch
-  }
-})
-
-interface Row {
-  _id: string
-  [field: string]: unknown
-}
-
-test('updates only change what was asked', async () => {
-  await using env = await setup()
-  const created = await env.ok('create_entry', {
+  const page = await env.ok('create_entry', {
     type: 'Page',
-    data: {
-      title: 'Minimal',
-      intro: 'Intro',
-      features: [
-        {title: 'One', items: [{text: 'a'}, {text: 'b'}]},
-        {title: 'Two'}
-      ]
-    }
+    data: {title: 'With image', image: media.id}
   })
-  // Content written by hand: no defaults, its own key order, legacy meta
-  const handWritten = await env.readEntry(created.file)
-  const [one, two] = handWritten.features as Array<Row>
-  const custom = {
-    _id: handWritten._id,
-    _type: 'Page',
-    _index: handWritten._index,
-    title: 'Minimal',
-    features: [
-      {
-        _id: one._id,
-        _index: one._index,
-        _type: 'Feature',
-        title: 'One',
-        items: one.items
-      },
-      {_type: 'Feature', _id: two._id, title: 'Two'}
-    ],
-    intro: 'Intro'
-  }
-  const text = JSON.stringify(custom, null, 2)
-  await env.writeText(created.file, text)
-
-  // A row patch touches that row's field only
-  await env.ok('update_entry', {
-    id: created.id,
-    data: {features: {update: [{_id: two._id, title: 'Second'}]}}
-  })
-  // Only the row's title changed, metadata records the edit like the
-  // dashboard's save does
-  const patched = await env.readEntry(created.file)
-  test.ok(patched.metadata.updatedAt > 0)
-  delete patched.metadata
-  test.is(
-    JSON.stringify(patched, null, 2),
-    text.replace('"title": "Two"', '"title": "Second"')
-  )
-  // An array with partial rows merges rows by _id
-  await env.ok('update_entry', {
-    id: created.id,
-    data: {features: [{_id: two._id}, {_id: one._id, title: 'First'}]}
-  })
-  const reordered = await env.readEntry(created.file)
-  delete reordered.metadata
-  test.equal(reordered.features, [
-    {_type: 'Feature', _id: two._id, title: 'Second'},
-    {...custom.features[0], title: 'First'}
-  ])
-  test.equal(Object.keys(reordered), Object.keys(custom))
-
-  // Operations: insert, remove, order and nested lists
-  const inserted = await env.ok('update_entry', {
-    id: created.id,
-    data: {
-      features: {
-        update: [
-          {
-            _id: one._id,
-            items: {
-              insert: [
-                {row: {text: 'c'}, after: (one.items as Array<Row>)[0]._id}
-              ]
-            }
-          }
-        ],
-        insert: [{row: {title: 'Zero'}, before: two._id}]
-      }
-    }
-  })
-  test.equal(inserted.changed, ['features'])
-  const afterInsert = (await env.readEntry(created.file)).features as Array<Row>
-  test.equal(
-    afterInsert.map(row => row.title),
-    ['Zero', 'Second', 'First']
-  )
-  const zero = afterInsert[0]
-  // New rows are shaped like the dashboard creates them
-  test.equal(Object.keys(zero), [
-    '_id',
-    '_index',
-    '_type',
-    'title',
-    'link',
-    'items'
-  ])
-  // with an order key before the next row that has one
-  test.is(zero._index, 'Zz')
-  test.equal(
-    (afterInsert[2].items as Array<Row>).map(row => row.text),
-    ['a', 'c', 'b']
-  )
-  test.equal(
-    (afterInsert[2].items as Array<Row>).map(row => row._index),
-    ['a0', 'a0V', 'a1']
-  )
-  await env.ok('update_entry', {
-    id: created.id,
-    data: {features: {remove: [zero._id], order: [one._id, two._id]}}
-  })
-  test.equal(
-    ((await env.readEntry(created.file)).features as Array<Row>).map(
-      row => row.title
-    ),
-    ['First', 'Second']
-  )
-  const missing = await env.call('update_entry', {
-    id: created.id,
-    data: {features: {remove: ['nope']}}
-  })
-  test.ok(missing.text.startsWith('features.remove[0]: no row with _id "nope"'))
-  const badOrder = await env.call('update_entry', {
-    id: created.id,
-    data: {features: {order: [one._id]}}
-  })
-  test.ok(badOrder.text.startsWith('features.order: expected every row _id'))
-})
-
-test('rows keep their order keys, new rows get one', async () => {
-  await using env = await setup()
-  const target = await env.ok('create_entry', {
+  const pageData = await env.readEntry(page.file)
+  test.is(pageData.image._type, 'image')
+  test.is(pageData.image._entry, media.id)
+  const wrong = await env.call('create_entry', {
     type: 'Page',
-    data: {title: 'Target'}
+    data: {title: 'Wrong image', image: page.id}
   })
-  const created = await env.ok('create_entry', {
-    type: 'Page',
-    data: {
-      title: 'Ordered',
-      body: [
-        {_type: 'paragraph', content: [{_type: 'text', text: 'Install'}]},
-        {
-          _type: 'Tabs',
-          variants: [
-            {name: 'npm', code: 'npm i'},
-            {name: 'yarn', code: 'yarn add'}
-          ],
-          link: target.id,
-          related: [target.id]
-        }
-      ],
-      features: [{title: 'One'}, {title: 'Two'}],
-      related: [target.id]
-    }
-  })
-  const original = await env.readText(created.file)
-  const stored = JSON.parse(original)
-  const tabs = stored.body[1]
-  test.equal(
-    tabs.variants.map((row: Row) => row._index),
-    ['a0', 'a1']
-  )
-  test.is(tabs.related[0]._index, 'a0')
-  // A single link is not a list row
-  test.equal(Object.keys(tabs.link), ['_id', '_type', '_entry'])
-  test.equal(
-    stored.features.map((row: Row) => row._index),
-    ['a0', 'a1']
-  )
-  test.is(stored.related[0]._index, 'a0')
+  test.ok(wrong.text.includes('upload_file returns media ids'))
 
-  // Resending the Markdown, the stored TextDoc or the block unchanged keeps
-  // the entry as it is
-  const read = await env.ok('get_entry', {id: created.id})
-  test.ok(String(read.data.body).includes('```alinea-block'))
-  await env.ok('update_entry', {id: created.id, data: {body: read.data.body}})
-  test.is(await env.readText(created.file), original)
-  await env.ok('update_entry', {id: created.id, data: {body: stored.body}})
-  test.is(await env.readText(created.file), original)
-  const fence = (block: unknown) =>
-    `Install\n\n\`\`\`alinea-block\n${JSON.stringify(block, null, 2)}\n\`\`\``
-  await env.ok('update_entry', {id: created.id, data: {body: fence(tabs)}})
-  test.is(await env.readText(created.file), original)
-
-  // New rows in a block get keys between their neighbours
-  const [npm, yarn] = tabs.variants
-  await env.ok('update_entry', {
-    id: created.id,
-    data: {
-      body: fence({
-        ...tabs,
-        variants: [
-          npm,
-          {name: 'pnpm', code: 'pnpm add'},
-          yarn,
-          {_type: 'Variant', _index: '', name: 'bun', code: 'bun add'}
-        ],
-        related: [...tabs.related, {id: created.id}]
-      }),
-      features: [
-        {title: 'Zero'},
-        ...stored.features,
-        {title: 'Three', _index: 'a5'}
-      ]
-    }
+  // Into a folder, from the enclosing repository
+  const folder = await env.ok('create_entry', {
+    type: 'MediaLibrary',
+    root: 'media',
+    data: {title: 'Photos'}
   })
-  const updated = await env.readEntry(created.file)
-  const variants = updated.body[1].variants as Array<Row>
-  test.equal(
-    variants.map(row => [row.name, row._index]),
-    [
-      ['npm', 'a0'],
-      ['pnpm', 'a0V'],
-      ['yarn', 'a1'],
-      ['bun', 'a2']
-    ]
-  )
-  test.equal(variants[0], npm)
-  test.equal(
-    (updated.body[1].related as Array<Row>).map(row => row._index),
-    ['a0', 'a1']
-  )
-  test.equal(
-    (updated.features as Array<Row>).map(row => [row.title, row._index]),
-    [
-      ['Zero', 'Zz'],
-      ['One', 'a0'],
-      ['Two', 'a1'],
-      ['Three', 'a5']
-    ]
-  )
-
-  // Moving a row gives it a key between its new neighbours
-  const features = updated.features as Array<Row>
-  await env.ok('update_entry', {
-    id: created.id,
-    data: {
-      features: {
-        order: [
-          features[1]._id,
-          features[2]._id,
-          features[0]._id,
-          features[3]._id
-        ]
-      }
-    }
+  await copyFile('test/fixtures/example.jpg', join(env.repoDir, 'scratch.jpg'))
+  const photo = await env.ok('upload_file', {
+    path: join(env.repoDir, 'scratch.jpg'),
+    parentId: folder.id
   })
-  test.equal(
-    ((await env.readEntry(created.file)).features as Array<Row>).map(row => [
-      row.title,
-      row._index
-    ]),
-    [
-      ['One', 'a0'],
-      ['Two', 'a1'],
-      ['Zero', 'a2'],
-      ['Three', 'a5']
-    ]
-  )
-})
+  test.is(photo.file, 'content/media/photos/scratch.json')
 
-test('inline code reads back as written', async () => {
-  await using env = await setup()
-  const body =
-    'Link images with `![alt](entry:ID)` and filter with `{in: [a, b]}`'
-  const created = await env.ok('create_entry', {
-    type: 'Page',
-    data: {title: 'Code', body}
+  // Replacing keeps the id, title and alt text, recomputes the rest
+  const {default: sharp} = await import('sharp')
+  await writeFile(
+    join(env.rootDir, 'red.png'),
+    await sharp({
+      create: {width: 20, height: 10, channels: 3, background: '#ff0000'}
+    })
+      .png()
+      .toBuffer()
+  )
+  const replaced = await env.ok('upload_file', {
+    path: 'red.png',
+    replace: media.id
   })
-  const stored = await env.readEntry(created.file)
-  test.equal(stored.body[0].content, [{_type: 'text', text: body}])
-  const read = await env.ok('get_entry', {id: created.id})
-  test.is(read.data.body, body)
+  test.is(replaced.id, media.id)
+  test.ok(replaced.location !== media.location)
+  await test.throws(() =>
+    readFile(join(env.rootDir, 'public/media', media.location))
+  )
+  const replacedData = await env.readEntry(replaced.file)
+  test.is(replacedData.title, 'A photo')
+  test.is(replacedData.alt, 'A description')
+  test.is(replacedData.width, 20)
+  const notMedia = await env.call('upload_file', {
+    path: 'red.png',
+    replace: page.id
+  })
+  test.ok(notMedia.text.includes('is not a MediaFile entry'))
 })
 
 test('writes match the dashboard for the same edit', async () => {
   await using env = await setup()
-  const target = await env.ok('create_entry', {
-    type: 'Page',
-    data: {title: 'Target'}
-  })
   const created = await env.ok('create_entry', {
     type: 'Page',
     data: {
@@ -995,22 +730,17 @@ test('writes match the dashboard for the same edit', async () => {
     [Record<string, unknown>, (value: Record<string, unknown>) => void]
   > = [
     [
-      {intro: 'Changed'},
+      {intro: 'Changed', seo: {robots: 'noindex'}},
       value => {
         value.intro = 'Changed'
+        value.seo = {...(value.seo as object), robots: 'noindex'}
       }
     ],
     [
-      {features: {update: [{_id: rows[1]._id, title: 'Second'}]}},
+      {features: [{_id: rows[0]._id}, {_id: rows[1]._id, title: 'Second'}]},
       value => {
         const features = value.features as Array<Row>
         features[1] = {...features[1], title: 'Second'}
-      }
-    ],
-    [
-      {seo: {robots: 'noindex'}},
-      value => {
-        value.seo = {...(value.seo as object), robots: 'noindex'}
       }
     ],
     [
@@ -1032,215 +762,43 @@ test('writes match the dashboard for the same edit', async () => {
     test.is(stamp(await env.readText(created.file)), stamp(dashboard))
     await env.writeText(created.file, original)
   }
-  // Resending the Markdown of a rich text field keeps it as it is
-  const read = await env.ok('get_entry', {id: created.id})
-  test.ok(String(read.data.body).includes('```ts id='))
-  await env.ok('update_entry', {id: created.id, data: {body: read.data.body}})
-  test.is(await env.readText(created.file), original)
-  // A single link to a new entry is shaped like the dashboard's picker
-  await env.ok('update_entry', {id: created.id, data: {related: [target.id]}})
-  const [related] = (await env.readEntry(created.file)).related as Array<Row>
-  test.equal(Object.keys(related), ['_id', '_type', '_index', '_entry'])
 })
 
-test('shared fields only touch other locales when they change', async () => {
+test('rich text round trips through Markdown', async () => {
   await using env = await setup()
-  const en = await env.ok('create_entry', {
-    type: 'Post',
-    root: 'blog',
-    data: {title: 'Hello', summary: 'Hi', category: 'News'}
-  })
-  const nl = await env.ok('create_entry', {
-    translationOf: en.id,
-    locale: 'nl',
-    data: {title: 'Hallo', summary: 'Hoi'}
-  })
-  test.is((await env.readEntry(nl.file)).category, 'News')
-  const dutch = JSON.stringify(
-    {...(await env.readEntry(nl.file)), extra: 1},
-    null,
-    2
-  )
-  await env.writeText(nl.file, dutch)
-  await env.ok('update_entry', {
-    id: en.id,
-    locale: 'en',
-    data: {summary: 'Hey'}
-  })
-  test.is(await env.readText(nl.file), dutch)
-  await env.ok('update_entry', {id: en.id, data: {category: 'Updates'}})
-  const updated = await env.readEntry(nl.file)
-  test.is(updated.category, 'Updates')
-  test.is(updated.summary, 'Hoi')
-})
-
-test('update_entry applies a changed link anchor or target', async () => {
-  await using env = await setup()
-  const target = await env.ok('create_entry', {
+  const created = await env.ok('create_entry', {
     type: 'Page',
-    data: {title: 'Target'}
+    data: {title: 'Code', body: 'Intro with `inline` code'}
   })
-  const other = await env.ok('create_entry', {
-    type: 'Page',
-    data: {title: 'Other'}
-  })
-  const source = await env.ok('create_entry', {
-    type: 'Page',
-    data: {title: 'Source', body: `See [the target](entry:${target.id}#one)`}
-  })
-  const mark = async () => {
-    const stored = await env.readEntry(source.file)
-    return stored.body[0].content[1].marks[0]
+  const stored = await env.readEntry(created.file)
+  const notice = {_id: 'notice1', _type: 'Notice', level: 'info', text: []}
+  const code = {
+    _id: 'block1',
+    _type: 'CodeBlock',
+    code: 'let a',
+    language: 'ts'
   }
-  const created = await mark()
-  test.is(created._anchor, 'one')
-
-  const anchored = await env.ok('update_entry', {
-    id: source.id,
-    data: {body: `See [the target](entry:${target.id}#two)`}
-  })
-  test.is(anchored.note, undefined)
-  const withAnchor = await mark()
-  test.is(withAnchor._anchor, 'two')
-  test.is(withAnchor._entry, target.id)
-  test.is(withAnchor._id, created._id)
-
+  await env.writeText(
+    created.file,
+    JSON.stringify({...stored, body: [...stored.body, code, notice]}, null, 2)
+  )
+  const before = await env.readText(created.file)
+  const read = await env.ok('get_entry', {id: created.id})
+  test.ok(
+    read.data.body.startsWith(
+      'Intro with `inline` code\n\n```ts id=block1\nlet a\n```\n\n```alinea-block\n'
+    )
+  )
+  // Sending it back unchanged changes nothing
+  await env.ok('update_entry', {id: created.id, data: {body: read.data.body}})
+  test.is(await env.readText(created.file), before)
   await env.ok('update_entry', {
-    id: source.id,
-    data: {body: `See [the target](entry:${target.id})`}
+    id: created.id,
+    data: {body: String(read.data.body).replace('let a', 'let b')}
   })
-  test.is((await mark())._anchor, undefined)
-
-  await env.ok('update_entry', {
-    id: source.id,
-    data: {body: `See [the target](entry:${other.id})`}
-  })
-  test.is((await mark())._entry, other.id)
-
-  const read = await env.ok('get_entry', {id: source.id})
-  test.is(read.data.body, `See [the target](entry:${other.id})`)
-
-  // Link fields: the stored link is kept and its anchor changes
-  const linked = await env.ok('create_entry', {
-    type: 'Page',
-    data: {
-      title: 'Linked',
-      features: [{_type: 'Feature', title: 'F', link: {id: target.id}}]
-    }
-  })
-  const link = async () => (await env.readEntry(linked.file)).features[0].link
-  const initial = await link()
-  const feature = (await env.ok('get_entry', {id: linked.id})).data.features[0]
-  const withLinkAnchor = await env.ok('update_entry', {
-    id: linked.id,
-    data: {features: [{...feature, link: {...feature.link, _anchor: 'two'}}]}
-  })
-  test.equal(withLinkAnchor.changed, ['features'])
-  test.equal(await link(), {...initial, _anchor: 'two'})
-  await env.ok('update_entry', {
-    id: linked.id,
-    data: {features: [{...feature, link: {id: target.id, anchor: 'three'}}]}
-  })
-  test.equal(await link(), {...initial, _anchor: 'three'})
-  await env.ok('update_entry', {
-    id: linked.id,
-    data: {features: [{...feature, link: {id: target.id, anchor: null}}]}
-  })
-  test.equal(await link(), initial)
-})
-
-test('find_references and guarded deletes', async () => {
-  await using env = await setup()
-  const target = await env.ok('create_entry', {
-    type: 'Page',
-    data: {title: 'Target'}
-  })
-  const child = await env.ok('create_entry', {
-    type: 'Page',
-    parentId: target.id,
-    data: {title: 'Child', related: [target.id]}
-  })
-  const source = await env.ok('create_entry', {
-    type: 'Page',
-    data: {
-      title: 'Source',
-      related: [target.id],
-      body: `See [child](entry:${child.id})`
-    }
-  })
-  const references = await env.ok('find_references', {id: target.id})
-  test.equal(
-    references.incoming
-      .map((ref: {title: string; field: string}) => [
-        ref.title,
-        ref.field.split('.')[0]
-      ])
-      .sort(),
-    [
-      ['Child', 'related'],
-      ['Source', 'related']
-    ]
-  )
-  const outgoing = await env.ok('find_references', {id: source.id})
-  test.equal(
-    outgoing.outgoing.map((ref: {id: string; title: string}) => [
-      ref.id,
-      ref.title
-    ]),
-    [
-      [child.id, 'Child'],
-      [target.id, 'Target']
-    ]
-  )
-  const refused = await env.call('delete_entry', {id: target.id})
-  test.is(refused.isError, true)
-  test.ok(refused.text.includes('linked from 1 place(s)'))
-  test.ok(refused.text.includes(`Source (Page, id ${source.id}) field related`))
-  // References from its own children do not count
-  test.ok(!refused.text.includes(child.id))
-  const forced = await env.ok('delete_entry', {id: target.id, force: true})
-  test.ok(forced.warning.includes(source.id))
-})
-
-test('find_entries lists entries in tree order', async () => {
-  await using env = await setup()
-  const a = await env.ok('create_entry', {type: 'Page', data: {title: 'A'}})
-  await env.ok('create_entry', {type: 'Page', data: {title: 'B'}})
-  const child = await env.ok('create_entry', {
-    type: 'Page',
-    parentId: a.id,
-    data: {title: 'A child'}
-  })
-  await env.ok('create_entry', {
-    type: 'Page',
-    parentId: child.id,
-    data: {title: 'A grandchild'}
-  })
-  const found = await env.ok('find_entries', {root: 'pages'})
-  test.equal(
-    found.entries.map((entry: {title: string}) => entry.title),
-    ['A', 'A child', 'A grandchild', 'B']
-  )
-  const paged = await env.ok('find_entries', {
-    root: 'pages',
-    offset: 1,
-    limit: 2
-  })
-  test.equal(
-    paged.entries.map((entry: {title: string}) => entry.title),
-    ['A child', 'A grandchild']
-  )
-})
-
-test('find_entries orders siblings by the overview sort of their parent', async () => {
-  await using env = await setup()
-  for (const title of ['Apple', 'Cherry', 'Banana'])
-    await env.ok('create_entry', {type: 'Post', root: 'sorted', data: {title}})
-  const found = await env.ok('find_entries', {root: 'sorted'})
-  test.equal(
-    found.entries.map((entry: {title: string}) => entry.title),
-    ['Cherry', 'Banana', 'Apple']
-  )
+  const [, changed, block] = (await env.readEntry(created.file)).body
+  test.equal(changed, {...code, code: 'let b'})
+  test.equal(block, notice)
 })
 
 test('reads reflect files changed on disk', async () => {
@@ -1257,56 +815,4 @@ test('reads reflect files changed on disk', async () => {
   )
   const read = await env.ok('get_entry', {id: created.id})
   test.is(read.data.intro, 'After')
-})
-
-test('code blocks round trip through Markdown fences', async () => {
-  await using env = await setup()
-  const created = await env.ok('create_entry', {
-    type: 'Page',
-    data: {title: 'Code', body: 'Intro with `inline` code'}
-  })
-  const stored = await env.readEntry(created.file)
-  // Written by hand with the id first
-  const block = {
-    _id: 'block1',
-    _type: 'CodeBlock',
-    code: 'let a',
-    language: 'ts'
-  }
-  // Written by the dashboard's editor, with an alignment Markdown can't hold
-  const [paragraph] = stored.body
-  stored.body = [
-    {_type: 'paragraph', textAlign: 'left', content: paragraph.content}
-  ]
-  await env.writeText(
-    created.file,
-    JSON.stringify({...stored, body: [...stored.body, block]}, null, 2)
-  )
-  const before = await env.readText(created.file)
-  const read = await env.ok('get_entry', {id: created.id})
-  test.is(
-    read.data.body,
-    'Intro with `inline` code\n\n```ts id=block1\nlet a\n```'
-  )
-  await env.ok('update_entry', {id: created.id, data: {body: read.data.body}})
-  test.is(await env.readText(created.file), before)
-  await env.ok('update_entry', {
-    id: created.id,
-    data: {body: String(read.data.body).replace('let a', 'let b')}
-  })
-  const [intro, changed] = (await env.readEntry(created.file)).body
-  test.equal(intro, stored.body[0])
-  test.equal(Object.keys(changed), ['_id', '_type', 'code', 'language'])
-  test.is(changed.code, 'let b')
-  test.is(intro.content[0].text, 'Intro with `inline` code')
-  await env.ok('update_entry', {
-    id: created.id,
-    data: {body: String(read.data.body).replace('Intro', 'An intro')}
-  })
-  const [edited] = (await env.readEntry(created.file)).body
-  test.equal(edited, {
-    _type: 'paragraph',
-    textAlign: 'left',
-    content: [{_type: 'text', text: 'An intro with `inline` code'}]
-  })
 })

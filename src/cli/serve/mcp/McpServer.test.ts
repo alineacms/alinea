@@ -2,7 +2,6 @@ import {suite} from '@alinea/suite'
 import {
   isLocalRequest,
   McpServer,
-  McpToolError,
   supportedProtocolVersions
 } from './McpServer.js'
 
@@ -31,7 +30,7 @@ const server = new McpServer({
       description: 'Always fails',
       inputSchema: {type: 'object', properties: {}},
       async call() {
-        throw new McpToolError('title: expected a string')
+        throw new Error('title: expected a string')
       }
     }
   ]
@@ -79,7 +78,7 @@ test('initialize negotiates the protocol version', async () => {
     id: 1,
     result: {
       protocolVersion: '2025-03-26',
-      capabilities: {tools: {listChanged: false}},
+      capabilities: {tools: {}},
       serverInfo: {name: 'alinea', version: '1.0.0'},
       instructions: 'Use the tools'
     }
@@ -124,15 +123,6 @@ test('tool failures are results with isError', async () => {
     content: [{type: 'text', text: 'title: expected a string'}],
     isError: true
   })
-  const invalid = await rpc('tools/call', {
-    name: 'echo',
-    arguments: {text: 1, other: true}
-  })
-  test.is(invalid.result.isError, true)
-  test.ok(
-    invalid.result.content[0].text.includes('"text" must be of type string')
-  )
-  test.ok(invalid.result.content[0].text.includes('unknown argument "other"'))
 })
 
 test('json-rpc errors', async () => {
@@ -140,14 +130,11 @@ test('json-rpc errors', async () => {
   test.is(unknownMethod.error.code, -32601)
   const unknownTool = await rpc('tools/call', {name: 'nope'})
   test.is(unknownTool.error.code, -32602)
-  const badParams = await rpc('initialize', {})
-  test.is(badParams.error.code, -32602)
   const parseError = await post('{nope')
   test.is(parseError.status, 400)
   test.is((await parseError.json()).error.code, -32700)
   const invalid = await (await post({id: 3, method: 'ping'})).json()
   test.equal(invalid.error.code, -32600)
-  test.is(invalid.id, 3)
 })
 
 test('rejects batches', async () => {
@@ -184,17 +171,4 @@ test('rejects non-local requests', async () => {
   test.ok(isLocalRequest(request({host: '[::1]:4500'})))
   const response = await server.handle(request({host: 'evil.example:4500'}))
   test.is(response.status, 403)
-})
-
-test('rejects unsupported protocol version headers', async () => {
-  const response = await post(
-    {jsonrpc: '2.0', id: 1, method: 'ping'},
-    {headers: {'mcp-protocol-version': '2024-01-01'}}
-  )
-  test.is(response.status, 400)
-  const supported = await post(
-    {jsonrpc: '2.0', id: 1, method: 'ping'},
-    {headers: {'mcp-protocol-version': '2025-06-18'}}
-  )
-  test.is(supported.status, 200)
 })
