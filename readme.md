@@ -80,8 +80,7 @@ export const BlogPost = Config.document('Blog post', {
 })
 
 export const Blog = Config.document('Blog', {
-  contains: [BlogPost],
-  fields: {}
+  contains: [BlogPost]
 })
 
 export const cms = createCMS({

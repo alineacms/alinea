@@ -427,3 +427,12 @@ test('Localizes entry links to translated targets', () => {
     input
   )
 })
+
+test('container types can leave out their fields', () => {
+  const Container = type('Container', {contains: ['Test']})
+  test.equal(Type.fields(Container), {})
+  test.equal(Type.contains(Container), ['Test'])
+  // @ts-expect-error Types without children need fields
+  const invalid = () => type('Invalid', {})
+  test.ok(invalid)
+})

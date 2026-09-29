@@ -12,6 +12,7 @@ import {type PathField, path as createPath} from '#/field/path.js'
 import {tab, tabs} from '#/field/tabs.js'
 import {type TextField, text} from '#/field/text.js'
 import {
+  type ContainerTypeConfig,
   type FieldsDefinition,
   type Type,
   type TypeConfig,
@@ -34,9 +35,9 @@ function documentFields() {
   }
 }
 
-export function document<Fields extends FieldsDefinition>(
+export function document<Fields extends FieldsDefinition = {}>(
   label: string,
-  {fields, ...config}: TypeConfig<Fields>
+  {fields, ...config}: TypeConfig<Fields> | ContainerTypeConfig<Fields>
 ): Type<Document & Fields> {
   const {title, path, metadata} = documentFields()
   const fieldsWithMeta: Document & Fields = <any>tabs(
