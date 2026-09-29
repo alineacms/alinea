@@ -76,22 +76,6 @@
         "label": "Set up instant publishing"
       },
       "illustration": "publishFlow",
-      "snippets": [
-        {
-          "_id": "3JjOvnbefUdWN4SKN8ZENuootwH",
-          "_index": "a0",
-          "_type": "Snippet",
-          "filename": "vercel.json",
-          "code": "{\n  \"ignoreCommand\":\n    \"git diff --quiet HEAD^ HEAD\n     -- . ':!content'\"\n}"
-        },
-        {
-          "_id": "3JjOvl3GXWH6Oyiqh6c4peuKNKl",
-          "_index": "a1",
-          "_type": "Snippet",
-          "filename": "app/api/cms/route.ts",
-          "code": "createHandler({\n  cms,\n  afterCommit() {\n    revalidatePath('/', 'layout')\n  }\n})"
-        }
-      ],
       "anchor": ""
     },
     {

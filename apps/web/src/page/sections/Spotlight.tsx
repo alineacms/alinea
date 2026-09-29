@@ -6,7 +6,6 @@ import {SectionHeader} from '@/layout/SectionHeader'
 import type {Spotlight as SpotlightSchema} from '@/schema/sections/Spotlight'
 import {ArrowLink} from './ArrowLink'
 import {CheckList} from './CheckList'
-import {CodeSnippet} from './CodeSnippet'
 import {resolveLink} from './links'
 import {PublishFlow} from './PublishFlow'
 import css from './Spotlight.module.scss'
@@ -23,17 +22,15 @@ export function Spotlight({
   text,
   checks,
   link,
-  illustration,
-  snippets
+  illustration
 }: SpotlightProps) {
   const hasFlow = illustration === 'publishFlow'
-  const hasSnippets = Boolean(snippets?.length)
   return (
     <Section>
       {heading && (
         <SectionHeader title={heading} description={intro || undefined} />
       )}
-      <div className={styles.root({visual: hasFlow || hasSnippets})}>
+      <div className={styles.root({visual: hasFlow})}>
         <div className={styles.root.content()}>
           {label && (
             <Label size="small" className={styles.root.label()}>
@@ -45,21 +42,9 @@ export function Spotlight({
           <CheckList items={checks} />
           <ArrowLink link={resolveLink(link)} />
         </div>
-        {(hasFlow || hasSnippets) && (
+        {hasFlow && (
           <div className={styles.root.visual()}>
-            {hasFlow && <PublishFlow />}
-            {hasSnippets && (
-              <div className={styles.root.snippets()}>
-                {snippets.map(snippet => (
-                  <CodeSnippet
-                    key={snippet._id}
-                    size="small"
-                    filename={snippet.filename}
-                    code={snippet.code}
-                  />
-                ))}
-              </div>
-            )}
+            <PublishFlow />
           </div>
         )}
       </div>

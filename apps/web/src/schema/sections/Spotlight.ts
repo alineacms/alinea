@@ -29,16 +29,6 @@ export const Spotlight = Config.type('Spotlight', {
               none: 'None',
               publishFlow: 'Publish flow'
             }
-          }),
-          snippets: Field.list('Snippets', {
-            schema: {
-              Snippet: Config.type('Snippet', {
-                fields: {
-                  filename: Field.text('File name'),
-                  code: Field.code('Code')
-                }
-              })
-            }
           })
         }
       }),
