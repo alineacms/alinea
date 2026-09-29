@@ -1,32 +1,27 @@
-import {type DOMAttributes, type ReactElement, isValidElement} from 'react'
+import {isValidElement} from 'react'
 import {usePress} from 'react-aria'
 import {Pressable} from 'react-aria-components'
 import {Button, type ButtonProps} from '../Button.js'
+import {Slot, type SlotProps} from './Slot.js'
 
 export interface TriggerProps extends ButtonProps {}
 
-interface TriggerElementProps extends DOMAttributes<Element> {
-  disabled?: boolean
-}
-
 /**
  * Renders the element that opens an overlay. By default this is a Button,
- * with `asChild` the child is used instead: a DOM element is made pressable,
- * a component (eg. a Button) picks up the trigger behavior itself.
+ * with `asChild` the props are merged into the child instead. Our own Button
+ * picks up the trigger behavior itself, any other child is made pressable.
  */
 export function Trigger({asChild, children, ...props}: TriggerProps) {
   if (!asChild) return <Button {...props}>{children}</Button>
-  if (
-    isValidElement<TriggerElementProps>(children) &&
-    typeof children.type === 'string'
+  const slot = <Slot {...(props as SlotProps)}>{children}</Slot>
+  if (!isValidElement<ButtonProps>(children)) return null
+  if (children.type === Button && !children.props.asChild) return slot
+  return (
+    // A disabled element cannot be focused, so it is not pressable either
+    <Pressable isDisabled={Boolean(children.props.disabled ?? props.disabled)}>
+      {slot}
+    </Pressable>
   )
-    return (
-      // A disabled element cannot be focused, so it is not pressable either
-      <Pressable isDisabled={Boolean(children.props.disabled)}>
-        {children as ReactElement<TriggerElementProps, string>}
-      </Pressable>
-    )
-  return children
 }
 
 /**

@@ -28,6 +28,7 @@ test('clears the selected value', async ({mount, page}) => {
   await expect(page.getByTestId('value')).toHaveText('Value: figma')
   await page.getByRole('button', {name: 'Clear'}).click()
   await expect(input).toHaveValue('')
+  await expect(input).toBeFocused()
   await expect(page.getByTestId('value')).toHaveText('Value: none')
 })
 

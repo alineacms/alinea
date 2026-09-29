@@ -37,9 +37,6 @@
 
   &:has(.MultipleSelectTrigger-button:disabled) {
     pointer-events: none;
-  }
-
-  &:not([data-readonly]):has(.MultipleSelectTrigger-button:disabled) {
     opacity: 0.5;
   }
 }
@@ -139,7 +136,6 @@
 }
 
 .MultipleSelectContent[data-slot] {
-  width: var(--alinea-trigger-width, var(--trigger-width));
   display: flex;
   flex-direction: column;
   overflow-y: hidden;
@@ -238,8 +234,4 @@
   .MultipleSelectSearch-input:placeholder-shown + & {
     visibility: hidden;
   }
-}
-
-.MultipleSelectHidden {
-  display: none;
 }

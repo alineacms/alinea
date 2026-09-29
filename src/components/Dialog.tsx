@@ -1,5 +1,10 @@
 import styler from '@alinea/styler'
-import {type ComponentPropsWithoutRef, type ReactNode, useContext} from 'react'
+import {
+  type ComponentPropsWithoutRef,
+  type MouseEvent,
+  type ReactNode,
+  useContext
+} from 'react'
 import {
   Dialog as DialogPrimitive,
   DialogTrigger as DialogTriggerPrimitive,
@@ -11,7 +16,7 @@ import {
 import {IcRoundClose} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 import css from './Dialog.module.css'
-import {Slot} from './internal/Slot.js'
+import {Slot, type SlotProps} from './internal/Slot.js'
 import {
   OptionalTrigger,
   Trigger,
@@ -80,8 +85,9 @@ export function DialogContent({
 }: DialogContentProps) {
   return (
     <ModalOverlay
+      data-slot="dialog-overlay"
       isDismissable={dismissable}
-      className={styles.DialogOverlay()}
+      className={styles.DialogContent.overlay()}
     >
       <Modal
         data-slot="dialog-content"
@@ -188,18 +194,30 @@ export function useDialog(): DialogState {
 export interface DialogCloseProps extends ButtonProps {}
 
 /** Closes the surrounding Dialog or Popover when pressed */
-export function DialogClose({asChild, onClick, ...props}: DialogCloseProps) {
+export function DialogClose({
+  asChild,
+  onClick,
+  children,
+  ...props
+}: DialogCloseProps) {
   const state = useContext(OverlayTriggerStateContext)
-  const close = () => state?.close()
-  if (asChild) return <Slot onClick={close}>{props.children}</Slot>
+  function close(event: MouseEvent<HTMLButtonElement>) {
+    onClick?.(event)
+    state?.close()
+  }
+  if (asChild)
+    return (
+      <Slot
+        data-slot="dialog-close"
+        {...(props as SlotProps)}
+        onClick={close as SlotProps['onClick']}
+      >
+        {children}
+      </Slot>
+    )
   return (
-    <Button
-      data-slot="dialog-close"
-      {...props}
-      onClick={event => {
-        onClick?.(event)
-        close()
-      }}
-    />
+    <Button data-slot="dialog-close" {...props} onClick={close}>
+      {children}
+    </Button>
   )
 }

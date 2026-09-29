@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, States} from './MultipleSelect.stories.js'
+import {Example, ReadOnly, States} from './MultipleSelect.stories.js'
 
 test('selects several values and removes a tag', async ({mount, page}) => {
   await mount(<Example />)
@@ -62,4 +62,26 @@ test('the list is as wide as the trigger', async ({mount, page}) => {
   expect(
     Math.abs(contentBox!.width - Math.max(240, triggerBox!.width))
   ).toBeLessThanOrEqual(1)
+})
+
+test('a read only select does not open and submits its values', async ({
+  mount,
+  page
+}) => {
+  await mount(<ReadOnly />)
+  const button = page.locator('[data-slot="multiple-select-button"]')
+  await expect(button).toBeEnabled()
+  await expect(button).toHaveAttribute('aria-readonly', 'true')
+  await page.locator('[data-slot="multiple-select-trigger"]').click()
+  await expect(page.getByRole('listbox')).toHaveCount(0)
+  await expect(
+    page.locator('[data-slot="multiple-select-tag-remove"]')
+  ).toHaveCount(0)
+  const data = await page
+    .getByTestId('form')
+    .evaluate(form => [...new FormData(form as HTMLFormElement)])
+  expect(data).toEqual([
+    ['fruits', 'apple'],
+    ['fruits', 'banana']
+  ])
 })

@@ -99,6 +99,20 @@ export function States() {
   )
 }
 
+export function ReadOnly() {
+  return (
+    <form data-testid="form">
+      <Select label="Read only" name="software" readOnly defaultValue="sketch">
+        {software.map(item => (
+          <SelectItem key={item.value} value={item.value}>
+            {item.label}
+          </SelectItem>
+        ))}
+      </Select>
+    </form>
+  )
+}
+
 export function LongList() {
   return (
     <Select label="Large option list" placeholder="Select an option">

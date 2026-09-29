@@ -1,10 +1,12 @@
 import styler from '@alinea/styler'
 import {
+  type KeyboardEvent,
   type ReactElement,
   type ReactNode,
   type RefObject,
   useContext,
-  useRef
+  useRef,
+  useState
 } from 'react'
 import {
   Button,
@@ -73,6 +75,7 @@ export function Select({
   ...props
 }: SelectProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setOpen] = useState(defaultOpen ?? false)
   return (
     <SelectPrimitive
       data-slot="select"
@@ -84,10 +87,14 @@ export function Select({
       onSelectionChange={key =>
         onValueChange?.(key === null ? null : String(key))
       }
-      isOpen={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-      isDisabled={disabled || readOnly}
+      // A read only select can be focused but not opened
+      isOpen={!readOnly && (open ?? isOpen)}
+      onOpenChange={next => {
+        if (readOnly) return
+        setOpen(next)
+        onOpenChange?.(next)
+      }}
+      isDisabled={disabled}
       isRequired={required}
       isInvalid={error ? true : undefined}
       placeholder={placeholder}
@@ -110,7 +117,6 @@ export function Select({
         />
         <PopoverSurface
           data-slot="select-content"
-          className={styles.SelectContent()}
           triggerRef={triggerRef}
           matchTriggerWidth
         >
@@ -135,6 +141,7 @@ function SelectTrigger({
   readOnly
 }: SelectTriggerProps) {
   const state = useContext(SelectStateContext)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const hasValue = Boolean(state && state.selectedItems.length > 0)
   return (
     <div
@@ -143,8 +150,19 @@ function SelectTrigger({
       data-invalid={invalid || undefined}
       data-readonly={readOnly || undefined}
       className={styles.SelectTrigger()}
+      onKeyDownCapture={readOnly ? preventSelectionKeys : undefined}
     >
-      <Button className={styles.SelectTrigger.button()}>
+      <Button
+        ref={buttonRef}
+        data-slot="select-button"
+        className={styles.SelectTrigger.button()}
+        render={
+          readOnly
+            ? // react-aria does not pass aria-readonly on to the element
+              props => <button {...props} aria-readonly />
+            : undefined
+        }
+      >
         <SelectValue
           data-slot="select-value"
           className={styles.SelectTrigger.value()}
@@ -170,7 +188,11 @@ function SelectTrigger({
           slot={null}
           aria-label="Clear"
           data-slot="select-clear"
-          onPress={() => state?.setValue(null)}
+          onPress={() => {
+            state?.setValue(null)
+            // The clear button unmounts, keep focus in the field
+            buttonRef.current?.focus()
+          }}
           className={styles.SelectTrigger.clear()}
         >
           <Icon icon={IcRoundClose} />
@@ -178,6 +200,16 @@ function SelectTrigger({
       )}
     </div>
   )
+}
+
+/** Typing or arrowing on a closed trigger would still change the value */
+function preventSelectionKeys(event: KeyboardEvent) {
+  if (
+    event.key.length === 1 ||
+    event.key === 'ArrowLeft' ||
+    event.key === 'ArrowRight'
+  )
+    event.stopPropagation()
 }
 
 export interface SelectItemProps extends StyleProps {
@@ -208,7 +240,7 @@ export function SelectGroup({label, children, ...props}: SelectGroupProps) {
       className={styles.SelectGroup()}
     >
       {label && (
-        <Header data-slot="select-label" className={styles.SelectLabel()}>
+        <Header data-slot="select-label" className={styles.SelectGroup.label()}>
           {label}
         </Header>
       )}

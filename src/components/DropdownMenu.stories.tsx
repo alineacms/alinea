@@ -103,6 +103,35 @@ export function Selection() {
   )
 }
 
+export function SharedValues() {
+  const [width, setWidth] = useState('small')
+  const [height, setHeight] = useState('large')
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger variant="outline">Size</DropdownMenuTrigger>
+      <DropdownMenuContent aria-label="Size">
+        <DropdownMenuRadioGroup
+          aria-label="Width"
+          value={width}
+          onValueChange={setWidth}
+        >
+          <DropdownMenuRadioItem value="small">Narrow</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="large">Wide</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup
+          aria-label="Height"
+          value={height}
+          onValueChange={setHeight}
+        >
+          <DropdownMenuRadioItem value="small">Short</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="large">Tall</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 export function Submenu() {
   return (
     <DropdownMenu>

@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, Groups, States} from './Select.stories.js'
+import {Example, Groups, ReadOnly, States} from './Select.stories.js'
 
 test('selects and clears a value', async ({mount, page}) => {
   await mount(<Example />)
@@ -15,6 +15,7 @@ test('selects and clears a value', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Clear'}).click()
   await expect(page.getByTestId('value')).toHaveText('Value: none')
   await expect(trigger).toContainText('Select software')
+  await expect(trigger).toBeFocused()
 })
 
 test('supports keyboard selection', async ({mount, page}) => {
@@ -43,6 +44,13 @@ test('renders groups, separators and disabled items', async ({mount, page}) => {
   await expect(
     page.locator('[data-slot="select-item-description"]')
   ).toHaveText('Configure the workspace')
+  // The trigger shows the selected option without its description
+  await page.getByRole('option', {name: /Settings/}).click()
+  const trigger = page.locator('[data-slot="select-trigger"]')
+  await expect(trigger).toContainText('Settings')
+  await expect(
+    trigger.locator('[data-slot="select-item-description"]')
+  ).toBeHidden()
 })
 
 test('required, disabled and invalid states', async ({mount, page}) => {
@@ -80,4 +88,25 @@ test('the list is as wide as the trigger with its clear button', async ({
   // The list follows wide fields, narrow ones get at least 240 pixels
   const expected = Math.max(240, triggerBox!.width)
   expect(Math.abs(contentBox!.width - expected)).toBeLessThanOrEqual(1)
+})
+
+test('a read only select can be focused and submits its value', async ({
+  mount,
+  page
+}) => {
+  await mount(<ReadOnly />)
+  const trigger = page.getByRole('button', {name: /Read only/})
+  await expect(trigger).toBeEnabled()
+  await expect(trigger).toHaveAttribute('aria-readonly', 'true')
+  await trigger.click()
+  await expect(trigger).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.type('f')
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('listbox')).toHaveCount(0)
+  await expect(trigger).toContainText('Sketch')
+  const data = await page
+    .getByTestId('form')
+    .evaluate(form => [...new FormData(form as HTMLFormElement)])
+  expect(data).toEqual([['software', 'sketch']])
 })

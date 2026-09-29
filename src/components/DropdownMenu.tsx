@@ -1,5 +1,11 @@
 import styler from '@alinea/styler'
-import {type ReactElement, type ReactNode, useId} from 'react'
+import {
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useId
+} from 'react'
 import {
   Header,
   Keyboard,
@@ -26,6 +32,12 @@ import type {
 } from './types.js'
 
 const styles = styler(css)
+
+/**
+ * Keys are unique across the whole menu, so radio items are keyed by the id
+ * of their group followed by their value
+ */
+const RadioGroupContext = createContext('')
 
 export interface DropdownMenuProps extends OpenStateProps {
   children: ReactNode
@@ -151,7 +163,10 @@ export function DropdownMenuCheckboxItem({
   const id = useId()
   return (
     <MenuSection
-      aria-label={props.textValue}
+      aria-label={
+        props.textValue ??
+        (typeof props.children === 'string' ? props.children : undefined)
+      }
       selectionMode="multiple"
       selectedKeys={checked ? [id] : []}
       onSelectionChange={keys =>
@@ -159,7 +174,11 @@ export function DropdownMenuCheckboxItem({
       }
       shouldCloseOnSelect={closeOnSelect}
     >
-      <DropdownMenuItemView {...props} id={id} />
+      <DropdownMenuItemView
+        data-slot="dropdown-menu-checkbox-item"
+        {...props}
+        id={id}
+      />
     </MenuSection>
   )
 }
@@ -179,21 +198,25 @@ export function DropdownMenuRadioGroup({
   children,
   ...props
 }: DropdownMenuRadioGroupProps) {
+  const prefix = useId()
   return (
     <MenuSection
+      data-slot="dropdown-menu-radio-group"
       {...props}
       selectionMode="single"
       disallowEmptySelection
-      selectedKeys={value === null ? [] : [value]}
+      selectedKeys={value === null ? [] : [prefix + value]}
       onSelectionChange={keys => {
         if (keys === 'all') return
         const [key] = keys
-        if (key !== undefined) onValueChange(String(key))
+        if (key !== undefined) onValueChange(String(key).slice(prefix.length))
       }}
       shouldCloseOnSelect={closeOnSelect}
       className={styles.DropdownMenuGroup()}
     >
-      {children}
+      <RadioGroupContext.Provider value={prefix}>
+        {children}
+      </RadioGroupContext.Provider>
     </MenuSection>
   )
 }
@@ -206,7 +229,14 @@ export function DropdownMenuRadioItem({
   value,
   ...props
 }: DropdownMenuRadioItemProps) {
-  return <DropdownMenuItemView {...props} id={value} />
+  const prefix = useContext(RadioGroupContext)
+  return (
+    <DropdownMenuItemView
+      data-slot="dropdown-menu-radio-item"
+      {...props}
+      id={prefix + value}
+    />
+  )
 }
 
 export interface DropdownMenuGroupProps extends AriaProps {
@@ -214,7 +244,13 @@ export interface DropdownMenuGroupProps extends AriaProps {
 }
 
 export function DropdownMenuGroup(props: DropdownMenuGroupProps) {
-  return <MenuSection {...props} className={styles.DropdownMenuGroup()} />
+  return (
+    <MenuSection
+      data-slot="dropdown-menu-group"
+      {...props}
+      className={styles.DropdownMenuGroup()}
+    />
+  )
 }
 
 export interface DropdownMenuLabelProps extends StyleProps {
@@ -229,6 +265,7 @@ export function DropdownMenuLabel({
 }: DropdownMenuLabelProps) {
   return (
     <Header
+      data-slot="dropdown-menu-label"
       {...props}
       data-inset={inset || undefined}
       className={styles.DropdownMenuLabel(styler.merge({className}))}
@@ -237,7 +274,12 @@ export function DropdownMenuLabel({
 }
 
 export function DropdownMenuSeparator() {
-  return <Separator className={styles.DropdownMenuSeparator()} />
+  return (
+    <Separator
+      data-slot="dropdown-menu-separator"
+      className={styles.DropdownMenuSeparator()}
+    />
+  )
 }
 
 export interface DropdownMenuShortcutProps extends StyleProps {
@@ -250,6 +292,7 @@ export function DropdownMenuShortcut({
 }: DropdownMenuShortcutProps) {
   return (
     <Keyboard
+      data-slot="dropdown-menu-shortcut"
       {...props}
       className={styles.DropdownMenuShortcut(styler.merge({className}))}
     />
@@ -268,7 +311,9 @@ export function DropdownMenuSub({children}: DropdownMenuSubProps) {
 export interface DropdownMenuSubTriggerProps extends DropdownMenuItemBaseProps {}
 
 export function DropdownMenuSubTrigger(props: DropdownMenuSubTriggerProps) {
-  return <DropdownMenuItemView {...props} />
+  return (
+    <DropdownMenuItemView data-slot="dropdown-menu-sub-trigger" {...props} />
+  )
 }
 
 export interface DropdownMenuSubContentProps
@@ -277,7 +322,9 @@ export interface DropdownMenuSubContentProps
 }
 
 export function DropdownMenuSubContent(props: DropdownMenuSubContentProps) {
-  return <DropdownMenuContent {...props} />
+  return (
+    <DropdownMenuContent data-slot="dropdown-menu-sub-content" {...props} />
+  )
 }
 
 interface DropdownMenuItemViewProps extends DropdownMenuItemBaseProps {
@@ -311,18 +358,24 @@ function DropdownMenuItemView({
       {({hasSubmenu, isSelected}) => (
         <>
           {icon && (
-            <Icon icon={icon} className={styles.DropdownMenuItem.icon()} />
+            <Icon
+              icon={icon}
+              data-slot="dropdown-menu-item-icon"
+              className={styles.DropdownMenuItem.icon()}
+            />
           )}
           {children}
           {isSelected && (
             <Icon
               icon={IcRoundCheck}
+              data-slot="dropdown-menu-item-indicator"
               className={styles.DropdownMenuItem.indicator()}
             />
           )}
           {hasSubmenu && (
             <Icon
               icon={IcRoundKeyboardArrowRight}
+              data-slot="dropdown-menu-item-indicator"
               className={styles.DropdownMenuItem.indicator()}
             />
           )}

@@ -37,9 +37,6 @@
 
   &:has(.SelectTrigger-button:disabled) {
     pointer-events: none;
-  }
-
-  &:not([data-readonly]):has(.SelectTrigger-button:disabled) {
     opacity: 0.5;
   }
 }
@@ -75,15 +72,6 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-
-  [data-slot='select-item-text'] {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  [data-slot='select-item-description'] {
-    display: none;
-  }
 }
 
 .SelectTrigger-placeholder {
@@ -144,10 +132,6 @@
   }
 }
 
-.SelectContent[data-slot] {
-  width: var(--alinea-trigger-width, var(--trigger-width));
-}
-
 .SelectContent-list {
   outline: none;
 }
@@ -156,7 +140,7 @@
   display: block;
 }
 
-.SelectLabel {
+.SelectGroup-label {
   padding: 4px 6px;
   color: var(--alinea-fg-muted);
   font-size: 0.8rem;

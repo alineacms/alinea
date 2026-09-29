@@ -17,9 +17,10 @@ const styles = styler(css)
 
 export interface PopoverSurfaceProps extends Omit<
   PopoverPrimitiveProps,
-  'children' | 'className'
+  'children' | 'className' | 'style'
 > {
   className?: string
+  style?: CSSProperties
   ref?: Ref<HTMLElement>
   /**
    * Size the popover to the full width of `triggerRef`. react-aria measures
@@ -52,11 +53,7 @@ export function PopoverSurface({
   return (
     <PopoverPrimitive
       {...props}
-      style={
-        widthStyle && typeof style !== 'function'
-          ? {...style, ...widthStyle}
-          : style
-      }
+      style={{...style, ...widthStyle}}
       className={styles.PopoverSurface(
         {matchTriggerWidth},
         styler.merge({className})
