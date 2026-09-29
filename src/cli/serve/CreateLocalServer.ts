@@ -212,7 +212,13 @@ export function createLocalServer(
   }
 
   const httpRouter = router(
-    handleMcp && matcher.all('/mcp').map(({request}) => handleMcp(request)),
+    // Matched on the full pathname: the Next dev rewrite forwards adminPath
+    // requests from any network interface, those must never reach MCP
+    handleMcp &&
+      router
+        .matcher()
+        .all('/mcp')
+        .map(({request}) => handleMcp(request)),
     matcher.get('/~dev').map((): Response => {
       let heartbeat: ReturnType<typeof setInterval> | undefined
       let unregister: (() => void) | undefined

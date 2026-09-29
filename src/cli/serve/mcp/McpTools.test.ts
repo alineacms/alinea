@@ -4,10 +4,11 @@ import {
   mkdtemp,
   readFile,
   rm,
+  symlink,
   writeFile
 } from 'node:fs/promises'
 import {tmpdir} from 'node:os'
-import {dirname, join} from 'node:path'
+import {basename, dirname, join} from 'node:path'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {createHandler} from '#/backend/Handler.js'
 import {createCMS} from '#/core.js'
@@ -552,6 +553,19 @@ test('upload_file creates a media entry', async () => {
     test.ok(outside.text.includes(join(env.repoDir, '..', 'secret.jpg')))
     test.ok(outside.text.includes(env.rootDir))
     test.ok(outside.text.includes(env.repoDir))
+    // Hidden files and symlinks out of the project are refused
+    await writeFile(join(env.rootDir, '.env'), 'SECRET=1')
+    await mkdir(join(env.repoDir, '.git', 'objects'), {recursive: true})
+    await writeFile(join(env.repoDir, '.git', 'objects', 'a.jpg'), 'git')
+    const secret = join(env.repoDir, '..', `${basename(env.repoDir)}.jpg`)
+    await writeFile(secret, 'secret')
+    await symlink(secret, join(env.rootDir, 'link.jpg'))
+    try {
+      for (const hidden of ['.env', '../.git/objects/a.jpg', 'link.jpg'])
+        test.is((await env.call('upload_file', {path: hidden})).isError, true)
+    } finally {
+      await rm(secret)
+    }
     const media = await env.ok('upload_file', {
       path: 'example.jpg',
       title: 'A photo'
