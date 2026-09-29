@@ -45,7 +45,8 @@ import {policyAtom} from './user.js'
 import {
   acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
-  dispense
+  dispense,
+  moveEntries
 } from './utils.js'
 
 /** The best ranked matches a search loads into the explorer. */
@@ -989,23 +990,11 @@ export class ExplorerAtoms {
       locale: string | null
     ) => {
       if (target.position === 'on') return
-      const graph = get(graphAtom)
       const listed = get(this.items(locale)).map(entry => entry.id)
       const moving = [...ids]
         .filter(id => id !== String(target.key))
         .sort((a, b) => listed.indexOf(a) - listed.indexOf(b))
-      let {position, key} = target
-      for (const id of moving) {
-        await graph.move({
-          id,
-          target: String(key),
-          targetType: 'entry',
-          dropPosition: position
-        })
-        // The next entry follows the one just moved
-        position = 'after'
-        key = id
-      }
+      await moveEntries(get(graphAtom), moving, target)
     }
   )
   onAction = atom(

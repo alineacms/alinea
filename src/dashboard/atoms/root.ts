@@ -30,7 +30,8 @@ import {
   dashboardEntryDragItem,
   dashboardEntryDragTypes,
   dashboardEntryDropIds,
-  dispense
+  dispense,
+  moveEntries
 } from './utils.js'
 
 export interface RootTreeItem {
@@ -447,45 +448,35 @@ export class RootAtoms {
   onMove = atom(
     null,
     async (get, _set, event: DragMoveEvent, tree: TreeAtoms) => {
-      const graph = get(graphAtom)
       const policy = get(policyAtom)
-      const moveTarget = String(event.target.key)
-      const targetType = 'entry'
-      const items = get(tree.items)
-      for (const key of event.keys) {
-        const id = String(key)
-        const item = items.find(candidate => candidate.id === id)
-        if (!item || item.dragDisabled) continue
-        policy.assert(
-          event.target.position === 'on' ? Permission.Move : Permission.Reorder,
-          {
-            workspace: this.workspace,
-            root: this.key,
-            id,
-            type: item.type,
-            locale: item.locale,
-            parents: item.parents
-          }
-        )
-        await graph.move({
-          id,
-          target: moveTarget,
-          targetType,
-          dropPosition: event.target.position
+      const permission =
+        event.target.position === 'on' ? Permission.Move : Permission.Reorder
+      // Move entries in the order they are listed rather than selected
+      const moving = get(tree.items).filter(
+        item => event.keys.has(item.id) && !item.dragDisabled
+      )
+      for (const item of moving)
+        policy.assert(permission, {
+          workspace: this.workspace,
+          root: this.key,
+          id: item.id,
+          type: item.type,
+          locale: item.locale,
+          parents: item.parents
         })
-      }
+      await moveEntries(
+        get(graphAtom),
+        moving.map(item => item.id),
+        event.target
+      )
     }
   )
   onDrop = atom(null, async (get, _set, event: DropItemsEvent) => {
-    const graph = get(graphAtom)
-    for (const id of dashboardEntryDropIds(event.items)) {
-      await graph.move({
-        id,
-        target: String(event.target.key),
-        targetType: 'entry',
-        dropPosition: event.target.position
-      })
-    }
+    await moveEntries(
+      get(graphAtom),
+      dashboardEntryDropIds(event.items),
+      event.target
+    )
   })
 }
 
