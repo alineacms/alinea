@@ -288,7 +288,7 @@ export function ExplorerSearch({
   }
 
   function moveSelection(direction: 1 | -1) {
-    if (!explorer.hasSelection || items.length === 0) return
+    if (items.length === 0) return
     const current = selectedIndex()
     const next =
       current === -1
@@ -304,6 +304,9 @@ export function ExplorerSearch({
     if (event.key === 'Escape' && onEscape) {
       event.preventDefault()
       onEscape()
+    } else if (!isCombobox && explorer.selectionMode !== 'single') {
+      // A selection of many entries is kept, the keys stay in the field
+      return
     } else if (event.key === 'ArrowDown') {
       event.preventDefault()
       moveSelection(1)
