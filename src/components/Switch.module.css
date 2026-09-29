@@ -8,18 +8,14 @@
   cursor: pointer;
   forced-color-adjust: none;
 
-  &:has(:disabled),
-  &:has([aria-readonly='true']) {
-    pointer-events: none;
-  }
-
   &:has(:disabled) {
+    pointer-events: none;
     opacity: 0.5;
-    cursor: default;
   }
 
   &:has([aria-readonly='true']) {
     color: var(--alinea-fg-disabled);
+    cursor: default;
   }
 }
 

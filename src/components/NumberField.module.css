@@ -34,7 +34,6 @@
   }
 
   &:has(.NumberFieldInput[readonly]) {
-    pointer-events: none;
     background-color: var(--alinea-bg-muted);
   }
 }

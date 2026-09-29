@@ -31,12 +31,12 @@
 
   &:has(.SearchFieldInput:disabled),
   &:has(.SearchFieldInput[readonly]) {
-    pointer-events: none;
     background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-disabled);
   }
 
   &:has(.SearchFieldInput:disabled) {
+    pointer-events: none;
     opacity: 0.5;
   }
 }

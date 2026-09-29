@@ -68,12 +68,12 @@
 
   &:disabled,
   &[readonly] {
-    pointer-events: none;
     background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-disabled);
   }
 
   &:disabled {
+    pointer-events: none;
     opacity: 0.5;
   }
 
