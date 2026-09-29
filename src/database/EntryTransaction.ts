@@ -687,15 +687,31 @@ export class EntryTransaction implements AsyncDisposable {
 
   async remove({id, locale, status}: Op<RemoveMutation>): Promise<void> {
     assert(id, 'Remove mutation is missing an id')
-    const found = (await this.#versions(id, locale)).filter(
+    const versions = await this.#versions(id, locale)
+    const found = versions.filter(
       entry => status === undefined || entry.versionStatus === status
+    )
+    // Files of the versions that remain stay: discarding the draft of a media
+    // file must not remove the file its published version points to
+    const skipLocations = new Set(
+      versions
+        .filter(entry => !found.includes(entry))
+        .map(entry => entry.data.location)
     )
     for (const entry of found) {
       if (entry.versionStatus === 'published')
         assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       this.#sourceTransaction.remove(entry.filePath)
-      if (entry.versionStatus !== 'draft')
-        this.#sourceTransaction.remove(entry.childrenDir)
+      if (
+        entry.type === 'MediaFile' &&
+        !skipLocations.has(entry.data.location)
+      ) {
+        skipLocations.add(entry.data.location)
+        this.#removeMediaFile(entry)
+      }
+      // Drafts share their children with the other versions
+      if (entry.versionStatus === 'draft') continue
+      this.#sourceTransaction.remove(entry.childrenDir)
       if (entry.type === 'MediaLibrary') {
         const files = await this.#mediaFiles({
           workspace: entry.workspace,
@@ -703,7 +719,7 @@ export class EntryTransaction implements AsyncDisposable {
           filePathPrefix: `${entry.childrenDir}/`
         })
         for (const file of files) this.#removeMediaFile(file)
-      } else if (entry.type === 'MediaFile') this.#removeMediaFile(entry)
+      }
     }
     const info = found[0]
     if (info) {
