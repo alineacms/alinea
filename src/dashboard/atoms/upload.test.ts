@@ -11,8 +11,8 @@ test('reports invalid uploads while continuing with valid files', async () => {
   store.set(configAtom, {...config, maxUploadSize: 5})
   const upload = spyOn(db, 'upload').mockResolvedValue(undefined as never)
   const explorer = createExplorerAtoms({workspace: 'main', root: 'pages'}, {})
-  const valid = new File(['small'], 'valid.jpg')
-  const invalid = new File(['too large'], 'invalid.jpg')
+  const valid = new File(['small'], 'valid.pdf')
+  const invalid = new File(['too large'], 'invalid.pdf')
 
   await store.set(explorer.upload, [invalid, valid])
 
@@ -24,7 +24,7 @@ test('reports invalid uploads while continuing with valid files', async () => {
     expect.objectContaining({
       type: 'upload',
       status: 'failed',
-      error: expect.stringContaining('invalid.jpg'),
+      error: expect.stringContaining('invalid.pdf'),
       upload: {workspace: 'main', root: 'pages', parentId: undefined}
     })
   )
@@ -33,7 +33,7 @@ test('reports invalid uploads while continuing with valid files', async () => {
     expect.objectContaining({
       type: 'upload',
       status: 'running',
-      operations: [expect.objectContaining({title: 'valid.jpg'})]
+      operations: [expect.objectContaining({title: 'valid.pdf'})]
     })
   )
 })
