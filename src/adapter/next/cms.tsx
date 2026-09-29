@@ -321,17 +321,19 @@ export class NextCMS<
     if (!stats) return null
     const {default: dynamic} = await import('next/dynamic.js')
     const {isDev, handlerUrl} = await requestContext(this.config)
-    let file = `${Config.adminPath(this.config)}.html`
-    if (!file.startsWith('/')) file = `/${file}`
+    let adminPath = Config.adminPath(this.config)
+    if (!adminPath.startsWith('/')) adminPath = `/${adminPath}`
+    // In development the site proxies the admin path to the dev server, link
+    // to the dashboard as the site serves it, resolved against its origin
     const dashboardUrl = isDev
-      ? new URL('/', handlerUrl)
-      : new URL(file, handlerUrl)
+      ? adminPath
+      : new URL(`${adminPath}.html`, handlerUrl).href
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
     return (
       <NextPreviews
-        dashboardUrl={dashboardUrl.href}
+        dashboardUrl={dashboardUrl}
         widget={widget}
         stats={widget && showStats ? stats.settled() : undefined}
         workspace={workspace}
