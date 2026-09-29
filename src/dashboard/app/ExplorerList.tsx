@@ -7,8 +7,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-  Icon,
-  type Selection
+  Icon
 } from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
@@ -17,6 +16,7 @@ import {useLayoutEffect, useRef} from 'react'
 import {
   explorerPageIsPending,
   explorerScrollKey,
+  type DashboardEntry,
   type DashboardExplorer,
   type DashboardRoot,
   type ExplorerReadyPage
@@ -166,14 +166,18 @@ function useScrollRestoration(
 export interface ExplorerListProps {
   compactTable?: boolean
   explorer: DashboardExplorer
-  onSelectionChange?: (selection: Selection) => void
+  /**
+   * Called when a selectable entry is clicked, pickers that select a single
+   * entry confirm it right away
+   */
+  onPick?: (entry: DashboardEntry) => void
   page: ExplorerReadyPage
 }
 
 export function ExplorerList({
   compactTable,
   explorer,
-  onSelectionChange,
+  onPick,
   page
 }: ExplorerListProps) {
   const showResults = explorer.mode !== 'search' || Boolean(page.search.trim())
@@ -257,6 +261,7 @@ export function ExplorerList({
           explorer={explorer}
           items={page.items}
           locale={page.locale}
+          onPick={onPick}
           page={page}
           renderEmptyState={() => (
             <EmptyResults explorer={explorer} page={page} root={page.root} />
@@ -269,7 +274,7 @@ export function ExplorerList({
           explorer={explorer}
           items={page.items}
           locale={page.locale}
-          onSelectionChange={onSelectionChange}
+          onPick={onPick}
           page={page}
           renderEmptyState={() => (
             <EmptyResults explorer={explorer} page={page} root={page.root} />

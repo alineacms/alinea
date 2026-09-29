@@ -324,7 +324,7 @@ function LinkPickerCompact({
       <ExplorerBody
         compactTable
         explorer={explorer}
-        onSelectionChange={selectsMultiple ? undefined : commitSelection}
+        onPick={selectsMultiple ? undefined : commitEntry}
         page={page}
       />
       {selectsMultiple && (
@@ -357,11 +357,18 @@ function LinkPickerExpanded({
   const modal = useDialog()
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValueRaw(explorer.selection)
+  const setSelection = useSetAtom(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
 
   function onSubmit() {
     onConfirm(page.locale)
     modal.close()
+  }
+
+  // A single link is picked as soon as it is clicked
+  function onPick(entry: DashboardEntry) {
+    setSelection(new Set([entry.id]))
+    onSubmit()
   }
 
   return (
@@ -379,6 +386,7 @@ function LinkPickerExpanded({
           <ExplorerPickerContent
             explorer={explorer}
             navigationLabel="Link folders"
+            onPick={explorer.selectionMode === 'single' ? onPick : undefined}
             options={options}
             page={page}
             tree={tree}

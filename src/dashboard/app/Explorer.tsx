@@ -15,7 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
   SearchField,
-  type Selection,
   Switch,
   Text,
   ToggleGroup,
@@ -102,7 +101,11 @@ export interface ExplorerHeaderProps {
 export interface ExplorerBodyProps {
   compactTable?: boolean
   explorer: DashboardExplorer
-  onSelectionChange?: (selection: Selection) => void
+  /**
+   * Called when a selectable entry is clicked, pickers that select a single
+   * entry confirm it right away
+   */
+  onPick?: (entry: DashboardEntry) => void
   page: ExplorerReadyPage
 }
 
@@ -1127,7 +1130,7 @@ export function ExplorerHeader({
 export function ExplorerBody({
   compactTable,
   explorer,
-  onSelectionChange,
+  onPick,
   page
 }: ExplorerBodyProps) {
   return (
@@ -1136,7 +1139,7 @@ export function ExplorerBody({
         <ExplorerList
           compactTable={compactTable}
           explorer={explorer}
-          onSelectionChange={onSelectionChange}
+          onPick={onPick}
           page={page}
         />
       </div>

@@ -33,6 +33,7 @@ interface ExplorerCardItemProps {
   explorer: DashboardExplorer
   locale: string | null
   includeWorkspace: boolean
+  onPick?: (entry: DashboardEntry) => void
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
@@ -40,7 +41,8 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   entry,
   explorer,
   locale,
-  includeWorkspace
+  includeWorkspace,
+  onPick
 }: ExplorerCardItemProps) {
   const {data} = useAtomValueRaw(entry.data)
   const isSelectable = useAtomValueRaw(explorer.isSelectable(entry))
@@ -64,6 +66,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       locale={locale}
       isSelectable={isSelectable}
       includeWorkspace={includeWorkspace}
+      onPick={onPick}
     />
   )
 })
@@ -76,6 +79,7 @@ interface ExplorerCardLoadedItemProps {
   locale: string | null
   isSelectable: boolean
   includeWorkspace: boolean
+  onPick?: (entry: DashboardEntry) => void
 }
 
 const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
@@ -85,7 +89,8 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   explorer,
   locale,
   isSelectable,
-  includeWorkspace
+  includeWorkspace,
+  onPick
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValueRaw(data.label)
   const icon = useAtomValueRaw(data.icon)
@@ -129,6 +134,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
       textValue={label}
       selectable={isSelectable}
       onAction={hasAction ? onAction : undefined}
+      onClick={isSelectable && onPick ? () => onPick(entry) : undefined}
     >
       {breadcrumbs ? (
         <ExplorerLocatedCard
@@ -200,12 +206,18 @@ export interface ExplorerCardsProps {
   page: ExplorerReadyPage
   renderEmptyState: () => ReactNode
   locale: string | null
+  /**
+   * Called when a selectable entry is clicked, pickers that select a single
+   * entry confirm it right away
+   */
+  onPick?: (entry: DashboardEntry) => void
 }
 
 export function ExplorerCards({
   dragDrop,
   explorer,
   items,
+  onPick,
   page,
   renderEmptyState,
   locale
@@ -229,7 +241,7 @@ export function ExplorerCards({
         aria-label="Explorer entries"
         dropLabel="Drop files to upload"
         items={items}
-        dependencies={[breadcrumbs, locale, page]}
+        dependencies={[breadcrumbs, locale, onPick, page]}
         selectionMode={selectionMode}
         selectionBehavior={explorer.selectionBehavior}
         showSelectionControls={hasSelection && explorer.showSelectionControls}
@@ -249,6 +261,7 @@ export function ExplorerCards({
             explorer={explorer}
             locale={locale}
             includeWorkspace={page.searchesEverything}
+            onPick={onPick}
           />
         )}
       </ContentGrid>

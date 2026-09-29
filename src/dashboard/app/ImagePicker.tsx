@@ -3,6 +3,7 @@ import {Button, Text, useDialog} from '#/components.js'
 import {getRoot} from '#/core/Internal.js'
 import {
   createExplorerAtoms,
+  type DashboardEntry,
   type ExplorerLocation,
   type ExplorerOptions
 } from '#/dashboard/atoms/explorer.js'
@@ -102,6 +103,7 @@ function ImagePickerModalContent({options}: ExplorerModalProps) {
   const explorerPage = useAtomValueRawSync(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValueRaw(explorer.selection)
+  const setSelection = useSetAtom(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
 
   if (!explorerPage)
@@ -112,6 +114,12 @@ function ImagePickerModalContent({options}: ExplorerModalProps) {
       onConfirm()
       modal.close()
     })
+  }
+
+  // A single file is picked as soon as it is clicked
+  function onPick(entry: DashboardEntry) {
+    setSelection(new Set([entry.id]))
+    onSubmit()
   }
 
   return (
@@ -128,6 +136,7 @@ function ImagePickerModalContent({options}: ExplorerModalProps) {
           <ExplorerPickerContent
             explorer={explorer}
             navigationLabel="Media folders"
+            onPick={explorer.selectionMode === 'single' ? onPick : undefined}
             options={options}
             page={explorerPage}
             tree={tree}

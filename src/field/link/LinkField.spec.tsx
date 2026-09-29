@@ -1,5 +1,6 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
+  EntryPickerMultiple,
   EntryPickerSingle,
   Example,
   FilteredEntryFieldWithoutEntryScope,
@@ -101,8 +102,8 @@ test('keeps a link selected while filtering the picker', async ({
   mount,
   page
 }) => {
-  await mount(<EntryPickerSingle />)
-  await page.getByRole('button', {name: 'Pick an entry'}).click()
+  await mount(<EntryPickerMultiple />)
+  await page.getByRole('button', {name: 'Pick entries'}).click()
   await page.getByRole('button', {name: 'Expand entry picker'}).click()
 
   const search = page.getByRole('searchbox', {name: 'Search'})
@@ -113,6 +114,55 @@ test('keeps a link selected while filtering the picker', async ({
   await search.fill('About')
   await expect(page.getByText('About', {exact: true})).toBeVisible()
   await expect(page.getByText('1 item selected')).toBeVisible()
+})
+
+test('picks a single link in the expanded picker right away', async ({
+  mount,
+  page
+}) => {
+  await mount(<EntryPickerSingle />)
+  await page.getByRole('button', {name: 'Pick an entry'}).click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  const confirmed = page.waitForEvent(
+    'console',
+    message => message.type() === 'info'
+  )
+  await picker.getByRole('row', {name: /^Home /}).click()
+  await expect(picker).toBeHidden()
+  await confirmed
+})
+
+test('picks a single image right away', async ({mount, page}) => {
+  await mount(<ImagePickerSingle />)
+  await page.getByRole('button', {name: 'Pick an image'}).click()
+
+  const picker = page.getByRole('dialog', {name: 'Pick an image'})
+  const image = picker
+    .getByRole('grid', {name: 'Explorer entries'})
+    .getByRole('row')
+    .filter({hasText: 'landscape'})
+  await image.click()
+  await expect(picker).toBeHidden()
+})
+
+test('keeps the picker open while picking multiple links', async ({
+  mount,
+  page
+}) => {
+  await mount(<EntryPickerMultiple />)
+  await page.getByRole('button', {name: 'Pick entries'}).click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  await picker.getByRole('row', {name: /^Home /}).click()
+  await expect(picker.getByText('1 item selected')).toBeVisible()
+  await expect(picker).toBeVisible()
 })
 
 test('opens a compact entry picker and selects immediately', async ({

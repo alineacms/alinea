@@ -5,8 +5,7 @@ import {
   TableRow,
   TableTitle,
   type DragDropProps,
-  type IconType,
-  type Selection
+  type IconType
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
@@ -55,6 +54,7 @@ interface ExplorerTableRowProps {
   compact: boolean
   explorer: DashboardExplorer
   locale: string | null
+  onPick?: (entry: DashboardEntry) => void
   page: ExplorerReadyPage
 }
 
@@ -150,6 +150,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     isSelectable,
     label,
     links,
+    onPick,
     parents,
     rootLabel
   } = props
@@ -170,6 +171,9 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       return
     }
     onAction(entry, props.locale)
+  }
+  function pick() {
+    onPick?.(entry)
   }
   function enterParent() {
     startTransition(() => openLocation(entry))
@@ -193,7 +197,11 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
         hasAction && explorer.mode !== 'search' ? performAction : undefined
       }
       onClick={
-        hasAction && explorer.mode === 'search' ? performAction : undefined
+        hasAction && explorer.mode === 'search'
+          ? performAction
+          : isSelectable && onPick
+            ? pick
+            : undefined
       }
       onDoubleClick={hasChildren ? enterParent : undefined}
       rows={
@@ -240,6 +248,7 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
       entry={child}
       explorer={props.explorer}
       locale={props.locale}
+      onPick={props.onPick}
       page={props.page}
     />
   ))
@@ -309,10 +318,14 @@ export interface ExplorerTableProps {
   dragDrop: DragDropProps
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
-  onSelectionChange?: (selection: Selection) => void
   page: ExplorerReadyPage
   renderEmptyState: () => ReactNode
   locale: string | null
+  /**
+   * Called when a selectable entry is clicked, pickers that select a single
+   * entry confirm it right away
+   */
+  onPick?: (entry: DashboardEntry) => void
 }
 
 export function ExplorerTable({
@@ -320,7 +333,7 @@ export function ExplorerTable({
   dragDrop,
   explorer,
   items,
-  onSelectionChange,
+  onPick,
   page,
   renderEmptyState,
   locale
@@ -349,11 +362,6 @@ export function ExplorerTable({
     explorer.showSelectionControls &&
     (!compact || selectionMode === 'multiple')
 
-  function changeSelection(selection: Selection) {
-    setSelected(selection === 'all' ? 'all' : new Set(selection))
-    onSelectionChange?.(selection)
-  }
-
   return (
     <div
       id={explorer.resultsId}
@@ -379,13 +387,18 @@ export function ExplorerTable({
                 )
         }
         expandable={explorer.supportsInlineExpansion}
-        dependencies={[breadcrumbs, compact, locale, page]}
+        dependencies={[breadcrumbs, compact, locale, onPick, page]}
         items={items}
         selectionMode={selectionMode}
         selectionBehavior={explorer.selectionBehavior}
         showSelectionControls={showSelectionControls}
         selectedKeys={hasSelection ? selected : undefined}
-        onSelectionChange={hasSelection ? changeSelection : undefined}
+        onSelectionChange={
+          hasSelection
+            ? selection =>
+                setSelected(selection === 'all' ? 'all' : new Set(selection))
+            : undefined
+        }
         expandedKeys={expandedKeys}
         onExpandedChange={setExpandedKeys}
         renderEmptyState={renderEmptyState}
@@ -397,6 +410,7 @@ export function ExplorerTable({
             entry={item}
             explorer={explorer}
             locale={locale}
+            onPick={onPick}
             page={page}
           />
         )}
