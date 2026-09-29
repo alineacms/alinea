@@ -151,7 +151,6 @@ function WorkspaceProfileMenu({
         side="right"
         align="end"
         sideOffset={16}
-        style={{padding: '0', boxShadow: 'var(--alinea-shadow-tooltip)'}}
       >
         <ul className={styles.WorkspaceRoots.profile.popover()}>
           <li className={styles.WorkspaceRoots.profile.popover.user()}>
