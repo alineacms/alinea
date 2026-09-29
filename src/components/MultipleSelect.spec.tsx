@@ -47,7 +47,12 @@ test('default, disabled and invalid states', async ({mount, page}) => {
 })
 
 test('the list is as wide as the trigger', async ({mount, page}) => {
-  await mount(<Example />)
+  // A full width field would leave no room for the viewport padding
+  await mount(
+    <div style={{width: 600}}>
+      <Example />
+    </div>
+  )
   const trigger = page.locator('[data-slot="multiple-select-trigger"]')
   await trigger.click()
   const content = page.locator('[data-slot="multiple-select-content"]')
