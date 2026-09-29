@@ -142,6 +142,7 @@ function SelectTrigger({
   readOnly
 }: SelectTriggerProps) {
   const state = useContext(SelectStateContext)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const hasValue = Boolean(state && state.selectedItems.length > 0)
   return (
     <div
@@ -153,6 +154,7 @@ function SelectTrigger({
       onKeyDownCapture={readOnly ? preventSelectionKeys : undefined}
     >
       <Button
+        ref={buttonRef}
         className={styles.SelectTrigger.button()}
         render={
           readOnly
@@ -186,7 +188,11 @@ function SelectTrigger({
           slot={null}
           aria-label="Clear"
           data-slot="select-clear"
-          onPress={() => state?.setValue(null)}
+          onPress={() => {
+            state?.setValue(null)
+            // The clear button unmounts, keep focus in the field
+            buttonRef.current?.focus()
+          }}
           className={styles.SelectTrigger.clear()}
         >
           <Icon icon={IcRoundClose} />

@@ -15,6 +15,7 @@ test('selects and clears a value', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Clear'}).click()
   await expect(page.getByTestId('value')).toHaveText('Value: none')
   await expect(trigger).toContainText('Select software')
+  await expect(trigger).toBeFocused()
 })
 
 test('supports keyboard selection', async ({mount, page}) => {

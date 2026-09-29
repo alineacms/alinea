@@ -184,6 +184,7 @@ function ComboBoxTrigger({
   clearable
 }: ComboBoxTriggerProps) {
   const state = useContext(ComboBoxStateContext)
+  const inputRef = useRef<HTMLInputElement>(null)
   const hasClear = clearable && Boolean(state?.inputValue)
   return (
     <div
@@ -193,6 +194,7 @@ function ComboBoxTrigger({
       className={styles.ComboBoxTrigger()}
     >
       <Input
+        ref={inputRef}
         data-slot="combobox-input"
         placeholder={placeholder}
         autoFocus={autoFocus}
@@ -206,6 +208,8 @@ function ComboBoxTrigger({
           onPress={() => {
             state?.setInputValue('')
             state?.setSelectedKey(null)
+            // The clear button unmounts, keep focus in the field
+            inputRef.current?.focus()
           }}
           className={styles.ComboBoxTrigger.action()}
         >
