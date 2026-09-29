@@ -367,7 +367,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Call `describe_schema` with `detail: \"summary\"` for the workspaces, roots, locales and types, then call it with `type` for the full fields, block types and value formats of every type you will write."
+                  "text": "Call `describe_schema` for the workspaces, roots, types and their fields, and the value format of each field kind."
                 }
               ]
             }
@@ -381,7 +381,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Locate content, parents and ids with `find_entries` and `get_entry`."
+                  "text": "Find content, parents and ids with `find_entries` and `get_entry`."
                 }
               ]
             }
@@ -395,7 +395,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Write with `create_entry` and `update_entry`, with `data` keyed by field name. Upload images and files with `upload_file` first to get the media id for image and file fields."
+                  "text": "Write with `create_entry` and `update_entry`, with `data` keyed by field name. Rich text is Markdown, links are entry ids. Upload images and files with `upload_file` first to get the media id for image and file fields."
                 }
               ]
             }
@@ -409,7 +409,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Entries are published by default, pass `publish: false` to save a draft when drafts are enabled."
+                  "text": "Writes publish, pass `publish: false` to save a draft when drafts are enabled."
                 }
               ]
             }
@@ -423,7 +423,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Call `find_references` before deleting or renaming an entry."
+                  "text": "`get_entry` lists the entries linking to an entry, check them before deleting or moving it."
                 }
               ]
             }
@@ -476,7 +476,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Describes the workspaces, roots (with their locales, the types they accept and seeded children), the entry types with their fields, and how to write a value for every field kind."
+          "text": "Describes the workspaces and roots (their locales and the types they accept), every entry type with its fields, and the value format of each field kind. Pass `type` to describe only that type."
         }
       ]
     },
@@ -491,7 +491,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`detail`: `\"summary\"` lists every type with field keys, kinds and labels only. `\"full\"` (the default) includes every field option, block and value format."
+                  "text": "Each field reads `kind[details] Label (flags)`. The label is left out when it matches the key, flags are `required`, `shared` and `readOnly`."
                 }
               ]
             }
@@ -505,7 +505,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`type`: describe one type in full, with the blocks and field groups it uses and the value formats."
+                  "text": "`list[...]` and `richText[...]` name the `_type` of each row or block. `object[name]` and `fields: name` refer to `definitions`, which describe nested types once. A row type described under another name reads `Row=Definition`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`select[a|b]` lists the option keys, `link[entry|url]` the link types (`links` for multiple links) and `localised[en|nl] text` holds a value per locale."
                 }
               ]
             }
@@ -516,14 +530,14 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQQfA0uEEJrCaQdXQazEpllw",
-      "code": "{\"detail\": \"summary\"}",
+      "code": "{}",
       "fileName": "",
       "language": "json"
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjyQR8wJyZt0hzM0N8wM43Yyla",
-      "code": "{\n  \"detail\": \"summary\",\n  \"enableDrafts\": false,\n  \"workspaces\": [{\n    \"name\": \"main\",\n    \"label\": \"My site\",\n    \"source\": \"content\",\n    \"mediaDir\": \"public/media\",\n    \"roots\": [\n      {\"name\": \"pages\", \"label\": \"Pages\", \"contains\": [\"Page\", \"Blog\"]},\n      {\"name\": \"media\", \"label\": \"Media\", \"media\": true, \"contains\": [\"MediaLibrary\", \"MediaFile\"]}\n    ]\n  }],\n  \"types\": {\n    \"Blog\": {\"label\": \"Blog\", \"contains\": [\"BlogPost\"], \"fields\": {\"title\": \"text\", \"path\": \"path\", \"metadata\": \"metadata\"}},\n    \"BlogPost\": {\"label\": \"Blog post\", \"fields\": {\"title\": \"text\", \"path\": \"path\", \"publishDate\": \"date\", \"author\": \"link[entry]\", \"cover\": \"link[image] Cover image\", \"body\": \"richText\", \"metadata\": \"metadata\"}}\n  }\n}",
+      "code": "{\n  \"enableDrafts\": false,\n  \"workspaces\": {\n    \"main\": {\n      \"pages\": {\"contains\": [\"Page\", \"Blog\"]},\n      \"media\": {\"media\": true, \"contains\": [\"MediaLibrary\"]}\n    }\n  },\n  \"types\": {\n    \"Blog\": {\n      \"contains\": [\"BlogPost\"],\n      \"fields\": {\"title\": \"text (required)\", \"path\": \"path (required)\", \"metadata\": \"object[metadata]\"}\n    },\n    \"BlogPost\": {\n      \"fields\": {\n        \"title\": \"text (required)\",\n        \"path\": \"path (required)\",\n        \"publishDate\": \"date\",\n        \"author\": \"link[entry]\",\n        \"cover\": \"link[image] Cover image\",\n        \"body\": \"richText\",\n        \"metadata\": \"object[metadata]\"\n      }\n    }\n  },\n  \"definitions\": {\n    \"metadata\": {\"title\": \"text\", \"description\": \"text\", \"openGraph\": \"object[openGraph]\", \"...\": \"...\"},\n    \"openGraph\": {\"image\": \"link[image]\", \"title\": \"text\", \"description\": \"text\"}\n  },\n  \"valueFormats\": \"...\"\n}",
       "fileName": "",
       "language": "json"
     },
@@ -532,7 +546,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Then describe each type before writing it:"
+          "text": "Describe a single type:"
         }
       ]
     },
@@ -559,7 +573,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Lists entries matching filters, in the order of the content tree: by workspace and root, parents before their children, siblings in their sidebar order. With `search` the results are ordered by relevance instead."
+          "text": "Lists entries matching filters, with the `total` number of matches. With `parentId` the entries are in their sibling order, otherwise they are ordered by url, and with `search` by relevance. Each entry has a `children` count and the path of its `file`."
         }
       ]
     },
@@ -630,7 +644,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`limit` (default 50, at most 200) and `offset` for paging."
+                  "text": "`limit` (default 50) and `offset` for paging."
                 }
               ]
             }
@@ -648,7 +662,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQPS00ZAUtaWbYvqpRDs8UAq",
-      "code": "{\n  \"total\": 12,\n  \"offset\": 0,\n  \"entries\": [\n    {\n      \"id\": \"3JmZ4hN9\",\n      \"type\": \"BlogPost\",\n      \"title\": \"Hello world\",\n      \"path\": \"hello-world\",\n      \"url\": \"/blog/hello-world\",\n      \"parentId\": \"3JmZ1c0Y\",\n      \"locale\": null,\n      \"status\": \"published\",\n      \"workspace\": \"main\",\n      \"root\": \"pages\",\n      \"childrenCount\": 0\n    }\n  ]\n}",
+      "code": "{\n  \"total\": 12,\n  \"entries\": [\n    {\n      \"id\": \"3JmZ4hN9\",\n      \"type\": \"BlogPost\",\n      \"title\": \"Hello world\",\n      \"url\": \"/blog/hello-world\",\n      \"parentId\": \"3JmZ1c0Y\",\n      \"locale\": null,\n      \"status\": \"published\",\n      \"workspace\": \"main\",\n      \"root\": \"pages\",\n      \"children\": 0,\n      \"file\": \"content/pages/blog/hello-world.json\"\n    }\n  ]\n}",
       "fileName": "",
       "language": "json"
     },
@@ -668,7 +682,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Reads one entry with its metadata, the path of its file and its field data."
+          "text": "Reads one entry: its metadata, the path of its file, its versions, the entries linking to it (`referencedBy`) and its field data. Rich text is returned as Markdown, which `create_entry` and `update_entry` accept back. The stored JSON is in the entry's file."
         }
       ]
     },
@@ -697,35 +711,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`locale`: the translation to read. Without it you get the root's default locale, and `otherLocales` lists the other translations."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`status`: which version to read, `preferDraft` by default."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`richText`: `\"markdown\"` (the default) returns rich text as Markdown, which `create_entry` and `update_entry` accept back. `\"raw\"` returns the stored JSON, `\"both\"` the raw data plus a `markdown` map."
+                  "text": "`locale`: the translation to read, defaults to the root's default locale. `versions` lists the locale and status of every version."
                 }
               ]
             }
@@ -743,7 +729,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQVXz51Nf8KZLVtmDPItIkhB",
-      "code": "{\n  \"id\": \"3JmZ4hN9\",\n  \"type\": \"BlogPost\",\n  \"title\": \"Hello world\",\n  \"path\": \"hello-world\",\n  \"url\": \"/blog/hello-world\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"parents\": [\"3JmZ1c0Y\"],\n  \"file\": \"content/pages/blog/hello-world.json\",\n  \"childrenCount\": 0,\n  \"versions\": [{\"locale\": null, \"status\": \"published\"}],\n  \"data\": {\n    \"title\": \"Hello world\",\n    \"path\": \"hello-world\",\n    \"publishDate\": \"2026-09-23\",\n    \"author\": {\"_id\": \"3JmZ9kT2\", \"_type\": \"entry\", \"_entry\": \"3JmZ2aP5\"},\n    \"body\": \"Our first post, written by [Ada](entry:3JmZ2aP5).\",\n    \"metadata\": {\"title\": \"\", \"description\": \"\", \"openGraph\": {\"title\": \"\", \"image\": {}, \"description\": \"\"}}\n  }\n}",
+      "code": "{\n  \"id\": \"3JmZ4hN9\",\n  \"type\": \"BlogPost\",\n  \"title\": \"Hello world\",\n  \"url\": \"/blog/hello-world\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/hello-world.json\",\n  \"versions\": [{\"locale\": null, \"status\": \"published\"}],\n  \"referencedBy\": [\n    {\"id\": \"3JmZ5rE8\", \"title\": \"Choosing a CMS\", \"type\": \"BlogPost\", \"locale\": null, \"field\": \"body\"}\n  ],\n  \"data\": {\n    \"title\": \"Hello world\",\n    \"path\": \"hello-world\",\n    \"publishDate\": \"2026-09-23\",\n    \"author\": {\"_id\": \"3JmZ9kT2\", \"_type\": \"entry\", \"_entry\": \"3JmZ2aP5\"},\n    \"body\": \"Our first post, written by [Ada](entry:3JmZ2aP5).\",\n    \"metadata\": {\"title\": \"\", \"description\": \"\", \"openGraph\": {\"title\": \"\", \"image\": {}, \"description\": \"\"}}\n  }\n}",
       "fileName": "",
       "language": "json"
     },
@@ -792,7 +778,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`parentId`: the parent entry, leave it out to create the entry at the top level of a root."
+                  "text": "`parentId`: the parent entry, leave it out to create the entry at the top level of a root. The entry is added after its siblings, unless the parent type sets an insert order."
                 }
               ]
             }
@@ -867,20 +853,6 @@
               ]
             }
           ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`insertOrder`: `\"first\"` or `\"last\"` (the default) among its siblings, unless the parent type defines an order."
-                }
-              ]
-            }
-          ]
         }
       ]
     },
@@ -894,7 +866,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQTb1NmCEhLPQOrSwvI3i62F",
-      "code": "{\n  \"id\": \"3JmZ5rE8\",\n  \"type\": \"BlogPost\",\n  \"title\": \"Choosing a CMS\",\n  \"path\": \"choosing-a-cms\",\n  \"url\": \"/blog/choosing-a-cms\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/choosing-a-cms.json\"\n}",
+      "code": "{\n  \"id\": \"3JmZ5rE8\",\n  \"type\": \"BlogPost\",\n  \"title\": \"Choosing a CMS\",\n  \"url\": \"/blog/choosing-a-cms\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/choosing-a-cms.json\"\n}",
       "fileName": "",
       "language": "json"
     },
@@ -939,7 +911,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Changes fields of an existing entry. Only the fields in `data` change, everything else stays as it is. Object and localised fields merge key by key, rich text is replaced and lists are replaced, merged by row id or patched (see "
+          "text": "Changes fields of an existing entry. Only the fields in `data` change, everything else stays as it is. Object and localised fields merge key by key, rich text and lists are replaced, and list rows that keep their `_id` keep their stored values (see "
         },
         {
           "_type": "text",
@@ -1030,7 +1002,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQSiddtJt2rcl5RSAowtZ1tW",
-      "code": "{\n  \"id\": \"3JmZ5rE8\",\n  \"type\": \"BlogPost\",\n  \"title\": \"How to choose a CMS\",\n  \"path\": \"how-to-choose-a-cms\",\n  \"url\": \"/blog/how-to-choose-a-cms\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/how-to-choose-a-cms.json\",\n  \"changed\": [\"title\", \"path\"]\n}",
+      "code": "{\n  \"id\": \"3JmZ5rE8\",\n  \"type\": \"BlogPost\",\n  \"title\": \"How to choose a CMS\",\n  \"url\": \"/blog/how-to-choose-a-cms\",\n  \"parentId\": \"3JmZ1c0Y\",\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"pages\",\n  \"file\": \"content/pages/blog/how-to-choose-a-cms.json\"\n}",
       "fileName": "",
       "language": "json"
     },
@@ -1039,7 +1011,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "When the data matches what is stored, nothing is written and the result says `\"note\": \"No changes\"`. For media files only `title`, `alt` and `focus` can change."
+          "text": "When the data matches what is stored, nothing is written and the result says `\"note\": \"No changes\"`."
         }
       ]
     },
@@ -1059,7 +1031,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Deletes an entry with its children, in all locales. Media files are removed from disk as well."
+          "text": "Deletes an entry with its children, in all locales. Media files are removed from disk as well. It refuses while other entries link to the entry."
         }
       ]
     },
@@ -1150,74 +1122,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQULNZVT12JlTUU86TDjrFET",
-      "code": "{\"deleted\": [{\"id\": \"3JmZ5rE8\", \"title\": \"How to choose a CMS\", \"locale\": null, \"status\": \"published\"}]}",
-      "fileName": "",
-      "language": "json"
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "find_references"
-        }
-      ],
-      "_anchor": "find-references"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Lists the entries linking to an entry (`incoming`, with the field holding each link) and the entries it links to (`outgoing`), like the references panel in the dashboard."
-        }
-      ]
-    },
-    {
-      "_type": "bulletList",
-      "content": [
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`id`: the entry."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`locale`: the translation whose outgoing links to list, defaults to the root's default locale."
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3JjyQRx6qrgOO4EzgEyWQMtUUAC",
-      "code": "{\"id\": \"3JmZ2aP5\"}",
-      "fileName": "",
-      "language": "json"
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3JjyQQCIM8XZS3PHzChn0RzNLEr",
-      "code": "{\n  \"id\": \"3JmZ2aP5\",\n  \"title\": \"Ada\",\n  \"locale\": null,\n  \"incoming\": [\n    {\n      \"id\": \"3JmZ4hN9\",\n      \"title\": \"Hello world\",\n      \"type\": \"BlogPost\",\n      \"url\": \"/blog/hello-world\",\n      \"locale\": null,\n      \"workspace\": \"main\",\n      \"root\": \"pages\",\n      \"field\": \"author\",\n      \"fieldLabel\": \"Author\"\n    }\n  ],\n  \"outgoing\": []\n}",
+      "code": "{\"deleted\": \"3JmZ5rE8\"}",
       "fileName": "",
       "language": "json"
     },
@@ -1237,7 +1142,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Publishes the draft of an entry, or restores an archived entry. An entry that is already published is left alone."
+          "text": "Publishes the draft of an entry, or restores an archived entry. With `archive: true` it archives the published entry instead: it is hidden from the site but kept, and publishing restores it. An already published entry is left alone and the result says `\"note\": \"Already published\"`."
         }
       ]
     },
@@ -1271,6 +1176,20 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`archive`: archive the entry instead of publishing it."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1284,34 +1203,23 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQUJqIwqU7mJVM0hO0Bp3H48",
-      "code": "{\"id\": \"3JmZ5rE8\", \"locale\": null, \"status\": \"published\", \"from\": \"draft\"}",
+      "code": "{\"id\": \"3JmZ5rE8\", \"locale\": null, \"status\": \"published\"}",
       "fileName": "",
       "language": "json"
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "archive_entry"
-        }
-      ],
-      "_anchor": "archive-entry"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Archives a published entry: it is hidden from the site but kept, and `publish_entry` restores it. Takes `id` and `locale`."
+          "text": "Archive an entry:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjyQTnWfyFo0T801R2AGzSS7dE",
-      "code": "{\"id\": \"3JmZ5rE8\"}",
+      "code": "{\"id\": \"3JmZ5rE8\", \"archive\": true}",
       "fileName": "",
       "language": "json"
     },
@@ -1380,7 +1288,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The entry's type must be allowed in its new location, and entries only move within their workspace."
+          "text": "The entry's type must be allowed in its new parent."
         }
       ]
     },
@@ -1416,7 +1324,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Adds an image or other file to a workspace's media library. Image dimensions, the average color, a thumbhash and a preview are computed, as in the dashboard."
+          "text": "Adds a local file to a workspace's media library. Image dimensions, the average color, a thumbhash and a preview are computed, as in the dashboard."
         }
       ]
     },
@@ -1431,21 +1339,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`path`: a local file, relative to the project directory (where `alinea dev` runs) or absolute inside it or inside the enclosing git repository. Or:"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`url`: an http(s) url to download."
+                  "text": "`path`: a local file, relative to the project directory (where `alinea dev` runs) or absolute inside the enclosing git repository. Hidden files such as `.env`, and files outside these directories, are refused."
                 }
               ]
             }
@@ -1515,20 +1409,6 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`focus`: the focus point of the image, `{\"x\": 0.5, \"y\": 0.3}` with values from 0 (left, top) to 1 (right, bottom)."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
                   "text": "`replace`: the id of an existing media entry whose file to replace, see "
                 },
                 {
@@ -1556,14 +1436,14 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQW5I11CrvWZyy0mCkTcrVIg",
-      "code": "{\"path\": \"assets/cover.jpg\", \"title\": \"Cover\", \"alt\": \"A desk with a laptop\", \"focus\": {\"x\": 0.5, \"y\": 0.4}}",
+      "code": "{\"path\": \"assets/cover.jpg\", \"title\": \"Cover\", \"alt\": \"A desk with a laptop\"}",
       "fileName": "",
       "language": "json"
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjyQQTSNBax5hQ4MsvSLCFgYDH",
-      "code": "{\n  \"id\": \"3JmZ7xC4\",\n  \"title\": \"Cover\",\n  \"url\": \"http://localhost:3000/admin/file/cover.jpg\",\n  \"publicUrl\": \"http://localhost:3000/media/cover.3JmZ7yD5.jpg\",\n  \"file\": \"content/media/cover.json\",\n  \"location\": \"/cover.3JmZ7yD5.jpg\",\n  \"storedAt\": \"public/media/cover.3JmZ7yD5.jpg\",\n  \"extension\": \".jpg\",\n  \"size\": 206083,\n  \"width\": 2000,\n  \"height\": 1333,\n  \"alt\": \"A desk with a laptop\",\n  \"focus\": {\"x\": 0.5, \"y\": 0.4}\n}",
+      "code": "{\n  \"id\": \"3JmZ7xC4\",\n  \"type\": \"MediaFile\",\n  \"title\": \"Cover\",\n  \"url\": \"/admin/file/cover.jpg\",\n  \"parentId\": null,\n  \"locale\": null,\n  \"status\": \"published\",\n  \"workspace\": \"main\",\n  \"root\": \"media\",\n  \"file\": \"content/media/cover.json\",\n  \"location\": \"/cover.3JmZ7yD5.jpg\"\n}",
       "fileName": "",
       "language": "json"
     },
@@ -1621,7 +1501,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Number: a number or `null`. Check: a boolean."
+                  "text": "Number: a number. Check: a boolean."
                 }
               ]
             }
@@ -1635,7 +1515,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Select: the option key (not its label) or `null`. Multiple select: an array of option keys."
+                  "text": "Select: an option key (not its label). Multiple select: an array of option keys."
                 }
               ]
             }
@@ -1649,7 +1529,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Object and metadata fields: an object of nested fields, only the given keys change."
+                  "text": "Object fields, such as metadata: an object of nested fields, only the given keys change."
                 }
               ]
             }
@@ -1663,7 +1543,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "JSON, hidden and custom fields: any JSON value, stored as is."
+                  "text": "JSON and hidden fields: any JSON value, stored as is."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Values are checked against the field kind: a value of the wrong type, an unknown option or an unknown field fails with an error naming the field."
                 }
               ]
             }
@@ -1795,7 +1689,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "You can also pass the stored TextDoc JSON (read it with `richText: \"raw\"`)."
+          "text": "You can also pass stored TextDoc JSON, as found in the entry's file."
         }
       ]
     },
@@ -1821,7 +1715,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Entry, image and file links: the id of the entry or media entry, or `{\"id\": \"...\", ...linkFields}` to fill the link's extra fields. Images and files are media entries, upload them with `upload_file` first."
+                  "text": "Entry, image and file links: the id of the entry or media entry (`entry:ID` works too), or `{\"id\": \"...\", ...fields}` to fill the link's extra fields. Images and files are media entries, upload them with `upload_file` first."
                 }
               ]
             }
@@ -1835,7 +1729,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Url links: a url, or `{\"url\": \"https://example.com\", \"title\": \"Example\", \"target\": \"_blank\"}`."
+                  "text": "Url links: a url, or `{\"url\": \"https://example.com\", \"title\": \"Example\", \"target\": \"_self\"}` (the target defaults to `_blank`)."
                 }
               ]
             }
@@ -1854,6 +1748,20 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The stored link objects that `get_entry` returns are accepted as they are."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1862,7 +1770,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Every id is checked: linking to an entry that doesn't exist, or to a page where an image is expected, fails with an error naming the field."
+          "text": "Every id is checked: linking to an entry that doesn't exist, or to an entry that isn't media where an image or file is expected, fails with an error naming the field."
         }
       ]
     },
@@ -1882,7 +1790,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Pass an array of rows to replace a list. Each row is an object with the `_type` of its row type and its fields; `_type` can be left out when the list has a single row type, and `_id` and `_index` are generated. A row that includes the `_id` of an existing row is merged into that row, so the agent only has to send the fields that change."
+          "text": "Pass an array of rows, which replaces the list. Each row is an object with the `_type` of its row type and its fields; `_type` can be left out when the list has a single row type. A row with the `_id` of a current row updates that row, so only send the fields that change. Rows without an `_id` are added, rows you leave out are removed, and the array order is the new order."
         }
       ]
     },
@@ -1891,75 +1799,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "To change a few rows of a long list, send operations instead of the whole list. They are applied in this order:"
-        }
-      ]
-    },
-    {
-      "_type": "bulletList",
-      "content": [
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`update`: rows with the `_id` of an existing row and the fields to change."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`insert`: `{\"row\": {...}, \"after\": \"<row id>\"}` or `\"before\"`, without either the row is added at the end."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`remove`: the ids of the rows to remove."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
-                  "text": "`order`: every row id in the new order."
-                }
-              ]
-            }
-          ]
+          "text": "This changes the title of the first row, adds a row after it and keeps the third row, any other rows are removed:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjyQPrmM9NFwbdnvRnnAXQWQ9W",
-      "code": "{\n  \"id\": \"3JmZ1c0Y\",\n  \"data\": {\n    \"sections\": {\n      \"update\": [{\"_id\": \"3JmZ8qW1\", \"title\": \"New title\"}],\n      \"insert\": [{\"row\": {\"_type\": \"Cta\", \"title\": \"Get started\"}, \"after\": \"3JmZ8qW1\"}],\n      \"remove\": [\"3JmZ8rT4\"]\n    }\n  }\n}",
+      "code": "{\n  \"id\": \"3JmZ1c0Y\",\n  \"data\": {\n    \"sections\": [\n      {\"_id\": \"3JmZ8qW1\", \"title\": \"New title\"},\n      {\"_type\": \"Cta\", \"title\": \"Get started\"},\n      {\"_id\": \"3JmZ8rT4\"}\n    ]\n  }\n}",
       "fileName": "",
       "language": "json"
     },
@@ -1968,7 +1815,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Nested lists take the same forms. A row's type can't be changed in place: remove the row and insert a new one."
+          "text": "Nested lists take the same form. A row's type can't be changed in place: leave the row out and add a new one."
         }
       ]
     },
@@ -2040,7 +1887,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Media files are entries of type `MediaFile` in a media root, created by `upload_file`. Their `alt` text is a string, or strings keyed by locale when the media root is translated, and their `focus` point decides how images are cropped."
+          "text": "Media files are entries of type `MediaFile` in a media root, created by `upload_file`. Their `alt` text is a string, or strings keyed by locale when the media root is translated, and their `focus` point (`{\"x\": 0.5, \"y\": 0.3}`, from 0 to 1) decides how images are cropped."
         }
       ]
     },
@@ -2065,7 +1912,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The entry keeps its id, so every image field and rich text image that links to it keeps working. The new file gets a new location, the old file is removed, and the title, alt text and focus point are kept unless you pass new ones. The result lists the removed file under `replaced`."
+          "text": "The entry keeps its id, so every image field and rich text image that links to it keeps working. The new file gets a new location and the old file is removed. The title, alt text and focus point are kept, unless you pass a new title or alt text."
         }
       ]
     },
@@ -2074,7 +1921,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Change the title, alt text or focus point without a new file with `update_entry`: `{\"id\": \"3JmZ7xC4\", \"data\": {\"alt\": \"The new logo\"}}`."
+          "text": "Change the title, alt text or focus point without a new file with `update_entry`: `{\"id\": \"3JmZ7xC4\", \"data\": {\"alt\": \"The new logo\", \"focus\": {\"x\": 0.5, \"y\": 0.3}}}`."
         }
       ]
     },
@@ -2123,7 +1970,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Entries link to each other through link fields and rich text. Before deleting, moving or replacing content, call `find_references` to see what links to it."
+          "text": "Entries link to each other through link fields and rich text. Before deleting, moving or replacing content, check `referencedBy` in the result of `get_entry` to see what links to it."
         }
       ]
     },
@@ -2139,7 +1986,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjyQRk0885BRE17Of8RFnOTXfi",
-      "code": "Entry \"3JmZ2aP5\" is linked from 2 place(s), update those links first or pass force: true to delete anyway:\n- Hello world (BlogPost, id 3JmZ4hN9) field author\n- Choosing a CMS (BlogPost, id 3JmZ5rE8) field author",
+      "code": "Entry \"3JmZ2aP5\" is linked from:\n- Hello world (3JmZ4hN9) field author\n- Choosing a CMS (3JmZ5rE8) field author\nChange those links or pass force: true",
       "fileName": "",
       "language": "text"
     },
@@ -2148,7 +1995,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Update or remove those links first. With `force: true` the entry is deleted anyway and the result carries a `warning` that lists the entries whose links now point to a missing entry. Deleting only a draft, or one translation while others remain, leaves the entry in place, so it isn't checked."
+          "text": "Update or remove those links first, or pass `force: true` to delete the entry anyway and leave the links pointing to a missing entry. Links from the entry's own children count as well. Deleting only a draft, or a single translation, isn't checked."
         }
       ]
     },
