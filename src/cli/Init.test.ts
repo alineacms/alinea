@@ -2,6 +2,7 @@ import {
   detectPm,
   init,
   PM,
+  patchAgents,
   patchGitignore,
   patchPackageJson
 } from '#/cli/Init.js'
@@ -72,6 +73,10 @@ if (testPms) {
     test.is(config.includes('example.com'), false)
     const gitignore = await fs.readFile(path.join(cwd, '.gitignore'), 'utf-8')
     test.is(gitignore, '/public/admin.html\n/public/admin/\n')
+    const agents = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf-8')
+    test.ok(agents.startsWith('## Alinea\n'))
+    test.ok(agents.includes('`src/cms.ts`'))
+    test.ok(agents.includes('node_modules/alinea/docs/'))
   })
 }
 
@@ -110,6 +115,21 @@ test('patchGitignore appends missing lines', () => {
   )
   const source = '/public/admin/\n/public/admin.html\n'
   test.is(patchGitignore(source, lines), source)
+})
+
+test('patchAgents appends the section once', () => {
+  const section = '## Alinea\n\nUse the docs.\n'
+  test.is(patchAgents('', section), section)
+  test.is(
+    patchAgents('# Project\n\nRules.\n', section),
+    '# Project\n\nRules.\n\n## Alinea\n\nUse the docs.\n'
+  )
+  test.is(
+    patchAgents('# Project\r\n', section),
+    '# Project\r\n\r\n## Alinea\r\n\r\nUse the docs.\r\n'
+  )
+  const source = '# Project\n\n## Alinea\n\nOur own notes.\n'
+  test.is(patchAgents(source, section), source)
 })
 
 test('detectPm detects bun.lock', async () => {

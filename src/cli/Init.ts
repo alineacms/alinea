@@ -93,6 +93,20 @@ export function patchGitignore(source: string, lines: Array<string>): string {
   return source + separator + missing.join(newline) + newline
 }
 
+/**
+ * Append a section to an AGENTS.md source, unless it already has a line with
+ * the heading the section starts with.
+ */
+export function patchAgents(source: string, section: string): string {
+  const [heading] = section.split('\n')
+  const lines = source.split(/\r?\n/).map(line => line.trim())
+  if (lines.includes(heading)) return source
+  if (!source.trim()) return section
+  const newline = source.includes('\r\n') ? '\r\n' : '\n'
+  const body = section.replaceAll('\n', newline)
+  return `${source.trimEnd()}${newline}${newline}${body}`
+}
+
 export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
   const configLocation = findConfigFile(cwd)
@@ -153,6 +167,19 @@ export async function init(options: InitOptions) {
     await fs.mkdir(path.dirname(routeLocation), {recursive: true})
     await fs.writeFile(routeLocation, handlerFile)
   }
+  // Point coding agents to the docs and the MCP server
+  const agentsFile = path.join(cwd, 'AGENTS.md')
+  const [agents = ''] = await outcome(fs.readFile(agentsFile, 'utf-8'))
+  const agentsSection = await fs.readFile(
+    path.join(__dirname, 'static/init/agents.md'),
+    'utf-8'
+  )
+  const cmsFile = path.relative(cwd, configFileLocation).replaceAll('\\', '/')
+  const patchedAgents = patchAgents(
+    agents,
+    agentsSection.replace('{cmsFile}', cmsFile)
+  )
+  if (patchedAgents !== agents) await fs.writeFile(agentsFile, patchedAgents)
   // alinea build writes the dashboard to the public folder
   const gitignoreFile = path.join(cwd, '.gitignore')
   const [gitignore = ''] = await outcome(fs.readFile(gitignoreFile, 'utf-8'))
