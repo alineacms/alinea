@@ -383,7 +383,7 @@ function UserActionsMenu({user, onDeactivate, onEdit}: UserActionsMenuProps) {
         size="icon-sm"
         icon={IcRoundMoreHoriz}
       />
-      <DropdownMenuContent aria-label={`Actions for ${label}`}>
+      <DropdownMenuContent aria-label={`Actions for ${label}`} align="end">
         <DropdownMenuItem onSelect={() => onEdit(user)}>Edit</DropdownMenuItem>
         <DropdownMenuItem disabled={!email} onSelect={() => onDeactivate(user)}>
           Deactivate account

@@ -230,6 +230,8 @@
   display: flex;
   min-width: 0;
   gap: 4px;
+  /* Lines up with the title, past the 14px icon and its 6px gap */
+  padding-left: 20px;
   overflow: hidden;
   color: var(--alinea-fg-muted);
   font-size: inherit;

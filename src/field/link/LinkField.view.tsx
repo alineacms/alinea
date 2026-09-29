@@ -1329,7 +1329,6 @@ function EntryLinkRowActions({
         variant="ghost"
         icon={IcRoundOpenInNew}
         disabled
-        size="sm"
       >
         Open link
       </Button>

@@ -50,7 +50,7 @@
   transition: var(--alinea-transition);
 
   &.is-placeholder {
-    color: var(--alinea-fg-muted);
+    color: var(--alinea-fg-disabled);
   }
 
   &:focus {

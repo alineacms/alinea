@@ -61,7 +61,7 @@
 }
 
 .MultipleSelectTrigger-placeholder {
-  color: var(--alinea-fg-muted);
+  color: var(--alinea-fg-disabled);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
 }
@@ -190,7 +190,7 @@
   line-height: 1.5;
 
   &::placeholder {
-    color: var(--alinea-fg-muted);
+    color: var(--alinea-fg-disabled);
   }
 
   &::-webkit-search-cancel-button,

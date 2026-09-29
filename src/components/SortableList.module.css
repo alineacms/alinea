@@ -203,6 +203,11 @@
 .SortableListItemSettings[data-variant='actions'] {
   padding: 0;
   gap: 0;
+
+  /* Actions read like menu items */
+  [data-slot='button'] {
+    font-weight: 500;
+  }
 }
 
 .SortableListDragPreview {

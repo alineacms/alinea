@@ -14,7 +14,11 @@
   padding: 4px;
   border-radius: var(--alinea-radius);
   border: 1px solid var(--alinea-border);
-  background-color: var(--alinea-input);
+  /* In dark mode a floating surface is lifted above the page it covers */
+  background-color: light-dark(
+    var(--alinea-overlay),
+    color-mix(in oklab, var(--alinea-overlay) 96%, var(--alinea-fg))
+  );
   box-shadow: var(--alinea-shadow-raised);
 
   /* Dropdowns line up with their field, however wide it is */

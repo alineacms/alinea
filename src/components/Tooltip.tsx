@@ -69,7 +69,8 @@ export interface TooltipContentProps
 export function TooltipContent({
   side = 'top',
   align,
-  sideOffset = 8,
+  // The 8px arrow plus a gap, so its tip does not touch the trigger
+  sideOffset = 12,
   alignOffset,
   className,
   children,

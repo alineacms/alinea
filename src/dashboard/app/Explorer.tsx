@@ -855,7 +855,7 @@ function ExplorerControlsButton(props: ExplorerControlsProps) {
         icon={IcRoundFilterList}
         size="icon-lg"
       />
-      <PopoverContent aria-label="Filter and sort" side="bottom" align="start">
+      <PopoverContent aria-label="Filter and sort" side="bottom" align="end">
         <ExplorerControlsPopover {...props} />
       </PopoverContent>
     </Popover>
