@@ -44,7 +44,6 @@ import {
 import {configAtom, viewsAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
-  type DashboardEntryData,
   type DashboardExplorer,
   explorerPageIsPending,
   type ExplorerReadyPage,
@@ -140,12 +139,6 @@ interface ExplorerHeaderMainProps {
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
   page: ExplorerReadyPage
-  titleControls?: ReactNode
-}
-
-interface ExplorerHeaderLoadedParentMainProps {
-  data: DashboardEntryData
-  explorer: DashboardExplorer
   titleControls?: ReactNode
 }
 
@@ -430,11 +423,12 @@ function ExplorerResultMode({
   )
 }
 
-function ExplorerHeaderLoadedParentMain({
-  data,
+function ExplorerHeaderParentMain({
   explorer,
+  parent: current,
   titleControls
-}: ExplorerHeaderLoadedParentMainProps) {
+}: ExplorerHeaderParentMainProps) {
+  const {data} = useAtomValueRaw(current.data)
   const label = useAtomValueRaw(data.label)
   const parents = useAtomValueRaw(data.parents)
   const setLocation = useSetAtom(explorer.location)
@@ -508,30 +502,6 @@ function ExplorerLocationParents({
   parent
 }: ExplorerLocationParentsProps) {
   const {data} = useAtomValueRaw(parent.data)
-  if (!data) return null
-  return (
-    <ExplorerLoadedLocationParents
-      data={data}
-      explorer={explorer}
-      lockNavigation={lockNavigation}
-      parent={parent}
-    />
-  )
-}
-
-interface ExplorerLoadedLocationParentsProps {
-  data: DashboardEntryData
-  explorer: DashboardExplorer
-  lockNavigation: boolean
-  parent: DashboardEntry
-}
-
-function ExplorerLoadedLocationParents({
-  data,
-  explorer,
-  lockNavigation,
-  parent
-}: ExplorerLoadedLocationParentsProps) {
   const parents = useAtomValueRaw(data.parents)
   return [...parents, parent].map((entry, index, entries) => (
     <ExplorerLocationParent
@@ -558,33 +528,6 @@ function ExplorerLocationParent({
   lockNavigation
 }: ExplorerLocationParentProps) {
   const {data} = useAtomValueRaw(entry.data)
-  if (!data) return null
-  return (
-    <ExplorerLoadedLocationParent
-      current={current}
-      data={data}
-      entry={entry}
-      explorer={explorer}
-      lockNavigation={lockNavigation}
-    />
-  )
-}
-
-interface ExplorerLoadedLocationParentProps {
-  current: boolean
-  data: DashboardEntryData
-  entry: DashboardEntry
-  explorer: DashboardExplorer
-  lockNavigation: boolean
-}
-
-function ExplorerLoadedLocationParent({
-  current,
-  data,
-  entry,
-  explorer,
-  lockNavigation
-}: ExplorerLoadedLocationParentProps) {
   const label = useAtomValueRaw(data.label)
   const setLocation = useSetAtom(explorer.location)
   return (
@@ -810,22 +753,6 @@ function ExplorerLocationMenu({
         />
       )}
     </div>
-  )
-}
-
-function ExplorerHeaderParentMain({
-  explorer,
-  parent,
-  titleControls
-}: ExplorerHeaderParentMainProps) {
-  const {data} = useAtomValueRaw(parent.data)
-  if (!data) return null
-  return (
-    <ExplorerHeaderLoadedParentMain
-      data={data}
-      explorer={explorer}
-      titleControls={titleControls}
-    />
   )
 }
 

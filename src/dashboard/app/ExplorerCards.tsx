@@ -1,7 +1,6 @@
 import {
   ContentCard,
   type ContentCardProps,
-  ContentCardSkeleton,
   ContentGrid,
   ContentGridItem,
   type DragDropProps
@@ -46,52 +45,6 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
 }: ExplorerCardItemProps) {
   const {data} = useAtomValueRaw(entry.data)
   const isSelectable = useAtomValueRaw(explorer.isSelectable(entry))
-  if (!data)
-    return (
-      <ContentGridItem
-        id={entry.id}
-        textValue="Loading entry"
-        aria-label="Loading entry"
-        selectable={isSelectable}
-      >
-        <ContentCardSkeleton />
-      </ContentGridItem>
-    )
-  return (
-    <ExplorerCardLoadedItem
-      breadcrumbs={breadcrumbs}
-      entry={entry}
-      data={data}
-      explorer={explorer}
-      locale={locale}
-      isSelectable={isSelectable}
-      includeWorkspace={includeWorkspace}
-      onPick={onPick}
-    />
-  )
-})
-
-interface ExplorerCardLoadedItemProps {
-  breadcrumbs: boolean
-  entry: DashboardEntry
-  data: DashboardEntryData
-  explorer: DashboardExplorer
-  locale: string | null
-  isSelectable: boolean
-  includeWorkspace: boolean
-  onPick?: (entry: DashboardEntry) => void
-}
-
-const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
-  breadcrumbs,
-  entry,
-  data,
-  explorer,
-  locale,
-  isSelectable,
-  includeWorkspace,
-  onPick
-}: ExplorerCardLoadedItemProps) {
   const label = useAtomValueRaw(data.label)
   const icon = useAtomValueRaw(data.icon)
   const type = useAtomValueRaw(data.type)
@@ -175,28 +128,19 @@ function ExplorerLocatedCard({
     ...(includeWorkspace && workspaceLabel ? [workspaceLabel] : []),
     ...(rootLabel ? [rootLabel] : []),
     ...parents.map(parent => (
-      <ExplorerCardParent key={parent.id} parent={parent} />
+      <ExplorerCardParentLabel key={parent.id} parent={parent} />
     ))
   ]
   return <ContentCard {...card} breadcrumbs={breadcrumbs} />
 }
 
-interface ExplorerCardParentProps {
+interface ExplorerCardParentLabelProps {
   parent: DashboardEntry
 }
 
-function ExplorerCardParent({parent}: ExplorerCardParentProps) {
-  const {data} = useAtomValueRaw(parent.data)
-  if (!data) return null
-  return <ExplorerCardParentLabel parent={data} />
-}
-
-interface ExplorerCardParentLabelProps {
-  parent: DashboardEntryData
-}
-
 function ExplorerCardParentLabel({parent}: ExplorerCardParentLabelProps) {
-  return useAtomValueRaw(parent.label)
+  const {data} = useAtomValueRaw(parent.data)
+  return useAtomValueRaw(data.label)
 }
 
 export interface ExplorerCardsProps {
