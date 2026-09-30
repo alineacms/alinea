@@ -143,6 +143,23 @@ const mediaFileFields = new Set([
 /** Fields of a media file editors fill in, kept when its file is replaced */
 const mediaEditedFields = new Set(['alt', 'focus', 'metadata'])
 
+/** Who created and last updated an entry and when, stamped in its metadata
+ * field by the save hooks (see Entry.createdAt) */
+const auditKeys = new Set(['createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+
+/**
+ * Whether an update of the metadata field only stamps its audit details,
+ * which the system maintains outside field permissions. Any other change,
+ * such as to its aliases, is permission checked.
+ */
+function onlyStampsAudit(before: unknown, after: unknown): boolean {
+  if (before === undefined || before === null) before = {}
+  if (!isRecord(before) || !isRecord(after)) return false
+  const rest = (value: Record<string, unknown>) =>
+    JSON.stringify(entries(value).filter(([key]) => !auditKeys.has(key)))
+  return rest(before) === rest(after)
+}
+
 export class EntryTransaction implements AsyncDisposable {
   #workingDatabase: EntryDatabase
   #workingSource: OverlaySource
@@ -443,7 +460,9 @@ export class EntryTransaction implements AsyncDisposable {
     })
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Update, entry)
-    for (const key of keys(set))
+    for (const key of keys(set)) {
+      if (key === 'metadata' && onlyStampsAudit(entry.data.metadata, set[key]))
+        continue
       this.#policy.assert(Permission.Update, {
         workspace: entry.workspace,
         root: entry.root,
@@ -453,6 +472,7 @@ export class EntryTransaction implements AsyncDisposable {
         locale: entry.locale,
         field: key
       })
+    }
     const updates = fromEntries(
       entries(set).map(([key, value]) => [key, value ?? null])
     )

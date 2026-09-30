@@ -1,5 +1,8 @@
 import {suite} from '@alinea/suite'
+import {create, update} from '#/core/db/Operation.js'
 import {Entry} from '#/core/Entry.js'
+import {WriteablePolicy} from '#/core/Role.js'
+import {getScope} from '#/core/Scope.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field} from '#/index.js'
 
@@ -107,5 +110,80 @@ test('updates of a draft stamp the draft', async () => {
   test.equal(draft.metadata.updatedBy, {
     name: 'John',
     email: 'john@example.com'
+  })
+})
+
+test('audit stamps do not need an update permission on the metadata field', async () => {
+  const db = await createDB()
+  const created = await db.create({
+    type: Page,
+    set: {title: 'A', metadata: {title: 'SEO title'}},
+    user: jane
+  })
+  // A role that may only update the title
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({field: Page.path, deny: {update: true}})
+    .set({field: Page.metadata, deny: {update: true}})
+  const resource = {type: 'Page', workspace: 'main', root: 'pages'}
+  test.ok(policy.canUpdate({...resource, field: 'title'}))
+  test.not.ok(policy.canUpdate({...resource, field: 'metadata'}))
+  const commit = async (mutations: Awaited<ReturnType<typeof edit.task>>) =>
+    db.write(await db.request(mutations, policy))
+  const edit = update({
+    type: Page,
+    id: created._id,
+    set: {title: 'B'},
+    user: john
+  })
+
+  // Updating the title stamps who updated the entry
+  await commit(await edit.task(db))
+  const updated = await db.get({type: Page, id: created._id})
+  test.is(updated.title, 'B')
+  test.equal(updated.metadata.updatedBy, {
+    name: 'John',
+    email: 'john@example.com'
+  })
+  test.equal(updated.metadata.createdBy, created.metadata.createdBy)
+
+  // Other metadata, such as its aliases or SEO title, stays checked
+  const aliases = update({
+    type: Page,
+    id: created._id,
+    set: {
+      metadata: {
+        ...updated.metadata,
+        aliases: [{_id: 'a', _type: 'alias', _index: 'a0', url: '/old'}]
+      }
+    },
+    user: john
+  })
+  await test.throws(async () => commit(await aliases.task(db)), 'denied')
+  const seo = update({
+    type: Page,
+    id: created._id,
+    set: {metadata: {...updated.metadata, title: 'Other'}},
+    user: john
+  })
+  await test.throws(async () => commit(await seo.task(db)), 'denied')
+
+  // Saves like the dashboard's, the whole entry at once, still go through
+  const data = await db.get({id: created._id, select: Entry.data})
+  await commit(
+    await create({
+      type: Page,
+      id: created._id,
+      set: {...data, title: 'C'},
+      overwrite: true,
+      user: jane
+    }).task(db)
+  )
+  const saved = await db.get({type: Page, id: created._id})
+  test.is(saved.title, 'C')
+  test.is(saved.metadata.title, 'SEO title')
+  test.equal(saved.metadata.updatedBy, {
+    name: 'Jane',
+    email: 'jane@example.com'
   })
 })
