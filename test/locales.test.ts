@@ -201,3 +201,59 @@ test('create entries', async () => {
 
   test.is(result.parentPath, page1.path)
 })
+
+async function translatedTree() {
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  const parent = await db.create({type: Page, locale: 'en', set: {title: 'P'}})
+  await db.create({id: parent._id, type: Page, locale: 'de', set: {title: 'P'}})
+  await db.create({
+    id: parent._id,
+    type: Page,
+    locale: 'de',
+    status: 'draft',
+    set: {title: 'P draft'}
+  })
+  for (const locale of ['en', 'de'])
+    await db.create({
+      id: 'child',
+      type: Page,
+      locale,
+      parentId: parent._id,
+      set: {title: 'C'}
+    })
+  async function versions() {
+    const rows = await db.find({
+      id: {in: [parent._id, 'child']},
+      status: 'all',
+      select: {id: Query.id, locale: Query.locale, status: Query.status}
+    })
+    return rows
+      .map(
+        row =>
+          `${row.id === 'child' ? 'child' : 'parent'} ${row.locale} ${row.status}`
+      )
+      .sort()
+  }
+  return {db, parent: parent._id, versions}
+}
+
+test('removing a translation keeps the other translations and children', async () => {
+  const {db, parent, versions} = await translatedTree()
+  await db.mutate([{op: 'remove', id: parent, locale: 'en'}])
+  // The children of the removed translation are stored below it
+  test.equal(await versions(), [
+    'child de published',
+    'parent de draft',
+    'parent de published'
+  ])
+})
+
+test('removing every translation removes the entry and its children', async () => {
+  const {db, parent, versions} = await translatedTree()
+  await db.mutate([
+    {op: 'remove', id: parent, locale: 'en'},
+    {op: 'remove', id: parent, locale: 'de'}
+  ])
+  test.equal(await versions(), [])
+})

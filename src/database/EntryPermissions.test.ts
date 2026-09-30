@@ -178,3 +178,27 @@ test('permissions scoped to a parent apply to creating children', async () => {
   )
   test.ok(request.changes.length > 0)
 })
+
+test('deleting checks the permission of every removed translation', async () => {
+  const db = await createDb()
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'article',
+      type: 'Page',
+      locale: 'nl',
+      data: {title: 'Artikel'}
+    }
+  ])
+  const policy = new WriteablePolicy(getScope(cms.config))
+  policy.set({allow: {read: true}}, {locale: 'en', allow: {delete: true}})
+  const error = await rejects(() =>
+    db.request([{op: 'remove', id: 'article'}], policy)
+  )
+  test.is(error.message, 'Permission denied')
+  const request = await db.request(
+    [{op: 'remove', id: 'article', locale: 'en'}],
+    policy
+  )
+  test.ok(request.changes.length > 0)
+})
