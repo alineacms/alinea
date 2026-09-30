@@ -3,7 +3,7 @@ import {Entry} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {OpenFilter} from '#/core/Filter.js'
 import {getExpr, getRoot} from '#/core/Internal.js'
-import {MediaLibrary} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field, Query} from '#/index.js'
@@ -267,12 +267,49 @@ test('the media library lists a preview, dimensions, size and file type', () => 
     name: 'MediaLibrary',
     type: MediaLibrary
   })
+  // Media files record who last updated them, folders hold files
   expect(folder.columns.map(column => column.key)).toEqual([
     'preview',
     'dimensions',
     'size',
-    'fileType'
+    'fileType',
+    'updated',
+    'author'
   ])
+})
+
+test('media explorers show who last updated a file once one records it', async () => {
+  const db = new LocalDB(config)
+  await db.sync()
+  await db.create({
+    type: MediaLibrary,
+    workspace: 'main',
+    root: 'media',
+    set: {title: 'Folder'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'media'},
+    {rootData: atom(getRoot(config.workspaces.main.media))}
+  )
+  const keys = async () =>
+    (await store.get(explorer.pageReady)).overview.columns.map(
+      column => column.key
+    )
+  const fileColumns = ['preview', 'dimensions', 'size', 'fileType']
+  expect(await keys()).toEqual(fileColumns)
+  await db.create({
+    type: MediaFile,
+    workspace: 'main',
+    root: 'media',
+    set: {
+      title: 'Photo',
+      metadata: {updatedAt: 5, updatedBy: {name: 'Ann', email: ''}}
+    }
+  })
+  await store.set(syncAtom)
+  expect(await keys()).toEqual([...fileColumns, 'updated', 'author'])
 })
 
 test('compact field columns read the entry data, others are queried', () => {

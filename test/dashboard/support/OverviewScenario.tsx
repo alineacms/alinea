@@ -120,7 +120,11 @@ async function createOverviewScenario() {
         height: 800,
         hash: 'photo',
         preview: overviewPhotoPreview,
-        averageColor: '#777777'
+        averageColor: '#777777',
+        metadata: {
+          updatedAt: Date.UTC(2026, 0, 2) / 1000,
+          updatedBy: {name: 'Ann Editor', email: 'ann@example.com'}
+        }
       }
     },
     ...[

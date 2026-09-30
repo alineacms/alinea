@@ -6,8 +6,10 @@ import {text} from '#/field/text/TextField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import prettyBytes from 'pretty-bytes'
 import {Entry} from '../Entry.js'
+import {Expr} from '../Expr.js'
 import {
   column,
+  Overview,
   type OverviewFilterOption,
   type OverviewOptions
 } from '../Overview.js'
@@ -29,8 +31,8 @@ export const MediaFile = type('Media file', {
     })
   },
   fields: {
-    title: text('Title'),
-    path: path('Path'),
+    title: text('Title', {width: 0.5}),
+    path: path('Path', {width: 0.5}),
     metadata: auditMetadata(),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
@@ -88,12 +90,21 @@ function fileKindOption(
  * of each file, orders and filters on those
  */
 export function mediaOverview(): OverviewOptions {
+  // Folders order by 0 and files by null, which sorts last in either direction
+  const foldersFirst = Overview.sortExpr({
+    MediaLibrary: new Expr({type: 'value', value: 0})
+  })
   return {
-    builtins: {type: false, status: false, updated: false, author: false},
-    // Entry ids start with their creation time, so the newest come first
-    sort: {desc: Entry.id},
+    builtins: {type: false, status: false},
+    // Entry ids start with their creation time, so the newest files come
+    // first, below the folders
+    sort: [{asc: foldersFirst}, {desc: Entry.id}],
     sorts: {
-      latest: {label: 'Latest', by: Entry.id, direction: 'desc'},
+      latest: {
+        label: 'Latest',
+        by: [foldersFirst, Entry.id],
+        direction: 'desc'
+      },
       title: {label: 'Title', by: Entry.title},
       size: {label: 'Size', by: MediaFile.size, direction: 'desc'},
       dimensions: {
@@ -126,9 +137,11 @@ export function mediaOverview(): OverviewOptions {
         }
       }
     },
+    // The file's columns come before who last updated it and when
     columns: {
       preview: column({
         header: 'Preview',
+        position: 'start',
         width: 64,
         collapsible: false,
         sortable: false,
@@ -141,6 +154,7 @@ export function mediaOverview(): OverviewOptions {
       }),
       dimensions: column({
         header: 'Dimensions',
+        position: 'start',
         width: 150,
         select: {width: MediaFile.width, height: MediaFile.height},
         sortBy: MediaFile.width,
@@ -149,6 +163,7 @@ export function mediaOverview(): OverviewOptions {
       }),
       size: column({
         header: 'Size',
+        position: 'start',
         width: 110,
         align: 'end',
         select: MediaFile.size,
@@ -159,6 +174,7 @@ export function mediaOverview(): OverviewOptions {
       }),
       fileType: column({
         header: 'File type',
+        position: 'start',
         width: 110,
         select: MediaFile.extension,
         format: extension =>

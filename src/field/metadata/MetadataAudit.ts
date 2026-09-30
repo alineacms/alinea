@@ -50,6 +50,23 @@ export function metadataDetailsType(): Type<MetadataDetailsFields> {
   })
 }
 
+const auditFields = new WeakSet<object>()
+
+/** Marks a field that stamps who last updated the entry and when */
+export function withAudit<F extends object>(field: F): F {
+  auditFields.add(field)
+  return field
+}
+
+/**
+ * Whether entries of a type store who last updated them and when, in a
+ * `metadata` field made with `metadata()` or `auditMetadata()`
+ */
+export function hasAuditMetadata(type: Type): boolean {
+  const field = Type.field(type, 'metadata')
+  return field !== undefined && auditFields.has(field)
+}
+
 /** Metadata that only holds the details, stamped on every save */
 export function auditMetadata(
   label = 'Metadata'
@@ -65,7 +82,7 @@ export function auditMetadata(
       ) as Type.Infer<typeof fields>
     }
   })
-  return Object.assign(field, fields)
+  return withAudit(Object.assign(field, fields))
 }
 
 /** Unknown creation details and empty aliases, which files leave out */

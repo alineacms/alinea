@@ -98,6 +98,9 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
           </TabsList>
         </div>
         <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
+          <div className={styles.FileEditor.fields()}>
+            <NodeEditor node={node} type={fileFields} />
+          </div>
           <div className={styles.FileEditor()}>
             {isImage && (
               <FilePreview
@@ -160,7 +163,6 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
                   </span>
                 </div>
               )}
-              <NodeEditor node={node} type={fileFields} />
             </div>
           </div>
         </TabsContent>

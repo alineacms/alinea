@@ -191,7 +191,16 @@ test('lists media with a preview, dimensions, size and file type', async ({
   await open(page, '#/entry/main/media')
   await mount(<OverviewScenarioMount />)
   await page.getByRole('radio', {name: 'Row view'}).click()
+  // Folders first, then the files by id, which starts with the creation time
+  await expect
+    .poll(() => titles(page))
+    .toEqual(['Archive', 'Photo', 'Notes', 'Letter', 'Annual report'])
+  // The photo records who last updated it
+  const header = page.locator('[data-slot="table-header"]')
+  await expect(header.getByText('Updated', {exact: true})).toBeVisible()
+  await expect(header.getByText('Author', {exact: true})).toBeVisible()
   const photo = table(page).getByRole('row', {name: /^Photo/})
+  await expect(photo).toContainText('Ann Editor')
   await expect(photo).toContainText('1200 × 800 px')
   await expect(photo).toContainText('1.02 kB')
   await expect(photo).toContainText('GIF')

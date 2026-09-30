@@ -30,7 +30,7 @@ import {isRecord} from '#/core/util/Objects.js'
 import type {View} from '#/core/View.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {JsonField} from '#/field/json/JsonField.js'
-import {MetadataField} from '#/field/metadata/MetadataField.js'
+import {hasAuditMetadata} from '#/field/metadata/MetadataAudit.js'
 import {atom} from 'jotai'
 import {graphAtom} from './core.js'
 import {routeAtom} from './nav.js'
@@ -211,11 +211,6 @@ export function parentTypes(config: Config, parent: OverviewParent) {
   return Schema.contained(config.schema, contains).filter(name =>
     Boolean(config.schema[name])
   )
-}
-
-/** Whether entries of a type store who edited them and when */
-function hasAuditMetadata(type: Type) {
-  return Type.field(type, 'metadata') instanceof MetadataField
 }
 
 export interface OverviewResolveOptions {
