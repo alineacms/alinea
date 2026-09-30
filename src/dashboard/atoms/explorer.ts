@@ -149,6 +149,10 @@ export interface ExplorerOptions {
   filterState?: PrimitiveAtom<OverviewFilterSelection>
   showSelectionControls?: boolean
   initialSelection?: Array<string>
+  /**
+   * Whether the matches in a folder are limited to its children, or cover
+   * the whole root. Defaults to the folder in browse mode.
+   */
   searchDepth?: 'current' | 'all'
   onAction?: (entry: ExplorerEntry) => void
   onConfirm?: (selection: Array<string>, locale: string | null) => void
@@ -1119,7 +1123,17 @@ export class ExplorerAtoms {
   selectionActions = atom((get): ExplorerSelectionActions => {
     const page = get(this.page)
     const selection = get(this.selection)
-    const items = (page?.items ?? [])
+    const expandedKeys = get(this.expandedKeys)
+    // Rows expanded inline list their children below them
+    const listed = (entries: Array<ExplorerEntry>): Array<ExplorerEntry> =>
+      entries.flatMap(entry =>
+        this.supportsInlineExpansion &&
+        page?.resultMode === 'browse' &&
+        expandedKeys.has(entry.id)
+          ? [entry, ...listed(get(this.children(entry, page.locale)))]
+          : [entry]
+      )
+    const items = listed(page?.items ?? [])
       .filter(entry => selection === 'all' || selection.has(entry.id))
       .flatMap(entry => {
         const {data} = get(entry.data)
@@ -1268,6 +1282,7 @@ export class ExplorerAtoms {
       const graph = get(graphAtom)
       const overview = await get(this.overview)
       const selectedLocationParentId =
+        this.searchDepth === 'current' &&
         !searchesEverything &&
         flatList &&
         !this.pickChildren &&

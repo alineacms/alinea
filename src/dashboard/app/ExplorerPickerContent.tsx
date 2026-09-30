@@ -86,7 +86,6 @@ export function usePickerExplorer(
         (!options.limitLocations?.length && !options.pickChildren),
       initialView: options.initialView ?? initialView,
       rootData,
-      searchDepth: 'all',
       selectedLocale: initialLocale,
       treeItems: (locale, location) =>
         tree(currentRoot(location), locale, location).items,

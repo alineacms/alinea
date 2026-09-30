@@ -4,7 +4,7 @@ import {
   type MoveSubject,
   type MoveTargets
 } from '#/dashboard/atoms/move.js'
-import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, useState, useTransition} from 'react'
 import {IcRoundDriveFileMove} from '../icons.js'
 import {ExplorerHeader} from './Explorer.js'
@@ -77,14 +77,16 @@ function MoveDialogContent({
 }: MoveDialogContentProps) {
   const {subjects} = targets
   const [{workspace, root, locale, parentId}] = subjects as [MoveSubject]
-  // Opens at the current location, other roots are not a target
+  // Opens at the current location, other roots are not a target and search
+  // covers the whole root
   const {explorer, tree} = usePickerExplorer(
     {
       canSelect: targets.canSelect,
       condition: targets.condition,
       initialResultMode: 'browse',
       limitLocations: [{workspace, root}],
-      nestedNavigation: true
+      nestedNavigation: true,
+      searchDepth: 'all'
     },
     {
       workspace,
@@ -95,12 +97,16 @@ function MoveDialogContent({
     'row'
   )
   const page = useAtomValueRawSync(explorer.page)
-  const selection = useAtomValueRaw(explorer.selection)
+  // The picked target while it is listed
+  const {
+    items: [target]
+  } = useAtomValueRawSync(explorer.selectionActions)
   const moveEntries = useSetAtom(moveEntriesAtom)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string>()
   if (!page) return <DashboardModalDialog variant="explorer" isLoading />
-  const [target] = selection === 'all' ? [] : selection
+  const isCurrent = (target: string | null) =>
+    subjects.every(subject => subject.parentId === target)
 
   function moveTo(target: string | null) {
     setError(undefined)
@@ -140,16 +146,19 @@ function MoveDialogContent({
                 <span role="alert">{error}</span>
               </Text>
             ) : (
-              <Text color="muted">{moveDialogTitle(subjects)}</Text>
+              <Text color="muted">
+                {!target
+                  ? moveDialogTitle(subjects)
+                  : isCurrent(target.id)
+                    ? `Already in "${target.title}"`
+                    : `Move to "${target.title}"`}
+              </Text>
             )}
             <ExplorerModalActions>
               {targets.rootAccepts && (
                 <Button
                   variant="ghost"
-                  disabled={
-                    isPending ||
-                    subjects.every(subject => subject.parentId === null)
-                  }
+                  disabled={isPending || isCurrent(null)}
                   onClick={() => moveTo(null)}
                 >
                   Move to root
@@ -159,9 +168,9 @@ function MoveDialogContent({
               <Button
                 color="primary"
                 icon={IcRoundDriveFileMove}
-                disabled={target === undefined || isPending}
+                disabled={!target || isCurrent(target.id) || isPending}
                 loading={isPending}
-                onClick={() => moveTo(String(target))}
+                onClick={() => target && moveTo(target.id)}
               >
                 Move
               </Button>
