@@ -5,12 +5,9 @@ test('moves an entry into another entry', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
   await app.entry('Alpha').dragTo(app.entry('Folder'))
-  await expect(async () => {
-    const expand = app.page.getByRole('button', {name: 'Expand Folder'})
-    if (await expand.isVisible()) await expand.click()
-    await expect(app.entry('Alpha')).toBeVisible({timeout: 1000})
-  }).toPass()
+  // The open entry stays selected, which reveals it in its new parent
   await expect(app.entry('Alpha')).toHaveAttribute('aria-level', '2')
+  await expect(app.entry('Folder')).toHaveAttribute('aria-expanded', 'true')
 })
 
 test('moves an entry from an overview to the root level', async ({
@@ -44,8 +41,10 @@ test('moves a child above its expanded parent', async ({dashboard, mount}) => {
     name: 'Workspace roots'
   })
   await workspaceRoots.getByRole('button', {name: 'Pages', exact: true}).click()
-  const expandFolder = tree.getByRole('button', {name: 'Expand Folder'})
-  if (await expandFolder.isVisible()) await expandFolder.click()
+  // The tree changes with the root page once it is shown, the folder no
+  // longer holds the open entry so it collapses
+  await expect(app.title).toHaveCount(0)
+  await tree.getByRole('button', {name: 'Expand Folder'}).click()
   await expect(
     tree.getByRole('button', {name: 'Collapse Folder'})
   ).toBeVisible()
@@ -87,8 +86,10 @@ test('moves a child between expanded tree levels', async ({
     name: 'Workspace roots'
   })
   await workspaceRoots.getByRole('button', {name: 'Pages', exact: true}).click()
-  const expandFolder = tree.getByRole('button', {name: 'Expand Folder'})
-  if (await expandFolder.isVisible()) await expandFolder.click()
+  // The tree changes with the root page once it is shown, the folder no
+  // longer holds the open entry so it collapses
+  await expect(app.title).toHaveCount(0)
+  await tree.getByRole('button', {name: 'Expand Folder'}).click()
   await expect(
     tree.getByRole('button', {name: 'Collapse Folder'})
   ).toBeVisible()
