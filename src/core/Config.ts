@@ -38,6 +38,12 @@ export interface Config {
    * 2560 by 2560 pixels, false keeps uploads as they are.
    */
   resizeImages?: ImageResizeOptions | false
+  /**
+   * Scale down the jpeg images in PDF uploads larger than these dimensions,
+   * the PDF is kept when that does not make it smaller. Defaults to 2000 by
+   * 2000 pixels at quality 0.8, false keeps PDFs as they are.
+   */
+  compressPdfs?: ImageResizeOptions | false
 
   /** The base url of the application */
   baseUrl?: string | {development?: string; production?: string}

@@ -131,9 +131,11 @@ test('reports files that exceed the configured upload limit', () => {
   const file = new File(['oversized'], 'photo.jpg')
 
   const pdf = new File(['oversized'], 'brochure.pdf')
-  expect(uploadSizeError(pdf, {maxUploadSize: pdf.size - 1})).toContain(
-    'brochure.pdf'
-  )
+  expect(
+    uploadSizeError(pdf, {maxUploadSize: pdf.size - 1, compressPdfs: false})
+  ).toContain('brochure.pdf')
+  // PDFs are checked once their images are scaled down
+  expect(uploadSizeError(pdf, {maxUploadSize: pdf.size - 1})).toBeUndefined()
   expect(
     uploadSizeError(file, {maxUploadSize: file.size - 1, resizeImages: false})
   ).toContain('photo.jpg')

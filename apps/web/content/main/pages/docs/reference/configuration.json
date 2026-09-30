@@ -500,6 +500,26 @@
     },
     {
       "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`compressPdfs`"
+        }
+      ],
+      "_anchor": "compresspdfs"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Scale down the JPEG images in PDF uploads, such as scans and print brochures, to fit `maxWidth` and `maxHeight` pixels. Defaults to `{maxWidth: 2000, maxHeight: 2000, quality: 0.8}`, about 200 dpi on an A4 page; set it to `false` to store PDFs as they are. Like `resizeImages` this happens in the browser, or with `sharp` when you pass `transformImage` to `cms.upload`, and `maxUploadSize` applies to the compressed PDF. The PDF is stored as uploaded unless this makes it at least 10% smaller, and encrypted, signed and PDF/A documents are never rewritten. Text, links, forms and other images are kept as they are."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {

@@ -40,8 +40,8 @@ test('reports invalid uploads while continuing with valid files', async () => {
   await store.get(userPolicyReadyAtom)
   store.set(configAtom, {...config, maxUploadSize: 5})
   const upload = spyOn(db, 'upload').mockResolvedValue(undefined as never)
-  const valid = new File(['small'], 'valid.pdf')
-  const invalid = new File(['too large'], 'invalid.pdf')
+  const valid = new File(['small'], 'valid.txt')
+  const invalid = new File(['too large'], 'invalid.txt')
 
   await store.set(uploadFilesAtom, {
     workspace: 'main',
@@ -57,7 +57,7 @@ test('reports invalid uploads while continuing with valid files', async () => {
     expect.objectContaining({
       type: 'upload',
       status: 'failed',
-      error: expect.stringContaining('invalid.pdf'),
+      error: expect.stringContaining('invalid.txt'),
       upload: {workspace: 'main', root: 'pages', parentId: undefined}
     })
   )
@@ -66,7 +66,7 @@ test('reports invalid uploads while continuing with valid files', async () => {
     expect.objectContaining({
       type: 'upload',
       status: 'running',
-      operations: [expect.objectContaining({title: 'valid.pdf'})]
+      operations: [expect.objectContaining({title: 'valid.txt'})]
     })
   )
 })
