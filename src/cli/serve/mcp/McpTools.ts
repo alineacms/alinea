@@ -694,6 +694,7 @@ export function createContentTools(
             ),
           parentId: replace ? existing!.parentId : parentId,
           replaceId: replace,
+          user,
           createPreview: options.createPreview,
           edit: {rotate, crop},
           transformImage: options.transformImage

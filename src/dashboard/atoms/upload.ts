@@ -16,7 +16,7 @@ import {atom} from 'jotai'
 import {uploadProgressAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
 import {uploadSizeError} from './utils.js'
-import {policyAtom} from './user.js'
+import {policyAtom, userAtom} from './user.js'
 
 export interface UploadDestination {
   workspace: string
@@ -79,6 +79,7 @@ export const uploadFilesAtom = atom(
             transformImage,
             edit,
             ...(replaceId ? {replaceId} : {}),
+            user: get(userAtom),
             parentId: request.parentId,
             workspace: request.workspace,
             root: request.root,

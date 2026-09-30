@@ -639,6 +639,10 @@ test('upload_file creates and replaces media entries', async () => {
   const stored = await env.readEntry(media.file)
   test.is(stored._type, 'MediaFile')
   test.is(stored.alt, 'A description')
+  test.equal(stored.metadata.createdBy, {
+    name: 'Test user',
+    email: 't@example.com'
+  })
   test.ok(stored.width > 0)
   test.is(typeof stored.thumbHash, 'string')
   // The same fields as a dashboard upload of the same file

@@ -141,7 +141,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "A media entry is stored with your content, in the media root: `content/media/landscape.json`. It holds the title, the file location, the extension and size, a content hash and, for images, the width and height, the average color, a thumbhash placeholder, the focal point and the alt text."
+                  "text": "A media entry is stored with your content, in the media root: `content/media/landscape.json`. It holds the title, the file location, the extension and size, a content hash and, for images, the width and height, the average color, a thumbhash placeholder, the focal point and the alt text. Its metadata records who uploaded the file and who last changed it, and when."
                 }
               ]
             }

@@ -14,10 +14,12 @@ import {
 } from '../media/ImageTransform.js'
 import {isImage} from '../media/IsImage.js'
 import {MediaLocation} from '../media/MediaLocation.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import {assertUploadSize} from '../media/UploadLimits.js'
 import {assert} from '../util/Assert.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
+import type {User} from '../User.js'
 import {createFileHash} from '../util/ContentHash.js'
 import {keys} from '../util/Objects.js'
 import {basename, extname} from '../util/Paths.js'
@@ -223,6 +225,8 @@ export interface UploadQuery {
   ): Promise<Blob>
   onProgress?(progress: UploadProgress): void
   replaceId?: string
+  /** Recorded as the creator, or the last editor of a replaced file */
+  user?: User | null
 }
 
 export interface UploadProgress {
@@ -304,6 +308,14 @@ export class UploadOperation extends Operation {
         url: info.previewUrl,
         location: MediaLocation.storagePath(db.config, workspace, fileLocation)
       }
+      // A replace keeps the details of the file it replaces
+      const replaced = query.replaceId
+        ? await db.first({
+            id: query.replaceId,
+            status: 'preferDraft',
+            select: MediaFile.metadata
+          })
+        : undefined
       const createEntry: Mutation = {
         op: 'create',
         id: entryId,
@@ -312,17 +324,26 @@ export class UploadOperation extends Operation {
         type: 'MediaFile',
         root,
         workspace,
-        data: {
-          title,
-          location: fileLocation,
-          // Local uploads have no preview url, leave the empty value out
-          ...(info.previewUrl ? {previewUrl: info.previewUrl} : {}),
-          extension,
-          size: body.byteLength,
-          hash,
-          ...(sourceHash ? {sourceHash} : {}),
-          ...previewData
-        },
+        data: Type.beforeSave(
+          MediaFile,
+          {
+            title,
+            location: fileLocation,
+            // Local uploads have no preview url, leave the empty value out
+            ...(info.previewUrl ? {previewUrl: info.previewUrl} : {}),
+            extension,
+            size: body.byteLength,
+            hash,
+            ...(sourceHash ? {sourceHash} : {}),
+            ...previewData,
+            metadata: replaced ?? undefined
+          },
+          {
+            action: query.replaceId ? 'update' : 'create',
+            user: query.user,
+            now: new Date()
+          }
+        ),
         overwrite: query.replaceId !== undefined
       }
       return [uploadFile, createEntry]
