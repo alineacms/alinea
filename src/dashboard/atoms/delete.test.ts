@@ -4,6 +4,7 @@ import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Edit, Field} from '#/index.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
 import {
@@ -11,6 +12,8 @@ import {
   loadDeletePlanAtom,
   type DeleteSubject
 } from './delete.js'
+import {eventsAtom} from './core.js'
+import {incomingReferencesAtoms} from './entry.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 
 const Page = Config.document('Page', {
@@ -150,4 +153,29 @@ test('only languages the user can delete are offered', async () => {
   store.set(preloadUserPolicyAtom, localUser, policy)
   const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
   expect(plan.locales).toEqual(['en'])
+})
+
+test('references are reloaded when another entry links to the entry', async () => {
+  const {db, store} = await fixture()
+  const references = incomingReferencesAtoms('child')
+  const unsubscribe = store.sub(references, () => {})
+  expect((await store.get(references)).references).toEqual([])
+  await db.create({
+    type: Page,
+    id: 'childLink',
+    root: 'other',
+    set: {
+      title: 'Child link',
+      link: Edit.link(Page.link).addEntry('child').value()
+    }
+  })
+  store
+    .get(eventsAtom)
+    .dispatchEvent(
+      new IndexEvent({op: 'index', sha: 'next', ids: ['childLink']})
+    )
+  expect(sources((await store.get(references)).references)).toEqual([
+    'Child link'
+  ])
+  unsubscribe()
 })

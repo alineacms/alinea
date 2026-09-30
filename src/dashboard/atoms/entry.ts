@@ -767,7 +767,8 @@ export const entryAtoms = dispense((entryId: string) => {
 /** The versions linking to an entry, that the user can read */
 export const incomingReferencesAtoms = dispense((targetId: string) =>
   atom(async (get): Promise<EntryReferences> => {
-    get(entryRevisionAtom(targetId))
+    // Links are added and removed by other entries
+    get(shaAtom)
     const graph = get(graphAtom)
     const policy = get(policyAtom)
     const result = await graph.referencesTo({
