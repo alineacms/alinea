@@ -51,7 +51,7 @@ test('keeps a path edited while translating', async ({dashboard, mount}) => {
   await app.field('Title').fill('Départ localisé')
   await expect(path).toHaveValue('depart-localise')
   await path.fill('depart')
-  await app.field('Title').fill('Départ')
+  await app.field('Title').fill('Départ ville')
   await expect(path).toHaveValue('depart')
 
   await app.page.getByRole('button', {name: 'Save translation'}).click()
