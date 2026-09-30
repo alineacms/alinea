@@ -420,6 +420,22 @@ test('uploads record who created the file, saves and replaces who updated it', a
     test.is(replaced.createdAt, created.createdAt)
     test.equal(replaced.updatedBy, {name: 'Jane', email: 'jane@example.com'})
     test.is(await db.get({id: upload._id, select: MediaFile.alt}), 'Notes')
+
+    // Files from before audit metadata do not get made up creation details
+    const existing = await db.create({
+      type: MediaFile,
+      root: 'media',
+      set: {title: 'Old', location: 'old.txt', extension: '.txt'}
+    })
+    await db.upload({
+      file: new File(['new'], 'old.txt'),
+      replaceId: existing._id,
+      user: john
+    })
+    const old = await metadata(existing._id)
+    test.is(old.createdAt, undefined)
+    test.is(old.createdBy, undefined)
+    test.equal(old.updatedBy, {name: 'John', email: 'john@example.com'})
   } finally {
     globalThis.fetch = fetch
   }

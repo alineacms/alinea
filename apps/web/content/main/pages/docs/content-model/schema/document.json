@@ -143,7 +143,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The metadata field also keeps an audit trail: `createdAt` and `createdBy` are set when the entry is created, `updatedAt` and `updatedBy` on every save. Timestamps are Unix timestamps in seconds, the users are the editor's name and email. When an entry is published on a new url, its previous url is added to `aliases`. These values are written to the content files, so keep in mind that editor emails end up in your repository."
+          "text": "The metadata field also keeps an audit trail: `createdAt` and `createdBy` are set when the entry is created, `updatedAt` and `updatedBy` on every save. Entries created before they were recorded leave `createdAt` and `createdBy` empty. Timestamps are Unix timestamps in seconds, the users are the editor's name and email. When an entry is published on a new url, its previous url is added to `aliases`. These values are written to the content files, so keep in mind that editor emails end up in your repository."
         }
       ]
     },

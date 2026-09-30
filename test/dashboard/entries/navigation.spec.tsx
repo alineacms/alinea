@@ -367,6 +367,11 @@ test('opens metadata for a localised file with null alt text', async ({
 
   await expect(app.field('Alt text')).toBeVisible()
   await expect(app.field('Alt text')).toHaveValue('')
+  // Nobody recorded who uploaded or changed this file
+  await expect(app.page.getByText('Created by', {exact: true})).toBeVisible()
+  await expect(app.page.getByText('Not available', {exact: true})).toHaveCount(
+    4
+  )
 })
 
 test('splits document metadata into SEO and Details tabs', async ({

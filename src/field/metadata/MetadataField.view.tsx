@@ -53,8 +53,8 @@ export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
   const value = useFieldValue(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
-  const name = value?.name || 'Unknown user'
   const email = value?.email
+  const name = value?.name || (email ? 'Unknown user' : 'Not available')
   return (
     <Field label={options.label} error={error} shared={options.shared}>
       <div className={styles.MetadataUserFieldView()}>
@@ -103,7 +103,7 @@ export function MetadataDetailsView({section}: MetadataDetailsViewProps) {
 }
 
 function formatAuditTimestamp(value: number | string | null): string {
-  if (value === null) return ''
+  if (value === null || value === undefined) return ''
   const date = new Date(typeof value === 'number' ? value * 1000 : value)
   if (Number.isNaN(date.getTime())) return String(value)
   return new Intl.DateTimeFormat(undefined, {

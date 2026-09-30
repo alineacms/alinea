@@ -81,17 +81,13 @@ export function beforeSaveWithAudit(
     next[key] = nextValue
   }
 
-  const createdAt = timestampFromValue(source.createdAt)
-  const refreshCreatedFields =
-    action === 'create' || action === 'translate' || createdAt === undefined
-  if (refreshCreatedFields) {
+  // Only a create records who created the entry, others leave it unknown
+  if (action === 'create' || action === 'translate') {
     set('createdAt', timestamp)
     set('createdBy', actor)
   } else {
-    set('createdAt', createdAt)
-  }
-  if (!refreshCreatedFields && !isMetadataAuditUser(source.createdBy)) {
-    set('createdBy', actor)
+    const createdAt = timestampFromValue(source.createdAt)
+    if (createdAt !== undefined) set('createdAt', createdAt)
   }
   set('updatedAt', timestamp)
   set('updatedBy', actor)
@@ -129,9 +125,4 @@ function timestampFromValue(value: unknown): number | undefined {
   const parsed = new Date(value).getTime()
   if (Number.isNaN(parsed)) return undefined
   return Math.floor(parsed / 1000)
-}
-
-function isMetadataAuditUser(value: unknown): value is MetadataAuditUser {
-  if (!isRecord(value)) return false
-  return typeof value.name === 'string' && typeof value.email === 'string'
 }
