@@ -25,8 +25,7 @@ function treeItem(
     locale: null,
     parentId,
     parents,
-    hasChildren,
-    dragDisabled: false
+    hasChildren
   }
 }
 

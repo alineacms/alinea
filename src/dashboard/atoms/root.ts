@@ -11,7 +11,12 @@ import {
 import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
-import type {DragMoveEvent, DropItemsEvent, Key} from '#/components.js'
+import type {
+  DragMoveEvent,
+  DropItemsEvent,
+  DropTarget,
+  Key
+} from '#/components.js'
 import type {RootViewProps} from '../cms/ViewProps.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
@@ -45,7 +50,8 @@ export interface RootTreeItem {
   parentId: string | null
   parents: Array<string>
   hasChildren: boolean
-  dragDisabled: boolean
+  /** Its parent orders its children, so it keeps its place among them */
+  ordered?: boolean
 }
 
 export interface RootTreeNode {
@@ -191,7 +197,6 @@ export class TreeAtoms implements TreeSource {
       Promise.all(expandedModels.map(model => get(model.raw(this.#locale))))
     ])
     const levels = [rootModels, ...childLevels]
-    // Children of an ordered parent can not be reordered by hand
     const orderedLevels: Array<boolean> = [
       Boolean(Root.childrenOrder(get(this.#root.data))),
       ...parentEntries.map(entry => {
@@ -487,10 +492,9 @@ export class RootAtoms {
       const policy = get(policyAtom)
       const permission =
         event.target.position === 'on' ? Permission.Move : Permission.Reorder
+      if (!treeAcceptsDrop(get(tree.view).entries, event.target)) return
       // Move entries in the order they are listed rather than selected
-      const moving = get(tree.items).filter(
-        item => event.keys.has(item.id) && !item.dragDisabled
-      )
+      const moving = get(tree.items).filter(item => event.keys.has(item.id))
       for (const item of moving)
         policy.assert(permission, {
           workspace: this.workspace,
@@ -520,6 +524,17 @@ export const rootAtoms = dispense(
   (workspace: string, root: string) => new RootAtoms(workspace, root)
 )
 
+/**
+ * Entries can always be dropped on a parent, but only placed before or after
+ * the children of a parent that does not order them
+ */
+export function treeAcceptsDrop(
+  entries: Map<string, RootTreeItem>,
+  target: DropTarget
+): boolean {
+  return target.position === 'on' || !entries.get(String(target.key))?.ordered
+}
+
 function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {
   return {
     id: entry.id,
@@ -531,7 +546,7 @@ function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {
     parentId: entry.parentId,
     parents: entry.parents,
     hasChildren: entry.hasChildren,
-    dragDisabled: ordered
+    ordered
   }
 }
 

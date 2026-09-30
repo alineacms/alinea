@@ -162,7 +162,7 @@ test('expands and collapses an entry with the sidebar chevron', async ({
   ).toBeVisible()
 })
 
-test('orders children by their parent type and disables dragging', async ({
+test('orders children by their parent type and keeps them movable', async ({
   dashboard,
   mount
 }) => {
@@ -173,8 +173,9 @@ test('orders children by their parent type and disables dragging', async ({
 
   const children = tree.locator('[role="row"][aria-level="2"]')
   await expect(children).toHaveText([/Apple$/, /Zebra$/])
-  await expect(tree.getByRole('button', {name: 'Drag Apple'})).toHaveCount(0)
-  await expect(tree.getByRole('button', {name: 'Drag Zebra'})).toHaveCount(0)
+  // They can not be reordered, but can be moved into other entries
+  await expect(tree.getByRole('button', {name: 'Drag Apple'})).toBeVisible()
+  await expect(tree.getByRole('button', {name: 'Drag Zebra'})).toBeVisible()
 })
 
 test('orders a root overview by the root configuration', async ({
@@ -427,6 +428,11 @@ test('opens metadata for a localised file with null alt text', async ({
 
   await expect(app.field('Alt text')).toBeVisible()
   await expect(app.field('Alt text')).toHaveValue('')
+  // Nobody recorded who uploaded or changed this file
+  await expect(app.page.getByText('Created by', {exact: true})).toBeVisible()
+  await expect(app.page.getByText('Not available', {exact: true})).toHaveCount(
+    4
+  )
 })
 
 test('splits document metadata into SEO and Details tabs', async ({

@@ -1,7 +1,6 @@
 import {IcRoundPermMedia} from '#/dashboard/icons.js'
 import {hidden} from '#/field/hidden/HiddenField.js'
-import {aliases} from '#/field/metadata/MetadataAliases.js'
-import {object} from '#/field/object/ObjectField.js'
+import {auditMetadata} from '#/field/metadata/MetadataAudit.js'
 import {path} from '#/field/path/PathField.js'
 import {text} from '#/field/text/TextField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
@@ -32,11 +31,7 @@ export const MediaFile = type('Media file', {
   fields: {
     title: text('Title'),
     path: path('Path'),
-    metadata: object('Metadata', {
-      fields: {
-        aliases: aliases()
-      }
-    }),
+    metadata: auditMetadata(),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
     extension: hidden<string>('Extension'),
@@ -95,9 +90,10 @@ function fileKindOption(
 export function mediaOverview(): OverviewOptions {
   return {
     builtins: {type: false, status: false, updated: false, author: false},
-    // Media files do not store when they were uploaded yet, so they can not
-    // be listed newest first
+    // Entry ids start with their creation time, so the newest come first
+    sort: {desc: Entry.id},
     sorts: {
+      latest: {label: 'Latest', by: Entry.id, direction: 'desc'},
       title: {label: 'Title', by: Entry.title},
       size: {label: 'Size', by: MediaFile.size, direction: 'desc'},
       dimensions: {

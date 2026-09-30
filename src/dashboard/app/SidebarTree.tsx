@@ -17,10 +17,17 @@ import {
   type RootTreeItem,
   type RootTreeNode,
   type TreeSnapshot,
-  type TreeSource
+  type TreeSource,
+  treeAcceptsDrop
 } from '../atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
+import {
+  useAtom,
+  useAtomValueRaw,
+  useSetAtom,
+  useStore,
+  type WritableAtom
+} from 'jotai'
 import {
   memo,
   type ComponentType,
@@ -123,7 +130,6 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   return (
     <TreeItem
       id={item.id}
-      hideDragHandle={data.dragDisabled}
       title={data.title}
       hasChildItems={data.hasChildren}
       icon={configuredIcon ?? (data.hasChildren ? LucideFolder : LucideFile)}
@@ -252,11 +258,13 @@ function useRootTreeDragDrop(
   const getItems = useSetAtom(root.getItems)
   const drop = useSetAtom(root.onDrop)
   const move = useSetAtom(root.onMove)
+  const store = useStore()
   // Only the entries of the root itself can be dragged
   if (disabled || dragDisabled || !(tree instanceof TreeAtoms)) return {}
   const moveInTree = (event: DragMoveEvent) => move(event, tree)
   return {
     acceptedDragTypes: root.acceptedDragTypes,
+    canDrop: target => treeAcceptsDrop(store.get(tree.view).entries, target),
     getDragData: getItems,
     onDropItems: drop,
     onMove: moveInTree,

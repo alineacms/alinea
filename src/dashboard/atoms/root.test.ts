@@ -15,8 +15,9 @@ import {
   TestEvents
 } from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
-import type {Key} from '#/components.js'
+import type {DropTarget, Key} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {config as overviewConfig} from '#test/overview.js'
 import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
@@ -453,7 +454,7 @@ test('child levels reload when a child ordering field changes', async () => {
   unsubscribe()
 })
 
-test('ordered children stay drag-disabled under a hidden parent', async () => {
+test('children of an ordered hidden parent are ordered', async () => {
   const HiddenOrderedFolder = Config.document('Hidden ordered folder', {
     contains: ['Page'],
     fields: {title: Field.text('Title')},
@@ -498,7 +499,37 @@ test('ordered children stay drag-disabled under a hidden parent', async () => {
 
   await store.get(tree.ready)
 
-  expect(store.get(tree.item(child._id)).dragDisabled).toBe(true)
+  expect(store.get(tree.item(child._id)).ordered).toBe(true)
+})
+
+test('entries of an ordered parent move into folders but keep their place', async () => {
+  const db = new LocalDB(overviewConfig)
+  await db.sync()
+  const folder = (title: string) =>
+    db.create({
+      type: MediaLibrary,
+      workspace: 'main',
+      root: 'media',
+      set: {title}
+    })
+  const photos = await folder('Photos')
+  const logos = await folder('Logos')
+  const store = createDashboardStore(overviewConfig, db)
+  await store.get(userPolicyReadyAtom)
+  const root = rootAtoms('main', 'media')
+  const tree = root.tree(null)
+  const move = async (target: DropTarget) => {
+    await store.get(tree.ready)
+    await store.set(root.onMove, {keys: new Set([photos._id]), target}, tree)
+  }
+  const parentOf = (id: string) =>
+    db.get({id, select: {parentId: Query.parentId, index: Query.index}})
+  const before = await parentOf(photos._id)
+  // The media root lists its folders newest first, they can not be reordered
+  await move({key: logos._id, position: 'after'})
+  expect(await parentOf(photos._id)).toEqual(before)
+  await move({key: logos._id, position: 'on'})
+  expect((await parentOf(photos._id)).parentId).toBe(logos._id)
 })
 
 test('entry data loads by id without loading its child level', async () => {

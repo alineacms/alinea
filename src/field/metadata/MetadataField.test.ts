@@ -63,7 +63,7 @@ test('metadata audit preserves created fields when updating', () => {
   })
 })
 
-test('metadata audit stamps created user when created date is missing', () => {
+test('metadata audit leaves unknown created fields empty when updating', () => {
   const date = new Date('2023-06-02T10:57:19.584Z')
   const result = Type.beforeSave(
     Article,
@@ -79,8 +79,8 @@ test('metadata audit stamps created user when created date is missing', () => {
   )
 
   test.equal(result.metadata, {
-    createdAt: 1685703439,
-    createdBy: {name: 'John Doe', email: 'info@codeurs.be'},
+    createdAt: null,
+    createdBy: {name: '', email: ''},
     updatedAt: 1685703439,
     updatedBy: {name: 'John Doe', email: 'info@codeurs.be'}
   })

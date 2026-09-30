@@ -1,6 +1,8 @@
 import fs from 'node:fs'
 import {suite} from '@alinea/suite'
 import {Config, Edit, Field} from '#/index.js'
+import {Entry} from '#/core/Entry.js'
+import {Type} from '#/core/Type.js'
 import {createCMS} from '#/core.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -362,6 +364,78 @@ test('uploads scale down images larger than resizeImages', async () => {
       await createFileHash(new Uint8Array(await example.arrayBuffer()))
     )
     test.ok(media.hash !== media.sourceHash)
+  } finally {
+    globalThis.fetch = fetch
+  }
+})
+
+test('uploads record who created the file, saves and replaces who updated it', async () => {
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+  const jane = {sub: 'jane', name: 'Jane', email: 'jane@example.com'}
+  const john = {sub: 'john', name: 'John', email: 'john@example.com'}
+  const db = new DB(cmsWithMediaDir().config)
+  const metadata = async (id: string) =>
+    db.get({id, select: MediaFile.metadata})
+  try {
+    const upload = await db.upload({
+      file: new File(['one'], 'notes.txt'),
+      user: jane
+    })
+    const created = await metadata(upload._id)
+    test.equal(created.createdBy, {name: 'Jane', email: 'jane@example.com'})
+    test.equal(created.updatedBy, created.createdBy)
+    test.ok(typeof created.createdAt === 'number')
+
+    // The dashboard's save of an alt text
+    const data = await db.get({id: upload._id, select: Entry.data})
+    await db.mutate([
+      {
+        op: 'create',
+        id: upload._id,
+        locale: null,
+        type: 'MediaFile',
+        overwrite: true,
+        data: Type.beforeSave(
+          MediaFile,
+          {...data, alt: 'Notes'},
+          {action: 'publish', user: john, now: new Date()}
+        )
+      }
+    ])
+    const saved = await metadata(upload._id)
+    test.is(saved.createdAt, created.createdAt)
+    test.equal(saved.createdBy, created.createdBy)
+    test.equal(saved.updatedBy, {name: 'John', email: 'john@example.com'})
+
+    await db.upload({
+      file: new File(['two'], 'notes.txt'),
+      replaceId: upload._id,
+      user: jane
+    })
+    const replaced = await metadata(upload._id)
+    test.is(replaced.createdAt, created.createdAt)
+    test.equal(replaced.updatedBy, {name: 'Jane', email: 'jane@example.com'})
+    test.is(await db.get({id: upload._id, select: MediaFile.alt}), 'Notes')
+
+    // Files from before audit metadata do not get made up creation details
+    const existing = await db.create({
+      type: MediaFile,
+      root: 'media',
+      set: {title: 'Old', location: 'old.txt', extension: '.txt'}
+    })
+    await db.upload({
+      file: new File(['new'], 'old.txt'),
+      replaceId: existing._id,
+      user: john
+    })
+    const old = await metadata(existing._id)
+    test.is(old.createdAt, undefined)
+    test.is(old.createdBy, undefined)
+    test.equal(old.updatedBy, {name: 'John', email: 'john@example.com'})
   } finally {
     globalThis.fetch = fetch
   }

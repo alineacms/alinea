@@ -533,7 +533,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Field.metadata(label)` no longer takes `inferTitleFrom`, `inferDescriptionFrom` or `inferImageFrom`. The metadata field now also stores the URL aliases of the entry and audit fields: `createdAt`, `createdBy`, `updatedAt` and `updatedBy`, with the name and email of the editor. They are filled in when an entry is saved. Keep that in mind for public repositories. The description is limited to 160 characters."
+          "text": "`Field.metadata(label)` no longer takes `inferTitleFrom`, `inferDescriptionFrom` or `inferImageFrom`. The metadata field now also stores the URL aliases of the entry and audit fields: `createdAt`, `createdBy`, `updatedAt` and `updatedBy`, with the name and email of the editor. `updatedAt` and `updatedBy` are filled in when an entry is saved, `createdAt` and `createdBy` only when an entry is created, so they stay empty for existing entries. Keep that in mind for public repositories. The description is limited to 160 characters."
         }
       ]
     },
