@@ -11,7 +11,8 @@ import {
   beforeSaveWithAudit,
   type MetadataAuditUser,
   type MetadataDetailsFields,
-  metadataDetailsType
+  metadataDetailsType,
+  withAudit
 } from './MetadataAudit.js'
 
 export {
@@ -123,7 +124,7 @@ export function metadata(
       return beforeSaveWithAudit(fields, context) as unknown as Metadata
     }
   })
-  return Object.assign(result, fields)
+  return withAudit(Object.assign(result, fields))
 }
 
 export class MetadataDetailsSection implements SectionData {

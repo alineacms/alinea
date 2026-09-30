@@ -24,7 +24,7 @@ import {
 import {Revision} from '#/core/Connection.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {Type} from '#/core/Type.js'
+import type {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
@@ -34,7 +34,7 @@ import {
   entrySidebarTabAtom
 } from '#/dashboard/atoms/dashboard.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
-import {MetadataField, type Metadata} from '#/field/metadata.js'
+import {hasAuditMetadata, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
 import {
   atom,
@@ -303,8 +303,9 @@ function EntrySidebarStatusItem({
     (selectedVersion?.type === 'status' && selectedVersion.status === status)
   const rowStatus = getStatusItemVersionStatus(status, activeVersion.main)
   const version = versions.get(status)
-  const hasMetadata = Type.field(type, 'metadata') instanceof MetadataField
-  const meta = hasMetadata ? formatMetadata(version?.data.metadata) : undefined
+  const meta = hasAuditMetadata(type)
+    ? formatMetadata(version?.data.metadata)
+    : undefined
   return (
     <EntrySidebarVersionRow
       selected={selected}

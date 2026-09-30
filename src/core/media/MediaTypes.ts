@@ -95,7 +95,7 @@ export function mediaOverview(): OverviewOptions {
     MediaLibrary: new Expr({type: 'value', value: 0})
   })
   return {
-    builtins: {type: false, status: false, updated: false, author: false},
+    builtins: {type: false, status: false},
     // Entry ids start with their creation time, so the newest files come
     // first, below the folders
     sort: [{asc: foldersFirst}, {desc: Entry.id}],
@@ -137,9 +137,11 @@ export function mediaOverview(): OverviewOptions {
         }
       }
     },
+    // The file's columns come before who last updated it and when
     columns: {
       preview: column({
         header: 'Preview',
+        position: 'start',
         width: 64,
         collapsible: false,
         sortable: false,
@@ -152,6 +154,7 @@ export function mediaOverview(): OverviewOptions {
       }),
       dimensions: column({
         header: 'Dimensions',
+        position: 'start',
         width: 150,
         select: {width: MediaFile.width, height: MediaFile.height},
         sortBy: MediaFile.width,
@@ -160,6 +163,7 @@ export function mediaOverview(): OverviewOptions {
       }),
       size: column({
         header: 'Size',
+        position: 'start',
         width: 110,
         align: 'end',
         select: MediaFile.size,
@@ -170,6 +174,7 @@ export function mediaOverview(): OverviewOptions {
       }),
       fileType: column({
         header: 'File type',
+        position: 'start',
         width: 110,
         select: MediaFile.extension,
         format: extension =>

@@ -1,11 +1,13 @@
 import {document} from '#/core/Document.js'
 import {Type, type} from '#/core/Type.js'
 import {Field} from '#/core/Field.js'
+import {text} from '#/field/text.js'
 import {suite} from '@alinea/suite'
 import {
   MetadataTimestampField,
   MetadataUserField,
   auditMetadata,
+  hasAuditMetadata,
   metadata
 } from './MetadataField.js'
 
@@ -186,4 +188,14 @@ test('document metadata stays one record split over SEO and details', () => {
     Object.keys(Type.initialValue(Page).metadata as object).sort(),
     Object.keys(Type.fields(options.fields)).sort()
   )
+})
+
+test('types with either metadata field store audit details', () => {
+  const File = type('File', {fields: {metadata: auditMetadata()}})
+  const Other = type('Other', {fields: {metadata: text('Metadata')}})
+  test.ok(hasAuditMetadata(Article))
+  test.ok(hasAuditMetadata(document('Page', {fields: {}})))
+  test.ok(hasAuditMetadata(File))
+  test.not.ok(hasAuditMetadata(Other))
+  test.not.ok(hasAuditMetadata(type('Plain', {fields: {}})))
 })
