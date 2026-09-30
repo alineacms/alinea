@@ -15,7 +15,7 @@ import {
 } from '../entry/EntryTable.js'
 import {localeCondition, statusCondition} from './EntryQuery.js'
 
-/** Read the versions indexed as referencing the target and walk their data. */
+/** Read the versions indexed as referencing the targets and walk their data. */
 export async function queryEntryReferences(
   config: Config,
   db: Database,
@@ -23,6 +23,7 @@ export async function queryEntryReferences(
 ): Promise<EntryReferenceResult> {
   const entry = EntryIndexTable
   const indexed = EntryReferenceTable
+  const targetIds = Array<string>().concat(query.targetId)
   const conditions = [
     eq(entry.visible, true),
     statusCondition(entry, query.status),
@@ -31,7 +32,7 @@ export async function queryEntryReferences(
       db
         .select(indexed.source)
         .from(indexed)
-        .where(eq(indexed.targetId, query.targetId))
+        .where(inArray(indexed.targetId, targetIds))
     )
   ]
   if (query.locale !== undefined)
@@ -60,7 +61,7 @@ export async function queryEntryReferences(
       type,
       storedEntryData(row.data, row.path)
     )) {
-      if (target.targetId !== query.targetId) continue
+      if (!targetIds.includes(target.targetId)) continue
       references.push({
         ...target,
         sourceId: row.id,

@@ -42,12 +42,16 @@ async function fixture() {
   await db.sync()
   for (const locale of ['en', 'nl']) {
     await db.create({type: Page, id: 'test', locale, set: {title: 'Test'}})
+    // Links from entries that are deleted too do not break
     await db.create({
       type: Page,
       id: 'child',
       parentId: 'test',
       locale,
-      set: {title: 'Child'}
+      set: {
+        title: `Child ${locale}`,
+        link: Edit.link(Page.link).addEntry('test').value()
+      }
     })
     await db.create({
       type: Page,
@@ -135,7 +139,7 @@ test('a batch deletes entries in the language they are listed in', async () => {
     hasChildren: false
   }
   const plan = await store.set(loadDeletePlanAtom, [subject, plain])
-  expect(plan.locales).toEqual([])
+  expect(plan.locales).toBeUndefined()
   expect(store.get(plan.removals)).toEqual([
     {id: 'test', locale: 'en'},
     {id: 'plain', locale: null}
@@ -153,6 +157,25 @@ test('only languages the user can delete are offered', async () => {
   store.set(preloadUserPolicyAtom, localUser, policy)
   const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
   expect(plan.locales).toEqual(['en'])
+})
+
+test('the dialog warns about links to the entries deleted with it', async () => {
+  const {db, store} = await fixture()
+  await db.create({
+    type: Page,
+    id: 'childLink',
+    root: 'other',
+    set: {
+      title: 'Child link',
+      link: Edit.link(Page.link).addEntry('child').value()
+    }
+  })
+  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  expect(sources(store.get(plan.references))).toEqual([
+    'Child link',
+    'Home en',
+    'Plain'
+  ])
 })
 
 test('references are reloaded when another entry links to the entry', async () => {

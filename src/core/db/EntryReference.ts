@@ -31,7 +31,8 @@ export interface EntryReference {
 }
 
 export interface EntryReferenceQuery {
-  targetId: string
+  /** The entry, or entries, the references point to */
+  targetId: string | Array<string>
   status?: Status
   locale?: string | null
 }

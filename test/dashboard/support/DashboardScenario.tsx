@@ -467,6 +467,22 @@ async function createDashboardScenario({
       }
     }
   ])
+  // A link to a file inside a media folder
+  await db.create({
+    id: dashboardScenarioIds.mediaLinking,
+    locale: 'en',
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'localized',
+    set: {
+      title: 'Media linking',
+      relatedPage: {
+        _id: 'media-link',
+        _type: 'entry',
+        _entry: dashboardScenarioIds.nestedMediaFile
+      }
+    }
+  })
   await db.create({
     id: dashboardLinkScenarioIds.referenceFolder,
     type: ScenarioPage,

@@ -133,3 +133,24 @@ test('lists a few references and links to the references tab for the rest', asyn
   const tab = app.page.getByRole('tabpanel', {name: 'References'})
   await expect(tab.getByText(/^Popular linking \d$/)).toHaveCount(4)
 })
+
+test('warns about links to the files in a deleted media folder', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'mediaFolder',
+    routeRoot: 'media',
+    title: 'Media folder'
+  })
+
+  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete folder'})
+  await expect(dialog.getByRole('alert')).toContainText(
+    'This folder and its contents have 1 reference'
+  )
+  await expect(dialog.getByRole('list', {name: 'References'})).toContainText(
+    'Media linking'
+  )
+})
