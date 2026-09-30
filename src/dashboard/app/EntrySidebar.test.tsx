@@ -52,6 +52,7 @@ test('loads sidebar data only when its tab is selected', async () => {
   const localeData = entry.locales(null)
   const references = {
     references: [],
+    hidden: [],
     total: 0,
     scan: {scanned: 0, total: 0, complete: true}
   }

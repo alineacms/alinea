@@ -288,6 +288,22 @@ async function createDashboardScenario({
     root: 'localized',
     set: {title: 'Localized child'}
   })
+  // A link to an entry that is deleted with its parent
+  await db.create({
+    id: dashboardScenarioIds.childLinking,
+    locale: 'en',
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'localized',
+    set: {
+      title: 'Child linking',
+      relatedPage: {
+        _id: 'child-link',
+        _type: 'entry',
+        _entry: dashboardScenarioIds.localizedChild
+      }
+    }
+  })
   const localizedTitles = {
     en: ['Localized target', 'Localized linking'],
     fr: ['Cible localisée', 'Lien localisé']

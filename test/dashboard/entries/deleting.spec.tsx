@@ -155,3 +155,85 @@ test('warns about links to the files in a deleted media folder', async ({
     'Media linking'
   )
 })
+
+test('warns about links to the entries deleted with a page', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'localizedFolder',
+    routeRoot: 'localized',
+    title: 'Localized folder'
+  })
+
+  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
+  await expect(
+    dialog.getByText('Entries are deleted with the entries they contain.')
+  ).toBeVisible()
+  await expect(dialog.getByRole('alert')).toContainText(
+    'This entry and its contents have 1 reference'
+  )
+  await expect(dialog.getByRole('list', {name: 'References'})).toContainText(
+    'Child linking'
+  )
+})
+
+test('archives the entry instead of deleting it', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'child',
+    title: 'Child'
+  })
+
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
+  await dialog.getByRole('button', {name: 'Archive instead'}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(app.title).toHaveText('Child')
+  await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
+
+  // An archived entry is only deleted
+  await app.runEntryAction('Delete')
+  await expect(
+    dialog.getByRole('button', {name: 'Delete', exact: true})
+  ).toBeVisible()
+  await expect(
+    dialog.getByRole('button', {name: 'Archive instead'})
+  ).toHaveCount(0)
+})
+
+test('deletes an entry from a language it is not translated in', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'localizedStart',
+    routeRoot: 'localized:fr',
+    title: 'Localized start'
+  })
+  await expect(
+    app.page.getByText('This entry has not been translated yet')
+  ).toBeVisible()
+
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
+  const languages = dialog.getByRole('group', {name: 'Languages to delete'})
+  const english = languages.getByRole('checkbox', {name: 'EN'})
+  const confirm = dialog.getByRole('button', {name: 'Delete', exact: true})
+  // No language is picked for the one shown
+  await expect(english).not.toBeChecked()
+  await expect(confirm).toBeDisabled()
+  await languages.getByText('EN').click()
+  await expect(english).toBeChecked()
+  await confirm.click()
+
+  await expect(dialog).toHaveCount(0)
+  await expect(app.page).toHaveURL(/localized:fr$/)
+  const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
+  await expect(tree.getByRole('row', {name: 'Localized folder'})).toBeVisible()
+  await expect(tree.getByRole('row', {name: 'Localized start'})).toHaveCount(0)
+})

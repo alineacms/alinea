@@ -68,7 +68,10 @@ function DeleteDialogStory({
   locales,
   references = []
 }: DeleteDialogStoryProps) {
-  const open = () => createDeletePlan(subjects, locales, references)
+  // Published entries can be archived instead
+  const archivable = subjects.map(({id, locale}) => ({id, locale}))
+  const open = () =>
+    createDeletePlan({subjects, locales, references, archivable})
   const [plan, setPlan] = useState<DeletePlan | undefined>(open)
   return (
     <StoryProvider config={cms.config}>
@@ -79,6 +82,7 @@ function DeleteDialogStory({
         plan={plan}
         onClose={() => setPlan(undefined)}
         onConfirm={wait}
+        onArchive={wait}
       />
     </StoryProvider>
   )

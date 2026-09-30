@@ -122,10 +122,12 @@ export function entryHeaderActions({
     replace: false,
     unpublish: false
   }
-  if (isRevision || isDirty || untranslated) return actions
-  actions.move = canMove
-  // The delete dialog shows what links to the entry and picks its languages
+  if (isRevision || isDirty) return actions
+  // The delete dialog shows what links to the entry and picks its languages,
+  // those it exists in when it is not translated in the one shown
   actions.delete = canDelete && access.delete
+  if (untranslated) return actions
+  actions.move = canMove
 
   if (activeStatus === 'draft') {
     if (!isUnpublished) actions.removeDraft = access.update

@@ -1,5 +1,6 @@
 import {Button, PageFooter, Text, Toolbar} from '#/components.js'
 import {
+  archiveEntriesAtom,
   deleteEntriesAtom,
   loadDeletePlanAtom,
   type DeletePlan
@@ -28,6 +29,7 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
   const clearSelection = useSetAtom(explorer.clearSelection)
   const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
+  const archiveEntries = useSetAtom(archiveEntriesAtom)
   const loadMoveTargets = useSetAtom(loadMoveTargetsAtom)
   const [moving, setMoving] = useState<MoveTargets>()
   const [deletePlan, setDeletePlan] = useState<DeletePlan>()
@@ -68,6 +70,10 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
         onClose={() => setDeletePlan(undefined)}
         onConfirm={async plan => {
           await deleteEntries(plan)
+          clearSelection()
+        }}
+        onArchive={async plan => {
+          await archiveEntries(plan)
           clearSelection()
         }}
       />

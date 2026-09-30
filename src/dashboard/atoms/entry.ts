@@ -57,6 +57,8 @@ interface EntryData {
 
 export interface EntryReferences {
   references: Array<EntryReferenceWithSource>
+  /** Links from versions the user can not read, without their contents */
+  hidden: Array<EntryReference>
   total: number
 }
 
@@ -818,21 +820,26 @@ export async function loadIncomingReferences(
             locale: Entry.locale,
             status: Entry.status,
             path: Entry.path,
-            url: Entry.url
+            url: Entry.url,
+            // Access can be limited to entries below a parent
+            parents: Entry.parents
           }
         })
   const sourceByLocale = new Map(
     sources.map(source => [referenceSourceKey(source), source] as const)
   )
   const sourceById = new Map(sources.map(source => [source.id, source]))
-  const references = result.references.flatMap(reference => {
+  const references: Array<EntryReferenceWithSource> = []
+  const hidden: Array<EntryReference> = []
+  for (const reference of result.references) {
     const source =
       sourceByLocale.get(referenceKey(reference)) ??
       sourceById.get(reference.sourceId)
-    if (!source || !policy.canRead(source)) return []
-    return [{reference, source} satisfies EntryReferenceWithSource]
-  })
-  return {references, total: result.total}
+    if (!source) continue
+    if (policy.canRead(source)) references.push({reference, source})
+    else hidden.push(reference)
+  }
+  return {references, hidden, total: result.total}
 }
 
 function referenceKey(reference: {
