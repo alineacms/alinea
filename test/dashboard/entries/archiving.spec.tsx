@@ -14,7 +14,7 @@ test('archives and restores an entry', async ({dashboard, mount}) => {
   ).toBeVisible()
 })
 
-test('deletes an entry and navigates to its parent', async ({
+test('deletes an archived entry and navigates to its parent', async ({
   dashboard,
   mount
 }) => {
@@ -26,6 +26,10 @@ test('deletes an entry and navigates to its parent', async ({
 
   await app.runEntryAction('Archive')
   await app.runEntryAction('Delete')
+  await app.page
+    .getByRole('dialog', {name: 'Delete entry'})
+    .getByRole('button', {name: 'Delete', exact: true})
+    .click()
 
   await expect(app.page).toHaveURL(/workflow-folder$/)
   await expect(app.title).toHaveText('Folder')

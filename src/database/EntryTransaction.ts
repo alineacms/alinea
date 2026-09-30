@@ -723,10 +723,14 @@ export class EntryTransaction implements AsyncDisposable {
 
   async remove({id, locale, status}: Op<RemoveMutation>): Promise<void> {
     assert(id, 'Remove mutation is missing an id')
-    const versions = await this.#versions(id, locale)
+    const versions = await this.#versions(id)
     const found = versions.filter(
-      entry => status === undefined || entry.versionStatus === status
+      entry =>
+        (locale === undefined || entry.locale === locale) &&
+        (status === undefined || entry.versionStatus === status)
     )
+    // Permissions can be scoped to a locale, each removed version must allow it
+    for (const entry of found) this.#policy.assert(Permission.Delete, entry)
     // Files of the versions that remain stay: discarding the draft of a media
     // file must not remove the file its published version points to
     const skipLocations = new Set(
@@ -758,10 +762,7 @@ export class EntryTransaction implements AsyncDisposable {
       }
     }
     const info = found[0]
-    if (info) {
-      this.#policy.assert(Permission.Delete, info)
-      this.#messages.unshift(this.#report('remove', info.title))
-    }
+    if (info) this.#messages.unshift(this.#report('remove', info.title))
   }
 
   removeFile(mutation: Op<RemoveFileMutation>): void {

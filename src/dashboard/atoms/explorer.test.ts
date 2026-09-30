@@ -697,14 +697,13 @@ test('selection actions follow the selected listed entries', async () => {
   const actions = store.get(explorer.selectionActions)
   expect(actions.items.map(item => item.id)).toEqual([parent._id])
   expect(actions.canMove).toBe(true)
-  // Published pages are archived before they are deleted
-  expect(actions.canDelete).toBe(false)
+  expect(actions.canDelete).toBe(true)
 
   store.set(explorer.clearSelection)
   expect(store.get(explorer.selectionActions).items).toEqual([])
 })
 
-test('media is deleted right away, other entries once archived', () => {
+test('entries that are not seeded can be deleted and moved', () => {
   const config = Config.create({
     schema: {},
     workspaces: {
@@ -731,19 +730,16 @@ test('media is deleted right away, other entries once archived', () => {
     seeded: null
   }
   const policy = Policy.ALLOW_ALL
-  expect(explorerItemCanDelete(config, policy, item)).toBe(true)
+  expect(explorerItemCanDelete(policy, item)).toBe(true)
   expect(explorerItemCanMove(policy, item)).toBe(true)
   const seeded = {...item, seeded: 'media/file.json'}
-  expect(explorerItemCanDelete(config, policy, seeded)).toBe(false)
+  expect(explorerItemCanDelete(policy, seeded)).toBe(false)
   expect(explorerItemCanMove(policy, seeded)).toBe(false)
   const page = {...item, type: 'Page', root: 'pages'}
-  expect(explorerItemCanDelete(config, policy, page)).toBe(false)
-  expect(
-    explorerItemCanDelete(config, policy, {...page, status: 'archived'})
-  ).toBe(true)
+  expect(explorerItemCanDelete(policy, page)).toBe(true)
   const denied = new WriteablePolicy(getScope(config))
     .allowAll()
     .set({id: 'file', deny: {delete: true, move: true}})
-  expect(explorerItemCanDelete(config, denied, item)).toBe(false)
+  expect(explorerItemCanDelete(denied, item)).toBe(false)
   expect(explorerItemCanMove(denied, item)).toBe(false)
 })
