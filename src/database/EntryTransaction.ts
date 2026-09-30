@@ -20,7 +20,7 @@ import {
   generateKeyBetween,
   generateNKeysBetween
 } from '#/core/util/FractionalIndexing.js'
-import {entries, fromEntries, keys} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord, keys} from '#/core/util/Objects.js'
 import * as paths from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {unreachable} from '#/core/util/Types.js'
@@ -337,6 +337,9 @@ export class EntryTransaction implements AsyncDisposable {
           ([key]) => mediaEditedFields.has(key) && data[key] === undefined
         )
         data = {...data, ...fromEntries(edited)}
+        // Who replaced the file goes over the stored details
+        if (isRecord(stored.metadata) && isRecord(data.metadata))
+          data.metadata = {...stored.metadata, ...data.metadata}
       } else {
         // Other saves keep the current file, whatever file the editor showed
         // (eg. one from before a replace)

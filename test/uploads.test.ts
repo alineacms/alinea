@@ -421,6 +421,39 @@ test('uploads record who created the file, saves and replaces who updated it', a
     test.equal(replaced.updatedBy, {name: 'Jane', email: 'jane@example.com'})
     test.is(await db.get({id: upload._id, select: MediaFile.alt}), 'Notes')
 
+    // A replace sent with only who replaced the file keeps the stored details
+    const alias = {_id: 'alias', _type: 'alias', _index: 'a0', url: '/notes'}
+    const current = await db.get({id: upload._id, select: Entry.data})
+    await db.mutate([
+      {
+        op: 'create',
+        id: upload._id,
+        locale: null,
+        type: 'MediaFile',
+        overwrite: true,
+        data: {...current, metadata: {...replaced, aliases: [alias]}}
+      }
+    ])
+    await db.mutate([
+      {op: 'uploadFile', location: 'media/notes-3.txt', url: ''},
+      {
+        op: 'create',
+        id: upload._id,
+        locale: null,
+        type: 'MediaFile',
+        overwrite: true,
+        data: {
+          ...current,
+          location: 'media/notes-3.txt',
+          metadata: {updatedAt: 1, updatedBy: john}
+        }
+      }
+    ])
+    const merged = await metadata(upload._id)
+    test.is(merged.createdAt, created.createdAt)
+    test.equal(merged.aliases, [alias])
+    test.is(merged.updatedAt, 1)
+
     // Files from before audit metadata do not get made up creation details
     const existing = await db.create({
       type: MediaFile,

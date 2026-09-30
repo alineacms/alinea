@@ -308,14 +308,6 @@ export class UploadOperation extends Operation {
         url: info.previewUrl,
         location: MediaLocation.storagePath(db.config, workspace, fileLocation)
       }
-      // A replace keeps the details of the file it replaces
-      const replaced = query.replaceId
-        ? await db.first({
-            id: query.replaceId,
-            status: 'preferDraft',
-            select: MediaFile.metadata
-          })
-        : undefined
       const createEntry: Mutation = {
         op: 'create',
         id: entryId,
@@ -335,8 +327,7 @@ export class UploadOperation extends Operation {
             size: body.byteLength,
             hash,
             ...(sourceHash ? {sourceHash} : {}),
-            ...previewData,
-            metadata: replaced ?? undefined
+            ...previewData
           },
           {
             action: query.replaceId ? 'update' : 'create',
@@ -344,6 +335,7 @@ export class UploadOperation extends Operation {
             now: new Date()
           }
         ),
+        // The server keeps the stored details of the file this replaces
         overwrite: query.replaceId !== undefined
       }
       return [uploadFile, createEntry]
