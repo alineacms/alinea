@@ -33,7 +33,8 @@ export interface ListOptions<Definitions extends Schema> extends Omit<
   /** Hide the create actions once the list has this many items and mark
    * the field as invalid while it has more */
   max?: number
-  /** The initial value of the field, rows can leave single links empty */
+  /** The initial value of the field, rows can leave out fields to use their
+   * default and leave single links empty */
   initialValue?: Array<InferInitialValue<Definitions>>
   /** Validate the given value */
   validate?(

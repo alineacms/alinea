@@ -24,6 +24,13 @@
     background: var(--alinea-muted);
   }
 
+  /* The subtle background only marks the item under the pointer, keyboard
+     focus also gets a ring */
+  &.is-focusVisible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: -2px;
+  }
+
   &[aria-checked='true'] {
     color: var(--alinea-selected-fg);
     font-weight: 500;

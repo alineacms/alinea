@@ -2,6 +2,7 @@ import type {LocalConnection, Revision} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
 import {IcRoundFormatListNumbered} from '#/dashboard/icons.js'
@@ -128,7 +129,22 @@ export interface DashboardScenarioProps {
 
 class ScenarioDB extends LocalDB {
   readDelay = 0
+  /** Entries set up for the scenario are content from before audit metadata,
+   * so only the media files that record it show as recently changed */
+  seeding = true
   #reads = Promise.resolve()
+
+  mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
+    if (!this.seeding) return super.mutate(mutations)
+    return super.mutate(
+      mutations.map(mutation => {
+        if (mutation.op !== 'create' || mutation.type === 'MediaFile')
+          return mutation
+        const {metadata: _, ...data} = mutation.data
+        return {...mutation, data}
+      })
+    )
+  }
 
   resolve<Query extends GraphQuery>(
     query: Query
@@ -523,6 +539,7 @@ async function createDashboardScenario({
     parentId: dashboardLinkScenarioIds.referenceFolder,
     set: {title: 'Reference target'}
   })
+  db.seeding = false
   db.readDelay = readDelay
   const baseClient = createTestConnection(db, {users})
   let failUserList = failFirstUserList

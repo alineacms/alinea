@@ -234,8 +234,11 @@ export function CommandItem({
       textValue={text}
       isDisabled={disabled}
       onAction={() => onSelect?.(value)}
-      className={({isFocused}) =>
-        styles.CommandItem({highlighted: isFocused}, styler.merge({className}))
+      className={({isFocused, isFocusVisible}) =>
+        styles.CommandItem(
+          {highlighted: isFocused, focusVisible: isFocusVisible},
+          styler.merge({className})
+        )
       }
     >
       {icon && (

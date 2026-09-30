@@ -57,18 +57,28 @@ export function rootAcceptsType(
   return Schema.contained(config.schema, contains).includes(typeName)
 }
 
+/** The subjects without those inside another subject, which move with it */
+function outermostSubjects(subjects: Array<MoveSubject>): Array<MoveSubject> {
+  const ids = new Set(subjects.map(subject => subject.id))
+  return subjects.filter(
+    subject => !subject.parents.some(parent => ids.has(parent))
+  )
+}
+
 /**
  * Where the subjects, all of one root, can be moved to following the
  * `contains` rules of the types and root, and the move permission. When
- * given, only the `translated` entries are a target.
+ * given, only the `translated` entries are a target. Subjects inside another
+ * subject are left out, they move along with it.
  */
 export function moveTargets(
   config: Config,
   policy: Policy,
   rootData: RootData,
-  subjects: Array<MoveSubject>,
+  selected: Array<MoveSubject>,
   translated?: ReadonlySet<string>
 ): MoveTargets {
+  const subjects = outermostSubjects(selected)
   const moving = new Set(subjects.map(subject => subject.id))
   const typeNames = Array.from(new Set(subjects.map(subject => subject.type)))
   const types = typeNames.map(name => config.schema[name])
@@ -144,12 +154,15 @@ export const loadMoveTargetsAtom = atom(
 
 /**
  * Moves the subjects into the target entry, or to the root with null, in one
- * transaction: every entry moves or none do
+ * transaction: every entry moves or none do. Subjects inside another subject
+ * move along with it.
  */
 export const moveEntriesAtom = atom(
   null,
   async (get, _set, subjects: Array<MoveSubject>, target: string | null) => {
-    const moving = subjects.filter(subject => subject.parentId !== target)
+    const moving = outermostSubjects(subjects).filter(
+      subject => subject.parentId !== target
+    )
     if (moving.length === 0) return
     await get(graphAtom).commit(
       ...moving.map(

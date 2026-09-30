@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import {suite} from '@alinea/suite'
 import {Config, Edit, Field} from '#/index.js'
 import {Entry} from '#/core/Entry.js'
+import {createId} from '#/core/Id.js'
 import {Type} from '#/core/Type.js'
 import {createCMS} from '#/core.js'
 import type {UploadResponse} from '#/core/Connection.js'
@@ -455,17 +456,23 @@ test('uploads record who created the file, saves and replaces who updated it', a
     test.is(merged.updatedAt, 1)
 
     // Files from before audit metadata do not get made up creation details
-    const existing = await db.create({
-      type: MediaFile,
-      root: 'media',
-      set: {title: 'Old', location: 'old.txt', extension: '.txt'}
-    })
+    const existing = createId()
+    await db.mutate([
+      {
+        op: 'create',
+        id: existing,
+        locale: null,
+        type: 'MediaFile',
+        root: 'media',
+        data: {title: 'Old', location: 'old.txt', extension: '.txt'}
+      }
+    ])
     await db.upload({
       file: new File(['new'], 'old.txt'),
-      replaceId: existing._id,
+      replaceId: existing,
       user: john
     })
-    const old = await metadata(existing._id)
+    const old = await metadata(existing)
     test.is(old.createdAt, undefined)
     test.is(old.createdBy, undefined)
     test.equal(old.updatedBy, {name: 'John', email: 'john@example.com'})

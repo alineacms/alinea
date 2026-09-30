@@ -353,7 +353,14 @@ function DropdownMenuItemView({
       textValue={
         textValue ?? (typeof children === 'string' ? children : undefined)
       }
-      className={styles.DropdownMenuItem(styler.merge({className}))}
+      // react-aria focuses items on hover, isFocusVisible only follows the
+      // keyboard
+      className={({isFocusVisible}) =>
+        styles.DropdownMenuItem(
+          {focusVisible: isFocusVisible},
+          styler.merge({className})
+        )
+      }
     >
       {({hasSubmenu, isSelected}) => (
         <>

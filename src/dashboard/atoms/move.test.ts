@@ -144,6 +144,25 @@ test('every moved entry must fit in a target', () => {
   ).toEqual({ids: [], rootAccepts: false})
 })
 
+test('entries inside another moved entry move along with it', () => {
+  const selected = [
+    subject('post', 'Post', ['home', 'blog']),
+    subject('blog', 'Blog', ['home'])
+  ]
+  const targets = moveTargets(
+    config,
+    Policy.ALLOW_ALL,
+    rootData('pages'),
+    selected
+  )
+  expect(targets.subjects.map(subject => subject.id)).toEqual(['blog'])
+  // The post does not limit the targets to entries that hold posts
+  expect(targetsFor(selected)).toEqual({
+    ids: ['home', 'about', 'team'],
+    rootAccepts: true
+  })
+})
+
 test('entries of unknown types can not be moved', () => {
   expect(targetsFor([subject('post', 'Unknown')])).toEqual({
     ids: [],
@@ -212,6 +231,41 @@ test('moves media files into a folder and back to the root', async () => {
     null
   )
   expect(await parentIds()).toEqual([null, null])
+})
+
+test('moves an entry together with a child also in the batch', async () => {
+  const db = new LocalDB(config)
+  await db.sync()
+  const create = (title: string, parentId?: string) =>
+    db.create({
+      type: Page,
+      workspace: 'main',
+      root: 'pages',
+      parentId,
+      set: {title, path: title}
+    })
+  const target = await create('target')
+  const parent = await create('parent')
+  const child = await create('child', parent._id)
+  const store = createDashboardStore(config, db)
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  await store.get(userPolicyReadyAtom)
+  // Eg. both found in search results, the child listed first
+  await store.set(
+    moveEntriesAtom,
+    [subject(child._id, 'Page', [parent._id]), subject(parent._id, 'Page')],
+    target._id
+  )
+  const moved = await db.find({
+    id: {in: [parent._id, child._id]},
+    select: {id: Entry.id, parentId: Entry.parentId}
+  })
+  expect(moved).toEqual(
+    expect.arrayContaining([
+      {id: parent._id, parentId: target._id},
+      {id: child._id, parentId: parent._id}
+    ])
+  )
 })
 
 /** Pages of a root with languages, one of which exists in English only */

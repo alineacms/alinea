@@ -57,16 +57,11 @@ export const createEntryAtom = atom(
         ? [request.parentId, ...(parent?.parents ?? [])]
         : []
     })
-    const initialData = Type.withInitialValue(type, {
+    const data = Type.withInitialValue(type, {
       ...Type.initialValue(type),
       ...copiedData,
       title,
       path: slugify(title)
-    })
-    const data = Type.beforeSave(type, initialData, {
-      action: 'create',
-      user,
-      now: new Date()
     })
     const created = await graph.create({
       type,
@@ -80,7 +75,8 @@ export const createEntryAtom = atom(
         parentInsertOrder && parentInsertOrder !== 'free'
           ? parentInsertOrder
           : request.insertOrder,
-      set: data
+      set: data,
+      user
     })
     set(routeAtom, {
       workspace: request.workspace,

@@ -386,19 +386,11 @@ export function createContentTools(
           )
         const converted = inputData(type, args.data)
         await checkLinks(type, converted)
-        const data = Type.beforeSave(
-          type,
-          Type.withInitialValue(type, {
-            ...Type.initialValue(type),
-            ...source?.data,
-            ...converted
-          }),
-          {
-            action: translationOf ? 'translate' : 'create',
-            user,
-            now: new Date()
-          }
-        )
+        const data = Type.withInitialValue(type, {
+          ...Type.initialValue(type),
+          ...source?.data,
+          ...converted
+        })
         if (!data.title) fail('data.title is required')
         // The transaction derives the path from the title
         if (!converted.path) delete data.path
@@ -413,6 +405,7 @@ export function createContentTools(
           status: status(args.publish),
           insertOrder: insertOrder === 'free' ? undefined : insertOrder,
           set: data,
+          user,
           select: summary
         })
         return output(created as Summary)
