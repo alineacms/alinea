@@ -17,7 +17,7 @@ import {
 import {atom, createStore} from 'jotai'
 import type {DropTarget, Key} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {config as overviewConfig} from '#test/overview.js'
+import {config as overviewConfig, Product} from '#test/overview.js'
 import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
@@ -530,6 +530,51 @@ test('entries of an ordered parent move into folders but keep their place', asyn
   expect(await parentOf(photos._id)).toEqual(before)
   await move({key: logos._id, position: 'on'})
   expect((await parentOf(photos._id)).parentId).toBe(logos._id)
+})
+
+test('entries do not move into themselves or into entries without children', async () => {
+  const db = new LocalDB(overviewConfig)
+  await db.sync()
+  const logos = await db.create({
+    type: MediaLibrary,
+    workspace: 'main',
+    root: 'media',
+    set: {title: 'Logos'}
+  })
+  const photos = await db.create({
+    type: MediaLibrary,
+    workspace: 'main',
+    root: 'media',
+    parentId: logos._id,
+    set: {title: 'Photos'}
+  })
+  const [shirt, socks] = await Promise.all(
+    ['Shirt', 'Socks'].map(title =>
+      db.create({
+        type: Product,
+        workspace: 'main',
+        root: 'products',
+        set: {title}
+      })
+    )
+  )
+  const store = createDashboardStore(overviewConfig, db)
+  await store.get(userPolicyReadyAtom)
+  const move = async (root: RootAtoms, id: string, target: DropTarget) => {
+    const tree = root.tree(null)
+    store.set(tree.expandedKeys, new Set([logos._id]))
+    await store.get(tree.ready)
+    await store.set(root.onMove, {keys: new Set([id]), target}, tree)
+  }
+  const parentId = async (id: string) =>
+    (await db.get({id, select: {parentId: Query.parentId}})).parentId
+  const media = rootAtoms('main', 'media')
+  await move(media, logos._id, {key: photos._id, position: 'on'})
+  await move(media, logos._id, {key: logos._id, position: 'on'})
+  expect(await parentId(logos._id)).toBe(null)
+  const products = rootAtoms('main', 'products')
+  await move(products, shirt._id, {key: socks._id, position: 'on'})
+  expect(await parentId(shirt._id)).toBe(null)
 })
 
 test('entry data loads by id without loading its child level', async () => {

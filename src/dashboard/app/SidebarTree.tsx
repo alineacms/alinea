@@ -11,13 +11,13 @@ import {
 } from '#/components.js'
 import {typeAtoms} from '../atoms/config.js'
 import {nav, routeAtom, type Page} from '../atoms/nav.js'
+import {configAtom} from '../atoms/core.js'
 import {
-  TreeAtoms,
   type RootAtoms,
   type RootTreeItem,
   type RootTreeNode,
+  type TreeAtoms,
   type TreeSnapshot,
-  type TreeSource,
   treeAcceptsDrop
 } from '../atoms/root.js'
 import styler from '@alinea/styler'
@@ -62,7 +62,7 @@ export interface SidebarTreeExplorerProps {
   root: RootAtoms
   rootSelected?: boolean
   selectedLocale: WritableAtom<string | null, [string], unknown>
-  tree: TreeSource
+  tree: TreeAtoms
 }
 
 interface SidebarStatusDisplay {
@@ -251,7 +251,7 @@ function useScrollSelectedIntoView(
 /** Drag entries within the tree and drop entries from elsewhere on it */
 function useRootTreeDragDrop(
   root: RootAtoms,
-  tree: TreeSource,
+  tree: TreeAtoms,
   disabled = false
 ): DragDropProps {
   const dragDisabled = useAtomValueRaw(root.dragDisabled)
@@ -259,12 +259,16 @@ function useRootTreeDragDrop(
   const drop = useSetAtom(root.onDrop)
   const move = useSetAtom(root.onMove)
   const store = useStore()
-  // Only the entries of the root itself can be dragged
-  if (disabled || dragDisabled || !(tree instanceof TreeAtoms)) return {}
+  if (disabled || dragDisabled) return {}
   const moveInTree = (event: DragMoveEvent) => move(event, tree)
   return {
     acceptedDragTypes: root.acceptedDragTypes,
-    canDrop: target => treeAcceptsDrop(store.get(tree.view).entries, target),
+    canDrop: target =>
+      treeAcceptsDrop(
+        store.get(configAtom).schema,
+        store.get(tree.view).entries,
+        target
+      ),
     getDragData: getItems,
     onDropItems: drop,
     onMove: moveInTree,
@@ -283,7 +287,7 @@ interface SidebarTreeViewProps {
   onSelectionChange: (keys: ReadonlySet<Key>) => void
   root: RootAtoms
   rootSelected: boolean
-  tree: TreeSource
+  tree: TreeAtoms
 }
 
 /** The root button and entry tree shared by the sidebar and the pickers */

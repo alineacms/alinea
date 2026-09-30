@@ -70,13 +70,6 @@ export interface TreeView {
   snapshot: TreeSnapshot
 }
 
-/** The entries a tree of the sidebar shows */
-export interface TreeSource {
-  expandedKeys: PrimitiveAtom<Set<string>>
-  view: Atom<TreeView>
-  selectedItem: Atom<RootTreeItem | undefined>
-}
-
 interface TreeCollapseState {
   selectedId: string | undefined
   keys: Set<string>
@@ -98,7 +91,7 @@ const emptyTreeView: TreeView = {
   snapshot: emptyTreeSnapshot
 }
 
-export class TreeAtoms implements TreeSource {
+export class TreeAtoms {
   expandedKeys: PrimitiveAtom<Set<string>>
   collapsedKeys: PrimitiveAtom<TreeCollapseState>
   #root: RootAtoms
@@ -492,7 +485,9 @@ export class RootAtoms {
       const policy = get(policyAtom)
       const permission =
         event.target.position === 'on' ? Permission.Move : Permission.Reorder
-      if (!treeAcceptsDrop(get(tree.view).entries, event.target)) return
+      const {schema} = get(configAtom)
+      const {entries} = get(tree.view)
+      if (!treeAcceptsDrop(schema, entries, event.target, event.keys)) return
       // Move entries in the order they are listed rather than selected
       const moving = get(tree.items).filter(item => event.keys.has(item.id))
       for (const item of moving)
@@ -525,14 +520,20 @@ export const rootAtoms = dispense(
 )
 
 /**
- * Entries can always be dropped on a parent, but only placed before or after
- * the children of a parent that does not order them
+ * Entries can be dropped on a container, but only placed before or after the
+ * children of a parent that does not order them, and never inside themselves
  */
 export function treeAcceptsDrop(
+  schema: Schema,
   entries: Map<string, RootTreeItem>,
-  target: DropTarget
+  target: DropTarget,
+  keys: ReadonlySet<Key> = new Set()
 ): boolean {
-  return target.position === 'on' || !entries.get(String(target.key))?.ordered
+  const entry = entries.get(String(target.key))
+  if (!entry || entry.parents.some(id => keys.has(id))) return false
+  if (target.position !== 'on') return !entry.ordered
+  const type = schema[entry.type]
+  return !keys.has(entry.id) && Boolean(type && Type.isContainer(type))
 }
 
 function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {
