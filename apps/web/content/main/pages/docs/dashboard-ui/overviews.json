@@ -1281,7 +1281,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Its menu sorts by title, size, dimensions and file type, and filters on files or folders and on the kind of file: images, PDF, documents, spreadsheets, presentations, archives, video and audio. Folders stay listed while a file type is picked, so editors can still open them."
+          "text": "It lists the newest files first. Its menu sorts by latest, title, size, dimensions and file type, and filters on files or folders and on the kind of file: images, PDF, documents, spreadsheets, presentations, archives, video and audio. Folders stay listed while a file type is picked, so editors can still open them."
         }
       ]
     },

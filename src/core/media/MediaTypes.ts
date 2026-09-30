@@ -95,9 +95,10 @@ function fileKindOption(
 export function mediaOverview(): OverviewOptions {
   return {
     builtins: {type: false, status: false, updated: false, author: false},
-    // Media files do not store when they were uploaded yet, so they can not
-    // be listed newest first
+    // Entry ids start with their creation time, so the newest come first
+    sort: {desc: Entry.id},
     sorts: {
+      latest: {label: 'Latest', by: Entry.id, direction: 'desc'},
       title: {label: 'Title', by: Entry.title},
       size: {label: 'Size', by: MediaFile.size, direction: 'desc'},
       dimensions: {

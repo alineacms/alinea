@@ -43,6 +43,7 @@ test('without declared sorts the title and sortable columns sort', () => {
 test('the media library declares its sorts and filters', () => {
   const media = resolveOverview(config, rootParent('media'))
   expect(media.sorts.map(sort => [sort.key, sort.label])).toEqual([
+    ['latest', 'Latest'],
     ['title', 'Title'],
     ['size', 'Size'],
     ['dimensions', 'Dimensions'],
@@ -60,10 +61,10 @@ test('the media library declares its sorts and filters', () => {
     column: 'size',
     direction: 'asc'
   })
-  // Unknown orders fall back to the default order
-  expect(overviewOrder(media, {column: 'nope', direction: 'asc'})).toBe(
-    undefined
-  )
+  // Unknown orders fall back to the default order: newest first
+  expect(overviewOrder(media, {column: 'nope', direction: 'asc'})).toEqual({
+    desc: Entry.id
+  })
 })
 
 test('options of a filter match any, filters match all', () => {
@@ -120,6 +121,36 @@ async function mediaLibrary() {
   ])
   return {db, folder}
 }
+
+test('explorers list media newest first by entry id', async () => {
+  const {db} = await mediaLibrary()
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'media'},
+    {rootData: atom(getRoot(config.workspaces.main.media))}
+  )
+  const titles = async () =>
+    (await store.get(explorer.itemsReady(null))).map(item => item.title)
+  // Ids sort by creation time, the folder's generated id sorts before these
+  expect(await titles()).toEqual([
+    'Scanned letter',
+    'Photo',
+    'Meeting notes',
+    'Annual report',
+    'Folder'
+  ])
+  expect((await store.get(explorer.pageReady)).sort.manual).toBe(false)
+  // Picking Latest again lists the oldest first
+  store.set(explorer.requestedSort, {column: 'latest', direction: 'asc'})
+  expect(await titles()).toEqual([
+    'Folder',
+    'Annual report',
+    'Meeting notes',
+    'Photo',
+    'Scanned letter'
+  ])
+})
 
 test('explorers filter media by file type, keeping folders', async () => {
   const {db} = await mediaLibrary()
