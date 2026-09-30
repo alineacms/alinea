@@ -134,7 +134,8 @@ test('moves a media directory into another in the sidebar', async ({
     title: 'Media directory'
   })
   const sidebar = app.page.getByRole('treegrid', {name: 'Content tree'})
-  // Media directories are listed newest first, they can still be moved
+  // Media directories are listed before files, newest first, they can still
+  // be moved
   await sidebar
     .getByRole('button', {name: 'Drag Empty media directory'})
     .dragTo(sidebar.getByRole('row', {name: 'Media directory', exact: true}), {

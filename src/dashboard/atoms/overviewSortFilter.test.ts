@@ -1,12 +1,14 @@
 import '#test/react.js'
 import {Entry} from '#/core/Entry.js'
+import type {Order} from '#/core/Graph.js'
+import {createId} from '#/core/Id.js'
 import {getRoot} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config} from '#/index.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
 import {Product, config} from '#test/overview.js'
-import {expect, test} from 'bun:test'
+import {expect, setSystemTime, test} from 'bun:test'
 import {atom} from 'jotai'
 import {createExplorerAtoms} from './explorer.js'
 import {
@@ -61,10 +63,13 @@ test('the media library declares its sorts and filters', () => {
     column: 'size',
     direction: 'asc'
   })
-  // Unknown orders fall back to the default order: newest first
-  expect(overviewOrder(media, {column: 'nope', direction: 'asc'})).toEqual({
-    desc: Entry.id
-  })
+  // Unknown orders fall back to the default order: folders, then the newest
+  const [folders, newest] = media.sort as Array<Order>
+  expect(overviewOrder(media, {column: 'nope', direction: 'asc'})).toEqual([
+    folders,
+    newest
+  ])
+  expect(newest).toEqual({desc: Entry.id})
 })
 
 test('options of a filter match any, filters match all', () => {
@@ -93,37 +98,53 @@ test('options of a filter match any, filters match all', () => {
 async function mediaLibrary() {
   const db = new LocalDB(config)
   await db.sync()
-  const folder = await db.create({
-    type: MediaLibrary,
-    workspace: 'main',
-    root: 'media',
-    set: {title: 'Folder'}
-  })
+  const start = Date.UTC(2026, 0, 1)
+  // Created an hour apart, their ids start with letters of either case
+  const at = (hour: number) => setSystemTime(start + hour * 3_600_000)
   const file = (
-    id: string,
+    hour: number,
     title: string,
     extension: string,
     size: number
-  ) => ({
-    op: 'create' as const,
-    id,
-    type: 'MediaFile',
-    locale: null,
-    workspace: 'main',
-    root: 'media',
-    data: {title, path: id, location: `${id}${extension}`, extension, size}
-  })
-  await db.mutate([
-    file('annual', 'Annual report', '.pdf', 300),
-    file('scan', 'Scanned letter', '.PDF', 100),
-    file('photo', 'Photo', '.jpg', 200),
-    file('notes', 'Meeting notes', '.docx', 50)
-  ])
-  return {db, folder}
+  ) => {
+    at(hour)
+    const id = createId()
+    return {
+      op: 'create' as const,
+      id,
+      type: 'MediaFile',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      data: {title, path: id, location: `${id}${extension}`, extension, size}
+    }
+  }
+  const folder = (hour: number, title: string) => {
+    at(hour)
+    return db.create({
+      type: MediaLibrary,
+      workspace: 'main',
+      root: 'media',
+      set: {title}
+    })
+  }
+  try {
+    await db.mutate([file(0, 'Annual report', '.pdf', 300)])
+    await folder(1, 'Folder')
+    await db.mutate([
+      file(2, 'Meeting notes', '.docx', 50),
+      file(3, 'Photo', '.jpg', 200)
+    ])
+    await folder(4, 'Archive')
+    await db.mutate([file(5, 'Scanned letter', '.PDF', 100)])
+  } finally {
+    setSystemTime()
+  }
+  return db
 }
 
-test('explorers list media newest first by entry id', async () => {
-  const {db} = await mediaLibrary()
+test('explorers list media folders first, then files newest first', async () => {
+  const db = await mediaLibrary()
   const store = createDashboardStore(config, db)
   await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
@@ -132,19 +153,20 @@ test('explorers list media newest first by entry id', async () => {
   )
   const titles = async () =>
     (await store.get(explorer.itemsReady(null))).map(item => item.title)
-  // Ids sort by creation time, the folder's generated id sorts before these
   expect(await titles()).toEqual([
+    'Archive',
+    'Folder',
     'Scanned letter',
     'Photo',
     'Meeting notes',
-    'Annual report',
-    'Folder'
+    'Annual report'
   ])
   expect((await store.get(explorer.pageReady)).sort.manual).toBe(false)
-  // Picking Latest again lists the oldest first
+  // Picking Latest again lists the oldest first, still below the folders
   store.set(explorer.requestedSort, {column: 'latest', direction: 'asc'})
   expect(await titles()).toEqual([
     'Folder',
+    'Archive',
     'Annual report',
     'Meeting notes',
     'Photo',
@@ -153,7 +175,7 @@ test('explorers list media newest first by entry id', async () => {
 })
 
 test('explorers filter media by file type, keeping folders', async () => {
-  const {db} = await mediaLibrary()
+  const db = await mediaLibrary()
   const store = createDashboardStore(config, db)
   await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
@@ -169,7 +191,12 @@ test('explorers filter media by file type, keeping folders', async () => {
   store.set(explorer.toggleFilter, fileType, 'pdf')
   store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
   // Extensions match in either case, folders stay to browse into
-  expect(await titles()).toEqual(['Scanned letter', 'Folder', 'Annual report'])
+  expect(await titles()).toEqual([
+    'Scanned letter',
+    'Folder',
+    'Archive',
+    'Annual report'
+  ])
   const page = await store.get(explorer.pageReady)
   expect(page.filters).toEqual({fileType: ['pdf']})
   expect(page.sort.label).toBe('Title')
@@ -182,6 +209,7 @@ test('explorers filter media by file type, keeping folders', async () => {
     'Scanned letter',
     'Meeting notes',
     'Folder',
+    'Archive',
     'Annual report'
   ])
 
@@ -210,7 +238,8 @@ test('explorers filter media by file type, keeping folders', async () => {
     'Photo',
     'Scanned letter',
     'Meeting notes',
-    'Folder'
+    'Folder',
+    'Archive'
   ])
   expect((await store.get(explorer.pageReady)).filters).toEqual({})
 })

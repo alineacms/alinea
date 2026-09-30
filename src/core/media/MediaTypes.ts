@@ -6,8 +6,10 @@ import {text} from '#/field/text/TextField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import prettyBytes from 'pretty-bytes'
 import {Entry} from '../Entry.js'
+import {Expr} from '../Expr.js'
 import {
   column,
+  Overview,
   type OverviewFilterOption,
   type OverviewOptions
 } from '../Overview.js'
@@ -88,12 +90,21 @@ function fileKindOption(
  * of each file, orders and filters on those
  */
 export function mediaOverview(): OverviewOptions {
+  // Folders order by 0 and files by null, which sorts last in either direction
+  const foldersFirst = Overview.sortExpr({
+    MediaLibrary: new Expr({type: 'value', value: 0})
+  })
   return {
     builtins: {type: false, status: false, updated: false, author: false},
-    // Entry ids start with their creation time, so the newest come first
-    sort: {desc: Entry.id},
+    // Entry ids start with their creation time, so the newest files come
+    // first, below the folders
+    sort: [{asc: foldersFirst}, {desc: Entry.id}],
     sorts: {
-      latest: {label: 'Latest', by: Entry.id, direction: 'desc'},
+      latest: {
+        label: 'Latest',
+        by: [foldersFirst, Entry.id],
+        direction: 'desc'
+      },
       title: {label: 'Title', by: Entry.title},
       size: {label: 'Size', by: MediaFile.size, direction: 'desc'},
       dimensions: {

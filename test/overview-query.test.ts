@@ -1,9 +1,14 @@
 import {Entry} from '#/core/Entry.js'
-import type {GraphQuery} from '#/core/Graph.js'
-import {Overview} from '#/core/Overview.js'
+import type {GraphQuery, Order} from '#/core/Graph.js'
+import {
+  MediaFile,
+  MediaLibrary,
+  mediaOverview
+} from '#/core/media/MediaTypes.js'
+import {Overview, type OverviewSortBy} from '#/core/Overview.js'
 import {getScope} from '#/core/Scope.js'
 import {LocalDB} from '#/database/LocalDB.js'
-import {expect, test} from 'bun:test'
+import {expect, setSystemTime, test} from 'bun:test'
 import {BlogPost, Brand, Event, Person, Product, config} from './overview.js'
 
 async function catalogue() {
@@ -180,4 +185,63 @@ test('orders by a number of a linked entry, entries without a number last', asyn
     select: Entry.title
   })
   expect(desc).toEqual(['To ten', 'To nine', 'To none'])
+})
+
+test('media lists folders first, then files newest first', async () => {
+  const db = new LocalDB(config)
+  await db.sync()
+  const start = Date.UTC(2026, 0, 1)
+  const ids: Array<string> = []
+  // Created an hour apart, their ids start with letters of either case
+  const create = async (
+    hour: number,
+    type: typeof MediaFile | typeof MediaLibrary,
+    title: string
+  ) => {
+    setSystemTime(start + hour * 3_600_000)
+    const entry = await db.create({
+      type,
+      workspace: 'main',
+      root: 'media',
+      set: {title}
+    })
+    ids.push(entry._id)
+  }
+  try {
+    await create(0, MediaFile, 'Oldest file')
+    await create(1, MediaLibrary, 'Older folder')
+    await create(2, MediaFile, 'Older file')
+    await create(3, MediaLibrary, 'Newer folder')
+    await create(4, MediaFile, 'Newer file')
+  } finally {
+    setSystemTime()
+  }
+  const lowerCase = ids.map(id => id.toLowerCase())
+  expect(lowerCase.toSorted()).not.toEqual(lowerCase)
+  const {sort, sorts} = mediaOverview()
+  const scope = getScope(config)
+  const titles = (orderBy: Order | Array<Order>) =>
+    db.resolve(
+      scope.parse<GraphQuery>(
+        scope.stringify({root: 'media', orderBy, select: Entry.title})
+      )
+    )
+  expect(await titles(sort!)).toEqual([
+    'Newer folder',
+    'Older folder',
+    'Newer file',
+    'Older file',
+    'Oldest file'
+  ])
+  // Oldest first keeps the folders first too
+  const latest = sorts!.latest.by as Array<OverviewSortBy>
+  expect(
+    await titles(latest.map(by => ({asc: Overview.sortExpr(by)})))
+  ).toEqual([
+    'Older folder',
+    'Newer folder',
+    'Oldest file',
+    'Older file',
+    'Newer file'
+  ])
 })
