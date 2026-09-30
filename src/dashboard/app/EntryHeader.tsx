@@ -30,7 +30,7 @@ import {
   type DeletePlan
 } from '../atoms/delete.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
-import type {MoveSubject} from '../atoms/move.js'
+import {loadMoveTargetsAtom, type MoveTargets} from '../atoms/move.js'
 import {routeAtom} from '../atoms/nav.js'
 import type {ReactiveNode} from '../atoms/ReactiveNode.js'
 import {policyAtom} from '../atoms/user.js'
@@ -233,6 +233,7 @@ export function EntryHeader({
   const archive = useSetAtom(localeData.archive)
   const publishArchived = useSetAtom(localeData.publishArchived)
   const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
+  const loadMoveTargets = useSetAtom(loadMoveTargetsAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
   const replaceFile = useSetAtom(localeData.replaceFile)
   const reset = useSetAtom(node.reset)
@@ -262,7 +263,7 @@ export function EntryHeader({
   const isActionDisabled = isPending || activity.isMutating
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const [invalid, setInvalid] = useState<EntryValidationFailure>()
-  const [moving, setMoving] = useState<Array<MoveSubject>>()
+  const [moving, setMoving] = useState<MoveTargets>()
   const [deletePlan, setDeletePlan] = useState<DeletePlan>()
 
   function runAction(action: () => void | Promise<void>) {
@@ -469,7 +470,7 @@ export function EntryHeader({
     menuItems.push({
       id: 'move',
       label: 'Move to…',
-      action: () => setMoving([activeVersion]),
+      action: async () => setMoving(await loadMoveTargets([activeVersion])),
       icon: IcRoundDriveFileMove
     })
   if (actions.unpublish)
@@ -576,7 +577,7 @@ export function EntryHeader({
         failure={invalid}
         onClose={() => setInvalid(undefined)}
       />
-      <MoveDialog subjects={moving} onClose={() => setMoving(undefined)} />
+      <MoveDialog targets={moving} onClose={() => setMoving(undefined)} />
       <DeleteDialog
         plan={deletePlan}
         onClose={() => setDeletePlan(undefined)}

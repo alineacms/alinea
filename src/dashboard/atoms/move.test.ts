@@ -13,6 +13,7 @@ import type {ExplorerItemData} from './explorer.js'
 import {
   moveEntriesAtom,
   moveTargets,
+  loadMoveTargetsAtom,
   rootAcceptsType,
   type MoveSubject
 } from './move.js'
@@ -41,6 +42,10 @@ const config = Config.create({
       roots: {
         pages: Config.root('Pages', {contains: ['Page', 'Blog']}),
         open: Config.root('Open'),
+        intl: Config.root('Intl', {
+          contains: ['Page', 'Blog'],
+          i18n: {locales: ['en', 'fr']}
+        }),
         media: Config.media()
       }
     })
@@ -207,4 +212,67 @@ test('moves media files into a folder and back to the root', async () => {
     null
   )
   expect(await parentIds()).toEqual([null, null])
+})
+
+/** Pages of a root with languages, one of which exists in English only */
+async function intlFixture() {
+  const db = new LocalDB(config)
+  await db.sync()
+  const page = async (title: string, locales: Array<string>) => {
+    const [first, ...others] = locales
+    const created = await db.create({
+      type: Page,
+      workspace: 'main',
+      root: 'intl',
+      locale: first,
+      set: {title, path: title}
+    })
+    for (const locale of others)
+      await db.create({
+        type: Page,
+        id: created._id,
+        locale,
+        set: {title, path: title}
+      })
+    return created
+  }
+  const store = createDashboardStore(config, db)
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  await store.get(userPolicyReadyAtom)
+  const intl = (id: string, locale: string | null = 'en') => ({
+    ...subject(id, 'Page', [], 'intl'),
+    locale
+  })
+  return {db, store, page, intl}
+}
+
+test('only picks targets that exist in every language of the moved entries', async () => {
+  const {store, page, intl} = await intlFixture()
+  const both = await page('both', ['en', 'fr'])
+  const english = await page('english', ['en'])
+  const moved = await page('moved', ['en', 'fr'])
+  const targets = await store.set(loadMoveTargetsAtom, [intl(moved._id)])
+  expect(
+    targets.canSelect({...candidate(both._id, 'Page'), locale: 'en'})
+  ).toBe(true)
+  expect(
+    targets.canSelect({...candidate(english._id, 'Page'), locale: 'en'})
+  ).toBe(false)
+})
+
+test('moves every entry or none', async () => {
+  const {db, store, page, intl} = await intlFixture()
+  const english = await page('english', ['en'])
+  const single = await page('single', ['en'])
+  const moved = await page('moved', ['en', 'fr'])
+  // The French version of the second entry has no parent to move into
+  await expect(
+    store.set(moveEntriesAtom, [intl(single._id), intl(moved._id)], english._id)
+  ).rejects.toThrow()
+  const parents = await db.find({
+    id: {in: [single._id, moved._id]},
+    status: 'all',
+    select: Entry.parentId
+  })
+  expect(parents.every(parentId => parentId === null)).toBe(true)
 })

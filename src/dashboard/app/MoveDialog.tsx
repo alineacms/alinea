@@ -1,14 +1,11 @@
 import {Button, Text} from '#/components.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
 import {
   moveEntriesAtom,
-  moveTargets,
-  type MoveSubject
+  type MoveSubject,
+  type MoveTargets
 } from '#/dashboard/atoms/move.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
-import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
-import {Suspense, useTransition} from 'react'
+import {useAtomValueRawSync, useSetAtom} from 'jotai'
+import {Suspense, useState, useTransition} from 'react'
 import {IcRoundDriveFileMove} from '../icons.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
@@ -28,8 +25,8 @@ import {
 } from './ui/DashboardModal.js'
 
 export interface MoveDialogProps {
-  /** The entries to move, all of one root, closed when undefined */
-  subjects: Array<MoveSubject> | undefined
+  /** Where the entries of one root can move to, closed when undefined */
+  targets: MoveTargets | undefined
   onClose(): void
   /** Called once the entries were moved */
   onMoved?(): void
@@ -42,22 +39,22 @@ function moveDialogTitle(subjects: Array<MoveSubject>) {
 }
 
 /** Picks an entry of the root, or its top level, to move entries to */
-export function MoveDialog({subjects, onClose, onMoved}: MoveDialogProps) {
+export function MoveDialog({targets, onClose, onMoved}: MoveDialogProps) {
   return (
     <DashboardModal
-      open={Boolean(subjects)}
+      open={Boolean(targets)}
       size="explorer"
-      aria-label={subjects && moveDialogTitle(subjects)}
+      aria-label={targets && moveDialogTitle(targets.subjects)}
       onOpenChange={isOpen => {
         if (!isOpen) onClose()
       }}
     >
-      {subjects && (
+      {targets && (
         <Suspense
           fallback={<DashboardModalDialog variant="explorer" isLoading />}
         >
           <MoveDialogContent
-            subjects={subjects}
+            targets={targets}
             onClose={onClose}
             onMoved={onMoved}
           />
@@ -68,29 +65,28 @@ export function MoveDialog({subjects, onClose, onMoved}: MoveDialogProps) {
 }
 
 interface MoveDialogContentProps {
-  subjects: Array<MoveSubject>
+  targets: MoveTargets
   onClose(): void
   onMoved?(): void
 }
 
 function MoveDialogContent({
-  subjects,
+  targets,
   onClose,
   onMoved
 }: MoveDialogContentProps) {
+  const {subjects} = targets
   const [{workspace, root, locale, parentId}] = subjects as [MoveSubject]
-  const config = useAtomValueRaw(configAtom)
-  const policy = useAtomValueRaw(policyAtom)
-  const rootData = useAtomValueRaw(rootAtoms(workspace, root).data)
-  const targets = moveTargets(config, policy, rootData, subjects)
-  // Opens at the current location, other roots are not a target
+  // Opens at the current location, other roots are not a target and search
+  // covers the whole root
   const {explorer, tree} = usePickerExplorer(
     {
       canSelect: targets.canSelect,
       condition: targets.condition,
       initialResultMode: 'browse',
       limitLocations: [{workspace, root}],
-      nestedNavigation: true
+      nestedNavigation: true,
+      searchDepth: 'all'
     },
     {
       workspace,
@@ -101,15 +97,26 @@ function MoveDialogContent({
     'row'
   )
   const page = useAtomValueRawSync(explorer.page)
-  const selection = useAtomValueRaw(explorer.selection)
+  // The picked target while it is listed
+  const {
+    items: [target]
+  } = useAtomValueRawSync(explorer.selectionActions)
   const moveEntries = useSetAtom(moveEntriesAtom)
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string>()
   if (!page) return <DashboardModalDialog variant="explorer" isLoading />
-  const [target] = selection === 'all' ? [] : selection
+  const isCurrent = (target: string | null) =>
+    subjects.every(subject => subject.parentId === target)
 
   function moveTo(target: string | null) {
+    setError(undefined)
     startTransition(async () => {
-      await moveEntries(subjects, target)
+      try {
+        await moveEntries(subjects, target)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : String(error))
+        return
+      }
       onMoved?.()
       onClose()
     })
@@ -134,15 +141,24 @@ function MoveDialogContent({
             tree={tree}
           />
           <ExplorerModalFooter>
-            <Text color="muted">{moveDialogTitle(subjects)}</Text>
+            {error ? (
+              <Text color="destructive" asChild>
+                <span role="alert">{error}</span>
+              </Text>
+            ) : (
+              <Text color="muted">
+                {!target
+                  ? moveDialogTitle(subjects)
+                  : isCurrent(target.id)
+                    ? `Already in "${target.title}"`
+                    : `Move to "${target.title}"`}
+              </Text>
+            )}
             <ExplorerModalActions>
               {targets.rootAccepts && (
                 <Button
                   variant="ghost"
-                  disabled={
-                    isPending ||
-                    subjects.every(subject => subject.parentId === null)
-                  }
+                  disabled={isPending || isCurrent(null)}
                   onClick={() => moveTo(null)}
                 >
                   Move to root
@@ -152,9 +168,9 @@ function MoveDialogContent({
               <Button
                 color="primary"
                 icon={IcRoundDriveFileMove}
-                disabled={target === undefined || isPending}
+                disabled={!target || isCurrent(target.id) || isPending}
                 loading={isPending}
-                onClick={() => moveTo(String(target))}
+                onClick={() => target && moveTo(target.id)}
               >
                 Move
               </Button>

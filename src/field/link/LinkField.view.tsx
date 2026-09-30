@@ -86,7 +86,7 @@ import type {
   ReactNode,
   RefObject
 } from 'react'
-import {useMemo, useRef, useState} from 'react'
+import {useId, useMemo, useRef, useState} from 'react'
 import css from './LinkField.module.css'
 
 const styles = styler(css)
@@ -1353,6 +1353,111 @@ function EntryLinkRowActions({
   )
 }
 
+/**
+ * The settings of a link row open below the row when it is clicked, and below
+ * the settings button when that is clicked
+ */
+function useLinkRowSettings() {
+  const rowRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+  const [anchoredToRow, setAnchoredToRow] = useState(false)
+  return {
+    rowRef,
+    open,
+    anchoredToRow,
+    openFromRow() {
+      setAnchoredToRow(true)
+      setOpen(true)
+    },
+    onOpenChange(open: boolean) {
+      if (open) setAnchoredToRow(false)
+      setOpen(open)
+    },
+    close() {
+      setOpen(false)
+    }
+  }
+}
+
+interface LinkRowSettingsState extends ReturnType<typeof useLinkRowSettings> {}
+
+interface LinkRowButtonProps {
+  children: ReactNode
+  settings: LinkRowSettingsState
+}
+
+/** The content of a link row, which names it, opens the settings */
+function LinkRowButton({children, settings}: LinkRowButtonProps) {
+  const descriptionId = useId()
+  return (
+    <Button
+      ref={settings.rowRef}
+      aria-describedby={descriptionId}
+      variant="ghost"
+      className={styles.LinkFieldView.rowAction()}
+      onClick={settings.openFromRow}
+    >
+      {children}
+      <span id={descriptionId} hidden>
+        Edit link
+      </span>
+    </Button>
+  )
+}
+
+interface LinkRowSettingsProps {
+  node: ReactiveNode<LinkFieldRow>
+  onEdit: () => void
+  picker?: Picker<LinkFieldRow>
+  readOnly?: boolean
+  settings: LinkRowSettingsState
+  type: PickerType
+  value: LinkFieldRow
+}
+
+function LinkRowSettings({
+  node,
+  onEdit,
+  picker,
+  readOnly,
+  settings,
+  type,
+  value
+}: LinkRowSettingsProps) {
+  return (
+    <Popover open={settings.open} onOpenChange={settings.onOpenChange}>
+      <LinkSettingsButton />
+      {settings.anchoredToRow && <PopoverAnchor virtualRef={settings.rowRef} />}
+      <PopoverContent
+        aria-label="Link settings"
+        side="bottom"
+        align={settings.anchoredToRow ? 'start' : 'end'}
+      >
+        <SortableListItemSettings variant="actions">
+          <LinkRowActions
+            closeActions={settings.close}
+            isDisabled={readOnly}
+            onEdit={onEdit}
+            picker={picker}
+            type={type}
+            value={value}
+          />
+        </SortableListItemSettings>
+        <hr className={styles.LinkFieldView.settingsSeparator()} />
+        <SortableListItemSettings>
+          <LinkLabelField isDisabled={readOnly} node={node} value={value} />
+          <EntryAnchorField isDisabled={readOnly} node={node} value={value} />
+          <EntryLinkSuffixField
+            isDisabled={readOnly}
+            node={node}
+            value={value}
+          />
+        </SortableListItemSettings>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const [, setValue] = useField(field)
   const options = useFieldOptions(field)
@@ -1361,24 +1466,8 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const hasFields = Boolean(picker?.fields)
   const imagePreviewEntryId =
     type === 'image' && '_entry' in value ? value._entry : undefined
-  const [actionsOpen, setActionsOpen] = useState(false)
-  // Clicking the row opens the settings below it, the settings button below
-  // itself
-  const rowRef = useRef<HTMLButtonElement>(null)
-  const [anchoredToRow, setAnchoredToRow] = useState(false)
-  function openFromRow() {
-    setAnchoredToRow(true)
-    setActionsOpen(true)
-  }
-  function toggleActions(open: boolean) {
-    if (open) setAnchoredToRow(false)
-    setActionsOpen(open)
-  }
+  const settings = useLinkRowSettings()
   const [editOpen, setEditOpen] = useState(false)
-
-  function closeActions() {
-    setActionsOpen(false)
-  }
 
   function removeLink() {
     setValue(undefined!)
@@ -1389,20 +1478,18 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
       {imagePreviewEntryId && (
         <EntryLinkImagePreview entryId={imagePreviewEntryId} />
       )}
-      <SortableListItemTitle>
-        <LinkTypeBadge
-          className={styles.LinkFieldView.type()}
-          picker={picker}
-          type={type}
-          value={value}
-        />
-        <LinkMetaLabel
-          className={styles.LinkFieldView.metaLabel()}
-          node={node}
-          value={value}
-        />
-        <EntryAnchorBadge node={node} value={value} />
-      </SortableListItemTitle>
+      <LinkTypeBadge
+        className={styles.LinkFieldView.type()}
+        picker={picker}
+        type={type}
+        value={value}
+      />
+      <LinkMetaLabel
+        className={styles.LinkFieldView.metaLabel()}
+        node={node}
+        value={value}
+      />
+      <EntryAnchorBadge node={node} value={value} />
     </>
   )
 
@@ -1410,46 +1497,23 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
     <>
       <SortableListItem aria-label="Link item 1">
         <SortableListItemHeader className={styles.LinkFieldView.inputHeader()}>
-          {options.readOnly ? (
-            rowContent
-          ) : (
-            <Button
-              ref={rowRef}
-              aria-label="Edit link"
-              variant="ghost"
-              className={styles.LinkFieldView.rowAction()}
-              onClick={openFromRow}
-            >
-              {rowContent}
-            </Button>
-          )}
+          <SortableListItemTitle>
+            {options.readOnly ? (
+              rowContent
+            ) : (
+              <LinkRowButton settings={settings}>{rowContent}</LinkRowButton>
+            )}
+          </SortableListItemTitle>
           {!options.readOnly && (
             <SortableListItemActions>
-              <Popover open={actionsOpen} onOpenChange={toggleActions}>
-                <LinkSettingsButton />
-                {anchoredToRow && <PopoverAnchor virtualRef={rowRef} />}
-                <PopoverContent
-                  aria-label="Link settings"
-                  side="bottom"
-                  align={anchoredToRow ? 'start' : 'end'}
-                >
-                  <SortableListItemSettings variant="actions">
-                    <LinkRowActions
-                      closeActions={closeActions}
-                      onEdit={() => setEditOpen(true)}
-                      picker={picker}
-                      type={type}
-                      value={value}
-                    />
-                  </SortableListItemSettings>
-                  <hr className={styles.LinkFieldView.settingsSeparator()} />
-                  <SortableListItemSettings>
-                    <LinkLabelField node={node} value={value} />
-                    <EntryAnchorField node={node} value={value} />
-                    <EntryLinkSuffixField node={node} value={value} />
-                  </SortableListItemSettings>
-                </PopoverContent>
-              </Popover>
+              <LinkRowSettings
+                node={node}
+                onEdit={() => setEditOpen(true)}
+                picker={picker}
+                settings={settings}
+                type={type}
+                value={value}
+              />
               <Button
                 variant="ghost"
                 aria-label="Remove link"
@@ -1506,27 +1570,27 @@ function MultipleLinkRow({
     type === 'image' && '_entry' in value ? value._entry : undefined
   const itemId = value[Reference.id]
   const readOnly = Boolean(options.readOnly)
-  const [actionsOpen, setActionsOpen] = useState(false)
-  // Clicking the row opens the settings below it, the settings button below
-  // itself
-  const rowRef = useRef<HTMLButtonElement>(null)
-  const [anchoredToRow, setAnchoredToRow] = useState(false)
-  function openFromRow() {
-    setAnchoredToRow(true)
-    setActionsOpen(true)
-  }
-  function toggleActions(open: boolean) {
-    if (open) setAnchoredToRow(false)
-    setActionsOpen(open)
-  }
+  const settings = useLinkRowSettings()
   const [editOpen, setEditOpen] = useState(false)
-  function closeActions() {
-    setActionsOpen(false)
-  }
 
   function removeLink() {
     setValue(links => links.filter((_, currentIndex) => currentIndex !== index))
   }
+
+  const rowContent = (
+    <>
+      {imagePreviewEntryId && (
+        <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+      )}
+      <LinkTypeBadge picker={picker} type={type} value={value} />
+      <LinkMetaLabel
+        className={styles.LinkFieldView.metaLabel()}
+        node={node}
+        value={value}
+      />
+      <EntryAnchorBadge node={node} value={value} />
+    </>
+  )
 
   return (
     <>
@@ -1552,64 +1616,22 @@ function MultipleLinkRow({
                 onClick={() => onToggleRow(itemId)}
               />
             )}
-            <Button
-              ref={rowRef}
-              aria-label="Edit link"
-              variant="ghost"
-              className={styles.LinkFieldView.rowAction({multiple: true})}
-              onClick={openFromRow}
-            >
-              {imagePreviewEntryId && (
-                <EntryLinkImagePreview entryId={imagePreviewEntryId} />
-              )}
-              <LinkTypeBadge picker={picker} type={type} value={value} />
-              <LinkMetaLabel
-                className={styles.LinkFieldView.metaLabel()}
-                node={node}
-                value={value}
-              />
-              <EntryAnchorBadge node={node} value={value} />
-            </Button>
+            {readOnly ? (
+              rowContent
+            ) : (
+              <LinkRowButton settings={settings}>{rowContent}</LinkRowButton>
+            )}
           </SortableListItemTitle>
           <SortableListItemActions>
-            <Popover open={actionsOpen} onOpenChange={toggleActions}>
-              <LinkSettingsButton />
-              {anchoredToRow && <PopoverAnchor virtualRef={rowRef} />}
-              <PopoverContent
-                aria-label="Link settings"
-                side="bottom"
-                align={anchoredToRow ? 'start' : 'end'}
-              >
-                <SortableListItemSettings variant="actions">
-                  <LinkRowActions
-                    closeActions={closeActions}
-                    isDisabled={readOnly}
-                    onEdit={() => setEditOpen(true)}
-                    picker={picker}
-                    type={type}
-                    value={value}
-                  />
-                </SortableListItemSettings>
-                <hr className={styles.LinkFieldView.settingsSeparator()} />
-                <SortableListItemSettings>
-                  <LinkLabelField
-                    isDisabled={readOnly}
-                    node={node}
-                    value={value}
-                  />
-                  <EntryAnchorField
-                    isDisabled={readOnly}
-                    node={node}
-                    value={value}
-                  />
-                  <EntryLinkSuffixField
-                    isDisabled={readOnly}
-                    node={node}
-                    value={value}
-                  />
-                </SortableListItemSettings>
-              </PopoverContent>
-            </Popover>
+            <LinkRowSettings
+              node={node}
+              onEdit={() => setEditOpen(true)}
+              picker={picker}
+              readOnly={readOnly}
+              settings={settings}
+              type={type}
+              value={value}
+            />
             <Button
               variant="ghost"
               aria-label="Remove link"

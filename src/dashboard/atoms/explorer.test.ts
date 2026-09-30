@@ -421,6 +421,25 @@ test('filtered card queries stay scoped to the selected location', async () => {
   expect(items.map(item => item.id)).toEqual([child._id])
 })
 
+test('matches cover the whole root when searching all depths', async () => {
+  const {store, child, parent} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages', parentId: child._id},
+    {
+      condition: {_type: 'Page'},
+      initialResultMode: 'matches',
+      searchDepth: 'all'
+    }
+  )
+
+  const items = await store.get(explorer.itemsReady(null))
+
+  expect(items.map(item => item.id).sort()).toEqual(
+    [parent._id, child._id].sort()
+  )
+})
+
 test('picker can mark initial links without preselecting them', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},
@@ -716,6 +735,24 @@ test('selection actions follow the selected listed entries', async () => {
 
   store.set(explorer.clearSelection)
   expect(store.get(explorer.selectionActions).items).toEqual([])
+})
+
+test('selection actions include selected children listed inline', async () => {
+  const {child, parent, store} = await createDashboardAtomFixture()
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {nestedNavigation: true}
+  )
+  store.set(explorer.expandedKeys, new Set([parent._id]))
+  await store.get(explorer.pageReady)
+  store.sub(explorer.page, () => {})
+  await store.get(explorer.pageReady)
+
+  store.set(explorer.selection, new Set([child._id]))
+  const actions = store.get(explorer.selectionActions)
+  expect(actions.items.map(item => item.id)).toEqual([child._id])
 })
 
 test('entries that are not seeded can be deleted and moved', () => {
