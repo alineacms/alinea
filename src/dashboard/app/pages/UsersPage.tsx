@@ -69,27 +69,47 @@ type UsersAction =
   | {type: 'update'; user: UserInput}
   | {type: 'remove'; email: string}
 
-const loadedUsersAtom = atom(get => get(clientAtom).listUsers())
-const editedUsersAtom = atom<Array<User> | undefined>(undefined)
+/** The users, loaded again by every navigation that opens the page */
+const loadedUsersAtom = atom(get => {
+  get(routeAtom)
+  return get(clientAtom).listUsers()
+})
+
+interface EditedUsers {
+  loaded: Promise<Array<User>>
+  users: Array<User>
+}
+
+/** The edits made on the page, which apply to the users they were made on */
+const editedUsersAtom = atom<EditedUsers | undefined>(undefined)
 
 /** The listed users, loaded by the page and updated by the edits made on it */
 const usersAtom = atom(
-  async get => get(editedUsersAtom) ?? get(loadedUsersAtom),
+  async get => {
+    const loaded = get(loadedUsersAtom)
+    const edited = get(editedUsersAtom)
+    return edited?.loaded === loaded ? edited.users : loaded
+  },
   async (get, set, action: UsersAction): Promise<void> => {
     const client = get(clientAtom)
+    const loaded = get(loadedUsersAtom)
     const users = await get(usersAtom)
+    function edit(update: (users: Array<User>) => Array<User>) {
+      set(editedUsersAtom, current => ({
+        loaded,
+        users: update(current?.loaded === loaded ? current.users : users)
+      }))
+    }
     if (action.type === 'remove') {
       await client.removeUser(action.email)
-      set(editedUsersAtom, current =>
-        removeUser(current ?? users, action.email)
-      )
+      edit(current => removeUser(current, action.email))
       return
     }
     const saved =
       action.type === 'create'
         ? await client.createUser(action.user)
         : await client.updateUser(action.user)
-    set(editedUsersAtom, current => upsertUser(current ?? users, saved))
+    edit(current => upsertUser(current, saved))
   }
 )
 
