@@ -138,6 +138,13 @@ export const test = base.extend<{visual: VisualFixture} & VisualOptions>({
           settle,
           async shot(name, target, shotOptions = {}) {
             await settle()
+            // The activity indicator spins while the dashboard syncs, shoot
+            // it once it settled on its status icon
+            await expect(
+              page.locator(
+                '[data-slot="activity-status"] [data-slot="spinner"]'
+              )
+            ).toHaveCount(0)
             const mask = shotOptions.mask ?? []
             if (target)
               await expect

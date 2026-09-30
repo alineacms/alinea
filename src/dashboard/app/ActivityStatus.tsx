@@ -136,6 +136,7 @@ export function ActivityStatus({
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <Button
+              data-slot="activity-status"
               size={children ? undefined : 'icon'}
               variant={children ? 'outline' : 'ghost'}
               className={styles.ActivityStatus({
