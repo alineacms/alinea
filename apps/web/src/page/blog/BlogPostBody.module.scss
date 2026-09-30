@@ -141,19 +141,18 @@
 
   &-table {
     width: 100%;
-    min-width: max-content;
     border-collapse: collapse;
     font-size: 15px;
     line-height: 1.5;
     font-variant-numeric: tabular-nums;
 
-    tr + tr > * {
-      border-top: 1px solid var(--web-outline);
-    }
-
     @include sm {
       font-size: 14px;
     }
+  }
+
+  &-tableRow + &-tableRow {
+    border-top: 1px solid var(--web-outline);
   }
 
   &-tableHeader {
