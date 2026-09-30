@@ -54,6 +54,29 @@ test('creates without a user record an unknown creator', async () => {
   test.equal(entry.metadata.updatedBy, nobody)
 })
 
+test('creates without a user keep the audit details the caller provides', async () => {
+  const db = await createDB()
+  const imported = await db.create({
+    type: Page,
+    set: {
+      title: 'Imported',
+      metadata: {
+        createdAt: 100,
+        createdBy: {name: 'Ann', email: 'ann@example.com'},
+        updatedAt: 200,
+        updatedBy: {name: 'Bob', email: ''}
+      }
+    }
+  })
+  test.is(imported.metadata.createdAt, 100)
+  test.equal(imported.metadata.createdBy, {
+    name: 'Ann',
+    email: 'ann@example.com'
+  })
+  test.is(imported.metadata.updatedAt, 200)
+  test.equal(imported.metadata.updatedBy, {name: 'Bob', email: ''})
+})
+
 test('updates record who last updated the entry and keep its creation', async () => {
   const db = await createDB()
   const created = await db.create({

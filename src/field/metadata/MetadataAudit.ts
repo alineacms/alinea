@@ -107,16 +107,20 @@ export function beforeSaveWithAudit(
   const source: Record<string, unknown> = isRecord(value) ? value : {}
   const timestamp = Math.floor(now.getTime() / 1000)
   const actor = {name: user?.name ?? '', email: user?.email ?? ''}
+  const isCreate = action === 'create' || action === 'translate'
   let next = source
 
   function set(key: string, nextValue: unknown) {
+    // An entry created without a known user (eg. imported through the API)
+    // keeps the details the caller provided, only missing ones are filled in
+    if (!user && isCreate && hasValue(source[key])) return
     if (next[key] === nextValue) return
     if (next === source) next = {...source}
     next[key] = nextValue
   }
 
   // Only a create records who created the entry, others leave it unknown
-  if (action === 'create' || action === 'translate') {
+  if (isCreate) {
     set('createdAt', timestamp)
     set('createdBy', actor)
   } else {
@@ -127,6 +131,11 @@ export function beforeSaveWithAudit(
   set('updatedBy', actor)
 
   return Type.beforeSave(fields, next, {action, now, user})
+}
+
+function hasValue(value: unknown): boolean {
+  if (isRecord(value)) return Boolean(value.name || value.email)
+  return value !== undefined && value !== null
 }
 
 function timestamp(label: string): MetadataTimestampField {
