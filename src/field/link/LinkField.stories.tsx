@@ -91,6 +91,19 @@ const pageType = type('Page', {
   }
 })
 
+const readOnlyType = type('Read-only links', {
+  fields: {
+    relatedLink: link('Read-only link', {
+      readOnly: true,
+      initialValue: entryLink
+    }),
+    resources: link.multiple('Read-only links', {
+      readOnly: true,
+      initialValue: [entryLink, externalLink]
+    })
+  }
+})
+
 const filteredEntryType = type('Filtered entry', {
   fields: {
     relatedEntry: entry('Filtered entry', {
@@ -146,6 +159,31 @@ export function Example() {
           />
           <MultipleLinksFieldView field={resources} />
           <MultipleLinksFieldView field={relatedEntries} />
+        </div>
+      </EditorScope>
+    </StoryProvider>
+  )
+}
+
+export function ReadOnly() {
+  const editor = useMemo(() => {
+    const node = new ReactiveNode(Type.initialValue(readOnlyType) as object)
+    return new EntryEditor(readOnlyType, node)
+  }, [])
+  return (
+    <StoryProvider
+      client={db}
+      config={cms.config}
+      events={db.events}
+      graph={db}
+      views={views}
+    >
+      <EditorScope editor={editor}>
+        <div style={storyStyle}>
+          <SingleLinkFieldView
+            field={readOnlyType.relatedLink as LinkField<LinkRow, unknown>}
+          />
+          <MultipleLinksFieldView field={readOnlyType.resources} />
         </div>
       </EditorScope>
     </StoryProvider>

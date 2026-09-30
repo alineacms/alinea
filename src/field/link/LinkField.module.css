@@ -171,12 +171,9 @@
 .LinkFieldView-rowAction {
   align-self: stretch;
   flex: 1;
+  gap: 8px;
   min-width: 0;
   padding: 0;
-}
-
-.LinkFieldView-rowAction.is-multiple {
-  gap: 8px;
 }
 
 /* The whole row opens the link settings, only its action buttons highlight */

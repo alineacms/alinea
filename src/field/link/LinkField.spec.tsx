@@ -4,7 +4,8 @@ import {
   EntryPickerSingle,
   Example,
   FilteredEntryFieldWithoutEntryScope,
-  ImagePickerSingle
+  ImagePickerSingle,
+  ReadOnly
 } from './LinkField.stories.js'
 
 test('opens the standalone image picker story', async ({mount, page}) => {
@@ -71,7 +72,12 @@ test('opens single-link settings from the linked row', async ({
   await mount(<Example />)
 
   const relatedLink = page.getByRole('list', {name: 'Related link'})
-  await relatedLink.getByRole('button', {name: 'Edit link'}).click()
+  // The link names the row, which describes what it does
+  const row = relatedLink.getByRole('button', {name: 'Page Home'})
+  await expect(row).toHaveAccessibleDescription('Edit link')
+  // Buttons only hold phrasing content
+  await expect(row.locator('div')).toHaveCount(0)
+  await row.click()
 
   const settings = page.getByRole('dialog', {name: 'Link settings'})
   await expect(settings).toBeVisible()
@@ -87,17 +93,15 @@ test('opens multiple-link settings from the linked row', async ({
   const resources = page.getByRole('list', {name: 'Resources'})
   const settings = page.getByRole('dialog', {name: 'Link settings'})
   const firstRow = resources.getByRole('listitem').first()
+  const firstLink = firstRow.getByRole('button', {name: 'Page Home'})
+  await expect(firstLink).toHaveAccessibleDescription('Edit link')
   // Click beside the drag handle, which is centered over the top of the row
-  await firstRow
-    .getByRole('button', {name: 'Edit link'})
-    .click({position: {x: 16, y: 16}})
+  await firstLink.click({position: {x: 16, y: 16}})
   await expect(settings).toBeVisible()
   await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
   // Opened from the row, the settings show below the row's start rather than
   // below the settings button at its end
-  const row = await firstRow
-    .getByRole('button', {name: 'Edit link'})
-    .boundingBox()
+  const row = await firstLink.boundingBox()
   const popover = await settings.boundingBox()
   expect(Math.abs(popover!.x - row!.x)).toBeLessThan(24)
   expect(popover!.y).toBeGreaterThanOrEqual(row!.y + row!.height - 1)
@@ -105,7 +109,9 @@ test('opens multiple-link settings from the linked row', async ({
   await expect(settings).toBeHidden()
 
   const secondRow = resources.getByRole('listitem').nth(1)
-  await secondRow.getByRole('button', {name: 'Edit link'}).focus()
+  await secondRow
+    .getByRole('button', {name: 'External link Alinea documentation'})
+    .focus()
   await page.keyboard.press('Enter')
   await expect(settings).toBeVisible()
   await expect(settings.getByRole('textbox', {name: 'Label'})).toBeFocused()
@@ -124,9 +130,24 @@ test('opens multiple-link settings from the linked row', async ({
 
   const relatedEntries = page.getByRole('list', {name: 'Related entries'})
   await relatedEntries
-    .getByRole('button', {name: 'Edit link'})
+    .getByRole('button', {name: 'Page Home'})
     .click({position: {x: 16, y: 16}})
   await expect(settings).toBeVisible()
+})
+
+test('shows read-only link rows without opening their settings', async ({
+  mount,
+  page
+}) => {
+  await mount(<ReadOnly />)
+
+  for (const name of ['Read-only link', 'Read-only links']) {
+    const field = page.getByRole('list', {name, exact: true})
+    await expect(field.getByText('Home', {exact: true})).toBeVisible()
+    await expect(
+      field.getByRole('button').filter({hasText: 'Home'})
+    ).toHaveCount(0)
+  }
 })
 
 test('switches link picker workspaces and roots', async ({mount, page}) => {
