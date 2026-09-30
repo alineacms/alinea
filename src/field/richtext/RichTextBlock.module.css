@@ -1,4 +1,5 @@
 .RichTextBlock {
+  cursor: default;
   margin: 16px 0;
   outline: 3px solid transparent;
 }

@@ -51,6 +51,7 @@
 }
 
 .RichTextFieldView :global(.ProseMirror) {
+  cursor: text;
   min-height: calc(1.5em + 16px);
   padding: 8px 10px;
   outline: none;

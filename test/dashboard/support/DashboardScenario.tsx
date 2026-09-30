@@ -122,6 +122,8 @@ export interface DashboardScenarioProps {
   readDelay?: number
   // Render entry previews with a component that suspends while it loads
   slowPreview?: boolean
+  // Fail the first request for the list of users
+  failFirstUserList?: boolean
 }
 
 class ScenarioDB extends LocalDB {
@@ -160,7 +162,8 @@ const users: Array<User> = [
 
 async function createDashboardScenario({
   readDelay = 0,
-  slowPreview
+  slowPreview,
+  failFirstUserList
 }: DashboardScenarioProps): Promise<DashboardScenarioState> {
   const db = new ScenarioDB(slowPreview ? slowPreviewConfig : config)
   await db.sync()
@@ -394,8 +397,14 @@ async function createDashboardScenario({
   })
   db.readDelay = readDelay
   const baseClient = createTestConnection(db, {users})
+  let failUserList = failFirstUserList
   const client: LocalConnection = {
     ...baseClient,
+    listUsers() {
+      if (!failUserList) return baseClient.listUsers()
+      failUserList = false
+      return Promise.reject(new Error('Users are unavailable'))
+    },
     revisions(file) {
       return Promise.resolve([
         revision('current', file, 'Current version', 'Local user'),

@@ -448,6 +448,25 @@ test('edits nested rich text inside an embedded block', async ({
   ).toBeVisible()
 })
 
+test('shows a text cursor over the editable text only', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  await expect(page.locator('.ProseMirror').first()).toHaveCSS('cursor', 'text')
+  const block = page.locator('[data-richtext-block="true"]')
+  await expect(block).toHaveCSS('cursor', 'default')
+  await expect(block.getByRole('textbox', {name: 'Title'})).toHaveCSS(
+    'cursor',
+    'text'
+  )
+  await expect(page.getByLabel('Drag Callout block').first()).not.toHaveCSS(
+    'cursor',
+    'text'
+  )
+})
+
 test('selects text in block fields without dragging the block', async ({
   mount,
   page

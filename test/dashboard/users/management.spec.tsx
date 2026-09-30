@@ -55,3 +55,18 @@ test('creates, edits, and deactivates a user', async ({dashboard, mount}) => {
     app.page.getByRole('row', {name: /jane@example.com/})
   ).not.toBeVisible()
 })
+
+test('loads the users again on every visit', async ({dashboard, mount}) => {
+  const app = await dashboard.mount(() =>
+    mount(<DashboardScenarioMount failFirstUserList />)
+  )
+
+  await app.openUsers()
+  await expect(app.page.getByText('Users are unavailable')).toBeVisible()
+
+  await app.page.getByRole('button', {name: 'Back to app'}).click()
+  await expect(app.page).toHaveURL(/#\/entry\//)
+  await app.openUsers()
+  await expect(app.page.getByRole('row', {name: /Alice Editor/})).toBeVisible()
+  await expect(app.page.getByText('Users are unavailable')).toHaveCount(0)
+})

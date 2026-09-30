@@ -202,6 +202,45 @@ test('untranslated entries can start with empty fields instead of copied content
   })
 })
 
+test('untranslated entries start with the path of their title', async () => {
+  const Page = Config.document('Page', {fields: {}})
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {
+          pages: Config.root('Pages', {
+            contains: ['Page'],
+            i18n: {locales: ['en', 'fr']}
+          })
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.create({
+    id: 'translated-path',
+    locale: 'en',
+    root: 'pages',
+    type: Page,
+    set: {title: 'English title', path: 'custom-english-path'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms('translated-path'))
+  const locale = entry.locales('fr')
+
+  const copied = await store.get(locale.selectedNode)
+  expect(store.get(copied.value)).toMatchObject({path: 'english-title'})
+  expect(store.get(locale.errors(copied))).toEqual([])
+  expect(store.get(copied.isDirty)).toBe(false)
+
+  store.set(locale.copyTranslationSource, false)
+  const empty = await store.get(locale.selectedNode)
+  expect(store.get(empty.value)).toMatchObject({path: undefined})
+})
+
 function linkedSourceData() {
   return {
     title: 'Nieuws',
