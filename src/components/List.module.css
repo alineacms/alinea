@@ -80,7 +80,20 @@
   font-size: 14px;
   height: 28px;
   justify-content: center;
+  overflow: hidden;
   width: 28px;
+}
+
+.ListItemVisual[data-size='lg'] {
+  font-size: 20px;
+  height: 40px;
+  width: 40px;
+}
+
+.ListItemVisual-image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
 }
 
 .ListItemTitle,

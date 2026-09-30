@@ -19,7 +19,10 @@ async function openMediaDirectory(
     await route.fulfill({status: 200})
   })
   async function upload(
-    file: string | {name: string; mimeType: string; buffer: Buffer}
+    file:
+      | string
+      | {name: string; mimeType: string; buffer: Buffer}
+      | Array<{name: string; mimeType: string; buffer: Buffer}>
   ) {
     const chooser = app.page.waitForEvent('filechooser')
     await app.page.getByRole('button', {name: 'Upload media'}).click()
@@ -28,6 +31,48 @@ async function openMediaDirectory(
   }
   return {app, uploads, upload}
 }
+
+function jpeg(width: number, height: number) {
+  return sharp({
+    create: {width, height, channels: 3, background: {r: 40, g: 120, b: 200}}
+  })
+    .jpeg()
+    .toBuffer()
+}
+
+test('keeps the upload button in view while a long list of files scrolls', async ({
+  dashboard,
+  mount
+}) => {
+  const {app, upload} = await openMediaDirectory(dashboard, mount)
+  const buffer = await jpeg(120, 80)
+  const dialog = await upload(
+    Array.from({length: 22}, (_, i) => ({
+      name: `photo-${i + 1}.jpg`,
+      mimeType: 'image/jpeg',
+      buffer
+    }))
+  )
+  const files = dialog.getByRole('list', {name: 'Files'})
+  await expect(files).toHaveAttribute('data-slot', 'list')
+  const rows = files.locator('[data-slot="list-item"]')
+  await expect(rows).toHaveCount(22)
+  await expect(
+    rows.first().locator('[data-slot="list-item-visual-image"]')
+  ).toBeVisible()
+  const confirm = dialog.getByRole('button', {name: 'Upload 22 files'})
+  await expect(confirm).toBeInViewport()
+  await expect(
+    dialog.getByRole('heading', {name: 'Upload 22 files'})
+  ).toBeInViewport()
+  await expect(rows.last()).not.toBeInViewport()
+  await rows.last().scrollIntoViewIfNeeded()
+  await expect(rows.last()).toBeInViewport()
+  await expect(confirm).toBeInViewport()
+  await expect(
+    dialog.getByRole('heading', {name: 'Upload 22 files'})
+  ).toBeInViewport()
+})
 
 test('rotates an image in the upload dialog before uploading it', async ({
   dashboard,

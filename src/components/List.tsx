@@ -82,15 +82,37 @@ export function ListItem({
   )
 }
 
-export interface ListItemVisualProps extends ComponentPropsWithoutRef<'span'> {}
+export interface ListItemVisualProps extends ComponentPropsWithoutRef<'span'> {
+  /** An image that covers the visual, such as a thumbnail */
+  src?: string
+  /** `lg` fits a thumbnail, defaults to `default` */
+  size?: 'default' | 'lg'
+}
 
-export function ListItemVisual({className, ...props}: ListItemVisualProps) {
+export function ListItemVisual({
+  className,
+  src,
+  size = 'default',
+  children,
+  ...props
+}: ListItemVisualProps) {
   return (
     <span
       data-slot="list-item-visual"
+      data-size={size}
       {...props}
       className={styles.ListItemVisual(styler.merge({className}))}
-    />
+    >
+      {src && (
+        <img
+          alt=""
+          src={src}
+          data-slot="list-item-visual-image"
+          className={styles.ListItemVisual.image()}
+        />
+      )}
+      {children}
+    </span>
   )
 }
 

@@ -372,4 +372,36 @@ export function EmptySmallLists() {
   )
 }
 
+function gradient(from: string, to: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100"><linearGradient id="g"><stop stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient><rect width="160" height="100" fill="url(#g)"/></svg>`
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`
+}
+
+export function Thumbnails() {
+  return (
+    <List aria-label="Files" style={{width: 420}}>
+      <ListItem
+        leading={
+          <ListItemVisual size="lg" src={gradient('#2b6cb0', '#38a169')} />
+        }
+        trailing={itemControls}
+      >
+        <ListItemTitle>harbour-at-dawn.jpg</ListItemTitle>
+        <ListItemDescription>1.2 MB</ListItemDescription>
+      </ListItem>
+      <ListItem
+        leading={
+          <ListItemVisual size="lg">
+            <IcRoundInsertDriveFile data-slot="icon" />
+          </ListItemVisual>
+        }
+        trailing={itemControls}
+      >
+        <ListItemTitle>brochure-2026.pdf</ListItemTitle>
+        <ListItemDescription>2.4 MB</ListItemDescription>
+      </ListItem>
+    </List>
+  )
+}
+
 export default {title: 'Pure components / List'}

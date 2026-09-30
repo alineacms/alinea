@@ -1,4 +1,15 @@
-import {Button, Icon, Text, ToggleGroup, ToggleGroupItem} from '#/components.js'
+import {
+  Button,
+  Icon,
+  List,
+  ListItem,
+  ListItemDescription,
+  ListItemTitle,
+  ListItemVisual,
+  Text,
+  ToggleGroup,
+  ToggleGroupItem
+} from '#/components.js'
 import {rotatedSize, type ImageEdit} from '#/core/media/ImageTransform.js'
 import type {
   ImageSize,
@@ -53,19 +64,17 @@ export function PendingUploadsView({
     const {previewUrl, imageSize} = editingUpload
     return (
       <DashboardModalDialog label={`Edit ${editingUpload.file.name}`}>
-        <DashboardModalContent>
-          <ImageEditor
-            src={previewUrl}
-            width={imageSize.width}
-            height={imageSize.height}
-            edit={editingUpload.edit}
-            onApply={edit => {
-              onChange(editingUpload.id, {edit})
-              setEditing(undefined)
-            }}
-            onCancel={() => setEditing(undefined)}
-          />
-        </DashboardModalContent>
+        <ImageEditor
+          src={previewUrl}
+          width={imageSize.width}
+          height={imageSize.height}
+          edit={editingUpload.edit}
+          onApply={edit => {
+            onChange(editingUpload.id, {edit})
+            setEditing(undefined)
+          }}
+          onCancel={() => setEditing(undefined)}
+        />
       </DashboardModalDialog>
     )
   }
@@ -84,7 +93,7 @@ export function PendingUploadsView({
   return (
     <DashboardModalDialog label={label}>
       <DashboardModalContent>
-        <ul className={styles.PendingUploadsView()} aria-label="Files">
+        <List aria-label="Files">
           {uploads.map(upload => (
             <PendingUploadRow
               key={upload.id}
@@ -95,7 +104,7 @@ export function PendingUploadsView({
               onRemove={() => onRemove(upload.id)}
             />
           ))}
-        </ul>
+        </List>
       </DashboardModalContent>
       <DashboardModalFooter>
         <Button variant="outline" color="secondary" onClick={onCancel}>
@@ -128,81 +137,72 @@ function PendingUploadRow({
   const canEdit = imageSize && action !== 'existing'
   const hasChoice = !replacing && (duplicate || conflict)
   return (
-    <li className={styles.PendingUploadsView.row()}>
-      <PendingUploadThumbnail upload={upload} />
-      <div className={styles.PendingUploadsView.row.info()}>
-        <Text as="span" weight="medium" truncate>
-          {file.name}
+    <ListItem
+      leading={<PendingUploadThumbnail upload={upload} />}
+      trailing={
+        <>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              icon={IcRoundCrop}
+              aria-label={`Edit ${file.name}`}
+              onClick={onEdit}
+            />
+          )}
+          {!replacing && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              icon={IcRoundClose}
+              aria-label={`Remove ${file.name}`}
+              onClick={onRemove}
+            />
+          )}
+        </>
+      }
+    >
+      <ListItemTitle>{file.name}</ListItemTitle>
+      <ListItemDescription>
+        {prettyBytes(file.size)}
+        {edit && ' · Edited'}
+      </ListItemDescription>
+      {!replacing && duplicate && (
+        <Text as="p" size="sm" className={styles.PendingUploadsView.notice()}>
+          <Icon icon={IcRoundInfo} />
+          Already in the media library as “{duplicate.title}”
         </Text>
-        <Text as="span" size="sm" color="muted">
-          {prettyBytes(file.size)}
-          {edit && ' · Edited'}
+      )}
+      {!replacing && conflict && !duplicate && (
+        <Text as="p" size="sm" className={styles.PendingUploadsView.notice()}>
+          <Icon icon={IcRoundInfo} />A file named “{conflict.title}” exists in
+          this folder
         </Text>
-        {!replacing && duplicate && (
-          <Text
-            as="p"
-            size="sm"
-            className={styles.PendingUploadsView.row.notice()}
-          >
-            <Icon icon={IcRoundInfo} />
-            Already in the media library as “{duplicate.title}”
-          </Text>
-        )}
-        {!replacing && conflict && !duplicate && (
-          <Text
-            as="p"
-            size="sm"
-            className={styles.PendingUploadsView.row.notice()}
-          >
-            <Icon icon={IcRoundInfo} />A file named “{conflict.title}” exists in
-            this folder
-          </Text>
-        )}
-        {hasChoice && (
-          <ToggleGroup
-            type="single"
-            size="sm"
-            variant="outline"
-            aria-label={`What to do with ${file.name}`}
-            value={action}
-            onValueChange={value => {
-              if (value) onChange({action: value as PendingUploadAction})
-            }}
-            className={styles.PendingUploadsView.row.choice()}
-          >
-            {duplicate && (
-              <ToggleGroupItem value="existing">Use existing</ToggleGroupItem>
-            )}
-            {conflict && (
-              <ToggleGroupItem value="replace">Replace</ToggleGroupItem>
-            )}
-            <ToggleGroupItem value="upload">
-              {conflict ? 'Keep both' : 'Upload anyway'}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        )}
-      </div>
-      <div className={styles.PendingUploadsView.row.actions()}>
-        {canEdit && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            icon={IcRoundCrop}
-            aria-label={`Edit ${file.name}`}
-            onClick={onEdit}
-          />
-        )}
-        {!replacing && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            icon={IcRoundClose}
-            aria-label={`Remove ${file.name}`}
-            onClick={onRemove}
-          />
-        )}
-      </div>
-    </li>
+      )}
+      {hasChoice && (
+        <ToggleGroup
+          type="single"
+          size="sm"
+          variant="outline"
+          aria-label={`What to do with ${file.name}`}
+          value={action}
+          onValueChange={value => {
+            if (value) onChange({action: value as PendingUploadAction})
+          }}
+          className={styles.PendingUploadsView.choice()}
+        >
+          {duplicate && (
+            <ToggleGroupItem value="existing">Use existing</ToggleGroupItem>
+          )}
+          {conflict && (
+            <ToggleGroupItem value="replace">Replace</ToggleGroupItem>
+          )}
+          <ToggleGroupItem value="upload">
+            {conflict ? 'Keep both' : 'Upload anyway'}
+          </ToggleGroupItem>
+        </ToggleGroup>
+      )}
+    </ListItem>
   )
 }
 
@@ -217,7 +217,7 @@ function PendingUploadThumbnail({upload}: PendingUploadThumbnailProps) {
     const crop = edit.crop ?? {width: 1, height: 1}
     const landscape = crop.width * rotated.width >= crop.height * rotated.height
     return (
-      <span className={styles.PendingUploadsView.row.thumbnail()}>
+      <ListItemVisual size="lg">
         <CroppedImage
           src={previewUrl}
           width={imageSize.width}
@@ -226,30 +226,15 @@ function PendingUploadThumbnail({upload}: PendingUploadThumbnailProps) {
           // Fit the thumbnail, the image keeps its ratio
           style={landscape ? {width: '100%'} : {height: '100%'}}
         />
-      </span>
+      </ListItemVisual>
     )
   }
-  if (previewUrl)
-    return (
-      <span className={styles.PendingUploadsView.row.thumbnail()}>
-        <img
-          alt=""
-          src={previewUrl}
-          className={styles.PendingUploadsView.row.thumbnail.image()}
-        />
-      </span>
-    )
+  if (previewUrl) return <ListItemVisual size="lg" src={previewUrl} />
   const {icon, color} = fileKindVisual(extname(upload.file.name))
   return (
-    <span
-      className={styles.PendingUploadsView.row.thumbnail()}
-      style={{background: color}}
-    >
-      <Icon
-        icon={icon}
-        className={styles.PendingUploadsView.row.thumbnail.icon()}
-      />
-    </span>
+    <ListItemVisual size="lg" style={{background: color}}>
+      <Icon icon={icon} />
+    </ListItemVisual>
   )
 }
 
