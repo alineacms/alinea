@@ -411,19 +411,9 @@ export function explorerItemCanMove(policy: Policy, item: ExplorerItemData) {
   return !item.seeded && policy.canMove(item)
 }
 
-/**
- * The selected entry can be deleted right away. Media is deleted directly,
- * like the entry menu does other entries are archived before deleting them.
- */
-export function explorerItemCanDelete(
-  config: Config,
-  policy: Policy,
-  item: ExplorerItemData
-) {
-  if (item.seeded || !policy.canDelete(item)) return false
-  const type = config.schema[item.type]
-  const isMedia = type === MediaFile || type === MediaLibrary
-  return isMedia || item.status === 'archived'
+/** The selected entry can be deleted, in the language it is listed in */
+export function explorerItemCanDelete(policy: Policy, item: ExplorerItemData) {
+  return !item.seeded && policy.canDelete(item)
 }
 
 export interface ExplorerSelectionActions {
@@ -1148,19 +1138,10 @@ export class ExplorerAtoms {
         oneRoot &&
         items.every(item => explorerItemCanMove(policy, item)),
       canDelete:
-        some && items.every(item => explorerItemCanDelete(config, policy, item))
+        some && items.every(item => explorerItemCanDelete(policy, item))
     }
   })
   clearSelection = atom(null, (_get, set) => set(this.selection, new Set()))
-  /** Deletes the selected entries at once */
-  deleteSelection = atom(null, async (get, set) => {
-    const {items, canDelete} = get(this.selectionActions)
-    if (!canDelete) return
-    const policy = get(policyAtom)
-    for (const item of items) policy.assert(Permission.Delete, item)
-    await get(graphAtom).remove(...items.map(item => item.id))
-    set(this.selection, new Set())
-  })
   isExpanded = dispense((entry: ExplorerEntry) =>
     atom(get => get(this.expandedKeys).has(entry.id))
   )

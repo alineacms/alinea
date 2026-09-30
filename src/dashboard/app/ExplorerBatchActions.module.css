@@ -22,10 +22,3 @@
   gap: 8px;
   margin-left: auto;
 }
-
-.ExplorerDeleteDialog-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}

@@ -109,7 +109,7 @@ test('deletes selected media files after confirming', async ({
   const selection = app.page.getByRole('toolbar', {name: 'Selected entries'})
   await selection.getByRole('button', {name: 'Delete'}).click()
 
-  const dialog = app.page.getByRole('dialog', {name: 'Delete 2 items?'})
+  const dialog = app.page.getByRole('dialog', {name: 'Delete 2 items'})
   await expect(
     dialog.getByText('2 files are removed from the media library')
   ).toBeVisible()

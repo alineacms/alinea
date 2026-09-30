@@ -1,23 +1,18 @@
 import {Button, PageFooter, Text, Toolbar} from '#/components.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
-import type {
-  DashboardExplorer,
-  ExplorerItemData
-} from '#/dashboard/atoms/explorer.js'
+import {
+  deleteEntriesAtom,
+  loadDeletePlanAtom,
+  type DeletePlan
+} from '#/dashboard/atoms/delete.js'
+import type {DashboardExplorer} from '#/dashboard/atoms/explorer.js'
 import {loadMoveTreeAtom, type MoveTree} from '#/dashboard/atoms/move.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {useAtomValueRawSync, useSetAtom} from 'jotai'
 import {useState, useTransition} from 'react'
 import {IcRoundClose, IcRoundDelete, IcRoundDriveFileMove} from '../icons.js'
+import {DeleteDialog} from './DeleteDialog.js'
 import css from './ExplorerBatchActions.module.css'
 import {MoveDialog} from './MoveDialog.js'
-import {
-  DashboardModal,
-  DashboardModalContent,
-  DashboardModalDialog,
-  DashboardModalFooter
-} from './ui/DashboardModal.js'
 
 const styles = styler(css)
 
@@ -35,10 +30,11 @@ export function ExplorerBatchActions({
     explorer.selectionActions
   )
   const clearSelection = useSetAtom(explorer.clearSelection)
-  const deleteSelection = useSetAtom(explorer.deleteSelection)
   const loadMoveTree = useSetAtom(loadMoveTreeAtom)
+  const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
+  const deleteEntries = useSetAtom(deleteEntriesAtom)
   const [moveTree, setMoveTree] = useState<MoveTree>()
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deletePlan, setDeletePlan] = useState<DeletePlan>()
   const [isPending, startTransition] = useTransition()
   if (items.length === 0) return null
 
@@ -62,6 +58,13 @@ export function ExplorerBatchActions({
     })
   }
 
+  // Entries with languages are deleted in the listed language only
+  function openDeleteDialog() {
+    startTransition(async () => {
+      setDeletePlan(await loadDeletePlan(items))
+    })
+  }
+
   return (
     <>
       <ExplorerBatchActionBar
@@ -70,7 +73,7 @@ export function ExplorerBatchActions({
         canMove={canMove}
         isPending={isPending}
         onClear={clearSelection}
-        onDelete={() => setConfirmDelete(true)}
+        onDelete={openDeleteDialog}
         onMove={openMoveDialog}
       />
       <MoveDialog
@@ -78,11 +81,13 @@ export function ExplorerBatchActions({
         onClose={() => setMoveTree(undefined)}
         onMoved={clearSelection}
       />
-      <ExplorerDeleteDialog
-        items={items}
-        open={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
-        onConfirm={() => deleteSelection()}
+      <DeleteDialog
+        plan={deletePlan}
+        onClose={() => setDeletePlan(undefined)}
+        onConfirm={async plan => {
+          await deleteEntries(plan)
+          clearSelection()
+        }}
       />
     </>
   )
@@ -140,6 +145,7 @@ export function ExplorerBatchActionBar({
               color="destructive"
               icon={IcRoundDelete}
               disabled={isPending}
+              loading={isPending}
               onClick={onDelete}
             >
               Delete
@@ -148,93 +154,5 @@ export function ExplorerBatchActionBar({
         </div>
       </Toolbar>
     </PageFooter>
-  )
-}
-
-export interface ExplorerDeleteDialogProps {
-  items: Array<ExplorerItemData>
-  open: boolean
-  onClose(): void
-  onConfirm(): Promise<void>
-}
-
-/** Asks to confirm deleting the selected entries */
-export function ExplorerDeleteDialog({
-  items,
-  open,
-  onClose,
-  onConfirm
-}: ExplorerDeleteDialogProps) {
-  const config = useAtomValueRaw(configAtom)
-  const [isPending, startTransition] = useTransition()
-  const count = items.length
-  const [first] = items
-  const files = items.filter(item => config.schema[item.type] === MediaFile)
-  const folders = items.filter(
-    item => config.schema[item.type] === MediaLibrary
-  )
-  const parents = items.filter(
-    item => item.hasChildren && config.schema[item.type] !== MediaLibrary
-  )
-  const subject =
-    count === 1 && first ? `"${first.title}"` : `${count} selected items`
-
-  function confirm() {
-    startTransition(async () => {
-      await onConfirm()
-      onClose()
-    })
-  }
-
-  return (
-    <DashboardModal
-      open={open}
-      onOpenChange={isOpen => {
-        if (!isOpen) onClose()
-      }}
-    >
-      <DashboardModalDialog
-        label={count === 1 ? 'Delete item?' : `Delete ${count} items?`}
-      >
-        <DashboardModalContent>
-          <Text as="p">{subject} will be deleted. This can not be undone.</Text>
-          {files.length > 0 && (
-            <Text as="p">
-              {files.length === 1
-                ? 'The file is removed from the media library and its storage.'
-                : `${files.length} files are removed from the media library and its storage.`}
-            </Text>
-          )}
-          {folders.length > 0 && (
-            <Text as="p">
-              {folders.length === 1
-                ? 'The folder is deleted with every file in it.'
-                : `${folders.length} folders are deleted with every file in them.`}
-            </Text>
-          )}
-          {parents.length > 0 && (
-            <Text as="p">
-              Entries are deleted with the entries they contain.
-            </Text>
-          )}
-        </DashboardModalContent>
-        <DashboardModalFooter>
-          <div className={styles.ExplorerDeleteDialog.actions()}>
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              color="destructive"
-              icon={IcRoundDelete}
-              disabled={isPending}
-              loading={isPending}
-              onClick={confirm}
-            >
-              Delete
-            </Button>
-          </div>
-        </DashboardModalFooter>
-      </DashboardModalDialog>
-    </DashboardModal>
   )
 }
