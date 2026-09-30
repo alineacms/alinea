@@ -5,7 +5,7 @@ import {
   type DeletePlan
 } from '#/dashboard/atoms/delete.js'
 import type {DashboardExplorer} from '#/dashboard/atoms/explorer.js'
-import type {MoveSubject} from '#/dashboard/atoms/move.js'
+import {loadMoveTargetsAtom, type MoveTargets} from '#/dashboard/atoms/move.js'
 import styler from '@alinea/styler'
 import {useAtomValueRawSync, useSetAtom} from 'jotai'
 import {useState, useTransition} from 'react'
@@ -28,10 +28,17 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
   const clearSelection = useSetAtom(explorer.clearSelection)
   const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
-  const [moving, setMoving] = useState<Array<MoveSubject>>()
+  const loadMoveTargets = useSetAtom(loadMoveTargetsAtom)
+  const [moving, setMoving] = useState<MoveTargets>()
   const [deletePlan, setDeletePlan] = useState<DeletePlan>()
   const [isPending, startTransition] = useTransition()
   if (items.length === 0) return null
+
+  function openMoveDialog() {
+    startTransition(async () => {
+      setMoving(await loadMoveTargets(items))
+    })
+  }
 
   // Entries with languages are deleted in the listed language only
   function openDeleteDialog() {
@@ -49,10 +56,10 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
         isPending={isPending}
         onClear={clearSelection}
         onDelete={openDeleteDialog}
-        onMove={() => setMoving(items)}
+        onMove={openMoveDialog}
       />
       <MoveDialog
-        subjects={moving}
+        targets={moving}
         onClose={() => setMoving(undefined)}
         onMoved={clearSelection}
       />

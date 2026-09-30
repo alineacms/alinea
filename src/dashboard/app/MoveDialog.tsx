@@ -1,14 +1,11 @@
 import {Button, Text} from '#/components.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
 import {
   moveEntriesAtom,
-  moveTargets,
-  type MoveSubject
+  type MoveSubject,
+  type MoveTargets
 } from '#/dashboard/atoms/move.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
-import {Suspense, useTransition} from 'react'
+import {Suspense, useState, useTransition} from 'react'
 import {IcRoundDriveFileMove} from '../icons.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
@@ -28,8 +25,8 @@ import {
 } from './ui/DashboardModal.js'
 
 export interface MoveDialogProps {
-  /** The entries to move, all of one root, closed when undefined */
-  subjects: Array<MoveSubject> | undefined
+  /** Where the entries of one root can move to, closed when undefined */
+  targets: MoveTargets | undefined
   onClose(): void
   /** Called once the entries were moved */
   onMoved?(): void
@@ -42,22 +39,22 @@ function moveDialogTitle(subjects: Array<MoveSubject>) {
 }
 
 /** Picks an entry of the root, or its top level, to move entries to */
-export function MoveDialog({subjects, onClose, onMoved}: MoveDialogProps) {
+export function MoveDialog({targets, onClose, onMoved}: MoveDialogProps) {
   return (
     <DashboardModal
-      open={Boolean(subjects)}
+      open={Boolean(targets)}
       size="explorer"
-      aria-label={subjects && moveDialogTitle(subjects)}
+      aria-label={targets && moveDialogTitle(targets.subjects)}
       onOpenChange={isOpen => {
         if (!isOpen) onClose()
       }}
     >
-      {subjects && (
+      {targets && (
         <Suspense
           fallback={<DashboardModalDialog variant="explorer" isLoading />}
         >
           <MoveDialogContent
-            subjects={subjects}
+            targets={targets}
             onClose={onClose}
             onMoved={onMoved}
           />
@@ -68,21 +65,18 @@ export function MoveDialog({subjects, onClose, onMoved}: MoveDialogProps) {
 }
 
 interface MoveDialogContentProps {
-  subjects: Array<MoveSubject>
+  targets: MoveTargets
   onClose(): void
   onMoved?(): void
 }
 
 function MoveDialogContent({
-  subjects,
+  targets,
   onClose,
   onMoved
 }: MoveDialogContentProps) {
+  const {subjects} = targets
   const [{workspace, root, locale, parentId}] = subjects as [MoveSubject]
-  const config = useAtomValueRaw(configAtom)
-  const policy = useAtomValueRaw(policyAtom)
-  const rootData = useAtomValueRaw(rootAtoms(workspace, root).data)
-  const targets = moveTargets(config, policy, rootData, subjects)
   // Opens at the current location, other roots are not a target
   const {explorer, tree} = usePickerExplorer(
     {
@@ -104,12 +98,19 @@ function MoveDialogContent({
   const selection = useAtomValueRaw(explorer.selection)
   const moveEntries = useSetAtom(moveEntriesAtom)
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string>()
   if (!page) return <DashboardModalDialog variant="explorer" isLoading />
   const [target] = selection === 'all' ? [] : selection
 
   function moveTo(target: string | null) {
+    setError(undefined)
     startTransition(async () => {
-      await moveEntries(subjects, target)
+      try {
+        await moveEntries(subjects, target)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : String(error))
+        return
+      }
       onMoved?.()
       onClose()
     })
@@ -134,7 +135,13 @@ function MoveDialogContent({
             tree={tree}
           />
           <ExplorerModalFooter>
-            <Text color="muted">{moveDialogTitle(subjects)}</Text>
+            {error ? (
+              <Text color="destructive" asChild>
+                <span role="alert">{error}</span>
+              </Text>
+            ) : (
+              <Text color="muted">{moveDialogTitle(subjects)}</Text>
+            )}
             <ExplorerModalActions>
               {targets.rootAccepts && (
                 <Button
