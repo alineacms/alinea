@@ -1,5 +1,4 @@
 import {Entry} from '#/core/Entry.js'
-import {Permission} from '#/core/Role.js'
 import {atom, type Atom, type PrimitiveAtom} from 'jotai'
 import {graphAtom} from './core.js'
 import {loadIncomingReferences, type EntryReferenceWithSource} from './entry.js'
@@ -149,14 +148,8 @@ export const loadDeletePlanAtom = atom(
 export const deleteEntriesAtom = atom(
   null,
   async (get, _set, plan: DeletePlan) => {
-    const policy = get(policyAtom)
-    const removals = get(plan.removals)
-    for (const {id, locale} of removals) {
-      const subject = plan.subjects.find(subject => subject.id === id)
-      policy.assert(Permission.Delete, {...subject, locale})
-    }
     await get(graphAtom).mutate(
-      removals.map(removal => ({op: 'remove', ...removal}))
+      get(plan.removals).map(removal => ({op: 'remove', ...removal}))
     )
   }
 )
