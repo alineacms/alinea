@@ -202,3 +202,53 @@ test('deleting checks the permission of every removed translation', async () => 
   )
   test.ok(request.changes.length > 0)
 })
+
+async function createChild(db: EntryStore, status?: 'draft') {
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'parent',
+      type: 'Page',
+      locale: null,
+      status,
+      workspace: 'main',
+      root: 'pages',
+      data: {title: 'Parent'}
+    },
+    {
+      op: 'create',
+      id: 'child',
+      type: 'Page',
+      locale: null,
+      status,
+      parentId: 'parent',
+      data: {title: 'Child'}
+    }
+  ])
+}
+
+function childVersions(db: EntryStore) {
+  return db.resolve({id: 'child', status: 'all', select: Entry.id})
+}
+
+test('deleting an unpublished parent deletes its children', async () => {
+  const db = await createDb()
+  await createChild(db, 'draft')
+  test.equal((await childVersions(db)).length, 1)
+  await db.mutate([{op: 'remove', id: 'parent'}])
+  test.equal(await childVersions(db), [])
+})
+
+test('deleting a parent checks the permission of its children', async () => {
+  const db = await createDb()
+  await createChild(db)
+  const policy = new WriteablePolicy(getScope(cms.config))
+  policy.set(
+    {allow: {read: true, delete: true}},
+    {id: 'child', deny: {delete: true}}
+  )
+  const error = await rejects(() =>
+    db.request([{op: 'remove', id: 'parent'}], policy)
+  )
+  test.is(error.message, 'Permission denied')
+})
