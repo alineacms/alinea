@@ -215,6 +215,8 @@ test('shows the configured root icon in the rail, the sidebar and the splash pag
   await app.page.evaluate(() => {
     window.location.hash = '#/'
   })
+  // The splash page has no roots rail, wait for it to replace the entry page
+  await expect(roots).toHaveCount(0)
   const splashRoot = app.page.getByRole('button', {
     name: 'Ordered pages',
     exact: true
