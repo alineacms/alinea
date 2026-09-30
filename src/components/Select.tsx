@@ -45,6 +45,8 @@ export interface SelectProps
   /** Name of the hidden form input carrying the value */
   name?: string
   autoFocus?: boolean
+  /** `sm` is as tall as a default Button, defaults to `default` */
+  size?: 'default' | 'sm'
   /** SelectItem, SelectGroup and SelectSeparator elements */
   children: ReactNode
 }
@@ -69,6 +71,7 @@ export function Select({
   defaultOpen,
   onOpenChange,
   placeholder,
+  size = 'default',
   className,
   style,
   children,
@@ -111,6 +114,7 @@ export function Select({
       >
         <SelectTrigger
           triggerRef={triggerRef}
+          size={size}
           clearable={!required && !disabled && !readOnly}
           invalid={Boolean(error)}
           readOnly={readOnly}
@@ -129,6 +133,7 @@ export function Select({
 
 interface SelectTriggerProps {
   triggerRef: RefObject<HTMLDivElement>
+  size: 'default' | 'sm'
   clearable: boolean
   invalid: boolean
   readOnly?: boolean
@@ -136,6 +141,7 @@ interface SelectTriggerProps {
 
 function SelectTrigger({
   triggerRef,
+  size,
   clearable,
   invalid,
   readOnly
@@ -147,6 +153,7 @@ function SelectTrigger({
     <div
       ref={triggerRef}
       data-slot="select-trigger"
+      data-size={size}
       data-invalid={invalid || undefined}
       data-readonly={readOnly || undefined}
       className={styles.SelectTrigger()}

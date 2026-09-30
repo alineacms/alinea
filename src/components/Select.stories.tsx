@@ -4,6 +4,7 @@ import {
   IcRoundSearch,
   IcOutlineSettings
 } from '#/dashboard/icons.js'
+import {Button} from './Button.js'
 import {Select, SelectGroup, SelectItem, SelectSeparator} from './Select.js'
 
 const software = [
@@ -95,6 +96,27 @@ export function States() {
           </SelectItem>
         ))}
       </Select>
+    </div>
+  )
+}
+
+export function Small() {
+  return (
+    <div style={{display: 'flex', gap: 8}}>
+      <Select
+        aria-label="Small select"
+        size="sm"
+        defaultValue="figma"
+        required
+        style={{width: 180}}
+      >
+        {software.map(item => (
+          <SelectItem key={item.value} value={item.value}>
+            {item.label}
+          </SelectItem>
+        ))}
+      </Select>
+      <Button variant="outline">Button</Button>
     </div>
   )
 }

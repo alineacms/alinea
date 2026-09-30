@@ -61,6 +61,11 @@
   &:has(+ .SelectTrigger-clear) {
     padding-right: 0;
   }
+
+  .SelectTrigger[data-size='sm'] & {
+    padding-block: 4px;
+    line-height: 22px;
+  }
 }
 
 .SelectTrigger-value {

@@ -11,6 +11,10 @@ import {IcRoundRotateLeft, IcRoundRotateRight, IcRoundUndo} from '../icons.js'
 import {CroppedImage} from './CroppedImage.js'
 import css from './ImageEditor.module.css'
 import {
+  DashboardModalContent,
+  DashboardModalFooter
+} from './ui/DashboardModal.js'
+import {
   fitCrop,
   fullCrop,
   isFullCrop,
@@ -160,108 +164,113 @@ export function ImageEditor({
   }
 
   return (
-    <div className={styles.ImageEditor()}>
-      <div className={styles.ImageEditor.toolbar()}>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          icon={IcRoundRotateLeft}
-          aria-label="Rotate left"
-          onClick={() => turn(-1)}
-        />
-        <Button
-          variant="outline"
-          size="icon-sm"
-          icon={IcRoundRotateRight}
-          aria-label="Rotate right"
-          onClick={() => turn(1)}
-        />
-        <Select
-          aria-label="Aspect ratio"
-          className={styles.ImageEditor.aspect()}
-          value={aspect}
-          onValueChange={value => selectAspect((value ?? 'free') as Aspect)}
-          required
-        >
-          {Object.entries(aspects).map(([key, {label}]) => (
-            <SelectItem key={key} value={key}>
-              {label}
-            </SelectItem>
-          ))}
-        </Select>
-        <Text
-          as="span"
-          size="sm"
-          color="muted"
-          className={styles.ImageEditor.size()}
-        >
-          {pixels.width} × {pixels.height} px
-        </Text>
-        <Button variant="ghost" size="sm" icon={IcRoundUndo} onClick={reset}>
-          Reset
-        </Button>
-      </div>
-      <div className={styles.ImageEditor.canvas()}>
-        <div
-          ref={stage}
-          className={styles.ImageEditor.stage()}
-          style={{
-            // Fit the canvas, leaving out its padding
-            width: `min(100%, calc((var(--alinea-image-editor-height) - 32px) * ${rotated.width / rotated.height}))`
-          }}
-        >
-          <CroppedImage
-            src={src}
-            width={width}
-            height={height}
-            edit={{rotate}}
-            className={styles.ImageEditor.image()}
-          />
-          <div aria-hidden className={styles.ImageEditor.shade()}>
-            <span
-              className={styles.ImageEditor.shade.hole()}
-              style={cropStyle}
+    <>
+      <DashboardModalContent>
+        <div className={styles.ImageEditor()}>
+          <div className={styles.ImageEditor.toolbar()}>
+            <Button
+              variant="outline"
+              size="icon-lg"
+              icon={IcRoundRotateLeft}
+              aria-label="Rotate left"
+              onClick={() => turn(-1)}
             />
+            <Button
+              variant="outline"
+              size="icon-lg"
+              icon={IcRoundRotateRight}
+              aria-label="Rotate right"
+              onClick={() => turn(1)}
+            />
+            <Select
+              aria-label="Aspect ratio"
+              size="sm"
+              className={styles.ImageEditor.aspect()}
+              value={aspect}
+              onValueChange={value => selectAspect((value ?? 'free') as Aspect)}
+              required
+            >
+              {Object.entries(aspects).map(([key, {label}]) => (
+                <SelectItem key={key} value={key}>
+                  {label}
+                </SelectItem>
+              ))}
+            </Select>
+            <Text
+              as="span"
+              size="sm"
+              color="muted"
+              className={styles.ImageEditor.size()}
+            >
+              {pixels.width} × {pixels.height} px
+            </Text>
+            <Button variant="ghost" icon={IcRoundUndo} onClick={reset}>
+              Reset
+            </Button>
           </div>
-          <div
-            role="group"
-            aria-label="Crop area, use the arrow keys to move it"
-            tabIndex={0}
-            className={styles.ImageEditor.crop()}
-            style={cropStyle}
-            onKeyDown={onCropKeyDown}
-            onPointerDown={event => startDrag(event)}
-            onPointerMove={moveDrag}
-            onPointerUp={endDrag}
-            onPointerCancel={endDrag}
-          >
-            <span className={styles.ImageEditor.crop.grid()} />
-            {(relativeRatio
-              ? cornerHandles
-              : [...cornerHandles, ...edgeHandles]
-            ).map(handle => (
-              <span
-                key={handle}
-                data-handle={handle}
-                className={styles.ImageEditor.crop.handle(handle)}
-                onPointerDown={event => startDrag(event, handle)}
+          <div className={styles.ImageEditor.canvas()}>
+            <div
+              ref={stage}
+              className={styles.ImageEditor.stage()}
+              style={{
+                // Fit the canvas, leaving out its padding
+                width: `min(100%, calc((var(--alinea-image-editor-height) - 32px) * ${rotated.width / rotated.height}))`
+              }}
+            >
+              <CroppedImage
+                src={src}
+                width={width}
+                height={height}
+                edit={{rotate}}
+                className={styles.ImageEditor.image()}
+              />
+              <div aria-hidden className={styles.ImageEditor.shade()}>
+                <span
+                  className={styles.ImageEditor.shade.hole()}
+                  style={cropStyle}
+                />
+              </div>
+              <div
+                role="group"
+                aria-label="Crop area, use the arrow keys to move it"
+                tabIndex={0}
+                className={styles.ImageEditor.crop()}
+                style={cropStyle}
+                onKeyDown={onCropKeyDown}
+                onPointerDown={event => startDrag(event)}
                 onPointerMove={moveDrag}
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
-              />
-            ))}
+              >
+                <span className={styles.ImageEditor.crop.grid()} />
+                {(relativeRatio
+                  ? cornerHandles
+                  : [...cornerHandles, ...edgeHandles]
+                ).map(handle => (
+                  <span
+                    key={handle}
+                    data-handle={handle}
+                    className={styles.ImageEditor.crop.handle(handle)}
+                    onPointerDown={event => startDrag(event, handle)}
+                    onPointerMove={moveDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={endDrag}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div className={styles.ImageEditor.footer()}>
+      </DashboardModalContent>
+      <DashboardModalFooter>
         <Button variant="outline" color="secondary" onClick={onCancel}>
           Cancel
         </Button>
         <Button color="primary" onClick={apply}>
           Apply
         </Button>
-      </div>
-    </div>
+      </DashboardModalFooter>
+    </>
   )
 }
 

@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example, Groups, ReadOnly, States} from './Select.stories.js'
+import {Example, Groups, ReadOnly, Small, States} from './Select.stories.js'
 
 test('selects and clears a value', async ({mount, page}) => {
   await mount(<Example />)
@@ -63,6 +63,18 @@ test('required, disabled and invalid states', async ({mount, page}) => {
   await expect(
     page.locator('[data-slot="select-trigger"][data-invalid]')
   ).toHaveCount(1)
+})
+
+test('a small select is as tall as a button', async ({mount, page}) => {
+  await mount(<Small />)
+  const trigger = page.locator('[data-slot="select-trigger"]')
+  await expect(trigger).toHaveAttribute('data-size', 'sm')
+  const button = page.getByRole('button', {name: 'Button', exact: true})
+  const [select, sibling] = await Promise.all([
+    trigger.boundingBox(),
+    button.boundingBox()
+  ])
+  expect(select?.height).toBe(sibling?.height)
 })
 
 test('the list is as wide as the trigger with its clear button', async ({
