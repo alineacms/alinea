@@ -69,47 +69,40 @@ type UsersAction =
   | {type: 'update'; user: UserInput}
   | {type: 'remove'; email: string}
 
-/** The users, loaded again by every navigation that opens the page */
-const loadedUsersAtom = atom(get => {
-  get(routeAtom)
-  return get(clientAtom).listUsers()
+/** Whether the users page is open, so the users load once per visit */
+const usersPageOpenAtom = atom(get => get(routeAtom).page === 'users')
+
+/**
+ * The users of the current visit to the page, loaded when it opens and
+ * updated by the edits made on it
+ */
+const visitUsersAtom = atom(get => {
+  if (!get(usersPageOpenAtom)) return undefined
+  return atom(get(clientAtom).listUsers())
 })
 
-interface EditedUsers {
-  loaded: Promise<Array<User>>
-  users: Array<User>
-}
-
-/** The edits made on the page, which apply to the users they were made on */
-const editedUsersAtom = atom<EditedUsers | undefined>(undefined)
-
-/** The listed users, loaded by the page and updated by the edits made on it */
-const usersAtom = atom(
+/** @internal */
+export const usersAtom = atom(
   async get => {
-    const loaded = get(loadedUsersAtom)
-    const edited = get(editedUsersAtom)
-    return edited?.loaded === loaded ? edited.users : loaded
+    const users = get(visitUsersAtom)
+    return users ? get(users) : []
   },
   async (get, set, action: UsersAction): Promise<void> => {
     const client = get(clientAtom)
-    const loaded = get(loadedUsersAtom)
-    const users = await get(usersAtom)
-    function edit(update: (users: Array<User>) => Array<User>) {
-      set(editedUsersAtom, current => ({
-        loaded,
-        users: update(current?.loaded === loaded ? current.users : users)
-      }))
-    }
+    let update: (users: Array<User>) => Array<User>
     if (action.type === 'remove') {
       await client.removeUser(action.email)
-      edit(current => removeUser(current, action.email))
-      return
+      update = users => removeUser(users, action.email)
+    } else {
+      const saved =
+        action.type === 'create'
+          ? await client.createUser(action.user)
+          : await client.updateUser(action.user)
+      update = users => upsertUser(users, saved)
     }
-    const saved =
-      action.type === 'create'
-        ? await client.createUser(action.user)
-        : await client.updateUser(action.user)
-    edit(current => upsertUser(current, saved))
+    // The users may have loaded again while the edit was saved
+    const users = get(visitUsersAtom)
+    if (users) set(users, async current => update(await current))
   }
 )
 
