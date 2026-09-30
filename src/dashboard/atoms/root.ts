@@ -119,18 +119,39 @@ export class TreeAtoms implements TreeSource {
 
   #source = atom(async get => {
     const config = get(configAtom)
-    const selectedKeys = new Set([...get(this.#selectedKeys)].map(String))
-    const selectedId = [...selectedKeys][0]
-    const selectedModel = selectedId ? treeEntryAtoms(selectedId) : undefined
-    let selected: TreeEntrySummary | undefined
-    try {
-      selected = selectedModel
-        ? await get(selectedModel.summary(this.#locale))
-        : undefined
-    } catch (error) {
-      if (!(error instanceof MissingEntryError)) throw error
-      selected = undefined
+    const locale = this.#locale
+    async function listed(model: TreeEntryAtoms) {
+      try {
+        return await get(model.summary(locale))
+      } catch (error) {
+        if (error instanceof MissingEntryError) return undefined
+        throw error
+      }
     }
+    async function ancestors(model: TreeEntryAtoms) {
+      try {
+        return await get(model.parents)
+      } catch (error) {
+        if (error instanceof MissingEntryError) return []
+        throw error
+      }
+    }
+    let selectedKeys = new Set([...get(this.#selectedKeys)].map(String))
+    const requestedId = [...selectedKeys][0]
+    let selectedModel = requestedId ? treeEntryAtoms(requestedId) : undefined
+    let selected = selectedModel ? await listed(selectedModel) : undefined
+    // The tree does not list some entries, such as media files, so it
+    // reveals and selects their closest listed ancestor instead
+    if (selectedModel && !selected) {
+      for (const ancestor of (await ancestors(selectedModel)).toReversed()) {
+        selected = await listed(ancestor)
+        if (!selected) continue
+        selectedModel = ancestor
+        selectedKeys = new Set([ancestor.id])
+        break
+      }
+    }
+    const selectedId = [...selectedKeys][0]
     const parents =
       selectedModel && selected ? await get(selectedModel.parents) : []
     const models = new Map(parents.map(parent => [parent.id, parent]))

@@ -16,6 +16,9 @@ export const dashboardScenarioIds = {
   localizedFolder: 'workflow-localized-folder',
   localizedChild: 'workflow-localized-child',
   mediaFile: 'workflow-media-file',
+  mediaFolder: 'workflow-media-folder',
+  nestedMediaFolder: 'workflow-nested-media-folder',
+  nestedMediaFile: 'workflow-nested-media-file',
   searchPartial: 'workflow-search-partial',
   searchTitle: 'workflow-search-title',
   searchBody: 'workflow-search-body'

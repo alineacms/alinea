@@ -4,6 +4,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
+import {IcRoundFormatListNumbered} from '#/dashboard/icons.js'
 import type {Entry} from '#/core/Entry.js'
 import {Config, Field, Query} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
@@ -58,6 +59,7 @@ const main = Config.workspace('Main', {
     }),
     ordered: Config.root('Ordered pages', {
       contains: ['Page'],
+      icon: IcRoundFormatListNumbered,
       orderChildrenBy: {asc: Query.title}
     }),
     localized: Config.root('Localized pages', {
@@ -334,6 +336,43 @@ async function createDashboardScenario({
         extension: '.jpg',
         size: 1024,
         hash: 'legacy-image',
+        alt: null
+      }
+    },
+    {
+      op: 'create',
+      id: dashboardScenarioIds.mediaFolder,
+      type: 'MediaLibrary',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      data: {title: 'Media folder', path: 'media-folder'}
+    },
+    {
+      op: 'create',
+      id: dashboardScenarioIds.nestedMediaFolder,
+      type: 'MediaLibrary',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      parentId: dashboardScenarioIds.mediaFolder,
+      data: {title: 'Nested media folder', path: 'nested-media-folder'}
+    },
+    {
+      op: 'create',
+      id: dashboardScenarioIds.nestedMediaFile,
+      type: 'MediaFile',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      parentId: dashboardScenarioIds.nestedMediaFolder,
+      data: {
+        title: 'Nested media file',
+        path: 'nested-media-file',
+        location: 'media-folder/nested-media-folder/nested-media-file.jpg',
+        extension: '.jpg',
+        size: 1024,
+        hash: 'nested-media-file',
         alt: null
       }
     }

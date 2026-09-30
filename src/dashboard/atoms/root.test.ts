@@ -16,6 +16,7 @@ import {
 } from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
 import type {Key} from '#/components.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
@@ -258,6 +259,55 @@ test('selected entry ancestors load without expanding unrelated branches', async
     {id: parent._id, children: [{id: child._id, children: []}]}
   ])
   expect(snapshot.selectedKeys).toEqual(new Set([child._id]))
+})
+
+test('the sidebar tree reveals the folder of a selected media file', async () => {
+  const config = Config.create({
+    schema: {Page: DashboardTestPage},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {media: Config.media()}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const media = {workspace: 'main', root: 'media'}
+  const folder = await db.create({
+    ...media,
+    type: MediaLibrary,
+    set: {title: 'Folder', path: 'folder'}
+  })
+  const nested = await db.create({
+    ...media,
+    type: MediaLibrary,
+    parentId: folder._id,
+    set: {title: 'Nested', path: 'nested'}
+  })
+  const file = await db.create({
+    ...media,
+    type: MediaFile,
+    parentId: nested._id,
+    set: {title: 'File', path: 'file', location: 'file.jpg'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const root = rootAtoms('main', 'media')
+
+  store.set(routeAtom, {
+    browser: true,
+    route: {page: 'entry', workspace: 'main', root: 'media', entry: file._id}
+  })
+  const tree = root.tree(null)
+  const snapshot = await store.get(tree.ready)
+
+  expect(snapshot.expandedKeys).toEqual(new Set([folder._id]))
+  expect(snapshot.items).toEqual([
+    {id: folder._id, children: [{id: nested._id, children: []}]}
+  ])
+  expect(snapshot.selectedKeys).toEqual(new Set([nested._id]))
+  expect(store.get(tree.selectedItem)?.id).toBe(nested._id)
 })
 
 test('tree removes selected and expanded entries that become unreadable', async () => {
