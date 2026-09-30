@@ -40,6 +40,12 @@ test('single selection, links, actions and disabled items', async ({
   await expect(
     published.getByRole('link', {name: 'Published'})
   ).toHaveAttribute('href', '#published')
+  const status = tree.getByRole('row', {name: /^Status/})
+  await expect(status).toHaveAttribute('aria-selected', 'false')
+  await expect(status.getByRole('link', {name: 'Status'})).toHaveAttribute(
+    'aria-current',
+    'location'
+  )
   await expect(published.locator('[data-slot="tree-item-suffix"]')).toHaveCount(
     1
   )

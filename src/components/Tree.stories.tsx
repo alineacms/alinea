@@ -52,7 +52,13 @@ export function WithStatus() {
         onAction={setAction}
         disabledKeys={['draft']}
       >
-        <TreeItem id="status" title="Status" icon={IcOutlineDescription}>
+        <TreeItem
+          id="status"
+          title="Status"
+          icon={IcOutlineDescription}
+          href="#status"
+          current="location"
+        >
           <TreeItem
             id="published"
             title="Published"

@@ -148,6 +148,11 @@ export interface TreeItemProps<T extends object = object>
   icon?: IconType | ReactElement
   /** Renders the icon and title as links, pressing the row still selects */
   href?: string
+  /**
+   * Marks the link as the current page, or the current location within a
+   * set of pages, such as the folder of an open file that is not listed
+   */
+  current?: 'page' | 'location'
   /** Trailing content such as status icons */
   suffix?: ReactNode
   /** Shows the expand button, set when children load lazily */
@@ -169,6 +174,7 @@ export function TreeItem<T extends object = object>({
   label,
   icon,
   href,
+  current,
   suffix,
   hasChildItems,
   hideDragHandle,
@@ -263,7 +269,11 @@ export function TreeItem<T extends object = object>({
               className={styles.TreeItem.label()}
             >
               {href && !label ? (
-                <a className={styles.TreeItem.labelLink()} href={href}>
+                <a
+                  aria-current={current}
+                  className={styles.TreeItem.labelLink()}
+                  href={href}
+                >
                   {title}
                 </a>
               ) : (

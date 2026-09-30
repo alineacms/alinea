@@ -138,7 +138,7 @@ const authenticatedAtom = atom(async get => {
   const {locale} = page
 
   if (page.requestedRoot && page.requestedRoot !== root) {
-    await get(rootData.tree(locale).ready)
+    const tree = await get(rootData.tree(locale).ready)
     return (
       <>
         {meta('Root not found')}
@@ -146,6 +146,7 @@ const authenticatedAtom = atom(async get => {
           canManageMembers={canManageMembers}
           page={page}
           root={rootData}
+          tree={tree}
           workspace={{...workspaceData, name: workspace}}
         >
           <MissingRoot
@@ -159,7 +160,7 @@ const authenticatedAtom = atom(async get => {
   }
 
   if (entry) {
-    const [content, title] = await Promise.all([
+    const [content, title, tree] = await Promise.all([
       entryPage(page, get),
       entryTitle(page, entry, get),
       get(rootData.tree(locale).ready)
@@ -171,6 +172,7 @@ const authenticatedAtom = atom(async get => {
           canManageMembers={canManageMembers}
           page={page}
           root={rootData}
+          tree={tree}
           workspace={{...workspaceData, name: workspace}}
         >
           {content}
@@ -179,7 +181,7 @@ const authenticatedAtom = atom(async get => {
     )
   }
 
-  const [content] = await Promise.all([
+  const [content, tree] = await Promise.all([
     rootPage(page, get),
     get(rootData.tree(locale).ready)
   ])
@@ -190,6 +192,7 @@ const authenticatedAtom = atom(async get => {
         canManageMembers={canManageMembers}
         page={page}
         root={rootData}
+        tree={tree}
         workspace={{...workspaceData, name: workspace}}
       >
         {content}

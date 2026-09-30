@@ -5,8 +5,8 @@ import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {
-  createExplorerAtoms,
-  type ExplorerAtoms
+  ExplorerAtoms,
+  type ExplorerLocation
 } from '#/dashboard/atoms/explorer.js'
 import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
@@ -29,7 +29,7 @@ import {
   type TreeEntrySummary
 } from './entry.js'
 import {shaAtom} from './graph.js'
-import {overviewSortAtom, type Page, pageAtom} from './nav.js'
+import {overviewSortAtom, type Page, pageAtom, routeAtom} from './nav.js'
 import type {OverviewFilterSelection} from './overview.js'
 import {policyAtom} from './user.js'
 import {
@@ -63,6 +63,8 @@ export interface TreeSnapshot {
   expandedKeys: Set<string>
   items: Array<RootTreeNode>
   selectedKeys: Set<string>
+  /** The closest listed ancestor of a selected entry the tree does not list */
+  locationKey?: string
 }
 
 export interface TreeView {
@@ -116,7 +118,7 @@ export class TreeAtoms {
       })
   }
 
-  #source = atom(async get => {
+  #source = atom(async (get): Promise<TreeView> => {
     const config = get(configAtom)
     const locale = this.#locale
     async function listed(model: TreeEntryAtoms) {
@@ -136,21 +138,23 @@ export class TreeAtoms {
       }
     }
     let selectedKeys = new Set([...get(this.#selectedKeys)].map(String))
+    let locationKey: string | undefined
     const requestedId = [...selectedKeys][0]
     let selectedModel = requestedId ? treeEntryAtoms(requestedId) : undefined
     let selected = selectedModel ? await listed(selectedModel) : undefined
     // The tree does not list some entries, such as media files, so it
-    // reveals and selects their closest listed ancestor instead
+    // reveals their closest listed ancestor as their location instead
     if (selectedModel && !selected) {
       for (const ancestor of (await ancestors(selectedModel)).toReversed()) {
         selected = await listed(ancestor)
         if (!selected) continue
         selectedModel = ancestor
-        selectedKeys = new Set([ancestor.id])
+        selectedKeys = new Set()
+        locationKey = ancestor.id
         break
       }
     }
-    const selectedId = [...selectedKeys][0]
+    const selectedId = locationKey ?? [...selectedKeys][0]
     const parents =
       selectedModel && selected ? await get(selectedModel.parents) : []
     const models = new Map(parents.map(parent => [parent.id, parent]))
@@ -232,8 +236,8 @@ export class TreeAtoms {
     }
     return {
       entries,
-      snapshot: {expandedKeys, items: nested(null), selectedKeys}
-    } satisfies TreeView
+      snapshot: {expandedKeys, items: nested(null), selectedKeys, locationKey}
+    }
   })
 
   #state = unwrap(this.#source, previous => previous)
@@ -274,10 +278,10 @@ export class TreeAtoms {
       throw get(this.#itemSource(id))
     })
   )
+  /** The selected entry, or the location of a selected entry that is not listed */
   selectedItem = atom(get => {
     const state = get(this.#state)
-    const selectedId = state && [...state.snapshot.selectedKeys][0]
-    return selectedId ? state.entries.get(selectedId) : undefined
+    return state && locatedItem(state)
   })
   canCreate = atom(get => {
     if (get(this.#root.canCreate)) return true
@@ -313,7 +317,7 @@ export class TreeAtoms {
     await Promise.all(
       [...source.entries.keys()].map(id => get(this.#itemSource(id)))
     )
-    return source.snapshot
+    return source
   })
 }
 
@@ -424,13 +428,28 @@ export class RootAtoms {
    */
   #explorerFilters = atom<OverviewFilterSelection>({})
 
-  children = dispense((parentId: string | null) =>
-    createExplorerAtoms(
-      {
-        workspace: this.workspace,
-        root: this.key,
-        parentId: parentId ?? undefined
-      },
+  children = dispense((parentId: string | null) => {
+    const location: ExplorerLocation = {
+      workspace: this.workspace,
+      root: this.key,
+      parentId: parentId ?? undefined
+    }
+    return new ExplorerAtoms(
+      // The explorer of a page lists the location of its route, browsing to
+      // another location navigates to its page
+      atom(
+        () => location,
+        (get, set, update: SetStateAction<ExplorerLocation>) => {
+          const next = typeof update === 'function' ? update(location) : update
+          set(routeAtom, {
+            workspace: next.workspace,
+            root: next.root,
+            entry: next.parentId,
+            locale: next.locale ?? get(this.#explorerLocale) ?? undefined,
+            view: next.parentId ? 'overview' : undefined
+          })
+        }
+      ),
       {
         enableNavigation: true,
         sortState: overviewSortAtom(this.workspace, this.key, parentId),
@@ -442,9 +461,10 @@ export class RootAtoms {
         treeReady: locale => this.tree(locale).ready,
         selectionBehavior: 'toggle',
         selectionMode: 'multiple'
-      }
+      },
+      location
     )
-  )
+  })
 
   label = atom(get => get(this.data).label)
   icon = atom(get => get(this.data).icon ?? IcOutlineDescription)
@@ -534,6 +554,15 @@ export function treeAcceptsDrop(
   if (target.position !== 'on') return !entry.ordered
   const type = schema[entry.type]
   return !keys.has(entry.id) && Boolean(type && Type.isContainer(type))
+}
+
+/** The selected entry, or the location of a selected entry that is not listed */
+export function locatedItem({
+  entries,
+  snapshot
+}: TreeView): RootTreeItem | undefined {
+  const id = snapshot.locationKey ?? [...snapshot.selectedKeys][0]
+  return id ? entries.get(id) : undefined
 }
 
 function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {

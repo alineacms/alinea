@@ -184,7 +184,7 @@ test('tree renders children only when their parent is expanded', async () => {
   const root = rootAtoms('main', 'pages')
   const tree = root.createTree(null, atom(new Set<Key>()))
 
-  const rootSnapshot = await store.get(tree.ready)
+  const {snapshot: rootSnapshot} = await store.get(tree.ready)
   const rootItems = store.get(tree.items)
 
   expect(rootItems.map(item => item.id)).toEqual([parent._id])
@@ -197,7 +197,7 @@ test('tree renders children only when their parent is expanded', async () => {
   })
 
   store.set(tree.expandedKeys, new Set([parent._id]))
-  const expandedSnapshot = await store.get(tree.ready)
+  const {snapshot: expandedSnapshot} = await store.get(tree.ready)
   const expandedItems = store.get(tree.items)
 
   expect(expandedItems.map(item => item.id)).toEqual([parent._id, child._id])
@@ -251,7 +251,7 @@ test('selected entry ancestors load without expanding unrelated branches', async
   const root = rootAtoms('main', 'pages')
   const tree = root.createTree(null, atom(new Set<Key>([child._id])))
 
-  const snapshot = await store.get(tree.ready)
+  const {snapshot} = await store.get(tree.ready)
   const selectedItems = store.get(tree.items)
 
   expect(selectedItems.map(item => item.id)).toEqual([parent._id, child._id])
@@ -262,7 +262,7 @@ test('selected entry ancestors load without expanding unrelated branches', async
   expect(snapshot.selectedKeys).toEqual(new Set([child._id]))
 })
 
-test('the sidebar tree reveals the folder of a selected media file', async () => {
+test('the sidebar tree reveals the folder of a selected media file as its location', async () => {
   const config = Config.create({
     schema: {Page: DashboardTestPage},
     workspaces: {
@@ -301,14 +301,36 @@ test('the sidebar tree reveals the folder of a selected media file', async () =>
     route: {page: 'entry', workspace: 'main', root: 'media', entry: file._id}
   })
   const tree = root.tree(null)
-  const snapshot = await store.get(tree.ready)
+  const {snapshot} = await store.get(tree.ready)
 
   expect(snapshot.expandedKeys).toEqual(new Set([folder._id]))
   expect(snapshot.items).toEqual([
     {id: folder._id, children: [{id: nested._id, children: []}]}
   ])
-  expect(snapshot.selectedKeys).toEqual(new Set([nested._id]))
+  expect(snapshot.selectedKeys).toEqual(new Set())
+  expect(snapshot.locationKey).toBe(nested._id)
   expect(store.get(tree.selectedItem)?.id).toBe(nested._id)
+})
+
+test('the explorers of a root browse to a location by opening its page', async () => {
+  const {parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const root = rootAtoms('main', 'pages')
+
+  store.set(root.explorer.location, {
+    workspace: 'main',
+    root: 'pages',
+    parentId: parent._id
+  })
+
+  expect(store.get(root.explorer.location).parentId).toBeUndefined()
+  expect(store.get(routeAtom)).toMatchObject({
+    page: 'entry',
+    workspace: 'main',
+    root: 'pages',
+    entry: parent._id,
+    view: 'overview'
+  })
 })
 
 test('tree removes selected and expanded entries that become unreadable', async () => {
@@ -327,7 +349,8 @@ test('tree removes selected and expanded entries that become unreadable', async 
     .set({id: parent._id, deny: {read: true}})
   store.set(preloadUserPolicyAtom, localUser, policy)
 
-  await expect(store.get(tree.ready)).resolves.toEqual({
+  const {snapshot} = await store.get(tree.ready)
+  expect(snapshot).toEqual({
     expandedKeys: new Set([parent._id]),
     items: [],
     selectedKeys: new Set([parent._id])
