@@ -1324,7 +1324,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Adds a local file to a workspace's media library. Image dimensions, the average color, a thumbhash and a preview are computed, as in the dashboard. Images larger than the `resizeImages` option are scaled down first."
+          "text": "Adds a local file to a workspace's media library. Image dimensions, the average color, a thumbhash and a preview are computed, as in the dashboard. Images larger than the `resizeImages` option are scaled down first, as are the images in PDFs (see `compressPdfs`)."
         }
       ]
     },

@@ -7,8 +7,9 @@ import type {CreateInputRow, StoredRow} from '../Infer.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
 import {
   hasImageEdit,
-  imageResizeOptions,
+  isPdf,
   isTransformableImage,
+  uploadResize,
   type ImageEdit,
   type ImageTransform
 } from '../media/ImageTransform.js'
@@ -213,8 +214,8 @@ export interface UploadQuery {
   edit?: ImageEdit
   /**
    * Applies the edit and scales down images larger than the resizeImages
-   * option of the config: `alinea/core/media/TransformImage` does so in the
-   * browser or with sharp
+   * option of the config, and the images in PDFs larger than compressPdfs:
+   * `alinea/core/media/TransformImage` does so in the browser or with sharp
    */
   transformImage?(
     blob: Blob,
@@ -253,13 +254,12 @@ export class UploadOperation extends Operation {
         !edited || transformImage,
         'Editing an upload needs transformImage'
       )
-      const resize = imageResizeOptions(db.config.resizeImages)
+      const resize = uploadResize(fileName, db.config)
       const bytes = new Uint8Array(await source.arrayBuffer())
-      if (
-        transformImage &&
-        (edited || resize) &&
-        isTransformableImage(fileName, bytes)
-      ) {
+      const transformable = isPdf(fileName)
+        ? resize
+        : (edited || resize) && isTransformableImage(fileName, bytes)
+      if (transformImage && transformable) {
         const transformed = await transformImage(blob, fileName, {edit, resize})
         // Scaling down alone must make the file smaller
         if (edited || transformed.size < blob.size) {

@@ -1,3 +1,4 @@
+import type {Config} from '../Config.js'
 import {isRecord} from '../util/Objects.js'
 
 /** Clockwise rotation in quarter turns */
@@ -41,12 +42,31 @@ export const defaultImageResize: ImageResizeOptions = {
   maxHeight: 2560
 }
 
-/** The resize options of the config, undefined when resizing is disabled */
-export function imageResizeOptions(
-  option: ImageResizeOptions | false | undefined
+/** Images in PDF uploads are scaled down to fit these unless configured */
+export const defaultPdfResize: ImageResizeOptions = {
+  maxWidth: 2000,
+  maxHeight: 2000,
+  quality: 0.8
+}
+
+export function isPdf(fileName: string): boolean {
+  return fileName.toLowerCase().endsWith('.pdf')
+}
+
+/**
+ * How the images of an upload are scaled down before it is stored: the
+ * image itself or the images in a PDF. Undefined when it is stored as picked.
+ */
+export function uploadResize(
+  fileName: string,
+  {resizeImages, compressPdfs}: Pick<Config, 'resizeImages' | 'compressPdfs'>
 ): ImageResizeOptions | undefined {
-  if (option === false) return undefined
-  return option ?? defaultImageResize
+  if (isPdf(fileName))
+    return compressPdfs === false
+      ? undefined
+      : (compressPdfs ?? defaultPdfResize)
+  if (!imageEncodingType(fileName) || resizeImages === false) return undefined
+  return resizeImages ?? defaultImageResize
 }
 
 const encodings: Record<string, string> = {
