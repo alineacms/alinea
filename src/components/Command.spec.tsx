@@ -43,6 +43,22 @@ test('selects items with the keyboard and pointer', async ({mount, page}) => {
   )
 })
 
+test('marks only the item Enter picks, not the hovered one', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  await page.getByRole('searchbox', {name: 'Search blocks'}).focus()
+  await page.keyboard.press('ArrowDown')
+  const text = page.getByRole('option', {name: 'Text'})
+  const quote = page.getByRole('option', {name: 'Quote'})
+  await quote.hover()
+  await expect(text).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(quote).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await page.keyboard.press('Enter')
+  await expect(page.getByTestId('selected')).toHaveText('text')
+})
+
 test('picks from a popover and closes it', async ({mount, page}) => {
   await mount(<InPopover />)
   await page.getByRole('button', {name: 'Add block'}).click()
