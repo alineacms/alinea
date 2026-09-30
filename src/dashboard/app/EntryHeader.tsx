@@ -25,6 +25,7 @@ import type {FieldValidationError} from '#/core/Validation.js'
 import {activityAtom} from '../atoms/activity.js'
 import {configAtom} from '../atoms/core.js'
 import {
+  archiveEntriesAtom,
   deleteEntriesAtom,
   loadDeletePlanAtom,
   type DeletePlan
@@ -235,6 +236,7 @@ export function EntryHeader({
   const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
   const loadMoveTargets = useSetAtom(loadMoveTargetsAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
+  const archiveEntries = useSetAtom(archiveEntriesAtom)
   const replaceFile = useSetAtom(localeData.replaceFile)
   const reset = useSetAtom(node.reset)
   const isDirty = useAtomValueRaw(node.isDirty)
@@ -291,16 +293,25 @@ export function EntryHeader({
   // The references load before the dialog opens, the menu shows it is busy
   async function openDeleteDialog() {
     assert(activeVersion)
+    // No language is picked when the entry is not translated in the one shown
+    const locale = untranslated
+      ? localeData.requestedLocale
+      : activeVersion.locale
     setDeletePlan(
-      await loadDeletePlan([{...activeVersion, hasChildren}], locales)
+      await loadDeletePlan([{...activeVersion, hasChildren, locale}], locales)
     )
   }
 
   async function deleteAndNavigate(plan: DeletePlan) {
     assert(activeVersion)
     const {locale} = activeVersion
-    // Other languages remain when the one shown is not deleted
-    if (locale === null || store.get(plan.selectedLocales).includes(locale))
+    const selected = store.get(plan.selectedLocales)
+    // Other languages remain when the one shown is not deleted, and the
+    // untranslated view while the entry exists in another language
+    const removed = untranslated
+      ? locales.every(locale => selected.includes(locale))
+      : locale === null || selected.includes(locale)
+    if (removed)
       setRoute({
         workspace,
         root,
@@ -582,6 +593,7 @@ export function EntryHeader({
         plan={deletePlan}
         onClose={() => setDeletePlan(undefined)}
         onConfirm={deleteAndNavigate}
+        onArchive={archiveEntries}
       />
     </PageHeader>
   )

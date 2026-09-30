@@ -18,7 +18,7 @@ import {routeAtom} from '#/dashboard/atoms/nav.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useTransition} from 'react'
-import {IcRoundDelete, IcRoundWarning} from '../icons.js'
+import {IcRoundArchive, IcRoundDelete, IcRoundWarning} from '../icons.js'
 import css from './DeleteDialog.module.css'
 import {countReferenceSources, EntryReferenceList} from './EntryReferences.js'
 import {
@@ -35,10 +35,17 @@ export interface DeleteDialogProps {
   plan: DeletePlan | undefined
   onClose(): void
   onConfirm(plan: DeletePlan): Promise<void>
+  /** Archives the entries instead, offered when all of them can be */
+  onArchive?(plan: DeletePlan): Promise<void>
 }
 
 /** Confirms deleting entries, warning about the links that will break */
-export function DeleteDialog({plan, onClose, onConfirm}: DeleteDialogProps) {
+export function DeleteDialog({
+  plan,
+  onClose,
+  onConfirm,
+  onArchive
+}: DeleteDialogProps) {
   return (
     <DashboardModal
       open={Boolean(plan)}
@@ -51,6 +58,7 @@ export function DeleteDialog({plan, onClose, onConfirm}: DeleteDialogProps) {
           plan={plan}
           onClose={onClose}
           onConfirm={onConfirm}
+          onArchive={onArchive}
         />
       )}
     </DashboardModal>
@@ -64,21 +72,27 @@ interface DeleteDialogContentProps {
   plan: DeletePlan
   onClose(): void
   onConfirm(plan: DeletePlan): Promise<void>
+  onArchive?(plan: DeletePlan): Promise<void>
 }
 
 function DeleteDialogContent({
   plan,
   onClose,
-  onConfirm
+  onConfirm,
+  onArchive
 }: DeleteDialogContentProps) {
   const config = useAtomValueRaw(configAtom)
   const [selectedLocales, setSelectedLocales] = useAtom(plan.selectedLocales)
   const removals = useAtomValueRaw(plan.removals)
   const references = useAtomValueRaw(plan.references)
+  const hiddenSources = useAtomValueRaw(plan.hiddenSources)
+  const archivable = useAtomValueRaw(plan.archivable)
   const setRoute = useSetAtom(routeAtom)
   const setSidebarTab = useSetAtom(entrySidebarTabAtom)
   const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
-  const [isPending, startTransition] = useTransition()
+  const [isDeleting, startDelete] = useTransition()
+  const [isArchiving, startArchive] = useTransition()
+  const isPending = isDeleting || isArchiving
   const {subjects, locales} = plan
   const count = subjects.length
   const typeOf = (type: string) => config.schema[type]
@@ -89,17 +103,33 @@ function DeleteDialogContent({
   )
   const noun = files.length ? 'file' : folders.length ? 'folder' : 'entry'
   const sources = countReferenceSources(references)
+  const hiddenEntries =
+    hiddenSources === 1 ? '1 entry' : `${hiddenSources} entries`
+  const total = sources + hiddenSources
   const unlisted = Math.max(0, sources - maxListedSources)
   // Links to the entries or files inside the deleted ones
   const nested = references.some(
     ({reference}) => !subjects.some(item => item.id === reference.targetId)
   )
   const onlyFiles = files.length === count
-  const pickLocales = locales !== undefined && locales.length > 1
+  const [first] = subjects
+  // An entry is not translated in the language it is shown in when none is
+  // picked at first, it offers the languages it exists in
+  const pickLocales =
+    locales !== undefined &&
+    (locales.length > 1 ||
+      (locales.length === 1 && locales[0] !== first.locale))
 
   function confirm() {
-    startTransition(async () => {
+    startDelete(async () => {
       await onConfirm(plan)
+      onClose()
+    })
+  }
+
+  function archive() {
+    startArchive(async () => {
+      await onArchive?.(plan)
       onClose()
     })
   }
@@ -148,7 +178,7 @@ function DeleteDialogContent({
             {pickLocales ? ', in the selected languages.' : '.'}
           </Text>
         )}
-        {sources > 0 && (
+        {total > 0 && (
           <>
             <Alert variant="destructive" icon={IcRoundWarning}>
               <AlertTitle>
@@ -156,10 +186,12 @@ function DeleteDialogContent({
                 {nested &&
                   (count === 1 ? ' and its contents' : ' and their contents')}
                 {count === 1 && !nested ? ' has ' : ' have '}
-                {sources} {sources === 1 ? 'reference' : 'references'}
+                {total} {total === 1 ? 'reference' : 'references'}
               </AlertTitle>
               <AlertDescription>
-                The links from these entries will break.
+                {sources > 0
+                  ? 'The links from these entries will break.'
+                  : `The links from ${hiddenEntries} you can't access will break.`}
               </AlertDescription>
             </Alert>
             <EntryReferenceList
@@ -206,10 +238,30 @@ function DeleteDialogContent({
                   And {unlisted} more {unlisted === 1 ? 'entry' : 'entries'}.
                 </Text>
               ))}
+            {sources > 0 &&
+              hiddenSources > 0 && (
+                // Their titles stay hidden
+                <Text as="p" size="sm" color="muted">
+                  And links in {hiddenEntries} you can't access.
+                </Text>
+              )}
           </>
         )}
       </DashboardModalContent>
       <DashboardModalFooter>
+        {onArchive &&
+          archivable && (
+            // Archived entries are unpublished but can be restored
+            <Button
+              variant="outline"
+              icon={IcRoundArchive}
+              disabled={isPending}
+              loading={isArchiving}
+              onClick={archive}
+            >
+              Archive instead
+            </Button>
+          )}
         <div className={styles.DeleteDialog.actions()}>
           <Button variant="ghost" onClick={onClose}>
             Cancel
@@ -218,7 +270,7 @@ function DeleteDialogContent({
             color="destructive"
             icon={IcRoundDelete}
             disabled={isPending || removals.length === 0}
-            loading={isPending}
+            loading={isDeleting}
             onClick={confirm}
           >
             Delete

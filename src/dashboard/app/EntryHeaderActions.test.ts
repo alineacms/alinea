@@ -59,9 +59,9 @@ const cases: Array<ActionCase> = [
     expected: {}
   },
   {
-    name: 'hides actions for an untranslated entry',
-    state: {untranslated: true},
-    expected: {}
+    name: 'only deletes an untranslated entry',
+    state: {untranslated: true, canMove: true},
+    expected: {delete: true}
   },
   {
     name: 'removes or deletes a regular draft',

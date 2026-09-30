@@ -15,6 +15,7 @@ export const dashboardScenarioIds = {
   localizedStart: 'workflow-localized-start',
   localizedFolder: 'workflow-localized-folder',
   localizedChild: 'workflow-localized-child',
+  childLinking: 'workflow-child-linking',
   localizedTarget: 'workflow-localized-target',
   localizedLinking: 'workflow-localized-linking',
   popularTarget: 'workflow-popular-target',

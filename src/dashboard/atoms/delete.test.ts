@@ -8,6 +8,7 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
 import {
+  archiveEntriesAtom,
   deleteEntriesAtom,
   loadDeletePlanAtom,
   type DeleteSubject
@@ -21,6 +22,8 @@ const Page = Config.document('Page', {
   fields: {link: Field.entry('Link')}
 })
 
+const other = Config.root('Other', {contains: ['Page']})
+
 const config = Config.create({
   schema: {Page},
   workspaces: {
@@ -31,7 +34,7 @@ const config = Config.create({
           contains: ['Page'],
           i18n: {locales: ['en', 'nl']}
         }),
-        other: Config.root('Other', {contains: ['Page']})
+        other
       }
     })
   }
@@ -201,4 +204,92 @@ test('references are reloaded when another entry links to the entry', async () =
     'Child link'
   ])
   unsubscribe()
+})
+
+test('published entries can be archived instead, in the picked languages', async () => {
+  const {db, store} = await fixture()
+  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  expect(store.get(plan.archivable)).toBe(true)
+  store.set(plan.selectedLocales, ['en', 'nl'])
+  await store.set(archiveEntriesAtom, plan)
+  const statuses = await db.find({
+    id: 'test',
+    status: 'all',
+    select: {locale: Entry.locale, status: Entry.status}
+  })
+  expect(statuses.map(row => `${row.locale} ${row.status}`).sort()).toEqual([
+    'en archived',
+    'nl archived'
+  ])
+  // Archived entries are not archived again
+  const next = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  expect(store.get(next.archivable)).toBe(false)
+})
+
+test('only entries that are all published can be archived instead', async () => {
+  const {db, store} = await fixture()
+  await db.archive({id: 'test', locale: 'nl'})
+  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  expect(store.get(plan.archivable)).toBe(true)
+  store.set(plan.selectedLocales, ['en', 'nl'])
+  expect(store.get(plan.archivable)).toBe(false)
+  store.set(plan.selectedLocales, [])
+  expect(store.get(plan.archivable)).toBe(false)
+
+  const plain: DeleteSubject = {
+    ...subject,
+    id: 'plain',
+    root: 'other',
+    locale: null,
+    hasChildren: false
+  }
+  const batch = await store.set(loadDeletePlanAtom, [subject, plain])
+  expect(store.get(batch.archivable)).toBe(true)
+  const archived = await store.set(loadDeletePlanAtom, [
+    {...subject, locale: 'nl'},
+    plain
+  ])
+  expect(store.get(archived.archivable)).toBe(false)
+
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({root: other, deny: {archive: true}})
+  store.set(preloadUserPolicyAtom, localUser, policy)
+  const denied = await store.set(loadDeletePlanAtom, [subject, plain])
+  expect(store.get(denied.archivable)).toBe(false)
+})
+
+test('links from entries the user can not read are counted, not listed', async () => {
+  const {db, store} = await fixture()
+  await db.create({
+    type: Page,
+    id: 'secret',
+    root: 'other',
+    set: {
+      title: 'Secret',
+      link: Edit.link(Page.link).addEntry('child').value()
+    }
+  })
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({root: other, deny: {read: true}})
+  store.set(preloadUserPolicyAtom, localUser, policy)
+  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  expect(sources(store.get(plan.references))).toEqual(['Home en'])
+  // Plain and Secret, which links to the child deleted with the entry
+  expect(store.get(plan.hiddenSources)).toBe(2)
+  store.set(plan.selectedLocales, [])
+  expect(store.get(plan.hiddenSources)).toBe(0)
+})
+
+test('an entry shown in a language it is not translated in picks none', async () => {
+  const {store} = await fixture()
+  const plan = await store.set(
+    loadDeletePlanAtom,
+    [{...subject, locale: 'fr'}],
+    ['en', 'nl']
+  )
+  expect(plan.locales).toEqual(['en', 'nl'])
+  expect(store.get(plan.selectedLocales)).toEqual([])
+  expect(store.get(plan.removals)).toEqual([])
 })
