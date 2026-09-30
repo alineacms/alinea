@@ -6,19 +6,32 @@ import {transformImage} from './TransformImage.js'
 
 const resize = defaultPdfResize
 
+// Generating a noisy scan is slow on CI runners, create each size once
+const scans = new Map<string, Promise<Buffer>>()
+
+function scanImage(width: number, height: number) {
+  const key = `${width}x${height}`
+  let jpeg = scans.get(key)
+  if (!jpeg) {
+    jpeg = sharp({
+      create: {
+        width,
+        height,
+        channels: 3,
+        background: '#888',
+        noise: {type: 'gaussian', mean: 128, sigma: 40}
+      }
+    })
+      .blur(2)
+      .jpeg({quality: 95})
+      .toBuffer()
+    scans.set(key, jpeg)
+  }
+  return jpeg
+}
+
 async function scan(pages: number, width = 2480, height = 3508) {
-  const jpeg = await sharp({
-    create: {
-      width,
-      height,
-      channels: 3,
-      background: '#888',
-      noise: {type: 'gaussian', mean: 128, sigma: 40}
-    }
-  })
-    .blur(2)
-    .jpeg({quality: 95})
-    .toBuffer()
+  const jpeg = await scanImage(width, height)
   const pdf = await PDFDocument.create()
   const image = await pdf.embedJpg(jpeg)
   for (let i = 0; i < pages; i++)
