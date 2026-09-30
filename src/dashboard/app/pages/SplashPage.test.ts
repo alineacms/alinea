@@ -23,6 +23,17 @@ test('a creation that was not updated since is the creation', () => {
   ).toEqual({action: 'Created', actor: 'Alice', changedAt: 100_000})
 })
 
+test('an unknown creator falls back to who updated the entry', () => {
+  expect(
+    recentChange({
+      createdAt: 100,
+      createdBy: {name: '', email: ''},
+      updatedAt: 100,
+      updatedBy: alice
+    })
+  ).toEqual({action: 'Created', actor: 'Alice', changedAt: 100_000})
+})
+
 test('an update after the creation is an edit by the last editor', () => {
   expect(
     recentChange({

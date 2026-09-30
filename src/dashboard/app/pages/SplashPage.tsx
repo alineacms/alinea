@@ -139,7 +139,7 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
         new Map(
           readableCandidates.map(entry => [
             entry.id,
-            toRecentEntry(entry, trustsIdTimestamps)
+            toRecentEntry(entry, trustsIdTimestamps, now)
           ])
         ).values()
       )
@@ -213,10 +213,10 @@ export function recentChange({
   if (created)
     return {
       action: 'Created',
-      actor: auditName(createdBy ?? updatedBy),
+      actor: auditName(createdBy) ?? auditName(updatedBy),
       changedAt: createdAt * 1000
     }
-  return {actor: auditName(updatedBy ?? createdBy)}
+  return {actor: auditName(updatedBy) ?? auditName(createdBy)}
 }
 
 function auditName(user: EntryAuditUser | null) {
@@ -225,13 +225,16 @@ function auditName(user: EntryAuditUser | null) {
 
 function toRecentEntry(
   entry: RecentEntryRow,
-  trustsIdTimestamps: boolean
+  trustsIdTimestamps: boolean,
+  now: number
 ): RecentEntryCandidate | undefined {
   const change = recentChange(entry)
   const changedAt =
     change.changedAt ??
     (trustsIdTimestamps ? timestampFromId(entry.id) : undefined)
-  if (changedAt === undefined) return undefined
+  // Like ids, audit times far in the future were not made by this clock
+  if (changedAt === undefined || changedAt > now + futureTimestampTolerance)
+    return undefined
   return {...entry, ...change, changedAt}
 }
 
