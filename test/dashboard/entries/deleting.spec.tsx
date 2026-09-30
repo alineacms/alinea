@@ -106,7 +106,7 @@ test('deletes only the chosen language and warns about its references', async ({
   await expect(app.title).toHaveText('Cible localisée')
 })
 
-test('lists a few references and links to the references tab for the rest', async ({
+test('lists a few references and links to the references tab of an entry with children', async ({
   dashboard,
   mount
 }) => {
@@ -116,6 +116,7 @@ test('lists a few references and links to the references tab for the rest', asyn
     title: 'Popular target'
   })
 
+  await app.page.getByRole('button', {name: 'Edit entry'}).click()
   await app.runEntryAction('Delete')
   const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
   await expect(dialog.getByRole('alert')).toContainText(

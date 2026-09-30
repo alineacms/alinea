@@ -343,6 +343,15 @@ async function createDashboardScenario({
       }
     })
   await db.create({
+    id: dashboardScenarioIds.popularChild,
+    locale: 'en',
+    parentId: dashboardScenarioIds.popularTarget,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'localized',
+    set: {title: 'Popular child'}
+  })
+  await db.create({
     id: dashboardScenarioIds.searchPartial,
     type: ScenarioPage,
     workspace: 'main',

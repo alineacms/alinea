@@ -183,12 +183,17 @@ function DeleteDialogContent({
                   variant="ghost"
                   onClick={() => {
                     const [subject] = subjects
+                    const locale =
+                      selectedLocales.length === 1
+                        ? selectedLocales[0]
+                        : subject.locale
                     onClose()
                     setRoute({
                       workspace: subject.workspace,
                       root: subject.root,
                       entry: subject.id,
-                      locale: subject.locale ?? undefined
+                      locale: locale ?? undefined,
+                      view: 'edit'
                     })
                     setSidebarTab('references')
                     setSidebarOpen(true)
