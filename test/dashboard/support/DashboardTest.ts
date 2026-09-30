@@ -99,7 +99,9 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
         const driver = new DashboardDriver(page, component)
         const expectedTitle =
           options.title ?? entry[0].toUpperCase() + entry.slice(1)
-        await expect(driver.title).toHaveText(expectedTitle)
+        // The first render boots the dashboard and its database, which takes
+        // longer on busy CI runners than later assertions need
+        await expect(driver.title).toHaveText(expectedTitle, {timeout: 15_000})
         return driver
       }
     })
