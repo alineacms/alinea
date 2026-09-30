@@ -353,6 +353,10 @@ async function createDashboardScenario({
     root: 'pages',
     set: {title: 'Wireless receiver at 77 GHz'}
   })
+  // Uploads record who created and last replaced a file, in seconds
+  const now = Math.floor(Date.now() / 1000)
+  const alice = {name: 'Alice Editor', email: 'alice@example.com'}
+  const local = {name: 'Local user', email: 'local@example.com'}
   await db.mutate([
     {
       op: 'create',
@@ -405,7 +409,36 @@ async function createDashboardScenario({
         extension: '.jpg',
         size: 1024,
         hash: 'nested-media-file',
-        alt: null
+        alt: null,
+        metadata: {
+          createdAt: now - 3 * 24 * 60 * 60,
+          createdBy: alice,
+          updatedAt: now - 60 * 60,
+          updatedBy: local
+        }
+      }
+    },
+    {
+      op: 'create',
+      id: dashboardScenarioIds.uploadedMediaFile,
+      type: 'MediaFile',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      data: {
+        title: 'Uploaded image',
+        path: 'uploaded-image',
+        location: 'uploaded-image.jpg',
+        extension: '.jpg',
+        size: 1024,
+        hash: 'uploaded-image',
+        alt: null,
+        metadata: {
+          createdAt: now - 2 * 60 * 60,
+          createdBy: alice,
+          updatedAt: now - 2 * 60 * 60,
+          updatedBy: alice
+        }
       }
     }
   ])

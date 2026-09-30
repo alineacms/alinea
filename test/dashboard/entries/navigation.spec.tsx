@@ -229,6 +229,25 @@ test('shows the configured root icon in the rail, the sidebar and the splash pag
   ).toBe(fallback)
 })
 
+test('lists recently changed media files with their action and author on the splash page', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const roots = app.page.getByRole('complementary', {name: 'Workspace roots'})
+  await app.page.evaluate(() => {
+    window.location.hash = '#/'
+  })
+  await expect(roots).toHaveCount(0)
+  // The separators between action, time and author are hidden dots
+  await expect(
+    app.page.getByRole('button', {name: /^Nested media file/})
+  ).toContainText(/Edited·.+ago·Local user$/)
+  await expect(
+    app.page.getByRole('button', {name: /^Uploaded image/})
+  ).toContainText(/Created·.+ago·Alice Editor$/)
+})
+
 test('keeps a collapsed parent closed when selecting a child elsewhere', async ({
   dashboard,
   mount

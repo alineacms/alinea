@@ -21,6 +21,7 @@ export const dashboardScenarioIds = {
   mediaFolder: 'workflow-media-folder',
   nestedMediaFolder: 'workflow-nested-media-folder',
   nestedMediaFile: 'workflow-nested-media-file',
+  uploadedMediaFile: 'workflow-uploaded-media-file',
   searchPartial: 'workflow-search-partial',
   searchTitle: 'workflow-search-title',
   searchBody: 'workflow-search-body'

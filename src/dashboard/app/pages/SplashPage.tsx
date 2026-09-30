@@ -41,18 +41,31 @@ const recentCandidateWindowSize = recentEntryCount
 const visibleRootCount = 2
 const futureTimestampTolerance = 24 * 60 * 60 * 1000
 
-interface RecentEntryCandidate {
-  actor?: string
-  changedAt: number
+export interface RecentChangeAudit {
+  createdAt: number | null
   createdBy: EntryAuditUser | null
+  updatedAt: number | null
+  updatedBy: EntryAuditUser | null
+}
+
+export interface RecentChange {
+  action?: 'Created' | 'Edited'
+  actor?: string
+  /** Milliseconds since the epoch */
+  changedAt?: number
+}
+
+interface RecentEntryRow extends RecentChangeAudit {
   id: string
   locale: string | null
   root: string
   title: string
   type: string
-  updatedAt: number | null
-  updatedBy: EntryAuditUser | null
   workspace: string
+}
+
+interface RecentEntryCandidate extends RecentEntryRow, RecentChange {
+  changedAt: number
 }
 
 interface RecentEntry extends RecentEntryCandidate {
@@ -167,6 +180,7 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
 }
 
 const recentEntrySelection = {
+  createdAt: Entry.createdAt,
   createdBy: Entry.createdBy,
   id: Entry.id,
   locale: Entry.locale,
@@ -178,20 +192,47 @@ const recentEntrySelection = {
   workspace: Entry.workspace
 }
 
+/**
+ * The last change recorded in the audit metadata of an entry or media file:
+ * an update after the creation is an edit, a creation that was not updated
+ * since is the creation
+ */
+export function recentChange({
+  createdAt,
+  createdBy,
+  updatedAt,
+  updatedBy
+}: RecentChangeAudit): RecentChange {
+  const created = typeof createdAt === 'number'
+  if (typeof updatedAt === 'number' && !(created && updatedAt <= createdAt))
+    return {
+      action: 'Edited',
+      actor: auditName(updatedBy),
+      changedAt: updatedAt * 1000
+    }
+  if (created)
+    return {
+      action: 'Created',
+      actor: auditName(createdBy ?? updatedBy),
+      changedAt: createdAt * 1000
+    }
+  return {actor: auditName(updatedBy ?? createdBy)}
+}
+
+function auditName(user: EntryAuditUser | null) {
+  return user?.name || user?.email || undefined
+}
+
 function toRecentEntry(
-  entry: Omit<RecentEntryCandidate, 'actor' | 'changedAt'>,
+  entry: RecentEntryRow,
   trustsIdTimestamps: boolean
 ): RecentEntryCandidate | undefined {
+  const change = recentChange(entry)
   const changedAt =
-    typeof entry.updatedAt === 'number'
-      ? entry.updatedAt * 1000
-      : trustsIdTimestamps
-        ? timestampFromId(entry.id)
-        : undefined
+    change.changedAt ??
+    (trustsIdTimestamps ? timestampFromId(entry.id) : undefined)
   if (changedAt === undefined) return undefined
-  const auditUser = entry.updatedBy ?? entry.createdBy
-  const actor = auditUser?.name || auditUser?.email || undefined
-  return {...entry, actor, changedAt}
+  return {...entry, ...change, changedAt}
 }
 
 interface SplashPageProps {
@@ -378,13 +419,15 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
                   </span>
                 </span>
                 <span className={styles.SplashPage.entry.meta()}>
+                  {entry.action && <span>{entry.action}</span>}
+                  {entry.action && <span aria-hidden="true">·</span>}
+                  <Timestamp date={entry.changedAt} format="relative" />
+                  {entry.actor && <span aria-hidden="true">·</span>}
                   {entry.actor && (
                     <span className={styles.SplashPage.entry.user()}>
                       {entry.actor}
                     </span>
                   )}
-                  {entry.actor && <span aria-hidden="true">·</span>}
-                  <Timestamp date={entry.changedAt} format="relative" />
                 </span>
               </span>
             </Button>
