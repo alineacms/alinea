@@ -1,5 +1,6 @@
-import {JsonLoader} from '#/core/loader/JsonLoader.js'
 import type {Config} from '#/core/Config.js'
+import {loaderFor} from '#/core/Loader.js'
+import {JsonLoader} from '#/core/loader/JsonLoader.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {
   createRecord,
@@ -9,7 +10,6 @@ import {
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {extname} from '#/core/util/Paths.js'
 import {DateField} from '#/field/date/DateField.js'
 import {NumberField} from '#/field/number/NumberField.js'
 import {index, primaryKey, sql, table, type Database, type Table} from 'rado'
@@ -25,6 +25,8 @@ function entryVersionId(
 }
 
 /** One complete authored entry version. Only arrays and authored data are JSON. */
+const encoder = new TextEncoder()
+
 export const EntryIndexColumns = {
   /**
    * Also the rowid of the version's full-text search row. Declared, so VACUUM
@@ -65,15 +67,13 @@ export const EntryIndexColumns = {
   rowHash: column.varchar(undefined, {length: 128}).notNull(),
   /** Hash of this entry's child directory in the synced source tree. */
   childrenSha: column.varchar(undefined, {length: 128}),
-  /**
-   * Exact source blob where data differs from it: for seeded rows, whose data
-   * is expanded, and for files that are not JSON.
-   */
+  /** Exact source blob for seeded rows whose expanded data differs. */
   payload: column.text(),
   /**
-   * The source record as JSON: the exact source of JSON files, or expanded
-   * JSON for seeded rows. Stored as JSONB where SQLite supports it; read it as
-   * text with `entryDataText`.
+   * The source record as JSON: the exact source of JSON files, the record of
+   * files in other formats (see `storedSource`), or expanded JSON for seeded
+   * rows. Stored as JSONB where SQLite supports it; read it as text with
+   * `entryDataText`.
    */
   data: column.text().notNull()
 }
@@ -184,10 +184,6 @@ export function entryIndexRow(entry: IndexedEntry) {
   const record =
     entry.recordText ??
     JSON.stringify(createRecord(entry, entry.versionStatus), null, 2)
-  // The data column holds JSON, so keep the source apart when it differs
-  const storesSource =
-    Boolean(entry.seeded) ||
-    extname(entry.filePath).toLowerCase() !== JsonLoader.extension
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
     id: entry.id,
@@ -219,7 +215,7 @@ export function entryIndexRow(entry: IndexedEntry) {
     seeded: entry.seeded,
     rowHash: entry.rowHash,
     childrenSha: entry.childrenSha ?? null,
-    payload: storesSource ? (entry.payload ?? record) : null,
+    payload: entry.seeded ? (entry.payload ?? record) : null,
     data: entry.seeded ? JSON.stringify(entry.data) : record
   }
 }
@@ -232,4 +228,21 @@ export function storedEntryData(
   assert(isRecord(raw), 'Invalid stored entry data')
   const {data} = parseRecord(raw as EntryRecord)
   return {path, ...data}
+}
+
+/**
+ * The source file of a stored row: its payload, or its record as JSON written
+ * back in the format of its file. Files alinea wrote come back byte for byte,
+ * others parse to the same record.
+ */
+export function storedSource(
+  config: Config,
+  filePath: string,
+  payload: string | null,
+  data: string
+): Uint8Array {
+  if (payload !== null) return encoder.encode(payload)
+  const loader = loaderFor(filePath)
+  if (loader === JsonLoader) return encoder.encode(data)
+  return loader.format(config.schema, JSON.parse(data))
 }

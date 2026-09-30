@@ -275,7 +275,7 @@ test('entry database returns source blobs by hash', async () => {
   })
 })
 
-test('entry database keeps the exact source of files that are not JSON', async () => {
+test('entry database stores the record of files that are not JSON and writes it back', async () => {
   // A format whose text differs from the JSON of its record
   const FakeLoader: Loader = {
     extension: '.fake',
@@ -322,7 +322,8 @@ test('entry database keeps the exact source of files that are not JSON', async (
       })
       .from(EntryIndexTable)
       .get()
-    expect(stored?.payload).toBe(new TextDecoder().decode(contents))
+    // Only the record is stored, the file is written back when asked for
+    expect(stored?.payload).toBeNull()
     expect(JSON.parse(stored!.data)).toEqual(record)
     const sha = (await source.getTree()).index().get('pages/page.fake')!
     const blobs = Array<[string, Uint8Array]>()
