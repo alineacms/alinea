@@ -1,5 +1,5 @@
 import type {Config} from '../Config.js'
-import type {EntryStatus} from '../Entry.js'
+import {Entry, type EntryStatus} from '../Entry.js'
 import {Field} from '../Field.js'
 import {HttpError} from '../HttpError.js'
 import {createId} from '../Id.js'
@@ -21,7 +21,7 @@ import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import type {User} from '../User.js'
 import {createFileHash} from '../util/ContentHash.js'
-import {keys} from '../util/Objects.js'
+import {entries, fromEntries, keys} from '../util/Objects.js'
 import {basename, extname} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
 import {Workspace} from '../Workspace.js'
@@ -46,6 +46,8 @@ export interface CreateQuery<Fields> {
   set: Partial<CreateInputRow<Fields>>
   insertOrder?: 'first' | 'last'
   overwrite?: boolean
+  /** Recorded as the creator, or the last editor of an overwritten entry */
+  user?: User | null
 }
 
 function typeName(config: Config, type: Type) {
@@ -68,7 +70,15 @@ export class CreateOp<Fields> extends Operation {
           locale: op.locale ?? null,
           parentId: op.parentId ?? null,
           type: typeName(config, op.type),
-          data: initializeSet(op.type, op.set),
+          data: Type.beforeSave(op.type, initializeSet(op.type, op.set), {
+            action: !op.overwrite
+              ? 'create'
+              : (op.status ?? 'published') === 'published'
+                ? 'publish'
+                : 'update',
+            user: op.user,
+            now: new Date()
+          }),
           insertOrder: op.insertOrder,
           status: op.status,
           overwrite: op.overwrite,
@@ -131,11 +141,13 @@ export interface UpdateQuery<Fields> {
   set: Partial<StoredRow<Fields>>
   status?: 'draft' | 'published' | 'archived'
   locale?: string | null
+  /** Recorded as the last editor */
+  user?: User | null
 }
 
 export class UpdateOperation<Definition> extends Operation {
   constructor(query: UpdateQuery<Definition>) {
-    super((): Array<Mutation> => {
+    super(async (db): Promise<Array<Mutation>> => {
       const {status = 'published', locale = null, id, set} = query
       return [
         {
@@ -143,11 +155,38 @@ export class UpdateOperation<Definition> extends Operation {
           id,
           locale,
           status: status as EntryStatus,
-          set
+          set: await beforeUpdate(db, query)
         }
       ]
     })
   }
+}
+
+/** Runs the save hooks of the type on the updated entry, and adds the fields
+ * they change (such as who last updated it) to the update */
+async function beforeUpdate<Definition>(
+  db: WriteableGraph,
+  {status = 'published', locale = null, id, set, user}: UpdateQuery<Definition>
+): Promise<Record<string, unknown>> {
+  const current = await db.first({
+    select: {type: Entry.type, data: Entry.data},
+    id,
+    locale,
+    status
+  })
+  const type = current && db.config.schema[current.type]
+  // The transaction reports a missing entry
+  if (!type) return set
+  const updated = {...current.data, ...set}
+  const saved = Type.beforeSave(type, updated, {
+    action: status === 'published' ? 'publish' : 'update',
+    user,
+    now: new Date()
+  })
+  const changed = entries(saved).filter(([key, value]) => {
+    return value !== updated[key]
+  })
+  return {...set, ...fromEntries(changed)}
 }
 
 export interface MoveQuery {

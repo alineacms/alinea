@@ -143,6 +143,8 @@ test('create fills document metadata defaults around explicit values', async () 
     }
   })
 
+  const {createdAt} = entry.metadata
+  test.ok(typeof createdAt === 'number')
   test.equal(entry.metadata, {
     title: '',
     description: '',
@@ -152,9 +154,9 @@ test('create fills document metadata defaults around explicit values', async () 
       title: '',
       description: ''
     },
-    createdAt: null,
+    createdAt,
     createdBy: {name: '', email: ''},
-    updatedAt: null,
+    updatedAt: createdAt,
     updatedBy: {name: '', email: ''}
   })
 })
@@ -644,7 +646,8 @@ test('update does not add a MediaFile alias when its public URL is unchanged', a
     set: {location: '/replacement.jpg'}
   })
 
-  const aliases = await db.get({
+  // Files leave empty aliases out
+  const aliases = await db.first({
     id: entry._id,
     select: Entry.aliases
   })

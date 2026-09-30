@@ -245,12 +245,9 @@ async function setup() {
       id,
       locale,
       status: 'published',
-      set: Type.beforeSave(type, value, {
-        action: 'publish',
-        user,
-        now: new Date()
-      }),
-      overwrite: true
+      set: value,
+      overwrite: true,
+      user
     })
   }
   /** Upload a file like the dashboard's media library does */

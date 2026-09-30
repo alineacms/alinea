@@ -2,6 +2,7 @@ import '#test/react.js'
 import {Entry} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {OpenFilter} from '#/core/Filter.js'
+import {createId} from '#/core/Id.js'
 import {getExpr, getRoot} from '#/core/Internal.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
@@ -647,6 +648,27 @@ test('columns with position start come right after the title', () => {
   ])
 })
 
+/** Creates an entry in pages without audit data, as from before it */
+async function createUnaudited(
+  db: LocalDB,
+  type: 'Note' | 'Page',
+  title: string,
+  status?: 'draft'
+) {
+  await db.mutate([
+    {
+      op: 'create',
+      id: createId(),
+      locale: null,
+      type,
+      workspace: 'main',
+      root: 'pages',
+      status,
+      data: {title}
+    }
+  ])
+}
+
 async function mixedChildren() {
   const db = new LocalDB(open)
   await db.sync()
@@ -654,21 +676,11 @@ async function mixedChildren() {
     type: Note,
     workspace: 'main',
     root: 'pages',
-    set: {title: 'Note', metadata: {updatedAt: 5, updatedBy: {name: 'Ann'}}}
-  } as never)
-  await db.create({
-    type: Note,
-    workspace: 'main',
-    root: 'pages',
-    set: {title: 'Plain note'}
+    set: {title: 'Note'},
+    user: {sub: 'ann', name: 'Ann', email: ''}
   })
-  await db.create({
-    type: Page,
-    workspace: 'main',
-    root: 'pages',
-    status: 'draft',
-    set: {title: 'Draft page'}
-  })
+  await createUnaudited(db, 'Note', 'Plain note')
+  await createUnaudited(db, 'Page', 'Draft page', 'draft')
   return db
 }
 
@@ -696,18 +708,8 @@ test('explorers resolve their columns from the children of the parent', async ()
 test('explorer columns follow the children as the content changes', async () => {
   const db = new LocalDB(open)
   await db.sync()
-  await db.create({
-    type: Note,
-    workspace: 'main',
-    root: 'pages',
-    set: {title: 'A'}
-  })
-  await db.create({
-    type: Note,
-    workspace: 'main',
-    root: 'pages',
-    set: {title: 'B'}
-  })
+  await createUnaudited(db, 'Note', 'A')
+  await createUnaudited(db, 'Note', 'B')
   const store = createDashboardStore(open, db)
   await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
@@ -723,13 +725,7 @@ test('explorer columns follow the children as the content changes', async () => 
   // Sorting keeps the columns
   store.set(explorer.requestedSort, {column: 'title', direction: 'desc'})
   expect(await keys()).toEqual(['path', 'summary'])
-  await db.create({
-    type: Note,
-    workspace: 'main',
-    root: 'pages',
-    status: 'draft',
-    set: {title: 'C'}
-  })
+  await createUnaudited(db, 'Note', 'C', 'draft')
   await store.set(syncAtom)
   expect(await keys()).toEqual(['status', 'path', 'summary'])
 })

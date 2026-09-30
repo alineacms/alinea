@@ -5,7 +5,7 @@ import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
-import {Field, type FieldBeforeSaveAction} from '#/core/Field.js'
+import {Field} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
@@ -14,7 +14,6 @@ import {Permission} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
-import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
@@ -111,22 +110,9 @@ function withPath(type: Type, value: Record<string, unknown>) {
   return path ? {...value, path} : value
 }
 
-function prepareData(
-  get: Getter,
-  node: ReactiveNode<object>,
-  type: Type,
-  action: FieldBeforeSaveAction,
-  user: User
-) {
+function prepareData(get: Getter, node: ReactiveNode<object>, type: Type) {
   const current = get(node.value) as Record<string, unknown>
-  return {
-    checkpoint: current,
-    data: Type.beforeSave(type, withPath(type, current), {
-      action,
-      user,
-      now: new Date()
-    })
-  }
+  return {checkpoint: current, data: withPath(type, current)}
 }
 
 export class EntryLocaleAtoms {
@@ -496,13 +482,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {checkpoint, data} = prepareData(
-      get,
-      node,
-      typeConfig,
-      'update',
-      get(userAtom)
-    )
+    const {checkpoint, data} = prepareData(get, node, typeConfig)
     policy.assert(Permission.Update, activeEntry)
     const saved = await graph.create({
       type: typeConfig,
@@ -511,6 +491,7 @@ export class EntryLocaleAtoms {
       status: 'draft',
       set: data,
       overwrite: true,
+      user: get(userAtom),
       select: Entry.data
     })
     set(node.rebase, {checkpoint, saved})
@@ -528,13 +509,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {checkpoint, data} = prepareData(
-      get,
-      node,
-      typeConfig,
-      'publish',
-      get(userAtom)
-    )
+    const {checkpoint, data} = prepareData(get, node, typeConfig)
     policy.assert(Permission.Publish, activeEntry)
     this.#assertValid(get, node)
     const saved = await graph.create({
@@ -544,6 +519,7 @@ export class EntryLocaleAtoms {
       status: 'published',
       set: data,
       overwrite: true,
+      user: get(userAtom),
       select: Entry.data
     })
     set(node.rebase, {checkpoint, saved})
@@ -575,13 +551,7 @@ export class EntryLocaleAtoms {
     const type = config.schema[dataState.type]
     assert(type, `Type "${dataState.type}" not found in config`)
     if (!config.enableDrafts) this.#assertValid(get, node)
-    const {checkpoint, data} = prepareData(
-      get,
-      node,
-      type,
-      'translate',
-      get(userAtom)
-    )
+    const {checkpoint, data} = prepareData(get, node, type)
     const graph = get(graphAtom)
     const saved = await graph.create({
       type,
@@ -592,6 +562,7 @@ export class EntryLocaleAtoms {
       locale: this.requestedLocale,
       status: config.enableDrafts ? 'draft' : 'published',
       set: data,
+      user: get(userAtom),
       select: Entry.data
     })
     set(node.rebase, {checkpoint, saved})
