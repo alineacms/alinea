@@ -215,3 +215,54 @@ test('move onto a same-path published sibling throws', async () => {
     await db.close()
   }
 })
+
+test('moves keep to the types a root holds and to their workspace', async () => {
+  const Item = Config.document('Item', {fields: {}})
+  const Folder = Config.document('Folder', {contains: [Item], fields: {}})
+  const roots = () => ({
+    pages: Config.root('Pages', {contains: [Folder]}),
+    loose: Config.root('Loose')
+  })
+  const {config} = createCMS({
+    schema: {Folder, Item},
+    workspaces: {
+      main: Config.workspace('Main', {source: 'main', roots: roots()}),
+      second: Config.workspace('Second', {source: 'second', roots: roots()})
+    }
+  })
+  const db = new LocalDB(config)
+  const folder = await db.create({type: Folder, set: {title: 'Folder'}})
+  const item = await db.create({
+    type: Item,
+    parentId: folder._id,
+    set: {title: 'Item'}
+  })
+  const elsewhere = await db.create({
+    type: Folder,
+    workspace: 'second',
+    set: {title: 'Elsewhere'}
+  })
+  await expect(
+    db.move({id: item._id, target: folder._id, dropPosition: 'before'})
+  ).rejects.toThrow('Root pages does not allow entries of type Item')
+  await expect(
+    db.move({
+      id: item._id,
+      target: 'pages',
+      targetType: 'root',
+      dropPosition: 'on'
+    })
+  ).rejects.toThrow('Root pages does not allow entries of type Item')
+  await expect(
+    db.move({id: folder._id, target: elsewhere._id, dropPosition: 'after'})
+  ).rejects.toThrow('Cannot move entry to another workspace')
+  test.is(await db.get({id: item._id, select: Entry.parentId}), folder._id)
+  // A root that does not list its types holds any
+  await db.move({
+    id: item._id,
+    target: 'loose',
+    targetType: 'root',
+    dropPosition: 'on'
+  })
+  test.is(await db.get({id: item._id, select: Entry.root}), 'loose')
+})

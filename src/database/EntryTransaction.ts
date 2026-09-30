@@ -608,13 +608,26 @@ export class EntryTransaction implements AsyncDisposable {
       targetType === 'entry' || dropPosition === 'on',
       `Cannot move ${dropPosition} root ${target}`
     )
+    const {config} = this.#workingDatabase
+    const rootConfig = config.workspaces[workspace]?.[root]
+    assert(rootConfig, `Root not found: ${root}`)
+    assert(
+      workspace === moving[0].workspace,
+      'Cannot move entry to another workspace'
+    )
     const action =
       parentId !== moving[0].parentId || root !== moving[0].root
         ? Permission.Move
         : Permission.Reorder
     for (const entry of moving) this.#policy.assert(action, entry)
-    if (action === Permission.Move && parentId === null)
+    if (action === Permission.Move && parentId === null) {
       this.#policy.assert(Permission.Move, {workspace, root})
+      const type = config.schema[moving[0].type]
+      assert(
+        type && Config.rootContains(config, rootConfig, type),
+        `Root ${root} does not allow entries of type ${moving[0].type}`
+      )
+    }
     const moveTarget = {id, parentId, workspace, root}
     const aliasUpdates =
       action === Permission.Move
@@ -653,14 +666,10 @@ export class EntryTransaction implements AsyncDisposable {
           'Cannot move entry into its own children'
         )
         this.#policy.assert(Permission.Move, parent)
-        const parentType = this.#workingDatabase.config.schema[parent.type]
-        const childType = this.#workingDatabase.config.schema[entry.type]
+        const parentType = config.schema[parent.type]
+        const childType = config.schema[entry.type]
         assert(
-          Config.typeContains(
-            this.#workingDatabase.config,
-            parentType,
-            childType
-          ),
+          Config.typeContains(config, parentType, childType),
           `Parent of type ${parent.type} does not allow children of type ${entry.type}`
         )
       }

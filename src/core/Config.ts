@@ -106,13 +106,19 @@ export namespace Config {
     return config.schema[name]
   }
 
+  /**
+   * Whether entries of a type can be placed at the top level of a root. Roots
+   * that do not list the types they contain accept every type, media roots
+   * always hold files.
+   */
   export function rootContains(
     config: Config,
     root: Root,
     childType: Type
   ): boolean {
     const allowed = Root.contains(root)
-    if (allowed.length === 0) return false
+    if (allowed.length === 0) return true
+    if (Root.isMediaRoot(root) && childType === MediaFile) return true
     const scope = getScope(config)
     const typeName = scope.nameOf(childType)
     for (const type of allowed) {
