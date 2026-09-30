@@ -18,6 +18,7 @@ import {
   type RootTreeNode,
   type TreeAtoms,
   type TreeSnapshot,
+  type TreeView,
   treeAcceptsDrop
 } from '../atoms/root.js'
 import styler from '@alinea/styler'
@@ -52,6 +53,8 @@ const styles = styler(css)
 export interface SidebarTreeProps {
   page: Page
   root: RootAtoms
+  /** The tree loaded for the page */
+  view: TreeView
 }
 
 export interface SidebarTreeExplorerProps {
@@ -288,6 +291,7 @@ interface SidebarTreeViewProps {
   root: RootAtoms
   rootSelected: boolean
   tree: TreeAtoms
+  view: TreeView
 }
 
 /** The root button and entry tree shared by the sidebar and the pickers */
@@ -302,17 +306,18 @@ function SidebarTreeView({
   onSelectionChange,
   root,
   rootSelected,
-  tree
+  tree,
+  view
 }: SidebarTreeViewProps) {
   const label = useAtomValueRaw(root.label)
   const icon = useAtomValueRaw(root.icon)
   const i18n = useAtomValueRaw(root.i18n)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
-  const view = useAtomValueRaw(tree.view)
   const {snapshot} = view
   const treeRef = useRef<HTMLDivElement>(null)
   useScrollSelectedIntoView(treeRef, snapshot)
-  const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const [selectedId] = snapshot.selectedKeys
+  const selectedItem = selectedId ? view.entries.get(selectedId) : undefined
   const groupEnd = lastVisibleDescendant(snapshot.items, selectedItem?.id)
   function renderItem(item: RootTreeNode): ReactNode {
     const data = view.entries.get(item.id)
@@ -393,11 +398,13 @@ function SidebarTreeView({
 
 export const SidebarTree = memo(function SidebarTree({
   page,
-  root
+  root,
+  view
 }: SidebarTreeProps) {
   const {locale} = page
   const tree = root.tree(locale)
-  const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const [selectedId] = view.snapshot.selectedKeys
+  const selectedItem = selectedId ? view.entries.get(selectedId) : undefined
   const setRoute = useSetAtom(routeAtom)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const setCollapsed = useSetAtom(tree.collapsedKeys)
@@ -422,6 +429,7 @@ export const SidebarTree = memo(function SidebarTree({
       root={root}
       rootSelected={!page.entry}
       tree={tree}
+      view={view}
       onRootPress={() =>
         setRoute({
           workspace: root.workspace,
@@ -481,6 +489,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
 }: SidebarTreeExplorerProps) {
   const [locale, setLocale] = useAtom(selectedLocale)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
+  const view = useAtomValueRaw(tree.view)
   const dragDrop = useRootTreeDragDrop(root, tree, disableDragAndDrop)
   return (
     <SidebarTreeView
@@ -490,6 +499,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
       root={root}
       rootSelected={rootSelected}
       tree={tree}
+      view={view}
       onRootPress={onRootPress}
       onLocaleChange={setLocale}
       onSelectionChange={keys => {

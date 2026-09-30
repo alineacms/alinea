@@ -10,7 +10,7 @@ import {
 } from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
-import type {RootAtoms} from '#/dashboard/atoms/root.js'
+import type {RootAtoms, TreeView} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
 import type {PropsWithChildren} from 'react'
@@ -31,6 +31,8 @@ export interface DashboardLayoutProps extends PropsWithChildren {
   canManageMembers: boolean
   page: Page
   root: RootAtoms
+  /** The sidebar tree of the page */
+  tree: TreeView
   workspace: WorkspaceInternal & {name: string}
 }
 
@@ -39,6 +41,7 @@ export function DashboardLayout({
   children,
   page,
   root,
+  tree,
   workspace
 }: DashboardLayoutProps) {
   return (
@@ -58,7 +61,7 @@ export function DashboardLayout({
                     workspace={workspace}
                   />
                 </SidebarHeader>
-                <SidebarTree page={page} root={root} />
+                <SidebarTree page={page} root={root} view={tree} />
                 <SidebarCreateEntryButton root={root} />
               </Sidebar>
             }
