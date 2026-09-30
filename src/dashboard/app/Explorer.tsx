@@ -976,7 +976,7 @@ export function Explorer({
       />
       <ExplorerBody explorer={explorer} page={page} />
       {explorer.hasRowAction && explorer.selectionMode === 'multiple' && (
-        <ExplorerBatchActions explorer={explorer} locale={page.locale} />
+        <ExplorerBatchActions explorer={explorer} />
       )}
     </>
   )

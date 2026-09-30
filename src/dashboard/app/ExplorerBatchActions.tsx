@@ -5,7 +5,7 @@ import {
   type DeletePlan
 } from '#/dashboard/atoms/delete.js'
 import type {DashboardExplorer} from '#/dashboard/atoms/explorer.js'
-import {loadMoveTreeAtom, type MoveTree} from '#/dashboard/atoms/move.js'
+import type {MoveSubject} from '#/dashboard/atoms/move.js'
 import styler from '@alinea/styler'
 import {useAtomValueRawSync, useSetAtom} from 'jotai'
 import {useState, useTransition} from 'react'
@@ -18,45 +18,20 @@ const styles = styler(css)
 
 export interface ExplorerBatchActionsProps {
   explorer: DashboardExplorer
-  locale: string | null
 }
 
 /** Acts on the entries selected in an overview */
-export function ExplorerBatchActions({
-  explorer,
-  locale
-}: ExplorerBatchActionsProps) {
+export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
   const {items, canMove, canDelete} = useAtomValueRawSync(
     explorer.selectionActions
   )
   const clearSelection = useSetAtom(explorer.clearSelection)
-  const loadMoveTree = useSetAtom(loadMoveTreeAtom)
   const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
-  const [moveTree, setMoveTree] = useState<MoveTree>()
+  const [moving, setMoving] = useState<Array<MoveSubject>>()
   const [deletePlan, setDeletePlan] = useState<DeletePlan>()
   const [isPending, startTransition] = useTransition()
   if (items.length === 0) return null
-
-  // The targets load before the dialog opens, the button shows it is busy
-  function openMoveDialog() {
-    startTransition(async () => {
-      const tree = await loadMoveTree(
-        items.map(item => ({
-          id: item.id,
-          title: item.title,
-          type: item.type,
-          workspace: item.workspace,
-          root: item.root,
-          locale: item.locale,
-          parentId: item.parentId,
-          parents: item.parents
-        })),
-        locale
-      )
-      setMoveTree(tree)
-    })
-  }
 
   // Entries with languages are deleted in the listed language only
   function openDeleteDialog() {
@@ -74,11 +49,11 @@ export function ExplorerBatchActions({
         isPending={isPending}
         onClear={clearSelection}
         onDelete={openDeleteDialog}
-        onMove={openMoveDialog}
+        onMove={() => setMoving(items)}
       />
       <MoveDialog
-        tree={moveTree}
-        onClose={() => setMoveTree(undefined)}
+        subjects={moving}
+        onClose={() => setMoving(undefined)}
         onMoved={clearSelection}
       />
       <DeleteDialog

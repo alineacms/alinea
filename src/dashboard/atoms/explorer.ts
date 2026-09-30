@@ -98,6 +98,8 @@ export interface ExplorerOptions {
   allowAllWorkspaces?: boolean
   autoSelectFirstItem?: boolean
   breadcrumbs?: boolean
+  /** Entries that match the condition can be selected when this allows it */
+  canSelect?: (item: ExplorerItemData) => boolean
   condition?: Filter<EntryFields>
   enableNavigation?: boolean
   initialView?: ExplorerView
@@ -1147,11 +1149,14 @@ export class ExplorerAtoms {
   )
   isSelectable = dispense((entry: ExplorerEntry) =>
     atom(get => {
-      if (!this.#options.condition) return true
+      const {canSelect, condition} = this.#options
+      if (!condition && !canSelect) return true
       const {data} = get(entry.data)
       if (!data) return false
       const item = get(data.item)
-      return filterChecker(this.#options.condition, (candidate, name) =>
+      if (canSelect && !canSelect(item)) return false
+      if (!condition) return true
+      return filterChecker(condition, (candidate, name) =>
         explorerItemField(candidate as ExplorerItemData, name)
       )(item as never)
     })

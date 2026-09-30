@@ -1,5 +1,6 @@
 import {expect, test} from 'bun:test'
 import {Entry} from '#/core/Entry.js'
+import {filterChecker} from '#/core/Filter.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Policy, WriteablePolicy} from '#/core/Role.js'
@@ -8,15 +9,11 @@ import {localUser} from '#/core/User.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field} from '#/index.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
+import type {ExplorerItemData} from './explorer.js'
 import {
-  canMoveTo,
-  isCurrentMoveTarget,
-  loadMoveTreeAtom,
   moveEntriesAtom,
-  moveTargetView,
-  resolveMoveTargets,
+  moveTargets,
   rootAcceptsType,
-  type MoveCandidate,
   type MoveSubject
 } from './move.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -57,18 +54,21 @@ function rootData(name: string) {
 function candidate(
   id: string,
   type: string,
-  parents: Array<string> = [],
-  locale: string | null = null
-): MoveCandidate {
+  parents: Array<string> = []
+): ExplorerItemData {
   return {
     id,
     title: id,
+    path: id,
     type,
-    status: 'published',
-    main: true,
-    locale,
+    workspace: 'main',
+    root: 'pages',
+    locale: null,
     parentId: parents.at(-1) ?? null,
-    parents
+    parents,
+    index: '',
+    data: {},
+    hasChildren: false
   }
 }
 
@@ -98,65 +98,62 @@ const pages = [
   candidate('archive', 'Archive')
 ]
 
+/** The ids of the pages that can be picked to move the subjects into */
 function targetsFor(
   subjects: Array<MoveSubject>,
-  options: {
-    policy?: Policy
-    root?: string
-    candidates?: Array<MoveCandidate>
-  } = {}
+  {policy = Policy.ALLOW_ALL, root = 'pages'} = {}
 ) {
-  const root = options.root ?? 'pages'
-  return resolveMoveTargets({
-    config,
-    policy: options.policy ?? Policy.ALLOW_ALL,
-    rootData: rootData(root),
-    workspace: 'main',
-    root,
-    subjects,
-    candidates: options.candidates ?? pages
-  })
+  const targets = moveTargets(config, policy, rootData(root), subjects)
+  const matches = filterChecker(targets.condition, (item, name) =>
+    name === '_type' ? (item as ExplorerItemData).type : undefined
+  )
+  const picked = pages.filter(page => matches(page) && targets.canSelect(page))
+  return {ids: picked.map(page => page.id), rootAccepts: targets.rootAccepts}
 }
 
-test('only lists entries whose type contains the moved type', () => {
-  const targets = targetsFor([subject('post', 'Post', ['home', 'blog'])])
-  expect([...targets.accepts]).toEqual(['blog'])
-  // The ancestors of a target are listed to reach it
-  expect(targets.candidates.map(entry => entry.id)).toEqual(['home', 'blog'])
-  expect(targets.rootAccepts).toBe(false)
+test('only picks entries whose type contains the moved type', () => {
+  expect(targetsFor([subject('post', 'Post', ['home', 'blog'])])).toEqual({
+    ids: ['blog'],
+    rootAccepts: false
+  })
 })
 
 test('never moves an entry into itself or its children', () => {
-  const targets = targetsFor([subject('about', 'Page', ['home'])])
-  expect([...targets.accepts]).toEqual(['home'])
-  expect(targets.candidates.map(entry => entry.id)).toEqual(['home'])
-  expect(targets.rootAccepts).toBe(true)
+  expect(targetsFor([subject('about', 'Page', ['home'])])).toEqual({
+    ids: ['home'],
+    rootAccepts: true
+  })
 })
 
 test('skips hidden container types', () => {
-  const targets = targetsFor([subject('team', 'Page', ['home', 'about'])])
-  expect(targets.accepts.has('archive')).toBe(false)
+  const {ids} = targetsFor([subject('team', 'Page', ['home', 'about'])])
+  expect(ids).not.toContain('archive')
 })
 
 test('every moved entry must fit in a target', () => {
-  const targets = targetsFor([
-    subject('team', 'Page', ['home', 'about']),
-    subject('post', 'Post', ['home', 'blog'])
-  ])
-  expect(targets.accepts.size).toBe(0)
-  expect(targets.candidates).toEqual([])
-  expect(targets.rootAccepts).toBe(false)
+  expect(
+    targetsFor([
+      subject('team', 'Page', ['home', 'about']),
+      subject('post', 'Post', ['home', 'blog'])
+    ])
+  ).toEqual({ids: [], rootAccepts: false})
+})
+
+test('entries of unknown types can not be moved', () => {
+  expect(targetsFor([subject('post', 'Unknown')])).toEqual({
+    ids: [],
+    rootAccepts: false
+  })
 })
 
 test('follows the move permission of the target', () => {
   const policy = new WriteablePolicy(getScope(config))
     .allowAll()
     .set({id: 'about', deny: {move: true}})
-  const targets = targetsFor([subject('post', 'Page', ['home', 'blog'])], {
+  const {ids} = targetsFor([subject('post', 'Page', ['home', 'blog'])], {
     policy
   })
-  expect(targets.accepts.has('about')).toBe(false)
-  expect(targets.accepts.has('home')).toBe(true)
+  expect(ids).toEqual(['home'])
 })
 
 test('roots accept the types they contain, or anything without contains', () => {
@@ -167,36 +164,7 @@ test('roots accept the types they contain, or anything without contains', () => 
   expect(rootAcceptsType(config, rootData('media'), 'MediaLibrary')).toBe(true)
 })
 
-test('the current location can not be picked', () => {
-  const targets = targetsFor([subject('about', 'Page', ['home'])])
-  expect(isCurrentMoveTarget(targets, 'home')).toBe(true)
-  expect(canMoveTo(targets, 'home')).toBe(false)
-  expect(canMoveTo(targets, null)).toBe(true)
-  expect(canMoveTo(targets, undefined)).toBe(false)
-  expect(canMoveTo(targets, 'blog')).toBe(false)
-})
-
-test('the tree shows the targets in the chosen locale', () => {
-  const targets = targetsFor([subject('post', 'Page')], {
-    candidates: [
-      candidate('home', 'Page', [], 'en'),
-      {...candidate('home', 'Page', [], 'fr'), title: 'Accueil'},
-      candidate('about', 'Page', ['home'], 'en')
-    ]
-  })
-  const collapsed = moveTargetView(targets, 'fr', new Set(), 'about')
-  expect(collapsed.snapshot.items).toEqual([{id: 'home', children: []}])
-  expect(collapsed.entries.get('home')?.title).toBe('Accueil')
-  expect(collapsed.entries.get('home')?.hasChildren).toBe(true)
-  expect(collapsed.snapshot.selectedKeys).toEqual(new Set(['about']))
-  const expanded = moveTargetView(targets, 'en', new Set(['home']), null)
-  expect(expanded.snapshot.items).toEqual([
-    {id: 'home', children: [{id: 'about', children: []}]}
-  ])
-  expect(expanded.snapshot.selectedKeys).toEqual(new Set())
-})
-
-test('moves media files into a folder', async () => {
+test('moves media files into a folder and back to the root', async () => {
   const db = new LocalDB(config)
   await db.sync()
   const folder = await db.create({
@@ -204,13 +172,6 @@ test('moves media files into a folder', async () => {
     workspace: 'main',
     root: 'media',
     set: {title: 'Folder', path: 'folder'}
-  })
-  const nested = await db.create({
-    type: MediaLibrary,
-    workspace: 'main',
-    root: 'media',
-    parentId: folder._id,
-    set: {title: 'Nested', path: 'nested'}
   })
   const files = await Promise.all(
     ['one', 'two'].map(name =>
@@ -225,62 +186,25 @@ test('moves media files into a folder', async () => {
   const store = createDashboardStore(config, db)
   store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
   await store.get(userPolicyReadyAtom)
+  const parentIds = async () => {
+    const moved = await db.find({
+      id: {in: files.map(file => file._id)},
+      select: {parentId: Entry.parentId}
+    })
+    return moved.map(file => file.parentId)
+  }
 
-  const tree = await store.set(
-    loadMoveTreeAtom,
+  await store.set(
+    moveEntriesAtom,
     files.map(file => subject(file._id, 'MediaFile', [], 'media')),
+    folder._id
+  )
+  expect(await parentIds()).toEqual([folder._id, folder._id])
+
+  await store.set(
+    moveEntriesAtom,
+    files.map(file => subject(file._id, 'MediaFile', [folder._id], 'media')),
     null
   )
-  expect(tree.targets.rootAccepts).toBe(true)
-  expect([...tree.targets.accepts].sort()).toEqual(
-    [folder._id, nested._id].sort()
-  )
-  expect(store.get(tree.canConfirm)).toBe(false)
-  store.set(tree.pick, null)
-  // The files are at the root already
-  expect(store.get(tree.canConfirm)).toBe(false)
-  store.set(tree.pick, nested._id)
-  expect(store.get(tree.canConfirm)).toBe(true)
-
-  await store.set(moveEntriesAtom, tree)
-
-  const moved = await db.find({
-    id: {in: files.map(file => file._id)},
-    select: {parentId: Entry.parentId}
-  })
-  expect(moved.map(file => file.parentId)).toEqual([nested._id, nested._id])
-})
-
-test('a folder can not be moved into its own subfolder', async () => {
-  const db = new LocalDB(config)
-  await db.sync()
-  const folder = await db.create({
-    type: MediaLibrary,
-    workspace: 'main',
-    root: 'media',
-    set: {title: 'Folder', path: 'folder'}
-  })
-  await db.create({
-    type: MediaLibrary,
-    workspace: 'main',
-    root: 'media',
-    parentId: folder._id,
-    set: {title: 'Nested', path: 'nested'}
-  })
-  const other = await db.create({
-    type: MediaLibrary,
-    workspace: 'main',
-    root: 'media',
-    set: {title: 'Other', path: 'other'}
-  })
-  const store = createDashboardStore(config, db)
-  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
-  await store.get(userPolicyReadyAtom)
-
-  const tree = await store.set(
-    loadMoveTreeAtom,
-    [subject(folder._id, 'MediaLibrary', [], 'media')],
-    null
-  )
-  expect([...tree.targets.accepts]).toEqual([other._id])
+  expect(await parentIds()).toEqual([null, null])
 })

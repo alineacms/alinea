@@ -360,6 +360,21 @@ test('matches only contain selectable rows for compound conditions', async () =>
   expect(items.every(item => store.get(explorer.isSelectable(item)))).toBe(true)
 })
 
+test('canSelect limits which listed entries can be selected', async () => {
+  const {store, child, parent} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages', parentId: parent._id},
+    {canSelect: item => item.id !== child._id}
+  )
+
+  const items = await store.get(explorer.itemsReady(null))
+  const listed = items.find(item => item.id === child._id)
+
+  expect(listed).toBeDefined()
+  expect(store.get(explorer.isSelectable(listed!))).toBe(false)
+})
+
 test('card browse queries show direct children without applying conditions', async () => {
   const {store, child, parent} = await createDashboardAtomFixture()
   await store.get(userPolicyReadyAtom)

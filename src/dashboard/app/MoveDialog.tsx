@@ -1,132 +1,167 @@
-import {Button, Text, type Selection} from '#/components.js'
+import {Button, Text} from '#/components.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
 import {
-  isCurrentMoveTarget,
   moveEntriesAtom,
-  type MoveTree
+  moveTargets,
+  type MoveSubject
 } from '#/dashboard/atoms/move.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import styler from '@alinea/styler'
-import {useAtomValueRaw, useSetAtom} from 'jotai'
-import {useTransition} from 'react'
+import {policyAtom} from '#/dashboard/atoms/user.js'
+import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {Suspense, useTransition} from 'react'
 import {IcRoundDriveFileMove} from '../icons.js'
-import css from './MoveDialog.module.css'
-import {SidebarTreeExplorer} from './SidebarTree.js'
+import {ExplorerHeader} from './Explorer.js'
+import {
+  ExplorerModal,
+  ExplorerModalActions,
+  ExplorerModalFooter,
+  ExplorerModalSuspense
+} from './ExplorerModal.js'
+import {
+  ExplorerPickerContent,
+  usePickerExplorer
+} from './ExplorerPickerContent.js'
 import {
   DashboardModal,
-  DashboardModalDialog,
-  DashboardModalFooter
+  DashboardModalCloseButton,
+  DashboardModalDialog
 } from './ui/DashboardModal.js'
 
-const styles = styler(css)
-
 export interface MoveDialogProps {
-  /** The entries to move and where they can go, closed when undefined */
-  tree: MoveTree | undefined
+  /** The entries to move, all of one root, closed when undefined */
+  subjects: Array<MoveSubject> | undefined
   onClose(): void
   /** Called once the entries were moved */
   onMoved?(): void
 }
 
-/** Picks a location within the root to move one or more entries to */
-export function MoveDialog({tree, onClose, onMoved}: MoveDialogProps) {
+function moveDialogTitle(subjects: Array<MoveSubject>) {
+  const [first] = subjects
+  if (subjects.length === 1 && first) return `Move "${first.title}"`
+  return `Move ${subjects.length} items`
+}
+
+/** Picks an entry of the root, or its top level, to move entries to */
+export function MoveDialog({subjects, onClose, onMoved}: MoveDialogProps) {
   return (
     <DashboardModal
-      open={Boolean(tree)}
+      open={Boolean(subjects)}
+      size="explorer"
+      aria-label={subjects && moveDialogTitle(subjects)}
       onOpenChange={isOpen => {
         if (!isOpen) onClose()
       }}
     >
-      {tree && (
-        <MoveDialogContent tree={tree} onClose={onClose} onMoved={onMoved} />
+      {subjects && (
+        <Suspense
+          fallback={<DashboardModalDialog variant="explorer" isLoading />}
+        >
+          <MoveDialogContent
+            subjects={subjects}
+            onClose={onClose}
+            onMoved={onMoved}
+          />
+        </Suspense>
       )}
     </DashboardModal>
   )
 }
 
 interface MoveDialogContentProps {
-  tree: MoveTree
+  subjects: Array<MoveSubject>
   onClose(): void
   onMoved?(): void
 }
 
-function moveDialogTitle(tree: MoveTree) {
-  const {subjects} = tree.targets
-  const [first] = subjects
-  if (subjects.length === 1 && first) return `Move "${first.title}"`
-  return `Move ${subjects.length} items`
-}
-
-function MoveDialogContent({tree, onClose, onMoved}: MoveDialogContentProps) {
-  const {targets} = tree
-  const root = rootAtoms(targets.workspace, targets.root)
-  const rootLabel = useAtomValueRaw(root.label)
-  const target = useAtomValueRaw(tree.target)
-  const selectedItem = useAtomValueRaw(tree.selectedItem)
-  const canConfirm = useAtomValueRaw(tree.canConfirm)
-  const pick = useSetAtom(tree.pick)
-  const setExpandedKeys = useSetAtom(tree.expandedKeys)
+function MoveDialogContent({
+  subjects,
+  onClose,
+  onMoved
+}: MoveDialogContentProps) {
+  const [{workspace, root, locale, parentId}] = subjects as [MoveSubject]
+  const config = useAtomValueRaw(configAtom)
+  const policy = useAtomValueRaw(policyAtom)
+  const rootData = useAtomValueRaw(rootAtoms(workspace, root).data)
+  const targets = moveTargets(config, policy, rootData, subjects)
+  // Opens at the current location, other roots are not a target
+  const {explorer, tree} = usePickerExplorer(
+    {
+      canSelect: targets.canSelect,
+      condition: targets.condition,
+      initialResultMode: 'browse',
+      limitLocations: [{workspace, root}],
+      nestedNavigation: true
+    },
+    {
+      workspace,
+      root,
+      parentId: parentId ?? undefined,
+      locale: locale ?? undefined
+    },
+    'row'
+  )
+  const page = useAtomValueRawSync(explorer.page)
+  const selection = useAtomValueRaw(explorer.selection)
   const moveEntries = useSetAtom(moveEntriesAtom)
   const [isPending, startTransition] = useTransition()
-  const isEmpty = targets.candidates.length === 0 && !targets.rootAccepts
-  const targetLabel =
-    target === null ? rootLabel : (selectedItem?.title ?? undefined)
-  let status: string
-  if (isEmpty) status = 'There is no other location to move to'
-  else if (target === undefined) status = 'Pick a location'
-  else if (isCurrentMoveTarget(targets, target))
-    status = `Already in ${targetLabel}`
-  else status = `Move to ${targetLabel}`
+  if (!page) return <DashboardModalDialog variant="explorer" isLoading />
+  const [target] = selection === 'all' ? [] : selection
 
-  function onSelectionChange(keys: Selection) {
-    if (keys === 'all') return
-    const [key] = keys
-    if (key === undefined) return
-    const id = String(key)
-    if (targets.accepts.has(id)) pick(id)
-    // Entries that only hold targets further down open instead
-    else setExpandedKeys(current => new Set(current).add(id))
-  }
-
-  function confirm() {
+  function moveTo(target: string | null) {
     startTransition(async () => {
-      await moveEntries(tree)
+      await moveEntries(subjects, target)
       onMoved?.()
       onClose()
     })
   }
 
   return (
-    <DashboardModalDialog label={moveDialogTitle(tree)}>
-      <div className={styles.MoveDialog()}>
-        <SidebarTreeExplorer
-          ariaLabel="Move targets"
-          root={root}
-          rootSelected={target === null}
-          selectedLocale={tree.locale}
-          tree={tree}
-          onRootPress={() => pick(null)}
-          onSelectionChange={onSelectionChange}
-        />
-      </div>
-      <DashboardModalFooter>
-        <Text color="muted" className={styles.MoveDialog.status()}>
-          {status}
-        </Text>
-        <div className={styles.MoveDialog.actions()}>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            color="primary"
-            icon={IcRoundDriveFileMove}
-            disabled={!canConfirm || isPending}
-            loading={isPending}
-            onClick={confirm}
-          >
-            Move
-          </Button>
-        </div>
-      </DashboardModalFooter>
+    <DashboardModalDialog variant="explorer">
+      <ExplorerModalSuspense>
+        <ExplorerModal>
+          <ExplorerHeader
+            autoFocusSearch
+            controls={<DashboardModalCloseButton />}
+            explorer={explorer}
+            navigate
+            page={page}
+          />
+          <ExplorerPickerContent
+            explorer={explorer}
+            navigationLabel="Move targets"
+            options={{}}
+            page={page}
+            tree={tree}
+          />
+          <ExplorerModalFooter>
+            <Text color="muted">{moveDialogTitle(subjects)}</Text>
+            <ExplorerModalActions>
+              {targets.rootAccepts && (
+                <Button
+                  variant="ghost"
+                  disabled={
+                    isPending ||
+                    subjects.every(subject => subject.parentId === null)
+                  }
+                  onClick={() => moveTo(null)}
+                >
+                  Move to root
+                </Button>
+              )}
+              <Button onClick={onClose}>Cancel</Button>
+              <Button
+                color="primary"
+                icon={IcRoundDriveFileMove}
+                disabled={target === undefined || isPending}
+                loading={isPending}
+                onClick={() => moveTo(String(target))}
+              >
+                Move
+              </Button>
+            </ExplorerModalActions>
+          </ExplorerModalFooter>
+        </ExplorerModal>
+      </ExplorerModalSuspense>
     </DashboardModalDialog>
   )
 }

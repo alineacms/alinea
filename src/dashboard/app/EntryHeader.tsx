@@ -30,7 +30,7 @@ import {
   type DeletePlan
 } from '../atoms/delete.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
-import {loadMoveTreeAtom, type MoveTree} from '../atoms/move.js'
+import type {MoveSubject} from '../atoms/move.js'
 import {routeAtom} from '../atoms/nav.js'
 import type {ReactiveNode} from '../atoms/ReactiveNode.js'
 import {policyAtom} from '../atoms/user.js'
@@ -235,7 +235,6 @@ export function EntryHeader({
   const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
   const replaceFile = useSetAtom(localeData.replaceFile)
-  const loadMoveTree = useSetAtom(loadMoveTreeAtom)
   const reset = useSetAtom(node.reset)
   const isDirty = useAtomValueRaw(node.isDirty)
   const activeVersion = Array.from(versions.values()).find(
@@ -263,7 +262,7 @@ export function EntryHeader({
   const isActionDisabled = isPending || activity.isMutating
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const [invalid, setInvalid] = useState<EntryValidationFailure>()
-  const [moveTree, setMoveTree] = useState<MoveTree>()
+  const [moving, setMoving] = useState<Array<MoveSubject>>()
   const [deletePlan, setDeletePlan] = useState<DeletePlan>()
 
   function runAction(action: () => void | Promise<void>) {
@@ -308,27 +307,6 @@ export function EntryHeader({
         locale: route.locale
       })
     await deleteEntries(plan)
-  }
-
-  // The targets load before the dialog opens, the menu shows it is busy
-  async function openMoveDialog() {
-    assert(activeVersion)
-    const tree = await loadMoveTree(
-      [
-        {
-          id: entry.id,
-          title: activeVersion.title,
-          type: typeName,
-          workspace,
-          root,
-          locale: activeVersion.locale,
-          parentId,
-          parents: activeVersion.parents
-        }
-      ],
-      activeVersion.locale
-    )
-    setMoveTree(tree)
   }
 
   function replaceMediaFile() {
@@ -491,7 +469,7 @@ export function EntryHeader({
     menuItems.push({
       id: 'move',
       label: 'Move to…',
-      action: openMoveDialog,
+      action: () => setMoving([activeVersion]),
       icon: IcRoundDriveFileMove
     })
   if (actions.unpublish)
@@ -598,7 +576,7 @@ export function EntryHeader({
         failure={invalid}
         onClose={() => setInvalid(undefined)}
       />
-      <MoveDialog tree={moveTree} onClose={() => setMoveTree(undefined)} />
+      <MoveDialog subjects={moving} onClose={() => setMoving(undefined)} />
       <DeleteDialog
         plan={deletePlan}
         onClose={() => setDeletePlan(undefined)}

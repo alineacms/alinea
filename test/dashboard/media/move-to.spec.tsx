@@ -17,17 +17,21 @@ test('moves a media file to a media directory from the entry menu', async ({
 
   await app.runEntryAction('Move to…')
   const dialog = app.page.getByRole('dialog', {name: 'Move "Existing image"'})
-  const targets = dialog.getByRole('treegrid', {name: 'Move targets'})
+  const entries = dialog.getByRole('treegrid', {name: 'Explorer entries'})
+  const move = dialog.getByRole('button', {name: 'Move', exact: true})
+  await expect(move).toBeDisabled()
+  // The file is at the root already
   await expect(
-    targets.getByRole('row', {name: 'Empty media directory', exact: true})
-  ).toBeVisible()
+    dialog.getByRole('button', {name: 'Move to root'})
+  ).toBeDisabled()
   // Files are not a place to move to
-  await expect(
-    targets.getByRole('row', {name: 'Existing file', exact: true})
-  ).toHaveCount(0)
-  await targets.getByRole('row', {name: 'Media directory', exact: true}).click()
-  await expect(dialog.getByText('Move to Media directory')).toBeVisible()
-  await dialog.getByRole('button', {name: 'Move', exact: true}).click()
+  for (const name of [/^Existing image/, /^Existing file/])
+    await expect(entries.getByRole('row', {name})).toHaveAttribute(
+      'data-unselectable',
+      'true'
+    )
+  await entries.getByRole('row', {name: /^Media directory/}).click()
+  await move.click()
 
   await expect(dialog).toHaveCount(0)
   await app.page.getByRole('button', {name: 'Back to parent entry'}).click()
@@ -39,6 +43,65 @@ test('moves a media file to a media directory from the entry menu', async ({
   await expect(
     explorer.getByRole('row', {name: 'Nested image', exact: true})
   ).toBeVisible()
+})
+
+test('moves a media file out of its directory to the root', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
+    routeEntry: dashboardLinkScenarioIds.nestedImage,
+    routeRoot: 'media',
+    title: 'Nested image'
+  })
+
+  await app.runEntryAction('Move to…')
+  const dialog = app.page.getByRole('dialog', {name: 'Move "Nested image"'})
+  // The picker opens at the current location of the file
+  await expect(
+    dialog
+      .getByRole('treegrid', {name: 'Explorer entries'})
+      .getByRole('row', {name: /^Nested image/})
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: 'Move to root'}).click()
+
+  await expect(dialog).toHaveCount(0)
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await expect(
+    app.page
+      .getByRole('grid', {name: 'Explorer entries'})
+      .getByRole('row', {name: 'Nested image', exact: true})
+  ).toBeVisible()
+})
+
+test('never moves a media directory into itself', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
+    routeEntry: dashboardLinkScenarioIds.mediaDirectory,
+    routeRoot: 'media',
+    title: 'Media directory'
+  })
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('grid', {name: 'Explorer entries'})
+    .getByRole('row', {name: 'Media directory', exact: true})
+    .locator('[data-slot="selection-checkbox"]')
+    .click()
+  await app.page
+    .getByRole('toolbar', {name: 'Selected entries'})
+    .getByRole('button', {name: 'Move to…'})
+    .click()
+
+  const dialog = app.page.getByRole('dialog', {name: 'Move "Media directory"'})
+  const entries = dialog.getByRole('treegrid', {name: 'Explorer entries'})
+  await expect(
+    entries.getByRole('row', {name: /^Media directory/})
+  ).toHaveAttribute('data-unselectable', 'true')
+  await expect(
+    entries.getByRole('row', {name: /^Empty media directory/})
+  ).not.toHaveAttribute('data-unselectable')
 })
 
 test('moves selected media files to a media directory', async ({
@@ -64,8 +127,8 @@ test('moves selected media files to a media directory', async ({
   await selection.getByRole('button', {name: 'Move to…'}).click()
   const dialog = app.page.getByRole('dialog', {name: 'Move 2 items'})
   await dialog
-    .getByRole('treegrid', {name: 'Move targets'})
-    .getByRole('row', {name: 'Empty media directory', exact: true})
+    .getByRole('treegrid', {name: 'Explorer entries'})
+    .getByRole('row', {name: /^Empty media directory/})
     .click()
   await dialog.getByRole('button', {name: 'Move', exact: true}).click()
 
