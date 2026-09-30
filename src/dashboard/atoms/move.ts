@@ -191,8 +191,7 @@ export function moveTargetView(
       locale: candidate.locale,
       parentId: candidate.parentId,
       parents: candidate.parents,
-      hasChildren: children.has(candidate.id),
-      dragDisabled: true
+      hasChildren: children.has(candidate.id)
     })
   function nested(parentId: string | null): Array<RootTreeNode> {
     return (children.get(parentId) ?? []).map(candidate => ({

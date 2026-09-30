@@ -123,3 +123,29 @@ test('only drops media files on media directories', async ({
   )
   await expect(image).toHaveCount(0)
 })
+
+test('moves a media directory into another in the sidebar', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
+    routeEntry: dashboardLinkScenarioIds.mediaDirectory,
+    routeRoot: 'media',
+    title: 'Media directory'
+  })
+  const sidebar = app.page.getByRole('treegrid', {name: 'Content tree'})
+  // Media directories are listed newest first, they can still be moved
+  await sidebar
+    .getByRole('button', {name: 'Drag Empty media directory'})
+    .dragTo(sidebar.getByRole('row', {name: 'Media directory', exact: true}), {
+      force: true
+    })
+
+  await expect(async () => {
+    const expand = sidebar.getByRole('button', {name: 'Expand Media directory'})
+    if (await expand.isVisible()) await expand.click()
+    await expect(
+      sidebar.getByRole('row', {name: 'Empty media directory', exact: true})
+    ).toHaveAttribute('aria-level', '2', {timeout: 1000})
+  }).toPass()
+})
