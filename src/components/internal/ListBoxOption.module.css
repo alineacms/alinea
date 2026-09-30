@@ -10,14 +10,12 @@
   cursor: pointer;
 
   &[aria-selected='true'] {
+    color: var(--alinea-selected-fg);
     font-weight: 500;
-    background: var(--alinea-selected);
-    color: var(--alinea-primary-subtle-fg);
   }
 
   &.is-highlighted {
-    background: var(--alinea-primary);
-    color: var(--alinea-primary-fg);
+    background: var(--alinea-muted);
   }
 
   &[aria-disabled='true'] {

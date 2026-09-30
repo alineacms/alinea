@@ -46,13 +46,9 @@
   outline: none;
   cursor: pointer;
 
-  &:hover:not(.is-highlighted) {
-    background: var(--alinea-muted);
-  }
-
+  &:hover,
   &.is-highlighted {
-    background: var(--alinea-primary);
-    color: var(--alinea-primary-fg);
+    background: var(--alinea-muted);
   }
 
   &[aria-disabled='true'] {

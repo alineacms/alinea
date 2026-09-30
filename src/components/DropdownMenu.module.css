@@ -18,12 +18,14 @@
   outline: none;
   cursor: pointer;
 
-  &:focus {
-    background: var(--alinea-primary);
-    color: var(--alinea-primary-fg);
+  /* An open submenu keeps its trigger marked while focus moves into it */
+  &:focus,
+  &[aria-expanded='true'] {
+    background: var(--alinea-muted);
   }
 
   &[aria-checked='true'] {
+    color: var(--alinea-selected-fg);
     font-weight: 500;
   }
 
@@ -36,8 +38,7 @@
     color: var(--alinea-danger-subtle-fg);
 
     &:focus {
-      background: var(--alinea-danger);
-      color: var(--alinea-danger-fg);
+      background: var(--alinea-danger-subtle);
     }
   }
 
@@ -81,8 +82,4 @@
   font-family: inherit;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
-
-  .DropdownMenuItem:focus & {
-    color: inherit;
-  }
 }
