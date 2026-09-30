@@ -64,9 +64,9 @@ const cases: Array<ActionCase> = [
     expected: {}
   },
   {
-    name: 'only removes a regular draft',
+    name: 'removes or deletes a regular draft',
     state: {activeStatus: 'draft'},
-    expected: {removeDraft: true}
+    expected: {delete: true, removeDraft: true}
   },
   {
     name: 'does not remove a draft without update access',
@@ -74,7 +74,7 @@ const cases: Array<ActionCase> = [
       access: {...base.access, update: false},
       activeStatus: 'draft'
     },
-    expected: {}
+    expected: {delete: true}
   },
   {
     name: 'deletes an unpublished entry only below an unpublished parent',
@@ -98,27 +98,27 @@ const cases: Array<ActionCase> = [
   {
     name: 'archives an unpublished entry below a published parent',
     state: {activeStatus: 'draft', isUnpublished: true},
-    expected: {archive: true}
+    expected: {archive: true, delete: true}
   },
   {
-    name: 'offers unpublish and archive for a published entry',
+    name: 'offers unpublish, archive and delete for a published entry',
     state: {},
-    expected: {archive: true, unpublish: true}
+    expected: {archive: true, delete: true, unpublish: true}
   },
   {
-    name: 'does not offer delete directly for a published entry',
-    state: {access: {...base.access, archive: false, publish: false}},
-    expected: {}
+    name: 'does not delete without delete access',
+    state: {access: {...base.access, archive: false, delete: false}},
+    expected: {unpublish: true}
   },
   {
     name: 'does not unpublish when drafts are disabled',
     state: {draftsEnabled: false},
-    expected: {archive: true}
+    expected: {archive: true, delete: true}
   },
   {
     name: 'does not unpublish a media library',
     state: {isMediaLibrary: true},
-    expected: {archive: true}
+    expected: {archive: true, delete: true}
   },
   {
     name: 'replaces or deletes a published media file',
@@ -151,7 +151,7 @@ const cases: Array<ActionCase> = [
   {
     name: 'moves an entry that can move',
     state: {canMove: true},
-    expected: {archive: true, move: true, unpublish: true}
+    expected: {archive: true, delete: true, move: true, unpublish: true}
   },
   {
     name: 'moves a media file',
@@ -161,7 +161,7 @@ const cases: Array<ActionCase> = [
   {
     name: 'moves a draft',
     state: {activeStatus: 'draft', canMove: true},
-    expected: {move: true, removeDraft: true}
+    expected: {delete: true, move: true, removeDraft: true}
   },
   {
     name: 'does not move while dirty',

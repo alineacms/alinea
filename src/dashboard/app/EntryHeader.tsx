@@ -24,6 +24,11 @@ import {isRecord} from '#/core/util/Objects.js'
 import type {FieldValidationError} from '#/core/Validation.js'
 import {activityAtom} from '../atoms/activity.js'
 import {configAtom} from '../atoms/core.js'
+import {
+  deleteEntriesAtom,
+  loadDeletePlanAtom,
+  type DeletePlan
+} from '../atoms/delete.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
 import {loadMoveTreeAtom, type MoveTree} from '../atoms/move.js'
 import {routeAtom} from '../atoms/nav.js'
@@ -53,6 +58,7 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
+import {DeleteDialog} from './DeleteDialog.js'
 import css from './EntryHeader.module.css'
 import {
   entryHeaderActions,
@@ -208,6 +214,8 @@ export function EntryHeader({
   const versions = useAtomValueRaw(localeData.versions)
   const untranslated = useAtomValueRaw(localeData.untranslated)
   const typeName = useAtomValueRaw(entry.type)
+  const hasChildren = useAtomValueRaw(entry.hasChildren)
+  const locales = useAtomValueRaw(entry.translationSourceLocales)
   const parentId = useAtomValueRaw(entry.parentId)
   const workspace = useAtomValueRaw(entry.workspace)
   const root = useAtomValueRaw(entry.root)
@@ -224,7 +232,8 @@ export function EntryHeader({
   const unpublish = useSetAtom(localeData.unpublish)
   const archive = useSetAtom(localeData.archive)
   const publishArchived = useSetAtom(localeData.publishArchived)
-  const deleteEntry = useSetAtom(localeData.deleteEntry)
+  const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
+  const deleteEntries = useSetAtom(deleteEntriesAtom)
   const replaceFile = useSetAtom(localeData.replaceFile)
   const loadMoveTree = useSetAtom(loadMoveTreeAtom)
   const reset = useSetAtom(node.reset)
@@ -255,6 +264,7 @@ export function EntryHeader({
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const [invalid, setInvalid] = useState<EntryValidationFailure>()
   const [moveTree, setMoveTree] = useState<MoveTree>()
+  const [deletePlan, setDeletePlan] = useState<DeletePlan>()
 
   function runAction(action: () => void | Promise<void>) {
     startTransition(async () => {
@@ -278,14 +288,26 @@ export function EntryHeader({
     else runAction(action)
   }
 
-  async function deleteAndNavigate() {
-    setRoute({
-      workspace,
-      root,
-      entry: parentId ?? undefined,
-      locale: route.locale
-    })
-    await deleteEntry()
+  // The references load before the dialog opens, the menu shows it is busy
+  async function openDeleteDialog() {
+    assert(activeVersion)
+    setDeletePlan(
+      await loadDeletePlan([{...activeVersion, hasChildren}], locales)
+    )
+  }
+
+  async function deleteAndNavigate(plan: DeletePlan) {
+    assert(activeVersion)
+    const {locale} = activeVersion
+    // Other languages remain when the one shown is not deleted
+    if (locale === null || store.get(plan.selectedLocales).includes(locale))
+      setRoute({
+        workspace,
+        root,
+        entry: parentId ?? undefined,
+        locale: route.locale
+      })
+    await deleteEntries(plan)
   }
 
   // The targets load before the dialog opens, the menu shows it is busy
@@ -497,7 +519,7 @@ export function EntryHeader({
     menuItems.push({
       id: 'delete',
       label: 'Delete',
-      action: deleteAndNavigate,
+      action: openDeleteDialog,
       icon: IcRoundDelete
     })
 
@@ -577,6 +599,11 @@ export function EntryHeader({
         onClose={() => setInvalid(undefined)}
       />
       <MoveDialog tree={moveTree} onClose={() => setMoveTree(undefined)} />
+      <DeleteDialog
+        plan={deletePlan}
+        onClose={() => setDeletePlan(undefined)}
+        onConfirm={deleteAndNavigate}
+      />
     </PageHeader>
   )
 }

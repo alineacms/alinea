@@ -283,6 +283,35 @@ async function createDashboardScenario({
     root: 'localized',
     set: {title: 'Localized child'}
   })
+  const localizedTitles = {
+    en: ['Localized target', 'Localized linking'],
+    fr: ['Cible localisée', 'Lien localisé']
+  }
+  for (const [locale, [target, linking]] of Object.entries(localizedTitles)) {
+    await db.create({
+      id: dashboardScenarioIds.localizedTarget,
+      locale,
+      type: ScenarioPage,
+      workspace: 'main',
+      root: 'localized',
+      set: {title: target}
+    })
+    await db.create({
+      id: dashboardScenarioIds.localizedLinking,
+      locale,
+      type: ScenarioPage,
+      workspace: 'main',
+      root: 'localized',
+      set: {
+        title: linking,
+        relatedPage: {
+          _id: `link-${locale}`,
+          _type: 'entry',
+          _entry: dashboardScenarioIds.localizedTarget
+        }
+      }
+    })
+  }
   await db.create({
     id: dashboardScenarioIds.searchPartial,
     type: ScenarioPage,

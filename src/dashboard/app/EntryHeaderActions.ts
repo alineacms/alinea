@@ -124,24 +124,19 @@ export function entryHeaderActions({
   }
   if (isRevision || isDirty || untranslated) return actions
   actions.move = canMove
+  // The delete dialog shows what links to the entry and picks its languages
+  actions.delete = canDelete && access.delete
 
   if (activeStatus === 'draft') {
-    if (!isUnpublished) {
-      actions.removeDraft = access.update
-      return actions
-    }
-    if (isParentUnpublished) {
-      actions.delete = canDelete && access.delete
-      return actions
-    }
-    actions.archive = access.archive
+    if (!isUnpublished) actions.removeDraft = access.update
+    // Below an unpublished parent it is deleted rather than archived
+    else if (!isParentUnpublished) actions.archive = access.archive
     return actions
   }
 
   if (activeStatus === 'published') {
     if (isMediaFile) {
       actions.replace = access.update && access.upload
-      actions.delete = canDelete && access.delete
       return actions
     }
 
@@ -151,6 +146,5 @@ export function entryHeaderActions({
   }
 
   actions.publish = canPublishParents && access.publish
-  actions.delete = canDelete && access.delete
   return actions
 }

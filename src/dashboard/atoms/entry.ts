@@ -629,11 +629,6 @@ export class EntryLocaleAtoms {
       status: 'archived'
     })
   })
-  deleteEntry = atom(null, async get => {
-    const entry = this.#activeEntry(get)
-    get(policyAtom).assert(Permission.Delete, entry)
-    await get(graphAtom).remove(this.entry.id)
-  })
   replaceFile = atom(null, async (get, set, file: File) => {
     const entry = this.#activeEntry(get)
     const policy = get(policyAtom)
@@ -668,48 +663,7 @@ export class EntryAtoms {
     (_get, set, open: boolean) => set(this.#previousVersionsRequested, open)
   )
 
-  incomingReferencesReady = atom(async get => {
-    get(entryRevisionAtom(this.id))
-    const graph = get(graphAtom)
-    const policy = get(policyAtom)
-    const result = await graph.referencesTo({
-      targetId: this.id,
-      status: 'preferDraft'
-    })
-    const sourceIds = Array.from(
-      new Set(result.references.map(reference => reference.sourceId))
-    )
-    const sources =
-      sourceIds.length === 0
-        ? []
-        : await graph.find({
-            id: {in: sourceIds},
-            status: 'preferDraft',
-            select: {
-              id: Entry.id,
-              title: Entry.title,
-              type: Entry.type,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              locale: Entry.locale,
-              status: Entry.status,
-              path: Entry.path,
-              url: Entry.url
-            }
-          })
-    const sourceByLocale = new Map(
-      sources.map(source => [referenceSourceKey(source), source] as const)
-    )
-    const sourceById = new Map(sources.map(source => [source.id, source]))
-    const references = result.references.flatMap(reference => {
-      const source =
-        sourceByLocale.get(referenceKey(reference)) ??
-        sourceById.get(reference.sourceId)
-      if (!source || !policy.canRead(source)) return []
-      return [{reference, source} satisfies EntryReferenceWithSource]
-    })
-    return {references, total: result.total}
-  })
+  incomingReferencesReady = atom(get => get(incomingReferencesAtoms(this.id)))
   incomingReferences = unwrap(
     this.incomingReferencesReady,
     previous => previous
@@ -805,6 +759,52 @@ export const entryAtoms = dispense((entryId: string) => {
     ))
   })
 })
+
+/** The versions linking to an entry, that the user can read */
+export const incomingReferencesAtoms = dispense((targetId: string) =>
+  atom(async (get): Promise<EntryReferences> => {
+    get(entryRevisionAtom(targetId))
+    const graph = get(graphAtom)
+    const policy = get(policyAtom)
+    const result = await graph.referencesTo({
+      targetId,
+      status: 'preferDraft'
+    })
+    const sourceIds = Array.from(
+      new Set(result.references.map(reference => reference.sourceId))
+    )
+    const sources =
+      sourceIds.length === 0
+        ? []
+        : await graph.find({
+            id: {in: sourceIds},
+            status: 'preferDraft',
+            select: {
+              id: Entry.id,
+              title: Entry.title,
+              type: Entry.type,
+              workspace: Entry.workspace,
+              root: Entry.root,
+              locale: Entry.locale,
+              status: Entry.status,
+              path: Entry.path,
+              url: Entry.url
+            }
+          })
+    const sourceByLocale = new Map(
+      sources.map(source => [referenceSourceKey(source), source] as const)
+    )
+    const sourceById = new Map(sources.map(source => [source.id, source]))
+    const references = result.references.flatMap(reference => {
+      const source =
+        sourceByLocale.get(referenceKey(reference)) ??
+        sourceById.get(reference.sourceId)
+      if (!source || !policy.canRead(source)) return []
+      return [{reference, source} satisfies EntryReferenceWithSource]
+    })
+    return {references, total: result.total}
+  })
+)
 
 function referenceKey(reference: {
   sourceId: string
