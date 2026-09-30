@@ -18,6 +18,7 @@ import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {
   type FieldValidationError,
   policyFieldOptions,
@@ -277,10 +278,13 @@ export class EntryLocaleAtoms {
         })
       }
     }
+    // A translation starts with the path of its title, which the path field
+    // keeps following while the title is edited
+    const title = typeof data?.title === 'string' ? data.title : ''
     const value = Type.withInitialValue(type, {
       ...Type.initialValue(type),
       ...data,
-      ...(isUntranslated ? {path: undefined} : undefined)
+      ...(isUntranslated ? {path: slugify(title) || undefined} : undefined)
     })
     return new ReactiveNode<object>(value, readOnly)
   })
