@@ -435,7 +435,7 @@ test('search requires every word and prioritizes title prefixes', async ({
   await expect(results.nth(2)).toContainText('Archive')
 })
 
-test('opens metadata for a localised file with null alt text', async ({
+test('opens details for a localised file with null alt text', async ({
   dashboard,
   mount
 }) => {
@@ -445,10 +445,12 @@ test('opens metadata for a localised file with null alt text', async ({
     title: 'Legacy image'
   })
 
-  await app.page.getByRole('tab', {name: 'Metadata'}).click()
-
   await expect(app.field('Alt text')).toBeVisible()
   await expect(app.field('Alt text')).toHaveValue('')
+
+  await app.page.getByRole('tab', {name: 'Details'}).click()
+
+  await expect(app.page.getByText('Metadata', {exact: true})).toHaveCount(0)
   // Nobody recorded who uploaded or changed this file
   await expect(app.page.getByText('Created by', {exact: true})).toBeVisible()
   await expect(app.page.getByText('Not available', {exact: true})).toHaveCount(

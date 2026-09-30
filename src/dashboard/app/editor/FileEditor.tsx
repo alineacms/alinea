@@ -4,6 +4,7 @@ import {
   DataListItem,
   DataListLabel,
   DataListValue,
+  Icon,
   Link,
   Surface,
   Tabs,
@@ -17,7 +18,14 @@ import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {base64} from '#/core/util/Encoding.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
-import {useEditor, useField, useFieldValue} from '#/dashboard/hooks.js'
+import {
+  useEditor,
+  useField,
+  useFieldNode,
+  useFieldOptions,
+  useFieldValue
+} from '#/dashboard/hooks.js'
+import {IcRoundInfo, IcRoundInsertDriveFile} from '#/dashboard/icons.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
 import prettyBytes from 'pretty-bytes'
@@ -29,12 +37,11 @@ import {FilePreview, type FocusPoint} from './FilePreview.js'
 
 const styles = styler(css)
 
-const metadataFields = type('Metadata', {
+const fileFields = type('File', {
   fields: {
     title: MediaFile.title,
     path: MediaFile.path,
-    alt: MediaFile.alt,
-    metadata: MediaFile.metadata
+    alt: MediaFile.alt
   }
 })
 
@@ -80,12 +87,18 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
       <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
         <div className={styles.FileEditor.tabs.header()}>
           <TabsList aria-label="File editor">
-            <TabsTrigger value="file">File</TabsTrigger>
-            <TabsTrigger value="metadata">Metadata</TabsTrigger>
+            <TabsTrigger value="file">
+              <Icon icon={IcRoundInsertDriveFile} />
+              File
+            </TabsTrigger>
+            <TabsTrigger value="details">
+              <Icon icon={IcRoundInfo} />
+              Details
+            </TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
-          <div className={styles.FileEditor({image: isImage})}>
+          <div className={styles.FileEditor()}>
             {isImage && (
               <FilePreview
                 liveUrl={liveUrl?.href}
@@ -147,15 +160,25 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
                   </span>
                 </div>
               )}
+              <NodeEditor node={node} type={fileFields} />
             </div>
           </div>
         </TabsContent>
-        <TabsContent value="metadata" className={styles.FileEditor.tabPanel()}>
-          <div className={styles.FileEditor.metadataPanel()}>
-            <NodeEditor node={node} type={metadataFields} />
+        <TabsContent value="details" className={styles.FileEditor.tabPanel()}>
+          <div className={styles.FileEditor.details()}>
+            <FileDetails />
           </div>
         </TabsContent>
       </Tabs>
     </Surface>
+  )
+}
+
+/** Who created and last updated the file and when, and its URL aliases */
+function FileDetails() {
+  const options = useFieldOptions(MediaFile.metadata)
+  const node = useFieldNode<object>(MediaFile.metadata)
+  return (
+    <NodeEditor node={node} readOnly={options.readOnly} type={options.fields} />
   )
 }

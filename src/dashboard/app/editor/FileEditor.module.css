@@ -18,7 +18,7 @@
   min-width: 0;
 }
 
-.FileEditor-metadataPanel {
+.FileEditor-details {
   min-width: 0;
   padding: 16px;
 }
@@ -26,10 +26,6 @@
 .FileEditor {
   display: flex;
   flex-wrap: wrap;
-}
-
-.FileEditor.is-image {
-  height: 512px;
 }
 
 .FileEditor-content {
@@ -90,10 +86,6 @@
 @media (max-width: 800px) {
   .FileEditor {
     flex-direction: column;
-  }
-
-  .FileEditor.is-image {
-    height: auto;
   }
 
   .FileEditor-content {
