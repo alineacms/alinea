@@ -21,13 +21,23 @@
   &[data-entering] {
     animation: DashboardModal-enter 180ms ease-out;
   }
+
+  /* The dialog inside shrinks to fit the modal, so its content scrolls
+     between a header and footer that stay visible */
+  & > [role] {
+    flex-shrink: 1;
+    min-height: 0;
+  }
 }
 
 .DashboardModal-surface {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  /* Scrolls as a whole when the content does not shrink */
+  overflow-y: auto;
   border-radius: inherit;
   box-shadow: none;
 }
@@ -41,6 +51,7 @@
   gap: 24px;
   overflow: visible;
   height: 100%;
+  min-height: 0;
   padding: 0;
   background: var(--alinea-bg);
 
@@ -93,7 +104,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 0 16px;
+  min-height: 0;
+  overflow-y: auto;
+  /* Scrolls up to the header and footer, the padding keeps their spacing */
+  margin: -24px 0;
+  padding: 24px 16px;
   font-size: var(--alinea-font-size-base);
 }
 
