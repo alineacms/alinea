@@ -743,13 +743,13 @@ export class EntryTransaction implements AsyncDisposable {
     )
     // Permissions can be scoped to a locale, each removed version must allow it
     for (const entry of found) this.#policy.assert(Permission.Delete, entry)
+    const remaining = versions.filter(entry => !found.includes(entry))
     // Files of the versions that remain stay: discarding the draft of a media
     // file must not remove the file its published version points to
-    const skipLocations = new Set(
-      versions
-        .filter(entry => !found.includes(entry))
-        .map(entry => entry.data.location)
-    )
+    const skipLocations = new Set(remaining.map(entry => entry.data.location))
+    // The versions of a language share their children, which stay while one
+    // of them remains
+    const skipDirs = new Set(remaining.map(entry => entry.childrenDir))
     for (const entry of found) {
       if (entry.versionStatus === 'published')
         assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
@@ -761,17 +761,20 @@ export class EntryTransaction implements AsyncDisposable {
         skipLocations.add(entry.data.location)
         this.#removeMediaFile(entry)
       }
-      // Drafts share their children with the other versions
-      if (entry.versionStatus === 'draft') continue
-      this.#sourceTransaction.remove(entry.childrenDir)
-      if (entry.type === 'MediaLibrary') {
-        const files = await this.#mediaFiles({
-          workspace: entry.workspace,
-          root: entry.root,
-          filePathPrefix: `${entry.childrenDir}/`
-        })
-        for (const file of files) this.#removeMediaFile(file)
+      if (skipDirs.has(entry.childrenDir)) continue
+      skipDirs.add(entry.childrenDir)
+      const descendants = await this.#findEntries({
+        workspace: entry.workspace,
+        root: entry.root,
+        filePath: {startsWith: `${entry.childrenDir}/`}
+      })
+      for (const child of descendants) {
+        this.#policy.assert(Permission.Delete, child)
+        if (child.versionStatus === 'published')
+          assert(!child.seeded, `Cannot remove seeded entry ${child.filePath}`)
+        if (child.type === 'MediaFile') this.#removeMediaFile(child)
       }
+      this.#sourceTransaction.remove(entry.childrenDir)
     }
     const info = found[0]
     if (info) this.#messages.unshift(this.#report('remove', info.title))
@@ -1252,19 +1255,6 @@ export class EntryTransaction implements AsyncDisposable {
       ...siblingsOf(location),
       orderBy,
       select: Entry.index
-    })
-  }
-
-  #mediaFiles(location: {
-    workspace: string
-    root: string
-    filePathPrefix: string
-  }): Promise<Array<TransactionEntry>> {
-    return this.#findEntries({
-      workspace: location.workspace,
-      root: location.root,
-      filePath: {startsWith: location.filePathPrefix},
-      filter: {_type: 'MediaFile'}
     })
   }
 

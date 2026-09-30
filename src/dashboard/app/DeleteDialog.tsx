@@ -20,7 +20,7 @@ import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useTransition} from 'react'
 import {IcRoundDelete, IcRoundWarning} from '../icons.js'
 import css from './DeleteDialog.module.css'
-import {EntryReferenceList} from './EntryReferences.js'
+import {countReferenceSources, EntryReferenceList} from './EntryReferences.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -57,14 +57,8 @@ export function DeleteDialog({plan, onClose, onConfirm}: DeleteDialogProps) {
   )
 }
 
+// Hundreds of references would push the actions out of view, list a few
 const maxListedSources = 3
-
-function referenceSourceKey(reference: {
-  sourceId: string
-  sourceLocale: string | null
-}) {
-  return [reference.sourceId, reference.sourceLocale].join('\0')
-}
 
 interface DeleteDialogContentProps {
   plan: DeletePlan
@@ -94,18 +88,14 @@ function DeleteDialogContent({
     item => item.hasChildren && typeOf(item.type) !== MediaLibrary
   )
   const noun = files.length ? 'file' : folders.length ? 'folder' : 'entry'
-  const sourceKeys = Array.from(
-    new Set(references.map(({reference}) => referenceSourceKey(reference)))
+  const sources = countReferenceSources(references)
+  const unlisted = Math.max(0, sources - maxListedSources)
+  // Links to the entries or files inside the deleted ones
+  const nested = references.some(
+    ({reference}) => !subjects.some(item => item.id === reference.targetId)
   )
-  const sources = sourceKeys.length
-  // Hundreds of references would push the actions out of view, list a few
-  const listedKeys = new Set(sourceKeys.slice(0, maxListedSources))
-  const listedReferences = references.filter(({reference}) =>
-    listedKeys.has(referenceSourceKey(reference))
-  )
-  const unlisted = sources - listedKeys.size
   const onlyFiles = files.length === count
-  const pickLocales = locales.length > 1
+  const pickLocales = locales !== undefined && locales.length > 1
 
   function confirm() {
     startTransition(async () => {
@@ -162,15 +152,19 @@ function DeleteDialogContent({
           <>
             <Alert variant="destructive" icon={IcRoundWarning}>
               <AlertTitle>
-                {count === 1 ? `This ${noun} has` : 'These items have'}{' '}
+                {count === 1 ? `This ${noun}` : 'These items'}
+                {nested &&
+                  (count === 1 ? ' and its contents' : ' and their contents')}
+                {count === 1 && !nested ? ' has ' : ' have '}
                 {sources} {sources === 1 ? 'reference' : 'references'}
               </AlertTitle>
               <AlertDescription>
-                The links to it from these entries will break.
+                The links from these entries will break.
               </AlertDescription>
             </Alert>
             <EntryReferenceList
-              references={listedReferences}
+              references={references}
+              limit={maxListedSources}
               locale={null}
               onSelect={(source, locale) => {
                 onClose()
@@ -183,17 +177,23 @@ function DeleteDialogContent({
               }}
             />
             {unlisted > 0 &&
-              (count === 1 ? (
+              // The references tab lists the links to the entry itself
+              (count === 1 && !nested ? (
                 <Button
                   variant="ghost"
                   onClick={() => {
                     const [subject] = subjects
+                    const locale =
+                      selectedLocales.length === 1
+                        ? selectedLocales[0]
+                        : subject.locale
                     onClose()
                     setRoute({
                       workspace: subject.workspace,
                       root: subject.root,
                       entry: subject.id,
-                      locale: subject.locale ?? undefined
+                      locale: locale ?? undefined,
+                      view: 'edit'
                     })
                     setSidebarTab('references')
                     setSidebarOpen(true)

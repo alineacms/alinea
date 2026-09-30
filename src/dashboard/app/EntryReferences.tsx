@@ -57,13 +57,23 @@ export interface EntryReferenceListProps {
   /** The locale being edited, null for entries without languages */
   locale: string | null
   onSelect(source: EntryReferenceSource, locale: string | null): void
+  /** The most linking entries to list */
+  limit?: number
+}
+
+/** The number of entries linking, counting each language */
+export function countReferenceSources(
+  references: Array<EntryReferenceWithSource>
+): number {
+  return groupReferences(references).length
 }
 
 /** The entries linking to an entry, grouped per entry and language */
 export function EntryReferenceList({
   references,
   locale,
-  onSelect
+  onSelect,
+  limit
 }: EntryReferenceListProps) {
   // Entries in roots without languages (such as media) can be referenced
   // from any locale
@@ -74,7 +84,7 @@ export function EntryReferenceList({
   const otherReferences = showAllLocales
     ? []
     : references.filter(item => !matchesLocale(item, locale))
-  const groups = groupReferences(currentReferences)
+  const groups = groupReferences(currentReferences).slice(0, limit)
   const otherSummary = formatOtherLocales(groupReferences(otherReferences))
   if (groups.length === 0) {
     return (

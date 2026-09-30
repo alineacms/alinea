@@ -782,49 +782,58 @@ export const entryAtoms = dispense((entryId: string) => {
 
 /** The versions linking to an entry, that the user can read */
 export const incomingReferencesAtoms = dispense((targetId: string) =>
-  atom(async (get): Promise<EntryReferences> => {
-    get(entryRevisionAtom(targetId))
-    const graph = get(graphAtom)
-    const policy = get(policyAtom)
-    const result = await graph.referencesTo({
-      targetId,
-      status: 'preferDraft'
-    })
-    const sourceIds = Array.from(
-      new Set(result.references.map(reference => reference.sourceId))
-    )
-    const sources =
-      sourceIds.length === 0
-        ? []
-        : await graph.find({
-            id: {in: sourceIds},
-            status: 'preferDraft',
-            select: {
-              id: Entry.id,
-              title: Entry.title,
-              type: Entry.type,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              locale: Entry.locale,
-              status: Entry.status,
-              path: Entry.path,
-              url: Entry.url
-            }
-          })
-    const sourceByLocale = new Map(
-      sources.map(source => [referenceSourceKey(source), source] as const)
-    )
-    const sourceById = new Map(sources.map(source => [source.id, source]))
-    const references = result.references.flatMap(reference => {
-      const source =
-        sourceByLocale.get(referenceKey(reference)) ??
-        sourceById.get(reference.sourceId)
-      if (!source || !policy.canRead(source)) return []
-      return [{reference, source} satisfies EntryReferenceWithSource]
-    })
-    return {references, total: result.total}
+  atom(get => {
+    // Links are added and removed by other entries
+    get(shaAtom)
+    return loadIncomingReferences(get, targetId)
   })
 )
+
+/** The versions linking to the entries, that the user can read */
+export async function loadIncomingReferences(
+  get: Getter,
+  targetId: string | Array<string>
+): Promise<EntryReferences> {
+  const graph = get(graphAtom)
+  const policy = get(policyAtom)
+  const result = await graph.referencesTo({
+    targetId,
+    status: 'preferDraft'
+  })
+  const sourceIds = Array.from(
+    new Set(result.references.map(reference => reference.sourceId))
+  )
+  const sources =
+    sourceIds.length === 0
+      ? []
+      : await graph.find({
+          id: {in: sourceIds},
+          status: 'preferDraft',
+          select: {
+            id: Entry.id,
+            title: Entry.title,
+            type: Entry.type,
+            workspace: Entry.workspace,
+            root: Entry.root,
+            locale: Entry.locale,
+            status: Entry.status,
+            path: Entry.path,
+            url: Entry.url
+          }
+        })
+  const sourceByLocale = new Map(
+    sources.map(source => [referenceSourceKey(source), source] as const)
+  )
+  const sourceById = new Map(sources.map(source => [source.id, source]))
+  const references = result.references.flatMap(reference => {
+    const source =
+      sourceByLocale.get(referenceKey(reference)) ??
+      sourceById.get(reference.sourceId)
+    if (!source || !policy.canRead(source)) return []
+    return [{reference, source} satisfies EntryReferenceWithSource]
+  })
+  return {references, total: result.total}
+}
 
 function referenceKey(reference: {
   sourceId: string

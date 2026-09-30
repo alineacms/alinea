@@ -65,7 +65,7 @@ interface DeleteDialogStoryProps {
 
 function DeleteDialogStory({
   subjects,
-  locales = [],
+  locales,
   references = []
 }: DeleteDialogStoryProps) {
   const open = () => createDeletePlan(subjects, locales, references)

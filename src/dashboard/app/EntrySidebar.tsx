@@ -60,8 +60,6 @@ import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 
 const styles = styler(css)
 
-export type {EntrySidebarTab}
-
 export interface EntrySidebarProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
