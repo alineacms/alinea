@@ -1,24 +1,20 @@
-import {compressPdf} from './CompressPdf.js'
 import {
   imageEncodingType,
   imageTransformPlan,
-  isPdf,
   type ImageTransform
 } from './ImageTransform.js'
 
 export type {ImageTransform}
 
 /**
- * Rotate, crop and scale down an image with sharp on the server, or scale
- * down the images in a PDF. Returns the original when that changes nothing.
+ * Rotate, crop and scale down an image with sharp on the server. Returns the
+ * original when that changes nothing.
  */
 export async function transformImage(
   blob: Blob,
   fileName: string,
   transform: ImageTransform
 ): Promise<Blob> {
-  if (isPdf(fileName))
-    return compressPdf(blob, transform.resize, transformImage)
   const type = imageEncodingType(fileName)
   if (!type) return blob
   const {default: sharp} = await import(/* @vite-ignore */ 'sharp' + '').catch(

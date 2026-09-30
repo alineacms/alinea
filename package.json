@@ -110,7 +110,6 @@
     "@alinea/styler": "^1.0.3",
     "@alinea/suite": "^0.6.3",
     "@badgateway/oauth2-client": "^3.2.0",
-    "@cantoo/pdf-lib": "^2.11.1",
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
     "@floating-ui/dom": "^1.8.0",

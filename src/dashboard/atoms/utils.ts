@@ -1,5 +1,8 @@
 import type {Config} from '#/core/Config.js'
-import {uploadResize} from '#/core/media/ImageTransform.js'
+import {
+  imageEncodingType,
+  imageResizeOptions
+} from '#/core/media/ImageTransform.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import type {DragTypes, DropTarget, Key} from '#/components.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -189,12 +192,14 @@ export async function moveEntries(
 
 export function uploadSizeError(
   file: File,
-  config: Pick<Config, 'maxUploadSize' | 'resizeImages' | 'compressPdfs'>
+  config: Pick<Config, 'maxUploadSize' | 'resizeImages'>
 ): string | undefined {
-  // Images and PDFs scaled down before the upload are checked after resizing
-  if (uploadResize(file.name, config)) return undefined
+  const {maxUploadSize, resizeImages} = config
+  // Images scaled down before the upload are checked after resizing
+  if (imageResizeOptions(resizeImages) && imageEncodingType(file.name))
+    return undefined
   try {
-    assertUploadSize(file.name, file.size, config.maxUploadSize)
+    assertUploadSize(file.name, file.size, maxUploadSize)
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }

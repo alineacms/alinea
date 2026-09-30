@@ -1,25 +1,20 @@
-import {compressPdf} from './CompressPdf.js'
 import {
   imageEncodingType,
   imageTransformPlan,
-  isPdf,
   type ImageTransform
 } from './ImageTransform.js'
 
 export type {ImageTransform}
 
 /**
- * Rotate, crop and scale down an image on a canvas in the browser, or scale
- * down the images in a PDF. Returns the original when that changes nothing
- * or the browser cannot encode it.
+ * Rotate, crop and scale down an image on a canvas in the browser. Returns
+ * the original when that changes nothing or the browser cannot encode it.
  */
 export async function transformImage(
   blob: Blob,
   fileName: string,
   transform: ImageTransform
 ): Promise<Blob> {
-  if (isPdf(fileName))
-    return compressPdf(blob, transform.resize, transformImage)
   const type = imageEncodingType(fileName)
   if (!type) return blob
   // Bitmaps are decoded with their exif orientation applied
