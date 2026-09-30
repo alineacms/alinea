@@ -3,6 +3,7 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {Entry} from '#/core/Entry.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import type {Type} from '#/core/Type.js'
 import {Config, Field} from '#/index.js'
 import {
   createDashboardAtomFixture,
@@ -202,9 +203,8 @@ test('untranslated entries can start with empty fields instead of copied content
   })
 })
 
-test('untranslated entries start with the path of their title', async () => {
-  const Page = Config.document('Page', {fields: {}})
-  const config = Config.create({
+function translatedPathConfig(Page: Type) {
+  return Config.create({
     schema: {Page},
     workspaces: {
       main: Config.workspace('Main', {
@@ -218,6 +218,11 @@ test('untranslated entries start with the path of their title', async () => {
       })
     }
   })
+}
+
+test('untranslated entries save the path of their translated title', async () => {
+  const Page = Config.document('Page', {fields: {}})
+  const config = translatedPathConfig(Page)
   const db = new LocalDB(config)
   await db.create({
     id: 'translated-path',
@@ -231,14 +236,59 @@ test('untranslated entries start with the path of their title', async () => {
   const entry = await store.get(entryAtoms('translated-path'))
   const locale = entry.locales('fr')
 
-  const copied = await store.get(locale.selectedNode)
-  expect(store.get(copied.value)).toMatchObject({path: 'english-title'})
-  expect(store.get(locale.errors(copied))).toEqual([])
-  expect(store.get(copied.isDirty)).toBe(false)
+  const node = await store.get(locale.selectedNode)
+  expect(store.get(node.value)).toMatchObject({path: undefined})
+  expect(store.get(locale.errors(node))).toEqual([])
+  expect(store.get(node.isDirty)).toBe(false)
 
-  store.set(locale.copyTranslationSource, false)
-  const empty = await store.get(locale.selectedNode)
-  expect(store.get(empty.value)).toMatchObject({path: undefined})
+  // No path field view is mounted to follow the title
+  store.set(node.field('title'), 'Titre français')
+  await store.set(locale.saveTranslation, node)
+  const path = await db.first({
+    select: Entry.path,
+    id: 'translated-path',
+    locale: 'fr',
+    status: 'preferDraft'
+  })
+  expect(path).toBe('titre-francais')
+})
+
+test('untranslated entries follow the path source until the path is edited', async () => {
+  const Page = Config.type('Page', {
+    fields: {
+      title: Field.text('Title'),
+      name: Field.text('Name'),
+      path: Field.path('Path', {from: 'name', required: true, hidden: true})
+    }
+  })
+  const config = translatedPathConfig(Page)
+  const db = new LocalDB(config)
+  await db.create({
+    id: 'named-path',
+    locale: 'en',
+    root: 'pages',
+    type: Page,
+    set: {title: 'English title', name: 'English name'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms('named-path'))
+  const locale = entry.locales('fr')
+  const node = await store.get(locale.selectedNode)
+  store.set(node.field('name'), 'Nom français')
+  expect(await store.get(locale.previewEntryReady)).toMatchObject({
+    path: 'nom-francais'
+  })
+  store.set(node.field('path'), 'eigen-pad')
+  store.set(node.field('name'), 'Autre nom')
+  await store.set(locale.saveTranslation, node)
+  const path = await db.first({
+    select: Entry.path,
+    id: 'named-path',
+    locale: 'fr',
+    status: 'preferDraft'
+  })
+  expect(path).toBe('eigen-pad')
 })
 
 function linkedSourceData() {

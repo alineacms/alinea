@@ -5,7 +5,7 @@ import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
-import type {FieldBeforeSaveAction} from '#/core/Field.js'
+import {Field, type FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
@@ -24,6 +24,7 @@ import {
   policyFieldOptions,
   validateEntry
 } from '#/core/Validation.js'
+import {PathField} from '#/field/path/PathField.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
@@ -98,6 +99,18 @@ export type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
 
+/**
+ * A path that was not edited follows the field it is made from, the title by
+ * default, so a translation gets the path of its own title
+ */
+function withPath(type: Type, value: Record<string, unknown>) {
+  const field = Type.field(type, 'path')
+  if (value.path !== undefined || !(field instanceof PathField)) return value
+  const source = value[Field.options(field).from ?? 'title']
+  const path = typeof source === 'string' ? slugify(source) : ''
+  return path ? {...value, path} : value
+}
+
 function prepareData(
   get: Getter,
   node: ReactiveNode<object>,
@@ -108,7 +121,7 @@ function prepareData(
   const current = get(node.value) as Record<string, unknown>
   return {
     checkpoint: current,
-    data: Type.beforeSave(type, current, {
+    data: Type.beforeSave(type, withPath(type, current), {
       action,
       user,
       now: new Date()
@@ -278,13 +291,10 @@ export class EntryLocaleAtoms {
         })
       }
     }
-    // A translation starts with the path of its title, which the path field
-    // keeps following while the title is edited
-    const title = typeof data?.title === 'string' ? data.title : ''
     const value = Type.withInitialValue(type, {
       ...Type.initialValue(type),
       ...data,
-      ...(isUntranslated ? {path: slugify(title) || undefined} : undefined)
+      ...(isUntranslated ? {path: undefined} : undefined)
     })
     return new ReactiveNode<object>(value, readOnly)
   })
@@ -348,10 +358,16 @@ export class EntryLocaleAtoms {
     retryPreviewToken(get(clientAtom))
     set(this.#previewUrlRetry, current => current + 1)
   })
+  #value(get: Getter, node: ReactiveNode<object>) {
+    const {type} = get(this.entry.data)
+    const typeConfig = get(configAtom).schema[type]
+    assert(typeConfig, `Type "${type}" not found in config`)
+    return withPath(typeConfig, get(node.value) as Record<string, unknown>)
+  }
   previewEntryReady = atom(async get => {
     const activeEntry = await get(this.selectedEntry)
     const node = await get(this.selectedNode)
-    const value = get(node.value) as Record<string, unknown>
+    const value = this.#value(get, node)
     return {
       ...activeEntry,
       title: typeof value.title === 'string' ? value.title : activeEntry.title,
@@ -394,7 +410,7 @@ export class EntryLocaleAtoms {
   })
   updatePreviewPayload = atom(null, async get => {
     const node = await get(this.selectedNode)
-    const value = get(node.value) as Record<string, unknown>
+    const value = this.#value(get, node)
     const activeEntry = Array.from(get(this.versions).values()).find(
       version => version.active
     )
@@ -439,7 +455,7 @@ export class EntryLocaleAtoms {
       const config = get(configAtom)
       const type = config.schema[data.type]
       assert(type, `Type "${data.type}" not found in config`)
-      return validateEntry(type, get(node.value), {
+      return validateEntry(type, this.#value(get, node), {
         fieldOptions: policyFieldOptions(config, get(policyAtom), {
           workspace: data.workspace,
           root: data.root,

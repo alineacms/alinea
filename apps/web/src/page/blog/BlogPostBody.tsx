@@ -32,7 +32,12 @@ function BlogText({children}: BlogTextProps) {
 
 function BlogTable({children}: JSX.IntrinsicElements['table']) {
   return (
-    <div className={styles.root.tableScroll()} tabIndex={0}>
+    <div
+      className={styles.root.tableScroll()}
+      role="region"
+      aria-label="Table"
+      tabIndex={0}
+    >
       <table className={styles.root.table()}>
         <tbody>{children}</tbody>
       </table>
@@ -92,6 +97,7 @@ export function BlogPostBody({body}: BlogPostBodyProps) {
         li={<li className={styles.root.listItem()} />}
         blockquote={<blockquote className={styles.root.blockquote()} />}
         table={BlogTable}
+        tr={<tr className={styles.root.tableRow()} />}
         th={<th className={styles.root.tableHeader()} />}
         td={<td className={styles.root.tableCell()} />}
         hr={<hr className={styles.root.rule()} />}

@@ -46,7 +46,6 @@
   outline: none;
   cursor: pointer;
 
-  &:hover,
   &.is-highlighted {
     background: var(--alinea-muted);
   }
