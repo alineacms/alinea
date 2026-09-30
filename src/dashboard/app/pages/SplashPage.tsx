@@ -119,7 +119,7 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
             root,
             status: 'preferDraft',
             groupBy: Entry.id,
-            orderBy: {desc: Entry.id, caseSensitive: true},
+            orderBy: {desc: Entry.id},
             take: recentCandidateWindowSize,
             select: recentEntrySelection
           })

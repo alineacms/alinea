@@ -425,9 +425,14 @@ export function compileEntryQuery(
             internal.path?.join() === 'metadata' &&
             orderedMetadata.has(internal.name)
       // Strings are case-insensitive unless the query opts in. The field index
-      // orders dates and numbers as is, which case folding cannot change.
+      // orders dates and numbers as is, which case folding cannot change. Ids
+      // and indexes are base62 keys, which only order as stored.
       const collated =
-        ordersByIndex || order.caseSensitive
+        ordersByIndex ||
+        order.caseSensitive ||
+        (internal.type === 'entryField' &&
+          !internal.path &&
+          (internal.name === 'id' || internal.name === 'index'))
           ? value
           : sql`${value} collate nocase`
       // Nulls sort last in either direction, SQLite sorts them last for desc

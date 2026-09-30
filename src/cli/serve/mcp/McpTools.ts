@@ -270,7 +270,7 @@ export function createContentTools(
           orderBy: query.search
             ? undefined
             : 'parentId' in query
-              ? {asc: Entry.index, caseSensitive: true}
+              ? {asc: Entry.index}
               : {asc: Entry.url},
           select: {
             ...summary,

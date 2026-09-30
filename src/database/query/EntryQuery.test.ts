@@ -1,13 +1,14 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
+import {createId} from '#/core/Id.js'
 import {root} from '#/core/Root.js'
 import {type} from '#/core/Type.js'
 import {workspace} from '#/core/Workspace.js'
 import {date} from '#/field/date/DateField.js'
 import {number} from '#/field/number/NumberField.js'
 import {text} from '#/field/text/TextField.js'
-import {expect, test} from 'bun:test'
+import {expect, setSystemTime, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {sql} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
@@ -597,6 +598,26 @@ test('ordering by creation time walks its metadata index', async () => {
   const details = JSON.stringify(explain)
   expect(details).toContain('alinea_entry_index_by_field_metadata.createdAt')
   expect(details).not.toContain('TEMP B-TREE')
+})
+
+test('ids order by creation time, regardless of letter case', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable)
+  const start = Date.UTC(2026, 0, 1)
+  const ids = Array.from({length: 48}, (_, hour) => {
+    setSystemTime(start + hour * 3_600_000)
+    return createId()
+  })
+  setSystemTime()
+  await db
+    .insert(EntryIndexTable)
+    .values(ids.map(id => entryIndexRow(entry(id, {index: 'a0'}))))
+  const newestFirst = compileEntryQuery(config, {
+    orderBy: {desc: Entry.id},
+    select: Entry.id
+  })
+  expect(await newestFirst.rows.all(db)).toEqual(ids.toReversed())
 })
 
 test('long value lists bind one parameter, which the WASM build prepares', async () => {
