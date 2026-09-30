@@ -113,6 +113,7 @@ export function ImageEditor({
   }
 
   function startDrag(event: PointerEvent<HTMLElement>, handle?: CropHandle) {
+    if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -123,6 +124,8 @@ export function ImageEditor({
     const start = drag.current
     const rect = stage.current?.getBoundingClientRect()
     if (!start || !rect) return
+    // The button was released without a pointerup reaching us
+    if (!event.buttons) return endDrag()
     const dx = (event.clientX - start.x) / rect.width
     const dy = (event.clientY - start.y) / rect.height
     setCrop(
@@ -238,9 +241,11 @@ export function ImageEditor({
                 style={cropStyle}
                 onKeyDown={onCropKeyDown}
                 onPointerDown={event => startDrag(event)}
+                // Handles capture the pointer themselves, their events bubble up
                 onPointerMove={moveDrag}
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
+                onLostPointerCapture={endDrag}
               >
                 <span className={styles.ImageEditor.crop.grid()} />
                 {(relativeRatio
@@ -252,9 +257,6 @@ export function ImageEditor({
                     data-handle={handle}
                     className={styles.ImageEditor.crop.handle(handle)}
                     onPointerDown={event => startDrag(event, handle)}
-                    onPointerMove={moveDrag}
-                    onPointerUp={endDrag}
-                    onPointerCancel={endDrag}
                   />
                 ))}
               </div>

@@ -74,6 +74,53 @@ test('keeps the upload button in view while a long list of files scrolls', async
   ).toBeInViewport()
 })
 
+test('ends a crop drag when the button is released', async ({
+  dashboard,
+  mount
+}) => {
+  const {app, upload} = await openMediaDirectory(dashboard, mount)
+  const dialog = await upload({
+    name: 'landscape.jpg',
+    mimeType: 'image/jpeg',
+    buffer: await jpeg(1200, 800)
+  })
+  await dialog.getByRole('button', {name: 'Edit landscape.jpg'}).click()
+  const crop = dialog.getByRole('group', {name: /Crop area/})
+  const mouse = app.page.mouse
+  async function drag(handle: string, dx: number, dy: number) {
+    const box = (await crop.locator(`[data-handle="${handle}"]`).boundingBox())!
+    const x = box.x + box.width / 2
+    const y = box.y + box.height / 2
+    await mouse.move(x, y)
+    await mouse.down()
+    await mouse.move(x + dx, y + dy, {steps: 4})
+    return {x: x + dx, y: y + dy}
+  }
+
+  const end = await drag('se', -200, -150)
+  await mouse.up()
+  const cropped = await crop.boundingBox()
+  await mouse.move(end.x - 100, end.y - 80, {steps: 4})
+  await dialog.getByRole('button', {name: 'Aspect ratio'}).click()
+  await app.page.keyboard.press('Escape')
+  await mouse.move(end.x + 60, end.y + 40, {steps: 4})
+  expect(await crop.boundingBox()).toEqual(cropped)
+
+  // A release the crop never heard about ends the drag at the next move
+  const {x, y} = await drag('nw', 40, 30)
+  const moved = await crop.boundingBox()
+  await crop.dispatchEvent('pointermove', {
+    pointerId: 1,
+    isPrimary: true,
+    clientX: x + 50,
+    clientY: y + 50,
+    buttons: 0
+  })
+  await mouse.move(x + 80, y + 60, {steps: 4})
+  expect(await crop.boundingBox()).toEqual(moved)
+  await mouse.up()
+})
+
 test('rotates an image in the upload dialog before uploading it', async ({
   dashboard,
   mount
