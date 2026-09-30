@@ -3,8 +3,13 @@ import {expect, expectTypeOf, test} from 'bun:test'
 import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
+import type {ListRow} from '#/core/ListRow.js'
+import {Type} from '#/core/Type.js'
 import {LocalDB} from '#/database/LocalDB.js'
+import type {LinkRow} from '#/field/link.js'
+import type {ListOptions} from '#/field/list/ListField.js'
 import {Config, Field, Query} from '#/index.js'
+import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
 // Checks that the inferred result types match what queries return at runtime
 
@@ -195,4 +200,75 @@ test('relation helpers without a selection infer entries', async () => {
     expect(result.siblingCount).toBe(2)
     expect(result.firstRelated ?? null).toBe(null)
   })
+})
+
+test('list rows can leave a single link empty in their initial value', () => {
+  const Content = Config.type('Content', {
+    fields: {
+      title: Field.text('Title'),
+      image: Field.image('Image', {required: false}),
+      link: Field.link('Link'),
+      related: Field.entry.multiple('Related')
+    }
+  })
+  const withNull = Field.list('Content', {
+    schema: {Content},
+    initialValue: [{_type: 'Content', title: 'A', image: null, related: []}]
+  })
+  Field.list('Content', {
+    schema: {Content},
+    initialValue: [
+      {_type: 'Content', title: 'B', image: undefined, related: []},
+      {_type: 'Content', title: 'C', link: null, related: []}
+    ]
+  })
+  Field.list('Content', {
+    schema: {Content},
+    // @ts-expect-error An empty string is not a link
+    initialValue: [{_type: 'Content', title: 'D', image: '', related: []}]
+  })
+  Field.list('Content', {
+    schema: {Content},
+    // @ts-expect-error Other fields still need their value
+    initialValue: [{_type: 'Content', image: null, related: []}]
+  })
+  Field.list('Content', {
+    schema: {Content},
+    // @ts-expect-error Lists of links are not left empty with null
+    initialValue: [{_type: 'Content', title: 'E', related: null}]
+  })
+  type Row = NonNullable<
+    ListOptions<{Content: typeof Content}>['initialValue']
+  >[number]
+  expectTypeOf<Row['image']>().toEqualTypeOf<
+    EntryReference | null | undefined
+  >()
+  expectTypeOf<Row['link']>().toEqualTypeOf<LinkRow | null | undefined>()
+  expectTypeOf<Row['title']>().toEqualTypeOf<string>()
+  expectTypeOf<Row['related']>().toEqualTypeOf<
+    Array<EntryReference & ListRow>
+  >()
+
+  // An empty link is stored as null, like the initial value of a single link
+  const Page = Config.type('Page', {
+    fields: {
+      content: withNull,
+      omitted: Field.list('Omitted', {
+        schema: {Content},
+        initialValue: [
+          {_type: 'Content', title: 'B', image: undefined, related: []},
+          {_type: 'Content', title: 'C', related: []}
+        ]
+      })
+    }
+  })
+  const initial = Type.initialValue(Page) as {
+    content: Array<Record<string, unknown>>
+    omitted: Array<Record<string, unknown>>
+  }
+  expect(Type.initialValue(Content).image).toBe(null)
+  expect(initial.content[0].image).toBe(null)
+  expect(initial.omitted.map(row => row.image)).toEqual([null, null])
+  expect(initial.omitted.map(row => row.link)).toEqual([null, null])
+  expect(initial.omitted.map(row => row.title)).toEqual(['B', 'C'])
 })

@@ -5,6 +5,7 @@ import type {Field} from './Field.js'
 import type {InferProjection} from './Graph.js'
 import type {ListRow} from './ListRow.js'
 import type {Type} from './Type.js'
+import type {UnionMutator} from './UnionRow.js'
 import type {RecordField} from './field/RecordField.js'
 
 type QueryList<T> = Expand<
@@ -48,6 +49,40 @@ export type CreateInputRow<Definition> = {
     ? K
     : never]: CreateInputValue<Definition[K]>
 }
+
+/** Single link fields, which are stored as null while empty */
+type EmptyableKeys<Definition> = {
+  [K in keyof Definition]: Definition[K] extends Field<
+    any,
+    any,
+    UnionMutator<any>
+  >
+    ? K
+    : never
+}[keyof Definition]
+
+type InitialList<T> = Expand<
+  UnionOfValues<{
+    [K in keyof T]: {_type: K} & InitialRow<T[K]>
+  }>
+>
+
+/** Initial values of a row, single links can be left empty */
+export type InitialRow<Definition> = Expand<
+  Omit<StoredRow<Definition>, EmptyableKeys<Definition>> & {
+    [K in EmptyableKeys<Definition>]?: Definition[K] extends Field<infer T>
+      ? T | null
+      : never
+  }
+>
+
+/** The initial value of a field of type T, eg. the rows of a list field */
+export type InferInitialValue<T> =
+  T extends Type<infer Fields>
+    ? InitialRow<Fields>
+    : T extends Record<string, Type>
+      ? InitialList<T>
+      : InferStoredValue<T>
 
 export type InferStoredValue<T> =
   T extends Type<infer Fields>
