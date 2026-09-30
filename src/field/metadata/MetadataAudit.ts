@@ -1,7 +1,7 @@
 import type {FieldBeforeSaveContext, FieldOptions} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {Type, type} from '#/core/Type.js'
-import {isRecord} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {ObjectField} from '#/field/object.js'
 import {aliases, type AliasesField} from './MetadataAliases.js'
@@ -59,10 +59,27 @@ export function auditMetadata(
     options: {label, fields},
     view: viewKeys.ObjectInput,
     beforeSave(context) {
-      return beforeSaveWithAudit(fields, context) as Type.Infer<typeof fields>
+      const details = beforeSaveWithAudit(fields, context)
+      return fromEntries(
+        entries(details).filter(([key, value]) => !isPlaceholder(key, value))
+      ) as Type.Infer<typeof fields>
     }
   })
   return Object.assign(field, fields)
+}
+
+/** Unknown creation details and empty aliases, which files leave out */
+function isPlaceholder(key: string, value: unknown) {
+  switch (key) {
+    case 'createdAt':
+      return value === null
+    case 'createdBy':
+      return isRecord(value) && !value.name && !value.email
+    case 'aliases':
+      return Array.isArray(value) && value.length === 0
+    default:
+      return false
+  }
 }
 
 /** Stamps the created and updated details, then saves the other fields */

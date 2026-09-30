@@ -5,6 +5,7 @@ import {suite} from '@alinea/suite'
 import {
   MetadataTimestampField,
   MetadataUserField,
+  auditMetadata,
   metadata
 } from './MetadataField.js'
 
@@ -81,6 +82,29 @@ test('metadata audit leaves unknown created fields empty when updating', () => {
   test.equal(result.metadata, {
     createdAt: null,
     createdBy: {name: '', email: ''},
+    updatedAt: 1685703439,
+    updatedBy: {name: 'John Doe', email: 'info@codeurs.be'}
+  })
+})
+
+test('audit metadata leaves unknown created fields and empty aliases out', () => {
+  const File = type('File', {fields: {metadata: auditMetadata()}})
+  const date = new Date('2023-06-02T10:57:19.584Z')
+  const result = Type.beforeSave(
+    File,
+    {
+      metadata: {
+        createdAt: null,
+        createdBy: {name: '', email: ''},
+        updatedAt: null,
+        updatedBy: {name: '', email: ''},
+        aliases: []
+      }
+    },
+    {action: 'update', user, now: date}
+  )
+
+  test.equal(result.metadata, {
     updatedAt: 1685703439,
     updatedBy: {name: 'John Doe', email: 'info@codeurs.be'}
   })
