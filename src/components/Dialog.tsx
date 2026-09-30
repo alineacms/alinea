@@ -97,6 +97,7 @@ export function DialogContent({
         style={style}
       >
         <DialogPrimitive
+          data-slot="dialog-body"
           id={id}
           role={role}
           aria-label={ariaLabel}

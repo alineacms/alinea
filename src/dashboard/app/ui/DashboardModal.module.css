@@ -24,7 +24,7 @@
 
   /* The dialog inside shrinks to fit the modal, so its content scrolls
      between a header and footer that stay visible */
-  & > [role] {
+  & > [data-slot='dialog-body'] {
     flex-shrink: 1;
     min-height: 0;
   }
