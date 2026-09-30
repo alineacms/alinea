@@ -86,6 +86,11 @@
     }
   }
 
+  &:has(.TreeItem-labelLink[aria-current]):not([aria-selected='true']) {
+    color: var(--alinea-primary-subtle-fg);
+    font-weight: 600;
+  }
+
   &[aria-disabled='true'] {
     opacity: 0.5;
     cursor: default;

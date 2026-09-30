@@ -13,6 +13,7 @@ import {typeAtoms} from '../atoms/config.js'
 import {nav, routeAtom, type Page} from '../atoms/nav.js'
 import {configAtom} from '../atoms/core.js'
 import {
+  locatedItem,
   type RootAtoms,
   type RootTreeItem,
   type RootTreeNode,
@@ -94,6 +95,8 @@ function sidebarStatus(
 
 interface SidebarTreeItemProps {
   children?: (item: RootTreeNode) => ReactNode
+  /** The item is the location of a selected entry the tree does not list */
+  current?: boolean
   data: RootTreeItem
   entryLink?: (entry: RootTreeItem) => SidebarTreeLink
   /** The last visible row within the selected entry */
@@ -105,6 +108,7 @@ interface SidebarTreeItemProps {
 
 export const SidebarTreeItem = memo(function SidebarTreeItem({
   children,
+  current,
   data,
   entryLink,
   groupEnd,
@@ -137,6 +141,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
       hasChildItems={data.hasChildren}
       icon={configuredIcon ?? (data.hasChildren ? LucideFolder : LucideFile)}
       href={link ? dashboardHref(link.href) : undefined}
+      current={current ? 'location' : undefined}
       className={styles.SidebarTree.item({
         archived: isArchived,
         groupEnd: groupEnd && selectedAncestor !== undefined,
@@ -324,6 +329,7 @@ function SidebarTreeView({
     if (!data) return null
     return (
       <SidebarTreeItem
+        current={item.id === snapshot.locationKey}
         data={data}
         entryLink={entryLink}
         groupEnd={item.id === groupEnd}
@@ -396,6 +402,11 @@ function SidebarTreeView({
   )
 }
 
+/** Media directories open on their overview, other entries in the editor */
+function entryView(entry: RootTreeItem) {
+  return entry.type === 'MediaLibrary' ? undefined : 'edit'
+}
+
 export const SidebarTree = memo(function SidebarTree({
   page,
   root,
@@ -403,8 +414,7 @@ export const SidebarTree = memo(function SidebarTree({
 }: SidebarTreeProps) {
   const {locale} = page
   const tree = root.tree(locale)
-  const [selectedId] = view.snapshot.selectedKeys
-  const selectedItem = selectedId ? view.entries.get(selectedId) : undefined
+  const selectedItem = locatedItem(view)
   const setRoute = useSetAtom(routeAtom)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const setCollapsed = useSetAtom(tree.collapsedKeys)
@@ -416,7 +426,7 @@ export const SidebarTree = memo(function SidebarTree({
         root.key,
         entry.id,
         page.locale,
-        entry.type === 'MediaLibrary' ? undefined : 'edit'
+        entryView(entry)
       )
     }
   }
@@ -462,15 +472,17 @@ export const SidebarTree = memo(function SidebarTree({
         })
       }
       onSelectionChange={keys => {
-        const [entry] = keys
-        if (!entry || String(entry) === page.entry) return
-        setExpandedKeys(current => new Set(current).add(String(entry)))
+        const [key] = keys
+        const entry =
+          key === undefined ? undefined : view.entries.get(String(key))
+        if (!entry || entry.id === page.entry) return
+        setExpandedKeys(current => new Set(current).add(entry.id))
         setRoute({
           workspace: root.workspace,
           root: root.key,
-          entry: String(entry),
+          entry: entry.id,
           locale: page.locale ?? undefined,
-          view: 'edit'
+          view: entryView(entry)
         })
       }}
     />

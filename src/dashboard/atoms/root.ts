@@ -63,6 +63,8 @@ export interface TreeSnapshot {
   expandedKeys: Set<string>
   items: Array<RootTreeNode>
   selectedKeys: Set<string>
+  /** The closest listed ancestor of a selected entry the tree does not list */
+  locationKey?: string
 }
 
 export interface TreeView {
@@ -136,21 +138,23 @@ export class TreeAtoms {
       }
     }
     let selectedKeys = new Set([...get(this.#selectedKeys)].map(String))
+    let locationKey: string | undefined
     const requestedId = [...selectedKeys][0]
     let selectedModel = requestedId ? treeEntryAtoms(requestedId) : undefined
     let selected = selectedModel ? await listed(selectedModel) : undefined
     // The tree does not list some entries, such as media files, so it
-    // reveals and selects their closest listed ancestor instead
+    // reveals their closest listed ancestor as their location instead
     if (selectedModel && !selected) {
       for (const ancestor of (await ancestors(selectedModel)).toReversed()) {
         selected = await listed(ancestor)
         if (!selected) continue
         selectedModel = ancestor
-        selectedKeys = new Set([ancestor.id])
+        selectedKeys = new Set()
+        locationKey = ancestor.id
         break
       }
     }
-    const selectedId = [...selectedKeys][0]
+    const selectedId = locationKey ?? [...selectedKeys][0]
     const parents =
       selectedModel && selected ? await get(selectedModel.parents) : []
     const models = new Map(parents.map(parent => [parent.id, parent]))
@@ -232,7 +236,7 @@ export class TreeAtoms {
     }
     return {
       entries,
-      snapshot: {expandedKeys, items: nested(null), selectedKeys}
+      snapshot: {expandedKeys, items: nested(null), selectedKeys, locationKey}
     }
   })
 
@@ -274,10 +278,10 @@ export class TreeAtoms {
       throw get(this.#itemSource(id))
     })
   )
+  /** The selected entry, or the location of a selected entry that is not listed */
   selectedItem = atom(get => {
     const state = get(this.#state)
-    const selectedId = state && [...state.snapshot.selectedKeys][0]
-    return selectedId ? state.entries.get(selectedId) : undefined
+    return state && locatedItem(state)
   })
   canCreate = atom(get => {
     if (get(this.#root.canCreate)) return true
@@ -550,6 +554,15 @@ export function treeAcceptsDrop(
   if (target.position !== 'on') return !entry.ordered
   const type = schema[entry.type]
   return !keys.has(entry.id) && Boolean(type && Type.isContainer(type))
+}
+
+/** The selected entry, or the location of a selected entry that is not listed */
+export function locatedItem({
+  entries,
+  snapshot
+}: TreeView): RootTreeItem | undefined {
+  const id = snapshot.locationKey ?? [...snapshot.selectedKeys][0]
+  return id ? entries.get(id) : undefined
 }
 
 function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {

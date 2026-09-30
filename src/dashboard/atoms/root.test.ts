@@ -262,7 +262,7 @@ test('selected entry ancestors load without expanding unrelated branches', async
   expect(snapshot.selectedKeys).toEqual(new Set([child._id]))
 })
 
-test('the sidebar tree reveals the folder of a selected media file', async () => {
+test('the sidebar tree reveals the folder of a selected media file as its location', async () => {
   const config = Config.create({
     schema: {Page: DashboardTestPage},
     workspaces: {
@@ -307,7 +307,8 @@ test('the sidebar tree reveals the folder of a selected media file', async () =>
   expect(snapshot.items).toEqual([
     {id: folder._id, children: [{id: nested._id, children: []}]}
   ])
-  expect(snapshot.selectedKeys).toEqual(new Set([nested._id]))
+  expect(snapshot.selectedKeys).toEqual(new Set())
+  expect(snapshot.locationKey).toBe(nested._id)
   expect(store.get(tree.selectedItem)?.id).toBe(nested._id)
 })
 

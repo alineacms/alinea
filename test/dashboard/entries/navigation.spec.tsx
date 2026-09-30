@@ -265,7 +265,7 @@ test('keeps a collapsed parent closed when selecting a child elsewhere', async (
   await expect(tree.getByRole('button', {name: 'Expand Folder'})).toBeVisible()
 })
 
-test('reveals the folder of a nested media file in the sidebar tree', async ({
+test('reveals the folder of a nested media file as the current location in the sidebar tree', async ({
   dashboard,
   mount
 }) => {
@@ -286,7 +286,27 @@ test('reveals the folder of a nested media file in the sidebar tree', async ({
     exact: true
   })
   await expect(folder).toBeVisible()
+  await expect(folder).toHaveAttribute('aria-selected', 'false')
+  await expect(
+    folder.getByRole('link', {name: 'Nested media folder'})
+  ).toHaveAttribute('aria-current', 'location')
+  await expect(tree.getByRole('row', {selected: true})).toHaveCount(0)
+
+  // Pressing the row outside its link selects it, which opens the folder
+  const box = await folder.boundingBox()
+  await folder.click({position: {x: box!.width - 4, y: box!.height / 2}})
+
+  await expect(app.title).toHaveText('Nested media folder')
+  await expect(app.page).toHaveURL(/workflow-nested-media-folder$/)
   await expect(folder).toHaveAttribute('aria-selected', 'true')
+  await expect(
+    folder.getByRole('link', {name: 'Nested media folder'})
+  ).not.toHaveAttribute('aria-current')
+  await expect(
+    app.page
+      .getByRole('grid', {name: 'Explorer entries'})
+      .getByRole('row', {name: 'Nested media file', exact: true})
+  ).toBeVisible()
 })
 
 test('blocks navigation until unsaved changes are resolved', async ({
