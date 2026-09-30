@@ -336,6 +336,43 @@ async function createDashboardScenario({
         hash: 'legacy-image',
         alt: null
       }
+    },
+    {
+      op: 'create',
+      id: dashboardScenarioIds.mediaFolder,
+      type: 'MediaLibrary',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      data: {title: 'Media folder', path: 'media-folder'}
+    },
+    {
+      op: 'create',
+      id: dashboardScenarioIds.nestedMediaFolder,
+      type: 'MediaLibrary',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      parentId: dashboardScenarioIds.mediaFolder,
+      data: {title: 'Nested media folder', path: 'nested-media-folder'}
+    },
+    {
+      op: 'create',
+      id: dashboardScenarioIds.nestedMediaFile,
+      type: 'MediaFile',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      parentId: dashboardScenarioIds.nestedMediaFolder,
+      data: {
+        title: 'Nested media file',
+        path: 'nested-media-file',
+        location: 'media-folder/nested-media-folder/nested-media-file.jpg',
+        extension: '.jpg',
+        size: 1024,
+        hash: 'nested-media-file',
+        alt: null
+      }
     }
   ])
   await db.create({
