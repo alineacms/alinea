@@ -59,6 +59,21 @@ test('marks only the item Enter picks, not the hovered one', async ({
   await expect(page.getByTestId('selected')).toHaveText('text')
 })
 
+test('rings the item Enter picks while using the keyboard', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  await page.getByRole('searchbox', {name: 'Search blocks'}).focus()
+  const text = page.getByRole('option', {name: 'Text'})
+  const image = page.getByRole('option', {name: 'Image'})
+  await page.keyboard.press('ArrowDown')
+  await expect(text).toHaveCSS('outline-style', 'solid')
+  await page.keyboard.press('ArrowDown')
+  await expect(image).toHaveCSS('outline-style', 'solid')
+  await expect(text).toHaveCSS('outline-style', 'none')
+})
+
 test('picks from a popover and closes it', async ({mount, page}) => {
   await mount(<InPopover />)
   await page.getByRole('button', {name: 'Add block'}).click()

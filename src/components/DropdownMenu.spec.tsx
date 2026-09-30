@@ -27,6 +27,25 @@ test('opens a menu and closes it when an item is selected', async ({
   await expect(menu).toBeHidden()
 })
 
+test('rings the item focused with the keyboard, not the hovered one', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  await page.getByRole('button', {name: 'More actions'}).click()
+  const rename = page.getByRole('menuitem', {name: /Rename/})
+  const duplicate = page.getByRole('menuitem', {name: /Duplicate/})
+  // Hovering focuses the item and marks it with a background only
+  await rename.hover()
+  await expect(rename).toBeFocused()
+  await expect(rename).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(rename).toHaveCSS('outline-style', 'none')
+  await page.keyboard.press('ArrowDown')
+  await expect(duplicate).toBeFocused()
+  await expect(duplicate).toHaveCSS('outline-style', 'solid')
+  await expect(rename).toHaveCSS('outline-style', 'none')
+})
+
 test('uses the child as trigger', async ({mount, page}) => {
   await mount(<AsChild />)
   const trigger = page.getByRole('button', {name: 'Custom trigger'})

@@ -29,6 +29,26 @@ test('supports keyboard selection', async ({mount, page}) => {
   await expect(page.getByTestId('value')).not.toHaveText('Value: none')
 })
 
+test('rings the option focused with the keyboard, not the hovered one', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  await page.getByRole('button', {name: /Design software/}).click()
+  const options = page.getByRole('option')
+  const first = options.nth(0)
+  const second = options.nth(1)
+  // Hovering focuses the option and marks it with a background only
+  await first.hover()
+  await expect(first).toBeFocused()
+  await expect(first).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(first).toHaveCSS('outline-style', 'none')
+  await page.keyboard.press('ArrowDown')
+  await expect(second).toBeFocused()
+  await expect(second).toHaveCSS('outline-style', 'solid')
+  await expect(first).toHaveCSS('outline-style', 'none')
+})
+
 test('renders groups, separators and disabled items', async ({mount, page}) => {
   await mount(<Groups />)
   await page.getByRole('button', {name: /Setting/}).click()

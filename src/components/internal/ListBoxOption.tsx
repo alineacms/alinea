@@ -50,9 +50,9 @@ export function ListBoxOption({
       isDisabled={disabled}
       data-slot={slot}
       style={style}
-      className={({isFocused}) =>
+      className={({isFocused, isFocusVisible}) =>
         styles.ListBoxOption(
-          {highlighted: isFocused},
+          {highlighted: isFocused, focusVisible: isFocusVisible},
           styler.merge({className})
         )
       }
