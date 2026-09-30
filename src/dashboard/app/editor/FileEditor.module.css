@@ -23,6 +23,10 @@
   padding: 16px;
 }
 
+.FileEditor-fields {
+  padding: 16px 12px 0 16px;
+}
+
 .FileEditor {
   display: flex;
   flex-wrap: wrap;
@@ -90,5 +94,9 @@
 
   .FileEditor-content {
     padding: 12px;
+  }
+
+  .FileEditor-fields {
+    padding: 12px 12px 0;
   }
 }

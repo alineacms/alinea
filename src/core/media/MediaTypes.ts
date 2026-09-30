@@ -29,8 +29,8 @@ export const MediaFile = type('Media file', {
     })
   },
   fields: {
-    title: text('Title'),
-    path: path('Path'),
+    title: text('Title', {width: 0.5}),
+    path: path('Path', {width: 0.5}),
     metadata: auditMetadata(),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
