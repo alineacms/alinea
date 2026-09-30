@@ -1,5 +1,5 @@
 import {expect, test} from '../support/DashboardTest.js'
-import type {Page} from 'playwright'
+import type {Locator, Page} from 'playwright'
 import {dashboardScenarioIds} from '../support/DashboardScenarioData.js'
 import {DashboardScenarioMount} from '../support/DashboardScenarioMount.js'
 
@@ -188,6 +188,42 @@ test('orders a root overview by the root configuration', async ({
 
   const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   await expect(overview.getByRole('row')).toHaveText([/^Apple/, /^Zebra/])
+})
+
+test('shows the configured root icon in the rail, the sidebar and the splash page', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const roots = app.page.getByRole('complementary', {name: 'Workspace roots'})
+  const sidebar = app.page.locator('[data-slot="sidebar"]')
+  function icon(button: Locator) {
+    return button.locator('svg').first().innerHTML()
+  }
+  const configured = await icon(
+    roots.getByRole('button', {name: 'Ordered pages'})
+  )
+  const fallback = await icon(roots.getByRole('button', {name: 'Pages'}))
+  expect(configured).not.toBe(fallback)
+
+  await roots.getByRole('button', {name: 'Ordered pages'}).click()
+  const rootButton = sidebar.getByRole('button', {name: 'Ordered pages'})
+  await expect(rootButton).toBeVisible()
+  expect(await icon(rootButton)).toBe(configured)
+
+  await app.page.evaluate(() => {
+    window.location.hash = '#/'
+  })
+  const splashRoot = app.page.getByRole('button', {
+    name: 'Ordered pages',
+    exact: true
+  })
+  await expect(splashRoot).toBeVisible()
+  expect(await icon(splashRoot)).toBe(configured)
+  // Roots without an icon use the same fallback everywhere
+  expect(
+    await icon(app.page.getByRole('button', {name: 'Pages', exact: true}))
+  ).toBe(fallback)
 })
 
 test('keeps a collapsed parent closed when selecting a child elsewhere', async ({

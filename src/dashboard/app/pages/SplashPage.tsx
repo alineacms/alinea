@@ -85,8 +85,9 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
       const roots = Object.entries(workspace.roots).flatMap(
         ([rootKey, root]) => {
           if (!policy.canRead({workspace: key, root: rootKey})) return []
-          const {icon, label} = getRoot(root)
-          return [{icon: icon ?? LucideFile, key: rootKey, label}]
+          const {label} = getRoot(root)
+          const icon = get(rootAtoms(key, rootKey).icon)
+          return [{icon, key: rootKey, label}]
         }
       )
       const candidates = await Promise.all(

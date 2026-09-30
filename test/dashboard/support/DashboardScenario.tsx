@@ -4,6 +4,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
+import {IcRoundFormatListNumbered} from '#/dashboard/icons.js'
 import type {Entry} from '#/core/Entry.js'
 import {Config, Field, Query} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
@@ -58,6 +59,7 @@ const main = Config.workspace('Main', {
     }),
     ordered: Config.root('Ordered pages', {
       contains: ['Page'],
+      icon: IcRoundFormatListNumbered,
       orderChildrenBy: {asc: Query.title}
     }),
     localized: Config.root('Localized pages', {
