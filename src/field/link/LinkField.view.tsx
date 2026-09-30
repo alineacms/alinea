@@ -1517,9 +1517,6 @@ function MultipleLinkRow({
           {!readOnly && (
             <SortableListHandle aria-label={`Drag link item ${index + 1}`} />
           )}
-          {imagePreviewEntryId && !hasFields && (
-            <EntryLinkImagePreview entryId={imagePreviewEntryId} />
-          )}
           <SortableListItemTitle>
             {hasFields && (
               <SortableListItemToggle
@@ -1528,16 +1525,23 @@ function MultipleLinkRow({
                 onClick={() => onToggleRow(itemId)}
               />
             )}
-            {imagePreviewEntryId && hasFields && (
-              <EntryLinkImagePreview entryId={imagePreviewEntryId} />
-            )}
-            <LinkTypeBadge picker={picker} type={type} value={value} />
-            <LinkMetaLabel
-              className={styles.LinkFieldView.metaLabel()}
-              node={node}
-              value={value}
-            />
-            <EntryAnchorBadge node={node} value={value} />
+            <Button
+              aria-label="Edit link"
+              variant="ghost"
+              className={styles.LinkFieldView.rowAction({multiple: true})}
+              onClick={() => setActionsOpen(true)}
+            >
+              {imagePreviewEntryId && (
+                <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+              )}
+              <LinkTypeBadge picker={picker} type={type} value={value} />
+              <LinkMetaLabel
+                className={styles.LinkFieldView.metaLabel()}
+                node={node}
+                value={value}
+              />
+              <EntryAnchorBadge node={node} value={value} />
+            </Button>
           </SortableListItemTitle>
           <SortableListItemActions>
             <Popover open={actionsOpen} onOpenChange={setActionsOpen}>

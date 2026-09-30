@@ -78,6 +78,49 @@ test('opens single-link settings from the linked row', async ({
   await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
 })
 
+test('opens multiple-link settings from the linked row', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const resources = page.getByRole('list', {name: 'Resources'})
+  const settings = page.getByRole('dialog', {name: 'Link settings'})
+  const firstRow = resources.getByRole('listitem').first()
+  // Click beside the drag handle, which is centered over the top of the row
+  await firstRow
+    .getByRole('button', {name: 'Edit link'})
+    .click({position: {x: 16, y: 16}})
+  await expect(settings).toBeVisible()
+  await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(settings).toBeHidden()
+
+  const secondRow = resources.getByRole('listitem').nth(1)
+  await secondRow.getByRole('button', {name: 'Edit link'}).focus()
+  await page.keyboard.press('Enter')
+  await expect(settings).toBeVisible()
+  await expect(settings.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(settings).toBeHidden()
+
+  // The fold toggle and remove button keep their own behavior
+  await firstRow.getByRole('button', {name: 'Collapse link'}).click()
+  await expect(
+    firstRow.getByRole('button', {name: 'Expand link'})
+  ).toBeVisible()
+  await expect(settings).toBeHidden()
+  await secondRow.getByRole('button', {name: 'Remove link'}).click()
+  await expect(settings).toBeHidden()
+  await expect(resources.getByRole('listitem')).toHaveCount(2)
+
+  const relatedEntries = page.getByRole('list', {name: 'Related entries'})
+  await relatedEntries
+    .getByRole('button', {name: 'Edit link'})
+    .click({position: {x: 16, y: 16}})
+  await expect(settings).toBeVisible()
+})
+
 test('switches link picker workspaces and roots', async ({mount, page}) => {
   await mount(<EntryPickerSingle />)
   await page.getByRole('button', {name: 'Pick an entry'}).click()

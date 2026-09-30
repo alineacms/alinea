@@ -175,6 +175,10 @@
   padding: 0;
 }
 
+.LinkFieldView-rowAction.is-multiple {
+  gap: 8px;
+}
+
 /* The whole row opens the link settings, only its action buttons highlight */
 .LinkFieldView-rowAction[data-variant]:hover {
   background: transparent;
