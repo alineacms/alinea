@@ -80,13 +80,14 @@
   opacity: 1;
 }
 
+/* A thin strip along the top edge, so the rest of the header stays clickable */
 .SortableListHandle {
   position: absolute;
   top: -1px;
   left: 50%;
   z-index: 3;
   width: 56px;
-  height: 22px;
+  height: 10px;
   cursor: grab;
   opacity: 0;
   outline: none;

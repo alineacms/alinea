@@ -95,8 +95,7 @@ test('opens multiple-link settings from the linked row', async ({
   const firstRow = resources.getByRole('listitem').first()
   const firstLink = firstRow.getByRole('button', {name: 'Page Home'})
   await expect(firstLink).toHaveAccessibleDescription('Edit link')
-  // Click beside the drag handle, which is centered over the top of the row
-  await firstLink.click({position: {x: 16, y: 16}})
+  await firstLink.click()
   await expect(settings).toBeVisible()
   await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
   // Opened from the row, the settings show below the row's start rather than
@@ -129,9 +128,7 @@ test('opens multiple-link settings from the linked row', async ({
   await expect(resources.getByRole('listitem')).toHaveCount(2)
 
   const relatedEntries = page.getByRole('list', {name: 'Related entries'})
-  await relatedEntries
-    .getByRole('button', {name: 'Page Home'})
-    .click({position: {x: 16, y: 16}})
+  await relatedEntries.getByRole('button', {name: 'Page Home'}).click()
   await expect(settings).toBeVisible()
 })
 
