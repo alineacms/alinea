@@ -93,6 +93,14 @@ test('opens multiple-link settings from the linked row', async ({
     .click({position: {x: 16, y: 16}})
   await expect(settings).toBeVisible()
   await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
+  // Opened from the row, the settings show below the row's start rather than
+  // below the settings button at its end
+  const row = await firstRow
+    .getByRole('button', {name: 'Edit link'})
+    .boundingBox()
+  const popover = await settings.boundingBox()
+  expect(Math.abs(popover!.x - row!.x)).toBeLessThan(24)
+  expect(popover!.y).toBeGreaterThanOrEqual(row!.y + row!.height - 1)
   await page.keyboard.press('Escape')
   await expect(settings).toBeHidden()
 

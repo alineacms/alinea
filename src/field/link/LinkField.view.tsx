@@ -22,6 +22,7 @@ import {
   SortableListItemHeader,
   SortableListItemSettings,
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
   Select,
@@ -1361,6 +1362,18 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const imagePreviewEntryId =
     type === 'image' && '_entry' in value ? value._entry : undefined
   const [actionsOpen, setActionsOpen] = useState(false)
+  // Clicking the row opens the settings below it, the settings button below
+  // itself
+  const rowRef = useRef<HTMLButtonElement>(null)
+  const [anchoredToRow, setAnchoredToRow] = useState(false)
+  function openFromRow() {
+    setAnchoredToRow(true)
+    setActionsOpen(true)
+  }
+  function toggleActions(open: boolean) {
+    if (open) setAnchoredToRow(false)
+    setActionsOpen(open)
+  }
   const [editOpen, setEditOpen] = useState(false)
 
   function closeActions() {
@@ -1401,22 +1414,24 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
             rowContent
           ) : (
             <Button
+              ref={rowRef}
               aria-label="Edit link"
               variant="ghost"
               className={styles.LinkFieldView.rowAction()}
-              onClick={() => setActionsOpen(true)}
+              onClick={openFromRow}
             >
               {rowContent}
             </Button>
           )}
           {!options.readOnly && (
             <SortableListItemActions>
-              <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+              <Popover open={actionsOpen} onOpenChange={toggleActions}>
                 <LinkSettingsButton />
+                {anchoredToRow && <PopoverAnchor virtualRef={rowRef} />}
                 <PopoverContent
                   aria-label="Link settings"
                   side="bottom"
-                  align="end"
+                  align={anchoredToRow ? 'start' : 'end'}
                 >
                   <SortableListItemSettings variant="actions">
                     <LinkRowActions
@@ -1492,6 +1507,18 @@ function MultipleLinkRow({
   const itemId = value[Reference.id]
   const readOnly = Boolean(options.readOnly)
   const [actionsOpen, setActionsOpen] = useState(false)
+  // Clicking the row opens the settings below it, the settings button below
+  // itself
+  const rowRef = useRef<HTMLButtonElement>(null)
+  const [anchoredToRow, setAnchoredToRow] = useState(false)
+  function openFromRow() {
+    setAnchoredToRow(true)
+    setActionsOpen(true)
+  }
+  function toggleActions(open: boolean) {
+    if (open) setAnchoredToRow(false)
+    setActionsOpen(open)
+  }
   const [editOpen, setEditOpen] = useState(false)
   function closeActions() {
     setActionsOpen(false)
@@ -1526,10 +1553,11 @@ function MultipleLinkRow({
               />
             )}
             <Button
+              ref={rowRef}
               aria-label="Edit link"
               variant="ghost"
               className={styles.LinkFieldView.rowAction({multiple: true})}
-              onClick={() => setActionsOpen(true)}
+              onClick={openFromRow}
             >
               {imagePreviewEntryId && (
                 <EntryLinkImagePreview entryId={imagePreviewEntryId} />
@@ -1544,12 +1572,13 @@ function MultipleLinkRow({
             </Button>
           </SortableListItemTitle>
           <SortableListItemActions>
-            <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+            <Popover open={actionsOpen} onOpenChange={toggleActions}>
               <LinkSettingsButton />
+              {anchoredToRow && <PopoverAnchor virtualRef={rowRef} />}
               <PopoverContent
                 aria-label="Link settings"
                 side="bottom"
-                align="end"
+                align={anchoredToRow ? 'start' : 'end'}
               >
                 <SortableListItemSettings variant="actions">
                   <LinkRowActions
