@@ -67,9 +67,10 @@ type InitialList<T> = Expand<
   }>
 >
 
-/** Initial values of a row, single links can be left empty */
+/** Initial values of a row: fields left out get their default and single
+ * links can be left empty */
 export type InitialRow<Definition> = Expand<
-  Omit<StoredRow<Definition>, EmptyableKeys<Definition>> & {
+  Partial<Omit<StoredRow<Definition>, EmptyableKeys<Definition>>> & {
     [K in EmptyableKeys<Definition>]?: Definition[K] extends Field<infer T>
       ? T | null
       : never

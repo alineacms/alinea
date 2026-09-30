@@ -202,7 +202,7 @@ test('relation helpers without a selection infer entries', async () => {
   })
 })
 
-test('list rows can leave a single link empty in their initial value', () => {
+test('list rows can leave out fields and leave a single link empty in their initial value', () => {
   const Content = Config.type('Content', {
     fields: {
       title: Field.text('Title'),
@@ -229,8 +229,18 @@ test('list rows can leave a single link empty in their initial value', () => {
   })
   Field.list('Content', {
     schema: {Content},
-    // @ts-expect-error Other fields still need their value
-    initialValue: [{_type: 'Content', image: null, related: []}]
+    // Fields left out get their default
+    initialValue: [{_type: 'Content'}, {_type: 'Content', title: 'F'}]
+  })
+  Field.list('Content', {
+    schema: {Content},
+    // @ts-expect-error Rows name their type
+    initialValue: [{title: 'G'}]
+  })
+  Field.list('Content', {
+    schema: {Content},
+    // @ts-expect-error Fields left in keep their type
+    initialValue: [{_type: 'Content', title: 1}]
   })
   Field.list('Content', {
     schema: {Content},
@@ -244,9 +254,10 @@ test('list rows can leave a single link empty in their initial value', () => {
     EntryReference | null | undefined
   >()
   expectTypeOf<Row['link']>().toEqualTypeOf<LinkRow | null | undefined>()
-  expectTypeOf<Row['title']>().toEqualTypeOf<string>()
+  expectTypeOf<Row['_type']>().toEqualTypeOf<'Content'>()
+  expectTypeOf<Row['title']>().toEqualTypeOf<string | undefined>()
   expectTypeOf<Row['related']>().toEqualTypeOf<
-    Array<EntryReference & ListRow>
+    Array<EntryReference & ListRow> | undefined
   >()
 
   // An empty link is stored as null, like the initial value of a single link
@@ -257,7 +268,8 @@ test('list rows can leave a single link empty in their initial value', () => {
         schema: {Content},
         initialValue: [
           {_type: 'Content', title: 'B', image: undefined, related: []},
-          {_type: 'Content', title: 'C', related: []}
+          {_type: 'Content', title: 'C', related: []},
+          {_type: 'Content'}
         ]
       })
     }
@@ -268,7 +280,8 @@ test('list rows can leave a single link empty in their initial value', () => {
   }
   expect(Type.initialValue(Content).image).toBe(null)
   expect(initial.content[0].image).toBe(null)
-  expect(initial.omitted.map(row => row.image)).toEqual([null, null])
-  expect(initial.omitted.map(row => row.link)).toEqual([null, null])
-  expect(initial.omitted.map(row => row.title)).toEqual(['B', 'C'])
+  expect(initial.omitted.map(row => row.image)).toEqual([null, null, null])
+  expect(initial.omitted.map(row => row.link)).toEqual([null, null, null])
+  expect(initial.omitted.map(row => row.title)).toEqual(['B', 'C', ''])
+  expect(initial.omitted.map(row => row.related)).toEqual([[], [], []])
 })
