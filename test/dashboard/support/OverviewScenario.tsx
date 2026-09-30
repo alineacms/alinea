@@ -10,7 +10,6 @@ import {
   Category,
   Event,
   Person,
-  Product,
   config
 } from '#test/overview.js'
 import {use, useState} from 'react'
@@ -60,20 +59,25 @@ async function createOverviewScenario() {
     root: 'categories',
     set: {title: 'Tables'}
   })
+  // Products from before audit metadata, which store no audit data
   const product = (
     id: string,
     title: string,
     set: Record<string, unknown>,
     status?: 'draft'
   ) =>
-    db.create({
-      ...main,
-      id,
-      type: Product,
-      root: 'products',
-      status,
-      set: {title, ...set}
-    })
+    db.mutate([
+      {
+        op: 'create',
+        id,
+        type: 'Product',
+        locale: null,
+        workspace: 'main',
+        root: 'products',
+        status,
+        data: {title, ...set}
+      }
+    ])
   await product(ids.chair, 'Chair', {
     articleNumber: 'A-100',
     price: 20,
