@@ -35,18 +35,20 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
   const setRoute = useSetAtom(routeAtom)
   if (!data) return null
   return (
-    <EntryReferenceList
-      references={data.references}
-      locale={localeData.requestedLocale}
-      onSelect={(source, locale) => {
-        setRoute({
-          workspace: source.workspace,
-          root: source.root,
-          entry: source.id,
-          locale: locale ?? undefined
-        })
-      }}
-    />
+    <div className={styles.EntryReferences.tab()}>
+      <EntryReferenceList
+        references={data.references}
+        locale={localeData.requestedLocale}
+        onSelect={(source, locale) => {
+          setRoute({
+            workspace: source.workspace,
+            root: source.root,
+            entry: source.id,
+            locale: locale ?? undefined
+          })
+        }}
+      />
+    </div>
   )
 }
 

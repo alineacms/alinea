@@ -317,6 +317,31 @@ async function createDashboardScenario({
       }
     })
   }
+  // An entry linked from more entries than the delete dialog lists
+  await db.create({
+    id: dashboardScenarioIds.popularTarget,
+    locale: 'en',
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'localized',
+    set: {title: 'Popular target'}
+  })
+  for (const n of [1, 2, 3, 4])
+    await db.create({
+      id: `workflow-popular-linking-${n}`,
+      locale: 'en',
+      type: ScenarioPage,
+      workspace: 'main',
+      root: 'localized',
+      set: {
+        title: `Popular linking ${n}`,
+        relatedPage: {
+          _id: `popular-link-${n}`,
+          _type: 'entry',
+          _entry: dashboardScenarioIds.popularTarget
+        }
+      }
+    })
   await db.create({
     id: dashboardScenarioIds.searchPartial,
     type: ScenarioPage,

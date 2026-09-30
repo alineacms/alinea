@@ -29,6 +29,10 @@ import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {localAtom} from '#/dashboard/atoms/core.js'
+import {
+  type EntrySidebarTab,
+  entrySidebarTabAtom
+} from '#/dashboard/atoms/dashboard.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
@@ -56,6 +60,8 @@ import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 
 const styles = styler(css)
 
+export type {EntrySidebarTab}
+
 export interface EntrySidebarProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
@@ -65,9 +71,6 @@ export interface EntrySidebarProps {
   previewEntry?: Entry
   onOpenChange?: (isOpen: boolean) => void
 }
-
-export type EntrySidebarTab = 'preview' | 'history' | 'references'
-const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
 
 export async function entrySidebar(
   get: Getter,

@@ -3,6 +3,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.EntryReferences-tab {
   padding: 14px;
 }
 

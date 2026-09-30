@@ -105,3 +105,31 @@ test('deletes only the chosen language and warns about its references', async ({
   }, '#/entry/main/localized:fr/workflow-localized-target')
   await expect(app.title).toHaveText('Cible localisée')
 })
+
+test('lists a few references and links to the references tab for the rest', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'popularTarget',
+    routeRoot: 'localized',
+    title: 'Popular target'
+  })
+
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
+  await expect(dialog.getByRole('alert')).toContainText(
+    'This entry has 4 references'
+  )
+  const references = dialog.getByRole('list', {name: 'References'})
+  await expect(references.getByRole('listitem')).toHaveCount(3)
+  await dialog.getByRole('button', {name: 'See all 4 references'}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(app.title).toHaveText('Popular target')
+  await expect(app.page.getByRole('tab', {name: 'References'})).toHaveAttribute(
+    'aria-selected',
+    'true'
+  )
+  const tab = app.page.getByRole('tabpanel', {name: 'References'})
+  await expect(tab.getByText(/^Popular linking \d$/)).toHaveCount(4)
+})

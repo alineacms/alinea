@@ -9,6 +9,10 @@ import {
 } from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
+import {
+  entrySidebarOpenAtom,
+  entrySidebarTabAtom
+} from '#/dashboard/atoms/dashboard.js'
 import type {DeletePlan} from '#/dashboard/atoms/delete.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import styler from '@alinea/styler'
@@ -53,6 +57,15 @@ export function DeleteDialog({plan, onClose, onConfirm}: DeleteDialogProps) {
   )
 }
 
+const maxListedSources = 3
+
+function referenceSourceKey(reference: {
+  sourceId: string
+  sourceLocale: string | null
+}) {
+  return [reference.sourceId, reference.sourceLocale].join('\0')
+}
+
 interface DeleteDialogContentProps {
   plan: DeletePlan
   onClose(): void
@@ -69,6 +82,8 @@ function DeleteDialogContent({
   const removals = useAtomValueRaw(plan.removals)
   const references = useAtomValueRaw(plan.references)
   const setRoute = useSetAtom(routeAtom)
+  const setSidebarTab = useSetAtom(entrySidebarTabAtom)
+  const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
   const [isPending, startTransition] = useTransition()
   const {subjects, locales} = plan
   const count = subjects.length
@@ -79,11 +94,17 @@ function DeleteDialogContent({
     item => item.hasChildren && typeOf(item.type) !== MediaLibrary
   )
   const noun = files.length ? 'file' : folders.length ? 'folder' : 'entry'
-  const sources = new Set(
-    references.map(({reference}) =>
-      [reference.sourceId, reference.sourceLocale].join('\0')
-    )
-  ).size
+  const sourceKeys = Array.from(
+    new Set(references.map(({reference}) => referenceSourceKey(reference)))
+  )
+  const sources = sourceKeys.length
+  // Hundreds of references would push the actions out of view, list a few
+  const listedKeys = new Set(sourceKeys.slice(0, maxListedSources))
+  const listedReferences = references.filter(({reference}) =>
+    listedKeys.has(referenceSourceKey(reference))
+  )
+  const unlisted = sources - listedKeys.size
+  const onlyFiles = files.length === count
   const pickLocales = locales.length > 1
 
   function confirm() {
@@ -99,8 +120,9 @@ function DeleteDialogContent({
     >
       <DashboardModalContent>
         <Text as="p">
-          {count === 1 ? `This ${noun}` : `${count} items`} will be permanently
-          deleted and cannot be recovered afterwards.
+          {onlyFiles
+            ? `${count === 1 ? 'This file' : `${count} files`} will be permanently deleted from the media library and its storage.`
+            : `${count === 1 ? `This ${noun}` : `${count} items`} will be permanently deleted and cannot be recovered afterwards.`}
         </Text>
         {pickLocales && (
           <CheckboxGroup
@@ -116,7 +138,7 @@ function DeleteDialogContent({
             ))}
           </CheckboxGroup>
         )}
-        {files.length > 0 && (
+        {files.length > 0 && !onlyFiles && (
           <Text as="p">
             {files.length === 1
               ? 'The file is removed from the media library and its storage.'
@@ -148,7 +170,7 @@ function DeleteDialogContent({
               </AlertDescription>
             </Alert>
             <EntryReferenceList
-              references={references}
+              references={listedReferences}
               locale={null}
               onSelect={(source, locale) => {
                 onClose()
@@ -160,6 +182,30 @@ function DeleteDialogContent({
                 })
               }}
             />
+            {unlisted > 0 &&
+              (count === 1 ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    const [subject] = subjects
+                    onClose()
+                    setRoute({
+                      workspace: subject.workspace,
+                      root: subject.root,
+                      entry: subject.id,
+                      locale: subject.locale ?? undefined
+                    })
+                    setSidebarTab('references')
+                    setSidebarOpen(true)
+                  }}
+                >
+                  See all {sources} references
+                </Button>
+              ) : (
+                <Text as="p" size="sm" color="muted">
+                  And {unlisted} more {unlisted === 1 ? 'entry' : 'entries'}.
+                </Text>
+              ))}
           </>
         )}
       </DashboardModalContent>

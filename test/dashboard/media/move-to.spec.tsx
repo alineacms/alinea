@@ -111,7 +111,9 @@ test('deletes selected media files after confirming', async ({
 
   const dialog = app.page.getByRole('dialog', {name: 'Delete 2 items'})
   await expect(
-    dialog.getByText('2 files are removed from the media library')
+    dialog.getByText(
+      '2 files will be permanently deleted from the media library'
+    )
   ).toBeVisible()
   await dialog.getByRole('button', {name: 'Delete', exact: true}).click()
 
