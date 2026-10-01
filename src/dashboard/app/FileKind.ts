@@ -5,6 +5,7 @@ import {
   IcRoundCode,
   IcRoundDescription,
   IcRoundFolderZip,
+  IcRoundImage,
   IcRoundInsertDriveFile,
   IcRoundPictureAsPdf,
   IcRoundSlideshow,
@@ -12,29 +13,26 @@ import {
   IcRoundVideoFile
 } from '../icons.js'
 
-/** The icon of a file without an image preview, and the color behind it */
+/** The icon of a file without an image preview, in the color of its kind */
 export interface FileKindVisual {
   icon: IconType
-  color: string
+  iconColor?: string
 }
 
-function tint(color: string, percent: number) {
-  return `color-mix(in oklab, var(--alinea-${color}) ${percent}%, var(--alinea-bg))`
-}
+const other: FileKindVisual = {icon: IcRoundInsertDriveFile}
 
-const muted = 'var(--alinea-bg-muted)'
-const other: FileKindVisual = {icon: IcRoundInsertDriveFile, color: muted}
-
-// Images show their preview, other files the icon of their kind
+// Images show their preview where they have one, other files the icon of
+// their kind
 const visuals: Record<string, FileKindVisual> = {
-  pdf: {icon: IcRoundPictureAsPdf, color: tint('red-500', 16)},
-  document: {icon: IcRoundDescription, color: tint('blue-500', 18)},
-  spreadsheet: {icon: IcRoundTableChart, color: tint('green-500', 18)},
-  presentation: {icon: IcRoundSlideshow, color: tint('orange-700', 16)},
-  archive: {icon: IcRoundFolderZip, color: tint('yellow-500', 22)},
-  video: {icon: IcRoundVideoFile, color: muted},
-  audio: {icon: IcRoundAudioFile, color: muted},
-  code: {icon: IcRoundCode, color: muted}
+  image: {icon: IcRoundImage},
+  pdf: {icon: IcRoundPictureAsPdf, iconColor: 'var(--alinea-red-500)'},
+  document: {icon: IcRoundDescription, iconColor: 'var(--alinea-blue-700)'},
+  spreadsheet: {icon: IcRoundTableChart, iconColor: 'var(--alinea-green-600)'},
+  presentation: {icon: IcRoundSlideshow, iconColor: 'var(--alinea-orange-700)'},
+  archive: {icon: IcRoundFolderZip, iconColor: 'var(--alinea-yellow-600)'},
+  video: {icon: IcRoundVideoFile},
+  audio: {icon: IcRoundAudioFile},
+  code: {icon: IcRoundCode}
 }
 
 const visualOfExtension = new Map(

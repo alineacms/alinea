@@ -13,6 +13,7 @@ import {
 import {Entry, type EntryAuditUser} from '#/core/Entry.js'
 import {timestampFromId} from '#/core/Id.js'
 import {getRoot, getType} from '#/core/Internal.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
 import {shaAtom} from '#/dashboard/atoms/graph.js'
@@ -31,6 +32,7 @@ import {
   LucideFile
 } from '../../icons.js'
 import {AppearanceToggle} from '../AppearanceToggle.js'
+import {fileKindVisual} from '../FileKind.js'
 import {searchShortcutKeys} from '../../hook/UseSearchShortcut.js'
 import {GlobalSearch, WorkspaceAvatar} from '../WorkspaceMenu.js'
 import css from './SplashPage.module.css'
@@ -57,6 +59,8 @@ export interface RecentChange {
 
 interface RecentEntryRow extends RecentChangeAudit {
   id: string
+  /** The extension of a media file */
+  extension: string | null
   locale: string | null
   root: string
   title: string
@@ -150,7 +154,12 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
         const type = config.schema[entry.type]
         return {
           ...entry,
-          icon: type ? (getType(type).icon ?? LucideFile) : LucideFile
+          icon:
+            type === MediaFile
+              ? fileKindVisual(entry.extension).icon
+              : type
+                ? (getType(type).icon ?? LucideFile)
+                : LucideFile
         }
       })
       return {
@@ -182,6 +191,7 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
 const recentEntrySelection = {
   createdAt: Entry.createdAt,
   createdBy: Entry.createdBy,
+  extension: MediaFile.extension,
   id: Entry.id,
   locale: Entry.locale,
   root: Entry.root,

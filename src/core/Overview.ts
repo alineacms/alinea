@@ -1,15 +1,15 @@
 import type {EntryStatus} from './Entry.js'
-import type {EntryFields} from './EntryFields.js'
+import type {EntryFilterFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import type {OpenFilter} from './Filter.js'
 import type {
   EdgeQuery,
   GraphQuery,
   InferProjection,
+  Order,
   Projection
 } from './Graph.js'
 import {getExpr, hasExpr} from './Internal.js'
-import type {OrderBy} from './OrderBy.js'
 import type {Type} from './Type.js'
 import {isRecord, values} from './util/Objects.js'
 import type {View} from './View.js'
@@ -132,7 +132,7 @@ export interface OverviewFilterOption {
   /** Shown in the menu, eg. `PDF` */
   label: string
   /** The condition entries match when the option is picked */
-  filter: OpenFilter<EntryFields>
+  filter: OpenFilter<EntryFilterFields>
 }
 
 /** A filter editors can apply in the "Filter and sort" menu of an overview */
@@ -244,9 +244,10 @@ export interface OverviewOptions {
   builtins?: OverviewBuiltins
   /**
    * The default order of the children, in the overview and the sidebar tree.
-   * Children can not be reordered by hand when set.
+   * Children can not be reordered by hand when set, except in the sidebar
+   * tree where it orders them by `Entry.index` first, like media folders.
    */
-  sort?: OrderBy | Array<OrderBy>
+  sort?: Order | Array<Order>
   /**
    * The orders editors can pick, keyed by a name kept in the url. A key that
    * matches a column also orders that column when its header is clicked.

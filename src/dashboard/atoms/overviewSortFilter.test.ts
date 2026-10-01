@@ -51,7 +51,11 @@ test('the media library declares its sorts and filters', () => {
     ['dimensions', 'Dimensions'],
     ['fileType', 'File type']
   ])
-  expect(media.filters.map(filter => filter.key)).toEqual(['show', 'fileType'])
+  expect(media.filters.map(filter => filter.key)).toEqual([
+    'show',
+    'usage',
+    'fileType'
+  ])
   expect(overviewOrder(media, {column: 'title', direction: 'desc'})).toEqual({
     desc: Entry.title
   })
@@ -74,7 +78,7 @@ test('the media library declares its sorts and filters', () => {
 
 test('options of a filter match any, filters match all', () => {
   const media = resolveOverview(config, rootParent('media'))
-  const [show, fileType] = media.filters
+  const [show, , fileType] = media.filters
   const option = (key: string) =>
     [...show.options, ...fileType.options].find(option => option.key === key)!
       .filter
@@ -143,7 +147,7 @@ async function mediaLibrary() {
   return db
 }
 
-test('explorers list media folders first, then files newest first', async () => {
+test('explorers list media folders first in their manual order, then files newest first', async () => {
   const db = await mediaLibrary()
   const store = createDashboardStore(config, db)
   await store.get(userPolicyReadyAtom)
@@ -154,8 +158,8 @@ test('explorers list media folders first, then files newest first', async () => 
   const titles = async () =>
     (await store.get(explorer.itemsReady(null))).map(item => item.title)
   expect(await titles()).toEqual([
-    'Archive',
     'Folder',
+    'Archive',
     'Scanned letter',
     'Photo',
     'Meeting notes',

@@ -230,10 +230,10 @@ function PendingUploadThumbnail({upload}: PendingUploadThumbnailProps) {
     )
   }
   if (previewUrl) return <ListItemVisual size="lg" src={previewUrl} />
-  const {icon, color} = fileKindVisual(extname(upload.file.name))
+  const {icon, iconColor} = fileKindVisual(extname(upload.file.name))
   return (
-    <ListItemVisual size="lg" style={{background: color}}>
-      <Icon icon={icon} />
+    <ListItemVisual size="lg">
+      <Icon icon={icon} style={{color: iconColor}} />
     </ListItemVisual>
   )
 }

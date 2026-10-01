@@ -187,7 +187,7 @@ test('orders by a number of a linked entry, entries without a number last', asyn
   expect(desc).toEqual(['To ten', 'To nine', 'To none'])
 })
 
-test('media lists folders first, then files newest first', async () => {
+test('media lists folders first in their manual order, then files newest first', async () => {
   const db = new LocalDB(config)
   await db.sync()
   const start = Date.UTC(2026, 0, 1)
@@ -218,6 +218,17 @@ test('media lists folders first, then files newest first', async () => {
   }
   const lowerCase = ids.map(id => id.toLowerCase())
   expect(lowerCase.toSorted()).not.toEqual(lowerCase)
+  // Moved first, the newer folder's index sorts before the older folder's
+  // only as stored: it starts with an upper case letter
+  const [oldest, older, , newer] = ids
+  const moved = await db.move({
+    id: newer,
+    target: oldest,
+    dropPosition: 'before'
+  })
+  const olderIndex = await db.get({id: older, select: Entry.index})
+  expect(moved.index < olderIndex).toBe(true)
+  expect(moved.index.toLowerCase() > olderIndex.toLowerCase()).toBe(true)
   const {sort, sorts} = mediaOverview()
   const scope = getScope(config)
   const titles = (orderBy: Order | Array<Order>) =>
@@ -244,4 +255,41 @@ test('media lists folders first, then files newest first', async () => {
     'Older file',
     'Newer file'
   ])
+})
+
+test('the unused media filter lists the files no entry links to', async () => {
+  const db = new LocalDB(config)
+  await db.sync()
+  const media = {workspace: 'main', root: 'media'}
+  await db.create({...media, type: MediaLibrary, set: {title: 'Folder'}})
+  const file = (title: string) =>
+    db.create({...media, type: MediaFile, set: {title}})
+  const used = await file('Used')
+  await file('Unused')
+  const blog = await db.create({
+    type: BlogPost,
+    workspace: 'main',
+    root: 'blog',
+    set: {title: 'Post', cover: {_id: 'c1', _type: 'image', _entry: used._id}}
+  })
+  const unused = mediaOverview().filters!.usage.options.unused.filter
+  const titles = () =>
+    db.find({
+      root: 'media',
+      filter: unused,
+      orderBy: {asc: Entry.title},
+      select: Entry.title
+    })
+  // The folder stays to browse into
+  expect(await titles()).toEqual(['Folder', 'Unused'])
+  expect(
+    await db.find({
+      root: 'media',
+      filter: {_referenced: true},
+      select: Entry.title
+    })
+  ).toEqual(['Used'])
+  // Removing the link frees the file
+  await db.update({type: BlogPost, id: blog._id, set: {cover: undefined}})
+  expect(await titles()).toEqual(['Folder', 'Unused', 'Used'])
 })

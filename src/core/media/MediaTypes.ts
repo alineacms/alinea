@@ -1,4 +1,4 @@
-import {IcRoundPermMedia} from '#/dashboard/icons.js'
+import {IcRoundInsertDriveFile, IcRoundPermMedia} from '#/dashboard/icons.js'
 import {hidden} from '#/field/hidden/HiddenField.js'
 import {auditMetadata} from '#/field/metadata/MetadataAudit.js'
 import {path} from '#/field/path/PathField.js'
@@ -21,6 +21,8 @@ import {MediaLocation} from './MediaLocation.js'
 export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
   hidden: true,
+  // Lists that know the extension show the icon of the kind of file instead
+  icon: IcRoundInsertDriveFile,
   entryUrl({config, data, defaultUrl, parentPaths, path, workspace}) {
     return MediaLocation.entryUrl(config, {
       data,
@@ -96,9 +98,16 @@ export function mediaOverview(): OverviewOptions {
   })
   return {
     builtins: {type: false, status: false},
-    // Entry ids start with their creation time, so the newest files come
-    // first, below the folders
-    sort: [{asc: foldersFirst}, {desc: Entry.id}],
+    // Folders first in their manual order, files have none and come after,
+    // newest first: entry ids start with their creation time. Indexes are
+    // keys that only order as stored.
+    sort: [
+      {
+        asc: Overview.sortExpr({MediaLibrary: Entry.index}),
+        caseSensitive: true
+      },
+      {desc: Entry.id}
+    ],
     sorts: {
       latest: {
         label: 'Latest',
@@ -120,6 +129,21 @@ export function mediaOverview(): OverviewOptions {
         options: {
           files: {label: 'Files', filter: {_type: 'MediaFile'}},
           folders: {label: 'Folders', filter: {_type: 'MediaLibrary'}}
+        }
+      },
+      usage: {
+        label: 'Usage',
+        options: {
+          // Files no entry links to, folders stay to browse into
+          unused: {
+            label: 'Unused',
+            filter: {
+              or: [
+                {_type: 'MediaLibrary'},
+                {_type: 'MediaFile', _referenced: false}
+              ]
+            }
+          }
         }
       },
       fileType: {

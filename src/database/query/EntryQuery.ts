@@ -39,6 +39,7 @@ import {
 } from 'rado'
 import {
   EntryIndexTable,
+  EntryReferenceTable,
   isOrderedField,
   orderedMetadata,
   storedEntryData,
@@ -128,6 +129,14 @@ class Expressions {
       // Relations select fields by name.
       return selecting ? text.as(name) : text
     }
+    // Filters match entries another entry links to with `_referenced`
+    if (name === 'referenced')
+      return exists(
+        builder
+          .select(sql.value(1))
+          .from(EntryReferenceTable)
+          .where(eq(EntryReferenceTable.targetId, this.#entry.id))
+      )
     if (Object.hasOwn(this.#entry, name))
       return this.#entry[name as keyof EntryIndexTarget] as HasSql
     const expr = EntryExpressions[name as keyof typeof EntryExpressions]
