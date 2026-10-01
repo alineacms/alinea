@@ -245,3 +245,42 @@ test('publishing a draft relies on the checks of its saves', async () => {
   const published = await db.get({type: Article, id})
   test.is(published.summary, 'Drafted')
 })
+
+test('saving a published version needs the publish permission', async () => {
+  const db = new LocalDB(cms.config)
+  const article = await db.create({
+    type: Article,
+    root: 'pages',
+    workspace: 'main',
+    set: {title: 'Article'}
+  })
+  const data = await db.get({id: article._id, select: Entry.data})
+  const policy = new WriteablePolicy(getScope(cms.config))
+    .allowAll()
+    .set({type: Article, deny: {publish: true}})
+  const commit = async (op: ReturnType<typeof create>) =>
+    db.write(await db.request(await op.task(db), policy))
+  const save = (status: 'draft' | 'published') =>
+    create({
+      type: Article,
+      id: article._id,
+      set: {...data, title: 'Edited'},
+      status,
+      overwrite: true
+    })
+
+  await commit(save('draft'))
+  await test.throws(() => commit(save('published')), 'Permission denied')
+  await test.throws(
+    () =>
+      commit(
+        create({
+          type: Article,
+          root: 'pages',
+          workspace: 'main',
+          set: {title: 'New'}
+        })
+      ),
+    'Permission denied'
+  )
+})

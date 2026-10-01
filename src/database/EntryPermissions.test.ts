@@ -193,7 +193,10 @@ test('create under a parent rejects a different workspace or root', async () => 
 test('permissions scoped to a parent apply to creating children', async () => {
   const db = await createDb()
   const policy = new WriteablePolicy(getScope(cms.config))
-  policy.set({allow: {read: true}}, {id: 'article', allow: {create: true}})
+  policy.set(
+    {allow: {read: true}},
+    {id: 'article', allow: {create: true, publish: true}}
+  )
   const request = await db.request(
     [
       {

@@ -294,14 +294,17 @@ export class EntryTransaction implements AsyncDisposable {
     )
     const rootConfig = config.workspaces[workspace][root]
     assert(rootConfig, 'Invalid root')
-    this.#policy.assert(Permission.Create, {
+    const resource = {
       workspace,
       root,
       type,
       id,
       locale,
       parents: parentEntry ? [...parentEntry.parents, parentEntry.id] : []
-    })
+    }
+    this.#policy.assert(Permission.Create, resource)
+    if (status === 'published')
+      this.#policy.assert(Permission.Publish, resource)
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
