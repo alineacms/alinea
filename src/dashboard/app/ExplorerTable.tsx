@@ -21,6 +21,7 @@ import type {
 } from '../atoms/explorer.js'
 import {titleColumn as overviewTitle} from '../atoms/overview.js'
 import {LucideFile, LucideFolder} from '../icons.js'
+import {fileKindVisual} from './FileKind.js'
 import css from './ExplorerTable.module.css'
 import {
   OverviewCell,
@@ -238,6 +239,7 @@ function ExplorerTableRow({explorer, ...props}: ExplorerTableRowProps) {
   const rootLabel = useAtomValueRaw(root.label)
   const label = useAtomValueRaw(data.label)
   const configuredIcon = useAtomValueRaw(data.icon)
+  const fileInfo = useAtomValueRaw(data.fileInfo)
   const hasChildren = useAtomValueRaw(data.hasChildren)
   const item = useAtomValueRaw(data.item)
   const links = useAtomValueRaw(data.linked)
@@ -253,7 +255,11 @@ function ExplorerTableRow({explorer, ...props}: ExplorerTableRowProps) {
         explorer.supportsInlineExpansion &&
         hasChildren
       }
-      icon={configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)}
+      icon={
+        fileInfo
+          ? fileKindVisual(fileInfo.extension).icon
+          : (configuredIcon ?? (hasChildren ? LucideFolder : LucideFile))
+      }
       isSelectable={isSelectable}
       label={label}
       links={links}

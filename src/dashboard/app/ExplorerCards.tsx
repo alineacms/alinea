@@ -61,7 +61,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   const card: ContentCardProps = file
     ? {
         variant: 'media',
-        ...(file.extension && isImage(file.extension)
+        ...(file.preview && file.extension && isImage(file.extension)
           ? {image: file.preview, color: file.averageColor}
           : fileKindVisual(file.extension)),
         title: label,

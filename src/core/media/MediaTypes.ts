@@ -1,4 +1,4 @@
-import {IcRoundPermMedia} from '#/dashboard/icons.js'
+import {IcRoundInsertDriveFile, IcRoundPermMedia} from '#/dashboard/icons.js'
 import {hidden} from '#/field/hidden/HiddenField.js'
 import {auditMetadata} from '#/field/metadata/MetadataAudit.js'
 import {path} from '#/field/path/PathField.js'
@@ -21,6 +21,8 @@ import {MediaLocation} from './MediaLocation.js'
 export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
   hidden: true,
+  // Lists that know the extension show the icon of the kind of file instead
+  icon: IcRoundInsertDriveFile,
   entryUrl({config, data, defaultUrl, parentPaths, path, workspace}) {
     return MediaLocation.entryUrl(config, {
       data,

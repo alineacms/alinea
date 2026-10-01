@@ -5,6 +5,7 @@ import {
   IcRoundCode,
   IcRoundDescription,
   IcRoundFolderZip,
+  IcRoundImage,
   IcRoundInsertDriveFile,
   IcRoundPictureAsPdf,
   IcRoundSlideshow,
@@ -25,8 +26,10 @@ function tint(color: string, percent: number) {
 const muted = 'var(--alinea-bg-muted)'
 const other: FileKindVisual = {icon: IcRoundInsertDriveFile, color: muted}
 
-// Images show their preview, other files the icon of their kind
+// Images show their preview where they have one, other files the icon of
+// their kind
 const visuals: Record<string, FileKindVisual> = {
+  image: {icon: IcRoundImage, color: muted},
   pdf: {icon: IcRoundPictureAsPdf, color: tint('red-500', 16)},
   document: {icon: IcRoundDescription, color: tint('blue-500', 18)},
   spreadsheet: {icon: IcRoundTableChart, color: tint('green-500', 18)},
