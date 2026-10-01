@@ -80,7 +80,6 @@ export class BrowserEntryStore extends EntryStore {
           sql`insert or replace into ${buildTable} (id, revision)
             values (1, ${options.revision})`
         )
-      await handle.flush()
       return new BrowserEntryStore(
         config,
         database,
@@ -144,15 +143,15 @@ export class BrowserEntryStore extends EntryStore {
     this.#storageName = storageName
   }
 
+  /**
+   * Opening, and syncing, resolve once the content is in memory: storing it
+   * is a cache that finishes in the background, which takes seconds for a
+   * first sync or a rebuild of a large project.
+   */
   override sync(): Promise<string> {
-    return this.#persistAfter(() => super.sync())
+    return this.#run(() => super.sync())
   }
 
-  /**
-   * Resolve once the synced content is in memory: storing it is a cache that
-   * finishes in the background, which for a first sync of a large project
-   * takes seconds.
-   */
   override syncWith(
     remote: RemoteSource,
     options?: SyncOptions
