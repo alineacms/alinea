@@ -117,9 +117,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
 
   // A card on the photo, over the left edge of the screenshot
   &.is-image {
@@ -143,15 +140,49 @@
     display: none;
 
     @include sm {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &.is-above &-list {
+    @include sm {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 24px 32px;
-      margin-bottom: 32px;
     }
 
     @include s {
       grid-template-columns: minmax(0, 1fr);
     }
+  }
+
+  // Below the features, set apart by a line on the card
+  &-more {
+    align-self: flex-start;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--web-accent);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent-strong);
+    }
+  }
+
+  &.is-image &-more {
+    align-self: stretch;
+    padding-top: 16px;
+    border-top: 1px solid var(--web-outline);
   }
 
   &-item {
@@ -219,19 +250,32 @@
   .layout[data-previous='#{$shot}'] .root-layer[data-shot='#{$shot}'] {
     z-index: 1;
     opacity: 1;
+    transform: scale(var(--web-shot-previous-zoom, 1));
+    transform-origin: var(--web-shot-previous-origin, 50% 50%);
   }
 
+  // Fade in, then zoom into the crop of the feature
   .layout[data-active='#{$shot}'] .root-layer[data-shot='#{$shot}'] {
     z-index: 2;
     opacity: 1;
-    transition: opacity 0.25s ease-out;
+    transform: scale(var(--web-shot-zoom, 1));
+    transform-origin: var(--web-shot-origin, 50% 50%);
+    transition:
+      opacity 0.25s ease-out,
+      transform 0.7s ease-in-out 0.2s;
   }
 
-  .layout[data-active='#{$shot}']
+  .layout[data-feature='#{$shot}']
     .features.is-image
-    .features-item[data-shot='#{$shot}'] {
+    .features-item[data-feature='#{$shot}'] {
     .features-title {
       color: var(--web-accent);
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layout .root-layer {
+    transform: none !important;
   }
 }

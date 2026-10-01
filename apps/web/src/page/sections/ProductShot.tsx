@@ -7,7 +7,7 @@ import {Image} from '@/layout/Image'
 import {Section} from '@/layout/Section'
 import type {ProductShot as ProductShotSchema} from '@/schema/sections/ProductShot'
 import {DashboardMock} from './DashboardMock'
-import {resolveLink} from './links'
+import {type ResolvedLink, resolveLink} from './links'
 import {ProductShotStage} from './ProductShot.client'
 import css from './ProductShot.module.scss'
 import {SectionIcon} from './SectionIcon'
@@ -29,55 +29,75 @@ interface ProductShotFeaturesProps {
   placement: 'image' | 'above'
   /** The screenshot shown while each feature is hovered, 0 is the main one */
   shots: Array<number>
+  more?: ResolvedLink
 }
 
 /** The highlighted features, each linking to more about it */
 function ProductShotFeatures({
   features,
   placement,
-  shots
+  shots,
+  more
 }: ProductShotFeaturesProps) {
   return (
-    <ul className={styles.features({[placement]: true})}>
-      {features.map((feature, index) => {
-        const link = resolveLink(feature.link)
-        return (
-          <li
-            key={feature._id}
-            data-shot={shots[index]}
-            className={styles.features.item()}
-          >
-            <span className={styles.features.icon()}>
-              <SectionIcon name={feature.icon} />
-            </span>
-            <div className={styles.features.body()}>
-              <h3 className={styles.features.title()}>
-                {link ? (
-                  <Link
-                    href={link.href}
-                    target={link.target}
-                    className={styles.features.link()}
-                  >
-                    {feature.title}
-                    <span
-                      aria-hidden="true"
-                      className={styles.features.arrow()}
+    <div className={styles.features({[placement]: true})}>
+      <ul className={styles.features.list()}>
+        {features.map((feature, index) => {
+          const link = resolveLink(feature.link)
+          return (
+            <li
+              key={feature._id}
+              data-feature={index + 1}
+              data-shot={shots[index]}
+              data-zoom={feature.zoom ?? undefined}
+              data-focus-x={feature.focusX ?? undefined}
+              data-focus-y={feature.focusY ?? undefined}
+              className={styles.features.item()}
+            >
+              <span className={styles.features.icon()}>
+                <SectionIcon name={feature.icon} />
+              </span>
+              <div className={styles.features.body()}>
+                <h3 className={styles.features.title()}>
+                  {link ? (
+                    <Link
+                      href={link.href}
+                      target={link.target}
+                      className={styles.features.link()}
                     >
-                      →
-                    </span>
-                  </Link>
-                ) : (
-                  feature.title
+                      {feature.title}
+                      <span
+                        aria-hidden="true"
+                        className={styles.features.arrow()}
+                      >
+                        →
+                      </span>
+                    </Link>
+                  ) : (
+                    feature.title
+                  )}
+                </h3>
+                {feature.text && (
+                  <p className={styles.features.text()}>{feature.text}</p>
                 )}
-              </h3>
-              {feature.text && (
-                <p className={styles.features.text()}>{feature.text}</p>
-              )}
-            </div>
-          </li>
-        )
-      })}
-    </ul>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+      {more && (
+        <Link
+          href={more.href}
+          target={more.target}
+          className={styles.features.more()}
+        >
+          {more.label}
+          <span aria-hidden="true" className={styles.features.arrow()}>
+            →
+          </span>
+        </Link>
+      )}
+    </div>
   )
 }
 
@@ -124,7 +144,13 @@ function ProductShotFrame({shots}: ProductShotFrameProps) {
   )
 }
 
-export function ProductShot({image, darkImage, features}: ProductShotProps) {
+export function ProductShot({
+  image,
+  darkImage,
+  features,
+  more
+}: ProductShotProps) {
+  const moreLink = resolveLink(more)
   const hasImage = Boolean(image?.src)
   const hasFeatures = features?.length > 0
   // The main screenshot first, then one for every feature that has its own
@@ -142,6 +168,7 @@ export function ProductShot({image, darkImage, features}: ProductShotProps) {
             features={features}
             placement="above"
             shots={featureShots}
+            more={moreLink}
           />
         )}
         <div className={styles.root({features: hasFeatures})}>
@@ -159,6 +186,7 @@ export function ProductShot({image, darkImage, features}: ProductShotProps) {
               features={features}
               placement="image"
               shots={featureShots}
+              more={moreLink}
             />
           )}
           {hasImage ? (

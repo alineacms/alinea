@@ -24,11 +24,31 @@ export const ProductShot = Config.type('Product shot', {
               width: 0.5,
               help: 'Shown instead of the main image while the feature is hovered, in the same size'
             }),
-            darkImage: Field.image('Dark image', {width: 0.5})
+            darkImage: Field.image('Dark image', {width: 0.5}),
+            zoom: Field.number('Zoom', {
+              width: 1 / 3,
+              minValue: 1,
+              maxValue: 3,
+              step: 0.1,
+              help: 'Zoom into the image while hovered, eg. 1.6'
+            }),
+            focusX: Field.number('Zoom to x', {
+              width: 1 / 3,
+              minValue: 0,
+              maxValue: 100,
+              help: 'Percent from the left'
+            }),
+            focusY: Field.number('Zoom to y', {
+              width: 1 / 3,
+              minValue: 0,
+              maxValue: 100,
+              help: 'Percent from the top'
+            })
           }
         })
       }
     }),
+    more: labeledLink('Link below the features'),
     anchor: anchorField()
   }
 })

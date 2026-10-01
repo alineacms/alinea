@@ -54,7 +54,10 @@
             "_url": "/features#live-preview",
             "_title": "",
             "_target": "_self"
-          }
+          },
+          "zoom": 1.6,
+          "focusX": 88,
+          "focusY": 35
         },
         {
           "_id": "3K672VyaSyO0gM988UafBdAtW0O",
@@ -80,7 +83,10 @@
             "_id": "3K672WjcQ0qSXKWVcXJvB1kpGOD",
             "_type": "image",
             "_entry": "3K64ygMBIgj3Znh1hwxn15VQazv"
-          }
+          },
+          "zoom": 1.5,
+          "focusX": 38,
+          "focusY": 35
         },
         {
           "_id": "3K672QfZWJcu6hSGMN1ryeU7ghq",
@@ -106,7 +112,10 @@
             "_id": "3K672R8apWq4rZpJEIDVraJBoM6",
             "_type": "image",
             "_entry": "3K64yddhRReG9MKPqMdL7nZ3xNa"
-          }
+          },
+          "zoom": 1.8,
+          "focusX": 88,
+          "focusY": 18
         },
         {
           "_id": "3K672SaQKsAcom3MH4jykbYDscO",
@@ -132,9 +141,20 @@
             "_id": "3K672W0P6fDDKbvibczMP52BSng",
             "_type": "image",
             "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
-          }
+          },
+          "zoom": 1.8,
+          "focusX": 8,
+          "focusY": 14
         }
-      ]
+      ],
+      "more": {
+        "_id": "3K68Wbyv7e3uxmWs8F2hwu2McIQ",
+        "_type": "url",
+        "_url": "/features",
+        "_title": "",
+        "_target": "_self",
+        "label": "All features"
+      }
     },
     {
       "_id": "3JjOvjfZnce3zPbm7f5f9BQ9m5y",
