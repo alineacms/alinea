@@ -103,8 +103,11 @@ const agentRulesEnd = '<!-- END:alinea-agent-rules -->'
  */
 export function patchAgents(source: string, rules: string): string {
   const newline = source.includes('\r\n') ? '\r\n' : '\n'
-  const block = `${agentRulesStart}\n\n${rules.trim()}\n\n${agentRulesEnd}`
-    .replaceAll('\n', newline)
+  const block =
+    `${agentRulesStart}\n\n${rules.trim()}\n\n${agentRulesEnd}`.replaceAll(
+      '\n',
+      newline
+    )
   const start = source.indexOf(agentRulesStart)
   const end = source.indexOf(agentRulesEnd, start)
   if (start !== -1 && end !== -1)

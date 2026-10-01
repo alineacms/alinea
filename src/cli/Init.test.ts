@@ -76,7 +76,9 @@ if (testPms) {
     const gitignore = await fs.readFile(path.join(cwd, '.gitignore'), 'utf-8')
     test.is(gitignore, '/public/admin.html\n/public/admin/\n')
     const agents = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf-8')
-    test.ok(agents.startsWith('<!-- BEGIN:alinea-agent-rules -->\n\n## Alinea\n'))
+    test.ok(
+      agents.startsWith('<!-- BEGIN:alinea-agent-rules -->\n\n## Alinea\n')
+    )
     test.ok(agents.includes('`src/cms.ts`'))
     test.ok(agents.includes('node_modules/alinea/docs/'))
     const claude = await fs.readFile(path.join(cwd, 'CLAUDE.md'), 'utf-8')
@@ -162,7 +164,9 @@ test('patchMcpConfig adds the alinea server', () => {
     '{\n  "mcpServers": {\n    "alinea": {\n      "command": "npx",\n      "args": [\n        "alinea",\n        "mcp"\n      ]\n    }\n  }\n}\n'
   )
   test.equal(
-    JSON.parse(patchMcpConfig('{"mcpServers":{"other":{"command":"x"}}}', server)!),
+    JSON.parse(
+      patchMcpConfig('{"mcpServers":{"other":{"command":"x"}}}', server)!
+    ),
     {mcpServers: {other: {command: 'x'}, alinea: server}}
   )
   const configured = '{"mcpServers":{"alinea":{"command":"bunx"}}}'

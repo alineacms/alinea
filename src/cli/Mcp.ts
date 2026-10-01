@@ -118,7 +118,10 @@ export function mcpRelay({rootDir, lockFile, send}: McpRelayOptions): McpRelay {
         return reply(id, {tools: []})
       }
       if (method === 'tools/call')
-        return reply(id, {content: [{type: 'text', text: offline}], isError: true})
+        return reply(id, {
+          content: [{type: 'text', text: offline}],
+          isError: true
+        })
       fail(id, -32601, offline)
     },
     close() {

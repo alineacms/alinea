@@ -33,9 +33,7 @@ function FeatureItem({item}: FeatureItemProps) {
           {item.icon && (
             <SectionIcon name={item.icon} className={styles.item.icon()} />
           )}
-          {item.tag && (
-            <Label className={styles.item.tag()}>{item.tag}</Label>
-          )}
+          {item.tag && <Label className={styles.item.tag()}>{item.tag}</Label>}
         </div>
       )}
       {item.title && (

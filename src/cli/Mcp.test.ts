@@ -29,7 +29,10 @@ test('dev lock is ignored once its process is gone', async () => {
   relay.close()
   const file = devLockFile(dir)
   writeDevLock(file, {url: 'http://localhost:4500', pid: process.pid})
-  test.equal(readDevLock(file), {url: 'http://localhost:4500', pid: process.pid})
+  test.equal(readDevLock(file), {
+    url: 'http://localhost:4500',
+    pid: process.pid
+  })
   await fs.writeFile(file, JSON.stringify({url: 'x', pid: 2 ** 22 + 1}))
   test.is(readDevLock(file), undefined)
 })

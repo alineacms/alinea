@@ -51,7 +51,10 @@ export function ProductShot({image, darkImage}: ProductShotProps) {
           </div>
         ) : (
           <div className={styles.root.shot()}>
-            <DashboardMock mode="contrast" className={styles.root.dashboard()} />
+            <DashboardMock
+              mode="contrast"
+              className={styles.root.dashboard()}
+            />
           </div>
         )}
       </div>

@@ -73,7 +73,8 @@
   --web-section-gap: 160px;
   --web-band-padding: 128px;
   // Tinted bands: the soft surface with a faint dot grid
-  --web-band: radial-gradient(
+  --web-band:
+    radial-gradient(
         circle at 1px 1px,
         var(--web-band-dots) 1px,
         transparent 1.4px

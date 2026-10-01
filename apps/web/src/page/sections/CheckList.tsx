@@ -16,11 +16,7 @@ export interface CheckListProps {
   className?: string
 }
 
-export function CheckList({
-  items,
-  tone = 'accent',
-  className
-}: CheckListProps) {
+export function CheckList({items, tone = 'accent', className}: CheckListProps) {
   if (!items?.length) return null
   return (
     <ul
