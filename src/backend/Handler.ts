@@ -432,7 +432,8 @@ export function createHandler({
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
-        await periodicSync(cnx)
+        // No sync first: blobs this deployment lacks come from the remote,
+        // which is less work than a cold instance syncing everything.
         const tree = await local.source.getTree()
         const fromLocal: Array<string> = []
         const fromRemote: Array<string> = []
