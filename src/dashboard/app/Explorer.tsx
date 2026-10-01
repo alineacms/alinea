@@ -13,7 +13,6 @@ import {
   PageTitle,
   SearchField,
   Switch,
-  Text,
   ToggleGroup,
   ToggleGroupItem
 } from '#/components.js'
@@ -745,40 +744,6 @@ interface ExplorerToolbarProps {
   explorer: DashboardExplorer
   page: ExplorerReadyPage
 }
-interface ExplorerSortedByProps {
-  explorer: DashboardExplorer
-  page: ExplorerReadyPage
-}
-
-/** Tells the editor the list is sorted by a column rather than its order */
-function ExplorerSortedBy({explorer, page}: ExplorerSortedByProps) {
-  const sort = useSetAtom(explorer.requestedSort)
-  const [, startTransition] = useTransition()
-  if (!page.sort.requested || !page.sort.label) return null
-  return (
-    <div className={styles.Explorer.sortedBy()} data-slot="explorer-sorted-by">
-      <Text
-        size="sm"
-        color="muted"
-        className={styles.Explorer.sortedBy.label()}
-      >
-        Sorted by {page.sort.label}
-      </Text>
-      <span aria-hidden="true" className={styles.Explorer.sortedBy.separator()}>
-        ·
-      </span>
-      <Button
-        variant="ghost"
-        size="sm"
-        className={styles.Explorer.sortedBy.reset()}
-        onClick={() => startTransition(() => sort(undefined))}
-      >
-        Reset
-      </Button>
-    </div>
-  )
-}
-
 interface ExplorerActionsProps {
   page: ExplorerReadyPage
 }
@@ -833,7 +798,6 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
           {uploadCount}
         </ActivityStatus>
       )}
-      <ExplorerSortedBy explorer={explorer} page={page} />
       <ExplorerActions page={page} />
       <ExplorerControls
         sorts={page.search.trim() ? [] : page.overview.sorts}
@@ -844,7 +808,12 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
         onToggleFilter={(filter, option) =>
           startTransition(() => toggleFilter(filter, option))
         }
-        onClearFilters={() => startTransition(() => clearFilters())}
+        onReset={() =>
+          startTransition(() => {
+            clearFilters()
+            setSort(undefined)
+          })
+        }
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />

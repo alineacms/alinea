@@ -33,7 +33,8 @@ export interface ExplorerControlsProps {
   picked: OverviewFilterSelection
   onSort(sort: OverviewSort | undefined): void
   onToggleFilter(filter: OverviewFilterState, option: string): void
-  onClearFilters(): void
+  /** Clear the filters and return to the default order */
+  onReset(): void
 }
 
 /** The "Filter and sort" button of the explorer toolbar */
@@ -63,7 +64,7 @@ export function ExplorerControlsMenu({
   picked,
   onSort,
   onToggleFilter,
-  onClearFilters
+  onReset
 }: ExplorerControlsProps) {
   const filtered = Object.keys(picked).length > 0
   return (
@@ -98,16 +99,6 @@ export function ExplorerControlsMenu({
           </div>
         </div>
       ))}
-      {filtered && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClearFilters}
-          className={styles.ExplorerControls.clear()}
-        >
-          Clear filters
-        </Button>
-      )}
       <div
         role="group"
         aria-label="Sort by"
@@ -138,6 +129,18 @@ export function ExplorerControlsMenu({
           />
         ))}
       </div>
+      {(filtered || sort) && (
+        <div className={styles.ExplorerControls.section()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onReset}
+            className={styles.ExplorerControls.reset()}
+          >
+            Reset
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

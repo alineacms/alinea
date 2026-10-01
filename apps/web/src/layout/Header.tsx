@@ -20,12 +20,7 @@ const styles = styler(css)
 
 export type HeaderLink = AnyLink<{label: string; active: string}>
 
-export interface HeaderProps {
-  /** Text shown next to the logo, eg. "Cloud" */
-  badge?: string
-}
-
-export async function Header({badge}: HeaderProps) {
+export async function Header() {
   const links = await cms.get({
     type: Home,
     select: Home.links
@@ -35,7 +30,7 @@ export async function Header({badge}: HeaderProps) {
       <MobileMenu>
         <div className={styles.mobilemenu.container()}>
           <div className={styles.mobilemenu.top()}>
-            <Menu links={links} badge={badge} />
+            <Menu links={links} />
           </div>
           <div className={styles.mobilemenu.nav()}>
             <MobileNav />
@@ -43,7 +38,7 @@ export async function Header({badge}: HeaderProps) {
         </div>
       </MobileMenu>
       <HeaderRoot>
-        <Menu links={links} badge={badge} shortcut />
+        <Menu links={links} shortcut />
       </HeaderRoot>
     </MobileMenuProvider>
   )
@@ -81,17 +76,15 @@ async function MobileNav() {
 
 interface MenuProps {
   links: Array<HeaderLink>
-  badge?: string
   /** Opens search on ⌘K, only one of the rendered menus should */
   shortcut?: boolean
 }
 
-function Menu({links, badge, shortcut}: MenuProps) {
+function Menu({links, shortcut}: MenuProps) {
   return (
     <div className={styles.menu()}>
       <Link href="/" className={styles.menu.logo()} title="Alinea CMS">
         <Logo className={styles.menu.logo.mark()} />
-        {badge && <span className={styles.menu.logo.badge()}>{badge}</span>}
       </Link>
       <nav className={styles.menu.nav()}>
         {links?.map(link => {

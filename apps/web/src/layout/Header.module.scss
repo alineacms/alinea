@@ -52,14 +52,6 @@
         transform: none;
       }
     }
-
-    &-badge {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--web-foreground-faded);
-      line-height: 1.4;
-      white-space: nowrap;
-    }
   }
 
   &-nav {
@@ -81,6 +73,10 @@
       &:is(:hover, :focus-visible),
       &[aria-current] {
         color: var(--web-foreground);
+      }
+
+      &[aria-current] {
+        font-weight: 600;
       }
     }
   }

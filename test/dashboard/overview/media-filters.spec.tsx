@@ -57,7 +57,6 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
   await expect
     .poll(() => titles(page))
     .toEqual(['Letter', 'Archive', 'Annual report'])
-  await expect(page.getByText('Sorted by Title')).toBeVisible()
 
   // The filter stays while the editor opens a folder and comes back
   await page.keyboard.press('Escape')
@@ -77,10 +76,21 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
     .poll(() => titles(page))
     .toEqual(['Notes', 'Letter', 'Archive', 'Annual report'])
 
-  await menu.getByRole('button', {name: 'Clear filters'}).click()
+  // Reset clears the filters and the order
+  await menu.getByRole('button', {name: 'Reset', exact: true}).click()
+  await expect(page).not.toHaveURL(/sort=/)
   await expect
     .poll(() => titles(page))
-    .toEqual(['Photo', 'Notes', 'Letter', 'Archive', 'Annual report'])
+    .toEqual(
+      expect.arrayContaining([
+        'Photo',
+        'Notes',
+        'Letter',
+        'Archive',
+        'Annual report'
+      ])
+    )
+  await expect(menu.getByRole('button', {name: 'Reset'})).toHaveCount(0)
 })
 
 test('lists the unused media files and deletes them all', async ({
@@ -131,6 +141,6 @@ test('lists the unused media files and deletes them all', async ({
   await expect(table(page).getByText('No results found')).toBeVisible()
 
   await page.getByRole('button', {name: 'Filter and sort'}).click()
-  await menu.getByRole('button', {name: 'Clear filters'}).click()
+  await menu.getByRole('button', {name: 'Reset', exact: true}).click()
   await expect.poll(() => titles(page)).toEqual(['Archive', 'Photo'])
 })

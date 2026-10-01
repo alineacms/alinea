@@ -103,7 +103,6 @@ test('sorts by a column header and keeps the sort in the url', async ({
   await page.getByRole('button', {name: 'Price', exact: true}).click()
   await expect(page).toHaveURL(/\?sort=price$/)
   await expect.poll(() => titles(page)).toEqual(['Table', 'Lamp', 'Chair'])
-  await expect(page.getByText('Sorted by Price')).toBeVisible()
   // Sorting only changes the view, entries can not be reordered meanwhile
   await expect(list).toHaveCount(0)
 
@@ -111,10 +110,14 @@ test('sorts by a column header and keeps the sort in the url', async ({
   await expect(page).toHaveURL(/\?sort=-price$/)
   await expect.poll(() => titles(page)).toEqual(['Chair', 'Lamp', 'Table'])
 
-  await page.getByRole('button', {name: 'Reset', exact: true}).click()
+  // Reset in the filter and sort menu returns to the default order
+  await page.getByRole('button', {name: 'Filter and sort'}).click()
+  await page
+    .getByRole('dialog', {name: 'Filter and sort'})
+    .getByRole('button', {name: 'Reset', exact: true})
+    .click()
   await expect(page).not.toHaveURL(/sort=/)
   await expect.poll(() => titles(page)).toEqual(['Chair', 'Table', 'Lamp'])
-  await expect(page.getByText('Sorted by Price')).toHaveCount(0)
   await expect(list).toHaveCount(1)
 })
 

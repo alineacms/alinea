@@ -144,7 +144,7 @@ const shots: Array<Shot> = [
       const price = page.getByRole('button', {name: 'Price', exact: true})
       // The first click sorts ascending, the second descending
       await price.click()
-      await page.getByText('Sorted by Price').waitFor()
+      await page.waitForURL(/\?sort=price$/)
       await price.click()
       await page
         .getByRole('treegrid', {name: 'Explorer entries'})

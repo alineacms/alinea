@@ -64,7 +64,7 @@ export default async function GenericPage({params}: GenericPageProps) {
   const landing = await cms.first({type: Landing, url})
   if (landing)
     return (
-      <WebLayout theme={landing.theme} badge={landing.badge}>
+      <WebLayout theme={landing.theme}>
         <LandingPage page={landing} />
       </WebLayout>
     )

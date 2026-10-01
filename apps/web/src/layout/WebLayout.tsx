@@ -22,22 +22,19 @@ export interface WebLayoutProps {
   footer?: boolean
   /** Force a color theme, by default the system preference is followed */
   theme?: 'light' | 'dark' | null
-  /** Text shown next to the logo in the header */
-  badge?: string | null
 }
 
 export default async function WebLayout({
   children,
   footer = true,
-  theme,
-  badge
+  theme
 }: PropsWithChildren<WebLayoutProps>) {
   // The global theme-dark class applies the dark palette, see global.scss
   const themeClass = theme === 'dark' ? 'theme-dark' : undefined
   return (
     <div className={styles.layout(styler.merge({className: themeClass}))}>
       <SkipLink />
-      <Header badge={badge || undefined} />
+      <Header />
       <div id="content" tabIndex={-1} className={styles.layout.content()}>
         {children}
       </div>

@@ -12,10 +12,6 @@ export const Landing = Config.document('Landing', {
         dark: 'Dark'
       }
     }),
-    badge: Field.text('Header badge', {
-      width: 0.5,
-      help: 'Shown next to the logo in the header, eg. "Cloud"'
-    }),
     hero: Field.object('Hero', {
       fields: {
         badge: Field.text('Badge', {

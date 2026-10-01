@@ -57,7 +57,10 @@ function useControls(
     picked,
     onSort: setSort,
     onToggleFilter,
-    onClearFilters: () => setPicked({})
+    onReset: () => {
+      setPicked({})
+      setSort(undefined)
+    }
   }
 }
 
