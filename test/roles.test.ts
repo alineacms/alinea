@@ -5,6 +5,7 @@ import {LocalDB} from '#/database/LocalDB.js'
 import {create, move, publish, update} from '#/core/db/Operation.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Entry} from '#/core/Entry.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
 
@@ -40,7 +41,8 @@ const main = Config.workspace('Main', {
           type: Page
         })
       }
-    })
+    }),
+    media: Config.media()
   }
 })
 const cms = createCMS({
@@ -271,6 +273,40 @@ test('saving a published version needs the publish permission', async () => {
 
   await commit(save('draft'))
   await test.throws(() => commit(save('published')), 'Permission denied')
+  await test.throws(
+    () =>
+      commit(
+        create({
+          type: Article,
+          root: 'pages',
+          workspace: 'main',
+          set: {title: 'New'}
+        })
+      ),
+    'Permission denied'
+  )
+})
+
+test('uploading media needs the upload permission instead of publish', async () => {
+  const db = new LocalDB(cms.config)
+  const policy = new WriteablePolicy(getScope(cms.config)).set({
+    allow: {read: true, create: true, upload: true}
+  })
+  const commit = async (op: ReturnType<typeof create>) =>
+    db.write(await db.request(await op.task(db), policy))
+  const media = {workspace: 'main', root: 'media'}
+
+  const folder = create({...media, type: MediaLibrary, set: {title: 'Folder'}})
+  await commit(folder)
+  await commit(
+    create({
+      ...media,
+      type: MediaFile,
+      parentId: folder.id,
+      set: {title: 'File', location: 'file.jpg', extension: '.jpg'}
+    })
+  )
+  test.is(await db.count({type: MediaFile}), 1)
   await test.throws(
     () =>
       commit(

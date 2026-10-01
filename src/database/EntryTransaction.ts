@@ -303,8 +303,13 @@ export class EntryTransaction implements AsyncDisposable {
       parents: parentEntry ? [...parentEntry.parents, parentEntry.id] : []
     }
     this.#policy.assert(Permission.Create, resource)
+    // Media has no drafts: uploading it is what publishes it
+    const media = type === 'MediaFile' || type === 'MediaLibrary'
     if (status === 'published')
-      this.#policy.assert(Permission.Publish, resource)
+      this.#policy.assert(
+        media ? Permission.Upload : Permission.Publish,
+        resource
+      )
     const i18n = getRoot(rootConfig).i18n
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
