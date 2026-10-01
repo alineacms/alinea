@@ -145,11 +145,16 @@ export class BrowserEntryStore extends EntryStore {
     return this.#persistAfter(() => super.sync())
   }
 
+  /**
+   * Resolve once the synced content is in memory: storing it is a cache that
+   * finishes in the background, which for a first sync of a large project
+   * takes seconds.
+   */
   override syncWith(
     remote: RemoteSource,
     options?: SyncOptions
   ): Promise<string> {
-    return this.#persistAfter(() => super.syncWith(remote, options))
+    return this.#run(() => super.syncWith(remote, options))
   }
 
   override mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
@@ -162,13 +167,17 @@ export class BrowserEntryStore extends EntryStore {
 
   /** Resolve once the commits of a task that changed this store are stored. */
   #persistAfter<T>(task: () => Promise<T>): Promise<T> {
-    if (this.#closed)
-      return Promise.reject(new Error('BrowserEntryStore is closed'))
-    return this.#persistQueue.run(async () => {
+    return this.#run(async () => {
       const result = await task()
       await this.#handle.flush()
       return result
     })
+  }
+
+  #run<T>(task: () => Promise<T>): Promise<T> {
+    if (this.#closed)
+      return Promise.reject(new Error('BrowserEntryStore is closed'))
+    return this.#persistQueue.run(task)
   }
 
   override close(): Promise<void> {
