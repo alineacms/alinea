@@ -18,7 +18,12 @@ export const iconOptions = {
   StrokeUsers: 'Users',
   StrokeLock: 'Lock',
   StrokeFile: 'File',
-  StrokeMail: 'Mail'
+  StrokeMail: 'Mail',
+  StrokeEye: 'Eye',
+  StrokeImage: 'Image',
+  StrokeTree: 'Tree',
+  StrokeBlocks: 'Blocks',
+  StrokeDatabase: 'Database'
 }
 
 export type IconName = keyof typeof iconOptions

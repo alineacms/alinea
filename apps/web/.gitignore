@@ -40,3 +40,4 @@ next-env.d.ts
 /tutorial-sites/*/public/admin*
 .env
 .cache/
+/screenshots/

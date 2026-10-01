@@ -10,7 +10,6 @@
   z-index: 0;
   display: flex;
   justify-content: center;
-  margin-top: 88px;
   padding: 72px 40px;
   border-radius: 12px;
   overflow: hidden;
@@ -21,7 +20,6 @@
 
     height: 440px;
     justify-content: flex-start;
-    margin-top: 56px;
     padding: 40px 0 0 40px;
   }
 
@@ -29,8 +27,18 @@
     --web-shot-scale: 0.6;
 
     height: 296px;
-    margin-top: 40px;
     padding: 28px 0 0 22px;
+  }
+
+  // The features card overlaps the left of the image, which moves right
+  &.is-features {
+    @include l {
+      justify-content: flex-end;
+
+      .root-frame {
+        width: min(calc(960px * var(--web-shot-scale)), calc(100% - 300px));
+      }
+    }
   }
 
   &-background {
@@ -59,6 +67,20 @@
     transform-origin: top left;
   }
 
+  // Screenshots of the same size stack, the active one is shown
+  &-frame {
+    position: relative;
+  }
+
+  &-layer {
+    position: relative;
+
+    &:not(:first-child) {
+      position: absolute;
+      inset: 0;
+    }
+  }
+
   &-image {
     display: block;
 
@@ -74,6 +96,142 @@
       &.is-dark {
         display: none;
       }
+    }
+  }
+}
+
+// The image, with the features above it on small screens
+.layout {
+  margin-top: 88px;
+
+  @include sm {
+    margin-top: 56px;
+  }
+
+  @include s {
+    margin-top: 40px;
+  }
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  // A card on the photo, over the left edge of the screenshot
+  &.is-image {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 40px;
+    width: 280px;
+    padding: 24px;
+    border-radius: 12px;
+    background: var(--web-surface);
+    box-shadow: var(--web-shot-shadow);
+    transform: translateY(-50%);
+
+    @include sm {
+      display: none;
+    }
+  }
+
+  &.is-above {
+    display: none;
+
+    @include sm {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px 32px;
+      margin-bottom: 32px;
+    }
+
+    @include s {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &-item {
+    display: flex;
+    gap: 14px;
+  }
+
+  &-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 17px;
+    color: var(--web-accent);
+    background: var(--web-accent-soft);
+  }
+
+  &-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  &-title {
+    margin: 5px 0 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--web-foreground);
+  }
+
+  &-link {
+    color: inherit;
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent);
+    }
+  }
+
+  &-arrow {
+    margin-left: 6px;
+    color: var(--web-accent);
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--web-foreground-faded);
+  }
+}
+
+// The stage marks the hovered or focused feature, its screenshot shows
+.layout[data-active] .root-layer {
+  opacity: 0;
+}
+
+// The next screenshot fades in on top of the previous one, which stays fully
+// visible below it, so the panel never shows through both
+@for $shot from 0 through 8 {
+  .layout[data-previous='#{$shot}'] .root-layer[data-shot='#{$shot}'] {
+    z-index: 1;
+    opacity: 1;
+  }
+
+  .layout[data-active='#{$shot}'] .root-layer[data-shot='#{$shot}'] {
+    z-index: 2;
+    opacity: 1;
+    transition: opacity 0.25s ease-out;
+  }
+
+  .layout[data-active='#{$shot}']
+    .features.is-image
+    .features-item[data-shot='#{$shot}'] {
+    .features-title {
+      color: var(--web-accent);
     }
   }
 }

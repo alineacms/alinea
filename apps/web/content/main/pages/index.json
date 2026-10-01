@@ -38,7 +38,103 @@
         "_type": "image",
         "_entry": "3JjeksPO46LakWub1Kw2JxvvpGV"
       },
-      "anchor": ""
+      "anchor": "",
+      "features": [
+        {
+          "_id": "3K672UsPeDi3Ygw79sd0qBDpeJn",
+          "_index": "a0",
+          "_type": "Feature",
+          "icon": "StrokeEye",
+          "title": "Live preview",
+          "text": "See the page update next to the form as you type, before saving.",
+          "link": {
+            "_id": "3K672RfRtL5jJJMZetJXD00SThT",
+            "label": "",
+            "_type": "url",
+            "_url": "/features#live-preview",
+            "_title": "",
+            "_target": "_self"
+          }
+        },
+        {
+          "_id": "3K672VyaSyO0gM988UafBdAtW0O",
+          "_index": "a1",
+          "_type": "Feature",
+          "icon": "StrokeBlocks",
+          "title": "Pages built from blocks",
+          "text": "Compose pages from the blocks you define in your schema.",
+          "link": {
+            "_id": "3K672RrrGElR9YMXgfc53iwXs2i",
+            "label": "",
+            "_type": "url",
+            "_url": "/features#blocks",
+            "_title": "",
+            "_target": "_self"
+          },
+          "image": {
+            "_id": "3K672UrwM74qvcVd8CSFyssuTwQ",
+            "_type": "image",
+            "_entry": "3K64yfBlAEPuhEZ6pc2jVdwryyX"
+          },
+          "darkImage": {
+            "_id": "3K672WjcQ0qSXKWVcXJvB1kpGOD",
+            "_type": "image",
+            "_entry": "3K64ygMBIgj3Znh1hwxn15VQazv"
+          }
+        },
+        {
+          "_id": "3K672QfZWJcu6hSGMN1ryeU7ghq",
+          "_index": "a2",
+          "_type": "Feature",
+          "icon": "StrokeHistory",
+          "title": "Every version in git",
+          "text": "Each publish is a commit, start a new draft from any earlier version.",
+          "link": {
+            "_id": "3K672QLw2P1j6IOP3dqiP2NKpXo",
+            "label": "",
+            "_type": "url",
+            "_url": "/features#history",
+            "_title": "",
+            "_target": "_self"
+          },
+          "image": {
+            "_id": "3K672QjkNAMueEkuW4h6vGO4bTe",
+            "_type": "image",
+            "_entry": "3K64yWjkiYsdVh1k4o40GjHxmbS"
+          },
+          "darkImage": {
+            "_id": "3K672R8apWq4rZpJEIDVraJBoM6",
+            "_type": "image",
+            "_entry": "3K64yddhRReG9MKPqMdL7nZ3xNa"
+          }
+        },
+        {
+          "_id": "3K672SaQKsAcom3MH4jykbYDscO",
+          "_index": "a3",
+          "_type": "Feature",
+          "icon": "StrokeGlobe",
+          "title": "Translations",
+          "text": "Translate pages per locale, or single fields with fallbacks.",
+          "link": {
+            "_id": "3K672RolISuBFLpPZvjl6XHCXXO",
+            "label": "",
+            "_type": "url",
+            "_url": "/features#translations",
+            "_title": "",
+            "_target": "_self"
+          },
+          "image": {
+            "_id": "3K672XKgT0UyEpwMcpEAEGPEVs1",
+            "_type": "image",
+            "_entry": "3Jjeyr3NGyStGEZtrtcB1cooDBD"
+          },
+          "darkImage": {
+            "_id": "3K672W0P6fDDKbvibczMP52BSng",
+            "_type": "image",
+            "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
+          }
+        }
+      ]
     },
     {
       "_id": "3JjOvjfZnce3zPbm7f5f9BQ9m5y",
@@ -178,134 +274,6 @@
           "footnote": "Packages and disk size of a clean npm install, excluding React and Next.js. Measured September 2026."
         }
       ],
-      "anchor": ""
-    },
-    {
-      "_id": "3JjOvpBS8UrfUJTzZjBaGOzAN9B",
-      "_index": "a3",
-      "_type": "FeatureGrid",
-      "title": "Introducing Alinea 2.0",
-      "label": "",
-      "link": {
-        "_id": "3JjOvlfY4VngeP5sMzODVgQbMNP",
-        "_type": "url",
-        "_url": "/changelog",
-        "_title": "Full changelog",
-        "_target": "_self",
-        "label": "Full changelog"
-      },
-      "panel": true,
-      "image": {
-        "_id": "3Jznga0fk8MfKnFPwnYnnhIBucn",
-        "_type": "image",
-        "_entry": "3JmLmq1F4JhphD6g2eEfkrvsJew"
-      },
-      "darkImage": {
-        "_id": "3JzngTg50bcu2E1fGLRpUKHCPBk",
-        "_type": "image",
-        "_entry": "3JmLmuz6geh1YDFRslG10otkEQ1"
-      },
-      "items": [
-        {
-          "_id": "3JjOvnvK9XRwTsawyRdzLbZ9yo5",
-          "_index": "a0",
-          "_type": "Feature",
-          "icon": "StrokeAccessibility",
-          "tag": "Since 2.0",
-          "title": "An accessible dashboard",
-          "text": "Rebuilt on React Aria Components: keyboard navigation, focus management and screen reader support throughout.",
-          "link": {
-            "_id": "3Jznga3DLzC81On88aETZ9hHxHn",
-            "_type": "url",
-            "_url": "/docs/upgrading#dashboard",
-            "_title": "",
-            "_target": "_self",
-            "label": ""
-          }
-        },
-        {
-          "_id": "3JjOvkmcC5yUV3DmvbY58mCBD7u",
-          "_index": "a1",
-          "_type": "Feature",
-          "icon": "StrokeShieldCheck",
-          "tag": "Since 1.7",
-          "title": "Roles and permissions",
-          "text": "Decide who can create, edit, publish or upload, scoped by workspace, root, type, field, entry and locale.",
-          "link": {
-            "_id": "3JzngXVIHyTJbrby11d8LbHaHMo",
-            "_type": "entry",
-            "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG",
-            "label": ""
-          }
-        },
-        {
-          "_id": "3JjOvoiAnzcMvCIBO6zZKNTABGL",
-          "_index": "a2",
-          "_type": "Feature",
-          "icon": "StrokeCode",
-          "tag": "Since 2.0",
-          "title": "Dashboard components",
-          "text": "Build custom views with the same accessible React components the dashboard is made of, from alinea/components.",
-          "link": {
-            "_id": "3JzngTfrgIcpHnEFn2QaqmtXLLB",
-            "_type": "entry",
-            "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ",
-            "label": ""
-          }
-        },
-        {
-          "_id": "3JjOvokVrTZ2MOsYh300FtAvO0s",
-          "_index": "a3",
-          "_type": "Feature",
-          "icon": "StrokeGlobe",
-          "tag": "Since 2.0",
-          "title": "Per-field translations",
-          "text": "Field.localiser keeps every locale of a value in one field, with fallbacks, next to fully translated pages.",
-          "link": {
-            "_id": "3JzngY8mkAF3nY48WA6MnFzfra4",
-            "_type": "url",
-            "_url": "/docs/internationalization#localised-fields",
-            "_title": "",
-            "_target": "_self",
-            "label": ""
-          }
-        },
-        {
-          "_id": "3JjOvkXeanXOYct2uInKsrn0EAl",
-          "_index": "a4",
-          "_type": "Feature",
-          "icon": "StrokeLink",
-          "tag": "Since 2.0",
-          "title": "URL aliases and backlinks",
-          "text": "Renamed pages keep their old URLs for redirects, and every entry shows what links to it.",
-          "link": {
-            "_id": "3JzngXDnGPj2262rHVXXSevwM4u",
-            "_type": "url",
-            "_url": "/docs/schema/document#renamed-and-moved-pages",
-            "_title": "",
-            "_target": "_self",
-            "label": ""
-          }
-        },
-        {
-          "_id": "3JjOvodD38gOiQ0SOFYo0dFpQ7r",
-          "_index": "a5",
-          "_type": "Feature",
-          "icon": "StrokeHook",
-          "tag": "Since 2.0",
-          "title": "Commit hooks",
-          "text": "Rewrite changes before they are committed, or revalidate, notify and deploy after.",
-          "link": {
-            "_id": "3JzngVPyiorJ5JUCXjNAxBF5dpW",
-            "_type": "url",
-            "_url": "/docs/deploy#commit-hooks",
-            "_title": "",
-            "_target": "_self",
-            "label": ""
-          }
-        }
-      ],
-      "description": "",
       "anchor": ""
     },
     {
@@ -791,34 +759,34 @@
   ],
   "links": [
     {
-      "_id": "2a7ftYTVOui6duXcA4Js0xG8QC6",
       "_index": "a0",
+      "_id": "2a7ftYTVOui6duXcA4Js0xG8QC6",
       "_type": "entry",
       "_entry": "docs",
       "label": "Docs",
       "active": ""
     },
     {
-      "_id": "3BGbaRuOMqSaYmm9OviGcUyJdKm",
       "_index": "a1",
+      "_id": "3BGbaRuOMqSaYmm9OviGcUyJdKm",
       "_type": "url",
-      "_url": "/#features",
+      "_url": "/features",
       "_title": "Features",
       "_target": "_self",
       "label": "Features",
-      "active": "/#features"
+      "active": "/features"
     },
     {
-      "_id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
       "_index": "a2",
+      "_id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
       "_type": "entry",
       "_entry": "gx3H52whBKO_DdfcMNI3I",
       "label": "Blog",
       "active": ""
     },
     {
-      "_id": "3Bx7wXv1f67Hf6ilE7CZO15J2iU",
       "_index": "a3",
+      "_id": "3Bx7wXv1f67Hf6ilE7CZO15J2iU",
       "_type": "url",
       "_url": "/changelog",
       "_title": "Changelog",
@@ -827,8 +795,8 @@
       "active": ""
     },
     {
-      "_id": "3BCSsmQlw05W5vEN7Ya8vveSYfh",
       "_index": "a4",
+      "_id": "3BCSsmQlw05W5vEN7Ya8vveSYfh",
       "_type": "url",
       "_url": "/cloud",
       "_title": "Cloud",
@@ -848,7 +816,7 @@
           "_id": "3ByFwr5WFzimkKrLFQ3ockmEj6v",
           "_index": "a0",
           "_type": "url",
-          "_url": "/#features",
+          "_url": "/features",
           "_title": "Features",
           "_target": "_self",
           "label": "Features"

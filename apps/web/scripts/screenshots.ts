@@ -16,7 +16,7 @@
  * its own port (3101 for step 1, ...) unless it already runs, and stops the
  * ones it started.
  *
- * Captures land in apps/web/.cache/screenshots as WebP. Publishing uploads
+ * Captures land in apps/web/screenshots as WebP. Publishing uploads
  * them through the alinea dev MCP server into the "Screenshots" folder of the
  * main media library. Every shot keeps one media entry, found by its title,
  * so re-running replaces the image while the entry id stays the same and
@@ -306,7 +306,8 @@ const tutorialShots: Array<Shot> = [
 const baseUrl = process.env.SCREENSHOTS_BASE_URL ?? 'http://localhost:3000'
 const mcpUrl = process.env.ALINEA_MCP_URL ?? 'http://localhost:4500/mcp'
 const webDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const outDir = path.join(webDir, '.cache/screenshots')
+// Not a hidden folder: the dev MCP server refuses to upload hidden files
+const outDir = path.join(webDir, 'screenshots')
 // A laptop sized window, small enough that the interface reads well when the
 // capture is scaled down on the site
 const defaultViewport = {width: 1280, height: 800}

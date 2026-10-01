@@ -1,0 +1,1017 @@
+{
+  "_id": "3K65mqyvbIXYgEkC1GCyJbqXR4X",
+  "_type": "Landing",
+  "_index": "a3",
+  "title": "Features",
+  "theme": "light",
+  "hero": {
+    "badge": "Alinea 2.0",
+    "headline": "Everything editors need,\nin your Next.js app",
+    "text": "Alinea gives your editors a dashboard with a content tree, live previews, history, translations and a media library, and gives you typed content stored in git.",
+    "button": {
+      "_id": "3K65mr3LhTXW9O17Ii7DckFGz1w",
+      "label": "Get started",
+      "_type": "entry",
+      "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+    },
+    "link": {
+      "_id": "3K65msfJHNXjKDQhhBWm8l0e48u",
+      "label": "Try the demo",
+      "_type": "url",
+      "_url": "/demo",
+      "_title": "",
+      "_target": "_self"
+    }
+  },
+  "sections": [
+    {
+      "_id": "3K65mqvHY1FQzvyArqxyYwDCvHT",
+      "_index": "a0",
+      "_type": "FeatureDetail",
+      "icon": "StrokeTree",
+      "label": "Navigation",
+      "title": "A content tree with overviews",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Entries are organized in a tree that follows the structure of your site. Sections with many children open on an overview instead: a table or cards with the columns, filters and sort orders you define in your schema."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Drag entries to reorder them or move them elsewhere"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Columns, filters and sort options from your schema"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Large sections open on their overview, their tree stays collapsed"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65msBaoFaXKCJrsQRGQx8P43A",
+        "label": "Configure overviews",
+        "_type": "entry",
+        "_entry": "3Jlm0pWFwAtuoPTxeYRn4USpAFB"
+      },
+      "image": {
+        "_id": "3K65mqBTAFjlpfqdCpwMYU3pgtq",
+        "_type": "image",
+        "_entry": "3JmLmq1F4JhphD6g2eEfkrvsJew"
+      },
+      "darkImage": {
+        "_id": "3K65mmBUEIFbMfPHSYeiGruaJGp",
+        "_type": "image",
+        "_entry": "3JmLmuz6geh1YDFRslG10otkEQ1"
+      },
+      "imagePosition": "right",
+      "anchor": "content-tree"
+    },
+    {
+      "_id": "3K65mlN5FsLl31Xgwz37hw3jXvf",
+      "_index": "a1",
+      "_type": "FeatureDetail",
+      "icon": "StrokeEye",
+      "label": "Editing",
+      "title": "Live preview",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "The page you are editing renders next to the form and updates as you type, before anything is saved. Previews run on Next.js draft mode, so they show your own pages rendered by your own server components."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Updates on every change, without saving"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Preview drafts before they are published"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Follows your own routes and layouts"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65msClPgmEd7vLlSY8gS18Oz8",
+        "label": "Set up live previews",
+        "_type": "entry",
+        "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q"
+      },
+      "image": {
+        "_id": "3K65mmUWBxx8IV7nCkFhoUO3Spu",
+        "_type": "image",
+        "_entry": "3JjekoQez3OJmuOiJSZ37tE5JDo"
+      },
+      "darkImage": {
+        "_id": "3K65movbAtTv8NViFb24Apl8a7L",
+        "_type": "image",
+        "_entry": "3JjeksPO46LakWub1Kw2JxvvpGV"
+      },
+      "imagePosition": "left",
+      "anchor": "live-preview"
+    },
+    {
+      "_id": "3K65msBjUaPtLYuGH3eSHz7YkRh",
+      "_index": "a2",
+      "_type": "FeatureDetail",
+      "icon": "StrokeBlocks",
+      "label": "Editing",
+      "title": "Pages built from blocks",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "List fields let editors compose a page from the blocks you define, like a hero, a text section or a product grid. Every block type is part of your schema, so the content you query is typed too."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Add, reorder, copy and fold blocks"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Every block type is defined in your schema"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "The preview shows the page as it is built"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65mpiRCpiM1MuGg66APcEePM7",
+        "label": "Read about list fields",
+        "_type": "entry",
+        "_entry": "268hhWIV6twxD4PMp03isLY6Pac"
+      },
+      "image": {
+        "_id": "3K65mrFbEvD7u2Kr6N4pcUJ3386",
+        "_type": "image",
+        "_entry": "3K64yfBlAEPuhEZ6pc2jVdwryyX"
+      },
+      "darkImage": {
+        "_id": "3K65mryrjryuw4yD2IzdjMPGgbN",
+        "_type": "image",
+        "_entry": "3K64ygMBIgj3Znh1hwxn15VQazv"
+      },
+      "imagePosition": "right",
+      "anchor": "blocks"
+    },
+    {
+      "_id": "3K65mlKhuS0Lb10bvxNM98ZkszR",
+      "_index": "a3",
+      "_type": "FeatureDetail",
+      "icon": "StrokeHistory",
+      "label": "Git",
+      "title": "Every version in history",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Each publish is a commit to your repository, so every entry keeps its earlier versions. The history panel lists who published what and when. Open an earlier version to see it, or start a new draft from it."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Who changed what, and when"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Start a draft from any earlier version"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Review content changes like code, in git"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65mpgbhmLQNQl4PAjSfxcdRlM",
+        "label": "How publishing works",
+        "_type": "entry",
+        "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
+      },
+      "image": {
+        "_id": "3K65mnKNPKQIr8gSAALPUGLqwQ9",
+        "_type": "image",
+        "_entry": "3K64yWjkiYsdVh1k4o40GjHxmbS"
+      },
+      "darkImage": {
+        "_id": "3K65ms3Uv2WZwbrixT8DYOh0Fhr",
+        "_type": "image",
+        "_entry": "3K64yddhRReG9MKPqMdL7nZ3xNa"
+      },
+      "imagePosition": "left",
+      "anchor": "history"
+    },
+    {
+      "_id": "3K65mqzx3K5YDwCQTrqgv3kO2b2",
+      "_index": "a4",
+      "_type": "FeatureDetail",
+      "icon": "StrokeGlobe",
+      "label": "Content",
+      "title": "Translations",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Translate whole pages per locale, with each language in its own tree, or keep every locale of a value together in a single field with Field.localiser. Editors switch languages from the header and see which pages still need a translation."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Translated roots with a page per locale"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Per-field translations with fallbacks"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Shared fields stay the same in every locale"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65mniD8lAbAPH3YgwGjwNumEb",
+        "label": "Set up translations",
+        "_type": "entry",
+        "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+      },
+      "image": {
+        "_id": "3K65mn2UQnyRlqy1pRZ4fdnOhUA",
+        "_type": "image",
+        "_entry": "3Jjeyr3NGyStGEZtrtcB1cooDBD"
+      },
+      "darkImage": {
+        "_id": "3K65mrKbFgUEViuCkJgcZsTdAxm",
+        "_type": "image",
+        "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
+      },
+      "imagePosition": "right",
+      "anchor": "translations"
+    },
+    {
+      "_id": "3K65mqCO4PKQ4TlaYzVP0j5b8E8",
+      "_index": "a5",
+      "_type": "FeatureDetail",
+      "icon": "StrokeImage",
+      "label": "Content",
+      "title": "A media library",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Editors upload images and files and organize them in folders. Images get a focal point, a blurred placeholder and their dimensions, and can be cropped and scaled down before they are uploaded. Links point to the media entry, so moving or renaming a file does not break them."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Crop, rotate and scale images while uploading"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "PDFs are compressed and previewed by their first page"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Moved and renamed files keep their old URLs"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65msTdFNR8n5pqclHLoIhemrC",
+        "label": "Read about media",
+        "_type": "entry",
+        "_entry": "2aB45fUcIgu0Wx0NMULlU8VH7KK"
+      },
+      "image": {
+        "_id": "3K65mrF5McgWVN38mBEiUCgDdNX",
+        "_type": "image",
+        "_entry": "3K64yo07UBvfVdEEe9nGWEly2LJ"
+      },
+      "darkImage": {
+        "_id": "3K65mrNFADQQgtxS2elZ5K2p2y0",
+        "_type": "image",
+        "_entry": "3K64yoeeWR3JgyjYkKdttWgQXlH"
+      },
+      "imagePosition": "left",
+      "anchor": "media"
+    },
+    {
+      "_id": "3K65mnN5yQdCVqz0JfM5a1aigQd",
+      "_index": "a6",
+      "_type": "FeatureDetail",
+      "icon": "StrokeShieldCheck",
+      "label": "Teams",
+      "title": "Roles and permissions",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Decide who can create, edit, publish or upload, down to a workspace, root, type, field, entry or locale. Editors see the dashboard their role allows, and during development you can view it as any role."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Rules per workspace, root, type, field, entry and locale"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Combine several roles on one user"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Manage users in your own backend or in Alinea Cloud"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65mq1xJb6FtYjGYQLaaGA3buj",
+        "label": "Define roles",
+        "_type": "entry",
+        "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+      },
+      "image": {
+        "_id": "3K65ms4cnHUwBlAswle3G7jNZBE",
+        "_type": "image",
+        "_entry": "3Jjg25g3yx9TK9S96LEVcsIMsXg"
+      },
+      "darkImage": {
+        "_id": "3K65moNPDirQyt9GDXY98Ed2Tex",
+        "_type": "image",
+        "_entry": "3Jjg22DCeoJV5TIl5n8Lsa8x1oe"
+      },
+      "imagePosition": "right",
+      "anchor": "roles"
+    },
+    {
+      "_id": "3K65mm1lMblUnWzeR6GvDatf603",
+      "_index": "a7",
+      "_type": "FeatureDetail",
+      "icon": "StrokeSearch",
+      "label": "Navigation",
+      "title": "Search everything",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Find any page, entry or file with ⌘K. Search runs on the same SQLite index your site queries, so results show as you type and include the text of the fields you mark as searchable."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Search across workspaces, roots and media"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Full text search in the fields you choose"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Results as cards or in a list"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65mmaLDNko96uasGM7LPEw4Ih",
+        "label": "Query content",
+        "_type": "entry",
+        "_entry": "3AZCsyar65l8ytkp44ZL2C4aCG2"
+      },
+      "image": {
+        "_id": "3K65mqloGlZKWmqitQonBPKpvBr",
+        "_type": "image",
+        "_entry": "3K64yoX1vkzufweyUrxg34xajqL"
+      },
+      "darkImage": {
+        "_id": "3K65mqvH984Wg1btRzm3YvAeOn2",
+        "_type": "image",
+        "_entry": "3K64yyqhXCL7IbxsTTl5ouM5HJi"
+      },
+      "imagePosition": "left",
+      "anchor": "search"
+    },
+    {
+      "_id": "3K65msaebeyxYMUp35BOYDpdW9V",
+      "_index": "a8",
+      "_type": "FeatureDetail",
+      "icon": "StrokeLink",
+      "label": "Content",
+      "title": "Backlinks and URL aliases",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Every entry shows which pages link to it, so editors know what a change or a removal affects. Renamed and moved pages keep their old URLs as aliases, so links from elsewhere keep working."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "See what links to an entry before you remove it"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Old URLs redirect to the new ones"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "References in other languages are listed too"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65mnHlbniQBXSg0wBFjveBDNH",
+        "label": "Renamed and moved pages",
+        "_type": "url",
+        "_url": "/docs/content-model/schema/document#renamed-and-moved-pages",
+        "_title": "",
+        "_target": "_self"
+      },
+      "image": {
+        "_id": "3K65mnEgrsQIzOaJUYtoeg3UDvJ",
+        "_type": "image",
+        "_entry": "3K64yaKQef4oaw9yGJLwCPV2jGi"
+      },
+      "darkImage": {
+        "_id": "3K65mqDLDucWvzYtsbQQUfPYOH6",
+        "_type": "image",
+        "_entry": "3K64ya6gYq3xqxztK7hES50fFhf"
+      },
+      "imagePosition": "right",
+      "anchor": "references"
+    },
+    {
+      "_id": "3K65mmvBK9QMNTZcazv4jc2FmzN",
+      "_index": "a9",
+      "_type": "FeatureDetail",
+      "icon": "StrokeCode",
+      "label": "Developers",
+      "title": "Your own views and fields",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Add custom fields, panels and overview actions to the dashboard with the same accessible React components it is built from, exported from alinea/components."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Custom fields and views in React"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Built on React Aria, accessible by default"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Overview actions such as an export button"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "link": {
+        "_id": "3K65mph6WIddxKuv1d6XHBwSxSQ",
+        "label": "Browse the components",
+        "_type": "entry",
+        "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ"
+      },
+      "image": {
+        "_id": "3K65mnbLw6PML9nUAxTx5BM3GJS",
+        "_type": "image",
+        "_entry": "3JjeypESFeYvmOWKh1BvKaDtCpe"
+      },
+      "darkImage": {
+        "_id": "3K65mmIMT2NfbS7n9hox4R4gxao",
+        "_type": "image",
+        "_entry": "3Jjf6X1hAnKCbxkKnnUx4LThjNZ"
+      },
+      "imagePosition": "left",
+      "anchor": "components"
+    },
+    {
+      "_id": "3K65mlOMQWrHAqDarL7LpNMAndG",
+      "_index": "aA",
+      "_type": "FeatureGrid",
+      "title": "And also",
+      "label": "",
+      "description": "",
+      "link": {
+        "_id": "3K65mlzlcbHlAGWxxZowbrPF1FC",
+        "label": "Full changelog",
+        "_type": "url",
+        "_url": "/changelog",
+        "_title": "",
+        "_target": "_self"
+      },
+      "panel": true,
+      "image": null,
+      "darkImage": null,
+      "items": [
+        {
+          "_id": "3K65msnYXxLyPJS93yv1dgs8imk",
+          "_index": "a0",
+          "_type": "Feature",
+          "icon": "StrokeGitBranch",
+          "tag": "",
+          "title": "Content in git",
+          "text": "Every entry is a JSON file in your repository. Review, branch and roll back content like code.",
+          "link": null
+        },
+        {
+          "_id": "3K65mpbDlM4SEezuWQt3AEofdBL",
+          "_index": "a1",
+          "_type": "Feature",
+          "icon": "StrokeCode",
+          "tag": "",
+          "title": "Typed without codegen",
+          "text": "Query types are inferred from your schema, so there is no generate step.",
+          "link": null
+        },
+        {
+          "_id": "3K65msgoBffzOdBdOPxOx21J0EQ",
+          "_index": "a2",
+          "_type": "Feature",
+          "icon": "StrokeDatabase",
+          "tag": "",
+          "title": "No database server",
+          "text": "Content is indexed in SQLite and bundled with your site. Pages query it without a network roundtrip.",
+          "link": null
+        },
+        {
+          "_id": "3K65mrWABWMFrcbdQluGUKCL4ie",
+          "_index": "a3",
+          "_type": "Feature",
+          "icon": "StrokeCloud",
+          "tag": "",
+          "title": "Publish without a rebuild",
+          "text": "Published content goes live on the next request, no build or redeploy has to finish first.",
+          "link": null
+        },
+        {
+          "_id": "3K65msM6Vt61SIU4OI0MK3kfLnp",
+          "_index": "a4",
+          "_type": "Feature",
+          "icon": "StrokeAccessibility",
+          "tag": "",
+          "title": "An accessible dashboard",
+          "text": "Keyboard navigation, focus management and screen reader support throughout.",
+          "link": null
+        },
+        {
+          "_id": "3K65mpsdMAh5ImeZlOP1afmj0mi",
+          "_index": "a5",
+          "_type": "Feature",
+          "icon": "StrokeHook",
+          "tag": "",
+          "title": "Commit hooks",
+          "text": "Rewrite changes before they are committed, or revalidate, notify and deploy after.",
+          "link": null
+        },
+        {
+          "_id": "3K65mqfWnGZTOEDU978x0XwFTD7",
+          "_index": "a6",
+          "_type": "Feature",
+          "icon": "StrokeSparkle",
+          "tag": "",
+          "title": "Docs for coding agents",
+          "text": "The docs ship with the package as Markdown, so AI agents know the API of the installed version.",
+          "link": null
+        },
+        {
+          "_id": "3K65mqH8W5MGu5rV2tSFf9eyVwT",
+          "_index": "a7",
+          "_type": "Feature",
+          "icon": "StrokeUsers",
+          "tag": "",
+          "title": "Self-host or Cloud",
+          "text": "Run the backend on your own database, or let Alinea Cloud handle sign-in, media and publishing.",
+          "link": null
+        },
+        {
+          "_id": "3K65mod1U7PgvZa8NniRvxj8gZJ",
+          "_index": "a8",
+          "_type": "Feature",
+          "icon": "StrokeHeart",
+          "tag": "",
+          "title": "Open source",
+          "text": "MIT licensed and developed in the open on GitHub.",
+          "link": null
+        }
+      ],
+      "anchor": "more"
+    },
+    {
+      "_id": "3K65moSx0lpIB3cdZ7pkWcyFjrv",
+      "_index": "aB",
+      "_type": "Cta",
+      "title": "Add Alinea to your project",
+      "text": "Run the init command in your Next.js app, it sets up the config, the dashboard route and an example schema.",
+      "link": {
+        "_id": "3K65mo4aYutbBQ4CIVElLiinS4u",
+        "label": "Read the quickstart",
+        "_type": "entry",
+        "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
+      },
+      "command": "npx alinea@preview init",
+      "anchor": ""
+    }
+  ],
+  "metadata": {
+    "title": "Features",
+    "description": "What the Alinea dashboard offers editors and developers: a content tree and overviews, live preview, blocks, history, translations, media, roles, search and backlinks.",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790865338,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790865338,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

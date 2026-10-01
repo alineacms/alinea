@@ -1,0 +1,155 @@
+@use '@/style' as *;
+
+// Text beside a screenshot, the screenshot takes the larger column
+.root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 72px;
+  align-items: center;
+
+  &.is-image {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  &.is-image.is-left {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  @media (max-width: 1199.999px) {
+    gap: 48px;
+  }
+
+  @include sm {
+    gap: 32px;
+
+    &.is-image,
+    &.is-image.is-left {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  &.is-left &-content {
+    order: 2;
+
+    @include sm {
+      order: 0;
+    }
+  }
+
+  &-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &-icon {
+    font-size: 22px;
+    color: var(--web-accent);
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--web-foreground);
+
+    @include s {
+      font-size: 26px;
+    }
+  }
+
+  &-description {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &-text {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--web-foreground-faded);
+  }
+
+  &-link {
+    font-weight: 500;
+    color: var(--web-accent);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent-strong);
+    }
+  }
+
+  &-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &-check {
+    position: relative;
+    padding-left: 26px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--web-foreground);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 5px;
+      width: 14px;
+      height: 14px;
+      background: var(--web-accent);
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+    }
+  }
+
+  // Paragraphs inside list items take the list item styling
+  &-check &-text {
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  &-frame {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--web-outline);
+    box-shadow: var(--web-shot-shadow);
+  }
+
+  // The opposite mode of the site, like the other screenshots: the dark
+  // capture on the light site
+  &-image {
+    display: block;
+
+    &.is-light {
+      display: none;
+    }
+
+    @include theme-dark {
+      &.is-light {
+        display: block;
+      }
+
+      &.is-dark {
+        display: none;
+      }
+    }
+  }
+}

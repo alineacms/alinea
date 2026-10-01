@@ -1,14 +1,18 @@
 import type {ComponentType, SVGProps} from 'react'
 import {
   StrokeAccessibility,
+  StrokeBlocks,
   StrokeCheck,
   StrokeCloud,
   StrokeCode,
+  StrokeDatabase,
+  StrokeEye,
   StrokeGitBranch,
   StrokeGlobe,
   StrokeHeart,
   StrokeHistory,
   StrokeHook,
+  StrokeImage,
   StrokeLink,
   StrokeLock,
   StrokeMail,
@@ -16,6 +20,7 @@ import {
   StrokeSearch,
   StrokeShieldCheck,
   StrokeSparkle,
+  StrokeTree,
   StrokeUsers
 } from '@/icons'
 import type {IconName} from '@/schema/sections/options'
@@ -37,7 +42,12 @@ const icons: Record<IconName, ComponentType<SVGProps<SVGSVGElement>>> = {
   StrokeUsers,
   StrokeLock,
   StrokeFile,
-  StrokeMail
+  StrokeMail,
+  StrokeEye,
+  StrokeImage,
+  StrokeTree,
+  StrokeBlocks,
+  StrokeDatabase
 }
 
 export interface SectionIconProps extends Omit<

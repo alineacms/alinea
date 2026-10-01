@@ -647,6 +647,72 @@ export function StrokeBlocks(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function StrokeEye(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  )
+}
+
+export function StrokeImage(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+      <circle cx="9" cy="9" r="2"></circle>
+      <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"></path>
+    </svg>
+  )
+}
+
+export function StrokeTree(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M4 3v12a2 2 0 0 0 2 2h4"></path>
+      <path d="M4 8h6"></path>
+      <rect x="12" y="5" width="8" height="6" rx="1"></rect>
+      <rect x="12" y="14" width="8" height="6" rx="1"></rect>
+    </svg>
+  )
+}
+
 export function IcRoundOpenInNew(props: SVGProps<SVGSVGElement>) {
   return (
     <svg width="1em" height="1em" viewBox="0 0 24 24" {...props}>

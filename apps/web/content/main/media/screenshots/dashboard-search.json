@@ -1,0 +1,32 @@
+{
+  "_id": "3K64yoX1vkzufweyUrxg34xajqL",
+  "_type": "MediaFile",
+  "_index": "aV",
+  "title": "dashboard-search",
+  "location": "/dashboard-search.3K64yrUfW5KTVOV5Fq7ssERgBkm.webp",
+  "extension": ".webp",
+  "size": 120186,
+  "hash": "f958525d",
+  "width": 2560,
+  "height": 1200,
+  "thumbHash": "NAgGC4Kha0VwaIhaPb/k9Eo=",
+  "averageColor": "#d6d2d0",
+  "preview": "data:image/webp;base64,UklGRp4FAABXRUJQVlA4IJIFAADQHACdASqgAEsAPm0skkYkIiGhMVHNMIANiWUA0ISjUH3jeN6+16O9vtz5ze8x545LwrUAfIeD2mYmo+Tl9OROjgmwSmPMWyMDU7s/eO0IAQ4Eug5B6+8S5RAtPARHdGa1WUD0264nEk40EHEHpkse2LnRgvDt/xzsYU+OTzdN2yYfVrGf698p09SUgfPTgyd9xNfNpzVaZ2MBVeEfZ9pWwuiQbSduQCRajztvLN/UeosIJ8GBylaBFzpHpPKcvWRKyPiPu25+5id99j4yc5ZTaCKW5lDj57vgmDEeFxEWG2HMCJF1sP4eD1N/25xeUAD+Cn/Pt49MCrdmvqfFPMLxv59lMzf2RZ7KiKXEj47VhaPTqIrZuHx2++bRDSVu7KP33mL6wNz7RkczdZAvtRNlZBgK6jyI2ddStsnJTwpvZrMq+eyK0fvfk6/GmFXZaG2ywrnNbEzBUjw8hiE1gy88Y4ocbLSu2G0aqBXPpbm32zrkStuoS13kORN83I2YXZTsmNJbFRVxyuw0B6JNwqBK6yKhf6+r1Swz/wUJzu5THL2sHOiwSfMEwxIP8TBSpyYHqTYNbUmcVqZVnxQBsRRvgZFXkabCUHTCAF7H/RS0kVy8/jfC6LFpc4isSrB4HGd2e083qUpz4xJTCRHj8/Pk42iRRbU6Q+VgH+X1F3MXXlEm3RlHXwh4PzSJpat6z9+wWHUQhu05m/A8uzpWoKYEnWxdz/Vh7qqTdL/z8nM7cS13phVqUDyjKvnISv2n5HiNweVJw33sAWvH3jzRaiXvoBfUnuJ+tmJUTmKm4hZmeHwo5RZQSwAza/bLc9NYbOxYqdk6M/U3e6pC3pjcJ27feXwP++4x5MaVPHZvhIVS5QuEUtlTUd6vqLLRI4Tmc6eSOBYoedu/JXdFfBCFKavcPczdEwWYgeUEMWVQBFG1PpK6Noj3E+D/eiP9/8iRUCtMxVcX4GXnzrvf8AmXRaBN8128DrgL7Vc6hgyLX8S9NToDB41EYCiT9Fumzxiy9vwhN1eWT5Cy1Tsu+bj657ChSnuHlRFZEnAenF112ERfQ92XQ5qdY4v7LnW6qPkV3QdR8FaNlg98VmKrgDErOEDUMtFlYISPVTeZAS5WQabo8H55Zb4MIdcBrTHNcgxAk1IVtftRWLHcfdrdIGf1HjVgixyp39iscdjHlzt3RegaXcNl9wYtMoMY5T/naFL/MdWJg8oOhrA0egNGY9yF66OJTO8A84Vq/3cD+DRKnQMSGmYJDyoIlpiQBK6UL5eQHRGUQWT4m/Pyi9NHKXFrdZlEkAe/gxfK/sFj1cFpAByMeqveE/BS+Zb24hfAeXAv+B1zbYZpgRP2Qr95nGm6YnQQjdjTP6CBfO2jf1RcO0Gwt1/4iaBsDFo3L+xxb+jwQmkZxU4bd3HGkUzT2W05CexskByneevBreRq52/dpk8koMsG+wrYk5XJa/9ovUPgUPnScwV3PgqqD8vpibRhFLMyhPkJm6ckAh2p4+++vdv8v1rWRy9HSM8Bur6tE4DgIFWowh8JB2ZRwPOOdGVb5kXk1Nd1XPa59U3e02BDJX2dG+bwSBbW1i2rPyoMmqBWjXATOxWCj5FeK7hptIAm4lcfgF8iHiO6XO5wHRLblKs8Xh3fMR31ZZJGTabGnnRVdPUrzoHWcPncRVnbDj0OGz3b3JY/pDa44Ugc+MHUjeVYX5ebbpaFVRFV1vSEY3rU95HJaUMrCFA2wgEMj450Gww88TN8i+h26sbYuRu2aeXJGOQ3VCr9lsTDp3336sLPjXRvwd/uMDRxjcFhwEveDVmr0PNYNBR05TAAB4oJDAVT7jR9mVrjKlVyBG7IWoEJXU27ywwrqUbiXF+AhEKen/Vf7cNy+cGZZmZgEdAk2mSksAAA",
+  "focus": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "metadata": {
+    "createdAt": 1790864940,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790864940,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  },
+  "alt": "Searching all content for \"dining\", showing matching products, a collection, an article and images"
+}

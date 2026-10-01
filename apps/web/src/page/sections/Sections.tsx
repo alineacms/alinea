@@ -8,6 +8,7 @@ import {CodeShowcase} from './CodeShowcase'
 import {CompareCards} from './CompareCards'
 import {Cta} from './Cta'
 import {Faq} from './Faq'
+import {FeatureDetail} from './FeatureDetail'
 import {FeatureGrid} from './FeatureGrid'
 import {FlowCards} from './FlowCards'
 import {ProductShot} from './ProductShot'
@@ -30,6 +31,7 @@ const sectionViews: SectionViews = {
   Spotlight,
   CardPair,
   FeatureGrid,
+  FeatureDetail,
   Steps,
   CodeShowcase,
   CompareCards,
