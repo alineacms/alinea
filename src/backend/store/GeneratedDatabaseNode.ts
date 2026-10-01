@@ -18,37 +18,18 @@ async function generatedDatabasePath(): Promise<string> {
 }
 
 /**
- * One store per config: the CMS and a handler created from it share one
- * overlay, one sync and one preview cache. Queries compile against the
- * config's own types, so a copy of the config loaded by another bundle
- * gets its own store.
+ * Open the traced generated file as an in-memory overlay. Every caller gets
+ * its own overlay: the CMS syncs its store through the handler, which syncs
+ * its own, so they must not share one or the CMS would wait for itself.
  */
-const stores = new WeakMap<Config, ReturnType<typeof createGeneratedDatabase>>()
-/** The shared connection reports statements to the last registered logger. */
-const loggers = new WeakMap<Config, DatabaseOptions['logQuery']>()
-
-/** Open the traced generated file as an in-memory overlay. */
-export function generatedDatabase(
+export async function generatedDatabase(
   config: Config,
   options: DatabaseOptions = {}
 ) {
-  if (options.logQuery) loggers.set(config, options.logQuery)
-  let store = stores.get(config)
-  if (!store) {
-    store = generatedDatabasePath()
-      .then(path =>
-        runtimeDatabase({
-          path,
-          overlay: true,
-          logQuery: (query, durationMs) =>
-            loggers.get(config)?.(query, durationMs)
-        })
-      )
-      .then(db => createGeneratedDatabase(config, db))
-    stores.set(config, store)
-    store.catch(() => {
-      if (stores.get(config) === store) stores.delete(config)
-    })
-  }
-  return store
+  const db = await runtimeDatabase({
+    path: await generatedDatabasePath(),
+    overlay: true,
+    logQuery: options.logQuery
+  })
+  return createGeneratedDatabase(config, db)
 }

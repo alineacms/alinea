@@ -1,4 +1,6 @@
 import {nextMocks} from '#test/NextMocks.js'
+import {composeBackend} from '#/backend/api/CreateBackend.js'
+import {MissingCredentialsError} from '#/backend/Auth.js'
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
@@ -34,7 +36,10 @@ mock.module('next/constants.js', () => ({
   PHASE_PRODUCTION_BUILD: 'production-build'
 }))
 
-const {NextCMS} = await import('./cms.js')
+const [{NextCMS}, {createHandlerWithDatabase}] = await Promise.all([
+  import('./cms.js'),
+  import('./handler.js')
+])
 
 beforeEach(() => {
   process.env.NEXT_PHASE = 'production-server'
@@ -46,6 +51,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  // The fetch mock is shared with the other test files of the run.
+  handlerFetch = defaultFetch
   if (phase === undefined) delete process.env.NEXT_PHASE
   else process.env.NEXT_PHASE = phase
   if (runtime === undefined) delete process.env.NEXT_RUNTIME
@@ -321,4 +328,52 @@ test('sends the dev key with uploads to the dev server only', async () => {
     nextMocks.devHandlerUrl = undefined
     handlerFetch = defaultFetch
   }
+})
+
+test('syncs through a handler that answers in the same process', async () => {
+  nextMocks.draftMode = false
+  const Page = Config.document('Page', {fields: {}})
+  const config = Config.create({
+    baseUrl: 'https://example.com',
+    handlerUrl: '/api/cms',
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  })
+  const content = new LocalDB(config)
+  await content.sync()
+  await content.create({type: Page, set: {title: 'Committed elsewhere'}})
+  // The CMS and the handler each open their own overlay: the CMS holds its
+  // store while syncing it through the handler, which syncs its own first.
+  const cms = new NextCMS(config)
+  cms.bundledDb = PLazy.from(async () => {
+    const store = new LocalDB(config)
+    await store.sync()
+    return store
+  })
+  const handle = createHandlerWithDatabase(
+    {
+      cms,
+      backend: () =>
+        composeBackend(content, {
+          async verify() {
+            throw new MissingCredentialsError('Only the release key')
+          }
+        })
+    },
+    async () => new LocalDB(config)
+  )
+  handlerFetch = mock(async (input, init) => handle(new Request(input, init)))
+
+  const titles = await cms.find({
+    type: Page,
+    select: Page.title,
+    syncInterval: 0
+  })
+
+  expect(titles).toEqual(['Committed elsewhere'])
 })
