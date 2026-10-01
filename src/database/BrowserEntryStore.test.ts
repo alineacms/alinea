@@ -7,6 +7,7 @@ import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {IDBKeyRange, indexedDB} from 'fake-indexeddb'
+import {indexedDBStorage} from '@alinea/sqlite-wasm/indexeddb'
 import {BrowserEntryStore} from './BrowserEntryStore.js'
 
 // The stores keep their pages in this IndexedDB implementation.
@@ -318,5 +319,35 @@ test('browser entry stores keep persisted content across dashboard builds', asyn
     expect(requestedBlobs).toBe(0)
   } finally {
     await next.close()
+  }
+})
+
+test('browser entry stores keep new databases in 64 KB pages', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const name = `alinea-browser-db-${crypto.randomUUID()}`
+  const store = await BrowserEntryStore.open(config, {
+    ...idb,
+    name,
+    revision: 'config-1'
+  })
+  await store.close()
+  const {default: init} = await import('@alinea/sqlite-wasm')
+  const {Database} = await init()
+  const storage = indexedDBStorage(`${versionedCacheName(name)}-pages`, idb)
+  const db = await Database.sync(storage)
+  try {
+    expect(db.exec('pragma page_size')[0].values).toEqual([[65536]])
+  } finally {
+    db.detach()
+    await storage.delete()
   }
 })

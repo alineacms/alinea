@@ -64,6 +64,9 @@ export class BrowserEntryStore extends EntryStore {
         ? await options.replaces.#handOver(storage)
         : await syncWasmDatabase(storage)
       const db = handle.database
+      // IndexedDB stores one record per page: larger pages store and load a
+      // large database several times faster. Only applies to a new database.
+      await db.run(sql`pragma page_size = 65536`)
       const stored = await storedBuild(db)
       await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
       const database = new EntryDatabase(config, db, {fork: handle.fork})
