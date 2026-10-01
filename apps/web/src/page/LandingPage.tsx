@@ -1,7 +1,6 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
 import {Button} from '@/layout/Button'
-import {Label} from '@/layout/Label'
 import {resolveLink} from '@/page/sections/links'
 import {Sections} from '@/page/sections/Sections'
 import type {Landing} from '@/schema/Landing'
@@ -42,7 +41,6 @@ function LandingHero({hero}: LandingHeroProps) {
   const secondary = resolveLink(hero.link)
   return (
     <header className={styles.hero()}>
-      {hero.badge && <Label>{hero.badge}</Label>}
       {hero.headline && <LandingHeadline headline={hero.headline} />}
       {hero.text && <p className={styles.hero.text()}>{hero.text}</p>}
       {(primary || secondary) && (
@@ -63,6 +61,7 @@ function LandingHero({hero}: LandingHeroProps) {
           )}
         </div>
       )}
+      {hero.badge && <p className={styles.hero.badge()}>{hero.badge}</p>}
     </header>
   )
 }

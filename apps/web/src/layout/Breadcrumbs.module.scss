@@ -17,8 +17,12 @@
     display: none;
   }
 
+  &-link,
+  &-item {
+    color: var(--web-foreground-faded);
+  }
+
   &-link {
-    color: inherit;
     transition: color 0.15s ease-out;
 
     &:hover {

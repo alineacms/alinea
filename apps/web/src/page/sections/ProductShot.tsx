@@ -12,7 +12,7 @@ const styles = styler(css)
 
 export interface ProductShotProps extends Infer<typeof ProductShotSchema> {}
 
-// The screenshot is captured at twice the 1120px it is shown at, see
+// The screenshot is captured at twice its 1120px layout width, see
 // scripts/screenshots.ts, and served as is: resizing and re-encoding it
 // through the image optimizer blurs the interface text
 const imageStyle = {display: 'block', width: '100%', height: 'auto'}
@@ -22,14 +22,14 @@ export function ProductShot({image, darkImage}: ProductShotProps) {
   const hasDarkImage = Boolean(darkImage?.src)
   return (
     <Section flush>
-      <div className={styles.root({image: hasImage})}>
+      <div className={styles.root()}>
         <NextImage
           src={heroBg}
           alt=""
           fill
           priority
           placeholder="blur"
-          sizes="(max-width: 1440px) 100vw, 1280px"
+          sizes="(max-width: 1280px) 100vw, 1200px"
           className={styles.root.background()}
         />
         {hasImage ? (
@@ -51,7 +51,7 @@ export function ProductShot({image, darkImage}: ProductShotProps) {
           </div>
         ) : (
           <div className={styles.root.shot()}>
-            <DashboardMock mode="auto" className={styles.root.dashboard()} />
+            <DashboardMock mode="contrast" className={styles.root.dashboard()} />
           </div>
         )}
       </div>

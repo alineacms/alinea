@@ -54,7 +54,7 @@ export async function generateViewport({
     url: `/${slug}`,
     select: Landing.theme
   })
-  if (theme === 'dark') return {themeColor: '#0d1030'}
+  if (theme === 'dark') return {themeColor: '#131418'}
   return webViewport
 }
 

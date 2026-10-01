@@ -2,49 +2,54 @@
 
 .root {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 72px;
+  grid-template-columns: 460px minmax(0, 1fr);
+  gap: 96px;
   align-items: center;
 
   @media (max-width: 1199.999px) {
-    gap: 48px;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 56px;
   }
 
   @include sm {
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    gap: 48px;
   }
 
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 16px;
   }
 
   &-title {
     margin: 0;
     font-family: var(--web-title-font);
-    font-weight: 600;
-    font-size: 48px;
-    line-height: 1.08;
-    letter-spacing: -0.03em;
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
     color: var(--web-foreground);
 
-    @include sm {
-      font-size: 32px;
-      line-height: 1.1;
+    @include s {
+      font-size: 26px;
     }
   }
 
   &-text {
     margin: 0;
-    font-size: 18px;
+    font-size: 19px;
     line-height: 1.55;
     color: var(--web-foreground-faded);
 
-    @include sm {
+    @include s {
       font-size: 17px;
     }
+  }
+
+  &-checks,
+  &-link {
+    margin-top: 12px;
   }
 
   &-code {
@@ -58,28 +63,27 @@
     }
   }
 
-  &-snippet {
-    box-shadow: 0 30px 80px
-      color-mix(in srgb, var(--web-code-background) 25%, transparent);
-  }
-
+  // Type information floating over the code, like an editor hover
   &-tooltip {
     position: absolute;
-    left: 170px;
-    top: 138px;
+    left: 300px;
+    top: 150px;
     display: flex;
     flex-direction: column;
     margin: 0;
     padding: 12px 16px;
     border-radius: 10px;
-    border: 1px solid var(--web-outline);
     background: var(--web-surface);
-    color: var(--web-foreground);
+    color: var(--web-code-foreground);
     font-family: var(--web-mono-font);
     font-size: 12.5px;
     line-height: 1.6;
     white-space: pre;
-    box-shadow: 0 16px 40px rgba(10, 12, 40, 0.35);
+    box-shadow: var(--web-shot-shadow);
+
+    @media (max-width: 1199.999px) {
+      left: 200px;
+    }
 
     @include sm {
       position: static;
@@ -94,11 +98,11 @@
     }
 
     &-keyword {
-      color: var(--web-accent);
+      color: var(--web-code-keyword);
     }
 
     &-type {
-      color: var(--web-positive);
+      color: var(--web-code-string);
     }
   }
 }

@@ -1,11 +1,12 @@
 // Inline code sits in the line without changing its height
 .code {
-  padding: 0.15em 0.35em;
-  border-radius: 6px;
-  background: var(--web-neutral-soft);
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--web-surface-soft);
   color: var(--web-foreground);
   font-family: var(--web-mono-font);
-  font-size: 0.875em;
+  // 13.5px in 16px body text
+  font-size: 0.845em;
   line-height: 1;
   overflow-wrap: anywhere;
   box-decoration-break: clone;

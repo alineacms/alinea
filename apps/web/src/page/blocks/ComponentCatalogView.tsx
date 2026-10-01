@@ -63,7 +63,6 @@ export function ComponentCatalogView({
               ].join(' '),
               card: (
                 <CatalogCard
-                  kind="component"
                   href={componentHref(item.name)}
                   name={item.name}
                   code={`<${item.name}>`}

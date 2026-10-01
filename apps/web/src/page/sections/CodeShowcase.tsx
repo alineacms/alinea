@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {Section} from '@/layout/Section'
 import type {CodeShowcase as CodeShowcaseSchema} from '@/schema/sections/CodeShowcase'
 import {ArrowLink} from './ArrowLink'
+import {Band} from './Band'
 import {CheckList} from './CheckList'
 import css from './CodeShowcase.module.scss'
 import {CodeSnippet} from './CodeSnippet'
@@ -49,22 +49,17 @@ export function CodeShowcase({
 }: CodeShowcaseProps) {
   const lines = tooltip?.replace(/\s+$/, '').split('\n') ?? []
   return (
-    <Section>
+    <Band>
       <div className={styles.root()}>
         <div className={styles.root.content()}>
           {title && <h2 className={styles.root.title()}>{title}</h2>}
           {text && <p className={styles.root.text()}>{text}</p>}
-          <CheckList items={checks} size="large" />
-          <ArrowLink link={resolveLink(link)} />
+          <CheckList items={checks} className={styles.root.checks()} />
+          <ArrowLink link={resolveLink(link)} className={styles.root.link()} />
         </div>
         {code && (
           <div className={styles.root.code()}>
-            <CodeSnippet
-              size="large"
-              filename={filename}
-              code={code}
-              className={styles.root.snippet()}
-            />
+            <CodeSnippet size="large" filename={filename} code={code} />
             {lines.length > 0 && (
               <pre className={styles.root.tooltip()}>
                 {lines.map((line, i) => (
@@ -77,6 +72,6 @@ export function CodeShowcase({
           </div>
         )}
       </div>
-    </Section>
+    </Band>
   )
 }

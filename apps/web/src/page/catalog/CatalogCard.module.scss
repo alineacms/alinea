@@ -5,63 +5,40 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  gap: 14px;
   min-width: 0;
-  border-radius: 16px;
-  border: 1px solid var(--web-outline);
-  background: var(--web-surface);
   color: var(--web-foreground);
-  overflow: hidden;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
 
-  &:hover,
-  &:has(:focus-visible) {
-    border-color: color-mix(in srgb, var(--web-accent) 45%, var(--web-outline));
-    box-shadow: 0 8px 24px -12px
-      color-mix(in srgb, var(--web-foreground) 30%, transparent);
-  }
-
-  &:has(:focus-visible) {
-    outline: 2px solid var(--web-accent);
-    outline-offset: 2px;
-  }
-
+  // The preview sits on the dotted band, no card around it
   &-stage {
     position: relative;
-    height: 184px;
+    height: 176px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--web-band);
+    overflow: hidden;
+    transition: box-shadow 0.15s ease-out;
 
     @include s {
       height: 160px;
     }
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid var(--web-outline);
-    overflow: hidden;
   }
 
-  // Fields sit on a form, like in the entry editor
-  &.is-field &-stage {
-    background: var(--web-background);
+  &:hover &-stage {
+    box-shadow: inset 0 0 0 1px var(--web-outline-strong);
   }
 
-  // Components sit on a canvas
-  &.is-component &-stage {
-    background-color: var(--web-background);
-    background-image: radial-gradient(
-      color-mix(in srgb, var(--web-foreground-muted) 35%, transparent) 1px,
-      transparent 1.2px
-    );
-    background-size: 16px 16px;
-    background-position: center;
+  &:has(:focus-visible) &-stage {
+    outline: 2px solid var(--web-accent);
+    outline-offset: 2px;
   }
 
   &-body {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 14px 16px 15px;
   }
 
   &-row {
@@ -75,10 +52,13 @@
   &-title {
     color: inherit;
     outline: none;
-    font: 600 15px/22px var(--web-body-font);
+    font-size: 15.5px;
+    font-weight: 500;
+    line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: color 0.15s ease-out;
 
     // Stretch the link over the whole card
     &::after {
@@ -87,6 +67,10 @@
       inset: 0;
       z-index: 1;
     }
+  }
+
+  &:hover &-title {
+    color: var(--web-accent);
   }
 
   &-code {
@@ -100,7 +84,8 @@
 
   &-meta {
     flex-shrink: 0;
-    font: var(--web-docs-font-small);
+    font-size: 13.5px;
+    line-height: 20px;
     color: var(--web-foreground-muted);
   }
 }

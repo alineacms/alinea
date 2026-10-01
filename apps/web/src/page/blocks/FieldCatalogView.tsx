@@ -30,7 +30,6 @@ export function FieldCatalogView({showKind}: Infer<typeof FieldCatalogBlock>) {
             search: `${item.name} ${item.call} ${item.stores} ${item.description}`,
             card: (
               <CatalogCard
-                kind="field"
                 href={item.href}
                 name={item.name}
                 code={item.call}

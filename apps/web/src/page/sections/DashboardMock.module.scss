@@ -1,3 +1,5 @@
+@use '@/style' as *;
+
 // The mock uses the dashboard's own palette rather than the website tokens,
 // it is a picture of the product in either color scheme.
 
@@ -55,19 +57,13 @@
     @include dark-palette;
   }
 
-  &.is-auto {
-    @media (prefers-color-scheme: dark) {
-      @include dark-palette;
-    }
-  }
-
-  :global(html.is-light) &.is-auto {
-    @include light-palette;
-  }
-
-  :global(html.is-dark) &.is-auto,
-  :global(.theme-dark) &.is-auto {
+  // Screenshots stand out in the opposite mode of the surface they sit on
+  &.is-contrast {
     @include dark-palette;
+
+    @include theme-dark {
+      @include light-palette;
+    }
   }
 
   &-grow {

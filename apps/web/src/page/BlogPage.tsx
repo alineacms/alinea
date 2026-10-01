@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
 import {Query} from 'alinea'
 import type {Metadata, MetadataRoute} from 'next'
+import Link from 'next/link'
 import {cms} from '@/cms'
-import {Button} from '@/layout/Button'
 import {Newsletter} from '@/layout/engage/Newsletter'
 import {Section} from '@/layout/Section'
 import {BlogOverview} from '@/schema/BlogOverview'
@@ -37,15 +37,13 @@ export default async function BlogPage() {
     <main className={styles.root()}>
       <Section flush>
         <header className={styles.root.header()}>
-          <div className={styles.root.header.intro()}>
-            <h1 className={styles.root.header.title()}>News and updates</h1>
-            <p className={styles.root.header.description()}>
-              Releases, guides and notes from the people building Alinea.
-            </p>
-          </div>
-          <Button href="/changelog" variant="secondary">
+          <h1 className={styles.root.header.title()}>News and updates</h1>
+          <p className={styles.root.header.description()}>
+            Releases, guides and notes from the people building Alinea.
+          </p>
+          <Link href="/changelog" className={styles.root.header.link()}>
             View the changelog →
-          </Button>
+          </Link>
         </header>
       </Section>
       {featured && (
@@ -55,19 +53,15 @@ export default async function BlogPage() {
       )}
       {posts.length > 0 && (
         <Section flush className={styles.root.posts()}>
-          <div className={styles.root.posts.inner()}>
-            <h2 className={styles.root.posts.title()}>All posts</h2>
-            <div className={styles.root.posts.grid()}>
-              {posts.map(post => (
-                <BlogPostCard key={post.id} post={post} />
-              ))}
-            </div>
+          <h2 className={styles.root.posts.title()}>All posts</h2>
+          <div className={styles.root.posts.grid()}>
+            {posts.map(post => (
+              <BlogPostCard key={post.id} post={post} />
+            ))}
           </div>
         </Section>
       )}
-      <Section flush className={styles.root.newsletter()}>
-        <Newsletter variant="panel" />
-      </Section>
+      <Newsletter className={styles.root.newsletter()} />
     </main>
   )
 }

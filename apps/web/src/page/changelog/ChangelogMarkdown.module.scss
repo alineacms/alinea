@@ -9,33 +9,33 @@
 }
 
 .code {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--web-mono-font);
   font-size: 14px;
   padding: 1px 5px;
-  border-radius: 5px;
-  background: var(--web-code-inline-background, #eef0f7);
+  border-radius: 4px;
+  background: var(--web-code-inline-background);
 }
 
 .link {
-  color: var(--web-accent, #3f61e8);
+  color: var(--web-accent);
 
   &:hover {
-    color: var(--web-accent-strong, #2c47c0);
+    color: var(--web-accent-strong);
   }
 }
 
 .pre {
   margin: 0;
-  padding: 16px 18px;
-  border-radius: 12px;
-  background: var(--web-code-background, #14173a);
-  color: #e8e9f2;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: var(--web-code-background);
+  color: var(--web-code-foreground);
   overflow: auto;
 
   &-code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    line-height: 1.6;
+    font-family: var(--web-mono-font);
+    font-size: 13.5px;
+    line-height: 1.7;
   }
 }
 
@@ -48,5 +48,9 @@
 
   &-item {
     padding-left: 4px;
+
+    &::marker {
+      color: var(--web-code-comment);
+    }
   }
 }

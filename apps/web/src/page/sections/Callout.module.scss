@@ -1,63 +1,49 @@
 @use '@/style' as *;
 
 .root {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 48px;
-  padding: 56px;
-  border-radius: 28px;
-  border: 1px solid var(--web-outline);
-  background: var(--web-surface);
-
-  @include sm {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: start;
-    gap: 28px;
-    padding: 40px;
-  }
-
-  @include s {
-    padding: 28px 20px;
-    border-radius: 22px;
-  }
-
-  &-content {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
 
   &-heading {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 14px;
+    align-items: baseline;
+    gap: 8px 16px;
   }
 
   &-title {
     margin: 0;
     font-family: var(--web-title-font);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 40px;
-    line-height: 1.1;
-    letter-spacing: -0.025em;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
     color: var(--web-foreground);
 
     @include sm {
-      font-size: 32px;
+      font-size: 30px;
+    }
+
+    @include s {
+      font-size: 26px;
     }
   }
 
   &-text {
-    max-width: 640px;
+    max-width: 620px;
     margin: 0;
-    font-size: 17px;
-    line-height: 1.6;
+    font-size: 19px;
+    line-height: 1.55;
     color: var(--web-foreground-faded);
+
+    @include s {
+      font-size: 17px;
+    }
   }
 
   &-action {
-    flex-shrink: 0;
+    margin-top: 16px;
   }
 }

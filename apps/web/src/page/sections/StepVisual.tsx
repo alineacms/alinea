@@ -1,5 +1,4 @@
 import styler from '@alinea/styler'
-import {Label} from '@/layout/Label'
 import css from './StepVisual.module.scss'
 
 const styles = styler(css)
@@ -23,9 +22,7 @@ function EditorVisual() {
         </div>
       </div>
       <div className={styles.root.actions()}>
-        <Label variant="neutral" size="small">
-          Draft
-        </Label>
+        <span className={styles.root.draft()}>Draft</span>
         <span className={styles.root.publish()}>Publish</span>
       </div>
     </div>

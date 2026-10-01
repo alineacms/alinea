@@ -2,13 +2,7 @@
 
 import styler from '@alinea/styler'
 import {usePathname} from 'next/navigation'
-import {
-  type PropsWithChildren,
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef
-} from 'react'
+import {type PropsWithChildren, useEffect, useLayoutEffect, useRef} from 'react'
 import css from './DocsSidebar.module.scss'
 
 const styles = styler(css)
@@ -31,13 +25,13 @@ function writeScroll(value: number) {
 }
 
 /** Scrolls the container just enough to show the active link */
-function revealActive(container: HTMLElement, pinned: HTMLElement | null) {
+function revealActive(container: HTMLElement) {
   const active = container.querySelector<HTMLElement>('[aria-current="page"]')
   if (!active) return
   const box = container.getBoundingClientRect()
   const item = active.getBoundingClientRect()
   const margin = 48
-  const top = box.top + (pinned?.offsetHeight ?? 0) + margin
+  const top = box.top + margin
   if (item.top < top) container.scrollTop -= top - item.top
   else if (item.bottom > box.bottom - margin)
     container.scrollTop += item.bottom - (box.bottom - margin)
@@ -47,30 +41,21 @@ function revealActive(container: HTMLElement, pinned: HTMLElement | null) {
 const useIsomorphicLayoutEffect =
   typeof window === 'undefined' ? useEffect : useLayoutEffect
 
-export interface DocsSidebarProps {
-  /** Pinned above the scrolling links, eg. the search button */
-  top?: ReactNode
-}
-
 /**
  * The docs sidebar lives in the docs layout, so it stays mounted (and keeps
  * its scroll position) while navigating between docs pages. On a fresh load
  * the last scroll position of this tab is restored and the active link is
  * revealed if it ended up out of view.
  */
-export function DocsSidebar({
-  top,
-  children
-}: PropsWithChildren<DocsSidebarProps>) {
+export function DocsSidebar({children}: PropsWithChildren) {
   const ref = useRef<HTMLElement>(null)
-  const topRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   useIsomorphicLayoutEffect(() => {
     const container = ref.current
     if (!container) return
     const saved = readScroll()
     if (saved !== undefined) container.scrollTop = saved
-    revealActive(container, topRef.current)
+    revealActive(container)
   }, [])
   // Navigating from outside the sidebar (eg. the next page link) can activate
   // a link that is scrolled out of view
@@ -81,7 +66,7 @@ export function DocsSidebar({
       return
     }
     const container = ref.current
-    if (container) revealActive(container, topRef.current)
+    if (container) revealActive(container)
   }, [pathname])
   useEffect(() => {
     const container = ref.current
@@ -99,12 +84,7 @@ export function DocsSidebar({
   }, [])
   return (
     <aside ref={ref} className={styles.root()}>
-      {top && (
-        <div ref={topRef} className={styles.root.top()}>
-          {top}
-        </div>
-      )}
-      <div className={styles.root.inner()}>{children}</div>
+      {children}
     </aside>
   )
 }

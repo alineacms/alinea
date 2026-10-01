@@ -1,12 +1,13 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
 import Link from 'next/link'
-import {Button} from '@/layout/Button'
 import {Image} from '@/layout/Image'
 import {Label} from '@/layout/Label'
 import {Section} from '@/layout/Section'
 import {SectionHeader} from '@/layout/SectionHeader'
 import type {FeatureGrid as FeatureGridSchema} from '@/schema/sections/FeatureGrid'
+import {ArrowLink} from './ArrowLink'
+import {Band} from './Band'
 import css from './FeatureGrid.module.scss'
 import {resolveLink} from './links'
 import {SectionIcon} from './SectionIcon'
@@ -30,14 +31,10 @@ function FeatureItem({item}: FeatureItemProps) {
       {(item.icon || item.tag) && (
         <div className={styles.item.top()}>
           {item.icon && (
-            <span className={styles.item.icon()}>
-              <SectionIcon name={item.icon} />
-            </span>
+            <SectionIcon name={item.icon} className={styles.item.icon()} />
           )}
           {item.tag && (
-            <Label size="small" className={styles.item.tag()}>
-              {item.tag}
-            </Label>
+            <Label className={styles.item.tag()}>{item.tag}</Label>
           )}
         </div>
       )}
@@ -74,7 +71,7 @@ function FeatureItem({item}: FeatureItemProps) {
   )
 }
 
-// The banner crops the top left of the screenshot, see the module styles
+// Small screens crop the top left of the screenshot, see the module styles
 const bannerStyle = {
   width: '100%',
   height: '100%',
@@ -95,9 +92,10 @@ export function FeatureGrid({
   const action = resolveLink(link)
   const hasImage = Boolean(image?.src)
   const hasDarkImage = Boolean(darkImage?.src)
+  const Container = panel ? Band : Section
   return (
-    <Section>
-      <div className={styles.root({panel})}>
+    <Container>
+      <div className={styles.root()}>
         {(title || action) && (
           <div className={styles.root.header()}>
             <SectionHeader
@@ -106,16 +104,7 @@ export function FeatureGrid({
               description={description || undefined}
               className={styles.root.heading()}
             />
-            {action && (
-              <Button
-                variant="secondary"
-                href={action.href}
-                target={action.target}
-                className={styles.root.action()}
-              >
-                {action.label} →
-              </Button>
-            )}
+            <ArrowLink link={action} className={styles.root.action()} />
           </div>
         )}
         {hasImage && (
@@ -144,6 +133,6 @@ export function FeatureGrid({
           </div>
         )}
       </div>
-    </Section>
+    </Container>
   )
 }

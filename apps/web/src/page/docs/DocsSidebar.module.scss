@@ -5,8 +5,11 @@
   top: var(--web-header-height);
   flex-shrink: 0;
   align-self: flex-start;
-  width: 280px;
+  // 216px of links, with room on both sides for their focus ring
+  width: 224px;
   height: calc(100dvh - var(--web-header-height));
+  margin-inline: -4px;
+  padding: 56px 4px 64px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -17,20 +20,6 @@
   &:focus-within {
     scrollbar-color: color-mix(in srgb, var(--web-foreground) 18%, transparent)
       transparent;
-  }
-
-  &-top {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    padding: 28px 20px 12px 24px;
-    background: var(--web-surface);
-  }
-
-  &-inner {
-    display: flex;
-    flex-direction: column;
-    padding: 12px 20px 48px 24px;
   }
 
   @include sm {

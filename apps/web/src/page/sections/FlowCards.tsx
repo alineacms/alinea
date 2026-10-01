@@ -9,7 +9,7 @@ const styles = styler(css)
 
 export interface FlowCardsProps extends Infer<typeof FlowCardsSchema> {}
 
-/** A row of cards following the hero, one of them can be highlighted */
+/** A row of steps following the hero, one of them can be highlighted */
 export function FlowCards({items}: FlowCardsProps) {
   if (!items?.length) return null
   return (
@@ -21,9 +21,7 @@ export function FlowCards({items}: FlowCardsProps) {
             className={styles.card({highlight: item.highlight})}
           >
             {item.icon && (
-              <span className={styles.card.icon()}>
-                <SectionIcon name={item.icon} />
-              </span>
+              <SectionIcon name={item.icon} className={styles.card.icon()} />
             )}
             {item.title && (
               <h3 className={styles.card.title()}>{item.title}</h3>

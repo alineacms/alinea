@@ -1,25 +1,24 @@
+// The file label sits above the block, not in a header bar
 .root {
-  overflow: hidden;
-  border-radius: 12px;
-  background: var(--web-code-background);
-  color: var(--web-code-foreground);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 
   &-header {
-    display: flex;
-    align-items: center;
-    height: 42px;
-    padding: 0 16px;
-    border-bottom: 1px solid var(--web-code-outline);
     font-family: var(--web-mono-font);
     font-size: 12.5px;
-    line-height: 1;
+    line-height: 1.4;
     color: var(--web-foreground-muted);
   }
 
   &-code {
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--web-code-background);
+    color: var(--web-code-foreground);
     font-family: var(--web-mono-font);
-    font-size: 15px;
-    line-height: 1.75;
+    font-size: 14.5px;
+    line-height: 1.7;
 
     :global(.shiki) {
       margin: 0;

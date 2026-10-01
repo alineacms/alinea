@@ -1,28 +1,27 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font: var(--web-docs-font-nav);
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 1.4;
 }
 
 .title {
   padding-bottom: 2px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--web-foreground);
 }
 
 .list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
 .link {
-  padding: 5px 0 5px 14px;
-  border-left: 2px solid var(--web-outline);
-  color: var(--web-foreground-faded);
-  transition:
-    color 0.15s ease-out,
-    border-color 0.15s ease-out;
+  color: var(--web-foreground-muted);
+  transition: color 0.15s ease-out;
 
   &:hover {
     color: var(--web-foreground);
@@ -32,11 +31,10 @@
     color: var(--web-foreground);
     border-radius: 4px;
     outline: 2px solid var(--web-accent);
-    outline-offset: -2px;
+    outline-offset: 2px;
   }
 
   &.is-active {
-    border-left-color: var(--web-accent);
     color: var(--web-accent);
     font-weight: 500;
   }

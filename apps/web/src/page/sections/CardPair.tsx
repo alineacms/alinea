@@ -1,6 +1,5 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {Label} from '@/layout/Label'
 import {Section} from '@/layout/Section'
 import type {CardPair as CardPairSchema} from '@/schema/sections/CardPair'
 import css from './CardPair.module.scss'
@@ -25,13 +24,16 @@ function CodeCard({card}: CodeCardProps) {
       {card.text && <p className={styles.card.text()}>{card.text}</p>}
       <CodeSnippet filename={card.filename} code={card.code} />
       {card.chips?.length > 0 && (
-        <div className={styles.card.chips()}>
+        <ul className={styles.card.chips()}>
           {card.chips.map(chip => (
-            <Label key={chip._id} variant="neutral">
+            <li key={chip._id} className={styles.card.chip()}>
+              <span aria-hidden="true" className={styles.card.dash()}>
+                —
+              </span>
               {chip.text}
-            </Label>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </article>
   )

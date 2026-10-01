@@ -39,11 +39,10 @@ export function Steps({title, description, numbered, steps}: StepsProps) {
         <SectionHeader title={title} description={description || undefined} />
       )}
       {steps?.length > 0 && (
-        <div className={styles.root()}>
+        <div className={styles.root({numbered})}>
           {steps.map((step, i) => {
             const visual =
               step.visual && step.visual !== 'none' ? step.visual : undefined
-            const number = String(i + 1)
             return (
               <article
                 key={step._id}
@@ -51,6 +50,7 @@ export function Steps({title, description, numbered, steps}: StepsProps) {
               >
                 {visual === 'code' ? (
                   <CodeSnippet
+                    size="visual"
                     code={step.code}
                     className={styles.step.code()}
                   />
@@ -58,16 +58,10 @@ export function Steps({title, description, numbered, steps}: StepsProps) {
                   <StepVisual visual={visual} />
                 ) : null}
                 <div className={styles.step.body()}>
-                  {numbered ? (
-                    <span className={styles.step.number()}>{number}</span>
-                  ) : (
-                    <span className={styles.step.index()}>
-                      {number.padStart(2, '0')}
-                    </span>
-                  )}
-                  {step.title && (
-                    <h3 className={styles.step.title()}>{step.title}</h3>
-                  )}
+                  <h3 className={styles.step.title()}>
+                    <span className={styles.step.number()}>{i + 1}.</span>{' '}
+                    {step.title}
+                  </h3>
                   {step.text && (
                     <p className={styles.step.text()}>{step.text}</p>
                   )}

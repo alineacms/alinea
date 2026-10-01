@@ -2,9 +2,9 @@
 
 .root {
   position: relative;
-  padding: 72px 0 48px;
+  padding: 64px 0 48px;
   border-top: 1px solid var(--web-outline);
-  background: var(--web-surface);
+  background: var(--web-background);
   color: var(--web-foreground);
 
   @include sm {
@@ -14,7 +14,7 @@
   &-inner {
     display: flex;
     flex-direction: column;
-    gap: 56px;
+    gap: 64px;
     width: 100%;
     max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
     margin-inline: auto;
@@ -27,7 +27,7 @@
 
   &-top {
     display: flex;
-    gap: 48px;
+    gap: 64px;
 
     @include sm {
       flex-direction: column;
@@ -39,7 +39,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    width: 360px;
+    width: 380px;
     flex-shrink: 0;
 
     @include sm {
@@ -53,14 +53,15 @@
     color: var(--web-foreground);
 
     &-mark {
-      width: 68px;
+      width: 80px;
     }
   }
 
   &-description {
     margin: 0;
-    font-size: 15px;
-    line-height: 1.55;
+    max-width: 300px;
+    font-size: 14.5px;
+    line-height: 1.6;
     color: var(--web-foreground-faded);
   }
 
@@ -68,8 +69,9 @@
     flex-grow: 1;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 32px;
-    font-size: 15px;
+    gap: 48px;
+    font-size: 14.5px;
+    line-height: 1.5;
 
     @include s {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -81,10 +83,12 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
 
     &-title {
-      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 500;
     }
 
     &-link {
@@ -104,11 +108,8 @@
     gap: 8px 24px;
     padding-top: 24px;
     border-top: 1px solid var(--web-outline);
-    font-size: 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
     color: var(--web-foreground-muted);
-
-    @include sm {
-      font-size: 13px;
-    }
   }
 }

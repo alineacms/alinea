@@ -11,36 +11,33 @@
 .hero {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 24px;
+  align-items: flex-start;
   width: 100%;
   max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
   margin-inline: auto;
-  padding: 64px var(--web-gutter) 0;
-  text-align: center;
+  padding: 104px var(--web-gutter) 0;
 
   @include sm {
-    gap: 18px;
-    padding-top: 32px;
+    padding-top: 64px;
+  }
+
+  @include s {
+    padding-top: 40px;
   }
 
   &-title {
     margin: 0;
     font-family: var(--web-title-font);
-    font-weight: 600;
-    font-size: 84px;
-    line-height: 1.02;
-    letter-spacing: -0.035em;
+    font-weight: 500;
+    font-size: 56px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
     white-space: pre-line;
     color: var(--web-foreground);
 
-    @include sm {
-      font-size: 60px;
-      line-height: 1.04;
-    }
-
     @include s {
-      font-size: 44px;
+      font-size: 36px;
+      line-height: 1.1;
     }
   }
 
@@ -49,14 +46,15 @@
   }
 
   &-byline {
-    max-width: 660px;
-    margin: 0;
-    font-size: 20px;
-    line-height: 1.5;
+    max-width: 600px;
+    margin: 28px 0 0;
+    font-size: 19px;
+    line-height: 1.55;
     white-space: pre-line;
     color: var(--web-foreground-faded);
 
-    @include sm {
+    @include s {
+      margin-top: 20px;
       font-size: 17px;
     }
   }
@@ -65,20 +63,28 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding-top: 8px;
+    gap: 14px 12px;
+    margin-top: 40px;
 
     @include s {
-      flex-direction: column;
-      align-items: stretch;
-      align-self: stretch;
-      gap: 10px;
-      padding-top: 6px;
+      margin-top: 32px;
+    }
+  }
+
+  &-command {
+    margin-left: 16px;
+
+    @include s {
+      margin-left: 0;
     }
   }
 
   &-prompt {
-    margin-top: 4px;
+    max-width: 600px;
+    margin-top: 32px;
+
+    @include s {
+      margin-top: 24px;
+    }
   }
 }

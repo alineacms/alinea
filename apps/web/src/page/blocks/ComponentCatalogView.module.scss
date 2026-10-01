@@ -1,16 +1,15 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 56px;
 
   &-import {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 6px 8px 6px 20px;
+    padding: 14px 20px;
     border-radius: var(--web-docs-radius);
-    border: 1px solid var(--web-code-outline);
     background: var(--web-code-background);
     color: var(--web-code-foreground);
 

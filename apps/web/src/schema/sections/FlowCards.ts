@@ -10,7 +10,7 @@ export const FlowCards = Config.type('Flow cards', {
             icon: Field.select('Icon', {width: 0.5, options: iconOptions}),
             highlight: Field.check('Highlight', {
               width: 0.5,
-              description: 'Render this card inverted'
+              description: 'Mark this step in the accent color'
             }),
             title: Field.text('Title'),
             text: Field.text('Text', {multiline: true})
