@@ -162,6 +162,31 @@ test('expands and collapses an entry with the sidebar chevron', async ({
   ).toBeVisible()
 })
 
+test('opens a collapsed entry on its overview from the sidebar', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
+
+  await tree.getByRole('row', {name: 'Ordered folder'}).click()
+
+  // defaultView: 'overview' opens the children instead of the form
+  await expect(app.page).not.toHaveURL(/view=edit/)
+  await expect(
+    app.page
+      .getByRole('treegrid', {name: 'Explorer entries'})
+      .getByRole('row', {name: /^Apple/})
+  ).toBeVisible()
+  // collapsed: true keeps it closed until its arrow is clicked
+  await expect(
+    tree.getByRole('button', {name: 'Expand Ordered folder'})
+  ).toBeVisible()
+  await expect(tree.getByRole('row', {name: 'Apple'})).toHaveCount(0)
+  await tree.getByRole('button', {name: 'Expand Ordered folder'}).click()
+  await expect(tree.getByRole('row', {name: 'Apple'})).toBeVisible()
+})
+
 test('orders children by their parent type and keeps them movable', async ({
   dashboard,
   mount

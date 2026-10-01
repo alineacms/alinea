@@ -81,9 +81,10 @@ export function usePickerExplorer(
     const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
     explorer = createExplorerAtoms(initialLocation, {
       ...options,
+      // Limited pickers search all of their locations, if more than one
       allowAllWorkspaces:
         options.allowAllWorkspaces ??
-        (!options.limitLocations?.length && !options.pickChildren),
+        (!options.pickChildren && (options.limitLocations?.length ?? 2) > 1),
       initialView: options.initialView ?? initialView,
       rootData,
       selectedLocale: initialLocale,

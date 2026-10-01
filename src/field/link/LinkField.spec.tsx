@@ -114,7 +114,15 @@ test('opens multiple-link settings from the linked row', async ({
   await page.keyboard.press('Enter')
   await expect(settings).toBeVisible()
   await expect(settings.getByRole('textbox', {name: 'Label'})).toBeFocused()
-  await page.keyboard.press('Escape')
+  // External links open in a new tab
+  await page
+    .context()
+    .route('https://alineacms.com/**', route => route.fulfill({body: ''}))
+  const popup = page.waitForEvent('popup')
+  await settings.getByRole('button', {name: 'Open link'}).click()
+  await expect
+    .poll(async () => (await popup).url())
+    .toBe('https://alineacms.com/docs')
   await expect(settings).toBeHidden()
 
   // The fold toggle and remove button keep their own behavior

@@ -9,6 +9,7 @@ import {
   type Key,
   type Selection
 } from '#/components.js'
+import {Type, type EntryDefaultView} from '#/core/Type.js'
 import {typeAtoms} from '../atoms/config.js'
 import {nav, routeAtom, type Page} from '../atoms/nav.js'
 import {configAtom} from '../atoms/core.js'
@@ -402,9 +403,13 @@ function SidebarTreeView({
   )
 }
 
-/** Media directories open on their overview, other entries in the editor */
-function entryView(entry: RootTreeItem) {
-  return entry.type === 'MediaLibrary' ? undefined : 'edit'
+/**
+ * Entries open in the editor from the tree, unless their type opens on its
+ * overview with `defaultView: 'overview'`, as media directories do: those
+ * open on their default view
+ */
+function entryView(type: Type | undefined): EntryDefaultView | undefined {
+  return type && Type.defaultView(type) === 'overview' ? undefined : 'edit'
 }
 
 export const SidebarTree = memo(function SidebarTree({
@@ -419,6 +424,7 @@ export const SidebarTree = memo(function SidebarTree({
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const setCollapsed = useSetAtom(tree.collapsedKeys)
   const dragDrop = useRootTreeDragDrop(root, tree)
+  const {schema} = useAtomValueRaw(configAtom)
   function entryLink(entry: RootTreeItem): SidebarTreeLink {
     return {
       href: nav.entry(
@@ -426,7 +432,7 @@ export const SidebarTree = memo(function SidebarTree({
         root.key,
         entry.id,
         page.locale,
-        entryView(entry)
+        entryView(schema[entry.type])
       )
     }
   }
@@ -476,13 +482,16 @@ export const SidebarTree = memo(function SidebarTree({
         const entry =
           key === undefined ? undefined : view.entries.get(String(key))
         if (!entry || entry.id === page.entry) return
-        setExpandedKeys(current => new Set(current).add(entry.id))
+        const type = schema[entry.type]
+        // Collapsed types only expand by their arrow
+        if (!(type && Type.isCollapsed(type)))
+          setExpandedKeys(current => new Set(current).add(entry.id))
         setRoute({
           workspace: root.workspace,
           root: root.key,
           entry: entry.id,
           locale: page.locale ?? undefined,
-          view: entryView(entry)
+          view: entryView(type)
         })
       }}
     />

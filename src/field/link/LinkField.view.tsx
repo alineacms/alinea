@@ -29,7 +29,7 @@ import {
   SelectItem,
   TextField
 } from '#/components.js'
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
@@ -1296,6 +1296,8 @@ function LinkRowReferenceActions({
   type,
   value
 }: LinkRowReferenceActionsProps) {
+  if ('_url' in value)
+    return <UrlLinkRowAction closeActions={closeActions} url={value._url} />
   if (!('_entry' in value)) return null
   return (
     <EntryLinkRowActions
@@ -1305,6 +1307,42 @@ function LinkRowReferenceActions({
       type={type}
     />
   )
+}
+
+interface UrlLinkRowActionProps {
+  closeActions: () => void
+  url?: string
+}
+
+/** Opens an external link in a new tab, relative urls on the site */
+function UrlLinkRowAction({closeActions, url}: UrlLinkRowActionProps) {
+  const config = useAtomValueRaw(configAtom)
+  const href = openableUrl(url, Config.baseUrl(config) ?? window.location.href)
+  return (
+    <Button
+      aria-label="Open link"
+      variant="ghost"
+      icon={IcRoundOpenInNew}
+      disabled={!href}
+      onClick={() => {
+        if (href) window.open(href, '_blank', 'noopener,noreferrer')
+        closeActions()
+      }}
+    >
+      Open link
+    </Button>
+  )
+}
+
+const openableProtocols = new Set(['http:', 'https:', 'mailto:', 'tel:'])
+
+/** The absolute url of a link, unless it would run script like javascript: */
+function openableUrl(url: string | undefined, base: string) {
+  if (!url) return undefined
+  const parsed = URL.parse(url, base)
+  return parsed && openableProtocols.has(parsed.protocol)
+    ? parsed.href
+    : undefined
 }
 
 interface EntryLinkRowActionsProps {

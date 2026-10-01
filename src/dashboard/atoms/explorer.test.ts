@@ -223,6 +223,60 @@ test('workspace search includes all locales and unlocalized roots', async () => 
   )
 })
 
+test('searching all locations of a limited picker stays within them', async () => {
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {
+          pages: Config.root('Pages', {contains: ['Page']}),
+          news: Config.root('News', {contains: ['Page']}),
+          tags: Config.root('Tags', {contains: ['Page']})
+        }
+      }),
+      other: Config.workspace('Other', {
+        source: 'other',
+        roots: {pages: Config.root('Pages', {contains: ['Page']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  for (const [workspace, root] of [
+    ['main', 'pages'],
+    ['main', 'news'],
+    ['main', 'tags'],
+    ['other', 'pages']
+  ])
+    await db.create({type: Page, workspace, root, set: {title: 'Shared'}})
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {
+      allowAllWorkspaces: true,
+      limitLocations: [
+        {workspace: 'main', root: 'pages'},
+        {workspace: 'main', root: 'news'},
+        {workspace: 'other', root: 'pages'}
+      ]
+    }
+  )
+  store.set(explorer.search, 'Shared')
+  store.set(explorer.searchScope, 'everything')
+
+  expect(store.get(explorer.searchesEverything)).toBe(true)
+  const items = await store.get(explorer.itemsReady(null))
+  expect(items.map(item => [item.workspace, item.root]).sort()).toEqual([
+    ['main', 'news'],
+    ['main', 'pages'],
+    ['other', 'pages']
+  ])
+})
+
 test('ready pages snapshot the search that produced their items', async () => {
   const {store} = await createDashboardAtomFixture()
   await store.get(userPolicyReadyAtom)

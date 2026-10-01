@@ -76,6 +76,10 @@ export namespace Type {
     return Boolean(getType(type).hidden)
   }
 
+  export function isCollapsed(type: Type): boolean {
+    return Boolean(getType(type).collapsed)
+  }
+
   export function searchableText(type: Type, value: any): string {
     const self: Record<string, any> = value || {}
     let res = ''
@@ -321,6 +325,12 @@ export interface TypeConfig<Definition> {
   orderChildrenBy?: OrderBy | Array<OrderBy>
   /** Entries do not show up in the sidebar content tree */
   hidden?: true
+  /**
+   * Entries keep their children collapsed in the sidebar content tree when
+   * they are opened, the arrow expands them. Useful for entries with many
+   * children that are browsed in their overview instead.
+   */
+  collapsed?: true
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 

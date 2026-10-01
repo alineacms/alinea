@@ -1222,9 +1222,22 @@ export class ExplorerAtoms {
       const flatList = resultMode === 'matches'
       const condition = flatList ? this.#options.condition : undefined
       const picked = overviewFilter(overview, requestedFilters)
+      // Searching all locations stays within the locations a picker allows
+      const limits = this.#options.limitLocations
+      const allowed =
+        searchesEverything && limits?.length
+          ? {
+              or: limits.map(limit => ({
+                _workspace: limit.workspace,
+                _root: limit.root
+              }))
+            }
+          : undefined
       // The search terms, the picker's condition and the picked filters apply
-      const filter =
-        condition && picked ? {and: [condition, picked]} : (condition ?? picked)
+      const filters = [condition, picked, allowed].filter(
+        filter => filter !== undefined
+      )
+      const filter = filters.length > 1 ? {and: filters} : filters[0]
       return {
         workspace: searchesEverything ? undefined : location.workspace,
         root:

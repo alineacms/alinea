@@ -49,7 +49,9 @@ const HiddenFolder = Config.document('Hidden folder', {
 const OrderedFolder = Config.document('Ordered folder', {
   contains: ['Page'],
   fields: {},
-  orderChildrenBy: {asc: Query.title}
+  orderChildrenBy: {asc: Query.title},
+  defaultView: 'overview',
+  collapsed: true
 })
 
 const main = Config.workspace('Main', {
