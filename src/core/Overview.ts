@@ -6,10 +6,10 @@ import type {
   EdgeQuery,
   GraphQuery,
   InferProjection,
+  Order,
   Projection
 } from './Graph.js'
 import {getExpr, hasExpr} from './Internal.js'
-import type {OrderBy} from './OrderBy.js'
 import type {Type} from './Type.js'
 import {isRecord, values} from './util/Objects.js'
 import type {View} from './View.js'
@@ -244,9 +244,10 @@ export interface OverviewOptions {
   builtins?: OverviewBuiltins
   /**
    * The default order of the children, in the overview and the sidebar tree.
-   * Children can not be reordered by hand when set.
+   * Children can not be reordered by hand when set, except in the sidebar
+   * tree where it orders them by `Entry.index` first, like media folders.
    */
-  sort?: OrderBy | Array<OrderBy>
+  sort?: Order | Array<Order>
   /**
    * The orders editors can pick, keyed by a name kept in the url. A key that
    * matches a column also orders that column when its header is clicked.

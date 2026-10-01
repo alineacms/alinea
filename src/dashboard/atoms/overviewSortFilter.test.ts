@@ -147,7 +147,7 @@ async function mediaLibrary() {
   return db
 }
 
-test('explorers list media folders first, then files newest first', async () => {
+test('explorers list media folders first in their manual order, then files newest first', async () => {
   const db = await mediaLibrary()
   const store = createDashboardStore(config, db)
   await store.get(userPolicyReadyAtom)
@@ -158,8 +158,8 @@ test('explorers list media folders first, then files newest first', async () => 
   const titles = async () =>
     (await store.get(explorer.itemsReady(null))).map(item => item.title)
   expect(await titles()).toEqual([
-    'Archive',
     'Folder',
+    'Archive',
     'Scanned letter',
     'Photo',
     'Meeting notes',

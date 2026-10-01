@@ -17,7 +17,12 @@ import {
 import {atom, createStore} from 'jotai'
 import type {DropTarget, Key} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {config as overviewConfig, Product} from '#test/overview.js'
+import {
+  Blog,
+  BlogPost,
+  config as overviewConfig,
+  Product
+} from '#test/overview.js'
 import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
@@ -525,7 +530,7 @@ test('children of an ordered hidden parent are ordered', async () => {
   expect(store.get(tree.item(child._id)).ordered).toBe(true)
 })
 
-test('entries of an ordered parent move into folders but keep their place', async () => {
+test('media folders are reordered by hand and move into folders', async () => {
   const db = new LocalDB(overviewConfig)
   await db.sync()
   const folder = (title: string) =>
@@ -547,12 +552,39 @@ test('entries of an ordered parent move into folders but keep their place', asyn
   }
   const parentOf = (id: string) =>
     db.get({id, select: {parentId: Query.parentId, index: Query.index}})
-  const before = await parentOf(photos._id)
-  // The media root lists its folders newest first, they can not be reordered
+  // The media root lists its folders in their manual order
   await move({key: logos._id, position: 'after'})
-  expect(await parentOf(photos._id)).toEqual(before)
+  const moved = await parentOf(photos._id)
+  expect(moved.parentId).toBe(null)
+  expect(moved.index > (await parentOf(logos._id)).index).toBe(true)
   await move({key: logos._id, position: 'on'})
   expect((await parentOf(photos._id)).parentId).toBe(logos._id)
+})
+
+test('entries of an ordered parent keep their place', async () => {
+  const db = new LocalDB(overviewConfig)
+  await db.sync()
+  const main = {workspace: 'main', root: 'blog'}
+  const blog = await db.create({...main, type: Blog, set: {title: 'Blog'}})
+  const post = (title: string) =>
+    db.create({...main, type: BlogPost, parentId: blog._id, set: {title}})
+  const first = await post('First')
+  const second = await post('Second')
+  const store = createDashboardStore(overviewConfig, db)
+  await store.get(userPolicyReadyAtom)
+  const root = rootAtoms('main', 'blog')
+  const tree = root.tree(null)
+  store.set(tree.expandedKeys, new Set([blog._id]))
+  await store.get(tree.ready)
+  const index = (id: string) => db.get({id, select: Query.index})
+  const before = await index(first._id)
+  // The blog orders its posts by date
+  await store.set(
+    root.onMove,
+    {keys: new Set([first._id]), target: {key: second._id, position: 'after'}},
+    tree
+  )
+  expect(await index(first._id)).toBe(before)
 })
 
 test('entries do not move into themselves or into entries without children', async () => {

@@ -98,9 +98,16 @@ export function mediaOverview(): OverviewOptions {
   })
   return {
     builtins: {type: false, status: false},
-    // Entry ids start with their creation time, so the newest files come
-    // first, below the folders
-    sort: [{asc: foldersFirst}, {desc: Entry.id}],
+    // Folders first in their manual order, files have none and come after,
+    // newest first: entry ids start with their creation time. Indexes are
+    // keys that only order as stored.
+    sort: [
+      {
+        asc: Overview.sortExpr({MediaLibrary: Entry.index}),
+        caseSensitive: true
+      },
+      {desc: Entry.id}
+    ],
     sorts: {
       latest: {
         label: 'Latest',

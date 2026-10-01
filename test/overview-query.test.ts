@@ -187,7 +187,7 @@ test('orders by a number of a linked entry, entries without a number last', asyn
   expect(desc).toEqual(['To ten', 'To nine', 'To none'])
 })
 
-test('media lists folders first, then files newest first', async () => {
+test('media lists folders first in their manual order, then files newest first', async () => {
   const db = new LocalDB(config)
   await db.sync()
   const start = Date.UTC(2026, 0, 1)
@@ -218,6 +218,17 @@ test('media lists folders first, then files newest first', async () => {
   }
   const lowerCase = ids.map(id => id.toLowerCase())
   expect(lowerCase.toSorted()).not.toEqual(lowerCase)
+  // Moved first, the newer folder's index sorts before the older folder's
+  // only as stored: it starts with an upper case letter
+  const [oldest, older, , newer] = ids
+  const moved = await db.move({
+    id: newer,
+    target: oldest,
+    dropPosition: 'before'
+  })
+  const olderIndex = await db.get({id: older, select: Entry.index})
+  expect(moved.index < olderIndex).toBe(true)
+  expect(moved.index.toLowerCase() > olderIndex.toLowerCase()).toBe(true)
   const {sort, sorts} = mediaOverview()
   const scope = getScope(config)
   const titles = (orderBy: Order | Array<Order>) =>

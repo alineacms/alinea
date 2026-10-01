@@ -3,7 +3,8 @@ import {Permission, type Resource} from '#/core/Role.js'
 import {Root, type RootData, type RootI18n} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
-import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
+import type {Order} from '#/core/Graph.js'
+import {getExpr, getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {
   ExplorerAtoms,
   type ExplorerLocation
@@ -194,11 +195,11 @@ export class TreeAtoms {
       Promise.all(expandedModels.map(model => get(model.raw(this.#locale))))
     ])
     const levels = [rootModels, ...childLevels]
-    const orderedLevels: Array<boolean> = [
-      Boolean(Root.childrenOrder(get(this.#root.data))),
+    const levelOrders = [
+      Root.childrenOrder(get(this.#root.data)),
       ...parentEntries.map(entry => {
         const type = config.schema[entry.type]
-        return Boolean(type && Type.childrenOrder(type))
+        return type && Type.childrenOrder(type)
       })
     ]
     const levelItems = await Promise.all(
@@ -207,7 +208,7 @@ export class TreeAtoms {
           level.map(async model =>
             rootTreeItem(
               await get(model.summary(this.#locale)),
-              orderedLevels[index] ?? false
+              levelOrders[index]
             )
           )
         )
@@ -253,10 +254,10 @@ export class TreeAtoms {
         ? await get(treeEntryAtoms(entry.parentId).raw(this.#locale))
         : undefined
       const parentType = parent ? config.schema[parent.type] : undefined
-      const ordered = parent
-        ? Boolean(parentType && Type.childrenOrder(parentType))
-        : Boolean(Root.childrenOrder(get(this.#root.data)))
-      return rootTreeItem(entry, ordered)
+      const order = parent
+        ? parentType && Type.childrenOrder(parentType)
+        : Root.childrenOrder(get(this.#root.data))
+      return rootTreeItem(entry, order)
     })
   )
   children = dispense((id: string) => treeEntryAtoms(id).children(this.#locale))
@@ -565,7 +566,26 @@ export function locatedItem({
   return id ? entries.get(id) : undefined
 }
 
-function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {
+/**
+ * Whether the order of the parent places entries of a type other than in
+ * their manual order. Media folders keep theirs, before the files.
+ */
+function ordersType(order: Order | Array<Order> | undefined, type: string) {
+  const [first] = order ? [order].flat() : []
+  if (!first) return false
+  let expr = getExpr(first.asc ?? first.desc)
+  if (expr.type === 'typeSwitch') {
+    const inner = expr.cases[type]
+    if (!inner) return true
+    expr = getExpr(inner)
+  }
+  return !first.asc || expr.type !== 'entryField' || expr.name !== 'index'
+}
+
+function rootTreeItem(
+  entry: TreeEntrySummary,
+  order: Order | Array<Order> | undefined
+): RootTreeItem {
   return {
     id: entry.id,
     title: entry.title,
@@ -576,7 +596,7 @@ function rootTreeItem(entry: TreeEntrySummary, ordered: boolean): RootTreeItem {
     parentId: entry.parentId,
     parents: entry.parents,
     hasChildren: entry.hasChildren,
-    ordered
+    ordered: ordersType(order, entry.type)
   }
 }
 
