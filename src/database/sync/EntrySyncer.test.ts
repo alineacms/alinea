@@ -537,7 +537,7 @@ test('a language takes the url of the version that becomes main', async () => {
   }
 })
 
-test('a sync of more than one batch moves an entry to an earlier path', async () => {
+test('a sync of many changes moves an entry to an earlier path', async () => {
   const source = new MemorySource()
   await syncWith(source, new FSSource('test/fixtures/demo'))
   await change(source, tx =>
@@ -546,7 +546,7 @@ test('a sync of more than one batch moves an entry to an earlier path', async ()
   const incremental = await openRuntime(cms.config)
   try {
     await syncLikeFullSync(cms.config, source, incremental)
-    // More changes than one ingest batch lie between the new and old path.
+    // Many changes lie between the new and old path.
     await change(source, tx => {
       tx.rename('pages/recipes/zz-moved.json', 'pages/recipes/aa-moved.json')
       for (let index = 0; index < 300; index++) {
@@ -584,5 +584,32 @@ test('reindexes versions stored with identical files', async () => {
   } finally {
     await incremental.runtime.close()
     incremental.sqlite.close()
+  }
+})
+
+test('a large sync fetches its blobs in a few requests', async () => {
+  const source = new MemorySource()
+  await change(source, tx => {
+    for (let index = 0; index < 5000; index++)
+      tx.add(`pages/recipes/r${index}.json`, recipe(`r${index}`, `R${index}`))
+  })
+  const requests = Array<number>()
+  const remote: Source = {
+    getTree: () => source.getTree(),
+    getTreeIfDifferent: sha => source.getTreeIfDifferent(sha),
+    getBlobs(shas, options) {
+      requests.push(shas.length)
+      return source.getBlobs(shas, options)
+    },
+    applyChanges: batch => source.applyChanges(batch)
+  }
+  const {sqlite, runtime} = await openRuntime(cms.config)
+  try {
+    const result = await runtime.syncWith(remote)
+    expect(result.changedEntryIds.length).toBe(5000)
+    expect(requests).toEqual([1250, 1250, 1250, 1250])
+  } finally {
+    await runtime.close()
+    sqlite.close()
   }
 })

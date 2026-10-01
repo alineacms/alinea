@@ -8,9 +8,10 @@ import {entryIndexRow} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
 
-const changeBatchSize = 250
-/** Batches whose blobs are requested while an earlier batch is written. */
-const readAhead = 4
+/** Blob requests a large sync spreads its files over. */
+const parallelParts = 4
+/** Smaller syncs make fewer requests, of at least this many files. */
+const minPartSize = 1000
 
 /** What merging a source tree into the entry table changed. */
 export interface SyncChanges {
@@ -125,38 +126,37 @@ export async function mergeTrees(
     containers: new Set()
   }
   const diff = previousTree.diff(tree).changes
-  const batches = Array.from(chunks(diff, changeBatchSize), batch => ({
-    deleted: batch.flatMap(change =>
-      change.op === 'delete' ? [change.path] : []
-    ),
-    added: batch.flatMap(change =>
-      change.op === 'add' ? [{filePath: change.path, fileHash: change.sha}] : []
+  const deleted = diff.flatMap(change =>
+    change.op === 'delete' ? [change.path] : []
+  )
+  const added = diff.flatMap(change =>
+    change.op === 'add' ? [{filePath: change.path, fileHash: change.sha}] : []
+  )
+  // A few large requests in parallel: every request to a serverless handler
+  // pays for a sync of its own, so many small ones add up to seconds.
+  const parts = Array.from(
+    chunks(
+      added,
+      Math.max(minPartSize, Math.ceil(added.length / parallelParts))
     )
-  }))
-  // Later batches' blobs arrive while earlier ones are written, instead of
-  // one request after another.
-  function read(files: ReadonlyArray<FileRow>) {
+  )
+  const reads = parts.map(files => {
     const shas = [...new Set(files.map(file => file.fileHash))]
-    const blobs = shas.length
-      ? accumulate(source.getBlobs(shas)).then(found => new Map(found))
-      : Promise.resolve(new Map<string, Uint8Array>())
-    // A failed read is thrown once its batch is written.
+    const blobs = accumulate(source.getBlobs(shas)).then(
+      found => new Map(found)
+    )
+    // A failed read is thrown once its part is written.
     blobs.catch(() => {})
     return blobs
+  })
+  if (deleted.length) {
+    const stored = await removeVersions(queries, changes, deleted)
+    const found = new Set(stored.map(row => row.filePath))
+    for (const filePath of deleted)
+      assert(found.has(filePath), `Missing version to delete: ${filePath}`)
   }
-  const reads = batches.slice(0, readAhead).map(batch => read(batch.added))
-  for (const [index, {deleted, added}] of batches.entries()) {
-    const ahead = batches[index + readAhead]
-    if (ahead) reads.push(read(ahead.added))
-    const blobs = reads.shift()!
-    if (deleted.length) {
-      const stored = await removeVersions(queries, changes, deleted)
-      const found = new Set(stored.map(row => row.filePath))
-      for (const filePath of deleted)
-        assert(found.has(filePath), `Missing version to delete: ${filePath}`)
-    }
-    if (!added.length) continue
-    const rows = parseFiles(config, tree, added, await blobs)
+  for (const [index, files] of parts.entries()) {
+    const rows = parseFiles(config, tree, files, await reads[index])
     await removeVersions(
       queries,
       changes,
