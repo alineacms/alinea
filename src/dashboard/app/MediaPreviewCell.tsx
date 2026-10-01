@@ -28,13 +28,13 @@ export function MediaPreviewCell({
       </span>
     )
   if (!extension) return <span className={styles.MediaPreviewCell()} />
-  const {icon: Icon, color} = fileKindVisual(extension)
+  const {icon: Icon, iconColor} = fileKindVisual(extension)
   return (
-    <span
-      className={styles.MediaPreviewCell({file: true})}
-      style={{background: color}}
-    >
-      <Icon className={styles.MediaPreviewCell.icon()} />
+    <span className={styles.MediaPreviewCell({file: true})}>
+      <Icon
+        className={styles.MediaPreviewCell.icon()}
+        style={{color: iconColor}}
+      />
     </span>
   )
 }

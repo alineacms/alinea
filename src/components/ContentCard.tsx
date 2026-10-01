@@ -14,11 +14,13 @@ export interface ContentCardProps extends StyleProps {
   title: ReactNode
   /**
    * `icon` (the default) shows the icon on a neutral background, `media`
-   * previews a file: its image, or a file icon on the `color` placeholder
+   * previews a file: its image on the `color` placeholder, or a file icon
    */
   variant?: 'icon' | 'media'
   /** The large icon on top of the card */
   icon?: IconType
+  /** The color of the icon, eg. of the kind of file */
+  iconColor?: string
   /** Preview image of a media card */
   image?: string
   /** Placeholder color behind the image, eg. its average color */
@@ -36,6 +38,7 @@ export function ContentCard({
   title,
   variant = 'icon',
   icon,
+  iconColor,
   image,
   color,
   breadcrumbs,
@@ -73,6 +76,7 @@ export function ContentCard({
               data-slot="content-card-icon"
               icon={icon ?? IcRoundInsertDriveFile}
               className={styles.ContentCard.icon()}
+              style={{color: iconColor}}
             />
           )
         )}
