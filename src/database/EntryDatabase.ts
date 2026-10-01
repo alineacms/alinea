@@ -293,6 +293,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       const state = DatabaseStateTable
       const entries = EntryIndexTable
       const blobs = sql.identifier(reindexBlobsName)
+      const blobsBySha = sql.identifier(`${reindexBlobsName}_by_sha`)
       const encoder = new TextEncoder()
       const result = await this.#queue.run(async () => {
         // Read outside the transaction: queries on the connection itself would
@@ -309,6 +310,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
               select ${entries.fileHash} as sha,
                 coalesce(${entries.payload}, ${entryDataText(entries)}) as blob
               from ${entries}`)
+            // Read back in batches by hash: a scan per batch takes a second.
+            await tx.run(sql`create index temp.${blobsBySha} on ${blobs} (sha)`)
             await tx.delete(entries)
             await tx.delete(EntrySearchTable)
             await tx.delete(EntryReferenceTable)
