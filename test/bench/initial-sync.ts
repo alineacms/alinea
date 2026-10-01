@@ -1,15 +1,19 @@
 /**
  * Measures the initial dashboard sync of a large project: an empty browser
  * database (WASM SQLite) syncing from a handler that serves a generated
- * database over HTTP, as the dashboard does on its first load.
+ * database over HTTP, as the dashboard does on its first load. The generated
+ * files form a multilingual site with nested pages, linked rich text, blocks
+ * and a large media library.
  *
  * Requests can pay a fixed overhead, such as a serverless handler that syncs
  * before it answers, and share a bandwidth limit.
  *
- * With --browser it syncs a browser store kept in IndexedDB in Chromium.
+ * With --browser it syncs a browser store kept in IndexedDB in Chromium, and
+ * reopens it as a next load and as another dashboard build would. --profile
+ * lists the functions the browser spent the most time in.
  *
- *   bun test/bench/initial-sync.ts [entries] [overhead ms] [bandwidth MB/s]
- *     [--browser]
+ *   bun test/bench/initial-sync.ts [files] [overhead ms] [bandwidth MB/s]
+ *     [--browser] [--profile]
  */
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {createHandler} from '#/backend/Handler.js'
@@ -17,13 +21,11 @@ import {createGeneratedDatabase} from '#/backend/store/GeneratedDatabase.js'
 import {decodeBlobSequence, encodeBlobSequence} from '#/core/BlobTransport.js'
 import {Client} from '#/core/Client.js'
 import type {RemoteConnection} from '#/core/Connection.js'
-import {createRecord} from '#/core/EntryRecord.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {accumulate} from '#/core/util/Async.js'
-import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
 import {DatabaseSource} from '#/database/DatabaseSource.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
@@ -33,124 +35,22 @@ import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {cms} from './initial-sync.cms.js'
+import {content} from './initial-sync.content.js'
 
 const args = process.argv.slice(2).filter(arg => !arg.startsWith('--'))
 const browser = process.argv.includes('--browser')
-const size = Number(args[0] ?? 15_000)
+const profile = process.argv.includes('--profile')
+const size = Number(args[0] ?? 20_000)
 const overhead = Number(args[1] ?? 0)
 const bandwidth = Number(args[2] ?? 0) * 1024 * 1024
 
 const {config} = cms
 
-const words =
-  'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua'.split(
-    ' '
-  )
-function text(seed: number, count: number) {
-  return Array.from(
-    {length: count},
-    (_, i) => words[(seed * 7 + i * 13) % words.length]
-  ).join(' ')
-}
-function richText(seed: number, paragraphs: number) {
-  return Array.from({length: paragraphs}, (_, i) => ({
-    _type: 'paragraph',
-    _key: `p${seed}-${i}`,
-    content: [{type: 'text', text: text(seed + i, 40 + ((seed + i) % 60))}]
-  }))
-}
-
-/** Source files of a project: people, articles that link them, nested pages. */
-async function content() {
-  const files = Array<{path: string; contents: Uint8Array}>()
-  const people = Math.round(size * 0.1)
-  const pages = Math.round(size * 0.2)
-  const articles = size - people - pages
-  function add(
-    root: string,
-    file: string,
-    entry: {id: string; type: string; index: string; data: object},
-    status: 'published' | 'draft' = 'published'
-  ) {
-    const title = `${entry.type} ${entry.id}`
-    const record = createRecord(
-      {
-        ...entry,
-        root,
-        path: entry.id,
-        title,
-        seeded: null,
-        parentId: null,
-        data: {title, path: entry.id, ...entry.data}
-      },
-      status
-    )
-    files.push({
-      path: `${root}/${file}`,
-      contents: new TextEncoder().encode(JSON.stringify(record, null, 2))
-    })
-  }
-  const personKeys = generateNKeysBetween(null, null, people)
-  for (let i = 0; i < people; i++)
-    add('people', `person-${i}.json`, {
-      id: `person-${i}`,
-      type: 'Person',
-      index: personKeys[i],
-      data: {role: text(i, 3), bio: text(i, 60)}
-    })
-  const articleKeys = generateNKeysBetween(null, null, articles)
-  for (let i = 0; i < articles; i++)
-    add(
-      'articles',
-      `article-${i}${i % 20 === 0 ? '.draft' : ''}.json`,
-      {
-        id: `article-${i}`,
-        type: 'Article',
-        index: articleKeys[i],
-        data: {
-          date: '2026-01-01',
-          intro: text(i, 30),
-          author: [
-            {
-              _id: `l${i}`,
-              _type: 'entry',
-              _index: 'a0',
-              _entry: `person-${i % people}`
-            }
-          ],
-          body: richText(i, 3 + (i % 8))
-        }
-      },
-      i % 20 === 0 ? 'draft' : 'published'
-    )
-  // Pages nest two levels deep in two locales.
-  const perLocale = Math.floor(pages / 2)
-  const sections = Math.max(1, Math.round(perLocale / 50))
-  const sectionKeys = generateNKeysBetween(null, null, sections)
-  const childKeys = generateNKeysBetween(null, null, 50)
-  for (const locale of ['en', 'nl'])
-    for (let s = 0; s < sections; s++) {
-      const section = `section-${s}`
-      add('pages', `${locale}/${section}.json`, {
-        id: section,
-        type: 'Page',
-        index: sectionKeys[s],
-        data: {intro: `${locale} ${text(s, 20)}`, body: richText(s, 4)}
-      })
-      for (let c = 0; c < 49 && s * 50 + c < perLocale; c++)
-        add('pages', `${locale}/${section}/page-${c}.json`, {
-          id: `${section}-page-${c}`,
-          type: 'Page',
-          index: childKeys[c],
-          data: {
-            intro: `${locale} ${text(c, 20)}`,
-            body: richText(s + c, 2 + (c % 6))
-          }
-        })
-    }
+/** The generated site as a source. */
+async function generate() {
   const source = new MemorySource()
   const changes = await Promise.all(
-    files.map(async file => ({
+    content(size).map(async file => ({
       op: 'add' as const,
       path: file.path,
       sha: await hashBlob(file.contents),
@@ -172,6 +72,33 @@ async function browserStore() {
     sourceFollowsDatabase: true
   })
   return {store, handle}
+}
+
+interface ProfileNode {
+  id: number
+  callFrame: {functionName: string; url: string; lineNumber: number}
+}
+
+/** Print the functions the browser spent the most time in themselves. */
+function printProfile(result: {
+  nodes: Array<ProfileNode>
+  samples?: Array<number>
+  timeDeltas?: Array<number>
+}) {
+  const nodes = new Map(result.nodes.map(node => [node.id, node]))
+  const self = new Map<string, number>()
+  const {samples = [], timeDeltas = []} = result
+  for (const [i, id] of samples.entries()) {
+    const {functionName, url, lineNumber} = nodes.get(id)!.callFrame
+    const name = `${functionName || '(anonymous)'} ${url.split('/').pop()}:${lineNumber}`
+    self.set(name, (self.get(name) ?? 0) + (timeDeltas[i] ?? 0) / 1000)
+  }
+  const top = [...self].sort((a, b) => b[1] - a[1]).slice(0, 30)
+  console.log('\nself time')
+  for (const [name, ms] of top)
+    console.log(
+      `${name.slice(0, 64).padEnd(66)} ${ms.toFixed(0).padStart(6)} ms`
+    )
 }
 
 let built: Promise<Blob> | undefined
@@ -215,7 +142,7 @@ async function time<T>(label: string, run: () => Promise<T>) {
 const dir = await mkdtemp(join(tmpdir(), 'alinea-sync-bench-'))
 const path = join(dir, 'generated.sqlite')
 try {
-  const source = await time(`generate ${size} entries`, content)
+  const source = await time(`generate ${size} files`, generate)
   const tree = await source.getTree()
   const shas = [...new Set(tree.index().values())]
   const blobs = await accumulate(source.getBlobs(shas))
@@ -293,7 +220,12 @@ try {
       await tab.goto(`http://localhost:${http.port}/`)
       await tab.waitForFunction(() => 'bench' in window)
       requests.clear()
+      const cdp = profile ? await tab.context().newCDPSession(tab) : undefined
+      await cdp?.send('Profiler.enable')
+      await cdp?.send('Profiler.setSamplingInterval', {interval: 200})
+      await cdp?.send('Profiler.start')
       const result = await tab.evaluate(() => window.bench())
+      if (cdp) printProfile((await cdp.send('Profiler.stop')).profile)
       console.log(`browser (${result.count} entries indexed)`)
       for (const [label, ms] of Object.entries(result.timings))
         console.log(`${label.padEnd(52)} ${String(ms).padStart(6)} ms`)

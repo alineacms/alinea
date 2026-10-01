@@ -67,13 +67,18 @@ async function run() {
   mark('sync: blobs + index into WASM SQLite')
   const count = await store.count({status: 'all'})
   mark('count entries right after the sync')
-  // A sync of the store's own source does nothing but wait for its storage.
-  await store.sync()
-  mark('pages stored in IndexedDB after that')
   await store.close()
+  mark('close')
+  // Storing a database under the same name waits for its pages to be stored.
   const reopened = await BrowserEntryStore.open(config, options)
-  mark('reopen from IndexedDB (next load)')
+  mark('reopen from IndexedDB once stored (next load)')
   await reopened.close()
+  const rebuild = {...options, revision: 'another build'}
+  const rebuilt = await BrowserEntryStore.open(config, rebuild)
+  mark('reopen with another build (derives every entry again)')
+  await rebuilt.close()
+  await (await BrowserEntryStore.open(config, rebuild)).close()
+  mark('reopen once stored')
   const requests = performance
     .getEntriesByType('resource')
     .map(entry => new URL(entry.name).searchParams.get('action'))
