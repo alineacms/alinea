@@ -12,6 +12,7 @@ export function bootProd(
     yield {
       local: false,
       revision: process.env.ALINEA_BUILD_ID as string,
+      configFingerprint: process.env.ALINEA_CONFIG_FINGERPRINT as string,
       config: cms.config,
       views,
       client: new Client({config: cms.config, url: handlerUrl})

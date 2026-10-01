@@ -6,12 +6,19 @@ export function bootDev() {
   return boot(getConfig())
 }
 
+interface Build {
+  revision: string
+  configFingerprint: string
+}
+
 async function* getConfig(): ConfigGenerator {
-  const buildId = process.env.ALINEA_BUILD_ID as string
-  let revision = buildId
+  let build: Build = {
+    revision: process.env.ALINEA_BUILD_ID as string,
+    configFingerprint: process.env.ALINEA_CONFIG_FINGERPRINT as string
+  }
   const source = new SharedEventSource('./~dev')
   const url = new URL('./api', import.meta.url).href
-  const createConfig = async (revision: string) => {
+  const createConfig = async ({revision, configFingerprint}: Build) => {
     const {cms, views} = await loadConfig(revision)
     const {config} = cms
     const client = new Client({config, url})
@@ -19,6 +26,7 @@ async function* getConfig(): ConfigGenerator {
       local: true,
       alineaDev: Boolean(process.env.ALINEA_DEV),
       revision,
+      configFingerprint,
       config,
       views,
       client
@@ -27,10 +35,10 @@ async function* getConfig(): ConfigGenerator {
   let batch: ConfigBatch | undefined
   while (true) {
     const next =
-      batch?.revision !== revision ? await createConfig(revision) : batch
+      batch?.revision !== build.revision ? await createConfig(build) : batch
     yield next
     batch = next
-    revision = await new Promise<string>(resolve => {
+    build = await new Promise<Build>(resolve => {
       source.addEventListener(
         'message',
         event => {
@@ -38,12 +46,12 @@ async function* getConfig(): ConfigGenerator {
           const info = JSON.parse(event.data)
           switch (info.type) {
             case 'refresh':
-              return resolve(info.revision)
+              return resolve(info)
             case 'reload':
-              if (typeof window === 'undefined') return resolve(info.revision)
+              if (typeof window === 'undefined') return resolve(info)
               return window.location.reload()
             case 'refetch':
-              return resolve(revision)
+              return resolve(build)
           }
         },
         {once: true}

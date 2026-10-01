@@ -50,6 +50,7 @@ export function createLocalServer(
     apiKey
   }: ServeContext,
   cms: CMS,
+  configFingerprint: string,
   handleApi: Handler,
   user: User,
   db: LocalStore
@@ -130,6 +131,8 @@ export function createLocalServer(
         ? 'true'
         : 'false',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
+      'process.env.ALINEA_CONFIG_FINGERPRINT':
+        JSON.stringify(configFingerprint),
       ...publicDefines(process.env)
     },
     logOverride: {
@@ -154,7 +157,11 @@ export function createLocalServer(
           // A superseded server's watcher may still finish a build; only the
           // current server announces revisions, or the dashboard would load
           // one revision and immediately replace it with the next.
-          if (!closed) liveReload.reload(alineaDev ? 'reload' : 'refresh')
+          if (!closed)
+            liveReload.reload(
+              alineaDev ? 'reload' : 'refresh',
+              configFingerprint
+            )
         }
       }
     }

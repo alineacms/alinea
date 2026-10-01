@@ -38,10 +38,20 @@ export interface GenerateOptions {
   dashboardUrl?: Promise<string>
 }
 
-async function generatePackage(context: GenerateContext, cms: CMS) {
+async function generatePackage(
+  context: GenerateContext,
+  cms: CMS,
+  configFingerprint: string
+) {
   const {config} = cms
   const staticFile = join(config.publicDir, Config.dashboardFile(config))
-  await generateDashboard(context, cms, Config.handlerUrl(config), staticFile)
+  await generateDashboard(
+    context,
+    cms,
+    Config.handlerUrl(config),
+    staticFile,
+    configFingerprint
+  )
   return basename(staticFile)
 }
 
@@ -49,6 +59,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   {
     cms: CMS
     db: DevDB
+    configFingerprint: string
   },
   void
 > {
@@ -113,18 +124,21 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           process.exit(1)
         }
       }
+      const configFingerprint = await hashBlob(
+        await fsp.readFile(join(context.outDir, 'config.js'))
+      )
       // The dashboard bundles while the entries are indexed; a failure is
       // reported when the build writes its files.
       const dashboard =
-        cmd === 'build' && !afterGenerateCalled && generatePackage(context, cms)
+        cmd === 'build' &&
+        !afterGenerateCalled &&
+        generatePackage(context, cms, configFingerprint)
       if (dashboard) dashboard.catch(() => {})
       const databaseOptions = {
         config: cms.config,
         rootDir,
         databasePath,
-        configFingerprint: await hashBlob(
-          await fsp.readFile(join(context.outDir, 'config.js'))
-        ),
+        configFingerprint,
         dashboardUrl: await options.dashboardUrl
       }
       try {
@@ -163,7 +177,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         continue
       }
       for await (const db of indexing) {
-        yield {cms, db}
+        yield {cms, db, configFingerprint}
         if (onAfterGenerate && !afterGenerateCalled) {
           const recordCount = await db.count({})
           await write(recordCount ?? 0).then(

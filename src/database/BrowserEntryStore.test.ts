@@ -261,25 +261,25 @@ function openCache(name: string): Promise<IDBDatabase> {
   return requestResult(request)
 }
 
-test('browser entry stores keep persisted content across dashboard builds', async () => {
-  const pages = (searchable: boolean) => {
-    const Page = ConfigBuilder.document('Page', {
-      fields: {
-        title: Field.text('Title'),
-        body: Field.text('Body', {searchable})
-      }
-    })
-    const config: Config = {
-      schema: {Page},
-      workspaces: {
-        main: ConfigBuilder.workspace('Main', {
-          source: 'content',
-          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-        })
-      }
+function pages(searchable: boolean): Config {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      body: Field.text('Body', {searchable})
     }
-    return config
+  })
+  return {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
   }
+}
+
+test('browser entry stores keep persisted content across dashboard builds', async () => {
   const source = await createEntrySource(pages(false), [
     {
       id: 'page',
@@ -317,6 +317,31 @@ test('browser entry stores keep persisted content across dashboard builds', asyn
     ])
     await next.syncWith(source)
     expect(requestedBlobs).toBe(0)
+  } finally {
+    await next.close()
+  }
+})
+
+test('browser entry stores reopened with the same revision skip the reindex', async () => {
+  const source = await createEntrySource(pages(false), [
+    {
+      id: 'page',
+      type: 'Page',
+      index: 'a',
+      data: {title: 'Page', body: 'needle'}
+    }
+  ])
+  const name = `alinea-browser-same-config-${crypto.randomUUID()}`
+  const options = {name, revision: 'config-1', ...idb}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(source)
+  await first.close()
+  // The search index only changes when the entries are derived again, which a
+  // store reopened with the revision it was derived for skips.
+  const next = await BrowserEntryStore.open(pages(true), options)
+  try {
+    expect(await next.find({select: Entry.title})).toEqual(['Page'])
+    expect(await next.find({search: 'needle', select: Entry.id})).toEqual([])
   } finally {
     await next.close()
   }

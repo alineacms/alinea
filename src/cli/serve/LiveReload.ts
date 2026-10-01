@@ -8,10 +8,11 @@ type Client = {
 export class LiveReload {
   clients: Array<Client> = []
 
-  reload(type: 'refetch' | 'refresh' | 'reload') {
+  reload(type: 'refetch' | 'refresh' | 'reload', configFingerprint?: string) {
     const revision = createId()
+    const data = JSON.stringify({type, revision, configFingerprint})
     for (const client of this.clients) {
-      client.write(`data: ${JSON.stringify({type, revision})}\n\n`)
+      client.write(`data: ${data}\n\n`)
       if (type === 'reload') client.close()
     }
     if (type === 'reload') this.clients.length = 0

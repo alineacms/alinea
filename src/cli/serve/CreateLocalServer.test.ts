@@ -38,6 +38,7 @@ const emptyBuild: Plugin = {
 
 async function setup() {
   const rootDir = await mkdtemp(join(tmpdir(), 'alinea-local-server-'))
+  const liveReload = new LiveReload()
   const server = createLocalServer(
     {
       cmd: 'dev',
@@ -47,17 +48,19 @@ async function setup() {
       alineaDev: false,
       buildOptions: {plugins: [emptyBuild]},
       production: false,
-      liveReload: new LiveReload(),
+      liveReload,
       buildId: 'test',
       apiKey: 'dev'
     },
     cms,
+    'fingerprint',
     async () => new Response('api'),
     localUser,
     {sync: async () => {}} as unknown as LocalStore
   )
   return {
     rootDir,
+    liveReload,
     handle: server.handle,
     async [Symbol.asyncDispose]() {
       server.close()
@@ -79,6 +82,16 @@ test('serves MCP only on its own path', async () => {
     })
   )
   test.is(proxied.status, 404)
+})
+
+test('refreshes the dashboard with the config fingerprint', async () => {
+  await using env = await setup()
+  const message = await new Promise<string>(resolve => {
+    env.liveReload.register({write: resolve, close() {}})
+  })
+  const info = JSON.parse(message.slice('data: '.length))
+  test.is(info.type, 'refresh')
+  test.is(info.configFingerprint, 'fingerprint')
 })
 
 function upload(

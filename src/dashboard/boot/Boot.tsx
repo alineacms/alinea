@@ -14,6 +14,8 @@ import {WorkerDB} from './WorkerDB.js'
 export interface ConfigBatch {
   local: boolean
   revision: string
+  /** A browser store derives its entries again only when this changes. */
+  configFingerprint: string
   config: Config
   client: Client
   views: Record<string, ComponentType>
@@ -58,7 +60,8 @@ export async function boot(gen: ConfigGenerator) {
         }
       }
       const isLocal = worker instanceof DashboardWorker
-      if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
+      if (isLocal)
+        await worker.load(batch.configFingerprint, batch.config, batch.client)
       const db = new WorkerDB(batch.config, worker, batch.client, events)
       root.render(<App graph={db} events={events} {...batch} />)
       lastRevision = batch.revision

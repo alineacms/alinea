@@ -124,7 +124,7 @@ export async function createDevServer(
 
   async function reloadServer() {
     try {
-      for await (const {cms, db} of generateFiles) {
+      for await (const {cms, db, configFingerprint} of generateFiles) {
         if (currentCMS === cms) {
           context.liveReload.reload('refetch')
           continue
@@ -142,6 +142,7 @@ export async function createDevServer(
         const nextServer = createLocalServer(
           context,
           cms,
+          configFingerprint,
           handleApi,
           await user,
           db

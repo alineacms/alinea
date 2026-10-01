@@ -16,7 +16,8 @@ export async function generateDashboard(
   {configLocation, rootDir, configDir}: GenerateContext,
   cms: CMS,
   handlerUrl: string,
-  staticFile: string
+  staticFile: string,
+  configFingerprint: string
 ) {
   if (!staticFile.endsWith('.html'))
     throw new Error(
@@ -52,6 +53,8 @@ export async function generateDashboard(
     define: {
       'process.env.NODE_ENV': '"production"',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
+      'process.env.ALINEA_CONFIG_FINGERPRINT':
+        JSON.stringify(configFingerprint),
       'process.env.ALINEA_FORCE_AUTH': 'true',
       ...publicDefines(process.env)
     },

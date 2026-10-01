@@ -67,6 +67,7 @@ const vite = await createServer({
   clearScreen: false,
   define: {
     'process.env.ALINEA_BUILD_ID': JSON.stringify('self-hosted-dev'),
+    'process.env.ALINEA_CONFIG_FINGERPRINT': JSON.stringify('self-hosted-dev'),
     'process.env.NODE_ENV': JSON.stringify('development')
   },
   plugins: [
