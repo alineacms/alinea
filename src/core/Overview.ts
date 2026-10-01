@@ -1,5 +1,5 @@
 import type {EntryStatus} from './Entry.js'
-import type {EntryFields} from './EntryFields.js'
+import type {EntryFilterFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
 import type {OpenFilter} from './Filter.js'
 import type {
@@ -132,7 +132,7 @@ export interface OverviewFilterOption {
   /** Shown in the menu, eg. `PDF` */
   label: string
   /** The condition entries match when the option is picked */
-  filter: OpenFilter<EntryFields>
+  filter: OpenFilter<EntryFilterFields>
 }
 
 /** A filter editors can apply in the "Filter and sort" menu of an overview */

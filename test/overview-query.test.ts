@@ -245,3 +245,40 @@ test('media lists folders first, then files newest first', async () => {
     'Newer file'
   ])
 })
+
+test('the unused media filter lists the files no entry links to', async () => {
+  const db = new LocalDB(config)
+  await db.sync()
+  const media = {workspace: 'main', root: 'media'}
+  await db.create({...media, type: MediaLibrary, set: {title: 'Folder'}})
+  const file = (title: string) =>
+    db.create({...media, type: MediaFile, set: {title}})
+  const used = await file('Used')
+  await file('Unused')
+  const blog = await db.create({
+    type: BlogPost,
+    workspace: 'main',
+    root: 'blog',
+    set: {title: 'Post', cover: {_id: 'c1', _type: 'image', _entry: used._id}}
+  })
+  const unused = mediaOverview().filters!.usage.options.unused.filter
+  const titles = () =>
+    db.find({
+      root: 'media',
+      filter: unused,
+      orderBy: {asc: Entry.title},
+      select: Entry.title
+    })
+  // The folder stays to browse into
+  expect(await titles()).toEqual(['Folder', 'Unused'])
+  expect(
+    await db.find({
+      root: 'media',
+      filter: {_referenced: true},
+      select: Entry.title
+    })
+  ).toEqual(['Used'])
+  // Removing the link frees the file
+  await db.update({type: BlogPost, id: blog._id, set: {cover: undefined}})
+  expect(await titles()).toEqual(['Folder', 'Unused', 'Used'])
+})

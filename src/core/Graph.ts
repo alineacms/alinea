@@ -1,7 +1,7 @@
 import type {Root, Workspace} from '#/types.js'
 import type {Config} from './Config.js'
 import type {EntryStatus} from './Entry.js'
-import type {EntryFields} from './EntryFields.js'
+import type {EntryFields, EntryFilterFields} from './EntryFields.js'
 import type {Expr} from './Expr.js'
 import type {Condition, Filter} from './Filter.js'
 import type {Infer, StoredRow} from './Infer.js'
@@ -227,7 +227,7 @@ export declare class QuerySettings {
   preferredLocale?: string
 
   /** Filter by fields */
-  filter?: Filter<EntryFields>
+  filter?: Filter<EntryFilterFields>
 
   /** Filter by search terms */
   search?: string | Array<string>
@@ -261,7 +261,7 @@ export interface QueryBase<Selection, Types, Include> extends QuerySettings {
   type?: Types
   select?: Selection
   include?: Include
-  filter?: Filter<EntryFields & FieldsOf<Types>>
+  filter?: Filter<EntryFilterFields & FieldsOf<Types>>
 }
 
 export interface QueryWithResult<Result> extends QuerySettings {
@@ -274,7 +274,7 @@ export interface QueryWithResult<Result> extends QuerySettings {
 
 export interface QueryInput<Selection, Types> extends QuerySettings {
   select?: Selection
-  filter?: Filter<EntryFields & FieldsOf<Types>>
+  filter?: Filter<EntryFilterFields & FieldsOf<Types>>
 }
 
 export interface GraphQuery<

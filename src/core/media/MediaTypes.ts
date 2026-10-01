@@ -122,6 +122,21 @@ export function mediaOverview(): OverviewOptions {
           folders: {label: 'Folders', filter: {_type: 'MediaLibrary'}}
         }
       },
+      usage: {
+        label: 'Usage',
+        options: {
+          // Files no entry links to, folders stay to browse into
+          unused: {
+            label: 'Unused',
+            filter: {
+              or: [
+                {_type: 'MediaLibrary'},
+                {_type: 'MediaFile', _referenced: false}
+              ]
+            }
+          }
+        }
+      },
       fileType: {
         label: 'File type',
         multiple: true,

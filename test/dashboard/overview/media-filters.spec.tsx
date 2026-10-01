@@ -82,3 +82,55 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
     .poll(() => titles(page))
     .toEqual(['Photo', 'Notes', 'Letter', 'Archive', 'Annual report'])
 })
+
+test('lists the unused media files and deletes them all', async ({
+  mount,
+  page
+}) => {
+  await open(page, '#/entry/main/media')
+  await mount(<OverviewScenarioMount />)
+  await page.getByRole('radio', {name: 'Row view'}).click()
+  await expect
+    .poll(async () => (await titles(page)).length)
+    .toBeGreaterThanOrEqual(5)
+
+  await page.getByRole('button', {name: 'Filter and sort'}).click()
+  const menu = page.getByRole('dialog', {name: 'Filter and sort'})
+  await menu
+    .getByRole('group', {name: 'Usage'})
+    .getByRole('button', {name: 'Unused', exact: true})
+    .click()
+  // The post links to the photo, the folder stays to browse into
+  await expect
+    .poll(() => titles(page))
+    .toEqual(['Archive', 'Notes', 'Letter', 'Annual report'])
+  await menu
+    .getByRole('group', {name: 'Show'})
+    .getByRole('button', {name: 'Files', exact: true})
+    .click()
+  await expect
+    .poll(() => titles(page))
+    .toEqual(['Notes', 'Letter', 'Annual report'])
+  await page.keyboard.press('Escape')
+
+  await table(page)
+    .getByRole('row', {name: /^Notes/})
+    .locator('[data-slot="selection-checkbox"]')
+    .click()
+  await page.keyboard.press('ControlOrMeta+a')
+  const selection = page.getByRole('toolbar', {name: 'Selected entries'})
+  await selection.getByRole('button', {name: 'Delete'}).click()
+  const dialog = page.getByRole('dialog', {name: 'Delete 3 items'})
+  await expect(
+    dialog.getByText(
+      '3 files will be permanently deleted from the media library'
+    )
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: 'Delete', exact: true}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(table(page).getByText('No results found')).toBeVisible()
+
+  await page.getByRole('button', {name: 'Filter and sort'}).click()
+  await menu.getByRole('button', {name: 'Clear filters'}).click()
+  await expect.poll(() => titles(page)).toEqual(['Archive', 'Photo'])
+})

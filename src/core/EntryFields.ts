@@ -17,6 +17,12 @@ export interface EntryFields {
   _active: boolean
 }
 
+/** The fields filters can match, next to those of the entry */
+export interface EntryFilterFields extends EntryFields {
+  /** Whether another entry links to the entry */
+  _referenced: boolean
+}
+
 export const EntryFields = {
   _id: Entry.id,
   _type: Entry.type,

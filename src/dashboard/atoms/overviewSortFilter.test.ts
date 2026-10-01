@@ -51,7 +51,11 @@ test('the media library declares its sorts and filters', () => {
     ['dimensions', 'Dimensions'],
     ['fileType', 'File type']
   ])
-  expect(media.filters.map(filter => filter.key)).toEqual(['show', 'fileType'])
+  expect(media.filters.map(filter => filter.key)).toEqual([
+    'show',
+    'usage',
+    'fileType'
+  ])
   expect(overviewOrder(media, {column: 'title', direction: 'desc'})).toEqual({
     desc: Entry.title
   })
@@ -74,7 +78,7 @@ test('the media library declares its sorts and filters', () => {
 
 test('options of a filter match any, filters match all', () => {
   const media = resolveOverview(config, rootParent('media'))
-  const [show, fileType] = media.filters
+  const [show, , fileType] = media.filters
   const option = (key: string) =>
     [...show.options, ...fileType.options].find(option => option.key === key)!
       .filter
