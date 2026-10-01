@@ -71,6 +71,7 @@
         "jotai-family": "^1.1.0",
         "jotai-location": "^0.6.2",
         "knip": "^6.4.1",
+        "leanpdf": "^0.5.0",
         "lightningcss": "^1.32.0",
         "lolight": "^1.4.1",
         "madge": "^6.1.0",
@@ -1604,6 +1605,8 @@
     "koa-connect": ["koa-connect@2.1.1", "", {}, "sha512-ejvbGKYS6di4LUSS+6E+Z5ZVev9RqThLm3NfZjb9QHZMASLvnr4eDTImKcGlQXFrtVpMTyTovZ+Hcl6JbBuFNA=="],
 
     "koa-convert": ["koa-convert@2.0.0", "", { "dependencies": { "co": "^4.6.0", "koa-compose": "^4.1.0" } }, "sha512-asOvN6bFlSnxewce2e/DK3p4tltyfC4VM7ZwuTuepI7dEQVcvpyFuBcEARu1+Hxg8DIwytce2n7jrZtRlPrARA=="],
+
+    "leanpdf": ["leanpdf@0.5.0", "", { "peerDependencies": { "@napi-rs/canvas": ">=1.0.0", "sharp": ">=0.34.0" }, "optionalPeers": ["@napi-rs/canvas", "sharp"], "bin": { "leanpdf": "dist/cli.js" } }, "sha512-tI9ZRNBSxozEbZTTsDQD72B25pBnJ0c5OLG5dTtPJ7LB/4A+IvLnehn6Nj7kMzCjRo+5tjsWBWsWDXJgBJh+yQ=="],
 
     "less": ["less@4.6.4", "", { "dependencies": { "copy-anything": "^3.0.5", "parse-node-version": "^1.0.1" }, "optionalDependencies": { "errno": "^0.1.1", "graceful-fs": "^4.1.2", "image-size": "~0.5.0", "make-dir": "^2.1.0", "mime": "^1.4.1", "needle": "^3.1.0", "source-map": "~0.6.0" }, "bin": { "lessc": "bin/lessc" } }, "sha512-OJmO5+HxZLLw0RLzkqaNHzcgEAQG7C0y3aMbwtCzIUFZsLMNNq/1IdAdHEycQ58CwUO3jPTHmoN+tE5I7FQxNg=="],
 

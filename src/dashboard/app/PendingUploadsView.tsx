@@ -1,5 +1,6 @@
 import {
   Button,
+  Checkbox,
   Icon,
   List,
   ListItem,
@@ -37,6 +38,7 @@ const styles = styler(css)
 export interface PendingUploadChange {
   action?: PendingUploadAction
   edit?: ImageEdit
+  compress?: boolean
 }
 
 export interface PendingUploadsViewProps {
@@ -133,7 +135,7 @@ function PendingUploadRow({
   onEdit,
   onRemove
 }: PendingUploadRowProps) {
-  const {file, duplicate, conflict, action, edit, imageSize} = upload
+  const {file, duplicate, conflict, action, edit, imageSize, compress} = upload
   const canEdit = imageSize && action !== 'existing'
   const hasChoice = !replacing && (duplicate || conflict)
   return (
@@ -201,6 +203,15 @@ function PendingUploadRow({
             {conflict ? 'Keep both' : 'Upload anyway'}
           </ToggleGroupItem>
         </ToggleGroup>
+      )}
+      {compress !== undefined && action !== 'existing' && (
+        <Checkbox
+          checked={compress}
+          onCheckedChange={checked => onChange({compress: checked})}
+          className={styles.PendingUploadsView.compress()}
+        >
+          Compress images in this pdf
+        </Checkbox>
       )}
     </ListItem>
   )

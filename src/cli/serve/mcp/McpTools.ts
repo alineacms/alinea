@@ -28,9 +28,11 @@ export interface ContentToolsOptions {
   uploadRoots?: Array<string>
   /** The user recorded in metadata fields */
   user?: User
-  createPreview?(blob: Blob): Promise<ImagePreviewDetails>
+  createPreview?(blob: Blob): Promise<ImagePreviewDetails | undefined>
   /** Rotates, crops and scales down images before uploading */
   transformImage?: UploadQuery['transformImage']
+  /** Recompresses the images of pdfs before uploading */
+  compressPdf?: UploadQuery['compressPdf']
 }
 
 /** The git repository root enclosing a directory, if any */
@@ -679,7 +681,8 @@ export function createContentTools(
           user,
           createPreview: options.createPreview,
           edit: {rotate, crop},
-          transformImage: options.transformImage
+          transformImage: options.transformImage,
+          compressPdf: options.compressPdf
         })
         // The dashboard's upload: store the file and create the media entry
         const mutations = await operation.task(graph)

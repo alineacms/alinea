@@ -146,4 +146,8 @@ test('reports files that exceed the configured upload limit', () => {
       resizeImages: {maxWidth: 100}
     })
   ).toBeUndefined()
+  // Pdfs too, once they are compressed
+  expect(
+    uploadSizeError(pdf, {maxUploadSize: pdf.size - 1}, true)
+  ).toBeUndefined()
 })

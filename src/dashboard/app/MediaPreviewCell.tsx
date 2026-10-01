@@ -1,4 +1,4 @@
-import {isImage} from '#/core/media/IsImage.js'
+import {hasPreviewImage} from '#/core/media/Pdf.js'
 import type {OverviewCellProps} from '#/core/Overview.js'
 import styler from '@alinea/styler'
 import {fileKindVisual} from './FileKind.js'
@@ -18,7 +18,7 @@ export function MediaPreviewCell({
 }: OverviewCellProps<MediaPreviewCellValue | undefined>) {
   const preview = value?.preview
   const extension = value?.extension
-  if (preview && extension && isImage(extension))
+  if (preview && extension && hasPreviewImage(extension))
     return (
       <span
         className={styles.MediaPreviewCell()}

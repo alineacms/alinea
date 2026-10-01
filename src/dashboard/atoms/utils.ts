@@ -3,6 +3,7 @@ import {
   imageEncodingType,
   imageResizeOptions
 } from '#/core/media/ImageTransform.js'
+import {isPdf} from '#/core/media/Pdf.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import type {DragTypes, DropTarget, Key} from '#/components.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -192,12 +193,15 @@ export async function moveEntries(
 
 export function uploadSizeError(
   file: File,
-  config: Pick<Config, 'maxUploadSize' | 'resizeImages'>
+  config: Pick<Config, 'maxUploadSize' | 'resizeImages'>,
+  compressPdf = false
 ): string | undefined {
   const {maxUploadSize, resizeImages} = config
-  // Images scaled down before the upload are checked after resizing
+  // Images scaled down and pdfs compressed before the upload are checked
+  // after that
   if (imageResizeOptions(resizeImages) && imageEncodingType(file.name))
     return undefined
+  if (compressPdf && isPdf(file.name)) return undefined
   try {
     assertUploadSize(file.name, file.size, maxUploadSize)
   } catch (error) {

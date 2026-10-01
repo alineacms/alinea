@@ -29,7 +29,7 @@ function photo(name: string, width: number, height: number, hue: number) {
 }
 
 function pdf(name: string, size: number) {
-  return {file: new File([new Uint8Array(size)], name)}
+  return {file: new File([new Uint8Array(size)], name), compress: true}
 }
 
 function match(title: string): MediaMatch {
@@ -46,7 +46,7 @@ function match(title: string): MediaMatch {
 
 function upload(
   id: string,
-  file: Pick<PendingUpload, 'file' | 'previewUrl' | 'imageSize'>,
+  file: Pick<PendingUpload, 'file' | 'previewUrl' | 'imageSize' | 'compress'>,
   extra: Partial<PendingUpload> = {}
 ): PendingUpload {
   return {

@@ -315,6 +315,33 @@ test('uploads reject files over maxUploadSize before upload', async () => {
   test.is(db.uploads, 0)
 })
 
+test('uploads a pdf without a preview when its page can not be read', async () => {
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+  const cms = cmsWithMediaDir()
+  const db = new DB(cms.config)
+  try {
+    const upload = await db.upload({
+      // Named a pdf, but not one
+      file: new File(['plain text'], 'notes.pdf'),
+      async createPreview() {
+        throw new Error('Not an image')
+      }
+    })
+    const media = await db.get({
+      id: upload._id,
+      select: {extension: MediaFile.extension, preview: MediaFile.preview}
+    })
+    test.is(media.extension, '.pdf')
+    test.not.ok(media.preview)
+  } finally {
+    globalThis.fetch = fetch
+  }
+})
+
 test('uploads scale down images larger than resizeImages', async () => {
   const fetch = globalThis.fetch
   const uploaded: Array<number> = []

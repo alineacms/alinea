@@ -1,6 +1,7 @@
 import {rgba, toHex} from 'color2k'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {base64} from '../util/Encoding.js'
+import {startsAsPdf} from './Pdf.js'
 
 export interface ImagePreviewDetails {
   width: number
@@ -11,7 +12,11 @@ export interface ImagePreviewDetails {
   preview: string
 }
 
-export async function createPreview(blob: Blob): Promise<ImagePreviewDetails> {
+/** The preview of an image, pdfs are not rendered server side */
+export async function createPreview(
+  blob: Blob
+): Promise<ImagePreviewDetails | undefined> {
+  if (await startsAsPdf(blob)) return undefined
   const {default: sharp} = await import(/* @vite-ignore */ 'sharp' + '').catch(
     () => {
       throw new Error(

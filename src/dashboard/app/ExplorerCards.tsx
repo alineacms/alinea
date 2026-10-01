@@ -6,7 +6,7 @@ import {
   type DragDropProps
 } from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
-import {isImage} from '#/core/media/IsImage.js'
+import {hasPreviewImage} from '#/core/media/Pdf.js'
 import type {MediaFile} from '#/core/media/MediaTypes.js'
 import type {Infer} from '#/types.js'
 import styler from '@alinea/styler'
@@ -61,7 +61,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   const card: ContentCardProps = file
     ? {
         variant: 'media',
-        ...(file.preview && file.extension && isImage(file.extension)
+        ...(file.preview && file.extension && hasPreviewImage(file.extension)
           ? {image: file.preview, color: file.averageColor}
           : fileKindVisual(file.extension)),
         title: label,

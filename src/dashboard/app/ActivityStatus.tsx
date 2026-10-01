@@ -129,11 +129,14 @@ export function ActivityStatus({
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
   return (
-    // The popover stays non-modal so the dashboard behind it remains usable
-    // and scrollable, it still closes on interaction outside of it
-    <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
-      <PopoverTrigger asChild>
-        <Tooltip delayDuration={300}>
+    // The tooltip wraps the popover: an element-less Tooltip inside the
+    // PopoverTrigger would leave the popover without its trigger, so it
+    // could only be positioned when opened by a press, not on a failure.
+    <Tooltip delayDuration={300}>
+      {/* The popover stays non-modal so the dashboard behind it remains
+          usable and scrollable, it still closes on interaction outside it */}
+      <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
+        <PopoverTrigger asChild>
           <TooltipTrigger asChild>
             <Button
               data-slot="activity-status"
@@ -155,66 +158,69 @@ export function ActivityStatus({
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side={popoverSide} align={popoverAlign}>
-            {label}
-          </TooltipContent>
-        </Tooltip>
-      </PopoverTrigger>
-      <PopoverContent
-        className={styles.ActivityStatus.popover.surface()}
-        aria-label="Activity"
-        side={popoverSide}
-        align={popoverAlign}
-        sideOffset={16}
-      >
-        <div className={styles.ActivityStatus.popover()}>
-          <div className={styles.ActivityStatus.popover.header()}>
-            <Heading as="h2" size="xs">
-              Activity
-            </Heading>
-            {activity.hasFailed && (
-              <div className={styles.ActivityStatus.popover.actions()}>
-                {activity.canDiscard && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    color="destructive"
-                    onClick={() => discard()}
-                  >
-                    Discard
-                  </Button>
-                )}
-                {activity.canRetry && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    color="destructive"
-                    onClick={() => retry()}
-                  >
-                    Retry
-                  </Button>
-                )}
-              </div>
-            )}
+        </PopoverTrigger>
+        <PopoverContent
+          className={styles.ActivityStatus.popover.surface()}
+          aria-label="Activity"
+          side={popoverSide}
+          align={popoverAlign}
+          sideOffset={16}
+        >
+          <div className={styles.ActivityStatus.popover()}>
+            <div className={styles.ActivityStatus.popover.header()}>
+              <Heading as="h2" size="xs">
+                Activity
+              </Heading>
+              {activity.hasFailed && (
+                <div className={styles.ActivityStatus.popover.actions()}>
+                  {activity.canDiscard && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      color="destructive"
+                      onClick={() => {
+                        discard()
+                        setIsOpen(false)
+                      }}
+                    >
+                      Discard
+                    </Button>
+                  )}
+                  {activity.canRetry && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      color="destructive"
+                      onClick={() => retry()}
+                    >
+                      Retry
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+            <List
+              aria-label="Recent activity"
+              className={styles.ActivityStatus.popover.list()}
+              empty={activity.items.length === 0}
+            >
+              {activity.items.length === 0 ? (
+                <ListEmpty icon={IcRoundHistory} title="No recent activity">
+                  Actions and content updates will appear here.
+                </ListEmpty>
+              ) : (
+                activity.items.map(item => (
+                  <ActivityItem activity={item} key={item.id} />
+                ))
+              )}
+            </List>
           </div>
-          <List
-            aria-label="Recent activity"
-            className={styles.ActivityStatus.popover.list()}
-            empty={activity.items.length === 0}
-          >
-            {activity.items.length === 0 ? (
-              <ListEmpty icon={IcRoundHistory} title="No recent activity">
-                Actions and content updates will appear here.
-              </ListEmpty>
-            ) : (
-              activity.items.map(item => (
-                <ActivityItem activity={item} key={item.id} />
-              ))
-            )}
-          </List>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+      <TooltipContent side={popoverSide} align={popoverAlign}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

@@ -1,3 +1,4 @@
+import {pdfWithImage} from '#test/PdfFixture.js'
 import sharp from 'sharp'
 import {expect, test} from '../support/DashboardTest.js'
 import {dashboardLinkScenarioIds} from '../support/DashboardScenarioData.js'
@@ -201,4 +202,101 @@ test('offers the existing media file when the same file is uploaded again', asyn
   await both.getByRole('button', {name: 'Upload 1 file'}).click()
   await expect.poll(() => uploads.length).toBe(2)
   await expect(explorer.getByRole('row', {name: /^example/})).toHaveCount(2)
+})
+
+async function scanPdf() {
+  const width = 3000
+  const height = 3000
+  const noise = Buffer.alloc(width * height * 3)
+  for (let i = 0; i < noise.length; i++) noise[i] = (i * 7919) % 251
+  const photo = await sharp(noise, {raw: {width, height, channels: 3}})
+    .jpeg({quality: 95})
+    .toBuffer()
+  return Buffer.from(pdfWithImage(photo, width, height))
+}
+
+test('compresses a pdf and previews its first page', async ({
+  dashboard,
+  mount
+}) => {
+  const {app, uploads, upload} = await openMediaDirectory(dashboard, mount)
+  const pdf = await scanPdf()
+  const dialog = await upload({
+    name: 'scan.pdf',
+    mimeType: 'application/pdf',
+    buffer: pdf
+  })
+
+  const compress = dialog.getByRole('checkbox', {
+    name: 'Compress images in this pdf'
+  })
+  await expect(compress).toBeChecked()
+  await dialog.getByRole('button', {name: 'Upload 1 file'}).click()
+
+  await expect.poll(() => uploads.length).toBe(1)
+  expect(uploads[0].subarray(0, 5).toString()).toBe('%PDF-')
+  expect(uploads[0].byteLength).toBeLessThan(pdf.byteLength / 2)
+  const row = app.page
+    .getByRole('grid', {name: 'Explorer entries'})
+    .getByRole('row', {name: 'scan', exact: true})
+  await expect(row.locator('img')).toHaveAttribute('src', /^data:image\/webp/)
+})
+
+test('uploads a pdf as it is when compressing is turned off', async ({
+  dashboard,
+  mount
+}) => {
+  const {uploads, upload} = await openMediaDirectory(dashboard, mount)
+  const pdf = await scanPdf()
+  const dialog = await upload({
+    name: 'scan.pdf',
+    mimeType: 'application/pdf',
+    buffer: pdf
+  })
+
+  await dialog.getByText('Compress images in this pdf').click()
+  await expect(
+    dialog.getByRole('checkbox', {name: 'Compress images in this pdf'})
+  ).not.toBeChecked()
+  await dialog.getByRole('button', {name: 'Upload 1 file'}).click()
+
+  await expect.poll(() => uploads.length).toBe(1)
+  expect(uploads[0].equals(pdf)).toBe(true)
+})
+
+test('opens the activity next to its trigger when an upload fails', async ({
+  dashboard,
+  mount
+}) => {
+  const {app, upload} = await openMediaDirectory(dashboard, mount)
+  await app.page.route('**/__dashboard-scenario-upload', route =>
+    route.fulfill({status: 500, body: 'Storage unavailable'})
+  )
+  // The button keeps its tooltip. React Aria only opens tooltips on hover
+  // once it saw pointer movement
+  await app.page.mouse.move(1, 1)
+  await app.page.locator('[data-slot="activity-status"]').last().hover()
+  await expect(app.page.getByRole('tooltip')).toBeVisible()
+  const dialog = await upload({
+    name: 'notes.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('notes')
+  })
+  await dialog.getByRole('button', {name: 'Upload 1 file'}).click()
+
+  // Opened by the failure rather than a press, it is still positioned
+  // beside the activity button in the sidebar
+  const activity = app.page.getByRole('dialog', {name: 'Activity'})
+  await expect(activity.getByText('notes.txt')).toBeVisible()
+  const trigger = await app.page
+    .locator('[data-slot="activity-status"]')
+    .last()
+    .boundingBox()
+  const panel = await activity.boundingBox()
+  expect(panel!.x).toBeGreaterThan(trigger!.x + trigger!.width)
+  expect(panel!.y + panel!.height).toBeGreaterThan(trigger!.y)
+
+  // Discarding the failure closes the panel
+  await activity.getByRole('button', {name: 'Discard'}).click()
+  await expect(activity).toBeHidden()
 })

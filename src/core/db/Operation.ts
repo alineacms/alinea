@@ -13,6 +13,7 @@ import {
   type ImageTransform
 } from '../media/ImageTransform.js'
 import {isImage} from '../media/IsImage.js'
+import {isPdf} from '../media/Pdf.js'
 import {MediaLocation} from '../media/MediaLocation.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {assertUploadSize} from '../media/UploadLimits.js'
@@ -262,6 +263,11 @@ export interface UploadQuery {
     fileName: string,
     transform: ImageTransform
   ): Promise<Blob>
+  /**
+   * Recompresses the images of a pdf: `alinea/core/media/CompressPdf` does
+   * so in the browser or with sharp
+   */
+  compressPdf?(blob: Blob): Promise<Blob>
   onProgress?(progress: UploadProgress): void
   replaceId?: string
   /** Recorded as the creator, or the last editor of a replaced file */
@@ -279,7 +285,7 @@ export class UploadOperation extends Operation {
   constructor(query: UploadQuery) {
     super(async (db): Promise<Array<Mutation>> => {
       const entryId = this.id
-      const {file, createPreview, edit, transformImage} = query
+      const {file, createPreview, edit, transformImage, compressPdf} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const fileName = Array.isArray(file) ? file[0] : file.name
       const workspace = _workspace ?? Object.keys(db.config.workspaces)[0]
@@ -310,8 +316,15 @@ export class UploadOperation extends Operation {
           contentType = transformed.type
         }
       }
+      if (compressPdf && isPdf(fileName)) {
+        const compressed = await compressPdf(blob)
+        if (compressed.size < blob.size) {
+          blob = compressed
+          contentType = 'application/pdf'
+        }
+      }
       // The hash of the file as picked, so uploading it again is recognized
-      // after it was scaled down
+      // after it was scaled down or compressed
       const sourceHash =
         blob !== source && !edited ? await createFileHash(bytes) : undefined
       const fileSize = blob.size
@@ -331,7 +344,10 @@ export class UploadOperation extends Operation {
       })
       const previewData = isImage(fileName)
         ? await createPreview?.(blob)
-        : undefined
+        : isPdf(fileName)
+          ? // A pdf uploads without a preview when its page can't be read
+            pagePreview(await createPreview?.(blob).catch(() => undefined))
+          : undefined
       await sendUpload(info.url, info.method ?? 'POST', contentType, body, {
         headers: info.headers,
         onProgress: query.onProgress
@@ -381,6 +397,16 @@ export class UploadOperation extends Operation {
     })
     this.id = query.replaceId ?? createId()
   }
+}
+
+/**
+ * A pdf is shown by its first page, which has no pixel size or focus point
+ * of its own
+ */
+function pagePreview(preview: ImagePreviewDetails | undefined) {
+  if (!preview) return undefined
+  const {preview: image, thumbHash, averageColor} = preview
+  return {preview: image, thumbHash, averageColor}
 }
 
 interface UploadFileOptions {

@@ -1,4 +1,5 @@
 import {Entry} from '#/core/Entry.js'
+import {compressPdf} from '#/core/media/CompressPdf.browser.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {
   isTransformableImage,
@@ -6,6 +7,7 @@ import {
 } from '#/core/media/ImageTransform.js'
 import {isImage} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import {isPdf} from '#/core/media/Pdf.js'
 import {transformImage} from '#/core/media/TransformImage.browser.js'
 import {createId} from '#/core/Id.js'
 import {Permission} from '#/core/Role.js'
@@ -30,6 +32,8 @@ export interface UploadItem {
   edit?: ImageEdit
   /** The media entry whose file this upload replaces */
   replaceId?: string
+  /** Recompress the images of a pdf, unless false */
+  compress?: boolean
 }
 
 export interface UploadFilesRequest extends UploadDestination {
@@ -54,8 +58,8 @@ export const uploadFilesAtom = atom(
       root: request.root,
       parentId: request.parentId
     }
-    const invalidUploads = request.uploads.flatMap(({file}) => {
-      const error = uploadSizeError(file, config)
+    const invalidUploads = request.uploads.flatMap(({file, compress}) => {
+      const error = uploadSizeError(file, config, compress !== false)
       return error ? [{id: createId(), file, error}] : []
     })
     if (invalidUploads.length > 0)
@@ -71,12 +75,13 @@ export const uploadFilesAtom = atom(
     if (uploads.length === 0) return []
     set(uploadProgressAtom, {type: 'start', uploads, destination})
     const uploaded = await Promise.all(
-      uploads.map(async ({id, file, edit, replaceId}) => {
+      uploads.map(async ({id, file, edit, replaceId, compress}) => {
         try {
           const entry = await graph.upload({
             file,
             createPreview,
             transformImage,
+            ...(compress !== false ? {compressPdf} : {}),
             edit,
             ...(replaceId ? {replaceId} : {}),
             user: get(userAtom),
@@ -147,6 +152,8 @@ export interface PendingUpload {
   conflict?: MediaMatch
   action: PendingUploadAction
   edit?: ImageEdit
+  /** Whether the images of a pdf are recompressed, undefined for other files */
+  compress?: boolean
 }
 
 export interface ImageSize {
@@ -279,6 +286,7 @@ export const requestUploadsAtom = atom(
         id: createId(),
         file,
         ...(isImage(file.name) ? {previewUrl: URL.createObjectURL(file)} : {}),
+        ...(isPdf(file.name) ? {compress: true} : {}),
         ...(imageSize ? {imageSize} : {}),
         ...(duplicate ? {duplicate: mediaMatch(duplicate)} : {}),
         ...(conflict ? {conflict: mediaMatch(conflict)} : {}),
@@ -326,7 +334,7 @@ export const updatePendingUploadAtom = atom(
     get,
     set,
     id: string,
-    update: Partial<Pick<PendingUpload, 'action' | 'edit'>>
+    update: Partial<Pick<PendingUpload, 'action' | 'edit' | 'compress'>>
   ) => {
     const pending = get(pendingUploadsState)
     if (!pending) return
@@ -384,6 +392,7 @@ export const confirmPendingUploadsAtom = atom(null, async (get, set) => {
         {
           file: upload.file,
           ...(upload.edit ? {edit: upload.edit} : {}),
+          ...(upload.compress === false ? {compress: false} : {}),
           ...(replaceId ? {replaceId} : {})
         }
       ]

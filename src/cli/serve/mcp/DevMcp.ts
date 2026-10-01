@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
+import {compressPdf} from '#/core/media/CompressPdf.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {transformImage} from '#/core/media/TransformImage.js'
 import type {User} from '#/core/User.js'
@@ -53,7 +54,8 @@ export function createDevMcp(
         rootDir,
         user,
         createPreview,
-        transformImage
+        transformImage,
+        compressPdf
       })
     })
     return server.handle(request)
