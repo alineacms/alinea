@@ -163,21 +163,22 @@ export async function mergeTrees(
       rows.map(row => row.filePath),
       rows.map(row => row.versionId)
     )
+    const references = Array<[versionId: string, targetId: string]>()
     for (const row of rows) {
       await queries.insertEntry.run(insertEntryValues(row))
       await queries.insertSearch.run({
         title: row.title,
         body: row.searchableText
       })
-      if (row.references.length)
-        await queries.insertReferences.run({
-          versionId: row.versionId,
-          targets: JSON.stringify(row.references)
-        })
+      for (const target of row.references)
+        references.push([row.versionId, target])
       changes.touched.add(row.id)
       changes.inserted.add(row.versionId)
       if (hasChildren(row.childrenSha)) changes.parents.add(row.id)
     }
+    // A statement per row took a second for 20,000 entries.
+    if (references.length)
+      await queries.insertReferences.run({pairs: JSON.stringify(references)})
   }
 
   await updateDirectoryHashes(

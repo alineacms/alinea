@@ -41,7 +41,15 @@ const from = sql.placeholder<string>('from')
 const to = sql.placeholder<string>('to')
 const revision = sql.placeholder<string>('revision')
 const treeSnapshot = sql.placeholder<string | null>('tree')
-const targets = sql.placeholder<string>('targets')
+const pairs = sql.placeholder<string>('pairs')
+const versions = sql.placeholder<string>('versions')
+const pairVersion = sql<string>`json_extract(value, '$[0]')`
+const pairTarget = sql<string>`json_extract(value, '$[1]')`
+
+/** A field of the version object updated in {@link prepareSyncQueries}. */
+function derived<T>(field: string) {
+  return sql<T>`json_extract(value, ${sql.inline(`$.${field}`)})`
+}
 
 /** The columns of an entry version that deriving reads and writes. */
 function versionFields(entries: EntryIndexTarget) {
@@ -148,21 +156,14 @@ export function prepareSyncQueries(
         body: sql.placeholder<string>('body')
       })
       .prepare(undefined, db),
-    /** Record the entry ids a version references, under its rowid. */
+    /** Record [versionId, targetId] pairs under the rowid of the version. */
     insertReferences: builder
       .insert(references)
       .select(
         builder
-          .select({
-            targetId: sql<string>`value`,
-            source: builder
-              .select(entries.rowid)
-              .from(entries)
-              .where(
-                eq(entries.versionId, sql.placeholder<string>('versionId'))
-              )
-          })
-          .from(sql`json_each(${targets})`)
+          .select({targetId: pairTarget, source: entries.rowid})
+          .from(sql`json_each(${pairs})`)
+          .innerJoin(entries, eq(entries.versionId, pairVersion))
       )
       .prepare(undefined, db),
     /** Versions stored at these file paths or under these version ids. */
@@ -244,18 +245,20 @@ export function prepareSyncQueries(
       .from(entries)
       .where(inJson(entries.versionId, versionIds))
       .prepare(undefined, db),
-    updateVersion: builder
+    /** Write derived fields of versions, given as a JSON array of objects. */
+    updateVersions: builder
       .update(entries)
       .set({
-        parentId: sql.placeholder<string | null>('parentId'),
-        parents: sql.placeholder<Array<string>>('parents'),
-        status: sql.placeholder<EntryStatus>('status'),
-        active: sql.placeholder<boolean>('active'),
-        main: sql.placeholder<boolean>('main'),
-        visible: sql.placeholder<boolean>('visible'),
-        url: sql.placeholder<string>('url')
+        parentId: derived<string | null>('parentId'),
+        parents: derived<Array<string>>('parents'),
+        status: derived<EntryStatus>('status'),
+        active: derived<boolean>('active'),
+        main: derived<boolean>('main'),
+        visible: derived<boolean>('visible'),
+        url: derived<string>('url')
       })
-      .where(eq(entries.versionId, sql.placeholder<string>('versionId')))
+      .from(sql`json_each(${versions})`)
+      .where(eq(entries.versionId, derived<string>('versionId')))
       .prepare(undefined, db),
     /** An entry whose versions disagree on what all of them must share. */
     mismatchedEntry: builder

@@ -378,20 +378,27 @@ export async function deriveEntries(
     mainChanged
   )
   const written = new Set<string>()
+  const updates = Array<object>()
   for (const [version, fields] of before) {
     if (derivedFields(version) === fields) continue
     written.add(version.id)
-    await queries.updateVersion.run({
-      versionId: version.versionId,
-      parentId: version.parentId,
-      parents: JSON.stringify(version.parents),
-      status: version.status,
-      active: Number(version.active),
-      main: Number(version.main),
-      visible: Number(version.visible),
-      url: version.url
+    const {versionId, parentId, parents, status, active, main, visible, url} =
+      version
+    updates.push({
+      versionId,
+      parentId,
+      parents,
+      status,
+      active: Number(active),
+      main: Number(main),
+      visible: Number(visible),
+      url
     })
   }
+  // A statement per version awaits once per row, which adds up to seconds
+  // when every entry is derived with DevTools open.
+  if (updates.length)
+    await queries.updateVersions.run({versions: JSON.stringify(updates)})
   if (validate) await validateEntries(queries, [...changes.touched, ...written])
   const changed = new Set([...changes.touched, ...changes.containers])
   for (const version of versions.values()) changed.add(version.id)
