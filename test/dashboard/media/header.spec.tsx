@@ -10,9 +10,9 @@ interface HeaderFrame {
 }
 
 /**
- * Records the explorer header and list after every render, so a header that
- * does not describe the listed location is caught even when it is only
- * shown briefly
+ * Records the explorer header and list on every frame, so a header that does
+ * not describe the listed location is caught even when it is only shown
+ * briefly
  */
 async function recordHeader(page: Page) {
   await page.evaluate(() => {
@@ -20,8 +20,7 @@ async function recordHeader(page: Page) {
     const record = () => {
       const main = document.querySelector('main')
       const grid = main?.querySelector('[aria-label="Explorer entries"]')
-      // Virtualized results render their rows once they are sized
-      if (!main || !grid?.querySelector('[role="row"]')) return
+      if (!main || !grid) return
       const frame = {
         title: main.querySelector('h1')?.textContent ?? null,
         back:
@@ -39,13 +38,13 @@ async function recordHeader(page: Page) {
         return
       frames.push(frame)
     }
-    new MutationObserver(record).observe(document.body, {
-      attributes: true,
-      childList: true,
-      characterData: true,
-      subtree: true
-    })
-    record()
+    // Sample painted frames, not mutations: react-aria commits a new
+    // virtualizer without rows and sizes it before the frame is painted
+    function sample() {
+      record()
+      requestAnimationFrame(sample)
+    }
+    sample()
     Object.assign(window, {headerFrames: frames})
   })
   return {
