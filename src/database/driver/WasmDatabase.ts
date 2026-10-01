@@ -24,10 +24,18 @@ export interface WasmDatabaseHandle extends DatabaseHandle {
   detach(): void
 }
 
+/**
+ * Page cache in KiB. SQLite's default of 2 MB holds only 32 of the 64 KB
+ * pages a browser store uses: a large sync then copies pages in and out of
+ * the database memory over and over, which halves its speed.
+ */
+const cacheSize = -16384
+
 function wasmHandle(
   sqlite: WasmSqlite,
   options?: DatabaseOptions
 ): WasmDatabaseHandle {
+  sqlite.run(`pragma cache_size = ${cacheSize}`)
   return {
     database: connect(sqlite, options),
     driver: 'wasm',
