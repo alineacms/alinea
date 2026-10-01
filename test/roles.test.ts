@@ -2,7 +2,9 @@ import {createCMS} from '#/core.js'
 import {Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {LocalDB} from '#/database/LocalDB.js'
-import {create, move, update} from '#/core/db/Operation.js'
+import {create, move, publish, update} from '#/core/db/Operation.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {Entry} from '#/core/Entry.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
 
@@ -21,6 +23,14 @@ const Restricted = Config.document('Restricted', {
   contains: [SubPage],
   fields: {}
 })
+const Article = Config.document('Article', {
+  fields: {
+    title: Field.text('Title'),
+    path: Field.path('Path'),
+    summary: Field.text('Summary'),
+    metadata: Field.metadata()
+  }
+})
 const main = Config.workspace('Main', {
   source: 'content',
   roots: {
@@ -34,7 +44,7 @@ const main = Config.workspace('Main', {
   }
 })
 const cms = createCMS({
-  schema: {Page, Restricted, SubPage},
+  schema: {Page, Restricted, SubPage, Article},
   workspaces: {main}
 })
 
@@ -143,4 +153,95 @@ test('enforce move permissions', async () => {
     dropPosition: 'on'
   }).task(db)
   await test.throws(() => db.request(moveMutation, policy), 'denied')
+})
+
+/** A role that may only update the title of an article */
+function titleEditor() {
+  return new WriteablePolicy(getScope(cms.config))
+    .allowAll()
+    .set({field: Article.path, deny: {update: true}})
+    .set({field: Article.summary, deny: {update: true}})
+    .set({field: Article.metadata, deny: {update: true}})
+}
+
+async function createArticle() {
+  const db = new LocalDB(cms.config)
+  const article = await db.create({
+    type: Article,
+    root: 'pages',
+    workspace: 'main',
+    set: {title: 'Article', summary: 'Summary', metadata: {title: 'SEO'}}
+  })
+  const data = await db.get({id: article._id, select: Entry.data})
+  const commit = async (mutations: Array<Mutation>) =>
+    db.write(await db.request(mutations, titleEditor()))
+  return {db, id: article._id, data, commit}
+}
+
+const jane = {sub: 'jane', name: 'Jane', email: 'jane@example.com'}
+
+test('saves over an entry check the fields they change', async () => {
+  const {db, id, data, commit} = await createArticle()
+  const save = (set: Record<string, unknown>, status?: 'draft') =>
+    create({type: Article, id, set, status, overwrite: true, user: jane}).task(
+      db
+    )
+
+  // Changing only the title goes through and stamps who saved it
+  await commit(await save({...data, title: 'Title only'}))
+  const saved = await db.get({type: Article, id})
+  test.is(saved.title, 'Title only')
+  test.equal(saved.metadata.updatedBy, {name: 'Jane', email: jane.email})
+
+  // A field the role may not update is refused like an update would be,
+  // leaving it out of the save replaces it as well
+  await test.throws(
+    async () => commit(await save({title: 'Without summary'})),
+    'Permission denied'
+  )
+  await test.throws(
+    async () => commit(await save({...data, summary: 'Other'})),
+    'Permission denied'
+  )
+  await test.throws(
+    async () => commit(await save({...data, summary: 'Other'}, 'draft')),
+    'Permission denied'
+  )
+
+  // The dashboard's save: the whole entry, its path and metadata included
+  const current = await db.get({id, select: Entry.data})
+  await commit(await save({...current, title: 'Dashboard'}))
+  const dashboard = await db.get({type: Article, id})
+  test.is(dashboard.title, 'Dashboard')
+  test.is(dashboard.summary, 'Summary')
+  test.is(dashboard.metadata.title, 'SEO')
+})
+
+test('a new draft of an entry checks the fields it changes', async () => {
+  const {db, id, data, commit} = await createArticle()
+  const draft = create({
+    type: Article,
+    id,
+    status: 'draft',
+    set: {...data, summary: 'Other'}
+  })
+  await test.throws(
+    async () => commit(await draft.task(db)),
+    'Permission denied'
+  )
+})
+
+test('publishing a draft relies on the checks of its saves', async () => {
+  const {db, id, data, commit} = await createArticle()
+  // Drafted by someone who may change the summary
+  await db.create({
+    type: Article,
+    id,
+    status: 'draft',
+    set: {...data, summary: 'Drafted'},
+    overwrite: true
+  })
+  await commit(await publish({id, locale: null, status: 'draft'}).task(db))
+  const published = await db.get({type: Article, id})
+  test.is(published.summary, 'Drafted')
 })

@@ -12,7 +12,8 @@ const Page = Config.type('Page', {
   contains: ['Page'],
   fields: {
     title: Field.text('Title'),
-    path: Field.path('Path')
+    path: Field.path('Path'),
+    tag: Field.text('Tag', {shared: true})
   }
 })
 
@@ -88,6 +89,36 @@ test('a locale scoped role can create a translation', async () => {
     translator()
   )
   test.ok(request.changes.length > 0)
+})
+
+test('a translation cannot change shared fields of locales outside its role', async () => {
+  const db = await createDb()
+  const translate = (tag: string) =>
+    db.request(
+      [
+        {
+          op: 'create',
+          id: 'article',
+          type: 'Page',
+          locale: 'nl',
+          data: {title: 'Artikel', tag}
+        }
+      ],
+      translator()
+    )
+  await db.mutate([
+    {
+      op: 'update',
+      id: 'article',
+      locale: 'en',
+      status: 'published',
+      set: {tag: 'news'}
+    }
+  ])
+  // Sharing the same value leaves the english version alone
+  await translate('news')
+  const error = await rejects(() => translate('sports'))
+  test.is(error.message, 'Permission denied')
 })
 
 test('a locale scoped role cannot create outside its locales', async () => {

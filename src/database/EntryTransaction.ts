@@ -412,6 +412,11 @@ export class EntryTransaction implements AsyncDisposable {
         if (missing.length > 0) data = {...data, ...fromEntries(missing)}
       }
     }
+    // Saving over a version of this locale updates its fields
+    const current = existing.find(
+      entry => entry.locale === locale && entry.active
+    )
+    if (current) this.#assertUpdate(current, {path, ...data})
     // Seeds are placeholders an editor fills in later
     if (status === 'published' && !fromSeed)
       this.#assertValid(
@@ -459,24 +464,11 @@ export class EntryTransaction implements AsyncDisposable {
       versionStatus: {in: [status]}
     })
     assert(entry, `Entry not found: ${id}`)
-    this.#policy.assert(Permission.Update, entry)
-    for (const key of keys(set)) {
-      if (key === 'metadata' && onlyStampsAudit(entry.data.metadata, set[key]))
-        continue
-      this.#policy.assert(Permission.Update, {
-        workspace: entry.workspace,
-        root: entry.root,
-        type: entry.type,
-        id: entry.id,
-        parents: entry.parents,
-        locale: entry.locale,
-        field: key
-      })
-    }
     const updates = fromEntries(
       entries(set).map(([key, value]) => [key, value ?? null])
     )
     let data = {...entry.data, ...updates}
+    this.#assertUpdate(entry, data)
     const desiredPath = slugify(
       (data.path as string) ?? entry.data.path ?? entry.path
     )
@@ -998,6 +990,26 @@ export class EntryTransaction implements AsyncDisposable {
     return dataWithUrlAlias(type, candidate.data, previousUrl, currentUrl)
   }
 
+  /**
+   * Changing a version needs the update permission on it and on each field
+   * that changes. Values compare as an editor sees them, stored values over
+   * initial values, so a save of the whole entry only checks what it changes.
+   */
+  #assertUpdate(entry: TransactionEntry, data: Record<string, unknown>): void {
+    this.#policy.assert(Permission.Update, entry)
+    const type = this.#workingDatabase.config.schema[entry.type]
+    assert(type, `Type not found: ${entry.type}`)
+    const before = Type.withInitialValue(type, entry.data)
+    const after = Type.withInitialValue(type, data)
+    for (const field of new Set([...keys(before), ...keys(after)])) {
+      if (JSON.stringify(before[field]) === JSON.stringify(after[field]))
+        continue
+      if (field === 'metadata' && onlyStampsAudit(before[field], after[field]))
+        continue
+      this.#policy.assert(Permission.Update, {...entry, field})
+    }
+  }
+
   /** Published versions must pass field validation, drafts may not yet */
   #assertValid(
     id: string,
@@ -1106,6 +1118,7 @@ export class EntryTransaction implements AsyncDisposable {
           JSON.stringify(value) !== JSON.stringify(translation.data[key])
       )
       if (!changed) continue
+      this.#assertUpdate(translation, {...translation.data, ...shared})
       this.#addRecord(
         translation.filePath,
         createRecord(
