@@ -177,7 +177,6 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
         mode: 'search',
         rootData: root.data,
         searchDepth: 'all',
-        treeItems: locale => root.tree(locale).items,
         onAction(entry) {
           setRoute({
             workspace: entry.workspace,

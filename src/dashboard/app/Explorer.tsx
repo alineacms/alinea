@@ -42,6 +42,8 @@ import {
   type DashboardEntry,
   type DashboardExplorer,
   explorerPageIsPending,
+  type ExplorerParent,
+  type ExplorerPathEntry,
   type ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {
@@ -136,7 +138,7 @@ interface ExplorerHeaderMainProps {
 
 interface ExplorerHeaderParentMainProps {
   explorer: DashboardExplorer
-  parent: DashboardEntry
+  parent: ExplorerParent
   titleControls?: ReactNode
 }
 
@@ -420,23 +422,17 @@ function ExplorerHeaderParentMain({
   parent: current,
   titleControls
 }: ExplorerHeaderParentMainProps) {
-  const {data} = useAtomValueRaw(current.data)
-  const label = useAtomValueRaw(data.label)
-  const parents = useAtomValueRaw(data.parents)
   const setLocation = useSetAtom(explorer.location)
-  const parent = parents.at(-1)
+  const parentId = current.parents.at(-1)
   return (
     <div className={styles.ExplorerHeader.main()}>
       <PageBack
-        label={parent ? 'Back to parent entry' : 'Back to root'}
+        label={parentId ? 'Back to parent entry' : 'Back to root'}
         onClick={() => {
-          setLocation(location => ({
-            ...location,
-            parentId: parent?.id
-          }))
+          setLocation(location => ({...location, parentId}))
         }}
       />
-      <PageTitle>{label}</PageTitle>
+      <PageTitle>{current.title}</PageTitle>
       {titleControls}
     </div>
   )
@@ -448,7 +444,7 @@ function ExplorerHeaderMain({
   page,
   titleControls
 }: ExplorerHeaderMainProps) {
-  const parent = useAtomValueRaw(explorer.parent(page.location, page.locale))
+  const {parent} = page
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
@@ -485,7 +481,7 @@ interface ExplorerLocationMenuProps {
 interface ExplorerLocationParentsProps {
   explorer: DashboardExplorer
   lockNavigation: boolean
-  parent: DashboardEntry
+  parent: ExplorerParent
 }
 
 function ExplorerLocationParents({
@@ -493,9 +489,7 @@ function ExplorerLocationParents({
   lockNavigation,
   parent
 }: ExplorerLocationParentsProps) {
-  const {data} = useAtomValueRaw(parent.data)
-  const parents = useAtomValueRaw(data.parents)
-  return [...parents, parent].map((entry, index, entries) => (
+  return [...parent.path, parent].map((entry, index, entries) => (
     <ExplorerLocationParent
       current={index === entries.length - 1}
       entry={entry}
@@ -508,7 +502,7 @@ function ExplorerLocationParents({
 
 interface ExplorerLocationParentProps {
   current: boolean
-  entry: DashboardEntry
+  entry: ExplorerPathEntry
   explorer: DashboardExplorer
   lockNavigation: boolean
 }
@@ -519,8 +513,7 @@ function ExplorerLocationParent({
   explorer,
   lockNavigation
 }: ExplorerLocationParentProps) {
-  const {data} = useAtomValueRaw(entry.data)
-  const label = useAtomValueRaw(data.label)
+  const label = entry.title
   const setLocation = useSetAtom(explorer.location)
   return (
     <>
@@ -566,7 +559,7 @@ function ExplorerLocationMenu({
   const selectedLocale = page.locale
   const setSelectedLocale = useSetAtom(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
-  const parent = useAtomValueRaw(explorer.parent(location, selectedLocale))
+  const {parent} = page
   const configuredLocations = explorer.limitLocations?.length
     ? explorer.limitLocations
     : Object.entries(config.workspaces).flatMap(([workspace, value]) =>

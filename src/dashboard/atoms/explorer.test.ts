@@ -265,6 +265,25 @@ test('ready pages include inherited upload permissions for the current folder', 
   expect(page.canUpload).toBe(false)
 })
 
+test('ready pages describe the listed parent and its parents', async () => {
+  const {child, parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms({workspace: 'main', root: 'pages'}, {})
+
+  expect((await store.get(explorer.pageReady)).parent).toBeUndefined()
+
+  // No tree lists the nested location, the page loads it with its parents
+  store.set(explorer.location, current => ({...current, parentId: child._id}))
+  const page = await store.get(explorer.pageReady)
+
+  expect(page.parent).toEqual({
+    id: child._id,
+    title: 'Child',
+    parents: [parent._id],
+    path: [{id: parent._id, title: 'Parent draft'}]
+  })
+})
+
 test('search temporarily overrides the preferred result mode', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},

@@ -27,6 +27,7 @@ import type {ComponentType, SetStateAction} from 'react'
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
+import {MissingEntryError, treeEntryAtoms} from './entry.js'
 import {
   columnLinkIds,
   loadColumnValues,
@@ -117,10 +118,6 @@ export interface ExplorerOptions {
    * kept by the explorer.
    */
   scrollOffset?: (key: string) => PrimitiveAtom<number>
-  treeItems?: (
-    locale: string | null,
-    location: ExplorerLocation
-  ) => Atom<Array<ExplorerTreeItem>>
   treeReady?: (
     locale: string | null,
     location: ExplorerLocation
@@ -159,12 +156,18 @@ export interface ExplorerOptions {
   preselect?: boolean
 }
 
-export interface ExplorerTreeItem {
+/** An entry on the way from the root to the listed location */
+export interface ExplorerPathEntry {
   id: string
   title: string
-  type: string
-  parentId: string | null
-  hasChildren: boolean
+}
+
+/** The entry whose children are listed */
+export interface ExplorerParent extends ExplorerPathEntry {
+  /** The ids of its parents, from the root down */
+  parents: Array<string>
+  /** Its parents the editor can see, from the root down */
+  path: Array<ExplorerPathEntry>
 }
 
 export type ExplorerResultMode = 'browse' | 'matches'
@@ -191,6 +194,8 @@ export interface ExplorerReadyPage {
   items: Array<ExplorerEntry>
   locale: string | null
   location: ExplorerLocation
+  /** The entry the location lists the children of, undefined at a root */
+  parent: ExplorerParent | undefined
   overview: OverviewState
   /** The query of the listed entries, without selection and paging */
   query: ExplorerQuery
@@ -525,6 +530,19 @@ export class ExplorerEntry {
   }
 }
 
+/** Where files uploaded to a location are placed */
+function uploadResource(
+  location: ExplorerLocation,
+  parent: ExplorerParent | undefined
+): Resource {
+  return {
+    workspace: location.workspace,
+    root: location.root,
+    id: location.parentId,
+    parents: parent?.parents
+  }
+}
+
 let explorerCount = 0
 
 export class ExplorerAtoms {
@@ -573,10 +591,6 @@ export class ExplorerAtoms {
     void
   >
   root: Atom<ExplorerRootData>
-  parent: (
-    location: ExplorerLocation,
-    locale: string | null
-  ) => Atom<ExplorerEntry | undefined>
   itemsReady: (locale: string | null) => Atom<Promise<Array<ExplorerEntry>>>
   items: (locale: string | null) => Atom<Array<ExplorerEntry>>
   pageReady: Atom<Promise<ExplorerReadyPage>>
@@ -587,28 +601,29 @@ export class ExplorerAtoms {
    */
   scrollOffset: (key: string) => PrimitiveAtom<number>
   #options: ExplorerOptions
-  #uploadResource = dispense(
-    (location: ExplorerLocation, locale: string | null) =>
-      atom(get => {
-        const fallback: Resource = {
-          workspace: location.workspace,
-          root: location.root,
-          id: location.parentId
+  /** The entry a location lists the children of, loaded with its parents */
+  #parent = dispense((parentId: string, locale: string | null) =>
+    atom(async (get): Promise<ExplorerParent | undefined> => {
+      async function summary(id: string) {
+        try {
+          return await get(treeEntryAtoms(id).summary(locale))
+        } catch (error) {
+          if (error instanceof MissingEntryError) return undefined
+          throw error
         }
-        if (!location.parentId) return fallback
-        const parent = get(this.parent(location, locale))
-        if (!parent) return fallback
-        const {data} = get(parent.data)
-        return {
-          ...fallback,
-          parents: get(data.parents).map(ancestor => ancestor.id)
-        }
-      })
-  )
-  #canUpload = dispense((location: ExplorerLocation, locale: string | null) =>
-    atom(get =>
-      get(policyAtom).canUpload(get(this.#uploadResource(location, locale)))
-    )
+      }
+      const entry = await summary(parentId)
+      if (!entry) return undefined
+      const parents = await Promise.all(entry.parents.map(summary))
+      return {
+        id: entry.id,
+        title: entry.title,
+        parents: entry.parents,
+        path: parents.flatMap(parent =>
+          parent ? [{id: parent.id, title: parent.title}] : []
+        )
+      }
+    })
   )
 
   constructor(
@@ -693,47 +708,6 @@ export class ExplorerAtoms {
     } else {
       this.root = atom({icon: atom(LucideFile), label: atom('')})
     }
-    const treeEntry = (item: ExplorerTreeItem): ExplorerEntry => {
-      const value: ExplorerItemData = {
-        id: item.id,
-        title: item.title,
-        path: '',
-        type: item.type,
-        workspace: initialLocation.workspace,
-        root: initialLocation.root ?? '',
-        locale: null,
-        parentId: item.parentId,
-        parents: [],
-        index: '',
-        data: {},
-        hasChildren: item.hasChildren
-      }
-      return new ExplorerEntry(item.id, value, atom(value), this.root)
-    }
-    this.parent = dispense(
-      (location: ExplorerLocation, locale: string | null) =>
-        atom(get => {
-          const parentId = location.parentId
-          if (!parentId || !options.treeItems) return undefined
-          const items = get(options.treeItems(locale, location))
-          const item = items.find(candidate => candidate.id === parentId)
-          if (!item) return undefined
-          const parent = treeEntry(item)
-          const ancestors = new Array<ExplorerEntry>()
-          let ancestorId = item.parentId
-          while (ancestorId) {
-            const ancestor = items.find(
-              candidate => candidate.id === ancestorId
-            )
-            if (!ancestor) break
-            ancestors.unshift(treeEntry(ancestor))
-            ancestorId = ancestor.parentId
-          }
-          const {data} = get(parent.data)
-          if (data) data.parents = atom(ancestors)
-          return parent
-        })
-    )
     const itemsSource = dispense((locale: string | null) =>
       atom(async get => {
         const values = await get(this.#itemData(locale))
@@ -803,6 +777,9 @@ export class ExplorerAtoms {
         label: atom(get(requestedRoot.label))
       }
       const itemsPromise = get(this.itemsReady(locale))
+      const parentPromise = location.parentId
+        ? get(this.#parent(location.parentId, locale))
+        : undefined
       const overview = await get(this.overview)
       const view =
         get(this.#selectedView) ??
@@ -811,18 +788,21 @@ export class ExplorerAtoms {
           : overview.layout === 'table'
             ? 'row'
             : get(this.view))
+      // Pickers browsing cards show the tree of the root next to them
       const needsTree =
-        Boolean(location.parentId) ||
-        (view === 'card' &&
-          resultMode === 'browse' &&
-          !searchesEverything &&
-          !this.pickChildren &&
-          !options.limitLocations?.length)
+        view === 'card' &&
+        resultMode === 'browse' &&
+        !searchesEverything &&
+        !this.pickChildren &&
+        !options.limitLocations?.length
       const treeReady = needsTree
         ? options.treeReady?.(locale, location)
         : undefined
       if (treeReady) await get(treeReady)
-      const canUpload = get(this.#canUpload(location, locale))
+      const parent = await parentPromise
+      const canUpload = get(policyAtom).canUpload(
+        uploadResource(location, parent)
+      )
       const items = await itemsPromise
       // The columns follow the loaded rows, every child of the parent or
       // the search results: their types, and built-in columns that differ
@@ -846,6 +826,7 @@ export class ExplorerAtoms {
         items,
         locale,
         location,
+        parent,
         overview: shown,
         query: (await get(this.#query(locale))) ?? {
           workspace: location.workspace,
@@ -951,9 +932,6 @@ export class ExplorerAtoms {
   get limitLocations() {
     return this.#options.limitLocations
   }
-  canUpload = atom(get =>
-    get(this.#canUpload(get(this.location), get(this.selectedLocale)))
-  )
   uploadsInCurrentFolder = atom(get => {
     const location = get(this.location)
     return get(activityAtom).items.filter(activity => {
@@ -976,9 +954,10 @@ export class ExplorerAtoms {
       const location = get(this.location)
       if (!location.root) return
       const locale = get(this.selectedLocale)
-      const treeReady = this.#options.treeReady?.(locale, location)
-      if (treeReady) await get(treeReady)
-      const resource = get(this.#uploadResource(location, locale))
+      const parent = location.parentId
+        ? await get(this.#parent(location.parentId, locale))
+        : undefined
+      const resource = uploadResource(location, parent)
       get(policyAtom).assert(Permission.Upload, resource)
       const ids = await set(requestUploadsAtom, {
         files,

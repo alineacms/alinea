@@ -87,8 +87,6 @@ export function usePickerExplorer(
       initialView: options.initialView ?? initialView,
       rootData,
       selectedLocale: initialLocale,
-      treeItems: (locale, location) =>
-        tree(currentRoot(location), locale, location).items,
       treeReady: (locale, location) =>
         tree(currentRoot(location), locale, location).ready
     })

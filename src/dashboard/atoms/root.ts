@@ -457,8 +457,6 @@ export class RootAtoms {
         filterState: this.#explorerFilters,
         scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
-        treeItems: locale => this.tree(locale).items,
-        treeReady: locale => this.tree(locale).ready,
         selectionBehavior: 'toggle',
         selectionMode: 'multiple'
       },
