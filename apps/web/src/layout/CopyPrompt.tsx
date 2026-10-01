@@ -20,14 +20,12 @@ export interface CopyPromptProps {
   prompt: string
   /** Shown below the prompt until it is copied */
   hint?: string
-  align?: 'start' | 'center'
   className?: string
 }
 
 export function CopyPrompt({
   prompt,
   hint = 'Works with Claude Code, Cursor, Codex and more',
-  align = 'start',
   className
 }: CopyPromptProps) {
   const [status, setStatus] = useState<CopyStatus>('idle')
@@ -54,7 +52,7 @@ export function CopyPrompt({
   const ButtonIcon = isCopied ? IcRoundCheck : IcRoundContentCopy
   return (
     <div
-      className={styles.root(styler.merge({className}), align, {
+      className={styles.root(styler.merge({className}), {
         copied: status === 'copied',
         failed: status === 'failed'
       })}

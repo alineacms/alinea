@@ -19,11 +19,13 @@ export const codeHighlighter = PLazy.from(async () => {
       ...theme,
       type: 'light',
       settings: [],
-      fg: '#1E232A',
-      bg: 'white',
+      // Placeholders Shiki swaps for --shiki-* variables, see global.scss
+      fg: '#000001',
+      bg: '#000002',
       colors: {
         ...theme.colors,
-        'editor.background': 'var(--web-code-background)'
+        'editor.foreground': '#000001',
+        'editor.background': '#000002'
       }
     },
     langs: [

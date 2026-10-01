@@ -4,6 +4,13 @@ import {Response} from '@alinea/iso'
 /** Protocol versions this server speaks, newest first */
 export const supportedProtocolVersions = ['2025-06-18', '2025-03-26']
 
+/** The version to answer an initialize request with */
+export function protocolVersion(requested: unknown): string {
+  return supportedProtocolVersions.includes(String(requested))
+    ? String(requested)
+    : supportedProtocolVersions[0]
+}
+
 export interface JsonSchema {
   type?: string | Array<string>
   description?: string
@@ -122,11 +129,8 @@ export class McpServer {
     const {name, version, instructions, tools} = this.#options
     switch (method) {
       case 'initialize': {
-        const requested = String(params.protocolVersion)
         return {
-          protocolVersion: supportedProtocolVersions.includes(requested)
-            ? requested
-            : supportedProtocolVersions[0],
+          protocolVersion: protocolVersion(params.protocolVersion),
           capabilities: {tools: {}},
           serverInfo: {name, version},
           instructions

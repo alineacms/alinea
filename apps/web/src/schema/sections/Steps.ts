@@ -6,7 +6,7 @@ export const Steps = Config.type('Steps', {
     title: Field.text('Title'),
     description: Field.text('Description', {multiline: true}),
     numbered: Field.check('Numbered', {
-      description: 'Show a large step number on each card'
+      description: 'Show the step numbers in the accent color'
     }),
     steps: Field.list('Steps', {
       schema: {

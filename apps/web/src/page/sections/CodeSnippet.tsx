@@ -4,7 +4,7 @@ import css from './CodeSnippet.module.scss'
 
 const styles = styler(css)
 
-export type CodeSnippetSize = 'small' | 'medium' | 'large'
+export type CodeSnippetSize = 'medium' | 'large' | 'visual'
 
 export interface CodeSnippetProps {
   code: string | null | undefined
@@ -19,7 +19,7 @@ function languageOf(code: string, filename?: string | null) {
   return 'tsx'
 }
 
-/** Highlighted code on the navy code background, with an optional file name */
+/** Highlighted code with an optional file name above the block */
 export async function CodeSnippet({
   code,
   filename,

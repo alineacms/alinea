@@ -1,19 +1,21 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 56px;
 
   &-more {
-    font: var(--web-docs-font-compact);
+    max-width: 720px;
+    padding-top: 24px;
+    border-top: 1px solid var(--web-outline);
     color: var(--web-foreground-faded);
 
     &-code {
-      font: 400 13.5px/1 var(--web-mono-font);
+      font: 400 0.875em/1 var(--web-mono-font);
       color: var(--web-foreground);
     }
 
     &-link {
-      font-weight: 600;
+      font-weight: 500;
       color: var(--web-accent);
 
       &:hover {

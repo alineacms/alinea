@@ -2,7 +2,6 @@ import styler from '@alinea/styler'
 import type {PropsWithChildren} from 'react'
 import {DocsMobileNav} from './DocsMobileNav'
 import {DocsNav} from './DocsNav'
-import {DocsSearch} from './DocsSearch'
 import {DocsSidebar} from './DocsSidebar'
 import {docsPages, getDocsTree} from './DocsTree'
 import css from './DocsLayout.module.scss'
@@ -22,7 +21,7 @@ export default async function DocsLayout({children}: PropsWithChildren) {
         <DocsNav groups={tree.groups} />
       </DocsMobileNav>
       <div className={styles.root.inner()}>
-        <DocsSidebar top={<DocsSearch />}>
+        <DocsSidebar>
           <DocsNav groups={tree.groups} />
         </DocsSidebar>
         <main id="docs-content" tabIndex={-1} className={styles.root.main()}>

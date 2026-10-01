@@ -1,19 +1,22 @@
+// Plain text with a copy icon, no box
 .root {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 15px 18px;
+  gap: 10px;
+  padding: 10px 4px;
   border: none;
-  border-radius: 12px;
   font-family: var(--web-mono-font);
   font-size: 14px;
-  line-height: 1.25;
-  color: var(--web-foreground);
-  background: var(--web-command-background);
+  line-height: 1.4;
+  color: var(--web-foreground-faded);
+  background: none;
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.2s ease-out;
+
+  &:is(:hover, :focus-visible) {
+    color: var(--web-foreground);
+  }
 
   &-command {
     display: block;
@@ -27,7 +30,7 @@
   &-icon {
     display: block;
     flex-shrink: 0;
-    font-size: 16px;
+    font-size: 15px;
     color: var(--web-foreground-muted);
     transition: color 0.2s ease-out;
   }

@@ -1,6 +1,5 @@
 import styler from '@alinea/styler'
 import Link from 'next/link'
-import {BlogAvatar} from './BlogAvatar'
 import {BlogCover} from './BlogCover'
 import css from './BlogFeaturedPost.module.scss'
 import {BlogPostMeta} from './BlogPostMeta'
@@ -20,33 +19,20 @@ export function BlogFeaturedPost({post}: BlogFeaturedPostProps) {
         cover={post.cover}
         text={post.coverText}
         fallbackText={post.title}
-        sizes="(max-width: 1023px) 100vw, 640px"
+        sizes="(max-width: 1023px) 100vw, 480px"
         priority
       />
       <div className={styles.root.content()}>
+        <h2 className={styles.root.title()}>{post.title}</h2>
         <BlogPostMeta
           category={post.category}
           publishDate={post.publishDate}
-          variant="accent"
+          author={post.author?.name}
         />
-        <h2 className={styles.root.title()}>{post.title}</h2>
         {post.introduction && (
           <p className={styles.root.introduction()}>{post.introduction}</p>
         )}
-        <div className={styles.root.footer()}>
-          {post.author?.name ? (
-            <span className={styles.root.author()}>
-              <BlogAvatar
-                name={post.author.name}
-                src={post.author.avatar?._url}
-              />
-              {post.author.name}
-            </span>
-          ) : (
-            <span />
-          )}
-          <span className={styles.root.read()}>Read the post →</span>
-        </div>
+        <span className={styles.root.read()}>Read the post →</span>
       </div>
     </Link>
   )

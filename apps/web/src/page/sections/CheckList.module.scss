@@ -6,39 +6,26 @@
   padding: 0;
   list-style: none;
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--web-foreground);
 
   &-item {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
   }
 
   &-icon {
     flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    margin-top: 2px;
+    width: 14px;
+    height: 14px;
+    margin-top: 5px;
+    stroke-width: 2.2;
     color: var(--web-accent);
   }
 
   &-text {
     min-width: 0;
-  }
-
-  &.is-large {
-    gap: 12px;
-  }
-
-  &.is-large &-item {
-    gap: 12px;
-  }
-
-  &.is-large &-icon {
-    width: 20px;
-    height: 20px;
-    margin-top: 1px;
   }
 
   &.is-muted &-icon {

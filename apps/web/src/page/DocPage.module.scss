@@ -2,24 +2,18 @@
 
 .root {
   display: flex;
-  justify-content: center;
-  gap: 64px;
-  padding: 40px 56px 0;
+  gap: 48px;
+  padding-top: 56px;
   // Next.js scrolls a new page into view on navigation, this lands it at the
   // very top of the document instead of below the sticky header
   scroll-margin-top: var(--web-docs-offset);
 
-  @media (max-width: 1279.999px) {
-    gap: 48px;
-    padding-inline: 40px;
-  }
-
   @include sm {
-    padding: 28px var(--web-gutter) 0;
+    padding-top: 28px;
   }
 
   &-article {
-    flex: 0 1 760px;
+    flex: 0 1 720px;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -27,11 +21,11 @@
 
   // Pages with a catalog use the width of the table of contents as well
   &.is-wide &-article {
-    flex-basis: 1024px;
+    flex-basis: 928px;
   }
 
   &.is-wide &-header {
-    max-width: 760px;
+    max-width: 720px;
   }
 
   &-top {
@@ -39,7 +33,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
+
+    @include sm {
+      margin-bottom: 24px;
+    }
 
     @include s {
       flex-wrap: wrap;
@@ -49,7 +47,7 @@
   &-header {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: var(--web-docs-space-header);
   }
 
@@ -63,7 +61,7 @@
   &-section {
     display: flex;
     flex-direction: column;
-    gap: var(--web-docs-space-h3-after);
+    gap: 16px;
     margin-top: var(--web-docs-space-h2);
 
     &-title {
@@ -75,7 +73,7 @@
     &-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      column-gap: 48px;
 
       @include s {
         grid-template-columns: minmax(0, 1fr);
@@ -87,20 +85,22 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: var(--web-docs-box-padding);
-      border-radius: var(--web-docs-radius);
-      border: 1px solid var(--web-outline);
+      padding: 14px 0;
+      border-top: 1px solid var(--web-outline);
       color: var(--web-foreground);
-      font: var(--web-docs-font-compact);
-      font-weight: 600;
-      transition:
-        border-color 0.15s ease-out,
-        color 0.15s ease-out;
+      font-size: 15.5px;
+      font-weight: 500;
+      line-height: 1.45;
+      transition: color 0.15s ease-out;
 
-      &:hover,
+      &:hover {
+        color: var(--web-accent);
+      }
+
       &:focus-visible {
-        border-color: var(--web-accent);
-        color: var(--web-accent-strong);
+        border-radius: 4px;
+        outline: 2px solid var(--web-accent);
+        outline-offset: 2px;
       }
 
       &-icon {
@@ -116,10 +116,11 @@
     top: var(--web-docs-offset);
     align-self: flex-start;
     flex-shrink: 0;
-    width: 220px;
+    // 160px of links, with room around them for their focus ring
+    width: 172px;
     max-height: calc(100dvh - var(--web-docs-offset));
-    padding: 40px 4px 40px 0;
-    margin-top: -40px;
+    margin: -56px -8px 0 -4px;
+    padding: 58px 8px 40px 4px;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;

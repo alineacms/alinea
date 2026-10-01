@@ -2,125 +2,132 @@
 
 @mixin light-theme {
   color-scheme: light;
-  --web-foreground: #171a42;
-  --web-foreground-faded: #555a78;
-  --web-foreground-muted: #7c80a0;
-  --web-background: #f7f7fa;
+  --web-foreground: #1b1c24;
+  --web-foreground-faded: #5c5e6a;
+  --web-foreground-muted: #6f717c;
+  --web-background: #fcfcfb;
   --web-surface: #ffffff;
-  --web-outline: #e8e9f2;
+  --web-surface-soft: #f4f4f1;
+  --web-outline: #e8e8e4;
+  --web-outline-strong: #dcdcd7;
+  --web-band-dots: #e0e0da;
   --web-accent: #3f61e8;
   --web-accent-strong: #2c47c0;
-  --web-accent-soft: #eef0fd;
+  --web-accent-soft: #eef1fd;
   --web-accent-foreground: #ffffff;
-  --web-code-background: #14173a;
-  --web-code-outline: #262a55;
-  --web-code-muted: #8d92b8;
-  --web-code-keyword: #9da3fa;
-  --web-code-string: #7fe0b8;
-  --web-positive: #007a55;
-  --web-positive-soft: #ecfdf5;
-  --web-neutral-soft: #f1f2f7;
-  --web-command-background: #eaecf7;
+  --web-code-background: #f4f4f1;
+  --web-code-foreground: #1b1c24;
+  --web-code-keyword: #3f61e8;
+  --web-code-string: #0f7b5c;
+  --web-code-comment: #8a8c96;
+  --web-code-number: #a74527;
+  --web-positive: #00a36c;
+  --web-positive-foreground: #0f7b5c;
+  --web-warning: #a74527;
 
-  // Legacy tokens, kept for pages that have not been restyled yet
-  --web-accent-hsl: 230, 77%, 60%;
-  --web-accent-light: hsl(230, 77%, 65%);
-  --web-background-variant: var(--web-surface);
-  --web-selected: var(--web-accent-soft);
-  --web-selected-foreground: var(--web-accent);
-  --web-highlight: #ebecf3;
-  --web-negative-hsl: 235, 48%, 17%;
-  --web-section1-background: #f1f3fd;
-  --web-code-inline-background: #eff0f9;
-  --web-code-inline-foreground: #1e232a;
+  // Scrollbars and inline code
+  --web-negative-hsl: 240, 14%, 12%;
+  --web-code-inline-background: var(--web-surface-soft);
+  --web-code-inline-foreground: var(--web-foreground);
 }
 
 @mixin dark-theme {
   color-scheme: dark;
-  --web-foreground: #ffffff;
-  --web-foreground-faded: #c9ceee;
-  --web-foreground-muted: #8f96c4;
-  --web-background: #0d1030;
-  --web-surface: #161b4a;
-  --web-outline: #262c63;
+  --web-foreground: #ededee;
+  --web-foreground-faded: #a9abb5;
+  --web-foreground-muted: #8b8d98;
+  --web-background: #131418;
+  --web-surface: #24252b;
+  --web-surface-soft: #1b1c21;
+  --web-outline: #26272e;
+  --web-outline-strong: #33353d;
+  --web-band-dots: #2b2c33;
   --web-accent: #8b9cff;
   --web-accent-strong: #aab6ff;
   --web-accent-soft: rgba(139, 156, 255, 0.14);
-  --web-accent-foreground: #0d1030;
-  // Darker than the page background so code stands out on it and on surfaces
-  --web-code-background: #0a0c26;
-  --web-code-outline: #2e3570;
-  --web-code-muted: #8d92b8;
+  --web-accent-foreground: #131418;
+  --web-code-background: #1b1c21;
+  --web-code-foreground: #ededee;
   --web-code-keyword: #9da3fa;
   --web-code-string: #7fe0b8;
+  --web-code-comment: #7d7f8a;
+  --web-code-number: #f2a58e;
   --web-positive: #34d399;
-  --web-positive-soft: rgba(52, 211, 153, 0.14);
-  --web-neutral-soft: rgba(255, 255, 255, 0.08);
-  --web-command-background: #1d2358;
+  --web-positive-foreground: #34d399;
+  --web-warning: #f2a58e;
 
-  // Legacy tokens, kept for pages that have not been restyled yet
-  --web-accent-hsl: 230, 100%, 77%;
-  --web-accent-light: #aab6ff;
-  --web-background-variant: var(--web-surface);
-  --web-selected: #232a66;
-  --web-selected-foreground: #ffffff;
-  --web-highlight: #1e2458;
+  // Scrollbars and inline code
   --web-negative-hsl: 0, 0%, 100%;
-  --web-section1-background: var(--web-surface);
   --web-code-inline-background: var(--web-outline);
-  --web-code-inline-foreground: #ffffff;
+  --web-code-inline-foreground: var(--web-foreground);
 }
 
 :root {
   --web-title-font: 'Poppins', sans-serif;
   --web-body-font: 'Instrument Sans', sans-serif;
   --web-mono-font: 'JetBrains Mono', monospace;
-  --web-header-height: 100px;
+  --web-header-height: 96px;
   --web-gutter: 80px;
-  --web-content-width: 1280px;
-  --web-section-gap: 128px;
-  --web-code-highlight: var(--web-accent);
-  --web-code-foreground: #fbfbfe;
+  --web-content-width: 1200px;
+  --web-reading-width: 680px;
+  --web-section-gap: 160px;
+  --web-band-padding: 128px;
+  // Tinted bands: the soft surface with a faint dot grid
+  --web-band: radial-gradient(
+        circle at 1px 1px,
+        var(--web-band-dots) 1px,
+        transparent 1.4px
+      )
+      0 0 / 16px 16px,
+    var(--web-surface-soft);
+  // Only for product screenshots floating on a surface
+  --web-shot-shadow:
+    0 1px 2px rgba(20, 20, 30, 0.06), 0 24px 60px -20px rgba(10, 14, 40, 0.45);
+  // Shiki's css-variables theme, see page/blocks/code/ShikiTheme.ts
+  --shiki-color-text: var(--web-code-foreground);
+  --shiki-color-background: var(--web-code-background);
+  --shiki-token-constant: var(--web-code-number);
+  --shiki-token-string: var(--web-code-string);
+  --shiki-token-comment: var(--web-code-comment);
+  --shiki-token-keyword: var(--web-code-keyword);
+  --shiki-token-parameter: var(--web-code-foreground);
+  --shiki-token-function: var(--web-code-foreground);
+  --shiki-token-string-expression: var(--web-code-string);
+  --shiki-token-punctuation: var(--web-code-comment);
+  --shiki-token-link: var(--web-accent);
 
   // Docs type scale, every text role on docs pages uses one of these
-  --web-docs-font-title: 600 40px/1.15 var(--web-title-font);
-  --web-docs-font-h2: 500 24px/1.35 var(--web-title-font);
-  --web-docs-font-h3: 500 19px/1.45 var(--web-title-font);
+  --web-docs-font-title: 500 44px/1.1 var(--web-title-font);
+  --web-docs-font-h2: 500 24px/1.25 var(--web-title-font);
+  --web-docs-font-h3: 500 19px/1.35 var(--web-title-font);
   --web-docs-font-h4: 500 16px/1.5 var(--web-title-font);
-  --web-docs-font-lead: 400 18px/1.65 var(--web-body-font);
-  --web-docs-font-body: 400 16px/1.75 var(--web-body-font);
+  --web-docs-font-lead: 400 19px/1.55 var(--web-body-font);
+  --web-docs-font-body: 400 16px/1.65 var(--web-body-font);
   // Text in boxed blocks: notices, cards, prompts
   --web-docs-font-compact: 400 15px/1.6 var(--web-body-font);
   // Sidebar, table of contents, breadcrumbs, captions
   --web-docs-font-nav: 400 14px/20px var(--web-body-font);
-  // Labels, legal
-  --web-docs-font-small: 400 13px/1.5 var(--web-body-font);
-  --web-docs-font-code: 400 14px/1.7 var(--web-mono-font);
+  --web-docs-font-code: 400 14px/1.75 var(--web-mono-font);
   // Code block file names and tabs
   --web-docs-font-code-label: 400 12.5px/20px var(--web-mono-font);
-  --web-docs-tracking-title: -0.025em;
-  --web-docs-tracking-heading: -0.015em;
+  --web-docs-tracking-title: -0.02em;
+  --web-docs-tracking-heading: -0.02em;
 
   // Vertical rhythm, margins collapse so the larger side wins
   --web-docs-space-flow: 20px;
   --web-docs-space-block: 28px;
   --web-docs-space-list: 8px;
-  --web-docs-space-h2: 48px;
+  --web-docs-space-h2: 56px;
   --web-docs-space-h3: 36px;
   --web-docs-space-h4: 28px;
-  --web-docs-space-h2-after: 16px;
+  --web-docs-space-h2-after: 12px;
   --web-docs-space-h3-after: 12px;
   --web-docs-space-h4-after: 8px;
-  --web-docs-space-header: 32px;
-  --web-docs-space-footer: 64px;
+  --web-docs-space-header: 40px;
+  --web-docs-space-footer: 72px;
 
   // Boxed blocks: code, notices, examples, prompts, links and cards
-  --web-docs-radius: 14px;
-  --web-docs-box-padding: 16px 20px;
-  --web-docs-code-bar: 44px;
-
-  // Navigation rows in the sidebar and the table of contents
-  --web-docs-nav-row: 32px;
+  --web-docs-radius: 10px;
 
   @include dark-theme;
 
@@ -131,19 +138,20 @@
   @include sm {
     --web-header-height: 76px;
     --web-gutter: 40px;
-    --web-section-gap: 72px;
-    --web-docs-font-title: 600 32px/1.2 var(--web-title-font);
-    --web-docs-font-h2: 500 22px/1.35 var(--web-title-font);
-    --web-docs-font-h3: 500 18px/1.45 var(--web-title-font);
-    --web-docs-font-lead: 400 17px/1.65 var(--web-body-font);
-    --web-docs-space-h2: 40px;
+    --web-section-gap: 104px;
+    --web-band-padding: 96px;
+    --web-docs-font-title: 500 36px/1.15 var(--web-title-font);
+    --web-docs-font-h2: 500 22px/1.3 var(--web-title-font);
+    --web-docs-font-h3: 500 18px/1.4 var(--web-title-font);
+    --web-docs-font-lead: 400 17px/1.6 var(--web-body-font);
+    --web-docs-space-h2: 44px;
     --web-docs-space-h3: 32px;
     --web-docs-space-header: 28px;
     --web-docs-space-footer: 56px;
   }
 
   @include s {
-    --web-gutter: 20px;
+    --web-gutter: 24px;
   }
 }
 
@@ -182,8 +190,9 @@ body {
   color: var(--web-foreground);
   background: var(--web-background);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.65;
   font-family: var(--web-body-font);
+  -webkit-font-smoothing: antialiased;
 }
 
 svg,
@@ -282,5 +291,14 @@ button {
   font-display: block;
   font-weight: 400;
   src: url('../../../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-display: block;
+  font-weight: 500;
+  src: url('../../../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2')
     format('woff2');
 }

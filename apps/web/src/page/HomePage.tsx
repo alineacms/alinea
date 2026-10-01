@@ -76,12 +76,14 @@ function HomeHero({
             {secondary.label}
           </Button>
         )}
-        <InstallCommand command={command || undefined} />
+        <InstallCommand
+          command={command || undefined}
+          className={styles.hero.command()}
+        />
       </div>
       {prompt && (
         <CopyPrompt
           prompt={withSiteUrl(prompt)}
-          align="center"
           className={styles.hero.prompt()}
         />
       )}

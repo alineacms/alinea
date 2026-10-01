@@ -1,17 +1,15 @@
 .root {
   display: flex;
-  gap: 14px;
-  padding: 16px 18px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--web-accent) 18%, transparent);
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 10px;
   background: var(--web-accent-soft);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--web-foreground);
 
   &.is-warning {
-    border-color: var(--web-outline);
-    background: var(--web-neutral-soft);
+    background: var(--web-surface-soft);
   }
 
   &-icon {
@@ -23,7 +21,7 @@
   }
 
   &.is-warning &-icon {
-    color: var(--web-foreground-faded);
+    color: var(--web-warning);
   }
 
   &-body {
@@ -38,7 +36,7 @@
   }
 
   &-link {
-    font-weight: 600;
+    font-weight: 500;
     color: var(--web-accent);
 
     &:hover {

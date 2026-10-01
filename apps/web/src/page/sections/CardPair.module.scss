@@ -3,17 +3,22 @@
 .root {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  gap: 96px;
 
   &.is-attached {
-    padding-top: 48px;
+    padding-top: 128px;
+  }
+
+  @media (max-width: 1199.999px) {
+    gap: 64px;
   }
 
   @include sm {
     grid-template-columns: minmax(0, 1fr);
+    gap: 64px;
 
     &.is-attached {
-      padding-top: 24px;
+      padding-top: 64px;
     }
   }
 }
@@ -21,53 +26,61 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   min-width: 0;
-  padding: 48px;
-  border-radius: 28px;
-  border: 1px solid var(--web-outline);
-  background: var(--web-surface);
+  padding-top: 32px;
+  border-top: 1px solid var(--web-outline);
 
   @include sm {
-    padding: 32px;
-    border-radius: 22px;
-  }
-
-  @include s {
-    padding: 24px 20px;
+    padding-top: 24px;
   }
 
   &-title {
     margin: 0;
     font-family: var(--web-title-font);
-    font-weight: 600;
-    font-size: 32px;
-    line-height: 1.12;
-    letter-spacing: -0.025em;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
     color: var(--web-foreground);
 
-    @include sm {
-      font-size: 26px;
+    @include s {
+      font-size: 20px;
     }
   }
 
   &-text {
-    margin: 0;
-    font-size: 16.5px;
-    line-height: 1.6;
+    margin: 0 0 12px;
+    font-size: 16px;
+    line-height: 1.65;
     color: var(--web-foreground-faded);
   }
 
   &-chips {
     display: flex;
     flex-wrap: wrap;
+    gap: 6px 24px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--web-foreground-faded);
+  }
+
+  &-chip {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    margin-top: auto;
+  }
+
+  &-dash {
+    color: var(--web-accent);
   }
 
   &-footnote {
-    margin: auto 0 0;
-    font-size: 13px;
+    margin: 12px 0 0;
+    font-size: 13.5px;
     line-height: 1.5;
     color: var(--web-foreground-muted);
   }
@@ -76,26 +89,25 @@
 .bars {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 4px;
+  gap: 14px;
 
   &-row {
     display: grid;
-    grid-template-columns: 92px minmax(0, 1fr) 120px;
+    grid-template-columns: 88px minmax(0, 1fr) 116px;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     font-size: 14.5px;
-    font-weight: 500;
+    line-height: 1.5;
     color: var(--web-foreground-faded);
 
     @include s {
-      grid-template-columns: 76px minmax(0, 1fr) auto;
-      gap: 10px;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
+      gap: 12px;
       font-size: 13.5px;
     }
 
     &.is-highlight {
-      font-weight: 700;
+      font-weight: 600;
       color: var(--web-foreground);
     }
   }
@@ -108,21 +120,18 @@
   }
 
   &-track {
-    height: 12px;
-    border-radius: 6px;
-    background: var(--web-neutral-soft);
+    height: 6px;
+    border-radius: 3px;
+    background: var(--web-surface-soft);
     overflow: hidden;
   }
 
   &-fill {
     display: block;
+    min-width: 6px;
     height: 100%;
-    border-radius: 6px;
-    background: color-mix(
-      in srgb,
-      var(--web-foreground-muted) 40%,
-      transparent
-    );
+    border-radius: 3px;
+    background: var(--web-outline-strong);
   }
 
   &-row.is-highlight &-fill {

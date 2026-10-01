@@ -5,10 +5,10 @@ import css from './DashboardMock.module.scss'
 
 const styles = styler(css)
 
-export type DashboardMockMode = 'light' | 'dark' | 'auto'
+export type DashboardMockMode = 'light' | 'dark' | 'contrast'
 
 export interface DashboardMockProps {
-  /** Color scheme, `auto` follows the website theme */
+  /** Color scheme, `contrast` is the opposite of the website theme */
   mode?: DashboardMockMode
   className?: string
 }

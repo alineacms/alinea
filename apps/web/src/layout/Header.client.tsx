@@ -115,10 +115,14 @@ const Snippet = memo(function Snippet({snippet}: SnippetProps) {
   const doc = parser.parseFromString(snippet, 'text/html')
   const nodes = [...doc.body.childNodes]
   return (
-    <p>
+    <p className={styles.results.row.snippet()}>
       {nodes.map((node, i) => {
         if (node.nodeName === 'MARK')
-          return <strong key={i}>{node.textContent}</strong>
+          return (
+            <strong key={i} className={styles.results.row.match()}>
+              {node.textContent}
+            </strong>
+          )
         return <Fragment key={i}>{node.textContent}</Fragment>
       })}
     </p>
@@ -158,7 +162,7 @@ const SearchResults = memo(function SearchResults({
           <li key={result.url} className={styles.results.row()}>
             <Breadcrumbs flat parents={result.parents} />
             <Link href={result.url} className={styles.results.row.link()}>
-              <h3>{result.title}</h3>
+              <h3 className={styles.results.row.title()}>{result.title}</h3>
               <Snippet snippet={result.snippet} />
             </Link>
           </li>
@@ -233,12 +237,31 @@ function SearchModal({onClose}: SearchModalProps) {
   )
 }
 
-export function SearchButton({children}: PropsWithChildren) {
+export interface SearchButtonProps {
+  /** Opens search on ⌘K, where the button shows that hint (docs pages) */
+  shortcut?: boolean
+}
+
+export function SearchButton({
+  shortcut,
+  children
+}: PropsWithChildren<SearchButtonProps>) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const withShortcut = shortcut && isDocsPath(pathname)
   useEffect(() => {
     setIsOpen(false)
   }, [pathname])
+  useEffect(() => {
+    if (!withShortcut) return
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'k' || !(event.metaKey || event.ctrlKey)) return
+      event.preventDefault()
+      setIsOpen(true)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [withShortcut])
   return (
     <>
       <div

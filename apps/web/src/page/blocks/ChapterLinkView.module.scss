@@ -3,24 +3,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: var(--web-docs-box-padding);
-  border-radius: var(--web-docs-radius);
-  border: 1px solid var(--web-outline);
-  background: var(--web-surface);
+  padding: 16px 0;
+  border-block: 1px solid var(--web-outline);
   color: var(--web-foreground);
-  transition:
-    border-color 0.15s ease-out,
-    color 0.15s ease-out;
+  transition: color 0.15s ease-out;
 
-  &:hover,
+  &:hover {
+    color: var(--web-accent);
+  }
+
   &:focus-visible {
-    border-color: var(--web-accent);
-    color: var(--web-accent-strong);
+    border-radius: 4px;
+    outline: 2px solid var(--web-accent);
+    outline-offset: 2px;
   }
 
   &-title {
-    font: var(--web-docs-font-compact);
-    font-weight: 600;
+    font-size: 15.5px;
+    font-weight: 500;
+    line-height: 1.5;
   }
 
   &-icon {

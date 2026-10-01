@@ -1,32 +1,37 @@
+// A marker: plain text, no pill. The Live pill is the only pill on the site.
 .root {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
+  gap: 8px;
   font-family: var(--web-body-font);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.5;
   white-space: nowrap;
 
   &.is-accent {
-    color: var(--web-accent-strong);
-    background: var(--web-accent-soft);
+    color: var(--web-accent);
   }
 
   &.is-neutral {
-    color: var(--web-foreground-faded);
-    background: var(--web-neutral-soft);
+    font-weight: 400;
+    color: var(--web-foreground-muted);
   }
 
   &.is-positive {
-    color: var(--web-positive);
-    background: var(--web-positive-soft);
+    font-weight: 400;
+    color: var(--web-foreground-faded);
+
+    &::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--web-positive);
+    }
   }
 
   &.is-small {
-    padding: 3px 10px;
-    font-size: 12.5px;
+    font-size: 13px;
   }
 }

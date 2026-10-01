@@ -8,8 +8,6 @@ const styles = styler(css)
 
 export interface CatalogCardProps {
   href: string
-  /** Fields show their input on a form, components on a canvas */
-  kind: 'field' | 'component'
   name: string
   /** How to use it in code, eg. `Field.text` or `<Button>` */
   code: string
@@ -20,7 +18,6 @@ export interface CatalogCardProps {
 
 export function CatalogCard({
   href,
-  kind,
   name,
   code,
   meta,
@@ -29,7 +26,7 @@ export function CatalogCard({
 }: CatalogCardProps) {
   return (
     // The title link covers the card, previews may contain links themselves
-    <div className={styles.root(kind)}>
+    <div className={styles.root()}>
       <div className={styles.root.stage()}>{preview}</div>
       <div className={styles.root.body()}>
         <div className={styles.root.row()}>

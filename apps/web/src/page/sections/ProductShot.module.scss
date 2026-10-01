@@ -1,43 +1,36 @@
 @use '@/style' as *;
 
+// The product on the blue photo, contained in the content column. Small
+// screens show the top left of the dashboard running off the edge so the
+// interface stays legible.
 .root {
   --web-shot-scale: 1;
 
   position: relative;
   z-index: 0;
-  height: 760px;
   display: flex;
   justify-content: center;
-  margin-top: 72px;
-  padding-top: 80px;
-  border-radius: 32px;
+  margin-top: 88px;
+  padding: 72px 40px;
+  border-radius: 12px;
   overflow: hidden;
+  background: var(--web-accent);
 
-  @media (max-width: 1199.999px) {
-    --web-shot-scale: 0.85;
-
-    height: 660px;
-    padding-top: 64px;
-  }
-
-  @include m {
+  @include sm {
     --web-shot-scale: 0.75;
 
     height: 440px;
     justify-content: flex-start;
-    margin-top: 48px;
+    margin-top: 56px;
     padding: 40px 0 0 40px;
-    border-radius: 24px;
   }
 
   @include s {
     --web-shot-scale: 0.6;
 
-    height: 320px;
-    justify-content: flex-start;
+    height: 296px;
     margin-top: 40px;
-    padding: 32px 0 0 20px;
-    border-radius: 24px;
+    padding: 28px 0 0 22px;
   }
 
   &-background {
@@ -45,12 +38,20 @@
     object-fit: cover;
   }
 
-  &-shot {
-    flex-shrink: 0;
+  &-shot,
+  &-frame {
     width: calc(960px * var(--web-shot-scale));
+    border-radius: calc(10px * var(--web-shot-scale));
+    overflow: hidden;
+    box-shadow: var(--web-shot-shadow);
+
+    @include sm {
+      flex-shrink: 0;
+    }
+  }
+
+  &-shot {
     height: calc(600px * var(--web-shot-scale));
-    border-radius: calc(14px * var(--web-shot-scale));
-    box-shadow: 0 40px 100px rgba(16, 24, 90, 0.45);
   }
 
   &-dashboard {
@@ -58,67 +59,20 @@
     transform-origin: top left;
   }
 
-  &.is-image {
-    height: auto;
-    justify-content: center;
-    padding: 80px 40px;
-
-    // Like the illustration, small screens show the top left of a larger
-    // screenshot running off the edge so the interface stays legible
-    @include m {
-      height: 440px;
-      justify-content: flex-start;
-      padding: 40px 0 0 40px;
-    }
-
-    @include s {
-      height: 340px;
-      justify-content: flex-start;
-      padding: 32px 0 0 20px;
-    }
-  }
-
-  // A window around the screenshot: rounded, a hairline edge that reads on
-  // both the light and dark screenshot, and a soft shadow on the backdrop
-  &-frame {
-    width: 100%;
-    max-width: 1120px;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.35),
-      0 1px 2px rgba(16, 24, 90, 0.2),
-      0 40px 100px rgba(16, 24, 90, 0.45);
-
-    @include m {
-      flex-shrink: 0;
-      width: 880px;
-      max-width: none;
-      border-radius: 12px;
-    }
-
-    @include s {
-      flex-shrink: 0;
-      width: 640px;
-      max-width: none;
-      border-radius: 10px;
-    }
-  }
-
   &-image {
     display: block;
 
-    &.is-dark {
+    &.is-light {
       display: none;
     }
 
     @include theme-dark {
       &.is-light {
-        display: none;
+        display: block;
       }
 
       &.is-dark {
-        display: block;
+        display: none;
       }
     }
   }

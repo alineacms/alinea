@@ -3,45 +3,35 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 760px;
-
-  &.is-center {
-    align-items: center;
-    margin-inline: auto;
-    text-align: center;
-  }
 
   &-box {
     display: flex;
     align-items: center;
     gap: 12px;
     width: 100%;
-    padding: 6px 6px 6px 16px;
+    padding: 6px 6px 6px 14px;
     border: 1px solid var(--web-outline);
-    border-radius: 14px;
+    border-radius: 10px;
     background: var(--web-surface);
-    box-shadow: 0 1px 2px
-      color-mix(in srgb, var(--web-foreground) 5%, transparent);
-    text-align: left;
     transition: border-color 0.2s ease-out;
 
     @include s {
       gap: 10px;
-      padding-left: 14px;
     }
   }
 
   &:has(&-button:hover) &-box,
   &.is-copied &-box {
-    border-color: color-mix(in srgb, var(--web-accent) 40%, var(--web-outline));
+    border-color: var(--web-outline-strong);
   }
 
   &-icon {
     display: block;
     flex-shrink: 0;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--web-accent);
 
     @include s {
@@ -55,13 +45,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 15px;
+    font-size: 14.5px;
     line-height: 1.4;
     color: var(--web-foreground);
-
-    @include s {
-      font-size: 14px;
-    }
   }
 
   &-button {
@@ -69,26 +55,23 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    min-width: 132px;
-    padding: 10px 14px;
+    gap: 6px;
+    min-width: 124px;
+    padding: 7px 12px;
     border: none;
-    border-radius: 10px;
+    border-radius: 6px;
     font-family: var(--web-body-font);
     font-size: 14px;
-    font-weight: 600;
-    line-height: 1.25;
+    font-weight: 500;
+    line-height: 1.4;
     white-space: nowrap;
-    color: var(--web-accent);
-    background: var(--web-accent-soft);
+    color: var(--web-foreground);
+    background: var(--web-surface-soft);
     cursor: pointer;
-    transition:
-      background-color 0.2s ease-out,
-      color 0.2s ease-out;
+    transition: background-color 0.2s ease-out;
 
     &:is(:hover, :focus-visible) {
-      color: var(--web-accent-foreground);
-      background: var(--web-accent);
+      background: var(--web-outline);
     }
 
     &:focus-visible {
@@ -98,13 +81,13 @@
 
     @include s {
       min-width: 0;
-      padding-inline: 12px;
     }
 
     &-icon {
       display: block;
       flex-shrink: 0;
-      font-size: 16px;
+      font-size: 15px;
+      color: var(--web-foreground-muted);
     }
 
     &-label {
@@ -112,9 +95,8 @@
     }
   }
 
-  &.is-copied &-button {
+  &.is-copied &-button-icon {
     color: var(--web-positive);
-    background: var(--web-positive-soft);
   }
 
   &-status {
@@ -122,8 +104,8 @@
     align-items: center;
     min-height: 20px;
     margin: 0;
-    padding-inline: 4px;
-    font-size: 14px;
+    padding-inline: 2px;
+    font-size: 13.5px;
     line-height: 20px;
     color: var(--web-foreground-muted);
 
@@ -131,17 +113,15 @@
       display: block;
       flex-shrink: 0;
       margin-right: 6px;
-      font-size: 16px;
+      font-size: 15px;
     }
   }
 
   &.is-copied &-status {
-    color: var(--web-positive);
-    font-weight: 500;
+    color: var(--web-positive-foreground);
   }
 
   &.is-failed &-status {
     color: var(--web-foreground);
-    font-weight: 500;
   }
 }

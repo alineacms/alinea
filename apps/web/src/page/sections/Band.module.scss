@@ -1,0 +1,9 @@
+.root {
+  // Hairlines read stronger and code sits on the surface inside a band
+  --web-outline: var(--web-outline-strong);
+  --web-code-background: var(--web-surface);
+
+  margin-top: var(--web-section-gap);
+  padding-block: var(--web-band-padding);
+  background: var(--web-band);
+}

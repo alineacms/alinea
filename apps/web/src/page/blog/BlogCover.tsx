@@ -11,9 +11,9 @@ export type BlogCoverSize = 'featured' | 'post'
 
 export interface BlogCoverProps {
   cover?: ImageLink | null
-  /** Rendered large on the gradient when there is no cover image */
+  /** Rendered on the photo when there is no cover image */
   text?: string | null
-  /** Rendered smaller on the gradient when there is no cover text */
+  /** Rendered smaller on the photo when there is no cover text */
   fallbackText?: string
   size?: BlogCoverSize
   sizes: string
@@ -53,7 +53,7 @@ export function BlogCover({
     )
   }
   return (
-    <div className={styles.root(size, 'gradient', styler.merge({className}))}>
+    <div className={styles.root(size, styler.merge({className}))}>
       <Image
         className={styles.root.image({flipped: size === 'post'})}
         src={heroBg.src}

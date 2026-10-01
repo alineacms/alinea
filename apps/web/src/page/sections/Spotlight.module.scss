@@ -3,35 +3,27 @@
 .root {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 56px;
+  gap: 96px;
   align-items: center;
-  padding: 56px;
-  border-radius: 28px;
-  border: 1px solid var(--web-outline);
-  background: var(--web-surface);
 
   &.is-visual {
     grid-template-columns: 440px minmax(0, 1fr);
   }
 
   @media (max-width: 1199.999px) {
+    gap: 64px;
+
     &.is-visual {
       grid-template-columns: 360px minmax(0, 1fr);
     }
   }
 
   @include sm {
-    gap: 32px;
-    padding: 32px;
-    border-radius: 22px;
+    gap: 48px;
 
     &.is-visual {
       grid-template-columns: minmax(0, 1fr);
     }
-  }
-
-  @include s {
-    padding: 24px 20px;
   }
 
   &-content {
@@ -40,36 +32,35 @@
     gap: 20px;
   }
 
-  &-label {
-    align-self: flex-start;
-  }
-
   &-title {
     margin: 0;
     font-family: var(--web-title-font);
-    font-weight: 600;
-    font-size: 38px;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
     white-space: pre-line;
     color: var(--web-foreground);
 
-    @include sm {
-      font-size: 30px;
+    @include s {
+      font-size: 22px;
     }
+  }
+
+  // The marker reads as a note on the title, not an eyebrow above it
+  &-label {
+    align-self: flex-start;
+    margin-top: -8px;
   }
 
   &-text {
     margin: 0;
-    font-size: 17px;
-    line-height: 1.6;
+    font-size: 16px;
+    line-height: 1.65;
     color: var(--web-foreground-faded);
   }
 
   &-visual {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
     min-width: 0;
   }
 }

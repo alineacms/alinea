@@ -3,7 +3,7 @@
 .root {
   display: grid;
   grid-template-columns: 400px minmax(0, 1fr);
-  gap: 80px;
+  gap: 96px;
 
   @media (max-width: 1199.999px) {
     grid-template-columns: 320px minmax(0, 1fr);
@@ -12,7 +12,7 @@
 
   @include sm {
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    gap: 40px;
   }
 
   &-intro {
@@ -24,15 +24,14 @@
   &-title {
     margin: 0;
     font-family: var(--web-title-font);
-    font-weight: 600;
-    font-size: 48px;
-    line-height: 1.08;
-    letter-spacing: -0.03em;
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
     color: var(--web-foreground);
 
-    @include sm {
-      font-size: 32px;
-      line-height: 1.1;
+    @include s {
+      font-size: 26px;
     }
   }
 
@@ -50,15 +49,15 @@
   color: var(--web-foreground-faded);
 
   &.is-intro {
-    font-size: 18px;
-    line-height: 1.55;
+    font-size: 17px;
+    line-height: 1.6;
   }
 
   &.is-answer {
-    max-width: 640px;
-    margin-top: 12px;
-    font-size: 16.5px;
-    line-height: 1.6;
+    max-width: 620px;
+    margin-top: 10px;
+    font-size: 16px;
+    line-height: 1.65;
   }
 
   &-paragraph {
@@ -66,7 +65,7 @@
   }
 
   &-link {
-    font-weight: 600;
+    font-weight: 500;
     color: var(--web-accent);
 
     &:is(:hover, :focus-visible) {
@@ -87,22 +86,21 @@
   padding: 24px 0;
   border-bottom: 1px solid var(--web-outline);
 
+  &[open] {
+    padding-bottom: 26px;
+  }
+
   &-question {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    font-family: var(--web-title-font);
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 500;
-    line-height: 1.35;
+    line-height: 1.5;
     color: var(--web-foreground);
     list-style: none;
     cursor: pointer;
-
-    @include s {
-      font-size: 18px;
-    }
 
     &::-webkit-details-marker {
       display: none;
@@ -118,7 +116,7 @@
   &-icon {
     display: flex;
     flex-shrink: 0;
-    font-size: 20px;
+    font-size: 16px;
     color: var(--web-foreground-muted);
 
     &-minus {

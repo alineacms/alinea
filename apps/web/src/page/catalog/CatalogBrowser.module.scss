@@ -3,31 +3,38 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 64px;
+
+  @include sm {
+    gap: 48px;
+  }
 
   &-controls {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 16px;
+    gap: 24px;
+    border-bottom: 1px solid var(--web-outline);
 
     @include sm {
-      flex-direction: column;
+      flex-direction: column-reverse;
       align-items: stretch;
+      gap: 16px;
     }
   }
 
   &-tabs {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    column-gap: 28px;
     min-width: 0;
 
     @include sm {
-      // Scroll the tabs sideways instead of wrapping them on small screens,
-      // with room for the focus ring
+      // Scroll the tabs sideways instead of wrapping them on small screens
+      flex-wrap: nowrap;
       overflow-x: auto;
-      margin: -4px calc(-1 * var(--web-gutter));
-      padding: 4px var(--web-gutter);
+      margin: 0 calc(-1 * var(--web-gutter));
+      padding: 0 var(--web-gutter);
       scrollbar-width: none;
 
       &::-webkit-scrollbar {
@@ -38,34 +45,32 @@
 
   &-tab {
     flex-shrink: 0;
-    height: 36px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 1px solid var(--web-outline);
-    background: var(--web-surface);
+    padding: 10px 0;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
     color: var(--web-foreground-faded);
-    font: 500 14px/1 var(--web-body-font);
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.4;
     cursor: pointer;
     transition:
       border-color 0.15s,
-      color 0.15s,
-      background 0.15s;
+      color 0.15s;
 
     &:hover {
-      border-color: color-mix(in srgb, var(--web-foreground) 30%, transparent);
       color: var(--web-foreground);
     }
 
     &:focus-visible {
+      color: var(--web-foreground);
       outline: 2px solid var(--web-accent);
-      outline-offset: 2px;
+      outline-offset: -2px;
+      border-radius: 4px;
     }
 
     &.is-selected {
-      border-color: var(--web-foreground);
-      background: var(--web-foreground);
-      color: var(--web-background);
-      font-weight: 600;
+      color: var(--web-foreground);
+      border-bottom-color: var(--web-accent);
     }
   }
 
@@ -75,11 +80,11 @@
     align-items: center;
     gap: 8px;
     width: 240px;
-    height: 40px;
+    height: 38px;
+    margin-bottom: 8px;
     padding: 0 12px;
-    border-radius: 10px;
-    border: 1px solid var(--web-outline);
-    background: var(--web-surface);
+    border-radius: 8px;
+    border: 1px solid var(--web-outline-strong);
     color: var(--web-foreground-muted);
     cursor: text;
     transition: border-color 0.15s;
@@ -91,11 +96,12 @@
 
     @include sm {
       width: 100%;
+      margin-bottom: 0;
     }
 
     &-icon {
       flex-shrink: 0;
-      font-size: 16px;
+      font-size: 15px;
     }
 
     &-input {
@@ -105,7 +111,7 @@
       outline: none;
       background: transparent;
       color: var(--web-foreground);
-      font: 400 14px/1 var(--web-body-font);
+      font: 400 14.5px/1 var(--web-body-font);
 
       &::placeholder {
         color: var(--web-foreground-muted);
@@ -125,13 +131,17 @@
   &-panel {
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 88px;
+
+    @include sm {
+      gap: 64px;
+    }
   }
 
   &-group {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 28px;
 
     &[hidden] {
       display: none;
@@ -139,7 +149,7 @@
   }
 
   &-heading {
-    font: var(--web-docs-font-h3);
+    font: var(--web-docs-font-h2);
     letter-spacing: var(--web-docs-tracking-heading);
     color: var(--web-foreground);
   }
@@ -147,7 +157,7 @@
   &-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    gap: 44px 32px;
     list-style: none;
 
     @media (max-width: 1279.999px) {
@@ -156,6 +166,7 @@
 
     @include s {
       grid-template-columns: minmax(0, 1fr);
+      row-gap: 36px;
     }
   }
 
@@ -174,8 +185,8 @@
     align-items: center;
     gap: 12px;
     padding: 48px 24px;
-    border-radius: var(--web-docs-radius);
-    border: 1px dashed var(--web-outline);
+    border-radius: 12px;
+    background: var(--web-surface-soft);
     font: var(--web-docs-font-compact);
     color: var(--web-foreground-faded);
     text-align: center;
@@ -186,18 +197,18 @@
       gap: 6px;
       height: 34px;
       padding: 0 12px;
-      border-radius: 10px;
-      border: 1px solid var(--web-outline);
-      background: var(--web-surface);
+      border-radius: 8px;
+      border: 1px solid var(--web-outline-strong);
       color: var(--web-foreground);
-      font: 500 14px/1 var(--web-body-font);
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
 
       &:hover {
         border-color: color-mix(
           in srgb,
           var(--web-foreground) 30%,
-          transparent
+          var(--web-outline-strong)
         );
       }
 

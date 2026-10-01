@@ -26,7 +26,7 @@
 
   // On a wide page text keeps its measure, catalogs use the full width
   &.is-wide :is(.p, .h2, .h3, .h4, .list, .blockquote, .block:not(.is-wide)) {
-    max-width: 760px;
+    max-width: 720px;
   }
 }
 
@@ -87,9 +87,10 @@
 
 .anchor {
   color: inherit;
+  transition: color 0.15s ease-out;
 
   &:hover {
-    color: var(--web-accent-strong);
+    color: var(--web-accent);
   }
 }
 
@@ -97,7 +98,8 @@
   color: var(--web-accent);
   font-weight: 500;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--web-accent) 35%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--web-accent) 30%, transparent);
+  text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
   transition: color 0.15s ease-out;
 
@@ -153,80 +155,15 @@
 
 .blockquote {
   margin: 0 0 var(--web-docs-space-flow);
-  padding: 4px 16px;
-  border-left: 2px solid var(--web-outline);
+  padding: 2px 0 2px 18px;
+  border-left: 2px solid var(--web-outline-strong);
 
   &:last-child {
     margin-bottom: 0;
   }
 }
 
-.steps {
-  display: flex;
-  flex-direction: column;
-  margin: var(--web-docs-space-h2) 0 0;
-  padding: 0;
-  list-style: none;
-
-  &:first-child {
-    margin-top: 0;
-  }
-}
-
+// The number of a step heading
 .step {
-  display: flex;
-  gap: 20px;
-
-  &-rail {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-
-    @include s {
-      display: none;
-    }
-  }
-
-  &-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    border-radius: 16px;
-    border: 1px solid color-mix(in srgb, var(--web-accent) 25%, transparent);
-    background: var(--web-surface);
-    color: var(--web-accent);
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  &-line {
-    flex-grow: 1;
-    width: 1px;
-    background: var(--web-outline);
-  }
-
-  &:last-child &-line {
-    background: linear-gradient(var(--web-outline), transparent);
-  }
-
-  &-content {
-    flex-grow: 1;
-    min-width: 0;
-    padding-bottom: var(--web-docs-space-h2);
-  }
-
-  &:last-child &-content {
-    padding-bottom: 0;
-  }
-
-  &-title {
-    @include heading(h2);
-    // Its first line (32px) lines up with the step number
-    margin-top: 0;
-  }
+  color: var(--web-foreground-muted);
 }

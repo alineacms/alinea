@@ -8,7 +8,6 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  background: var(--web-surface);
 
   @include sm {
     --web-docs-offset: calc(var(--web-header-height) + 48px);
@@ -17,26 +16,27 @@
   &-inner {
     flex-grow: 1;
     display: flex;
+    gap: 56px;
     width: 100%;
     max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
     margin-inline: auto;
+    padding-inline: var(--web-gutter);
+
+    @media (max-width: 1279.999px) {
+      gap: 40px;
+    }
   }
 
   &-main {
     flex-grow: 1;
     min-width: 0;
-    border-left: 1px solid var(--web-outline);
     outline: none;
-
-    @include sm {
-      border-left: 0;
-    }
   }
 }
 
 // A compact header on docs pages, it stays in view while reading
 :global(html):has(.root) {
   @include l {
-    --web-header-height: 64px;
+    --web-header-height: 72px;
   }
 }

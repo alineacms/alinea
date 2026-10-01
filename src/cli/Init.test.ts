@@ -3,7 +3,9 @@ import {
   init,
   PM,
   patchAgents,
+  patchClaude,
   patchGitignore,
+  patchMcpConfig,
   patchPackageJson
 } from '#/cli/Init.js'
 import {suite} from '@alinea/suite'
@@ -74,9 +76,15 @@ if (testPms) {
     const gitignore = await fs.readFile(path.join(cwd, '.gitignore'), 'utf-8')
     test.is(gitignore, '/public/admin.html\n/public/admin/\n')
     const agents = await fs.readFile(path.join(cwd, 'AGENTS.md'), 'utf-8')
-    test.ok(agents.startsWith('## Alinea\n'))
+    test.ok(agents.startsWith('<!-- BEGIN:alinea-agent-rules -->\n\n## Alinea\n'))
     test.ok(agents.includes('`src/cms.ts`'))
     test.ok(agents.includes('node_modules/alinea/docs/'))
+    const claude = await fs.readFile(path.join(cwd, 'CLAUDE.md'), 'utf-8')
+    test.is(claude, '@AGENTS.md\n')
+    const mcp = await fs.readFile(path.join(cwd, '.mcp.json'), 'utf-8')
+    test.equal(JSON.parse(mcp), {
+      mcpServers: {alinea: {command: 'npx', args: ['alinea', 'mcp']}}
+    })
   })
 }
 
@@ -117,19 +125,49 @@ test('patchGitignore appends missing lines', () => {
   test.is(patchGitignore(source, lines), source)
 })
 
-test('patchAgents appends the section once', () => {
-  const section = '## Alinea\n\nUse the docs.\n'
-  test.is(patchAgents('', section), section)
+const rules = '## Alinea\n\nUse the docs.\n'
+const block =
+  '<!-- BEGIN:alinea-agent-rules -->\n\n## Alinea\n\nUse the docs.\n\n<!-- END:alinea-agent-rules -->'
+
+test('patchAgents appends the marked rules', () => {
+  test.is(patchAgents('', rules), `${block}\n`)
   test.is(
-    patchAgents('# Project\n\nRules.\n', section),
-    '# Project\n\nRules.\n\n## Alinea\n\nUse the docs.\n'
+    patchAgents('# Project\n\nRules.\n', rules),
+    `# Project\n\nRules.\n\n${block}\n`
   )
   test.is(
-    patchAgents('# Project\r\n', section),
-    '# Project\r\n\r\n## Alinea\r\n\r\nUse the docs.\r\n'
+    patchAgents('# Project\r\n', rules),
+    `# Project\r\n\r\n${block.replaceAll('\n', '\r\n')}\r\n`
   )
-  const source = '# Project\n\n## Alinea\n\nOur own notes.\n'
-  test.is(patchAgents(source, section), source)
+})
+
+test('patchAgents replaces the marked rules only', () => {
+  const old =
+    '# Project\n\n<!-- BEGIN:alinea-agent-rules -->\nOld.\n<!-- END:alinea-agent-rules -->\n\nOurs.\n'
+  test.is(patchAgents(old, rules), `# Project\n\n${block}\n\nOurs.\n`)
+  const current = `# Project\n\n${block}\n`
+  test.is(patchAgents(current, rules), current)
+})
+
+test('patchClaude imports AGENTS.md', () => {
+  test.is(patchClaude(undefined, rules), '@AGENTS.md\n')
+  test.is(patchClaude('@AGENTS.md\n\nMore.\n', rules), '@AGENTS.md\n\nMore.\n')
+  test.is(patchClaude('# Notes\n', rules), `# Notes\n\n${block}\n`)
+})
+
+test('patchMcpConfig adds the alinea server', () => {
+  const server = {command: 'npx', args: ['alinea', 'mcp']}
+  test.is(
+    patchMcpConfig(undefined, server),
+    '{\n  "mcpServers": {\n    "alinea": {\n      "command": "npx",\n      "args": [\n        "alinea",\n        "mcp"\n      ]\n    }\n  }\n}\n'
+  )
+  test.equal(
+    JSON.parse(patchMcpConfig('{"mcpServers":{"other":{"command":"x"}}}', server)!),
+    {mcpServers: {other: {command: 'x'}, alinea: server}}
+  )
+  const configured = '{"mcpServers":{"alinea":{"command":"bunx"}}}'
+  test.is(patchMcpConfig(configured, server), configured)
+  test.is(patchMcpConfig('not json', server), undefined)
 })
 
 test('detectPm detects bun.lock', async () => {

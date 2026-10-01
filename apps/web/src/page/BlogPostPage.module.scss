@@ -6,22 +6,21 @@
   &-header {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 22px;
+    align-items: flex-start;
+    gap: 16px;
     width: 100%;
-    max-width: calc(800px + 2 * var(--web-gutter));
+    max-width: calc(var(--web-reading-width) + 2 * var(--web-gutter));
     margin-inline: auto;
-    padding: 72px var(--web-gutter) 0;
-    text-align: center;
+    padding: 80px var(--web-gutter) 0;
 
     @include sm {
-      gap: 18px;
       padding-top: 48px;
     }
 
     &-back {
-      font-size: 15px;
-      font-weight: 600;
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 500;
       color: var(--web-accent);
 
       &:hover {
@@ -29,100 +28,78 @@
       }
     }
 
-    &-meta {
-      justify-content: center;
-    }
-
     &-title {
       margin: 0;
       font-family: var(--web-title-font);
-      font-weight: 600;
-      font-size: 68px;
-      line-height: 1.02;
-      letter-spacing: -0.035em;
+      font-weight: 500;
+      font-size: 44px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
       overflow-wrap: break-word;
 
       @include sm {
-        font-size: 40px;
-        line-height: 1.08;
-      }
-    }
-
-    &-introduction {
-      margin: 0;
-      font-size: 21px;
-      line-height: 1.5;
-      color: var(--web-foreground-faded);
-
-      @include sm {
-        font-size: 18px;
+        font-size: 36px;
       }
     }
 
     &-author {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding-top: 4px;
-      font-size: 15px;
       font-weight: 500;
+      color: var(--web-foreground);
+    }
+
+    &-introduction {
+      margin: 8px 0 0;
+      font-size: 19px;
+      line-height: 1.55;
+      color: var(--web-foreground-faded);
+
+      @include sm {
+        font-size: 17px;
+      }
     }
   }
 
   &-cover {
-    margin-top: 56px;
+    width: min(747px, calc(100% - 2 * var(--web-gutter)));
+    aspect-ratio: 747 / 488;
+    margin: 56px auto 0;
 
     @include sm {
       margin-top: 40px;
-    }
-
-    &-figure {
-      height: 600px;
-      border-radius: 28px;
-
-      @include sm {
-        height: auto;
-        aspect-ratio: 16 / 10;
-        border-radius: 20px;
-      }
     }
   }
 
   &-content {
     display: flex;
     flex-direction: column;
-    gap: 56px;
+    gap: 64px;
     width: 100%;
-    max-width: calc(680px + 2 * var(--web-gutter));
+    max-width: calc(var(--web-reading-width) + 2 * var(--web-gutter));
     margin-inline: auto;
-    padding: 72px var(--web-gutter) 0;
+    padding: 64px var(--web-gutter) 0;
 
     @include sm {
-      gap: 40px;
       padding-top: 48px;
     }
   }
 
-  &-authorCard {
+  &-author {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
-    padding: 24px;
-    border-radius: 18px;
-    border: 1px solid var(--web-outline);
-    background: var(--web-surface);
+    gap: 6px 12px;
+    padding-top: 24px;
+    border-top: 1px solid var(--web-outline);
+    font-size: 16px;
     line-height: 1.5;
 
-    &-details {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
+    &-byline {
+      color: var(--web-foreground-faded);
 
-    &-title {
-      font-size: 16px;
-      font-weight: 600;
+      &-strong {
+        font-weight: 500;
+        color: var(--web-foreground);
+      }
     }
 
     &-link {
@@ -136,20 +113,11 @@
   }
 
   &-more {
-    margin-top: 112px;
+    gap: 56px;
+    margin-top: var(--web-section-gap);
 
     @include sm {
-      margin-top: 72px;
-    }
-
-    &-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-
-      @include sm {
-        gap: 20px;
-      }
+      gap: 32px;
     }
 
     &-header {
@@ -162,7 +130,7 @@
     &-title {
       margin: 0;
       font-family: var(--web-title-font);
-      font-weight: 600;
+      font-weight: 500;
       font-size: 32px;
       line-height: 1.15;
       letter-spacing: -0.02em;
@@ -174,7 +142,8 @@
 
     &-all {
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 500;
+      white-space: nowrap;
       color: var(--web-accent);
 
       &:hover {
@@ -185,11 +154,11 @@
     &-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 20px;
+      gap: 56px 64px;
 
       @include sm {
         grid-template-columns: minmax(0, 1fr);
-        gap: 16px;
+        gap: 40px;
       }
     }
   }

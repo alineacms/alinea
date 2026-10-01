@@ -3,7 +3,11 @@
 .root {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 56px;
+
+  @include sm {
+    gap: 32px;
+  }
 
   @include s {
     grid-template-columns: minmax(0, 1fr);
@@ -11,83 +15,56 @@
 
   &-card {
     display: flex;
+    flex-direction: column;
     gap: 16px;
-    padding: 20px;
-    border-radius: 16px;
-    border: 1px solid var(--web-outline);
-    background: var(--web-surface);
+    padding-top: 24px;
+    border-top: 1px solid var(--web-outline);
     color: var(--web-foreground);
-    transition: border-color 0.15s;
-
-    @include s {
-      padding: 16px;
-      gap: 14px;
-    }
-
-    &:hover:not(.is-current) {
-      border-color: color-mix(
-        in srgb,
-        var(--web-accent) 45%,
-        var(--web-outline)
-      );
-    }
 
     &:focus-visible {
+      border-radius: 4px;
       outline: 2px solid var(--web-accent);
-      outline-offset: 2px;
+      outline-offset: 4px;
     }
 
+    // A heavier rule in the accent marks the current catalog
     &.is-current {
-      border-color: var(--web-accent);
-      box-shadow: inset 0 0 0 0.5px var(--web-accent);
-      background: color-mix(
-        in srgb,
-        var(--web-accent-soft) 50%,
-        var(--web-surface)
-      );
+      padding-top: 23px;
+      border-top: 2px solid var(--web-accent);
     }
   }
 
   &-icon {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    background: var(--web-accent-soft);
-    color: var(--web-accent);
     font-size: 20px;
-  }
-
-  &-card.is-current &-icon {
-    background: var(--web-accent);
-    color: var(--web-accent-foreground);
+    color: var(--web-accent);
   }
 
   &-body {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
   }
 
   &-title {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    column-gap: 10px;
-    font: 600 18px/1.3 var(--web-title-font);
+    column-gap: 12px;
+    font: 500 20px/1.3 var(--web-title-font);
+    letter-spacing: -0.02em;
   }
 
   &-code {
     font: 400 12.5px/1.3 var(--web-mono-font);
-    color: var(--web-accent);
+    letter-spacing: normal;
+    color: var(--web-foreground-muted);
   }
 
   &-text {
-    font: var(--web-docs-font-compact);
+    font-size: 15.5px;
+    line-height: 1.6;
     color: var(--web-foreground-faded);
   }
 
@@ -95,15 +72,22 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font: 600 13.5px/20px var(--web-body-font);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
     color: var(--web-accent);
+    transition: color 0.15s ease-out;
 
     &-icon {
       font-size: 14px;
     }
   }
 
-  &-card.is-current &-link {
+  &-card:hover &-link {
     color: var(--web-accent-strong);
+  }
+
+  &-card.is-current &-link {
+    font-size: 13.5px;
   }
 }

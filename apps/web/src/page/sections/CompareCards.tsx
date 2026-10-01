@@ -26,16 +26,13 @@ export function CompareCards({title, description, cards}: CompareCardsProps) {
             const tone = card.tone || 'default'
             const link = resolveLink(card.link)
             return (
-              <article key={card._id} className={styles.card(tone)}>
+              <article key={card._id} className={styles.card()}>
                 <div className={styles.card.header()}>
                   {card.title && (
                     <h3 className={styles.card.title()}>{card.title}</h3>
                   )}
                   {card.badge && (
-                    <Label
-                      size="small"
-                      variant={tone === 'accent' ? 'accent' : 'neutral'}
-                    >
+                    <Label variant={tone === 'accent' ? 'accent' : 'neutral'}>
                       {card.badge}
                     </Label>
                   )}

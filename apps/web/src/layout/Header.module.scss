@@ -15,16 +15,6 @@
     position: sticky;
     top: 0;
     border-bottom: 1px solid var(--web-outline);
-    // Docs pages sit on the surface colour, the header matches them
-    background: var(--web-surface);
-
-    // Line the logo up with the start of the docs sidebar (its search box)
-    // below, which is inset 24px rather than the page gutter
-    @include l {
-      .menu {
-        padding-inline-start: 24px;
-      }
-    }
   }
 }
 
@@ -46,6 +36,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-right: 8px;
     flex-shrink: 0;
     color: var(--web-foreground);
 
@@ -53,21 +44,19 @@
     // baseline of the vertically centered 15px nav labels: shift it up so
     // both share one baseline. Without nav labels (mobile) it stays centered.
     &-mark {
-      width: 68px;
+      width: 84px;
       transform: translateY(-3px);
 
       @include sm {
-        width: 62px;
+        width: 76px;
         transform: none;
       }
     }
 
     &-badge {
-      padding: 3px 9px;
-      border-radius: 7px;
-      background: color-mix(in srgb, var(--web-foreground) 14%, transparent);
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--web-foreground-faded);
       line-height: 1.4;
       white-space: nowrap;
     }
@@ -99,7 +88,7 @@
   &-extra {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 28px;
     margin-left: auto;
 
     @include sm {
@@ -111,15 +100,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 10px;
     width: 40px;
     height: 40px;
     margin-right: -8px;
-    border-radius: 10px;
+    border-radius: 8px;
     color: var(--web-foreground-faded);
     cursor: pointer;
     transition:
       color 0.2s ease-out,
-      background 0.2s ease-out;
+      background 0.2s ease-out,
+      border-color 0.2s ease-out;
 
     @include sm {
       width: 44px;
@@ -129,12 +120,56 @@
 
     &:is(:hover, :focus-visible) {
       color: var(--web-foreground);
-      background: var(--web-highlight);
+      background: var(--web-surface-soft);
     }
 
     &-icon {
       display: block;
+      flex-shrink: 0;
       font-size: 20px;
+    }
+
+    &-label,
+    &-shortcut {
+      display: none;
+    }
+
+    // On docs pages search looks like a field, with its keyboard hint
+    @include l {
+      .root.is-sticky & {
+        justify-content: flex-start;
+        width: 280px;
+        margin-right: 0;
+        padding: 0 12px;
+        border: 1px solid var(--web-outline-strong);
+        color: var(--web-foreground-muted);
+        font-size: 14.5px;
+
+        &:is(:hover, :focus-visible) {
+          border-color: color-mix(
+            in srgb,
+            var(--web-foreground) 30%,
+            var(--web-outline-strong)
+          );
+          color: var(--web-foreground-faded);
+          background: transparent;
+        }
+      }
+
+      .root.is-sticky &-icon {
+        font-size: 17px;
+      }
+
+      .root.is-sticky &-label {
+        display: block;
+      }
+
+      .root.is-sticky &-shortcut {
+        display: block;
+        margin-left: auto;
+        font: 400 12px/1 var(--web-mono-font);
+        color: var(--web-foreground-muted);
+      }
     }
   }
 
@@ -155,13 +190,13 @@
   }
 
   &-cta {
-    padding: 12px 20px;
-    border-radius: 10px;
+    padding: 9px 16px;
+    border-radius: 8px;
     font-size: 15px;
-    font-weight: 600;
-    line-height: 1.25;
-    color: var(--web-accent-foreground);
-    background: var(--web-accent);
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--web-background);
+    background: var(--web-foreground);
     white-space: nowrap;
     transition: background 0.2s ease-out;
 
@@ -169,9 +204,18 @@
       display: none;
     }
 
+    // Docs pages lead with search instead
+    .root.is-sticky & {
+      display: none;
+    }
+
     &:is(:hover, :focus-visible) {
-      color: var(--web-accent-foreground);
-      background: var(--web-accent-strong);
+      color: var(--web-background);
+      background: color-mix(
+        in srgb,
+        var(--web-foreground) 82%,
+        var(--web-background)
+      );
     }
   }
 
@@ -181,8 +225,9 @@
     justify-content: center;
     width: 44px;
     height: 44px;
-    border: 1px solid var(--web-outline);
-    border-radius: 12px;
+    margin-right: -10px;
+    border: none;
+    border-radius: 8px;
     font-size: 22px;
     color: var(--web-foreground);
     background: transparent;
@@ -190,7 +235,7 @@
     transition: background 0.2s ease-out;
 
     &:hover {
-      background: var(--web-highlight);
+      background: var(--web-surface-soft);
     }
 
     @include l {
@@ -263,34 +308,42 @@
   align-items: flex-start;
   inset: 0;
   z-index: 10;
-  padding: 60px;
+  padding: 80px 60px;
 
   @include s {
-    padding: 20px;
+    padding: 16px;
   }
 
   &-header {
     position: sticky;
     top: 0;
-    background: var(--web-surface);
-    border-bottom: 1px solid var(--web-outline);
     z-index: 1;
-    padding: 8px 20px;
+    padding: 8px 18px;
+    border-bottom: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    color: var(--web-foreground-muted);
 
     &-icon {
-      font-size: 22px;
+      font-size: 20px;
+
       &.is-pending {
         animation: glow 0.5s ease-in-out infinite alternate;
       }
     }
 
     &-input {
-      background: none;
-      border: none;
-      font-size: 18px;
-      height: 40px;
-      width: 100%;
       flex: 1;
+      width: 100%;
+      height: 44px;
+      border: none;
+      background: none;
+      color: var(--web-foreground);
+      font-size: 17px;
+
+      &::placeholder {
+        color: var(--web-foreground-muted);
+      }
+
       &:focus {
         outline: none;
       }
@@ -300,48 +353,71 @@
   &-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(13, 16, 48, 0.45);
+    background: color-mix(in srgb, var(--web-background) 75%, transparent);
+    backdrop-filter: blur(2px);
   }
 
   &-container {
     position: relative;
-    margin: 0 auto;
-    width: 100%;
-    max-width: 566px;
-    background: var(--web-surface);
-    color: var(--web-foreground);
-    border: 1px solid var(--web-outline);
-    border-radius: 18px;
-    box-shadow: 0 24px 60px rgba(16, 24, 90, 0.25);
-    max-height: 100%;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 580px;
+    max-height: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    color: var(--web-foreground);
+    box-shadow: 0 24px 60px -20px
+      color-mix(in srgb, var(--web-foreground) 35%, transparent);
   }
 }
 
 .results {
-  list-style-type: none;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  padding: 8px 20px 20px 16px;
+  gap: 4px;
   max-height: 100%;
+  padding: 10px;
   overflow: auto;
+  list-style-type: none;
+  font-size: 14.5px;
+  color: var(--web-foreground-faded);
 
   &-row {
-    border-radius: 12px;
-    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 8px;
 
-    &:hover {
-      color: var(--web-foreground);
-      background: var(--web-highlight);
+    &:is(:hover, :focus-within) {
+      background: var(--web-surface-soft);
     }
 
     &-link {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
+    }
+
+    &-title {
+      font-size: 15.5px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--web-foreground);
+    }
+
+    &-snippet {
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    &-match {
+      font-weight: 500;
+      color: var(--web-accent);
     }
   }
 }

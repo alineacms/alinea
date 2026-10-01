@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
+import {isRecord} from 'alinea/core/util/Objects'
 import {slugify} from 'alinea/core/util/Slugs'
 import NextLink from 'next/link'
 import type {ComponentType, HTMLProps} from 'react'
@@ -27,10 +28,9 @@ type DocBodyNode = DocBodyDoc[number]
 interface DocHeading {
   id: string
   title: string
-  step?: number
 }
 
-const stepPattern = /^(\d+)\.\s+(.+)$/
+const stepPattern = /^(\d+)\.\s+/
 
 function textContent(nodes: unknown): string {
   if (!Array.isArray(nodes)) return ''
@@ -52,6 +52,20 @@ function headingText(node: DocBodyNode) {
   return textContent('content' in node ? node.content : undefined)
 }
 
+/** Moves the number of a step heading ("1. Install") to an attribute */
+function withStep(node: DocBodyNode): DocBodyNode {
+  if (!('content' in node) || !Array.isArray(node.content)) return node
+  const [first, ...rest]: Array<unknown> = node.content
+  if (!isRecord(first) || typeof first.text !== 'string') return node
+  const match = first.text.match(stepPattern)
+  if (!match) return node
+  return {
+    ...node,
+    'data-step': match[1],
+    content: [{...first, text: first.text.slice(match[0].length)}, ...rest]
+  } as DocBodyNode
+}
+
 /**
  * Anchors every heading to a unique slug of its text, the "On this page"
  * navigation links to these
@@ -63,18 +77,15 @@ export function withHeadingAnchors(body: DocBodyDoc): DocBodyDoc {
     const slug = slugify(headingText(node))
     const count = (seen.get(slug) ?? 0) + 1
     seen.set(slug, count)
-    return {...node, _anchor: count > 1 ? `${slug}-${count}` : slug}
+    return withStep({...node, _anchor: count > 1 ? `${slug}-${count}` : slug})
   })
 }
 
 function headingOf(node: DocBodyNode): DocHeading {
   const text = headingText(node)
-  const plain = text.replaceAll('`', '').trim()
-  const match = plain.match(stepPattern)
   return {
     id: '_anchor' in node ? String(node._anchor) : slugify(text),
-    title: match ? match[2] : plain,
-    step: match ? Number(match[1]) : undefined
+    title: text.replaceAll('`', '').trim()
   }
 }
 
@@ -97,16 +108,30 @@ function DocLink({href, ...props}: HTMLProps<HTMLAnchorElement>) {
   return <a href={href} {...props} className={styles.link()} />
 }
 
+interface DocHeadingProps extends HTMLProps<HTMLHeadingElement> {
+  'data-step'?: string
+}
+
 function DocHeadingTag(Tag: 'h2' | 'h3' | 'h4') {
-  return function DocHeading({id, children}: HTMLProps<HTMLHeadingElement>) {
+  return function DocHeading({
+    id,
+    children,
+    'data-step': step
+  }: DocHeadingProps) {
+    const content = (
+      <>
+        {step && <span className={styles.step()}>{step}. </span>}
+        {children}
+      </>
+    )
     return (
       <Tag id={id} className={styles[Tag]()}>
         {id ? (
           <a href={`#${id}`} className={styles.anchor()}>
-            {children}
+            {content}
           </a>
         ) : (
-          children
+          content
         )}
       </Tag>
     )
@@ -201,11 +226,6 @@ export function DocLead({doc}: DocLeadProps) {
   )
 }
 
-interface DocSection {
-  heading: DocHeading
-  nodes: DocBodyDoc
-}
-
 export interface DocBodyProps {
   body: DocBodyDoc
   /** Keeps text at a readable width while wide blocks use the full width */
@@ -213,43 +233,9 @@ export interface DocBodyProps {
 }
 
 export function DocBody({body, wide}: DocBodyProps) {
-  const headings = docHeadings(body)
-  const isSteps =
-    headings.length > 1 && headings.every(heading => heading.step !== undefined)
-  if (!isSteps)
-    return (
-      <div className={styles.root({wide})}>
-        <DocText doc={body} />
-      </div>
-    )
-  const firstHeading = body.findIndex(isH2)
-  const intro = body.slice(0, firstHeading)
-  const sections: Array<DocSection> = []
-  for (const node of body.slice(firstHeading)) {
-    if (isH2(node)) sections.push({heading: headingOf(node), nodes: []})
-    else sections[sections.length - 1].nodes.push(node)
-  }
   return (
-    <div className={styles.root()}>
-      {intro.length > 0 && <DocText doc={intro} />}
-      <ol className={styles.steps()}>
-        {sections.map(({heading, nodes}) => (
-          <li key={heading.id} className={styles.step()}>
-            <div className={styles.step.rail()} aria-hidden="true">
-              <span className={styles.step.number()}>{heading.step}</span>
-              <span className={styles.step.line()} />
-            </div>
-            <div className={styles.step.content()}>
-              <h2 id={heading.id} className={styles.step.title()}>
-                <a href={`#${heading.id}`} className={styles.anchor()}>
-                  {heading.title}
-                </a>
-              </h2>
-              <DocText doc={nodes} />
-            </div>
-          </li>
-        ))}
-      </ol>
+    <div className={styles.root({wide})}>
+      <DocText doc={body} />
     </div>
   )
 }

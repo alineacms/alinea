@@ -19,7 +19,7 @@ export const Landing = Config.document('Landing', {
     hero: Field.object('Hero', {
       fields: {
         badge: Field.text('Badge', {
-          help: 'Short pill shown above the headline'
+          help: 'Short marker shown below the buttons, eg. Beta'
         }),
         headline: Field.text('Headline', {
           multiline: true,

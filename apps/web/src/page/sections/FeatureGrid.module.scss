@@ -3,39 +3,19 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 64px;
 
   @include sm {
-    gap: 24px;
-  }
-
-  &.is-panel {
-    padding: 80px;
-    border-radius: 32px;
-    border: 1px solid var(--web-outline);
-    background: var(--web-surface);
-
-    @media (max-width: 1199.999px) {
-      padding: 56px;
-    }
-
-    @include sm {
-      padding: 32px;
-      border-radius: 24px;
-    }
-
-    @include s {
-      padding: 24px 20px;
-    }
+    gap: 40px;
   }
 
   &-header {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 24px 64px;
+    gap: 16px 48px;
 
-    @include sm {
+    @include s {
       flex-direction: column;
       align-items: flex-start;
     }
@@ -49,37 +29,43 @@
     flex-shrink: 0;
   }
 
-  // A crop of a screenshot between the header and the items
+  // A floating screenshot between the header and the items
   &-banner {
     position: relative;
-    aspect-ratio: 16 / 6;
-    border-radius: 16px;
-    border: 1px solid var(--web-outline);
-    background: var(--web-background);
+    align-self: center;
+    width: 100%;
+    max-width: 960px;
+    margin-bottom: 32px;
+    aspect-ratio: 16 / 7;
+    border-radius: 10px;
     overflow: hidden;
-    // Fade out the cut through the screenshot
-    mask-image: linear-gradient(to bottom, #000 72%, transparent);
+    box-shadow: var(--web-shot-shadow);
 
-    @include s {
-      aspect-ratio: 4 / 3;
-      border-radius: 12px;
+    @include sm {
+      margin-bottom: 0;
     }
 
+    @include s {
+      aspect-ratio: 16 / 10;
+      border-radius: 8px;
+    }
+
+    // The opposite mode of the surface: the dark screenshot on the light site
     &-image {
       position: absolute;
       inset: 0;
 
-      &.is-dark {
+      &.is-light {
         display: none;
       }
 
       @include theme-dark {
         &.is-light {
-          display: none;
+          display: block;
         }
 
         &.is-dark {
-          display: block;
+          display: none;
         }
       }
     }
@@ -88,24 +74,16 @@
   &-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
+    gap: 56px;
 
     @include sm {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+      gap: 48px 40px;
     }
 
     @include s {
       grid-template-columns: minmax(0, 1fr);
-      gap: 12px;
-    }
-  }
-
-  &.is-panel &-grid {
-    gap: 16px;
-
-    @include s {
-      gap: 12px;
+      gap: 0;
     }
   }
 }
@@ -113,16 +91,17 @@
 .item {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 28px;
-  border-radius: 18px;
-  border: 1px solid var(--web-outline);
-  background: var(--web-surface);
+  gap: 10px;
+  padding-top: 24px;
+  border-top: 1px solid var(--web-outline);
 
   @include s {
-    gap: 10px;
-    padding: 20px;
-    border-radius: 16px;
+    gap: 6px;
+    padding: 22px 0 26px;
+
+    &:last-child {
+      border-bottom: 1px solid var(--web-outline);
+    }
   }
 
   &-top {
@@ -130,19 +109,18 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    margin-bottom: 8px;
+
+    @include s {
+      margin-bottom: 4px;
+    }
   }
 
   &-icon {
-    width: 42px;
-    height: 42px;
-    display: flex;
     flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    border-radius: 11px;
-    background: var(--web-accent-soft);
-    color: var(--web-accent);
     font-size: 20px;
+    stroke-width: 1.6;
+    color: var(--web-accent);
   }
 
   &-tag {
@@ -152,39 +130,43 @@
   &.is-link {
     color: inherit;
     text-decoration: none;
-    transition: border-color 0.2s ease-out;
-
-    &:is(:hover, :focus-visible) {
-      border-color: color-mix(in srgb, var(--web-accent) 45%, transparent);
-    }
   }
 
   &-title {
-    margin: 4px 0 0;
+    margin: 0;
     font-family: var(--web-title-font);
     font-weight: 500;
     font-size: 20px;
     line-height: 1.3;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     color: var(--web-foreground);
+    transition: color 0.2s ease-out;
 
     @include s {
-      margin-top: 0;
       font-size: 18px;
     }
   }
 
+  &.is-link:is(:hover, :focus-visible) &-title {
+    color: var(--web-accent);
+  }
+
   &-text {
     margin: 0;
-    font-size: 15.5px;
-    line-height: 1.55;
+    font-size: 16px;
+    line-height: 1.65;
     color: var(--web-foreground-faded);
+
+    @include s {
+      line-height: 1.6;
+    }
   }
 
   &-more {
     margin-top: auto;
+    padding-top: 4px;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--web-accent);
   }
 
@@ -197,17 +179,5 @@
 
   &.is-link:is(:hover, :focus-visible) &-arrow {
     transform: translateX(2px);
-  }
-}
-
-// Inside a panel the cards are muted and the icon sits on the surface
-.root.is-panel .item {
-  gap: 12px;
-  border-color: transparent;
-  background: var(--web-background);
-
-  &-icon {
-    border: 1px solid var(--web-outline);
-    background: var(--web-surface);
   }
 }

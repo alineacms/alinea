@@ -5,15 +5,15 @@
   justify-content: center;
   gap: 8px;
   vertical-align: top;
-  padding: 14px 23px;
+  padding: 10px 17px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 8px;
   font-family: var(--web-body-font);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--web-accent-foreground);
-  background-color: var(--web-accent);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--web-background);
+  background-color: var(--web-foreground);
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
@@ -23,18 +23,22 @@
     color 0.2s ease-out;
 
   &:is(:hover, :focus-visible) {
-    color: var(--web-accent-foreground);
-    background-color: var(--web-accent-strong);
+    color: var(--web-background);
+    background-color: color-mix(
+      in srgb,
+      var(--web-foreground) 82%,
+      var(--web-background)
+    );
   }
 
   &.is-secondary {
     color: var(--web-foreground);
-    background-color: var(--web-surface);
-    border-color: var(--web-outline);
+    background-color: transparent;
+    border-color: var(--web-outline-strong);
 
     &:is(:hover, :focus-visible) {
       color: var(--web-foreground);
-      background-color: var(--web-surface);
+      background-color: transparent;
       border-color: var(--web-foreground-muted);
     }
   }

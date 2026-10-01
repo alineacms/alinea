@@ -43,7 +43,7 @@ export async function Header({badge}: HeaderProps) {
         </div>
       </MobileMenu>
       <HeaderRoot>
-        <Menu links={links} badge={badge} />
+        <Menu links={links} badge={badge} shortcut />
       </HeaderRoot>
     </MobileMenuProvider>
   )
@@ -82,9 +82,11 @@ async function MobileNav() {
 interface MenuProps {
   links: Array<HeaderLink>
   badge?: string
+  /** Opens search on ⌘K, only one of the rendered menus should */
+  shortcut?: boolean
 }
 
-function Menu({links, badge}: MenuProps) {
+function Menu({links, badge, shortcut}: MenuProps) {
   return (
     <div className={styles.menu()}>
       <Link href="/" className={styles.menu.logo()} title="Alinea CMS">
@@ -106,14 +108,16 @@ function Menu({links, badge}: MenuProps) {
         })}
       </nav>
       <div className={styles.menu.extra()}>
-        <SearchButton>
+        <SearchButton shortcut={shortcut}>
           <button
             type="button"
             className={styles.menu.search()}
             title="Search"
-            aria-label="Search"
+            aria-label="Search the docs"
           >
             <IcRoundSearch className={styles.menu.search.icon()} />
+            <span className={styles.menu.search.label()}>Search the docs</span>
+            <kbd className={styles.menu.search.shortcut()}>⌘K</kbd>
           </button>
         </SearchButton>
         <a

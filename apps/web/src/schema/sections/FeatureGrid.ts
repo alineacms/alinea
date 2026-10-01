@@ -7,8 +7,8 @@ export const FeatureGrid = Config.type('Feature grid', {
     label: Field.text('Label', {width: 0.25}),
     description: Field.text('Description', {multiline: true}),
     link: labeledLink('Link'),
-    panel: Field.check('Panel', {
-      description: 'Render inside a bordered panel with muted cards'
+    panel: Field.check('Band', {
+      description: 'Render on a full-width tinted band'
     }),
     image: Field.image('Image', {
       width: 0.5,

@@ -1,7 +1,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .group {
@@ -10,9 +10,10 @@
   gap: 2px;
 
   &-title {
-    padding: 0 10px 6px;
-    font: var(--web-docs-font-nav);
-    font-weight: 600;
+    padding: 0 10px 8px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
     color: var(--web-foreground);
   }
 }
@@ -26,11 +27,10 @@
 .link {
   flex-grow: 1;
   min-width: 0;
-  // Rows keep one height, longer titles wrap and grow
-  min-height: var(--web-docs-nav-row);
   padding: 6px 10px;
-  border-radius: 8px;
-  font: var(--web-docs-font-nav);
+  border-radius: 6px;
+  font-size: 14.5px;
+  line-height: 1.45;
   color: var(--web-foreground-faded);
   transition:
     background 0.15s ease-out,
@@ -38,7 +38,6 @@
 
   &:hover {
     color: var(--web-foreground);
-    background: var(--web-neutral-soft);
   }
 
   &:focus-visible {
@@ -53,7 +52,7 @@
 
   &.is-active {
     font-weight: 500;
-    color: var(--web-accent-strong);
+    color: var(--web-accent);
     background: var(--web-accent-soft);
   }
 
@@ -76,7 +75,7 @@
 
   &:hover {
     color: var(--web-foreground);
-    background: var(--web-neutral-soft);
+    background: var(--web-surface-soft);
   }
 
   &:focus-visible {
@@ -99,7 +98,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin: 2px 0 4px 14px;
+  margin: 2px 0 6px 10px;
   padding-left: 8px;
   border-left: 1px solid var(--web-outline);
 }

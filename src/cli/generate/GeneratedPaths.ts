@@ -1,6 +1,9 @@
 import {generatedDatabaseFile} from '#/database/Version.js'
 import {createHash} from 'node:crypto'
+import {createRequire} from 'node:module'
 import path from 'node:path'
+
+const require = createRequire(import.meta.url)
 
 export interface GeneratedPaths {
   /** The `@alinea/generated` package the alinea runtime imports from. */
@@ -12,7 +15,7 @@ export interface GeneratedPaths {
 
 export interface GeneratedPathsOptions {
   /** Directory of the alinea package that serves the project. */
-  alineaPackageDir: string
+  alineaPackageDir?: string
   rootDir: string
   configLocation: string
 }
@@ -24,7 +27,7 @@ export interface GeneratedPathsOptions {
  * servers never share a config or database.
  */
 export function generatedPaths({
-  alineaPackageDir,
+  alineaPackageDir = path.dirname(require.resolve('alinea/package.json')),
   rootDir,
   configLocation
 }: GeneratedPathsOptions): GeneratedPaths {

@@ -17,7 +17,7 @@ export const CompareCards = Config.type('Compare cards', {
               options: {
                 default: 'Default',
                 accent: 'Accent',
-                outline: 'Outline (dashed)'
+                outline: 'Muted'
               }
             }),
             text: Field.text('Text', {multiline: true}),

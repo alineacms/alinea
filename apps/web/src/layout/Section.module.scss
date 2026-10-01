@@ -3,7 +3,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 64px;
   width: 100%;
   max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
   margin-inline: auto;
@@ -11,7 +11,7 @@
   padding-top: var(--web-section-gap);
 
   @include sm {
-    gap: 24px;
+    gap: 40px;
   }
 
   &.is-flush {

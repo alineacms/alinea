@@ -25,12 +25,12 @@
     height: 36px;
     padding: 0 10px;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--web-foreground);
     cursor: pointer;
 
     &:hover {
-      background: var(--web-neutral-soft);
+      background: var(--web-surface-soft);
     }
 
     &:focus-visible {
@@ -86,7 +86,7 @@
     width: min(340px, 88vw);
     height: 100%;
     border-right: 1px solid var(--web-outline);
-    background: var(--web-surface);
+    background: var(--web-background);
     animation: drawer-in 0.2s ease-out;
 
     @media (prefers-reduced-motion: reduce) {
@@ -105,8 +105,8 @@
   }
 
   &-title {
-    font: var(--web-docs-font-nav);
-    font-weight: 600;
+    font-size: 14.5px;
+    font-weight: 500;
     color: var(--web-foreground);
   }
 
@@ -116,14 +116,14 @@
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 20px;
     color: var(--web-foreground-faded);
     cursor: pointer;
 
     &:hover {
       color: var(--web-foreground);
-      background: var(--web-neutral-soft);
+      background: var(--web-surface-soft);
     }
 
     &:focus-visible {

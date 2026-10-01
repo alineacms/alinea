@@ -1,44 +1,33 @@
 @use '@/style' as *;
 
 .root {
-  --changelog-gutter: var(--web-gutter, 80px);
-  box-sizing: border-box;
   width: 100%;
-  max-width: calc(
-    var(--web-content-width, 1280px) + 2 * var(--changelog-gutter)
-  );
+  max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
   margin: 0 auto;
-  padding: 0 var(--changelog-gutter);
-  color: var(--web-foreground, #171a42);
-
-  @include sm {
-    --changelog-gutter: var(--web-gutter, 20px);
-  }
+  padding: 0 var(--web-gutter) var(--web-section-gap);
 }
 
 .header {
-  padding-top: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding-top: 96px;
 
   @include sm {
     padding-top: 48px;
   }
 
-  &-intro {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
   &-title {
     margin: 0;
-    font-family: var(--web-title-font, Poppins, sans-serif);
-    font-weight: 600;
-    font-size: 64px;
-    line-height: 1.02;
-    letter-spacing: -0.035em;
+    font-family: var(--web-title-font);
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
 
     @include sm {
-      font-size: 44px;
+      font-size: 36px;
     }
   }
 
@@ -46,22 +35,26 @@
     margin: 0;
     max-width: 560px;
     font-size: 19px;
-    line-height: 1.5;
-    color: var(--web-foreground-faded, #555a78);
+    line-height: 1.55;
+    color: var(--web-foreground-faded);
+
+    @include sm {
+      font-size: 17px;
+    }
   }
 }
 
 .layout {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 200px minmax(0, 1fr);
   align-items: start;
   gap: 80px;
-  padding-top: 56px;
+  padding-top: 88px;
 
   @include sm {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
-    padding-top: 28px;
+    padding-top: 32px;
   }
 }
 
@@ -69,4 +62,5 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  max-width: 840px;
 }

@@ -18,31 +18,32 @@ export function ChangelogReleaseRow({
     <section id={release.version} className={styles.root({latest: isLatest})}>
       <div className={styles.meta()}>
         <h2 className={styles.meta.version()}>{release.version}</h2>
-        {release.date && (
-          <time dateTime={release.date} className={styles.meta.date()}>
-            {formatReleaseDate(release.date)}
-          </time>
-        )}
-        {isLatest && <span className={styles.meta.latest()}>Latest</span>}
-      </div>
-      <div className={styles.groups()}>
-        {release.groups.map((group, index) => (
-          <div key={index} className={styles.group()}>
-            {group.label && (
-              <span className={styles.group.label(group.kind ?? 'other')}>
-                {group.label}
-              </span>
+        {(release.date || isLatest) && (
+          <p className={styles.meta.line()}>
+            {release.date && (
+              <time dateTime={release.date}>
+                {formatReleaseDate(release.date)}
+              </time>
             )}
-            <ul className={styles.group.list()}>
-              {group.items.map((item, index) => (
-                <li key={index} className={styles.group.list.item()}>
-                  <ChangelogMarkdown source={item} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+            {release.date && isLatest && ' · '}
+            {isLatest && <span className={styles.meta.latest()}>Latest</span>}
+          </p>
+        )}
       </div>
+      {release.groups.map((group, index) => (
+        <div key={index} className={styles.group()}>
+          {group.label && (
+            <h3 className={styles.group.label()}>{group.label}</h3>
+          )}
+          <ul className={styles.group.list()}>
+            {group.items.map((item, index) => (
+              <li key={index} className={styles.group.list.item()}>
+                <ChangelogMarkdown source={item} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </section>
   )
 }

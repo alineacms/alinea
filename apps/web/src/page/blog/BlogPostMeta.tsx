@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {Label, type LabelVariant} from '@/layout/Label'
+import type {ReactNode} from 'react'
 import css from './BlogPostMeta.module.scss'
 import {
   type BlogCategory,
@@ -14,34 +14,36 @@ export interface BlogPostMetaProps {
   publishDate?: string | null
   /** Reading time in minutes */
   readingTime?: number
-  variant?: LabelVariant
+  author?: ReactNode
   className?: string
 }
 
+/** One line of meta: "Release · 23 September 2026 · Ben Merckx" */
 export function BlogPostMeta({
   category,
   publishDate,
   readingTime,
-  variant = 'neutral',
+  author,
   className
 }: BlogPostMetaProps) {
-  const label = category ? blogCategoryLabels[category] : undefined
+  const parts = [
+    category && blogCategoryLabels[category],
+    publishDate && (
+      <time key="date" dateTime={publishDate}>
+        {formatPublishDate(publishDate)}
+      </time>
+    ),
+    readingTime !== undefined && `${readingTime} min read`,
+    author
+  ].filter(Boolean)
   return (
-    <div className={styles.root(styler.merge({className}))}>
-      {label && (
-        <Label variant={variant} size="small">
-          {label}
-        </Label>
-      )}
-      {publishDate && (
-        <time dateTime={publishDate}>{formatPublishDate(publishDate)}</time>
-      )}
-      {readingTime !== undefined && (
-        <>
-          <span aria-hidden="true">·</span>
-          <span>{readingTime} min read</span>
-        </>
-      )}
-    </div>
+    <p className={styles.root(styler.merge({className}))}>
+      {parts.map((part, i) => (
+        <span key={i}>
+          {i > 0 && ' · '}
+          {part}
+        </span>
+      ))}
+    </p>
   )
 }

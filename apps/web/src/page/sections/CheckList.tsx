@@ -11,7 +11,6 @@ export interface CheckListItem {
 
 export interface CheckListProps {
   items: Array<CheckListItem> | null | undefined
-  size?: 'medium' | 'large'
   /** Muted renders the check marks in the muted foreground color */
   tone?: 'accent' | 'muted'
   className?: string
@@ -19,7 +18,6 @@ export interface CheckListProps {
 
 export function CheckList({
   items,
-  size = 'medium',
   tone = 'accent',
   className
 }: CheckListProps) {
@@ -27,7 +25,6 @@ export function CheckList({
   return (
     <ul
       className={styles.root(styler.merge({className}), {
-        large: size === 'large',
         muted: tone === 'muted'
       })}
     >

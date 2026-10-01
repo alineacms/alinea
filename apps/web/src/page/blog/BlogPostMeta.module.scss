@@ -1,9 +1,6 @@
 .root {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+  margin: 0;
   font-size: 14px;
-  line-height: 1.4;
-  color: var(--web-foreground-muted);
+  line-height: 1.5;
+  color: var(--web-foreground-faded);
 }

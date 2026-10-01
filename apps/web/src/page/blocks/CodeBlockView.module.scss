@@ -1,20 +1,17 @@
 .root {
-  border-radius: var(--web-docs-radius);
-  border: 1px solid var(--web-code-outline);
-  background: var(--web-code-background);
-  color: var(--web-code-foreground);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 
+  // The file name or "Terminal" sits above the block, not in a header bar
   &-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    height: var(--web-docs-code-bar);
-    padding: 0 16px 0 20px;
-    border-bottom: 1px solid var(--web-code-outline);
+    min-height: 20px;
     font: var(--web-docs-font-code-label);
-    color: var(--web-code-muted);
+    color: var(--web-foreground-muted);
 
     &-label {
       min-width: 0;
@@ -25,15 +22,18 @@
   }
 
   &-body {
+    border-radius: var(--web-docs-radius);
+    background: var(--web-code-background);
+    color: var(--web-code-foreground);
     overflow-x: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--web-code-outline) transparent;
+    scrollbar-color: var(--web-outline-strong) transparent;
   }
 
   &-pre {
     width: max-content;
     min-width: 100%;
-    padding: 16px 20px;
+    padding: 20px 22px;
     font: var(--web-docs-font-code);
   }
 
@@ -44,12 +44,13 @@
   &-line {
     &.is-prompt:not(:empty)::before {
       content: '$ ';
-      color: var(--web-foreground-muted);
+      color: var(--web-code-comment);
       user-select: none;
     }
   }
 
   &.is-compact &-pre {
-    line-height: 1.5;
+    padding-block: 16px;
+    line-height: 1.6;
   }
 }

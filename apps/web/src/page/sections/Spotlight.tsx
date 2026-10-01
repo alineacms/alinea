@@ -32,12 +32,8 @@ export function Spotlight({
       )}
       <div className={styles.root({visual: hasFlow})}>
         <div className={styles.root.content()}>
-          {label && (
-            <Label size="small" className={styles.root.label()}>
-              {label}
-            </Label>
-          )}
           {title && <h3 className={styles.root.title()}>{title}</h3>}
+          {label && <Label className={styles.root.label()}>{label}</Label>}
           {text && <p className={styles.root.text()}>{text}</p>}
           <CheckList items={checks} />
           <ArrowLink link={resolveLink(link)} />

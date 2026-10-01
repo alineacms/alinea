@@ -32,12 +32,10 @@ export default async function Changelog() {
   return (
     <main className={styles.root()}>
       <header className={styles.header()}>
-        <div className={styles.header.intro()}>
-          <h1 className={styles.header.title()}>What's new</h1>
-          <p className={styles.header.description()}>
-            Every release, what changed and why it matters.
-          </p>
-        </div>
+        <h1 className={styles.header.title()}>What's new</h1>
+        <p className={styles.header.description()}>
+          Every release, what changed and why it matters.
+        </p>
       </header>
       <div className={styles.layout()}>
         <ChangelogNav

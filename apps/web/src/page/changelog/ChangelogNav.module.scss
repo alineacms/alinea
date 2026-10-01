@@ -24,26 +24,23 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  font-size: 15px;
+  font-size: 14.5px;
 
   @include sm {
     display: none;
   }
 
   &-title {
-    padding: 0 12px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--web-foreground-muted);
+    padding: 0 0 12px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--web-foreground);
   }
 
   &-all {
-    margin-top: 12px;
-    padding: 8px 12px;
-    font-weight: 600;
-    text-decoration: none;
+    margin-top: 16px;
+    padding: 6px 0 6px 14px;
+    font-weight: 500;
     color: var(--web-accent);
 
     &:hover {
@@ -75,17 +72,13 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 7px 12px;
-  border-radius: 8px;
-  color: color-mix(in srgb, var(--web-foreground) 78%, var(--web-background));
-  text-decoration: none;
-  transition:
-    color 0.15s ease-out,
-    background 0.15s ease-out;
+  padding: 6px 0 6px 12px;
+  border-left: 2px solid transparent;
+  color: var(--web-foreground-faded);
+  transition: color 0.15s ease-out;
 
   &:hover {
     color: var(--web-foreground);
-    background: var(--web-surface);
   }
 
   &:focus-visible {
@@ -94,23 +87,21 @@
   }
 
   &[aria-current] {
-    background: var(--web-accent-soft);
-    color: var(--web-accent-strong);
-    font-weight: 600;
+    border-left-color: var(--web-accent);
+    color: var(--web-foreground);
+    font-weight: 500;
   }
 
   &-version {
-    font-variant-numeric: tabular-nums;
+    font-family: var(--web-mono-font);
+    font-size: 13.5px;
   }
 
   &-latest {
-    font-size: 13px;
-    font-weight: 600;
     color: var(--web-accent);
   }
 
   &-date {
-    font-size: 13px;
     font-weight: 400;
     color: var(--web-foreground-muted);
     white-space: nowrap;
@@ -127,11 +118,8 @@
   }
 
   &-label {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--web-foreground-muted);
+    font-size: 13px;
+    font-weight: 500;
   }
 
   &-field {
@@ -154,14 +142,13 @@
     width: 100%;
     height: 44px;
     padding: 0 40px 0 14px;
-    border: 1px solid var(--web-outline);
-    border-radius: 10px;
+    border: 1px solid var(--web-outline-strong);
+    border-radius: 8px;
     appearance: none;
-    background: var(--web-surface);
+    background: var(--web-background);
     color: var(--web-foreground);
     font: inherit;
     font-size: 15px;
-    font-weight: 500;
     font-variant-numeric: tabular-nums;
     cursor: pointer;
 

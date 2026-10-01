@@ -1,45 +1,45 @@
 @use '@/style' as *;
 
-.notfound {
-  overflow: hidden;
-  position: relative;
-  padding: 80px 24px;
-  border-radius: 24px;
-  background-color: var(--web-accent);
-  // The card sits on a dark gradient image in both themes
-  color: #ffffff;
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
+  margin-inline: auto;
+  padding: 96px var(--web-gutter) var(--web-section-gap);
 
-  @include l {
-    padding: 128px 96px;
+  @include sm {
+    padding-top: 48px;
+  }
 
-    &:after {
-      content: '404';
-      opacity: 0.2;
-      font-size: 24rem;
-      line-height: 1;
-      font-weight: 700;
-      position: absolute;
-      right: -32px;
-      top: 50%;
-      transform: translateY(-50%);
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+
+    @include sm {
+      font-size: 36px;
     }
   }
 
-  &-content {
-    position: relative;
-    gap: 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  &-description {
+    margin: 0;
+    max-width: 560px;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--web-foreground-faded);
 
-    @include l {
-      max-width: 640px;
-      align-items: flex-start;
+    @include sm {
+      font-size: 17px;
     }
+  }
 
-    &-title {
-      margin: 0;
-    }
+  &-action {
+    margin-top: 16px;
   }
 }

@@ -5,7 +5,7 @@
   "title": "Homepage",
   "hero": {
     "headline": "Git-based CMS\nbuilt for Next.js",
-    "byline": "Open source headless CMS. Your content lives in your repository as fully typed files, and your editors get a fast dashboard they will actually like.",
+    "byline": "An open source headless CMS. Content is stored as typed files in your repository and edited in a dashboard that runs inside your Next.js app.",
     "button": {
       "_id": "30YJq6LMDGRTe9xpsVzIfGMjKrC",
       "_type": "entry",
@@ -44,11 +44,11 @@
       "_id": "3JjOvjfZnce3zPbm7f5f9BQ9m5y",
       "_index": "a1",
       "_type": "Spotlight",
-      "heading": "Where Alinea shines",
-      "intro": "The things you won't find together in any other git-based CMS.",
+      "heading": "How Alinea differs",
+      "intro": "Like other git-based CMSs, Alinea stores content in your repository. It also publishes without a rebuild, previews drafts with one component and installs four packages.",
       "label": "Faster since 2.0",
-      "title": "Publish. It's live.\nNo build to wait for.",
-      "text": "Every publish is still a git commit, but your site doesn't wait for CI. It picks up the new content straight away. Skip builds for content-only commits and revalidate after each publish, and editors never wait on a deploy again.",
+      "title": "Published content goes live without a rebuild",
+      "text": "Every publish is a git commit. Your running site picks up the new content right away instead of waiting for CI. Commits that only change content can skip the build, and pages can be revalidated after each publish.",
       "checks": [
         {
           "_id": "3JjOvlCbfqtfJRQgTSWPG7kkkgb",
@@ -60,13 +60,13 @@
           "_id": "3JjOvpiuDNx3c5gLru8ss88irfa",
           "_index": "a1",
           "_type": "Item",
-          "text": "Content-only commits can skip the rebuild entirely"
+          "text": "Commits that only change content can skip the build"
         },
         {
           "_id": "3JjOvkoP5Rz7JVNyAyCcOhMYj9A",
           "_index": "a2",
           "_type": "Item",
-          "text": "Code changes still deploy the way they always have"
+          "text": "Code changes deploy as before"
         }
       ],
       "link": {
@@ -88,8 +88,8 @@
           "_id": "3JjOvpNLQs6sHnuJYfZTJRPPgEK",
           "_index": "a0",
           "_type": "CodeCard",
-          "title": "Live previews in one line",
-          "text": "Add one component to your layout and every page previews drafts as editors type. No per-component wiring, no preview routes, and server components render the draft on the server.",
+          "title": "Live previews with one component",
+          "text": "Add one component to your layout and every page shows drafts while editors type. You don't need preview routes or changes to each component, and server components render the draft on the server.",
           "filename": "app/layout.tsx",
           "code": "<body>\n  {children}\n  <cms.previews widget />\n</body>",
           "chips": [
@@ -117,8 +117,8 @@
           "_id": "3JjOvqE93ec4cf6H1MzLTCwDqb5",
           "_index": "a1",
           "_type": "BarsCard",
-          "title": "A tiny footprint",
-          "text": "Alinea installs 4 packages. Other CMSs pull in hundreds.",
+          "title": "Four packages to install",
+          "text": "Installing Alinea adds 4 packages. The other CMSs we measured add between 206 and 954.",
           "bars": [
             {
               "_id": "3JjOvkRHDxmSnS4HVC09CQgDtjD",
@@ -312,8 +312,8 @@
       "_id": "3JjOvjPGqugZsMGrjVGWQAlzdzn",
       "_index": "a4",
       "_type": "FeatureGrid",
-      "title": "Everything else, done properly",
-      "description": "The basics every team needs, without a database to run or a vendor to depend on.",
+      "title": "Other features",
+      "description": "Content is stored as files in git and queried through an SQLite index that is bundled with your site.",
       "panel": false,
       "anchor": "features",
       "items": [
@@ -331,8 +331,8 @@
           "_index": "a1",
           "_type": "Feature",
           "icon": "StrokeCode",
-          "title": "Typed, no codegen",
-          "text": "Query types come straight from your schema. No generate step and no stale types.",
+          "title": "Typed without codegen",
+          "text": "Query types are inferred from your schema, so there is no generate step.",
           "tag": ""
         },
         {
@@ -341,7 +341,7 @@
           "_type": "Feature",
           "icon": "StrokeSearch",
           "title": "No database server",
-          "text": "Content is indexed in SQLite, bundled with your site. Fast, fuzzy search in the dashboard.",
+          "text": "Content is indexed in SQLite and bundled with your site. The dashboard searches the same index.",
           "tag": ""
         },
         {
@@ -358,7 +358,7 @@
           "_index": "a4",
           "_type": "Feature",
           "icon": "StrokeSparkle",
-          "title": "Ready for coding agents",
+          "title": "Docs for coding agents",
           "text": "The docs ship with the package as Markdown, so AI agents know the API of the installed version.",
           "tag": ""
         },
@@ -380,7 +380,7 @@
       "_index": "a5",
       "_type": "Steps",
       "title": "From schema to published page",
-      "description": "Three steps, all in your own repository. Nothing to migrate, nothing extra to host.",
+      "description": "Each step happens in your own repository.",
       "numbered": false,
       "steps": [
         {
@@ -388,7 +388,7 @@
           "_index": "a0",
           "_type": "Step",
           "title": "Model your content",
-          "text": "Describe types and fields in TypeScript, right in your codebase. No migrations, no separate admin project.",
+          "text": "Describe types and fields in TypeScript in your codebase. There are no migrations and no separate admin project.",
           "visual": "code",
           "code": "const BlogPost = Config.document(\n  'Blog post', {\n  fields: {\n    title: Field.text('Title'),\n    cover: Field.image('Cover'),\n    body: Field.richText('Body')\n  }\n})"
         },
@@ -397,7 +397,7 @@
           "_index": "a1",
           "_type": "Step",
           "title": "Edit in the dashboard",
-          "text": "Editors get a generated dashboard with drafts, previews and media. They never see a line of JSON.",
+          "text": "Editors work in a dashboard generated from your schema, with drafts, previews and media.",
           "visual": "editor",
           "code": ""
         },
@@ -417,8 +417,8 @@
       "_id": "3JjOvkLgdFYZjdVjWQZFeQfEzEp",
       "_index": "a6",
       "_type": "CodeShowcase",
-      "title": "Typed from schema to page",
-      "text": "Query content from server components with an API that knows your schema. Your editor autocompletes every field, and the compiler catches the rest.",
+      "title": "Typed queries",
+      "text": "Query content from server components. Results are typed from your schema, so your editor autocompletes fields and TypeScript reports mistakes.",
       "checks": [
         {
           "_id": "3JjOvjoNA3odbHiEHNllMGxRyLG",
@@ -454,7 +454,7 @@
       "_id": "3JjOvluOLIBS3yTe1KwrX2cR4eJ",
       "_index": "a7",
       "_type": "CompareCards",
-      "title": "Host it your way",
+      "title": "Self-host or use Alinea Cloud",
       "description": "",
       "cards": [
         {
@@ -495,7 +495,7 @@
               "_id": "3JjOvqCfq0t0QxH1GwMYYeok4We",
               "_index": "a0",
               "_type": "Item",
-              "text": "Sign-in for editors, no auth to build"
+              "text": "Sign-in for editors included"
             },
             {
               "_id": "3JjOvjg9k2IteGUE53TncxgdGAk",
@@ -534,7 +534,7 @@
           "content": [
             {
               "_type": "text",
-              "text": "A ready-made Next.js template with a production-ready Alinea setup, so you can start from a working site."
+              "text": "Vetra is a Next.js template with Alinea already set up."
             }
           ]
         },
@@ -608,14 +608,14 @@
       "_id": "3JjOvpN8Qt6hAii3DsEqO3hGcYF",
       "_index": "a9",
       "_type": "Faq",
-      "title": "Questions, answered",
+      "title": "Frequently asked questions",
       "text": [
         {
           "_type": "paragraph",
           "content": [
             {
               "_type": "text",
-              "text": "Can't find what you need? Ask on "
+              "text": "Ask other questions on "
             },
             {
               "_type": "text",
@@ -777,8 +777,8 @@
       "_id": "3JjOvq6ZDWzrcY3A9LRGgtGEf1F",
       "_index": "aA",
       "_type": "Cta",
-      "title": "Ship content with your code",
-      "text": "Add Alinea to a Next.js project in a few minutes. Open source and MIT licensed.",
+      "title": "Add Alinea to your project",
+      "text": "Run the init command in a Next.js project to set it up. Alinea is open source and MIT licensed.",
       "link": {
         "_id": "3JjOvlEGOLsltuz3NqqmXa1UnKH",
         "_type": "entry",
@@ -786,7 +786,6 @@
         "label": "Get started"
       },
       "command": "npx alinea@preview init",
-      "background": "gradient",
       "anchor": ""
     }
   ],
