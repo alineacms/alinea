@@ -4,6 +4,7 @@ import type {BuildOptions} from 'esbuild'
 import path from 'node:path'
 import pkg from '../../package.json' with {type: 'json'}
 import {buildOptions} from './build/BuildOptions.js'
+import {devLockFile, writeDevLock} from './serve/DevLock.js'
 import {createDevServer, type DevServer} from './serve/DevServer.js'
 import {startServer} from './serve/StartServer.js'
 import {dirname} from './util/Dirname.js'
@@ -56,15 +57,18 @@ export async function serve(options: ServeOptions): Promise<void> {
       dashboardUrl,
       onAfterGenerate(msg, config, databasePath) {
         dashboardUrl.then(url => {
+          if (cmd === 'dev')
+            writeDevLock(devLockFile(path.dirname(databasePath)), {
+              url,
+              pid: process.pid
+            })
           const version = gray(pkg.version)
           const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
-          const isDev = cmd === 'dev'
-          const showUrl = isDev && !options.onAfterGenerate
-          const connector = gray(isDev ? '├' : '╰')
+          const showUrl = cmd === 'dev' && !options.onAfterGenerate
+          const connector = gray(showUrl ? '├' : '╰')
           const details = `${connector} ${gray(msg)}\n`
-          const cmsLine = showUrl ? `${gray('├')} Local CMS:    ${url}\n` : ''
-          const footer = isDev
-            ? `${cmsLine}${gray('╰')} MCP server:   ${url}/mcp\n\n`
+          const footer = showUrl
+            ? `${gray('╰')} Local CMS:    ${url}\n\n`
             : '\n'
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({

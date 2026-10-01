@@ -7,7 +7,8 @@ import type {Request, Response} from '@alinea/iso'
 import pkg from '../../../../package.json' with {type: 'json'}
 import {McpGraph} from './McpGraph.js'
 import {McpServer, rejectRequest} from './McpServer.js'
-import {createContentTools, mcpInstructions} from './McpTools.js'
+import {mcpInstructions} from './McpInstructions.js'
+import {createContentTools} from './McpTools.js'
 
 export interface DevMcpOptions {
   config: Config

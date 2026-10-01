@@ -276,7 +276,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`AGENTS.md`: a short Alinea section that points coding agents to the bundled docs and the MCP server. It is added to an existing `AGENTS.md` once, or creates the file."
+                  "text": "`AGENTS.md`: an Alinea section between `<!-- BEGIN:alinea-agent-rules -->` and `<!-- END:alinea-agent-rules -->` that points coding agents to the bundled docs and the MCP server. Running init again only replaces what is between the markers. A `CLAUDE.md` that imports `AGENTS.md` is created when the project has none."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`.mcp.json`: the `alinea` MCP server, which runs `npx alinea mcp`."
                 }
               ]
             }
@@ -467,20 +481,6 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`MCP server: http://localhost:4500/mcp` is the MCP server for the next step. The port moves to 4501 and up when 4500 is taken, always use the printed url."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
                   "text": "`- Alinea CMS: http://localhost:3000/admin` is the dashboard. Ask the user to open it and have a look around."
                 }
               ]
@@ -523,30 +523,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "In Claude Code, add it with the url from the dev server output:"
+          "text": "`alinea init` registered the server in the project's `.mcp.json`, which Claude Code reads; it asks the user to approve the server once. Cursor reads the same entry from `.cursor/mcp.json`, other agents need a stdio server named `alinea` that runs `npx alinea mcp` in the project directory:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjtPw7eCBbMmQPhuX20NiQ2Wpy",
-      "code": "claude mcp add --transport http alinea http://localhost:4500/mcp",
-      "fileName": "",
-      "language": "shellscript"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "For other agents add an HTTP MCP server named `alinea` with the same url, for example in a project `.mcp.json` (Cursor reads `.cursor/mcp.json`):"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3JjtPuk2zlWW0DxhKssJpFtsgPP",
-      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
+      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"command\": \"npx\",\n      \"args\": [\"alinea\", \"mcp\"]\n    }\n  }\n}",
       "fileName": "",
       "language": "json"
     },

@@ -50,6 +50,16 @@ prog
     })
   })
 
+  .command('mcp')
+  .describe('Connect coding agents to the content of the running dev server')
+  .option('-c, --config', 'Config file location')
+  .option('-d, --dir', 'Root directory of the project')
+  .action(async args => {
+    ensureNode()
+    const {mcp} = await import('./Mcp.js')
+    return mcp({cwd: args.dir, configFile: args.config})
+  })
+
   .command('build')
   .alias('generate')
   .describe('Generate types and content cache')

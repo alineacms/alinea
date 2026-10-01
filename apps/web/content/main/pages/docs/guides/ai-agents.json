@@ -39,7 +39,7 @@
     {
       "_id": "3JjZbW7MaMvkb9fSRI9kactq6ew",
       "_type": "CodeBlock",
-      "code": "claude mcp add --transport http alinea http://localhost:4500/mcp",
+      "code": "claude mcp add --scope project alinea -- npx alinea mcp",
       "fileName": "",
       "language": "shellscript",
       "compact": false
@@ -229,7 +229,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`alinea init` adds a short Alinea section to the project's `AGENTS.md` that points agents to the bundled docs and the MCP server, so agents find them without being told."
+          "text": "`alinea init` adds an Alinea section to the project's `AGENTS.md`, between `<!-- BEGIN:alinea-agent-rules -->` and `<!-- END:alinea-agent-rules -->` markers, that points agents to the bundled docs and the MCP server, and registers the server in `.mcp.json`. Agents find both without being told."
         }
       ]
     },

@@ -93,18 +93,69 @@ export function patchGitignore(source: string, lines: Array<string>): string {
   return source + separator + missing.join(newline) + newline
 }
 
+const agentRulesStart = '<!-- BEGIN:alinea-agent-rules -->'
+const agentRulesEnd = '<!-- END:alinea-agent-rules -->'
+
 /**
- * Append a section to an AGENTS.md source, unless it already has a line with
- * the heading the section starts with.
+ * Write the Alinea rules between their markers in an AGENTS.md source: in
+ * place of the marked block when there is one, appended otherwise. Content
+ * outside the markers stays as it is.
  */
-export function patchAgents(source: string, section: string): string {
-  const [heading] = section.split('\n')
-  const lines = source.split(/\r?\n/).map(line => line.trim())
-  if (lines.includes(heading)) return source
-  if (!source.trim()) return section
+export function patchAgents(source: string, rules: string): string {
   const newline = source.includes('\r\n') ? '\r\n' : '\n'
-  const body = section.replaceAll('\n', newline)
-  return `${source.trimEnd()}${newline}${newline}${body}`
+  const block = `${agentRulesStart}\n\n${rules.trim()}\n\n${agentRulesEnd}`
+    .replaceAll('\n', newline)
+  const start = source.indexOf(agentRulesStart)
+  const end = source.indexOf(agentRulesEnd, start)
+  if (start !== -1 && end !== -1)
+    return (
+      source.slice(0, start) + block + source.slice(end + agentRulesEnd.length)
+    )
+  if (!source.trim()) return block + newline
+  return `${source.trimEnd()}${newline}${newline}${block}${newline}`
+}
+
+/**
+ * Claude Code reads CLAUDE.md rather than AGENTS.md: a new one imports
+ * AGENTS.md, an existing one that doesn't gets the rules themselves.
+ */
+export function patchClaude(source: string | undefined, rules: string) {
+  if (source === undefined) return '@AGENTS.md\n'
+  if (source.includes('@AGENTS.md')) return source
+  return patchAgents(source, rules)
+}
+
+/**
+ * Add the alinea server to a .mcp.json source, keeping one that is already
+ * configured. Returns undefined if the source is not a JSON object.
+ */
+export function patchMcpConfig(
+  source: string | undefined,
+  server: {command: string; args: Array<string>}
+): string | undefined {
+  let config: unknown = {}
+  try {
+    if (source) config = JSON.parse(source)
+  } catch {
+    return undefined
+  }
+  if (!isRecord(config)) return undefined
+  const servers = isRecord(config.mcpServers) ? config.mcpServers : {}
+  if (source && servers.alinea) return source
+  const result = {...config, mcpServers: {...servers, alinea: server}}
+  const indent = source ? detectIndent(source) : '  '
+  return `${JSON.stringify(result, null, indent)}\n`
+}
+
+/** Write the patched contents of a file, if they changed */
+async function patchFile(
+  file: string,
+  patch: (source: string | undefined) => string | undefined
+) {
+  const [source] = await outcome(fs.readFile(file, 'utf-8'))
+  const patched = patch(source)
+  if (patched !== undefined && patched !== source)
+    await fs.writeFile(file, patched)
 }
 
 export async function init(options: InitOptions) {
@@ -168,24 +219,26 @@ export async function init(options: InitOptions) {
     await fs.writeFile(routeLocation, handlerFile)
   }
   // Point coding agents to the docs and the MCP server
-  const agentsFile = path.join(cwd, 'AGENTS.md')
-  const [agents = ''] = await outcome(fs.readFile(agentsFile, 'utf-8'))
-  const agentsSection = await fs.readFile(
-    path.join(__dirname, 'static/init/agents.md'),
-    'utf-8'
-  )
   const cmsFile = path.relative(cwd, configFileLocation).replaceAll('\\', '/')
-  const patchedAgents = patchAgents(
-    agents,
-    agentsSection.replace('{cmsFile}', cmsFile)
+  const rules = (
+    await fs.readFile(path.join(__dirname, 'static/init/agents.md'), 'utf-8')
+  ).replace('{cmsFile}', cmsFile)
+  await patchFile(path.join(cwd, 'AGENTS.md'), source =>
+    patchAgents(source ?? '', rules)
   )
-  if (patchedAgents !== agents) await fs.writeFile(agentsFile, patchedAgents)
+  await patchFile(path.join(cwd, 'CLAUDE.md'), source =>
+    patchClaude(source, rules)
+  )
+  await patchFile(path.join(cwd, '.mcp.json'), source =>
+    patchMcpConfig(source, {
+      command: pm === PM.Bun ? 'bunx' : 'npx',
+      args: ['alinea', 'mcp']
+    })
+  )
   // alinea build writes the dashboard to the public folder
-  const gitignoreFile = path.join(cwd, '.gitignore')
-  const [gitignore = ''] = await outcome(fs.readFile(gitignoreFile, 'utf-8'))
-  const patchedGitignore = patchGitignore(gitignore, dashboardOutput)
-  if (patchedGitignore !== gitignore)
-    await fs.writeFile(gitignoreFile, patchedGitignore)
+  await patchFile(path.join(cwd, '.gitignore'), source =>
+    patchGitignore(source ?? '', dashboardOutput)
+  )
   if (quiet) return
   const command = `${runner} alinea dev`
   console.info(

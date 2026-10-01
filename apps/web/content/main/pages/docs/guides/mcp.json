@@ -190,23 +190,23 @@
       "content": [
         {
           "_type": "text",
-          "text": "Start your dev script (`alinea dev`, or `alinea dev -- next dev` in a Next.js project). The banner prints the url of the MCP server:"
+          "text": "`alinea init` registers the server in `.mcp.json` at the project root. In an existing project, add it yourself and commit it to share the setup with your team:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3JjyQUb3UCvHZjKGpiMnuwmvjId",
-      "code": "ɑ Alinea 2.0.0\n├ dev src/cms.tsx in 690ms (172 records)\n╰ MCP server:   http://localhost:4500/mcp",
+      "_id": "3jihOsnoQIpxFZ9l6QVPjG1pjBF",
+      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"command\": \"npx\",\n      \"args\": [\"alinea\", \"mcp\"]\n    }\n  }\n}",
       "fileName": "",
-      "language": "shellscript"
+      "language": "json"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "The server listens on the port of the local dashboard, 4500 by default. When 4500 is taken the dev server moves to 4501 and up, and the printed url changes with it. `alinea dev --port 4600` (or `-p`) changes the port it starts from, but it still moves up when that port is taken, so check the banner when the tools don't connect. The endpoint speaks the Streamable HTTP transport: it answers JSON-RPC messages sent with `POST` and does not keep sessions."
+          "text": "`alinea mcp` connects to the `alinea dev` of the project it runs in, on whichever port that dev server ended up, so the same configuration works in every checkout and worktree. Pass `--dir` or `--config` when the project is not in the current directory. While `alinea dev` is not running the server lists no tools, and it tells the agent when they become available."
         }
       ]
     },
@@ -222,47 +222,20 @@
       "_anchor": "claude-code"
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Claude Code reads `.mcp.json` and asks once to approve the server. To add it from the command line instead:"
+        }
+      ]
+    },
+    {
       "_type": "CodeBlock",
-      "_id": "3JjyQRBJ7rZvizv2PR107I721s6",
-      "code": "claude mcp add --transport http alinea http://localhost:4500/mcp",
+      "_id": "3koyOGovWxx0ZJkydTTQAx1E9R6",
+      "code": "claude mcp add --scope project alinea -- npx alinea mcp",
       "fileName": "",
       "language": "shellscript"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Add `--scope project` to write the server to the project's `.mcp.json` instead of your local settings, so everyone working on the project gets it."
-        }
-      ]
-    },
-    {
-      "_type": "heading",
-      "level": 3,
-      "content": [
-        {
-          "_type": "text",
-          "text": "Project .mcp.json"
-        }
-      ],
-      "_anchor": "project-mcp-json"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "Claude Code and other clients read MCP servers from a `.mcp.json` file in the project root. Commit it to share the setup with your team:"
-        }
-      ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3JjyQUgQYOjW46Y0uBYlPNeAzHi",
-      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
-      "fileName": ".mcp.json",
-      "language": "json"
     },
     {
       "_type": "heading",
@@ -280,16 +253,9 @@
       "content": [
         {
           "_type": "text",
-          "text": "Cursor reads project servers from `.cursor/mcp.json`, where the `url` alone is enough:"
+          "text": "Cursor reads project servers from `.cursor/mcp.json`, with the same entry as `.mcp.json`."
         }
       ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3JjyQTdYa641fD7MbDsWHssqEhf",
-      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
-      "fileName": ".cursor/mcp.json",
-      "language": "json"
     },
     {
       "_type": "heading",
@@ -307,32 +273,27 @@
       "content": [
         {
           "_type": "text",
-          "text": "Any client that supports remote (Streamable HTTP) MCP servers can connect: add an HTTP server named `alinea` with the url from the banner, following your client's documentation. Clients that only launch local stdio servers can reach it through a bridge such as "
-        },
-        {
-          "_type": "text",
-          "text": "mcp-remote",
-          "marks": [
-            {
-              "_type": "link",
-              "_id": "3JjyQQGHI9wROrC7bEMSJ7YfcrP",
-              "_link": "url",
-              "href": "https://www.npmjs.com/package/mcp-remote"
-            }
-          ]
-        },
-        {
-          "_type": "text",
-          "text": " (`npx mcp-remote http://localhost:4500/mcp`)."
+          "text": "Add a stdio server named `alinea` that runs `npx alinea mcp` in the project directory, following your client's documentation. Clients that ignore a changed tool list only see the tools when `alinea dev` already runs as the session starts: restart the session if they don't show up."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "HTTP endpoint"
+        }
+      ],
+      "_anchor": "http-endpoint"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Most agents connect to MCP servers when a session starts. Start `alinea dev` first, and restart or reload the agent's session if the tools don't show up."
+          "text": "`alinea mcp` forwards to the endpoint `alinea dev` serves at `/mcp` on the port of the local dashboard: 4500 by default, or 4501 and up when that port is taken. Clients that support remote (Streamable HTTP) servers can connect to it directly, but its url changes with the port. It answers JSON-RPC messages sent with `POST` and does not keep sessions."
         }
       ]
     },

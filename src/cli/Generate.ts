@@ -3,7 +3,6 @@ import {Config} from '#/core/Config.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
-import {createRequire} from 'node:module'
 import * as fsp from 'node:fs/promises'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
@@ -21,8 +20,6 @@ import {findConfigFile} from './util/FindConfigFile.js'
 import {reportError, reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
-const require = createRequire(import.meta.url)
-const alineaPackageDir = path.dirname(require.resolve('alinea/package.json'))
 
 export interface GenerateOptions {
   cmd: 'dev' | 'build'
@@ -79,7 +76,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const configDir = path.dirname(configLocation)
 
   const {packageDir, outDir, databasePath} = generatedPaths({
-    alineaPackageDir,
     rootDir,
     configLocation
   })
