@@ -5,6 +5,7 @@ import type {
   Revision,
   SyncApi
 } from '#/core/Connection.js'
+import type {Config} from '#/core/Config.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import {HttpError} from '#/core/HttpError.js'
 import type {CommitChange, CommitRequest} from '#/core/db/CommitRequest.js'
@@ -15,8 +16,9 @@ import {
 } from '#/core/source/GithubSource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64, btoa} from '#/core/util/Encoding.js'
-import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {join, relative} from '#/core/util/Paths.js'
+import {loaderFor} from '#/core/Loader.js'
+import {contentFileVersions} from '#/core/util/EntryFilenames.js'
 
 export interface GithubOptions extends GithubSourceOptions {}
 
@@ -25,11 +27,13 @@ export class GithubApi
   implements HistoryApi, CommitApi, SyncApi
 {
   #options: GithubOptions
+  #config: Config
 
-  constructor(options: GithubOptions) {
+  constructor(options: GithubOptions, config: Config) {
     const normalized = normalizeGithubSourceOptions(options)
     super(normalized)
     this.#options = normalized
+    this.#config = config
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
@@ -64,7 +68,12 @@ export class GithubApi
   ): Promise<EntryRecord | undefined> {
     const content = await this.#getFileContentAtCommit(file, revisionId)
     try {
-      return content ? (JSON.parse(content) as EntryRecord) : undefined
+      return content
+        ? loaderFor(file).parse(
+            this.#config.schema,
+            new TextEncoder().encode(content)
+          )
+        : undefined
     } catch (error) {
       return undefined
     }
@@ -97,7 +106,7 @@ export class GithubApi
     const {owner, repo, branch, authToken, rootDir} = this.#options
     // Support multiple files and follow rename history
     const seen = new Set<string>()
-    const queue = fileVersions(file)
+    const queue = contentFileVersions(file)
     const allRevisions = Array<Revision>()
     const maxRequests = 3
     let requestCount = 0
@@ -175,7 +184,7 @@ export class GithubApi
           const relative = prev.startsWith(prefix)
             ? prev.slice(prefix.length)
             : prev
-          queue.push(...fileVersions(relative))
+          queue.push(...contentFileVersions(relative))
         }
       }
     }

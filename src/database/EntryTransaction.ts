@@ -1,6 +1,7 @@
+import {defaultLoader, loaderFor} from '#/core/Loader.js'
 import {Config} from '#/core/Config.js'
 import {Entry, entryStatuses} from '#/core/Entry.js'
-import {createRecord} from '#/core/EntryRecord.js'
+import {createRecord, type EntryRecord} from '#/core/EntryRecord.js'
 import type {QuerySettings} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
@@ -396,7 +397,24 @@ export class EntryTransaction implements AsyncDisposable {
       root,
       parent
     )
-    const filePath = paths.join(parentDir, entryVersionFile(path, status))
+    // Keep the format of the version this replaces, or of the entry's other
+    // versions; only a brand new entry is written in the default format
+    const formatOf =
+      existing.find(
+        entry => entry.locale === locale && entry.versionStatus === status
+      ) ??
+      existingMain ??
+      existing[0]
+    const filePath = paths.join(
+      parentDir,
+      entryVersionFile(
+        path,
+        status,
+        formatOf
+          ? paths.extname(formatOf.filePath)
+          : defaultLoader(this.#workingDatabase.config).extension
+      )
+    )
     if (locale !== null && status === 'published') {
       const from = existing.find(
         entry => entry.locale !== locale && entry.versionStatus === 'published'
@@ -491,7 +509,11 @@ export class EntryTransaction implements AsyncDisposable {
           locale
         })
     const childrenDir = paths.join(entry.parentDir, path)
-    const filePath = entryVersionFile(childrenDir, entry.versionStatus)
+    const filePath = entryVersionFile(
+      childrenDir,
+      entry.versionStatus,
+      paths.extname(entry.filePath)
+    )
     if (entry.versionStatus === 'published') {
       this.#policy.assert(Permission.Publish, entry)
       this.#assertValid(id, entry.type, {...data, path}, entry)
@@ -563,7 +585,7 @@ export class EntryTransaction implements AsyncDisposable {
     if (entry.path !== path)
       this.#sourceTransaction.rename(entry.childrenDir, childrenDir)
     this.#addRecord(
-      `${childrenDir}.json`,
+      entryVersionFile(childrenDir, 'published', paths.extname(entry.filePath)),
       createRecord({...entry, path, data}, 'published')
     )
     this.#messages.push(this.#report('publish', entry.title))
@@ -594,7 +616,7 @@ export class EntryTransaction implements AsyncDisposable {
     }
     this.#sourceTransaction.rename(
       main.filePath,
-      entryVersionFile(main.childrenDir, status)
+      entryVersionFile(main.childrenDir, status, paths.extname(main.filePath))
     )
     this.#messages.push(
       this.#report(status === 'draft' ? 'unpublish' : 'archive', main.title)
@@ -713,7 +735,11 @@ export class EntryTransaction implements AsyncDisposable {
             })
           : entry.path
       const childrenDir = paths.join(parentDir, path)
-      const filePath = entryVersionFile(childrenDir, entry.versionStatus)
+      const filePath = entryVersionFile(
+        childrenDir,
+        entry.versionStatus,
+        paths.extname(entry.filePath)
+      )
       if (action === Permission.Move) {
         this.#sourceTransaction.remove(entry.filePath)
         this.#sourceTransaction.rename(entry.childrenDir, childrenDir)
@@ -864,10 +890,10 @@ export class EntryTransaction implements AsyncDisposable {
     this.#workingTree = into
   }
 
-  #addRecord(filePath: string, record: Record<string, unknown>): void {
+  #addRecord(filePath: string, record: EntryRecord): void {
     this.#sourceTransaction.add(
       filePath,
-      new TextEncoder().encode(JSON.stringify(record, null, 2))
+      loaderFor(filePath).format(this.#workingDatabase.config.schema, record)
     )
   }
 
@@ -882,7 +908,11 @@ export class EntryTransaction implements AsyncDisposable {
         version.filePath,
         paths.join(
           version.parentDir,
-          entryVersionFile(path, version.versionStatus)
+          entryVersionFile(
+            path,
+            version.versionStatus,
+            paths.extname(version.filePath)
+          )
         )
       )
       this.#sourceTransaction.rename(

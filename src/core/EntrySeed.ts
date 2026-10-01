@@ -1,3 +1,5 @@
+import {defaultLoader} from './Loader.js'
+import {contentFileVersions} from './util/EntryFilenames.js'
 import {Config, type Config as ConfigType} from './Config.js'
 import type {Mutation} from './db/Mutation.js'
 import {Entry} from './Entry.js'
@@ -49,9 +51,9 @@ export function entrySeeds(config: ConfigType): ReadonlyArray<EntrySeed> {
             workspaceName,
             rootName,
             locale,
-            `${path}.json`
+            `${path}${defaultLoader(config).extension}`
           )
-          const nodePath = filePath.slice(0, -'.json'.length)
+          const nodePath = withoutExtension(filePath)
           const parentNodePath = path.includes('/')
             ? paths.dirname(nodePath)
             : null
@@ -67,6 +69,7 @@ export function entrySeeds(config: ConfigType): ReadonlyArray<EntrySeed> {
             filePath,
             nodePath,
             parentNodePath,
+            // An identifier stored in content, independent of the file format
             seedPath: `/${pathSegments.join('/')}.json`,
             data: {
               ...(fields as Record<string, unknown>),
@@ -112,11 +115,7 @@ export async function seedMutations(
       existingBySeed ??
       (await graph.first({
         filePath: {
-          in: [
-            seed.filePath,
-            seed.filePath.replace(/\.json$/, '.draft.json'),
-            seed.filePath.replace(/\.json$/, '.archived.json')
-          ]
+          in: contentFileVersions(seed.filePath)
         },
         status: 'all',
         select: selection
@@ -161,11 +160,16 @@ export function entrySeed(
   location: Pick<EntrySeed, 'workspace' | 'root' | 'locale'>
 ): EntrySeed | undefined {
   if (!seedPath) return undefined
+  const node = withoutExtension(seedPath)
   return entrySeeds(config).find(
     seed =>
-      seed.seedPath === seedPath &&
+      withoutExtension(seed.seedPath) === node &&
       seed.workspace === location.workspace &&
       seed.root === location.root &&
       seed.locale === location.locale
   )
+}
+
+function withoutExtension(filePath: string): string {
+  return filePath.slice(0, filePath.length - paths.extname(filePath).length)
 }

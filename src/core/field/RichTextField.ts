@@ -30,6 +30,7 @@ import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
+import {richTextFromYaml, richTextToYaml} from './RichTextYaml.js'
 import {validateType} from '../Validation.js'
 
 export type RichTextMutator<R> = {
@@ -98,6 +99,12 @@ export class RichTextField<
       searchableText(value) {
         if (!meta.options.searchable) return ''
         return richTextSearchableText(schema, value)
+      },
+      toYaml(value) {
+        return richTextToYaml(schema, value)
+      },
+      fromYaml(value, context) {
+        return richTextFromYaml(schema, value, context.path)
       },
       isEmpty(value) {
         return !Array.isArray(value) || isEmptyDoc(value)

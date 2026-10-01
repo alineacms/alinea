@@ -1,5 +1,7 @@
 import {OAuth2} from '#/backend/api/OAuth2.js'
 import {AuthAction} from '#/backend/Auth.js'
+import {loaderFor} from '#/core/Loader.js'
+import {JsonLoader} from '#/core/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
@@ -24,6 +26,7 @@ import type {GetBlobsOptions} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {entries} from '#/core/util/Objects.js'
+import {extname} from '#/core/util/Paths.js'
 import {Workspace} from '#/core/Workspace.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {Response} from '@alinea/iso'
@@ -288,26 +291,51 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     )
   }
 
-  revisions(file: string): Promise<Array<Revision>> {
+  async revisions(file: string): Promise<Array<Revision>> {
     const ctx = this.#context
-    return parseOutcome<Array<Revision>>(
-      fetch(
-        `${cloudConfig.history}?${new URLSearchParams({file})}`,
-        json({headers: bearer(ctx)})
-      )
+    // The entry may have been stored as json in earlier commits
+    const extension = extname(file)
+    const files = [file]
+    if (extension.toLowerCase() !== JsonLoader.extension)
+      files.push(`${file.slice(0, -extension.length)}${JsonLoader.extension}`)
+    const lists = await Promise.all(
+      files.map(async candidate => {
+        const request = parseOutcome<Array<Revision>>(
+          fetch(
+            `${cloudConfig.history}?${new URLSearchParams({file: candidate})}`,
+            json({headers: bearer(ctx)})
+          )
+        )
+        return candidate === file ? request : request.catch(() => [])
+      })
     )
+    const unique = new Map<string, Revision>()
+    for (const revision of lists.flat())
+      if (!unique.has(revision.ref)) unique.set(revision.ref, revision)
+    return [...unique.values()].sort((a, b) => b.createdAt - a.createdAt)
   }
 
-  revisionData(
+  async revisionData(
     file: string,
     revisionId: string
   ): Promise<EntryRecord | undefined> {
     const ctx = this.#context
-    return parseOutcome<EntryRecord | undefined>(
-      fetch(
-        `${cloudConfig.history}?${new URLSearchParams({file, ref: revisionId})}`,
-        json({headers: bearer(ctx)})
+    const loader = loaderFor(file)
+    if (loader === JsonLoader)
+      return parseOutcome<EntryRecord | undefined>(
+        fetch(
+          `${cloudConfig.history}?${new URLSearchParams({file, ref: revisionId})}`,
+          json({headers: bearer(ctx)})
+        )
       )
+    // Other formats are parsed here: the server returns the file as is
+    const response = await fetch(
+      `${cloudConfig.history}?${new URLSearchParams({file, ref: revisionId, raw: 'true'})}`,
+      {headers: bearer(ctx)}
+    ).then(failOnHttpError)
+    return loader.parse(
+      this.#config.schema,
+      new Uint8Array(await response.arrayBuffer())
     )
   }
 

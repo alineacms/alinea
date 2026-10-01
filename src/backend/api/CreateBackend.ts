@@ -57,7 +57,7 @@ export interface BackendOptions {
 export function backendFromOptions(options: BackendOptions): BackendFactory {
   const db = driver[options.database.driver](options.database.client)
   return (context, config) => {
-    const ghApi = new GithubApi(options.github)
+    const ghApi = new GithubApi(options.github, config)
     const dbApi = new DatabaseApi(context, {db})
     const uploadsApi = options.uploads?.s3
       ? new S3Uploads(options.uploads.s3, config.maxUploadSize)

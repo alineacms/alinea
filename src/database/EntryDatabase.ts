@@ -32,6 +32,7 @@ import {entryDataText, hasJsonbRows, supportsJsonb} from './entry/EntryData.js'
 import {
   EntryIndexTable,
   EntryReferenceTable,
+  storedSource,
   syncFieldIndexes
 } from './entry/EntryTable.js'
 import {EntryTransaction} from './EntryTransaction.js'
@@ -86,6 +87,13 @@ export interface EntryApplyResult extends EntrySyncResult {
  * A queryable entry index owning its SQLite connection. Mutations are planned
  * on a working copy inside a write transaction of that connection.
  */
+interface StoredRow {
+  sha: string
+  filePath: string
+  payload: string | null
+  data: string
+}
+
 export class EntryDatabase extends Graph implements AsyncDisposable {
   #config: Config
   #options: EntryDatabaseOptions
@@ -293,7 +301,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       const state = DatabaseStateTable
       const entries = EntryIndexTable
       const blobs = sql.identifier(reindexBlobsName)
-      const encoder = new TextEncoder()
       const result = await this.#queue.run(async () => {
         // Read outside the transaction: queries on the connection itself would
         // wait for the transaction to finish.
@@ -302,12 +309,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           throw new Error('Cannot reindex a database without a source tree')
         return this.#db.transaction(
           async tx => {
-            // The stored payloads are the exact source files of the recorded
-            // tree, so they feed the sync back in without an external source.
+            // The stored rows hold the source files of the recorded tree, so
+            // they feed the sync back in without an external source.
             await tx.run(sql`drop table if exists temp.${blobs}`)
             await tx.run(sql`create temp table ${blobs} as
-              select ${entries.fileHash} as sha,
-                coalesce(${entries.payload}, ${entryDataText(entries)}) as blob
+              select ${entries.fileHash} as sha, ${entries.filePath} as filePath,
+                ${entries.payload} as payload, ${entryDataText(entries)} as data
               from ${entries}`)
             await tx.delete(entries)
             await tx.delete(EntrySearchTable)
@@ -327,15 +334,18 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
               },
               async *getBlobs(shas) {
                 for (const batch of chunks(shas, 400)) {
-                  const rows = await tx.all<{sha: string; blob: string}>(
-                    sql`select sha, blob from temp.${blobs}
+                  const rows = await tx.all<StoredRow>(
+                    sql`select sha, filePath, payload, data from temp.${blobs}
                       where sha in (${sql.join(
                         batch.map(sha => sql.value(sha)),
                         sql`, `
                       )})`
                   )
                   for (const row of rows)
-                    yield [row.sha, encoder.encode(row.blob)] as const
+                    yield [
+                      row.sha,
+                      storedSource(config, row.filePath, row.payload, row.data)
+                    ] as const
                 }
               }
             }
@@ -532,7 +542,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     shas: ReadonlyArray<string>,
     options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
-    const encoder = new TextEncoder()
     const requested = new Set(shas)
     for (const batch of chunks(shas, 400)) {
       if (options.signal?.aborted)
@@ -546,7 +555,9 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         return this.#db
           .select({
             sha: target.fileHash,
-            payload: sql<string>`coalesce(${target.payload}, ${entryDataText(target)})`
+            filePath: target.filePath,
+            payload: target.payload,
+            data: entryDataText(target)
           })
           .from(target)
           .where(inArray(target.filePath, paths))
@@ -554,7 +565,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       })
       for (const row of rows)
         if (requested.delete(row.sha))
-          yield [row.sha, encoder.encode(row.payload)]
+          yield [
+            row.sha,
+            storedSource(this.#config, row.filePath, row.payload, row.data)
+          ]
     }
   }
 

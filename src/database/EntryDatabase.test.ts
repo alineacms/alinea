@@ -1,4 +1,7 @@
+import {contentLoaders, type Loader} from '#/core/Loader.js'
 import type {Config} from '#/core/Config.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import {ListRow} from '#/core/ListRow.js'
@@ -270,6 +273,263 @@ test('entry database returns source blobs by hash', async () => {
     path: 'page',
     title: 'Page'
   })
+})
+
+test('entry database stores the record of files that are not JSON and writes it back', async () => {
+  // A format whose text differs from the JSON of its record
+  const FakeLoader: Loader = {
+    extension: '.fake',
+    parse(schema, input) {
+      const [, json] = new TextDecoder().decode(input).split('\n---\n')
+      return JSON.parse(json) as EntryRecord
+    },
+    format(schema, entry) {
+      return new TextEncoder().encode(`fake\n---\n${JSON.stringify(entry)}`)
+    }
+  }
+  const loaders = contentLoaders as Array<Loader>
+  loaders.push(FakeLoader)
+  try {
+    const Page = ConfigBuilder.document('Page', {fields: {}})
+    const config: Config = {
+      schema: {Page},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+        })
+      }
+    }
+    const record = {_id: 'page', _type: 'Page', _index: 'a', title: 'Page'}
+    const contents = FakeLoader.format(config.schema, record)
+    const source = new MemorySource()
+    const tx = await transaction(source)
+    tx.add('pages/page.fake', contents)
+    const compiled = await tx.compile()
+    await source.applyChanges({
+      fromSha: compiled.from.sha,
+      changes: compiled.changes
+    })
+    using sqlite = new Database(':memory:')
+    const db = connect(sqlite)
+    await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+    const runtime = new EntryDatabase(config, db)
+    await runtime.syncWith(source)
+    const stored = await db
+      .select({
+        data: entryDataText(EntryIndexTable),
+        payload: EntryIndexTable.payload
+      })
+      .from(EntryIndexTable)
+      .get()
+    // Only the record is stored, the file is written back when asked for
+    expect(stored?.payload).toBeNull()
+    expect(JSON.parse(stored!.data)).toEqual(record)
+    const sha = (await source.getTree()).index().get('pages/page.fake')!
+    const blobs = Array<[string, Uint8Array]>()
+    for await (const blob of runtime.getBlobs([sha])) blobs.push(blob)
+    expect(blobs).toEqual([[sha, contents]])
+    expect(await hashBlob(blobs[0][1])).toBe(sha)
+    // Reindexing parses the stored source again
+    await runtime.reindex(config)
+    expect(await runtime.get({id: 'page', select: Entry.data})).toEqual({
+      path: 'page',
+      title: 'Page'
+    })
+    await runtime.close()
+  } finally {
+    loaders.splice(loaders.indexOf(FakeLoader), 1)
+  }
+})
+
+test('new entries use contentFormat while existing files keep theirs', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {title: Field.text('Title')}
+  })
+  const config: Config = {
+    contentFormat: 'yaml',
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const tx = await transaction(source)
+  tx.add(
+    'pages/old.json',
+    new TextEncoder().encode(
+      JSON.stringify({_id: 'old', _type: 'Page', _index: 'a0', title: 'Old'})
+    )
+  )
+  const compiled = await tx.compile()
+  await source.applyChanges({
+    fromSha: compiled.from.sha,
+    changes: compiled.changes
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(config, db)
+  await database.syncWith(source)
+  const result = await database.apply(
+    [
+      {
+        op: 'create',
+        id: 'new',
+        type: 'Page',
+        locale: null,
+        data: {title: 'New', path: 'new'}
+      },
+      {
+        op: 'update',
+        id: 'old',
+        locale: null,
+        status: 'published',
+        set: {title: 'Old updated'}
+      }
+    ],
+    {source}
+  )
+  const {changes} = sourceChanges(result.request)
+  expect(changes.map(change => change.path).sort()).toEqual([
+    'pages/new.yaml',
+    'pages/old.json'
+  ])
+  await source.applyChanges(sourceChanges(result.request))
+  await database.syncWith(source)
+  expect(
+    await database.find({select: Entry.title, orderBy: {asc: Entry.title}})
+  ).toEqual(['New', 'Old updated'])
+  await database.close()
+})
+
+test('files without a content loader are ignored', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const tx = await transaction(source)
+  tx.add('.DS_Store', new Uint8Array([0, 1, 2]))
+  tx.add('pages/.DS_Store', new Uint8Array([0, 1, 2]))
+  tx.add(
+    'pages/page.json',
+    new TextEncoder().encode(
+      JSON.stringify({_id: 'page', _type: 'Page', _index: 'a0', title: 'A'})
+    )
+  )
+  const compiled = await tx.compile()
+  await source.applyChanges({
+    fromSha: compiled.from.sha,
+    changes: compiled.changes
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(config, db)
+  await database.syncWith(source)
+  expect(await database.find({select: Entry.title})).toEqual(['A'])
+  const removal = await transaction(source)
+  removal.remove('pages/.DS_Store')
+  const removed = await removal.compile()
+  await source.applyChanges({
+    fromSha: removed.from.sha,
+    changes: removed.changes
+  })
+  await database.syncWith(source)
+  expect(await database.find({select: Entry.title})).toEqual(['A'])
+  await database.close()
+})
+
+test('an entry stored in two formats is rejected', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const tx = await transaction(source)
+  tx.add(
+    'pages/page.json',
+    new TextEncoder().encode(
+      JSON.stringify({_id: 'page', _type: 'Page', _index: 'a0', title: 'A'})
+    )
+  )
+  tx.add(
+    'pages/page.yaml',
+    new TextEncoder().encode('_id: page\n_type: Page\n_index: a0\ntitle: B\n')
+  )
+  const compiled = await tx.compile()
+  await source.applyChanges({
+    fromSha: compiled.from.sha,
+    changes: compiled.changes
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(config, db)
+  await expect(database.syncWith(source)).rejects.toThrow('hold the same entry')
+  await database.close()
+})
+
+test('other versions of an entry may use another format', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const tx = await transaction(source)
+  tx.add(
+    'pages/page.yaml',
+    new TextEncoder().encode('_id: page\n_type: Page\n_index: a0\ntitle: A\n')
+  )
+  tx.add(
+    'pages/page.draft.json',
+    new TextEncoder().encode(
+      JSON.stringify({_id: 'page', _type: 'Page', _index: 'a0', title: 'B'})
+    )
+  )
+  const compiled = await tx.compile()
+  await source.applyChanges({
+    fromSha: compiled.from.sha,
+    changes: compiled.changes
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(config, db)
+  await database.syncWith(source)
+  expect(
+    await database.find({
+      status: 'all',
+      select: {title: Entry.title, filePath: Entry.filePath},
+      orderBy: {asc: Entry.filePath}
+    })
+  ).toEqual([
+    {title: 'B', filePath: 'pages/page.draft.json'},
+    {title: 'A', filePath: 'pages/page.yaml'}
+  ])
+  await database.close()
 })
 
 test('cached trees follow revisions written by another database instance', async () => {

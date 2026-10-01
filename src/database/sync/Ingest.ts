@@ -1,9 +1,11 @@
+import {contentLoaders, isContentFile} from '#/core/Loader.js'
 import type {Config} from '#/core/Config.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
 import {accumulate} from '#/core/util/Async.js'
+import {extname} from '#/core/util/Paths.js'
 import {entryIndexRow} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
@@ -69,6 +71,15 @@ function parseFiles(
   return files.map(file => {
     const blob = blobs.get(file.fileHash)
     assert(blob, `Source did not return blob ${file.fileHash}`)
+    const extension = extname(file.filePath)
+    const base = file.filePath.slice(0, -extension.length)
+    for (const loader of contentLoaders) {
+      const version = `${base}${loader.extension}`
+      assert(
+        loader.extension === extension.toLowerCase() || !tree.has(version),
+        `${file.filePath} and ${version} hold the same entry, remove one`
+      )
+    }
     const entry = parseSourceEntry(config, file.filePath, file.fileHash, blob)
     return {
       ...entryIndexRow(entry),
@@ -124,7 +135,9 @@ export async function mergeTrees(
     childDirs: new Set(),
     containers: new Set()
   }
-  const diff = previousTree.diff(tree).changes
+  const diff = previousTree
+    .diff(tree)
+    .changes.filter(change => isContentFile(change.path))
   const batches = Array.from(chunks(diff, changeBatchSize), batch => ({
     deleted: batch.flatMap(change =>
       change.op === 'delete' ? [change.path] : []

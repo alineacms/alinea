@@ -1,4 +1,4 @@
-import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {loaderFor} from '#/core/Loader.js'
 import {Config} from '#/core/Config.js'
 import type {EntryReference} from '#/core/db/EntryReference.js'
 import {EntryValidationError} from '#/core/db/EntryValidationError.js'
@@ -416,12 +416,14 @@ export class EntryLocaleAtoms {
       status
     }
     const schema = get(configAtom).schema
+    // Patch the entry's file in its own format, as the preview applies it
+    const loader = loaderFor(activeEntry.filePath)
     const decoder = new TextDecoder()
     const baseText = decoder.decode(
-      JsonLoader.format(schema, createRecord(activeEntry, activeEntry.status))
+      loader.format(schema, createRecord(activeEntry, activeEntry.status))
     )
     const nextText = decoder.decode(
-      JsonLoader.format(schema, createRecord(nextEntry, status))
+      loader.format(schema, createRecord(nextEntry, status))
     )
     return encodePreviewPayload({
       locale: activeEntry.locale,

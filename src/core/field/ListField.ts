@@ -10,9 +10,14 @@ import {ListRow} from '../ListRow.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {createUniqueAnchor} from '../util/Anchors.js'
-import {generateKeyBetween} from '../util/FractionalIndexing.js'
-import {entries} from '../util/Objects.js'
+import {
+  generateKeyBetween,
+  generateNKeysBetween
+} from '../util/FractionalIndexing.js'
+import {entries, isRecord} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
+import {stableId} from '../util/StableId.js'
+import {typedFromYaml, typedToYaml} from '../util/TypedYaml.js'
 import {validateType} from '../Validation.js'
 
 export interface ListMutator<Row> {
@@ -88,6 +93,32 @@ export class ListFieldBase<
           }
         }
         return res
+      },
+      toYaml(value) {
+        if (!Array.isArray(value)) return value
+        return value.map(row => {
+          if (!isRecord(row) || typeof row._type !== 'string') return row
+          const {_id, _index, _type, ...data} = row
+          const type = schema[_type]
+          return typedToYaml(_type, type ? Type.toYaml(type, data) : data)
+        })
+      },
+      fromYaml(value, {path}) {
+        if (!Array.isArray(value)) return value
+        const indexes = generateNKeysBetween(null, null, value.length)
+        return value.map((row, index) => {
+          const typed = typedFromYaml(row)
+          if (!typed) return row
+          const [_type, data] = typed
+          const rowPath = [...path, String(index)]
+          const type = schema[_type]
+          return {
+            [ListRow.id]: stableId(rowPath),
+            [ListRow.index]: indexes[index],
+            [ListRow.type]: _type,
+            ...(type ? Type.fromYaml(type, data, rowPath) : data)
+          }
+        })
       },
       nestedErrors(value, context) {
         const rows = Array.isArray(value) ? value : []

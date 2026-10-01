@@ -52,6 +52,11 @@ export interface FieldLocalizeContext {
   entryIds: Set<string>
 }
 
+export interface FieldYamlContext {
+  /** Position of the value within the entry, used to derive stable ids */
+  path: Array<string>
+}
+
 export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
   Options,
   'label'
@@ -111,6 +116,10 @@ export interface FieldData<
   withInitialValue?: (value: StoredValue) => StoredValue
   applyLinks?: (value: StoredValue, loader: LinkResolver) => Promise<void>
   searchableText?: (value: StoredValue) => string
+  /** Encode the stored value for the YAML file format */
+  toYaml?: (value: StoredValue) => unknown
+  /** Decode a value encoded by toYaml, values of another shape are kept */
+  fromYaml?: (value: unknown, context: FieldYamlContext) => unknown
   /** Whether the value counts as missing for the `required` option */
   isEmpty?: (value: StoredValue) => boolean
   /** Validate fields nested in the value (list rows, object fields, blocks) */
@@ -322,6 +331,20 @@ export namespace Field {
     context: FieldLocalizeContext
   ): StoredValue {
     return getField(field).localizeLinks?.(value, context) ?? value
+  }
+
+  export function toYaml(field: HasField, value: unknown): unknown {
+    const data = getField(field)
+    return data.toYaml ? data.toYaml(value) : value
+  }
+
+  export function fromYaml(
+    field: HasField,
+    value: unknown,
+    context: FieldYamlContext
+  ): unknown {
+    const data = getField(field)
+    return data.fromYaml ? data.fromYaml(value, context) : value
   }
 
   export function isField(value: any): value is Field {

@@ -1,4 +1,5 @@
 import * as fsp from 'node:fs/promises'
+import {contentLoaders, loaderFor} from '#/core/Loader.js'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
@@ -191,6 +192,54 @@ export class DevDB extends EntryStore {
     if (!changes.length) return
     await this.source.applyChanges({fromSha: batch.fromSha, changes})
     await this.sync()
+  }
+
+  /**
+   * Convert every content file to the format of `extension`: each file is
+   * parsed by its own loader and written back in the new format under the
+   * same path with the new extension. Returns the number of converted files.
+   */
+  async migrate(extension: string): Promise<number> {
+    const target = contentLoaders.find(loader => loader.extension === extension)
+    assert(target, `Unknown content format: ${extension}`)
+    await this.sync()
+    const tree = await this.source.getTree()
+    const index = tree.index()
+    const files = Array.from(index).filter(([path]) => {
+      const current = extname(path)
+      return (
+        current !== extension &&
+        contentLoaders.some(loader => loader.extension === current)
+      )
+    })
+    if (!files.length) return 0
+    const blobs = new Map<string, Uint8Array>()
+    for await (const [sha, blob] of this.source.getBlobs(
+      files.map(([, sha]) => sha)
+    ))
+      blobs.set(sha, blob)
+    const {schema} = this.config
+    const changes = Array<Change>()
+    for (const [path, sha] of files) {
+      const blob = blobs.get(sha)
+      assert(blob, `Missing contents of ${path}`)
+      const converted = `${path.slice(0, -extname(path).length)}${extension}`
+      assert(
+        !index.has(converted),
+        `Cannot convert ${path}: ${converted} exists`
+      )
+      const contents = target.format(
+        schema,
+        loaderFor(path).parse(schema, blob)
+      )
+      changes.push(
+        {op: 'add', path: converted, sha: await hashBlob(contents), contents},
+        {op: 'delete', path, sha}
+      )
+    }
+    await this.source.applyChanges({fromSha: tree.sha, changes})
+    await this.sync()
+    return files.length
   }
 
   async watchFiles(): Promise<WatchFiles> {

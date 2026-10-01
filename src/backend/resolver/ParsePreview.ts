@@ -1,4 +1,3 @@
-import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {PreviewRequest, PreviewUpdate} from '#/core/Preview.js'
@@ -7,8 +6,10 @@ import {trace} from '#/core/Trace.js'
 import {createEntryRow} from '#/core/util/EntryRows.js'
 import {decodePreviewPayload} from '#/preview/PreviewPayload.js'
 import type {Graph} from '#/core/Graph.js'
+import {loaderFor} from '#/core/Loader.js'
 
 const decoder = new TextDecoder()
+const encoder = new TextEncoder()
 
 export interface DecodedEntryPreview {
   entry: Entry
@@ -37,8 +38,10 @@ export async function applyPreview(
       status: 'preferDraft'
     })
     if (!entry) return
+    const {schema} = local.config
+    const loader = loaderFor(entry.filePath)
     const baseText = decoder.decode(
-      JsonLoader.format(local.config.schema, createRecord(entry, entry.status))
+      loader.format(schema, createRecord(entry, entry.status))
     )
     let updatedText: string
     try {
@@ -46,7 +49,9 @@ export async function applyPreview(
     } catch {
       return
     }
-    const {data} = parseRecord(JSON.parse(updatedText))
+    const {data} = parseRecord(
+      loader.parse(schema, encoder.encode(updatedText))
+    )
     const {rowHash: _rowHash, fileHash: _fileHash, ...withoutHashes} = entry
     const patched = await createEntryRow(
       local.config,
