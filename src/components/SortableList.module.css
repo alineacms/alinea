@@ -37,6 +37,12 @@
   border-top: 1px solid var(--alinea-border);
 }
 
+/* Rows paint above the list's edge, the first row's divider would cover it */
+.SortableList > .SortableListItem:first-child,
+.SortableList > .SortableListItem-dropTarget:first-child > .SortableListItem {
+  border-top-color: transparent;
+}
+
 .SortableListItem[aria-current='true'] {
   background: var(--alinea-bg-muted);
 }

@@ -50,21 +50,25 @@
     border-color: var(--alinea-border-strong);
   }
 
-  /* The outline toggle group draws the frame, the pressed item is filled */
+  /* The outline toggle group draws the track, the pressed item is raised */
   &.is-grouped[data-variant='outline'] {
     border-color: transparent;
     border-radius: var(--alinea-radius-sm);
 
     @media (hover: hover) {
       &:hover {
-        background-color: var(--alinea-muted);
+        background-color: transparent;
       }
     }
 
     &[aria-pressed='true'],
     &[aria-checked='true'] {
-      background-color: var(--alinea-selected);
-      color: var(--alinea-selected-fg);
+      background-color: light-dark(
+        var(--alinea-bg),
+        color-mix(in oklab, var(--alinea-muted) 80%, var(--alinea-fg))
+      );
+      color: var(--alinea-fg);
+      box-shadow: var(--alinea-shadow-raised);
     }
 
     &[data-size='sm'] {

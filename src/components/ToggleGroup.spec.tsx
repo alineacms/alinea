@@ -43,7 +43,7 @@ test('sizes and orientation', async ({mount, page}) => {
   await expect(page.getByRole('radio', {name: 'Bottom'})).toBeFocused()
 })
 
-test('an outline group is framed like an input, with inset items', async ({
+test('an outline group is a track as tall as an input', async ({
   mount,
   page
 }) => {
@@ -52,7 +52,7 @@ test('an outline group is framed like an input, with inset items', async ({
     .locator('[data-slot="toggle-group"][data-variant="outline"]')
     .first()
   await expect(group).toHaveCSS('height', '32px')
-  await expect(group).toHaveCSS('border-top-width', '1px')
+  await expect(group).toHaveCSS('border-top-style', 'none')
   await expect(group).toHaveCSS('border-radius', '8px')
   const items = group.locator('[data-slot="toggle-group-item"]')
   for (const item of await items.all()) {
