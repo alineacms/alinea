@@ -1,15 +1,28 @@
+.SortableListRoot {
+  display: grid;
+  gap: 6px;
+}
+
+/* Add buttons sit below the list, left aligned, as small outlined buttons */
 .SortableListAdd-inner {
   align-items: center;
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  min-height: 36px;
-  border-top: 1px solid var(--alinea-border);
-}
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px;
 
-.SortableListAdd:first-child .SortableListAdd-inner {
-  border-top: 0;
+  [data-slot='button'][data-variant='ghost'] {
+    border-color: var(--alinea-border);
+    background: var(--alinea-bg);
+
+    @media (hover: hover) {
+      &:hover {
+        background: var(--alinea-selected);
+      }
+    }
+  }
 }
 
 .SortableListItem {
@@ -54,9 +67,9 @@
   top: 50%;
   width: 190px;
   max-width: calc(100% - 20px);
-  height: 6px;
+  height: 3px;
   background: var(--alinea-primary);
-  border-radius: var(--alinea-radius-sm);
+  border-radius: 2px;
   transform: translate(-50%, -50%);
 }
 
@@ -103,7 +116,7 @@
   top: 50%;
   width: 30px;
   height: 4px;
-  background: var(--alinea-fg-disabled);
+  background: var(--alinea-fg-subtle);
   border-radius: 999px;
   transform: translate(-50%, -50%);
 }
@@ -115,7 +128,7 @@
 
 .SortableListHandle:focus-visible::before {
   background: var(--alinea-primary);
-  outline: 2px solid color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+  outline: 2px solid var(--alinea-ring);
   outline-offset: 2px;
 }
 
@@ -125,8 +138,12 @@
   align-items: center;
   justify-content: space-between;
   min-width: 0;
-  min-height: 36px;
-  padding: 2px 8px;
+  min-height: var(--alinea-row-lg);
+  padding: 2px 6px 2px 8px;
+}
+
+.SortableListItemHeader:hover {
+  background: var(--alinea-muted);
 }
 
 .SortableListItemHeader:hover > .SortableListHandle,
@@ -152,8 +169,8 @@
   min-width: 0;
   overflow: hidden;
   color: var(--alinea-fg-muted);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--alinea-text-sm);
+  font-weight: var(--alinea-weight-medium);
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -182,16 +199,18 @@
 
 .SortableListItemContent {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   align-items: normal;
-  padding: 8px 16px 16px 16px;
+  padding: 6px 16px 16px 44px;
 }
 
 .SortableListItemFooter {
   display: flex;
   align-items: flex-start;
   min-width: 0;
-  padding: 8px 16px;
+  padding: 0 16px 10px 44px;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-sm);
 }
 
 .SortableListItemSettings {
@@ -218,22 +237,21 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid color-mix(in srgb, var(--alinea-border) 70%, transparent);
   border-radius: var(--alinea-radius);
   background: var(--alinea-overlay);
-  box-shadow: var(--alinea-shadow-raised);
+  box-shadow: var(--alinea-shadow-float);
 }
 
 .SortableListDragPreview-icon {
   width: 28px;
   height: 28px;
-  border-radius: var(--alinea-radius);
+  border-radius: var(--alinea-radius-sm);
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--alinea-primary);
-  background: color-mix(in srgb, var(--alinea-primary) 12%, transparent);
+  color: var(--alinea-primary-subtle-fg);
+  background: var(--alinea-primary-subtle);
 }
 
 .SortableListDragPreview-body {
@@ -243,8 +261,8 @@
 }
 
 .SortableListDragPreview-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--alinea-text-sm);
+  font-weight: var(--alinea-weight-medium);
   color: var(--alinea-fg);
   overflow: hidden;
   text-overflow: ellipsis;

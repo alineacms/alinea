@@ -1,6 +1,7 @@
+/* Flat in the page: a hairline edge instead of a shadow */
 .Surface {
   background: var(--alinea-bg);
-  box-shadow: var(--alinea-shadow-raised);
+  box-shadow: 0 0 0 1px var(--alinea-border);
   border-radius: var(--alinea-radius);
   color: var(--alinea-fg);
   cursor: default;
@@ -16,12 +17,12 @@
 
 .Surface[data-depth='muted'] {
   background: var(--alinea-bg-muted);
-  box-shadow: var(--alinea-shadow-muted);
+  box-shadow: 0 0 0 1px var(--alinea-border);
 }
 
 .Surface .Surface:not([data-depth]) {
   background: var(--alinea-bg-muted);
-  box-shadow: var(--alinea-shadow-muted);
+  box-shadow: 0 0 0 1px var(--alinea-border);
 }
 
 .Surface .Surface .Surface:not([data-depth]) {
@@ -30,7 +31,7 @@
 
 .Surface .Surface .Surface .Surface:not([data-depth]) {
   background: var(--alinea-bg-muted);
-  box-shadow: var(--alinea-shadow-muted);
+  box-shadow: 0 0 0 1px var(--alinea-border);
 }
 
 .Surface .Surface .Surface .Surface .Surface:not([data-depth]) {
@@ -59,8 +60,8 @@
   box-sizing: border-box;
   display: flex;
   gap: 8px;
-  min-height: 36px;
-  padding: 6px 16px;
+  min-height: var(--alinea-row-lg);
+  padding: 4px 16px;
 }
 
 .SurfaceRow:not(:first-child) {

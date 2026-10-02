@@ -1,7 +1,9 @@
 import styler from '@alinea/styler'
 import {
+  Children,
   type ComponentPropsWithoutRef,
   createContext,
+  isValidElement,
   type DOMAttributes,
   type ReactNode,
   type RefObject,
@@ -78,6 +80,7 @@ export function SortableList({
   role = 'list',
   onReorder,
   dragType = DEFAULT_DRAG_TYPE,
+  children,
   ...props
 }: SortableListProps) {
   const [draggingKey, setDraggingKey] = useState<Key | null>(null)
@@ -126,14 +129,35 @@ export function SortableList({
       }
     }
   }, [reorderable, dragType, draggingKey, dropTarget])
+  // Add actions sit below the list rather than inside its surface, so an
+  // empty list is just its add buttons
+  const items: Array<ReactNode> = []
+  const adds: Array<ReactNode> = []
+  Children.forEach(children, child => {
+    if (isValidElement(child) && child.type === SortableListAdd)
+      adds.push(child)
+    else items.push(child)
+  })
+  const list = items.length > 0 && (
+    <Surface
+      data-slot="sortable-list"
+      {...props}
+      className={className}
+      role={role}
+    >
+      {items}
+    </Surface>
+  )
   return (
     <SortableListContext.Provider value={context}>
-      <Surface
-        data-slot="sortable-list"
-        {...props}
-        className={className}
-        role={role}
-      />
+      {adds.length > 0 ? (
+        <div className={styles.SortableListRoot()}>
+          {list}
+          {adds}
+        </div>
+      ) : (
+        list
+      )}
     </SortableListContext.Provider>
   )
 }

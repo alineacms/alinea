@@ -3,9 +3,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0.4rem;
+  min-height: var(--alinea-row);
+  padding: 6px 8px;
   border-radius: var(--alinea-radius-sm);
-  font-size: var(--alinea-font-size-base);
+  font-size: var(--alinea-text-md);
   outline: none;
   cursor: pointer;
 
@@ -15,7 +16,7 @@
   }
 
   &.is-highlighted {
-    background: var(--alinea-muted);
+    background: var(--alinea-selected);
   }
 
   /* The subtle background only marks the item under the pointer, keyboard
@@ -27,7 +28,7 @@
 
   &[aria-disabled='true'] {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 
@@ -56,9 +57,9 @@
 }
 
 .ListBoxOption-description {
-  font-size: 0.75rem;
-  font-weight: 400;
-  opacity: 0.8;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-xs);
+  font-weight: var(--alinea-weight-regular);
 
   :not(.ListBoxOption) > .ListBoxOption-content > & {
     display: none;

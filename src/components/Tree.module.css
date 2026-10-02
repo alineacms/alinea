@@ -42,22 +42,22 @@
 }
 
 .TreeItem {
-  height: 34px;
+  height: var(--alinea-row);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 7px 12px;
+  gap: 6px;
+  padding: 0 8px;
   padding-left: calc(8px + (var(--alinea-tree-level, 1) - 1) * 16px);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 400;
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-regular);
   background: transparent;
   color: var(--alinea-fg);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   outline: none;
-  border-radius: var(--alinea-radius);
+  border-radius: var(--alinea-radius-sm);
   user-select: none;
 
   &:hover {
@@ -70,10 +70,11 @@
     outline-offset: -2px;
   }
 
+  /* Selection is neutral for every entry state, so a status dot sits on it */
   &[aria-selected='true'] {
     background: var(--alinea-selected);
-    color: var(--alinea-primary-subtle-fg);
-    font-weight: 600;
+    color: var(--alinea-selected-fg);
+    font-weight: var(--alinea-weight-medium);
 
     &.is-expanded {
       border-bottom-left-radius: 0;
@@ -81,18 +82,16 @@
     }
 
     &:focus-visible {
-      outline-color: var(--alinea-primary-subtle-fg);
-      outline-offset: -4px;
+      outline-offset: -2px;
     }
   }
 
   &:has(.TreeItem-labelLink[aria-current]):not([aria-selected='true']) {
-    color: var(--alinea-primary-subtle-fg);
-    font-weight: 600;
+    font-weight: var(--alinea-weight-medium);
   }
 
   &[aria-disabled='true'] {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: default;
   }
 
@@ -129,7 +128,7 @@
   width: 16px;
   height: 16px;
   visibility: hidden;
-  color: var(--alinea-fg);
+  color: var(--alinea-fg-subtle);
 
   .TreeItem.is-expandable & {
     visibility: visible;
@@ -178,7 +177,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 12px;
+  color: var(--alinea-fg-subtle);
+  font-size: 16px;
+
+  .TreeItem[aria-selected='true'] & {
+    color: inherit;
+  }
 }
 
 .TreeItem-iconLink {
@@ -187,7 +191,6 @@
 }
 
 .TreeItem-label {
-  margin-left: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -210,6 +213,6 @@
   gap: 4px;
   flex-shrink: 0;
   margin-left: auto;
-  font-size: 14px;
-  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-xs);
+  color: var(--alinea-fg-subtle);
 }

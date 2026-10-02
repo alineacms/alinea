@@ -38,13 +38,14 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: var(--alinea-control-md);
+  height: var(--alinea-control-md);
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--alinea-radius);
+  border: 0;
+  border-radius: var(--alinea-radius-sm);
   background: transparent;
-  color: var(--alinea-fg);
+  /* Inactive roots stay faded, only the current one is ink */
+  color: var(--alinea-fg-subtle);
   font: inherit;
   text-decoration: none;
   appearance: none;
@@ -55,7 +56,8 @@
 
   @media (hover: hover) {
     &:hover {
-      background: color-mix(in oklab, var(--alinea-fg) 10%, transparent);
+      background: color-mix(in oklab, var(--alinea-fg) 5%, transparent);
+      color: var(--alinea-fg);
     }
   }
 
@@ -67,10 +69,11 @@
   &[aria-current='page'] {
     background: var(--alinea-bg);
     box-shadow: var(--alinea-shadow-raised);
+    color: var(--alinea-fg);
   }
 
   &[aria-disabled='true'] {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
   }
 }
