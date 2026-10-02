@@ -6,25 +6,27 @@
   gap: 8px;
   margin-inline: auto;
   padding: 24px;
-  border: 2px dashed var(--alinea-border);
-  border-radius: var(--alinea-radius);
+  border: 1px dashed var(--alinea-border-strong);
+  border-radius: var(--alinea-radius-lg);
+  background-color: var(--alinea-bg-muted);
   outline: none;
   color: var(--alinea-fg);
   transition: var(--alinea-transition);
   transition-property: background-color, border-color, box-shadow, opacity;
 
   &:has(:focus-visible) {
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: 2px;
   }
 
   &.is-dropTarget {
+    border-style: solid;
     border-color: var(--alinea-primary);
     background-color: var(--alinea-primary-subtle);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &.is-disabled {
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 

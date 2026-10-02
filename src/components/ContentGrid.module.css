@@ -33,7 +33,7 @@
     border-radius: var(--alinea-radius);
     box-shadow: var(--alinea-shadow-raised);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: var(--alinea-weight-medium);
   }
 }
 
@@ -73,7 +73,7 @@
   outline: none;
 
   &.is-dragging {
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 

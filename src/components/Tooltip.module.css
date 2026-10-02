@@ -2,11 +2,13 @@
   max-width: 200px;
   padding: 4px 8px;
   border-radius: var(--alinea-radius-sm);
-  background: var(--alinea-primary);
-  color: var(--alinea-primary-fg);
+  /* Ink, so a tooltip never reads as an action or a status */
+  background: var(--alinea-fg);
+  color: var(--alinea-bg);
   box-shadow: var(--alinea-shadow-tooltip);
-  font-size: var(--alinea-font-size-base);
-  line-height: 1.4;
+  font-size: var(--alinea-text-xs);
+  font-weight: var(--alinea-weight-medium);
+  line-height: 16px;
   forced-color-adjust: none;
   outline: none;
   opacity: 1;
@@ -23,7 +25,7 @@
 
 .TooltipContent-arrow-icon {
   display: block;
-  fill: var(--alinea-primary);
+  fill: var(--alinea-fg);
 
   &[data-side='bottom'] {
     transform: rotate(180deg);

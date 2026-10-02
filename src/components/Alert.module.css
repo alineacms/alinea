@@ -2,21 +2,22 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 4px 12px;
+  gap: 2px 10px;
   box-sizing: border-box;
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 14px;
   border: 1px solid var(--alinea-border);
-  border-radius: var(--alinea-radius-lg);
+  border-radius: var(--alinea-radius);
   background: var(--alinea-bg);
   color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-  line-height: 1.5;
+  font-size: var(--alinea-text-md);
+  line-height: 20px;
 
   &[data-icon] {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
+  /* Tints are mixed from the status fill, text uses its text tone */
   &[data-variant='destructive'] {
     border-color: color-mix(in oklab, var(--alinea-danger) 30%, transparent);
     background: var(--alinea-danger-subtle);
@@ -24,7 +25,7 @@
   }
 
   &[data-variant='warning'] {
-    border-color: color-mix(in oklab, var(--alinea-warning) 45%, transparent);
+    border-color: color-mix(in oklab, var(--alinea-warning) 35%, transparent);
     background: var(--alinea-warning-subtle);
     color: var(--alinea-warning-subtle-fg);
   }
@@ -40,16 +41,14 @@
 .AlertTitle {
   grid-column-start: -2;
   min-width: 0;
-  font-weight: 600;
-
-  .Alert[data-variant='default'] & {
-    color: var(--alinea-fg-strong);
-  }
+  font-weight: var(--alinea-weight-medium);
 }
 
 .AlertDescription {
   grid-column-start: -2;
   min-width: 0;
+  font-size: var(--alinea-text-sm);
+  line-height: 18px;
 
   .Alert[data-variant='default'] & {
     color: var(--alinea-fg-muted);

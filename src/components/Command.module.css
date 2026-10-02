@@ -19,7 +19,7 @@
 .CommandEmpty {
   padding: 16px;
   color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
+  font-size: var(--alinea-text-sm);
   text-align: center;
 }
 
@@ -28,10 +28,10 @@
 }
 
 .CommandGroup-heading {
-  padding: 4px 6px;
-  color: var(--alinea-fg-muted);
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 6px 8px 4px;
+  color: var(--alinea-fg-subtle);
+  font-size: var(--alinea-text-xs);
+  font-weight: var(--alinea-weight-medium);
 }
 
 .CommandItem {
@@ -39,15 +39,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0.4rem;
+  min-height: var(--alinea-row);
+  padding: 0 8px;
   border-radius: var(--alinea-radius-sm);
   color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
+  font-size: var(--alinea-text-md);
   outline: none;
   cursor: pointer;
 
   &.is-highlighted {
-    background: var(--alinea-muted);
+    background: var(--alinea-selected);
   }
 
   /* The subtle background only marks the item under the pointer, keyboard
@@ -59,12 +60,13 @@
 
   &[aria-disabled='true'] {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 
 .CommandItem-icon {
   flex-shrink: 0;
+  color: var(--alinea-fg-muted);
 }
 
 .CommandItem-label {

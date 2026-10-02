@@ -9,7 +9,7 @@
   min-width: 0;
   padding: 24px;
   color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
+  font-size: var(--alinea-text-md);
   text-align: center;
   text-wrap: balance;
 
@@ -17,9 +17,9 @@
     flex: 0 1 auto;
     width: min(560px, 100%);
     padding: 32px;
+    border: 1px dashed var(--alinea-border-strong);
     border-radius: var(--alinea-radius-lg);
     background: var(--alinea-bg);
-    box-shadow: var(--alinea-shadow-raised);
   }
 }
 
@@ -44,29 +44,30 @@
   &:where([data-variant='icon']) {
     width: 48px;
     height: 48px;
-    border: 1px solid var(--alinea-border);
     border-radius: var(--alinea-radius-lg);
-    background: var(--alinea-bg-muted);
+    background: var(--alinea-selected);
     font-size: 24px;
   }
 }
 
 .EmptyTitle {
   margin: 0;
-  color: var(--alinea-fg-strong);
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.35;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-text-lg);
+  font-weight: var(--alinea-weight-medium);
+  line-height: 22px;
 
   .Empty[data-variant='card'] & {
-    font-size: 1.125rem;
+    font-size: var(--alinea-text-xl);
+    font-weight: var(--alinea-weight-title);
   }
 }
 
 .EmptyDescription {
   margin: 0;
   color: var(--alinea-fg-muted);
-  line-height: 1.5;
+  font-size: var(--alinea-text-sm);
+  line-height: 18px;
 }
 
 .EmptyContent {

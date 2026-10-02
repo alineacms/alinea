@@ -32,7 +32,7 @@
 
   /* Selected cards tint their top */
   [aria-selected='true'] .ContentCard:not([data-variant='media']) & {
-    background: color-mix(in oklab, var(--alinea-bg-muted) 72%, var(--alinea-primary));
+    background: var(--alinea-selected);
   }
 
   .ContentCard[data-variant='media'] &:not(:has(.ContentCard-image)) {
@@ -122,7 +122,7 @@
   flex: 0 0 auto;
   overflow: hidden;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
