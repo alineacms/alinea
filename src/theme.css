@@ -74,9 +74,9 @@
   the value differs per color scheme. Everything else is derived from them.
 */
 :root {
-  --alinea-font: 'Instrument Sans', sans-serif;
+  --alinea-font: 'Inter', sans-serif;
   --alinea-mono-font: 'JetBrains Mono', monospace;
-  --alinea-font-size-base: 0.875rem;
+  --alinea-font-size-base: 0.8125rem;
   --alinea-radius: 8px;
 
   --alinea-backdrop: light-dark(#fafafa, var(--alinea-gray-900));
@@ -112,9 +112,9 @@
 
   /* Type: six sizes, 600 is only used for titles */
   --alinea-text-xs: 0.75rem;
-  --alinea-text-sm: 0.8125rem;
+  --alinea-text-sm: 0.78125rem;
   --alinea-text-md: var(--alinea-font-size-base);
-  --alinea-text-lg: 0.9375rem;
+  --alinea-text-lg: 0.875rem;
   --alinea-text-xl: 1.125rem;
   --alinea-text-2xl: 1.5rem;
   --alinea-weight-regular: 400;
