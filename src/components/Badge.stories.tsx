@@ -1,12 +1,5 @@
 import type {CSSProperties} from 'react'
-import {
-  IcRoundArchive,
-  IcRoundCheck,
-  IcRoundEdit,
-  IcRoundFlashOn,
-  IcRoundPublic,
-  IcRoundVisibility
-} from '#/dashboard/icons.js'
+import {IcRoundEdit, IcRoundPublic} from '#/dashboard/icons.js'
 import {Badge} from './Badge.js'
 
 const storyStyle: CSSProperties = {
@@ -50,24 +43,17 @@ export function Usages() {
 
       <h2 style={headingStyle}>Reference statuses</h2>
       <div style={rowStyle}>
-        <Badge icon={IcRoundCheck} status="published">
-          Published
-        </Badge>
-        <Badge icon={IcRoundEdit} status="draft">
-          Draft
-        </Badge>
-        <Badge icon={IcRoundFlashOn} status="unpublished">
-          Unpublished
-        </Badge>
-        <Badge icon={IcRoundArchive} status="archived">
-          Archived
-        </Badge>
+        <Badge status="published">Published</Badge>
+        <Badge status="draft">Draft</Badge>
+        <Badge status="unpublished">Unpublished</Badge>
+        <Badge status="archived">Archived</Badge>
+        <Badge status="untranslated">Untranslated</Badge>
       </div>
 
-      <h2 style={headingStyle}>Details bar</h2>
+      <h2 style={headingStyle}>Compact status</h2>
       <div style={rowStyle}>
-        <Badge icon={IcRoundVisibility} status="published">
-          Published
+        <Badge size="sm" status="published">
+          published
         </Badge>
       </div>
 

@@ -45,14 +45,10 @@ import {
   type ReactNode
 } from 'react'
 import {
-  IcOutlineArchive,
   IcRoundArchive,
   IcRoundCheck,
   IcRoundDelete,
   IcRoundDriveFileMove,
-  IcRoundEdit,
-  IcRoundFlashOn,
-  IcRoundLanguage,
   IcRoundMoreHoriz,
   IcRoundPublishedWithChanges,
   IcRoundSave,
@@ -176,14 +172,6 @@ const badgeStatus = {
   draft: 'draft',
   untranslated: 'untranslated'
 } as const
-
-const badgeIcon = {
-  published: IcRoundCheck,
-  unpublished: IcRoundFlashOn,
-  archived: IcOutlineArchive,
-  draft: IcRoundEdit,
-  untranslated: IcRoundLanguage
-}
 
 export interface EntryHeaderProps {
   controls?: ReactNode
@@ -531,7 +519,7 @@ export function EntryHeader({
       {showStatus && (
         <Badge
           className={styles.EntryHeader.status()}
-          icon={isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]}
+          icon={isRevision ? IcRoundPublishedWithChanges : undefined}
           status={isRevision ? undefined : badgeStatus[status]}
         >
           {isRevision ? 'Revision' : variantDescription[status]}

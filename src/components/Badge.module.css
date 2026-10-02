@@ -23,20 +23,54 @@
     line-height: 18px;
   }
 
+  &[data-status] {
+    gap: 6px;
+    height: 18px;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    font-size: var(--alinea-text-sm);
+    line-height: 18px;
+  }
+
   &[data-status='published'] {
-    background: var(--alinea-status-published);
     color: var(--alinea-status-published-fg);
   }
 
-  &[data-status='draft'],
-  &[data-status='untranslated'] {
-    background: var(--alinea-status-draft);
+  &[data-status='draft'] {
     color: var(--alinea-status-draft-fg);
   }
 
   &[data-status='unpublished'] {
-    background: var(--alinea-status-unpublished);
     color: var(--alinea-status-unpublished-fg);
+  }
+}
+
+.Badge-dot {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+
+  .Badge[data-status='published'] & {
+    background: var(--alinea-status-published-dot);
+  }
+
+  .Badge[data-status='draft'] & {
+    background: var(--alinea-status-draft-dot);
+  }
+
+  .Badge[data-status='unpublished'] & {
+    background: var(--alinea-status-unpublished-dot);
+  }
+
+  .Badge[data-status='archived'] & {
+    border: 1.5px solid var(--alinea-fg-subtle);
+  }
+
+  .Badge[data-status='untranslated'] & {
+    border: 1.5px dashed var(--alinea-fg-subtle);
   }
 }
 

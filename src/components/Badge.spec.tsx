@@ -16,6 +16,8 @@ test('badges expose their size and status', async ({mount, page}) => {
   const published = badges.filter({hasText: 'Published'}).first()
   await expect(published).toHaveAttribute('data-size', 'default')
   await expect(published).toHaveAttribute('data-status', 'published')
+  await expect(published.locator('[data-slot="badge-dot"]')).toHaveCount(1)
+  await expect(published.locator('svg')).toHaveCount(0)
   const draft = badges.filter({hasText: 'Draft'})
   await expect(draft).toHaveAttribute('data-status', 'draft')
   const color = (status: string) =>

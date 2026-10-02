@@ -15,7 +15,7 @@ const styles = styler(css)
 export interface BadgeProps extends StyleProps, AriaProps, DataProps {
   icon?: IconType | ReactElement
   size?: 'default' | 'sm'
-  /** Colors the badge like the matching entry status */
+  /** Shows the entry status as a colored dot before the label */
   status?: ContentStatus
   title?: string
   children?: ReactNode
@@ -37,12 +37,16 @@ export function Badge({
       data-status={status}
       className={styles.Badge(styler.merge({className}))}
     >
-      {icon && (
-        <Icon
-          icon={icon}
-          data-slot="badge-icon"
-          className={styles.Badge.icon()}
-        />
+      {status ? (
+        <span data-slot="badge-dot" className={styles.Badge.dot()} />
+      ) : (
+        icon && (
+          <Icon
+            icon={icon}
+            data-slot="badge-icon"
+            className={styles.Badge.icon()}
+          />
+        )
       )}
       <span data-slot="badge-label" className={styles.Badge.label()}>
         {children}
