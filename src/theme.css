@@ -2,28 +2,37 @@
 :root {
   color-scheme: light dark;
 
+  /* Warm neutrals, from paper to ink */
   --alinea-gray-0: #ffffff;
-  --alinea-gray-50: #f9fafb;
-  --alinea-gray-100: #f3f4f7;
-  --alinea-gray-200: #e7e8ec;
-  --alinea-gray-300: #d1d5dc;
-  --alinea-gray-400: #99a1af;
-  --alinea-gray-500: #6a7282;
-  --alinea-gray-600: #4a5565;
-  --alinea-gray-700: #364153;
-  --alinea-gray-800: #1e2939;
-  --alinea-gray-900: #101828;
+  --alinea-gray-50: #fcfcfb;
+  --alinea-gray-100: #f4f4f1;
+  --alinea-gray-200: #e8e8e4;
+  --alinea-gray-300: #d4d4ce;
+  --alinea-gray-400: #a3a5ad;
+  --alinea-gray-500: #6f717c;
+  --alinea-gray-600: #5c5e6a;
+  --alinea-gray-700: #33343f;
+  --alinea-gray-800: #1b1c24;
+  --alinea-gray-900: #121318;
 
-  --alinea-blue-50: #edeefe;
-  --alinea-blue-100: #d9dbfd;
-  --alinea-blue-200: #c5c8fc;
-  --alinea-blue-300: #b1b5fb;
-  --alinea-blue-400: #9da3fa;
-  --alinea-blue-500: #8890f9;
-  --alinea-blue-600: #747df8;
-  --alinea-blue-700: #606af7;
-  --alinea-blue-800: #4c57f6;
-  --alinea-blue-900: #414ad1;
+  --alinea-blue-50: #eef1fd;
+  --alinea-blue-100: #dde3fb;
+  --alinea-blue-200: #c3ccff;
+  --alinea-blue-300: #a8b7ff;
+  --alinea-blue-400: #8ea2ff;
+  --alinea-blue-500: #6b84f0;
+  --alinea-blue-600: #5470ec;
+  --alinea-blue-700: #3f61e8;
+  --alinea-blue-800: #2c47c0;
+  --alinea-blue-900: #232a4a;
+
+  --alinea-magenta-50: #fde6f0;
+  --alinea-magenta-200: #ff7fb2;
+  --alinea-magenta-300: #ff4b95;
+  --alinea-magenta-500: #e0136b;
+  --alinea-magenta-600: #c00f5b;
+  --alinea-magenta-700: #b80d5a;
+  --alinea-magenta-900: #3d1426;
 
   --alinea-red-50: #ffebee;
   --alinea-red-200: #ef9a9a;
@@ -38,21 +47,26 @@
   --alinea-yellow-500: #ffc107;
   --alinea-yellow-600: #ffb300;
 
-  --alinea-orange-50: #fcf5ee;
-  --alinea-orange-100: #f9eadb;
-  --alinea-orange-200: #f1d3b7;
-  --alinea-orange-700: #a74527;
-  --alinea-orange-800: #863926;
+  --alinea-orange-50: #fff1e0;
+  --alinea-orange-100: #ffe2bf;
+  --alinea-orange-200: #ffbb6b;
+  --alinea-orange-300: #ffa033;
+  --alinea-orange-400: #ff8a00;
+  --alinea-orange-500: #e67a00;
+  --alinea-orange-700: #a85400;
+  --alinea-orange-800: #6b3600;
+  --alinea-orange-900: #3a2810;
 
-  --alinea-green-50: #ecfdf5;
-  --alinea-green-100: #d0fae5;
-  --alinea-green-200: #a4f4cf;
-  --alinea-green-300: #5ee9b5;
-  --alinea-green-400: #00d492;
+  --alinea-green-50: #e3f9ef;
+  --alinea-green-100: #b3f0d6;
+  --alinea-green-200: #8be8c2;
+  --alinea-green-300: #5ef0b4;
+  --alinea-green-400: #20d995;
   --alinea-green-500: #00bc7d;
-  --alinea-green-600: #009966;
-  --alinea-green-700: #007a55;
-  --alinea-green-800: #006045;
+  --alinea-green-600: #00a36c;
+  --alinea-green-700: #00744d;
+  --alinea-green-800: #005a3c;
+  --alinea-green-900: #0f3328;
 }
 
 /*
@@ -60,24 +74,26 @@
   the value differs per color scheme. Everything else is derived from them.
 */
 :root {
-  --alinea-font: 'Inter', sans-serif;
+  --alinea-font: 'Instrument Sans', sans-serif;
   --alinea-mono-font: 'JetBrains Mono', monospace;
-  --alinea-font-size-base: 0.8125rem;
+  --alinea-font-size-base: 0.875rem;
   --alinea-radius: 8px;
 
-  --alinea-backdrop: light-dark(var(--alinea-gray-100), var(--alinea-gray-900));
+  --alinea-backdrop: light-dark(#fafafa, var(--alinea-gray-900));
   --alinea-bg: light-dark(var(--alinea-gray-0), var(--alinea-gray-800));
-  --alinea-fg: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
-  --alinea-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
+  --alinea-fg: light-dark(var(--alinea-gray-800), #ecedf1);
+  --alinea-border: light-dark(var(--alinea-gray-200), #2c2e38);
 
-  --alinea-primary: light-dark(var(--alinea-blue-800), var(--alinea-blue-500));
-  --alinea-primary-fg: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
-  --alinea-danger: light-dark(var(--alinea-red-400), var(--alinea-red-500));
-  --alinea-danger-fg: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
-  --alinea-warning: light-dark(var(--alinea-yellow-400), var(--alinea-yellow-500));
+  /* One accent for everything you act on: filled buttons, checks, links, focus */
+  --alinea-primary: light-dark(var(--alinea-blue-700), var(--alinea-blue-400));
+  --alinea-primary-fg: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
+  /* Status hues sit far apart on the wheel so a dot alone tells them apart */
+  --alinea-danger: light-dark(var(--alinea-magenta-500), var(--alinea-magenta-300));
+  --alinea-danger-fg: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
+  --alinea-warning: light-dark(var(--alinea-orange-400), var(--alinea-orange-300));
   --alinea-warning-fg: var(--alinea-gray-900);
-  --alinea-success: light-dark(var(--alinea-green-600), var(--alinea-green-500));
-  --alinea-ring: var(--alinea-blue-500);
+  --alinea-success: light-dark(var(--alinea-green-500), var(--alinea-green-400));
+  --alinea-ring: var(--alinea-primary);
 }
 
 /*
@@ -86,66 +102,81 @@
 */
 :root,
 [data-alinea-theme] {
-  --alinea-transition: 0.2s ease-out;
-  --alinea-radius-sm: calc(var(--alinea-radius) / 2);
+  --alinea-transition: 0.12s ease-out;
+
+  /* Radii nest: an inner corner is the outer radius minus the inset */
+  --alinea-radius-xs: 4px;
+  --alinea-radius-sm: calc(var(--alinea-radius) - 2px);
   --alinea-radius-lg: calc(var(--alinea-radius) * 1.5);
   --alinea-radius-xl: calc(var(--alinea-radius) * 2);
 
-  --alinea-fg-strong: color-mix(in oklab, var(--alinea-fg) 70%, CanvasText);
-  --alinea-fg-muted: color-mix(in oklab, var(--alinea-fg) 85%, var(--alinea-bg));
-  --alinea-fg-disabled: color-mix(in oklab, var(--alinea-fg) 45%, var(--alinea-bg));
-  --alinea-field-label: color-mix(in oklab, var(--alinea-fg) 42%, var(--alinea-bg));
+  /* Type: six sizes, 600 is only used for titles */
+  --alinea-text-xs: 0.75rem;
+  --alinea-text-sm: 0.8125rem;
+  --alinea-text-md: var(--alinea-font-size-base);
+  --alinea-text-lg: 0.9375rem;
+  --alinea-text-xl: 1.125rem;
+  --alinea-text-2xl: 1.5rem;
+  --alinea-weight-regular: 400;
+  --alinea-weight-medium: 500;
+  --alinea-weight-title: 600;
 
-  --alinea-bg-muted: color-mix(in oklab, var(--alinea-bg) 97%, var(--alinea-fg));
-  --alinea-muted: color-mix(in oklab, var(--alinea-bg) 92%, var(--alinea-fg));
+  /* Sizing: three control heights, three row heights, one bar height */
+  --alinea-control-sm: 28px;
+  --alinea-control-md: 32px;
+  --alinea-control-lg: 40px;
+  --alinea-row: 32px;
+  --alinea-row-lg: 40px;
+  --alinea-header-height: 52px;
+  --alinea-footer-height: 56px;
+
+  --alinea-fg-strong: color-mix(in oklab, var(--alinea-fg) 70%, CanvasText);
+  --alinea-fg-muted: color-mix(in oklab, var(--alinea-fg) 70%, var(--alinea-bg));
+  --alinea-fg-subtle: color-mix(in oklab, var(--alinea-fg) 58%, var(--alinea-bg));
+  --alinea-fg-disabled: color-mix(in oklab, var(--alinea-fg) 40%, var(--alinea-bg));
+  --alinea-field-label: var(--alinea-fg-muted);
+
+  --alinea-bg-muted: color-mix(in oklab, var(--alinea-bg) 80%, var(--alinea-border));
+  /* Hover and selection are neutral, so a status dot reads on either */
+  --alinea-muted: color-mix(in oklab, var(--alinea-bg) 70%, var(--alinea-border));
+  --alinea-selected: color-mix(in oklab, var(--alinea-bg) 52%, var(--alinea-border));
+  --alinea-selected-fg: var(--alinea-fg);
   --alinea-input: var(--alinea-bg);
   --alinea-overlay: var(--alinea-bg);
-  --alinea-border-strong: color-mix(in oklab, var(--alinea-border) 70%, var(--alinea-fg));
-  --alinea-scrim: color-mix(in oklab, black 45%, transparent);
+  --alinea-border-strong: color-mix(in oklab, var(--alinea-border) 88%, var(--alinea-fg));
+  --alinea-scrim: color-mix(in oklab, var(--alinea-gray-800) 36%, transparent);
 
-  --alinea-primary-subtle: color-mix(in oklab, var(--alinea-primary) 12%, var(--alinea-bg));
+  /* The primary tint marks active tools, info and drop targets, not selection */
+  --alinea-primary-subtle: color-mix(in oklab, var(--alinea-primary) 9%, var(--alinea-bg));
   --alinea-primary-subtle-fg: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
-  --alinea-selected: color-mix(in oklab, var(--alinea-primary) 10%, var(--alinea-bg));
-  --alinea-selected-fg: var(--alinea-primary-subtle-fg);
-  --alinea-danger-subtle: color-mix(in oklab, var(--alinea-danger) 14%, var(--alinea-bg));
-  --alinea-danger-subtle-fg: color-mix(in oklab, var(--alinea-danger) 80%, var(--alinea-fg));
-  --alinea-warning-subtle: color-mix(in oklab, var(--alinea-warning) 18%, var(--alinea-bg));
-  /* Yellow is light, in light mode it needs a darker base to stay readable */
-  --alinea-warning-subtle-fg: light-dark(
-    color-mix(in oklab, var(--alinea-warning) 50%, var(--alinea-gray-900)),
-    color-mix(in oklab, var(--alinea-warning) 55%, var(--alinea-fg))
-  );
-  --alinea-success-subtle: color-mix(in oklab, var(--alinea-success) 16%, var(--alinea-bg));
-  --alinea-success-subtle-fg: color-mix(in oklab, var(--alinea-success) 70%, var(--alinea-fg));
+  --alinea-danger-subtle: color-mix(in oklab, var(--alinea-danger) 10%, var(--alinea-bg));
+  --alinea-danger-subtle-fg: light-dark(var(--alinea-magenta-700), var(--alinea-magenta-200));
+  --alinea-warning-subtle: color-mix(in oklab, var(--alinea-warning) 12%, var(--alinea-bg));
+  --alinea-warning-subtle-fg: light-dark(var(--alinea-orange-700), var(--alinea-orange-200));
+  --alinea-success-subtle: color-mix(in oklab, var(--alinea-success) 12%, var(--alinea-bg));
+  --alinea-success-subtle-fg: light-dark(var(--alinea-green-700), var(--alinea-green-300));
 
-  /* Entry statuses are more vivid than the subtle tones so they stand out,
-     in dark mode they are tints so they do not outshine the selection */
-  --alinea-status-published: light-dark(
-    var(--alinea-green-300),
-    color-mix(in oklab, var(--alinea-green-500) 30%, var(--alinea-bg))
-  );
-  --alinea-status-published-fg: light-dark(var(--alinea-green-800), var(--alinea-green-100));
-  --alinea-status-draft: light-dark(
-    var(--alinea-blue-50),
-    color-mix(in oklab, var(--alinea-blue-500) 30%, var(--alinea-bg))
-  );
-  --alinea-status-draft-fg: light-dark(var(--alinea-blue-800), var(--alinea-blue-50));
-  --alinea-status-unpublished: light-dark(
-    var(--alinea-orange-50),
-    color-mix(in oklab, var(--alinea-orange-700) 30%, var(--alinea-bg))
-  );
-  --alinea-status-unpublished-fg: light-dark(
-    var(--alinea-orange-700),
-    color-mix(in oklab, var(--alinea-orange-700) 30%, var(--alinea-orange-200))
-  );
+  /* Entry statuses: a dot, the tone of its word, and a tint for badges */
+  --alinea-status-published-dot: var(--alinea-success);
+  --alinea-status-published: var(--alinea-success-subtle);
+  --alinea-status-published-fg: var(--alinea-success-subtle-fg);
+  --alinea-status-draft-dot: var(--alinea-primary);
+  --alinea-status-draft: var(--alinea-primary-subtle);
+  --alinea-status-draft-fg: var(--alinea-primary-subtle-fg);
+  --alinea-status-unpublished-dot: var(--alinea-warning);
+  --alinea-status-unpublished: var(--alinea-warning-subtle);
+  --alinea-status-unpublished-fg: var(--alinea-warning-subtle-fg);
 
-  --alinea-shadow-raised: 0 1px 3.5px rgb(0 0 0 / 8%);
-  --alinea-shadow-muted:
-    0 1px 3.5px rgb(0 0 0 / 10%), 0 1px 1px rgb(0 0 0 / 6%),
-    0 0 0 1px light-dark(transparent, var(--alinea-border)),
-    0 6px 16px light-dark(transparent, rgb(0 0 0 / 38%));
-  --alinea-shadow-tooltip: 0 8px 20px rgb(0 0 0 / 10%);
-  --alinea-shadow-modal: 0 2px 13px rgb(0 0 0 / 11%);
+  /* Depth: flat in the page, a fine shadow when raised, a soft one when floating */
+  --alinea-shadow-raised: 0 1px 2px light-dark(rgb(27 28 36 / 8%), rgb(0 0 0 / 40%));
+  --alinea-shadow-float:
+    0 0 0 1px light-dark(rgb(27 28 36 / 8%), var(--alinea-border)),
+    0 8px 24px -6px light-dark(rgb(27 28 36 / 16%), rgb(0 0 0 / 50%));
+  --alinea-shadow-muted: var(--alinea-shadow-float);
+  --alinea-shadow-tooltip: var(--alinea-shadow-float);
+  --alinea-shadow-modal:
+    0 0 0 1px light-dark(rgb(27 28 36 / 8%), var(--alinea-border)),
+    0 24px 48px -12px light-dark(rgb(27 28 36 / 28%), rgb(0 0 0 / 60%));
 }
 
 :root[data-theme='light'] {
