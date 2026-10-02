@@ -29,29 +29,6 @@ export function Example() {
   )
 }
 
-export function Variants() {
-  return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
-      {(['line', 'subtle', 'enclosed'] as const).map(variant => (
-        <Tabs key={variant} variant={variant} defaultValue="account">
-          <TabsList aria-label={`${variant} tabs`}>
-            {sections.map(section => (
-              <TabsTrigger key={section.value} value={section.value}>
-                {section.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {sections.map(section => (
-            <TabsContent key={section.value} value={section.value}>
-              {section.text}
-            </TabsContent>
-          ))}
-        </Tabs>
-      ))}
-    </div>
-  )
-}
-
 export function Controlled() {
   const [value, setValue] = useState('password')
   return (
@@ -77,7 +54,7 @@ export function Controlled() {
 
 export function Vertical() {
   return (
-    <Tabs orientation="vertical" variant="subtle" defaultValue="account">
+    <Tabs orientation="vertical" defaultValue="account">
       <TabsList aria-label="Settings">
         {sections.map(section => (
           <TabsTrigger key={section.value} value={section.value}>

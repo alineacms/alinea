@@ -588,7 +588,6 @@ export const componentExampleIds = [
   'Switch',
   'SwitchStates',
   'Tabs',
-  'TabsVariants',
   'TabsVertical',
   'DialogPreview',
   'Dialog',

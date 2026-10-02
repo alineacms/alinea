@@ -16,7 +16,6 @@ export interface TabsProps extends StyleProps, DataProps {
   defaultValue?: string
   onValueChange?: (value: string) => void
   orientation?: Orientation
-  variant?: 'line' | 'subtle' | 'enclosed'
   disabled?: boolean
   id?: string
   children: ReactNode
@@ -28,7 +27,6 @@ export function Tabs({
   defaultValue,
   onValueChange,
   orientation = 'horizontal',
-  variant = 'line',
   disabled,
   className,
   children,
@@ -38,7 +36,6 @@ export function Tabs({
     <TabsPrimitive
       data-slot="tabs"
       {...props}
-      data-variant={variant}
       className={styles.Tabs(styler.merge({className}))}
       selectedKey={value}
       defaultSelectedKey={defaultValue}

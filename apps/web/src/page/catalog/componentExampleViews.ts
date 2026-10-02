@@ -70,7 +70,6 @@ import {SwitchStatesExample} from './examples/SwitchStates'
 import {TableExample} from './examples/Table'
 import {TableSelectionExample} from './examples/TableSelection'
 import {TabsExample} from './examples/Tabs'
-import {TabsVariantsExample} from './examples/TabsVariants'
 import {TabsVerticalExample} from './examples/TabsVertical'
 import {TagGroupExample} from './examples/TagGroup'
 import {TextExample} from './examples/Text'
@@ -107,7 +106,6 @@ export const componentExampleViews = {
   Switch: SwitchExample,
   SwitchStates: SwitchStatesExample,
   Tabs: TabsExample,
-  TabsVariants: TabsVariantsExample,
   TabsVertical: TabsVerticalExample,
   DialogPreview: DialogPreviewExample,
   Dialog: DialogExample,

@@ -4,7 +4,7 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from 'alinea/components'
 
 export function TabsVerticalExample() {
   return (
-    <Tabs orientation="vertical" variant="subtle" defaultValue="general">
+    <Tabs orientation="vertical" defaultValue="general">
       <TabsList aria-label="Settings">
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="languages">Languages</TabsTrigger>

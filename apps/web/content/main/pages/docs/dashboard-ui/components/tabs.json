@@ -25,31 +25,6 @@
       "content": [
         {
           "_type": "text",
-          "text": "Variants"
-        }
-      ],
-      "_anchor": "variants"
-    },
-    {
-      "_type": "paragraph",
-      "content": [
-        {
-          "_type": "text",
-          "text": "`line` underlines the selected tab, `subtle` gives it a background and `enclosed` sets the tabs in a track, like a segmented control."
-        }
-      ]
-    },
-    {
-      "_type": "ComponentExampleBlock",
-      "_id": "3JmLPc9z0aS0VXcYGf8fI26KRW4",
-      "example": "TabsVariants"
-    },
-    {
-      "_type": "heading",
-      "level": 2,
-      "content": [
-        {
-          "_type": "text",
           "text": "Vertical"
         }
       ],
