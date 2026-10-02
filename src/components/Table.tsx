@@ -42,7 +42,7 @@ const styles = styler(css)
 function noop() {}
 
 /** Width of the selection checkbox column in pixels */
-const selectionWidth = 30
+const selectionWidth = 44
 
 export interface TableColumn {
   id: Key
@@ -102,6 +102,13 @@ interface TableContextValue {
   selectable: boolean
   selectionMode: SelectionProps['selectionMode']
   onRowAction?: (key: Key) => void
+}
+
+interface TableSelectAllProps {
+  /** The number of rows, compared to the selection to check the box */
+  count: number
+  selectedKeys: SelectionProps['selectedKeys']
+  onSelectionChange: SelectionProps['onSelectionChange']
 }
 
 const TableContext = createContext<TableContextValue | null>(null)
@@ -236,6 +243,18 @@ export function Table<T extends object>({
       >
         {showHeader && (
           <TableHeader
+            selectAll={
+              selectable &&
+              selectionMode === 'multiple' &&
+              selectedKeys !== undefined &&
+              onSelectionChange
+                ? {
+                    count: Array.from(items).length,
+                    selectedKeys,
+                    onSelectionChange
+                  }
+                : undefined
+            }
             sortDescriptor={sortDescriptor}
             onSortChange={onSortChange}
           />
@@ -291,8 +310,35 @@ export function Table<T extends object>({
 }
 
 interface TableHeaderProps {
+  /** Set when the header checks all rows, only for a controlled selection */
+  selectAll?: TableSelectAllProps
   sortDescriptor?: SortDescriptor
   onSortChange?: (descriptor: SortDescriptor) => void
+}
+
+function TableSelectAll({
+  count,
+  selectedKeys,
+  onSelectionChange
+}: TableSelectAllProps) {
+  const size = selectedKeys === 'all' ? count : (selectedKeys?.size ?? 0)
+  const checked = count > 0 && size >= count
+  return (
+    <div
+      data-slot="table-header-selection"
+      className={styles.TableHeader.selection()}
+    >
+      <SelectionCheckbox
+        aria-label="Select all"
+        checked={checked}
+        indeterminate={size > 0 && !checked}
+        disabled={count === 0}
+        onCheckedChange={() =>
+          onSelectionChange?.(size > 0 ? new Set() : 'all')
+        }
+      />
+    </div>
+  )
 }
 
 const sortDescriptions = {
@@ -300,11 +346,19 @@ const sortDescriptions = {
   desc: 'sorted descending'
 }
 
-function TableHeader({sortDescriptor, onSortChange}: TableHeaderProps) {
+function TableHeader({
+  selectAll,
+  sortDescriptor,
+  onSortChange
+}: TableHeaderProps) {
   const {columns, expandable, selectable} = useTable()
   return (
     <div data-slot="table-header" className={styles.TableHeader()}>
-      {selectable && <span data-slot="table-header-spacer" />}
+      {selectAll ? (
+        <TableSelectAll {...selectAll} />
+      ) : (
+        selectable && <span data-slot="table-header-spacer" />
+      )}
       {columns.map((column, index) => {
         const sorted =
           sortDescriptor?.column === column.id
@@ -571,20 +625,38 @@ export function TableThumbnail({
 export interface TableTitleProps extends StyleProps {
   /** Doubles as the drag handle of the row when rows can be dragged */
   icon?: IconType
+  /**
+   * An image or tile shown before the title in place of the icon, it also
+   * doubles as the drag handle
+   */
+  media?: ReactNode
   title: ReactNode
   /** A small caption above the title, eg. the parent path */
   label?: ReactNode
+  /** Shown right after the title, eg. a status dot */
+  status?: ReactNode
 }
 
 export function TableTitle({
   icon,
+  media,
   title,
   label,
+  status,
   className,
   style
 }: TableTitleProps) {
   const row = useContext(TableRowContext)
   const name = typeof title === 'string' ? title : row?.textValue
+  const visual = media ? (
+    <span data-slot="table-title-media" className={styles.TableTitle.media()}>
+      {media}
+    </span>
+  ) : (
+    icon && (
+      <Icon aria-hidden icon={icon} className={styles.TableTitle.icon()} />
+    )
+  )
   return (
     <div
       data-slot="table-title"
@@ -592,7 +664,7 @@ export function TableTitle({
       className={styles.TableTitle(styler.merge({className}))}
       style={style}
     >
-      {icon &&
+      {visual &&
         (row?.allowsDragging ? (
           <ButtonPrimitive
             slot="drag"
@@ -600,14 +672,10 @@ export function TableTitle({
             aria-label={`Drag ${name}`}
             className={styles.TableTitle.drag()}
           >
-            <Icon
-              aria-hidden
-              icon={icon}
-              className={styles.TableTitle.icon()}
-            />
+            {visual}
           </ButtonPrimitive>
         ) : (
-          <Icon aria-hidden icon={icon} className={styles.TableTitle.icon()} />
+          visual
         ))}
       <span data-slot="table-title-text" className={styles.TableTitle.text()}>
         {label && (
@@ -618,12 +686,15 @@ export function TableTitle({
             {label}
           </span>
         )}
-        <span
-          data-slot="table-title-title"
-          className={styles.TableTitle.title()}
-          title={typeof title === 'string' ? title : undefined}
-        >
-          {title}
+        <span data-slot="table-title-row" className={styles.TableTitle.row()}>
+          <span
+            data-slot="table-title-title"
+            className={styles.TableTitle.title()}
+            title={typeof title === 'string' ? title : undefined}
+          >
+            {title}
+          </span>
+          {status}
         </span>
       </span>
     </div>

@@ -11,6 +11,7 @@ import {policyAtom} from './user.js'
 const rowSelect = {
   id: Entry.id,
   status: Entry.status,
+  main: Entry.main,
   title: Entry.title,
   path: Entry.path,
   url: Entry.url,

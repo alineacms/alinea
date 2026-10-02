@@ -55,6 +55,7 @@ import {
   richTextBlockValueAttribute
 } from './RichTextBlockValue.js'
 import css from './RichTextField.module.css'
+import {RichTextHeadings, richTextHeadingSheet} from './RichTextHeadings.js'
 import {RichTextInsertMenu} from './RichTextInsertMenu.js'
 import {documentUpdateAtom} from './RichTextState.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
@@ -127,6 +128,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     return [
       richTextDocumentExtension(blocks.length > 0),
       richTextBlockClipboard,
+      richTextHeadingSheet,
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]
@@ -311,6 +313,9 @@ export function RichTextFieldView<Blocks extends Schema>({
             />
           )}
           <EditorContent editor={editor} />
+          {editor && (
+            <RichTextHeadings editor={editor} root={root} readOnly={readOnly} />
+          )}
           {editor && (
             <RichTextBlockPortals
               blocksById={blocksById}

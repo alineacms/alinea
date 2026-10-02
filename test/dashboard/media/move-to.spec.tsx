@@ -12,7 +12,10 @@ test('moves a media file to a media directory from the entry menu', async ({
     title: 'Existing image'
   })
   await expect(
-    app.page.getByRole('button', {name: 'Back to root'})
+    app.page
+      .getByRole('navigation', {name: 'Breadcrumb'})
+      .getByRole('button')
+      .last()
   ).toBeVisible()
 
   await app.runEntryAction('Move to…')
@@ -34,7 +37,11 @@ test('moves a media file to a media directory from the entry menu', async ({
   await move.click()
 
   await expect(dialog).toHaveCount(0)
-  await app.page.getByRole('button', {name: 'Back to parent entry'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
   await expect(app.title).toHaveText('Media directory')
   const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
   await expect(
@@ -66,7 +73,11 @@ test('moves a media file out of its directory to the root', async ({
   await dialog.getByRole('button', {name: 'Move to root'}).click()
 
   await expect(dialog).toHaveCount(0)
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
   await expect(
     app.page
       .getByRole('grid', {name: 'Explorer entries'})
@@ -83,7 +94,11 @@ test('never moves a media directory into itself', async ({
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
   await app.page
     .getByRole('grid', {name: 'Explorer entries'})
     .getByRole('row', {name: 'Media directory', exact: true})
@@ -113,7 +128,11 @@ test('moves selected media files to a media directory', async ({
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
 
   const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
   for (const name of ['Existing image', 'Existing file'])
@@ -161,7 +180,11 @@ test('deletes selected media files after confirming', async ({
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
 
   const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
   for (const name of ['Existing image', 'Existing file'])

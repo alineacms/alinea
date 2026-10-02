@@ -2,6 +2,22 @@ import type {Locator, Page} from 'playwright'
 import {expect, test} from '../support/DashboardTest.js'
 import {LinkFieldScenarioMount} from '../support/LinkFieldScenarioMount.js'
 
+// Add buttons sit below the list and an empty list renders none, so look up
+// the field by its label instead of the list
+function linkField(page: Page, label: string): Locator {
+  const field = page.locator('[data-slot="field"]').filter({
+    has: page
+      .locator(':scope > [data-slot="field-header"]')
+      .getByText(label, {exact: true})
+  })
+  // Link lists render their label beside the rows and the add buttons
+  const list = page
+    .locator('[data-slot="list-label"]')
+    .filter({has: page.getByText(label, {exact: true})})
+    .locator('xpath=following-sibling::*[1]')
+  return field.or(list)
+}
+
 async function expandLinkPicker(page: Page): Promise<Locator> {
   const compactPicker = page.getByRole('dialog', {
     name: 'Pick a link',
@@ -39,8 +55,7 @@ test('opens entry fields in the compact picker', async ({dashboard, mount}) => {
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await app.page
-    .getByRole('list', {name: 'Browse page'})
+  await linkField(app.page, 'Browse page')
     .getByRole('button', {name: 'Browse page'})
     .click()
 
@@ -65,8 +80,7 @@ test('opens a functional location in another workspace and root', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Related page'})
+  await linkField(app.page, 'Related page')
     .getByRole('button', {name: 'Related page'})
     .click()
 
@@ -88,15 +102,22 @@ test('opens a functional location in another workspace and root', async ({
       return Boolean(
         searchBox &&
         locationBox &&
-        locationBox.y >= searchBox.y + searchBox.height + 8
+        locationBox.y >= searchBox.y + searchBox.height
       )
     })
     .toBe(true)
+  // The search is the header row, its controls are compact and centred in it
   await expect
     .poll(async () => {
       const searchBox = await search.locator('..').boundingBox()
       const viewBox = await view.boundingBox()
-      return searchBox?.height === viewBox?.height
+      if (!searchBox || !viewBox) return false
+      const center = (box: {y: number; height: number}) =>
+        box.y + box.height / 2
+      return (
+        viewBox.height === 28 &&
+        Math.abs(center(searchBox) - center(viewBox)) <= 1
+      )
     })
     .toBe(true)
   const resultModes = location.getByRole('radiogroup', {
@@ -116,8 +137,7 @@ test('switches a localized card picker without showing its loader', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Localized page'})
+  await linkField(app.page, 'Localized page')
     .getByRole('button', {name: 'Localized page'})
     .click()
 
@@ -191,8 +211,7 @@ test('hides card navigation when picker locations are limited', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Limited page'})
+  await linkField(app.page, 'Limited page')
     .getByRole('button', {name: 'Limited page'})
     .click()
 
@@ -227,8 +246,7 @@ test('filters entries with a functional condition', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Filtered page', exact: true})
+  await linkField(app.page, 'Filtered page')
     .getByRole('button', {name: 'Filtered page'})
     .click()
 
@@ -276,8 +294,7 @@ test('defaults a condition without a location to all locations', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Global filtered page'})
+  await linkField(app.page, 'Global filtered page')
     .getByRole('button', {name: 'Global filtered page'})
     .click()
 
@@ -345,7 +362,7 @@ test('adds the same entry to a multiple link field more than once', async ({
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
-  const field = app.page.getByRole('list', {name: 'Duplicate pages'})
+  const field = linkField(app.page, 'Duplicate pages')
 
   async function addAlpha() {
     await field.getByRole('button', {name: 'Duplicate pages'}).click()
@@ -373,7 +390,7 @@ test('toggles multiple links by clicking cards before using a checkbox', async (
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
-  const field = app.page.getByRole('list', {name: 'Repeated pages'})
+  const field = linkField(app.page, 'Repeated pages')
   await field.getByRole('button', {name: 'Repeated pages'}).click()
   const picker = await expandLinkPicker(app.page)
   await picker
@@ -407,10 +424,9 @@ test('opens pickChildren at the children of the edited entry', async ({
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
     entry: 'folder'
   })
-  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  await app.page.getByRole('radio', {name: 'Edit entry'}).click()
 
-  await app.page
-    .getByRole('list', {name: 'Child page'})
+  await linkField(app.page, 'Child page')
     .getByRole('button', {name: 'Child page'})
     .click()
 
@@ -437,8 +453,7 @@ test('keeps pickChildren breadcrumbs static', async ({dashboard, mount}) => {
     entry: 'child'
   })
 
-  await app.page
-    .getByRole('list', {name: 'Child page'})
+  await linkField(app.page, 'Child page')
     .getByRole('button', {name: 'Child page'})
     .click()
 
@@ -458,8 +473,7 @@ test('navigates into folders without showing a suspense loader', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Browse page'})
+  await linkField(app.page, 'Browse page')
     .getByRole('button', {name: 'Browse page'})
     .click()
 
@@ -546,7 +560,7 @@ test('keeps root overview rows flat', async ({dashboard, mount}) => {
     })
     observer.observe(document.body, {childList: true, subtree: true})
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.crumb('Pages').click()
 
   const entries = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = entries.getByRole('row', {name: /Folder/})
@@ -569,8 +583,7 @@ test('preloads entries before card sidebar navigation commits', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Browse page'})
+  await linkField(app.page, 'Browse page')
     .getByRole('button', {name: 'Browse page'})
     .click()
 
@@ -614,8 +627,7 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Browse page'})
+  await linkField(app.page, 'Browse page')
     .getByRole('button', {name: 'Browse page'})
     .click()
 
@@ -857,8 +869,7 @@ test('navigates through folders to matching rows in a link picker', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Navigable page'})
+  await linkField(app.page, 'Navigable page')
     .getByRole('button', {name: 'Navigable page'})
     .click()
 
@@ -915,8 +926,7 @@ test('opens a table parent as the current location on double click', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Navigable page'})
+  await linkField(app.page, 'Navigable page')
     .getByRole('button', {name: 'Navigable page'})
     .click()
 
@@ -934,8 +944,8 @@ test('opens a table parent as the current location on double click', async ({
 
 test('selects existing images and files', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
-  const imageField = app.page.getByRole('list', {name: 'Featured image'})
-  const fileField = app.page.getByRole('list', {name: 'Download'})
+  const imageField = linkField(app.page, 'Featured image')
+  const fileField = linkField(app.page, 'Download')
 
   await app.page.evaluate(() => {
     document.documentElement.dataset.sidebarLoaderSeen = 'false'
@@ -1029,8 +1039,8 @@ test('shows images and files picked into multiple link fields', async ({
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
-  const gallery = app.page.getByRole('list', {name: 'Gallery'})
-  const attachments = app.page.getByRole('list', {name: 'Attachments'})
+  const gallery = linkField(app.page, 'Gallery')
+  const attachments = linkField(app.page, 'Attachments')
 
   await gallery.getByRole('button', {name: 'Image'}).click()
   const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
@@ -1054,8 +1064,7 @@ test('card image picker browses directories and filters within them', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Featured image'})
+  await linkField(app.page, 'Featured image')
     .getByRole('button', {name: 'Image'})
     .click()
 
@@ -1104,8 +1113,7 @@ test('card image picker opens empty media directories', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
-  await app.page
-    .getByRole('list', {name: 'Featured image'})
+  await linkField(app.page, 'Featured image')
     .getByRole('button', {name: 'Image'})
     .click()
 
@@ -1131,8 +1139,8 @@ test('uploads images and files from their picker modals', async ({
   await app.page.route('**/__dashboard-scenario-upload', route =>
     route.fulfill({status: 200})
   )
-  const imageField = app.page.getByRole('list', {name: 'Featured image'})
-  const fileField = app.page.getByRole('list', {name: 'Download'})
+  const imageField = linkField(app.page, 'Featured image')
+  const fileField = linkField(app.page, 'Download')
 
   await imageField.getByRole('button', {name: 'Image'}).click()
   const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})

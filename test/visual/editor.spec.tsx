@@ -32,7 +32,7 @@ themed(() => {
       .getByRole('textbox', {name: 'Title', exact: true})
       .fill('About us')
     await expect(
-      app.page.getByRole('button', {name: 'Discard my changes'})
+      app.page.getByRole('button', {name: 'Discard', exact: true})
     ).toBeVisible()
     await app.page.mouse.move(640, 790)
     await app.shot('entry-dirty')

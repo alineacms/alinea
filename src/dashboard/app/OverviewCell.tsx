@@ -23,6 +23,7 @@ import {
   compactFieldText
 } from './CompactField.js'
 import css from './OverviewCell.module.css'
+import {overviewStatus, statusLabel} from './OverviewStatus.js'
 
 const styles = styler(css)
 
@@ -46,12 +47,14 @@ export function overviewTableColumn(column: OverviewColumnState): TableColumn {
   }
 }
 
-interface AuditMetadata {
+export interface AuditMetadata {
+  /** Seconds since the epoch */
   updatedAt?: number | null
   updatedBy?: {name?: string; email?: string} | null
 }
 
-function auditMetadata(row: OverviewRow): AuditMetadata {
+/** Who last updated the entry of a row and when, if its type records it */
+export function auditMetadata(row: OverviewRow): AuditMetadata {
   const metadata = row.data.metadata
   return isRecord(metadata) ? (metadata as AuditMetadata) : {}
 }
@@ -73,7 +76,7 @@ export function overviewCellText(
     case 'type':
       return typeLabel(config, row.type)
     case 'status':
-      return row.status ?? ''
+      return row.status ? statusLabel[overviewStatus(row)] : ''
     case 'updated': {
       const updatedAt = auditMetadata(row).updatedAt
       return typeof updatedAt === 'number'
@@ -210,13 +213,15 @@ function OverviewBuiltinCell({column, config, row}: OverviewBuiltinCellProps) {
           {typeLabel(config, row.type)}
         </span>
       )
-    case 'status':
+    case 'status': {
       if (!row.status) return <OverviewEmpty />
+      const status = overviewStatus(row)
       return (
-        <Badge size="sm" status={row.status}>
-          {row.status}
+        <Badge size="sm" status={status}>
+          {statusLabel[status]}
         </Badge>
       )
+    }
     case 'updated': {
       const updatedAt = auditMetadata(row).updatedAt
       if (typeof updatedAt !== 'number') return <OverviewEmpty />

@@ -1,5 +1,6 @@
 import {type ComponentType, useState} from 'react'
 import {
+  IcRoundClose,
   IcRoundEdit,
   IcRoundImage,
   IcRoundLink,
@@ -23,7 +24,8 @@ import {
   SortableListItemHeader,
   SortableListItemSettings,
   SortableListItemTitle,
-  SortableListItemToggle
+  SortableListItemToggle,
+  SortableListItemTrigger
 } from './SortableList.js'
 import {TextField} from './TextField.js'
 import type {DragMoveEvent} from './types.js'
@@ -36,7 +38,7 @@ export function Basic() {
       <ListLabel aria-label="Collapse all items" expanded hasRows shared>
         Sections
       </ListLabel>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListItem aria-label="Hero item 1">
           <SortableListItemHeader>
             <SortableListItemTitle>
@@ -45,13 +47,11 @@ export function Basic() {
                 expanded={heroExpanded}
                 onClick={() => setHeroExpanded(!heroExpanded)}
               />
-              <Badge icon={IcRoundPanorama} size="sm">
-                Hero
-              </Badge>
+              <Badge icon={IcRoundPanorama}>Hero</Badge>
               <SortableListItemDescription>
                 Landing page intro
               </SortableListItemDescription>
-              <Badge size="sm">#landing-page-intro</Badge>
+              <Badge>#landing-page-intro</Badge>
             </SortableListItemTitle>
             <SortableListItemActions>
               <Popover>
@@ -92,16 +92,18 @@ export function Basic() {
                 expanded={quoteExpanded}
                 onClick={() => setQuoteExpanded(!quoteExpanded)}
               />
-              <Badge size="sm">Quote</Badge>
-              <SortableListItemDescription>
-                Editorial quote
-              </SortableListItemDescription>
+              <SortableListItemTrigger aria-label="Quote settings">
+                <Badge>Quote</Badge>
+                <SortableListItemDescription>
+                  Editorial quote
+                </SortableListItemDescription>
+              </SortableListItemTrigger>
             </SortableListItemTitle>
             <SortableListItemActions>
               <Button
                 variant="ghost"
-                aria-label="Quote settings"
-                icon={IcRoundMoreHoriz}
+                aria-label="Remove quote"
+                icon={IcRoundClose}
                 size="icon-sm"
               />
             </SortableListItemActions>
@@ -136,7 +138,7 @@ export function Basic() {
 export function Empty() {
   return (
     <div style={{maxWidth: 720}}>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListAdd>
           <Button variant="ghost" size="sm">
             Add Hero
@@ -182,7 +184,6 @@ export function Reorderable() {
     <div style={{maxWidth: 480}}>
       <SortableList
         aria-label="Sections"
-        data-depth="muted"
         onReorder={event => setItems(items => moveItems(items, event))}
       >
         {items.map(item => (
@@ -197,9 +198,7 @@ export function Reorderable() {
             <SortableListItemHeader>
               <SortableListHandle aria-label={`Drag ${item.label}`} />
               <SortableListItemTitle>
-                <Badge icon={item.icon} size="sm">
-                  {item.label}
-                </Badge>
+                <Badge icon={item.icon}>{item.label}</Badge>
               </SortableListItemTitle>
             </SortableListItemHeader>
           </SortableListItem>
@@ -227,6 +226,29 @@ export function ToggleReorder() {
             <SortableListItemHeader>
               <SortableListHandle aria-label={`Drag ${item.label}`} />
               <input aria-label={`${item.label} title`} />
+            </SortableListItemHeader>
+          </SortableListItem>
+        ))}
+      </SortableList>
+    </div>
+  )
+}
+
+/** The item whose settings are open is highlighted */
+export function Current() {
+  return (
+    <div style={{maxWidth: 480}}>
+      <SortableList aria-label="Sections">
+        {reorderItems.map(item => (
+          <SortableListItem
+            aria-label={item.label}
+            current={item.id === 'text'}
+            key={item.id}
+          >
+            <SortableListItemHeader>
+              <SortableListItemTitle>
+                <Badge icon={item.icon}>{item.label}</Badge>
+              </SortableListItemTitle>
             </SortableListItemHeader>
           </SortableListItem>
         ))}

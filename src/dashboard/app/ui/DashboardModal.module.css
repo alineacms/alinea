@@ -1,8 +1,7 @@
-/* Sizes come from DialogContent (`lg` and `full`), the modal only resets the
-   dialog chrome to the dashboard look. */
+/* Sizes come from DialogContent, the modal moves the padding into its
+   header, content and footer so those can scroll and carry borders. */
 .DashboardModal {
   padding: 0;
-  border-radius: var(--alinea-radius);
 
   &:has(.DashboardModalDialog.is-loading) {
     width: auto;
@@ -79,25 +78,32 @@
 
 .DashboardModalDialog-header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--alinea-border);
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 0 12px 0 24px;
 }
 
 .DashboardModalCloseButton {
-  margin-left: 12px;
   flex-shrink: 0;
 }
 
 .DashboardModalFooter {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 12px 24px;
   border-top: 1px solid var(--alinea-border);
+
+  /* A trailing group of actions stays right of a leading action */
+  & > :not([data-slot='button']):last-child {
+    margin-left: auto;
+  }
 }
 
 .DashboardModalContent {
@@ -108,15 +114,20 @@
   overflow-y: auto;
   /* Scrolls up to the header and footer, the padding keeps their spacing */
   margin: -24px 0;
-  padding: 24px 16px;
+  padding: 4px 24px 24px;
   font-size: var(--alinea-font-size-base);
+
+  .DashboardModalDialog:not(:has(.DashboardModalDialog-header)) & {
+    padding-top: 24px;
+  }
 }
 
 .DashboardModalTitle {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
+  font-size: var(--alinea-text-xl);
+  font-weight: var(--alinea-weight-title);
+  letter-spacing: -0.01em;
+  line-height: 26px;
 }
 
 .DashboardModalForm {

@@ -168,6 +168,22 @@ export class EntryLocaleAtoms {
     })
     return !parent
   })
+  /** The ancestors this user can read, root first, titled in this locale */
+  parents = atom(async get => {
+    const summaries = await Promise.all(
+      get(this.entry.data).parents.map(async parent => {
+        try {
+          return await get(
+            treeEntryAtoms(parent.id).summary(this.requestedLocale)
+          )
+        } catch (error) {
+          if (error instanceof MissingEntryError) return undefined
+          throw error
+        }
+      })
+    )
+    return summaries.filter(summary => summary !== undefined)
+  })
   selectedVersion = atom<SelectedVersion | null>(null)
   versions = atom(get => {
     const data = get(this.entry.data)

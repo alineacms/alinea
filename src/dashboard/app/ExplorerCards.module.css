@@ -6,3 +6,16 @@
   height: 100%;
   overflow: hidden;
 }
+
+.ExplorerCards-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ExplorerCards-title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

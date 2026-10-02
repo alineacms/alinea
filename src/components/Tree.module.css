@@ -60,13 +60,13 @@
   border-radius: var(--alinea-radius-sm);
   user-select: none;
 
-  &:hover {
-    background: var(--alinea-muted);
+  &:hover,
+  &:focus-visible {
+    background: color-mix(in oklab, var(--alinea-selected) 55%, var(--alinea-bg));
   }
 
   &:focus-visible {
     outline: 2px solid var(--alinea-ring);
-    background: var(--alinea-muted);
     outline-offset: -2px;
   }
 
@@ -79,10 +79,6 @@
     &.is-expanded {
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
-    }
-
-    &:focus-visible {
-      outline-offset: -2px;
     }
   }
 

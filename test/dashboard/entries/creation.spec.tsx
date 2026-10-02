@@ -24,7 +24,10 @@ test('opens for the current folder without showing a suspense loader', async ({
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await app.page.getByRole('button', {name: 'Create new'}).click()
+  await app.page
+    .locator('[data-slot="page-header"]')
+    .getByRole('button', {name: 'Create new'})
+    .click()
   const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
   await expect(createEntry.getByRole('textbox', {name: 'Title'})).toBeVisible()
   await expect(createEntry.getByRole('list', {name: 'Parent'})).toContainText(
@@ -54,7 +57,7 @@ test('creates a draft entry and opens it for editing', async ({
   await expect(app.field('Title')).toHaveValue('New page')
   await expect(app.page.getByText('Unpublished', {exact: true})).toBeVisible()
 
-  await app.page.getByRole('button', {name: 'Back to parent entry'}).click()
+  await app.crumb('Alpha').click()
   await expect(app.title).toHaveText('Alpha')
   const expandAlpha = app.page.getByRole('button', {name: 'Expand Alpha'})
   if (await expandAlpha.isVisible()) await expandAlpha.click()
@@ -72,10 +75,11 @@ test('loads a parent selected from a collapsed branch by id', async ({
 
   await app.page.getByRole('button', {name: 'Create new'}).click()
   const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
-  await createEntry.getByRole('button', {name: 'Link settings'}).click()
-  await app.page
-    .getByRole('dialog', {name: 'Link settings'})
-    .getByRole('button', {name: 'Replace link'})
+  // Outside the entry editor the parent row opens the picker itself
+  await createEntry
+    .getByRole('listitem', {name: 'Link item 1'})
+    .getByRole('button')
+    .first()
     .click()
 
   const picker = app.page.getByRole('dialog', {

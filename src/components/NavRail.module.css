@@ -4,9 +4,10 @@
   flex-shrink: 0;
   align-items: center;
   gap: 16px;
-  width: 32px;
+  width: 44px;
   height: 100%;
-  padding: 10px 0;
+  /* Centers the header on the bar of the sidebar next to it */
+  padding: calc((var(--alinea-header-height) - var(--alinea-control-md)) / 2) 0 10px;
 }
 
 .NavRailHeader {
@@ -14,8 +15,8 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .NavRailContent,

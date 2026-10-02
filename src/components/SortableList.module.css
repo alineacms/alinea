@@ -1,10 +1,16 @@
+/* The attribute outweighs the radius of the surface */
+.SortableList[data-slot='sortable-list'] {
+  border-radius: calc(var(--alinea-radius) + 2px);
+}
+
 .SortableListRoot {
   display: grid;
   gap: 6px;
 }
 
-/* Add buttons sit below the list, left aligned, as small outlined buttons */
-.SortableListAdd-inner {
+/* Add buttons sit below the list, left aligned, as small outlined buttons.
+   Both classes outweigh the ghost button styles. */
+.SortableListAdd .SortableListAdd-inner {
   align-items: center;
   box-sizing: border-box;
   display: flex;
@@ -13,15 +19,24 @@
   justify-content: flex-start;
   gap: 6px;
 
-  [data-slot='button'][data-variant='ghost'] {
+  [data-variant='ghost'] {
     border-color: var(--alinea-border);
+    border-radius: var(--alinea-radius-sm);
     background: var(--alinea-bg);
 
     @media (hover: hover) {
       &:hover {
-        background: var(--alinea-selected);
+        background: var(--alinea-muted);
       }
     }
+  }
+
+  [data-variant='ghost'][data-size='sm'] {
+    padding: 0 10px 0 8px;
+  }
+
+  [data-slot='button-icon'] {
+    color: var(--alinea-fg-muted);
   }
 }
 
@@ -33,6 +48,10 @@
 
 .SortableListItem:not(:first-child) {
   border-top: 1px solid var(--alinea-border);
+}
+
+.SortableListItem[aria-current='true'] {
+  background: var(--alinea-bg-muted);
 }
 
 .SortableListItem[data-dragging] {
@@ -133,21 +152,22 @@
 }
 
 .SortableListItemHeader {
+  /* Smaller buttons keep a folded item as tall as a text field */
+  --alinea-control-sm: 24px;
+
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   min-width: 0;
-  min-height: var(--alinea-row-lg);
-  padding: 2px 6px 2px 8px;
+  min-height: calc(var(--alinea-control-md) - 2px);
+  padding: 0 3px 0 4px;
 }
 
-.SortableListItemHeader:hover {
-  background: var(--alinea-muted);
-}
-
-.SortableListItemHeader:hover > .SortableListHandle,
-.SortableListItemHeader:focus-within > .SortableListHandle,
+.SortableListItem:hover:not(:has(.SortableListItem:hover))
+  > .SortableListItemHeader
+  > .SortableListHandle,
+.SortableListHandle:focus,
 .SortableListHandle[data-dragging] {
   opacity: 1;
   pointer-events: auto;
@@ -158,7 +178,26 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
+}
+
+/* The title and its "…" read as one button, the parts inside keep their gap */
+.SortableListItemTrigger[data-slot] {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: var(--alinea-control-sm);
+  padding: 0 0 0 4px;
+  border-radius: var(--alinea-radius-sm);
+  font-weight: inherit;
+}
+
+.SortableListItemTrigger-more {
+  flex-shrink: 0;
+  width: var(--alinea-control-sm);
+  margin-left: auto;
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
 }
 
 .SortableListItemTitle[data-dragging] {
@@ -168,7 +207,7 @@
 .SortableListItemDescription {
   min-width: 0;
   overflow: hidden;
-  color: var(--alinea-fg-muted);
+  color: var(--alinea-fg-subtle);
   font-size: var(--alinea-text-sm);
   font-weight: var(--alinea-weight-medium);
   line-height: 18px;
@@ -180,17 +219,19 @@
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+  gap: 6px;
+
+  [data-slot='button']:not([data-active], :hover) {
+    color: var(--alinea-fg-muted);
+  }
 }
 
 .SortableListItemToggle {
   flex: 0 0 auto;
-  color: var(--alinea-fg-muted);
 }
 
-.SortableListItemToggle:hover,
-.SortableListItemToggle:active,
-.SortableListItemToggle[data-active] {
-  color: var(--alinea-fg);
+.SortableListItemHeader .SortableListItemToggle:not([data-active], :hover) {
+  color: var(--alinea-fg-muted);
 }
 
 .SortableListItemToggle-icon {
@@ -201,14 +242,14 @@
   display: grid;
   gap: 14px;
   align-items: normal;
-  padding: 6px 16px 16px 44px;
+  padding: 6px 16px 16px 34px;
 }
 
 .SortableListItemFooter {
   display: flex;
   align-items: flex-start;
   min-width: 0;
-  padding: 0 16px 10px 44px;
+  padding: 0 16px 10px 34px;
   color: var(--alinea-fg-muted);
   font-size: var(--alinea-text-sm);
 }

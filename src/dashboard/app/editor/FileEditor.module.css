@@ -1,35 +1,27 @@
-.FileEditor-surface {
-  width: 100%;
-}
-
 .FileEditor-tabs {
+  gap: 20px;
   min-width: 0;
 }
 
-.FileEditor-tabs-header {
-  display: flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 16px;
+.FileEditor-tabs-list {
+  height: auto;
   border-bottom: 1px solid var(--alinea-border);
 }
 
+.FileEditor-tabs-trigger {
+  padding: 0 0 10px;
+}
+
 .FileEditor-tabPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   min-width: 0;
-}
-
-.FileEditor-details {
-  min-width: 0;
-  padding: 16px;
-}
-
-.FileEditor-fields {
-  padding: 16px 12px 0 16px;
 }
 
 .FileEditor {
   display: flex;
-  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .FileEditor-content {
@@ -39,8 +31,6 @@
   min-height: 0;
   flex-direction: column;
   gap: 20px;
-  overflow: auto;
-  padding: 12px;
 }
 
 .FileEditor-metadata {
@@ -90,13 +80,5 @@
 @media (max-width: 800px) {
   .FileEditor {
     flex-direction: column;
-  }
-
-  .FileEditor-content {
-    padding: 12px;
-  }
-
-  .FileEditor-fields {
-    padding: 12px 12px 0;
   }
 }

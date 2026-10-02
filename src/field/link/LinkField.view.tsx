@@ -8,6 +8,7 @@ import {
   Icon,
   SortableList,
   SortableListItemTitle,
+  SortableListItemTrigger,
   SortableListAdd,
   SortableListDragPreview,
   ListError,
@@ -20,13 +21,16 @@ import {
   SortableListItemToggle,
   SortableListItemFooter,
   SortableListItemHeader,
-  SortableListItemSettings,
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverTrigger,
+  Kbd,
   Select,
   SelectItem,
+  SheetBody,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetSection,
+  SheetTitle,
   TextField
 } from '#/components.js'
 import {Config} from '#/core/Config.js'
@@ -39,6 +43,11 @@ import {Reference} from '#/core/Reference.js'
 import {Root} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/components.js'
+import {
+  BlockSheet,
+  type BlockSheetState,
+  useBlockSheet
+} from '#/dashboard/app/BlockSheet.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -68,9 +77,9 @@ import {
   IcRoundAttachFile,
   IcRoundAdd,
   IcRoundClose,
+  IcRoundDelete,
   IcRoundEdit,
   IcRoundLink,
-  IcRoundMoreHoriz,
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
@@ -804,6 +813,7 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
         <LinkPickerAction
           anchorRef={anchorRef}
           buttonSize="sm"
+          buttonIcon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={link => setValue(singleLink(link))}
@@ -811,10 +821,6 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
           type={type as PickerType}
           value={value?._type === type ? value : undefined}
         >
-          <Icon
-            aria-hidden
-            icon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
-          />
           {options.isEntryField ? options.label : picker.label}
         </LinkPickerAction>
       ))}
@@ -841,6 +847,7 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
           allowDuplicates={options.allowDuplicates}
           anchorRef={anchorRef}
           buttonSize="sm"
+          buttonIcon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={link => {
@@ -864,10 +871,6 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
           selection={links.filter(row => row._type === type)}
           type={type as PickerType}
         >
-          <Icon
-            aria-hidden
-            icon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
-          />
           {options.isEntryField ? options.label : picker.label}
         </LinkPickerAction>
       ))}
@@ -918,6 +921,7 @@ function LinkRowActions({
         <Button
           aria-label="Replace link"
           variant="ghost"
+          size="sm"
           icon={IcRoundEdit}
           disabled={isDisabled}
           onClick={() => {
@@ -1060,31 +1064,48 @@ function EntryAnchorFieldInner({
 }
 
 interface LinkMetaLabelProps {
-  className: string
   node: ReactiveNode<LinkFieldRow>
   value: LinkFieldRow
 }
 
-function LinkMetaLabel({className, node, value}: LinkMetaLabelProps) {
+function LinkMetaLabel({node, value}: LinkMetaLabelProps) {
+  return (
+    <LinkLabel node={node} value={value}>
+      {label =>
+        label && (
+          <SortableListItemDescription
+            className={styles.LinkFieldView.metaLabel()}
+          >
+            {label}
+          </SortableListItemDescription>
+        )
+      }
+    </LinkLabel>
+  )
+}
+
+interface LinkLabelProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+  children: (label: string | undefined) => ReactNode
+}
+
+/** The label of a link: its custom label, the linked title or the url */
+function LinkLabel({node, value, children}: LinkLabelProps) {
   const customLabel = useAtomValueRaw(node.field('_label')) as
     | string
     | undefined
-  if ('_entry' in value) {
+  if ('_entry' in value)
     return (
-      <EntryLinkMetaLabel
-        className={className}
+      <EntryLinkLabel
         customLabel={customLabel}
         entryId={value._entry}
         locale={value._locale}
-      />
+      >
+        {children}
+      </EntryLinkLabel>
     )
-  }
-  return (
-    <ResolvedLinkMetaLabel
-      className={className}
-      label={customLabel || linkFallbackLabel(value)}
-    />
-  )
+  return children(trimmed(customLabel || linkFallbackLabel(value)))
 }
 
 function linkFallbackLabel(value: LinkFieldRow): string | undefined {
@@ -1093,44 +1114,26 @@ function linkFallbackLabel(value: LinkFieldRow): string | undefined {
   return undefined
 }
 
-interface EntryLinkMetaLabelProps {
-  className: string
+function trimmed(label: string | undefined) {
+  return label?.trim() || undefined
+}
+
+interface EntryLinkLabelProps {
   customLabel?: string
   entryId: string
   locale?: string
+  children: (label: string | undefined) => ReactNode
 }
 
-function EntryLinkMetaLabel({
-  className,
+function EntryLinkLabel({
   customLabel,
   entryId,
-  locale
-}: EntryLinkMetaLabelProps) {
+  locale,
+  children
+}: EntryLinkLabelProps) {
   const state = useLinkEntryState(entryId, locale)
-  if (state.state !== 'hasData' || !state.data) {
-    return <ResolvedLinkMetaLabel className={className} label={customLabel} />
-  }
-  return (
-    <ResolvedLinkMetaLabel
-      className={className}
-      label={customLabel ?? state.data.title}
-    />
-  )
-}
-
-interface ResolvedLinkMetaLabelProps {
-  className: string
-  label?: string
-}
-
-function ResolvedLinkMetaLabel({className, label}: ResolvedLinkMetaLabelProps) {
-  const value = label?.trim()
-  if (!value) return null
-  return (
-    <SortableListItemDescription className={className}>
-      {value}
-    </SortableListItemDescription>
-  )
+  const title = state.state === 'hasData' ? state.data?.title : undefined
+  return children(trimmed(customLabel ?? title))
 }
 
 interface LinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
@@ -1142,7 +1145,13 @@ interface LinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
 function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
   const fallbackIcon = getLinkIcon(type)
   const fallbackLabel = picker?.label ?? type
-  if (type === 'image') return null
+  if (type === 'image') {
+    return (
+      <Badge {...props} icon={IcRoundPanorama} size="sm">
+        Image
+      </Badge>
+    )
+  }
   if (type === 'file') {
     return (
       <Badge {...props} icon={IcRoundAttachFile} size="sm">
@@ -1265,22 +1274,10 @@ function ResolvedLinkLabelField({
 }: ResolvedLinkLabelFieldProps) {
   return (
     <TextField
-      autoFocus
       disabled={isDisabled}
       label="Label"
       onValueChange={onChange}
       value={customLabel ?? fallbackLabel}
-    />
-  )
-}
-
-function LinkSettingsButton() {
-  return (
-    <PopoverTrigger
-      variant="ghost"
-      aria-label="Link settings"
-      icon={IcRoundMoreHoriz}
-      size="icon-sm"
     />
   )
 }
@@ -1322,6 +1319,7 @@ function UrlLinkRowAction({closeActions, url}: UrlLinkRowActionProps) {
     <Button
       aria-label="Open link"
       variant="ghost"
+      size="sm"
       icon={IcRoundOpenInNew}
       disabled={!href}
       onClick={() => {
@@ -1365,6 +1363,7 @@ function EntryLinkRowActions({
       <Button
         aria-label="Open link"
         variant="ghost"
+        size="sm"
         icon={IcRoundOpenInNew}
         disabled
       >
@@ -1380,6 +1379,7 @@ function EntryLinkRowActions({
     <Button
       aria-label="Open link"
       variant="ghost"
+      size="sm"
       icon={IcRoundOpenInNew}
       onClick={() => {
         window.open(href, '_blank', 'noopener,noreferrer')
@@ -1391,108 +1391,103 @@ function EntryLinkRowActions({
   )
 }
 
-/**
- * The settings of a link row open below the row when it is clicked, and below
- * the settings button when that is clicked
- */
-function useLinkRowSettings() {
-  const rowRef = useRef<HTMLButtonElement>(null)
-  const [open, setOpen] = useState(false)
-  const [anchoredToRow, setAnchoredToRow] = useState(false)
-  return {
-    rowRef,
-    open,
-    anchoredToRow,
-    openFromRow() {
-      setAnchoredToRow(true)
-      setOpen(true)
-    },
-    onOpenChange(open: boolean) {
-      if (open) setAnchoredToRow(false)
-      setOpen(open)
-    },
-    close() {
-      setOpen(false)
-    }
-  }
-}
-
-interface LinkRowSettingsState extends ReturnType<typeof useLinkRowSettings> {}
-
 interface LinkRowButtonProps {
   children: ReactNode
-  settings: LinkRowSettingsState
+  sheet: BlockSheetState
+  onEdit: () => void
 }
 
-/** The content of a link row, which names it, opens the settings */
-function LinkRowButton({children, settings}: LinkRowButtonProps) {
+/**
+ * The content of a link row, which names it, opens its settings. Outside an
+ * entry editor there are no settings, it replaces the link instead.
+ */
+function LinkRowButton({children, sheet, onEdit}: LinkRowButtonProps) {
   const descriptionId = useId()
   return (
-    <Button
-      ref={settings.rowRef}
+    <SortableListItemTrigger
       aria-describedby={descriptionId}
-      variant="ghost"
-      className={styles.LinkFieldView.rowAction()}
-      onClick={settings.openFromRow}
+      aria-expanded={sheet.available ? sheet.open : undefined}
+      more={sheet.available}
+      onClick={sheet.available ? sheet.toggle : onEdit}
     >
       {children}
       <span id={descriptionId} hidden>
         Edit link
       </span>
-    </Button>
+    </SortableListItemTrigger>
   )
 }
 
-interface LinkRowSettingsProps {
+interface LinkSheetProps {
   node: ReactiveNode<LinkFieldRow>
   onEdit: () => void
+  onRemove: () => void
   picker?: Picker<LinkFieldRow>
   readOnly?: boolean
-  settings: LinkRowSettingsState
+  sheet: BlockSheetState
   type: PickerType
   value: LinkFieldRow
 }
 
-function LinkRowSettings({
+function LinkSheet({
   node,
   onEdit,
+  onRemove,
   picker,
   readOnly,
-  settings,
+  sheet,
   type,
   value
-}: LinkRowSettingsProps) {
+}: LinkSheetProps) {
+  const close = () => sheet.setOpen(false)
   return (
-    <Popover open={settings.open} onOpenChange={settings.onOpenChange}>
-      <LinkSettingsButton />
-      {settings.anchoredToRow && <PopoverAnchor virtualRef={settings.rowRef} />}
-      <PopoverContent
-        aria-label="Link settings"
-        side="bottom"
-        align={settings.anchoredToRow ? 'start' : 'end'}
-      >
-        <SortableListItemSettings variant="actions">
+    <BlockSheet id={value[Reference.id]}>
+      <SheetContent onClose={close}>
+        <SheetHeader>
+          <LinkTypeBadge picker={picker} type={type} value={value} />
+          <SheetTitle>
+            <LinkLabel node={node} value={value}>
+              {label => label ?? 'Link'}
+            </LinkLabel>
+          </SheetTitle>
+          <Kbd size="sm" aria-hidden>
+            Esc
+          </Kbd>
+          <SheetClose aria-label="Close link settings" />
+        </SheetHeader>
+        <SheetBody>
+          <SheetSection title="General">
+            <LinkLabelField isDisabled={readOnly} node={node} value={value} />
+            <EntryAnchorField isDisabled={readOnly} node={node} value={value} />
+            <EntryLinkSuffixField
+              isDisabled={readOnly}
+              node={node}
+              value={value}
+            />
+          </SheetSection>
+        </SheetBody>
+        <SheetFooter>
           <LinkRowActions
-            closeActions={settings.close}
+            closeActions={close}
             isDisabled={readOnly}
             onEdit={onEdit}
             picker={picker}
             type={type}
             value={value}
           />
-        </SortableListItemSettings>
-        <hr className={styles.LinkFieldView.settingsSeparator()} />
-        <SortableListItemSettings>
-          <LinkLabelField isDisabled={readOnly} node={node} value={value} />
-          <EntryAnchorField isDisabled={readOnly} node={node} value={value} />
-          <EntryLinkSuffixField
-            isDisabled={readOnly}
-            node={node}
-            value={value}
-          />
-        </SortableListItemSettings>
-      </PopoverContent>
-    </Popover>
+          <Button
+            variant="ghost"
+            size="sm"
+            color="destructive"
+            icon={IcRoundDelete}
+            disabled={readOnly}
+            onClick={onRemove}
+          >
+            Remove
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </BlockSheet>
   )
 }
 
@@ -1504,7 +1499,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const hasFields = Boolean(picker?.fields)
   const imagePreviewEntryId =
     type === 'image' && '_entry' in value ? value._entry : undefined
-  const settings = useLinkRowSettings()
+  const sheet = useBlockSheet(value[Reference.id])
   const [editOpen, setEditOpen] = useState(false)
 
   function removeLink() {
@@ -1516,42 +1511,34 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
       {imagePreviewEntryId && (
         <EntryLinkImagePreview entryId={imagePreviewEntryId} />
       )}
-      <LinkTypeBadge
-        className={styles.LinkFieldView.type()}
-        picker={picker}
-        type={type}
-        value={value}
-      />
-      <LinkMetaLabel
-        className={styles.LinkFieldView.metaLabel()}
-        node={node}
-        value={value}
-      />
+      {type !== 'image' && (
+        <LinkTypeBadge
+          className={styles.LinkFieldView.type()}
+          picker={picker}
+          type={type}
+          value={value}
+        />
+      )}
+      <LinkMetaLabel node={node} value={value} />
       <EntryAnchorBadge node={node} value={value} />
     </>
   )
 
   return (
     <>
-      <SortableListItem aria-label="Link item 1">
-        <SortableListItemHeader className={styles.LinkFieldView.inputHeader()}>
+      <SortableListItem aria-label="Link item 1" current={sheet.open}>
+        <SortableListItemHeader>
           <SortableListItemTitle>
             {options.readOnly ? (
               rowContent
             ) : (
-              <LinkRowButton settings={settings}>{rowContent}</LinkRowButton>
+              <LinkRowButton sheet={sheet} onEdit={() => setEditOpen(true)}>
+                {rowContent}
+              </LinkRowButton>
             )}
           </SortableListItemTitle>
           {!options.readOnly && (
             <SortableListItemActions>
-              <LinkRowSettings
-                node={node}
-                onEdit={() => setEditOpen(true)}
-                picker={picker}
-                settings={settings}
-                type={type}
-                value={value}
-              />
               <Button
                 variant="ghost"
                 aria-label="Remove link"
@@ -1568,6 +1555,16 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
           </SortableListItemContent>
         )}
       </SortableListItem>
+      <LinkSheet
+        node={node}
+        onEdit={() => setEditOpen(true)}
+        onRemove={removeLink}
+        picker={picker}
+        readOnly={options.readOnly}
+        sheet={sheet}
+        type={type}
+        value={value}
+      />
       {picker && (
         <LinkPickerDialog
           isOpen={editOpen}
@@ -1608,7 +1605,7 @@ function MultipleLinkRow({
     type === 'image' && '_entry' in value ? value._entry : undefined
   const itemId = value[Reference.id]
   const readOnly = Boolean(options.readOnly)
-  const settings = useLinkRowSettings()
+  const sheet = useBlockSheet(value[Reference.id])
   const [editOpen, setEditOpen] = useState(false)
 
   function removeLink() {
@@ -1620,12 +1617,10 @@ function MultipleLinkRow({
       {imagePreviewEntryId && (
         <EntryLinkImagePreview entryId={imagePreviewEntryId} />
       )}
-      <LinkTypeBadge picker={picker} type={type} value={value} />
-      <LinkMetaLabel
-        className={styles.LinkFieldView.metaLabel()}
-        node={node}
-        value={value}
-      />
+      {type !== 'image' && (
+        <LinkTypeBadge picker={picker} type={type} value={value} />
+      )}
+      <LinkMetaLabel node={node} value={value} />
       <EntryAnchorBadge node={node} value={value} />
     </>
   )
@@ -1641,6 +1636,7 @@ function MultipleLinkRow({
           />
         }
         id={itemId}
+        current={sheet.open}
       >
         <SortableListItemHeader>
           {!readOnly && (
@@ -1657,19 +1653,12 @@ function MultipleLinkRow({
             {readOnly ? (
               rowContent
             ) : (
-              <LinkRowButton settings={settings}>{rowContent}</LinkRowButton>
+              <LinkRowButton sheet={sheet} onEdit={() => setEditOpen(true)}>
+                {rowContent}
+              </LinkRowButton>
             )}
           </SortableListItemTitle>
           <SortableListItemActions>
-            <LinkRowSettings
-              node={node}
-              onEdit={() => setEditOpen(true)}
-              picker={picker}
-              readOnly={readOnly}
-              settings={settings}
-              type={type}
-              value={value}
-            />
             <Button
               variant="ghost"
               aria-label="Remove link"
@@ -1695,6 +1684,16 @@ function MultipleLinkRow({
           </SortableListItemFooter>
         )}
       </SortableListItem>
+      <LinkSheet
+        node={node}
+        onEdit={() => setEditOpen(true)}
+        onRemove={removeLink}
+        picker={picker}
+        readOnly={readOnly}
+        sheet={sheet}
+        type={type}
+        value={value}
+      />
       {picker && (
         <LinkPickerDialog
           isOpen={editOpen}
@@ -1739,7 +1738,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         />
       )}
       {isEmpty && !readOnly && (
-        <SortableListAdd className={styles.LinkFieldView.inputHeader()}>
+        <SortableListAdd>
           <SingleLinkCreateActions field={field} />
         </SortableListAdd>
       )}

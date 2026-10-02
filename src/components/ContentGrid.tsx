@@ -44,7 +44,7 @@ export interface ContentGridProps<T extends object>
   minItemWidth?: number
   /** Maximum card width in pixels, defaults to 320 */
   maxItemWidth?: number
-  /** Card height in pixels, defaults to 196 */
+  /** Card height in pixels, defaults to 224 */
   itemHeight?: number
   /** Space between cards in pixels, defaults to 16 */
   gap?: number
@@ -88,7 +88,7 @@ export function ContentGrid<T extends object>({
   disabledKeys,
   minItemWidth = 240,
   maxItemWidth = 320,
-  itemHeight = 196,
+  itemHeight = 224,
   gap = 16,
   maxColumns = 5,
   onItemAction,

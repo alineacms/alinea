@@ -82,6 +82,13 @@
   top: 10px;
   left: 10px;
   z-index: 2;
+
+  /* Pointers reveal the box on hover, selected cards keep it */
+  @media (hover: hover) {
+    .ContentGridItem:not([aria-selected='true'], :hover, :focus-within) & {
+      opacity: 0;
+    }
+  }
 }
 
 /* Keeps the drag handle reachable for keyboards and assistive tech */
@@ -107,9 +114,8 @@
   overflow: hidden;
   color: var(--alinea-fg);
   border: 1px solid var(--alinea-border);
-  border-radius: var(--alinea-radius);
+  border-radius: var(--alinea-radius-lg);
   background: var(--alinea-overlay);
-  box-shadow: var(--alinea-shadow-raised);
   font-size: var(--alinea-font-size-base);
   cursor: pointer;
 
@@ -118,6 +124,9 @@
   }
 
   .ContentGridItem[aria-selected='true'] & {
+    border-color: var(--alinea-primary);
+    outline: 2px solid var(--alinea-primary);
+    outline-offset: -1px;
     background: var(--alinea-selected);
   }
 

@@ -127,7 +127,7 @@
   --alinea-control-lg: 40px;
   --alinea-row: 32px;
   --alinea-row-lg: 40px;
-  --alinea-header-height: 52px;
+  --alinea-header-height: 44px;
   --alinea-footer-height: 56px;
 
   --alinea-fg-strong: color-mix(in oklab, var(--alinea-fg) 70%, CanvasText);

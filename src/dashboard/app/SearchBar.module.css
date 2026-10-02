@@ -1,0 +1,32 @@
+.SearchBar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px 0 14px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.SearchBar-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.SearchBar-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  margin: 0 8px;
+  background: var(--alinea-border);
+}
+
+.SearchBar-controls {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}

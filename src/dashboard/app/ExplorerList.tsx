@@ -166,6 +166,8 @@ function useScrollRestoration(
 export interface ExplorerListProps {
   compactTable?: boolean
   explorer: DashboardExplorer
+  /** Shown as the overview of a page: thumbnails, parents and row actions */
+  overview?: boolean
   /**
    * Called when a selectable entry is clicked, pickers that select a single
    * entry confirm it right away
@@ -178,6 +180,7 @@ export function ExplorerList({
   compactTable,
   explorer,
   onPick,
+  overview,
   page
 }: ExplorerListProps) {
   const showResults = explorer.mode !== 'search' || Boolean(page.search.trim())
@@ -260,6 +263,7 @@ export function ExplorerList({
           items={page.items}
           locale={page.locale}
           onPick={onPick}
+          overview={overview}
           page={page}
           renderEmptyState={() => (
             <EmptyResults explorer={explorer} page={page} root={page.root} />
@@ -273,6 +277,7 @@ export function ExplorerList({
           items={page.items}
           locale={page.locale}
           onPick={onPick}
+          overview={overview}
           page={page}
           renderEmptyState={() => (
             <EmptyResults explorer={explorer} page={page} root={page.root} />

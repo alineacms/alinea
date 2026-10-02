@@ -1,0 +1,12 @@
+.TabsView {
+  gap: 20px;
+}
+
+.TabsView-list {
+  height: auto;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.TabsView-trigger {
+  padding: 0 0 10px;
+}

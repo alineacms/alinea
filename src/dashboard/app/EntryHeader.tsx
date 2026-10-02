@@ -1,14 +1,18 @@
 import {
   Badge,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
   Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  Heading,
   PageActions,
-  PageBack,
   PageHeader,
-  PageTitle,
   Text
 } from '#/components.js'
 import {
@@ -17,7 +21,6 @@ import {
 } from '#/core/db/EntryUrlConflictError.js'
 import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Entry} from '#/core/Entry.js'
-import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -30,16 +33,22 @@ import {
   loadDeletePlanAtom,
   type DeletePlan
 } from '../atoms/delete.js'
-import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
+import type {
+  EntryAtoms,
+  EntryLocaleAtoms,
+  TreeEntrySummary
+} from '../atoms/entry.js'
 import {loadMoveTargetsAtom, type MoveTargets} from '../atoms/move.js'
 import {routeAtom} from '../atoms/nav.js'
 import type {ReactiveNode} from '../atoms/ReactiveNode.js'
+import {rootAtoms} from '../atoms/root.js'
 import {policyAtom} from '../atoms/user.js'
 import {useSaveShortcut} from '../hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
 import {
   type ComponentType,
+  Fragment,
   useState,
   useTransition,
   type ReactNode
@@ -53,6 +62,7 @@ import {
   IcRoundPublishedWithChanges,
   IcRoundSave,
   IcRoundSync,
+  IcRoundUndo,
   IcRoundVisibilityOff
 } from '../icons.js'
 import {DeleteDialog} from './DeleteDialog.js'
@@ -180,6 +190,8 @@ export interface EntryHeaderProps {
   isSidebarOpen?: boolean
   node: ReactiveNode<object>
   onSidebarOpenChange?: (isOpen: boolean) => void
+  /** Ancestors of the entry, root first */
+  parents: Array<TreeEntrySummary>
   parentNeedsTranslation: boolean
   selectedEntry: Entry
 }
@@ -191,6 +203,7 @@ export function EntryHeader({
   isSidebarOpen,
   node,
   onSidebarOpenChange,
+  parents,
   parentNeedsTranslation,
   selectedEntry
 }: EntryHeaderProps) {
@@ -208,6 +221,7 @@ export function EntryHeader({
   const parentId = useAtomValueRaw(entry.parentId)
   const workspace = useAtomValueRaw(entry.workspace)
   const root = useAtomValueRaw(entry.root)
+  const rootLabel = useAtomValueRaw(rootAtoms(workspace, root).label)
   const canPublishParents = useAtomValueRaw(entry.canPublishParents)
   const isParentUnpublished = useAtomValueRaw(entry.parentUnpublished)
   const [selectedVersion, setSelectedVersion] = useAtom(
@@ -239,7 +253,6 @@ export function EntryHeader({
   const isMediaFile = type === MediaFile
   const isMediaLibrary = type === MediaLibrary
   const isMedia = isMediaFile || isMediaLibrary
-  const typeData = getType(type)
   const isRevision = selectedVersion?.type === 'history'
   const isUnpublished = activeStatus === 'draft' && activeVersion.main
   const viewedStatus = selectedEntry.status
@@ -394,8 +407,13 @@ export function EntryHeader({
   } else if (primaryActions.dirty) {
     primaryAction = (
       <>
-        <Button variant="ghost" disabled={isPending} onClick={() => reset()}>
-          Discard my changes
+        <Button
+          variant="ghost"
+          icon={IcRoundUndo}
+          disabled={isPending}
+          onClick={() => reset()}
+        >
+          Discard
         </Button>
         {primaryActions.dirty.publish && (
           <Button
@@ -434,6 +452,10 @@ export function EntryHeader({
       </Button>
     )
   }
+
+  // Top level entries lead back to their root
+  const crumbs: Array<{id?: string; title: string}> =
+    parents.length > 0 ? parents : [{title: rootLabel}]
 
   const menuItems: Array<EntryHeaderMenuItem> = []
   const actions = entryHeaderActions({
@@ -502,20 +524,48 @@ export function EntryHeader({
     })
 
   return (
-    <PageHeader size="lg" className={styles.EntryHeader({dirty: isDirty})}>
-      <PageBack
-        label={parentId ? 'Back to parent entry' : 'Back to root'}
-        onClick={() =>
-          setRoute({
-            workspace,
-            root,
-            entry: parentId ?? undefined,
-            locale: route.locale
-          })
-        }
-      />
-      <PageTitle>{selectedEntry.title}</PageTitle>
+    <PageHeader className={styles.EntryHeader({dirty: isDirty})}>
       {controls}
+      <Breadcrumb className={styles.EntryHeader.crumbs()}>
+        <BreadcrumbList className={styles.EntryHeader.crumbs.list()}>
+          {crumbs.map(crumb => (
+            <Fragment key={crumb.id ?? ''}>
+              <BreadcrumbItem className={styles.EntryHeader.crumbs.item()}>
+                <BreadcrumbLink asChild>
+                  <button
+                    type="button"
+                    className={styles.EntryHeader.crumbs.link()}
+                    onClick={() =>
+                      setRoute({
+                        workspace,
+                        root,
+                        entry: crumb.id,
+                        locale: route.locale
+                      })
+                    }
+                  >
+                    {crumb.title}
+                  </button>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator
+                className={styles.EntryHeader.crumbs.separator()}
+              />
+            </Fragment>
+          ))}
+          <BreadcrumbItem className={styles.EntryHeader.crumbs.current()}>
+            <Heading
+              data-slot="page-title"
+              className={styles.EntryHeader.title()}
+              size="xs"
+              weight="medium"
+              truncate
+            >
+              {selectedEntry.title}
+            </Heading>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       {showStatus && (
         <Badge
           className={styles.EntryHeader.status()}
@@ -525,40 +575,37 @@ export function EntryHeader({
           {isRevision ? 'Revision' : variantDescription[status]}
         </Badge>
       )}
-      <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
-        {typeData.label}
-      </Badge>
       {!access.update && <ReadOnlyBadge />}
-      {menuItems.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            size="icon"
-            variant="ghost"
-            aria-label="More actions"
-            icon={IcRoundMoreHoriz}
-            disabled={isActionDisabled}
-            loading={isPending}
-          />
-          <DropdownMenuContent
-            aria-label="More actions"
-            side="bottom"
-            align="start"
-          >
-            {menuItems.map(item => (
-              <DropdownMenuItem
-                key={item.id}
-                icon={item.icon}
-                textValue={item.label}
-                disabled={isActionDisabled}
-                onSelect={() => runAction(item.action)}
-              >
-                {item.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
       <PageActions className={styles.EntryHeader.actions()}>
+        {menuItems.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              size="icon"
+              variant="ghost"
+              aria-label="More actions"
+              icon={IcRoundMoreHoriz}
+              disabled={isActionDisabled}
+              loading={isPending}
+            />
+            <DropdownMenuContent
+              aria-label="More actions"
+              side="bottom"
+              align="end"
+            >
+              {menuItems.map(item => (
+                <DropdownMenuItem
+                  key={item.id}
+                  icon={item.icon}
+                  textValue={item.label}
+                  disabled={isActionDisabled}
+                  onSelect={() => runAction(item.action)}
+                >
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         {primaryAction}
         {onSidebarOpenChange && !isSidebarOpen && (
           <EntrySidebarToggle

@@ -12,102 +12,63 @@
   flex: 1;
   min-height: 0;
   height: auto;
-  padding: 0 8px 8px;
+  padding: 2px 8px 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.SidebarTree-item.is-archived,
-.SidebarTree-item.is-untranslated {
-  /* The label is dimmed below, a muted color on top would fade it twice */
-  color: var(--alinea-fg);
-}
-
-.SidebarTree-item.is-unpublished {
-  color: var(--alinea-status-unpublished-fg);
-}
-
-.SidebarTree-item.is-archived:hover,
-.SidebarTree-item.is-archived[aria-selected='true'] {
-  background: var(--alinea-muted);
-}
-
-.SidebarTree-item.is-unpublished:hover,
-.SidebarTree-item.is-unpublished[aria-selected='true'] {
-  background: var(--alinea-status-unpublished);
-}
-
-/* The selected entry and its visible descendants read as one block */
+/* The selected entry and its visible descendants read as one block, the
+   descendants a lighter grey than the selected row */
 .SidebarTree-item.is-parentSelected {
   border-radius: 0;
+
+  &:not([aria-selected='true']) {
+    background: color-mix(in oklab, var(--alinea-selected) 35%, var(--alinea-bg));
+  }
+
+  /* The usual hover grey would barely show on the tint */
+  &:not([aria-selected='true']):is(:hover, :focus-visible) {
+    background: color-mix(in oklab, var(--alinea-selected) 75%, var(--alinea-bg));
+  }
+
+  &.is-groupEnd {
+    border-bottom-left-radius: var(--alinea-radius-sm);
+    border-bottom-right-radius: var(--alinea-radius-sm);
+  }
 }
 
-.SidebarTree-item.is-parentSelected.is-groupEnd {
-  border-bottom-left-radius: var(--alinea-radius);
-  border-bottom-right-radius: var(--alinea-radius);
-}
-
-.SidebarTree-item.is-parentSelected:not(:hover):not([aria-selected='true']) {
-  background: color-mix(in oklab, var(--alinea-selected), var(--alinea-bg) 60%);
-}
-
-/* Archived and unpublished rows keep their own hover color */
-.SidebarTree-item.is-parentSelected:hover:not([aria-selected='true']):not(
-  .is-archived,
-  .is-unpublished
-) {
-  background: var(--alinea-selected);
-}
-
-.SidebarTree-item.is-parentSelected.is-archived:not(:hover):not([aria-selected='true']) {
-  background: color-mix(in srgb, var(--alinea-muted) 54%, transparent);
-}
-
-.SidebarTree-item.is-parentSelected.is-unpublished:not(:hover):not([aria-selected='true']) {
-  background: color-mix(in srgb, var(--alinea-status-unpublished) 54%, transparent);
-}
-
-.SidebarTree-item.is-archived [data-slot='tree-item-label'],
-.SidebarTree-item.is-untranslated [data-slot='tree-item-label'] {
-  opacity: 0.72;
-}
-
-.SidebarTree-item.is-archived[aria-selected='true'] [data-slot='tree-item-label'] {
-  opacity: 1;
+.SidebarTree-item.is-archived:not([aria-selected='true']) [data-slot='tree-item-label'] {
+  opacity: 0.55;
 }
 
 .SidebarTree-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: var(--alinea-radius-sm);
-  color: var(--alinea-fg-muted);
-  background: var(--alinea-muted);
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+
+  &[data-status='draft'] {
+    background: var(--alinea-status-draft-dot);
+  }
+
+  &[data-status='unpublished'] {
+    background: var(--alinea-status-unpublished-dot);
+  }
+
+  &[data-status='archived'] {
+    border: 1.5px solid var(--alinea-fg-subtle);
+  }
+
+  &[data-status='untranslated'] {
+    border: 1.5px dashed var(--alinea-fg-subtle);
+  }
 }
 
-.SidebarTree-status-icon {
-  width: 13px;
-  height: 13px;
-}
-
-.SidebarTree-status.is-draft {
-  color: var(--alinea-status-draft-fg);
-  background: var(--alinea-status-draft);
-}
-
-.SidebarTree-status.is-unpublished {
-  color: var(--alinea-status-unpublished-fg);
-  background: var(--alinea-status-unpublished);
-}
-
-.SidebarTree-status.is-archived,
-.SidebarTree-status.is-untranslated {
-  color: var(--alinea-fg-muted);
-  background: var(--alinea-muted);
+.SidebarTree-root {
+  flex-shrink: 0;
+  padding: 4px 8px 0;
 }
 
 .SidebarTree-rootButton {
@@ -116,71 +77,52 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 34px;
-  border-radius: var(--alinea-radius);
+  height: var(--alinea-row);
+  border-radius: var(--alinea-radius-sm);
   overflow: hidden;
-  color: var(--alinea-fg);
-  background: transparent;
-  font-size: var(--alinea-font-size-base);
-  font-weight: 600;
+  color: var(--alinea-fg-subtle);
+
+  &:has(.SidebarTree-rootButton-action:hover):not(.is-selected) {
+    background: color-mix(in oklab, var(--alinea-selected) 55%, var(--alinea-bg));
+  }
+
+  &.is-selected {
+    background: var(--alinea-selected);
+    color: var(--alinea-fg);
+  }
 }
 
-.SidebarTree-root {
-  flex-shrink: 0;
-  padding: 8px 8px 0;
-}
-
-.SidebarTree-rootButton-action {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 3px;
-  box-sizing: border-box;
+/* Outranks the ghost button colors, the wrapper carries the selected and
+   hover colors */
+.SidebarTree-rootButton > .SidebarTree-rootButton-action[data-variant][data-color] {
   flex: 1 1 auto;
+  justify-content: flex-start;
+  box-sizing: border-box;
   min-width: 0;
   height: 100%;
-  padding: 7px 4px 7px 12px;
-  border-radius: var(--alinea-radius);
+  padding: 0 4px 0 10px;
+  border-radius: inherit;
   color: inherit;
   background: transparent;
-  font-size: var(--alinea-font-size-base);
-  font-weight: 600;
-  outline: none;
-}
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-medium);
 
-.SidebarTree-rootButton-action[data-variant],
-.SidebarTree-rootButton-action[data-variant]:hover {
-  /* The wrapper carries the selected and hover colors */
-  color: inherit;
-  background: transparent;
-}
+  &:hover {
+    color: inherit;
+    background: transparent;
+  }
 
-.SidebarTree-rootButton:has(.SidebarTree-rootButton-action[data-hovered]):not(.is-selected) {
-  background: var(--alinea-muted);
-}
-
-.SidebarTree-rootButton-action[data-focus-visible] {
-  outline: 2px solid var(--alinea-ring);
-  outline-offset: -2px;
-}
-
-.SidebarTree-rootButton:has(.SidebarTree-rootButton-action[data-focus-visible]):not(.is-selected) {
-  background: var(--alinea-muted);
-}
-
-.SidebarTree-rootButton:has(.SidebarTree-rootButton-action[data-pressed]):not(.is-selected) {
-  background: var(--alinea-muted);
-}
-
-.SidebarTree-rootButton.is-selected {
-  background: var(--alinea-selected);
-  color: var(--alinea-primary-subtle-fg);
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: -2px;
+  }
 }
 
 .SidebarTree-rootButton-label {
   flex: 1;
+  /* The button's line-height of 1 clips descenders under overflow: hidden */
+  line-height: 1.25;
   min-width: 0;
-  margin-left: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -192,12 +134,4 @@
   flex: 0 0 auto;
   min-width: 0;
   padding-right: 4px;
-}
-
-.SidebarTree-rootButton-action [data-slot='button-icon'] {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 12px;
 }

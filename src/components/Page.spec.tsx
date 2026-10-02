@@ -35,11 +35,10 @@ test('renders a header, a scrolling contained body and a footer', async ({
   expect(bounds!.height).toBe(56)
 })
 
-test('a large header with a back button', async ({mount, page}) => {
+test('a header with a back button', async ({mount, page}) => {
   await mount(<EditorHeader />)
   const header = page.locator('[data-slot="page-header"]')
-  await expect(header).toHaveAttribute('data-size', 'lg')
-  expect((await header.boundingBox())!.height).toBe(48)
+  expect((await header.boundingBox())!.height).toBe(44)
   const back = page.getByRole('button', {name: 'Back to parent'})
   await expect(back).toHaveAttribute('data-slot', 'page-back')
   await back.click()

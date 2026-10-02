@@ -1,0 +1,80 @@
+.SheetContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--alinea-bg-muted);
+  color: var(--alinea-fg);
+  outline: none;
+}
+
+.SheetHeader {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: var(--alinea-header-height);
+  padding: 0 8px 0 10px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.SheetHeader-back[data-slot] {
+  --alinea-button-accent: var(--alinea-fg-muted);
+}
+
+.SheetTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.SheetBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.SheetSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px 20px;
+
+  &:not(:first-child) {
+    border-top: 1px solid var(--alinea-border);
+  }
+}
+
+.SheetSection-title {
+  margin: 0;
+  color: var(--alinea-fg-subtle);
+  font-size: var(--alinea-text-xs);
+  font-weight: var(--alinea-weight-title);
+  letter-spacing: 0.02em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.SheetFooter {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: var(--alinea-header-height);
+  padding: 0 12px;
+  border-top: 1px solid var(--alinea-border);
+
+  /* The first destructive action starts the group at the end */
+  > :not([data-color='destructive']) + [data-color='destructive'],
+  > [data-color='destructive']:first-child {
+    margin-left: auto;
+  }
+}

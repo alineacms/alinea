@@ -19,11 +19,22 @@ import {
   SortableListItemToggle,
   SortableListItemHeader,
   SortableListItemDescription,
-  SortableListItemSettings,
+  SortableListItemTrigger,
+  Kbd,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  TextField
+  SheetBody,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetSection,
+  SheetTitle,
+  TextField,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
 } from '#/components.js'
 import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
@@ -33,9 +44,11 @@ import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/components.js'
+import {BlockSheet, useBlockSheet} from '#/dashboard/app/BlockSheet.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
+  useEntry,
   useFieldError,
   useFieldNode,
   useFieldOptions,
@@ -48,8 +61,10 @@ import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundClose,
-  IcRoundFirstPage,
-  IcRoundLastPage,
+  IcRoundDelete,
+  IcRoundAddRowAbove,
+  IcRoundAddRowBelow,
+  IcRoundLink,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
 import {ListOptions} from '#/field/list.js'
@@ -58,18 +73,10 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import type {ComponentType} from 'react'
-import {
-  createContext,
-  memo,
-  useCallback,
-  useContext,
-  useMemo,
-  useState
-} from 'react'
+import {memo, useCallback, useMemo, useState} from 'react'
 import css from './ListField.module.css'
 
 const styles = styler(css)
-const ListFieldDepthContext = createContext(0)
 
 interface ListValue {
   _id: string
@@ -102,7 +109,6 @@ export interface ListFieldViewProps {
 }
 
 export function ListFieldView({field}: ListFieldViewProps) {
-  const depth = useContext(ListFieldDepthContext)
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
   const list = useFieldNode(field) as ReactiveNode<Array<ListValue>>
@@ -189,7 +195,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const content = (hasRows || !readOnly) && (
     <SortableList
       aria-label={options.label || 'List items'}
-      data-depth={depth % 2 === 0 ? 'muted' : 'base'}
       dragType={LIST_FIELD_ROW_DRAG_TYPE}
       onReorder={readOnly ? undefined : moveRow}
     >
@@ -225,7 +230,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
   )
 
   return (
-    <ListFieldDepthContext.Provider value={depth + 1}>
+    <>
       <ListLabel
         required={options.required}
         aria-label={
@@ -247,13 +252,15 @@ export function ListFieldView({field}: ListFieldViewProps) {
       </ListLabel>
       {content}
       {error && <ListError>{error}</ListError>}
-    </ListFieldDepthContext.Provider>
+    </>
   )
 }
 
+type InsertPosition = 'before' | 'after'
+
 export function insertIndex(
   rowIndex: number,
-  position: 'before' | 'after'
+  position: InsertPosition
 ): number {
   return position === 'before' ? rowIndex : rowIndex + 1
 }
@@ -304,10 +311,9 @@ function ListFieldCreateActions({
   const visibleItems = items.slice(0, 3)
   const hasMenu = items.length > visibleItems.length
   return (
-    <div className={styles.ListFieldCreateActions()}>
+    <>
       {pasted && (
         <Button
-          className={styles.ListFieldCreateActions.button()}
           onClick={() => onPaste(pasted)}
           size="sm"
           icon={IcBaselineContentPasteGo}
@@ -318,11 +324,10 @@ function ListFieldCreateActions({
       )}
       {visibleItems.map(item => (
         <Button
-          className={styles.ListFieldCreateActions.button()}
           key={item.id}
           onClick={() => onSelect(item)}
           size="sm"
-          icon={getType(item.type).icon || IcRoundAdd}
+          icon={getType(item.type).icon}
           variant="ghost"
         >
           {item.label}
@@ -339,7 +344,7 @@ function ListFieldCreateActions({
           onSelect={onSelect}
         />
       )}
-    </div>
+    </>
   )
 }
 
@@ -359,85 +364,31 @@ interface ListFieldRowProps {
   onInsertRow: (index: number, row: ListValue) => void
 }
 
-interface ListFieldInsertActionProps {
+interface ListFieldSheetActionProps {
   icon: ComponentType
-  isDisabled: boolean
-  items: Array<ListFieldTypeItem>
   label: string
-  pasted?: ListValue
-  onClose: () => void
-  onOpenPicker: () => void
-  onSelect: (item: ListFieldTypeItem) => void
+  disabled?: boolean
+  onClick: () => void
 }
 
-function ListFieldInsertAction({
+function ListFieldSheetAction({
   icon,
-  isDisabled,
-  items,
   label,
-  pasted,
-  onClose,
-  onOpenPicker,
-  onSelect
-}: ListFieldInsertActionProps) {
-  const directAddItem = !pasted && items.length === 1 ? items[0] : undefined
-  if (directAddItem) {
-    return (
-      <Button
+  disabled,
+  onClick
+}: ListFieldSheetActionProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
         variant="ghost"
-        className={styles.ListFieldView.insertAction()}
+        size="icon-sm"
         icon={icon}
-        disabled={isDisabled}
-        onClick={() => {
-          onSelect(directAddItem)
-          onClose()
-        }}
-      >
-        {label}
-      </Button>
-    )
-  }
-  return (
-    <Button
-      variant="ghost"
-      className={styles.ListFieldView.insertAction()}
-      disabled={isDisabled}
-      onClick={() => {
-        onOpenPicker()
-      }}
-      icon={icon}
-    >
-      {label}
-    </Button>
-  )
-}
-
-interface ListFieldInsertPanelProps {
-  items: Array<ListFieldTypeItem>
-  label: string
-  pasted?: ListValue
-  pasteLabel?: string
-  onPaste: (row: ListValue) => void
-  onSelect: (item: ListFieldTypeItem) => void
-}
-
-function ListFieldInsertPanel({
-  items,
-  label,
-  pasted,
-  pasteLabel,
-  onPaste,
-  onSelect
-}: ListFieldInsertPanelProps) {
-  return (
-    <ListFieldTypeCommand
-      items={items}
-      label={label}
-      pasted={pasted}
-      pasteLabel={pasteLabel}
-      onPaste={onPaste}
-      onSelect={onSelect}
-    />
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+      />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -469,14 +420,12 @@ const ListFieldRow = memo(function ListFieldRow({
   const setAnchor = useSetAtom(row.field('_anchor'))
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
+  const sheet = useBlockSheet(itemId)
   const type = schema[typeName]
   if (!type) return null
 
   const label = Type.label(type)
   const typeIcon = getType(type).icon
-  function moveCurrentRow(direction: -1 | 1) {
-    moveListRow(index, index + direction)
-  }
 
   function deleteRow() {
     removeRow(index)
@@ -495,265 +444,127 @@ const ListFieldRow = memo(function ListFieldRow({
   }
 
   return (
-    <SortableListItem
-      aria-label={`${label} item ${index + 1}`}
-      dragPreview={<SortableListDragPreview icon={typeIcon} label={label} />}
-      id={itemId}
-    >
-      <ListFieldRowHeader
-        canInsert={canCreate}
-        expanded={expanded}
-        isFirstRow={index === 0}
-        isLastRow={index === rows - 1}
-        label={label}
-        customLabel={customLabel}
-        anchor={anchorValue}
-        dragLabel={`Drag ${label} item ${index + 1}`}
-        readOnly={readOnly}
-        typeIcon={typeIcon}
-        insertItems={typeItems}
-        pasted={pasted && schema[pasted._type] ? pasted : undefined}
-        onAnchorChange={updateAnchor}
-        onCustomLabelChange={updateCustomLabel}
-        onCopy={() => onCopyRow(itemId)}
-        onDelete={deleteRow}
-        onInsertBefore={(value: ListValue) =>
-          onInsertRow(insertIndex(index, 'before'), value)
-        }
-        onInsertAfter={(value: ListValue) =>
-          onInsertRow(insertIndex(index, 'after'), value)
-        }
-        onMoveDown={() => moveCurrentRow(1)}
-        onMoveUp={() => moveCurrentRow(-1)}
-        onToggle={() => onToggleRow(itemId)}
-      />
-      {expanded && (
-        <SortableListItemContent>
-          <NodeEditor node={row as ReactiveNode<object>} type={type} />
-        </SortableListItemContent>
-      )}
-    </SortableListItem>
+    <>
+      <SortableListItem
+        aria-label={`${label} item ${index + 1}`}
+        current={sheet.open}
+        dragPreview={<SortableListDragPreview icon={typeIcon} label={label} />}
+        id={itemId}
+      >
+        <ListFieldRowHeader
+          expanded={expanded}
+          label={label}
+          customLabel={customLabel}
+          anchor={anchorValue}
+          dragLabel={`Drag ${label} item ${index + 1}`}
+          readOnly={readOnly}
+          settingsOpen={sheet.open}
+          typeIcon={typeIcon}
+          onDelete={deleteRow}
+          onSettingsToggle={sheet.toggle}
+          onToggle={() => onToggleRow(itemId)}
+        />
+        {expanded && (
+          <SortableListItemContent>
+            <NodeEditor node={row as ReactiveNode<object>} type={type} />
+          </SortableListItemContent>
+        )}
+      </SortableListItem>
+      {/* Outside the item so events in the sheet don't reach its handlers */}
+      <BlockSheet id={itemId}>
+        <ListFieldRowSheet
+          anchor={anchorValue}
+          canInsert={canCreate}
+          customLabel={customLabel}
+          isFirstRow={index === 0}
+          isLastRow={index === rows - 1}
+          items={typeItems}
+          label={label}
+          pasted={pasted && schema[pasted._type] ? pasted : undefined}
+          readOnly={readOnly}
+          typeIcon={typeIcon}
+          onAnchorChange={updateAnchor}
+          onClose={() => sheet.setOpen(false)}
+          onCopy={() => onCopyRow(itemId)}
+          onCustomLabelChange={updateCustomLabel}
+          onDelete={deleteRow}
+          onInsertAfter={value =>
+            onInsertRow(insertIndex(index, 'after'), value)
+          }
+          onInsertBefore={value =>
+            onInsertRow(insertIndex(index, 'before'), value)
+          }
+          onMoveDown={() => moveListRow(index, index + 1)}
+          onMoveUp={() => moveListRow(index, index - 1)}
+        />
+      </BlockSheet>
+    </>
   )
 })
 
+function rowAnchor(customLabel: string, anchor?: string): string {
+  return (anchor ?? slugify(customLabel.trim())).trim()
+}
+
 interface ListFieldRowHeaderProps {
-  className?: string
-  canInsert: boolean
   expanded: boolean
-  isFirstRow: boolean
-  isLastRow: boolean
-  isPreview?: boolean
-  insertItems: Array<ListFieldTypeItem>
   label: string
   dragLabel: string
   customLabel: string
   anchor?: string
-  pasted?: ListValue
   readOnly: boolean
+  settingsOpen: boolean
   typeIcon?: ComponentType
-  onAnchorChange: (value: string) => void
-  onCustomLabelChange: (value: string) => void
-  onCopy?: () => void
-  onDelete?: () => void
-  onInsertBefore: (value: ListValue) => void
-  onInsertAfter: (value: ListValue) => void
-  onMoveDown?: () => void
-  onMoveUp?: () => void
-  onToggle?: () => void
+  onDelete: () => void
+  onSettingsToggle: () => void
+  onToggle: () => void
 }
 
 function ListFieldRowHeader({
-  canInsert,
-  className,
   expanded,
-  isFirstRow,
-  isLastRow,
-  isPreview,
-  insertItems,
   label,
   dragLabel,
   customLabel,
   anchor,
-  pasted,
   readOnly,
+  settingsOpen,
   typeIcon,
-  onAnchorChange,
-  onCustomLabelChange,
-  onCopy,
   onDelete,
-  onInsertBefore,
-  onInsertAfter,
-  onMoveDown,
-  onMoveUp,
+  onSettingsToggle,
   onToggle
 }: ListFieldRowHeaderProps) {
   const displayLabel = customLabel.trim()
-  const displayAnchor = (anchor ?? slugify(displayLabel)).trim()
+  const displayAnchor = rowAnchor(customLabel, anchor)
   const showAnchor = Boolean(displayAnchor && !displayLabel)
-  const [actionsOpen, setActionsOpen] = useState(false)
-  const [insertPosition, setInsertPosition] = useState<
-    'before' | 'after' | null
-  >(null)
-
-  function closeActions() {
-    setActionsOpen(false)
-    setInsertPosition(null)
-  }
-
   return (
-    <SortableListItemHeader className={className}>
+    <SortableListItemHeader>
       {!readOnly && <SortableListHandle aria-label={dragLabel} />}
       <SortableListItemTitle>
         <SortableListItemToggle
           aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
           expanded={expanded}
-          disabled={isPreview}
           onClick={onToggle}
         />
-        <Badge icon={typeIcon} size="sm">
-          {label}
-        </Badge>
-        {displayLabel && (
-          <SortableListItemDescription>
-            {displayLabel}
-          </SortableListItemDescription>
-        )}
-        {showAnchor && <Badge size="sm">#{displayAnchor}</Badge>}
+        <SortableListItemTrigger
+          aria-label={`${label} settings`}
+          aria-expanded={settingsOpen}
+          onClick={onSettingsToggle}
+        >
+          <Badge icon={typeIcon}>{label}</Badge>
+          {displayLabel && (
+            <SortableListItemDescription>
+              {displayLabel}
+            </SortableListItemDescription>
+          )}
+          {showAnchor && <Badge>#{displayAnchor}</Badge>}
+        </SortableListItemTrigger>
       </SortableListItemTitle>
       <SortableListItemActions>
-        <Popover
-          open={actionsOpen}
-          onOpenChange={open => {
-            if (open) setActionsOpen(true)
-            else closeActions()
-          }}
-        >
-          <PopoverTrigger
-            variant="ghost"
-            aria-label={`${label} actions`}
-            icon={IcRoundMoreHoriz}
-            size="icon-sm"
-          />
-          <PopoverContent
-            aria-label={`${label} actions`}
-            side="bottom"
-            align="end"
-          >
-            {insertPosition ? (
-              <ListFieldInsertPanel
-                items={insertItems}
-                label={`Insert ${insertPosition}`}
-                pasted={pasted}
-                pasteLabel={
-                  pasted ? pasteBlockLabel(pasted, insertItems) : undefined
-                }
-                onPaste={row => {
-                  if (insertPosition === 'before') onInsertBefore(cloneRow(row))
-                  else onInsertAfter(cloneRow(row))
-                  closeActions()
-                }}
-                onSelect={item => {
-                  const row = createRow(item.id, item.type)
-                  if (insertPosition === 'before') onInsertBefore(row)
-                  else onInsertAfter(row)
-                  closeActions()
-                }}
-              />
-            ) : (
-              <>
-                <SortableListItemSettings>
-                  <TextField
-                    label="Label"
-                    autoFocus
-                    disabled={readOnly || isPreview}
-                    onValueChange={onCustomLabelChange}
-                    value={customLabel}
-                  />
-                  <SlugField
-                    fieldValue={anchor}
-                    label="Anchor"
-                    isDisabled={readOnly || isPreview}
-                    onChange={onAnchorChange}
-                    source={customLabel}
-                  />
-                </SortableListItemSettings>
-                <hr className={styles.ListFieldRowHeader.separator()} />
-                <SortableListItemSettings variant="actions">
-                  <Button
-                    variant="ghost"
-                    icon={IcBaselineContentCopy}
-                    onClick={() => {
-                      onCopy?.()
-                      closeActions()
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </SortableListItemSettings>
-                <hr className={styles.ListFieldRowHeader.separator()} />
-                <SortableListItemSettings variant="actions">
-                  {!isFirstRow && (
-                    <Button
-                      variant="ghost"
-                      icon={IcRoundArrowUpward}
-                      onClick={() => {
-                        onMoveUp?.()
-                        closeActions()
-                      }}
-                    >
-                      Move up
-                    </Button>
-                  )}
-                  {!isLastRow && (
-                    <Button
-                      variant="ghost"
-                      icon={IcRoundArrowDownward}
-                      onClick={() => {
-                        onMoveDown?.()
-                        closeActions()
-                      }}
-                    >
-                      Move down
-                    </Button>
-                  )}
-                  {canInsert && (
-                    <>
-                      <ListFieldInsertAction
-                        icon={IcRoundFirstPage}
-                        isDisabled={Boolean(readOnly || isPreview)}
-                        items={insertItems}
-                        label="Insert before"
-                        pasted={pasted}
-                        onClose={closeActions}
-                        onOpenPicker={() => setInsertPosition('before')}
-                        onSelect={item =>
-                          onInsertBefore(createRow(item.id, item.type))
-                        }
-                      />
-                      <ListFieldInsertAction
-                        icon={IcRoundLastPage}
-                        isDisabled={Boolean(readOnly || isPreview)}
-                        items={insertItems}
-                        label="Insert after"
-                        pasted={pasted}
-                        onClose={closeActions}
-                        onOpenPicker={() => setInsertPosition('after')}
-                        onSelect={item =>
-                          onInsertAfter(createRow(item.id, item.type))
-                        }
-                      />
-                    </>
-                  )}
-                </SortableListItemSettings>
-              </>
-            )}
-          </PopoverContent>
-        </Popover>
         <Button
           variant="ghost"
           aria-label={`Remove ${label}`}
           icon={IcRoundClose}
-          disabled={readOnly || isPreview}
+          disabled={readOnly}
           onClick={onDelete}
           size="icon-sm"
         />
@@ -762,9 +573,182 @@ function ListFieldRowHeader({
   )
 }
 
+interface ListFieldRowSheetProps {
+  anchor?: string
+  canInsert: boolean
+  customLabel: string
+  isFirstRow: boolean
+  isLastRow: boolean
+  items: Array<ListFieldTypeItem>
+  label: string
+  pasted?: ListValue
+  readOnly: boolean
+  typeIcon?: ComponentType
+  onAnchorChange: (value: string) => void
+  onClose: () => void
+  onCopy: () => void
+  onCustomLabelChange: (value: string) => void
+  onDelete: () => void
+  onInsertAfter: (value: ListValue) => void
+  onInsertBefore: (value: ListValue) => void
+  onMoveDown: () => void
+  onMoveUp: () => void
+}
+
+function ListFieldRowSheet({
+  anchor,
+  canInsert,
+  customLabel,
+  isFirstRow,
+  isLastRow,
+  items,
+  label,
+  pasted,
+  readOnly,
+  typeIcon,
+  onAnchorChange,
+  onClose,
+  onCopy,
+  onCustomLabelChange,
+  onDelete,
+  onInsertAfter,
+  onInsertBefore,
+  onMoveDown,
+  onMoveUp
+}: ListFieldRowSheetProps) {
+  const [insertPosition, setInsertPosition] = useState<InsertPosition | null>(
+    null
+  )
+  const entryUrl = useEntry()?.url
+  const displayLabel = customLabel.trim()
+  const displayAnchor = rowAnchor(customLabel, anchor)
+  const title = displayLabel || (displayAnchor && `#${displayAnchor}`) || label
+  const link =
+    entryUrl && displayAnchor ? `${entryUrl}#${displayAnchor}` : undefined
+
+  function insert(position: InsertPosition, row: ListValue) {
+    if (position === 'after') onInsertAfter(row)
+    else onInsertBefore(row)
+    onClose()
+  }
+
+  function startInsert(position: InsertPosition) {
+    // A single block type needs no picker
+    const only = !pasted && items.length === 1 ? items[0] : undefined
+    if (only) insert(position, createRow(only.id, only.type))
+    else setInsertPosition(position)
+  }
+
+  function copy() {
+    onCopy()
+    onClose()
+  }
+
+  return (
+    <SheetContent onClose={onClose}>
+      <SheetHeader>
+        <Badge icon={typeIcon} size="sm">
+          {label}
+        </Badge>
+        <SheetTitle>{title}</SheetTitle>
+        <Kbd size="sm" aria-hidden>
+          Esc
+        </Kbd>
+        <SheetClose aria-label="Close block settings" />
+      </SheetHeader>
+      {insertPosition ? (
+        <SheetBody>
+          <ListFieldTypeCommand
+            items={items}
+            label={`Insert ${insertPosition}`}
+            pasted={pasted}
+            pasteLabel={pasted ? pasteBlockLabel(pasted, items) : undefined}
+            onPaste={row => insert(insertPosition, cloneRow(row))}
+            onSelect={item =>
+              insert(insertPosition, createRow(item.id, item.type))
+            }
+          />
+        </SheetBody>
+      ) : (
+        <>
+          <SheetBody>
+            <SheetSection title="General">
+              <TextField
+                label="Label"
+                disabled={readOnly}
+                onValueChange={onCustomLabelChange}
+                value={customLabel}
+              />
+              <div className={styles.ListFieldRowSheet.anchor()}>
+                <div className={styles.ListFieldRowSheet.anchor.field()}>
+                  <SlugField
+                    fieldValue={anchor}
+                    label="Anchor"
+                    isDisabled={readOnly}
+                    onChange={onAnchorChange}
+                    source={customLabel}
+                  />
+                </div>
+                {link && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    icon={IcRoundLink}
+                    aria-label="Copy link to block"
+                    onClick={() => navigator.clipboard.writeText(link)}
+                  />
+                )}
+              </div>
+            </SheetSection>
+          </SheetBody>
+          <SheetFooter>
+            <ListFieldSheetAction
+              icon={IcBaselineContentCopy}
+              label="Copy"
+              onClick={copy}
+            />
+            <ListFieldSheetAction
+              icon={IcRoundArrowUpward}
+              label="Move up"
+              disabled={readOnly || isFirstRow}
+              onClick={onMoveUp}
+            />
+            <ListFieldSheetAction
+              icon={IcRoundArrowDownward}
+              label="Move down"
+              disabled={readOnly || isLastRow}
+              onClick={onMoveDown}
+            />
+            <ListFieldSheetAction
+              icon={IcRoundAddRowAbove}
+              label="Insert before"
+              disabled={readOnly || !canInsert}
+              onClick={() => startInsert('before')}
+            />
+            <ListFieldSheetAction
+              icon={IcRoundAddRowBelow}
+              label="Insert after"
+              disabled={readOnly || !canInsert}
+              onClick={() => startInsert('after')}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              color="destructive"
+              icon={IcRoundDelete}
+              disabled={readOnly}
+              onClick={onDelete}
+            >
+              Delete
+            </Button>
+          </SheetFooter>
+        </>
+      )}
+    </SheetContent>
+  )
+}
+
 interface ListFieldTypePickerProps {
-  className?: string
-  isDisabled?: boolean
   items: Array<ListFieldTypeItem>
   label: string
   onOpenChange?: (isOpen: boolean) => void
@@ -776,8 +760,6 @@ interface ListFieldTypePickerProps {
 }
 
 function ListFieldTypePicker({
-  className,
-  isDisabled,
   items,
   label,
   onOpenChange,
@@ -798,12 +780,8 @@ function ListFieldTypePicker({
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         aria-label={label}
-        className={styles.ListFieldTypePicker.trigger(
-          styler.merge({className})
-        )}
-        data-open={isOpen ? 'true' : undefined}
-        disabled={isDisabled}
-        size="icon"
+        variant="ghost"
+        size="icon-sm"
         icon={triggerIcon}
       />
       <PopoverContent

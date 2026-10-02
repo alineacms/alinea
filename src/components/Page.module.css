@@ -4,7 +4,7 @@
   flex-direction: column;
   min-width: 0;
   height: 100%;
-  background: var(--alinea-bg-muted);
+  background: var(--alinea-bg);
 }
 
 .PageHeader {
@@ -12,15 +12,11 @@
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 0 16px;
+  height: var(--alinea-header-height);
+  padding: 0 12px 0 24px;
   overflow-y: hidden;
   border-bottom: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
-
-  &[data-size='lg'] {
-    min-height: 48px;
-  }
 }
 
 .PageBack {

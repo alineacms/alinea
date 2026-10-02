@@ -239,6 +239,7 @@ export function EntrySidebarBrowserPreview({
   return (
     <div className={styles.EntrySidebarPreview()}>
       <PreviewToolbar
+        className={styles.EntrySidebarPreview.toolbar()}
         labels={{reload: previewUrl ? 'Reload preview' : 'Retry preview'}}
         onBack={previewUrl ? () => post(PreviewAction.Previous) : undefined}
         onForward={previewUrl ? () => post(PreviewAction.Next) : undefined}
@@ -248,6 +249,7 @@ export function EntrySidebarBrowserPreview({
       <PreviewFrame
         key={`${previewUrl}:${frameVersion}`}
         ref={iframe}
+        className={styles.EntrySidebarPreview.frame()}
         title="Preview"
         src={previewUrl}
         loading={Boolean(previewUrl ? loading : previewUrlPending)}

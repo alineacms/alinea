@@ -2,7 +2,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  gap: 16px;
+  gap: 12px;
 }
 
 .CreateEntry-parentField {

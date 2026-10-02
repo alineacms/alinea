@@ -27,6 +27,7 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
 import {
   Suspense,
+  type ComponentType,
   useId,
   useMemo,
   useState,
@@ -57,6 +58,7 @@ type LinkFieldValueAtom = WritableAtom<
 interface TypeOption {
   id: string
   label: string
+  icon?: ComponentType
 }
 
 interface LinkEditor {
@@ -83,13 +85,12 @@ function buildTypeOptions(
   schema: Record<string, Type>,
   types: Array<string>
 ): Array<TypeOption> {
-  return types
-    .map(type => {
-      const schemaType = schema[type]
-      if (!schemaType || Type.isHidden(schemaType)) return null
-      return {id: type, label: getType(schemaType).label}
-    })
-    .filter((option): option is TypeOption => option !== null)
+  return types.flatMap(type => {
+    const schemaType = schema[type]
+    if (!schemaType || Type.isHidden(schemaType)) return []
+    const {label, icon} = getType(schemaType)
+    return [{id: type, label, icon}]
+  })
 }
 
 function createLinkEditor(
@@ -250,7 +251,7 @@ function CreateEntryForm() {
             required
           >
             {typeOptions.map(option => (
-              <SelectItem value={option.id} key={option.id}>
+              <SelectItem value={option.id} key={option.id} icon={option.icon}>
                 {option.label}
               </SelectItem>
             ))}

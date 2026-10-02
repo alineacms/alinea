@@ -1,0 +1,29 @@
+/* Set on the heading whose sheet is open. The spread shadow pads the tint
+   without moving the text. */
+.RichTextHeadings-current {
+  border-radius: var(--alinea-radius-xs);
+  background: var(--alinea-bg-muted);
+  box-shadow: 0 0 0 4px var(--alinea-bg-muted);
+}
+
+.RichTextHeadings {
+  position: relative;
+  height: 0;
+}
+
+.RichTextHeadingButton {
+  position: absolute;
+  z-index: 1;
+  right: 6px;
+}
+
+.RichTextHeadingSheet-anchor {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.RichTextHeadingSheet-anchor-field {
+  flex: 1;
+  min-width: 0;
+}

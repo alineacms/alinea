@@ -650,6 +650,8 @@ export interface OverviewRow {
   path: string
   url?: string
   status?: EntryStatus
+  /** The draft is the only version, the entry was never published */
+  main?: boolean
   locale: string | null
   workspace: string
   root: string

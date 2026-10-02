@@ -1,0 +1,52 @@
+.OverviewHeader-location {
+  min-width: 0;
+}
+
+.OverviewHeader-crumbs {
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-md);
+  white-space: nowrap;
+}
+
+.OverviewHeader-crumb {
+  min-width: 0;
+}
+
+.OverviewHeader-link {
+  max-width: 200px;
+  padding: 2px 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  text-overflow: ellipsis;
+}
+
+.OverviewHeader-separator {
+  color: var(--alinea-fg-subtle);
+}
+
+.OverviewHeader-title[data-slot] {
+  padding: 2px 0;
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-medium);
+  letter-spacing: normal;
+  line-height: 1.25rem;
+}
+
+.OverviewHeader-count {
+  flex-shrink: 0;
+  margin-left: 4px;
+  color: var(--alinea-fg-subtle);
+  font-size: var(--alinea-text-sm);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .OverviewHeader-count {
+    display: none;
+  }
+}

@@ -1,4 +1,8 @@
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Table,
   TableCell,
   type TableColumn,
@@ -7,6 +11,7 @@ import {
   type DragDropProps,
   type IconType
 } from '#/components.js'
+import {hasPreviewImage} from '#/core/media/Pdf.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
@@ -19,8 +24,17 @@ import type {
   ExplorerLinkedEntry,
   ExplorerReadyPage
 } from '../atoms/explorer.js'
+import {explorerItemCanDelete, explorerItemCanMove} from '../atoms/explorer.js'
 import {titleColumn as overviewTitle} from '../atoms/overview.js'
-import {LucideFile, LucideFolder} from '../icons.js'
+import {policyAtom} from '../atoms/user.js'
+import {
+  IcRoundDelete,
+  IcRoundDriveFileMove,
+  IcRoundMoreHoriz,
+  LucideFile,
+  LucideFolder
+} from '../icons.js'
+import {useExplorerItemActions} from './ExplorerBatchActions.js'
 import {fileKindVisual} from './FileKind.js'
 import css from './ExplorerTable.module.css'
 import {
@@ -28,6 +42,8 @@ import {
   overviewCellText,
   overviewTableColumn
 } from './OverviewCell.js'
+import {overviewStatus, OverviewStatusDot} from './OverviewStatus.js'
+import {OverviewThumbnail} from './OverviewThumbnail.js'
 
 const styles = styler(css)
 
@@ -48,6 +64,23 @@ const compactTitleColumn: TableColumn = {
 
 const compactColumns = [compactTitleColumn]
 
+const actionsColumn: TableColumn = {id: 'actions', header: '', width: 48}
+
+/** Rows with a thumbnail are taller */
+const thumbnailRowHeight = 60
+
+/**
+ * Overviews show a thumbnail before every title, media lists show their
+ * previews there as well
+ */
+function hasThumbnails(
+  compact: boolean,
+  overview: boolean,
+  page: ExplorerReadyPage
+) {
+  return !compact && (overview || page.isMedia)
+}
+
 interface ExplorerTableRowProps {
   entry: DashboardEntry
   breadcrumbs: boolean
@@ -55,7 +88,10 @@ interface ExplorerTableRowProps {
   explorer: DashboardExplorer
   locale: string | null
   onPick?: (entry: DashboardEntry) => void
+  overview: boolean
   page: ExplorerReadyPage
+  /** Show the root before the parents, eg. for results of several roots */
+  withRoot: boolean
 }
 
 interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
@@ -65,6 +101,7 @@ interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
   icon: IconType
   isSelectable: boolean
   label: string
+  media?: ReactNode
   parents: Array<DashboardEntry>
   rootLabel?: string
 }
@@ -72,15 +109,18 @@ interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
 interface ExplorerTableBreadcrumbsProps {
   entries: Array<DashboardEntry>
   rootLabel?: string
+  withRoot: boolean
 }
 
 function ExplorerTableBreadcrumbs({
   entries,
-  rootLabel
+  rootLabel,
+  withRoot
 }: ExplorerTableBreadcrumbsProps) {
+  const showRoot = Boolean(rootLabel) && (withRoot || entries.length === 0)
   return (
     <span className={styles.ExplorerTable.breadcrumbs()}>
-      {entries.length === 0 && rootLabel && (
+      {showRoot && (
         <span
           className={styles.ExplorerTable.breadcrumb.root()}
           title={rootLabel}
@@ -90,7 +130,10 @@ function ExplorerTableBreadcrumbs({
       )}
       {entries.map((entry, index) => (
         <span key={entry.id} className={styles.ExplorerTable.breadcrumb()}>
-          <ExplorerTableBreadcrumb entry={entry} index={index} />
+          <ExplorerTableBreadcrumb
+            entry={entry}
+            separated={showRoot || index > 0}
+          />
         </span>
       ))}
     </span>
@@ -99,29 +142,76 @@ function ExplorerTableBreadcrumbs({
 
 interface ExplorerTableBreadcrumbProps {
   entry: DashboardEntry
-  index: number
+  separated: boolean
 }
 
-function ExplorerTableBreadcrumb({entry, index}: ExplorerTableBreadcrumbProps) {
+function ExplorerTableBreadcrumb({
+  entry,
+  separated
+}: ExplorerTableBreadcrumbProps) {
   const {data} = useAtomValueRaw(entry.data)
   const label = useAtomValueRaw(data.label)
-  const root = useAtomValueRaw(data.root)
-  const rootLabel = useAtomValueRaw(root.label)
   return (
-    <>
-      {index === 0 && (
-        <span
-          className={styles.ExplorerTable.breadcrumb.root()}
-          title={rootLabel}
-        >
-          {rootLabel}
-        </span>
-      )}
-      <span
-        className={styles.ExplorerTable.breadcrumb.label()}
-        title={label}
-      >{`/ ${label}`}</span>
-    </>
+    <span className={styles.ExplorerTable.breadcrumb.label()} title={label}>
+      {separated ? `/ ${label}` : label}
+    </span>
+  )
+}
+
+interface ExplorerRowMenuProps {
+  entry: DashboardEntry
+  explorer: DashboardExplorer
+  item: ExplorerItemData
+  label: string
+  locale: string | null
+}
+
+/** Opens, moves or deletes the entry of a row */
+function ExplorerRowMenu({
+  entry,
+  explorer,
+  item,
+  label,
+  locale
+}: ExplorerRowMenuProps) {
+  const policy = useAtomValueRaw(policyAtom)
+  const onAction = useSetAtom(explorer.onAction)
+  const actions = useExplorerItemActions()
+  const canMove = explorerItemCanMove(policy, item)
+  const canDelete = explorerItemCanDelete(policy, item)
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`Actions for ${label}`}
+        icon={IcRoundMoreHoriz}
+        size="icon-sm"
+        variant="ghost"
+      />
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => onAction(entry, locale)}>
+          Open
+        </DropdownMenuItem>
+        {canMove && (
+          <DropdownMenuItem
+            icon={IcRoundDriveFileMove}
+            disabled={actions.isPending}
+            onSelect={() => actions.move([item])}
+          >
+            Move to…
+          </DropdownMenuItem>
+        )}
+        {canDelete && (
+          <DropdownMenuItem
+            icon={IcRoundDelete}
+            variant="destructive"
+            disabled={actions.isPending}
+            onSelect={() => actions.remove([item])}
+          >
+            Delete
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -137,9 +227,12 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     isSelectable,
     label,
     links,
+    media,
     onPick,
+    overview,
     parents,
-    rootLabel
+    rootLabel,
+    withRoot
   } = props
   const config = useAtomValueRaw(configAtom)
   const columns = props.page.overview.columns
@@ -194,10 +287,20 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     >
       <TableTitle
         icon={icon}
+        media={media}
         title={label}
+        status={
+          overview ? (
+            <OverviewStatusDot status={overviewStatus(item, props.locale)} />
+          ) : undefined
+        }
         label={
           breadcrumbs ? (
-            <ExplorerTableBreadcrumbs entries={parents} rootLabel={rootLabel} />
+            <ExplorerTableBreadcrumbs
+              entries={parents}
+              rootLabel={rootLabel}
+              withRoot={withRoot}
+            />
           ) : undefined
         }
       />
@@ -211,6 +314,17 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
             <OverviewCell column={column} row={item} links={links} />
           </TableCell>
         ))}
+      {overview && (
+        <TableCell align="center">
+          <ExplorerRowMenu
+            entry={entry}
+            explorer={explorer}
+            item={item}
+            label={label}
+            locale={props.locale}
+          />
+        </TableCell>
+      )}
     </TableRow>
   )
 }
@@ -228,7 +342,9 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
       explorer={props.explorer}
       locale={props.locale}
       onPick={props.onPick}
+      overview={props.overview}
       page={props.page}
+      withRoot={props.withRoot}
     />
   ))
 }
@@ -245,6 +361,24 @@ function ExplorerTableRow({explorer, ...props}: ExplorerTableRowProps) {
   const links = useAtomValueRaw(data.linked)
   const parents = useAtomValueRaw(data.parents)
   const isSelectable = useAtomValueRaw(explorer.isSelectable(props.entry))
+  const thumbnail = useAtomValueRaw(data.thumbnail)
+  const kind = fileInfo ? fileKindVisual(fileInfo.extension) : undefined
+  const icon =
+    kind?.icon ?? configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)
+  const media = hasThumbnails(props.compact, props.overview, props.page) ? (
+    <OverviewThumbnail
+      icon={icon}
+      iconColor={kind?.iconColor}
+      image={
+        fileInfo?.preview &&
+        fileInfo.extension &&
+        hasPreviewImage(fileInfo.extension)
+          ? fileInfo.preview
+          : thumbnail?.preview
+      }
+      color={fileInfo?.averageColor ?? thumbnail?.averageColor}
+    />
+  ) : undefined
   return (
     <ExplorerTableDisplayRow
       {...props}
@@ -255,14 +389,11 @@ function ExplorerTableRow({explorer, ...props}: ExplorerTableRowProps) {
         explorer.supportsInlineExpansion &&
         hasChildren
       }
-      icon={
-        fileInfo
-          ? fileKindVisual(fileInfo.extension).icon
-          : (configuredIcon ?? (hasChildren ? LucideFolder : LucideFile))
-      }
+      icon={icon}
       isSelectable={isSelectable}
       label={label}
       links={links}
+      media={media}
       parents={parents}
       rootLabel={rootLabel}
     />
@@ -282,6 +413,8 @@ export interface ExplorerTableProps {
    * entry confirm it right away
    */
   onPick?: (entry: DashboardEntry) => void
+  /** Shown as the overview of a page: thumbnails, parents and row actions */
+  overview?: boolean
 }
 
 export function ExplorerTable({
@@ -290,6 +423,7 @@ export function ExplorerTable({
   explorer,
   items,
   onPick,
+  overview = false,
   page,
   renderEmptyState,
   locale
@@ -297,18 +431,32 @@ export function ExplorerTable({
   const [selected, setSelected] = useAtom(explorer.selection)
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
   const sort = useSetAtom(explorer.requestedSort)
-  const columns = useMemo(
-    () => [titleColumn, ...page.overview.columns.map(overviewTableColumn)],
-    [page.overview]
-  )
+  const thumbnails = hasThumbnails(compact, overview, page)
+  const columns = useMemo(() => {
+    const title: TableColumn = thumbnails
+      ? {
+          ...titleColumn,
+          // Line the header up with the titles after their thumbnails
+          header: (
+            <span className={styles.ExplorerTable.titleHeader()}>
+              {titleColumn.header}
+            </span>
+          )
+        }
+      : titleColumn
+    const rest = page.overview.columns.map(overviewTableColumn)
+    return overview ? [title, ...rest, actionsColumn] : [title, ...rest]
+  }, [overview, page.overview, thumbnails])
   const sortDescriptor = page.sort.column
     ? {column: page.sort.column.column, direction: page.sort.column.direction}
     : undefined
   const selectionMode = explorer.selectionMode
   const breadcrumbs =
+    overview ||
     explorer.breadcrumbs ||
     page.resultMode === 'matches' ||
     page.searchesEverything
+  const withRoot = page.searchesEverything || explorer.rootScope === 'workspace'
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls =
     hasSelection &&
@@ -318,15 +466,16 @@ export function ExplorerTable({
   return (
     <div
       id={explorer.resultsId}
-      className={styles.ExplorerTable.viewport({compact})}
+      className={styles.ExplorerTable.viewport({compact, overview})}
     >
       <Table
         {...dragDrop}
         aria-label="Explorer entries"
-        className={styles.ExplorerTable()}
+        className={styles.ExplorerTable({overview})}
         variant={compact ? 'plain' : 'surface'}
         columns={compact ? compactColumns : columns}
         showHeader={!compact}
+        rowHeight={thumbnails ? thumbnailRowHeight : undefined}
         sortDescriptor={sortDescriptor}
         onSortChange={
           page.search.trim()
@@ -340,7 +489,7 @@ export function ExplorerTable({
                 )
         }
         expandable={explorer.supportsInlineExpansion}
-        dependencies={[breadcrumbs, compact, locale, onPick, page]}
+        dependencies={[breadcrumbs, compact, locale, onPick, overview, page]}
         items={items}
         selectionMode={selectionMode}
         selectionBehavior={explorer.selectionBehavior}
@@ -364,7 +513,9 @@ export function ExplorerTable({
             explorer={explorer}
             locale={locale}
             onPick={onPick}
+            overview={overview}
             page={page}
+            withRoot={withRoot}
           />
         )}
       </Table>

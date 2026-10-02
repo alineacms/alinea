@@ -84,7 +84,7 @@
   }
 
   .RadioGroup[aria-readonly='true'] & {
-    border: 1px dashed var(--alinea-border-strong);
+    border: 1px solid var(--alinea-border-strong);
     background: var(--alinea-bg-muted);
   }
 

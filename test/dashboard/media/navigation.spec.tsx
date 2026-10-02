@@ -6,7 +6,9 @@ import {DashboardScenarioMount} from '../support/DashboardScenarioMount.js'
 function mediaLocations(page: Page) {
   const main = page.getByRole('main')
   return {
-    root: main.getByRole('button', {name: 'Media', exact: true}),
+    root: main
+      .locator('[data-slot="sidebar-content"]')
+      .getByRole('button', {name: 'Media', exact: true}),
     tree: main.getByRole('treegrid', {name: 'Content tree'}),
     explorer: main.getByRole('grid', {name: 'Explorer entries'})
   }
@@ -38,7 +40,7 @@ test('opens a media folder page from the root explorer and returns to the root',
   await expect(app.page).toHaveURL(/#\/entry\/main\/media$/)
   await expect(root).toHaveAttribute('aria-current', 'page')
   await expect(tree.getByRole('row', {selected: true})).toHaveCount(0)
-  await expect(app.title).toHaveCount(0)
+  await expect(app.title).toHaveText('Media')
   await expect(
     explorer.getByRole('row', {name: 'Media folder', exact: true})
   ).toBeVisible()

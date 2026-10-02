@@ -19,7 +19,7 @@ export function Basic() {
       </Surface>
       <Surface aria-label="Muted surface" depth="muted" role="region">
         <SurfaceContent>
-          An explicit depth overrides the background the nesting would pick.
+          An explicit depth sets a muted background.
         </SurfaceContent>
       </Surface>
     </div>
@@ -36,11 +36,9 @@ export function Nested() {
         <SurfaceContent>
           <Surface aria-label="Nested surface" role="region">
             <SurfaceContent>
-              Nested surfaces default to the muted background.
+              Nested surfaces keep the base background.
               <Surface aria-label="Deeper surface" role="region">
-                <SurfaceContent>
-                  A deeper surface alternates back to the base background.
-                </SurfaceContent>
+                <SurfaceContent>So does a deeper surface.</SurfaceContent>
               </Surface>
             </SurfaceContent>
           </Surface>

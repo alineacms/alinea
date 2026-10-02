@@ -91,7 +91,7 @@ test('restores the saved sidebar width after navigating away and back while clos
     .first()
     .click()
   await expect(divider(app.page, 'right')).toHaveCount(0)
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.crumb('Pages').click()
   await expect(app.page.locator('[data-side="right"]')).toHaveCount(0)
   await app.openEntry('Alpha')
   await expect(divider(app.page, 'right')).toHaveCount(0)

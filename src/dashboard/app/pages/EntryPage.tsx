@@ -9,10 +9,7 @@ import {
   EmptyTitle,
   Icon,
   Page as PageLayout,
-  PageContent,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
+  PageContent
 } from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -25,7 +22,8 @@ import {
   entryAtoms,
   MissingEntryError,
   type EntryAtoms,
-  type EntryLocaleAtoms
+  type EntryLocaleAtoms,
+  type TreeEntrySummary
 } from '#/dashboard/atoms/entry.js'
 import type {ResolvedEditorImage} from '#/dashboard/atoms/editor.js'
 import {
@@ -40,18 +38,16 @@ import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {useEffect, useLayoutEffect, useRef} from 'react'
+import {type ReactNode, useEffect, useLayoutEffect, useRef} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
-  IcOutlineViewList,
-  IcRoundEdit,
   IcRoundCheck,
-  IcRoundSave
+  IcRoundSave,
+  IcRoundUndo
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
-import {CreateEntryButton} from './../DashboardLayout.js'
-import {EntryFields} from './../EntryFields.js'
+import {FieldsEditor} from './../EntryFields.js'
 import {NodeEditor} from './../NodeEditor.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {entryDirtyActions} from './../EntryHeaderActions.js'
@@ -61,8 +57,14 @@ import {
   type EntrySidebarProps
 } from './../EntrySidebar.js'
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
-import {Explorer} from './../Explorer.js'
+import {EntryViewToggle} from './../EntryViewToggle.js'
+import {Overview} from './../Overview.js'
 import {SidebarLayout} from '../SidebarLayout.js'
+import {
+  BlockSheetProvider,
+  BlockSheetSlot,
+  useBlockSheetOpen
+} from '../BlockSheet.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -95,6 +97,7 @@ export const entryPage = page(async (page, get) => {
       )
     }
     const selectedNode = await get(localeData.selectedNode)
+    const parents = await get(localeData.parents)
     const richTextImages = await get(localeData.richTextImages)
     const parentNeedsTranslation = type.customView
       ? false
@@ -111,6 +114,7 @@ export const entryPage = page(async (page, get) => {
         localeData={localeData}
         node={selectedNode}
         page={page}
+        parents={parents}
         parentNeedsTranslation={parentNeedsTranslation}
         richTextImages={richTextImages}
         selectedEntry={selectedEntry}
@@ -192,47 +196,13 @@ export function NotFoundPanel({
   )
 }
 
-interface EntryViewToggleProps {
-  entry: EntryAtoms
-  page: Page
-}
-
-function EntryViewToggle({entry, page}: EntryViewToggleProps) {
-  const entryView = useAtomValueRaw(entry.view)
-  const view = page.view ?? entryView
-  const setRoute = useSetAtom(routeAtom)
-  const nextView = view === 'overview' ? 'edit' : 'overview'
-  const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
-  const tooltip = nextView === 'overview' ? 'Overview view' : 'Edit view'
-  const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
-  return (
-    <Tooltip delayDuration={300}>
-      <TooltipTrigger
-        aria-label={label}
-        variant="ghost"
-        icon={ViewIcon}
-        size="icon"
-        onClick={() =>
-          setRoute({
-            workspace: page.workspace,
-            root: page.root,
-            entry: page.entry,
-            locale: page.locale ?? undefined,
-            view: nextView
-          })
-        }
-      />
-      <TooltipContent>{tooltip}</TooltipContent>
-    </Tooltip>
-  )
-}
-
 interface EntryEditorContentProps {
   page: Page
   entry: EntryAtoms
   copyTranslationSource: boolean
   isSidebarOpen: boolean
   localeData: EntryLocaleAtoms
+  parents: Array<TreeEntrySummary>
   parentNeedsTranslation: boolean
   richTextImages: ReadonlyMap<string, ResolvedEditorImage>
   selectedEntry: Entry
@@ -256,36 +226,19 @@ function EntryOverview({
   root,
   selectedEntry
 }: EntryOverviewProps) {
-  const setRoute = useSetAtom(routeAtom)
   const policy = useAtomValueRaw(policyAtom)
-  const parentId = selectedEntry.parentId
   return (
     <PageLayout>
-      <Explorer
-        controls={
-          <div className={styles.EntryOverview.mobileActions()}>
-            <CreateEntryButton root={root} toolbar />
-          </div>
-        }
+      <Overview
         explorer={root.children(entry.id)}
         page={explorerPage}
         readOnly={
           !policy.canUpdate(selectedEntry) ||
           (explorerPage.isMedia && !explorerPage.canUpload)
         }
-        headerEntry={{
-          backLabel: parentId ? 'Back to parent entry' : 'Back to root',
-          title: selectedEntry.title,
-          onBack() {
-            setRoute({
-              workspace: selectedEntry.workspace,
-              root: selectedEntry.root,
-              entry: parentId ?? undefined,
-              locale: page.locale ?? undefined
-            })
-          }
-        }}
-        titleControls={<EntryViewToggle entry={entry} page={page} />}
+        root={root}
+        title={selectedEntry.title}
+        toggle={<EntryViewToggle entry={entry} page={page} />}
       />
     </PageLayout>
   )
@@ -297,6 +250,7 @@ function EntryEditorContent({
   copyTranslationSource,
   isSidebarOpen,
   localeData,
+  parents,
   parentNeedsTranslation,
   richTextImages,
   selectedEntry,
@@ -370,11 +324,7 @@ function EntryEditorContent({
 
   let editorBody = (
     <>
-      <PageContent
-        ref={editorBodyRef}
-        contained
-        className={styles.EntryEditor.body()}
-      >
+      <PageContent ref={editorBodyRef} className={styles.EntryEditor.form()}>
         <div className={styles.EntryEditor.fields()}>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
@@ -390,7 +340,7 @@ function EntryEditorContent({
           )}
 
           <NodeEditor node={node} type={type.type}>
-            <EntryFields />
+            <FieldsEditor />
           </NodeEditor>
         </div>
       </PageContent>
@@ -400,7 +350,7 @@ function EntryEditorContent({
   if (isMediaFile) {
     editorBody = (
       <>
-        <PageContent ref={editorBodyRef} className={styles.EntryEditor.body()}>
+        <PageContent ref={editorBodyRef} className={styles.EntryEditor.form()}>
           <NodeEditor node={node} type={type.type}>
             <FileEditor
               parentPaths={parentPaths}
@@ -438,6 +388,7 @@ function EntryEditorContent({
         localeData={localeData}
         node={node}
         onSidebarOpenChange={sidebar ? setSidebarOpen : undefined}
+        parents={parents}
         parentNeedsTranslation={parentNeedsTranslation}
         selectedEntry={selectedEntry}
       />
@@ -463,8 +414,12 @@ function EntryEditorContent({
                 : ''}
             </DashboardModalContent>
             <DashboardModalFooter>
-              <Button onClick={discardAndConfirm} variant="ghost">
-                Discard my changes
+              <Button
+                onClick={discardAndConfirm}
+                variant="ghost"
+                icon={IcRoundUndo}
+              >
+                Discard
               </Button>
               <div className={styles.EntryEditorContent.navigationActions()}>
                 {dirtyActions.publish && (
@@ -497,19 +452,46 @@ function EntryEditorContent({
         richTextImages={richTextImages}
         selectedEntry={selectedEntry}
       >
-        <SidebarLayout
-          side="right"
-          visible={Boolean(sidebar && isSidebarOpen)}
-          sidebar={
-            sidebar &&
-            isSidebarOpen && (
-              <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />
-            )
-          }
-        >
-          {mainEditor}
-        </SidebarLayout>
+        <BlockSheetProvider>
+          <EntryEditorLayout
+            sidebar={
+              sidebar &&
+              isSidebarOpen && (
+                <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />
+              )
+            }
+          >
+            {mainEditor}
+          </EntryEditorLayout>
+        </BlockSheetProvider>
       </EntryScope>
     </>
+  )
+}
+
+interface EntryEditorLayoutProps {
+  sidebar: ReactNode
+  children: ReactNode
+}
+
+/**
+ * An open block sheet covers the sidebar, it shows the sidebar panel on its
+ * own while the sidebar is collapsed
+ */
+function EntryEditorLayout({sidebar, children}: EntryEditorLayoutProps) {
+  const sheetOpen = useBlockSheetOpen()
+  return (
+    <SidebarLayout
+      side="right"
+      visible={Boolean(sidebar) || sheetOpen}
+      sidebar={
+        <div className={styles.EntryEditorLayout.sidebar()}>
+          {sidebar}
+          <BlockSheetSlot />
+        </div>
+      }
+    >
+      {children}
+    </SidebarLayout>
   )
 }

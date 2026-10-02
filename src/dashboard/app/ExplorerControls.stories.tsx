@@ -1,4 +1,3 @@
-import {Surface} from '#/components.js'
 import {mediaOverview} from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
 import {cms} from '#/dashboard/fixture/cms.ts?alinea'
@@ -11,7 +10,6 @@ import {
 } from '../atoms/overview.js'
 import {
   ExplorerControls,
-  ExplorerControlsMenu,
   type ExplorerControlsProps
 } from './ExplorerControls.js'
 
@@ -50,9 +48,11 @@ function useControls(
         : [option]
     setPicked(next.length > 0 ? {...others, [filter.key]: next} : others)
   }
+  const option = overview.sorts.find(option => option.key === sort?.column)
   return {
     sorts: overview.sorts,
     sort,
+    sortLabel: option?.label,
     filters: overview.filters,
     picked,
     onSort: setSort,
@@ -64,15 +64,15 @@ function useControls(
   }
 }
 
-const surfaceStyle = {padding: 8, width: 'fit-content', margin: 16}
+const frame = {display: 'flex', gap: 8, padding: 16}
 
-/** The popover of the media library, with its declared sorts and filters */
+/** The media library declares its filters and orders */
 export function MediaLibrary() {
   const controls = useControls(media)
   return (
-    <Surface style={surfaceStyle}>
-      <ExplorerControlsMenu {...controls} />
-    </Surface>
+    <div style={frame}>
+      <ExplorerControls {...controls} />
+    </div>
   )
 }
 
@@ -83,29 +83,19 @@ export function MediaLibraryFiltered() {
     initialFilters: {fileType: ['pdf', 'document'], show: ['files']}
   })
   return (
-    <Surface style={surfaceStyle}>
-      <ExplorerControlsMenu {...controls} />
-    </Surface>
+    <div style={frame}>
+      <ExplorerControls {...controls} />
+    </div>
   )
 }
 
-/** An overview without declared sorts: the title and sortable columns */
+/** An overview without declared filters or sorts: the sortable columns */
 export function ColumnSorts() {
   const controls = useControls(products, {
     initialSort: {column: 'title', direction: 'desc'}
   })
   return (
-    <Surface style={surfaceStyle}>
-      <ExplorerControlsMenu {...controls} />
-    </Surface>
-  )
-}
-
-/** The toolbar button that opens the popover */
-export function Button() {
-  const controls = useControls(media, {initialFilters: {fileType: ['pdf']}})
-  return (
-    <div style={{display: 'flex', justifyContent: 'flex-end', padding: 16}}>
+    <div style={frame}>
       <ExplorerControls {...controls} />
     </div>
   )

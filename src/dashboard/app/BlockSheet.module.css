@@ -1,0 +1,50 @@
+.BlockSheetSlot {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  /* Runs as the hidden slot fills, so switching sheets doesn't replay it */
+  animation: BlockSheet-enter 150ms ease-out;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.BlockSheet {
+  position: absolute;
+  inset: 0;
+  /* Stacks above the panel's divider, so it draws its own */
+  border-inline-start: 1px solid var(--alinea-border);
+
+  &[data-closing] {
+    animation: BlockSheet-exit 150ms ease-in forwards;
+  }
+}
+
+@keyframes BlockSheet-enter {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+@keyframes BlockSheet-exit {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes BlockSheet-enter {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes BlockSheet-exit {
+    to {
+      opacity: 0;
+    }
+  }
+}

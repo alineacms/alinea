@@ -26,7 +26,6 @@
   }
 
   &:has(.SearchFieldInput[readonly]) {
-    border-style: dashed;
     background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-muted);
   }
@@ -120,4 +119,31 @@
 
 .SearchFieldClear-icon {
   position: relative;
+}
+
+/* The field is the header row of its results, without a box of its own */
+.SearchField[data-variant='inline'] {
+  .SearchFieldGroup {
+    height: 44px;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+  }
+
+  .SearchFieldIcon {
+    width: 18px;
+    height: 18px;
+    margin: 0 10px 0 0;
+    color: var(--alinea-fg-subtle);
+    font-size: 18px;
+  }
+
+  .SearchFieldInput {
+    padding: 5px 0;
+    font-size: var(--alinea-text-md);
+  }
+
+  .SearchFieldClear {
+    padding: 0 4px;
+  }
 }

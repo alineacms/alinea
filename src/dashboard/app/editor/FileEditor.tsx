@@ -83,96 +83,94 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const displayedFocusPoint = hoverPoint ?? focusPoint
   const node = useEditor().node
   return (
-    <Surface className={styles.FileEditor.surface()}>
-      <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
-        <div className={styles.FileEditor.tabs.header()}>
-          <TabsList aria-label="File editor">
-            <TabsTrigger value="file">
-              <Icon icon={IcRoundInsertDriveFile} />
-              File
-            </TabsTrigger>
-            <TabsTrigger value="details">
-              <Icon icon={IcRoundInfo} />
-              Details
-            </TabsTrigger>
-          </TabsList>
-        </div>
-        <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
-          <div className={styles.FileEditor.fields()}>
-            <NodeEditor node={node} type={fileFields} />
-          </div>
-          <div className={styles.FileEditor()}>
+    <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
+      <TabsList
+        aria-label="File editor"
+        className={styles.FileEditor.tabs.list()}
+      >
+        <TabsTrigger value="file" className={styles.FileEditor.tabs.trigger()}>
+          <Icon icon={IcRoundInsertDriveFile} />
+          File
+        </TabsTrigger>
+        <TabsTrigger
+          value="details"
+          className={styles.FileEditor.tabs.trigger()}
+        >
+          <Icon icon={IcRoundInfo} />
+          Details
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
+        <NodeEditor node={node} type={fileFields} />
+        <div className={styles.FileEditor()}>
+          {isImage && (
+            <FilePreview
+              liveUrl={liveUrl?.href}
+              preview={preview}
+              placeholder={placeholder}
+              width={width}
+              height={height}
+              onHoverPointChange={setHoverPoint}
+            />
+          )}
+          <div className={styles.FileEditor.content()}>
+            <Surface variant="muted" className={styles.FileEditor.metadata()}>
+              <DataList orientation="vertical" aria-label="File details">
+                <DataListItem>
+                  <DataListLabel>Extension</DataListLabel>
+                  <DataListValue>{extension}</DataListValue>
+                </DataListItem>
+                <DataListItem>
+                  <DataListLabel>File size</DataListLabel>
+                  <DataListValue>{prettyBytes(size)}</DataListValue>
+                </DataListItem>
+                {isImage && width && height ? (
+                  <DataListItem>
+                    <DataListLabel>Dimensions</DataListLabel>
+                    <DataListValue>
+                      {width}px x {height}px
+                    </DataListValue>
+                  </DataListItem>
+                ) : null}
+                {liveUrl && (
+                  <DataListItem full>
+                    <DataListLabel>URL</DataListLabel>
+                    <DataListValue>
+                      <Link
+                        href={liveUrl.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {displayedUrl}
+                      </Link>
+                    </DataListValue>
+                  </DataListItem>
+                )}
+              </DataList>
+            </Surface>
             {isImage && (
-              <FilePreview
-                liveUrl={liveUrl?.href}
-                preview={preview}
-                placeholder={placeholder}
-                width={width}
-                height={height}
-                onHoverPointChange={setHoverPoint}
-              />
-            )}
-            <div className={styles.FileEditor.content()}>
-              <Surface variant="muted" className={styles.FileEditor.metadata()}>
-                <DataList orientation="vertical" aria-label="File details">
-                  <DataListItem>
-                    <DataListLabel>Extension</DataListLabel>
-                    <DataListValue>{extension}</DataListValue>
-                  </DataListItem>
-                  <DataListItem>
-                    <DataListLabel>File size</DataListLabel>
-                    <DataListValue>{prettyBytes(size)}</DataListValue>
-                  </DataListItem>
-                  {isImage && width && height ? (
-                    <DataListItem>
-                      <DataListLabel>Dimensions</DataListLabel>
-                      <DataListValue>
-                        {width}px x {height}px
-                      </DataListValue>
-                    </DataListItem>
-                  ) : null}
-                  {liveUrl && (
-                    <DataListItem full>
-                      <DataListLabel>URL</DataListLabel>
-                      <DataListValue>
-                        <Link
-                          href={liveUrl.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {displayedUrl}
-                        </Link>
-                      </DataListValue>
-                    </DataListItem>
-                  )}
-                </DataList>
-              </Surface>
-              {isImage && (
-                <div className={styles.FileEditor.focus()}>
-                  <div className={styles.FileEditor.focus.header()}>
-                    <strong className={styles.FileEditor.focus.label()}>
-                      Focus point
-                    </strong>
-                    <span className={styles.FileEditor.focus.description()}>
-                      Click on the image to change the focus point
-                    </span>
-                  </div>
-                  <span className={styles.FileEditor.focus.value()}>
-                    ({displayedFocusPoint?.x.toFixed(2)},{' '}
-                    {displayedFocusPoint?.y.toFixed(2)})
+              <div className={styles.FileEditor.focus()}>
+                <div className={styles.FileEditor.focus.header()}>
+                  <strong className={styles.FileEditor.focus.label()}>
+                    Focus point
+                  </strong>
+                  <span className={styles.FileEditor.focus.description()}>
+                    Click on the image to change the focus point
                   </span>
                 </div>
-              )}
-            </div>
+                <span className={styles.FileEditor.focus.value()}>
+                  ({displayedFocusPoint?.x.toFixed(2)},{' '}
+                  {displayedFocusPoint?.y.toFixed(2)})
+                </span>
+              </div>
+            )}
           </div>
-        </TabsContent>
-        <TabsContent value="details" className={styles.FileEditor.tabPanel()}>
-          <div className={styles.FileEditor.details()}>
-            <FileDetails />
-          </div>
-        </TabsContent>
-      </Tabs>
-    </Surface>
+        </div>
+      </TabsContent>
+      <TabsContent value="details" className={styles.FileEditor.tabPanel()}>
+        <FileDetails />
+      </TabsContent>
+    </Tabs>
   )
 }
 

@@ -23,7 +23,6 @@
   }
 
   &:has(.ComboBoxTrigger-input[readonly]) {
-    border-style: dashed;
     background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-muted);
   }

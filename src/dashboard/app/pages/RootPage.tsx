@@ -8,8 +8,7 @@ import type {RootViewProps} from '#/dashboard/cms/ViewProps.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ComponentType} from 'react'
-import {Explorer} from '../Explorer.js'
-import {CreateEntryButton} from '../DashboardLayout.js'
+import {Overview} from '../Overview.js'
 import {NotFoundPanel} from './EntryPage.js'
 import css from './RootPage.module.css'
 
@@ -62,15 +61,7 @@ interface RootBrowserProps {
 function RootBrowser({page, root}: RootBrowserProps) {
   return (
     <PageLayout>
-      <Explorer
-        controls={
-          <div className={styles.RootPage.mobileActions()}>
-            <CreateEntryButton root={root} toolbar />
-          </div>
-        }
-        explorer={root.explorer}
-        page={page}
-      />
+      <Overview explorer={root.explorer} page={page} root={root} />
     </PageLayout>
   )
 }

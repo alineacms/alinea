@@ -1,32 +1,20 @@
-import {
-  Button,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Text,
-  Toggle
-} from '#/components.js'
+import {Button} from '#/components.js'
 import type {OverviewSort} from '#/core/Overview.js'
-import styler from '@alinea/styler'
 import type {
   OverviewFilterSelection,
   OverviewFilterState,
   OverviewSortState
-} from '../atoms/overview.js'
-import {
-  IcRoundArrowDownward,
-  IcRoundArrowUpward,
-  IcRoundFilterList
-} from '../icons.js'
-import css from './ExplorerControls.module.css'
-
-const styles = styler(css)
+} from '#/dashboard/atoms/overview.js'
+import {ExplorerFilterMenu} from './ExplorerFilterMenu.js'
+import {ExplorerSortMenu} from './ExplorerSortMenu.js'
 
 export interface ExplorerControlsProps {
   /** The orders editors can pick, none while searching */
   sorts: Array<OverviewSortState>
   /** The order the editor picked, undefined for the default order */
   sort: OverviewSort | undefined
+  /** The label of the picked order */
+  sortLabel: string | undefined
   /** The filters editors can apply */
   filters: Array<OverviewFilterState>
   /** The options of the filters the list is filtered by */
@@ -35,140 +23,47 @@ export interface ExplorerControlsProps {
   onToggleFilter(filter: OverviewFilterState, option: string): void
   /** Clear the filters and return to the default order */
   onReset(): void
+  /** `sm` fits the controls in a search bar */
+  size?: 'default' | 'sm'
 }
 
-/** The "Filter and sort" button of the explorer toolbar */
-export function ExplorerControls(props: ExplorerControlsProps) {
-  const filtered = Object.keys(props.picked).length > 0
-  return (
-    <Popover>
-      <PopoverTrigger
-        aria-label="Filter and sort"
-        variant="outline"
-        active={filtered || Boolean(props.sort)}
-        icon={IcRoundFilterList}
-        size="icon-lg"
-      />
-      <PopoverContent aria-label="Filter and sort" side="bottom" align="end">
-        <ExplorerControlsMenu {...props} />
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-/** The filters and orders of the "Filter and sort" popover */
-export function ExplorerControlsMenu({
+/** The filters and the order of a list of entries, as outline buttons */
+export function ExplorerControls({
   sorts,
   sort,
+  sortLabel,
   filters,
   picked,
   onSort,
   onToggleFilter,
-  onReset
+  onReset,
+  size = 'default'
 }: ExplorerControlsProps) {
   const filtered = Object.keys(picked).length > 0
   return (
-    <div className={styles.ExplorerControls()}>
-      {filters.map(filter => (
-        <div
-          key={filter.key}
-          role="group"
-          aria-label={filter.label}
-          className={styles.ExplorerControls.section()}
-        >
-          <Text
-            as="p"
-            size="sm"
-            color="muted"
-            className={styles.ExplorerControls.label()}
-          >
-            {filter.label}
-          </Text>
-          <div className={styles.ExplorerControls.filterOptions()}>
-            {filter.options.map(option => (
-              <Toggle
-                key={option.key}
-                size="sm"
-                variant="outline"
-                pressed={Boolean(picked[filter.key]?.includes(option.key))}
-                onPressedChange={() => onToggleFilter(filter, option.key)}
-              >
-                {option.label}
-              </Toggle>
-            ))}
-          </div>
-        </div>
-      ))}
-      <div
-        role="group"
-        aria-label="Sort by"
-        className={styles.ExplorerControls.section()}
-      >
-        <Text
-          as="p"
-          size="sm"
-          color="muted"
-          className={styles.ExplorerControls.label()}
-        >
-          Sort by
-        </Text>
-        <Button
-          variant="ghost"
-          active={!sort}
-          onClick={() => onSort(undefined)}
-          className={styles.ExplorerControls.sortOption()}
-        >
-          Default order
-        </Button>
-        {sorts.map(option => (
-          <ExplorerSortOption
-            key={option.key}
-            option={option}
-            sort={sort}
-            onSort={onSort}
-          />
-        ))}
-      </div>
-      {(filtered || sort) && (
-        <div className={styles.ExplorerControls.section()}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReset}
-            className={styles.ExplorerControls.reset()}
-          >
-            Reset
-          </Button>
-        </div>
+    <>
+      {filters.length > 0 && (
+        <ExplorerFilterMenu
+          filters={filters}
+          picked={picked}
+          size={size}
+          onToggle={onToggleFilter}
+        />
       )}
-    </div>
-  )
-}
-
-interface ExplorerSortOptionProps {
-  option: OverviewSortState
-  sort: OverviewSort | undefined
-  onSort(sort: OverviewSort): void
-}
-
-/** An order in the menu, picking it again reverses its direction */
-function ExplorerSortOption({option, sort, onSort}: ExplorerSortOptionProps) {
-  const current = sort?.column === option.key ? sort.direction : undefined
-  const direction = current
-    ? current === 'asc'
-      ? 'desc'
-      : 'asc'
-    : option.direction
-  return (
-    <Button
-      variant="ghost"
-      active={Boolean(current)}
-      onClick={() => onSort({column: option.key, direction})}
-      className={styles.ExplorerControls.sortOption()}
-    >
-      {option.label}
-      {current === 'asc' && <IcRoundArrowUpward />}
-      {current === 'desc' && <IcRoundArrowDownward />}
-    </Button>
+      {sorts.length > 0 && (
+        <ExplorerSortMenu
+          sorts={sorts}
+          sort={sort}
+          label={sortLabel}
+          size={size}
+          onSort={onSort}
+        />
+      )}
+      {(filtered || sort) && (
+        <Button variant="ghost" size={size} onClick={onReset}>
+          Reset
+        </Button>
+      )}
+    </>
   )
 }

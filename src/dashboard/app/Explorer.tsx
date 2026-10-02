@@ -9,7 +9,6 @@ import {
   type Key,
   PageBack,
   PageContent,
-  PageHeader,
   PageTitle,
   SearchField,
   Switch,
@@ -24,7 +23,7 @@ import {ViewToggle} from './ViewToggle.js'
 import {rootAtoms} from '../atoms/root.js'
 import {policyAtom} from '../atoms/user.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   useEffect,
   useId,
@@ -52,29 +51,14 @@ import {
   IcRoundUploadFile
 } from '../icons.js'
 import css from './Explorer.module.css'
-import {ExplorerBatchActions} from './ExplorerBatchActions.js'
 import {ExplorerControls} from './ExplorerControls.js'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
+import {SearchBar} from './SearchBar.js'
 
 const styles = styler(css)
-
-export interface ExplorerProps {
-  controls?: ReactNode
-  explorer: DashboardExplorer
-  headerEntry?: ExplorerHeaderEntry
-  page: ExplorerReadyPage
-  readOnly?: boolean
-  titleControls?: ReactNode
-}
-
-export interface ExplorerHeaderEntry {
-  backLabel: string
-  title: string
-  onBack(): void
-}
 
 export interface ExplorerHeaderProps {
   canBrowse?: boolean
@@ -83,11 +67,9 @@ export interface ExplorerHeaderProps {
   onSearchEscape?: () => void
   controls?: ReactNode
   explorer: DashboardExplorer
-  headerEntry?: ExplorerHeaderEntry
   navigate?: boolean
   page: ExplorerReadyPage
   readOnly?: boolean
-  titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
@@ -107,6 +89,9 @@ interface ExplorerSearchProps {
   onEntryAction?: (entry: DashboardEntry) => void
   onEscape?: () => void
   page: ExplorerReadyPage
+  placeholder?: string
+  /** Shown as the row of a SearchBar */
+  inline?: boolean
 }
 
 /** The closest element that scrolls vertically, starting at `element` */
@@ -130,15 +115,7 @@ function findResult(results: HTMLElement | null, key: string) {
 
 interface ExplorerHeaderMainProps {
   explorer: DashboardExplorer
-  headerEntry?: ExplorerHeaderEntry
-  page: ExplorerReadyPage
-  titleControls?: ReactNode
-}
-
-interface ExplorerHeaderParentMainProps {
-  explorer: DashboardExplorer
   parent: ExplorerParent
-  titleControls?: ReactNode
 }
 
 export function ExplorerSearch({
@@ -146,7 +123,9 @@ export function ExplorerSearch({
   explorer,
   onEntryAction,
   onEscape,
-  page
+  page,
+  placeholder = 'Search...',
+  inline
 }: ExplorerSearchProps) {
   const items = page.items
   const [selection, setSelection] = useAtom(explorer.selection)
@@ -316,7 +295,8 @@ export function ExplorerSearch({
       className={styles.Explorer.search()}
       icon={IcRoundSearch}
       loading={isPending || inputValue !== page.search}
-      placeholder="Search..."
+      placeholder={placeholder}
+      variant={inline ? 'inline' : 'default'}
       value={inputValue}
       onValueChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
@@ -416,11 +396,10 @@ function ExplorerResultMode({
   )
 }
 
-function ExplorerHeaderParentMain({
+function ExplorerHeaderMain({
   explorer,
-  parent: current,
-  titleControls
-}: ExplorerHeaderParentMainProps) {
+  parent: current
+}: ExplorerHeaderMainProps) {
   const setLocation = useSetAtom(explorer.location)
   const parentId = current.parents.at(-1)
   return (
@@ -432,43 +411,8 @@ function ExplorerHeaderParentMain({
         }}
       />
       <PageTitle>{current.title}</PageTitle>
-      {titleControls}
     </div>
   )
-}
-
-function ExplorerHeaderMain({
-  explorer,
-  headerEntry,
-  page,
-  titleControls
-}: ExplorerHeaderMainProps) {
-  const {parent} = page
-  if (headerEntry) {
-    return (
-      <div className={styles.ExplorerHeader.main()}>
-        <PageBack
-          label={headerEntry.backLabel}
-          onClick={() => headerEntry.onBack()}
-        />
-        <PageTitle>{headerEntry.title}</PageTitle>
-        {titleControls}
-      </div>
-    )
-  }
-  if (parent) {
-    return (
-      <ExplorerHeaderParentMain
-        parent={parent}
-        explorer={explorer}
-        titleControls={titleControls}
-      />
-    )
-  }
-  if (titleControls) {
-    return <div className={styles.ExplorerHeader.main()}>{titleControls}</div>
-  }
-  return null
 }
 
 interface ExplorerLocationMenuProps {
@@ -749,7 +693,7 @@ interface ExplorerActionsProps {
 }
 
 /** The actions configured with `overview.actions` */
-function ExplorerActions({page}: ExplorerActionsProps) {
+export function ExplorerActions({page}: ExplorerActionsProps) {
   const views = useAtomValueRaw(viewsAtom)
   const {location, overview} = page
   if (overview.actions.length === 0 || !location.root) return null
@@ -800,8 +744,10 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       )}
       <ExplorerActions page={page} />
       <ExplorerControls
+        size="sm"
         sorts={page.search.trim() ? [] : page.overview.sorts}
         sort={page.sort.requested}
+        sortLabel={page.sort.label}
         filters={page.overview.filters}
         picked={page.filters}
         onSort={sort => startTransition(() => setSort(sort))}
@@ -816,10 +762,10 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
         }
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
-        <ViewToggle view={page.view} setView={setView} />
+        <ViewToggle size="sm" view={page.view} setView={setView} />
         {page.isMedia && page.canUpload && !locationIsPending && (
           <FileTrigger multiple onSelect={files => upload(files)}>
-            <Button icon={IcRoundUploadFile} color="primary">
+            <Button icon={IcRoundUploadFile} color="primary" size="sm">
               Upload media
             </Button>
           </FileTrigger>
@@ -835,61 +781,54 @@ export function ExplorerHeader({
   onSearchEscape,
   controls,
   explorer,
-  headerEntry,
   navigate,
   page,
-  readOnly,
-  titleControls
+  readOnly
 }: ExplorerHeaderProps) {
   return (
-    <PageHeader className={styles.ExplorerHeader({navigation: navigate})}>
-      <div className={styles.ExplorerHeader.content()}>
-        <div className={styles.ExplorerHeader.primary()}>
-          {!navigate && (
-            <ExplorerHeaderMain
-              explorer={explorer}
-              headerEntry={headerEntry}
-              page={page}
-              titleControls={titleControls}
-            />
-          )}
-          {readOnly && <ReadOnlyBadge />}
-          <div className={styles.Explorer.searchSlot()}>
-            <ExplorerSearch
-              autoFocus={autoFocusSearch}
-              explorer={explorer}
-              onEscape={onSearchEscape}
-              page={page}
-            />
+    <header className={styles.ExplorerHeader()}>
+      <SearchBar
+        controls={
+          <>
+            {readOnly && <ReadOnlyBadge />}
             <ExplorerSearchScope explorer={explorer} page={page} />
-          </div>
-          <div className={styles.Explorer.toolbar()}>
             <ExplorerToolbar explorer={explorer} page={page} />
             {controls}
-          </div>
-        </div>
-        {navigate && (
-          <div
-            aria-label="Explorer location"
-            className={styles.ExplorerHeader.location()}
-            role="group"
-          >
-            <ExplorerResultMode
-              canBrowse={canBrowse}
+          </>
+        }
+      >
+        {!navigate && page.parent && (
+          <ExplorerHeaderMain explorer={explorer} parent={page.parent} />
+        )}
+        <ExplorerSearch
+          autoFocus={autoFocusSearch}
+          explorer={explorer}
+          inline
+          onEscape={onSearchEscape}
+          page={page}
+        />
+      </SearchBar>
+      {navigate && (
+        <div
+          aria-label="Explorer location"
+          className={styles.ExplorerHeader.location()}
+          role="group"
+        >
+          <ExplorerResultMode
+            canBrowse={canBrowse}
+            explorer={explorer}
+            page={page}
+          />
+          {!page.searchesEverything && (
+            <ExplorerLocationMenu
               explorer={explorer}
+              lockNavigation={explorer.pickChildren}
               page={page}
             />
-            {!page.searchesEverything && (
-              <ExplorerLocationMenu
-                explorer={explorer}
-                lockNavigation={explorer.pickChildren}
-                page={page}
-              />
-            )}
-          </div>
-        )}
-      </div>
-    </PageHeader>
+          )}
+        </div>
+      )}
+    </header>
   )
 }
 
@@ -910,36 +849,5 @@ export function ExplorerBody({
         />
       </div>
     </PageContent>
-  )
-}
-
-export function Explorer({
-  controls,
-  explorer,
-  headerEntry,
-  page: loadedPage,
-  readOnly,
-  titleControls
-}: ExplorerProps) {
-  const resolvedPage = useAtomValueRawSync(explorer.page)
-  // The explorer shows its own updates, such as a new search, but keeps the
-  // locale of the page until the page of another locale replaces it
-  const page =
-    resolvedPage?.locale === loadedPage.locale ? resolvedPage : loadedPage
-  return (
-    <>
-      <ExplorerHeader
-        controls={controls}
-        explorer={explorer}
-        headerEntry={headerEntry}
-        page={page}
-        readOnly={readOnly ?? (page.isMedia && !page.canUpload)}
-        titleControls={titleControls}
-      />
-      <ExplorerBody explorer={explorer} page={page} />
-      {explorer.hasRowAction && explorer.selectionMode === 'multiple' && (
-        <ExplorerBatchActions explorer={explorer} />
-      )}
-    </>
   )
 }

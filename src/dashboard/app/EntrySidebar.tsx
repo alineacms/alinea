@@ -131,7 +131,7 @@ export function EntrySidebar({
   const hasPreview = !isMediaFile && !isMediaLibrary
   const allowedTabs = entrySidebarTabs(type)
   return (
-    <Sidebar side="right">
+    <Sidebar side="right" className={styles.EntrySidebar()}>
       <Tabs
         className={styles.EntrySidebar.tabs()}
         value={selectedTab}
@@ -140,7 +140,7 @@ export function EntrySidebar({
           if (allowedTabs.includes(next)) setSelectedTab(next)
         }}
       >
-        <SidebarHeader>
+        <SidebarHeader className={styles.EntrySidebar.header()}>
           <TabsList aria-label="Entry sidebar">
             {hasPreview && <TabsTrigger value="preview">Preview</TabsTrigger>}
             {!isMediaFile && <TabsTrigger value="history">History</TabsTrigger>}

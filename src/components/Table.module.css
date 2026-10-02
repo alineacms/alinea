@@ -13,6 +13,14 @@
     --alinea-table-indent: 6px;
   }
 
+  /* A border rather than the surface's outline, which scrolling parents clip */
+  &[data-variant='surface'] {
+    box-sizing: border-box;
+    border: 1px solid var(--alinea-border);
+    border-radius: var(--alinea-radius-lg);
+    box-shadow: none;
+  }
+
   &[data-variant='plain'] {
     border-radius: 0;
   }
@@ -83,6 +91,13 @@
   font-weight: var(--alinea-weight-medium);
 }
 
+.TableHeader-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
 .TableHeader-head {
   display: flex;
   align-items: center;
@@ -146,16 +161,22 @@
   outline: none;
   cursor: pointer;
 
-  /* A divider that does not take space from the row */
+  /* A divider above the row that does not take space from it. The header
+     closes the first row and the edge of the table the last one, so
+     neither gets a second line. */
   &::after {
     content: '';
     position: absolute;
+    top: 0;
     right: 0;
-    bottom: 0;
     left: 0;
     height: 1px;
     pointer-events: none;
     background: var(--alinea-border);
+  }
+
+  &[aria-level='1'][aria-posinset='1']::after {
+    content: none;
   }
 
   &:hover {
@@ -211,7 +232,7 @@
 .TableRow-selection {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   min-width: 0;
 }
 
@@ -269,7 +290,7 @@
   max-width: 100%;
   overflow: hidden;
   color: var(--alinea-fg-subtle);
-  font-size: var(--alinea-text-xs);
+  font-size: var(--alinea-text-sm);
   font-weight: var(--alinea-weight-regular);
   line-height: 16px;
   text-overflow: ellipsis;
@@ -309,6 +330,10 @@
   min-width: 0;
   padding: 5px 10px;
   overflow: hidden;
+
+  &:has(.TableTitle-media) {
+    gap: 16px;
+  }
 }
 
 .TableTitle-drag {
@@ -329,6 +354,12 @@
   }
 }
 
+.TableTitle-media {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
 .TableTitle-icon {
   flex: 0 0 auto;
   width: 1em;
@@ -343,9 +374,17 @@
   min-width: 0;
 }
 
+.TableTitle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .TableTitle-title {
   overflow: hidden;
   font-size: 13px;
+  font-weight: var(--alinea-weight-medium);
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;

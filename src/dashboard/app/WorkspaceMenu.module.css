@@ -6,26 +6,35 @@
 }
 
 .WorkspaceMenu-avatar {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border-radius: 10px;
 }
 
-.WorkspaceMenu-avatar-logo {
-  width: 100%;
-  height: 100%;
+.WorkspaceMenu-avatar-icon {
+  font-size: 18px;
 }
 
-.WorkspaceMenu-avatarTrigger {
+.WorkspaceMenu-avatar-initial {
+  font-size: 13px;
+  font-weight: var(--alinea-weight-title);
+  line-height: 1;
+}
+
+.WorkspaceMenu-avatarTrigger,
+/* Outranks the size of the icon button */
+.WorkspaceMenu-avatarTrigger[data-size] {
   display: flex;
   width: 32px;
   height: 32px;
   align-items: center;
   padding: 0;
   justify-content: center;
+  border-radius: 10px;
 }
 
 .WorkspaceMenu-trigger {
@@ -47,8 +56,15 @@
   white-space: nowrap;
   font-size: 13px;
   font-weight: 500;
+  /* The button's line-height of 1 clips descenders under overflow: hidden */
+  line-height: 1.25;
 }
 
 .WorkspaceMenu-search {
   flex-shrink: 0;
+}
+
+/* Outranks the menu item's own weight */
+.WorkspaceMenu-option[data-slot] {
+  font-weight: var(--alinea-weight-regular);
 }

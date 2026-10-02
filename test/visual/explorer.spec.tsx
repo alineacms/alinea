@@ -72,13 +72,13 @@ function explorerTests() {
 themed(() => {
   explorerTests()
 
-  test('root explorer filter and sort popover', async ({mount, visual}) => {
+  test('root explorer sort menu', async ({mount, visual}) => {
     const app = await visual.open(() => mount(<FixtureScenarioMount />), {
       hash: routes.pages,
       ready: explorer
     })
-    await app.page.getByRole('button', {name: 'Filter and sort'}).click()
-    await expect(app.page.getByRole('dialog')).toBeVisible()
+    await app.page.getByRole('button', {name: 'Sort', exact: true}).click()
+    await expect(app.page.getByRole('menu', {name: 'Sort by'})).toBeVisible()
     await app.shot('root-filter-sort')
   })
 

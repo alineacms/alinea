@@ -73,7 +73,7 @@ export function EditorHeader() {
   const [log, setLog] = useState('')
   return (
     <div style={{margin: 24, border: '1px solid var(--alinea-border)'}}>
-      <PageHeader size="lg">
+      <PageHeader>
         <PageBack label="Back to parent" onClick={() => setLog('back')} />
         <PageTitle>Launching the new platform</PageTitle>
         <Badge icon={IcRoundEdit} status="draft">

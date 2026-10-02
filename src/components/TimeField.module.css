@@ -21,7 +21,6 @@
   }
 
   &:has(.TimeField-segment[aria-readonly='true']) {
-    border-style: dashed;
     background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-muted);
   }

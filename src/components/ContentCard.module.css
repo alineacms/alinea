@@ -17,7 +17,7 @@
 .ContentCard-media {
   position: relative;
   display: flex;
-  flex: 0 0 124px;
+  flex: 0 0 140px;
   align-items: center;
   justify-content: center;
   width: 100%;
@@ -27,7 +27,6 @@
 
   .ContentCard:not([data-variant='media']) & {
     background: var(--alinea-bg-muted);
-    box-shadow: inset 0 -1px var(--alinea-border);
   }
 
   /* Selected cards tint their top */
@@ -87,15 +86,10 @@
   flex: 1;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
-  padding: 10px 12px 11px;
+  padding: 10px 14px 12px;
   overflow: hidden;
-
-  .ContentCard.is-breadcrumbs & {
-    gap: 2px;
-    padding: 5px 12px 6px;
-  }
 }
 
 .ContentCard-breadcrumbs {
@@ -106,9 +100,9 @@
   min-width: 0;
   width: 100%;
   overflow: hidden;
-  color: var(--alinea-fg-muted);
-  font-size: 12px;
-  line-height: 16px;
+  color: var(--alinea-fg-subtle);
+  font-size: var(--alinea-text-sm);
+  line-height: 18px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -123,7 +117,7 @@
   overflow: hidden;
   font-size: 13px;
   font-weight: var(--alinea-weight-medium);
-  line-height: 1.35;
+  line-height: 19px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -135,8 +129,8 @@
   gap: 8px;
   min-width: 0;
   color: var(--alinea-fg-muted);
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: var(--alinea-text-sm);
+  line-height: 18px;
 }
 
 .ContentCard-description-text {

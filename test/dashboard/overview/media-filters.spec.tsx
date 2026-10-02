@@ -19,8 +19,9 @@ async function titles(page: Page) {
     .evaluateAll(rows =>
       rows.map(
         row =>
-          row.querySelector('[data-slot="table-title"]')?.textContent?.trim() ??
-          ''
+          row
+            .querySelector('[data-slot="table-title-title"]')
+            ?.textContent?.trim() ?? ''
       )
     )
 }
@@ -36,8 +37,8 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
     .poll(async () => (await titles(page)).length)
     .toBeGreaterThanOrEqual(5)
 
-  await page.getByRole('button', {name: 'Filter and sort'}).click()
-  const menu = page.getByRole('dialog', {name: 'Filter and sort'})
+  await page.getByRole('button', {name: 'Filter', exact: true}).click()
+  const menu = page.getByRole('dialog', {name: 'Filter'})
   const fileType = menu.getByRole('group', {name: 'File type'})
   await fileType.getByRole('button', {name: 'PDF', exact: true}).click()
   await expect(
@@ -50,25 +51,31 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
   await expect.poll(async () => (await titles(page)).length).toBe(3)
 
   // Picking an order again reverses it
-  await menu.getByRole('button', {name: 'Title', exact: true}).click()
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', {name: 'Sort', exact: true}).click()
+  await page.getByRole('menuitem', {name: 'Title', exact: true}).click()
   await expect(page).toHaveURL(/\?sort=title$/)
-  await menu.getByRole('button', {name: 'Title', exact: true}).click()
+  await page.getByRole('button', {name: 'Sort by Title'}).click()
+  await page.getByRole('menuitem', {name: /^Title/}).click()
   await expect(page).toHaveURL(/\?sort=-title$/)
   await expect
     .poll(() => titles(page))
     .toEqual(['Letter', 'Archive', 'Annual report'])
 
   // The filter stays while the editor opens a folder and comes back
-  await page.keyboard.press('Escape')
   await table(page)
     .getByRole('row', {name: /^Archive/})
     .click()
   await expect(page.getByRole('heading', {level: 1})).toHaveText('Archive')
-  await page.getByRole('button', {name: 'Back to root'}).click()
+  await page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .first()
+    .click()
   await expect
     .poll(() => titles(page))
     .toEqual(['Letter', 'Archive', 'Annual report'])
-  await page.getByRole('button', {name: 'Filter and sort'}).click()
+  await page.getByRole('button', {name: 'Filter: PDF'}).click()
 
   // Several file types match any of them
   await fileType.getByRole('button', {name: 'Documents', exact: true}).click()
@@ -77,7 +84,8 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
     .toEqual(['Notes', 'Letter', 'Archive', 'Annual report'])
 
   // Reset clears the filters and the order
-  await menu.getByRole('button', {name: 'Reset', exact: true}).click()
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', {name: 'Reset', exact: true}).click()
   await expect(page).not.toHaveURL(/sort=/)
   await expect
     .poll(() => titles(page))
@@ -90,7 +98,7 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
         'Annual report'
       ])
     )
-  await expect(menu.getByRole('button', {name: 'Reset'})).toHaveCount(0)
+  await expect(page.getByRole('button', {name: 'Reset'})).toHaveCount(0)
 })
 
 test('lists the unused media files and deletes them all', async ({
@@ -104,8 +112,8 @@ test('lists the unused media files and deletes them all', async ({
     .poll(async () => (await titles(page)).length)
     .toBeGreaterThanOrEqual(5)
 
-  await page.getByRole('button', {name: 'Filter and sort'}).click()
-  const menu = page.getByRole('dialog', {name: 'Filter and sort'})
+  await page.getByRole('button', {name: 'Filter', exact: true}).click()
+  const menu = page.getByRole('dialog', {name: 'Filter'})
   await menu
     .getByRole('group', {name: 'Usage'})
     .getByRole('button', {name: 'Unused', exact: true})
@@ -140,7 +148,6 @@ test('lists the unused media files and deletes them all', async ({
   await expect(dialog).toHaveCount(0)
   await expect(table(page).getByText('No results found')).toBeVisible()
 
-  await page.getByRole('button', {name: 'Filter and sort'}).click()
-  await menu.getByRole('button', {name: 'Reset', exact: true}).click()
+  await page.getByRole('button', {name: 'Reset', exact: true}).click()
   await expect.poll(() => titles(page)).toEqual(['Archive', 'Photo'])
 })

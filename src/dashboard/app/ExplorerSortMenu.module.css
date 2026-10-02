@@ -1,0 +1,23 @@
+.ExplorerSortMenu-trigger {
+  flex-shrink: 0;
+  gap: 6px;
+  max-width: 220px;
+  padding-inline: 10px 8px;
+  font-size: var(--alinea-text-sm);
+}
+
+.ExplorerSortMenu-chevron {
+  flex-shrink: 0;
+  margin-inline-start: -2px;
+  color: var(--alinea-fg-subtle);
+  font-size: 14px;
+}
+
+.ExplorerSortMenu-mark {
+  box-sizing: content-box;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  padding-inline-start: 12px;
+  color: var(--alinea-primary);
+  font-size: 14px;
+}

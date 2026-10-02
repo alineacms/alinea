@@ -1,0 +1,24 @@
+.OverviewStatusDot {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+
+  &[data-status='draft'] {
+    background: var(--alinea-status-draft-dot);
+  }
+
+  &[data-status='unpublished'] {
+    background: var(--alinea-status-unpublished-dot);
+  }
+
+  &[data-status='archived'] {
+    border: 1.5px solid var(--alinea-fg-subtle);
+  }
+
+  &[data-status='untranslated'] {
+    border: 1.5px dashed var(--alinea-fg-subtle);
+  }
+}

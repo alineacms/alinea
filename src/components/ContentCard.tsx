@@ -52,10 +52,7 @@ export function ContentCard({
     <div
       data-slot="content-card"
       data-variant={variant}
-      className={styles.ContentCard(
-        {breadcrumbs: hasBreadcrumbs},
-        styler.merge({className})
-      )}
+      className={styles.ContentCard(styler.merge({className}))}
       style={style}
     >
       <div

@@ -1,14 +1,14 @@
-.EntryEditor-body {
+.EntryEditor-form {
   min-height: 0;
   min-width: 0;
-  padding: 16px;
-  background: var(--alinea-bg-muted);
+  padding: 24px 24px 40px;
+  background: var(--alinea-bg);
 }
 
 .EntryEditor-fields {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .EntryEditor-banner {
@@ -25,14 +25,20 @@
   }
 }
 
+.EntryEditorLayout-sidebar {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
 .EntryEditorContent-navigationActions {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.EntryOverview-mobileActions {
-  display: none;
 }
 
 .MissingEntry {
@@ -50,12 +56,8 @@
 }
 
 @media (max-width: 768px) {
-  .EntryOverview-mobileActions {
-    display: flex;
-  }
-
-  .EntryEditor-body {
-    padding: 8px;
+  .EntryEditor-form {
+    padding: 16px 8px 24px;
   }
 
   .MissingEntry {

@@ -110,7 +110,10 @@ export function RichTextToolbar({
       onFocus={() => onFocusChange(true)}
       onBlur={event => onFocusChange(false, event.relatedTarget)}
     >
-      <Toolbar aria-label="Text formatting">
+      <Toolbar
+        aria-label="Text formatting"
+        className={styles.RichTextToolbar.bar()}
+      >
         <ToolbarItems
           config={config}
           context={context}
@@ -172,7 +175,10 @@ function ToolbarItems({config, context, menu, ownerId}: ToolbarItemsProps) {
             menu ? (
               <DropdownMenuSeparator key={`${name}-separator`} />
             ) : (
-              <ToolbarSeparator key={`${name}-separator`} />
+              <ToolbarSeparator
+                key={`${name}-separator`}
+                className={styles.RichTextToolbar.separator()}
+              />
             )
           ]
     return [...separator, renderEntry(name, entry, context, menu, ownerId)]
@@ -211,7 +217,11 @@ function renderEntry(
       )
     return (
       <DropdownMenu key={name}>
-        <DropdownMenuTrigger variant="ghost" icon={icon}>
+        <DropdownMenuTrigger
+          variant="ghost"
+          icon={icon}
+          className={styles.RichTextToolbar.button()}
+        >
           {label}
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -229,7 +239,13 @@ function renderEntry(
     const children = entries(group).map(([childName, child]) =>
       renderEntry(`${name}-${childName}`, child, context, menu, ownerId)
     )
-    return menu ? children : <ToolbarGroup key={name}>{children}</ToolbarGroup>
+    return menu ? (
+      children
+    ) : (
+      <ToolbarGroup key={name} className={styles.RichTextToolbar.group()}>
+        {children}
+      </ToolbarGroup>
+    )
   }
   const label = resolve(entry.label, context)
   const title = entry.title ?? text(label) ?? humanize(name)
@@ -250,7 +266,8 @@ function renderEntry(
   return (
     <ToolbarButton
       key={name}
-      size="icon-lg"
+      className={styles.RichTextToolbar.button()}
+      size={entry.icon ? 'icon' : 'default'}
       active={active}
       aria-pressed={entry.active ? Boolean(active) : undefined}
       aria-label={title}

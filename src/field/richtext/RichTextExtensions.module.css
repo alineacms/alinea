@@ -8,6 +8,8 @@
 
 .RichTextExtensions-heading {
   min-width: 0;
+  /* Keeps the text clear of the settings button shown on hover */
+  padding-inline-end: 32px;
   font-weight: 600;
   overflow-wrap: break-word;
   white-space: pre-line;
@@ -131,16 +133,14 @@
   hyphens: auto;
 }
 
-.RichTextExtensions-anchor,
-.RichTextExtensions-heading[data-anchor] {
+.RichTextExtensions-anchor {
   position: relative;
   scroll-margin-top: 80px;
   border-radius: var(--alinea-radius-sm);
   transition: background-color 120ms ease;
 }
 
-.RichTextExtensions-anchor::before,
-.RichTextExtensions-heading[data-anchor]::before {
+.RichTextExtensions-anchor::before {
   content: '#' attr(data-anchor);
   position: absolute;
   z-index: 1;
@@ -168,13 +168,11 @@
     transform 120ms ease;
 }
 
-.RichTextExtensions-anchor:hover,
-.RichTextExtensions-heading[data-anchor]:hover {
+.RichTextExtensions-anchor:hover {
   background-color: color-mix(in srgb, var(--alinea-primary) 8%, transparent);
 }
 
-.RichTextExtensions-anchor:hover::before,
-.RichTextExtensions-heading[data-anchor]:hover::before {
+.RichTextExtensions-anchor:hover::before {
   opacity: 1;
   transform: translateY(calc(-100% - 2px)) scale(1);
 }

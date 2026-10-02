@@ -1,0 +1,42 @@
+.ExplorerFilterMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 280px;
+  max-width: 100%;
+  padding: 4px;
+}
+
+.ExplorerFilterMenu-trigger {
+  flex-shrink: 0;
+  gap: 6px;
+  max-width: 220px;
+  padding-inline: 10px 8px;
+  font-size: var(--alinea-text-sm);
+}
+
+.ExplorerFilterMenu-chevron {
+  flex-shrink: 0;
+  margin-inline-start: -2px;
+  color: var(--alinea-fg-subtle);
+  font-size: 14px;
+}
+
+.ExplorerFilterMenu-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ExplorerFilterMenu-filter-label {
+  color: var(--alinea-fg-subtle);
+  font-size: var(--alinea-text-xs);
+  font-weight: var(--alinea-weight-medium);
+}
+
+/* Several options can be picked, they wrap as chips */
+.ExplorerFilterMenu-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

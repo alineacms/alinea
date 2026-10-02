@@ -93,11 +93,16 @@ function SidebarCreateEntryButton({root}: SidebarCreateEntryButtonProps) {
 export interface CreateEntryButtonProps {
   root: RootAtoms
   toolbar?: boolean
+  /** An outline button next to a primary action in the toolbar */
+  secondary?: boolean
+  label?: string
 }
 
 export function CreateEntryButton({
   root,
-  toolbar = false
+  toolbar = false,
+  secondary = false,
+  label = 'Create new'
 }: CreateEntryButtonProps) {
   const {page} = useDashboardContext()
   const canCreate = useAtomValueRaw(root.tree(page.locale).canCreate)
@@ -105,15 +110,15 @@ export function CreateEntryButton({
   return (
     <Dialog>
       <DialogTrigger
-        aria-label="Create new"
+        aria-label={label}
         className={styles.DashboardLayout.create({toolbar})}
         icon={IcRoundAdd}
-        variant={toolbar ? 'solid' : 'outline'}
-        color={toolbar ? 'primary' : 'neutral'}
+        variant={toolbar && !secondary ? 'solid' : 'outline'}
+        color={toolbar && !secondary ? 'primary' : 'neutral'}
       >
-        Create new
+        {label}
       </DialogTrigger>
-      <DashboardModal aria-label="Create entry">
+      <DashboardModal size="sm" aria-label="Create entry">
         <CreateEntry />
       </DashboardModal>
     </Dialog>

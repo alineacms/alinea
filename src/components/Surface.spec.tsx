@@ -7,7 +7,7 @@ function background(locator: Locator) {
   return locator.evaluate(element => getComputedStyle(element).backgroundColor)
 }
 
-test('nested surfaces alternate their background', async ({mount, page}) => {
+test('nested surfaces keep the base background', async ({mount, page}) => {
   await mount(<Nested />)
   const base = await background(
     page.getByRole('region', {name: 'Base surface'})
@@ -18,7 +18,7 @@ test('nested surfaces alternate their background', async ({mount, page}) => {
   const deeper = await background(
     page.getByRole('region', {name: 'Deeper surface'})
   )
-  expect(nested).not.toBe(base)
+  expect(nested).toBe(base)
   expect(deeper).toBe(base)
 })
 

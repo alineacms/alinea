@@ -23,8 +23,9 @@ async function titles(page: Page) {
     .evaluateAll(rows =>
       rows.map(
         row =>
-          row.querySelector('[data-slot="table-title"]')?.textContent?.trim() ??
-          ''
+          row
+            .querySelector('[data-slot="table-title-title"]')
+            ?.textContent?.trim() ?? ''
       )
     )
 }
@@ -47,7 +48,9 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
     .poll(() =>
       header
         .locator('[data-slot="table-head"]')
-        .evaluateAll(cells => cells.map(cell => cell.textContent?.trim()))
+        .evaluateAll(cells =>
+          cells.map(cell => cell.textContent?.trim()).filter(Boolean)
+        )
     )
     .toEqual([
       'Title',
@@ -110,12 +113,9 @@ test('sorts by a column header and keeps the sort in the url', async ({
   await expect(page).toHaveURL(/\?sort=-price$/)
   await expect.poll(() => titles(page)).toEqual(['Chair', 'Lamp', 'Table'])
 
-  // Reset in the filter and sort menu returns to the default order
-  await page.getByRole('button', {name: 'Filter and sort'}).click()
-  await page
-    .getByRole('dialog', {name: 'Filter and sort'})
-    .getByRole('button', {name: 'Reset', exact: true})
-    .click()
+  // The default order in the sort menu returns to the stored order
+  await page.getByRole('button', {name: 'Sort by Price'}).click()
+  await page.getByRole('menuitem', {name: /^Default order/}).click()
   await expect(page).not.toHaveURL(/sort=/)
   await expect.poll(() => titles(page)).toEqual(['Chair', 'Table', 'Lamp'])
   await expect(list).toHaveCount(1)
@@ -141,7 +141,12 @@ test('keeps the sort when returning to the overview', async ({mount, page}) => {
   await expect(page).toHaveURL(/\?sort=price$/)
   await table(page).getByRole('row', {name: /^Lamp/}).click()
   await expect(page.getByRole('heading', {level: 1})).toHaveText('Lamp')
-  await page.getByRole('button', {name: 'Back to root'}).click()
+  // Back to the root through the breadcrumbs of the entry
+  await page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
   await expect(page).toHaveURL(/\?sort=price$/)
   await expect.poll(() => titles(page)).toEqual(['Table', 'Lamp', 'Chair'])
 })

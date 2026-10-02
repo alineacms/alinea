@@ -1,3 +1,47 @@
+.EntryHeader-crumbs {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.EntryHeader-crumbs-list {
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-wrap: normal;
+}
+
+.EntryHeader-crumbs-item {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.EntryHeader-crumbs-link {
+  min-width: 0;
+  overflow: hidden;
+  padding: 2px 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.EntryHeader-crumbs-separator {
+  flex-shrink: 0;
+  color: var(--alinea-fg-subtle);
+}
+
+.EntryHeader-crumbs-current {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.EntryHeader-title {
+  min-width: 0;
+}
+
+.EntryHeader-status {
+  flex-shrink: 0;
+  margin-inline-start: 6px;
+}
+
 @media (max-width: 768px) {
   .EntryHeader {
     gap: 4px;
@@ -8,8 +52,7 @@
     gap: 4px;
   }
 
-  .EntryHeader-status,
-  .EntryHeader-type {
+  .EntryHeader-status {
     display: none;
   }
 

@@ -1,24 +1,32 @@
-.ExplorerBatchActionBar {
-  gap: 8px;
-  height: 48px;
-  padding: 0 12px 0 8px;
-  background: var(--alinea-bg);
-}
-
-.ExplorerBatchActionBar-toolbar {
+.ExplorerBatchActionBar[data-slot] {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  z-index: 3;
   display: flex;
-  flex: 1;
-  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  max-width: calc(100% - 32px);
+  padding: 0 6px 0 16px;
+  border: 0;
+  border-radius: var(--alinea-radius-lg);
+  background: var(--alinea-overlay);
+  box-shadow: var(--alinea-shadow-float);
+  transform: translateX(-50%);
 }
 
 .ExplorerBatchActionBar-count {
-  font-weight: 500;
+  margin-inline-end: 10px;
+  font-size: var(--alinea-text-sm);
+  font-weight: var(--alinea-weight-medium);
   white-space: nowrap;
 }
 
-.ExplorerBatchActionBar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
+.ExplorerBatchActionBar-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--alinea-border);
 }

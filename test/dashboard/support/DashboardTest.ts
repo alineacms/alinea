@@ -46,6 +46,14 @@ export class DashboardDriver {
     return this.page.getByRole('heading', {level: 1})
   }
 
+  // Scoped to the header, the root label also names its button in the rail
+  crumb(name: string): Locator {
+    return this.page
+      .locator('[data-slot="page-header"]')
+      .getByRole('navigation', {name: 'Breadcrumb'})
+      .getByRole('button', {name, exact: true})
+  }
+
   async openProfile(): Promise<void> {
     await this.page.getByRole('button', {name: 'Local user'}).click()
     await expect(this.page.getByText('Appearance', {exact: true})).toBeVisible()

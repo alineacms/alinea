@@ -1,35 +1,3 @@
-.ListFieldCreateActions {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  justify-content: center;
-  gap: 6px;
-}
-
-.ListFieldCreateActions-button {
-  flex-shrink: 0;
-}
-
-.ListFieldView-insertAction {
-  align-self: stretch;
-  justify-content: flex-start;
-  width: 100%;
-  min-width: 0;
-  white-space: nowrap;
-}
-
-.ListFieldTypePicker-trigger {
-  flex-shrink: 0;
-  min-width: 2rem;
-  width: 2rem;
-}
-
-.ListFieldTypePicker-trigger.ListFieldView-insertAction {
-  justify-content: flex-start;
-  width: 100%;
-  min-width: 0;
-}
-
 .ListFieldTypePicker-popover {
   width: 280px;
   min-width: 280px;
@@ -37,9 +5,13 @@
   padding: 0;
 }
 
-.ListFieldRowHeader-separator {
-  height: 1px;
-  margin: 4px 8px;
-  border: none;
-  background-color: var(--alinea-border);
+.ListFieldRowSheet-anchor {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.ListFieldRowSheet-anchor-field {
+  flex: 1;
+  min-width: 0;
 }

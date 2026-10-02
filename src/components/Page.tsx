@@ -27,8 +27,6 @@ export function Page({className, ...props}: PageProps) {
 }
 
 export interface PageHeaderProps extends StyleProps, AriaProps, DataProps {
-  /** The `lg` header is taller, as used above entry editors */
-  size?: 'default' | 'lg'
   children: ReactNode
 }
 
@@ -36,16 +34,11 @@ export interface PageHeaderProps extends StyleProps, AriaProps, DataProps {
  * The bar at the top of the page, holds an optional PageBack, the PageTitle
  * and PageActions
  */
-export function PageHeader({
-  size = 'default',
-  className,
-  ...props
-}: PageHeaderProps) {
+export function PageHeader({className, ...props}: PageHeaderProps) {
   return (
     <header
       data-slot="page-header"
       {...props}
-      data-size={size}
       className={styles.PageHeader(styler.merge({className}))}
     />
   )

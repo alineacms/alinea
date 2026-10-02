@@ -3,7 +3,6 @@ import {hidden} from '#/field/hidden/HiddenField.js'
 import {auditMetadata} from '#/field/metadata/MetadataAudit.js'
 import {path} from '#/field/path/PathField.js'
 import {text} from '#/field/text/TextField.js'
-import {viewKeys} from '#/dashboard/ViewKeys.js'
 import prettyBytes from 'pretty-bytes'
 import {Entry} from '../Entry.js'
 import {Expr} from '../Expr.js'
@@ -161,21 +160,9 @@ export function mediaOverview(): OverviewOptions {
         }
       }
     },
-    // The file's columns come before who last updated it and when
+    // The file's columns come before who last updated it and when, its
+    // preview is shown before its title
     columns: {
-      preview: column({
-        header: 'Preview',
-        position: 'start',
-        width: 64,
-        collapsible: false,
-        sortable: false,
-        select: {
-          preview: MediaFile.preview,
-          averageColor: MediaFile.averageColor,
-          extension: MediaFile.extension
-        },
-        view: viewKeys.MediaPreviewCell
-      }),
       dimensions: column({
         header: 'Dimensions',
         position: 'start',

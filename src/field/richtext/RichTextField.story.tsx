@@ -1,4 +1,5 @@
 import {type} from '#/core/Type.js'
+import {BlockSheetStoryFrame} from '#/dashboard/app/BlockSheetStoryFrame.js'
 import {FieldsEditor} from '#/dashboard/app/EntryFields.js'
 import {EntryEditor} from '#/dashboard/atoms/editor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -117,7 +118,9 @@ const readOnlyBody = richText('Body', {
 const readOnlyEntry = type('Read-only entry', {fields: {body: readOnlyBody}})
 
 export function RichTextStory() {
-  return <RichTextFixture initialBody={blocksValue} entryType={entry} />
+  return (
+    <RichTextFixture initialBody={blocksValue} entryType={entry} withSheet />
+  )
 }
 
 export function RichTextPlainStory() {
@@ -128,6 +131,20 @@ export function RichTextPlainStory() {
         paragraph('Press Enter to create another paragraph and test history.')
       ]}
       entryType={plainEntry}
+    />
+  )
+}
+
+export function RichTextHeadingStory() {
+  return (
+    <RichTextFixture
+      initialBody={[
+        heading(2, 'Introduction', 'introduction'),
+        paragraph('Hover a heading to edit its anchor.'),
+        heading(3, 'Details', 'details')
+      ]}
+      entryType={plainEntry}
+      withSheet
     />
   )
 }
@@ -185,7 +202,13 @@ export function RichTextLegacyEmptyStory() {
 }
 
 export function RichTextReadOnlyStory() {
-  return <RichTextFixture initialBody={blocksValue} entryType={readOnlyEntry} />
+  return (
+    <RichTextFixture
+      initialBody={blocksValue}
+      entryType={readOnlyEntry}
+      withSheet
+    />
+  )
 }
 
 interface RichTextFixtureProps {
@@ -198,12 +221,14 @@ interface RichTextFixtureProps {
     | typeof customEntry
     | typeof readOnlyEntry
   withDashboard?: boolean
+  withSheet?: boolean
 }
 
 function RichTextFixture({
   initialBody,
   entryType,
-  withDashboard = false
+  withDashboard = false,
+  withSheet = false
 }: RichTextFixtureProps) {
   const state = useMemo(() => {
     const node = new ReactiveNode<object>({
@@ -214,8 +239,13 @@ function RichTextFixture({
       editor: new EntryEditor(entryType, node)
     }
   }, [entryType, initialBody])
-  const content = (
+  const fields = (
     <RichTextFixtureContent editor={state.editor} node={state.node} />
+  )
+  const content = withSheet ? (
+    <BlockSheetStoryFrame>{fields}</BlockSheetStoryFrame>
+  ) : (
+    fields
   )
   return withDashboard ? (
     <StoryProvider
@@ -261,6 +291,15 @@ function RichTextFixtureContent({editor, node}: RichTextFixtureContentProps) {
       <output data-testid="dirty">{String(dirty)}</output>
     </EditorScope>
   )
+}
+
+function heading(level: number, text: string, anchor: string) {
+  return {
+    _type: 'heading',
+    level,
+    _anchor: anchor,
+    content: [{_type: 'text', text}]
+  }
 }
 
 function paragraph(text: string) {

@@ -24,10 +24,9 @@ import {
   useSearchShortcut
 } from '../hook/UseSearchShortcut.js'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
-import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
+import {logoShapeForeground} from './LogoShape.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
-import {LogoShape} from './LogoShape.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -47,6 +46,7 @@ interface WorkspaceMenuProps {
 interface WorkspaceAvatarProps {
   color: string
   icon?: ComponentType
+  label: string
 }
 
 interface WorkspaceSelectorMenuProps {
@@ -56,14 +56,19 @@ interface WorkspaceSelectorMenuProps {
   page: Page
 }
 
-function WorkspaceAvatar({color, icon}: WorkspaceAvatarProps) {
+function WorkspaceAvatar({color, icon, label}: WorkspaceAvatarProps) {
   return (
-    <span className={styles.WorkspaceMenu.avatar()}>
-      <LogoShape
-        background={color}
-        icon={icon ?? AlineaLogo}
-        className={styles.WorkspaceMenu.avatar.logo()}
-      />
+    <span
+      className={styles.WorkspaceMenu.avatar()}
+      style={{background: color, color: logoShapeForeground(color)}}
+    >
+      {icon ? (
+        <Icon icon={icon} className={styles.WorkspaceMenu.avatar.icon()} />
+      ) : (
+        <span className={styles.WorkspaceMenu.avatar.initial()} aria-hidden>
+          {Array.from(label.trim())[0]?.toUpperCase()}
+        </span>
+      )}
     </span>
   )
 }
@@ -103,6 +108,7 @@ function WorkspaceSelectorMenu({
               value="users"
               icon={IcOutlineSettings}
               textValue="Manage users"
+              className={styles.WorkspaceMenu.option()}
             >
               Manage users
             </DropdownMenuRadioItem>
@@ -122,7 +128,11 @@ export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
   const workspaces = useAtomValueRaw(workspacesAtom)
   const setRoute = useSetAtom(routeAtom)
   const avatar = (
-    <WorkspaceAvatar color={workspace.color} icon={workspace.icon} />
+    <WorkspaceAvatar
+      color={workspace.color}
+      icon={workspace.icon}
+      label={workspace.label}
+    />
   )
   if (workspaces.length <= 1) {
     return (
@@ -290,7 +300,11 @@ interface WorkspaceItemProps {
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
   const data = useAtomValueRaw(workspaceAtom(workspace))
   return (
-    <DropdownMenuRadioItem value={workspace} textValue={data.label}>
+    <DropdownMenuRadioItem
+      value={workspace}
+      textValue={data.label}
+      className={styles.WorkspaceMenu.option()}
+    >
       {data.label}
     </DropdownMenuRadioItem>
   )

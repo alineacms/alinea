@@ -24,9 +24,9 @@ async function recordHeader(page: Page) {
       const frame = {
         title: main.querySelector('h1')?.textContent ?? null,
         back:
-          main
-            .querySelector('[data-slot="page-back"]')
-            ?.getAttribute('aria-label') ?? null,
+          Array.from(
+            main.querySelectorAll('[data-slot="breadcrumb"] button')
+          ).at(-1)?.textContent ?? null,
         list: grid.textContent ?? ''
       }
       const last = frames.at(-1)
@@ -59,17 +59,16 @@ async function recordHeader(page: Page) {
 
 /** The location a header describes, or why it does not match the list */
 function describe(frame: HeaderFrame) {
-  if (frame.title === null)
+  if (frame.title === 'Media')
     return frame.back === null && frame.list.includes('Legacy image')
       ? 'root'
       : `root header listing "${frame.list}"`
   if (frame.title === 'Media folder')
-    return frame.back === 'Back to root' &&
-      frame.list.includes('Nested media folder')
+    return frame.back === 'Media' && frame.list.includes('Nested media folder')
       ? 'folder'
       : `folder header listing "${frame.list}"`
   if (frame.title === 'Nested media folder')
-    return frame.back === 'Back to parent entry' &&
+    return frame.back === 'Media folder' &&
       frame.list.includes('Nested media file')
       ? 'nested folder'
       : `nested folder header listing "${frame.list}"`
@@ -77,7 +76,7 @@ function describe(frame: HeaderFrame) {
 }
 
 for (const readDelay of [0, 20]) {
-  test(`shows the back button and title of every media folder level (read delay ${readDelay}ms)`, async ({
+  test(`shows the breadcrumbs and title of every media folder level (read delay ${readDelay}ms)`, async ({
     dashboard,
     mount
   }) => {
@@ -92,12 +91,15 @@ for (const readDelay of [0, 20]) {
     const main = app.page.getByRole('main')
     const tree = main.getByRole('treegrid', {name: 'Content tree'})
     const explorer = main.getByRole('grid', {name: 'Explorer entries'})
-    const back = main.locator('[data-slot="page-back"]')
+    const back = main
+      .getByRole('navigation', {name: 'Breadcrumb'})
+      .getByRole('button')
+      .last()
     const header = await recordHeader(app.page)
 
     async function expectRoot() {
       await expect(app.page).toHaveURL(/#\/entry\/main\/media$/)
-      await expect(app.title).toHaveCount(0)
+      await expect(app.title).toHaveText('Media')
       await expect(back).toHaveCount(0)
       await expect(
         explorer.getByRole('row', {name: 'Legacy image', exact: true})
@@ -105,20 +107,20 @@ for (const readDelay of [0, 20]) {
     }
     async function expectFolder() {
       await expect(app.title).toHaveText('Media folder')
-      await expect(back).toHaveAccessibleName('Back to root')
+      await expect(back).toHaveAccessibleName('Media')
       await expect(
         explorer.getByRole('row', {name: 'Nested media folder', exact: true})
       ).toBeVisible()
     }
     async function expectNestedFolder() {
       await expect(app.title).toHaveText('Nested media folder')
-      await expect(back).toHaveAccessibleName('Back to parent entry')
+      await expect(back).toHaveAccessibleName('Media folder')
       await expect(
         explorer.getByRole('row', {name: 'Nested media file', exact: true})
       ).toBeVisible()
     }
 
-    // Open the levels from the explorer and return with the back button
+    // Open the levels from the explorer and return through the breadcrumbs
     await expectFolder()
     await back.click()
     await expectRoot()
@@ -144,7 +146,10 @@ for (const readDelay of [0, 20]) {
       tree.getByRole('row', {name: /^Nested media folder/})
     ).toHaveCount(0)
     await expectNestedFolder()
-    await main.getByRole('button', {name: 'Media', exact: true}).click()
+    await main
+      .locator('[data-slot="sidebar-content"]')
+      .getByRole('button', {name: 'Media', exact: true})
+      .click()
     await expectRoot()
 
     // Return through the browser history

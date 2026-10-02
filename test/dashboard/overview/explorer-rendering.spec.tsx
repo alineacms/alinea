@@ -53,20 +53,21 @@ test('shows the rows of an overview in the first frame it is shown', async ({
   )
   const main = app.page.getByRole('main')
   const explorer = main.getByRole('treegrid', {name: 'Explorer entries'})
-  const back = main.getByRole('button', {name: 'Back to root'})
   const recorder = await recordExplorer(app.page)
 
+  const crumbs = main.getByRole('navigation', {name: 'Breadcrumb'})
+
   // From the editor of an entry to the overview of its root
-  await back.click()
-  await expect(app.title).toHaveCount(0)
+  await crumbs.getByRole('button', {name: 'Pages'}).click()
+  await expect(app.title).toHaveText('Pages')
   await expect(explorer.getByRole('row', {name: /^Folder/})).toBeVisible()
 
   // Between the overviews of the root and a folder
   await explorer.getByRole('row', {name: /^Folder/}).click()
   await expect(app.title).toHaveText('Folder')
   await expect(explorer.getByRole('row', {name: /^Child/})).toBeVisible()
-  await back.click()
-  await expect(app.title).toHaveCount(0)
+  await crumbs.getByRole('button', {name: 'Pages'}).click()
+  await expect(app.title).toHaveText('Pages')
   await expect(explorer.getByRole('row', {name: /^Folder/})).toBeVisible()
 
   // From the editor of a media file to the overview of its folder
@@ -74,7 +75,7 @@ test('shows the rows of an overview in the first frame it is shown', async ({
     location.hash = `#/entry/main/media/${id}`
   }, dashboardScenarioIds.nestedMediaFile)
   await expect(app.title).toHaveText('Nested media file')
-  await main.getByRole('button', {name: 'Back to parent entry'}).click()
+  await crumbs.getByRole('button', {name: 'Nested media folder'}).click()
   await expect(app.title).toHaveText('Nested media folder')
   await expect(
     main

@@ -25,9 +25,7 @@ test('only moves into entries that exist in every language of the entry', async 
   await dialog.getByRole('button', {name: 'Move', exact: true}).click()
 
   await expect(dialog).toHaveCount(0)
-  await expect(
-    app.page.getByRole('button', {name: 'Back to parent entry'})
-  ).toBeVisible()
+  await expect(app.crumb('Localized target')).toBeVisible()
 })
 
 test('searches the whole root and shows where entries move to', async ({

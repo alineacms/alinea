@@ -41,7 +41,8 @@ export interface DashboardModalProps {
   /** Labels the modal, a DashboardModalTitle labels it otherwise */
   'aria-label'?: string
   children?: ReactNode
-  size?: 'default' | 'explorer'
+  /** `sm` fits a short form, `default` is wide and `explorer` fills the screen */
+  size?: 'sm' | 'default' | 'explorer'
 }
 
 export function DashboardModal({
@@ -54,7 +55,7 @@ export function DashboardModal({
 }: DashboardModalProps) {
   const content = (
     <DialogContent
-      size={size === 'explorer' ? 'full' : 'lg'}
+      size={size === 'explorer' ? 'full' : size === 'sm' ? 'default' : 'lg'}
       dismissable={dismissable}
       showCloseButton={false}
       aria-label={ariaLabel}
@@ -145,7 +146,7 @@ export function DashboardModalCloseButton() {
       aria-label="Close modal"
       variant="ghost"
       className={styles.DashboardModalCloseButton()}
-      size="icon"
+      size="icon-sm"
       icon={IcRoundClose}
     />
   )

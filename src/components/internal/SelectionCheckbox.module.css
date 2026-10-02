@@ -16,8 +16,8 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  border: 1px solid var(--alinea-border);
-  border-radius: var(--alinea-radius-sm);
+  border: 1px solid var(--alinea-border-strong);
+  border-radius: var(--alinea-radius-xs);
   background: var(--alinea-input);
   transition: var(--alinea-transition);
   transition-property: background, border-color, box-shadow;

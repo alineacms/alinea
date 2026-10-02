@@ -1,6 +1,5 @@
 import {
   Button,
-  Icon,
   SidebarContent,
   Tree,
   TreeItem,
@@ -31,22 +30,8 @@ import {
   useStore,
   type WritableAtom
 } from 'jotai'
-import {
-  memo,
-  type ComponentType,
-  type ReactNode,
-  type RefObject,
-  useEffect,
-  useRef
-} from 'react'
-import {
-  IcOutlineArchive,
-  IcRoundEdit,
-  IcRoundTranslate,
-  LucideFile,
-  LucideFolder,
-  RiFlashlightFill
-} from '../icons.js'
+import {memo, type ReactNode, type RefObject, useEffect, useRef} from 'react'
+import {LucideFile, LucideFolder} from '../icons.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import css from './SidebarTree.module.css'
 
@@ -71,7 +56,6 @@ export interface SidebarTreeExplorerProps {
 }
 
 interface SidebarStatusDisplay {
-  icon: ComponentType
   label: string
   status: 'draft' | 'unpublished' | 'archived' | 'untranslated'
 }
@@ -81,17 +65,11 @@ function sidebarStatus(
   locale: string | null
 ): SidebarStatusDisplay | undefined {
   if (locale && item.locale !== locale)
-    return {
-      icon: IcRoundTranslate,
-      label: 'Untranslated',
-      status: 'untranslated'
-    }
-  if (item.status === 'archived')
-    return {icon: IcOutlineArchive, label: 'Archived', status: 'archived'}
+    return {label: 'Untranslated', status: 'untranslated'}
+  if (item.status === 'archived') return {label: 'Archived', status: 'archived'}
   if (item.status === 'draft' && item.main)
-    return {icon: RiFlashlightFill, label: 'Unpublished', status: 'unpublished'}
-  if (item.status === 'draft')
-    return {icon: IcRoundEdit, label: 'Draft', status: 'draft'}
+    return {label: 'Unpublished', status: 'unpublished'}
+  if (item.status === 'draft') return {label: 'Draft', status: 'draft'}
 }
 
 interface SidebarTreeItemProps {
@@ -118,22 +96,10 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   selectedItem
 }: SidebarTreeItemProps) {
   const configuredIcon = useAtomValueRaw(typeAtoms(data.type)).icon
-  const displayStatus = sidebarStatus(data, locale)
-  const selectedAncestor =
+  const status = sidebarStatus(data, locale)
+  const parentSelected = Boolean(
     selectedItem && data.parents.includes(selectedItem.id)
-      ? selectedItem
-      : undefined
-  const selectedStatus = selectedAncestor
-    ? sidebarStatus(selectedAncestor, locale)
-    : undefined
-  const rowStatus =
-    selectedStatus?.status === 'archived' ||
-    selectedStatus?.status === 'unpublished'
-      ? selectedStatus
-      : displayStatus
-  const isArchived = rowStatus?.status === 'archived'
-  const isUnpublished = rowStatus?.status === 'unpublished'
-  const isUntranslated = displayStatus?.status === 'untranslated'
+  )
   const link = entryLink?.(data)
   return (
     <TreeItem
@@ -144,28 +110,20 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
       href={link ? dashboardHref(link.href) : undefined}
       current={current ? 'location' : undefined}
       className={styles.SidebarTree.item({
-        archived: isArchived,
-        groupEnd: groupEnd && selectedAncestor !== undefined,
-        parentSelected: selectedAncestor !== undefined,
-        unpublished: isUnpublished,
-        untranslated: isUntranslated
+        archived: status?.status === 'archived',
+        parentSelected,
+        groupEnd: parentSelected && groupEnd
       })}
       suffix={
-        displayStatus ? (
+        status && (
           <span
-            className={styles.SidebarTree.status({
-              [displayStatus.status]: true
-            })}
-            aria-label={displayStatus.label}
             role="img"
-            title={displayStatus.label}
-          >
-            <Icon
-              icon={displayStatus.icon}
-              className={styles.SidebarTree.status.icon()}
-            />
-          </span>
-        ) : undefined
+            aria-label={status.label}
+            title={status.label}
+            data-status={status.status}
+            className={styles.SidebarTree.status()}
+          />
+        )
       }
       items={item.children}
     >
@@ -195,7 +153,7 @@ function equalStringSets(left: Set<string>, right: Set<string>): boolean {
   )
 }
 
-const treeRowHeight = 34
+const treeRowHeight = 32
 
 /** The last visible descendant of an entry, if it is expanded */
 function lastVisibleDescendant(
@@ -316,7 +274,6 @@ function SidebarTreeView({
   view
 }: SidebarTreeViewProps) {
   const label = useAtomValueRaw(root.label)
-  const icon = useAtomValueRaw(root.icon)
   const i18n = useAtomValueRaw(root.i18n)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const {snapshot} = view
@@ -355,7 +312,6 @@ function SidebarTreeView({
               // Entries link to their page, so the selected root is the page
               aria-current={entryLink && rootSelected ? 'page' : undefined}
               className={styles.SidebarTree.rootButton.action()}
-              icon={icon}
               onClick={onRootPress}
             >
               <span className={styles.SidebarTree.rootButton.label()}>

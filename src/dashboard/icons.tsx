@@ -450,6 +450,24 @@ export function IcRoundVisibility(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+/** Material Symbols Rounded: swap-vert-rounded */
+export function IcRoundSwapVert(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M8.288 12.713Q8 12.425 8 12V5.825L6.125 7.7q-.275.275-.687.275T4.725 7.7q-.3-.3-.3-.712t.3-.713L8.3 2.7q.15-.15.325-.213T9 2.425t.375.062t.325.213l3.6 3.6q.3.3.287.7t-.312.7q-.3.275-.7.288t-.7-.288L10 5.825V12q0 .425-.288.713T9 13t-.712-.288m6.337 8.8q-.175-.062-.325-.212l-3.6-3.6q-.3-.3-.287-.7t.312-.7q.3-.275.7-.288t.7.288L14 18.175V12q0-.425.288-.712T15 11t.713.288T16 12v6.175l1.875-1.875q.275-.275.688-.275t.712.275q.3.3.3.713t-.3.712L15.7 21.3q-.15.15-.325.213t-.375.062t-.375-.062"
+      />
+    </svg>
+  )
+}
+
 /** Material Symbols Rounded: filter-list-outline-rounded */
 export function IcRoundFilterList(props: SVGProps<SVGSVGElement>) {
   return (
@@ -1856,6 +1874,24 @@ export function IcRoundLastPage(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+/** Material Symbols Rounded: add-row-below-outline-rounded */
+export function IcRoundAddRowBelow(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M19 10V4H5v6zM5 20q-.825 0-1.412-.587T3 18V4q0-.825.588-1.412T5 2h14q.825 0 1.413.588T21 4v14q0 .825-.587 1.413T19 20h-1q-.425 0-.712-.288T17 19t.288-.712T18 18h1v-6H5v6h1q.425 0 .713.288T7 19t-.288.713T6 20zm6.288 1.713Q11 21.425 11 21v-1h-1q-.425 0-.712-.288T9 19t.288-.712T10 18h1v-1q0-.425.288-.712T12 16t.713.288T13 17v1h1q.425 0 .713.288T15 19t-.288.713T14 20h-1v1q0 .425-.288.713T12 22t-.712-.288M12 10v2zm0 0"
+      />
+    </svg>
+  )
+}
+
 /** Material Symbols Rounded: lock-outline-rounded */
 export function IcRoundLock(props: SVGProps<SVGSVGElement>) {
   return (
@@ -2847,6 +2883,24 @@ export function IcRoundFirstPage(props: SVGProps<SVGSVGElement>) {
       <path
         fill="currentColor"
         d="M6.288 17.713Q6 17.425 6 17V7q0-.425.288-.712T7 6t.713.288T8 7v10q0 .425-.288.713T7 18t-.712-.288M13.8 12l3.9 3.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-4.6-4.6q-.15-.15-.212-.325T11.425 12t.063-.375t.212-.325l4.6-4.6q.275-.275.7-.275t.7.275t.275.7t-.275.7z"
+      />
+    </svg>
+  )
+}
+
+/** Material Symbols Rounded: add-row-above-outline-rounded */
+export function IcRoundAddRowAbove(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        fill="currentColor"
+        d="M5 14v6h14v-6zm0 8q-.825 0-1.412-.587T3 20V6q0-.825.588-1.412T5 4h1q.425 0 .713.288T7 5t-.288.713T6 6H5v6h14V6h-1q-.425 0-.712-.288T17 5t.288-.712T18 4h1q.825 0 1.413.588T21 6v14q0 .825-.587 1.413T19 22zm6-16h-1q-.425 0-.712-.288T9 5t.288-.712T10 4h1V3q0-.425.288-.712T12 2t.713.288T13 3v1h1q.425 0 .713.288T15 5t-.288.713T14 6h-1v1q0 .425-.288.713T12 8t-.712-.288T11 7zm1 8v-2zm0 0"
       />
     </svg>
   )

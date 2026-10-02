@@ -43,7 +43,7 @@ test('sizes and orientation', async ({mount, page}) => {
   await expect(page.getByRole('radio', {name: 'Bottom'})).toBeFocused()
 })
 
-test('outline items sit borderless inside the group frame', async ({
+test('outline items sit borderless inside the group track', async ({
   mount,
   page
 }) => {
@@ -51,7 +51,7 @@ test('outline items sit borderless inside the group frame', async ({
   const group = page.locator(
     '[data-slot="toggle-group"][data-variant="outline"]'
   )
-  await expect(group.first()).toHaveCSS('border-top-style', 'solid')
+  await expect(group.first()).toHaveCSS('border-top-style', 'none')
   const items = group.first().locator('[data-slot="toggle-group-item"]')
   for (const item of await items.all())
     await expect(item).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)')

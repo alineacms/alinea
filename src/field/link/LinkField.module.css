@@ -1,7 +1,3 @@
-.LinkFieldView-inputHeader {
-  min-height: calc(1.5 * var(--alinea-font-size-base) + 16px);
-}
-
 .LinkFieldView-label {
   align-self: stretch;
   display: inline-flex;
@@ -16,7 +12,8 @@
   min-width: 180px;
 }
 
-.LinkFieldView-label.is-missing {
+.LinkFieldView-label.is-missing,
+.LinkFieldView-label.is-missing .LinkFieldView-title {
   color: var(--alinea-fg-muted);
 }
 
@@ -68,9 +65,9 @@
 }
 
 .LinkFieldView-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-regular);
+  color: var(--alinea-fg);
   min-width: 0;
   max-width: 240px;
   overflow: hidden;
@@ -115,8 +112,12 @@
   white-space: nowrap;
 }
 
-.LinkFieldView-metaLabel {
+/* The attribute outweighs the muted description it is drawn as */
+.LinkFieldView-metaLabel[data-slot] {
   max-width: 240px;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-regular);
 }
 
 .LinkFieldView-anchorOption {
@@ -156,36 +157,16 @@
   width: 120px;
 }
 
+/* Spans the field, so the picker it anchors centers on the whole field */
 .LinkFieldView-create {
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
-  width: 100%;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .LinkFieldView-createButton {
   flex-shrink: 0;
-}
-
-.LinkFieldView-rowAction {
-  align-self: stretch;
-  flex: 1;
-  gap: 8px;
-  min-width: 0;
-  padding: 0;
-}
-
-/* The whole row opens the link settings, only its action buttons highlight */
-.LinkFieldView-rowAction[data-variant]:hover {
-  background: transparent;
-}
-
-.LinkFieldView-settingsSeparator {
-  height: 1px;
-  margin: 4px 8px;
-  border: none;
-  background-color: var(--alinea-border);
 }
 
 @keyframes LinkFieldView-skeleton-pulse {

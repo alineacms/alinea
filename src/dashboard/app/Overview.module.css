@@ -1,0 +1,28 @@
+.Overview[data-slot] {
+  position: relative;
+  overflow: hidden;
+  background: var(--alinea-bg);
+}
+
+.Overview-list {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 0 24px 24px;
+
+  /* The grid spaces its edges like its gaps, line the cards up with the page */
+  &.is-cards {
+    margin-top: -16px;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .Overview-list {
+    padding: 0 12px 12px;
+
+    &.is-cards {
+      padding: 0;
+    }
+  }
+}

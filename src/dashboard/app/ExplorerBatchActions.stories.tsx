@@ -4,7 +4,11 @@ import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import type {CSSProperties} from 'react'
 import {ExplorerBatchActionBar} from './ExplorerBatchActions.js'
 
-const frame: CSSProperties = {display: 'flex', height: 320}
+const frame: CSSProperties = {
+  position: 'relative',
+  display: 'flex',
+  height: 320
+}
 
 function noop() {}
 

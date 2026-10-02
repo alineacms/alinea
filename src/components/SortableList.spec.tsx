@@ -1,11 +1,14 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
   Basic,
+  Current,
   Empty,
   Reorderable,
   ToggleReorder
 } from './SortableList.stories.js'
+import {Button} from './Button.js'
 import {ListLabel} from './List.js'
+import {SortableList, SortableListAdd} from './SortableList.js'
 
 test('reorders items by dragging the handle', async ({mount, page}) => {
   await mount(<Reorderable />)
@@ -122,14 +125,41 @@ test('folds item content with the toggle', async ({mount, page}) => {
   await expect(quote.getByLabel('Quote', {exact: true})).toBeVisible()
 })
 
-test('separates items and the add row with borders', async ({mount, page}) => {
+test('folded items are as tall as a text field', async ({mount, page}) => {
+  await mount(<Basic />)
+  const hero = page.getByRole('listitem', {name: 'Hero item 1'})
+  await hero.getByRole('button', {name: 'Collapse hero'}).click()
+  // The list draws its 1px edge outside, around the 30px row
+  expect((await hero.boundingBox())!.height).toBe(30)
+})
+
+test('joins the title and its "…" in one button', async ({mount, page}) => {
+  await mount(<Basic />)
+  const quote = page.getByRole('listitem', {name: 'Quote item 2'})
+  const trigger = quote.getByRole('button', {name: 'Quote settings'})
+  await expect(trigger).toHaveAttribute(
+    'data-slot',
+    'sortable-list-item-trigger'
+  )
+  await expect(trigger).toContainText('Editorial quote')
+  await expect(trigger.locator('svg')).toHaveCount(1)
+})
+
+test('separates items with borders and adds below the list', async ({
+  mount,
+  page
+}) => {
   await mount(<Basic />)
   const list = page.getByRole('list', {name: 'Sections'})
   const items = list.getByRole('listitem')
   await expect(items.first()).toHaveCSS('border-top-width', '0px')
   await expect(items.nth(1)).toHaveCSS('border-top-width', '1px')
-  const add = list.locator('[data-slot="sortable-list-add"] > div')
-  await expect(add).toHaveCSS('border-top-width', '1px')
+  await expect(list.locator('[data-slot="sortable-list-add"]')).toHaveCount(0)
+  const add = page.locator('[data-slot="sortable-list-add"]')
+  const listBox = (await list.boundingBox())!
+  const addBox = (await add.boundingBox())!
+  expect(addBox.y).toBeGreaterThanOrEqual(listBox.y + listBox.height)
+  expect(addBox.x).toBe(listBox.x)
 })
 
 test('drops the add row border in an empty list', async ({mount, page}) => {
@@ -137,6 +167,22 @@ test('drops the add row border in an empty list', async ({mount, page}) => {
   const add = page.locator('[data-slot="sortable-list-add"] > div')
   await expect(add).toHaveCSS('border-top-width', '0px')
   await expect(page.getByRole('button', {name: 'Add Hero'})).toBeVisible()
+})
+
+test('renders no surface without items', async ({mount, page}) => {
+  const empty = null
+  await mount(
+    <SortableList aria-label="Sections">
+      {empty}
+      <SortableListAdd>
+        <Button variant="ghost" size="sm">
+          Add Hero
+        </Button>
+      </SortableListAdd>
+    </SortableList>
+  )
+  await expect(page.getByRole('button', {name: 'Add Hero'})).toBeVisible()
+  await expect(page.getByRole('list', {name: 'Sections'})).toHaveCount(0)
 })
 
 test('a list label without rows to fold keeps its full color', async ({
@@ -167,4 +213,16 @@ test('keeps item state when reordering is switched off', async ({
   await page.getByRole('button', {name: 'Edit'}).click()
   await expect(title).toHaveValue('Welcome')
   await expect(page.getByRole('button', {name: 'Drag Hero'})).toHaveCount(1)
+})
+
+test('highlights the current item', async ({mount, page}) => {
+  await mount(<Current />)
+  const list = page.getByRole('list', {name: 'Sections'})
+  const text = list.getByRole('listitem', {name: 'Text'})
+  const hero = list.getByRole('listitem', {name: 'Hero'})
+  await expect(text).toHaveAttribute('aria-current', 'true')
+  await expect(hero).not.toHaveAttribute('aria-current')
+  const background = (item: typeof text) =>
+    item.evaluate(element => getComputedStyle(element).backgroundColor)
+  expect(await background(text)).not.toBe(await background(hero))
 })

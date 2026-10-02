@@ -1,15 +1,24 @@
-import {Button, PageFooter, Text, Toolbar} from '#/components.js'
+import {Button, Toolbar} from '#/components.js'
 import {
   archiveEntriesAtom,
   deleteEntriesAtom,
   loadDeletePlanAtom,
   type DeletePlan
 } from '#/dashboard/atoms/delete.js'
-import type {DashboardExplorer} from '#/dashboard/atoms/explorer.js'
+import type {
+  DashboardExplorer,
+  ExplorerItemData
+} from '#/dashboard/atoms/explorer.js'
 import {loadMoveTargetsAtom, type MoveTargets} from '#/dashboard/atoms/move.js'
 import styler from '@alinea/styler'
 import {useAtomValueRawSync, useSetAtom} from 'jotai'
-import {useState, useTransition} from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useState,
+  useTransition
+} from 'react'
 import {IcRoundClose, IcRoundDelete, IcRoundDriveFileMove} from '../icons.js'
 import {DeleteDialog} from './DeleteDialog.js'
 import css from './ExplorerBatchActions.module.css'
@@ -17,15 +26,32 @@ import {MoveDialog} from './MoveDialog.js'
 
 const styles = styler(css)
 
-export interface ExplorerBatchActionsProps {
-  explorer: DashboardExplorer
+interface ExplorerItemActionsValue {
+  isPending: boolean
+  move(items: Array<ExplorerItemData>): void
+  remove(items: Array<ExplorerItemData>): void
 }
 
-/** Acts on the entries selected in an overview */
-export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
-  const {items, canMove, canDelete} = useAtomValueRawSync(
-    explorer.selectionActions
-  )
+const ExplorerItemActionsContext =
+  createContext<ExplorerItemActionsValue | null>(null)
+
+/** Moves or deletes entries, from the selection or the menu of a row */
+export function useExplorerItemActions(): ExplorerItemActionsValue {
+  const actions = useContext(ExplorerItemActionsContext)
+  if (!actions) throw new Error('Missing ExplorerItemActions')
+  return actions
+}
+
+export interface ExplorerItemActionsProps {
+  explorer: DashboardExplorer
+  children: ReactNode
+}
+
+/** Holds the move and delete dialogs of the entries of an overview */
+export function ExplorerItemActions({
+  explorer,
+  children
+}: ExplorerItemActionsProps) {
   const clearSelection = useSetAtom(explorer.clearSelection)
   const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
@@ -34,32 +60,23 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
   const [moving, setMoving] = useState<MoveTargets>()
   const [deletePlan, setDeletePlan] = useState<DeletePlan>()
   const [isPending, startTransition] = useTransition()
-  if (items.length === 0) return null
-
-  function openMoveDialog() {
-    startTransition(async () => {
-      setMoving(await loadMoveTargets(items))
-    })
+  const actions: ExplorerItemActionsValue = {
+    isPending,
+    move(items) {
+      startTransition(async () => {
+        setMoving(await loadMoveTargets(items))
+      })
+    },
+    // Entries with languages are deleted in the listed language only
+    remove(items) {
+      startTransition(async () => {
+        setDeletePlan(await loadDeletePlan(items))
+      })
+    }
   }
-
-  // Entries with languages are deleted in the listed language only
-  function openDeleteDialog() {
-    startTransition(async () => {
-      setDeletePlan(await loadDeletePlan(items))
-    })
-  }
-
   return (
-    <>
-      <ExplorerBatchActionBar
-        count={items.length}
-        canDelete={canDelete}
-        canMove={canMove}
-        isPending={isPending}
-        onClear={clearSelection}
-        onDelete={openDeleteDialog}
-        onMove={openMoveDialog}
-      />
+    <ExplorerItemActionsContext.Provider value={actions}>
+      {children}
       <MoveDialog
         targets={moving}
         onClose={() => setMoving(undefined)}
@@ -77,7 +94,32 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
           clearSelection()
         }}
       />
-    </>
+    </ExplorerItemActionsContext.Provider>
+  )
+}
+
+export interface ExplorerBatchActionsProps {
+  explorer: DashboardExplorer
+}
+
+/** Acts on the entries selected in an overview */
+export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
+  const {items, canMove, canDelete} = useAtomValueRawSync(
+    explorer.selectionActions
+  )
+  const clearSelection = useSetAtom(explorer.clearSelection)
+  const actions = useExplorerItemActions()
+  if (items.length === 0) return null
+  return (
+    <ExplorerBatchActionBar
+      count={items.length}
+      canDelete={canDelete}
+      canMove={canMove}
+      isPending={actions.isPending}
+      onClear={clearSelection}
+      onDelete={() => actions.remove(items)}
+      onMove={() => actions.move(items)}
+    />
   )
 }
 
@@ -91,7 +133,7 @@ export interface ExplorerBatchActionBarProps {
   onMove(): void
 }
 
-/** Shows how many entries are selected and the actions on them */
+/** Floats over the list: how many entries are selected and their actions */
 export function ExplorerBatchActionBar({
   count,
   canDelete,
@@ -102,45 +144,49 @@ export function ExplorerBatchActionBar({
   onMove
 }: ExplorerBatchActionBarProps) {
   return (
-    <PageFooter className={styles.ExplorerBatchActionBar()}>
-      <Toolbar
-        aria-label="Selected entries"
-        className={styles.ExplorerBatchActionBar.toolbar()}
-      >
+    <Toolbar
+      aria-label="Selected entries"
+      className={styles.ExplorerBatchActionBar()}
+    >
+      <span className={styles.ExplorerBatchActionBar.count()}>
+        {count} selected
+      </span>
+      {canMove && (
         <Button
-          aria-label="Clear selection"
-          icon={IcRoundClose}
-          size="icon-sm"
+          icon={IcRoundDriveFileMove}
+          size="sm"
           variant="ghost"
-          onClick={onClear}
-        />
-        <Text className={styles.ExplorerBatchActionBar.count()}>
-          {count} selected
-        </Text>
-        <div className={styles.ExplorerBatchActionBar.actions()}>
-          {canMove && (
-            <Button
-              icon={IcRoundDriveFileMove}
-              disabled={isPending}
-              loading={isPending}
-              onClick={onMove}
-            >
-              Move to…
-            </Button>
-          )}
-          {canDelete && (
-            <Button
-              color="destructive"
-              icon={IcRoundDelete}
-              disabled={isPending}
-              loading={isPending}
-              onClick={onDelete}
-            >
-              Delete
-            </Button>
-          )}
-        </div>
-      </Toolbar>
-    </PageFooter>
+          disabled={isPending}
+          loading={isPending}
+          onClick={onMove}
+        >
+          Move to…
+        </Button>
+      )}
+      {canDelete && (
+        <Button
+          color="destructive"
+          icon={IcRoundDelete}
+          size="sm"
+          variant="ghost"
+          disabled={isPending}
+          loading={isPending}
+          onClick={onDelete}
+        >
+          Delete
+        </Button>
+      )}
+      <span
+        aria-hidden="true"
+        className={styles.ExplorerBatchActionBar.divider()}
+      />
+      <Button
+        aria-label="Clear selection"
+        icon={IcRoundClose}
+        size="icon-sm"
+        variant="ghost"
+        onClick={onClear}
+      />
+    </Toolbar>
   )
 }

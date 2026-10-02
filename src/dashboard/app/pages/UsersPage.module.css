@@ -3,7 +3,7 @@
 }
 
 .UsersPage-header {
-  height: 48px;
+  height: var(--alinea-header-height);
   padding: 8px 16px;
 }
 

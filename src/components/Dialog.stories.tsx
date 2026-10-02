@@ -30,9 +30,7 @@ export function Example() {
         <TextField label="Email" type="email" required autoFocus />
         <TextField label="Name" />
         <DialogFooter>
-          <DialogClose variant="outline" color="secondary">
-            Cancel
-          </DialogClose>
+          <DialogClose variant="outline">Cancel</DialogClose>
           <DialogClose color="primary">Create user</DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -55,11 +53,7 @@ export function Controlled() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              color="secondary"
-              onClick={() => setOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button color="destructive" onClick={() => setOpen(false)}>

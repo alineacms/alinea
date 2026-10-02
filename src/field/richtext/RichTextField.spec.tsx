@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
+  RichTextHeadingStory,
   RichTextImageDisabledStory,
   RichTextImageStory,
   RichTextImportedListStory,
@@ -320,9 +321,9 @@ test('moves text across an embedded block with cut and paste', async ({
   await page.keyboard.press('ControlOrMeta+v')
 
   await expect(editor).toContainText('After the block. Before the block.')
-  await expect(page.getByRole('button', {name: 'Callout actions'})).toHaveCount(
-    1
-  )
+  await expect(
+    page.getByRole('button', {name: 'Callout settings'})
+  ).toHaveCount(1)
 })
 
 test('preserves rich formatting when copying and pasting', async ({
@@ -436,11 +437,11 @@ test('edits nested rich text inside an embedded block', async ({
   await mount(<RichTextStory />)
 
   const block = page.locator('[data-richtext-block="true"]')
-  await expect(block).toHaveCSS('border-radius', '8px')
+  await expect(block).toHaveCSS('border-radius', '10px')
   await expect(block).toHaveCSS('margin', '16px 0px')
   await expect(block.locator('[data-richtext-block-editor="true"]')).toHaveCSS(
     'padding',
-    '8px 16px 16px'
+    '6px 16px 16px 34px'
   )
   await expect(page.getByText('Details', {exact: true})).toBeVisible()
   await expect(
@@ -522,10 +523,11 @@ test('keeps the owning rich text toolbar open while focus moves', async ({
   await expect(toolbar).toBeVisible()
   await expect(toolbar).toHaveCSS('display', 'flex')
   await expect(toolbar).toHaveCSS('height', '40px')
-  await expect(toolbar).toHaveCSS('padding', '4px 12px')
+  await expect(toolbar).toHaveCSS('padding', '0px 4px')
   const boldButton = page.getByRole('button', {name: 'Bold'})
+  await expect(boldButton).toHaveCSS('height', '32px')
   await expect(boldButton).toHaveCSS('border-radius', '8px')
-  await expect(boldButton.locator('svg')).toHaveCSS('font-size', '18px')
+  await expect(boldButton.locator('svg')).toHaveCSS('font-size', '16px')
   await expect(toolbar).toHaveAttribute(
     'data-richtext-toolbar-owner',
     outerOwner
@@ -547,6 +549,49 @@ test('keeps the owning rich text toolbar open while focus moves', async ({
     'data-richtext-toolbar-owner',
     nestedOwner
   )
+})
+
+test('shows focus as a border without a halo', async ({mount, page}) => {
+  await mount(<RichTextPlainStory />)
+
+  const field = page.locator('[data-richtext-field]')
+  await page.locator('.ProseMirror').getByText('Select this text').click()
+  await expect(field).toHaveAttribute('data-focused', 'true')
+  await expect(field).toHaveCSS('border-color', 'rgb(63, 97, 232)')
+  await expect(field).toHaveCSS('outline-style', 'none')
+  await expect(field).toHaveCSS('box-shadow', 'none')
+})
+
+test('edits a heading anchor in its sheet', async ({mount, page}) => {
+  await mount(<RichTextHeadingStory />)
+
+  const editor = page.locator('.ProseMirror')
+  const heading = editor.locator('h2')
+  const settings = page.getByRole('button', {name: 'Heading settings'})
+  await expect(heading).toHaveAttribute('data-anchor', 'introduction')
+  await expect(settings).toHaveCount(0)
+  await heading.hover()
+  await expect(settings).toHaveCount(1)
+
+  await settings.click()
+  const sheet = page.getByRole('dialog', {name: 'Introduction'})
+  await expect(sheet).toBeVisible()
+  await expect(sheet.getByText('H2', {exact: true})).toBeVisible()
+  const anchor = sheet.getByRole('textbox', {name: 'Anchor'})
+  await expect(anchor).toBeFocused()
+  await expect(anchor).toHaveValue('introduction')
+  await expect(heading).toHaveClass(/RichTextHeadings-current/)
+
+  await anchor.fill('getting started')
+  await expect(heading).toHaveAttribute('data-anchor', 'getting-started')
+  await expect(page.getByTestId('value')).toContainText(
+    '"_anchor":"getting-started"'
+  )
+
+  await page.keyboard.press('Escape')
+  await expect(sheet).toHaveCount(0)
+  await expect(heading).not.toHaveClass(/RichTextHeadings-current/)
+  await expect(editor.getByText('Introduction')).toBeVisible()
 })
 
 test('keeps toolbar popouts open', async ({mount, page}) => {
@@ -589,15 +634,38 @@ test('toolbar follows the selection within the editor', async ({
 test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await mount(<RichTextStory />)
 
-  await page.getByRole('button', {name: 'Callout actions'}).click()
-  await page.getByRole('button', {name: 'Duplicate'}).click()
-  await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(2)
+  const titles = page.getByRole('textbox', {name: 'Title'})
+  const settings = page.getByRole('button', {name: 'Callout settings'})
+  const sheet = page.getByRole('dialog', {name: 'Callout'})
+  await settings.click()
+  await expect(sheet).toBeVisible()
+  await expect(settings).toHaveAttribute('aria-expanded', 'true')
+  await expect(
+    page.locator('[data-richtext-block="true"] [aria-current="true"]')
+  ).toHaveCount(1)
+  await page.keyboard.press('x')
+  await expect(page.getByTestId('dirty')).toHaveText('false')
+  await sheet.getByRole('button', {name: 'Duplicate'}).click()
+  await expect(titles).toHaveCount(2)
+  await expect(sheet).toHaveCount(0)
 
-  await page.getByRole('button', {name: 'Callout actions'}).first().click()
-  await expect(page.getByRole('button', {name: 'Delete'})).toHaveCount(0)
+  await settings.first().click()
   await page.keyboard.press('Escape')
-  await page.getByRole('button', {name: 'Remove Callout'}).first().click()
-  await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(1)
+  await expect(sheet).toHaveCount(0)
+  await expect(settings.first()).toBeFocused()
+  await expect(
+    page.locator('[data-richtext-block="true"] [aria-current="true"]')
+  ).toHaveCount(0)
+
+  await settings.first().click()
+  await sheet.getByRole('button', {name: 'Delete'}).click()
+  await expect(titles).toHaveCount(1)
+  await expect(sheet).toHaveCount(0)
+
+  await settings.click()
+  await page.getByRole('button', {name: 'Remove Callout'}).click()
+  await expect(titles).toHaveCount(0)
+  await expect(sheet).toHaveCount(0)
 })
 
 test('moves a complex block and keeps its fields editable', async ({
@@ -649,7 +717,7 @@ test('duplicates and independently edits a complex block', async ({
 
   const titles = page.getByRole('textbox', {name: 'CTA title'})
   await titles.fill('Original CTA')
-  await page.getByRole('button', {name: 'Call to action actions'}).click()
+  await page.getByRole('button', {name: 'Call to action settings'}).click()
   await page.getByRole('button', {name: 'Duplicate'}).click()
 
   await expect(titles).toHaveCount(2)
@@ -700,7 +768,7 @@ test('inserts a block in nested rich text and preserves it while moving', async 
   await noteItem.press('Enter')
 
   const noteText = page.getByRole('textbox', {name: 'Text'})
-  await expect(page.getByRole('button', {name: 'Note actions'})).toBeVisible()
+  await expect(page.getByRole('button', {name: 'Note settings'})).toBeVisible()
   await noteText.fill('Nested note value')
   await expect(page.getByTestId('value')).toContainText('Nested note value')
 
@@ -738,9 +806,10 @@ test('keeps outer and inner block fields read only', async ({mount, page}) => {
   await expect(page.locator('[data-richtext-toolbar="true"]')).toHaveCount(0)
   await expect(page.getByRole('textbox', {name: 'Title'})).toBeDisabled()
 
-  await page.getByRole('button', {name: 'Callout actions'}).click()
-  await expect(page.getByRole('button', {name: 'Duplicate'})).toBeDisabled()
-  await expect(page.getByRole('button', {name: 'Delete'})).toHaveCount(0)
+  await page.getByRole('button', {name: 'Callout settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Callout'})
+  await expect(sheet.getByRole('button', {name: 'Duplicate'})).toBeDisabled()
+  await expect(sheet.getByRole('button', {name: 'Delete'})).toBeDisabled()
   await expect(
     page.getByRole('button', {name: 'Remove Callout'})
   ).toBeDisabled()
@@ -839,9 +908,9 @@ test('synchronizes external replacements and resets', async ({mount, page}) => {
 
   await page.getByRole('button', {name: 'Replace body'}).dispatchEvent('click')
   await expect(editor).toHaveText('Externally replaced.')
-  await expect(page.getByRole('button', {name: 'Callout actions'})).toHaveCount(
-    0
-  )
+  await expect(
+    page.getByRole('button', {name: 'Callout settings'})
+  ).toHaveCount(0)
 })
 
 test('inserts a block at the active text position', async ({mount, page}) => {
@@ -854,9 +923,9 @@ test('inserts a block at the active text position', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Insert block'}).click()
   await page.getByRole('menuitem', {name: 'Callout'}).click()
 
-  await expect(page.getByRole('button', {name: 'Callout actions'})).toHaveCount(
-    2
-  )
+  await expect(
+    page.getByRole('button', {name: 'Callout settings'})
+  ).toHaveCount(2)
   await expect(page.getByTestId('value')).not.toContainText(
     '{"_type":"paragraph"}'
   )
@@ -999,7 +1068,7 @@ test('survives a mixed editing session around several blocks', async ({
   await editor.getByText('After the block.', {exact: true}).click()
   await page.keyboard.press('ControlOrMeta+a')
   await page.getByRole('button', {name: 'Italic'}).click()
-  await page.getByRole('button', {name: 'Callout actions'}).first().click()
+  await page.getByRole('button', {name: 'Callout settings'}).first().click()
   await page.getByRole('button', {name: 'Duplicate'}).click()
 
   const blocks = page.locator('[data-richtext-block="true"]')
@@ -1150,7 +1219,7 @@ test('keeps focus in the selected table cell while typing', async ({
 test('reorders embedded blocks by dragging', async ({mount, page}) => {
   await mount(<RichTextStory />)
 
-  await page.getByRole('button', {name: 'Callout actions'}).click()
+  await page.getByRole('button', {name: 'Callout settings'}).click()
   await page.getByRole('button', {name: 'Duplicate'}).click()
   const titles = page.getByRole('textbox', {name: 'Title'})
   await titles.nth(1).fill('Second')
@@ -1177,7 +1246,7 @@ test('undoes and redoes block duplication and movement', async ({
 
   const editor = page.locator('.ProseMirror').first()
   const titles = page.getByRole('textbox', {name: 'Title'})
-  await page.getByRole('button', {name: 'Callout actions'}).click()
+  await page.getByRole('button', {name: 'Callout settings'}).click()
   await page.getByRole('button', {name: 'Duplicate'}).click()
   await expect(titles).toHaveCount(2)
 

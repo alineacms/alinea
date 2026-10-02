@@ -3,7 +3,8 @@ import {
   type ContentCardProps,
   ContentGrid,
   ContentGridItem,
-  type DragDropProps
+  type DragDropProps,
+  Timestamp
 } from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {hasPreviewImage} from '#/core/media/Pdf.js'
@@ -24,6 +25,8 @@ import type {
 import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
 import {fileKindVisual} from './FileKind.js'
 import css from './ExplorerCards.module.css'
+import {auditMetadata} from './OverviewCell.js'
+import {overviewStatus, OverviewStatusDot} from './OverviewStatus.js'
 
 const styles = styler(css)
 
@@ -34,6 +37,9 @@ interface ExplorerCardItemProps {
   locale: string | null
   includeWorkspace: boolean
   onPick?: (entry: DashboardEntry) => void
+  overview: boolean
+  /** Show the root before the parents, eg. for results of several roots */
+  withRoot: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
@@ -42,7 +48,9 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   explorer,
   locale,
   includeWorkspace,
-  onPick
+  onPick,
+  overview,
+  withRoot
 }: ExplorerCardItemProps) {
   const {data} = useAtomValueRaw(entry.data)
   const isSelectable = useAtomValueRaw(explorer.isSelectable(entry))
@@ -58,7 +66,8 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   }
   const file = useAtomValueRaw(data.fileInfo)
   const thumbnail = useAtomValueRaw(data.thumbnail)
-  const card: ContentCardProps = file
+  const item = useAtomValueRaw(data.item)
+  const base: ContentCardProps = file
     ? {
         variant: 'media',
         ...(file.preview && file.extension && hasPreviewImage(file.extension)
@@ -82,6 +91,27 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
           title: label,
           description: type.label
         }
+  const {updatedAt, updatedBy} = auditMetadata(item)
+  const card: ContentCardProps = overview
+    ? {
+        ...base,
+        title: (
+          <span className={styles.ExplorerCards.title()}>
+            <span className={styles.ExplorerCards.title.text()}>{label}</span>
+            <OverviewStatusDot status={overviewStatus(item, locale)} />
+          </span>
+        ),
+        description:
+          !file && typeof updatedAt === 'number' ? (
+            <>
+              {updatedBy?.name && `${updatedBy.name} · `}
+              <Timestamp date={updatedAt * 1000} format="date" />
+            </>
+          ) : (
+            base.description
+          )
+      }
+    : base
   return (
     <ContentGridItem
       id={entry.id}
@@ -96,6 +126,8 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
           data={data}
           entry={entry}
           includeWorkspace={includeWorkspace}
+          joined={overview}
+          withRoot={withRoot || !overview}
         />
       ) : (
         <ContentCard {...card} />
@@ -108,6 +140,9 @@ interface ExplorerLocatedCardProps extends ContentCardProps {
   data: DashboardEntryData
   entry: DashboardEntry
   includeWorkspace: boolean
+  /** Show the location as one line of names separated by slashes */
+  joined: boolean
+  withRoot: boolean
 }
 
 /** A card with the location of its entry as breadcrumbs */
@@ -115,6 +150,8 @@ function ExplorerLocatedCard({
   data,
   entry,
   includeWorkspace,
+  joined,
+  withRoot,
   ...card
 }: ExplorerLocatedCardProps) {
   const config = useAtomValueRaw(configAtom)
@@ -125,14 +162,22 @@ function ExplorerLocatedCard({
   const workspaceLabel = workspace
     ? getWorkspace(workspace).label
     : entry.workspace
+  const showRoot = Boolean(rootLabel) && (withRoot || parents.length === 0)
   const breadcrumbs: Array<ReactNode> = [
     ...(includeWorkspace && workspaceLabel ? [workspaceLabel] : []),
-    ...(rootLabel ? [rootLabel] : []),
+    ...(showRoot ? [rootLabel] : []),
     ...parents.map(parent => (
       <ExplorerCardParentLabel key={parent.id} parent={parent} />
     ))
   ]
-  return <ContentCard {...card} breadcrumbs={breadcrumbs} />
+  if (!joined) return <ContentCard {...card} breadcrumbs={breadcrumbs} />
+  const location = breadcrumbs.map((crumb, index) => (
+    <span key={index}>
+      {index > 0 && ' / '}
+      {crumb}
+    </span>
+  ))
+  return <ContentCard {...card} breadcrumbs={[location]} />
 }
 
 interface ExplorerCardParentLabelProps {
@@ -156,6 +201,8 @@ export interface ExplorerCardsProps {
    * entry confirm it right away
    */
   onPick?: (entry: DashboardEntry) => void
+  /** Shown as the overview of a page: parents, status and who updated it */
+  overview?: boolean
 }
 
 export function ExplorerCards({
@@ -163,6 +210,7 @@ export function ExplorerCards({
   explorer,
   items,
   onPick,
+  overview = false,
   page,
   renderEmptyState,
   locale
@@ -171,9 +219,11 @@ export function ExplorerCards({
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
   const breadcrumbs =
+    overview ||
     explorer.breadcrumbs ||
     page.resultMode === 'matches' ||
     page.searchesEverything
+  const withRoot = page.searchesEverything || explorer.rootScope === 'workspace'
   return (
     <div
       id={explorer.resultsId}
@@ -186,7 +236,7 @@ export function ExplorerCards({
         aria-label="Explorer entries"
         dropLabel="Drop files to upload"
         items={items}
-        dependencies={[breadcrumbs, locale, onPick, page]}
+        dependencies={[breadcrumbs, locale, onPick, overview, page]}
         selectionMode={selectionMode}
         selectionBehavior={explorer.selectionBehavior}
         showSelectionControls={hasSelection && explorer.showSelectionControls}
@@ -207,6 +257,8 @@ export function ExplorerCards({
             locale={locale}
             includeWorkspace={page.searchesEverything}
             onPick={onPick}
+            overview={overview}
+            withRoot={withRoot}
           />
         )}
       </ContentGrid>

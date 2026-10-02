@@ -47,7 +47,7 @@ test('deletes an unpublished entry and lands on its parent overview', async ({
     }
   )
 
-  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  await app.page.getByRole('radio', {name: 'Edit entry'}).click()
   await app.runEntryAction('Unpublish')
   await expect(app.page.getByText('Unpublished', {exact: true})).toBeVisible()
   await app.page.getByRole('button', {name: 'Expand Ordered folder'}).click()
@@ -116,7 +116,7 @@ test('lists a few references and links to the references tab of an entry with ch
     title: 'Popular target'
   })
 
-  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  await app.page.getByRole('radio', {name: 'Edit entry'}).click()
   await app.runEntryAction('Delete')
   const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
   await expect(dialog.getByRole('alert')).toContainText(
@@ -145,7 +145,7 @@ test('warns about links to the files in a deleted media folder', async ({
     title: 'Media folder'
   })
 
-  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  await app.page.getByRole('radio', {name: 'Edit entry'}).click()
   await app.runEntryAction('Delete')
   const dialog = app.page.getByRole('dialog', {name: 'Delete folder'})
   await expect(dialog.getByRole('alert')).toContainText(
@@ -166,7 +166,7 @@ test('warns about links to the entries deleted with a page', async ({
     title: 'Localized folder'
   })
 
-  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  await app.page.getByRole('radio', {name: 'Edit entry'}).click()
   await app.runEntryAction('Delete')
   const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
   await expect(

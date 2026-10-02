@@ -244,15 +244,14 @@ test('fields marked overview: true become columns without parent columns', () =>
   ).toBe(false)
 })
 
-test('the media library lists a preview, dimensions, size and file type', () => {
+test('the media library lists dimensions, size and file type', () => {
   const overview = resolveOverview(config, rootParent('media'))
   expect(overview.columns.map(column => column.key)).toEqual([
-    'preview',
     'dimensions',
     'size',
     'fileType'
   ])
-  const [, dimensions, size, fileType] = overview.columns
+  const [dimensions, size, fileType] = overview.columns
   expect(dimensions.format!({width: 1200, height: 800}, {locale: null})).toBe(
     '1200 × 800 px'
   )
@@ -262,7 +261,6 @@ test('the media library lists a preview, dimensions, size and file type', () => 
   expect(size.format!(345466, {locale: null})).toBe('345 kB')
   expect(size.align).toBe('end')
   expect(fileType.format!('.jpg', {locale: null})).toBe('JPG')
-  expect(overview.columns[0].sortBy).toBeUndefined()
   const folder = resolveOverview(config, {
     kind: 'type',
     name: 'MediaLibrary',
@@ -270,7 +268,6 @@ test('the media library lists a preview, dimensions, size and file type', () => 
   })
   // Media files record who last updated them, folders hold files
   expect(folder.columns.map(column => column.key)).toEqual([
-    'preview',
     'dimensions',
     'size',
     'fileType',
@@ -298,7 +295,7 @@ test('media explorers show who last updated a file once one records it', async (
     (await store.get(explorer.pageReady)).overview.columns.map(
       column => column.key
     )
-  const fileColumns = ['preview', 'dimensions', 'size', 'fileType']
+  const fileColumns = ['dimensions', 'size', 'fileType']
   expect(await keys()).toEqual(fileColumns)
   await db.create({
     type: MediaFile,

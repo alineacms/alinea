@@ -517,7 +517,7 @@ function EditorHeader({
   dirty
 }: HeaderProps) {
   return (
-    <PageHeader size="lg">
+    <PageHeader>
       <PageBack label="Back to Blog" />
       <PageTitle>{page.title}</PageTitle>
       <ToggleGroup

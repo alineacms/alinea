@@ -84,7 +84,7 @@ test('selects the sidebar root when navigating back to it', async ({
   const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
 
   await expect(tree.getByRole('row', {selected: true})).toHaveText(/Alpha$/)
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.crumb('Pages').click()
 
   await expect(
     app.page.locator('button[aria-current="page"]', {hasText: 'Pages'})
@@ -102,18 +102,15 @@ test('shows the loaded entry title on an overview outside the sidebar tree', asy
   })
 
   await expect(app.title).toHaveText('Hidden folder')
-  await expect(
-    app.page.getByRole('button', {name: 'Back to root'})
-  ).toBeVisible()
-  const editView = app.page.getByRole('button', {name: 'Edit entry'})
-  await app.page.keyboard.press('Tab')
-  await editView.focus()
-  await expect(app.page.getByRole('tooltip')).toHaveText('Edit view')
+  await expect(app.crumb('Pages')).toBeVisible()
+  const editView = app.page.getByRole('radio', {name: 'Edit entry'})
+  const overviewView = app.page.getByRole('radio', {name: 'Show overview'})
+  await expect(overviewView).toBeChecked()
   await editView.click()
-  const overviewView = app.page.getByRole('button', {name: 'Show overview'})
-  await app.page.keyboard.press('Tab')
-  await overviewView.focus()
-  await expect(app.page.getByRole('tooltip')).toHaveText('Overview view')
+  await expect(editView).toBeChecked()
+  await expect(app.title).toHaveText('Hidden folder')
+  await overviewView.click()
+  await expect(overviewView).toBeChecked()
 })
 
 test('keeps localized children when switching a sidebar entry to overview', async ({
@@ -127,7 +124,7 @@ test('keeps localized children when switching a sidebar entry to overview', asyn
   })
 
   await app.openEntry('Localized folder')
-  await app.page.getByRole('button', {name: 'Show overview'}).click()
+  await app.page.getByRole('radio', {name: 'Show overview'}).click()
 
   const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   await expect(overview.getByText('No results found')).toHaveCount(0)
@@ -213,10 +210,10 @@ test('orders a root overview by the root configuration', async ({
   await roots.getByRole('button', {name: 'Ordered pages'}).click()
 
   const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
-  await expect(overview.getByRole('row')).toHaveText([/^Apple/, /^Zebra/])
+  await expect(overview.getByRole('row')).toHaveText([/Apple/, /Zebra/])
 })
 
-test('shows the configured root icon in the rail, the sidebar and the splash page', async ({
+test('shows the configured root icon in the rail and the splash page', async ({
   dashboard,
   mount
 }) => {
@@ -233,9 +230,9 @@ test('shows the configured root icon in the rail, the sidebar and the splash pag
   expect(configured).not.toBe(fallback)
 
   await roots.getByRole('button', {name: 'Ordered pages'}).click()
-  const rootButton = sidebar.getByRole('button', {name: 'Ordered pages'})
-  await expect(rootButton).toBeVisible()
-  expect(await icon(rootButton)).toBe(configured)
+  await expect(
+    sidebar.getByRole('button', {name: 'Ordered pages'})
+  ).toBeVisible()
 
   await app.page.evaluate(() => {
     window.location.hash = '#/'
@@ -350,7 +347,7 @@ test('blocks navigation until unsaved changes are resolved', async ({
   await expect(confirmation).toContainText('This entry has unsaved changes')
   await expect(app.title).toHaveText('Alpha')
 
-  await confirmation.getByRole('button', {name: 'Discard my changes'}).click()
+  await confirmation.getByRole('button', {name: 'Discard', exact: true}).click()
   await expect(app.title).toHaveText('Beta')
 })
 
@@ -371,7 +368,7 @@ test('blocks browser history until unsaved changes are resolved', async ({
   await expect(app.title).toHaveText('Beta')
   await expect(app.page).toHaveURL(/workflow-beta\?view=edit$/)
 
-  await confirmation.getByRole('button', {name: 'Discard my changes'}).click()
+  await confirmation.getByRole('button', {name: 'Discard', exact: true}).click()
   await expect(app.title).toHaveText('Alpha')
   await expect(app.field('Title')).toHaveValue('Alpha')
 })
@@ -386,7 +383,7 @@ test('updates document metadata with dashboard navigation', async ({
   await app.openEntry('Beta')
   await expect(app.page).toHaveTitle('Main: Beta')
 
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.crumb('Pages').click()
   await expect(app.page).toHaveTitle('Main: Pages')
   await expect(app.page.locator('link[rel="icon"]')).toHaveAttribute(
     'href',
@@ -583,7 +580,7 @@ test('keeps the overview on screen while an entry preview loads', async ({
   const app = await dashboard.mount(() =>
     mount(<DashboardScenarioMount slowPreview />)
   )
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.crumb('Pages').click()
   const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   await expect(overview).toBeVisible()
   const frames = await watchDashboard(app.page)

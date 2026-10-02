@@ -198,15 +198,16 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .ListLabel .ListLabel-toggle {
-  color: inherit;
-  min-height: auto;
-  padding-block: 0;
-  margin-inline: -8px;
+  height: auto;
+  margin-left: -6px;
+  padding: 2px 6px;
   border: none;
+  border-radius: var(--alinea-radius-sm);
+  color: inherit;
 }
 
 .ListLabel-title {
@@ -223,6 +224,11 @@
   font-size: var(--alinea-text-md);
   font-weight: var(--alinea-weight-medium);
   transition: color var(--alinea-transition);
+}
+
+.ListLabel-fold {
+  color: var(--alinea-fg-subtle);
+  font-size: 16px;
 }
 
 .ListLabel-required {

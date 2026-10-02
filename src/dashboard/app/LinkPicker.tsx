@@ -30,6 +30,7 @@ import {
   usePickerExplorer
 } from './ExplorerPickerContent.js'
 import css from './LinkPicker.module.css'
+import {SearchBar} from './SearchBar.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -254,24 +255,28 @@ function LinkPickerCompact({
 
   return (
     <div className={styles.LinkPickerCompact()}>
-      <div className={styles.LinkPickerCompact.header()}>
+      <SearchBar
+        controls={
+          <Tooltip>
+            <TooltipTrigger
+              aria-label="Expand entry picker"
+              variant="ghost"
+              icon={IcRoundOpenInFull}
+              size="icon-sm"
+              onClick={openExpanded}
+            />
+            <TooltipContent>Expand entry picker</TooltipContent>
+          </Tooltip>
+        }
+      >
         <ExplorerSearch
           autoFocus
           explorer={explorer}
+          inline
           onEntryAction={commitEntry}
           page={page}
         />
-        <Tooltip>
-          <TooltipTrigger
-            aria-label="Expand entry picker"
-            variant="ghost"
-            icon={IcRoundOpenInFull}
-            size="icon-lg"
-            onClick={openExpanded}
-          />
-          <TooltipContent>Expand entry picker</TooltipContent>
-        </Tooltip>
-      </div>
+      </SearchBar>
       <ExplorerBody
         compactTable
         explorer={explorer}

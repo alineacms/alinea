@@ -354,7 +354,11 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
             className={styles.SplashPage.card.header.button()}
             onClick={() => setRoute(openRoute)}
           >
-            <WorkspaceAvatar color={workspace.color} icon={workspace.icon} />
+            <WorkspaceAvatar
+              color={workspace.color}
+              icon={workspace.icon}
+              label={workspace.label}
+            />
             <span className={styles.SplashPage.card.header.content()}>
               <span className={styles.SplashPage.card.header.label()}>
                 {workspace.label}

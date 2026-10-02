@@ -43,7 +43,7 @@ test('moves a child above its expanded parent', async ({dashboard, mount}) => {
   await workspaceRoots.getByRole('button', {name: 'Pages', exact: true}).click()
   // The tree changes with the root page once it is shown, the folder no
   // longer holds the open entry so it collapses
-  await expect(app.title).toHaveCount(0)
+  await expect(app.title).toHaveText('Pages')
   await tree.getByRole('button', {name: 'Expand Folder'}).click()
   await expect(
     tree.getByRole('button', {name: 'Collapse Folder'})
@@ -88,7 +88,7 @@ test('moves a child between expanded tree levels', async ({
   await workspaceRoots.getByRole('button', {name: 'Pages', exact: true}).click()
   // The tree changes with the root page once it is shown, the folder no
   // longer holds the open entry so it collapses
-  await expect(app.title).toHaveCount(0)
+  await expect(app.title).toHaveText('Pages')
   await tree.getByRole('button', {name: 'Expand Folder'}).click()
   await expect(
     tree.getByRole('button', {name: 'Collapse Folder'})
@@ -109,7 +109,7 @@ test('reorders entries by dragging them in an overview', async ({
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.crumb('Pages').click()
   const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   const rows = overview.getByRole('row')
   await expect(rows.nth(0)).toHaveAccessibleName(/^Alpha/)
@@ -128,7 +128,7 @@ test('moves an entry into a folder by dragging it in an overview', async ({
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.crumb('Pages').click()
   const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = overview.getByRole('row', {name: /^Folder/})
 

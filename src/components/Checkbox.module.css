@@ -69,7 +69,7 @@
   .Checkbox:has([aria-readonly='true']) &,
   .Checkbox:has([aria-readonly='true']:checked) &,
   .Checkbox:has([aria-readonly='true']:indeterminate) & {
-    border: 1px dashed var(--alinea-border-strong);
+    border: 1px solid var(--alinea-border-strong);
     background: var(--alinea-bg-muted);
   }
 }

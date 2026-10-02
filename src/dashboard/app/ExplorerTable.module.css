@@ -6,15 +6,30 @@
   padding: 16px;
   overflow: hidden;
 
-  &.is-compact {
+  &.is-compact,
+  &.is-overview {
     padding: 0;
   }
+}
+
+.ExplorerTable-titleHeader {
+  padding-inline-start: 56px;
 }
 
 .ExplorerTable {
   min-height: 0;
   width: 100%;
   height: 100%;
+
+  /* The overview ends below its last row */
+  &.is-overview {
+    height: auto;
+    max-height: 100%;
+  }
+
+  &.is-overview:has([data-slot='table-empty']) {
+    min-height: 280px;
+  }
 }
 
 .ExplorerTable-breadcrumbs {
@@ -50,7 +65,7 @@
 }
 
 @media (max-width: 768px) {
-  .ExplorerTable-viewport {
+  .ExplorerTable-viewport:not(.is-compact, .is-overview) {
     padding: 8px;
   }
 }

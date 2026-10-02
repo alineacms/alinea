@@ -6,17 +6,33 @@ const styles = styler(css)
 
 export interface SelectionCheckboxProps {
   'aria-label'?: string
+  /** Set outside a row, eg. to check every row from a header */
+  checked?: boolean
+  indeterminate?: boolean
+  disabled?: boolean
+  onCheckedChange?: (checked: boolean) => void
 }
 
 /**
  * The checkbox react-aria collections (Table, Tree, GridList) render in their
- * `selection` slot. It gets its state from the surrounding row.
+ * `selection` slot. It gets its state from the surrounding row, unless it is
+ * controlled through `checked`.
  */
-export function SelectionCheckbox(props: SelectionCheckboxProps) {
+export function SelectionCheckbox({
+  checked,
+  indeterminate,
+  disabled,
+  onCheckedChange,
+  ...props
+}: SelectionCheckboxProps) {
   return (
     <Checkbox
       {...props}
-      slot="selection"
+      isSelected={checked}
+      isIndeterminate={indeterminate}
+      isDisabled={disabled}
+      onChange={onCheckedChange}
+      slot={checked === undefined ? 'selection' : undefined}
       data-slot="selection-checkbox"
       // react-aria focuses the hidden input from script, so :focus-visible
       // also matches after a pointer press; isFocusVisible follows the modality

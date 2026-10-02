@@ -31,7 +31,6 @@
   }
 
   &:has(.NumberFieldInput[readonly]) {
-    border-style: dashed;
     background-color: var(--alinea-bg-muted);
   }
 }

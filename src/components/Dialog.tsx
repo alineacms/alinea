@@ -57,9 +57,8 @@ export function DialogTrigger(props: DialogTriggerProps) {
 export interface DialogContentProps extends StyleProps, AriaProps, DataProps {
   role?: 'dialog' | 'alertdialog'
   /**
-   * `default` fits its content up to a narrow width, `lg` is a fixed wide
-   * dialog and `full` fills the viewport (minus a margin), defaults to
-   * `default`
+   * `default` is 520px wide, `lg` 640px and `full` fills the viewport (minus
+   * a margin), each shrinks to fit narrow screens, defaults to `default`
    */
   size?: 'default' | 'lg' | 'full'
   /** Close the dialog when clicking outside of it, defaults to true */
@@ -110,7 +109,7 @@ export function DialogContent({
             <DialogClose
               aria-label="Close"
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               icon={IcRoundClose}
               className={styles.DialogContent.close()}
             />

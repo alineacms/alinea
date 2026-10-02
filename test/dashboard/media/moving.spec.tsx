@@ -11,7 +11,11 @@ test('opens a media directory overview from its sidebar icon', async ({
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
   const sidebar = app.page.getByRole('treegrid', {name: 'Content tree'})
   const directory = sidebar.getByRole('row', {
     name: 'Media directory',
@@ -35,7 +39,11 @@ test('opens a media directory card', async ({dashboard, mount}) => {
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
 
   const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
   await explorer
@@ -56,7 +64,11 @@ test('moves media files from an overview into a media directory card', async ({
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
 
   const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
   await expect(
@@ -82,7 +94,11 @@ test('moves media files from an overview into a sidebar media directory', async 
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
 
   const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
   const sidebar = app.page.getByRole('treegrid', {name: 'Content tree'})
@@ -106,7 +122,11 @@ test('only drops media files on media directories', async ({
     routeRoot: 'media',
     title: 'Media directory'
   })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await app.page
+    .getByRole('navigation', {name: 'Breadcrumb'})
+    .getByRole('button')
+    .last()
+    .click()
 
   const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
   const image = explorer.getByRole('row', {name: 'Existing image', exact: true})
