@@ -177,9 +177,7 @@ test('renders no surface without items', async ({mount, page}) => {
     <SortableList aria-label="Sections">
       {empty}
       <SortableListAdd>
-        <Button variant="ghost" size="sm">
-          Add Hero
-        </Button>
+        <Button variant="outline">Add Hero</Button>
       </SortableListAdd>
     </SortableList>
   )

@@ -85,27 +85,31 @@
 }
 
 .MetadataTimestampFieldView {
-  min-height: 36px;
+  box-sizing: border-box;
+  min-height: var(--alinea-control-md);
   display: flex;
   align-items: center;
-  padding: 8px 10px;
-  border: 1px solid var(--alinea-border);
+  padding: 5px 12px;
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
   background: var(--alinea-bg-muted);
-  color: var(--alinea-fg-disabled);
+  color: var(--alinea-fg-muted);
+  line-height: 20px;
   font-size: 13px;
 }
 
 .MetadataUserFieldView {
-  min-height: 36px;
+  box-sizing: border-box;
+  min-height: var(--alinea-control-md);
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 10px;
-  border: 1px solid var(--alinea-border);
+  padding: 5px 12px;
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
   background: var(--alinea-bg-muted);
-  color: var(--alinea-fg-disabled);
+  color: var(--alinea-fg-muted);
+  line-height: 20px;
   overflow: hidden;
 }
 

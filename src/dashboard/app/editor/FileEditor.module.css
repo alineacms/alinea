@@ -2,7 +2,7 @@
 .FileEditor-tabs {
   min-width: 0;
   border: 1px solid var(--alinea-border);
-  border-radius: calc(var(--alinea-radius) + 2px);
+  border-radius: var(--alinea-radius-container);
   background: var(--alinea-bg);
 }
 

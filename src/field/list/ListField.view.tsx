@@ -315,9 +315,8 @@ function ListFieldCreateActions({
       {pasted && (
         <Button
           onClick={() => onPaste(pasted)}
-          size="sm"
           icon={IcBaselineContentPasteGo}
-          variant="ghost"
+          variant="outline"
         >
           {pasteBlockLabel(pasted, items)}
         </Button>
@@ -326,9 +325,8 @@ function ListFieldCreateActions({
         <Button
           key={item.id}
           onClick={() => onSelect(item)}
-          size="sm"
           icon={getType(item.type).icon}
-          variant="ghost"
+          variant="outline"
         >
           {item.label}
         </Button>
@@ -784,8 +782,8 @@ function ListFieldTypePicker({
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         aria-label={label}
-        variant="ghost"
-        size="icon-sm"
+        variant="outline"
+        size="icon"
         icon={triggerIcon}
       />
       <PopoverContent

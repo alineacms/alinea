@@ -276,7 +276,6 @@ function CreateEntryForm() {
                   type="single"
                   variant="outline"
                   aria-label="Insert"
-                  className={styles.CreateEntry.insertOrder.toggle()}
                   value={insertOrder}
                   onValueChange={value => {
                     if (value === 'first' || value === 'last')

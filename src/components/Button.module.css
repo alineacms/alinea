@@ -156,6 +156,7 @@
   &[data-size='sm'] {
     height: var(--alinea-control-sm);
     padding: 0 8px;
+    border-radius: var(--alinea-radius-sm);
     font-size: var(--alinea-text-sm);
   }
 

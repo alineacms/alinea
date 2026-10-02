@@ -122,12 +122,8 @@ export function Basic() {
           )}
         </SortableListItem>
         <SortableListAdd>
-          <Button variant="ghost" size="sm">
-            Add Hero
-          </Button>
-          <Button variant="ghost" size="sm">
-            Add Quote
-          </Button>
+          <Button variant="outline">Add Hero</Button>
+          <Button variant="outline">Add Quote</Button>
         </SortableListAdd>
       </SortableList>
       <ListError>At least one section is required.</ListError>
@@ -140,9 +136,7 @@ export function Empty() {
     <div style={{maxWidth: 720}}>
       <SortableList aria-label="Sections">
         <SortableListAdd>
-          <Button variant="ghost" size="sm">
-            Add Hero
-          </Button>
+          <Button variant="outline">Add Hero</Button>
         </SortableListAdd>
       </SortableList>
     </div>

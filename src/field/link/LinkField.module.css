@@ -155,6 +155,13 @@
   width: 120px;
 }
 
+/* A single link without fields is a control: one row framed like an input
+   rather than a list. The attributes outweigh the list styles. */
+.LinkFieldView-single.is-control[data-slot][role] {
+  border-radius: var(--alinea-radius);
+  outline-color: var(--alinea-border-strong);
+}
+
 /* Spans the field, so the picker it anchors centers on the whole field */
 .LinkFieldView-create {
   flex: 1;

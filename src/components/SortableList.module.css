@@ -1,7 +1,7 @@
 /* The attribute outweighs the surface. The edge is drawn inside the list,
    over the first row's border, so every row is as tall as a text field. */
 .SortableList[data-slot='sortable-list'] {
-  border-radius: calc(var(--alinea-radius) + 2px);
+  border-radius: var(--alinea-radius-container);
   box-shadow: none;
   outline: 1px solid var(--alinea-border);
   outline-offset: -1px;
@@ -12,9 +12,8 @@
   gap: 6px;
 }
 
-/* Add buttons sit below the list, left aligned, as small outlined buttons.
-   Both classes outweigh the ghost button styles. */
-.SortableListAdd .SortableListAdd-inner {
+/* Add buttons sit below the list, left aligned */
+.SortableListAdd-inner {
   align-items: center;
   box-sizing: border-box;
   display: flex;
@@ -22,22 +21,6 @@
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: 6px;
-
-  [data-variant='ghost'] {
-    border-color: var(--alinea-border);
-    border-radius: var(--alinea-radius-sm);
-    background: var(--alinea-bg);
-
-    @media (hover: hover) {
-      &:hover {
-        background: var(--alinea-muted);
-      }
-    }
-  }
-
-  [data-variant='ghost'][data-size='sm'] {
-    padding: 0 10px 0 8px;
-  }
 
   [data-slot='button-icon'] {
     color: var(--alinea-fg-muted);

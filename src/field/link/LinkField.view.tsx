@@ -1,6 +1,5 @@
 import {
   Button,
-  type ButtonProps,
   Dialog,
   DialogTrigger,
   type DragMoveEvent,
@@ -372,9 +371,7 @@ interface LinkPickerActionProps {
   allowDuplicates?: boolean
   anchorRef?: RefObject<Element | null>
   ariaLabel?: string
-  buttonVariant?: ButtonProps['variant']
   buttonIcon?: ComponentType
-  buttonSize?: ButtonProps['size']
   children?: ReactNode
   className?: string
   isDisabled?: boolean
@@ -447,9 +444,7 @@ function LinkPickerAction({
   allowDuplicates = false,
   anchorRef,
   ariaLabel,
-  buttonVariant = 'ghost',
   buttonIcon,
-  buttonSize,
   children,
   className,
   isDisabled,
@@ -472,11 +467,10 @@ function LinkPickerAction({
       <Dialog>
         <DialogTrigger
           aria-label={ariaLabel}
-          variant={buttonVariant}
+          variant="outline"
           className={className}
           icon={buttonIcon}
           disabled={isDisabled}
-          size={buttonSize}
         >
           {children}
         </DialogTrigger>
@@ -556,11 +550,10 @@ function LinkPickerAction({
       <Dialog>
         <DialogTrigger
           aria-label={ariaLabel}
-          variant={buttonVariant}
+          variant="outline"
           className={className}
           icon={buttonIcon}
           disabled={isDisabled}
-          size={buttonSize}
         >
           {children}
         </DialogTrigger>
@@ -575,11 +568,10 @@ function LinkPickerAction({
     <Dialog>
       <DialogTrigger
         aria-label={ariaLabel}
-        variant={buttonVariant}
+        variant="outline"
         className={className}
         icon={buttonIcon}
         disabled={isDisabled}
-        size={buttonSize}
       >
         {children}
       </DialogTrigger>
@@ -812,7 +804,6 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
           anchorRef={anchorRef}
-          buttonSize="sm"
           buttonIcon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
           className={styles.LinkFieldView.createButton()}
           key={type}
@@ -846,7 +837,6 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
         <LinkPickerAction
           allowDuplicates={options.allowDuplicates}
           anchorRef={anchorRef}
-          buttonSize="sm"
           buttonIcon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
           className={styles.LinkFieldView.createButton()}
           key={type}
@@ -1728,8 +1718,14 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const isEmpty = nodeIsEmpty || !selectedValue
   const hasRows = Boolean(selectedValue)
   const readOnly = Boolean(options.readOnly)
+  const picker =
+    selectedValue &&
+    options.pickers[getPickerType(selectedValue[Reference.type])]
   const content = (hasRows || !readOnly) && (
-    <SortableList aria-label={options.label || 'Link'}>
+    <SortableList
+      aria-label={options.label || 'Link'}
+      className={styles.LinkFieldView.single({control: !picker?.fields})}
+    >
       {selectedValue && (
         <SingleLinkRow
           field={field}

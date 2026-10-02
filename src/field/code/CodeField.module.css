@@ -1,25 +1,21 @@
 .CodeEditorInput {
   overflow: hidden;
   background-color: var(--alinea-input);
-  border: 1px solid var(--alinea-border);
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
-  outline: 3px solid transparent;
   transition: var(--alinea-transition);
-  transition-property: border-color, outline-color, background-color;
+  transition-property: border-color, background-color;
 
   &:hover {
-    border-color: var(--alinea-border-strong);
-    outline-color: var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   &:focus-within {
     border-color: var(--alinea-primary);
-    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[data-invalid='true'] {
     border-color: var(--alinea-danger);
-    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &[data-read-only='true'] {
@@ -28,8 +24,7 @@
 
   &[data-read-only='true']:hover,
   &[data-read-only='true']:focus-within {
-    border-color: var(--alinea-border);
-    outline-color: transparent;
+    border-color: var(--alinea-border-strong);
   }
 }
 

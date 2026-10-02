@@ -47,28 +47,28 @@
   }
 
   &[data-variant='outline'] {
-    border-color: var(--alinea-border);
+    border-color: var(--alinea-border-strong);
   }
 
-  /* The outline toggle group draws the track, the pressed item is raised */
+  /* The outline toggle group draws the frame, the pressed item is filled */
   &.is-grouped[data-variant='outline'] {
     border-color: transparent;
     border-radius: var(--alinea-radius-sm);
 
     @media (hover: hover) {
       &:hover {
-        background-color: transparent;
+        background-color: var(--alinea-muted);
       }
     }
 
     &[aria-pressed='true'],
     &[aria-checked='true'] {
-      background-color: light-dark(
-        var(--alinea-bg),
-        color-mix(in oklab, var(--alinea-muted) 80%, var(--alinea-fg))
-      );
-      color: var(--alinea-fg);
-      box-shadow: var(--alinea-shadow-raised);
+      background-color: var(--alinea-selected);
+      color: var(--alinea-selected-fg);
+    }
+
+    &[data-size='sm'] {
+      border-radius: var(--alinea-radius-xs);
     }
 
     &[data-icon-only] {

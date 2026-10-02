@@ -107,6 +107,8 @@
   /* Radii nest: an inner corner is the outer radius minus the inset */
   --alinea-radius-xs: 4px;
   --alinea-radius-sm: calc(var(--alinea-radius) - 2px);
+  /* Lists of rows and tab panels: a step rounder than the controls in them */
+  --alinea-radius-container: calc(var(--alinea-radius) + 2px);
   --alinea-radius-lg: calc(var(--alinea-radius) * 1.5);
   --alinea-radius-xl: calc(var(--alinea-radius) * 2);
 

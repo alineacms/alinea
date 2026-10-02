@@ -9,16 +9,27 @@
     align-items: stretch;
   }
 
-  /* A segmented control: the pressed item is raised out of a muted track */
+  /* A segmented control, framed like an input so it lines up with one. The
+     items are inset by 2px, so their radius is 2px smaller. */
   &[data-variant='outline'] {
-    padding: 2px;
-    border: 0;
+    align-items: stretch;
+    height: var(--alinea-control-md);
+    padding: 1px;
+    border: 1px solid var(--alinea-border-strong);
     border-radius: var(--alinea-radius);
-    background-color: var(--alinea-selected);
+    background-color: var(--alinea-bg);
+
+    &[data-size='sm'] {
+      height: var(--alinea-control-sm);
+      border-radius: var(--alinea-radius-sm);
+    }
+
+    &[data-size='lg'] {
+      height: var(--alinea-control-lg);
+    }
 
     &[data-orientation='vertical'] {
       height: auto;
-      padding: 3px;
     }
   }
 }

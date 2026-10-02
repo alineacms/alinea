@@ -9,8 +9,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 39px;
-  padding: 4px 34px 4px 6px;
+  min-height: var(--alinea-control-md);
+  padding: 3px 34px 3px 6px;
   border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
   background: var(--alinea-input);

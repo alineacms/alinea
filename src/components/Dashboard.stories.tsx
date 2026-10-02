@@ -707,7 +707,7 @@ function EditorForm({page, onChange}: {page: StoryPage; onChange: () => void}) {
                 </SortableListItem>
               ))}
               <SortableListAdd>
-                <Button variant="ghost" size="sm" icon={IcRoundAdd}>
+                <Button variant="outline" icon={IcRoundAdd}>
                   Add section
                 </Button>
               </SortableListAdd>

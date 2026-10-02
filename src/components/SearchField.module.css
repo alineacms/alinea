@@ -5,7 +5,8 @@
 .SearchFieldGroup {
   display: flex;
   align-items: center;
-  height: 32px;
+  box-sizing: border-box;
+  height: var(--alinea-control-md);
   overflow: hidden;
   border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
