@@ -108,7 +108,8 @@ export function CreateEntryButton({
         aria-label="Create new"
         className={styles.DashboardLayout.create({toolbar})}
         icon={IcRoundAdd}
-        color={toolbar ? 'primary' : 'secondary'}
+        variant={toolbar ? 'solid' : 'outline'}
+        color={toolbar ? 'primary' : 'neutral'}
       >
         Create new
       </DialogTrigger>

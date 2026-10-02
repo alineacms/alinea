@@ -2,7 +2,7 @@ import styler from '@alinea/styler'
 import type {ReactNode} from 'react'
 import {Label as LabelPrimitive, Text} from 'react-aria-components'
 import {Badge} from './Badge.js'
-import {IcRoundPublic} from '#/dashboard/icons.js'
+import {IcBaselineErrorOutline, IcRoundPublic} from '#/dashboard/icons.js'
 import css from './Field.module.css'
 import {Icon} from './Icon.js'
 import type {FieldSharedProps, StyleProps} from './types.js'
@@ -123,7 +123,7 @@ export interface FieldErrorProps extends StyleProps {
 }
 
 /** Inside a react-aria field its id is added to the control's aria-describedby */
-export function FieldError({className, ...props}: FieldErrorProps) {
+export function FieldError({className, children, ...props}: FieldErrorProps) {
   return (
     <Text
       slot="errorMessage"
@@ -132,7 +132,14 @@ export function FieldError({className, ...props}: FieldErrorProps) {
       role="alert"
       {...props}
       className={styles.FieldError(styler.merge({className}))}
-    />
+    >
+      <Icon
+        icon={IcBaselineErrorOutline}
+        data-slot="field-error-icon"
+        className={styles.FieldError.icon()}
+      />
+      <span className={styles.FieldError.text()}>{children}</span>
+    </Text>
   )
 }
 

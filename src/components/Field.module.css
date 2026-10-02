@@ -42,8 +42,22 @@
 }
 
 .FieldError {
-  padding-top: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 6px;
   color: var(--alinea-danger-subtle-fg);
   font-size: var(--alinea-text-sm);
   line-height: 18px;
+}
+
+/* Centers the icon on the first 18px line when the message wraps */
+.FieldError-icon {
+  margin-top: 2px;
+  font-size: 14px;
+}
+
+.FieldError-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
