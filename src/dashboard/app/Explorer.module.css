@@ -6,14 +6,31 @@
   background: var(--alinea-bg);
 }
 
-.ExplorerHeader-location {
+/* The controls of the list below the search, beside its location */
+.ExplorerHeader-bar {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  min-height: 44px;
-  padding: 0 12px 0 14px;
+  min-height: 40px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--alinea-border);
+}
+
+.ExplorerHeader-location {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ExplorerHeader-tools {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
 }
 
 .ExplorerHeader-main {
@@ -27,13 +44,13 @@
 .Explorer-toolbar-tools {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .Explorer-toolbar-mediaActions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -81,7 +98,7 @@
   display: inline-flex;
   align-items: center;
   min-width: 0;
-  min-height: 30px;
+  min-height: 28px;
   padding: 3px 8px;
   border: 1px solid transparent;
   font-size: var(--alinea-font-size-base);
@@ -115,7 +132,7 @@
 .Explorer-locationBreadcrumbs-localeValue {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
+  min-height: 28px;
   padding: 0 4px;
   font-size: var(--alinea-font-size-base);
   font-weight: 600;
@@ -153,7 +170,8 @@
 }
 
 @media (max-width: 768px) {
-  .ExplorerHeader-location {
-    padding: 0 8px;
+  .ExplorerHeader-bar {
+    flex-wrap: wrap;
+    padding: 6px 8px;
   }
 }

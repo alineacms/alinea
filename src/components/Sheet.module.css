@@ -18,6 +18,7 @@
   height: var(--alinea-header-height);
   padding: 0 8px 0 10px;
   border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg);
 }
 
 .SheetHeader-back[data-slot] {

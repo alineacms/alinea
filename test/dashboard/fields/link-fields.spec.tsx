@@ -106,17 +106,18 @@ test('opens a functional location in another workspace and root', async ({
       )
     })
     .toBe(true)
-  // The search is the header row, its controls are compact and centred in it
+  // The search fills its row, the controls of the list sit beside the
+  // location in the row below at a compact height
   await expect
     .poll(async () => {
-      const searchBox = await search.locator('..').boundingBox()
+      const locationBox = await location.boundingBox()
       const viewBox = await view.boundingBox()
-      if (!searchBox || !viewBox) return false
+      if (!locationBox || !viewBox) return false
       const center = (box: {y: number; height: number}) =>
         box.y + box.height / 2
       return (
         viewBox.height === 28 &&
-        Math.abs(center(searchBox) - center(viewBox)) <= 1
+        Math.abs(center(locationBox) - center(viewBox)) <= 1
       )
     })
     .toBe(true)

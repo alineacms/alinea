@@ -1,6 +1,10 @@
-/* The attribute outweighs the radius of the surface */
+/* The attribute outweighs the surface. The edge is drawn inside the list,
+   over the first row's border, so every row is as tall as a text field. */
 .SortableList[data-slot='sortable-list'] {
   border-radius: calc(var(--alinea-radius) + 2px);
+  box-shadow: none;
+  outline: 1px solid var(--alinea-border);
+  outline-offset: -1px;
 }
 
 .SortableListRoot {
@@ -46,7 +50,7 @@
   overflow: hidden;
 }
 
-.SortableListItem:not(:first-child) {
+.SortableListItem {
   border-top: 1px solid var(--alinea-border);
 }
 
@@ -62,10 +66,6 @@
   position: relative;
   display: grid;
   outline: none;
-}
-
-.SortableListItem-dropTarget:not(:first-child) > .SortableListItem {
-  border-top: 1px solid var(--alinea-border);
 }
 
 .SortableListItem-dropIndicator {
@@ -160,7 +160,7 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  min-height: calc(var(--alinea-control-md) - 2px);
+  min-height: calc(var(--alinea-control-md) - 1px);
   padding: 0 3px 0 4px;
 }
 
@@ -209,7 +209,7 @@
   overflow: hidden;
   color: var(--alinea-fg-subtle);
   font-size: var(--alinea-text-sm);
-  font-weight: var(--alinea-weight-medium);
+  font-weight: var(--alinea-weight-regular);
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;

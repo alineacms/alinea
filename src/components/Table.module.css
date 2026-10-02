@@ -105,6 +105,7 @@
   height: 36px;
   padding: 0 10px;
   white-space: nowrap;
+  overflow: hidden;
 
   &[data-align='end'] {
     justify-content: flex-end;

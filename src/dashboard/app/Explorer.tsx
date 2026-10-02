@@ -787,16 +787,7 @@ export function ExplorerHeader({
 }: ExplorerHeaderProps) {
   return (
     <header className={styles.ExplorerHeader()}>
-      <SearchBar
-        controls={
-          <>
-            {readOnly && <ReadOnlyBadge />}
-            <ExplorerSearchScope explorer={explorer} page={page} />
-            <ExplorerToolbar explorer={explorer} page={page} />
-            {controls}
-          </>
-        }
-      >
+      <SearchBar controls={controls}>
         {!navigate && page.parent && (
           <ExplorerHeaderMain explorer={explorer} parent={page.parent} />
         )}
@@ -808,26 +799,33 @@ export function ExplorerHeader({
           page={page}
         />
       </SearchBar>
-      {navigate && (
-        <div
-          aria-label="Explorer location"
-          className={styles.ExplorerHeader.location()}
-          role="group"
-        >
-          <ExplorerResultMode
-            canBrowse={canBrowse}
-            explorer={explorer}
-            page={page}
-          />
-          {!page.searchesEverything && (
-            <ExplorerLocationMenu
+      <div className={styles.ExplorerHeader.bar()}>
+        {navigate && (
+          <div
+            aria-label="Explorer location"
+            className={styles.ExplorerHeader.location()}
+            role="group"
+          >
+            <ExplorerResultMode
+              canBrowse={canBrowse}
               explorer={explorer}
-              lockNavigation={explorer.pickChildren}
               page={page}
             />
-          )}
+            {!page.searchesEverything && (
+              <ExplorerLocationMenu
+                explorer={explorer}
+                lockNavigation={explorer.pickChildren}
+                page={page}
+              />
+            )}
+          </div>
+        )}
+        <div className={styles.ExplorerHeader.tools()}>
+          {readOnly && <ReadOnlyBadge />}
+          <ExplorerSearchScope explorer={explorer} page={page} />
+          <ExplorerToolbar explorer={explorer} page={page} />
         </div>
-      )}
+      </div>
     </header>
   )
 }

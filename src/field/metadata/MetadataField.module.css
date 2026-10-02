@@ -94,7 +94,6 @@
   background: var(--alinea-bg-muted);
   color: var(--alinea-fg-disabled);
   font-size: 13px;
-  font-family: var(--alinea-mono-font);
 }
 
 .MetadataUserFieldView {

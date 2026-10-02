@@ -1,12 +1,18 @@
+/* Matches the radius of sortable lists, which sit next to it in forms */
 .TabsView {
-  gap: 20px;
+  border: 1px solid var(--alinea-border);
+  border-radius: calc(var(--alinea-radius) + 2px);
+  background: var(--alinea-bg);
 }
 
+/* An inset shadow rather than a border, so the selected tab's underline
+   covers it instead of sitting above it */
 .TabsView-list {
   height: auto;
-  border-bottom: 1px solid var(--alinea-border);
+  padding: 0 16px;
+  box-shadow: inset 0 -1px var(--alinea-border);
 }
 
-.TabsView-trigger {
-  padding: 0 0 10px;
+.TabsView-panel {
+  padding: 16px 16px 20px;
 }

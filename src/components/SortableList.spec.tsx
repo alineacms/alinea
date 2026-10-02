@@ -129,8 +129,8 @@ test('folded items are as tall as a text field', async ({mount, page}) => {
   await mount(<Basic />)
   const hero = page.getByRole('listitem', {name: 'Hero item 1'})
   await hero.getByRole('button', {name: 'Collapse hero'}).click()
-  // The list draws its 1px edge outside, around the 30px row
-  expect((await hero.boundingBox())!.height).toBe(30)
+  // The list draws its edge inside, over the row's top border
+  expect((await hero.boundingBox())!.height).toBe(32)
 })
 
 test('joins the title and its "…" in one button', async ({mount, page}) => {
@@ -152,8 +152,10 @@ test('separates items with borders and adds below the list', async ({
   await mount(<Basic />)
   const list = page.getByRole('list', {name: 'Sections'})
   const items = list.getByRole('listitem')
-  await expect(items.first()).toHaveCSS('border-top-width', '0px')
   await expect(items.nth(1)).toHaveCSS('border-top-width', '1px')
+  // The list edge is drawn inside, over the first row's border
+  await expect(items.first()).toHaveCSS('border-top-width', '1px')
+  await expect(list).toHaveCSS('outline-offset', '-1px')
   await expect(list.locator('[data-slot="sortable-list-add"]')).toHaveCount(0)
   const add = page.locator('[data-slot="sortable-list-add"]')
   const listBox = (await list.boundingBox())!

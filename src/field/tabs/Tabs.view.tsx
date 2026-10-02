@@ -23,11 +23,7 @@ export function TabsView({section}: TabsViewProps) {
         {visibleTypes.map((type, i) => {
           const {icon} = getType(type)
           return (
-            <TabsTrigger
-              key={i}
-              value={String(i)}
-              className={styles.TabsView.trigger()}
-            >
+            <TabsTrigger key={i} value={String(i)}>
               {icon && <Icon icon={icon} />}
               {Type.label(type)}
             </TabsTrigger>
@@ -35,7 +31,11 @@ export function TabsView({section}: TabsViewProps) {
         })}
       </TabsList>
       {visibleTypes.map((type, i) => (
-        <TabsContent key={i} value={String(i)}>
+        <TabsContent
+          key={i}
+          value={String(i)}
+          className={styles.TabsView.panel()}
+        >
           <EditFields fields={getType(type).fields} />
         </TabsContent>
       ))}

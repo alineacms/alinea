@@ -33,7 +33,7 @@ test('global search starts in the current workspace and can expand to everything
       return Boolean(
         searchBox &&
         everythingBox &&
-        everythingBox.x >= searchBox.x + searchBox.width
+        everythingBox.y >= searchBox.y + searchBox.height
       )
     })
     .toBe(true)

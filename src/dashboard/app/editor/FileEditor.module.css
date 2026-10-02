@@ -1,15 +1,17 @@
+/* Bordered like the tabs of entry forms */
 .FileEditor-tabs {
-  gap: 20px;
   min-width: 0;
+  border: 1px solid var(--alinea-border);
+  border-radius: calc(var(--alinea-radius) + 2px);
+  background: var(--alinea-bg);
 }
 
+/* An inset shadow rather than a border, so the selected tab's underline
+   covers it instead of sitting above it */
 .FileEditor-tabs-list {
   height: auto;
-  border-bottom: 1px solid var(--alinea-border);
-}
-
-.FileEditor-tabs-trigger {
-  padding: 0 0 10px;
+  padding: 0 16px;
+  box-shadow: inset 0 -1px var(--alinea-border);
 }
 
 .FileEditor-tabPanel {
@@ -17,6 +19,7 @@
   flex-direction: column;
   gap: 20px;
   min-width: 0;
+  padding: 16px 16px 20px;
 }
 
 .FileEditor {
@@ -35,7 +38,6 @@
 
 .FileEditor-metadata {
   width: 100%;
-  padding: 12px;
 }
 
 .FileEditor-focus {

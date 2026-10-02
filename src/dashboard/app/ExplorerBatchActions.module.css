@@ -30,3 +30,7 @@
   margin: 0 4px;
   background: var(--alinea-border);
 }
+
+.ExplorerBatchActionBar-action {
+  display: inline-flex;
+}

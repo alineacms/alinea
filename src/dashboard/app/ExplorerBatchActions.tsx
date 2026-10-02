@@ -104,7 +104,7 @@ export interface ExplorerBatchActionsProps {
 
 /** Acts on the entries selected in an overview */
 export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
-  const {items, canMove, canDelete} = useAtomValueRawSync(
+  const {items, movable, deletable} = useAtomValueRawSync(
     explorer.selectionActions
   )
   const clearSelection = useSetAtom(explorer.clearSelection)
@@ -113,19 +113,21 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
   return (
     <ExplorerBatchActionBar
       count={items.length}
-      canDelete={canDelete}
-      canMove={canMove}
+      canDelete={deletable.length > 0}
+      canMove={movable.length > 0}
       isPending={actions.isPending}
       onClear={clearSelection}
-      onDelete={() => actions.remove(items)}
-      onMove={() => actions.move(items)}
+      onDelete={() => actions.remove(deletable)}
+      onMove={() => actions.move(movable)}
     />
   )
 }
 
 export interface ExplorerBatchActionBarProps {
   count: number
+  /** At least one selected entry can be deleted, the others are left */
   canDelete: boolean
+  /** At least one selected entry can be moved, the others are left */
   canMove: boolean
   isPending?: boolean
   onClear(): void
@@ -151,31 +153,39 @@ export function ExplorerBatchActionBar({
       <span className={styles.ExplorerBatchActionBar.count()}>
         {count} selected
       </span>
-      {canMove && (
+      <ExplorerBatchAction
+        reason={
+          canMove ? undefined : 'None of the selected entries can be moved'
+        }
+      >
         <Button
           icon={IcRoundDriveFileMove}
           size="sm"
           variant="ghost"
-          disabled={isPending}
+          disabled={isPending || !canMove}
           loading={isPending}
           onClick={onMove}
         >
           Move to…
         </Button>
-      )}
-      {canDelete && (
+      </ExplorerBatchAction>
+      <ExplorerBatchAction
+        reason={
+          canDelete ? undefined : 'None of the selected entries can be deleted'
+        }
+      >
         <Button
           color="destructive"
           icon={IcRoundDelete}
           size="sm"
           variant="ghost"
-          disabled={isPending}
+          disabled={isPending || !canDelete}
           loading={isPending}
           onClick={onDelete}
         >
           Delete
         </Button>
-      )}
+      </ExplorerBatchAction>
       <span
         aria-hidden="true"
         className={styles.ExplorerBatchActionBar.divider()}
@@ -188,5 +198,21 @@ export function ExplorerBatchActionBar({
         onClick={onClear}
       />
     </Toolbar>
+  )
+}
+
+interface ExplorerBatchActionProps {
+  /** Why the action is disabled */
+  reason?: string
+  children: ReactNode
+}
+
+// A disabled button gets no pointer events, so the reason is the title of
+// the element around it
+function ExplorerBatchAction({reason, children}: ExplorerBatchActionProps) {
+  return (
+    <span className={styles.ExplorerBatchActionBar.action()} title={reason}>
+      {children}
+    </span>
   )
 }

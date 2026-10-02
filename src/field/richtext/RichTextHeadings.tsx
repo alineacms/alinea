@@ -274,7 +274,7 @@ function RichTextHeadingSheet({
         <SheetClose aria-label="Close heading settings" />
       </SheetHeader>
       <SheetBody>
-        <SheetSection title="General">
+        <SheetSection>
           <div className={styles.RichTextHeadingSheet.anchor()}>
             <div className={styles.RichTextHeadingSheet.anchor.field()}>
               <SlugField

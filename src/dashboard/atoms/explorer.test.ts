@@ -803,8 +803,8 @@ test('selection actions follow the selected listed entries', async () => {
   store.set(explorer.selection, new Set([parent._id, 'not-listed']))
   const actions = store.get(explorer.selectionActions)
   expect(actions.items.map(item => item.id)).toEqual([parent._id])
-  expect(actions.canMove).toBe(true)
-  expect(actions.canDelete).toBe(true)
+  expect(actions.movable.map(item => item.id)).toEqual([parent._id])
+  expect(actions.deletable.map(item => item.id)).toEqual([parent._id])
 
   store.set(explorer.clearSelection)
   expect(store.get(explorer.selectionActions).items).toEqual([])

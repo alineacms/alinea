@@ -1456,7 +1456,7 @@ function LinkSheet({
           <SheetClose aria-label="Close link settings" />
         </SheetHeader>
         <SheetBody>
-          <SheetSection title="General">
+          <SheetSection>
             <LinkLabelField isDisabled={readOnly} node={node} value={value} />
             <EntryAnchorField isDisabled={readOnly} node={node} value={value} />
             <EntryLinkSuffixField

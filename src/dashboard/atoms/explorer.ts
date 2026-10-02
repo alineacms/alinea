@@ -432,8 +432,10 @@ export function explorerItemCanDelete(policy: Policy, item: ExplorerItemData) {
 export interface ExplorerSelectionActions {
   /** The selected entries that are listed */
   items: Array<ExplorerItemData>
-  canMove: boolean
-  canDelete: boolean
+  /** The selected entries the editor may move, all within one root */
+  movable: Array<ExplorerItemData>
+  /** The selected entries the editor may delete */
+  deletable: Array<ExplorerItemData>
 }
 
 export interface ExplorerRootData {
@@ -1120,22 +1122,17 @@ export class ExplorerAtoms {
         const {data} = get(entry.data)
         return data ? [get(data.item)] : []
       })
-    const config = get(configAtom)
     const policy = get(policyAtom)
-    const [first] = items
-    const some = items.length > 0
+    const allowed = items.filter(item => explorerItemCanMove(policy, item))
+    const [first] = allowed
     // Entries move within their root, search results can span roots
-    const oneRoot = items.every(
+    const oneRoot = allowed.every(
       item => item.workspace === first.workspace && item.root === first.root
     )
     return {
       items,
-      canMove:
-        some &&
-        oneRoot &&
-        items.every(item => explorerItemCanMove(policy, item)),
-      canDelete:
-        some && items.every(item => explorerItemCanDelete(policy, item))
+      movable: oneRoot ? allowed : [],
+      deletable: items.filter(item => explorerItemCanDelete(policy, item))
     }
   })
   clearSelection = atom(null, (_get, set) => set(this.selection, new Set()))

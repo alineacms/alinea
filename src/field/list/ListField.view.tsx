@@ -533,9 +533,8 @@ function ListFieldRowHeader({
   onSettingsToggle,
   onToggle
 }: ListFieldRowHeaderProps) {
-  const displayLabel = customLabel.trim()
   const displayAnchor = rowAnchor(customLabel, anchor)
-  const showAnchor = Boolean(displayAnchor && !displayLabel)
+  const title = customLabel.trim() || (displayAnchor && `#${displayAnchor}`)
   return (
     <SortableListItemHeader>
       {!readOnly && <SortableListHandle aria-label={dragLabel} />}
@@ -551,12 +550,9 @@ function ListFieldRowHeader({
           onClick={onSettingsToggle}
         >
           <Badge icon={typeIcon}>{label}</Badge>
-          {displayLabel && (
-            <SortableListItemDescription>
-              {displayLabel}
-            </SortableListItemDescription>
+          {title && (
+            <SortableListItemDescription>{title}</SortableListItemDescription>
           )}
-          {showAnchor && <Badge>#{displayAnchor}</Badge>}
         </SortableListItemTrigger>
       </SortableListItemTitle>
       <SortableListItemActions>
@@ -672,7 +668,7 @@ function ListFieldRowSheet({
       ) : (
         <>
           <SheetBody>
-            <SheetSection title="General">
+            <SheetSection>
               <TextField
                 label="Label"
                 disabled={readOnly}
@@ -702,6 +698,26 @@ function ListFieldRowSheet({
             </SheetSection>
           </SheetBody>
           <SheetFooter>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={IcRoundAddRowAbove}
+              disabled={readOnly || !canInsert}
+              onClick={() => startInsert('before')}
+            >
+              Insert before
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={IcRoundAddRowBelow}
+              disabled={readOnly || !canInsert}
+              onClick={() => startInsert('after')}
+            >
+              Insert after
+            </Button>
+          </SheetFooter>
+          <SheetFooter>
             <ListFieldSheetAction
               icon={IcBaselineContentCopy}
               label="Copy"
@@ -718,18 +734,6 @@ function ListFieldRowSheet({
               label="Move down"
               disabled={readOnly || isLastRow}
               onClick={onMoveDown}
-            />
-            <ListFieldSheetAction
-              icon={IcRoundAddRowAbove}
-              label="Insert before"
-              disabled={readOnly || !canInsert}
-              onClick={() => startInsert('before')}
-            />
-            <ListFieldSheetAction
-              icon={IcRoundAddRowBelow}
-              label="Insert after"
-              disabled={readOnly || !canInsert}
-              onClick={() => startInsert('after')}
             />
             <Button
               variant="ghost"

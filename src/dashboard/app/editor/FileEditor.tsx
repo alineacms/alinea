@@ -6,7 +6,6 @@ import {
   DataListValue,
   Icon,
   Link,
-  Surface,
   Tabs,
   TabsContent,
   TabsList,
@@ -88,14 +87,11 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
         aria-label="File editor"
         className={styles.FileEditor.tabs.list()}
       >
-        <TabsTrigger value="file" className={styles.FileEditor.tabs.trigger()}>
+        <TabsTrigger value="file">
           <Icon icon={IcRoundInsertDriveFile} />
           File
         </TabsTrigger>
-        <TabsTrigger
-          value="details"
-          className={styles.FileEditor.tabs.trigger()}
-        >
+        <TabsTrigger value="details">
           <Icon icon={IcRoundInfo} />
           Details
         </TabsTrigger>
@@ -114,7 +110,7 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
             />
           )}
           <div className={styles.FileEditor.content()}>
-            <Surface variant="muted" className={styles.FileEditor.metadata()}>
+            <div className={styles.FileEditor.metadata()}>
               <DataList orientation="vertical" aria-label="File details">
                 <DataListItem>
                   <DataListLabel>Extension</DataListLabel>
@@ -147,7 +143,7 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
                   </DataListItem>
                 )}
               </DataList>
-            </Surface>
+            </div>
             {isImage && (
               <div className={styles.FileEditor.focus()}>
                 <div className={styles.FileEditor.focus.header()}>

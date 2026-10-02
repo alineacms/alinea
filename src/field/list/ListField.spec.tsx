@@ -56,6 +56,8 @@ test('names the sheet after the row label', async ({mount, page}) => {
     })
   ).toHaveValue('intro')
   await expect(page.getByText(/^Link here/)).toHaveCount(0)
+  // The only section needs no title
+  await expect(page.locator('[data-slot="sheet-section-title"]')).toHaveCount(0)
   await expect(hero.getByText('Intro', {exact: true})).toBeVisible()
 })
 
@@ -113,6 +115,9 @@ test('shows the row actions again after leaving the insert picker', async ({
     .first()
   const sheet = page.getByRole('dialog', {name: 'Hero'})
   await hero.getByRole('button', {name: 'Hero settings'}).click()
+  await expect(sheet.getByRole('button', {name: 'Insert before'})).toHaveText(
+    'Insert before'
+  )
   await sheet.getByRole('button', {name: 'Insert after'}).click()
   await expect(sheet.getByRole('button', {name: 'Insert after'})).toHaveCount(0)
   await sheet.getByRole('button', {name: 'Close block settings'}).click()
