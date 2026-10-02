@@ -14,7 +14,7 @@
   }
 
   &:has([aria-readonly='true']) {
-    color: var(--alinea-fg-disabled);
+    color: var(--alinea-fg-muted);
     cursor: default;
   }
 }
@@ -47,8 +47,13 @@
     background: color-mix(in oklab, var(--alinea-primary), var(--alinea-fg) 18%);
   }
 
+  /* Listing the checked state outweighs the checked hover rule */
   .Switch:has([aria-readonly='true']) & {
     background: var(--alinea-border);
+  }
+
+  .Switch:has([aria-readonly='true']:checked) & {
+    background: var(--alinea-fg-subtle);
   }
 }
 

@@ -18,8 +18,16 @@
   transition: var(--alinea-transition);
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:where(:has(.MultipleSelectTrigger-button[aria-readonly='true']))) {
     border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+  }
+
+  &:has(.MultipleSelectTrigger-button[aria-readonly='true']) {
+    padding-right: 6px;
+    border-style: dashed;
+    background-color: var(--alinea-bg-muted);
+    color: var(--alinea-fg-muted);
+    cursor: default;
   }
 
   &:focus-within,
@@ -84,6 +92,12 @@
   &:focus-visible {
     background: var(--alinea-muted);
   }
+
+  /* Stays in place as the focus target of the field, without an arrow */
+  &[aria-readonly='true'] {
+    background: none;
+    cursor: default;
+  }
 }
 
 .MultipleSelectTrigger-arrow {
@@ -92,6 +106,10 @@
 
   .MultipleSelectTrigger-button[aria-expanded='true'] & {
     transform: rotate(180deg);
+  }
+
+  .MultipleSelectTrigger-button[aria-readonly='true'] & {
+    visibility: hidden;
   }
 }
 
@@ -108,6 +126,10 @@
   line-height: 24px;
   outline: none;
   cursor: default;
+
+  .MultipleSelectTrigger:has(.MultipleSelectTrigger-button[aria-readonly='true']) & {
+    color: inherit;
+  }
 
   &:focus-visible {
     outline: 2px solid var(--alinea-ring);

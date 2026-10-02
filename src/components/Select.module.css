@@ -18,8 +18,14 @@
   background: var(--alinea-input);
   transition: var(--alinea-transition);
 
-  &:hover {
+  &:hover:not(:where(:has(.SelectTrigger-button[aria-readonly='true']))) {
     border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+  }
+
+  &:has(.SelectTrigger-button[aria-readonly='true']) {
+    border-style: dashed;
+    background-color: var(--alinea-bg-muted);
+    color: var(--alinea-fg-muted);
   }
 
   &:has(.SelectTrigger-button:focus-visible),
@@ -54,6 +60,10 @@
   text-align: left;
   cursor: pointer;
 
+  &[aria-readonly='true'] {
+    cursor: default;
+  }
+
   &:has(+ .SelectTrigger-clear) {
     padding-right: 0;
   }
@@ -87,6 +97,10 @@
 
   .SelectTrigger-button[aria-expanded='true'] & {
     transform: rotate(180deg);
+  }
+
+  .SelectTrigger-button[aria-readonly='true'] & {
+    display: none;
   }
 }
 

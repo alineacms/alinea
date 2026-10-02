@@ -16,6 +16,7 @@ export function Example() {
       />
       <DatePicker required label="With error" error="Date is required" />
       <DatePicker label="Disabled" defaultValue="2026-09-23" disabled />
+      <DatePicker label="Read only" defaultValue="2026-09-23" readOnly />
     </div>
   )
 }

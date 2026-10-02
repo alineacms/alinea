@@ -13,7 +13,7 @@
   transition: var(--alinea-transition);
   transition-property: border-color, outline-color, opacity;
 
-  &:hover {
+  &:hover:not(:where(:has(.SearchFieldInput[readonly]))) {
     border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
@@ -25,14 +25,16 @@
     border-color: var(--alinea-danger);
   }
 
-  &:has(.SearchFieldInput:disabled),
   &:has(.SearchFieldInput[readonly]) {
+    border-style: dashed;
     background-color: var(--alinea-bg-muted);
-    color: var(--alinea-fg-disabled);
+    color: var(--alinea-fg-muted);
   }
 
   &:has(.SearchFieldInput:disabled) {
     pointer-events: none;
+    background-color: var(--alinea-bg-muted);
+    color: var(--alinea-fg-disabled);
     opacity: 0.45;
   }
 }
@@ -71,6 +73,10 @@
   &::-webkit-search-cancel-button,
   &::-webkit-search-decoration {
     -webkit-appearance: none;
+  }
+
+  &[readonly] {
+    color: var(--alinea-fg-muted);
   }
 }
 

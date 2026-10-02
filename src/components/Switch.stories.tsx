@@ -13,6 +13,7 @@ export function Example() {
       <Switch readOnly defaultChecked>
         Read-only
       </Switch>
+      <Switch readOnly>Read-only and off</Switch>
     </div>
   )
 }

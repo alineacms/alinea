@@ -25,6 +25,11 @@ export function Example() {
         defaultValue={{start: '2026-09-07', end: '2026-09-11'}}
         disabled
       />
+      <DateRangePicker
+        label="Read only"
+        defaultValue={{start: '2026-09-07', end: '2026-09-11'}}
+        readOnly
+      />
     </div>
   )
 }

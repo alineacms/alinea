@@ -70,6 +70,13 @@ export function States() {
           </ComboBoxItem>
         ))}
       </ComboBox>
+      <ComboBox label="Read only" readOnly defaultValue="figma">
+        {software.map(item => (
+          <ComboBoxItem key={item.value} value={item.value}>
+            {item.label}
+          </ComboBoxItem>
+        ))}
+      </ComboBox>
       <ComboBox label="Disabled items">
         {software.map((item, i) => (
           <ComboBoxItem

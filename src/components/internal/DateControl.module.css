@@ -11,8 +11,14 @@
   white-space: nowrap;
   transition: var(--alinea-transition);
 
-  &:hover {
+  &:hover:not(:where(:has(.DateControl-segment[aria-readonly='true']))) {
     border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+  }
+
+  &:has(.DateControl-segment[aria-readonly='true']) {
+    border-style: dashed;
+    background-color: var(--alinea-bg-muted);
+    color: var(--alinea-fg-muted);
   }
 
   &:focus-within,
@@ -88,6 +94,10 @@
     &::before {
       background-color: var(--alinea-primary-subtle);
     }
+  }
+
+  .DateControl:has(.DateControl-segment[aria-readonly='true']) & {
+    display: none;
   }
 }
 

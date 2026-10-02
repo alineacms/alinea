@@ -13,6 +13,7 @@ export function Example() {
         description="Opening hours start"
       />
       <TimeField label="Disabled" defaultValue="09:30" disabled />
+      <TimeField label="Read only" defaultValue="09:30" readOnly />
     </div>
   )
 }

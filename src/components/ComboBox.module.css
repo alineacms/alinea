@@ -18,8 +18,14 @@
   background: var(--alinea-input);
   transition: var(--alinea-transition);
 
-  &:hover {
+  &:hover:not(:where(:has(.ComboBoxTrigger-input[readonly]))) {
     border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+  }
+
+  &:has(.ComboBoxTrigger-input[readonly]) {
+    border-style: dashed;
+    background-color: var(--alinea-bg-muted);
+    color: var(--alinea-fg-muted);
   }
 
   &:focus-within,
@@ -91,6 +97,10 @@
     background-color: transparent;
     border-color: var(--alinea-primary);
     opacity: 1;
+  }
+
+  .ComboBoxTrigger-input[readonly] ~ & {
+    display: none;
   }
 }
 

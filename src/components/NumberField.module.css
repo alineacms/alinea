@@ -12,7 +12,7 @@
   transition: var(--alinea-transition);
   transition-property: border-color, box-shadow, opacity;
 
-  &:hover {
+  &:hover:not(:where(:has(.NumberFieldInput[readonly]))) {
     border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
@@ -31,6 +31,7 @@
   }
 
   &:has(.NumberFieldInput[readonly]) {
+    border-style: dashed;
     background-color: var(--alinea-bg-muted);
   }
 }
@@ -54,7 +55,7 @@
   }
 
   &[readonly] {
-    color: var(--alinea-fg-disabled);
+    color: var(--alinea-fg-muted);
   }
 }
 
@@ -64,6 +65,10 @@
   border-left: 1px solid var(--alinea-border);
   border-radius: 0 calc(var(--alinea-radius) - 1px) calc(var(--alinea-radius) - 1px) 0;
   overflow: hidden;
+
+  .NumberFieldInput[readonly] + & {
+    display: none;
+  }
 }
 
 .NumberFieldStepper {

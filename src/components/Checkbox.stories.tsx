@@ -35,8 +35,12 @@ export function States() {
       <Checkbox disabled defaultChecked>
         Disabled and checked
       </Checkbox>
+      <Checkbox readOnly>Read-only</Checkbox>
       <Checkbox readOnly defaultChecked>
         Read-only and checked
+      </Checkbox>
+      <Checkbox readOnly checked="indeterminate">
+        Read-only and indeterminate
       </Checkbox>
       <form
         onSubmit={event => event.preventDefault()}

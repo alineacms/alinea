@@ -44,6 +44,10 @@ export function States() {
         <Checkbox value="apple">Apple</Checkbox>
         <Checkbox value="orange">Orange</Checkbox>
       </CheckboxGroup>
+      <CheckboxGroup label="Read only" readOnly defaultValue={['apple']}>
+        <Checkbox value="apple">Apple</Checkbox>
+        <Checkbox value="orange">Orange</Checkbox>
+      </CheckboxGroup>
       <CheckboxGroup label="Invalid" required error="Pick at least one">
         <Checkbox value="apple">Apple</Checkbox>
         <Checkbox value="orange">Orange</Checkbox>

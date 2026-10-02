@@ -18,11 +18,11 @@ test('default, disabled and read-only states', async ({mount, page}) => {
   await expect(
     page.getByRole('switch', {name: 'Disabled', exact: true})
   ).toBeDisabled()
-  const readOnly = page.getByRole('switch', {name: 'Read-only'})
+  const readOnly = page.getByRole('switch', {name: 'Read-only', exact: true})
   await readOnly.focus()
   await readOnly.press('Space')
   await expect(readOnly).toBeChecked()
-  await page.getByText('Read-only').click()
+  await page.getByText('Read-only', {exact: true}).click()
   await expect(readOnly).toBeChecked()
 })
 

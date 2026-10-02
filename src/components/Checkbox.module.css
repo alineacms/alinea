@@ -65,9 +65,12 @@
     background: var(--alinea-danger);
   }
 
-  .Checkbox:has([aria-readonly='true']) & {
-    border-color: var(--alinea-border);
-    background: var(--alinea-selected);
+  /* Listing the checked states outweighs the hover and invalid rules */
+  .Checkbox:has([aria-readonly='true']) &,
+  .Checkbox:has([aria-readonly='true']:checked) &,
+  .Checkbox:has([aria-readonly='true']:indeterminate) & {
+    border: 1px dashed var(--alinea-border-strong);
+    background: var(--alinea-bg-muted);
   }
 }
 
@@ -88,6 +91,15 @@
     fill: var(--alinea-primary-fg);
     stroke: none;
   }
+
+  .Checkbox:has([aria-readonly='true']) & {
+    stroke: var(--alinea-fg-muted);
+  }
+
+  .Checkbox:has([aria-readonly='true']:indeterminate) & {
+    fill: var(--alinea-fg-muted);
+    stroke: none;
+  }
 }
 
 .Checkbox-content {
@@ -102,6 +114,6 @@
   font-weight: 400;
 
   .Checkbox:has([aria-readonly='true']) & {
-    color: var(--alinea-fg-disabled);
+    color: var(--alinea-fg-muted);
   }
 }
