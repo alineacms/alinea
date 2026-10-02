@@ -19,15 +19,16 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.571rem;
+  gap: 8px;
   color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
+  font-size: var(--alinea-text-md);
+  line-height: 20px;
   cursor: pointer;
   forced-color-adjust: none;
 
   &:has(:disabled) {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 
   .RadioGroup[aria-readonly='true'] & {
@@ -43,17 +44,16 @@
   display: block;
   flex-shrink: 0;
   box-sizing: border-box;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--alinea-border);
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--alinea-border-strong);
   border-radius: 100%;
   background: var(--alinea-input);
   transition: var(--alinea-transition);
-  transition-property: border-color, border-width, box-shadow;
+  transition-property: border-color, border-width;
 
   .RadioGroupItem:hover & {
-    border-color: var(--alinea-border-strong);
-    box-shadow: 0 0 0 3px var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   .RadioGroupItem:active & {
@@ -61,12 +61,12 @@
   }
 
   .RadioGroupItem:has(:checked) & {
-    border-width: 6px;
+    border-width: 5px;
     border-color: var(--alinea-primary);
   }
 
   .RadioGroupItem:hover:has(:checked) & {
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+    border-color: color-mix(in oklab, var(--alinea-primary), var(--alinea-fg) 18%);
   }
 
   .RadioGroupItem:active:has(:checked) & {
@@ -87,8 +87,7 @@
   display: grid;
   gap: 2px;
   min-width: 0;
-  padding-top: 2px;
-  line-height: 1.1;
+  line-height: 20px;
 }
 
 .RadioGroupItem-label {

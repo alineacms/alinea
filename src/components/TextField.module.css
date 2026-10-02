@@ -10,19 +10,19 @@
 
 .TextFieldGroup-icon {
   position: absolute;
-  /* Centered on the first line: border + padding + (line-height - 1em) / 2 */
-  top: calc(9px + 0.25em);
+  /* Centered on the first line of a control-md field */
+  top: calc((var(--alinea-control-md) - 1em) / 2);
   z-index: 1;
-  font-size: var(--alinea-font-size-base);
+  font-size: 16px;
   color: var(--alinea-fg-muted);
   pointer-events: none;
 
   &.is-start {
-    left: 10px;
+    left: 12px;
   }
 
   &.is-end {
-    right: 10px;
+    right: 12px;
   }
 }
 
@@ -35,46 +35,49 @@
   box-sizing: border-box;
   display: block;
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--alinea-border);
+  min-height: var(--alinea-control-md);
+  /* (control height - border - line height) / 2 keeps a single line at 32 */
+  padding: 5px 12px;
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
-  outline: 3px solid transparent;
+  outline: none;
   background-color: var(--alinea-input);
   color: var(--alinea-fg);
   font: inherit;
-  font-size: var(--alinea-font-size-base);
-  line-height: 1.5;
+  font-size: var(--alinea-text-md);
+  line-height: 20px;
   transition: var(--alinea-transition);
-  transition-property: border-color, outline-color, opacity;
+  transition-property: border-color, background-color, opacity;
 
   &::placeholder {
-    color: var(--alinea-fg-disabled);
+    color: var(--alinea-fg-subtle);
   }
 
   &:hover {
-    border-color: var(--alinea-border-strong);
-    outline-color: var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
+  /* Focus is the border alone: inputs are focused on every click, so they
+     stay quieter than the ring on buttons and rows */
   &:focus {
     border-color: var(--alinea-primary);
-    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[aria-invalid='true'] {
     border-color: var(--alinea-danger);
-    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
-  }
-
-  &:disabled,
-  &[readonly] {
-    background-color: var(--alinea-bg-muted);
-    color: var(--alinea-fg-disabled);
   }
 
   &:disabled {
+    border-color: var(--alinea-border);
+    background-color: var(--alinea-selected);
+    color: var(--alinea-fg-disabled);
     pointer-events: none;
-    opacity: 0.5;
+  }
+
+  &[readonly] {
+    border-style: dashed;
+    background-color: var(--alinea-bg-muted);
+    color: var(--alinea-fg-muted);
   }
 
   .TextFieldGrow & {
@@ -88,11 +91,11 @@
   }
 
   &.is-start {
-    padding-left: calc(20px + 1em);
+    padding-left: 36px;
   }
 
   &.is-end {
-    padding-right: calc(20px + 1em);
+    padding-right: 36px;
   }
 
   &.is-shadow {

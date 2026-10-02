@@ -1,36 +1,32 @@
 .DateControl,
 .DateControl-input.is-framed {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--alinea-border);
+  padding: 5px 12px;
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
   background: var(--alinea-input);
   color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
-  line-height: 1.5;
+  line-height: 20px;
   white-space: nowrap;
-  outline: 3px solid transparent;
   transition: var(--alinea-transition);
 
   &:hover {
-    border-color: var(--alinea-border-strong);
-    outline-color: var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   &:focus-within,
   &:has(.DateControl-trigger[aria-expanded='true']) {
     border-color: var(--alinea-primary);
-    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &:has(.DateControl-segment[aria-invalid='true']) {
     border-color: var(--alinea-danger);
-    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &[aria-disabled='true'] {
     background-color: var(--alinea-bg-muted);
-    opacity: 0.5;
+    opacity: 0.45;
     pointer-events: none;
   }
 }

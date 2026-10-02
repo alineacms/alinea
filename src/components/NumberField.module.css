@@ -6,31 +6,28 @@
 .NumberFieldGroup {
   display: flex;
   position: relative;
-  border: 1px solid var(--alinea-border);
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
   background-color: var(--alinea-input);
   transition: var(--alinea-transition);
   transition-property: border-color, box-shadow, opacity;
 
   &:hover {
-    border-color: var(--alinea-border-strong);
-    box-shadow: 0 0 0 3px var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   &:focus-within {
     border-color: var(--alinea-primary);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &:has(.NumberFieldInput[aria-invalid='true']) {
     border-color: var(--alinea-danger);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &:has(.NumberFieldInput:disabled) {
     pointer-events: none;
     background-color: var(--alinea-bg-muted);
-    opacity: 0.5;
+    opacity: 0.45;
   }
 
   &:has(.NumberFieldInput[readonly]) {
@@ -42,18 +39,18 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 70px;
-  padding: 8px 10px;
+  padding: 5px 12px;
   border: none;
   outline: none;
   background: transparent;
   color: var(--alinea-fg);
   font: inherit;
   font-size: var(--alinea-font-size-base);
-  line-height: 1.5;
+  line-height: 20px;
   text-align: left;
 
   &::placeholder {
-    color: var(--alinea-fg-disabled);
+    color: var(--alinea-fg-subtle);
   }
 
   &[readonly] {
@@ -94,7 +91,7 @@
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: default;
   }
 }

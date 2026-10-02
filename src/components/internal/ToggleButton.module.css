@@ -4,15 +4,15 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 26px;
-  padding: 2px 6px;
+  min-height: var(--alinea-control-sm);
+  padding: 0 8px;
   border: 1px solid transparent;
   border-radius: var(--alinea-radius);
   background: transparent;
   color: var(--alinea-fg-muted);
   font: inherit;
-  font-size: var(--alinea-font-size-base);
-  font-weight: 550;
+  font-size: var(--alinea-text-sm);
+  font-weight: var(--alinea-weight-medium);
   white-space: nowrap;
   appearance: none;
   outline: none;
@@ -24,7 +24,7 @@
   @media (hover: hover) {
     &:hover {
       color: var(--alinea-fg);
-      background-color: color-mix(in oklab, var(--alinea-muted) 85%, var(--alinea-fg));
+      background-color: var(--alinea-selected);
     }
   }
 
@@ -41,7 +41,7 @@
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: default;
     pointer-events: none;
   }
@@ -53,6 +53,7 @@
   /* The outline toggle group draws the track, the pressed item is raised */
   &.is-grouped[data-variant='outline'] {
     border-color: transparent;
+    border-radius: var(--alinea-radius-sm);
 
     @media (hover: hover) {
       &:hover {
@@ -66,7 +67,7 @@
         var(--alinea-bg),
         color-mix(in oklab, var(--alinea-muted) 80%, var(--alinea-fg))
       );
-      color: var(--alinea-fg-strong);
+      color: var(--alinea-fg);
       box-shadow: var(--alinea-shadow-raised);
     }
 
@@ -76,30 +77,32 @@
   }
 
   &[data-size='sm'] {
-    padding: 2px 6px;
-    border-radius: calc(var(--alinea-radius) - 2px);
-    font-size: 12px;
+    min-height: 24px;
+    padding: 0 6px;
+    border-radius: var(--alinea-radius-sm);
+    font-size: var(--alinea-text-xs);
   }
 
   &[data-size='lg'] {
-    min-height: 32px;
-    padding: 4px 10px;
+    min-height: var(--alinea-control-md);
+    padding: 0 12px;
+    font-size: var(--alinea-text-md);
   }
 
   &[data-icon-only] {
-    min-width: 26px;
+    min-width: var(--alinea-control-sm);
     padding: 0;
   }
 
   &[data-icon-only][data-size='lg'] {
-    min-width: 32px;
+    min-width: var(--alinea-control-md);
   }
 }
 
 .ToggleButton-icon {
   display: block;
   flex-shrink: 0;
-  font-size: 18px;
+  font-size: 16px;
 
   .ToggleButton[data-size='sm'][data-icon-only] & {
     font-size: 14px;

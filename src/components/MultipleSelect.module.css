@@ -11,8 +11,7 @@
   gap: 8px;
   min-height: 39px;
   padding: 4px 34px 4px 6px;
-  border: 1px solid var(--alinea-border);
-  outline: 3px solid transparent;
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
   background: var(--alinea-input);
   color: var(--alinea-fg);
@@ -20,24 +19,21 @@
   cursor: pointer;
 
   &:hover {
-    border-color: var(--alinea-border-strong);
-    outline-color: var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   &:focus-within,
   &:has(.MultipleSelectTrigger-button[aria-expanded='true']) {
     border-color: var(--alinea-primary);
-    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &.is-invalid {
     border-color: var(--alinea-danger);
-    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &:has(.MultipleSelectTrigger-button:disabled) {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 
@@ -60,7 +56,7 @@
 .MultipleSelectTrigger-placeholder {
   color: var(--alinea-fg-disabled);
   font-size: var(--alinea-font-size-base);
-  line-height: 1.5;
+  line-height: 20px;
 }
 
 .MultipleSelectTrigger-button {
@@ -102,12 +98,14 @@
 .MultipleSelectTag {
   display: flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 50px;
-  background: var(--alinea-primary-subtle);
-  color: var(--alinea-primary-subtle-fg);
-  font-size: var(--alinea-font-size-base);
-  line-height: 1.2;
+  height: 24px;
+  padding: 0 6px 0 8px;
+  border-radius: var(--alinea-radius-sm);
+  background: var(--alinea-selected);
+  color: var(--alinea-fg);
+  font-size: var(--alinea-text-sm);
+  font-weight: var(--alinea-weight-medium);
+  line-height: 24px;
   outline: none;
   cursor: default;
 
@@ -120,7 +118,7 @@
 .MultipleSelectTag-remove {
   display: flex;
   align-items: center;
-  margin-left: 8px;
+  margin-left: 4px;
   padding: 0;
   border: none;
   background: none;
@@ -183,10 +181,10 @@
   color: var(--alinea-fg);
   font: inherit;
   font-size: var(--alinea-font-size-base);
-  line-height: 1.5;
+  line-height: 20px;
 
   &::placeholder {
-    color: var(--alinea-fg-disabled);
+    color: var(--alinea-fg-subtle);
   }
 
   &::-webkit-search-cancel-button,

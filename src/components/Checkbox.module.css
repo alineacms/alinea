@@ -2,16 +2,16 @@
   position: relative;
   display: flex;
   align-items: baseline;
-  gap: 0.571rem;
+  gap: 8px;
   color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-  line-height: 1;
+  font-size: var(--alinea-text-md);
+  line-height: 20px;
   cursor: pointer;
   forced-color-adjust: none;
 
   &:has(:disabled) {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 
   &:has([aria-readonly='true']) {
@@ -26,15 +26,17 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  border: 1px solid var(--alinea-border);
-  border-radius: var(--alinea-radius-sm);
+  /* Aligns the box with the first line of a 20px label */
+  align-self: flex-start;
+  margin-top: 2px;
+  border: 1px solid var(--alinea-border-strong);
+  border-radius: var(--alinea-radius-xs);
   background: var(--alinea-input);
   transition: var(--alinea-transition);
-  transition-property: background, border-color, box-shadow;
+  transition-property: background, border-color;
 
   .Checkbox:hover & {
-    border-color: var(--alinea-border-strong);
-    box-shadow: 0 0 0 3px var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   .Checkbox.is-focusVisible & {
@@ -50,7 +52,8 @@
 
   .Checkbox:hover:has(:checked) &,
   .Checkbox:hover:has(:indeterminate) & {
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+    border-color: color-mix(in oklab, var(--alinea-primary), var(--alinea-fg) 18%);
+    background: color-mix(in oklab, var(--alinea-primary), var(--alinea-fg) 18%);
   }
 
   .Checkbox:has([aria-invalid='true']) & {
@@ -64,7 +67,7 @@
 
   .Checkbox:has([aria-readonly='true']) & {
     border-color: var(--alinea-border);
-    background: var(--alinea-border);
+    background: var(--alinea-selected);
   }
 }
 

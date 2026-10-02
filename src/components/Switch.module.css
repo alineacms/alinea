@@ -1,16 +1,16 @@
 .Switch {
   display: flex;
   align-items: center;
-  gap: 0.571rem;
+  gap: 8px;
   color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-  line-height: 1;
+  font-size: var(--alinea-text-md);
+  line-height: 20px;
   cursor: pointer;
   forced-color-adjust: none;
 
   &:has(:disabled) {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 
   &:has([aria-readonly='true']) {
@@ -21,21 +21,17 @@
 
 .Switch-track {
   flex: 0 0 auto;
-  width: 2rem;
-  height: 1.143rem;
-  border: 1px solid var(--alinea-border);
-  border-radius: 1.143rem;
-  background: var(--alinea-input);
+  box-sizing: border-box;
+  width: 28px;
+  height: 16px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--alinea-border-strong);
   transition: var(--alinea-transition);
-  transition-property: background, border-color, box-shadow;
+  transition-property: background;
 
   .Switch:hover & {
-    border-color: var(--alinea-border-strong);
-    box-shadow: 0 0 0 3px var(--alinea-muted);
-  }
-
-  .Switch:active & {
-    border-color: var(--alinea-border-strong);
+    background: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   .Switch.is-focusVisible & {
@@ -44,38 +40,26 @@
   }
 
   .Switch:has(:checked) & {
-    border-color: var(--alinea-primary);
     background: var(--alinea-primary);
   }
 
   .Switch:hover:has(:checked) & {
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
-  }
-
-  .Switch:active:has(:checked) & {
-    border-color: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
-    background: color-mix(in oklab, var(--alinea-primary) 80%, var(--alinea-fg));
+    background: color-mix(in oklab, var(--alinea-primary), var(--alinea-fg) 18%);
   }
 
   .Switch:has([aria-readonly='true']) & {
-    border-color: var(--alinea-border);
     background: var(--alinea-border);
   }
 }
 
 .Switch-thumb {
   display: block;
-  width: 0.857rem;
-  height: 0.857rem;
-  margin: 2px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--alinea-border-strong);
+  background: var(--alinea-bg);
   transition: var(--alinea-transition);
   transition-property: background, transform;
-
-  .Switch:active & {
-    background: var(--alinea-border-strong);
-  }
 
   .Switch:has(:checked) & {
     background: var(--alinea-primary-fg);

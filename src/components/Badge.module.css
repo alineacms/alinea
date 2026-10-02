@@ -5,21 +5,20 @@
   align-self: center;
   gap: 4px;
   min-width: 0;
-  height: 24px;
-  padding: 0 12px;
-  border-radius: 32px;
-  background: var(--alinea-muted);
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--alinea-radius-xs);
+  background: var(--alinea-selected);
   color: var(--alinea-fg-muted);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 24px;
+  font-size: var(--alinea-text-xs);
+  font-weight: var(--alinea-weight-medium);
+  line-height: 20px;
   white-space: nowrap;
 
   &[data-size='sm'] {
     gap: 3px;
     height: 18px;
     padding: 0 4px;
-    border-radius: var(--alinea-radius-sm);
     font-size: 11px;
     line-height: 18px;
   }
@@ -43,7 +42,7 @@
 
 .Badge-icon {
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 13px;
 
   .Badge[data-size='sm'] & {
     font-size: 12px;

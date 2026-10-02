@@ -9,35 +9,31 @@
   min-width: 0;
   max-width: 100%;
   display: flex;
-  border: 1px solid var(--alinea-border);
-  outline: 3px solid transparent;
+  border: 1px solid var(--alinea-border-strong);
   border-radius: var(--alinea-radius);
   font-size: var(--alinea-font-size-base);
-  line-height: 1.5;
+  line-height: 20px;
   text-align: left;
   color: var(--alinea-fg);
   background: var(--alinea-input);
   transition: var(--alinea-transition);
 
   &:hover {
-    border-color: var(--alinea-border-strong);
-    outline-color: var(--alinea-muted);
+    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
   }
 
   &:has(.SelectTrigger-button:focus-visible),
   &:has(.SelectTrigger-button[aria-expanded='true']) {
     border-color: var(--alinea-primary);
-    outline-color: color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
   &[data-invalid] {
     border-color: var(--alinea-danger);
-    outline-color: color-mix(in oklab, var(--alinea-danger) 20%, transparent);
   }
 
   &:has(.SelectTrigger-button:disabled) {
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }
 
@@ -54,7 +50,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 5px 12px;
   text-align: left;
   cursor: pointer;
 
