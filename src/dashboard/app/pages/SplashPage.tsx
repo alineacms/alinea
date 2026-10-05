@@ -274,7 +274,7 @@ function SplashPage({
               <div className={styles.SplashPage.user()}>
                 <Icon
                   icon={IcBaselineAccountCircle}
-                  className={styles.SplashPage.actionIcon()}
+                  className={styles.SplashPage.user.icon()}
                 />
                 <Text weight="medium" truncate>
                   {userName}
@@ -308,7 +308,9 @@ function SplashPage({
               aria-label="Appearance"
               className={styles.SplashPage.appearance()}
             >
-              <Text>Appearance</Text>
+              <span className={styles.SplashPage.appearance.label()}>
+                Appearance
+              </span>
               <AppearanceToggle />
             </div>
           </div>
@@ -347,11 +349,12 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
         <Heading
           as="h2"
           size="xs"
+          weight="medium"
           className={styles.SplashPage.card.header.title()}
         >
           <Button
             variant="ghost"
-            className={styles.SplashPage.card.header.button()}
+            className={styles.SplashPage.workspace()}
             onClick={() => setRoute(openRoute)}
           >
             <WorkspaceAvatar
@@ -359,18 +362,17 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
               icon={workspace.icon}
               label={workspace.label}
             />
-            <span className={styles.SplashPage.card.header.content()}>
-              <span className={styles.SplashPage.card.header.label()}>
-                {workspace.label}
-              </span>
+            <span className={styles.SplashPage.workspace.label()}>
+              {workspace.label}
             </span>
           </Button>
         </Heading>
-        <div className={styles.SplashPage.card.footer()}>
+        <div className={styles.SplashPage.roots()}>
           {visibleRoots.map(root => (
             <Button
               key={root.key}
               variant="ghost"
+              size="sm"
               className={styles.SplashPage.root()}
               icon={root.icon}
               onClick={() => setRoute({workspace: key, root: root.key})}
@@ -382,6 +384,7 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 variant="ghost"
+                size="sm"
                 className={styles.SplashPage.root()}
               >
                 +{remainingRoots.length} more
@@ -389,7 +392,7 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
               <DropdownMenuContent
                 aria-label={`More roots in ${workspace.label}`}
                 side="bottom"
-                align="start"
+                align="end"
               >
                 {remainingRoots.map(root => (
                   <DropdownMenuItem
@@ -423,17 +426,15 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
                 })
               }
             >
+              <span className={styles.SplashPage.entry.visual()}>
+                <Icon icon={entry.icon} />
+              </span>
               <span className={styles.SplashPage.entry.content()}>
-                <span className={styles.SplashPage.entry.primary()}>
-                  <span className={styles.SplashPage.entry.visual()}>
-                    <Icon
-                      className={styles.SplashPage.entry.visual.icon()}
-                      icon={entry.icon}
-                    />
-                  </span>
-                  <span className={styles.SplashPage.entry.title()}>
-                    <span title={entry.title}>{entry.title}</span>
-                  </span>
+                <span
+                  className={styles.SplashPage.entry.title()}
+                  title={entry.title}
+                >
+                  {entry.title}
                 </span>
                 <span className={styles.SplashPage.entry.meta()}>
                   {entry.action && <span>{entry.action}</span>}
