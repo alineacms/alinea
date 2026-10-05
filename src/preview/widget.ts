@@ -54,8 +54,8 @@ export function registerPreviewWidget() {
     <div class="previews">
       <div class="inner">
         <a target="_top" class="button" title="Admin panel" id="btn-admin">
-          <svg class="logo" viewBox="0 0 36 36" preserveAspectRatio="none">
-            <path fill="#5763E6" d="M20.8178 10.3977V11.733C19.8978 10.6534 18.5316 10 16.6636 10C13.0112 10 10 13.267 10 17.5C10 21.733 13.0112 25 16.6636 25C18.5316 25 19.8978 24.3466 20.8178 23.267V24.6023H25V10.3977H20.8178ZM17.5 20.9659C15.5762 20.9659 14.1822 19.6307 14.1822 17.5C14.1822 15.3693 15.5762 14.0341 17.5 14.0341C19.4238 14.0341 20.8178 15.3693 20.8178 17.5C20.8178 19.6307 19.4238 20.9659 17.5 20.9659Z" />
+          <svg class="logo" viewBox="1.5 1.5 32 32">
+            <path fill="currentColor" d="M20.8178 10.3977V11.733C19.8978 10.6534 18.5316 10 16.6636 10C13.0112 10 10 13.267 10 17.5C10 21.733 13.0112 25 16.6636 25C18.5316 25 19.8978 24.3466 20.8178 23.267V24.6023H25V10.3977H20.8178ZM17.5 20.9659C15.5762 20.9659 14.1822 19.6307 14.1822 17.5C14.1822 15.3693 15.5762 14.0341 17.5 14.0341C19.4238 14.0341 20.8178 15.3693 20.8178 17.5C20.8178 19.6307 19.4238 20.9659 17.5 20.9659Z" />
           </svg>
         </a>
         <div class="connection" title="Previewing live" id="preview-disabled">
@@ -66,7 +66,7 @@ export function registerPreviewWidget() {
         <span class="separator"></span>
         <a target="_top" class="button" title="Edit content" id="btn-edit">
           <svg class="icon" width="1em" height="1em" viewBox="0 0 24 24">
-            <path fill="#5763E6" d="M3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15L17.81 9.94l-3.75-3.75L3.15 17.1c-.1.1-.15.22-.15.36M20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83l3.75 3.75z"/>
+            <path fill="currentColor" d="M5 19h1.425L16.2 9.225L14.775 7.8L5 17.575zm-1 2q-.425 0-.712-.288T3 20v-2.425q0-.4.15-.763t.425-.637L16.2 3.575q.3-.275.663-.425t.762-.15t.775.15t.65.45L20.425 5q.3.275.437.65T21 6.4q0 .4-.138.763t-.437.662l-12.6 12.6q-.275.275-.638.425t-.762.15zM19 6.4L17.6 5zm-3.525 2.125l-.7-.725L16.2 9.225z"/>
           </svg>
         </a>
         <span class="separator stats"></span>
@@ -74,33 +74,58 @@ export function registerPreviewWidget() {
       </div>
     </div>
   `
+  // The widget renders on the site itself: it can't rely on the dashboard's
+  // stylesheets or bundled fonts, so it carries its own tokens and font stack.
   const styles = `
     :host {
       display: contents;
     }
     .previews {
+      --alinea-accent: #3f61e8;
+      --alinea-on-accent: #ffffff;
+      --alinea-bg: #ffffff;
+      --alinea-soft: #f4f4f1;
+      --alinea-line: #e8e8e4;
+      --alinea-fg: #1b1c24;
+      --alinea-fg2: #5c5e6a;
+      --alinea-bad: #b80d5a;
+      --alinea-float: 0 0 0 1px rgb(27 28 36 / 8%),
+        0 8px 24px -6px rgb(27 28 36 / 16%);
       position: fixed;
-      bottom: 15px;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 9999;
     }
+    @media (prefers-color-scheme: dark) {
+      .previews {
+        --alinea-accent: #8ea2ff;
+        --alinea-on-accent: #121318;
+        --alinea-bg: #1b1c24;
+        --alinea-soft: #262833;
+        --alinea-line: #2c2e38;
+        --alinea-fg: #ecedf1;
+        --alinea-fg2: #a9acb8;
+        --alinea-bad: #ff7fb2;
+        --alinea-float: 0 0 0 1px #3a3c48, 0 8px 24px -6px rgb(0 0 0 / 50%);
+      }
+    }
     .inner {
       display: flex;
       align-items: center;
-      background: #fff;
-      border-radius: 17.5px;
-      box-shadow: 0 0 1.4px rgba(0,0,0,.1), 0 2px 3.5px rgba(0,0,0,.1);
-      z-index: 1000;
-      height: 35px;
-      font-size: 14px;
-      font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-      border: 1.5px solid #E4E4E7;
-      transition: border 0.2s ease-out;
+      gap: 2px;
+      box-sizing: border-box;
+      height: 48px;
+      padding: 4px;
+      background: var(--alinea-bg);
+      border-radius: 14px;
+      box-shadow: var(--alinea-float);
+      color: var(--alinea-fg);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1;
+      white-space: nowrap;
       animation: fade-in 0.3s ease-out;
-    }
-    .inner.is-centered {
-      border-color: #8189e5;
     }
     .inner[data-dragging="true"] {
       cursor: grabbing;
@@ -110,58 +135,73 @@ export function registerPreviewWidget() {
     }
     .logo {
       display: block;
-      height: 25px;
-      width: auto;
+      width: 32px;
+      height: 32px;
       flex-shrink: 0;
+      border-radius: 9px;
+      background: var(--alinea-accent);
+      color: var(--alinea-on-accent);
     }
     .icon {
       display: block;
-      font-size: 16px;
+      flex-shrink: 0;
+      font-size: 18px;
     }
     .button {
       box-sizing: border-box;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: none;
-      background: none;
+      width: 40px;
+      height: 40px;
       padding: 0;
-      cursor: pointer;
-      color: #596e8d;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--alinea-fg2);
       white-space: nowrap;
-      height: 100%;
-      width: 45px;
+      cursor: pointer;
+      transition: background-color 0.15s, color 0.15s;
     }
     .button:hover {
-      color: #000;
+      background: var(--alinea-soft);
+      color: var(--alinea-fg);
+    }
+    .button:focus-visible {
+      outline: 2px solid var(--alinea-accent);
+      outline-offset: -2px;
     }
     .connection {
       display: none;
       box-sizing: border-box;
       align-items: center;
       justify-content: center;
-      margin-left: -6px;
-      margin-top: -1px;
-      padding-right: 13px;
-      height: 100%;
+      height: 40px;
+      padding: 0 8px 0 4px;
+    }
+    .connection .icon {
+      font-size: 16px;
     }
     .is-connected .connection {
       display: flex;
-      color: #5763E6;
+      color: var(--alinea-accent);
     }
     .is-warning .connection {
       display: flex;
-      color: #bf1029;
+      color: var(--alinea-bad);
     }
     .is-loading .connection {
       display: flex;
-      color: #5763E6;
+      color: var(--alinea-accent);
       animation: pulse 1s linear infinite;
     }
     .separator {
       display: block;
-      border-left: 1px solid #E4E4E7;
-      height: 16px;
+      flex-shrink: 0;
+      width: 1px;
+      height: 20px;
+      margin: 0 4px;
+      background: var(--alinea-line);
     }
     .stats {
       display: none;
@@ -171,9 +211,9 @@ export function registerPreviewWidget() {
     }
     .button.stats {
       width: auto;
-      padding: 0 16px 0 12px;
-      font: inherit;
-      font-size: 13px;
+      padding: 0 12px;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
       font-variant-numeric: tabular-nums;
     }
     @keyframes pulse {
