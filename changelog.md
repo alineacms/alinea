@@ -11,6 +11,8 @@
   `{field: Article.visibility.germany, deny: {all: true}}`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`
   signs in the local user with that role, for saves, hooks and `cms.user()`.
+- The `collapsed: false` type option expands an entry's children in the
+  sidebar content tree from the start.
 - Rebuild the dashboard on React Aria Components, with keyboard navigation,
   focus management and screen reader support throughout, a new theme with dark
   mode, a responsive layout, entry history and a references panel that shows

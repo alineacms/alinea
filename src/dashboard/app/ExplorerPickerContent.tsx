@@ -48,7 +48,10 @@ export function createExplorerTree(explorer: () => DashboardExplorer) {
             : get(current.location).parentId
           return parentId ? new Set<Key>([parentId]) : new Set<Key>()
         }),
-        current.sidebarExpandedKeys,
+        {
+          expandedKeys: current.sidebarExpandedKeys,
+          closedKeys: current.sidebarClosedKeys
+        },
         current.permission
       )
     }

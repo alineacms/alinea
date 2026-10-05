@@ -344,7 +344,7 @@ test('tree removes selected and expanded entries that become unreadable', async 
   const tree = rootAtoms('main', 'pages').createTree(
     null,
     atom(new Set<Key>([parent._id])),
-    atom(new Set([parent._id]))
+    {expandedKeys: atom(new Set([parent._id]))}
   )
 
   await store.get(tree.ready)
@@ -385,7 +385,7 @@ test('entry models and child levels are shared across trees', async () => {
   const selectedKeys = atom(new Set<Key>([firstChild._id]))
   const expandedKeys = atom(new Set([parent._id]))
   const root = rootAtoms('main', 'pages')
-  const tree = root.createTree(null, selectedKeys, expandedKeys)
+  const tree = root.createTree(null, selectedKeys, {expandedKeys})
 
   await store.get(tree.ready)
   const subscriptions = [
@@ -409,11 +409,9 @@ test('entry models and child levels are shared across trees', async () => {
   await store.get(tree.ready)
   expect(db.resolveCount).toBe(0)
   const selectionResolveCount = db.resolveCount
-  const secondTree = root.createTree(
-    null,
-    atom(new Set<Key>()),
-    atom(new Set([parent._id]))
-  )
+  const secondTree = root.createTree(null, atom(new Set<Key>()), {
+    expandedKeys: atom(new Set([parent._id]))
+  })
   await store.get(secondTree.ready)
   for (const unsubscribe of subscriptions) unsubscribe()
 
@@ -861,4 +859,54 @@ test('tree canCreate follows the selected container', async () => {
   store.set(selectedKeys, new Set<Key>([tag._id]))
   await store.get(tree.ready)
   expect(store.get(tree.canCreate)).toBe(true)
+})
+
+test('types that are not collapsed expand their children from the start', async () => {
+  const Folder = Config.document('Folder', {
+    collapsed: false,
+    contains: ['Folder', 'Page'],
+    fields: {title: Field.text('Title')}
+  })
+  const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
+  const config = Config.create({
+    schema: {Folder, Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {pages: Config.root('Pages', {contains: ['Folder', 'Page']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const folder = await db.create({type: Folder, set: {title: 'Folder'}})
+  const nested = await db.create({
+    type: Folder,
+    parentId: folder._id,
+    set: {title: 'Nested'}
+  })
+  const page = await db.create({
+    type: Page,
+    parentId: nested._id,
+    set: {title: 'Page'}
+  })
+  await db.create({type: Page, parentId: page._id, set: {title: 'Child'}})
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const tree = rootAtoms('main', 'pages').createTree(null, atom(new Set<Key>()))
+
+  const {snapshot} = await store.get(tree.ready)
+  expect(snapshot.expandedKeys).toEqual(new Set([folder._id, nested._id]))
+  expect(snapshot.items).toEqual([
+    {
+      id: folder._id,
+      children: [{id: nested._id, children: [{id: page._id, children: []}]}]
+    }
+  ])
+
+  // Closed by hand they stay closed
+  store.set(tree.expand, new Set([folder._id]))
+  const closed = await store.get(tree.ready)
+  expect(closed.snapshot.expandedKeys).toEqual(new Set([folder._id]))
+  expect(store.get(tree.closedKeys)).toEqual(new Set([nested._id]))
 })

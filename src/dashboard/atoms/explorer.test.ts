@@ -983,8 +983,15 @@ test('picker trees list entries that can be explored', async () => {
   const root = rootAtoms('shared', 'pages')
   const selected = atom(new Set<Key>())
   const expanded = () => atom(new Set([folder._id]))
-  const picker = root.createTree(null, selected, expanded(), Permission.Explore)
-  const sidebar = root.createTree(null, selected, expanded())
+  const picker = root.createTree(
+    null,
+    selected,
+    {expandedKeys: expanded()},
+    Permission.Explore
+  )
+  const sidebar = root.createTree(null, selected, {
+    expandedKeys: expanded()
+  })
 
   const listed = await store.get(picker.ready)
   expect([...listed.entries.values()].map(entry => entry.title)).toEqual([

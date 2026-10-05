@@ -594,6 +594,7 @@ export class ExplorerAtoms {
   selection: PrimitiveAtom<'all' | Set<Key>>
   expandedKeys = atom(new Set<Key>())
   sidebarExpandedKeys = atom(new Set<string>())
+  sidebarClosedKeys = atom(new Set<string>())
   #selectedResultMode: PrimitiveAtom<ExplorerResultMode>
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
   /** The column the editor sorted by, undefined for the default order */

@@ -81,6 +81,7 @@ interface TreeCollapseState {
 interface TreeViewState {
   expandedKeys: PrimitiveAtom<Set<string>>
   collapsedKeys: PrimitiveAtom<TreeCollapseState>
+  closedKeys: PrimitiveAtom<Set<string>>
 }
 
 const emptyTreeSnapshot: TreeSnapshot = {
@@ -97,6 +98,8 @@ const emptyTreeView: TreeView = {
 export class TreeAtoms {
   expandedKeys: PrimitiveAtom<Set<string>>
   collapsedKeys: PrimitiveAtom<TreeCollapseState>
+  /** Entries closed by hand, which stay closed when their type expands */
+  closedKeys: PrimitiveAtom<Set<string>>
   #root: RootAtoms
   #locale: string | null
   #selectedKeys: Atom<Set<Key>>
@@ -120,6 +123,7 @@ export class TreeAtoms {
         selectedId: undefined,
         keys: new Set<string>()
       })
+    this.closedKeys = viewState?.closedKeys ?? atom(new Set<string>())
   }
 
   #source = atom(async (get): Promise<TreeView> => {
@@ -173,53 +177,79 @@ export class TreeAtoms {
     for (const parentId of selected?.parents ?? [])
       if (!collapsedKeys.has(parentId)) expandedKeys.add(parentId)
 
-    const missingModels = (
-      await Promise.all(
-        [...expandedKeys]
-          .filter(id => !models.has(id))
-          .map(async id => {
-            try {
-              return await get(treeEntryAtoms(id, permission).ready)
-            } catch (error) {
-              if (error instanceof MissingEntryError) return undefined
-              throw error
-            }
-          })
-      )
-    ).filter((model): model is TreeEntryAtoms => Boolean(model))
-    for (const model of missingModels) models.set(model.id, model)
+    const closedKeys = get(this.closedKeys)
+    const root = this.#root
+    const treeLocale = this.#locale
+    async function load() {
+      const missingModels = (
+        await Promise.all(
+          [...expandedKeys]
+            .filter(id => !models.has(id))
+            .map(async id => {
+              try {
+                return await get(treeEntryAtoms(id, permission).ready)
+              } catch (error) {
+                if (error instanceof MissingEntryError) return undefined
+                throw error
+              }
+            })
+        )
+      ).filter((model): model is TreeEntryAtoms => Boolean(model))
+      for (const model of missingModels) models.set(model.id, model)
 
-    const expandedModels = [...expandedKeys].flatMap(id => {
-      const model = models.get(id)
-      return model ? [model] : []
-    })
-    const [rootModels, childLevels, parentEntries] = await Promise.all([
-      get(this.#root.treeEntries(this.#locale, permission)),
-      Promise.all(
-        expandedModels.map(model => get(model.children(this.#locale)))
-      ),
-      Promise.all(expandedModels.map(model => get(model.raw(this.#locale))))
-    ])
-    const levels = [rootModels, ...childLevels]
-    const levelOrders = [
-      Root.childrenOrder(get(this.#root.data)),
-      ...parentEntries.map(entry => {
-        const type = config.schema[entry.type]
-        return type && Type.childrenOrder(type)
+      const expandedModels = [...expandedKeys].flatMap(id => {
+        const model = models.get(id)
+        return model ? [model] : []
       })
-    ]
-    const levelItems = await Promise.all(
-      levels.map((level, index) =>
+      const [rootModels, childLevels, parentEntries] = await Promise.all([
+        get(root.treeEntries(treeLocale, permission)),
         Promise.all(
-          level.map(async model =>
-            rootTreeItem(
-              await get(model.summary(this.#locale)),
-              levelOrders[index]
+          expandedModels.map(model => get(model.children(treeLocale)))
+        ),
+        Promise.all(expandedModels.map(model => get(model.raw(treeLocale))))
+      ])
+      const levels = [rootModels, ...childLevels]
+      const levelOrders = [
+        Root.childrenOrder(get(root.data)),
+        ...parentEntries.map(entry => {
+          const type = config.schema[entry.type]
+          return type && Type.childrenOrder(type)
+        })
+      ]
+      const levelItems = await Promise.all(
+        levels.map((level, index) =>
+          Promise.all(
+            level.map(async model =>
+              rootTreeItem(
+                await get(model.summary(treeLocale)),
+                levelOrders[index]
+              )
             )
           )
         )
       )
-    )
+      return {expandedModels, levelItems}
+    }
+    // Types with `collapsed: false` expand from the start, level by level
+    function expanding(items: Array<RootTreeItem>) {
+      return items.filter(item => {
+        const type = config.schema[item.type]
+        return (
+          item.hasChildren &&
+          type &&
+          Type.expands(type) &&
+          !expandedKeys.has(item.id) &&
+          !closedKeys.has(item.id)
+        )
+      })
+    }
+    let loaded = await load()
+    let more: Array<RootTreeItem>
+    while ((more = expanding(loaded.levelItems.flat())).length > 0) {
+      for (const item of more) expandedKeys.add(item.id)
+      loaded = await load()
+    }
+    const {expandedModels, levelItems} = loaded
 
     const entries = new Map<string, RootTreeItem>()
     const children = new Map<string | null, Array<string>>()
@@ -245,6 +275,29 @@ export class TreeAtoms {
       entries,
       snapshot: {expandedKeys, items: nested(null), selectedKeys, locationKey}
     }
+  })
+
+  /**
+   * Applies what the user expanded and collapsed. Keys closed by hand are
+   * remembered, so entries of types that expand from the start stay closed.
+   */
+  expand = atom(null, (get, set, next: Set<string>) => {
+    const current = get(this.snapshot).expandedKeys
+    const opened = [...next].filter(id => !current.has(id))
+    const closed = [...current].filter(id => !next.has(id))
+    if (opened.length === 0 && closed.length === 0) return
+    set(this.expandedKeys, keys => {
+      const result = new Set(keys)
+      for (const id of opened) result.add(id)
+      for (const id of closed) result.delete(id)
+      return result
+    })
+    set(this.closedKeys, keys => {
+      const result = new Set(keys)
+      for (const id of closed) result.add(id)
+      for (const id of opened) result.delete(id)
+      return result
+    })
   })
 
   #state = unwrap(this.#source, previous => previous)
@@ -383,7 +436,8 @@ export class RootAtoms {
       collapsedKeys: atom<TreeCollapseState>({
         selectedId: undefined,
         keys: new Set<string>()
-      })
+      }),
+      closedKeys: atom(new Set<string>())
     }
     this.tree = dispense(
       (locale: string | null) =>
@@ -396,22 +450,21 @@ export class RootAtoms {
   createTree(
     locale: string | null,
     selectedKeys: Atom<Set<Key>>,
-    expandedKeys?: PrimitiveAtom<Set<string>>,
+    state: Partial<Pick<TreeViewState, 'expandedKeys' | 'closedKeys'>> = {},
     permission = Permission.Read
-  ) {
+  ): TreeAtoms {
     return new TreeAtoms(
       this,
       locale,
       selectedKeys,
-      expandedKeys
-        ? {
-            expandedKeys,
-            collapsedKeys: atom<TreeCollapseState>({
-              selectedId: undefined,
-              keys: new Set<string>()
-            })
-          }
-        : undefined,
+      {
+        expandedKeys: state.expandedKeys ?? atom(new Set<string>()),
+        collapsedKeys: atom<TreeCollapseState>({
+          selectedId: undefined,
+          keys: new Set<string>()
+        }),
+        closedKeys: state.closedKeys ?? atom(new Set<string>())
+      },
       permission
     )
   }

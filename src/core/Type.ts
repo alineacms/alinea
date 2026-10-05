@@ -77,7 +77,11 @@ export namespace Type {
   }
 
   export function isCollapsed(type: Type): boolean {
-    return Boolean(getType(type).collapsed)
+    return getType(type).collapsed === true
+  }
+
+  export function expands(type: Type): boolean {
+    return getType(type).collapsed === false
   }
 
   export function searchableText(type: Type, value: any): string {
@@ -326,11 +330,13 @@ export interface TypeConfig<Definition> {
   /** Entries do not show up in the sidebar content tree */
   hidden?: true
   /**
-   * Entries keep their children collapsed in the sidebar content tree when
-   * they are opened, the arrow expands them. Useful for entries with many
-   * children that are browsed in their overview instead.
+   * How entries show their children in the sidebar content tree. By default
+   * they expand when the entry is opened. With `true` they stay collapsed
+   * until the arrow is clicked, useful for entries with many children that
+   * are browsed in their overview instead. With `false` they are expanded
+   * from the start.
    */
-  collapsed?: true
+  collapsed?: boolean
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 

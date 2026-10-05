@@ -318,7 +318,7 @@ function SidebarTreeView({
   const label = useAtomValueRaw(root.label)
   const icon = useAtomValueRaw(root.icon)
   const i18n = useAtomValueRaw(root.i18n)
-  const setExpandedKeys = useSetAtom(tree.expandedKeys)
+  const expand = useSetAtom(tree.expand)
   const {snapshot} = view
   const treeRef = useRef<HTMLDivElement>(null)
   useScrollSelectedIntoView(treeRef, snapshot)
@@ -385,9 +385,7 @@ function SidebarTreeView({
             expandedKeys={snapshot.expandedKeys}
             onExpandedChange={keys => {
               const next = new Set([...keys].map(String))
-              setExpandedKeys(current =>
-                equalStringSets(current, next) ? current : next
-              )
+              expand(next)
               onExpandedChange?.(next)
             }}
             selectedKeys={snapshot.selectedKeys}
