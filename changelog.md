@@ -1,6 +1,8 @@
 # Changelog
 
 ## [2.0.0]
+- Commit hooks receive the `user` that commits. `alinea dev --role <name>`
+  signs in the local user with that role, for saves, hooks and `cms.user()`.
 - Rebuild the dashboard on React Aria Components, with keyboard navigation,
   focus management and screen reader support throughout, a new theme with dark
   mode, a responsive layout, entry history and a references panel that shows

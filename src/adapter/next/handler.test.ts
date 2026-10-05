@@ -74,6 +74,9 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
     port: 0,
     async fetch(request) {
       const cookie = request.headers.get('cookie')
+      // The hooks receive the user the dev server signs in
+      if (new URL(request.url).searchParams.get('action') === 'user')
+        return Response.json({sub: 'dev', roles: ['editor']})
       received.push({
         action: new URL(request.url).searchParams.get('action'),
         body: await request.json(),
@@ -95,12 +98,12 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
   const devHandle = createHandlerWithDatabase(
     {
       cms,
-      beforeCommit({mutations}) {
-        hooks.push(['before', mutations.length])
+      beforeCommit({mutations, user}) {
+        hooks.push(['before', mutations.length, user.roles])
         return [...mutations, ...mutations]
       },
-      afterCommit({sha}) {
-        hooks.push(['after', sha])
+      afterCommit({sha, user}) {
+        hooks.push(['after', sha, user.roles])
       }
     },
     async () => {
@@ -135,8 +138,8 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
       }
     ])
     expect(hooks).toEqual([
-      ['before', 1],
-      ['after', 'committed']
+      ['before', 1, ['editor']],
+      ['after', 'committed', ['editor']]
     ])
     // The dev server answers everything else itself.
     const resolve = await devHandle(

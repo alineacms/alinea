@@ -33,6 +33,7 @@ prog
   .option('-p, --port', 'Port to listen on')
   .option('--production', 'Use production backend')
   .option('--dev', 'Watch alinea sources')
+  .option('--role', 'Sign in locally with this role, repeat for more')
   .action(async args => {
     ensureNode()
     ensureLibs(libs)
@@ -46,6 +47,9 @@ prog
       cwd: args.dir,
       onAfterGenerate,
       configFile: args.config,
+      roles:
+        args.role &&
+        [args.role].flat().filter(role => typeof role === 'string'),
       cmd: 'dev'
     })
   })

@@ -16,7 +16,7 @@ import path from 'node:path'
 import {generate} from '../Generate.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
-import {reportError} from '../util/Report.js'
+import {reportError, reportFatal, reportWarning} from '../util/Report.js'
 import {createLocalServer} from './CreateLocalServer.js'
 import {GitHistory} from './GitHistory.js'
 import {LiveReload} from './LiveReload.js'
@@ -38,6 +38,8 @@ export interface CreateDevServerOptions {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  /** Roles of the local user, instead of admin */
+  roles?: Array<string>
   apiKey?: string
   dashboardUrl: Promise<string>
   onAfterGenerate?: (
@@ -89,7 +91,9 @@ export async function createDevServer(
   }
 
   const drafts = new MemoryDrafts()
-  const user = gitUser(rootDir)
+  const user = gitUser(rootDir).then(user =>
+    options.roles ? {...user, roles: options.roles} : user
+  )
   const generateFiles = generate({
     cmd,
     cwd: rootDir,
@@ -127,6 +131,17 @@ export async function createDevServer(
       for await (const {cms, db, configFingerprint} of generateFiles) {
         if (currentCMS === cms) {
           context.liveReload.reload('refetch')
+          continue
+        }
+        const unknown = options.roles?.filter(role => !cms.config.roles?.[role])
+        if (unknown?.length) {
+          const message = `Role not found in config: ${unknown.join(', ')}`
+          if (!currentCMS) {
+            reportFatal(message)
+            process.exit(1)
+          }
+          // Keep serving the previous config until the role is back
+          reportWarning(message)
           continue
         }
 

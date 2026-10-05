@@ -273,7 +273,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Both hooks can be async. Errors thrown in `afterCommit` are logged and don't fail the commit."
+          "text": "Both hooks also receive the `user` making the commit, with their roles. In development that is the local user: an admin, or the roles you pass to `alinea dev --role`. Both hooks can be async. Errors thrown in `afterCommit` are logged and don't fail the commit."
         }
       ]
     },

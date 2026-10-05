@@ -449,6 +449,7 @@ test('runs commit hooks around a successful commit', async () => {
   const db = new LocalDB(cms.config)
   const calls: Array<string> = []
   const committedShas: Array<string> = []
+  const users = new Set<string>()
   const handle = createHandler({
     cms,
     db,
@@ -463,12 +464,14 @@ test('runs commit hooks around a successful commit', async () => {
         }
       })
     },
-    beforeCommit({mutations}) {
+    beforeCommit({mutations, user}) {
       calls.push(`beforeCommit:${mutations.map(({op}) => op).join(',')}`)
+      users.add(user.sub)
     },
-    afterCommit({mutations, sha}) {
+    afterCommit({mutations, sha, user}) {
       calls.push(`afterCommit:${mutations.map(({op}) => op).join(',')}`)
       committedShas.push(sha)
+      users.add(user.sub)
     }
   })
 
@@ -532,6 +535,7 @@ test('runs commit hooks around a successful commit', async () => {
     archiveResult.sha,
     removeResult.sha
   ])
+  test.equal([...users], ['admin'])
 })
 
 test('runs commit hooks for publish, unpublish and move mutations', async () => {

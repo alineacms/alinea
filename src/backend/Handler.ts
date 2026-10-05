@@ -51,6 +51,8 @@ export type HookResponse<T = void> = void | T | Promise<void | T>
 
 export interface BeforeCommitContext {
   mutations: ReadonlyArray<Mutation>
+  /** The user committing the mutations */
+  user: User
 }
 
 export interface AfterCommitContext extends BeforeCommitContext {
@@ -365,7 +367,10 @@ export function createHandler({
         const policy = await user.policy
         let mutations = (await body) as ReadonlyArray<Mutation>
         await local.syncWith(cnx)
-        const adjusted = await hooks.beforeCommit?.({mutations})
+        const adjusted = await hooks.beforeCommit?.({
+          mutations,
+          user: user.claims
+        })
         if (adjusted) mutations = adjusted
         const attempt = async (retry = 0) => {
           if (retry > 0) await local.syncWith(cnx)
@@ -392,10 +397,7 @@ export function createHandler({
         }
         const sha = await attempt()
         try {
-          await hooks.afterCommit?.({
-            mutations,
-            sha
-          })
+          await hooks.afterCommit?.({mutations, sha, user: user.claims})
         } catch (error) {
           console.error('Alinea afterCommit hook failed', error)
         }

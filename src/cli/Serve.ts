@@ -21,6 +21,7 @@ export interface ServeOptions {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  roles?: Array<string>
   onAfterGenerate?: (env?: Record<string, string>) => void
 }
 
@@ -46,6 +47,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       configFile: options.configFile,
       alineaDev: options.alineaDev,
       production: options.production,
+      roles: options.roles,
       apiKey,
       buildOptions: {
         ...buildOptions,
@@ -66,7 +68,10 @@ export async function serve(options: ServeOptions): Promise<void> {
           const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
           const showUrl = cmd === 'dev' && !options.onAfterGenerate
           const connector = gray(showUrl ? '├' : '╰')
-          const details = `${connector} ${gray(msg)}\n`
+          const roles = options.roles
+            ? gray(`├ Signed in as ${options.roles.join(', ')}\n`)
+            : ''
+          const details = `${roles}${connector} ${gray(msg)}\n`
           const footer = showUrl
             ? `${gray('╰')} Local CMS:    ${url}\n\n`
             : '\n'

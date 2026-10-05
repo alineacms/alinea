@@ -20,6 +20,7 @@ import {
 import {HttpError} from '#/core/HttpError.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {User} from '#/core/User.js'
 import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
@@ -101,8 +102,6 @@ export function createHandlerWithDatabase(
       return failure(400, 'Expected JSON')
     }
     if (!Array.isArray(mutations)) return failure(400, 'Expected mutations')
-    const adjusted = await options.beforeCommit?.({mutations})
-    if (adjusted) mutations = [...adjusted]
     const devServer = new Client({
       config,
       url: context.handlerUrl.href,
@@ -115,7 +114,12 @@ export function createHandlerWithDatabase(
       }
     })
     let sha: string
+    let user: User | undefined
     try {
+      user = await devServer.user()
+      if (!user) return failure(401, 'Unauthorized')
+      const adjusted = await options.beforeCommit?.({mutations, user})
+      if (adjusted) mutations = [...adjusted]
       ;({sha} = await devServer.mutate(mutations))
     } catch (error) {
       // Report what the dev server rejected, such as a missing permission.
@@ -123,7 +127,7 @@ export function createHandlerWithDatabase(
       throw error
     }
     try {
-      await afterCommit({mutations, sha})
+      await afterCommit({mutations, sha, user})
     } catch (error) {
       console.error('Alinea afterCommit hook failed', error)
     }

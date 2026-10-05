@@ -125,7 +125,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": " to see the dashboard as that user would."
+                  "text": " to see the dashboard as that user would. That only changes what the dashboard shows: to also save, run commit hooks and answer `cms.user()` with a role, start the dev server with `alinea dev --role editor` (repeat `--role` for more)."
                 }
               ]
             }

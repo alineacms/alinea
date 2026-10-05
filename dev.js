@@ -3,7 +3,7 @@ import {ensureEnv} from 'alinea/cli/util/EnsureEnv'
 import {forwardCommand} from 'alinea/cli/util/ForwardCommand'
 import sade from 'sade'
 
-async function run({production, dir, config}) {
+async function run({production, dir, config, role}) {
   ensureEnv(dir)
   const forceProduction = process.env.ALINEA_CLOUD_URL
   process.env.NODE_ENV =
@@ -17,6 +17,7 @@ async function run({production, dir, config}) {
     base: 'http://localhost:3000',
     cwd: path.resolve(dir),
     configFile: config,
+    roles: role && [role].flat().filter(role => typeof role === 'string'),
     staticDir: path.resolve('src/cli/static'),
     port: 4500,
     onAfterGenerate,
@@ -31,5 +32,6 @@ sade('dev', true)
   .option('--production', 'Run in production mode')
   .option('--dir', 'Development directory', 'apps/web')
   .option('--config', 'Config file')
+  .option('--role', 'Sign in locally with this role, repeat for more')
   .action(opts => run(opts))
   .parse(process.argv)
