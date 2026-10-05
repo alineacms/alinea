@@ -30,7 +30,6 @@ import {useAtomValueRaw} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
 import {thumbHashToDataURL} from 'thumbhash'
-import {fileKindVisual} from '../FileKind.js'
 import {NodeEditor} from '../NodeEditor.js'
 import css from './FileEditor.module.css'
 import {FilePreview, type FocusPoint} from './FilePreview.js'
@@ -82,10 +81,9 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
     : undefined
   const displayedFocusPoint = hoverPoint ?? focusPoint
   const node = useEditor().node
-  const {icon: KindIcon, iconColor} = fileKindVisual(extension)
   return (
     <div className={styles.FileEditor()}>
-      {isImage ? (
+      {isImage && (
         <FilePreview
           liveUrl={liveUrl?.href}
           preview={preview}
@@ -94,13 +92,6 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
           height={height}
           onHoverPointChange={setHoverPoint}
         />
-      ) : (
-        <div className={styles.FileEditor.kind()}>
-          <KindIcon
-            className={styles.FileEditor.kind.icon()}
-            style={{color: iconColor}}
-          />
-        </div>
       )}
       <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
         <TabsList

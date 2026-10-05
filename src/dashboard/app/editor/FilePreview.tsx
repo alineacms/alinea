@@ -67,9 +67,6 @@ export function FilePreview({
       placeholder={placeholder}
       width={width}
       height={height}
-      style={
-        width && height ? {aspectRatio: `${width} / ${height}`} : undefined
-      }
       alt="Preview of media file"
       focus={focusPoint}
       onFocusChange={setFocusPoint}

@@ -1,10 +1,7 @@
-/* Sized by the image's aspect ratio, so landscape images don't sit in a tall
-   letterbox, but kept within the viewport for portrait ones */
+/* One height for every image, the image is fitted inside it */
 .FilePreview {
   width: 100%;
-  min-height: 200px;
-  max-height: min(60vh, 520px);
-  aspect-ratio: 16 / 9;
+  height: min(50vh, 400px);
   border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius-container);
   background-color: var(--alinea-bg-muted);

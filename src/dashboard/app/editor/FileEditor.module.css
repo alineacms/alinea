@@ -5,23 +5,6 @@
   min-width: 0;
 }
 
-/* Non-image files show the icon of their kind where images show a preview */
-.FileEditor-kind {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 160px;
-  border: 1px solid var(--alinea-border);
-  border-radius: var(--alinea-radius-container);
-  background: var(--alinea-bg-muted);
-  color: var(--alinea-fg-muted);
-}
-
-.FileEditor-kind-icon {
-  width: 48px;
-  height: 48px;
-}
-
 /* Bordered like the tabs of entry forms */
 .FileEditor-tabs {
   min-width: 0;
