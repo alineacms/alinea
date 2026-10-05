@@ -83,9 +83,11 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const node = useEditor().node
   return (
     <div className={styles.FileEditor()}>
-      {isImage && (
+      {Boolean(isImage || preview) && (
         <FilePreview
-          liveUrl={liveUrl?.href}
+          // Only images load the file itself, a pdf shows its rendered page
+          liveUrl={isImage ? liveUrl?.href : undefined}
+          focusable={Boolean(isImage)}
           preview={preview}
           placeholder={placeholder}
           width={width}

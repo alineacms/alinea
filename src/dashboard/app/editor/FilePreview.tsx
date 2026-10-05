@@ -16,6 +16,8 @@ export interface FilePreviewProps {
   placeholder?: string
   width?: number
   height?: number
+  /** Images take a focus point, other previews (a pdf page) do not */
+  focusable?: boolean
   onHoverPointChange?: (focusPoint: FocusPoint | null) => void
 }
 
@@ -25,6 +27,7 @@ export function FilePreview({
   placeholder,
   width,
   height,
+  focusable = true,
   onHoverPointChange
 }: FilePreviewProps) {
   const [focusPoint = {x: 0.5, y: 0.5}, setFocusPoint] = useField(
@@ -62,15 +65,15 @@ export function FilePreview({
 
   return (
     <MediaPreview
-      className={styles.FilePreview()}
+      className={styles.FilePreview({page: !focusable})}
       src={previewSource}
       placeholder={placeholder}
       width={width}
       height={height}
       alt="Preview of media file"
-      focus={focusPoint}
-      onFocusChange={setFocusPoint}
-      onFocusHover={onHoverPointChange}
+      focus={focusable ? focusPoint : undefined}
+      onFocusChange={focusable ? setFocusPoint : undefined}
+      onFocusHover={focusable ? onHoverPointChange : undefined}
     />
   )
 }

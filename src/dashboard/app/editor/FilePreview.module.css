@@ -6,3 +6,10 @@
   border-radius: var(--alinea-radius-container);
   background-color: var(--alinea-bg-muted);
 }
+
+/* A rendered pdf page is mostly white, its edge keeps it apart from the fill */
+.FilePreview.is-page [data-slot='media-preview-image'] {
+  box-shadow:
+    0 0 0 1px var(--alinea-border),
+    var(--alinea-shadow-raised);
+}
