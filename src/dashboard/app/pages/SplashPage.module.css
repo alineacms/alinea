@@ -128,10 +128,6 @@
   color: var(--alinea-fg);
   font-size: var(--alinea-text-md);
   font-weight: var(--alinea-weight-medium);
-
-  &:hover {
-    background: var(--alinea-muted);
-  }
 }
 
 .SplashPage-workspace-label {
@@ -188,10 +184,6 @@
   color: var(--alinea-fg);
   font-weight: var(--alinea-weight-regular);
   line-height: 1.25;
-
-  &:hover {
-    background: var(--alinea-muted);
-  }
 }
 
 .SplashPage-entry-visual {

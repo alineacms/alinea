@@ -108,12 +108,12 @@
     border-color: color-mix(in oklab, var(--alinea-button-accent) 30%, transparent);
   }
 
-  /* Neutral outline and ghost buttons hover with the same grey as rows */
+  /* Neutral outline and ghost buttons hover with the muted grey */
   &[data-variant='outline'][data-color='neutral'],
   &[data-variant='ghost'][data-color='neutral'] {
     @media (hover: hover) {
       &:hover {
-        background: var(--alinea-selected);
+        background: var(--alinea-muted);
       }
     }
   }
