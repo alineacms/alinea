@@ -118,7 +118,7 @@ export function CreateEntryButton({
       >
         {label}
       </DialogTrigger>
-      <DashboardModal size="sm" aria-label="Create entry">
+      <DashboardModal size="sm" aria-label="Create new">
         <CreateEntry />
       </DashboardModal>
     </Dialog>

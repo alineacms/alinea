@@ -233,7 +233,7 @@ function CreateEntryForm() {
   const canCreate = Boolean(selectedType && title.trim())
 
   return (
-    <DashboardModalDialog variant="explorer" label="Create entry">
+    <DashboardModalDialog variant="explorer" label="Create new">
       <form onSubmit={onSubmit} id={formId}>
         <DashboardModalContent>
           <TextField

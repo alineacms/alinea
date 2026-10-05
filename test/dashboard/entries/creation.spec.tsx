@@ -28,7 +28,7 @@ test('opens for the current folder without showing a suspense loader', async ({
     .locator('[data-slot="page-header"]')
     .getByRole('button', {name: 'Create new'})
     .click()
-  const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
+  const createEntry = app.page.getByRole('dialog', {name: 'Create new'})
   await expect(createEntry.getByRole('textbox', {name: 'Title'})).toBeVisible()
   await expect(createEntry.getByRole('list', {name: 'Parent'})).toContainText(
     'Folder'
@@ -74,7 +74,7 @@ test('loads a parent selected from a collapsed branch by id', async ({
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
   await app.page.getByRole('button', {name: 'Create new'}).click()
-  const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
+  const createEntry = app.page.getByRole('dialog', {name: 'Create new'})
   // Outside the entry editor the parent row opens the picker itself
   await createEntry
     .getByRole('listitem', {name: 'Link item 1'})

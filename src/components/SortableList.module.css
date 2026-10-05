@@ -178,12 +178,38 @@
   font-weight: inherit;
 }
 
+/* With a "…" only that part looks like an icon button, the label stays calm.
+   Outranks the hover of the ghost button. */
+.SortableListItemTrigger[data-slot][data-variant]:has(.SortableListItemTrigger-more):hover {
+  background: transparent;
+}
+
 .SortableListItemTrigger-more {
+  display: inline-flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   width: var(--alinea-control-sm);
+  height: var(--alinea-control-sm);
   margin-left: auto;
+  border-radius: var(--alinea-radius-sm);
   color: var(--alinea-fg-muted);
   font-size: 14px;
+  transition: var(--alinea-transition);
+  transition-property: background-color, color;
+
+  @media (hover: hover) {
+    .SortableListItemTrigger:hover & {
+      background: var(--alinea-muted);
+      color: var(--alinea-fg);
+    }
+  }
+
+  /* The open item is highlighted with the muted grey already */
+  .SortableListItemTrigger[aria-expanded='true'] & {
+    background: var(--alinea-selected);
+    color: var(--alinea-fg);
+  }
 }
 
 .SortableListItemTitle[data-dragging] {

@@ -470,29 +470,30 @@ test('expands the compact entry picker into the explorer modal', async ({
   await expect(page.getByRole('button', {name: 'Select'})).toBeVisible()
 })
 
-test('centers the compact picker on the entire link field', async ({
-  mount,
-  page
-}) => {
+test('opens the compact picker below the add row', async ({mount, page}) => {
+  // Leaves room below the field, the picker flips above it otherwise
+  await page.setViewportSize({width: 1280, height: 1600})
   await mount(<Example />)
   const trigger = linkField(page, 'Resources').getByRole('button', {
     name: 'Page link'
   })
-  const field = trigger.locator('..')
+  const row = trigger.locator('..')
   await trigger.click()
 
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   await expect(picker).toBeVisible()
   await expect
     .poll(async () => {
-      const fieldBox = await field.boundingBox()
+      const rowBox = await row.boundingBox()
       const pickerBox = await picker.boundingBox()
-      if (!fieldBox || !pickerBox) return Number.POSITIVE_INFINITY
-      const fieldCenter = fieldBox.x + fieldBox.width / 2
-      const pickerCenter = pickerBox.x + pickerBox.width / 2
-      return Math.abs(fieldCenter - pickerCenter)
+      if (!rowBox || !pickerBox) return undefined
+      const gap = pickerBox.y - (rowBox.y + rowBox.height)
+      return {
+        below: gap >= 4 && gap <= 8,
+        start: Math.abs(pickerBox.x - rowBox.x) <= 1
+      }
     })
-    .toBeLessThanOrEqual(1)
+    .toEqual({below: true, start: true})
 })
 
 test('truncates long link labels', async ({mount, page}) => {

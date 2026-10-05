@@ -103,7 +103,7 @@ interface LinkPickerPopoverProps {
   children: ReactNode
 }
 
-/** The compact picker opens with the surrounding Dialog, next to the anchor */
+/** The compact picker opens with the surrounding Dialog, below the anchor */
 function LinkPickerPopover({anchorRef, children}: LinkPickerPopoverProps) {
   const dialog = useDialog()
   return (
@@ -118,6 +118,8 @@ function LinkPickerPopover({anchorRef, children}: LinkPickerPopoverProps) {
         aria-label="Pick a link"
         className={styles.LinkPicker.popover()}
         side="bottom"
+        align="start"
+        sideOffset={6}
       >
         {children}
       </PopoverContent>

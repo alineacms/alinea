@@ -145,6 +145,22 @@ test('joins the title and its "…" in one button', async ({mount, page}) => {
   await expect(trigger.locator('svg')).toHaveCount(1)
 })
 
+test('hovering the trigger only fills its "…"', async ({mount, page}) => {
+  await mount(<Basic />)
+  const quote = page.getByRole('listitem', {name: 'Quote item 2'})
+  const trigger = quote.getByRole('button', {name: 'Quote settings'})
+  const more = trigger.locator('[data-slot="sortable-list-item-more"]')
+  await trigger.getByText('Editorial quote').hover()
+  const background = (element: Element) =>
+    getComputedStyle(element).backgroundColor
+  await expect.poll(() => trigger.evaluate(background)).toBe('rgba(0, 0, 0, 0)')
+  await expect
+    .poll(() => more.evaluate(background))
+    .not.toBe('rgba(0, 0, 0, 0)')
+  const box = await more.boundingBox()
+  expect([box?.width, box?.height]).toEqual([28, 28])
+})
+
 test('separates items with borders and adds below the list', async ({
   mount,
   page

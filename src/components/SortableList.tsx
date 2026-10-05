@@ -453,11 +453,12 @@ export function SortableListItemTrigger({
     >
       {children}
       {more && (
-        <Icon
-          aria-hidden
-          icon={IcRoundMoreHoriz}
+        <span
+          data-slot="sortable-list-item-more"
           className={styles.SortableListItemTrigger.more()}
-        />
+        >
+          <Icon aria-hidden icon={IcRoundMoreHoriz} />
+        </span>
       )}
     </Button>
   )
