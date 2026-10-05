@@ -351,6 +351,29 @@ test('blocks navigation until unsaved changes are resolved', async ({
   await expect(app.title).toHaveText('Beta')
 })
 
+test('publishing from the navigation dialog validates like the header', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.field('Title').fill('Invalid')
+  await app.entry('Beta').click()
+
+  const confirmation = app.page.getByRole('dialog', {
+    name: 'Confirm navigation'
+  })
+  const publish = confirmation.getByRole('button', {name: 'Publish'})
+  await expect(publish).toBeEnabled()
+  await publish.click()
+
+  await expect(
+    app.page.getByRole('dialog', {name: 'Fix invalid fields before publishing'})
+  ).toBeVisible()
+  await expect(confirmation).toHaveCount(0)
+  await expect(app.title).toHaveText('Alpha')
+})
+
 test('blocks browser history until unsaved changes are resolved', async ({
   dashboard,
   mount

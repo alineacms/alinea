@@ -37,8 +37,14 @@ import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {type ReactNode, useEffect, useLayoutEffect, useRef} from 'react'
+import {useAtom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
+import {
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState
+} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -71,6 +77,10 @@ import {
   DashboardModalDialog,
   DashboardModalFooter
 } from './../ui/DashboardModal.js'
+import {
+  type EntryValidationFailure,
+  EntryValidationModal
+} from '../EntryValidationModal.js'
 import css from './EntryPage.module.css'
 
 const styles = styler(css)
@@ -278,6 +288,8 @@ function EntryEditorContent({
   const hasErrors = useAtomValueRaw(localeData.hasErrors(node))
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
+  const [invalid, setInvalid] = useState<EntryValidationFailure>()
+  const store = useStore()
   const setRouteGuard = useSetAtom(routeGuardAtom)
   const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
   const editorBodyRef = useRef<HTMLDivElement>(null)
@@ -297,7 +309,15 @@ function EntryEditorContent({
     routeBlock?.confirm()
   }
 
+  // Like the header, publishing validates first: invalid fields keep the
+  // editor open and explain what to fix
   const publishAndConfirm = async () => {
+    const errors = store.get(localeData.errors(node))
+    if (errors.length > 0) {
+      setRouteBlock(null)
+      setInvalid({errors})
+      return
+    }
     await publishEdits(node)
     routeBlock?.confirm()
   }
@@ -427,7 +447,6 @@ function EntryEditorContent({
                     onClick={publishAndConfirm}
                     color={canSaveDraft ? 'secondary' : 'primary'}
                     icon={IcRoundCheck}
-                    disabled={hasErrors}
                   >
                     Publish
                   </Button>
@@ -446,6 +465,10 @@ function EntryEditorContent({
           </DashboardModalDialog>
         )}
       </DashboardModal>
+      <EntryValidationModal
+        failure={invalid}
+        onClose={() => setInvalid(undefined)}
+      />
       <EntryScope
         entry={entry}
         localeData={localeData}
