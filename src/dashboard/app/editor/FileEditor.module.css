@@ -1,3 +1,27 @@
+.FileEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Non-image files show the icon of their kind where images show a preview */
+.FileEditor-kind {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius-container);
+  background: var(--alinea-bg-muted);
+  color: var(--alinea-fg-muted);
+}
+
+.FileEditor-kind-icon {
+  width: 48px;
+  height: 48px;
+}
+
 /* Bordered like the tabs of entry forms */
 .FileEditor-tabs {
   min-width: 0;
@@ -22,65 +46,14 @@
   padding: 16px 16px 20px;
 }
 
-.FileEditor {
-  display: flex;
-  gap: 20px;
-}
-
-.FileEditor-content {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.FileEditor-metadata {
-  width: 100%;
-}
-
 .FileEditor-focus {
-  display: block;
-}
-
-.FileEditor-focus-header {
   display: flex;
   flex-wrap: wrap;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px 8px;
-  padding-bottom: 8px;
-  line-height: 1;
+  align-items: baseline;
+  gap: 2px 12px;
 }
 
-.FileEditor-focus-label {
+.FileEditor-focus-hint {
   color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 500;
-}
-
-.FileEditor-focus-description {
-  display: block;
-  max-width: 100%;
-  color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-  line-height: 1.1;
-  font-weight: 400;
-  font-style: italic;
-  white-space: normal;
-  word-wrap: break-word;
-}
-
-.FileEditor-focus-value {
-  display: block;
-  color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-  line-height: 1.35;
-}
-
-@media (max-width: 800px) {
-  .FileEditor {
-    flex-direction: column;
-  }
+  font-size: var(--alinea-text-sm);
 }

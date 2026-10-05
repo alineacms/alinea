@@ -30,6 +30,7 @@ import {useAtomValueRaw} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
 import {thumbHashToDataURL} from 'thumbhash'
+import {fileKindVisual} from '../FileKind.js'
 import {NodeEditor} from '../NodeEditor.js'
 import css from './FileEditor.module.css'
 import {FilePreview, type FocusPoint} from './FilePreview.js'
@@ -81,92 +82,94 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
     : undefined
   const displayedFocusPoint = hoverPoint ?? focusPoint
   const node = useEditor().node
+  const {icon: KindIcon, iconColor} = fileKindVisual(extension)
   return (
-    <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
-      <TabsList
-        aria-label="File editor"
-        className={styles.FileEditor.tabs.list()}
-      >
-        <TabsTrigger value="file">
-          <Icon icon={IcRoundInsertDriveFile} />
-          File
-        </TabsTrigger>
-        <TabsTrigger value="details">
-          <Icon icon={IcRoundInfo} />
-          Details
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
-        <NodeEditor node={node} type={fileFields} />
-        <div className={styles.FileEditor()}>
-          {isImage && (
-            <FilePreview
-              liveUrl={liveUrl?.href}
-              preview={preview}
-              placeholder={placeholder}
-              width={width}
-              height={height}
-              onHoverPointChange={setHoverPoint}
-            />
-          )}
-          <div className={styles.FileEditor.content()}>
-            <div className={styles.FileEditor.metadata()}>
-              <DataList orientation="vertical" aria-label="File details">
-                <DataListItem>
-                  <DataListLabel>Extension</DataListLabel>
-                  <DataListValue>{extension}</DataListValue>
-                </DataListItem>
-                <DataListItem>
-                  <DataListLabel>File size</DataListLabel>
-                  <DataListValue>{prettyBytes(size)}</DataListValue>
-                </DataListItem>
-                {isImage && width && height ? (
-                  <DataListItem>
-                    <DataListLabel>Dimensions</DataListLabel>
-                    <DataListValue>
-                      {width}px x {height}px
-                    </DataListValue>
-                  </DataListItem>
-                ) : null}
-                {liveUrl && (
-                  <DataListItem full>
-                    <DataListLabel>URL</DataListLabel>
-                    <DataListValue>
-                      <Link
-                        href={liveUrl.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {displayedUrl}
-                      </Link>
-                    </DataListValue>
-                  </DataListItem>
-                )}
-              </DataList>
-            </div>
+    <div className={styles.FileEditor()}>
+      {isImage ? (
+        <FilePreview
+          liveUrl={liveUrl?.href}
+          preview={preview}
+          placeholder={placeholder}
+          width={width}
+          height={height}
+          onHoverPointChange={setHoverPoint}
+        />
+      ) : (
+        <div className={styles.FileEditor.kind()}>
+          <KindIcon
+            className={styles.FileEditor.kind.icon()}
+            style={{color: iconColor}}
+          />
+        </div>
+      )}
+      <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
+        <TabsList
+          aria-label="File editor"
+          className={styles.FileEditor.tabs.list()}
+        >
+          <TabsTrigger value="file">
+            <Icon icon={IcRoundInsertDriveFile} />
+            File
+          </TabsTrigger>
+          <TabsTrigger value="details">
+            <Icon icon={IcRoundInfo} />
+            Details
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
+          <NodeEditor node={node} type={fileFields} />
+          <DataList aria-label="File details">
+            <DataListItem>
+              <DataListLabel>Extension</DataListLabel>
+              <DataListValue>{extension}</DataListValue>
+            </DataListItem>
+            <DataListItem>
+              <DataListLabel>File size</DataListLabel>
+              <DataListValue>{prettyBytes(size)}</DataListValue>
+            </DataListItem>
+            {isImage && width && height ? (
+              <DataListItem>
+                <DataListLabel>Dimensions</DataListLabel>
+                <DataListValue>
+                  {width}px x {height}px
+                </DataListValue>
+              </DataListItem>
+            ) : null}
+            {liveUrl && (
+              <DataListItem>
+                <DataListLabel>URL</DataListLabel>
+                <DataListValue>
+                  <Link
+                    href={liveUrl.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {displayedUrl}
+                  </Link>
+                </DataListValue>
+              </DataListItem>
+            )}
             {isImage && (
-              <div className={styles.FileEditor.focus()}>
-                <div className={styles.FileEditor.focus.header()}>
-                  <strong className={styles.FileEditor.focus.label()}>
-                    Focus point
-                  </strong>
-                  <span className={styles.FileEditor.focus.description()}>
+              <DataListItem>
+                <DataListLabel>Focus point</DataListLabel>
+                <DataListValue className={styles.FileEditor.focus()}>
+                  <span>
+                    ({displayedFocusPoint.x.toFixed(2)},{' '}
+                    {displayedFocusPoint.y.toFixed(2)})
+                  </span>
+                  <span className={styles.FileEditor.focus.hint()}>
                     Click on the image to change the focus point
                   </span>
-                </div>
-                <span className={styles.FileEditor.focus.value()}>
-                  ({displayedFocusPoint?.x.toFixed(2)},{' '}
-                  {displayedFocusPoint?.y.toFixed(2)})
-                </span>
-              </div>
+                </DataListValue>
+              </DataListItem>
             )}
-          </div>
-        </div>
-      </TabsContent>
-      <TabsContent value="details" className={styles.FileEditor.tabPanel()}>
-        <FileDetails />
-      </TabsContent>
-    </Tabs>
+          </DataList>
+        </TabsContent>
+        <TabsContent value="details" className={styles.FileEditor.tabPanel()}>
+          <FileDetails />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
 
