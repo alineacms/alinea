@@ -53,7 +53,9 @@ test('keeps its keys when a refresh fails', async () => {
   await jwks(uri, 'a')
   served.status = 503
   served.now += 11 * 60_000
+  await test.throws(() => jwks(uri, 'a'))
   test.equal(kids(await jwks(uri, 'a')), ['a'])
+  test.is(served.requests, 2)
 })
 
 test('loads again after a failed load', async () => {

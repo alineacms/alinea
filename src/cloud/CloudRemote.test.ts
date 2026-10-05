@@ -45,6 +45,10 @@ test('returns safe handshake validation details', async () => {
 
 test('returns handshake signing key failures as unavailable', async () => {
   const originalFetch = globalThis.fetch
+  const originalNow = Date.now
+  const now = originalNow()
+  // Keys cached by other tests have expired by then
+  Date.now = () => now + 60 * 60_000
   globalThis.fetch = Object.assign(
     async () => new Response('Unavailable', {status: 503}),
     {preconnect: originalFetch.preconnect}
@@ -74,6 +78,7 @@ test('returns handshake signing key failures as unavailable', async () => {
     })
   } finally {
     globalThis.fetch = originalFetch
+    Date.now = originalNow
   }
 })
 

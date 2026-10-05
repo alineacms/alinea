@@ -38,14 +38,14 @@ function load(uri: string, previous?: Cached): Promise<Array<WebKey>> {
       throw new Error('Invalid signing keys')
     return body.keys.filter(isKey)
   })
-  // Failing to refresh keeps the keys we had
+  // The request that refreshes sees a failure, others keep the keys we had
   const keys = previous ? fetched.catch(() => previous.keys) : fetched
   const entry = {keys, expires: Date.now() + lifetime, loaded: Date.now()}
   cache.set(uri, entry)
   keys.catch(() => {
     if (cache.get(uri) === entry) cache.delete(uri)
   })
-  return keys
+  return fetched
 }
 
 function isKey(value: unknown): value is WebKey {
