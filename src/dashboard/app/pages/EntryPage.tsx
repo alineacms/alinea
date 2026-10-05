@@ -44,7 +44,7 @@ import {
   IcBaselineErrorOutline,
   IcRoundCheck,
   IcRoundSave,
-  IcRoundUndo
+  IcRoundClose
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
 import {FieldsEditor} from './../EntryFields.js'
@@ -417,7 +417,7 @@ function EntryEditorContent({
               <Button
                 onClick={discardAndConfirm}
                 variant="ghost"
-                icon={IcRoundUndo}
+                icon={IcRoundClose}
               >
                 Discard
               </Button>

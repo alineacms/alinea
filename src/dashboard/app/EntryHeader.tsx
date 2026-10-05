@@ -63,7 +63,7 @@ import {
   IcRoundPublishedWithChanges,
   IcRoundSave,
   IcRoundSync,
-  IcRoundUndo,
+  IcRoundClose,
   IcRoundVisibilityOff
 } from '../icons.js'
 import {DeleteDialog} from './DeleteDialog.js'
@@ -411,7 +411,7 @@ export function EntryHeader({
       <>
         <Button
           variant="ghost"
-          icon={IcRoundUndo}
+          icon={IcRoundClose}
           disabled={isPending}
           onClick={() => reset()}
         >

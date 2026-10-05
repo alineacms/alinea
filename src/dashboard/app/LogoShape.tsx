@@ -6,6 +6,10 @@ import css from './LogoShape.module.css'
 
 const styles = styler(css)
 
+/** The rounded square of the logo and workspace avatars, in a 36 unit box */
+export const logoShapePath =
+  'M18 36C25.884 36 29.9427 36 32.8047 33.138C35.6667 30.276 36 25.884 36 18C36 10.116 35.6667 6.05733 32.8047 3.19533C29.9427 0.333333 25.884 0 18 0C10.116 0 6.05733 0.333333 3.19533 3.19533C0.333333 6.05733 0 10.116 0 18C0 25.884 0.333333 29.9427 3.19533 32.8047C6.05733 35.6667 10.116 36 18 36Z'
+
 export interface LogoShapeProps extends SVGProps<SVGSVGElement> {
   background: string
   foreground?: string
@@ -36,10 +40,7 @@ export function LogoShape({
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="none"
     >
-      <path
-        d="M18 36C25.884 36 29.9427 36 32.8047 33.138C35.6667 30.276 36 25.884 36 18C36 10.116 35.6667 6.05733 32.8047 3.19533C29.9427 0.333333 25.884 0 18 0C10.116 0 6.05733 0.333333 3.19533 3.19533C0.333333 6.05733 0 10.116 0 18C0 25.884 0.333333 29.9427 3.19533 32.8047C6.05733 35.6667 10.116 36 18 36Z"
-        fill={background}
-      />
+      <path d={logoShapePath} fill={background} />
       <g color={foreground} transform="translate(8 8)" fontSize="20">
         {createElement(Icon)}
       </g>

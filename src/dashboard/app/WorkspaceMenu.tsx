@@ -25,7 +25,7 @@ import {
 } from '../hook/UseSearchShortcut.js'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
-import {logoShapeForeground} from './LogoShape.js'
+import {logoShapeForeground, logoShapePath} from './LogoShape.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {
   DashboardModal,
@@ -60,8 +60,16 @@ function WorkspaceAvatar({color, icon, label}: WorkspaceAvatarProps) {
   return (
     <span
       className={styles.WorkspaceMenu.avatar()}
-      style={{background: color, color: logoShapeForeground(color)}}
+      style={{color: logoShapeForeground(color)}}
     >
+      <svg
+        aria-hidden
+        className={styles.WorkspaceMenu.avatar.shape()}
+        viewBox="0 0 36 36"
+        preserveAspectRatio="none"
+      >
+        <path d={logoShapePath} fill={color} />
+      </svg>
       {icon ? (
         <Icon icon={icon} className={styles.WorkspaceMenu.avatar.icon()} />
       ) : (

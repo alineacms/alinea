@@ -7,20 +7,30 @@
 }
 
 .WorkspaceMenu-avatar {
+  position: relative;
   width: 32px;
   height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 10px;
+}
+
+/* The same rounded square as the favicon, rather than a border radius */
+.WorkspaceMenu-avatar-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .WorkspaceMenu-avatar-icon {
+  position: relative;
   font-size: 18px;
 }
 
 .WorkspaceMenu-avatar-initial {
+  position: relative;
   font-size: 13px;
   font-weight: var(--alinea-weight-title);
   line-height: 1;
