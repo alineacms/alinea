@@ -1,6 +1,14 @@
 # Changelog
 
 ## [2.0.0]
+- Roles combine per role: a deny only applies within the role that sets it, so
+  another role of the same user can still allow the action. Before, a deny in
+  any role blocked it for the user.
+- Enforce the `explore` permission: link and image pickers list the entries a
+  role can explore, without opening them in the dashboard. Allowing `read`
+  allows `explore`, denying `read` denies it unless `explore` is allowed.
+- Target fields inside object fields in role permissions, such as
+  `{field: Article.visibility.germany, deny: {all: true}}`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`
   signs in the local user with that role, for saves, hooks and `cms.user()`.
 - Rebuild the dashboard on React Aria Components, with keyboard navigation,

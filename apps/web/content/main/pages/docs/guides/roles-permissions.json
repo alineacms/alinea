@@ -447,7 +447,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`explore`: deprecated and never checked. What a role can browse in the entry tree and media library follows `read`."
+                  "text": "`explore`: find and select entries in pickers, such as those of link and image fields, without opening them in the dashboard. Allowing `read` allows `explore` too, and denying `read` denies it unless `explore` is allowed."
                 }
               ]
             }
@@ -509,7 +509,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": " A denied action stays denied for everything below it, and an allow further down can't undo it. Put denies on the most specific target you can."
+                  "text": " Within a role, a denied action stays denied for everything below it, and an allow further down can't undo it. Put denies on the most specific target you can."
                 }
               ]
             }
@@ -572,7 +572,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A user with several roles gets the union of their rules: an action allowed by any role is allowed. Denies are combined the same way, so a deny in one role also blocks what another role allows. Keep denies in roles that are meant to restrict."
+          "text": "A user with several roles can do what any of their roles allows. Each role is checked on its own: a deny holds within the role that sets it, but doesn't block what another role allows."
         }
       ]
     },
@@ -592,7 +592,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Your handler checks the policy on every save, so a user can't create, update, publish, archive, move, reorder, delete or upload beyond their roles, even outside the dashboard. `read` hides workspaces, roots, entries and fields in the dashboard."
+          "text": "Your handler checks the policy on every save, so a user can't create, update, publish, archive, move, reorder, delete or upload beyond their roles, even outside the dashboard. `read` hides workspaces, roots, entries and fields in the dashboard, `explore` hides workspaces, roots and entries in pickers."
         }
       ]
     },
@@ -601,7 +601,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Permissions don't make content secret. Your content lives in your git repository and the dashboard syncs all of it to the browser, so treat `read` as a way to keep the dashboard focused, not as access control for confidential data."
+          "text": "Permissions don't make content secret. Your content lives in your git repository and the dashboard syncs all of it to the browser, so treat `read` and `explore` as a way to keep the dashboard focused, not as access control for confidential data."
         }
       ]
     },
@@ -702,7 +702,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Deny `read` on a field to hide it from the role."
+          "text": "Deny `read` on a field to hide it from the role. Fields inside an object field can be targeted too, such as `{field: Article.visibility.germany, deny: {all: true}}`, and inherit what applies to the object field. Fields inside list rows can't be targeted, nor can a field reused in more than one place."
         }
       ]
     },

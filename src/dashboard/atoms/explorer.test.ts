@@ -3,15 +3,16 @@ import {
   createDashboardStore
 } from '#test/DashboardFixture.js'
 import {LocalDB} from '#/database/LocalDB.js'
-import {Policy, WriteablePolicy} from '#/core/Role.js'
+import {Permission, Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
 import {Entry} from '#/core/Entry.js'
 import {Config, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
-import type {DropTarget} from '#/components.js'
+import type {DropTarget, Key} from '#/components.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
+import {workspacesAtom} from './config.js'
 import {routeAtom} from './nav.js'
 import {rootAtoms} from './root.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -21,7 +22,8 @@ import {
   explorerItemCanDelete,
   explorerItemCanMove,
   explorerThumbnailId,
-  type ExplorerItemData
+  type ExplorerItemData,
+  searchResultLimit
 } from './explorer.js'
 import {syncAtom} from './graph.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -867,4 +869,162 @@ test('entries that are not seeded can be deleted and moved', () => {
     .set({id: 'file', deny: {delete: true, move: true}})
   expect(explorerItemCanDelete(denied, item)).toBe(false)
   expect(explorerItemCanMove(denied, item)).toBe(false)
+})
+
+const Item = Config.document('Item', {
+  contains: ['Item'],
+  fields: {title: Field.text('Title')}
+})
+const ownWorkspace = Config.workspace('Own', {
+  source: 'own',
+  roots: {
+    pages: Config.root('Pages', {contains: ['Item']}),
+    media: Config.root('Media', {contains: ['Item']})
+  }
+})
+const sharedWorkspace = Config.workspace('Shared', {
+  source: 'shared',
+  roots: {
+    pages: Config.root('Pages', {contains: ['Item']}),
+    media: Config.root('Media', {contains: ['Item']})
+  }
+})
+const exploreConfig = Config.create({
+  schema: {Item},
+  workspaces: {own: ownWorkspace, shared: sharedWorkspace}
+})
+
+/** An editor of their own workspace that can link to a shared one */
+async function exploreFixture() {
+  const db = new LocalDB(exploreConfig)
+  await db.sync()
+  const folder = await db.create({
+    type: Item,
+    workspace: 'shared',
+    root: 'pages',
+    set: {title: 'Shared folder'}
+  })
+  await db.create({
+    type: Item,
+    workspace: 'shared',
+    root: 'pages',
+    parentId: folder._id,
+    set: {title: 'Shared page'}
+  })
+  await db.create({
+    type: Item,
+    workspace: 'own',
+    root: 'pages',
+    set: {title: 'Own page'}
+  })
+  const store = createDashboardStore(exploreConfig, db)
+  await store.get(userPolicyReadyAtom)
+  const policy = new WriteablePolicy(getScope(exploreConfig)).set(
+    {workspace: ownWorkspace, allow: {all: true}},
+    {workspace: sharedWorkspace, allow: {explore: true}, grant: 'explicit'},
+    {root: sharedWorkspace.pages, allow: {explore: true}},
+    {root: sharedWorkspace.media, allow: {explore: true}}
+  )
+  store.set(preloadUserPolicyAtom, localUser, policy)
+  return {folder, store}
+}
+
+test('pickers offer the locations that can be explored', async () => {
+  const {store} = await exploreFixture()
+  const location = {workspace: 'own', root: 'pages'}
+  const picker = createExplorerAtoms(location, {
+    permission: Permission.Explore
+  })
+  const browser = createExplorerAtoms(location, {})
+
+  expect(store.get(workspacesAtom)).toEqual(['own'])
+  expect(store.get(picker.locations)).toEqual([
+    {workspace: 'own', root: 'pages'},
+    {workspace: 'own', root: 'media'},
+    {workspace: 'shared', root: 'pages'},
+    {workspace: 'shared', root: 'media'}
+  ])
+  expect(store.get(browser.locations)).toEqual([
+    {workspace: 'own', root: 'pages'},
+    {workspace: 'own', root: 'media'}
+  ])
+})
+
+test('pickers list and search entries that can be explored', async () => {
+  const {folder, store} = await exploreFixture()
+  const location = {workspace: 'shared', root: 'pages'}
+  const picker = createExplorerAtoms(location, {
+    allowAllWorkspaces: true,
+    permission: Permission.Explore
+  })
+  const browser = createExplorerAtoms(location, {allowAllWorkspaces: true})
+  const titles = async (explorer: typeof picker) =>
+    (await store.get(explorer.itemsReady(null))).map(item => item.title).sort()
+
+  expect(await titles(picker)).toEqual(['Shared folder'])
+  expect(await titles(browser)).toEqual([])
+
+  for (const explorer of [picker, browser]) {
+    store.set(explorer.search, 'Shared')
+    store.set(explorer.searchScope, 'everything')
+  }
+  expect(await titles(picker)).toEqual(['Shared folder', 'Shared page'])
+  expect(await titles(browser)).toEqual([])
+
+  store.set(picker.search, '')
+  store.set(picker.location, {...location, parentId: folder._id})
+  const page = await store.get(picker.pageReady)
+  expect(page.parent?.title).toBe('Shared folder')
+  expect(page.items.map(item => item.title)).toEqual(['Shared page'])
+})
+
+test('picker trees list entries that can be explored', async () => {
+  const {folder, store} = await exploreFixture()
+  const root = rootAtoms('shared', 'pages')
+  const selected = atom(new Set<Key>())
+  const expanded = () => atom(new Set([folder._id]))
+  const picker = root.createTree(null, selected, expanded(), Permission.Explore)
+  const sidebar = root.createTree(null, selected, expanded())
+
+  const listed = await store.get(picker.ready)
+  expect([...listed.entries.values()].map(entry => entry.title)).toEqual([
+    'Shared folder',
+    'Shared page'
+  ])
+  expect((await store.get(sidebar.ready)).entries.size).toBe(0)
+})
+
+test('search results are not taken by matches that are not listed', async () => {
+  const config = Config.create({
+    schema: {Item},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {
+          secret: Config.root('Secret', {contains: ['Item']}),
+          pages: Config.root('Pages', {contains: ['Item']})
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  for (let i = 0; i < searchResultLimit; i++)
+    await db.create({type: Item, root: 'secret', set: {title: 'Match'}})
+  await db.create({type: Item, root: 'pages', set: {title: 'Match'}})
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const policy = new WriteablePolicy(getScope(config)).set({
+    root: config.workspaces.main.pages,
+    allow: {read: true}
+  })
+  store.set(preloadUserPolicyAtom, localUser, policy)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {mode: 'search'}
+  )
+  store.set(explorer.search, 'Match')
+
+  const items = await store.get(explorer.itemsReady(null))
+  expect(items.map(item => item.root)).toEqual(['pages'])
 })

@@ -72,7 +72,7 @@ export interface ExplorerLimitLocation {
   root: string
 }
 
-function constrainLocation(
+export function constrainLocation(
   location: ExplorerLocation,
   limits: Array<ExplorerLimitLocation> | undefined
 ): ExplorerLocation {
@@ -110,6 +110,11 @@ export interface ExplorerOptions {
   limitLocations?: Array<ExplorerLimitLocation>
   mode?: 'browse' | 'search'
   nestedNavigation?: boolean
+  /**
+   * Entries are listed when the policy allows this permission on them,
+   * defaults to read. Pickers list what can be explored.
+   */
+  permission?: Permission
   pickChildren?: boolean
   rootData?: Atom<RootData>
   /**
@@ -240,6 +245,21 @@ export function explorerScrollKey(page: ExplorerReadyPage) {
   ])
 }
 
+/** The locations an explorer can list: those of the picker the policy allows */
+export function explorerLocations(
+  config: Config,
+  policy: Policy,
+  options: ExplorerOptions
+): Array<ExplorerLimitLocation> {
+  const permission = options.permission ?? Permission.Read
+  const configured = options.limitLocations?.length
+    ? options.limitLocations
+    : Object.entries(config.workspaces).flatMap(([workspace, value]) =>
+        Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
+      )
+  return configured.filter(location => policy.check(permission, location))
+}
+
 export interface ExplorerItemData {
   active?: boolean
   createdAt?: number | null
@@ -349,6 +369,7 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
   get: Getter,
   overview: OverviewState,
   items: Array<Item>,
+  permission = Permission.Read,
   thumbnails = true
 ): Promise<Array<Item>> {
   const config = get(configAtom)
@@ -388,7 +409,7 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
   })
   const byId = new Map<string, Array<LinkedEntryRow>>()
   for (const row of rows) {
-    if (!policy.canRead(row)) continue
+    if (!policy.check(permission, row)) continue
     const versions = byId.get(row.id) ?? []
     versions.push(row as LinkedEntryRow)
     byId.set(row.id, versions)
@@ -563,6 +584,7 @@ export class ExplorerAtoms {
   readonly supportsInlineExpansion
   readonly pickChildren
   readonly hasCondition
+  readonly permission: Permission
   readonly canSearchEverything: Atom<boolean>
   readonly searchesEverything: Atom<boolean>
 
@@ -604,9 +626,10 @@ export class ExplorerAtoms {
   /** The entry a location lists the children of, loaded with its parents */
   #parent = dispense((parentId: string, locale: string | null) =>
     atom(async (get): Promise<ExplorerParent | undefined> => {
+      const {permission} = this
       async function summary(id: string) {
         try {
-          return await get(treeEntryAtoms(id).summary(locale))
+          return await get(treeEntryAtoms(id, permission).summary(locale))
         } catch (error) {
           if (error instanceof MissingEntryError) return undefined
           throw error
@@ -679,6 +702,7 @@ export class ExplorerAtoms {
     this.supportsInlineExpansion = options.nestedNavigation ?? false
     this.pickChildren = options.pickChildren ?? false
     this.hasCondition = Boolean(options.condition)
+    this.permission = options.permission ?? Permission.Read
     this.canSearchEverything = atom(
       get =>
         this.allowAllWorkspaces &&
@@ -932,6 +956,10 @@ export class ExplorerAtoms {
   get limitLocations() {
     return this.#options.limitLocations
   }
+  /** The locations this explorer lists */
+  locations = atom(get =>
+    explorerLocations(get(configAtom), get(policyAtom), this.#options)
+  )
   uploadsInCurrentFolder = atom(get => {
     const location = get(this.location)
     return get(activityAtom).items.filter(activity => {
@@ -1175,15 +1203,17 @@ export class ExplorerAtoms {
         select: explorerItemSelect
       })
       const policy = get(policyAtom)
-      const readable = entries.filter(candidate => policy.canRead(candidate))
+      const visible = entries.filter(candidate =>
+        policy.check(this.permission, candidate)
+      )
       const [parentIds, rows] = await Promise.all([
         parentsWithChildren(
           graph,
           entry.workspace,
           entry.root,
-          readable.map(candidate => candidate.id)
+          visible.map(candidate => candidate.id)
         ),
-        loadColumnValues(config, graph, overview, readable)
+        loadColumnValues(config, graph, overview, visible)
       ])
       const currentParents = get(data.parents)
       const values = await withLinkedEntries(
@@ -1192,7 +1222,8 @@ export class ExplorerAtoms {
         rows.map(candidate => ({
           ...candidate,
           hasChildren: parentIds.has(candidate.id)
-        }))
+        })),
+        this.permission
       )
       return values.map(value => {
         return new ExplorerEntry(value.id, value, atom(value), this.root, [
@@ -1222,17 +1253,17 @@ export class ExplorerAtoms {
       const flatList = resultMode === 'matches'
       const condition = flatList ? this.#options.condition : undefined
       const picked = overviewFilter(overview, requestedFilters)
-      // Searching all locations stays within the locations a picker allows
-      const limits = this.#options.limitLocations
-      const allowed =
-        searchesEverything && limits?.length
-          ? {
-              or: limits.map(limit => ({
-                _workspace: limit.workspace,
-                _root: limit.root
-              }))
-            }
-          : undefined
+      // Searching several roots stays within the locations the picker and
+      // the policy allow, so matches that can't be listed don't take the
+      // place of those that can
+      const locations = searchesMultipleRoots ? get(this.locations) : undefined
+      if (locations?.length === 0) return undefined
+      const allowed = locations && {
+        or: locations.map(limit => ({
+          _workspace: limit.workspace,
+          _root: limit.root
+        }))
+      }
       // The search terms, the picker's condition and the picked filters apply
       const filters = [condition, picked, allowed].filter(
         filter => filter !== undefined
@@ -1297,9 +1328,9 @@ export class ExplorerAtoms {
             explorerItemField(candidate as ExplorerItemData, name)
           )
         : undefined
-      const readable = entries.filter(
+      const visible = entries.filter(
         entry =>
-          policy.canRead(entry) &&
+          policy.check(this.permission, entry) &&
           (!selectedLocationParentId ||
             entry.parents.includes(selectedLocationParentId)) &&
           (!flatList || !matchesCondition || matchesCondition(entry as never))
@@ -1309,9 +1340,9 @@ export class ExplorerAtoms {
           graph,
           query.workspace,
           query.root,
-          readable.map(entry => entry.id)
+          visible.map(entry => entry.id)
         ),
-        loadColumnValues(config, graph, overview, readable)
+        loadColumnValues(config, graph, overview, visible)
       ])
       return withLinkedEntries(
         get,
@@ -1319,7 +1350,8 @@ export class ExplorerAtoms {
         rows.map(entry => ({
           ...entry,
           hasChildren: parentIds.has(entry.id)
-        }))
+        })),
+        this.permission
       )
     })
   )

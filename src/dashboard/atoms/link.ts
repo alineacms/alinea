@@ -1,9 +1,11 @@
 import type {EntryAnchorTarget} from '#/core/Field.js'
+import {Permission} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import {atom, type Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {configAtom} from './core.js'
 import {entryAtoms, type EntryAtoms, MissingEntryError} from './entry.js'
+import {policyAtom} from './user.js'
 import {dispense} from './utils.js'
 
 export interface LinkEntrySummary {
@@ -15,6 +17,8 @@ export interface LinkEntrySummary {
   preview?: string
   parents: Array<{id: string; title: string}>
   anchors: Array<EntryAnchorTarget>
+  /** The editor can open the entry, not only link to it */
+  readable: boolean
 }
 
 export type LinkEntryState =
@@ -28,7 +32,7 @@ async function linkEntryParent(
   locale: string | null
 ): Promise<{id: string; title: string} | undefined> {
   try {
-    const parent = await get(entryAtoms(id))
+    const parent = await get(entryAtoms(id, Permission.Explore))
     const preferred = get(parent.locales(locale).preferredEntry)
     return {id: preferred.id, title: preferred.title}
   } catch (error) {
@@ -41,7 +45,8 @@ export const linkEntryAtoms = dispense((id: string, locale?: string) => {
   const source = atom(async get => {
     let model: EntryAtoms
     try {
-      model = await get(entryAtoms(id))
+      // Links show the entries they can be picked from
+      model = await get(entryAtoms(id, Permission.Explore))
     } catch (error) {
       if (error instanceof MissingEntryError) return null
       throw error
@@ -65,7 +70,8 @@ export const linkEntryAtoms = dispense((id: string, locale?: string) => {
       preview:
         typeof entry.data.preview === 'string' ? entry.data.preview : undefined,
       parents,
-      anchors: type ? Type.anchors(type, entry.data) : []
+      anchors: type ? Type.anchors(type, entry.data) : [],
+      readable: get(policyAtom).canRead(entry)
     }
   })
   const result = atom(async (get): Promise<LinkEntryState> => {

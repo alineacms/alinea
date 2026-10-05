@@ -5,9 +5,11 @@ import type {Field} from './Field.js'
 import {
   getExpr,
   getRoot,
+  getType,
   type HasRoot,
   type HasWorkspace,
-  hasExpr
+  hasExpr,
+  hasType
 } from './Internal.js'
 import type {Page} from './Page.js'
 import type {Root} from './Root.js'
@@ -48,6 +50,8 @@ export class Scope {
   #keys: Map<string, Entity> = new Map()
   #paths: Map<Entity, Array<string>> = new Map()
   #locales: Map<string, Array<string>> = new Map()
+  #nested: Map<Entity, Array<string>> = new Map()
+  #shared: Set<Entity> = new Set()
 
   constructor(config: Config) {
     for (const [workspaceName, workspace] of entries(config.workspaces)) {
@@ -71,6 +75,27 @@ export class Scope {
         this.#insert(field, ScopeKey.field(typeName, fieldName))
       }
     }
+    for (const [typeName, type] of entries(config.schema))
+      for (const [fieldName, field] of entries(type))
+        this.#insertNested(field, ['Field', typeName, fieldName])
+  }
+
+  // Fields of object fields get a key, eg. Field.Type.object.field, so roles
+  // can target them. They are kept apart from the other entities: queries
+  // select top level fields only. A field instance used in more than one
+  // place has no single key, so it can't be targeted.
+  #insertNested(field: Field, path: Array<string>) {
+    if (!hasType(field)) return
+    for (const [name, inner] of entries(getType(field).allFields)) {
+      const location = [...path, name]
+      if (this.#nested.has(inner)) {
+        this.#nested.delete(inner)
+        this.#shared.add(inner)
+      } else if (!this.#paths.has(inner) && !this.#shared.has(inner)) {
+        this.#nested.set(inner, location)
+      }
+      this.#insertNested(inner, location)
+    }
   }
 
   workspaceOf(root: HasRoot): HasWorkspace {
@@ -80,9 +105,20 @@ export class Scope {
   }
 
   keyOf(entity: Entity) {
-    const path = this.#paths.get(entity)
+    if (this.#shared.has(entity))
+      throw new Error(
+        'Field is used in more than one place, target the field containing it'
+      )
+    const path = this.#paths.get(entity) ?? this.#nested.get(entity)
     if (!path) throw new Error(`Entity not found in scope: ${entity}`)
     return path.join('.')
+  }
+
+  /** The type of a field and its path in there, such as `seo.title` */
+  fieldOf(field: Field): [type: string, path: string] | undefined {
+    const path = this.#paths.get(field) ?? this.#nested.get(field)
+    if (path?.[0] !== 'Field') return
+    return [path[1], path.slice(2).join('.')]
   }
 
   locationOf(entity: Entity) {

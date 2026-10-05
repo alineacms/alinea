@@ -8,15 +8,19 @@ import {
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {startTransition, useMemo} from 'react'
 import {
+  constrainLocation,
   createExplorerAtoms,
   type DashboardEntry,
   type DashboardExplorer,
   type ExplorerLocation,
   type ExplorerOptions,
   type ExplorerReadyPage,
-  type ExplorerView
+  type ExplorerView,
+  explorerLocations
 } from '../atoms/explorer.js'
+import {configAtom} from '../atoms/core.js'
 import {rootAtoms} from '../atoms/root.js'
+import {policyAtom} from '../atoms/user.js'
 import {dispense} from '../atoms/utils.js'
 import {useDashboardContext} from '../hooks.js'
 import {ExplorerBody} from './Explorer.js'
@@ -44,7 +48,8 @@ export function createExplorerTree(explorer: () => DashboardExplorer) {
             : get(current.location).parentId
           return parentId ? new Set<Key>([parentId]) : new Set<Key>()
         }),
-        current.sidebarExpandedKeys
+        current.sidebarExpandedKeys,
+        current.permission
       )
     }
   )
@@ -56,10 +61,17 @@ export function createExplorerTree(explorer: () => DashboardExplorer) {
  */
 export function usePickerExplorer(
   options: ExplorerOptions,
-  location: ExplorerLocation,
+  requested: ExplorerLocation,
   initialView: ExplorerView
 ) {
   const {page, root} = useDashboardContext()
+  const config = useAtomValueRaw(configAtom)
+  const policy = useAtomValueRaw(policyAtom)
+  // Pickers open in a location they can list
+  const location = constrainLocation(
+    requested,
+    explorerLocations(config, policy, options)
+  )
   const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
   const pickerI18n = useAtomValueRaw(pickerRoot.i18n)
   const initialLocale = normalizePickerLocale(

@@ -13,7 +13,13 @@ const Page = Config.type('Page', {
   fields: {
     title: Field.text('Title'),
     path: Field.path('Path'),
-    tag: Field.text('Tag', {shared: true})
+    tag: Field.text('Tag', {shared: true}),
+    visibility: Field.object('Visibility', {
+      fields: {
+        belgium: Field.check('Belgium'),
+        germany: Field.check('Germany')
+      }
+    })
   }
 })
 
@@ -118,6 +124,31 @@ test('a translation cannot change shared fields of locales outside its role', as
   // Sharing the same value leaves the english version alone
   await translate('news')
   const error = await rejects(() => translate('sports'))
+  test.is(error.message, 'Permission denied')
+})
+
+test('a denied field inside an object field cannot change', async () => {
+  const db = await createDb()
+  const policy = new WriteablePolicy(getScope(cms.config))
+  policy.set(
+    {allow: {all: true}},
+    {field: Page.visibility.germany, deny: {all: true}}
+  )
+  const update = (visibility: Record<string, boolean>) =>
+    db.request(
+      [
+        {
+          op: 'update',
+          id: 'article',
+          locale: 'en',
+          status: 'published',
+          set: {visibility}
+        }
+      ],
+      policy
+    )
+  await update({belgium: true})
+  const error = await rejects(() => update({belgium: true, germany: true}))
   test.is(error.message, 'Permission denied')
 })
 

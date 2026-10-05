@@ -1,5 +1,6 @@
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
+import {Permission} from '#/core/Role.js'
 import type {Type} from '#/core/Type.js'
 import type {Getter} from 'jotai'
 import {configAtom, graphAtom} from './core.js'
@@ -47,5 +48,5 @@ export async function loadEntryTableRows(
     .map(row => ({...row, hasChildren: false}))
   const rows = await loadColumnValues(config, graph, overview, readable)
   // The table shows no thumbnails
-  return withLinkedEntries(get, overview, rows, false)
+  return withLinkedEntries(get, overview, rows, Permission.Read, false)
 }

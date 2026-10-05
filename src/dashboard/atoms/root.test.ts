@@ -404,9 +404,10 @@ test('entry models and child levels are shared across trees', async () => {
   await store.get(tree.children(parent._id))
   expect(db.resolveCount).toBe(0)
 
+  // The selected sibling and its parents are listed already
   store.set(selectedKeys, new Set<Key>([secondChild._id]))
   await store.get(tree.ready)
-  expect(db.resolveCount).toBe(3)
+  expect(db.resolveCount).toBe(0)
   const selectionResolveCount = db.resolveCount
   const secondTree = root.createTree(
     null,

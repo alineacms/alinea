@@ -22,7 +22,6 @@ import {resolveView} from '#/core/View.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from './ViewToggle.js'
 import {rootAtoms} from '../atoms/root.js'
-import {policyAtom} from '../atoms/user.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
@@ -554,19 +553,11 @@ function ExplorerLocationMenu({
 }: ExplorerLocationMenuProps) {
   const config = useAtomValueRaw(configAtom)
   const location = page.location
-  const policy = useAtomValueRaw(policyAtom)
+  const visibleLocations = useAtomValueRaw(explorer.locations)
   const selectedLocale = page.locale
   const setSelectedLocale = useSetAtom(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
   const {parent} = page
-  const configuredLocations = explorer.limitLocations?.length
-    ? explorer.limitLocations
-    : Object.entries(config.workspaces).flatMap(([workspace, value]) =>
-        Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
-      )
-  const visibleLocations = configuredLocations.filter(location =>
-    policy.canRead(location)
-  )
   const locations = visibleLocations.map(candidate => {
     const workspace = config.workspaces[candidate.workspace]
     const workspaceLabel = workspace

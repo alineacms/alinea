@@ -61,9 +61,8 @@ export interface Permissions {
   archive: boolean
   upload: boolean
   /**
-   * @deprecated Never enforced. What a user can browse in the dashboard's
-   * entry tree and media library is controlled by `read`. Kept so existing
-   * roles keep type checking; it will be removed in a future major version.
+   * Find entries in pickers, for example to link to them, without opening
+   * them in the dashboard. Allowing `read` allows `explore` as well.
    */
   explore: boolean
   manageMembers: boolean
@@ -124,6 +123,11 @@ function pack(input: PermissionInput): number {
     for (const [name, state] of Object.entries(input.allow)) {
       if (state) result |= permissionMap[name as keyof Permissions]
     }
+  // What you can read you can also find in pickers, and what you can't read
+  // you can't find unless explore is allowed
+  if (input.allow?.read) result |= Permission.Explore
+  if (input.deny?.read && !input.allow?.explore)
+    result |= deny(Permission.Explore)
   if (input.deny)
     for (const [name, state] of Object.entries(input.deny)) {
       if (state) result |= deny(permissionMap[name as keyof Permissions])
@@ -134,10 +138,12 @@ function pack(input: PermissionInput): number {
   return result
 }
 
-function isAllowed(packed: number, permission: Permission): boolean {
-  return (
-    (packed & permission) === permission && (packed & deny(permission)) === 0
-  )
+function allowed(packed: number): number {
+  return packed & Permission.All & ~(packed >> total)
+}
+
+function isAllowed(permissions: number, permission: Permission): boolean {
+  return (permissions & permission) === permission
 }
 
 function entitlements(packed: number): Permissions {
@@ -184,78 +190,75 @@ export class ACL extends Map<string, number> {
     }
     return true
   }
+  resolve(resource?: Resource): number {
+    let result = this.root
+    if (!resource) return result
+    assert(typeof resource === 'object', 'Resource must be an object')
+    if (resource.workspace) {
+      result = combine(result, this.get(ScopeKey.workspace(resource.workspace)))
+      if (resource.root)
+        result = combine(
+          result,
+          this.get(ScopeKey.root(resource.workspace, resource.root))
+        )
+    }
+    if (resource.parents)
+      for (const parent of resource.parents)
+        result = combine(result, this.get(ScopeKey.entry(parent)))
+    if (resource.type) {
+      result = combine(result, this.get(ScopeKey.type(resource.type)))
+      if (resource.field) {
+        // A field of an object field inherits from the fields containing it
+        const path = resource.field.split('.')
+        for (let i = 1; i <= path.length; i++)
+          result = combine(
+            result,
+            this.get(ScopeKey.field(resource.type, path.slice(0, i).join('.')))
+          )
+      }
+    }
+    if (resource.locale !== undefined)
+      result = combine(result, this.get(ScopeKey.locale(resource.locale)))
+    if (resource.id)
+      result = combine(result, this.get(ScopeKey.entry(resource.id)))
+    return result
+  }
 }
 
 export class Policy {
   static ALLOW_ALL = new Policy(Permission.All)
   static ALLOW_NONE = new Policy(Permission.None)
 
-  protected acl = new ACL()
+  // Every role resolves on its own: a deny is absolute within its role, but
+  // another role of the same user can still allow the action
+  protected acls: Array<ACL> = [new ACL()]
 
   constructor(root?: Permission) {
-    if (root !== undefined) this.acl.root = root
+    if (root !== undefined) this.acls[0].root = root
   }
 
   static from(policy: Policy): Policy {
     const result = new Policy()
-    result.acl = new ACL(policy.acl)
+    result.acls = policy.acls.map(acl => new ACL(acl))
     return result
   }
 
   equals(that: Policy): boolean {
-    return this.acl.equals(that.acl)
+    return (
+      this.acls.length === that.acls.length &&
+      this.acls.every((acl, i) => acl.equals(that.acls[i]))
+    )
   }
 
   concat(that: Policy): Policy {
     const result = new Policy()
-    const acl = new ACL(this.acl)
-    acl.root |= that.acl.root
-    for (const [key, permissions] of that.acl)
-      acl.set(key, permissions | acl.get(key))
-    result.acl = acl
+    result.acls = [...this.acls, ...that.acls].map(acl => new ACL(acl))
     return result
   }
 
   #permissionsOf(resource?: Resource): number {
-    let result = this.acl.root
-    if (!resource) return result
-    assert(typeof resource === 'object', 'Resource must be an object')
-    if (resource.workspace) {
-      const workspacePermission = this.acl.get(
-        ScopeKey.workspace(resource.workspace)
-      )
-      result = combine(result, workspacePermission)
-      if (resource.root) {
-        const rootPermission = this.acl.get(
-          ScopeKey.root(resource.workspace, resource.root)
-        )
-        result = combine(result, rootPermission)
-      }
-    }
-    if (resource.parents) {
-      for (const parent of resource.parents) {
-        const parentPermission = this.acl.get(ScopeKey.entry(parent))
-        result = combine(result, parentPermission)
-      }
-    }
-    if (resource.type) {
-      const typePermission = this.acl.get(ScopeKey.type(resource.type))
-      result = combine(result, typePermission)
-      if (resource.field) {
-        const fieldPermission = this.acl.get(
-          ScopeKey.field(resource.type, resource.field)
-        )
-        result = combine(result, fieldPermission)
-      }
-    }
-    if (resource.locale !== undefined) {
-      const localePermission = this.acl.get(ScopeKey.locale(resource.locale))
-      result = combine(result, localePermission)
-    }
-    if (resource.id) {
-      const entryPermission = this.acl.get(ScopeKey.entry(resource.id))
-      result = combine(result, entryPermission)
-    }
+    let result = Permission.None
+    for (const acl of this.acls) result |= allowed(acl.resolve(resource))
     return result
   }
 
@@ -308,7 +311,6 @@ export class Policy {
     return this.check(Permission.Upload, resource)
   }
 
-  /** @deprecated `explore` is never enforced, use `canRead` instead. */
   canExplore(resource?: Resource): boolean {
     return this.check(Permission.Explore, resource)
   }
@@ -329,14 +331,18 @@ export class WriteablePolicy extends Policy {
     this.#scope = scope
   }
 
+  get #acl(): ACL {
+    return this.acls[0]
+  }
+
   allowAll(): this {
-    this.acl.root = Permission.All
+    this.#acl.root = Permission.All
     return this
   }
 
   #apply(key: string, input: PermissionInput): this {
     const packed = pack(input)
-    this.acl.set(key, packed)
+    this.#acl.set(key, packed)
     return this
   }
 
@@ -350,7 +356,7 @@ export class WriteablePolicy extends Policy {
       else if (input.id) this.#apply(ScopeKey.entry(input.id), input)
       else if (input.locale !== undefined)
         this.#apply(ScopeKey.locale(input.locale), input)
-      else this.acl.root |= pack(input)
+      else this.#acl.root |= pack(input)
     }
     return this
   }

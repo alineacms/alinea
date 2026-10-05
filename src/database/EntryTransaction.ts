@@ -2,7 +2,8 @@ import {Config} from '#/core/Config.js'
 import {Entry, entryStatuses} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import type {QuerySettings} from '#/core/Graph.js'
-import {getRoot} from '#/core/Internal.js'
+import type {Field} from '#/core/Field.js'
+import {getRoot, getType, hasType} from '#/core/Internal.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {Permission, type Policy, type Resource} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
@@ -158,6 +159,26 @@ function onlyStampsAudit(before: unknown, after: unknown): boolean {
   const rest = (value: Record<string, unknown>) =>
     JSON.stringify(entries(value).filter(([key]) => !auditKeys.has(key)))
   return rest(before) === rest(after)
+}
+
+// Fields inside object fields can have their own rules, so each change in
+// there is checked on its own path
+function changedPaths(
+  path: string,
+  field: Field | undefined,
+  before: unknown,
+  after: unknown
+): Array<string> {
+  if (!field || !hasType(field)) return [path]
+  const previous = Type.withInitialValue(field, isRecord(before) ? before : {})
+  const next = Type.withInitialValue(field, isRecord(after) ? after : {})
+  const fields = getType(field).allFields
+  const result = [...new Set([...keys(previous), ...keys(next)])]
+    .filter(key => JSON.stringify(previous[key]) !== JSON.stringify(next[key]))
+    .flatMap(key =>
+      changedPaths(`${path}.${key}`, fields[key], previous[key], next[key])
+    )
+  return result.length > 0 ? result : [path]
 }
 
 export class EntryTransaction implements AsyncDisposable {
@@ -1009,12 +1030,13 @@ export class EntryTransaction implements AsyncDisposable {
     assert(type, `Type not found: ${entry.type}`)
     const before = Type.withInitialValue(type, entry.data)
     const after = Type.withInitialValue(type, data)
-    for (const field of new Set([...keys(before), ...keys(after)])) {
-      if (JSON.stringify(before[field]) === JSON.stringify(after[field]))
+    for (const key of new Set([...keys(before), ...keys(after)])) {
+      if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue
+      if (key === 'metadata' && onlyStampsAudit(before[key], after[key]))
         continue
-      if (field === 'metadata' && onlyStampsAudit(before[field], after[field]))
-        continue
-      this.#policy.assert(Permission.Update, {...entry, field})
+      const field = Type.field(type, key)
+      for (const path of changedPaths(key, field, before[key], after[key]))
+        this.#policy.assert(Permission.Update, {...entry, field: path})
     }
   }
 

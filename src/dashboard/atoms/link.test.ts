@@ -3,13 +3,16 @@ import {createStore, type Atom} from 'jotai'
 import {Config, Field} from '#/index.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import {WriteablePolicy} from '#/core/Role.js'
+import {getScope} from '#/core/Scope.js'
+import {localUser} from '#/core/User.js'
 import {
   createDashboardAtomFixture,
   createDashboardStore
 } from '#test/DashboardFixture.js'
 import {entryAtoms} from './entry.js'
 import {linkEntryAtoms, type LinkEntryState} from './link.js'
-import {userPolicyReadyAtom} from './user.js'
+import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 
 type Store = ReturnType<typeof createStore>
 
@@ -233,4 +236,29 @@ test('loads linked entry summaries in the locale stored on the link', async () =
     state: 'hasData',
     data: {preview: 'data:image/jpeg;base64,preview'}
   })
+})
+
+test('links show entries that can be explored but not opened', async () => {
+  const {child, config, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const policy = new WriteablePolicy(getScope(config)).set({
+    allow: {explore: true}
+  })
+  store.set(preloadUserPolicyAtom, localUser, policy)
+  const linkEntry = linkEntryAtoms(child._id)
+  const changed = waitForChange(store, linkEntry)
+
+  expect(store.get(linkEntry)).toEqual({state: 'loading'})
+  await changed
+
+  expect(store.get(linkEntry)).toMatchObject({
+    state: 'hasData',
+    data: {
+      id: child._id,
+      title: 'Child',
+      parents: [{title: 'Parent draft'}],
+      readable: false
+    }
+  })
+  await expect(store.get(entryAtoms(child._id))).rejects.toThrow()
 })

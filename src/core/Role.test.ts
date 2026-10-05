@@ -20,7 +20,13 @@ const admin = role('Admin', {
 const type1 = type('Type1', {
   fields: {
     title: Field.text('Title'),
-    body: Field.text('Body')
+    body: Field.text('Body'),
+    visibility: Field.object('Visibility', {
+      fields: {
+        belgium: Field.check('Belgium'),
+        germany: Field.check('Germany')
+      }
+    })
   }
 })
 
@@ -123,7 +129,6 @@ test('editB negative checks', async () => {
   test.not.ok(policy.canPublish(b))
   test.not.ok(policy.canArchive(b))
   test.not.ok(policy.canUpload(b))
-  test.not.ok(policy.canExplore(b))
   test.not.ok(policy.canManageMembers())
 })
 
@@ -143,7 +148,7 @@ test('explicitDeny negative checks', async () => {
   const policy = new WriteablePolicy(scope)
   await explicitDeny.permissions(policy, undefined!)
 
-  // Should have all permissions except read on c
+  // Should have all permissions except read, and with it explore, on c
   test.ok(policy.canUpdate(c))
   test.ok(policy.canDelete(c))
   test.ok(policy.canReorder(c))
@@ -151,7 +156,7 @@ test('explicitDeny negative checks', async () => {
   test.ok(policy.canPublish(c))
   test.ok(policy.canArchive(c))
   test.ok(policy.canUpload(c))
-  test.ok(policy.canExplore(c))
+  test.not.ok(policy.canExplore(c))
   test.not.ok(policy.canRead(c))
 })
 
@@ -260,6 +265,60 @@ test('field permissions inherit from type and can be denied', () => {
   test.ok(policy.canUpdate({type: 'type1', field: 'body'}))
 })
 
+test('read allows explore', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({workspace: workspace1, allow: {explore: true}})
+  policy.set({id: a.id, allow: {read: true}})
+  test.ok(policy.canExplore({workspace: 'workspace1'}))
+  test.not.ok(policy.canRead({workspace: 'workspace1'}))
+  test.ok(policy.canExplore(a))
+})
+
+test('denying read denies explore', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({allow: {read: true}})
+  policy.set({workspace: workspace1, deny: {read: true}})
+  test.not.ok(policy.canExplore({workspace: 'workspace1'}))
+  test.ok(policy.canExplore(a))
+})
+
+test('denying read keeps explore when it is allowed', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({allow: {explore: true}, deny: {read: true}})
+  test.ok(policy.canExplore(a))
+  test.not.ok(policy.canRead(a))
+})
+
+test('fields of object fields can be denied', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({type: type1, allow: {read: true, update: true}})
+  policy.set({field: type1.visibility.germany, deny: {all: true}})
+  test.ok(policy.canUpdate({type: 'type1', field: 'visibility.belgium'}))
+  test.not.ok(policy.canUpdate({type: 'type1', field: 'visibility.germany'}))
+  test.not.ok(policy.canRead({type: 'type1', field: 'visibility.germany'}))
+})
+
+test('fields reused in several object fields cannot be targeted', () => {
+  const seo = {title: Field.text('Title')}
+  const A = type('A', {fields: {seo: Field.object('SEO', {fields: seo})}})
+  const B = type('B', {fields: {seo: Field.object('SEO', {fields: seo})}})
+  const scope = getScope(createConfig({schema: {A, B}, workspaces: {}}))
+  const policy = new WriteablePolicy(scope)
+  test.throws(
+    () => policy.set({field: B.seo.title, deny: {all: true}}),
+    'Field is used in more than one place'
+  )
+  test.is(scope.nameOf(B.seo.title), undefined)
+})
+
+test('fields of object fields inherit from the object field', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({type: type1, allow: {update: true}})
+  policy.set({field: type1.visibility, deny: {update: true}})
+  test.not.ok(policy.canUpdate({type: 'type1', field: 'visibility.belgium'}))
+  test.ok(policy.canUpdate({type: 'type1', field: 'title'}))
+})
+
 test('field permissions support explicit grant mode', () => {
   const policy = new WriteablePolicy(scope)
   policy.set({type: type1, grant: 'explicit', allow: {read: true}})
@@ -299,13 +358,28 @@ test('locale permissions', async () => {
   test.not.ok(policy.canRead({locale: 'fr'}))
 })
 
-test('Policy.concat keeps denies from every role', () => {
+test('Policy.concat keeps denies within their role', () => {
   const restrict = new WriteablePolicy(scope)
   const grant = new WriteablePolicy(scope)
-  restrict.set({allow: {read: true}}, {id: a.id, deny: {update: true}})
-  grant.set({allow: {read: true, update: true}})
-  const merged = grant.concat(restrict)
+  restrict.set(
+    {allow: {read: true, update: true}},
+    {id: a.id, deny: {update: true}}
+  )
+  grant.set({id: b.id, allow: {update: true}})
+  test.not.ok(restrict.canUpdate(a))
+  test.not.ok(restrict.canUpdate(b))
+  const merged = restrict.concat(grant)
   test.ok(merged.canUpdate({id: 'x'}))
   test.not.ok(merged.canUpdate(a))
-  test.not.ok(merged.canUpdate(b))
+  test.ok(merged.canUpdate(b))
+})
+
+test('Policy.concat keeps explicit grants within their role', () => {
+  const explicit = new WriteablePolicy(scope)
+  const inherit = new WriteablePolicy(scope)
+  explicit.set({workspace: workspace1, grant: 'explicit', allow: {read: true}})
+  inherit.set({allow: {update: true}})
+  const merged = explicit.concat(inherit)
+  test.ok(merged.canUpdate({workspace: 'workspace1', root: 'root1'}))
+  test.not.ok(merged.canRead({workspace: 'workspace1', root: 'root1'}))
 })

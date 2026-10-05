@@ -1,6 +1,7 @@
 // oxlint-disable jsx_a11y/no-autofocus
 import {useDialog} from '#/components.js'
 import {getRoot} from '#/core/Internal.js'
+import {Permission} from '#/core/Role.js'
 import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, startTransition, type ReactNode} from 'react'
 import type {DashboardEntry, ExplorerOptions} from '../atoms/explorer.js'
@@ -46,11 +47,11 @@ function ImagePickerModalContent({options}: ExplorerModalProps) {
   const policy = useAtomValueRaw(policyAtom)
   const mediaRoot = Object.entries(workspace.roots).find(
     ([key, value]) =>
-      policy.canRead({workspace: root.workspace, root: key}) &&
+      policy.canExplore({workspace: root.workspace, root: key}) &&
       Boolean(getRoot(value).isMediaRoot)
   )?.[0]
   const {explorer, tree} = usePickerExplorer(
-    options,
+    {...options, permission: Permission.Explore},
     options.location ?? {
       workspace: root.workspace,
       root: mediaRoot ?? root.key

@@ -100,16 +100,19 @@ export class TreeAtoms {
   #root: RootAtoms
   #locale: string | null
   #selectedKeys: Atom<Set<Key>>
+  #permission: Permission
 
   constructor(
     root: RootAtoms,
     locale: string | null,
     selectedKeys: Atom<Set<Key>>,
-    viewState?: TreeViewState
+    viewState?: TreeViewState,
+    permission = Permission.Read
   ) {
     this.#root = root
     this.#locale = locale
     this.#selectedKeys = selectedKeys
+    this.#permission = permission
     this.expandedKeys = viewState?.expandedKeys ?? atom(new Set<string>())
     this.collapsedKeys =
       viewState?.collapsedKeys ??
@@ -122,6 +125,7 @@ export class TreeAtoms {
   #source = atom(async (get): Promise<TreeView> => {
     const config = get(configAtom)
     const locale = this.#locale
+    const permission = this.#permission
     async function listed(model: TreeEntryAtoms) {
       try {
         return await get(model.summary(locale))
@@ -141,7 +145,9 @@ export class TreeAtoms {
     let selectedKeys = new Set([...get(this.#selectedKeys)].map(String))
     let locationKey: string | undefined
     const requestedId = [...selectedKeys][0]
-    let selectedModel = requestedId ? treeEntryAtoms(requestedId) : undefined
+    let selectedModel = requestedId
+      ? treeEntryAtoms(requestedId, permission)
+      : undefined
     let selected = selectedModel ? await listed(selectedModel) : undefined
     // The tree does not list some entries, such as media files, so it
     // reveals their closest listed ancestor as their location instead
@@ -173,7 +179,7 @@ export class TreeAtoms {
           .filter(id => !models.has(id))
           .map(async id => {
             try {
-              return await get(treeEntryAtoms(id).ready)
+              return await get(treeEntryAtoms(id, permission).ready)
             } catch (error) {
               if (error instanceof MissingEntryError) return undefined
               throw error
@@ -188,7 +194,7 @@ export class TreeAtoms {
       return model ? [model] : []
     })
     const [rootModels, childLevels, parentEntries] = await Promise.all([
-      get(this.#root.treeEntries(this.#locale)),
+      get(this.#root.treeEntries(this.#locale, permission)),
       Promise.all(
         expandedModels.map(model => get(model.children(this.#locale)))
       ),
@@ -247,11 +253,13 @@ export class TreeAtoms {
   items = atom(get => [...get(this.view).entries.values()])
   #itemSource = dispense((id: string) =>
     atom(async get => {
-      const model = treeEntryAtoms(id)
+      const model = treeEntryAtoms(id, this.#permission)
       const entry = await get(model.summary(this.#locale))
       const config = get(configAtom)
       const parent = entry.parentId
-        ? await get(treeEntryAtoms(entry.parentId).raw(this.#locale))
+        ? await get(
+            treeEntryAtoms(entry.parentId, this.#permission).raw(this.#locale)
+          )
         : undefined
       const parentType = parent ? config.schema[parent.type] : undefined
       const order = parent
@@ -260,7 +268,9 @@ export class TreeAtoms {
       return rootTreeItem(entry, order)
     })
   )
-  children = dispense((id: string) => treeEntryAtoms(id).children(this.#locale))
+  children = dispense((id: string) =>
+    treeEntryAtoms(id, this.#permission).children(this.#locale)
+  )
   #itemState = dispense((id: string) =>
     unwrap(this.#itemSource(id), previous => previous)
   )
@@ -382,10 +392,12 @@ export class RootAtoms {
     this.explorer = this.children(null)
   }
 
+  /** A tree that lists the entries the policy allows with the permission */
   createTree(
     locale: string | null,
     selectedKeys: Atom<Set<Key>>,
-    expandedKeys?: PrimitiveAtom<Set<string>>
+    expandedKeys?: PrimitiveAtom<Set<string>>,
+    permission = Permission.Read
   ) {
     return new TreeAtoms(
       this,
@@ -399,11 +411,12 @@ export class RootAtoms {
               keys: new Set<string>()
             })
           }
-        : undefined
+        : undefined,
+      permission
     )
   }
 
-  treeEntries = dispense((locale: string | null) =>
+  #treeEntries = dispense((locale: string | null, permission: Permission) =>
     atom(async get => {
       get(shaAtom)
       const data = get(this.data)
@@ -411,10 +424,15 @@ export class RootAtoms {
         get,
         {workspace: this.workspace, root: this.key, parentId: null},
         locale,
+        permission,
         Root.childrenOrder(data)
       )
     })
   )
+
+  treeEntries(locale: string | null, permission = Permission.Read) {
+    return this.#treeEntries(locale, permission)
+  }
 
   /**
    * The scroll offsets of the explorers of this root. The root explorer and

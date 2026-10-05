@@ -109,9 +109,10 @@ export function policyFieldOptions(
 ): FieldOptionsResolver {
   const scope = getScope(config)
   return (field, options) => {
-    const name = scope.nameOf(field)
-    if (!name) return options
-    const fieldResource = {...resource, field: name}
+    const location = scope.fieldOf(field)
+    // A field reused in another type has its rules on its own type
+    if (!location || location[0] !== resource.type) return options
+    const fieldResource = {...resource, field: location[1]}
     return {
       ...options,
       hidden: options.hidden || !policy.canRead(fieldResource),

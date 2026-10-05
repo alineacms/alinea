@@ -723,10 +723,10 @@ export class EntryAtoms {
   )
 }
 
-export const entryAtoms = dispense((entryId: string) => {
+const entryFamily = dispense((entryId: string, permission: Permission) => {
   const data = atom(async get => {
     get(entryRevisionAtom(entryId))
-    const load = get(entryLoader)
+    const load = get(entryLoader(permission))
     const [result, error] = await load(entryId)
     if (error) {
       throw error
@@ -752,6 +752,14 @@ export const entryAtoms = dispense((entryId: string) => {
     ))
   })
 })
+
+/** An entry with the versions the policy allows with the permission */
+export function entryAtoms(
+  entryId: string,
+  permission = Permission.Read
+): Atom<Promise<EntryAtoms>> {
+  return entryFamily(entryId, permission)
+}
 
 /** The versions linking to an entry, that the user can read */
 export const incomingReferencesAtoms = dispense((targetId: string) =>
@@ -824,45 +832,49 @@ function referenceSourceKey(source: EntryReferenceSource) {
   return `${source.id}\0${source.locale ?? ''}`
 }
 
-const entryLoader = atom(get => {
-  const config = get(configAtom)
-  const graph = get(graphAtom)
-  const policy = get(policyAtom)
-  const visibleTypes = entries(config.schema)
-    .filter(([, type]) => !Type.isHidden(type))
-    .map(([name]) => name)
-  return loader(async ids => {
-    const rows = await graph.find({
-      groupBy: Entry.id,
-      select: selection,
-      id: {in: ids},
-      status: 'preferDraft'
-    })
-    const parentIds = await graph.find({
-      select: Entry.parentId,
-      parentId: {in: ids},
-      filter: {_type: {in: visibleTypes}},
-      groupBy: Entry.parentId,
-      status: 'preferDraft'
-    })
-    const byId = new Map(rows.map(row => [row.id, row] as const))
-    return ids.map(id => {
-      const row = byId.get(id)
-      if (!row) return [null, new MissingEntryError(id)] as const
-      const readableEntries = row.entries.filter(entry => policy.canRead(entry))
-      if (readableEntries.length === 0)
-        return [null, new MissingEntryError(id)] as const
-      return [
-        {
-          ...row,
-          entries: readableEntries,
-          hasChildren: parentIds.includes(id)
-        },
-        null
-      ] as const
+const entryLoader = dispense((permission: Permission) =>
+  atom(get => {
+    const config = get(configAtom)
+    const graph = get(graphAtom)
+    const policy = get(policyAtom)
+    const visibleTypes = entries(config.schema)
+      .filter(([, type]) => !Type.isHidden(type))
+      .map(([name]) => name)
+    return loader(async ids => {
+      const rows = await graph.find({
+        groupBy: Entry.id,
+        select: selection,
+        id: {in: ids},
+        status: 'preferDraft'
+      })
+      const parentIds = await graph.find({
+        select: Entry.parentId,
+        parentId: {in: ids},
+        filter: {_type: {in: visibleTypes}},
+        groupBy: Entry.parentId,
+        status: 'preferDraft'
+      })
+      const byId = new Map(rows.map(row => [row.id, row] as const))
+      return ids.map(id => {
+        const row = byId.get(id)
+        if (!row) return [null, new MissingEntryError(id)] as const
+        const visible = row.entries.filter(entry =>
+          policy.check(permission, entry)
+        )
+        if (visible.length === 0)
+          return [null, new MissingEntryError(id)] as const
+        return [
+          {
+            ...row,
+            entries: visible,
+            hasChildren: parentIds.includes(id)
+          },
+          null
+        ] as const
+      })
     })
   })
-})
+)
 
 export class MissingEntryError extends Error {
   constructor(public id: string) {
@@ -938,6 +950,7 @@ export async function loadTreeChildren(
   get: Getter,
   location: TreeChildrenLocation,
   locale: string | null,
+  permission: Permission,
   orderBy?: Order | Array<Order>
 ): Promise<Array<TreeEntryAtoms>> {
   const config = get(configAtom)
@@ -954,67 +967,72 @@ export async function loadTreeChildren(
     status: 'preferDraft'
   })
   return preferredTreeEntries(
-    matches.filter(entry => policy.canRead(entry)),
+    matches.filter(entry => policy.check(permission, entry)),
     locale
-  ).map(entry => treeEntryAtoms(entry.id))
+  ).map(entry => treeEntryAtoms(entry.id, permission))
 }
 
-const treeEntryLoader = atom(get => {
-  const config = get(configAtom)
-  const graph = get(graphAtom)
-  const policy = get(policyAtom)
-  const visibleTypes = entries(config.schema)
-    .filter(([, type]) => !Type.isHidden(type))
-    .map(([name]) => name)
-  return loader<TreeEntryData>(async ids => {
-    const [rows, children] = await Promise.all([
-      graph.find({
-        id: {in: ids},
-        select: treeEntrySelect,
-        status: 'preferDraft'
-      }),
-      graph.find({
-        filter: {_type: {in: visibleTypes}},
-        parentId: {in: ids},
-        select: treeChildSelect,
-        status: 'preferDraft'
+const treeEntryLoader = dispense((permission: Permission) =>
+  atom(get => {
+    const config = get(configAtom)
+    const graph = get(graphAtom)
+    const policy = get(policyAtom)
+    const visibleTypes = entries(config.schema)
+      .filter(([, type]) => !Type.isHidden(type))
+      .map(([name]) => name)
+    return loader<TreeEntryData>(async ids => {
+      const [rows, children] = await Promise.all([
+        graph.find({
+          id: {in: ids},
+          select: treeEntrySelect,
+          status: 'preferDraft'
+        }),
+        graph.find({
+          filter: {_type: {in: visibleTypes}},
+          parentId: {in: ids},
+          select: treeChildSelect,
+          status: 'preferDraft'
+        })
+      ])
+      const entriesById = new Map<string, Array<(typeof rows)[number]>>()
+      for (const entry of rows) {
+        const versions = entriesById.get(entry.id) ?? []
+        versions.push(entry)
+        entriesById.set(entry.id, versions)
+      }
+      const parentsWithChildren = new Set(
+        children
+          .filter(child => policy.check(permission, child))
+          .flatMap(child => (child.parentId ? [child.parentId] : []))
+      )
+      return ids.map(id => {
+        const entryVersions = entriesById.get(id)
+        if (!entryVersions) return [null, new MissingEntryError(id)] as const
+        return [
+          {
+            entries: entryVersions,
+            hasChildren: parentsWithChildren.has(id)
+          },
+          null
+        ] as const
       })
-    ])
-    const entriesById = new Map<string, Array<(typeof rows)[number]>>()
-    for (const entry of rows) {
-      const versions = entriesById.get(entry.id) ?? []
-      versions.push(entry)
-      entriesById.set(entry.id, versions)
-    }
-    const parentsWithChildren = new Set(
-      children
-        .filter(child => policy.canRead(child))
-        .flatMap(child => (child.parentId ? [child.parentId] : []))
-    )
-    return ids.map(id => {
-      const entryVersions = entriesById.get(id)
-      if (!entryVersions) return [null, new MissingEntryError(id)] as const
-      return [
-        {
-          entries: entryVersions,
-          hasChildren: parentsWithChildren.has(id)
-        },
-        null
-      ] as const
     })
   })
-})
+)
 
 export class TreeEntryAtoms {
   #data = atom(async get => {
     get(entryRevisionAtom(this.id))
-    const [data, error] = await get(treeEntryLoader)(this.id)
+    const [data, error] = await get(treeEntryLoader(this.permission))(this.id)
     if (error) throw error
     assert(data, `Tree entry "${this.id}" not found`)
     return data
   })
 
-  constructor(public readonly id: string) {}
+  constructor(
+    public readonly id: string,
+    public readonly permission: Permission
+  ) {}
 
   ready = atom(async get => {
     await get(this.#data)
@@ -1039,7 +1057,9 @@ export class TreeEntryAtoms {
         data.entries.filter(candidate => {
           const type = config.schema[candidate.type]
           return Boolean(
-            type && !Type.isHidden(type) && policy.canRead(candidate)
+            type &&
+            !Type.isHidden(type) &&
+            policy.check(this.permission, candidate)
           )
         }),
         locale
@@ -1051,7 +1071,7 @@ export class TreeEntryAtoms {
 
   parents = atom(async get => {
     const entry = await get(this.raw(null))
-    const models = entry.parents.map(treeEntryAtoms)
+    const models = entry.parents.map(id => treeEntryAtoms(id, this.permission))
     await Promise.all(models.map(model => get(model.ready)))
     return models
   })
@@ -1070,10 +1090,24 @@ export class TreeEntryAtoms {
           parentId: this.id
         },
         locale,
+        this.permission,
         Type.childrenOrder(type)
       )
     })
   )
 }
 
-export const treeEntryAtoms = dispense((id: string) => new TreeEntryAtoms(id))
+const treeEntryFamily = dispense(
+  (id: string, permission: Permission) => new TreeEntryAtoms(id, permission)
+)
+
+/**
+ * An entry of a tree that lists what the policy allows with the permission.
+ * Pickers list what can be explored, the sidebar what can be read.
+ */
+export function treeEntryAtoms(
+  id: string,
+  permission = Permission.Read
+): TreeEntryAtoms {
+  return treeEntryFamily(id, permission)
+}

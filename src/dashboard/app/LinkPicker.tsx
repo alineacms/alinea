@@ -10,6 +10,7 @@ import {
   Text,
   useDialog
 } from '#/components.js'
+import {Permission} from '#/core/Role.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, useState, type ReactNode, type RefObject} from 'react'
@@ -197,8 +198,9 @@ function LinkPickerReady({
 
 function useLinkPickerExplorer(options: LinkPickerOptions) {
   const {root} = useDashboardContext()
+  // Entries can be linked to where they can be explored, without reading them
   return usePickerExplorer(
-    options,
+    {...options, permission: Permission.Explore},
     options.location ?? {workspace: root.workspace, root: root.key},
     'row'
   )

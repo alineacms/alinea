@@ -1373,6 +1373,7 @@ function EntryLinkRowActions({
     )
   }
   const entry = state.data
+  if (!entry.readable) return null
   const linkLocale =
     type === 'entry' ? (locale ?? scope?.localeData.requestedLocale) : undefined
   const href = `#${nav.entry(entry.workspace, entry.root, entry.id, linkLocale)}`
