@@ -57,10 +57,7 @@ test('shows the connection state in the full-page widget', async ({
   )
   await expect(preview.getByTitle('Edit content')).toBeVisible()
   await expect(preview.locator('alinea-preview .is-warning')).toHaveCount(1)
-  await expect(preview.getByTitle('Admin panel')).toHaveAttribute(
-    'href',
-    'http://preview.example/admin'
-  )
+  await expect(preview.getByTitle('Admin panel')).toHaveCount(0)
   await expect(preview.getByTitle('Edit content')).toHaveAttribute(
     'href',
     'http://preview.example/admin#/edit?url=%2Fpreview'
