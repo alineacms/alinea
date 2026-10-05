@@ -219,6 +219,7 @@ function renderEntry(
       <DropdownMenu key={name}>
         <DropdownMenuTrigger
           variant="ghost"
+          size="sm"
           icon={icon}
           className={styles.RichTextToolbar.button()}
         >
@@ -267,7 +268,7 @@ function renderEntry(
     <ToolbarButton
       key={name}
       className={styles.RichTextToolbar.button()}
-      size={entry.icon ? 'icon' : 'default'}
+      size={entry.icon ? 'icon-sm' : 'sm'}
       active={active}
       aria-pressed={entry.active ? Boolean(active) : undefined}
       aria-label={title}

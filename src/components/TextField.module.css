@@ -36,9 +36,9 @@
   display: block;
   width: 100%;
   min-height: var(--alinea-control-md);
-  /* (control height - border - line height) / 2 keeps a single line at 32 */
-  padding: 5px 12px;
-  border: 1px solid var(--alinea-border-strong);
+  /* (control height - border - line height) / 2 keeps a single line at 36 */
+  padding: 7px 12px;
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   outline: none;
   background-color: var(--alinea-input);
@@ -54,7 +54,7 @@
   }
 
   &:hover:not(:where([readonly])) {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   /* Focus is the border alone: inputs are focused on every click, so they
@@ -68,7 +68,6 @@
   }
 
   &:disabled {
-    border-color: var(--alinea-border);
     background-color: var(--alinea-selected);
     color: var(--alinea-fg-disabled);
     pointer-events: none;

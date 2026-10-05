@@ -281,7 +281,7 @@ export function WorkspaceMenu({
       {menu}
       <GlobalSearch root={root}>
         <Button
-          size="icon"
+          size="icon-sm"
           variant="ghost"
           icon={IcRoundSearch}
           className={styles.WorkspaceMenu.search()}

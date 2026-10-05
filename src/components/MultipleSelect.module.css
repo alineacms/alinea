@@ -11,7 +11,7 @@
   gap: 8px;
   min-height: var(--alinea-control-md);
   padding: 3px 34px 3px 6px;
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   background: var(--alinea-input);
   color: var(--alinea-fg);
@@ -19,7 +19,7 @@
   cursor: pointer;
 
   &:hover:not(:where(:has(.MultipleSelectTrigger-button[aria-readonly='true']))) {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   &:has(.MultipleSelectTrigger-button[aria-readonly='true']) {

@@ -73,6 +73,12 @@
   min-height: 0;
   flex: 1;
   height: 100%;
+  background: var(--alinea-bg-muted);
+
+  /* The compact picker is a popover of rows, not a page */
+  &.is-compact {
+    background: none;
+  }
 }
 
 .Explorer-actions {

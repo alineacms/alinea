@@ -838,7 +838,7 @@ export function ExplorerBody({
 }: ExplorerBodyProps) {
   return (
     <PageContent>
-      <div className={styles.Explorer.viewport()}>
+      <div className={styles.Explorer.viewport({compact: compactTable})}>
         <ExplorerList
           compactTable={compactTable}
           explorer={explorer}

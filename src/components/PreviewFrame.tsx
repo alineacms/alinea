@@ -138,7 +138,7 @@ export function PreviewToolbar({
       >
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           icon={IcRoundArrowBack}
           data-slot="preview-toolbar-back"
           aria-label={labels?.back ?? 'Go back in preview'}
@@ -147,7 +147,7 @@ export function PreviewToolbar({
         />
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           icon={IcRoundArrowForward}
           data-slot="preview-toolbar-forward"
           aria-label={labels?.forward ?? 'Go forward in preview'}
@@ -156,7 +156,7 @@ export function PreviewToolbar({
         />
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           icon={IcRoundRefresh}
           data-slot="preview-toolbar-reload"
           aria-label={labels?.reload ?? 'Reload preview'}
@@ -168,7 +168,7 @@ export function PreviewToolbar({
       {children}
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-sm"
         icon={IcRoundOpenInNew}
         data-slot="preview-toolbar-open"
         aria-label={labels?.open ?? 'Open preview in new tab'}

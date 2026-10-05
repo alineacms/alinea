@@ -7,8 +7,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 5px 10px;
-  border: 1px solid var(--alinea-border-strong);
+  padding: 7px 10px;
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   background: var(--alinea-input);
   font-size: var(--alinea-font-size-base);
@@ -17,7 +17,7 @@
   transition: var(--alinea-transition);
 
   &:hover:not(:where(:has(.TimeField-segment[aria-readonly='true']))) {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   &:has(.TimeField-segment[aria-readonly='true']) {

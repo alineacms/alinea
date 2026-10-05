@@ -51,12 +51,12 @@ test('an outline group is a track as tall as an input', async ({
   const group = page
     .locator('[data-slot="toggle-group"][data-variant="outline"]')
     .first()
-  await expect(group).toHaveCSS('height', '32px')
+  await expect(group).toHaveCSS('height', '36px')
   await expect(group).toHaveCSS('border-top-style', 'none')
   await expect(group).toHaveCSS('border-radius', '8px')
   const items = group.locator('[data-slot="toggle-group-item"]')
   for (const item of await items.all()) {
-    await expect(item).toHaveCSS('height', '28px')
+    await expect(item).toHaveCSS('height', '32px')
     await expect(item).toHaveCSS('border-radius', '6px')
     await expect(item).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)')
   }

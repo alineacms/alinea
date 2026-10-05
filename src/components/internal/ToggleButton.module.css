@@ -47,7 +47,7 @@
   }
 
   &[data-variant='outline'] {
-    border-color: var(--alinea-border-strong);
+    border-color: var(--alinea-border);
   }
 
   /* The outline toggle group draws the track, the pressed item is raised */

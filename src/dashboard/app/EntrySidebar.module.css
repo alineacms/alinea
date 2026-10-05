@@ -1,7 +1,3 @@
-.EntrySidebar[data-slot] {
-  background: var(--alinea-bg-muted);
-}
-
 .EntrySidebar-header[data-slot] {
   padding: 0 12px 0 20px;
 }

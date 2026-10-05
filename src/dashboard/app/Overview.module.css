@@ -1,7 +1,7 @@
 .Overview[data-slot] {
   position: relative;
   overflow: hidden;
-  background: var(--alinea-bg);
+  background: var(--alinea-bg-muted);
 }
 
 .Overview-list {

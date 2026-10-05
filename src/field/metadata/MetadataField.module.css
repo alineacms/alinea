@@ -90,7 +90,7 @@
   display: flex;
   align-items: center;
   padding: 5px 12px;
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   background: var(--alinea-bg-muted);
   color: var(--alinea-fg-muted);
@@ -105,7 +105,7 @@
   align-items: center;
   gap: 4px;
   padding: 5px 12px;
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   background: var(--alinea-bg-muted);
   color: var(--alinea-fg-muted);

@@ -131,7 +131,7 @@ export function EntrySidebar({
   const hasPreview = !isMediaFile && !isMediaLibrary
   const allowedTabs = entrySidebarTabs(type)
   return (
-    <Sidebar side="right" className={styles.EntrySidebar()}>
+    <Sidebar side="right">
       <Tabs
         className={styles.EntrySidebar.tabs()}
         value={selectedTab}

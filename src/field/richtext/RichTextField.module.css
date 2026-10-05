@@ -1,6 +1,6 @@
 .RichTextFieldView {
   background-color: var(--alinea-input);
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   transition: var(--alinea-transition);
   transition-property: border-color, background-color;
@@ -15,7 +15,7 @@
 }
 
 .RichTextFieldView:hover {
-  border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+  border-color: var(--alinea-border-strong);
 }
 
 /* Focus is the border alone, like text fields */
@@ -32,7 +32,7 @@
 }
 
 .RichTextFieldView[data-read-only='true']:hover {
-  border-color: var(--alinea-border-strong);
+  border-color: var(--alinea-border);
 }
 
 .RichTextFieldView :global(.ProseMirror) {

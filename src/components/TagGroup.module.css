@@ -40,7 +40,7 @@
   }
 
   &.is-selectable {
-    border: 1px solid var(--alinea-border-strong);
+    border: 1px solid var(--alinea-border);
     background: var(--alinea-bg);
     color: var(--alinea-fg);
     cursor: pointer;

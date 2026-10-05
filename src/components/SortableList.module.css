@@ -141,9 +141,6 @@
 }
 
 .SortableListItemHeader {
-  /* Smaller buttons keep a folded item as tall as a text field */
-  --alinea-control-sm: 24px;
-
   box-sizing: border-box;
   display: flex;
   align-items: center;

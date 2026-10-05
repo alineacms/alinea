@@ -187,7 +187,6 @@ export function ImageEditor({
             />
             <Select
               aria-label="Aspect ratio"
-              size="sm"
               className={styles.ImageEditor.aspect()}
               value={aspect}
               onValueChange={value => selectAspect((value ?? 'free') as Aspect)}

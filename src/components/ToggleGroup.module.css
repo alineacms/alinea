@@ -17,7 +17,7 @@
     padding: 2px;
     border: 0;
     border-radius: var(--alinea-radius);
-    background-color: var(--alinea-selected);
+    background-color: var(--alinea-border);
 
     &[data-size='sm'] {
       height: var(--alinea-control-sm);

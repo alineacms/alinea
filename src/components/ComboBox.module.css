@@ -10,7 +10,7 @@
   align-items: center;
   gap: 4px;
   padding-right: 8px;
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   font-size: var(--alinea-font-size-base);
   line-height: 20px;
@@ -19,7 +19,7 @@
   transition: var(--alinea-transition);
 
   &:hover:not(:where(:has(.ComboBoxTrigger-input[readonly]))) {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   &:has(.ComboBoxTrigger-input[readonly]) {
@@ -46,7 +46,7 @@
   appearance: none;
   flex: 1 1 auto;
   min-width: 0;
-  padding: 5px 12px;
+  padding: 7px 12px;
   border: none;
   outline: none;
   background: none;

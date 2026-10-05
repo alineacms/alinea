@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--alinea-bg-muted);
+  background: var(--alinea-bg);
   color: var(--alinea-fg);
   outline: none;
 }

@@ -116,7 +116,9 @@ export function Small() {
           </SelectItem>
         ))}
       </Select>
-      <Button variant="outline">Button</Button>
+      <Button variant="outline" size="sm">
+        Button
+      </Button>
     </div>
   )
 }

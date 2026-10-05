@@ -1,8 +1,8 @@
 .DateControl,
 .DateControl-input.is-framed {
   width: 100%;
-  padding: 5px 12px;
-  border: 1px solid var(--alinea-border-strong);
+  padding: 7px 12px;
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   background: var(--alinea-input);
   color: var(--alinea-fg);
@@ -12,7 +12,7 @@
   transition: var(--alinea-transition);
 
   &:hover:not(:where(:has(.DateControl-segment[aria-readonly='true']))) {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   &:has(.DateControl-segment[aria-readonly='true']) {

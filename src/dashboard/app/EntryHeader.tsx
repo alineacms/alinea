@@ -21,6 +21,7 @@ import {
 } from '#/core/db/EntryUrlConflictError.js'
 import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Entry} from '#/core/Entry.js'
+import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -250,6 +251,7 @@ export function EntryHeader({
   const access = policy.get(activeVersion)
   const type = config.schema[typeName]
   assert(type, `Type "${typeName}" not found in config`)
+  const typeData = getType(type)
   const isMediaFile = type === MediaFile
   const isMediaLibrary = type === MediaLibrary
   const isMedia = isMediaFile || isMediaLibrary
@@ -575,12 +577,15 @@ export function EntryHeader({
           {isRevision ? 'Revision' : variantDescription[status]}
         </Badge>
       )}
+      <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
+        {typeData.label}
+      </Badge>
       {!access.update && <ReadOnlyBadge />}
       <PageActions className={styles.EntryHeader.actions()}>
         {menuItems.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger
-              size="icon"
+              size="icon-sm"
               variant="ghost"
               aria-label="More actions"
               icon={IcRoundMoreHoriz}

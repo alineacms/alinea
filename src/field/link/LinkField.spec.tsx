@@ -76,7 +76,7 @@ test('frames a single link like an input, a link with fields like a list', async
 }) => {
   await mount(<Example />)
   const related = page.getByRole('list', {name: 'Related link'})
-  await expect(related).toHaveCSS('height', '32px')
+  await expect(related).toHaveCSS('height', '36px')
   await expect(related).toHaveCSS('border-radius', '8px')
   const hero = page.getByRole('list', {name: 'Hero image'})
   await expect(hero).toHaveCSS('border-radius', '10px')

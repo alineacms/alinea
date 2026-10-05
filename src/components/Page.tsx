@@ -58,7 +58,7 @@ export function PageBack({label = 'Back', className, ...props}: PageBackProps) {
       data-slot="page-back"
       {...props}
       variant="ghost"
-      size="icon"
+      size="icon-sm"
       icon={IcRoundArrowBack}
       aria-label={label}
       className={styles.PageBack(styler.merge({className}))}

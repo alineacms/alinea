@@ -1,13 +1,13 @@
 .CodeEditorInput {
   overflow: hidden;
   background-color: var(--alinea-input);
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   transition: var(--alinea-transition);
   transition-property: border-color, background-color;
 
   &:hover {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   &:focus-within {
@@ -24,7 +24,7 @@
 
   &[data-read-only='true']:hover,
   &[data-read-only='true']:focus-within {
-    border-color: var(--alinea-border-strong);
+    border-color: var(--alinea-border);
   }
 }
 

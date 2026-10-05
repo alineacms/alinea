@@ -9,7 +9,7 @@
   min-width: 0;
   max-width: 100%;
   display: flex;
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   font-size: var(--alinea-font-size-base);
   line-height: 20px;
@@ -19,7 +19,7 @@
   transition: var(--alinea-transition);
 
   &:hover:not(:where(:has(.SelectTrigger-button[aria-readonly='true']))) {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   &:has(.SelectTrigger-button[aria-readonly='true']) {
@@ -55,7 +55,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 12px;
+  padding: 7px 12px;
   text-align: left;
   cursor: pointer;
 
@@ -68,8 +68,7 @@
   }
 
   .SelectTrigger[data-size='sm'] & {
-    padding-block: 4px;
-    line-height: 22px;
+    padding-block: 3px;
   }
 }
 

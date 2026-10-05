@@ -8,14 +8,14 @@
   box-sizing: border-box;
   height: var(--alinea-control-md);
   overflow: hidden;
-  border: 1px solid var(--alinea-border-strong);
+  border: 1px solid var(--alinea-border);
   border-radius: var(--alinea-radius);
   background-color: var(--alinea-input);
   transition: var(--alinea-transition);
   transition-property: border-color, outline-color, opacity;
 
   &:hover:not(:where(:has(.SearchFieldInput[readonly]))) {
-    border-color: color-mix(in oklab, var(--alinea-border-strong) 70%, var(--alinea-fg));
+    border-color: var(--alinea-border-strong);
   }
 
   &:focus-within {

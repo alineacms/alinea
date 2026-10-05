@@ -134,7 +134,7 @@ export function SheetHeader({className, children, ...props}: SheetHeaderProps) {
         <Button
           data-slot="sheet-back"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           icon={IcRoundArrowBack}
           aria-label={context.backLabel}
           className={styles.SheetHeader.back()}
@@ -231,7 +231,7 @@ export function SheetClose({onClick, ...props}: SheetCloseProps) {
       data-slot="sheet-close"
       {...props}
       variant="ghost"
-      size="icon"
+      size="icon-sm"
       icon={IcRoundClose}
       onClick={onClick ?? (() => context?.onClose?.())}
     />

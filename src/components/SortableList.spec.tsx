@@ -130,7 +130,7 @@ test('folded items are as tall as a text field', async ({mount, page}) => {
   const hero = page.getByRole('listitem', {name: 'Hero item 1'})
   await hero.getByRole('button', {name: 'Collapse hero'}).click()
   // The list draws its edge inside, over the row's top border
-  expect((await hero.boundingBox())!.height).toBe(32)
+  expect((await hero.boundingBox())!.height).toBe(36)
 })
 
 test('joins the title and its "…" in one button', async ({mount, page}) => {

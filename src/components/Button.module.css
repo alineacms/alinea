@@ -142,7 +142,7 @@
 
   /* A neutral outline matches the borders of inputs and toggle groups */
   &[data-variant='outline'][data-color='neutral'] {
-    border-color: var(--alinea-border-strong);
+    border-color: var(--alinea-border);
     background: var(--alinea-bg);
   }
 

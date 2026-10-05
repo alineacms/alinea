@@ -2,12 +2,12 @@
 :root {
   color-scheme: light dark;
 
-  /* Warm neutrals, from paper to ink */
+  /* Neutrals with a hint of warmth in the light steps, from paper to ink */
   --alinea-gray-0: #ffffff;
   --alinea-gray-50: #fcfcfb;
-  --alinea-gray-100: #f4f4f1;
-  --alinea-gray-200: #e8e8e4;
-  --alinea-gray-300: #d4d4ce;
+  --alinea-gray-100: #f4f4f3;
+  --alinea-gray-200: #e8e8e6;
+  --alinea-gray-300: #d4d4d1;
   --alinea-gray-400: #a3a5ad;
   --alinea-gray-500: #6f717c;
   --alinea-gray-600: #5c5e6a;
@@ -125,7 +125,7 @@
 
   /* Sizing: three control heights, three row heights, one bar height */
   --alinea-control-sm: 28px;
-  --alinea-control-md: 32px;
+  --alinea-control-md: 36px;
   --alinea-control-lg: 40px;
   --alinea-row: 32px;
   --alinea-row-lg: 40px;

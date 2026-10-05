@@ -37,8 +37,14 @@
   min-width: 0;
 }
 
-.EntryHeader-status {
+.EntryHeader-status,
+.EntryHeader-type {
   flex-shrink: 0;
+}
+
+/* The badges keep a little more room from the title than from each other */
+.EntryHeader-status,
+.EntryHeader-crumbs + .EntryHeader-type {
   margin-inline-start: 6px;
 }
 
@@ -52,7 +58,8 @@
     gap: 4px;
   }
 
-  .EntryHeader-status {
+  .EntryHeader-status,
+  .EntryHeader-type {
     display: none;
   }
 

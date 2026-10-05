@@ -12,25 +12,8 @@
   padding: 14px;
 }
 
-.EntrySidebarPreview-component,
-.EntrySidebarPreview-frame {
+.EntrySidebarPreview-component {
   flex: 1;
   min-height: 0;
-  margin: 0 12px 12px;
-  border-radius: var(--alinea-radius-container);
-  background: var(--alinea-bg);
-  box-shadow: 0 0 0 1px var(--alinea-border);
-}
-
-.EntrySidebarPreview-component {
-  margin-top: 12px;
   overflow: auto;
-}
-
-/* Sits on the sidebar background instead of a bar of its own */
-.EntrySidebarPreview-toolbar[data-slot] {
-  min-height: 0;
-  padding: 6px 8px;
-  border-bottom: 0;
-  background: transparent;
 }

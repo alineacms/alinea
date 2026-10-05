@@ -85,7 +85,7 @@ test('required, disabled and invalid states', async ({mount, page}) => {
   ).toHaveCount(1)
 })
 
-test('a small select is as tall as a button', async ({mount, page}) => {
+test('a small select is as tall as a small button', async ({mount, page}) => {
   await mount(<Small />)
   const trigger = page.locator('[data-slot="select-trigger"]')
   await expect(trigger).toHaveAttribute('data-size', 'sm')

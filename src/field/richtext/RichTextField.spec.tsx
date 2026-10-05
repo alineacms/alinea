@@ -525,9 +525,9 @@ test('keeps the owning rich text toolbar open while focus moves', async ({
   await expect(toolbar).toHaveCSS('height', '40px')
   await expect(toolbar).toHaveCSS('padding', '0px 4px')
   const boldButton = page.getByRole('button', {name: 'Bold'})
-  await expect(boldButton).toHaveCSS('height', '32px')
-  await expect(boldButton).toHaveCSS('border-radius', '8px')
-  await expect(boldButton.locator('svg')).toHaveCSS('font-size', '16px')
+  await expect(boldButton).toHaveCSS('height', '28px')
+  await expect(boldButton).toHaveCSS('border-radius', '6px')
+  await expect(boldButton.locator('svg')).toHaveCSS('font-size', '14px')
   await expect(toolbar).toHaveAttribute(
     'data-richtext-toolbar-owner',
     outerOwner
