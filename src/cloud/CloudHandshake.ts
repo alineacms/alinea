@@ -1,10 +1,8 @@
+import {jwks, type WebKey} from '#/backend/util/JWKS.js'
+import {HttpError} from '#/core/HttpError.js'
 import {decode, verify} from '#/core/util/JWT.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {cloudConfig} from './CloudConfig.js'
-
-interface CloudKey extends JsonWebKey {
-  kid: string
-}
 
 interface VerifyCloudHandshakeOptions {
   clientId: string
@@ -20,12 +18,6 @@ export class CloudHandshakeServiceError extends Error {
   name = 'CloudHandshakeServiceError'
 }
 
-let keysPromise: Promise<Array<CloudKey>> | undefined
-let keysExpireAt = 0
-let lastForcedRefreshAt = 0
-
-const keyCacheLifetime = 5 * 60 * 1000
-const forcedRefreshInterval = 60 * 1000
 const verificationMessages: Record<string, string> = {
   'Invalid signature': 'Handshake token signature is invalid',
   'Token expired': 'Handshake token has expired',
@@ -46,10 +38,7 @@ export async function verifyCloudHandshake(
     !header.kid
   )
     throw new CloudHandshakeError('Handshake token header is invalid')
-  let key = (await cloudKeys()).find(key => key.kid === header.kid)
-  if (!key) {
-    key = (await refreshCloudKeys()).find(key => key.kid === header.kid)
-  }
+  const key = (await cloudKeys(header.kid)).find(key => key.kid === header.kid)
   if (!key)
     throw new CloudHandshakeError('Handshake token signing key is unknown')
   const payload = await verify(token, key, {algorithms: ['RS256']}).catch(
@@ -98,51 +87,17 @@ function verificationError(
       })
 }
 
-function cloudKeys(): Promise<Array<CloudKey>> {
-  if (keysPromise && (keysExpireAt === 0 || Date.now() < keysExpireAt))
-    return keysPromise
-  return loadCloudKeys()
-}
-
-function refreshCloudKeys(): Promise<Array<CloudKey>> {
-  const now = Date.now()
-  if (keysPromise && keysExpireAt === 0) return keysPromise
-  if (keysPromise && now - lastForcedRefreshAt < forcedRefreshInterval)
-    return keysPromise
-  lastForcedRefreshAt = now
-  return loadCloudKeys()
-}
-
-function loadCloudKeys(): Promise<Array<CloudKey>> {
-  keysExpireAt = 0
-  keysPromise = fetch(cloudConfig.jwks)
-    .then(async response => {
-      if (!response.ok)
-        throw new CloudHandshakeServiceError(
-          `Could not load handshake signing keys: ${response.status}`
-        )
-      const body: unknown = await response.json()
-      if (!isRecord(body) || !Array.isArray(body.keys))
-        throw new CloudHandshakeServiceError(
-          'Cloud returned invalid handshake signing keys'
-        )
-      keysExpireAt = Date.now() + keyCacheLifetime
-      return body.keys.filter(isCloudKey)
-    })
-    .catch(cause => {
-      keysPromise = undefined
-      keysExpireAt = 0
-      if (cause instanceof CloudHandshakeServiceError) throw cause
-      throw new CloudHandshakeServiceError(
-        'Could not load handshake signing keys',
-        {cause}
-      )
-    })
-  return keysPromise
-}
-
-function isCloudKey(value: unknown): value is CloudKey {
-  return isRecord(value) && typeof value.kid === 'string'
+async function cloudKeys(kid: string): Promise<Array<WebKey>> {
+  try {
+    return await jwks(cloudConfig.jwks, kid)
+  } catch (cause) {
+    throw new CloudHandshakeServiceError(
+      cause instanceof HttpError
+        ? `Could not load handshake signing keys: ${cause.code}`
+        : 'Could not load handshake signing keys',
+      {cause}
+    )
+  }
 }
 
 function normalizedCloudUrl(): string {

@@ -22,7 +22,7 @@ const algorithms = {
 
 type Algorithm = keyof typeof algorithms
 
-type JWTHeader = {
+export type JWTHeader = {
   alg: Algorithm
   kid?: string
   typ?: string

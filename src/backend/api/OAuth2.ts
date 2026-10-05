@@ -6,12 +6,12 @@ import type {
   AuthedContext,
   RequestContext
 } from '#/core/Connection.js'
-import {HttpError} from '#/core/HttpError.js'
+import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {outcome} from '#/core/Outcome.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {decode, JWTPayload, verify} from '#/core/util/JWT.js'
+import {decode, type JWTHeader, JWTPayload, verify} from '#/core/util/JWT.js'
 import {Request, Response} from '@alinea/iso'
 import {
   generateCodeVerifier,
@@ -19,15 +19,13 @@ import {
   type OAuth2Token
 } from '@badgateway/oauth2-client'
 import {parse} from 'cookie-es'
-import PLazy from 'p-lazy'
 import {
   AuthAction,
   InvalidCredentialsError,
   MissingCredentialsError
 } from '../Auth.js'
 import {router} from '../router/Router.js'
-
-type JWKS = {keys: Array<JsonWebKey & {kid: string}>}
+import {jwks, type WebKey} from '../util/JWKS.js'
 
 export interface OAuth2Options {
   /**
@@ -85,7 +83,7 @@ export class OAuth2 implements AuthApi {
   #context: RequestContext
   #config: Config
   #client: OAuth2Client
-  #jwks: Promise<Array<JsonWebKey & {kid: string}>>
+  #jwksUri: string
   #validateClaims: OAuth2Options['validateClaims']
 
   constructor(context: RequestContext, config: Config, options: OAuth2Options) {
@@ -109,19 +107,17 @@ export class OAuth2 implements AuthApi {
         return response
       }) as typeof fetch
     })
-    const loadJwks = async (): Promise<Array<JsonWebKey & {kid: string}>> => {
-      try {
-        const res = await fetch(options.jwksUri)
-        if (res.status !== 200)
-          throw new HttpError(res.status, await res.text())
-        const jwks: JWKS = await res.json()
-        return jwks.keys
-      } catch (cause) {
-        this.#jwks = PLazy.from(loadJwks)
-        throw new Error('Remote unavailable', {cause})
-      }
-    }
-    this.#jwks = PLazy.from(loadJwks)
+    this.#jwksUri = options.jwksUri
+  }
+
+  async #key(token: string): Promise<JsonWebKey> {
+    const {header} = decode(token)
+    const keys = await jwks(this.#jwksUri, header.kid).catch(cause => {
+      throw new HttpError(ErrorCode.ServiceUnavailable, 'Remote unavailable', {
+        cause
+      })
+    })
+    return selectKey(keys, header)
   }
 
   get #redirectUri(): URL {
@@ -239,11 +235,10 @@ export class OAuth2 implements AuthApi {
       [COOKIE_ACCESS_TOKEN]: accessToken,
       [COOKIE_REFRESH_TOKEN]: refreshToken
     } = parse(cookieHeader)
-    const jwks = await this.#jwks
     try {
       if (!accessToken)
         throw new MissingCredentialsError('Missing access token cookie')
-      const key = selectKey(jwks, accessToken)
+      const key = await this.#key(accessToken)
       const user = await verify<JWTPayload & User>(accessToken, key)
       await this.#validateClaims(user)
       assert(user.exp, 'Missing exp claim in access token')
@@ -253,6 +248,13 @@ export class OAuth2 implements AuthApi {
       return {...ctx, user, token: accessToken}
     } catch (error) {
       if (!refreshToken) throw error
+      // Refreshing can't help while the keys can't be loaded, and would use
+      // up the refresh token
+      if (
+        error instanceof HttpError &&
+        error.code === ErrorCode.ServiceUnavailable
+      )
+        throw error
       // Access token is not valid, but we have a refresh token
       const token = {accessToken, refreshToken, expiresAt: null}
       const newToken = await this.#client.refreshToken(token).catch(cause => {
@@ -260,7 +262,7 @@ export class OAuth2 implements AuthApi {
           cause: [cause, error]
         })
       })
-      const key = selectKey(jwks, newToken.accessToken)
+      const key = await this.#key(newToken.accessToken)
       const user = await verify<JWTPayload & User>(newToken.accessToken, key, {
         clockTolerance: 30
       }).catch(cause => {
@@ -283,11 +285,7 @@ export class OAuth2 implements AuthApi {
   }
 }
 
-function selectKey(
-  jwks: Array<JsonWebKey & {kid: string}>,
-  token: string
-): JsonWebKey {
-  const {header} = decode(token)
+function selectKey(jwks: Array<WebKey>, header: JWTHeader): JsonWebKey {
   const kid = header.kid
   const alg = header.alg
 
