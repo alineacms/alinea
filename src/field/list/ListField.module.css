@@ -1,9 +1,7 @@
 .ListFieldCreateActions {
   display: flex;
   flex-wrap: wrap;
-  width: 100%;
-  justify-content: center;
-  gap: 6px;
+  gap: 2px;
 }
 
 .ListFieldCreateActions-button {
@@ -20,8 +18,6 @@
 
 .ListFieldTypePicker-trigger {
   flex-shrink: 0;
-  min-width: 2rem;
-  width: 2rem;
 }
 
 .ListFieldTypePicker-trigger.ListFieldView-insertAction {
@@ -35,11 +31,4 @@
   min-width: 280px;
   overflow: hidden;
   padding: 0;
-}
-
-.ListFieldRowHeader-separator {
-  height: 1px;
-  margin: 4px 8px;
-  border: none;
-  background-color: var(--alinea-border);
 }

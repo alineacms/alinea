@@ -187,57 +187,51 @@
 }
 
 .ListLabel {
-  color: var(--alinea-fg-muted);
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 6px;
-  padding-block: 4px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
-.ListLabel .ListLabel-toggle {
-  color: inherit;
-  min-height: auto;
-  padding-block: 0;
-  margin-inline: -8px;
-  border: none;
+.ListLabel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  min-height: 24px;
 }
 
 .ListLabel-title {
   display: inline-flex;
-  flex-shrink: 0;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
-  line-height: 1;
 }
 
 .ListLabel-title-text {
-  color: var(--alinea-fg-muted);
+  color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
   font-weight: 600;
-  transition: color var(--alinea-transition);
 }
 
 .ListLabel-required {
   color: var(--alinea-danger-subtle-fg);
 }
 
-/* A toggle without rows to fold still labels the field: keep the label
-   text at full strength and only fade the fold icon */
-.ListLabel .ListLabel-toggle:disabled {
-  opacity: 1;
+.ListLabel-count {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-variant-numeric: tabular-nums;
 }
 
-.ListLabel .ListLabel-toggle:disabled .ListLabel-fold {
-  opacity: 0.5;
-}
-
-.ListLabel .ListLabel-toggle:hover,
-.ListLabel .ListLabel-toggle:active,
-.ListLabel .ListLabel-toggle[data-active] {
-  background: transparent;
+.ListLabel .ListLabel-toggle {
+  flex: 0 0 auto;
+  min-height: 24px;
+  margin: -3px -8px -3px 0;
+  padding-block: 0;
+  color: var(--alinea-fg-muted);
+  font-weight: 400;
 }
 
 .ListError {

@@ -2,7 +2,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  SortableListItemIcon
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
@@ -10,7 +11,7 @@ import type {Schema} from '#/core/Schema.js'
 import {BlockNode, Node} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
-import {IcRoundAddCircle} from '#/dashboard/icons.js'
+import {IcOutlineViewList, IcRoundAddCircle} from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/core'
 import {FloatingMenu} from '@tiptap/react/menus'
@@ -52,7 +53,13 @@ export function RichTextInsertMenu({
           {entries(schema).map(([name, type]) => (
             <DropdownMenuItem
               key={name}
-              icon={getType(type).icon ?? IcRoundAddCircle}
+              icon={
+                <SortableListItemIcon
+                  icon={getType(type).icon ?? IcOutlineViewList}
+                  name={Type.label(type)}
+                  size="sm"
+                />
+              }
               textValue={Type.label(type)}
               onSelect={() => {
                 onInsert({

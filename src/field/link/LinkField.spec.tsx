@@ -5,6 +5,7 @@ import {
   Example,
   FilteredEntryFieldWithoutEntryScope,
   ImagePickerSingle,
+  PlainLinks,
   ReadOnly
 } from './LinkField.stories.js'
 
@@ -72,8 +73,8 @@ test('opens single-link settings from the linked row', async ({
   await mount(<Example />)
 
   const relatedLink = page.getByRole('list', {name: 'Related link'})
-  // The link names the row, which describes what it does
-  const row = relatedLink.getByRole('button', {name: 'Page Home'})
+  // The link names the row by its title and type, and describes what it does
+  const row = relatedLink.getByRole('button', {name: 'Home Page'})
   await expect(row).toHaveAccessibleDescription('Edit link')
   // Buttons only hold phrasing content
   await expect(row.locator('div')).toHaveCount(0)
@@ -82,18 +83,19 @@ test('opens single-link settings from the linked row', async ({
   const settings = page.getByRole('dialog', {name: 'Link settings'})
   await expect(settings).toBeVisible()
   await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
+  await expect(settings.getByRole('textbox', {name: 'Label'})).toBeVisible()
 })
 
 test('opens multiple-link settings from the linked row', async ({
   mount,
   page
 }) => {
-  await mount(<Example />)
+  await mount(<PlainLinks />)
 
-  const resources = page.getByRole('list', {name: 'Resources'})
+  const links = page.getByRole('list', {name: 'Links'})
   const settings = page.getByRole('dialog', {name: 'Link settings'})
-  const firstRow = resources.getByRole('listitem').first()
-  const firstLink = firstRow.getByRole('button', {name: 'Page Home'})
+  const firstRow = links.getByRole('listitem').first()
+  const firstLink = firstRow.getByRole('button', {name: 'Home Page'})
   await expect(firstLink).toHaveAccessibleDescription('Edit link')
   await firstLink.click()
   await expect(settings).toBeVisible()
@@ -107,9 +109,11 @@ test('opens multiple-link settings from the linked row', async ({
   await page.keyboard.press('Escape')
   await expect(settings).toBeHidden()
 
-  const secondRow = resources.getByRole('listitem').nth(1)
+  const secondRow = links.getByRole('listitem').nth(1)
   await secondRow
-    .getByRole('button', {name: 'External link Alinea documentation'})
+    .getByRole('button', {
+      name: 'Alinea documentation https://alineacms.com/docs'
+    })
     .focus()
   await page.keyboard.press('Enter')
   await expect(settings).toBeVisible()
@@ -117,19 +121,62 @@ test('opens multiple-link settings from the linked row', async ({
   await page.keyboard.press('Escape')
   await expect(settings).toBeHidden()
 
-  // The fold toggle and remove button keep their own behavior
-  await firstRow.getByRole('button', {name: 'Collapse link'}).click()
+  // The remove button keeps its own behavior
+  await secondRow.getByRole('button', {name: 'Remove link'}).click()
+  await expect(settings).toBeHidden()
+  await expect(links.getByRole('listitem')).toHaveCount(1)
+})
+
+test('keeps link settings of rows with fields in the row content', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const resources = page.getByRole('list', {name: 'Resources'})
+  const firstRow = resources.getByRole('listitem').first()
+  // Without a row button, the header toggles the row
+  await expect(firstRow.getByRole('button', {name: 'Home Page'})).toHaveCount(0)
+  await expect(
+    firstRow.getByRole('textbox', {name: 'Label', exact: true})
+  ).toBeVisible()
+  await firstRow.getByText('Home', {exact: true}).click()
   await expect(
     firstRow.getByRole('button', {name: 'Expand link'})
   ).toBeVisible()
-  await expect(settings).toBeHidden()
-  await secondRow.getByRole('button', {name: 'Remove link'}).click()
-  await expect(settings).toBeHidden()
-  await expect(resources.getByRole('listitem')).toHaveCount(2)
+  await expect(firstRow.getByRole('textbox')).toHaveCount(0)
+  await firstRow.getByText('Home', {exact: true}).click()
+  await expect(
+    firstRow.getByRole('button', {name: 'Collapse link'})
+  ).toBeVisible()
 
-  const relatedEntries = page.getByRole('list', {name: 'Related entries'})
-  await relatedEntries.getByRole('button', {name: 'Page Home'}).click()
-  await expect(settings).toBeVisible()
+  // The popover only holds actions
+  await firstRow.getByRole('button', {name: 'Link settings'}).click()
+  const settings = page.getByRole('dialog', {name: 'Link settings'})
+  await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
+  await expect(
+    settings.getByRole('button', {name: 'Replace link'})
+  ).toBeVisible()
+  await expect(settings.getByRole('textbox')).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(settings).toBeHidden()
+
+  // The link label and anchor live in the settings disclosure
+  const disclosure = firstRow.getByRole('button', {
+    name: 'Settings',
+    exact: true
+  })
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'false')
+  await disclosure.click()
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'true')
+  const label = firstRow
+    .locator('[data-slot="sortable-list-item-disclosure"]')
+    .getByRole('textbox', {name: 'Label'})
+  await expect(label).toBeVisible()
+  await label.fill('Start here')
+  await expect(
+    firstRow.locator('[data-slot="sortable-list-item-label"]')
+  ).toHaveText('Start here')
 })
 
 test('shows read-only link rows without opening their settings', async ({
@@ -428,11 +475,16 @@ test('truncates long link labels', async ({mount, page}) => {
   const label = page.getByText('Alinea documentation', {exact: true})
 
   const overflow = await label.evaluate(element => {
-    element.textContent =
-      'Alinea documentation with an intentionally very long navigation label'
+    element.textContent = 'Alinea documentation with a very long label '.repeat(
+      4
+    )
     const style = getComputedStyle(element)
+    const header = element.closest('[data-slot="sortable-list-item-header"]')!
     return {
       clipped: element.scrollWidth > element.clientWidth,
+      contained:
+        element.getBoundingClientRect().right <=
+        header.getBoundingClientRect().right,
       maxWidth: style.maxWidth,
       overflow: style.overflow,
       textOverflow: style.textOverflow,
@@ -442,7 +494,8 @@ test('truncates long link labels', async ({mount, page}) => {
 
   expect(overflow).toEqual({
     clipped: true,
-    maxWidth: '240px',
+    contained: true,
+    maxWidth: 'none',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
@@ -484,4 +537,30 @@ test('reorders multiple links with the keyboard', async ({mount, page}) => {
   await expect(
     resources.getByRole('button', {name: 'Drag link item 2'})
   ).toBeFocused()
+})
+
+test('inserts a link on the border between link rows', async ({
+  mount,
+  page
+}) => {
+  await mount(<PlainLinks />)
+  const links = page.getByRole('list', {name: 'Links'})
+  const insert = links.getByRole('button', {
+    name: 'Insert link before link item 2'
+  })
+  await insert.hover()
+  await insert.click()
+  await page
+    .getByRole('dialog', {name: 'Insert link before link item 2'})
+    .getByRole('button', {name: 'External link'})
+    .click()
+  const dialog = page.getByRole('dialog', {name: 'External link'})
+  await dialog.getByRole('textbox', {name: 'URL'}).fill('https://example.com')
+  await dialog.getByRole('textbox', {name: 'Label'}).fill('Inserted')
+  await dialog.getByRole('button', {name: 'Add link'}).click()
+  await expect(dialog).toBeHidden()
+  const rows = links.getByRole('listitem')
+  await expect(rows).toHaveCount(3)
+  await expect(rows.nth(1)).toContainText('Inserted')
+  await expect(rows.nth(2)).toContainText('Alinea documentation')
 })

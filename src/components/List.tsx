@@ -1,8 +1,8 @@
 import styler from '@alinea/styler'
+import {IcRoundUnfoldLess, IcRoundUnfoldMore} from '#/dashboard/icons.js'
 import type {ComponentPropsWithoutRef, HTMLAttributes, ReactNode} from 'react'
 import {Button, type ButtonProps} from './Button.js'
 import {FieldDescription, FieldSharedBadge} from './Field.js'
-import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import css from './List.module.css'
 import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
@@ -212,9 +212,12 @@ export interface ListLabelProps extends Omit<
   children: ReactNode
   expanded: boolean
   hasRows?: boolean
+  /** Number of items, shown next to the label */
+  count?: number
   shared?: boolean
   /** Marks the label with an asterisk, like a required field label */
   required?: boolean
+  /** Shows the button that expands or collapses all rows */
   showFold?: boolean
   description?: ReactNode
   inline?: boolean
@@ -224,6 +227,7 @@ export function ListLabel({
   children,
   expanded,
   hasRows,
+  count,
   shared,
   required,
   showFold = true,
@@ -232,49 +236,52 @@ export function ListLabel({
   inline = false,
   ...props
 }: ListLabelProps) {
-  if (inline && !showFold && !description && !shared) return null
-  const text = !inline && (
-    <span className={styles.ListLabel.title.text()}>
-      {children}
-      {required && (
-        <span
-          data-slot="list-label-required"
-          className={styles.ListLabel.required()}
-        >
-          {' *'}
-        </span>
-      )}
-    </span>
-  )
-
+  const fold = showFold && hasRows
+  if (inline && !fold && !description && !shared) return null
   return (
     <div
       data-slot="list-label"
       className={styles.ListLabel(styler.merge({className}))}
     >
-      {showFold ? (
-        <Button
-          {...props}
-          variant="ghost"
-          className={styles.ListLabel.toggle()}
-          data-has-rows={hasRows ? 'true' : undefined}
-          disabled={props.disabled ?? !hasRows}
-        >
-          <span className={styles.ListLabel.title()}>
-            {text}
-            <FoldIcon
-              aria-hidden
-              className={styles.ListLabel.fold()}
-              data-slot="icon"
-              expanded={expanded}
-            />
-          </span>
-        </Button>
-      ) : (
-        text && <span className={styles.ListLabel.title()}>{text}</span>
-      )}
+      <div className={styles.ListLabel.header()}>
+        <span className={styles.ListLabel.title()}>
+          {!inline && (
+            <span className={styles.ListLabel.title.text()}>
+              {children}
+              {required && (
+                <span
+                  data-slot="list-label-required"
+                  className={styles.ListLabel.required()}
+                >
+                  {' *'}
+                </span>
+              )}
+            </span>
+          )}
+          {!inline && count !== undefined && (
+            <span
+              data-slot="list-label-count"
+              className={styles.ListLabel.count()}
+            >
+              {count}
+            </span>
+          )}
+          {shared && <FieldSharedBadge />}
+        </span>
+        {fold && (
+          <Button
+            {...props}
+            variant="ghost"
+            size="sm"
+            icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
+            className={styles.ListLabel.toggle()}
+            aria-expanded={expanded}
+          >
+            {expanded ? 'Collapse all' : 'Expand all'}
+          </Button>
+        )}
+      </div>
       {description && <FieldDescription>{description}</FieldDescription>}
-      {shared && <FieldSharedBadge />}
     </div>
   )
 }

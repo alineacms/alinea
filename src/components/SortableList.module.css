@@ -1,21 +1,116 @@
-.SortableListAdd-inner {
-  align-items: center;
-  box-sizing: border-box;
+.SortableList {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  min-height: 36px;
-  border-top: 1px solid var(--alinea-border);
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
 }
 
-.SortableListAdd:first-child .SortableListAdd-inner {
-  border-top: 0;
+.SortableList-items {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-bg);
+}
+
+.SortableListAdd-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  min-height: 30px;
+  margin-inline: -8px;
+
+  :is([data-slot='button'], [data-slot$='-trigger']) {
+    color: var(--alinea-fg-muted);
+    font-weight: 500;
+  }
 }
 
 .SortableListItem {
   position: relative;
   display: grid;
-  overflow: hidden;
+  background: var(--alinea-bg);
+}
+
+.SortableListItemInsert {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  height: 16px;
+  opacity: 0;
+  transition: opacity var(--alinea-transition);
+}
+
+.SortableListItemInsert::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  left: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--alinea-primary);
+}
+
+/* Dropping near a border places the item there already */
+.SortableList[data-dragging] .SortableListItemInsert {
+  pointer-events: none;
+}
+
+/* Centers the button over the type icon, which starts the title when an item
+   has no toggle */
+.SortableListItem:not(
+    :has(> .SortableListItemHeader > .SortableListItemTitle > .SortableListItemToggle)
+  )
+  > .SortableListItemInsert
+  > .SortableListItemInsert-button {
+  margin-left: 9px;
+}
+
+.SortableListItemInsert:hover,
+.SortableListItemInsert:has(:focus-visible),
+.SortableListItemInsert:has([aria-expanded='true']) {
+  opacity: 1;
+}
+
+.SortableListItemInsert-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 0 0 0 42px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--alinea-bg);
+  color: var(--alinea-primary);
+  font-size: 14px;
+  box-shadow: 0 0 0 1.5px var(--alinea-primary);
+  cursor: pointer;
+  outline: none;
+  transition: var(--alinea-transition);
+  transition-property: background-color, color;
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--alinea-primary);
+      color: var(--alinea-primary-fg);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: 2px;
+  }
 }
 
 .SortableListItem:not(:first-child) {
@@ -85,7 +180,7 @@
   position: absolute;
   top: -1px;
   left: 50%;
-  z-index: 3;
+  z-index: 4;
   width: 56px;
   height: 10px;
   cursor: grab;
@@ -124,9 +219,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 4px;
   min-width: 0;
-  min-height: 36px;
-  padding: 2px 8px;
+  min-height: 40px;
+  padding: 3px 6px;
+  transition: background-color var(--alinea-transition);
+}
+
+/* Open items and the hovered header stand out from the content below */
+.SortableListItem:has(> .SortableListItemContent) > .SortableListItemHeader,
+.SortableListItemHeader:hover {
+  background: color-mix(in oklab, var(--alinea-bg) 95%, var(--alinea-fg));
 }
 
 .SortableListItemHeader:hover > .SortableListHandle,
@@ -142,6 +245,66 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  align-self: stretch;
+}
+
+/* Also holds when the tile is passed to an Icon, as in a CommandItem */
+.SortableListItemIcon[data-size] {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: color-mix(in oklab, currentColor 14%, var(--alinea-bg));
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
+}
+
+.SortableListItemIcon[data-size='sm'] {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.SortableListItemIcon[data-color='red'] {
+  color: light-dark(oklch(55% 0.16 25), oklch(74% 0.12 25));
+}
+
+.SortableListItemIcon[data-color='orange'] {
+  color: light-dark(oklch(58% 0.13 65), oklch(76% 0.11 65));
+}
+
+.SortableListItemIcon[data-color='green'] {
+  color: light-dark(oklch(56% 0.13 150), oklch(76% 0.12 150));
+}
+
+.SortableListItemIcon[data-color='teal'] {
+  color: light-dark(oklch(56% 0.1 195), oklch(76% 0.09 195));
+}
+
+.SortableListItemIcon[data-color='blue'] {
+  color: light-dark(oklch(54% 0.16 265), oklch(74% 0.12 265));
+}
+
+.SortableListItemIcon[data-color='purple'] {
+  color: light-dark(oklch(54% 0.17 300), oklch(74% 0.13 300));
+}
+
+.SortableListItemIcon[data-color='pink'] {
+  color: light-dark(oklch(55% 0.17 355), oklch(74% 0.13 355));
+}
+
+.SortableListItemLabel {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .SortableListItemTitle[data-dragging] {
@@ -149,11 +312,13 @@
 }
 
 .SortableListItemDescription {
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 50%;
+  margin-left: auto;
   overflow: hidden;
   color: var(--alinea-fg-muted);
   font-size: 12px;
-  font-weight: 500;
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -163,6 +328,20 @@
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+}
+
+/* Actions show once the header is hovered or focused, or a menu is open */
+@media (hover: hover) {
+  .SortableListItemActions {
+    opacity: 0;
+    transition: opacity var(--alinea-transition);
+  }
+
+  .SortableListItemHeader:hover > .SortableListItemActions,
+  .SortableListItemHeader:focus-within > .SortableListItemActions,
+  .SortableListItemActions:has([aria-expanded='true']) {
+    opacity: 1;
+  }
 }
 
 .SortableListItemToggle {
@@ -176,15 +355,82 @@
   color: var(--alinea-fg);
 }
 
-.SortableListItemToggle-icon {
-  font-size: 16px;
-}
-
 .SortableListItemContent {
   display: grid;
   gap: 12px;
   align-items: normal;
-  padding: 8px 16px 16px 16px;
+  padding: 12px 16px 16px;
+}
+
+.SortableListItemContent:has(> .SortableListItemDisclosure:last-child) {
+  padding-bottom: 0;
+}
+
+.SortableListItemDisclosure {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.SortableListItemDisclosure-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--alinea-fg-muted);
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+  transition: color var(--alinea-transition);
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(--alinea-fg);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: -2px;
+    border-radius: var(--alinea-radius-sm);
+  }
+}
+
+.SortableListItemDisclosure-label {
+  flex: 0 0 auto;
+}
+
+.SortableListItemDisclosure-summary {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  opacity: 0.8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.SortableListItemDisclosure-icon {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-size: 16px;
+  transition: transform var(--alinea-transition);
+}
+
+.SortableListItemDisclosure-trigger[aria-expanded='true'] .SortableListItemDisclosure-icon {
+  transform: rotate(90deg);
+}
+
+.SortableListItemDisclosure-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 16px;
+  padding: 4px 0 16px;
 }
 
 .SortableListItemFooter {
@@ -249,4 +495,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.SortableListItemDisclosure-content[hidden] {
+  display: none;
 }

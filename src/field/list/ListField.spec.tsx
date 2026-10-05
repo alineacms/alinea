@@ -113,6 +113,30 @@ test('folds a single item', async ({mount, page}) => {
   await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
 })
 
+test('edits a row label and anchor in its settings', async ({mount, page}) => {
+  await mount(<Example />)
+  const hero = page
+    .getByRole('list', {name: 'Sections'})
+    .getByRole('listitem', {name: 'Hero item 1'})
+  const title = hero.locator('[data-slot="sortable-list-item-label"]').first()
+  await expect(title).toHaveText('Build structured pages')
+
+  // The settings button names its summary once there is one
+  const settings = hero.getByRole('button', {name: /^Settings/})
+  await expect(settings).toHaveAttribute('aria-expanded', 'false')
+  await expect(hero.getByRole('textbox', {name: 'Label'})).toHaveCount(0)
+  await settings.click()
+  await expect(settings).toHaveAttribute('aria-expanded', 'true')
+  await hero.getByRole('textbox', {name: 'Label'}).fill('Intro block')
+  await expect(title).toHaveText('Intro block')
+  await expect(hero.getByRole('textbox', {name: 'Anchor'})).toHaveValue(
+    'intro-block'
+  )
+
+  await settings.click()
+  await expect(settings).toContainText('Intro block · #intro-block')
+})
+
 type Locator = ReturnType<MountResult['locator']>
 
 /** Accessible names of the direct rows of a list */
@@ -120,7 +144,7 @@ function rowNames(list: Locator) {
   return list.evaluate(element =>
     Array.from(
       element.querySelectorAll(
-        ':scope > [data-slot="sortable-list-item-drop-target"]'
+        ':scope > [data-slot="sortable-list-items"] > [data-slot="sortable-list-item-drop-target"]'
       )
     ).map(row =>
       row.querySelector('[role="listitem"]')!.getAttribute('aria-label')
@@ -139,7 +163,7 @@ test('reorders rows by dragging the handle', async ({mount, page}) => {
   const quoteBox = (await quote.boundingBox())!
   await hero.getByRole('button', {name: 'Drag Hero item 1'}).dragTo(quote, {
     sourcePosition: {x: 10, y: 6},
-    targetPosition: {x: 40, y: quoteBox.height - 4}
+    targetPosition: {x: quoteBox.width / 2, y: quoteBox.height - 12}
   })
   await expect(sections.getByRole('listitem').first()).toHaveAccessibleName(
     'Quote item 1'
@@ -228,4 +252,22 @@ test('adds blocks from the type picker', async ({mount, page}) => {
   await actions.getByRole('option', {name: 'Quote'}).click()
   await expect(actions).toBeHidden()
   expect((await rowNames(sections))[0]).toBe('Quote item 1')
+})
+
+test('inserts a row on the border between rows', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  const before = await rowNames(sections)
+  const insert = sections.getByRole('button', {
+    name: 'Insert before Quote item 2'
+  })
+  await insert.hover()
+  await insert.click()
+  const picker = page.getByRole('dialog', {name: 'Insert before Quote item 2'})
+  await picker.getByRole('searchbox', {name: 'Search types'}).fill('stat')
+  await page.keyboard.press('Enter')
+  await expect(picker).toBeHidden()
+  const after = await rowNames(sections)
+  expect(after).toHaveLength(before.length + 1)
+  expect(after[1]).toBe('Stat item 2')
 })

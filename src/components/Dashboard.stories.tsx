@@ -139,6 +139,8 @@ import {
   SortableListItem,
   SortableListItemContent,
   SortableListItemDescription,
+  SortableListItemIcon,
+  SortableListItemLabel,
   SortableListItemHeader,
   SortableListItemTitle
 } from './SortableList.js'
@@ -688,11 +690,15 @@ function EditorForm({page, onChange}: {page: StoryPage; onChange: () => void}) {
                   <SortableListItemHeader>
                     <SortableListHandle aria-label={`Drag ${section.label}`} />
                     <SortableListItemTitle>
-                      <Badge icon={section.icon} size="sm">
-                        {section.type}
-                      </Badge>
-                      <SortableListItemDescription>
+                      <SortableListItemIcon
+                        icon={section.icon}
+                        name={section.type}
+                      />
+                      <SortableListItemLabel>
                         {section.label}
+                      </SortableListItemLabel>
+                      <SortableListItemDescription>
+                        {section.type}
                       </SortableListItemDescription>
                     </SortableListItemTitle>
                   </SortableListItemHeader>

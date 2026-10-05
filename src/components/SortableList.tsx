@@ -1,8 +1,18 @@
 import styler from '@alinea/styler'
 import {
+  IcRoundAdd,
+  IcRoundChevronRight,
+  IcRoundUnfoldLess,
+  IcRoundUnfoldMore
+} from '#/dashboard/icons.js'
+import {
+  Children,
+  type ComponentPropsWithRef,
   type ComponentPropsWithoutRef,
   createContext,
   type DOMAttributes,
+  isValidElement,
+  type MouseEvent,
   type ReactNode,
   type RefObject,
   useContext,
@@ -18,10 +28,13 @@ import {
   useDrop
 } from 'react-aria'
 import {Button, type ButtonProps} from './Button.js'
-import {FoldIcon} from './FoldIcon.js'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from './Collapsible.js'
 import {Icon} from './Icon.js'
 import css from './SortableList.module.css'
-import {Surface, type SurfaceProps} from './Surface.js'
 import type {DragMoveEvent, DropTarget, IconType, Key} from './types.js'
 
 const styles = styler(css)
@@ -60,7 +73,7 @@ interface SortableListItemContextValue {
 const SortableListItemContext =
   createContext<SortableListItemContextValue | null>(null)
 
-export interface SortableListProps extends SurfaceProps {
+export interface SortableListProps extends ComponentPropsWithoutRef<'div'> {
   /**
    * Enables reordering: items with an `id` can be dragged by their
    * `SortableListHandle`, with a pointer or with the keyboard (Enter on the
@@ -78,6 +91,7 @@ export function SortableList({
   role = 'list',
   onReorder,
   dragType = DEFAULT_DRAG_TYPE,
+  children,
   ...props
 }: SortableListProps) {
   const [draggingKey, setDraggingKey] = useState<Key | null>(null)
@@ -126,14 +140,33 @@ export function SortableList({
       }
     }
   }, [reorderable, dragType, draggingKey, dropTarget])
+  // The add row renders below the bordered items, so an empty list only shows
+  // its add buttons
+  const items: Array<ReactNode> = []
+  const add: Array<ReactNode> = []
+  for (const child of Children.toArray(children)) {
+    if (isValidElement(child) && child.type === SortableListAdd) add.push(child)
+    else items.push(child)
+  }
   return (
     <SortableListContext.Provider value={context}>
-      <Surface
+      <div
         data-slot="sortable-list"
         {...props}
-        className={className}
+        className={styles.SortableList(styler.merge({className}))}
+        data-dragging={draggingKey !== null || undefined}
         role={role}
-      />
+      >
+        {items.length > 0 && (
+          <div
+            data-slot="sortable-list-items"
+            className={styles.SortableList.items()}
+          >
+            {items}
+          </div>
+        )}
+        {add}
+      </div>
     </SortableListContext.Provider>
   )
 }
@@ -330,19 +363,38 @@ function ReorderableItem({
 
 export interface SortableListItemHeaderProps extends ComponentPropsWithoutRef<'div'> {}
 
-/** Top bar of an item, holds its handle, title and actions */
+/**
+ * Top bar of an item, holds its handle, title and actions. Clicking the bar
+ * outside its controls presses the `SortableListItemToggle` it holds.
+ */
 export function SortableListItemHeader({
   className,
+  onClick,
   ...props
 }: SortableListItemHeaderProps) {
+  function handleClick(event: MouseEvent<HTMLDivElement>) {
+    onClick?.(event)
+    if (event.defaultPrevented) return
+    const target = event.target as Element
+    if (target.closest(interactive)) return
+    event.currentTarget
+      .querySelector<HTMLElement>(
+        ':scope > [data-slot="sortable-list-item-title"] > [data-slot="sortable-list-item-toggle"]'
+      )
+      ?.click()
+  }
   return (
     <div
       data-slot="sortable-list-item-header"
       {...props}
       className={styles.SortableListItemHeader(styler.merge({className}))}
+      onClick={handleClick}
     />
   )
 }
+
+const interactive =
+  'button, a, input, select, textarea, label, [role="button"], [contenteditable]'
 
 export interface SortableListHandleProps extends ComponentPropsWithoutRef<'span'> {}
 
@@ -397,7 +449,95 @@ export function SortableListItemTitle({
 
 export interface SortableListItemDescriptionProps extends ComponentPropsWithoutRef<'span'> {}
 
-/** Muted, truncated text next to the badges of an item, eg. its label */
+export interface SortableListItemIconProps extends Omit<
+  ComponentPropsWithoutRef<'span'>,
+  'children' | 'color'
+> {
+  icon: IconType
+  /** Picks a stable color, eg. the name of the item's type */
+  name?: string
+  /** `sm` fits a button, defaults to `default` */
+  size?: 'default' | 'sm'
+}
+
+const iconColors = ['red', 'orange', 'green', 'teal', 'blue', 'purple', 'pink']
+
+/** The icon of an item's type on a tile tinted by its name */
+export function SortableListItemIcon({
+  className,
+  icon,
+  name,
+  size = 'default',
+  ...props
+}: SortableListItemIconProps) {
+  return (
+    <span
+      data-slot="sortable-list-item-icon"
+      {...props}
+      className={styles.SortableListItemIcon(styler.merge({className}))}
+      data-color={name ? iconColor(name) : undefined}
+      data-size={size}
+    >
+      <Icon aria-hidden icon={icon} />
+    </span>
+  )
+}
+
+function iconColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++)
+    hash = (Math.imul(hash, 31) + name.charCodeAt(i)) | 0
+  return iconColors[(hash >>> 0) % iconColors.length]
+}
+
+export interface SortableListItemInsertProps extends Omit<
+  ComponentPropsWithRef<'button'>,
+  'children'
+> {}
+
+/**
+ * Inserts an item before the one it is placed in: a line with an add button
+ * that shows when the pointer is on the border above the item. Place it first
+ * in the `SortableListItem`.
+ */
+export function SortableListItemInsert({
+  className,
+  ...props
+}: SortableListItemInsertProps) {
+  return (
+    <div
+      data-slot="sortable-list-item-insert"
+      className={styles.SortableListItemInsert(styler.merge({className}))}
+    >
+      <button
+        type="button"
+        data-slot="sortable-list-item-insert-button"
+        {...props}
+        className={styles.SortableListItemInsert.button()}
+      >
+        <Icon aria-hidden icon={IcRoundAdd} />
+      </button>
+    </div>
+  )
+}
+
+export interface SortableListItemLabelProps extends ComponentPropsWithoutRef<'span'> {}
+
+/** The truncated name of an item */
+export function SortableListItemLabel({
+  className,
+  ...props
+}: SortableListItemLabelProps) {
+  return (
+    <span
+      data-slot="sortable-list-item-label"
+      {...props}
+      className={styles.SortableListItemLabel(styler.merge({className}))}
+    />
+  )
+}
+
+/** Muted, truncated text at the end of the title, eg. a summary or type */
 export function SortableListItemDescription({
   className,
   ...props
@@ -448,13 +588,8 @@ export function SortableListItemToggle({
       variant="ghost"
       className={styles.SortableListItemToggle(styler.merge({className}))}
       size="icon-sm"
-    >
-      <FoldIcon
-        aria-hidden
-        className={styles.SortableListItemToggle.icon()}
-        expanded={expanded}
-      />
-    </Button>
+      icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
+    />
   )
 }
 
@@ -511,6 +646,59 @@ export function SortableListItemSettings({
   )
 }
 
+export interface SortableListItemDisclosureProps {
+  className?: string
+  /** Defaults to `Settings` */
+  label?: ReactNode
+  /** Shown next to the label while closed */
+  summary?: ReactNode
+  defaultOpen?: boolean
+  children?: ReactNode
+}
+
+/** A folded group of secondary fields at the end of an item's content */
+export function SortableListItemDisclosure({
+  className,
+  label = 'Settings',
+  summary,
+  defaultOpen,
+  children
+}: SortableListItemDisclosureProps) {
+  return (
+    <Collapsible
+      data-slot="sortable-list-item-disclosure"
+      className={styles.SortableListItemDisclosure(styler.merge({className}))}
+      defaultOpen={defaultOpen}
+    >
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className={styles.SortableListItemDisclosure.trigger()}
+        >
+          <span className={styles.SortableListItemDisclosure.label()}>
+            {label}
+          </span>
+          {summary && (
+            <span className={styles.SortableListItemDisclosure.summary()}>
+              {summary}
+            </span>
+          )}
+          <Icon
+            aria-hidden
+            className={styles.SortableListItemDisclosure.icon()}
+            icon={IcRoundChevronRight}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent
+        className={styles.SortableListItemDisclosure.content()}
+      >
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
 export interface SortableListDragPreviewProps extends ComponentPropsWithoutRef<'div'> {
   icon?: IconType
   label: ReactNode
@@ -545,7 +733,7 @@ export function SortableListDragPreview({
 
 export interface SortableListAddProps extends ComponentPropsWithoutRef<'div'> {}
 
-/** Last row of the list holding the buttons that add items */
+/** The buttons that add items, rendered below the items */
 export function SortableListAdd({
   children,
   className,

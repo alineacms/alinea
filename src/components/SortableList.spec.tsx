@@ -48,9 +48,11 @@ test('shows a drop indicator while dragging', async ({mount, page}) => {
   await page.mouse.down()
   // The first move starts the drag, the next ones move over the target
   await page.mouse.move(handleBox.x + 20, handleBox.y + 20)
-  await page.mouse.move(textBox.x + 20, textBox.y + textBox.height - 4, {
-    steps: 5
-  })
+  await page.mouse.move(
+    textBox.x + textBox.width / 2,
+    textBox.y + textBox.height - 4,
+    {steps: 5}
+  )
   const indicator = list.locator(
     '[data-slot="sortable-list-drop-indicator"][data-active]'
   )
@@ -122,35 +124,55 @@ test('folds item content with the toggle', async ({mount, page}) => {
   await expect(quote.getByLabel('Quote', {exact: true})).toBeVisible()
 })
 
-test('separates items and the add row with borders', async ({mount, page}) => {
+test('separates items and renders the add row below them', async ({
+  mount,
+  page
+}) => {
   await mount(<Basic />)
   const list = page.getByRole('list', {name: 'Sections'})
-  const items = list.getByRole('listitem')
+  const box = list.locator(':scope > [data-slot="sortable-list-items"]')
+  await expect(box).toHaveCSS('border-top-width', '1px')
+  await expect(box).toHaveCSS('border-radius', '8px')
+  await expect(box).toHaveCSS('overflow', 'hidden')
+  const items = box.getByRole('listitem')
   await expect(items.first()).toHaveCSS('border-top-width', '0px')
   await expect(items.nth(1)).toHaveCSS('border-top-width', '1px')
-  const add = list.locator('[data-slot="sortable-list-add"] > div')
-  await expect(add).toHaveCSS('border-top-width', '1px')
+  const add = list.locator(':scope > [data-slot="sortable-list-add"]')
+  await expect(box.locator('[data-slot="sortable-list-add"]')).toHaveCount(0)
+  await expect(add.locator('> div')).toHaveCSS('border-top-width', '0px')
+  const boxBounds = (await box.boundingBox())!
+  const addBounds = (await add.boundingBox())!
+  expect(addBounds.y).toBeGreaterThanOrEqual(boxBounds.y + boxBounds.height)
 })
 
-test('drops the add row border in an empty list', async ({mount, page}) => {
+test('renders only the add row in an empty list', async ({mount, page}) => {
   await mount(<Empty />)
-  const add = page.locator('[data-slot="sortable-list-add"] > div')
-  await expect(add).toHaveCSS('border-top-width', '0px')
+  await expect(page.locator('[data-slot="sortable-list-items"]')).toHaveCount(0)
   await expect(page.getByRole('button', {name: 'Add Hero'})).toBeVisible()
 })
 
-test('a list label without rows to fold keeps its full color', async ({
+test('a list label without rows renders no fold toggle', async ({
   mount,
   page
 }) => {
   await mount(
-    <ListLabel aria-label="No list items to fold" expanded hasRows={false}>
+    <ListLabel aria-label="Collapse all items" expanded hasRows={false}>
       Sections
     </ListLabel>
   )
-  const toggle = page.getByRole('button', {name: 'No list items to fold'})
-  await expect(toggle).toBeDisabled()
-  await expect(toggle).toHaveCSS('opacity', '1')
+  await expect(page.getByText('Sections')).toBeVisible()
+  await expect(page.getByRole('button')).toHaveCount(0)
+})
+
+test('a list label with rows folds them all', async ({mount, page}) => {
+  await mount(
+    <ListLabel aria-label="Collapse all items" expanded hasRows>
+      Sections
+    </ListLabel>
+  )
+  const toggle = page.getByRole('button', {name: 'Collapse all items'})
+  await expect(toggle).toHaveText('Collapse all')
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
 })
 
 test('keeps item state when reordering is switched off', async ({

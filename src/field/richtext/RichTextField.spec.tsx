@@ -436,13 +436,24 @@ test('edits nested rich text inside an embedded block', async ({
   await mount(<RichTextStory />)
 
   const block = page.locator('[data-richtext-block="true"]')
-  await expect(block).toHaveCSS('border-radius', '8px')
   await expect(block).toHaveCSS('margin', '16px 0px')
+  await expect(
+    block.locator(':scope > [data-slot="sortable-list-items"]')
+  ).toHaveCSS('border-radius', '8px')
   await expect(block.locator('[data-richtext-block-editor="true"]')).toHaveCSS(
     'padding',
-    '8px 16px 16px'
+    '12px 16px 16px'
   )
   await expect(page.getByText('Details', {exact: true})).toBeVisible()
+  await expect(
+    page.locator('.ProseMirror').getByText('Nested details.')
+  ).toBeVisible()
+
+  await block.getByRole('button', {name: 'Collapse Callout'}).click()
+  await expect(
+    block.locator('[data-richtext-block-editor="true"]')
+  ).toHaveCount(0)
+  await block.getByRole('button', {name: 'Expand Callout'}).click()
   await expect(
     page.locator('.ProseMirror').getByText('Nested details.')
   ).toBeVisible()
@@ -738,12 +749,12 @@ test('keeps outer and inner block fields read only', async ({mount, page}) => {
   await expect(page.locator('[data-richtext-toolbar="true"]')).toHaveCount(0)
   await expect(page.getByRole('textbox', {name: 'Title'})).toBeDisabled()
 
-  await page.getByRole('button', {name: 'Callout actions'}).click()
-  await expect(page.getByRole('button', {name: 'Duplicate'})).toBeDisabled()
-  await expect(page.getByRole('button', {name: 'Delete'})).toHaveCount(0)
-  await expect(
-    page.getByRole('button', {name: 'Remove Callout'})
-  ).toBeDisabled()
+  await expect(page.getByRole('button', {name: 'Callout actions'})).toHaveCount(
+    0
+  )
+  await expect(page.getByRole('button', {name: 'Remove Callout'})).toHaveCount(
+    0
+  )
 })
 
 /**

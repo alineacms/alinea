@@ -164,7 +164,9 @@ themed(() => {
       title: 'Tabbed page'
     })
     await app.page.getByRole('button', {name: 'Quote actions'}).click()
-    await app.page.getByRole('button', {name: 'Insert before'}).click()
+    await app.page
+      .getByRole('button', {name: 'Insert before', exact: true})
+      .click()
     await expect(
       app.page
         .getByRole('searchbox', {name: 'Search types'})

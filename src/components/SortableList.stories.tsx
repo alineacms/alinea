@@ -1,12 +1,12 @@
 import {type ComponentType, useState} from 'react'
 import {
   IcRoundEdit,
+  IcRoundFormatQuote,
   IcRoundImage,
   IcRoundLink,
   IcRoundMoreHoriz,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {ListError, ListLabel} from './List.js'
 import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
@@ -19,8 +19,11 @@ import {
   SortableListItemActions,
   SortableListItemContent,
   SortableListItemDescription,
+  SortableListItemDisclosure,
   SortableListItemFooter,
   SortableListItemHeader,
+  SortableListItemIcon,
+  SortableListItemLabel,
   SortableListItemSettings,
   SortableListItemTitle,
   SortableListItemToggle
@@ -36,7 +39,7 @@ export function Basic() {
       <ListLabel aria-label="Collapse all items" expanded hasRows shared>
         Sections
       </ListLabel>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListItem aria-label="Hero item 1">
           <SortableListItemHeader>
             <SortableListItemTitle>
@@ -45,13 +48,9 @@ export function Basic() {
                 expanded={heroExpanded}
                 onClick={() => setHeroExpanded(!heroExpanded)}
               />
-              <Badge icon={IcRoundPanorama} size="sm">
-                Hero
-              </Badge>
-              <SortableListItemDescription>
-                Landing page intro
-              </SortableListItemDescription>
-              <Badge size="sm">#landing-page-intro</Badge>
+              <SortableListItemIcon icon={IcRoundPanorama} name="Hero" />
+              <SortableListItemLabel>Landing page intro</SortableListItemLabel>
+              <SortableListItemDescription>Hero</SortableListItemDescription>
             </SortableListItemTitle>
             <SortableListItemActions>
               <Popover>
@@ -62,10 +61,6 @@ export function Basic() {
                   size="icon-sm"
                 />
                 <PopoverContent side="bottom" align="end">
-                  <SortableListItemSettings>
-                    <TextField label="Label" value="Landing page intro" />
-                    <TextField label="Anchor" value="landing-page-intro" />
-                  </SortableListItemSettings>
                   <SortableListItemSettings variant="actions">
                     <Button variant="ghost">Copy</Button>
                     <Button variant="ghost">Delete</Button>
@@ -81,6 +76,10 @@ export function Basic() {
                 label="Body"
                 value="Compose reusable content sections with a list field."
               />
+              <SortableListItemDisclosure summary="Landing page intro · #landing-page-intro">
+                <TextField label="Label" value="Landing page intro" />
+                <TextField label="Anchor" value="landing-page-intro" />
+              </SortableListItemDisclosure>
             </SortableListItemContent>
           )}
         </SortableListItem>
@@ -92,10 +91,9 @@ export function Basic() {
                 expanded={quoteExpanded}
                 onClick={() => setQuoteExpanded(!quoteExpanded)}
               />
-              <Badge size="sm">Quote</Badge>
-              <SortableListItemDescription>
-                Editorial quote
-              </SortableListItemDescription>
+              <SortableListItemIcon icon={IcRoundFormatQuote} name="Quote" />
+              <SortableListItemLabel>Editorial quote</SortableListItemLabel>
+              <SortableListItemDescription>Quote</SortableListItemDescription>
             </SortableListItemTitle>
             <SortableListItemActions>
               <Button
@@ -136,7 +134,7 @@ export function Basic() {
 export function Empty() {
   return (
     <div style={{maxWidth: 720}}>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListAdd>
           <Button variant="ghost" size="sm">
             Add Hero
@@ -182,7 +180,6 @@ export function Reorderable() {
     <div style={{maxWidth: 480}}>
       <SortableList
         aria-label="Sections"
-        data-depth="muted"
         onReorder={event => setItems(items => moveItems(items, event))}
       >
         {items.map(item => (
@@ -197,9 +194,8 @@ export function Reorderable() {
             <SortableListItemHeader>
               <SortableListHandle aria-label={`Drag ${item.label}`} />
               <SortableListItemTitle>
-                <Badge icon={item.icon} size="sm">
-                  {item.label}
-                </Badge>
+                <SortableListItemIcon icon={item.icon} name={item.label} />
+                <SortableListItemLabel>{item.label}</SortableListItemLabel>
               </SortableListItemTitle>
             </SortableListItemHeader>
           </SortableListItem>

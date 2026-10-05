@@ -87,13 +87,10 @@
 .LinkFieldView-previewImagePlaceholder {
   align-self: center;
   aspect-ratio: 1;
-  border-radius: var(--alinea-radius);
+  border-radius: 6px;
   flex-shrink: 0;
-  height: 36px;
-  margin: -2px 0;
-  margin-left: -8px;
-  margin-right: 8px;
-  width: 36px;
+  height: 24px;
+  width: 24px;
 }
 
 .LinkFieldView-previewImage {
@@ -159,9 +156,9 @@
 .LinkFieldView-create {
   display: flex;
   flex-wrap: wrap;
+  /* The compact picker centers on the whole field */
   width: 100%;
-  justify-content: center;
-  gap: 8px;
+  gap: 2px;
 }
 
 .LinkFieldView-createButton {
@@ -174,6 +171,7 @@
   gap: 8px;
   min-width: 0;
   padding: 0;
+  font-weight: inherit;
 }
 
 /* The whole row opens the link settings, only its action buttons highlight */
