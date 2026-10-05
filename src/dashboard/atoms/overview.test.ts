@@ -56,7 +56,6 @@ test('the title comes first, then built-in columns, then the parent columns', ()
   // The article number is placed at the start
   expect(overview.columns.map(column => column.key)).toEqual([
     'articleNumber',
-    'status',
     'updated',
     'author',
     'categories',
@@ -70,7 +69,6 @@ test('the type column shows for lists of several types', () => {
   const blog = resolveOverview(config, blogParent)
   expect(blog.columns.map(column => column.key)).toEqual([
     'type',
-    'status',
     'updated',
     'author',
     'date'
@@ -536,12 +534,8 @@ test('updated and author columns only show when entries store audit data', () =>
   expect(keys([edited])).toContain('author')
 })
 
-function group(
-  type: string,
-  status: OverviewChildren['status'] = 'published',
-  audit = false
-): OverviewChildren {
-  return {type, status, updatedAt: audit, updatedBy: audit}
+function group(type: string, audit = false): OverviewChildren {
+  return {type, updatedAt: audit, updatedBy: audit}
 }
 
 const Note = Config.document('Note', {
@@ -605,15 +599,13 @@ test('declared types follow the children that are present', () => {
   ])
 })
 
-test('the status column shows when the statuses of the children differ', () => {
-  const keys = (children: Array<OverviewChildren>) =>
-    resolveOverview(config, rootParent('products'), {children}).columns.map(
-      column => column.key
-    )
-  expect(keys([group('Product')])).not.toContain('status')
-  expect(keys([group('Product'), group('Product', 'draft')])).toContain(
-    'status'
-  )
+test('the status column only shows when configured', () => {
+  const keys = (builtins?: {status: boolean}) =>
+    resolveOverviewOptions(config, {builtins}, ['Product'], undefined, {
+      children: [group('Product')]
+    }).columns.map(column => column.key)
+  expect(keys()).not.toContain('status')
+  expect(keys({status: true})).toContain('status')
 })
 
 test('audit columns show when any child stores audit metadata', () => {
@@ -622,7 +614,7 @@ test('audit columns show when any child stores audit metadata', () => {
       column => column.key
     )
   expect(keys([group('Product')])).not.toContain('updated')
-  expect(keys([group('Product'), group('Product', 'draft', true)])).toEqual(
+  expect(keys([group('Product'), group('Product', true)])).toEqual(
     expect.arrayContaining(['updated', 'author'])
   )
   const byOnly = {...group('Product'), updatedBy: true}
@@ -636,7 +628,7 @@ test('builtins force columns on or off regardless of the children', () => {
     {columns: {}, builtins: {type: true, status: true, author: false}},
     ['Product'],
     undefined,
-    {children: [group('Product', 'published', true)]}
+    {children: [group('Product', true)]}
   )
   expect(overview.columns.map(column => column.key)).toEqual([
     'type',
@@ -729,7 +721,6 @@ test('explorers resolve their columns from the children of the parent', async ()
   const page = await store.get(explorer.pageReady)
   expect(page.overview.columns.map(column => column.key)).toEqual([
     'type',
-    'status',
     'updated',
     'author',
     'path',
@@ -761,7 +752,7 @@ test('explorer columns follow the children as the content changes', async () => 
   expect(await keys()).toEqual(['path', 'summary'])
   await createUnaudited(db, 'Note', 'C', 'draft')
   await store.set(syncAtom)
-  expect(await keys()).toEqual(['status', 'path', 'summary'])
+  expect(await keys()).toEqual(['path', 'summary'])
 })
 
 test('search result columns follow the results like listed children', async () => {
@@ -781,7 +772,7 @@ test('search result columns follow the results like listed children', async () =
   // Only results with audit data show who edited them and when
   expect(await keys('plain')).toEqual(['path', 'summary'])
   expect(await keys('note')).toEqual(['updated', 'author', 'path', 'summary'])
-  // The type and status columns show when the results differ in them
+  // The type column shows when the results differ in it
   expect(await keys('draft')).toEqual(['path', 'stock'])
   await db.create({
     type: Page,
@@ -793,7 +784,6 @@ test('search result columns follow the results like listed children', async () =
   await store.set(syncAtom)
   expect(await keys('note')).toEqual([
     'type',
-    'status',
     'updated',
     'author',
     'path',

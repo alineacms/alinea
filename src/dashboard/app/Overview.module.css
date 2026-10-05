@@ -12,8 +12,21 @@
 
   /* The grid spaces its edges like its gaps, line the cards up with the page */
   &.is-cards {
+    position: relative;
     margin-top: -16px;
     padding: 0 8px;
+
+    /* Fades cards out under the toolbar. It covers the grid's top gap, so
+       it only shows once cards scroll under it */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 1;
+      height: 16px;
+      pointer-events: none;
+      background: linear-gradient(var(--alinea-bg-muted), transparent);
+    }
   }
 }
 

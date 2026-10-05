@@ -35,13 +35,7 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
   await mount(<OverviewScenarioMount />)
   const header = page.locator('[data-slot="table-header"]')
   await expect(header).toContainText('Title')
-  for (const column of [
-    'Status',
-    'Article number',
-    'Categories',
-    'Brand',
-    'Price'
-  ])
+  for (const column of ['Article number', 'Categories', 'Brand', 'Price'])
     await expect(header.getByText(column, {exact: true})).toBeVisible()
   // The article number is placed before the built-in columns
   await expect
@@ -52,16 +46,10 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
           cells.map(cell => cell.textContent?.trim()).filter(Boolean)
         )
     )
-    .toEqual([
-      'Title',
-      'Article number',
-      'Status',
-      'Categories',
-      'Brand',
-      'Price'
-    ])
-  // All products share a type and no product stores audit data
-  for (const column of ['Type', 'Updated', 'Author'])
+    .toEqual(['Title', 'Article number', 'Categories', 'Brand', 'Price'])
+  // All products share a type, no product stores audit data and the status
+  // shows after the title
+  for (const column of ['Type', 'Status', 'Updated', 'Author'])
     await expect(header.getByText(column, {exact: true})).toHaveCount(0)
   const chair = table(page).getByRole('row', {name: /^Chair/})
   await expect(chair).toContainText('€20.00')
@@ -176,7 +164,7 @@ test('lists mixed children with per type columns and card thumbnails', async ({
   await page.getByRole('radio', {name: 'Row view'}).click()
   const header = page.locator('[data-slot="table-header"]')
   await expect(header.getByText('Type', {exact: true})).toBeVisible()
-  // Every child is published, so there is no status column
+  // The status shows after the title, not in a column
   await expect(header.getByText('Status', {exact: true})).toHaveCount(0)
   // Ordered by the default sort: newest first
   await expect.poll(() => titles(page)).toEqual(['Meetup', 'Post'])

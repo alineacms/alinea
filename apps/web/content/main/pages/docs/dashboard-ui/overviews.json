@@ -746,7 +746,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`status`: the publication status. Shown when the children differ in status, for example when some are drafts. A list of published entries has no status column."
+                  "text": "`status`: the publication status. Hidden unless configured, as the title already marks drafts and archived entries."
                 }
               ]
             }

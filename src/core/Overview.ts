@@ -224,7 +224,7 @@ export interface OverviewColumn<Value = any> extends OverviewColumnBase<Value> {
 export interface OverviewBuiltins {
   /** The entry type, shown by default when the children have several types */
   type?: boolean
-  /** The publication status, shown by default when the statuses differ */
+  /** The publication status, hidden by default: the title shows it */
   status?: boolean
   /** When the entry was last edited, shown by default when recorded */
   updated?: boolean
