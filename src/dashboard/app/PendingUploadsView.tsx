@@ -109,7 +109,7 @@ export function PendingUploadsView({
         </List>
       </DashboardModalContent>
       <DashboardModalFooter>
-        <Button variant="outline" color="secondary" onClick={onCancel}>
+        <Button variant="outline" color="neutral" onClick={onCancel}>
           Cancel
         </Button>
         <Button color="primary" onClick={onConfirm}>

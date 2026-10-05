@@ -108,7 +108,7 @@
   padding: 3px 8px;
   border: 1px solid transparent;
   font-size: var(--alinea-font-size-base);
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   line-height: 24px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -141,7 +141,7 @@
   min-height: 28px;
   padding: 0 4px;
   font-size: var(--alinea-font-size-base);
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   line-height: 24px;
 }
 
@@ -151,7 +151,7 @@
   overflow: hidden;
   color: var(--alinea-fg);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -170,7 +170,7 @@
   overflow: hidden;
   color: var(--alinea-fg-muted);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--alinea-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

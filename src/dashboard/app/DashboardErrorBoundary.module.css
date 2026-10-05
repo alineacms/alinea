@@ -10,6 +10,11 @@
   background: var(--alinea-bg-muted);
 }
 
+/* Outranks the dashed outline of the card variant */
+.DashboardErrorBoundary .DashboardErrorBoundary-card {
+  border: 1px solid var(--alinea-border);
+}
+
 .DashboardErrorBoundary-media {
   color: var(--alinea-danger);
 }

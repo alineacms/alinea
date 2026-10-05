@@ -2,11 +2,6 @@
   background: var(--alinea-bg);
 }
 
-.UsersPage-header {
-  height: var(--alinea-header-height);
-  padding: 8px 16px;
-}
-
 .UsersPage-search {
   min-width: 0;
   flex: 1;
@@ -31,8 +26,29 @@
 }
 
 .UsersPage-identity {
-  display: grid;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   min-width: 0;
+}
+
+.UsersPage-identity-person,
+.UsersPage-identity-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.UsersPage-identity-person {
+  flex-shrink: 0;
+  max-width: 50%;
+  font-weight: var(--alinea-weight-medium);
+}
+
+.UsersPage-identity-email {
+  min-width: 0;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-sm);
 }
 
 .UsersPage-roles {

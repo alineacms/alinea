@@ -1,12 +1,12 @@
 .Heading {
   margin: 0;
   color: var(--alinea-fg);
-  font-weight: 600;
+  font-weight: var(--alinea-weight-title);
   letter-spacing: -0.01em;
   line-height: 1.25;
 
   &[data-size='xs'] {
-    font-size: 0.8125rem;
+    font-size: var(--alinea-text-md);
   }
 
   &[data-size='sm'] {
@@ -14,7 +14,7 @@
   }
 
   &[data-size='default'] {
-    font-size: 1.125rem;
+    font-size: var(--alinea-text-xl);
   }
 
   &[data-size='lg'] {
@@ -27,7 +27,7 @@
   }
 
   &[data-weight='medium'] {
-    font-weight: 500;
+    font-weight: var(--alinea-weight-medium);
   }
 
   &[data-weight='bold'] {

@@ -67,6 +67,7 @@ import {
   IcRoundVisibilityOff
 } from '../icons.js'
 import {DeleteDialog} from './DeleteDialog.js'
+import {HeaderLocaleMenu} from './HeaderLocaleMenu.js'
 import css from './EntryHeader.module.css'
 import {
   entryHeaderActions,
@@ -582,6 +583,7 @@ export function EntryHeader({
       </Badge>
       {!access.update && <ReadOnlyBadge />}
       <PageActions className={styles.EntryHeader.actions()}>
+        <HeaderLocaleMenu />
         {menuItems.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger

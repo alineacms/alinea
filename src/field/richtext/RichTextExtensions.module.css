@@ -10,7 +10,7 @@
   min-width: 0;
   /* Keeps the text clear of the settings button shown on hover */
   padding-inline-end: 32px;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-title);
   overflow-wrap: break-word;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
@@ -155,7 +155,7 @@
   color: var(--alinea-fg-muted);
   font-family: var(--alinea-mono-font);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   line-height: 1.2;
   opacity: 0;
   text-overflow: ellipsis;
@@ -202,7 +202,7 @@
 .RichTextExtensions-tableHeader {
   background: var(--alinea-bg-muted);
   text-align: left;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-title);
 }
 
 .RichTextExtensions-highlight {

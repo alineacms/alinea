@@ -2,14 +2,15 @@ import {PageContent} from '#/components.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
-import type {
-  DashboardExplorer,
-  ExplorerReadyPage
+import {
+  type DashboardExplorer,
+  type ExplorerReadyPage,
+  explorerScrollKey
 } from '#/dashboard/atoms/explorer.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useAtomValueRawSync} from 'jotai'
-import type {ReactNode} from 'react'
+import {useEffect, useRef, useState, type ReactNode} from 'react'
 import {CreateEntryButton} from './DashboardLayout.js'
 import {
   ExplorerBatchActions,
@@ -49,6 +50,7 @@ export function Overview({
   const page =
     resolvedPage?.locale === loadedPage.locale ? resolvedPage : loadedPage
   const rootLabel = useAtomValueRaw(page.root.label)
+  const [list, scrolled] = useScrolled(explorerScrollKey(page))
   const config = useAtomValueRaw(configAtom)
   // Files are uploaded, so in a media folder only folders are created
   const creatable = page.overview.types.filter(name => {
@@ -56,8 +58,9 @@ export function Overview({
     return type && !Type.isHidden(type)
   })
   const createsFolders =
-    creatable.length > 0 &&
-    creatable.every(name => config.schema[name] === MediaLibrary)
+    page.isMedia ||
+    (creatable.length > 0 &&
+      creatable.every(name => config.schema[name] === MediaLibrary))
   return (
     <ExplorerItemActions explorer={explorer}>
       <OverviewHeader
@@ -83,8 +86,12 @@ export function Overview({
           explorer={explorer}
           label={page.parent?.title ?? rootLabel}
           page={page}
+          scrolled={scrolled && page.view === 'card'}
         />
-        <div className={styles.Overview.list({cards: page.view === 'card'})}>
+        <div
+          ref={list}
+          className={styles.Overview.list({cards: page.view === 'card'})}
+        >
           <ExplorerList explorer={explorer} overview page={page} />
         </div>
         {explorer.hasRowAction && explorer.selectionMode === 'multiple' && (
@@ -93,4 +100,29 @@ export function Overview({
       </PageContent>
     </ExplorerItemActions>
   )
+}
+
+/**
+ * Whether a list inside the element has scrolled down. Each list, by its
+ * scroll key, starts at the top unless it scrolls when its offset is restored.
+ */
+function useScrolled(key: string) {
+  const ref = useRef<HTMLDivElement>(null)
+  const keyRef = useRef(key)
+  const [scrolled, setScrolled] = useState<string>()
+  useEffect(() => {
+    keyRef.current = key
+  }, [key])
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    // Scroll events do not bubble, capture those of the list's scroller
+    function onScroll(event: Event) {
+      if (event.target instanceof Element)
+        setScrolled(event.target.scrollTop > 0 ? keyRef.current : undefined)
+    }
+    element.addEventListener('scroll', onScroll, {capture: true, passive: true})
+    return () => element.removeEventListener('scroll', onScroll, true)
+  }, [])
+  return [ref, scrolled === key] as const
 }

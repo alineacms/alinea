@@ -47,6 +47,7 @@ interface WorkspaceAvatarProps {
   color: string
   icon?: ComponentType
   label: string
+  size?: 'sm'
 }
 
 interface WorkspaceSelectorMenuProps {
@@ -56,10 +57,10 @@ interface WorkspaceSelectorMenuProps {
   page: Page
 }
 
-function WorkspaceAvatar({color, icon, label}: WorkspaceAvatarProps) {
+function WorkspaceAvatar({color, icon, label, size}: WorkspaceAvatarProps) {
   return (
     <span
-      className={styles.WorkspaceMenu.avatar()}
+      className={styles.WorkspaceMenu.avatar({sm: size === 'sm'})}
       style={{color: logoShapeForeground(color)}}
     >
       <svg
@@ -313,6 +314,12 @@ function WorkspaceItem({workspace}: WorkspaceItemProps) {
       textValue={data.label}
       className={styles.WorkspaceMenu.option()}
     >
+      <WorkspaceAvatar
+        color={data.color}
+        icon={data.icon}
+        label={data.label}
+        size="sm"
+      />
       {data.label}
     </DropdownMenuRadioItem>
   )

@@ -1,4 +1,3 @@
-import {Surface, SurfaceContent} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
 import {HiddenField} from '#/field/hidden.js'
@@ -8,6 +7,7 @@ import {memo} from 'react'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
 import {useEditor, useFieldOptions, useFieldView} from '../hooks.js'
 import css from './EntryFields.module.css'
+import {InlineErrorBoundary} from './InlineErrorBoundary.js'
 
 const styles = styler(css)
 
@@ -18,6 +18,7 @@ export function FieldsEditor() {
   ))
 }
 
+/** The fields of an entry, where fields outside of tabs get a container */
 export function EntryFields() {
   const editor = useEditor()
   return editor.sections.map((section, index) => (
@@ -40,11 +41,7 @@ const EntryFormSection = memo(function EntryFormSection({
 }: FormSectionProps) {
   const fields = <FormSection section={section} />
   if (Section.view(section.section)) return fields
-  return (
-    <Surface>
-      <SurfaceContent>{fields}</SurfaceContent>
-    </Surface>
-  )
+  return <div className={styles.EntryFields()}>{fields}</div>
 })
 
 export interface EditFieldsProps {
@@ -99,7 +96,9 @@ export const EditField = memo(function EditField({field}: EditFieldProps) {
       className={styles.EditField.slot()}
       style={{flexBasis: fieldWidth(options.width)}}
     >
-      <View field={field} />
+      <InlineErrorBoundary title={`Could not show ${Field.label(field)}`}>
+        <View field={field} />
+      </InlineErrorBoundary>
     </div>
   )
 })

@@ -62,7 +62,7 @@
   }
 
   &[data-status='untranslated'] {
-    border: 1.5px dashed var(--alinea-fg-subtle);
+    background: var(--alinea-fg-subtle);
   }
 }
 

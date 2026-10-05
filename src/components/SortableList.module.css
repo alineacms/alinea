@@ -1,10 +1,20 @@
 /* The attribute outweighs the surface. The edge is drawn inside the list,
-   over the first row's border, so every row is as tall as a text field. */
+   over the first row's border, so every row is as tall as a text field. It
+   sits on a layer above the rows so their backgrounds never cover it. */
 .SortableList[data-slot='sortable-list'] {
+  position: relative;
   border-radius: var(--alinea-radius-container);
   box-shadow: none;
-  outline: 1px solid var(--alinea-border);
-  outline-offset: -1px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border: 1px solid var(--alinea-border);
+    border-radius: inherit;
+    pointer-events: none;
+  }
 }
 
 .SortableListRoot {
@@ -77,7 +87,7 @@
   max-width: calc(100% - 20px);
   height: 3px;
   background: var(--alinea-primary);
-  border-radius: 2px;
+  border-radius: 999px;
   transform: translate(-50%, -50%);
 }
 
@@ -178,10 +188,26 @@
   font-weight: inherit;
 }
 
-/* With a "…" only that part looks like an icon button, the label stays calm.
-   Outranks the hover of the ghost button. */
-.SortableListItemTrigger[data-slot][data-variant]:has(.SortableListItemTrigger-more):hover {
+/* Hovering the title or its "…" colors the whole row, the trigger itself
+   stays transparent. Outranks the hover of the ghost button. */
+.SortableListItemTrigger[data-slot][data-variant]:hover {
   background: transparent;
+}
+
+@media (hover: hover) {
+  .SortableListItemHeader:has(.SortableListItemTrigger:hover) {
+    background: var(--alinea-muted);
+  }
+}
+
+/* Keyboard focus rings the whole row rather than the title inside it */
+.SortableListItemTrigger[data-slot]:focus-visible {
+  outline: none;
+}
+
+.SortableListItemHeader:has(.SortableListItemTrigger:focus-visible) {
+  border-radius: var(--alinea-radius-container);
+  box-shadow: inset 0 0 0 2px var(--alinea-ring);
 }
 
 .SortableListItemTrigger-more {
@@ -192,22 +218,12 @@
   width: var(--alinea-control-sm);
   height: var(--alinea-control-sm);
   margin-left: auto;
-  border-radius: var(--alinea-radius-sm);
   color: var(--alinea-fg-muted);
   font-size: 14px;
-  transition: var(--alinea-transition);
-  transition-property: background-color, color;
+  transition: color var(--alinea-transition);
 
-  @media (hover: hover) {
-    .SortableListItemTrigger:hover & {
-      background: var(--alinea-muted);
-      color: var(--alinea-fg);
-    }
-  }
-
-  /* The open item is highlighted with the muted grey already */
+  .SortableListItemTrigger:hover &,
   .SortableListItemTrigger[aria-expanded='true'] & {
-    background: var(--alinea-selected);
     color: var(--alinea-fg);
   }
 }
@@ -279,7 +295,7 @@
 
   /* Actions read like menu items */
   [data-slot='button'] {
-    font-weight: 500;
+    font-weight: var(--alinea-weight-medium);
   }
 }
 

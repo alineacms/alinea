@@ -6,6 +6,7 @@
   min-width: 0;
 }
 
+/* A logo, not a control, so its sizes are its own */
 .WorkspaceMenu-avatar {
   position: relative;
   width: 32px;
@@ -14,6 +15,11 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+
+  &.is-sm {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 /* The same rounded square as the favicon, rather than a border radius */
@@ -27,13 +33,21 @@
 .WorkspaceMenu-avatar-icon {
   position: relative;
   font-size: 18px;
+
+  .WorkspaceMenu-avatar.is-sm & {
+    font-size: 12px;
+  }
 }
 
 .WorkspaceMenu-avatar-initial {
   position: relative;
-  font-size: 13px;
+  font-size: var(--alinea-text-md);
   font-weight: var(--alinea-weight-title);
   line-height: 1;
+
+  .WorkspaceMenu-avatar.is-sm & {
+    font-size: 10px;
+  }
 }
 
 .WorkspaceMenu-avatarTrigger,
@@ -45,7 +59,7 @@
   align-items: center;
   padding: 0;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--alinea-radius-container);
 }
 
 .WorkspaceMenu-trigger {
@@ -65,8 +79,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-medium);
   /* The button's line-height of 1 clips descenders under overflow: hidden */
   line-height: 1.25;
 }

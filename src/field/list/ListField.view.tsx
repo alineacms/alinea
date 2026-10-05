@@ -325,7 +325,7 @@ function ListFieldCreateActions({
         <Button
           key={item.id}
           onClick={() => onSelect(item)}
-          icon={getType(item.type).icon}
+          icon={getType(item.type).icon ?? IcRoundAdd}
           variant="outline"
         >
           {item.label}

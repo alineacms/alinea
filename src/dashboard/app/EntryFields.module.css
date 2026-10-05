@@ -1,3 +1,10 @@
+.EntryFields {
+  padding: 16px 16px 20px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius-container);
+  background: var(--alinea-bg);
+}
+
 .EditFields {
   --alinea-field-gap: 16px;
 

@@ -1,0 +1,41 @@
+.InlineError {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius-container);
+  background: var(--alinea-bg);
+  font-size: var(--alinea-text-md);
+  line-height: 1.4;
+}
+
+.InlineError-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--alinea-danger-subtle-fg);
+  font-size: 16px;
+}
+
+.InlineError-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.InlineError-title {
+  color: var(--alinea-fg);
+  font-weight: var(--alinea-weight-medium);
+}
+
+.InlineError-message {
+  overflow-wrap: anywhere;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-sm);
+}
+
+.PickerError {
+  padding: 0 24px 24px;
+}

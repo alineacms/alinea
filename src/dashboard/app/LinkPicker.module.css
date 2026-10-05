@@ -10,8 +10,17 @@
   max-height: min(320px, calc(var(--visual-viewport-height, 100dvh) - 32px));
   padding: 0;
   overflow: hidden;
-  border-radius: var(--alinea-radius);
+  border-radius: var(--alinea-radius-lg);
   background: var(--alinea-bg);
+}
+
+/* The error only takes the room it needs */
+.LinkPicker-popover:has(.LinkPicker-error) {
+  height: auto;
+}
+
+.LinkPicker-error {
+  padding: 12px;
 }
 
 .LinkPickerCompact {

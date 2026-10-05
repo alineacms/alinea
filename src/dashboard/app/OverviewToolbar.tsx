@@ -17,17 +17,24 @@ export interface OverviewToolbarProps {
   page: ExplorerReadyPage
   /** The name of the listed location, used in the search placeholder */
   label: string
+  /** The list has scrolled under the toolbar */
+  scrolled?: boolean
 }
 
 /** Search, filters, order and view of an overview */
-export function OverviewToolbar({explorer, page, label}: OverviewToolbarProps) {
+export function OverviewToolbar({
+  explorer,
+  page,
+  label,
+  scrolled = false
+}: OverviewToolbarProps) {
   const setView = useSetAtom(explorer.view)
   const setSort = useSetAtom(explorer.requestedSort)
   const toggleFilter = useSetAtom(explorer.toggleFilter)
   const clearFilters = useSetAtom(explorer.clearFilters)
   const [, startTransition] = useTransition()
   return (
-    <div className={styles.OverviewToolbar()}>
+    <div className={styles.OverviewToolbar({scrolled})}>
       <div className={styles.OverviewToolbar.search()}>
         <ExplorerSearch
           explorer={explorer}

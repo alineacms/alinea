@@ -1,17 +1,6 @@
 import type {CSSProperties} from 'react'
-import {List} from '#/components.js'
-import {
-  IcOutlineArchive,
-  IcOutlineDrafts,
-  IcRoundEdit,
-  IcRoundVisibility,
-  IcRoundVisibilityOff
-} from '../icons.js'
-import {Badge} from '#/components.js'
-import {
-  EntrySidebarVersionRow,
-  type EntrySidebarVersionStatus
-} from './EntrySidebar.js'
+import {Badge, type ContentStatus} from '#/components.js'
+import {EntrySidebarVersionRow} from './EntrySidebar.js'
 
 const storyStyle: CSSProperties = {
   width: 322,
@@ -35,37 +24,14 @@ const headingStyle: CSSProperties = {
   lineHeight: 1
 }
 
-const rows = [
-  {
-    status: 'none',
-    icon: IcOutlineDrafts,
-    title: 'No status'
-  },
-  {
-    status: 'published',
-    icon: IcRoundVisibility,
-    title: 'Published'
-  },
-  {
-    status: 'draft',
-    icon: IcRoundEdit,
-    title: 'Draft'
-  },
-  {
-    status: 'unpublished',
-    icon: IcRoundVisibilityOff,
-    title: 'Unpublished'
-  },
-  {
-    status: 'archived',
-    icon: IcOutlineArchive,
-    title: 'Archived'
-  }
-] satisfies Array<{
-  status: EntrySidebarVersionStatus
-  icon: typeof IcRoundVisibility
-  title: string
-}>
+const rows: Array<{status: ContentStatus; title: string}> = [
+  {status: 'published', title: 'Published'},
+  {status: 'draft', title: 'Draft'},
+  {status: 'unpublished', title: 'Unpublished'},
+  {status: 'archived', title: 'Archived'}
+]
+
+const listStyle: CSSProperties = {margin: 0, padding: 0, listStyle: 'none'}
 
 interface VersionRowsProps {
   selected?: boolean
@@ -74,22 +40,18 @@ interface VersionRowsProps {
 
 function VersionRows({selected, showEditing}: VersionRowsProps) {
   return (
-    <List>
+    <ul style={listStyle}>
       {rows.map(row => (
         <EntrySidebarVersionRow
           key={row.status}
-          selected={selected}
-          status={row.status}
-          icon={row.icon}
-          title={row.title}
-          meta="Stijn Codeurs - Today at 10:40"
+          selected={selected && row.status === 'draft'}
+          title={<Badge status={row.status}>{row.title}</Badge>}
+          meta="Stijn Codeurs · 2 hours ago"
         >
-          {showEditing && row.status === 'draft' && (
-            <Badge size="sm">Editing</Badge>
-          )}
+          {showEditing && row.status === 'draft' && 'Editing'}
         </EntrySidebarVersionRow>
       ))}
-    </List>
+    </ul>
   )
 }
 
@@ -105,7 +67,7 @@ export function VersionRowStates() {
         <VersionRows selected />
       </section>
       <section style={sectionStyle}>
-        <h2 style={headingStyle}>With editing badge</h2>
+        <h2 style={headingStyle}>Editing</h2>
         <VersionRows selected showEditing />
       </section>
     </div>

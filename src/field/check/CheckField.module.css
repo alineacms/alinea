@@ -1,8 +1,8 @@
-.checkline {
-  display: flex;
-  gap: 4px;
-}
-.checkline-required {
+.CheckField-required {
   color: var(--alinea-danger-subtle-fg);
-  font-size: var(--alinea-font-size-base);
+}
+
+.CheckField-shared {
+  margin-inline-start: 6px;
+  vertical-align: top;
 }

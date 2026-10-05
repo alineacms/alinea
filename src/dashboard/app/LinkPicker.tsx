@@ -29,6 +29,10 @@ import {
   ExplorerPickerFooter,
   usePickerExplorer
 } from './ExplorerPickerContent.js'
+import {
+  InlineErrorBoundary,
+  PickerErrorBoundary
+} from './InlineErrorBoundary.js'
 import css from './LinkPicker.module.css'
 import {SearchBar} from './SearchBar.js'
 import {
@@ -51,27 +55,41 @@ export function LinkPicker({anchorRef, ...options}: LinkPickerProps) {
   const [expanded, setExpanded] = useState(false)
   if (!dialog.open && !expanded) return null
   return (
-    <Suspense
-      fallback={
-        <LinkPickerLoading expanded={expanded} onExpandedChange={setExpanded} />
-      }
+    <InlineErrorBoundary
+      title="Could not open the picker"
+      wrap={error => (
+        <LinkPickerPopover anchorRef={anchorRef}>
+          <div className={styles.LinkPicker.error()}>{error}</div>
+        </LinkPickerPopover>
+      )}
     >
-      <LinkPickerReady
-        anchorRef={anchorRef}
-        expanded={expanded}
-        options={options}
-        onExpandedChange={setExpanded}
-      />
-    </Suspense>
+      <Suspense
+        fallback={
+          <LinkPickerLoading
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+          />
+        }
+      >
+        <LinkPickerReady
+          anchorRef={anchorRef}
+          expanded={expanded}
+          options={options}
+          onExpandedChange={setExpanded}
+        />
+      </Suspense>
+    </InlineErrorBoundary>
   )
 }
 
 export function LinkPickerModal(options: LinkPickerOptions) {
   return (
     <DashboardModal size="explorer" aria-label={expandedPickerLabel}>
-      <Suspense fallback={<LinkPickerModalLoading />}>
-        <LinkPickerModalContent options={options} />
-      </Suspense>
+      <PickerErrorBoundary>
+        <Suspense fallback={<LinkPickerModalLoading />}>
+          <LinkPickerModalContent options={options} />
+        </Suspense>
+      </PickerErrorBoundary>
     </DashboardModal>
   )
 }

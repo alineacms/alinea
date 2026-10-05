@@ -58,7 +58,7 @@
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
-  height: 56px;
+  height: var(--alinea-footer-height);
   padding: 0 16px;
   border-top: 1px solid var(--alinea-border);
 }

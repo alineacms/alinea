@@ -41,7 +41,7 @@
 
 .BreadcrumbPage {
   color: var(--alinea-fg-strong);
-  font-weight: 500;
+  font-weight: var(--alinea-weight-medium);
 }
 
 .BreadcrumbSeparator {

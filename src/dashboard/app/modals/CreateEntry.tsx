@@ -12,6 +12,7 @@ import {
   useDialog
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
+import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Reference} from '#/core/Reference.js'
 import {Schema} from '#/core/Schema.js'
 import {Type, type as createType} from '#/core/Type.js'
@@ -113,7 +114,12 @@ function CreateEntryLoading() {
   return <DashboardModalDialog variant="explorer" isLoading />
 }
 
-function CreateEntryForm() {
+interface CreateEntryProps {
+  /** Opened to create a folder */
+  folder?: boolean
+}
+
+function CreateEntryForm({folder = false}: CreateEntryProps) {
   const modal = useDialog()
   const {page, root} = useDashboardContext()
   const createEntry = useSetAtom(createEntryAtom)
@@ -231,9 +237,14 @@ function CreateEntryForm() {
   }
 
   const canCreate = Boolean(selectedType && title.trim())
+  const createsFolder =
+    folder ||
+    (typeOptions.length > 0 &&
+      typeOptions.every(option => config[option.id] === MediaLibrary))
+  const label = createsFolder ? 'Create folder' : 'Create new'
 
   return (
-    <DashboardModalDialog variant="explorer" label="Create new">
+    <DashboardModalDialog variant="explorer" label={label}>
       <form onSubmit={onSubmit} id={formId}>
         <DashboardModalContent>
           <TextField
@@ -304,7 +315,12 @@ function CreateEntryForm() {
       </form>
 
       <DashboardModalFooter>
-        <Button type="button" variant="outline" onClick={modal.close}>
+        <Button
+          type="button"
+          variant="outline"
+          color="neutral"
+          onClick={modal.close}
+        >
           Cancel
         </Button>
         <Button
@@ -314,17 +330,17 @@ function CreateEntryForm() {
           disabled={!canCreate}
           loading={isCreating}
         >
-          Create entry
+          {createsFolder ? 'Create folder' : 'Create entry'}
         </Button>
       </DashboardModalFooter>
     </DashboardModalDialog>
   )
 }
 
-export function CreateEntry() {
+export function CreateEntry({folder}: CreateEntryProps) {
   return (
     <Suspense fallback={<CreateEntryLoading />}>
-      <CreateEntryForm />
+      <CreateEntryForm folder={folder} />
     </Suspense>
   )
 }

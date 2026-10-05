@@ -51,6 +51,12 @@
   max-height: 100%;
   margin: auto;
   object-fit: contain;
+  /* Transparent images need a light square in dark mode, eg. a black icon */
+  background: repeating-conic-gradient(
+      light-dark(var(--alinea-muted), var(--alinea-gray-700)) 0 25%,
+      light-dark(var(--alinea-bg), var(--alinea-gray-600)) 0 50%
+    )
+    0 0 / 1rem 1rem;
   opacity: 0;
   pointer-events: none;
   transition: opacity 180ms ease-out;

@@ -32,7 +32,7 @@
     border: 1px solid var(--alinea-border);
     border-radius: var(--alinea-radius);
     box-shadow: var(--alinea-shadow-raised);
-    font-size: 13px;
+    font-size: var(--alinea-text-md);
     font-weight: var(--alinea-weight-medium);
   }
 }

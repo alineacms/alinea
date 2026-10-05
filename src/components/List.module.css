@@ -242,18 +242,11 @@
 }
 
 .ListLabel .ListLabel-toggle:disabled .ListLabel-fold {
-  opacity: 0.45;
+  opacity: 0.5;
 }
 
 .ListLabel .ListLabel-toggle:hover,
 .ListLabel .ListLabel-toggle:active,
 .ListLabel .ListLabel-toggle[data-active] {
   background: transparent;
-}
-
-.ListError {
-  color: var(--alinea-danger-subtle-fg);
-  font-size: var(--alinea-text-sm);
-  line-height: 18px;
-  padding-top: 6px;
 }

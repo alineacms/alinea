@@ -1,6 +1,7 @@
-import {Button, Text} from '#/components.js'
+import {Button, Icon, Text} from '#/components.js'
 import type {FieldValidationError} from '#/core/Validation.js'
 import styler from '@alinea/styler'
+import {IcBaselineErrorOutline} from '../icons.js'
 import css from './EntryValidationModal.module.css'
 import {
   DashboardModal,
@@ -65,8 +66,18 @@ export function EntryValidationModal({
                     key={index}
                     className={styles.EntryValidationModal.item()}
                   >
-                    <Text weight="medium">{error.labels.join(' › ')}</Text>
-                    <Text color="destructive">{error.message}</Text>
+                    <Icon
+                      icon={IcBaselineErrorOutline}
+                      className={styles.EntryValidationModal.icon()}
+                    />
+                    <span className={styles.EntryValidationModal.text()}>
+                      <span className={styles.EntryValidationModal.label()}>
+                        {error.labels.join(' › ')}
+                      </span>
+                      <span className={styles.EntryValidationModal.error()}>
+                        {error.message}
+                      </span>
+                    </span>
                   </li>
                 ))}
               </ul>

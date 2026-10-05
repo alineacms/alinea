@@ -1,4 +1,4 @@
-import { Config, Field } from 'alinea'
+import {Config, Field} from 'alinea'
 
 export const InlineFields = Config.document('Inline fields', {
   fields: {

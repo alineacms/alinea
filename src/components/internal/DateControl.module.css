@@ -31,7 +31,7 @@
 
   &[aria-disabled='true'] {
     background-color: var(--alinea-bg-muted);
-    opacity: 0.45;
+    opacity: 0.5;
     pointer-events: none;
   }
 }
@@ -46,7 +46,9 @@
   padding-inline: 1px;
   transition: var(--alinea-transition);
 
-  &.is-placeholder {
+  &.is-placeholder,
+  .DateControl-input:not(:has(.DateControl-segment:not(.is-literal, .is-placeholder)))
+    &.is-literal {
     color: var(--alinea-fg-disabled);
   }
 

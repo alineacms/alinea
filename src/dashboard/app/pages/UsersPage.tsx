@@ -275,7 +275,7 @@ function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
       aria-label="Users"
       items={users}
       columns={userColumns}
-      rowHeight={56}
+      rowHeight={40}
       className={styles.UsersPage.table()}
       dependencies={[roleLabel, onEdit, onDeactivate]}
       renderEmptyState={() => <Text color="muted">No users found</Text>}
@@ -314,13 +314,11 @@ function UserIdentity({user}: UserIdentityProps) {
   return (
     <span className={styles.UsersPage.identity()}>
       {user.name && (
-        <Text weight="semibold" truncate>
-          {user.name}
-        </Text>
+        <span className={styles.UsersPage.identity.person()}>{user.name}</span>
       )}
-      <Text color="muted" truncate>
+      <span className={styles.UsersPage.identity.email()}>
         {user.email || user.sub}
-      </Text>
+      </span>
     </span>
   )
 }
@@ -422,7 +420,7 @@ function DeactivateUserModal({user}: DeactivateUserModalProps) {
         <Button
           type="button"
           variant="outline"
-          color="secondary"
+          color="neutral"
           onClick={modal.close}
         >
           Cancel
@@ -541,7 +539,7 @@ function UserModal({user}: UserModalProps) {
         <Button
           type="button"
           variant="outline"
-          color="secondary"
+          color="neutral"
           onClick={modal.close}
         >
           Cancel

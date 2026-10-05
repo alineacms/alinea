@@ -8,6 +8,7 @@ import {policyAtom} from '../atoms/user.js'
 import {useDashboardContext} from '../hooks.js'
 import {ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
+import {PickerErrorBoundary} from './InlineErrorBoundary.js'
 import {
   ExplorerPickerContent,
   ExplorerPickerFooter,
@@ -27,11 +28,13 @@ export function ImagePicker(options: ImagePickerOptions) {
   const label = String(options.label ?? 'Pick media')
   return (
     <DashboardModal size="explorer" aria-label={label}>
-      <Suspense
-        fallback={<DashboardModalDialog variant="explorer" isLoading />}
-      >
-        <ImagePickerModalContent options={options} />
-      </Suspense>
+      <PickerErrorBoundary>
+        <Suspense
+          fallback={<DashboardModalDialog variant="explorer" isLoading />}
+        >
+          <ImagePickerModalContent options={options} />
+        </Suspense>
+      </PickerErrorBoundary>
     </DashboardModal>
   )
 }

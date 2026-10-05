@@ -118,8 +118,8 @@ export function CreateEntryButton({
       >
         {label}
       </DialogTrigger>
-      <DashboardModal aria-label="Create new">
-        <CreateEntry />
+      <DashboardModal aria-label={label}>
+        <CreateEntry folder={label === 'Create folder'} />
       </DashboardModal>
     </Dialog>
   )

@@ -111,18 +111,18 @@ export function NumberField({
               className={styles.NumberFieldSteppers()}
             >
               <Button
-                slot="increment"
-                data-slot="number-field-increment"
-                className={styles.NumberFieldStepper()}
-              >
-                <IcRoundKeyboardArrowUp />
-              </Button>
-              <Button
                 slot="decrement"
                 data-slot="number-field-decrement"
                 className={styles.NumberFieldStepper()}
               >
                 <IcRoundKeyboardArrowDown />
+              </Button>
+              <Button
+                slot="increment"
+                data-slot="number-field-increment"
+                className={styles.NumberFieldStepper()}
+              >
+                <IcRoundKeyboardArrowUp />
               </Button>
             </div>
           )}

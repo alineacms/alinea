@@ -258,3 +258,20 @@
     margin-bottom: 8px;
   }
 }
+
+/* The workspace name gets the first line, its roots wrap to the next */
+@media (max-width: 480px) {
+  .SplashPage-card-header {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .SplashPage-card-header-title {
+    flex: 1 1 100%;
+  }
+
+  .SplashPage-roots {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}

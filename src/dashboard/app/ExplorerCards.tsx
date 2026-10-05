@@ -22,6 +22,7 @@ import type {
   DashboardExplorer,
   ExplorerReadyPage
 } from '../atoms/explorer.js'
+import {isAtLocation} from '../atoms/explorer.js'
 import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
 import {fileKindVisual} from './FileKind.js'
 import css from './ExplorerCards.module.css'
@@ -38,6 +39,7 @@ interface ExplorerCardItemProps {
   includeWorkspace: boolean
   onPick?: (entry: DashboardEntry) => void
   overview: boolean
+  page: ExplorerReadyPage
   /** Show the root before the parents, eg. for results of several roots */
   withRoot: boolean
 }
@@ -50,6 +52,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   includeWorkspace,
   onPick,
   overview,
+  page,
   withRoot
 }: ExplorerCardItemProps) {
   const {data} = useAtomValueRaw(entry.data)
@@ -83,13 +86,13 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
           image: thumbnail.preview,
           color: thumbnail.averageColor,
           title: label,
-          description: type.label
+          description: type.label === label ? undefined : type.label
         }
       : {
           // Like the tree and table, only entries with children are folders
           icon: icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription),
           title: label,
-          description: type.label
+          description: type.label === label ? undefined : type.label
         }
   const {updatedAt, updatedBy} = auditMetadata(item)
   const card: ContentCardProps = overview
@@ -122,6 +125,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
     >
       {breadcrumbs ? (
         <ExplorerLocatedCard
+          page={page}
           {...card}
           data={data}
           entry={entry}
@@ -139,6 +143,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
 interface ExplorerLocatedCardProps extends ContentCardProps {
   data: DashboardEntryData
   entry: DashboardEntry
+  page: ExplorerReadyPage
   includeWorkspace: boolean
   /** Show the location as one line of names separated by slashes */
   joined: boolean
@@ -151,6 +156,7 @@ function ExplorerLocatedCard({
   entry,
   includeWorkspace,
   joined,
+  page,
   withRoot,
   ...card
 }: ExplorerLocatedCardProps) {
@@ -170,6 +176,7 @@ function ExplorerLocatedCard({
       <ExplorerCardParentLabel key={parent.id} parent={parent} />
     ))
   ]
+  if (isAtLocation(entry, parents, page)) return <ContentCard {...card} />
   if (!joined) return <ContentCard {...card} breadcrumbs={breadcrumbs} />
   const location = breadcrumbs.map((crumb, index) => (
     <span key={index}>
@@ -258,6 +265,7 @@ export function ExplorerCards({
             includeWorkspace={page.searchesEverything}
             onPick={onPick}
             overview={overview}
+            page={page}
             withRoot={withRoot}
           />
         )}

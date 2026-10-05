@@ -1,19 +1,49 @@
 .EntryValidationModal-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   margin: 12px 0 0;
   padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius-container);
+  background: var(--alinea-bg);
   list-style: none;
 }
 
 .EntryValidationModal-item {
   display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+
+  & + & {
+    border-top: 1px solid var(--alinea-border);
+  }
+}
+
+.EntryValidationModal-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--alinea-danger-subtle-fg);
+  font-size: 16px;
+}
+
+.EntryValidationModal-text {
+  display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: var(--alinea-danger-subtle);
+  min-width: 0;
+}
+
+.EntryValidationModal-label {
+  color: var(--alinea-fg);
+  font-size: var(--alinea-text-md);
+  font-weight: var(--alinea-weight-medium);
+}
+
+.EntryValidationModal-error {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-text-sm);
 }
 
 .EntryValidationModal-message {

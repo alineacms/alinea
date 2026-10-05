@@ -34,7 +34,7 @@
 
 .OpenGraphPreview-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-title);
   color: var(--alinea-fg-strong);
   line-height: 1.3;
   overflow: hidden;
@@ -95,7 +95,7 @@
   background: var(--alinea-bg-muted);
   color: var(--alinea-fg-muted);
   line-height: 20px;
-  font-size: 13px;
+  font-size: var(--alinea-text-md);
 }
 
 .MetadataUserFieldView {
@@ -114,7 +114,7 @@
 }
 
 .MetadataUserFieldView-person {
-  font-size: 13px;
+  font-size: var(--alinea-text-md);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -126,6 +126,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--alinea-text-md);
   color: var(--alinea-fg-muted);
 }

@@ -5,7 +5,7 @@ import {Badge} from './Badge.js'
 import {IcBaselineErrorOutline, IcRoundPublic} from '#/dashboard/icons.js'
 import css from './Field.module.css'
 import {Icon} from './Icon.js'
-import type {FieldSharedProps, StyleProps} from './types.js'
+import type {DataProps, FieldSharedProps, StyleProps} from './types.js'
 
 const styles = styler(css)
 
@@ -118,7 +118,7 @@ export function FieldDescription({className, ...props}: FieldDescriptionProps) {
   )
 }
 
-export interface FieldErrorProps extends StyleProps {
+export interface FieldErrorProps extends StyleProps, DataProps {
   children: ReactNode
 }
 

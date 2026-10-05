@@ -19,7 +19,7 @@
   flex: 1;
   margin: 0;
   font-size: var(--alinea-font-size-base);
-  font-weight: 500;
+  font-weight: var(--alinea-weight-medium);
   text-align: center;
 }
 
@@ -50,7 +50,7 @@
   }
 
   &:disabled {
-    opacity: 0.45;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 }
@@ -61,7 +61,7 @@
 
 .Calendar-weekday {
   color: var(--alinea-fg-muted);
-  font-weight: 400;
+  font-weight: var(--alinea-weight-regular);
 }
 
 .Calendar-day {
@@ -113,7 +113,7 @@
 
   &[aria-disabled='true'],
   &.is-unavailable {
-    opacity: 0.45;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 

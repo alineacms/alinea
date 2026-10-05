@@ -21,7 +21,7 @@
 
 .ExplorerList-drag-preview-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   line-height: 1.2;
 }
 

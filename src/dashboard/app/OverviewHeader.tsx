@@ -16,6 +16,7 @@ import type {
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {Fragment, type ReactNode} from 'react'
+import {HeaderLocaleMenu} from './HeaderLocaleMenu.js'
 import css from './OverviewHeader.module.css'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 
@@ -88,6 +89,7 @@ export function OverviewHeader({
         {count === 1 ? '1 entry' : `${count} entries`}
       </span>
       {readOnly && <ReadOnlyBadge />}
+      <HeaderLocaleMenu />
       {actions && <PageActions>{actions}</PageActions>}
     </PageHeader>
   )

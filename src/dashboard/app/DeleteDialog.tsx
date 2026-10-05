@@ -263,7 +263,7 @@ function DeleteDialogContent({
             </Button>
           )}
         <div className={styles.DeleteDialog.actions()}>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="outline" color="neutral" onClick={onClose}>
             Cancel
           </Button>
           <Button

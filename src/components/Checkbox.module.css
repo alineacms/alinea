@@ -11,7 +11,7 @@
 
   &:has(:disabled) {
     pointer-events: none;
-    opacity: 0.45;
+    opacity: 0.5;
   }
 
   &:has([aria-readonly='true']) {
@@ -111,7 +111,7 @@
 
 .Checkbox-label {
   color: inherit;
-  font-weight: 400;
+  font-weight: var(--alinea-weight-regular);
 
   .Checkbox:has([aria-readonly='true']) & {
     color: var(--alinea-fg-muted);

@@ -16,7 +16,7 @@
   color: var(--alinea-fg-muted);
   font: inherit;
   font-size: var(--alinea-font-size-base);
-  font-weight: 500;
+  font-weight: var(--alinea-weight-medium);
   text-align: start;
   appearance: none;
   outline: none;
@@ -35,7 +35,7 @@
   }
 
   &:disabled {
-    opacity: 0.45;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 }

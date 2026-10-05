@@ -36,7 +36,7 @@
   align-items: center;
   gap: 4px;
   box-sizing: border-box;
-  min-height: 40px;
+  min-height: var(--alinea-row-lg);
   padding: 0 8px;
   overflow-y: hidden;
   border-bottom: 1px solid var(--alinea-border);

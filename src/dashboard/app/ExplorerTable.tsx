@@ -24,7 +24,11 @@ import type {
   ExplorerLinkedEntry,
   ExplorerReadyPage
 } from '../atoms/explorer.js'
-import {explorerItemCanDelete, explorerItemCanMove} from '../atoms/explorer.js'
+import {
+  explorerItemCanDelete,
+  explorerItemCanMove,
+  isAtLocation
+} from '../atoms/explorer.js'
 import {titleColumn as overviewTitle} from '../atoms/overview.js'
 import {policyAtom} from '../atoms/user.js'
 import {
@@ -295,7 +299,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
           ) : undefined
         }
         label={
-          breadcrumbs ? (
+          breadcrumbs && !isAtLocation(entry, parents, props.page) ? (
             <ExplorerTableBreadcrumbs
               entries={parents}
               rootLabel={rootLabel}

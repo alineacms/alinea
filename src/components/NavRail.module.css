@@ -74,7 +74,7 @@
   }
 
   &[aria-disabled='true'] {
-    opacity: 0.45;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 }
@@ -98,7 +98,7 @@
   background: var(--alinea-primary);
   color: var(--alinea-primary-fg);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   line-height: 1;
 
   &[data-dot] {

@@ -70,7 +70,10 @@ export function DateControlInput({
         <DateSegment
           data-slot={`${dataSlot}-segment`}
           className={state =>
-            styles.DateControl.segment({placeholder: state.isPlaceholder})
+            styles.DateControl.segment({
+              placeholder: state.isPlaceholder,
+              literal: segment.type === 'literal'
+            })
           }
           segment={segment}
         />

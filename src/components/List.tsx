@@ -1,7 +1,12 @@
 import styler from '@alinea/styler'
 import type {ComponentPropsWithoutRef, HTMLAttributes, ReactNode} from 'react'
 import {Button, type ButtonProps} from './Button.js'
-import {FieldDescription, FieldSharedBadge} from './Field.js'
+import {
+  FieldDescription,
+  FieldError,
+  type FieldErrorProps,
+  FieldSharedBadge
+} from './Field.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import css from './List.module.css'
@@ -279,14 +284,8 @@ export function ListLabel({
   )
 }
 
-export interface ListErrorProps extends ComponentPropsWithoutRef<'div'> {}
+export interface ListErrorProps extends FieldErrorProps {}
 
-export function ListError({className, ...props}: ListErrorProps) {
-  return (
-    <div
-      data-slot="list-error"
-      {...props}
-      className={styles.ListError(styler.merge({className}))}
-    />
-  )
+export function ListError(props: ListErrorProps) {
+  return <FieldError data-slot="list-error" {...props} />
 }

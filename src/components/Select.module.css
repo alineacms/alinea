@@ -38,7 +38,7 @@
 
   &:has(.SelectTrigger-button:disabled) {
     pointer-events: none;
-    opacity: 0.45;
+    opacity: 0.5;
   }
 }
 
@@ -156,8 +156,8 @@
 .SelectGroup-label {
   padding: 4px 6px;
   color: var(--alinea-fg-muted);
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: var(--alinea-text-sm);
+  font-weight: var(--alinea-weight-medium);
 }
 
 .SelectSeparator {

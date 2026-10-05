@@ -3,13 +3,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-  Icon,
   List,
   ListEmpty,
-  ListItem,
-  ListItemDescription,
-  ListItemTitle,
-  ListItemVisual,
   Sidebar,
   SidebarContent,
   SidebarHeader,
@@ -19,7 +14,8 @@ import {
   TabsList,
   TabsTrigger,
   Text,
-  Timestamp
+  Timestamp,
+  type ContentStatus
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
@@ -44,15 +40,8 @@ import {
   useAtomValueRawSync,
   useSetAtom
 } from 'jotai'
-import {type ComponentType, type ReactNode} from 'react'
-import {
-  IcOutlineDrafts,
-  IcRoundArchive,
-  IcRoundEdit,
-  IcRoundHistory,
-  IcRoundVisibility,
-  IcRoundVisibilityOff
-} from '../icons.js'
+import type {ReactNode} from 'react'
+import {IcRoundHistory} from '../icons.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
@@ -208,7 +197,10 @@ function EntrySidebarHistory({
             Current versions
           </h2>
         </Text>
-        <List aria-label="Current versions">
+        <ul
+          aria-label="Current versions"
+          className={styles.EntrySidebar.versions()}
+        >
           {statuses.map(status => (
             <EntrySidebarStatusItem
               entry={entry}
@@ -217,7 +209,7 @@ function EntrySidebarHistory({
               status={status}
             />
           ))}
-        </List>
+        </ul>
       </section>
       <section className={styles.EntrySidebar.section()}>
         <Collapsible
@@ -263,7 +255,10 @@ function EntrySidebarPreviousVersions({
       </List>
     )
   return (
-    <List aria-label="Previous versions">
+    <ul
+      aria-label="Previous versions"
+      className={styles.EntrySidebar.versions()}
+    >
       {history.map(revision => (
         <EntrySidebarRevisionItem
           key={`${revision.file}:${revision.ref}`}
@@ -271,7 +266,7 @@ function EntrySidebarPreviousVersions({
           revision={revision}
         />
       ))}
-    </List>
+    </ul>
   )
 }
 
@@ -309,13 +304,11 @@ function EntrySidebarStatusItem({
   return (
     <EntrySidebarVersionRow
       selected={selected}
-      status={rowStatus}
-      icon={getVersionStatusIcon(rowStatus)}
-      title={formatStatus(status)}
+      title={<Badge status={rowStatus}>{formatStatus(status)}</Badge>}
       meta={meta}
       onClick={() => setSelectedVersion({type: 'status', status})}
     >
-      {isEditing && <Badge size="sm">Editing</Badge>}
+      {isEditing && 'Editing'}
     </EntrySidebarVersionRow>
   )
 }
@@ -336,12 +329,9 @@ function EntrySidebarRevisionItem({
     selectedVersion?.type === 'history' &&
     selectedVersion.ref === revision.ref &&
     selectedVersion.file === revision.file
-  const revisionKind = getRevisionKind(revision)
   return (
     <EntrySidebarVersionRow
       selected={selected}
-      status={revisionKind.status}
-      icon={revisionKind.icon}
       title={<Timestamp date={revision.createdAt} />}
       meta={revision.user?.name}
       onClick={() =>
@@ -355,86 +345,49 @@ function EntrySidebarRevisionItem({
   )
 }
 
-export type EntrySidebarVersionStatus = EntryStatus | 'unpublished' | 'none'
-
 export interface EntrySidebarVersionRowProps {
   selected?: boolean
-  status?: EntrySidebarVersionStatus
-  icon: ComponentType
   title: ReactNode
-  meta: ReactNode
+  meta?: ReactNode
   children?: ReactNode
   onClick?: () => void
 }
 
 export function EntrySidebarVersionRow({
   selected = false,
-  status = 'none',
-  icon,
   title,
   meta,
   children,
   onClick
 }: EntrySidebarVersionRowProps) {
   return (
-    <ListItem
-      data-status={status}
-      leading={
-        <ListItemVisual>
-          <Icon icon={icon} />
-        </ListItemVisual>
-      }
-      onClick={onClick}
-      selected={selected}
-      trailing={children}
-    >
-      <ListItemTitle>{title}</ListItemTitle>
-      {meta && <ListItemDescription>{meta}</ListItemDescription>}
-    </ListItem>
+    <li className={styles.EntrySidebarVersionRow()}>
+      <button
+        type="button"
+        aria-pressed={selected}
+        className={styles.EntrySidebarVersionRow.button()}
+        onClick={onClick}
+      >
+        <span className={styles.EntrySidebarVersionRow.title()}>{title}</span>
+        {meta && (
+          <span className={styles.EntrySidebarVersionRow.meta()}>{meta}</span>
+        )}
+        {children && (
+          <span className={styles.EntrySidebarVersionRow.trailing()}>
+            {children}
+          </span>
+        )}
+      </button>
+    </li>
   )
-}
-
-interface EntrySidebarRevisionKind {
-  icon: ComponentType
-  status: EntrySidebarVersionStatus
 }
 
 function getStatusItemVersionStatus(
   status: EntryStatus,
   main?: boolean
-): EntrySidebarVersionStatus {
+): ContentStatus {
   if (status === 'draft' && main === true) return 'unpublished'
   return status
-}
-
-function getVersionStatusIcon(status: EntrySidebarVersionStatus) {
-  switch (status) {
-    case 'published':
-      return IcRoundVisibility
-    case 'unpublished':
-      return IcRoundVisibilityOff
-    case 'archived':
-      return IcRoundArchive
-    default:
-      return IcRoundEdit
-  }
-}
-
-function getRevisionKind(revision: Revision): EntrySidebarRevisionKind {
-  const description = revision.description?.toLowerCase() ?? ''
-  if (description.includes('unpublish')) {
-    return {icon: getVersionStatusIcon('unpublished'), status: 'unpublished'}
-  }
-  if (description.includes('archive')) {
-    return {icon: getVersionStatusIcon('archived'), status: 'archived'}
-  }
-  if (description.includes('draft')) {
-    return {icon: getVersionStatusIcon('draft'), status: 'draft'}
-  }
-  if (description.includes('publish')) {
-    return {icon: getVersionStatusIcon('published'), status: 'published'}
-  }
-  return {icon: IcOutlineDrafts, status: 'none'}
 }
 
 function formatStatus(status: EntryStatus) {

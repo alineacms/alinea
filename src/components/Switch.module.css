@@ -10,7 +10,7 @@
 
   &:has(:disabled) {
     pointer-events: none;
-    opacity: 0.45;
+    opacity: 0.5;
   }
 
   &:has([aria-readonly='true']) {

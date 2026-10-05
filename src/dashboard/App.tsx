@@ -20,7 +20,7 @@ import {
   type ReactNode
 } from 'react'
 import css from './App.module.css'
-import {AccessDenied} from './app/AccessDenied.js'
+import {AccessDenied, AccessDeniedPage} from './app/AccessDenied.js'
 import {AuthView} from './app/AuthView.js'
 import {DashboardLayout} from './app/DashboardLayout.js'
 import {DashboardMeta} from './app/DashboardMeta.js'
@@ -83,10 +83,32 @@ const authenticatedAtom = atom(async get => {
 
   if (page.type === 'users') {
     if (!canManageMembers) {
+      const title = meta('No user management access')
+      if (!workspace || !workspaceData || !root)
+        return (
+          <>
+            {title}
+            <AccessDeniedPage canManageMembers={false} scope="users" />
+          </>
+        )
+      const rootData = rootAtoms(workspace, root)
+      const tree = await get(rootData.tree(page.locale).ready)
       return (
         <>
-          {meta('No user management access')}
-          <AccessDenied canManageMembers={false} scope="users" />
+          {title}
+          <DashboardLayout
+            canManageMembers={false}
+            page={{...page, type: 'entry'}}
+            root={rootData}
+            tree={tree}
+            workspace={{...workspaceData, name: workspace}}
+          >
+            <AccessDenied
+              canManageMembers={false}
+              scope="users"
+              back={{workspace, root}}
+            />
+          </DashboardLayout>
         </>
       )
     }
@@ -104,7 +126,10 @@ const authenticatedAtom = atom(async get => {
       return (
         <>
           {meta('No workspace access')}
-          <AccessDenied canManageMembers={canManageMembers} scope="workspace" />
+          <AccessDeniedPage
+            canManageMembers={canManageMembers}
+            scope="workspace"
+          />
         </>
       )
     }
@@ -120,7 +145,10 @@ const authenticatedAtom = atom(async get => {
     return (
       <>
         {meta('No workspace access')}
-        <AccessDenied canManageMembers={canManageMembers} scope="workspace" />
+        <AccessDeniedPage
+          canManageMembers={canManageMembers}
+          scope="workspace"
+        />
       </>
     )
   }
@@ -129,7 +157,7 @@ const authenticatedAtom = atom(async get => {
     return (
       <>
         {meta('No root access')}
-        <AccessDenied canManageMembers={canManageMembers} scope="root" />
+        <AccessDeniedPage canManageMembers={canManageMembers} scope="root" />
       </>
     )
   }

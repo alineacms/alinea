@@ -12,7 +12,7 @@
 
   &[aria-selected='true'] {
     color: var(--alinea-selected-fg);
-    font-weight: 500;
+    font-weight: var(--alinea-weight-medium);
   }
 
   &.is-highlighted {
@@ -28,7 +28,7 @@
 
   &[aria-disabled='true'] {
     pointer-events: none;
-    opacity: 0.45;
+    opacity: 0.5;
   }
 }
 

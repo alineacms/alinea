@@ -164,7 +164,9 @@ function MoveDialogContent({
                   Move to root
                 </Button>
               )}
-              <Button onClick={onClose}>Cancel</Button>
+              <Button variant="outline" color="neutral" onClick={onClose}>
+                Cancel
+              </Button>
               <Button
                 color="primary"
                 icon={IcRoundDriveFileMove}

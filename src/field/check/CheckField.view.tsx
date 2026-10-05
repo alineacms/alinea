@@ -22,24 +22,21 @@ export function CheckFieldView({field}: CheckFieldViewProps) {
       required={options.description ? options.required : undefined}
       shared={options.description ? options.shared : undefined}
     >
-      <div className={styles.checkline()}>
-        <Checkbox
-          autoFocus={options.autoFocus}
-          checked={Boolean(value)}
-          disabled={options.readOnly}
-          onCheckedChange={setValue}
-        >
-          {options.description ?? options.label}
-        </Checkbox>
-        {!options.description && (
-          <>
-            {options.required && (
-              <span className={styles.checkline.required()}> *</span>
-            )}
-            {options.shared && <FieldSharedBadge />}
-          </>
+      <Checkbox
+        autoFocus={options.autoFocus}
+        checked={Boolean(value)}
+        disabled={options.readOnly}
+        onCheckedChange={setValue}
+      >
+        {options.description ?? options.label}
+        {/* Inside the label so they flow after its text when it wraps */}
+        {!options.description && options.required && (
+          <span className={styles.CheckField.required()}>{' *'}</span>
         )}
-      </div>
+        {!options.description && options.shared && (
+          <FieldSharedBadge className={styles.CheckField.shared()} />
+        )}
+      </Checkbox>
     </Field>
   )
 }

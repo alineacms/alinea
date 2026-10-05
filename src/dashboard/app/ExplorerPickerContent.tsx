@@ -115,7 +115,9 @@ export function ExplorerPickerFooter({
         {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
       </Text>
       <ExplorerModalActions>
-        <Button onClick={modal.close}>Cancel</Button>
+        <Button variant="outline" color="neutral" onClick={modal.close}>
+          Cancel
+        </Button>
         <Button color="primary" onClick={onSubmit}>
           Select
         </Button>

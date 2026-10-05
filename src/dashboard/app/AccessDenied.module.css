@@ -2,8 +2,15 @@
   display: flex;
   flex: 1;
   min-width: 0;
+  min-height: 100%;
   align-items: center;
   justify-content: center;
   padding: 16px;
   background: var(--alinea-bg-muted);
+}
+
+/* Outranks the dashed outline of the card variant */
+.AccessDenied .AccessDenied-card {
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius-lg);
 }

@@ -17,7 +17,7 @@
     flex: 0 1 auto;
     width: min(560px, 100%);
     padding: 32px;
-    border: 1px dashed var(--alinea-border-strong);
+    border: 1px solid var(--alinea-border);
     border-radius: var(--alinea-radius-lg);
     background: var(--alinea-bg);
   }

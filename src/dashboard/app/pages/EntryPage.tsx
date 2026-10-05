@@ -53,7 +53,7 @@ import {
   IcRoundClose
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
-import {FieldsEditor} from './../EntryFields.js'
+import {EntryFields} from './../EntryFields.js'
 import {NodeEditor} from './../NodeEditor.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {entryDirtyActions} from './../EntryHeaderActions.js'
@@ -360,7 +360,7 @@ function EntryEditorContent({
           )}
 
           <NodeEditor node={node} type={type.type}>
-            <FieldsEditor />
+            <EntryFields />
           </NodeEditor>
         </div>
       </PageContent>

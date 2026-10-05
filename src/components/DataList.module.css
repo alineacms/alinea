@@ -39,7 +39,7 @@
   min-width: 0;
   margin: 0;
   color: var(--alinea-fg-muted);
-  font-weight: 500;
+  font-weight: var(--alinea-weight-medium);
 }
 
 .DataListValue {

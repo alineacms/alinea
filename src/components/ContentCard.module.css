@@ -49,25 +49,12 @@
   max-height: 100%;
   object-fit: contain;
   object-position: center center;
-  background-size: 1.25rem 1.25rem;
-  background-position:
-    0px 0px,
-    0.625rem 0.625rem;
-  background-image:
-    linear-gradient(
-      45deg,
-      var(--alinea-muted) 25%,
-      transparent 25%,
-      transparent 75%,
-      var(--alinea-muted) 75%,
-      var(--alinea-muted) 100%
-    ),
-    linear-gradient(
-      45deg,
-      var(--alinea-muted) 25%,
-      var(--alinea-bg) 25% 75%,
-      var(--alinea-muted) 75% 100%
-    );
+  /* Transparent images need a light square in dark mode, eg. a black icon */
+  background: repeating-conic-gradient(
+      light-dark(var(--alinea-muted), var(--alinea-gray-700)) 0 25%,
+      light-dark(var(--alinea-bg), var(--alinea-gray-600)) 0 50%
+    )
+    0 0 / 1rem 1rem;
 }
 
 .ContentCard-icon {
@@ -115,7 +102,7 @@
 .ContentCard-title {
   flex: 0 0 auto;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--alinea-text-md);
   font-weight: var(--alinea-weight-medium);
   line-height: 19px;
   text-overflow: ellipsis;

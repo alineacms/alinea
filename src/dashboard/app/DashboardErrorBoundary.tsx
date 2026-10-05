@@ -60,7 +60,7 @@ function DashboardRouteErrorBoundary({
     const message = errorMessage(error)
     return (
       <div className={styles.DashboardErrorBoundary()}>
-        <Empty variant="card">
+        <Empty variant="card" className={styles.DashboardErrorBoundary.card()}>
           <EmptyHeader>
             <EmptyMedia
               variant="icon"

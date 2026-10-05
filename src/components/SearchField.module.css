@@ -35,7 +35,7 @@
     pointer-events: none;
     background-color: var(--alinea-bg-muted);
     color: var(--alinea-fg-disabled);
-    opacity: 0.45;
+    opacity: 0.5;
   }
 }
 
@@ -125,7 +125,7 @@
 /* The field is the header row of its results, without a box of its own */
 .SearchField[data-variant='inline'] {
   .SearchFieldGroup {
-    height: 44px;
+    height: var(--alinea-header-height);
     border: 0;
     border-radius: 0;
     background-color: transparent;

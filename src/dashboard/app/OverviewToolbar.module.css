@@ -3,8 +3,18 @@
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
+  position: relative;
+  z-index: 1;
   min-width: 0;
-  padding: 20px 24px 14px;
+  padding: 20px 24px 12px;
+  background: var(--alinea-bg-muted);
+  transition: box-shadow var(--alinea-transition);
+
+  &.is-scrolled {
+    box-shadow:
+      0 1px 0 var(--alinea-border),
+      0 4px 12px -6px light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 50%));
+  }
 }
 
 .OverviewToolbar-search {
@@ -24,7 +34,7 @@
 @media (max-width: 768px) {
   .OverviewToolbar {
     flex-wrap: wrap;
-    padding: 12px 12px 8px;
+    padding: 12px;
   }
 
   .OverviewToolbar-search {

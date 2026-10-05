@@ -15,6 +15,8 @@
   inset: 0;
   /* Stacks above the panel's divider, so it draws its own */
   border-inline-start: 1px solid var(--alinea-border);
+  /* Casts to the left, so the sheet reads as a layer over the preview */
+  box-shadow: -12px 0 24px -16px rgb(0 0 0 / 0.24);
 
   &[data-closing] {
     animation: BlockSheet-exit 150ms ease-in forwards;
@@ -47,4 +49,10 @@
       opacity: 0;
     }
   }
+}
+
+/* The resizable panel clips its content; while a sheet is open the panel
+   holding it lets the sheet's shadow fall over the editor column */
+:global(.split-view-view):has(> * .BlockSheet):not(:has(:global(.split-view-view) .BlockSheet)) {
+  overflow: visible;
 }

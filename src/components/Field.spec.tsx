@@ -20,7 +20,7 @@ test('labels the control and marks required and disabled fields', async ({
   await expect(page.getByLabel('Slug')).toBeVisible()
   const header = (label: string) =>
     fields.filter({hasText: label}).locator('[data-slot="field-header"]')
-  await expect(header('Summary')).toHaveCSS('opacity', '0.45')
+  await expect(header('Summary')).toHaveCSS('opacity', '0.5')
   await expect(header('Slug')).toHaveCSS('opacity', '1')
   await expect(fields.filter({hasText: 'Title'})).not.toHaveAttribute(
     'data-invalid'

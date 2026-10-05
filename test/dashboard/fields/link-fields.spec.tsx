@@ -64,7 +64,7 @@ test('opens entry fields in the compact picker', async ({dashboard, mount}) => {
     exact: true
   })
   await expect(picker).toBeVisible()
-  await expect(picker.locator('..')).toHaveCSS('height', '350px')
+  await expect(picker.locator('..')).toHaveCSS('height', '320px')
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -94,7 +94,7 @@ test('opens a functional location in another workspace and root', async ({
   const view = picker.getByRole('radiogroup', {name: 'Explorer view'})
   const location = picker.getByRole('group', {name: 'Explorer location'})
   const singleRoot = location.getByText('Reference library', {exact: true})
-  await expect(singleRoot).toHaveCSS('font-weight', '600')
+  await expect(singleRoot).toHaveCSS('font-weight', '500')
   await expect
     .poll(async () => {
       const searchBox = await search.locator('..').boundingBox()

@@ -17,7 +17,7 @@
   width: 6px;
   height: 24px;
   border: 1px solid var(--alinea-border);
-  border-radius: 3px;
+  border-radius: 999px;
   background: var(--alinea-bg);
   transform: translate(-50%, -50%);
   pointer-events: none;

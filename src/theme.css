@@ -146,7 +146,10 @@
   --alinea-input: var(--alinea-bg);
   --alinea-overlay: var(--alinea-bg);
   --alinea-border-strong: color-mix(in oklab, var(--alinea-border) 88%, var(--alinea-fg));
-  --alinea-scrim: color-mix(in oklab, var(--alinea-gray-800) 36%, transparent);
+  --alinea-scrim: light-dark(
+    color-mix(in oklab, var(--alinea-gray-800) 36%, transparent),
+    rgb(0 0 0 / 60%)
+  );
 
   /* The primary tint marks active tools, info and drop targets, not selection */
   --alinea-primary-subtle: color-mix(in oklab, var(--alinea-primary) 9%, var(--alinea-bg));

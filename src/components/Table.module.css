@@ -384,7 +384,7 @@
 
 .TableTitle-title {
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--alinea-text-md);
   font-weight: var(--alinea-weight-medium);
   line-height: 1.3;
   text-overflow: ellipsis;

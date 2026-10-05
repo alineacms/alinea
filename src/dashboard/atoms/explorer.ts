@@ -222,6 +222,24 @@ export function explorerPageIsPending(
 }
 
 /**
+ * Whether an entry is listed where it lives, so its location repeats the
+ * place the page already shows
+ */
+export function isAtLocation(
+  entry: ExplorerEntry,
+  parents: Array<ExplorerEntry>,
+  page: ExplorerReadyPage
+): boolean {
+  const {location} = page
+  return (
+    !page.searchesEverything &&
+    entry.workspace === location.workspace &&
+    entry.root === location.root &&
+    parents.at(-1)?.id === location.parentId
+  )
+}
+
+/**
  * Identifies the listed results of a page: pages with the same key list the
  * same entries in the same way and share their scroll offset
  */

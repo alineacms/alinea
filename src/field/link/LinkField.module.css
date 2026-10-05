@@ -103,7 +103,7 @@
 
 .LinkFieldView-meta {
   color: var(--alinea-fg-muted);
-  font-size: 12px;
+  font-size: var(--alinea-text-xs);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -127,15 +127,15 @@
 }
 
 .LinkFieldView-anchorOption-label {
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .LinkFieldView-anchorOption-location {
-  font-size: 12px;
-  font-weight: 400;
+  font-size: var(--alinea-text-xs);
+  font-weight: var(--alinea-weight-regular);
   opacity: 0.65;
   overflow: hidden;
   text-overflow: ellipsis;

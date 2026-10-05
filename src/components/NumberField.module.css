@@ -29,7 +29,7 @@
   &:has(.NumberFieldInput:disabled) {
     pointer-events: none;
     background-color: var(--alinea-bg-muted);
-    opacity: 0.45;
+    opacity: 0.5;
   }
 
   &:has(.NumberFieldInput[readonly]) {
@@ -62,10 +62,9 @@
 
 .NumberFieldSteppers {
   display: flex;
-  flex-direction: column;
-  border-left: 1px solid var(--alinea-border);
-  border-radius: 0 calc(var(--alinea-radius) - 1px) calc(var(--alinea-radius) - 1px) 0;
-  overflow: hidden;
+  flex-shrink: 0;
+  align-items: center;
+  padding-inline-end: 3px;
 
   .NumberFieldInput[readonly] + & {
     display: none;
@@ -74,30 +73,36 @@
 
 .NumberFieldStepper {
   display: flex;
-  flex-grow: 1;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  min-height: 0;
-  padding: 0 4px;
+  width: var(--alinea-control-sm);
+  height: var(--alinea-control-sm);
+  padding: 0;
   border: none;
+  border-radius: var(--alinea-radius-sm);
   background: none;
   color: var(--alinea-fg-muted);
+  font-size: 18px;
   cursor: pointer;
   transition: var(--alinea-transition);
   transition-property: background-color, color;
 
   &:hover {
-    background-color: color-mix(in oklab, var(--alinea-fg) 8%, transparent);
-    color: var(--alinea-primary-subtle-fg);
+    background-color: var(--alinea-muted);
+    color: var(--alinea-fg);
   }
 
   &:active {
-    background-color: color-mix(in oklab, var(--alinea-fg) 14%, transparent);
+    background-color: var(--alinea-selected);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: -2px;
   }
 
   &:disabled {
-    opacity: 0.45;
+    opacity: 0.5;
     cursor: default;
   }
 }

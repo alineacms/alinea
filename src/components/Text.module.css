@@ -8,7 +8,7 @@
   }
 
   &[data-size='sm'] {
-    font-size: 0.75rem;
+    font-size: var(--alinea-text-xs);
   }
 
   &[data-size='lg'] {
@@ -16,15 +16,15 @@
   }
 
   &[data-weight='regular'] {
-    font-weight: 400;
+    font-weight: var(--alinea-weight-regular);
   }
 
   &[data-weight='medium'] {
-    font-weight: 500;
+    font-weight: var(--alinea-weight-medium);
   }
 
   &[data-weight='semibold'] {
-    font-weight: 600;
+    font-weight: var(--alinea-weight-title);
   }
 
   &[data-weight='bold'] {

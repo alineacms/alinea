@@ -46,7 +46,7 @@ export const BasicFields = Config.document('Basic fields', {
         image: Field.image('Image'),
         title: Field.text('Title'),
         cta: Field.link('Call to action', {
-          location: {workspace: 'main', root: 'pages'}
+          location: {workspace: 'primary', root: 'pages'}
         })
       }
     })

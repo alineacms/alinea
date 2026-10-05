@@ -28,5 +28,5 @@
 
 .AuthView-link {
   color: var(--alinea-primary);
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
 }

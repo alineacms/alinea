@@ -734,6 +734,8 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const uploadCount = uploads.length
   const uploadLabel =
     uploadCount === 1 ? '1 file uploading' : `${uploadCount} files uploading`
+  // The search dialog finds entries, creating them belongs to the overview
+  const searching = explorer.mode === 'search'
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
@@ -742,7 +744,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
           {uploadCount}
         </ActivityStatus>
       )}
-      <ExplorerActions page={page} />
+      {!searching && <ExplorerActions page={page} />}
       <ExplorerControls
         size="sm"
         sorts={page.search.trim() ? [] : page.overview.sorts}
@@ -763,7 +765,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle size="sm" view={page.view} setView={setView} />
-        {page.isMedia && page.canUpload && !locationIsPending && (
+        {page.isMedia && page.canUpload && !locationIsPending && !searching && (
           <FileTrigger multiple onSelect={files => upload(files)}>
             <Button icon={IcRoundUploadFile} color="primary" size="sm">
               Upload media

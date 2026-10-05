@@ -9,7 +9,7 @@
   padding: 0 4px;
   border: 0;
   border-radius: var(--alinea-radius-sm);
-  font-size: 12px;
+  font-size: var(--alinea-text-xs);
   font-weight: inherit;
   line-height: normal;
 
@@ -42,13 +42,12 @@
 
 .LocaleMenu-label-code {
   flex: 0 0 auto;
-  font-weight: 600;
+  font-weight: var(--alinea-weight-medium);
 }
 
 .LocaleMenu-label-fullName {
   min-width: 0;
-  color: inherit;
-  opacity: 0.62;
+  color: var(--alinea-fg-muted);
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;

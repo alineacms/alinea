@@ -130,9 +130,11 @@ function WorkspaceProfileMenu({
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Tooltip delayDuration={100}>
+    // The tooltip wraps the popover, the element-less Tooltip cannot be the
+    // ref-forwarding child of a PopoverTrigger
+    <Tooltip delayDuration={100}>
+      <Popover>
+        <PopoverTrigger asChild>
           <TooltipTrigger asChild>
             <Button
               size="icon-lg"
@@ -141,88 +143,88 @@ function WorkspaceProfileMenu({
               aria-label={userName}
             />
           </TooltipTrigger>
-          <TooltipContent side="right">{userName}</TooltipContent>
-        </Tooltip>
-      </PopoverTrigger>
-      <PopoverContent
-        aria-label={userName}
-        className={styles.WorkspaceRoots.profile.popover.surface()}
-        side="right"
-        align="end"
-        sideOffset={16}
-      >
-        <ul className={styles.WorkspaceRoots.profile.popover()}>
-          <li className={styles.WorkspaceRoots.profile.popover.user()}>
-            <Icon
-              icon={IcBaselineAccountCircle}
-              className={styles.WorkspaceRoots.profile.popover.user.icon()}
-            />
-            <Text
-              weight="medium"
-              truncate
-              className={styles.WorkspaceRoots.profile.popover.user.title()}
-            >
-              {userName}
-            </Text>
-          </li>
-          {canManageMembers && (
-            <li className={styles.WorkspaceRoots.profile.popover.action()}>
-              <Button
-                variant="ghost"
-                aria-label="Manage users"
-                icon={IcOutlineSettings}
-                className={styles.WorkspaceRoots.profile.popover.action.button()}
-                onClick={() => setRoute({page: 'users'})}
+        </PopoverTrigger>
+        <TooltipContent side="right">{userName}</TooltipContent>
+        <PopoverContent
+          aria-label={userName}
+          className={styles.WorkspaceRoots.profile.popover.surface()}
+          side="right"
+          align="end"
+          sideOffset={16}
+        >
+          <ul className={styles.WorkspaceRoots.profile.popover()}>
+            <li className={styles.WorkspaceRoots.profile.popover.user()}>
+              <Icon
+                icon={IcBaselineAccountCircle}
+                className={styles.WorkspaceRoots.profile.popover.user.icon()}
+              />
+              <Text
+                weight="medium"
+                truncate
+                className={styles.WorkspaceRoots.profile.popover.user.title()}
               >
-                <Text truncate>Manage users</Text>
-              </Button>
+                {userName}
+              </Text>
             </li>
-          )}
-          <li className={styles.WorkspaceRoots.profile.popover.item()}>
-            <Text as="p">Appearance</Text>
-            <AppearanceToggle />
-          </li>
-          {isLocal && roleEntries.length > 0 && (
-            <li className={styles.WorkspaceRoots.profile.popover.item()}>
-              <Text as="p">Role</Text>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  variant="outline"
-                  className={styles.WorkspaceRoots.trigger()}
+            {canManageMembers && (
+              <li className={styles.WorkspaceRoots.profile.popover.action()}>
+                <Button
+                  variant="ghost"
+                  aria-label="Manage users"
+                  icon={IcOutlineSettings}
+                  className={styles.WorkspaceRoots.profile.popover.action.button()}
+                  onClick={() => setRoute({page: 'users'})}
                 >
-                  <Text truncate>{roleLabel}</Text>
-                  <IcRoundUnfoldMore />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent aria-label="Development roles">
-                  {roleEntries.map(([name, role]) => (
-                    <DropdownMenuCheckboxItem
-                      key={name}
-                      textValue={role.label}
-                      checked={selectedRoles.has(name)}
-                      onCheckedChange={checked => toggleRole(name, checked)}
-                    >
-                      {role.label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Text truncate>Manage users</Text>
+                </Button>
+              </li>
+            )}
+            <li className={styles.WorkspaceRoots.profile.popover.item()}>
+              <Text as="p">Appearance</Text>
+              <AppearanceToggle />
             </li>
-          )}
-          {canLogout && (
-            <li className={styles.WorkspaceRoots.profile.popover.action()}>
-              <Button
-                variant="ghost"
-                aria-label="Logout"
-                icon={IcRoundLogout}
-                className={styles.WorkspaceRoots.profile.popover.action.button()}
-                onClick={logout}
-              >
-                <Text truncate>Logout</Text>
-              </Button>
-            </li>
-          )}
-        </ul>
-      </PopoverContent>
-    </Popover>
+            {isLocal && roleEntries.length > 0 && (
+              <li className={styles.WorkspaceRoots.profile.popover.item()}>
+                <Text as="p">Role</Text>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    variant="outline"
+                    className={styles.WorkspaceRoots.trigger()}
+                  >
+                    <Text truncate>{roleLabel}</Text>
+                    <IcRoundUnfoldMore />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent aria-label="Development roles">
+                    {roleEntries.map(([name, role]) => (
+                      <DropdownMenuCheckboxItem
+                        key={name}
+                        textValue={role.label}
+                        checked={selectedRoles.has(name)}
+                        onCheckedChange={checked => toggleRole(name, checked)}
+                      >
+                        {role.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </li>
+            )}
+            {canLogout && (
+              <li className={styles.WorkspaceRoots.profile.popover.action()}>
+                <Button
+                  variant="ghost"
+                  aria-label="Logout"
+                  icon={IcRoundLogout}
+                  className={styles.WorkspaceRoots.profile.popover.action.button()}
+                  onClick={logout}
+                >
+                  <Text truncate>Logout</Text>
+                </Button>
+              </li>
+            )}
+          </ul>
+        </PopoverContent>
+      </Popover>
+    </Tooltip>
   )
 }
