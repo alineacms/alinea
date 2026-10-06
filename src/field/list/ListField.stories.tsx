@@ -4,6 +4,7 @@ import type {ListRow} from '#/core/ListRow.js'
 import {track} from '#/core/Tracker.js'
 import {Type, type} from '#/core/Type.js'
 import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
+import {BlockSheetStoryFrame} from '#/dashboard/app/BlockSheetStoryFrame.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {EntryEditor} from '#/dashboard/atoms/editor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -257,11 +258,13 @@ export function Example() {
   if (!sections) return null
   return (
     <StoryProvider views={views}>
-      <EditorScope editor={editor}>
-        <div style={storyStyle}>
-          <ListFieldView field={sections} />
-        </div>
-      </EditorScope>
+      <BlockSheetStoryFrame>
+        <EditorScope editor={editor}>
+          <div style={storyStyle}>
+            <ListFieldView field={sections} />
+          </div>
+        </EditorScope>
+      </BlockSheetStoryFrame>
     </StoryProvider>
   )
 }
@@ -289,9 +292,11 @@ export function MinMax() {
   )
   return (
     <StoryProvider views={views}>
-      <div style={storyStyle}>
-        <NodeEditor node={node} type={limitedType} />
-      </div>
+      <BlockSheetStoryFrame>
+        <div style={storyStyle}>
+          <NodeEditor node={node} type={limitedType} />
+        </div>
+      </BlockSheetStoryFrame>
     </StoryProvider>
   )
 }

@@ -23,6 +23,7 @@ import {
   type ReactNode
 } from 'react'
 import {IcRoundClose} from '../../icons.js'
+import {BlockSheetBoundary} from '../BlockSheet.js'
 import css from './DashboardModal.module.css'
 
 const styles = styler(css)
@@ -62,7 +63,7 @@ export function DashboardModal({
     >
       <DashboardModalLabel.Provider value={ariaLabel}>
         <Surface className={styles.DashboardModal.surface()}>
-          {children}
+          <BlockSheetBoundary>{children}</BlockSheetBoundary>
         </Surface>
       </DashboardModalLabel.Provider>
     </DialogContent>

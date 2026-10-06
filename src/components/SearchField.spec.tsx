@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Combobox, Example, States} from './SearchField.stories.js'
+import {Combobox, Example, Inline, States} from './SearchField.stories.js'
 
 test('types, submits and clears a query', async ({mount, page}) => {
   await mount(<Example />)
@@ -48,4 +48,15 @@ test('can act as a combobox for a list of results', async ({mount, page}) => {
   await input.press('ArrowDown')
   await expect(input).toHaveAttribute('aria-activedescendant', 'fruit-1')
   await expect(input).toBeFocused()
+})
+
+test('renders inline without a box of its own', async ({mount, page}) => {
+  await mount(<Inline />)
+  const field = page.locator('[data-slot="search-field"]')
+  await expect(field).toHaveAttribute('data-variant', 'inline')
+  const group = page.locator('[data-slot="search-field-group"]')
+  await expect(group).toHaveCSS('border-top-width', '0px')
+  await expect(group).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await page.getByRole('searchbox', {name: 'Search'}).fill('alinea')
+  await expect(page.getByText('Results for "alinea"')).toBeVisible()
 })

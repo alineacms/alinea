@@ -43,13 +43,6 @@ test('keeps remove controls visible on single and multiple link rows', async ({
   await expect(
     heroImage.getByRole('button', {name: 'Remove link'})
   ).toBeVisible()
-  await heroImage.getByRole('button', {name: 'Link settings'}).click()
-  await expect(
-    page
-      .getByRole('dialog', {name: 'Link settings'})
-      .getByRole('button', {name: 'Remove link'})
-  ).toHaveCount(0)
-  await page.keyboard.press('Escape')
 
   const resources = page.getByRole('list', {name: 'Resources'})
   await expect(
@@ -65,6 +58,20 @@ test('keeps remove controls visible on single and multiple link rows', async ({
   ).toHaveCount(2)
 })
 
+test('removes a link from its settings sheet', async ({mount, page}) => {
+  await mount(<Example />)
+
+  const heroImage = page.getByRole('list', {name: 'Hero image'})
+  await heroImage.getByRole('button', {name: 'landscape'}).click()
+  const settings = page.getByRole('dialog', {name: 'landscape'})
+  await settings.getByRole('button', {name: 'Remove'}).click()
+  await expect(settings).toBeHidden()
+  await expect(heroImage.getByRole('listitem')).toHaveCount(0)
+  await expect(
+    heroImage.getByRole('button', {name: 'Image', exact: true})
+  ).toBeVisible()
+})
+
 test('opens single-link settings from the linked row', async ({
   mount,
   page
@@ -77,11 +84,37 @@ test('opens single-link settings from the linked row', async ({
   await expect(row).toHaveAccessibleDescription('Edit link')
   // Buttons only hold phrasing content
   await expect(row.locator('div')).toHaveCount(0)
+  // The row and its "…" are one button
+  await expect(relatedLink.getByRole('button')).toHaveCount(2)
+  await expect(row).toHaveAttribute('aria-expanded', 'false')
   await row.click()
 
-  const settings = page.getByRole('dialog', {name: 'Link settings'})
+  const settings = page.getByRole('dialog', {name: 'Home'})
   await expect(settings).toBeVisible()
+  await expect(settings.getByText('Page', {exact: true})).toBeVisible()
+  await expect(settings.getByRole('textbox', {name: 'Label'})).toBeFocused()
   await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
+  await expect(
+    settings.getByRole('button', {name: 'Replace link'})
+  ).toBeVisible()
+  await expect(settings.getByRole('button', {name: 'Remove'})).toBeVisible()
+  // The open row is highlighted
+  await expect(relatedLink.getByRole('listitem')).toHaveAttribute(
+    'aria-current',
+    'true'
+  )
+  await expect(row).toHaveAttribute('aria-expanded', 'true')
+
+  // The row toggles the sheet
+  await row.click()
+  await expect(settings).toBeHidden()
+  await expect(relatedLink.getByRole('listitem')).not.toHaveAttribute(
+    'aria-current'
+  )
+  await row.click()
+  await expect(settings).toBeVisible()
+  await settings.getByRole('button', {name: 'Close link settings'}).click()
+  await expect(settings).toBeHidden()
 })
 
 test('opens multiple-link settings from the linked row', async ({
@@ -91,53 +124,60 @@ test('opens multiple-link settings from the linked row', async ({
   await mount(<Example />)
 
   const resources = page.getByRole('list', {name: 'Resources'})
-  const settings = page.getByRole('dialog', {name: 'Link settings'})
   const firstRow = resources.getByRole('listitem').first()
   const firstLink = firstRow.getByRole('button', {name: 'Page Home'})
   await expect(firstLink).toHaveAccessibleDescription('Edit link')
   await firstLink.click()
-  await expect(settings).toBeVisible()
-  await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
-  // Opened from the row, the settings show below the row's start rather than
-  // below the settings button at its end
-  const row = await firstLink.boundingBox()
-  const popover = await settings.boundingBox()
-  expect(Math.abs(popover!.x - row!.x)).toBeLessThan(24)
-  expect(popover!.y).toBeGreaterThanOrEqual(row!.y + row!.height - 1)
+  const home = page.getByRole('dialog', {name: 'Home'})
+  await expect(home).toBeVisible()
+  await expect(home.getByRole('button', {name: 'Open link'})).toBeVisible()
+  await expect(firstRow).toHaveAttribute('aria-current', 'true')
   await page.keyboard.press('Escape')
-  await expect(settings).toBeHidden()
+  await expect(home).toBeHidden()
+  await expect(firstLink).toBeFocused()
 
+  // One sheet is open at a time
   const secondRow = resources.getByRole('listitem').nth(1)
   await secondRow
     .getByRole('button', {name: 'External link Alinea documentation'})
     .focus()
   await page.keyboard.press('Enter')
-  await expect(settings).toBeVisible()
-  await expect(settings.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  const docs = page.getByRole('dialog', {name: 'Alinea documentation'})
+  await expect(docs).toBeVisible()
+  await expect(docs.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  await expect(docs.getByText('Anchor', {exact: true})).toHaveCount(0)
+  await expect(docs.getByRole('textbox', {name: 'URL suffix'})).toHaveCount(0)
+  await expect(secondRow).toHaveAttribute('aria-current', 'true')
+  await expect(firstRow).not.toHaveAttribute('aria-current')
   // External links open in a new tab
   await page
     .context()
     .route('https://alineacms.com/**', route => route.fulfill({body: ''}))
   const popup = page.waitForEvent('popup')
-  await settings.getByRole('button', {name: 'Open link'}).click()
+  await docs.getByRole('button', {name: 'Open link'}).click()
   await expect
     .poll(async () => (await popup).url())
     .toBe('https://alineacms.com/docs')
-  await expect(settings).toBeHidden()
+  await expect(docs).toBeHidden()
 
   // The fold toggle and remove button keep their own behavior
   await firstRow.getByRole('button', {name: 'Collapse link'}).click()
   await expect(
     firstRow.getByRole('button', {name: 'Expand link'})
   ).toBeVisible()
-  await expect(settings).toBeHidden()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await secondRow
+    .getByRole('button', {name: 'External link Alinea documentation'})
+    .click()
+  await expect(docs).toBeVisible()
   await secondRow.getByRole('button', {name: 'Remove link'}).click()
-  await expect(settings).toBeHidden()
+  await expect(docs).toBeHidden()
   await expect(resources.getByRole('listitem')).toHaveCount(2)
 
   const relatedEntries = page.getByRole('list', {name: 'Related entries'})
   await relatedEntries.getByRole('button', {name: 'Page Home'}).click()
-  await expect(settings).toBeVisible()
+  await expect(home).toBeVisible()
+  await expect(home.getByRole('textbox', {name: 'URL suffix'})).toBeVisible()
 })
 
 test('shows read-only link rows without opening their settings', async ({
@@ -492,4 +532,33 @@ test('reorders multiple links with the keyboard', async ({mount, page}) => {
   await expect(
     resources.getByRole('button', {name: 'Drag link item 2'})
   ).toBeFocused()
+})
+
+test('inserts a link on the border between link rows', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  const links = page.getByRole('list', {name: 'Resources'})
+  await expect(
+    links.getByRole('button', {name: 'Insert link before link item 1'})
+  ).toHaveCount(0)
+  const insert = links.getByRole('button', {
+    name: 'Insert link before link item 2'
+  })
+  await insert.hover()
+  await insert.click()
+  await page
+    .getByRole('dialog', {name: 'Insert link before link item 2'})
+    .getByRole('button', {name: 'External link'})
+    .click()
+  const dialog = page.getByRole('dialog', {name: 'External link'})
+  await dialog.getByRole('textbox', {name: 'URL'}).fill('https://example.com')
+  await dialog.getByRole('textbox', {name: 'Label'}).fill('Inserted')
+  await dialog.getByRole('button', {name: 'Add link'}).click()
+  await expect(dialog).toBeHidden()
+  const rows = links.getByRole('listitem')
+  await expect(rows).toHaveCount(4)
+  await expect(rows.nth(1)).toContainText('Inserted')
+  await expect(rows.nth(2)).toContainText('Alinea documentation')
 })

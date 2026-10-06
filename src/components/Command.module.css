@@ -5,7 +5,7 @@
 }
 
 .CommandInput {
-  padding: 8px;
+  padding: 0 12px 0 14px;
   border-bottom: 1px solid var(--alinea-border);
 }
 
@@ -39,6 +39,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 32px;
   padding: 0.4rem;
   border-radius: var(--alinea-radius-sm);
   color: var(--alinea-fg);
@@ -46,8 +47,15 @@
   outline: none;
   cursor: pointer;
 
+  &:hover,
   &.is-highlighted {
     background: var(--alinea-muted);
+  }
+
+  /* Like a menu, the item under the pointer is the one marked. The item
+     Enter picks keeps its ring while using the keyboard. */
+  .CommandList:hover &.is-highlighted:not(:hover) {
+    background: transparent;
   }
 
   /* The subtle background only marks the item under the pointer, keyboard
@@ -65,6 +73,7 @@
 
 .CommandItem-icon {
   flex-shrink: 0;
+  font-size: 16px;
 }
 
 .CommandItem-label {

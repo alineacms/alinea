@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
 import {
+  type ComponentPropsWithRef,
   type ComponentPropsWithoutRef,
   createContext,
   type DOMAttributes,
@@ -17,6 +18,7 @@ import {
   useDrag,
   useDrop
 } from 'react-aria'
+import {IcRoundAdd, IcRoundMoreHoriz} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
@@ -132,6 +134,7 @@ export function SortableList({
         data-slot="sortable-list"
         {...props}
         className={className}
+        data-dragging={draggingKey !== null || undefined}
         role={role}
       />
     </SortableListContext.Provider>
@@ -149,6 +152,8 @@ export interface SortableListItemProps extends Omit<
   id?: Key
   /** Rendered under the pointer while dragging, eg. a `SortableListDragPreview` */
   dragPreview?: ReactNode
+  /** Highlights the item, eg. while its settings are open next to the list */
+  current?: boolean
 }
 
 export function SortableListItem({
@@ -183,6 +188,7 @@ interface SortableListItemElementProps extends Omit<
 function SortableListItemElement({
   className,
   dragging,
+  current,
   ...props
 }: SortableListItemElementProps) {
   return (
@@ -190,6 +196,7 @@ function SortableListItemElement({
       data-slot="sortable-list-item"
       role="listitem"
       {...props}
+      aria-current={current || undefined}
       className={styles.SortableListItem(styler.merge({className}))}
       data-dragging={dragging || undefined}
     />
@@ -392,6 +399,75 @@ export function SortableListItemTitle({
       className={styles.SortableListItemTitle(styler.merge({className}))}
       data-dragging={item?.dragging || undefined}
     />
+  )
+}
+
+export interface SortableListItemTriggerProps extends Omit<
+  ButtonProps,
+  'variant' | 'size' | 'icon' | 'asChild'
+> {
+  /** Ends the button with a "…", defaults to true */
+  more?: boolean
+}
+
+/**
+ * The badges and description of an item as one button that ends in a "…",
+ * eg. to open the settings of the item. Fills the title up to the actions.
+ */
+export function SortableListItemTrigger({
+  className,
+  more = true,
+  children,
+  ...props
+}: SortableListItemTriggerProps) {
+  return (
+    <Button
+      data-slot="sortable-list-item-trigger"
+      {...props}
+      variant="ghost"
+      className={styles.SortableListItemTrigger(styler.merge({className}))}
+    >
+      {children}
+      {more && (
+        <span
+          data-slot="sortable-list-item-more"
+          className={styles.SortableListItemTrigger.more()}
+        >
+          <Icon aria-hidden icon={IcRoundMoreHoriz} />
+        </span>
+      )}
+    </Button>
+  )
+}
+
+export interface SortableListItemInsertProps extends Omit<
+  ComponentPropsWithRef<'button'>,
+  'children'
+> {}
+
+/**
+ * Inserts an item before the one it is placed in: a line with an add button
+ * that shows when the pointer is on the border above the item. Place it first
+ * in the `SortableListItem`.
+ */
+export function SortableListItemInsert({
+  className,
+  ...props
+}: SortableListItemInsertProps) {
+  return (
+    <div
+      data-slot="sortable-list-item-insert"
+      className={styles.SortableListItemInsert(styler.merge({className}))}
+    >
+      <button
+        type="button"
+        data-slot="sortable-list-item-insert-button"
+        {...props}
+        className={styles.SortableListItemInsert.button()}
+      >
+        <Icon aria-hidden icon={IcRoundAdd} />
+      </button>
+    </div>
   )
 }
 

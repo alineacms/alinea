@@ -96,7 +96,11 @@ test('opens a functional location in another workspace and root', async ({
     .poll(async () => {
       const searchBox = await search.locator('..').boundingBox()
       const viewBox = await view.boundingBox()
-      return searchBox?.height === viewBox?.height
+      if (!searchBox || !viewBox) return false
+      // The inline search has no box of its own, it centers with the toggle
+      const searchCenter = searchBox.y + searchBox.height / 2
+      const viewCenter = viewBox.y + viewBox.height / 2
+      return Math.abs(searchCenter - viewCenter) <= 1
     })
     .toBe(true)
   const resultModes = location.getByRole('radiogroup', {

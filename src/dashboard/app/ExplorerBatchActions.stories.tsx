@@ -4,7 +4,11 @@ import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import type {CSSProperties} from 'react'
 import {ExplorerBatchActionBar} from './ExplorerBatchActions.js'
 
-const frame: CSSProperties = {display: 'flex', height: 320}
+const frame: CSSProperties = {
+  position: 'relative',
+  display: 'flex',
+  height: 320
+}
 
 function noop() {}
 
@@ -49,7 +53,7 @@ export function LoadingMoveTargets() {
   return <ActionBarStory count={12} isPending />
 }
 
-/** Seeded entries can not be deleted */
+/** Seeded entries can not be deleted, the action says why on hover */
 export function MoveOnly() {
   return <ActionBarStory count={3} canDelete={false} />
 }

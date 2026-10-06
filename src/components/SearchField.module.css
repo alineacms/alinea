@@ -119,3 +119,29 @@
 .SearchFieldClear-icon {
   position: relative;
 }
+
+/* The field is the header row of its results, without a box of its own */
+.SearchField[data-variant='inline'] {
+  .SearchFieldGroup {
+    height: 44px;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background-color: transparent;
+  }
+
+  .SearchFieldIcon {
+    width: 18px;
+    height: 18px;
+    margin: 0 10px 0 0;
+    font-size: 18px;
+  }
+
+  .SearchFieldInput {
+    padding: 5px 0;
+  }
+
+  .SearchFieldClear {
+    padding: 0 4px;
+  }
+}

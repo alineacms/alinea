@@ -40,7 +40,7 @@ import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {useEffect, useLayoutEffect, useRef} from 'react'
+import {type ReactNode, useEffect, useLayoutEffect, useRef} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -63,6 +63,11 @@ import {
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
 import {Explorer} from './../Explorer.js'
 import {SidebarLayout} from '../SidebarLayout.js'
+import {
+  BlockSheetProvider,
+  BlockSheetSlot,
+  useBlockSheetOpen
+} from '../BlockSheet.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -497,19 +502,46 @@ function EntryEditorContent({
         richTextImages={richTextImages}
         selectedEntry={selectedEntry}
       >
-        <SidebarLayout
-          side="right"
-          visible={Boolean(sidebar && isSidebarOpen)}
-          sidebar={
-            sidebar &&
-            isSidebarOpen && (
-              <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />
-            )
-          }
-        >
-          {mainEditor}
-        </SidebarLayout>
+        <BlockSheetProvider>
+          <EntryEditorLayout
+            sidebar={
+              sidebar &&
+              isSidebarOpen && (
+                <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />
+              )
+            }
+          >
+            {mainEditor}
+          </EntryEditorLayout>
+        </BlockSheetProvider>
       </EntryScope>
     </>
+  )
+}
+
+interface EntryEditorLayoutProps {
+  sidebar: ReactNode
+  children: ReactNode
+}
+
+/**
+ * An open block sheet covers the sidebar, it shows the sidebar panel on its
+ * own while the sidebar is collapsed
+ */
+function EntryEditorLayout({sidebar, children}: EntryEditorLayoutProps) {
+  const sheetOpen = useBlockSheetOpen()
+  return (
+    <SidebarLayout
+      side="right"
+      visible={Boolean(sidebar) || sheetOpen}
+      sidebar={
+        <div className={styles.EntryEditorLayout.sidebar()}>
+          {sidebar}
+          <BlockSheetSlot />
+        </div>
+      }
+    >
+      {children}
+    </SidebarLayout>
   )
 }

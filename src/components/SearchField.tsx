@@ -31,6 +31,11 @@ export interface SearchFieldProps
   placeholder?: string
   /** Shows a spinner while results are being loaded */
   loading?: boolean
+  /**
+   * `inline` drops the box so the field reads as the top row of the results
+   * it searches, like a command palette. The row draws its own border.
+   */
+  variant?: 'default' | 'inline'
   name?: string
   autoFocus?: boolean
   onBlur?: (event: FocusEvent<HTMLInputElement>) => void
@@ -69,6 +74,7 @@ export function SearchField({
   onValueChange,
   placeholder,
   loading,
+  variant = 'default',
   onBlur,
   onFocus,
   onKeyDown,
@@ -85,6 +91,7 @@ export function SearchField({
     <SearchFieldPrimitive
       data-slot="search-field"
       {...props}
+      data-variant={variant}
       onChange={onValueChange}
       isRequired={required}
       isDisabled={disabled}

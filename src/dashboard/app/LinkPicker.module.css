@@ -26,16 +26,6 @@
   overflow: hidden;
 }
 
-.LinkPickerCompact-header {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 8px;
-  border-bottom: 1px solid var(--alinea-border);
-}
-
 .LinkPickerCompact-footer {
   display: flex;
   flex: 0 0 auto;
