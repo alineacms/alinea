@@ -2,6 +2,7 @@ import {suite} from '@alinea/suite'
 import {HttpError} from '../HttpError.js'
 import {diff} from '../source/Source.js'
 import {FSSource} from './FSSource.js'
+import {hashBlob} from './GitUtils.js'
 import {GithubSource, normalizeGithubSourceOptions} from './GithubSource.js'
 import {ReadonlyTree} from './Tree.js'
 
@@ -228,6 +229,179 @@ test('splits trees GitHub truncates by directory', async () => {
   }
 })
 
+test('fetches blobs a hundred at a time through GraphQL', async () => {
+  const texts = await textBlobs(150)
+  const encoder = new TextEncoder()
+  const binaryBytes = new Uint8Array([0, 1, 2, 3])
+  const binary = await hashBlob(binaryBytes)
+  // Latin-1 text, which GraphQL can only give as decoded UTF-8
+  const latinBytes = new Uint8Array([0x63, 0x61, 0x66, 0xe9])
+  const latin = await hashBlob(latinBytes)
+  const shas = [...texts.keys(), binary, latin]
+  const originalFetch = globalThis.fetch
+  const queries = Array<number>()
+  const restBlobs = Array<string>()
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const url = String(input)
+      if (url.endsWith('/graphql')) {
+        const requested = requestedBlobs(init)
+        queries.push(requested.length)
+        const repository = Object.fromEntries(
+          requested.map(([key, sha]) => [
+            key,
+            sha === binary
+              ? {text: null, isBinary: true, isTruncated: false}
+              : sha === latin
+                ? {text: 'caf\uFFFD', isBinary: false, isTruncated: false}
+                : {text: texts.get(sha), isBinary: false, isTruncated: false}
+          ])
+        )
+        return Response.json({data: {repository}})
+      }
+      const sha = url.split('/git/blobs/')[1]
+      restBlobs.push(sha)
+      const bytes = sha === binary ? binaryBytes : latinBytes
+      return Response.json({
+        encoding: 'base64',
+        content: btoa(String.fromCharCode(...bytes)),
+        size: bytes.length
+      })
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const blobs = new Map<string, Uint8Array>()
+    for await (const [sha, blob] of githubSource().getBlobs(shas))
+      blobs.set(sha, blob)
+    test.equal(queries, [100, 52])
+    test.equal(restBlobs, [binary, latin])
+    test.equal([...blobs.keys()], shas)
+    for (const [sha, text] of texts)
+      test.equal(blobs.get(sha), encoder.encode(text))
+    test.equal(blobs.get(binary), binaryBytes)
+    test.equal(blobs.get(latin), latinBytes)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('asks again in halves for blobs GitHub cannot answer at once', async () => {
+  const texts = await textBlobs(100)
+  const shas = [...texts.keys()]
+  const originalFetch = globalThis.fetch
+  const queries = Array<number>()
+  globalThis.fetch = Object.assign(
+    async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const requested = requestedBlobs(init)
+      queries.push(requested.length)
+      // Too many large files to answer in time
+      if (requested.length > 30) {
+        return requested.length > 60
+          ? new Response('Bad gateway', {status: 502})
+          : Response.json({
+              data: null,
+              errors: [{message: 'Something went wrong. This may be a timeout'}]
+            })
+      }
+      const repository = Object.fromEntries(
+        requested.map(([key, sha]) => [
+          key,
+          {text: texts.get(sha), isBinary: false, isTruncated: false}
+        ])
+      )
+      return Response.json({data: {repository}})
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const fetched = Array<string>()
+    for await (const [sha] of githubSource().getBlobs(shas)) fetched.push(sha)
+    test.equal(fetched, shas)
+    test.equal(queries, [100, 50, 25, 25, 50, 25, 25])
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('gives up on blobs after a few queries while GitHub fails', async () => {
+  const shas = [...(await textBlobs(300)).keys()]
+  const originalFetch = globalThis.fetch
+  const queries = Array<number>()
+  let restCalls = 0
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!String(input).endsWith('/graphql')) restCalls += 1
+      else queries.push(requestedBlobs(init).length)
+      return new Response('Bad gateway', {status: 502})
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  const unhandled = Array<unknown>()
+  const onUnhandled = (reason: unknown) => unhandled.push(reason)
+  process.on('unhandledRejection', onUnhandled)
+  try {
+    let failure: unknown
+    try {
+      for await (const _ of githubSource().getBlobs(shas)) {
+      }
+    } catch (error) {
+      failure = error
+    }
+    test.ok(failure instanceof HttpError)
+    // The batches after the failed one settle on their own
+    await new Promise(resolve => setTimeout(resolve, 50))
+    test.equal(unhandled, [])
+    test.is(restCalls, 0)
+    // Each of the three batches tries 100, 50 and 25 blobs
+    test.equal(
+      queries.toSorted((a, b) => a - b),
+      [25, 25, 25, 50, 50, 50, 100, 100, 100]
+    )
+  } finally {
+    process.off('unhandledRejection', onUnhandled)
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('reports GraphQL errors such as a rate limit right away', async () => {
+  const originalFetch = globalThis.fetch
+  let queries = 0
+  globalThis.fetch = Object.assign(
+    async (): Promise<Response> => {
+      queries += 1
+      return Response.json({
+        data: null,
+        errors: [{type: 'RATE_LIMITED', message: 'API rate limit exceeded'}]
+      })
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const source = new GithubSource({
+      owner: 'owner',
+      repo: 'limited-repo',
+      branch: 'main',
+      authToken: 'token',
+      rootDir: '',
+      contentDir: 'content'
+    })
+    const shas = ['a'.repeat(40), 'b'.repeat(40)]
+    let failure: unknown
+    try {
+      for await (const _ of source.getBlobs(shas)) {
+      }
+    } catch (error) {
+      failure = error
+    }
+    test.ok(failure instanceof Error)
+    test.ok(String(failure).includes('API rate limit exceeded'))
+    test.is(queries, 1)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('sync', async () => {
   if (!process.env.GITHUB_AUTH_TOKEN) return
   const dir = 'test/fixtures/demo'
@@ -243,3 +417,33 @@ test('sync', async () => {
   const batch = await diff(fsSource, ghSource)
   test.is(batch.changes.length, 0)
 })
+
+function githubSource(): GithubSource {
+  return new GithubSource({
+    owner: 'owner',
+    repo: 'blob-repo',
+    branch: 'main',
+    authToken: 'token',
+    rootDir: '',
+    contentDir: 'content'
+  })
+}
+
+/** Texts by the sha of their blob. */
+async function textBlobs(count: number): Promise<Map<string, string>> {
+  const encoder = new TextEncoder()
+  const texts = new Map<string, string>()
+  for (let i = 0; i < count; i++) {
+    const text = `{"title": "Entry ${i}"}`
+    texts.set(await hashBlob(encoder.encode(text)), text)
+  }
+  return texts
+}
+
+/** The aliases and shas a GraphQL blob query asks for. */
+function requestedBlobs(init?: RequestInit): Array<[string, string]> {
+  const {variables} = JSON.parse(String(init?.body))
+  return Object.entries(variables as Record<string, string>).filter(([key]) =>
+    /^b\d+$/.test(key)
+  )
+}

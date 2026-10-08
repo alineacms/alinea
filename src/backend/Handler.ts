@@ -434,9 +434,14 @@ export function createHandler({
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
-        // No sync first: blobs this deployment lacks come from the remote,
-        // which is less work than a cold instance syncing everything.
-        const tree = await local.source.getTree()
+        // Clients ask for blobs of a tree an instance answered with: one that
+        // has not synced to it yet does so now and keeps them, so the remote
+        // is asked for each change once instead of for every client.
+        let tree = await local.source.getTree()
+        if (!dev && shas.some(sha => !tree.hasSha(sha))) {
+          await syncForRead(cnx)
+          tree = await local.source.getTree()
+        }
         const fromLocal: Array<string> = []
         const fromRemote: Array<string> = []
         for (const sha of shas) {

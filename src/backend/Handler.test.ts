@@ -3,6 +3,7 @@ import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {createHandler} from '#/backend/Handler.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
+import {decodeBlobSequence} from '#/core/BlobTransport.js'
 import {createCMS} from '#/core.js'
 import type {
   AuthOptions,
@@ -1487,6 +1488,65 @@ function requestContext(): RequestContext {
     isDev: true
   }
 }
+
+test('fetches blobs from the remote once for every client that asks', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  await remoteDb.create({type: Page, set: {title: 'Home'}})
+  const tree = await remoteDb.source.getTree()
+  const shas = tree
+    .flat()
+    .tree.filter(entry => entry.type === 'blob')
+    .map(entry => entry.sha)
+  let fetched = 0
+  let treeRequests = 0
+  const handle = createHandler({
+    cms,
+    db: new LocalDB(cms.config),
+    remote(context) {
+      return composeBackend(
+        {
+          getTreeIfDifferent(sha) {
+            treeRequests += 1
+            return remoteDb.getTreeIfDifferent(sha)
+          },
+          async *getBlobs(requested, options) {
+            fetched += requested.length
+            yield* remoteDb.getBlobs(requested, options)
+          }
+        },
+        {
+          async verify(): Promise<AuthedContext> {
+            return {
+              ...context,
+              token: 'test',
+              user: {roles: ['admin'], sub: 'admin'}
+            }
+          }
+        }
+      )
+    }
+  })
+  // Dashboards in several tabs ask for the same changed content
+  for (let client = 0; client < 3; client++) {
+    const response = await handle(
+      new Request('http://localhost/api?action=blob', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({shas})
+      }),
+      requestContext()
+    )
+    test.is(response.status, 200)
+    const received = Array<string>()
+    for await (const [sha] of decodeBlobSequence(response.body!))
+      received.push(sha)
+    test.equal(received, shas)
+  }
+  test.is(fetched, shas.length)
+  // Once the instance has them, nothing asks the remote again
+  test.is(treeRequests, 1)
+})
 
 test('serves current content when a read cannot sync with the remote', async () => {
   const cms = createCMS({
