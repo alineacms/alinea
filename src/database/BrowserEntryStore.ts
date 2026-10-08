@@ -46,6 +46,7 @@ export class BrowserEntryStore extends EntryStore {
   #fingerprint: string
   #stored: string | undefined
   #written: Promise<unknown> = Promise.resolve()
+  #cleanup: Promise<void> = Promise.resolve()
 
   static async open(
     config: Config,
@@ -55,18 +56,26 @@ export class BrowserEntryStore extends EntryStore {
     const storage =
       options.storage ??
       indexedDBSnapshotStorage(`${versionedCacheName(name)}-snapshots`)
-    if (!options.storage && globalThis.indexedDB)
-      await cleanupOldCaches(indexedDB, name)
+    // Other caches are deleted in the background, they don't affect this one.
+    const cleanup =
+      !options.storage && globalThis.indexedDB
+        ? cleanupOldCaches(indexedDB, name).catch(() => {})
+        : Promise.resolve()
     const Database = await wasmSqlite()
     const sqlite = await openBase(storage, Database, fingerprint)
-    try {
-      return await BrowserEntryStore.#on(config, sqlite, storage, fingerprint)
-    } catch (error) {
+    const store = await BrowserEntryStore.#on(
+      config,
+      sqlite,
+      storage,
+      fingerprint
+    ).catch(error => {
       if (!baseOf(sqlite)) throw error
       // Start over from an empty database rather than one this build cannot
       // read or derive again.
       return BrowserEntryStore.#on(config, new Database(), storage, fingerprint)
-    }
+    })
+    store.#cleanup = cleanup
+    return store
   }
 
   static async #on(
@@ -78,17 +87,24 @@ export class BrowserEntryStore extends EntryStore {
     const group = baseOf(sqlite)?.group
     sqlite.run(`pragma cache_size = ${cacheSize}`)
     const {database: db, fork} = wasmHandle(sqlite)
+    // Previews fork the store to read a few entries: the default cache of a
+    // database on a base will do, rather than another copy of the store's.
+    async function preview() {
+      const copy = await fork()
+      await copy.database.run(sql`pragma cache_size = -8192`)
+      return copy
+    }
     try {
       // Larger pages read a base in fewer, larger reads. Only applies to a
       // new database.
       await db.run(sql`pragma page_size = 65536`)
       await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
-      const database = new EntryDatabase(config, db, {fork})
+      const database = new EntryDatabase(config, db, {fork: preview})
       // Content stored for another config is derived again for this one,
       // instead of syncing every entry from the remote into an empty
       // database.
       if (group !== undefined && group !== fingerprint)
-        await database.reindex(config)
+        await withoutJournal(sqlite, () => database.reindex(config))
       return new BrowserEntryStore(
         config,
         database,
@@ -133,29 +149,69 @@ export class BrowserEntryStore extends EntryStore {
   #checkpoint(revision: string): string {
     if (!this.#storage.supported() || this.#stored === revision) return revision
     this.#stored = revision
+    const sqlite = this.#sqlite
     const storage = this.#storage
     const group = this.#fingerprint
+    const key = `${revision}-${group}`
     // Checkpoints fork the database, which fails during a transaction. The
     // write itself is not awaited: the database keeps working meanwhile.
-    this.#written = this.database
-      .whileIdle(async () => ({
-        written: storage.checkpoint(this.#sqlite, `${revision}-${group}`, {
-          group,
-          meta: {tree: revision}
-        })
-      }))
-      .then(({written}) => written)
+    const write = (key: string) =>
+      this.database
+        .whileIdle(async () => ({
+          // The base it reads holds every page already, as after opening a
+          // base another worker stored.
+          written: heldPages(sqlite)
+            ? storage.checkpoint(sqlite, key, {group, meta: {tree: revision}})
+            : Promise.resolve(true)
+        }))
+        .then(({written}) => written)
+    // Another worker may have stored this content in other pages, which
+    // the database cannot move onto: it would keep every page it changed in
+    // memory, so it stores a base of its own, which cleanup keeps instead.
+    const written = write(key)
+      .then(
+        written =>
+          written ||
+          baseOf(sqlite)?.key === key ||
+          write(`${key}-${crypto.randomUUID()}`)
+      )
       .then(() => storage.cleanup({keepGroups}))
       .catch(() => {
         if (this.#stored === revision) this.#stored = undefined
       })
+    // A collision writes once more after the first write: close waits for
+    // every checkpoint that is still writing.
+    this.#written = Promise.all([this.#written, written])
     return revision
   }
 
   /** Close once the last checkpoint is stored. */
   override async close(): Promise<void> {
-    await this.#written
+    await Promise.all([this.#cleanup, this.#written])
     await super.close()
+  }
+}
+
+function heldPages(sqlite: WasmSqlite): number {
+  return Number(sqlite.exec('pragma overlay_pages')[0].values[0][0])
+}
+
+/**
+ * Run `task` without a rollback journal. A reindex changes every page, and
+ * the journal would hold the original of each in memory: a second copy of
+ * the database. A failed task leaves the database unusable, which the store
+ * then replaces with an empty one.
+ */
+async function withoutJournal<T>(
+  sqlite: WasmSqlite,
+  task: () => Promise<T>
+): Promise<T> {
+  const [[mode]] = sqlite.exec('pragma journal_mode')[0].values
+  sqlite.run('pragma journal_mode = off')
+  try {
+    return await task()
+  } finally {
+    sqlite.run(`pragma journal_mode = ${mode}`)
   }
 }
 

@@ -8,12 +8,13 @@
  * Requests can pay a fixed overhead, such as a serverless handler that syncs
  * before it answers, and share a bandwidth limit.
  *
- * With --browser it syncs a browser store kept in IndexedDB in Chromium, and
- * reopens it as a next load and as another dashboard build would. --profile
- * lists the functions the browser spent the most time in.
+ * With --browser it syncs a browser store kept in IndexedDB in a worker in
+ * Chromium, as the dashboard does, and reopens it as a next load and as
+ * another dashboard build would. There is no profile of the browser run:
+ * Playwright opens CDP sessions on pages only, not on workers.
  *
  *   bun test/bench/initial-sync.ts [files] [overhead ms] [bandwidth MB/s]
- *     [--browser] [--profile]
+ *     [--browser]
  */
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {createHandler} from '#/backend/Handler.js'
@@ -39,7 +40,6 @@ import {content} from './initial-sync.content.js'
 
 const args = process.argv.slice(2).filter(arg => !arg.startsWith('--'))
 const browser = process.argv.includes('--browser')
-const profile = process.argv.includes('--profile')
 const size = Number(args[0] ?? 20_000)
 const overhead = Number(args[1] ?? 0)
 const bandwidth = Number(args[2] ?? 0) * 1024 * 1024
@@ -74,43 +74,21 @@ async function browserStore() {
   return {store, handle}
 }
 
-interface ProfileNode {
-  id: number
-  callFrame: {functionName: string; url: string; lineNumber: number}
-}
-
-/** Print the functions the browser spent the most time in themselves. */
-function printProfile(result: {
-  nodes: Array<ProfileNode>
-  samples?: Array<number>
-  timeDeltas?: Array<number>
-}) {
-  const nodes = new Map(result.nodes.map(node => [node.id, node]))
-  const self = new Map<string, number>()
-  const {samples = [], timeDeltas = []} = result
-  for (const [i, id] of samples.entries()) {
-    const {functionName, url, lineNumber} = nodes.get(id)!.callFrame
-    const name = `${functionName || '(anonymous)'} ${url.split('/').pop()}:${lineNumber}`
-    self.set(name, (self.get(name) ?? 0) + (timeDeltas[i] ?? 0) / 1000)
-  }
-  const top = [...self].sort((a, b) => b[1] - a[1]).slice(0, 30)
-  console.log('\nself time')
-  for (const [name, ms] of top)
-    console.log(
-      `${name.slice(0, 64).padEnd(66)} ${ms.toFixed(0).padStart(6)} ms`
+const bundles = new Map<string, Promise<Blob>>()
+function bundle(name: 'page' | 'worker') {
+  if (!bundles.has(name))
+    bundles.set(
+      name,
+      Bun.build({
+        entrypoints: [join(import.meta.dir, `initial-sync.${name}.ts`)],
+        target: 'browser',
+        define: {'process.env.NODE_ENV': '"production"'}
+      }).then(result => {
+        if (!result.success) throw new AggregateError(result.logs)
+        return result.outputs[0]
+      })
     )
-}
-
-let built: Promise<Blob> | undefined
-function page() {
-  return (built ??= Bun.build({
-    entrypoints: [join(import.meta.dir, 'initial-sync.page.ts')],
-    target: 'browser',
-    define: {'process.env.NODE_ENV': '"production"'}
-  }).then(result => {
-    if (!result.success) throw new AggregateError(result.logs)
-    return result.outputs[0]
-  }))
+  return bundles.get(name)!
 }
 
 function sleep(ms: number) {
@@ -186,7 +164,8 @@ try {
         return new Response('<script type="module" src="/page.js"></script>', {
           headers: {'content-type': 'text/html'}
         })
-      if (pathname === '/page.js') return new Response(await page())
+      if (pathname === '/page.js') return new Response(await bundle('page'))
+      if (pathname === '/worker.js') return new Response(await bundle('worker'))
       const action = new URL(request.url).searchParams.get('action') ?? '?'
       const start = performance.now()
       await sleep(overhead)
@@ -220,18 +199,13 @@ try {
       await tab.goto(`http://localhost:${http.port}/`)
       await tab.waitForFunction(() => 'bench' in window)
       requests.clear()
-      const cdp = profile ? await tab.context().newCDPSession(tab) : undefined
-      await cdp?.send('Profiler.enable')
-      await cdp?.send('Profiler.setSamplingInterval', {interval: 200})
-      await cdp?.send('Profiler.start')
       const result = await tab.evaluate(() => window.bench())
-      if (cdp) printProfile((await cdp.send('Profiler.stop')).profile)
       console.log(`browser (${result.count} entries indexed)`)
       for (const [label, ms] of Object.entries(result.timings))
         console.log(`${label.padEnd(52)} ${String(ms).padStart(6)} ms`)
       console.log(`requests: ${result.requests.join(', ')}`)
       console.log(
-        `IndexedDB: ${result.idb.puts} puts, ${(result.idb.bytes / 1024 / 1024).toFixed(1)} MB, transactions ${result.idb.transactions.join(' ')} ms`
+        `IndexedDB: ${result.idb.writes} writes, ${(result.idb.bytes / 1024 / 1024).toFixed(1)} MB, transactions ${result.idb.transactions.join(' ')} ms`
       )
     } finally {
       await instance.close()

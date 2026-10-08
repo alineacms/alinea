@@ -288,13 +288,16 @@ test('queries read indexed tables, also after a sync changed the rows', async ()
   await database.close()
 })
 
-test('lookups narrowed by id, parent or url skip the type index', async () => {
+test('lookups by id, parent or url search their index once analyzed', async () => {
   const {log, db} = await recordingDatabase()
   await EntryDatabase.createSchema(db, config, 'empty')
   const database = new EntryDatabase(config, db)
   await database.syncWith(await source(base))
+  // Plan on the same rows: a sync gathers the statistics the planner uses.
   using planner = new Database(':memory:')
-  await EntryDatabase.createSchema(connectNative(planner), config, 'empty')
+  const native = connectNative(planner)
+  await EntryDatabase.createSchema(native, config, 'empty')
+  await new EntryDatabase(config, native).syncWith(await source(base))
   const lookups: Record<string, GraphQuery> = {
     id: {first: true, id: 'team', type: Page, select: Entry.id},
     parentId: {parentId: 'about', type: Page, select: Entry.id},
@@ -316,4 +319,17 @@ test('lookups narrowed by id, parent or url skip the type index', async () => {
     }).toEqual({name, plans: []})
   }
   await database.close()
+})
+
+test('opening a database without statistics gathers them', async () => {
+  using native = new Database(':memory:')
+  const db = connectNative(native)
+  await EntryDatabase.createSchema(db, config, 'empty')
+  await new EntryDatabase(config, db).syncWith(await source(base))
+  native.run('delete from sqlite_stat1')
+  await EntryDatabase.createSchema(db, config, 'empty')
+  const stats = native
+    .query("select 1 from sqlite_stat1 where tbl = 'alinea_entry_index'")
+    .all()
+  expect(stats.length).toBeGreaterThan(0)
 })

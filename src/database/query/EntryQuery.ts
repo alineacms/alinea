@@ -388,19 +388,7 @@ export function compileEntryQuery(
       if (!name) throw new Error('Query type is not in the configured schema')
       return name
     })
-    // Without statistics SQLite weighs the type index like the id, parent
-    // and url indexes and picks it, which reads every entry of the type: a
-    // unary + keeps the type out of index selection when those narrow the
-    // rows.
-    const narrowed =
-      edge !== undefined ||
-      query.id !== undefined ||
-      (query.parentId !== undefined && query.parentId !== null) ||
-      query.url !== undefined
-    const type = membership.index('type')
-    conditions.push(
-      compileCondition(narrowed ? sql`+${type}` : type, {in: names})
-    )
+    conditions.push(compileCondition(membership.index('type'), {in: names}))
   }
   const location = Array.isArray(query.location)
     ? query.location

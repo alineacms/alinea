@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
+import {createEntryRow} from '#/core/util/EntryRows.js'
 import type {Source} from '#/core/source/Source.js'
 import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
@@ -133,6 +134,58 @@ test('stores on one base change apart', async () => {
   } finally {
     await next.close()
   }
+})
+
+test('previews an entry over a store on a base', async () => {
+  const storage = memorySnapshotStorage()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  await first.close()
+  const store = await BrowserEntryStore.open(pages(false), options)
+  try {
+    const entry = await store.get({id: 'page', select: Entry})
+    const {rowHash: _rowHash, fileHash: _fileHash, ...base} = entry
+    const previewed = await createEntryRow(
+      pages(false),
+      {...base, title: 'Preview', data: {...entry.data, title: 'Preview'}},
+      entry.status
+    )
+    const titles = (preview?: Entry) =>
+      store.find({
+        select: Entry.title,
+        preview: preview && {entry: preview}
+      })
+    expect(await titles(previewed)).toEqual(['Preview'])
+    expect(await titles()).toEqual(['Page'])
+  } finally {
+    await store.close()
+  }
+})
+
+test('stores its own base when another wrote the content in other pages', async () => {
+  const storage = memorySnapshotStorage()
+  const options = {name, fingerprint: 'config-1', storage}
+  const source = await pageSource()
+  const a = await BrowserEntryStore.open(pages(false), options)
+  const b = await BrowserEntryStore.open(pages(false), options)
+  // Through another revision first, b lays out the same content differently.
+  const other = await createEntrySource(pages(false), [
+    {id: 'other', type: 'Page', index: 'a1', data: {title: 'Other'}}
+  ])
+  await b.syncWith(other)
+  await a.syncWith(source)
+  await a.close()
+  const revision = await b.syncWith(source)
+  await b.close()
+  const keys = (await storage.list()).map(base => base.key)
+  expect(keys).toHaveLength(1)
+  expect(keys[0]).toStartWith(`${revision}-config-1-`)
+  // A store opened on that base holds nothing new to store.
+  const c = await BrowserEntryStore.open(pages(false), options)
+  await c.sync()
+  await c.close()
+  expect((await storage.list()).map(base => base.key)).toEqual(keys)
 })
 
 test('starts empty from a base that is not a database', async () => {

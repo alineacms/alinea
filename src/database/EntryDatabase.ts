@@ -20,7 +20,7 @@ import {
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {TaskQueue} from '#/core/util/Async.js'
-import {eq, inArray, Rollback, sql, type Database} from 'rado'
+import {eq, getTable, inArray, Rollback, sql, type Database} from 'rado'
 import {DatabaseSource} from './DatabaseSource.js'
 import {
   DatabaseMetadataTable,
@@ -240,6 +240,9 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         tree: revision === ReadonlyTree.EMPTY.sha ? ReadonlyTree.EMPTY : null
       })
     await syncFieldIndexes(db, config)
+    // A database stored before statistics were kept has none until its
+    // content changes.
+    await analyze(db)
   }
 
   /**
@@ -267,6 +270,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           recordsTree: this.#recordsTree
         })
         this.#tree = tree
+        if (changed.length > 0) await this.#optimize()
         return changed
       })
       const change = {revision: tree.sha, changedEntryIds}
@@ -301,7 +305,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         const {tree} = await this.#readTreeState()
         if (!tree)
           throw new Error('Cannot reindex a database without a source tree')
-        return this.#db.transaction(
+        const reindexed = await this.#db.transaction(
           async tx => {
             // The stored payloads are the exact source files of the recorded
             // tree, so they feed the sync back in without an external source.
@@ -361,6 +365,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           },
           {async: true}
         )
+        await this.#optimize()
+        return reindexed
       })
       this.#tree = result.tree
       // The revision stayed, the indexed text did not.
@@ -502,6 +508,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   [Symbol.asyncDispose](): Promise<void> {
     return this.close()
+  }
+
+  async #optimize(): Promise<void> {
+    if (!this.#transactional) await analyze(this.#db)
   }
 
   getRevision(): Promise<string> {
@@ -687,4 +697,26 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       if (free?.freelist_count) await this.#db.run(sql`vacuum`)
     })
   }
+}
+
+/**
+ * Gather statistics for the planner, on tables that have none or grew a lot:
+ * without them it weighs every index alike and can pick one that reads every
+ * entry of a type instead of the few with an id. Best effort: a failure keeps
+ * the statistics there were.
+ */
+async function analyze(db: Database): Promise<void> {
+  try {
+    // SQLite before 3.46 analyzes every row without a limit.
+    await db.run(sql`pragma analysis_limit = 400`)
+    const entries = getTable(EntryIndexTable).name
+    const stats = await db.get(
+      sql`select 1 from sqlite_master where name = 'sqlite_stat1'`
+    )
+    const analyzed =
+      stats &&
+      (await db.get(sql`select 1 from sqlite_stat1 where tbl = ${entries}`))
+    // Older SQLite only optimizes tables it has statistics for.
+    await db.run(analyzed ? sql`pragma optimize = 0x10002` : sql`analyze`)
+  } catch {}
 }
