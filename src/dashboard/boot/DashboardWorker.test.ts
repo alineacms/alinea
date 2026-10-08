@@ -2,6 +2,10 @@ import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
+import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
+import {versionedCacheName} from '#/database/Version.js'
+import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
+import {FakeLocks} from '#test/FakeLocks.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
@@ -756,9 +760,124 @@ test('a new dashboard build syncs before replacing a store without content', asy
   }
 })
 
-/** Install an empty IndexedDB as a worker has it, until the returned call. */
+test('rebuilds a damaged content cache from the remote', async () => {
+  const restore = installIndexedDB()
+  try {
+    const fixture = new FSSource('test/fixtures/demo')
+    const remoteDB = new LocalDB(cms.config, fixture)
+    await remoteDB.sync()
+    const client = createTestConnection(remoteDB)
+    const first = new DashboardWorker()
+    await first.load('build-1', cms.config, client)
+    await first.sync()
+    // The first worker ends.
+    await (await first.db).close()
+    installedLocks?.drop(cacheLock)
+    await damageCache()
+
+    const worker = new DashboardWorker()
+    await worker.load('build-1', cms.config, client)
+    await worker.sync()
+    const db = await worker.db
+    expect(db).toBeInstanceOf(BrowserEntryStore)
+    expect(
+      await db.get({type: cms.schema.DemoRecipe, path: 'chocolate-chip'})
+    ).toMatchObject({title: 'Chocolate chip'})
+  } finally {
+    restore()
+  }
+})
+
+test('starts from the cache another worker holds, without storing', async () => {
+  const restore = installIndexedDB()
+  try {
+    const fixture = new FSSource('test/fixtures/demo')
+    const remoteDB = new LocalDB(cms.config, fixture)
+    await remoteDB.sync()
+    const client = createTestConnection(remoteDB)
+    const holder = new DashboardWorker()
+    await holder.load('build-1', cms.config, client)
+    await holder.sync()
+    expect(await holder.db).toBeInstanceOf(BrowserEntryStore)
+
+    // A worker of another build, in a realm of its own.
+    globalThis.indexedDB = new Proxy(globalThis.indexedDB, {})
+    let requestedBlobs = 0
+    const counting: LocalConnection = {
+      ...client,
+      async *getBlobs(shas, options) {
+        requestedBlobs += shas.length
+        yield* client.getBlobs(shas, options)
+      }
+    }
+    const other = new DashboardWorker(new MemorySource())
+    await other.load('build-2', cms.config, counting)
+    const db = await other.db
+    expect(db).not.toBeInstanceOf(BrowserEntryStore)
+    // The content is there before syncing, and the sync fetches nothing.
+    expect(
+      await db.get({type: cms.schema.DemoRecipe, path: 'chocolate-chip'})
+    ).toMatchObject({title: 'Chocolate chip'})
+    await other.sync()
+    expect(requestedBlobs).toBe(0)
+  } finally {
+    restore()
+  }
+})
+
+test('waits a moment for the worker of a replaced build to end', async () => {
+  const restore = installIndexedDB()
+  try {
+    const fixture = new FSSource('test/fixtures/demo')
+    const remoteDB = new LocalDB(cms.config, fixture)
+    await remoteDB.sync()
+    const client = createTestConnection(remoteDB)
+    const outdated = new DashboardWorker()
+    await outdated.load('build-1', cms.config, client)
+    await outdated.sync()
+    const current = new DashboardWorker(new MemorySource())
+    const load = current.load('build-2', cms.config, client)
+    // The tab of the older build reloads into the new one.
+    await (await outdated.db).close()
+    installedLocks?.drop(cacheLock)
+    await load
+    expect(await current.db).toBeInstanceOf(BrowserEntryStore)
+  } finally {
+    restore()
+  }
+})
+
+/** Overwrite the cached pages after the first, which hold the tables. */
+async function damageCache(): Promise<void> {
+  const request = globalThis.indexedDB.open(cacheLock)
+  const cache = await requestResult(request)
+  const transaction = cache.transaction('chunks', 'readwrite')
+  const chunks = transaction.objectStore('chunks')
+  const keys = await requestResult(chunks.getAllKeys())
+  expect(keys.length).toBeGreaterThan(1)
+  for (const key of keys.slice(1))
+    chunks.put(new Uint8Array(65536).fill(7), key)
+  await transactionComplete(transaction)
+  cache.close()
+}
+
+/** The name of the dashboard cache, and of the lock that holds it. */
+const cacheLock = `${versionedCacheName('alinea-entry-database')}-pages`
+
+/** The Web Locks the last `installIndexedDB` installed. */
+let installedLocks: FakeLocks | undefined
+
+/**
+ * Install an empty IndexedDB and Web Locks as a worker has them, until the
+ * returned call.
+ */
 function installIndexedDB(): () => void {
-  const globals = {indexedDB: new IDBFactory(), IDBKeyRange}
+  installedLocks = new FakeLocks()
+  const globals = {
+    indexedDB: new IDBFactory(),
+    IDBKeyRange,
+    navigator: {...globalThis.navigator, locks: installedLocks}
+  }
   const previous = new Map<string, PropertyDescriptor | undefined>()
   for (const [key, value] of Object.entries(globals)) {
     previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key))

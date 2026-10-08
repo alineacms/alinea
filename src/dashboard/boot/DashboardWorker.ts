@@ -13,7 +13,11 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Source} from '#/core/source/Source.js'
-import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
+import {
+  BrowserEntryStore,
+  holdCache,
+  isCorruptDatabaseError
+} from '#/database/BrowserEntryStore.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import pLimit from 'p-limit'
 import {
@@ -24,6 +28,12 @@ import {
 } from './ActivityEvent.js'
 
 const remote = pLimit(1)
+const cacheName = 'alinea-entry-database'
+/**
+ * How long a worker waits for the cache before it starts from a snapshot:
+ * the worker of a build that was just replaced takes a moment to end.
+ */
+const cacheWait = 1000
 const syncInterval = 120_000
 
 interface QueuedMutation {
@@ -52,8 +62,8 @@ export class DashboardWorker extends EventTarget {
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<LoadedDashboard>()
   #defer: (() => Promise<void>) | undefined
-  /** The store kept in IndexedDB, which a replacement takes over from. */
-  #stored: BrowserEntryStore | undefined
+  /** Whether this worker holds the cache, see #holdsCache. */
+  #cacheHeld: Promise<boolean> | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
   #activities: Array<Activity> = []
@@ -345,25 +355,16 @@ export class DashboardWorker extends EventTarget {
     this.#localDB = undefined
     this.#localClient = undefined
     try {
-      // A replacement takes over the stored content from the replaced
-      // store's memory, which then stops storing without waiting for its
-      // work in flight.
-      const db = globalThis.indexedDB
-        ? await BrowserEntryStore.open(config, {
-            name: 'alinea-entry-database',
-            revision,
-            replaces: this.#stored
-          })
-        : await EntryStore.memory(config, this.#fallbackSource())
-      if (db instanceof BrowserEntryStore) this.#stored = db
-      // The replaced store closes in the background: awaiting it here would
-      // stall the replacement behind the old store's in-flight work.
-      if (this.#defer)
-        void this.#defer().catch(() => {
-          // The replaced database finishes outstanding work before closing.
-        })
+      await this.#defer?.()
       this.#defer = undefined
-      const cacheFailure = await this.#syncLocalIndex(db)
+      let db = await this.#open(config, revision, false)
+      let cacheFailure = await this.#syncLocalIndex(db)
+      // Damaged cached content is not shown: start over from the remote.
+      if (cacheFailure && isCorruptDatabaseError(cacheFailure.error)) {
+        await db.close()
+        db = await this.#open(config, revision, true)
+        cacheFailure = await this.#syncLocalIndex(db)
+      }
       // A replacement without cached content syncs before it takes over, so
       // the dashboard never swaps from a populated store to an empty one.
       // This runs outside the shared remote slot: a sync of the superseded
@@ -386,9 +387,13 @@ export class DashboardWorker extends EventTarget {
       })
       this.#defer = async () => {
         unsubscribe()
-        // A replacement took over storing from a superseded store.
-        if (db instanceof BrowserEntryStore) await db.abandon()
-        else await db.close()
+        // The replacement opens the cache once this store stopped storing.
+        if (db instanceof BrowserEntryStore) await db.release()
+        // Awaiting the close would stall the replacement behind the
+        // replaced store's work in flight.
+        void db.close().catch(() => {
+          // The replaced database finishes outstanding work before closing.
+        })
       }
     } catch (cause) {
       this.#currentRevision = undefined
@@ -396,6 +401,44 @@ export class DashboardWorker extends EventTarget {
       nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
     }
+  }
+
+  /**
+   * Open a store with its content cached in IndexedDB. While another worker
+   * holds the cache, start from a copy of what it holds without storing,
+   * and else, or if the cache fails, keep the content in memory only.
+   */
+  async #open(
+    config: Config,
+    revision: string,
+    reset: boolean
+  ): Promise<EntryStore> {
+    if (globalThis.indexedDB) {
+      const options = {name: cacheName, revision}
+      if (await this.#holdsCache()) {
+        try {
+          return await BrowserEntryStore.open(config, {...options, reset})
+        } catch (error) {
+          console.warn('Failed to open the content cache', error)
+        }
+      } else if (!reset) {
+        // A damaged copy is not read again.
+        const snapshot = await BrowserEntryStore.snapshot(config, options)
+        if (snapshot) return snapshot
+      }
+    }
+    return EntryStore.memory(config, this.#fallbackSource())
+  }
+
+  /**
+   * Whether this worker holds the cache, which it then keeps for as long as
+   * it runs: no other worker writes the cache meanwhile, such as one of
+   * another dashboard build. A worker that does not hold it stores nothing
+   * until the dashboard loads again.
+   */
+  #holdsCache(): Promise<boolean> {
+    this.#cacheHeld ??= holdCache(cacheName, {wait: cacheWait})
+    return this.#cacheHeld
   }
 
   #fallbackSource(): Source {
