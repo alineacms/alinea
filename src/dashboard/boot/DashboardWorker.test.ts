@@ -8,7 +8,7 @@ import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
 import {expect, test} from 'bun:test'
-import {IDBFactory, IDBKeyRange, indexedDB} from 'fake-indexeddb'
+import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
@@ -641,137 +641,75 @@ async function createFailedMutationFixture() {
 }
 
 test('a sync queued on a superseded browser store syncs the replacement', async () => {
-  const restore = installIndexedDB()
-  try {
-    const fixture = new FSSource('test/fixtures/demo')
-    const remoteDB = new LocalDB(cms.config, fixture)
-    await remoteDB.sync()
-    const baseClient = createTestConnection(remoteDB)
-    let releaseFirstSync: (() => void) | undefined
-    let markFirstSyncStarted: (() => void) | undefined
-    const firstSyncStarted = new Promise<void>(resolve => {
-      markFirstSyncStarted = resolve
-    })
-    const holdFirstSync = new Promise<void>(resolve => {
-      releaseFirstSync = resolve
-    })
-    let secondRemoteSyncs = 0
-    const firstClient: LocalConnection = {
-      ...baseClient,
-      async getTreeIfDifferent(sha) {
-        markFirstSyncStarted?.()
-        await holdFirstSync
-        return baseClient.getTreeIfDifferent(sha)
-      }
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let releaseFirstSync: (() => void) | undefined
+  let markFirstSyncStarted: (() => void) | undefined
+  const firstSyncStarted = new Promise<void>(resolve => {
+    markFirstSyncStarted = resolve
+  })
+  const holdFirstSync = new Promise<void>(resolve => {
+    releaseFirstSync = resolve
+  })
+  let secondRemoteSyncs = 0
+  const firstClient: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      markFirstSyncStarted?.()
+      await holdFirstSync
+      return baseClient.getTreeIfDifferent(sha)
     }
-    const secondClient: LocalConnection = {
-      ...baseClient,
-      getTreeIfDifferent(sha) {
-        secondRemoteSyncs += 1
-        return baseClient.getTreeIfDifferent(sha)
-      }
-    }
-    const worker = new DashboardWorker()
-    await worker.load('superseded-first', cms.config, firstClient)
-    const first = worker.sync()
-    await firstSyncStarted
-    // Queued behind the held sync, this reaches the first store only after
-    // the replacement below has abandoned it.
-    const queued = worker.sync()
-    await worker.load('superseded-second', cms.config, secondClient)
-
-    releaseFirstSync?.()
-    await first
-    const sha = await queued
-    expect(sha).toBe(await worker.sha())
-    expect(secondRemoteSyncs).toBeGreaterThanOrEqual(1)
-  } finally {
-    restore()
   }
-})
-
-test('a new dashboard build keeps the cached content', async () => {
-  const restore = installIndexedDB()
-  try {
-    const fixture = new FSSource('test/fixtures/demo')
-    const remoteDB = new LocalDB(cms.config, fixture)
-    await remoteDB.sync()
-    const baseClient = createTestConnection(remoteDB)
-    let remoteSyncs = 0
-    const client: LocalConnection = {
-      ...baseClient,
-      getTreeIfDifferent(sha) {
-        remoteSyncs += 1
-        return baseClient.getTreeIfDifferent(sha)
-      }
+  const secondClient: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      secondRemoteSyncs += 1
+      return baseClient.getTreeIfDifferent(sha)
     }
-    const worker = new DashboardWorker()
-    await worker.load('build-1', cms.config, client)
-    await worker.sync()
-    expect(remoteSyncs).toBe(1)
-    const query = {type: cms.schema.DemoRecipe, path: 'chocolate-chip'}
-
-    // The cached content carries over: no remote sync is needed to answer.
-    await worker.load('build-2', cms.config, client)
-    expect(remoteSyncs).toBe(1)
-    expect(await (await worker.db).get(query)).toMatchObject({
-      title: 'Chocolate chip'
-    })
-  } finally {
-    restore()
   }
+  const worker = new DashboardWorker()
+  await worker.load('superseded-first', cms.config, firstClient)
+  const first = worker.sync()
+  await firstSyncStarted
+  // Queued behind the held sync, this reaches the first store only after
+  // the replacement below has abandoned it.
+  const queued = worker.sync()
+  await worker.load('superseded-second', cms.config, secondClient)
+
+  releaseFirstSync?.()
+  await first
+  const sha = await queued
+  expect(sha).toBe(await worker.sha())
+  expect(secondRemoteSyncs).toBeGreaterThanOrEqual(1)
 })
 
 test('a new dashboard build syncs before replacing a store without content', async () => {
-  const restore = installIndexedDB()
-  try {
-    const fixture = new FSSource('test/fixtures/demo')
-    const remoteDB = new LocalDB(cms.config, fixture)
-    await remoteDB.sync()
-    const baseClient = createTestConnection(remoteDB)
-    let remoteSyncs = 0
-    const client: LocalConnection = {
-      ...baseClient,
-      getTreeIfDifferent(sha) {
-        remoteSyncs += 1
-        return baseClient.getTreeIfDifferent(sha)
-      }
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let remoteSyncs = 0
+  const client: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      remoteSyncs += 1
+      return baseClient.getTreeIfDifferent(sha)
     }
-    const worker = new DashboardWorker()
-    // Replaced before it ever synced, the store hands over no content.
-    await worker.load('build-1', cms.config, client)
-    expect(remoteSyncs).toBe(0)
-    await worker.load('build-2', cms.config, client)
-    expect(remoteSyncs).toBe(1)
-    expect(
-      await (
-        await worker.db
-      ).get({
-        type: cms.schema.DemoRecipe,
-        path: 'chocolate-chip'
-      })
-    ).toMatchObject({title: 'Chocolate chip'})
-  } finally {
-    restore()
   }
-})
-
-/** Install an empty IndexedDB as a worker has it, until the returned call. */
-function installIndexedDB(): () => void {
-  const globals = {indexedDB: new IDBFactory(), IDBKeyRange}
-  const previous = new Map<string, PropertyDescriptor | undefined>()
-  for (const [key, value] of Object.entries(globals)) {
-    previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
-    Object.defineProperty(globalThis, key, {
-      value,
-      configurable: true,
-      writable: true
+  const worker = new DashboardWorker()
+  // Replaced before it ever synced, the store hands over no content.
+  await worker.load('build-1', cms.config, client)
+  expect(remoteSyncs).toBe(0)
+  await worker.load('build-2', cms.config, client)
+  expect(remoteSyncs).toBe(1)
+  expect(
+    await (
+      await worker.db
+    ).get({
+      type: cms.schema.DemoRecipe,
+      path: 'chocolate-chip'
     })
-  }
-  return () => {
-    for (const [key, descriptor] of previous) {
-      if (descriptor) Object.defineProperty(globalThis, key, descriptor)
-      else delete (globalThis as Record<string, unknown>)[key]
-    }
-  }
-}
+  ).toMatchObject({title: 'Chocolate chip'})
+})

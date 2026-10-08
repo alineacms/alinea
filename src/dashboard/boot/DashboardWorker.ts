@@ -52,8 +52,6 @@ export class DashboardWorker extends EventTarget {
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<LoadedDashboard>()
   #defer: (() => Promise<void>) | undefined
-  /** The store kept in IndexedDB, which a replacement takes over from. */
-  #stored: BrowserEntryStore | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
   #activities: Array<Activity> = []
@@ -61,6 +59,7 @@ export class DashboardWorker extends EventTarget {
   #blocked = false
   #syncInterval: ReturnType<typeof setInterval> | undefined
 
+  /** Keep the content in memory with `source`, instead of in the browser. */
   constructor(source?: Source) {
     super()
     this.#source = source
@@ -345,17 +344,12 @@ export class DashboardWorker extends EventTarget {
     this.#localDB = undefined
     this.#localClient = undefined
     try {
-      // A replacement takes over the stored content from the replaced
-      // store's memory, which then stops storing without waiting for its
-      // work in flight.
-      const db = globalThis.indexedDB
-        ? await BrowserEntryStore.open(config, {
+      const db = this.#source
+        ? await EntryStore.memory(config, this.#source)
+        : await BrowserEntryStore.open(config, {
             name: 'alinea-entry-database',
-            revision,
-            replaces: this.#stored
+            fingerprint: revision
           })
-        : await EntryStore.memory(config, this.#fallbackSource())
-      if (db instanceof BrowserEntryStore) this.#stored = db
       // The replaced store closes in the background: awaiting it here would
       // stall the replacement behind the old store's in-flight work.
       if (this.#defer)
@@ -386,9 +380,7 @@ export class DashboardWorker extends EventTarget {
       })
       this.#defer = async () => {
         unsubscribe()
-        // A replacement took over storing from a superseded store.
-        if (db instanceof BrowserEntryStore) await db.abandon()
-        else await db.close()
+        await db.close()
       }
     } catch (cause) {
       this.#currentRevision = undefined
@@ -396,12 +388,6 @@ export class DashboardWorker extends EventTarget {
       nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
     }
-  }
-
-  #fallbackSource(): Source {
-    if (!this.#source)
-      throw new Error('A source is required when IndexedDB is unavailable')
-    return this.#source
   }
 
   async #syncLocalIndex(db: EntryStore): Promise<CacheFailure | undefined> {

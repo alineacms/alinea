@@ -4,7 +4,7 @@ import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
 import {cms} from './initial-sync.cms.js'
 
 const {config} = cms
-const options = {name: 'alinea-sync-bench', revision: 'bench'}
+const options = {name: 'alinea-sync-bench', fingerprint: 'bench'}
 
 const idb = {puts: 0, bytes: 0, transactions: Array<number>()}
 const transaction = IDBDatabase.prototype.transaction
@@ -69,13 +69,13 @@ async function run() {
   mark('count entries right after the sync')
   await store.close()
   mark('close')
-  // Storing a database under the same name waits for its pages to be stored.
+  // Closing waits for the checkpoint of the sync.
   const reopened = await BrowserEntryStore.open(config, options)
-  mark('reopen from IndexedDB once stored (next load)')
+  mark('reopen the newest base (next load)')
   await reopened.close()
-  const rebuild = {...options, revision: 'another build'}
+  const rebuild = {...options, fingerprint: 'another build'}
   const rebuilt = await BrowserEntryStore.open(config, rebuild)
-  mark('reopen with another build (derives every entry again)')
+  mark('reopen with another config (derives every entry again)')
   await rebuilt.close()
   await (await BrowserEntryStore.open(config, rebuild)).close()
   mark('reopen once stored')

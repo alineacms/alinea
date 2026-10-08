@@ -1,12 +1,11 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {MemorySource} from '#/core/source/MemorySource.js'
 import * as Comlink from 'comlink'
 import {ActivityEvent} from './ActivityEvent.js'
 import type {ConfigGenerator} from './Boot.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
 export async function loadWorker(gen: ConfigGenerator) {
-  const worker = new DashboardWorker(new MemorySource())
+  const worker = new DashboardWorker()
 
   addEventListener('connect', event => {
     if (!(event instanceof MessageEvent)) return

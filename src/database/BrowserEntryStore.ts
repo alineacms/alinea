@@ -1,252 +1,201 @@
 import type {Config} from '#/core/Config.js'
-import type {Mutation} from '#/core/db/Mutation.js'
-import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {TaskQueue} from '#/core/util/Async.js'
-import type {Storage} from '@alinea/sqlite-wasm/Database.js'
-import {indexedDBStorage} from '@alinea/sqlite-wasm/indexeddb'
-import {sql, type Database} from 'rado'
-import {versionedCacheName} from './Version.js'
+import type {Database as WasmSqlite} from '@alinea/sqlite-wasm/Database.js'
+import {
+  baseOf,
+  indexedDBSnapshotStorage,
+  type SnapshotStorage
+} from '@alinea/sqlite-wasm/snapshots'
+import {sql} from 'rado'
+import {databaseVersion, versionedCacheName} from './Version.js'
 import {EntryDatabase} from './EntryDatabase.js'
 import {EntryStore} from './EntryStore.js'
 import {DatabaseSource} from './DatabaseSource.js'
-import {
-  syncWasmDatabase,
-  type WasmDatabaseHandle
-} from './driver/WasmDatabase.js'
+import {wasmHandle, wasmSqlite} from './driver/WasmDatabase.js'
 
-/** The dashboard build that last derived the stored entries. */
-const buildTable = sql.identifier('alinea_dashboard_build')
+/**
+ * Page cache in KiB. Pages of a base are read from IndexedDB as queries need
+ * them, at 0.5 to 2 ms each: a scan that does not fit the cache reads every
+ * page again each time.
+ */
+const cacheSize = -65536
+
+/** Bases of this many configs are kept; the newest is always among them. */
+const keepGroups = 2
 
 export interface BrowserEntryStoreOptions {
   name: string
-  revision: string
-  /**
-   * The store this one replaces, such as one of a previous dashboard build:
-   * its content carries over from memory instead of loading it again, and it
-   * stops storing without waiting for its work in flight.
-   */
-  replaces?: BrowserEntryStore
-  /** The IndexedDB implementation, the global one by default. */
-  indexedDB?: IDBFactory
-  IDBKeyRange?: typeof IDBKeyRange
+  /** Stores of one config fingerprint open the bases it wrote. */
+  fingerprint: string
+  /** Where bases are kept, Blobs in IndexedDB by default. */
+  storage?: SnapshotStorage
 }
 
 /**
- * WASM entry store kept in IndexedDB: every commit stores the pages it
- * changed.
+ * WASM entry store on a copy-on-write overlay over the newest stored base:
+ * it reads pages from the base as queries need them, and keeps its changes
+ * in memory. Every sync stores them as a new base in the background, which
+ * the next store opens; the stored bases never change, so stores of any
+ * number of workers and dashboard builds can use them at once.
  */
 export class BrowserEntryStore extends EntryStore {
-  #handle: WasmDatabaseHandle
-  #indexedDB: IDBFactory
-  #baseName: string
-  #storageName: string
-  #persistQueue = new TaskQueue()
-  #closed = false
-  #detached = false
+  #sqlite: WasmSqlite
+  #storage: SnapshotStorage
+  #fingerprint: string
+  #stored: string | undefined
+  #written: Promise<unknown> = Promise.resolve()
 
   static async open(
     config: Config,
-    options: BrowserEntryStoreOptions,
-    retried = false
+    options: BrowserEntryStoreOptions
   ): Promise<BrowserEntryStore> {
-    const factory = options.indexedDB ?? indexedDB
-    const storageName = storageNameOf(options.name)
-    const storage = indexedDBStorage(storageName, {
-      indexedDB: factory,
-      IDBKeyRange: options.IDBKeyRange ?? IDBKeyRange
-    })
-    let handle: WasmDatabaseHandle | undefined
+    const {name, fingerprint} = options
+    const storage =
+      options.storage ??
+      indexedDBSnapshotStorage(`${versionedCacheName(name)}-snapshots`)
+    if (!options.storage && globalThis.indexedDB)
+      await cleanupOldCaches(indexedDB, name)
+    const Database = await wasmSqlite()
+    const sqlite = await openBase(storage, Database, fingerprint)
     try {
-      handle = options.replaces
-        ? await options.replaces.#handOver(storage)
-        : await syncWasmDatabase(storage)
-      const db = handle.database
-      // IndexedDB stores one record per page: larger pages store and load a
-      // large database several times faster. Only applies to a new database.
+      return await BrowserEntryStore.#on(config, sqlite, storage, fingerprint)
+    } catch (error) {
+      if (!baseOf(sqlite)) throw error
+      // Start over from an empty database rather than one this build cannot
+      // read or derive again.
+      return BrowserEntryStore.#on(config, new Database(), storage, fingerprint)
+    }
+  }
+
+  static async #on(
+    config: Config,
+    sqlite: WasmSqlite,
+    storage: SnapshotStorage,
+    fingerprint: string
+  ): Promise<BrowserEntryStore> {
+    const group = baseOf(sqlite)?.group
+    sqlite.run(`pragma cache_size = ${cacheSize}`)
+    const {database: db, fork} = wasmHandle(sqlite)
+    try {
+      // Larger pages read a base in fewer, larger reads. Only applies to a
+      // new database.
       await db.run(sql`pragma page_size = 65536`)
-      const stored = await storedBuild(db)
       await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
-      const database = new EntryDatabase(config, db, {fork: handle.fork})
-      // Content stored by another dashboard build is derived again with this
-      // build's config, instead of syncing every entry from the remote into
-      // an empty database.
-      if (stored !== undefined && stored !== options.revision)
+      const database = new EntryDatabase(config, db, {fork})
+      // Content stored for another config is derived again for this one,
+      // instead of syncing every entry from the remote into an empty
+      // database.
+      if (group !== undefined && group !== fingerprint)
         await database.reindex(config)
-      if (stored !== options.revision)
-        await db.run(
-          sql`insert or replace into ${buildTable} (id, revision)
-            values (1, ${options.revision})`
-        )
       return new BrowserEntryStore(
         config,
         database,
-        handle,
-        factory,
-        options.name,
-        storageName
+        sqlite,
+        storage,
+        fingerprint
       )
     } catch (error) {
-      if (handle) await handle.database.close()
-      if (retried) throw error
-      // Start over from an empty database rather than keep one this build
-      // cannot read, such as a stored one that is corrupt (SQLITE_CORRUPT).
-      await storage.delete()
-      return BrowserEntryStore.open(
-        config,
-        {...options, replaces: undefined},
-        true
-      )
-    }
-  }
-
-  /**
-   * Copy this store's database for a replacement stored in `storage`, and
-   * stop storing this one. The replacement is stored once this store's
-   * commits so far are written.
-   */
-  async #handOver(storage: Storage): Promise<WasmDatabaseHandle> {
-    const copy = await this.database.whileIdle(() => this.#handle.fork())
-    this.#detach()
-    try {
-      await copy.attach(storage)
-      return copy
-    } catch (error) {
-      await copy.database.close()
+      await db.close()
       throw error
     }
-  }
-
-  #detach(): void {
-    if (this.#detached) return
-    this.#detached = true
-    this.#handle.detach()
   }
 
   private constructor(
     config: Config,
     database: EntryDatabase,
-    handle: WasmDatabaseHandle,
-    factory: IDBFactory,
-    baseName: string,
-    storageName: string
+    sqlite: WasmSqlite,
+    storage: SnapshotStorage,
+    fingerprint: string
   ) {
     super(config, database, new DatabaseSource(database), {
       ownsDatabase: true,
       sourceFollowsDatabase: true
     })
-    this.#handle = handle
-    this.#indexedDB = factory
-    this.#baseName = baseName
-    this.#storageName = storageName
+    this.#sqlite = sqlite
+    this.#storage = storage
+    this.#fingerprint = fingerprint
   }
 
-  /**
-   * Opening, and syncing, resolve once the content is in memory: storing it
-   * is a cache that finishes in the background, which takes seconds for a
-   * first sync or a rebuild of a large project.
-   */
-  override sync(): Promise<string> {
-    return this.#run(() => super.sync())
+  override async sync(): Promise<string> {
+    return this.#checkpoint(await super.sync())
   }
 
-  override syncWith(
+  override async syncWith(
     remote: RemoteSource,
     options?: SyncOptions
   ): Promise<string> {
-    return this.#run(() => super.syncWith(remote, options))
+    return this.#checkpoint(await super.syncWith(remote, options))
   }
 
-  override mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
-    return this.#persistAfter(() => super.mutate(mutations))
+  /** Store the content at `revision` as a base, in the background. */
+  #checkpoint(revision: string): string {
+    if (!this.#storage.supported() || this.#stored === revision) return revision
+    this.#stored = revision
+    const storage = this.#storage
+    const group = this.#fingerprint
+    // Checkpoints fork the database, which fails during a transaction. The
+    // write itself is not awaited: the database keeps working meanwhile.
+    this.#written = this.database
+      .whileIdle(async () => ({
+        written: storage.checkpoint(this.#sqlite, `${revision}-${group}`, {
+          group,
+          meta: {tree: revision}
+        })
+      }))
+      .then(({written}) => written)
+      .then(() => storage.cleanup({keepGroups}))
+      .catch(() => {
+        if (this.#stored === revision) this.#stored = undefined
+      })
+    return revision
   }
 
-  override write(request: CommitRequest): Promise<{sha: string}> {
-    return this.#persistAfter(() => super.write(request))
-  }
-
-  /** Resolve once the commits of a task that changed this store are stored. */
-  #persistAfter<T>(task: () => Promise<T>): Promise<T> {
-    return this.#run(async () => {
-      const result = await task()
-      await this.#handle.flush()
-      return result
-    })
-  }
-
-  #run<T>(task: () => Promise<T>): Promise<T> {
-    if (this.#closed)
-      return Promise.reject(new Error('BrowserEntryStore is closed'))
-    return this.#persistQueue.run(task)
-  }
-
-  override close(): Promise<void> {
-    if (this.#closed) return this.#persistQueue.drain()
-    this.#closed = true
-    return this.#persistQueue.run(async () => {
-      try {
-        await super.close()
-      } finally {
-        await cleanupOldCaches(
-          this.#indexedDB,
-          this.#baseName,
-          this.#storageName
-        )
-      }
-    })
-  }
-
-  /**
-   * Close a store that a replacement took over from: its work in flight
-   * changes only its memory copy, which is not stored.
-   */
-  abandon(): Promise<void> {
-    this.#detach()
-    if (this.#closed) return this.#persistQueue.drain()
-    this.#closed = true
-    return this.#persistQueue.run(() => super.close())
+  /** Close once the last checkpoint is stored. */
+  override async close(): Promise<void> {
+    await this.#written
+    await super.close()
   }
 }
 
-function storageNameOf(name: string): string {
-  return `${versionedCacheName(name)}-pages`
+/**
+ * Open the newest base of `fingerprint`, or else the newest of any config,
+ * or an empty database.
+ */
+async function openBase(
+  storage: SnapshotStorage,
+  Database: new () => WasmSqlite,
+  fingerprint: string
+): Promise<WasmSqlite> {
+  if (!storage.supported()) return new Database()
+  // A base that cannot be read is replaced by the next checkpoint.
+  return storage
+    .open(Database, {group: fingerprint, fallback: 'any'})
+    .catch(() => new Database())
 }
 
-async function storedBuild(db: Database): Promise<string | undefined> {
-  await db.run(sql`create table if not exists ${buildTable} (
-    id integer primary key,
-    revision text not null
-  )`)
-  const row = await db.get<{revision: string}>(
-    sql`select revision from ${buildTable} where id = 1`
-  )
-  if (row) return row.revision
-  // Entries without a recorded build were stored by an interrupted open.
-  const entries = await db.get<{count: number}>(
-    sql`select count(*) as count from sqlite_master
-      where type = 'table' and name = 'alinea_entry_index'`
-  )
-  return entries?.count ? '' : undefined
-}
-
-/** Delete the IndexedDB databases of other Alinea versions and layouts. */
+/**
+ * Delete the IndexedDB databases of older Alinea versions and layouts. Those
+ * of newer versions belong to builds that may still run.
+ */
 async function cleanupOldCaches(
   factory: IDBFactory,
-  baseName: string,
-  currentName: string
+  name: string
 ): Promise<void> {
   if (!factory.databases) return
   const databases = await factory.databases().catch(() => [])
-  const names = databases.flatMap(database =>
-    database.name &&
-    database.name !== currentName &&
-    (database.name === baseName || database.name.startsWith(`${baseName}-`))
-      ? [database.name]
-      : []
+  const stale = databases.flatMap(database =>
+    database.name && isStale(database.name, name) ? [database.name] : []
   )
-  await Promise.all(names.map(name => deleteCache(factory, name)))
+  await Promise.all(stale.map(cache => deleteCache(factory, cache)))
+}
+
+function isStale(cache: string, name: string): boolean {
+  if (cache === name || cache === `${versionedCacheName(name)}-pages`)
+    return true
+  if (!cache.startsWith(`${name}-v`)) return false
+  return Number.parseInt(cache.slice(name.length + 2)) < databaseVersion
 }
 
 function deleteCache(factory: IDBFactory, name: string): Promise<void> {

@@ -1,7 +1,6 @@
 import type {Client} from '#/core/Client.js'
 import type {Config} from '#/core/Config.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {MemorySource} from '#/core/source/MemorySource.js'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
@@ -35,7 +34,7 @@ export async function boot(gen: ConfigGenerator) {
       ;[events, worker] = createSharedWorker()
     } catch {
       console.warn('Shared worker not supported, falling back to local worker.')
-      events = worker = new DashboardWorker(new MemorySource())
+      events = worker = new DashboardWorker()
     }
     const scripts = document.getElementsByTagName('script')
     const element = scripts[scripts.length - 1]

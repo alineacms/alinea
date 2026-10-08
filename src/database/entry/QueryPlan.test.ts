@@ -287,3 +287,33 @@ test('queries read indexed tables, also after a sync changed the rows', async ()
   await plain.close()
   await database.close()
 })
+
+test('lookups narrowed by id, parent or url skip the type index', async () => {
+  const {log, db} = await recordingDatabase()
+  await EntryDatabase.createSchema(db, config, 'empty')
+  const database = new EntryDatabase(config, db)
+  await database.syncWith(await source(base))
+  using planner = new Database(':memory:')
+  await EntryDatabase.createSchema(connectNative(planner), config, 'empty')
+  const lookups: Record<string, GraphQuery> = {
+    id: {first: true, id: 'team', type: Page, select: Entry.id},
+    parentId: {parentId: 'about', type: Page, select: Entry.id},
+    url: {first: true, url: '/about/team', type: Page, select: Entry.id},
+    translations: team(Query.translations({type: Page, select: Entry.id}))
+  }
+  for (const [name, query] of Object.entries(lookups)) {
+    log.reads = []
+    await database.resolve(query)
+    const plans = log.reads.flatMap(statement =>
+      planner
+        .prepare(`explain query plan ${statement}`)
+        .all()
+        .map(row => (row as PlanRow).detail)
+    )
+    expect({
+      name,
+      plans: plans.filter(plan => plan.includes('by_type'))
+    }).toEqual({name, plans: []})
+  }
+  await database.close()
+})
