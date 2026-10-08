@@ -6,6 +6,7 @@ import {isRecord} from '#/core/util/Objects.js'
 import {chunks} from '../util/Arrays.js'
 import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
+import {GithubUsage} from './GithubUsage.js'
 import type {GetBlobsOptions, Source} from './Source.js'
 import {type FlatTree, Leaf, ReadonlyTree} from './Tree.js'
 
@@ -58,9 +59,33 @@ export class GithubSource implements Source {
   #limit = pLimit(8)
   /** Blob queries in flight, each holding up to a hundred blobs in memory. */
   #blobQueries = pLimit(2)
+  #usage = new GithubUsage()
 
   constructor(options: GithubSourceOptions) {
     this.#options = normalizeGithubSourceOptions(options)
+  }
+
+  /** Request GitHub, counting the request against its budget. */
+  protected async githubFetch(
+    input: string,
+    init?: RequestInit
+  ): Promise<Response> {
+    const response = await fetch(input, init)
+    this.#usage.record(response)
+    return response
+  }
+
+  /** Run an operation, and log what it spent of GitHub's budgets. */
+  protected async spending<T>(
+    operation: string,
+    run: () => Promise<T>
+  ): Promise<T> {
+    const before = this.#usage.count()
+    try {
+      return await run()
+    } finally {
+      this.#usage.log(operation, before)
+    }
   }
 
   protected get contentLocation() {
@@ -82,7 +107,7 @@ export class GithubSource implements Source {
     const cached = shaCache.get(url)
     const headers = new Headers({Authorization: `Bearer ${authToken}`})
     if (cached) headers.set('If-None-Match', cached.etag)
-    const parentInfo = await fetch(url, {headers})
+    const parentInfo = await this.githubFetch(url, {headers})
     if (parentInfo.status === 304) {
       assert(cached, 'Received 304 without a cached GitHub response')
       return cached.sha
@@ -100,10 +125,12 @@ export class GithubSource implements Source {
     return sha
   }
 
-  async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
-    const remoteSha = await this.shaAt(this.#options.branch)
-    if (remoteSha === sha) return undefined
-    return this.#fetchTree(remoteSha, this.contentLocation)
+  getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
+    return this.spending('sync', async () => {
+      const remoteSha = await this.shaAt(this.#options.branch)
+      if (remoteSha === sha) return undefined
+      return this.#fetchTree(remoteSha, this.contentLocation)
+    })
   }
 
   /**
@@ -115,7 +142,7 @@ export class GithubSource implements Source {
     const key = `${owner}/${repo}:${location}`
     const list = async (query: string) => {
       const response = await this.#limit(() =>
-        fetch(
+        this.githubFetch(
           `https://api.github.com/repos/${owner}/${repo}/git/trees/${sha}${query}`,
           {headers: {Authorization: `Bearer ${authToken}`}}
         )
@@ -149,13 +176,18 @@ export class GithubSource implements Source {
     shas: ReadonlyArray<string>,
     options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
+    const before = this.#usage.count()
     const batches = Array.from(chunks(shas, blobsPerQuery), batch =>
       this.#blobQueries(() => this.#queryBlobs(batch, options.signal))
     )
     // A failure is thrown where its batch is awaited: the batches after it
     // must not fail unobserved meanwhile.
     for (const batch of batches) batch.catch(() => {})
-    for (const batch of batches) yield* await batch
+    try {
+      for (const batch of batches) yield* await batch
+    } finally {
+      this.#usage.log('blobs', before)
+    }
   }
 
   /**
@@ -203,7 +235,7 @@ export class GithubSource implements Source {
     }`
     const variables: Record<string, string> = {owner, repo}
     for (const [i, sha] of shas.entries()) variables[`b${i}`] = sha
-    const response = await fetch('https://api.github.com/graphql', {
+    const response = await this.githubFetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -254,7 +286,7 @@ export class GithubSource implements Source {
 
   async #fetchBlob(sha: string, signal?: AbortSignal): Promise<Uint8Array> {
     const {owner, repo, authToken} = this.#options
-    const response = await fetch(
+    const response = await this.githubFetch(
       `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
       {headers: {Authorization: `Bearer ${authToken}`}, signal}
     )
