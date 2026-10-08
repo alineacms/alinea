@@ -1,5 +1,4 @@
 import {createCMS, Entry} from '#/core.js'
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
@@ -32,31 +31,36 @@ async function createDb() {
   return db
 }
 
-async function rejection(run: () => Promise<unknown>) {
-  try {
-    await run()
-  } catch (error) {
-    return error
-  }
-  return undefined
-}
-
-test('updating a published entry with invalid fields is rejected', async () => {
+test('published entries may have invalid fields', async () => {
   const db = await createDb()
+  // An importer writes content that misses required fields
   const created = await db.create({
     type: Article,
     root: 'pages',
-    set: {title: 'Article', summary: 'Summary'}
+    set: {title: 'Article'}
   })
-  const error = await rejection(() =>
-    db.update({type: Article, id: created._id, set: {summary: ''}})
-  )
-  test.ok(error instanceof EntryValidationError)
-  test.equal((error as EntryValidationError).info.errors, [
-    {path: ['summary'], labels: ['Summary'], message: 'Field is required'}
-  ])
-  const summary = await db.get({id: created._id, select: Article.summary})
-  test.is(summary, 'Summary')
+  test.is(created.summary, undefined)
+  // Other writes to it are not held up by the missing field
+  await db.update({type: Article, id: created._id, set: {title: 'Updated'}})
+  const title = await db.get({id: created._id, select: Article.title})
+  test.is(title, 'Updated')
+})
+
+test('drafts with invalid fields can be published', async () => {
+  const db = await createDb()
+  const draft = await db.create({
+    type: Article,
+    root: 'pages',
+    status: 'draft',
+    set: {title: 'Draft'}
+  })
+  await db.publish({id: draft._id, locale: null, status: 'draft'})
+  const published = await db.first({
+    id: draft._id,
+    status: 'published',
+    select: Entry.title
+  })
+  test.is(published, 'Draft')
 })
 
 test('drafts and seeds may have invalid fields', async () => {

@@ -755,7 +755,7 @@ test('rejects create mutations without an id', async () => {
   }
 })
 
-test('rejects publishing entries with invalid fields', async () => {
+test('publishes entries with invalid fields through the api', async () => {
   const Article = Config.document('Article', {
     fields: {
       summary: Field.text('Summary', {required: true}),
@@ -806,14 +806,11 @@ test('rejects publishing entries with invalid fields', async () => {
       requestContext()
     )
 
-  const rejected = await create('published', {code: 'B'})
-  test.is(rejected.status, 422)
-  const {error} = (await rejected.json()) as {error: string}
-  test.ok(error.includes('- summary (Summary): Field is required'))
-  test.ok(error.includes('- code (Code): Starts with A'))
-  test.is(writes, 0)
+  // Validation warns editors in the dashboard, it doesn't block writes
+  const published = await create('published', {code: 'B'})
+  test.is(published.status, 200)
+  test.is(writes, 1)
 
-  // Drafts are work in progress and may be invalid
   const draft = await create('draft', {code: 'B'})
   test.is(draft.status, 200)
   const publish = await handle(
@@ -822,10 +819,8 @@ test('rejects publishing entries with invalid fields', async () => {
     ]),
     requestContext()
   )
-  test.is(publish.status, 422)
-
-  const valid = await create('published', {summary: 'Summary', code: 'A1'})
-  test.is(valid.status, 200)
+  test.is(publish.status, 200)
+  test.is(writes, 3)
 })
 
 test('does not report a committed mutation as failed when afterCommit throws', async () => {

@@ -11,7 +11,6 @@ import type {
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Source} from '#/core/source/Source.js'
 import {
   BrowserEntryStore,
@@ -161,10 +160,7 @@ export class DashboardWorker extends EventTarget {
         void this.#flush(item)
         return item.sha
       } catch (error) {
-        if (
-          error instanceof EntryUrlConflictError ||
-          error instanceof EntryValidationError
-        ) {
+        if (error instanceof EntryUrlConflictError) {
           this.#cancelMutation(item, error)
           throw error
         }

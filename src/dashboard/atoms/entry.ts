@@ -1,7 +1,6 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
 import type {EntryReference} from '#/core/db/EntryReference.js'
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
@@ -461,17 +460,6 @@ export class EntryLocaleAtoms {
     atom(get => get(this.errors(node)).length > 0)
   )
 
-  #assertValid(get: Getter, node: ReactiveNode<object>) {
-    const errors = get(this.errors(node))
-    if (errors.length === 0) return
-    const title = (get(node.value) as Record<string, unknown>).title
-    throw new EntryValidationError({
-      entryId: this.entry.id,
-      title: typeof title === 'string' ? title : undefined,
-      errors
-    })
-  }
-
   saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const dataState = get(this.entry.data)
     const {id, type} = dataState
@@ -513,7 +501,6 @@ export class EntryLocaleAtoms {
     const graph = get(graphAtom)
     const {checkpoint, data} = prepareData(get, node, typeConfig)
     policy.assert(Permission.Publish, activeEntry)
-    this.#assertValid(get, node)
     const saved = await graph.create({
       type: typeConfig,
       id,
@@ -552,7 +539,6 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const type = config.schema[dataState.type]
     assert(type, `Type "${dataState.type}" not found in config`)
-    if (!config.enableDrafts) this.#assertValid(get, node)
     const {checkpoint, data} = prepareData(get, node, type)
     const graph = get(graphAtom)
     const saved = await graph.create({
