@@ -1,4 +1,5 @@
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {suite} from '@alinea/suite'
 import {GithubApi} from './GithubApi.js'
@@ -24,7 +25,8 @@ test('uses commit request user for co-authored-by trailer', async () => {
               repository: {
                 ref: {
                   target: {
-                    oid: 'head-oid'
+                    oid: 'head-oid',
+                    file: {oid: fromSha}
                   }
                 }
               }
@@ -38,15 +40,15 @@ test('uses commit request user for co-authored-by trailer', async () => {
           data: {
             createCommitOnBranch: {
               commit: {
-                oid: 'commit-oid'
+                oid: 'commit-oid',
+                file: {oid: intoSha}
               }
             }
           }
         })
       }
 
-      const sha = url.endsWith('ref=head-oid') ? fromSha : intoSha
-      return Response.json([{path: 'content', sha}])
+      throw new Error(`A save made a REST request: ${url}`)
     },
     {preconnect: originalFetch.preconnect}
   )
@@ -102,19 +104,26 @@ test('uses repository-relative media paths in commits', async () => {
         graphQlCalls += 1
         if (graphQlCalls === 1) {
           return Response.json({
-            data: {repository: {ref: {target: {oid: 'head-oid'}}}}
+            data: {
+              repository: {
+                ref: {target: {oid: 'head-oid', file: {oid: fromSha}}}
+              }
+            }
           })
         }
 
         const body = init?.body ? JSON.parse(String(init.body)) : undefined
         fileChanges = readFileChanges(body)
         return Response.json({
-          data: {createCommitOnBranch: {commit: {oid: 'commit-oid'}}}
+          data: {
+            createCommitOnBranch: {
+              commit: {oid: 'commit-oid', file: {oid: intoSha}}
+            }
+          }
         })
       }
 
-      const sha = url.endsWith('ref=head-oid') ? fromSha : intoSha
-      return Response.json([{path: 'content', sha}])
+      throw new Error(`A save made a REST request: ${url}`)
     },
     {preconnect: originalFetch.preconnect}
   )
@@ -172,3 +181,57 @@ function readFileChanges(body: unknown): unknown {
   const input = variables.input
   return isRecord(input) ? input.fileChanges : undefined
 }
+
+test('commits the first entry of a content directory', async () => {
+  const originalFetch = globalThis.fetch
+  let graphQlCalls = 0
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL): Promise<Response> => {
+      const url = String(input)
+      if (url !== 'https://api.github.com/graphql')
+        throw new Error(`A save made a REST request: ${url}`)
+      graphQlCalls += 1
+      if (graphQlCalls === 1) {
+        // GitHub reports the missing directory next to a null file
+        return Response.json({
+          data: {repository: {ref: {target: {oid: 'head-oid', file: null}}}},
+          errors: [
+            {
+              type: 'NOT_FOUND',
+              path: ['repository', 'ref', 'target', 'file'],
+              message: "Could not resolve file for path 'content'."
+            }
+          ]
+        })
+      }
+      return Response.json({
+        data: {
+          createCommitOnBranch: {
+            commit: {oid: 'commit-oid', file: {oid: 'into-sha'}}
+          }
+        }
+      })
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const api = new GithubApi({
+      authToken: 'token',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      rootDir: '',
+      contentDir: 'content'
+    })
+    const result = await api.write({
+      description: 'First entry',
+      fromSha: ReadonlyTree.EMPTY.sha,
+      intoSha: 'into-sha',
+      changes: []
+    })
+    test.equal(result, {sha: 'into-sha'})
+    test.is(graphQlCalls, 2)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})

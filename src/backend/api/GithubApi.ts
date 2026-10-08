@@ -14,8 +14,11 @@ import {
   normalizeGithubSourceOptions
 } from '#/core/source/GithubSource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
+import {assert} from '#/core/util/Assert.js'
 import {base64, btoa} from '#/core/util/Encoding.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {join, relative} from '#/core/util/Paths.js'
 
 export interface GithubOptions extends GithubSourceOptions {}
@@ -32,9 +35,13 @@ export class GithubApi
     this.#options = normalized
   }
 
+  /**
+   * Commit through GraphQL, which also answers the content sha before and
+   * after: a save spends none of the REST rate limit.
+   */
   async write(request: CommitRequest): Promise<{sha: string}> {
-    const currentCommit = await this.#getLatestCommitOid()
-    const currentSha = await this.shaAt(currentCommit)
+    const {oid: currentCommit, contentSha: currentSha} =
+      await this.#getLatestCommit()
 
     if (currentSha !== request.fromSha)
       throw new ShaMismatchError(currentSha, request.fromSha)
@@ -51,7 +58,7 @@ export class GithubApi
       commitMessage
     )
 
-    return {sha: await this.shaAt(newCommit)}
+    return {sha: newCommit.contentSha}
   }
 
   async revisions(file: string): Promise<Array<Revision>> {
@@ -84,9 +91,12 @@ export class GithubApi
         throw new HttpError(response.status, await response.text())
       })
       .then(result => {
-        if (Array.isArray(result.errors) && result.errors.length > 0) {
-          const message = result.errors.map((e: any) => e.message).join('; ')
-          console.trace(result.errors)
+        const errors = Array.isArray(result.errors)
+          ? result.errors.filter((error: unknown) => !isMissingFile(error))
+          : []
+        if (errors.length > 0) {
+          const message = errors.map((e: any) => e.message).join('; ')
+          console.trace(errors)
           throw new Error(message)
         }
         return result
@@ -208,14 +218,14 @@ export class GithubApi
     expectedHeadOid: string,
     changes: Array<CommitChange>,
     commitMessage: string
-  ): Promise<string> {
+  ): Promise<CommitState> {
     const {additions, deletions} = await this.#processChanges(changes)
     const {owner, repo, branch, authToken} = this.#options
     return this.#graphQL(
-      `mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {
+      `mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!, $content: String!) {
       createCommitOnBranch(input: $input) {
         commit {
-          oid
+          ${commitStateFields}
         }
       }
     }`,
@@ -228,14 +238,12 @@ export class GithubApi
           message: {headline: commitMessage},
           fileChanges: {additions, deletions},
           expectedHeadOid
-        }
+        },
+        content: this.contentLocation
       },
       authToken
     )
-      .then(result => {
-        const commitId = result.data.createCommitOnBranch.commit.oid
-        return commitId
-      })
+      .then(result => commitState(result.data.createCommitOnBranch.commit))
       .catch(error => {
         if (error instanceof Error) {
           const mismatchMessage = /is at ([a-z0-9]+) but expected ([a-z0-9]+)/
@@ -302,21 +310,21 @@ export class GithubApi
     return {additions, deletions}
   }
 
-  async #getLatestCommitOid(): Promise<string> {
+  async #getLatestCommit(): Promise<CommitState> {
     const {owner, repo, branch, authToken} = this.#options
     return this.#graphQL(
-      `query GetLatestCommit($owner: String!, $repo: String!, $branch: String!) {
+      `query GetLatestCommit($owner: String!, $repo: String!, $branch: String!, $content: String!) {
       repository(owner: $owner, name: $repo) {
         ref(qualifiedName: $branch) {
           target {
-            oid
+            ${commitStateFields}
           }
         }
       }
     }`,
-      {owner, repo, branch},
+      {owner, repo, branch, content: this.contentLocation},
       authToken
-    ).then(result => result.data.repository.ref.target.oid)
+    ).then(result => commitState(result.data.repository.ref.target))
   }
 
   async #fetchUploadedContent(url: string): Promise<string> {
@@ -329,4 +337,37 @@ export class GithubApi
 
 function repositoryPath(...segments: Array<string>): string {
   return relative('/', join('/', ...segments))
+}
+
+/** A commit, and the sha of its content directory. */
+interface CommitState {
+  oid: string
+  contentSha: string
+}
+
+/** The fields of a commit that `commitState` reads, given `$content`. */
+const commitStateFields = `oid ... on Commit { file(path: $content) { oid } }`
+
+function commitState(commit: unknown): CommitState {
+  assert(isRecord(commit) && typeof commit.oid === 'string')
+  const file = commit.file
+  // A content directory without entries is not in the commit at all.
+  const contentSha =
+    isRecord(file) && typeof file.oid === 'string'
+      ? file.oid
+      : ReadonlyTree.EMPTY.sha
+  return {oid: commit.oid, contentSha}
+}
+
+/**
+ * GitHub reports a path missing from a commit as an error next to a null
+ * file, such as a content directory before its first entry.
+ */
+function isMissingFile(error: unknown): boolean {
+  return (
+    isRecord(error) &&
+    error.type === 'NOT_FOUND' &&
+    Array.isArray(error.path) &&
+    error.path.at(-1) === 'file'
+  )
 }
