@@ -108,7 +108,7 @@ export function moveTargets(
     condition: {_type: {in: containers}},
     canSelect,
     refusal(parent) {
-      if (!movable) return 'These entries can not be moved.'
+      if (!movable) return "These entries can't be moved."
       const single = subjects.length === 1
       const these = single ? `"${first.title}"` : 'these entries'
       const These = single ? these : 'These entries'
@@ -117,19 +117,19 @@ export function moveTargets(
         .join(' or ')
       if (!parent) {
         if (!typeNames.every(name => rootAcceptsType(config, rootData, name)))
-          return `${rootData.label} does not hold ${kinds} at its top level.`
+          return `${rootData.label} doesn't hold ${kinds} at its top level.`
         if (!policy.canMove({workspace: first.workspace, root: first.root}))
-          return `You can not move entries to the top level of ${rootData.label}.`
+          return `You can't move entries to the top level of ${rootData.label}.`
         return undefined
       }
       if (moving.has(parent.id) || parent.parents.some(id => moving.has(id)))
-        return `${These} can not be moved into itself.`
+        return `${These} can't be moved into itself.`
       if (!containers.includes(parent.type))
-        return `"${parent.title}" can not hold ${kinds}.`
+        return `"${parent.title}" can't hold ${kinds}.`
       if (translated && !translated.has(parent.id))
-        return `"${parent.title}" does not exist in every language of ${these}.`
+        return `"${parent.title}" doesn't exist in every language of ${these}.`
       if (!policy.canMove(parent))
-        return `You can not move entries into "${parent.title}".`
+        return `You can't move entries into "${parent.title}".`
       return undefined
     },
     rootAccepts:

@@ -330,3 +330,43 @@ test('moves every entry or none', async () => {
   })
   expect(parents.every(parentId => parentId === null)).toBe(true)
 })
+
+test('tells why entries can not move somewhere', () => {
+  const refusal = (
+    subjects: Array<MoveSubject>,
+    parent: MoveSubject | null,
+    {
+      policy = Policy.ALLOW_ALL,
+      root = 'pages',
+      translated = undefined as ReadonlySet<string> | undefined
+    } = {}
+  ) =>
+    moveTargets(config, policy, rootData(root), subjects, translated).refusal(
+      parent
+    )
+  const post = subject('post', 'Post', ['home', 'blog'])
+  expect(refusal([post], subject('blog', 'Blog', ['home']))).toBeUndefined()
+  expect(refusal([post], subject('home', 'Page'))).toBe(
+    '"home" can\'t hold Post.'
+  )
+  expect(refusal([post], null)).toBe(
+    "Pages doesn't hold Post at its top level."
+  )
+  expect(
+    refusal(
+      [subject('about', 'Page', ['home'])],
+      subject('team', 'Page', ['home', 'about'])
+    )
+  ).toBe('"about" can\'t be moved into itself.')
+  expect(
+    refusal([post], subject('blog', 'Blog', ['home']), {
+      translated: new Set()
+    })
+  ).toBe('"blog" doesn\'t exist in every language of "post".')
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({id: 'blog', deny: {move: true}})
+  expect(refusal([post], subject('blog', 'Blog', ['home']), {policy})).toBe(
+    'You can\'t move entries into "blog".'
+  )
+})

@@ -820,7 +820,7 @@ test('entries are not moved where their type is not allowed', async () => {
   })
   const confirmation = await answerMove(store, false)
   await moving
-  expect(confirmation.refusal).toBe('"A" can not hold Note.')
+  expect(confirmation.refusal).toBe('"A" can\'t hold Note.')
   expect(await db.first({id: b._id, select: Entry.parentId})).toBeNull()
 })
 

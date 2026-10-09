@@ -1,7 +1,7 @@
 import type {DropTarget, Key} from '#/components.js'
 import {isDocument} from '#/core/Document.js'
 import {Entry} from '#/core/Entry.js'
-import {atom} from 'jotai'
+import {atom, type Getter, type Setter} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import {configAtom, graphAtom} from './core.js'
 import {loadMoveTargetsAtom} from './move.js'
@@ -88,7 +88,7 @@ export const confirmMoveAtom = atom(
           }
         })
       )
-    const refusal = await movingRefusal()
+    const refusal = await moveRefusal(get, set, moved, dropped, parentId)
     if (refusal) return ask({pages: [], refusal}).then(() => false)
     const {schema} = get(configAtom)
     const pages = moved.filter(subject => {
@@ -97,27 +97,49 @@ export const confirmMoveAtom = atom(
     })
     if (pages.length === 0 || !get(confirmMovesAtom)) return true
     return ask({pages: pages.map(({id, title}) => ({id, title}))})
-
-    async function movingRefusal(): Promise<string | undefined> {
-      const policy = get(policyAtom)
-      for (const subject of moved) {
-        if (
-          subject.workspace !== dropped!.workspace ||
-          subject.root !== dropped!.root
-        )
-          return 'Entries can only be moved within their own root.'
-        if (subject.seeded)
-          return `"${subject.title}" is part of the site setup and can not be moved.`
-        if (!policy.canMove(subject))
-          return `You can not move "${subject.title}".`
-      }
-      const targets = await set(loadMoveTargetsAtom, moved)
-      if (parentId === null) return targets.refusal(null)
-      const parent =
-        parentId === dropped!.id
-          ? dropped!
-          : await graph.first({...query, id: parentId})
-      return parent ? targets.refusal(parent) : 'The new parent was not found.'
-    }
   }
 )
+
+interface MoveItem {
+  id: string
+  title: string
+  type: string
+  workspace: string
+  root: string
+  locale: string | null
+  parentId: string | null
+  parents: Array<string>
+  seeded: string | null
+}
+
+/** Why `moved` can not get `parentId` as parent next to `dropped` */
+async function moveRefusal(
+  get: Getter,
+  set: Setter,
+  moved: Array<MoveItem>,
+  dropped: MoveItem,
+  parentId: string | null
+): Promise<string | undefined> {
+  const policy = get(policyAtom)
+  for (const subject of moved) {
+    if (
+      subject.workspace !== dropped.workspace ||
+      subject.root !== dropped.root
+    )
+      return "Entries can't be moved out of their root."
+    if (subject.seeded)
+      return `"${subject.title}" is part of the site setup and can't be moved.`
+    if (!policy.canMove(subject)) return `You can't move "${subject.title}".`
+  }
+  const targets = await set(loadMoveTargetsAtom, moved)
+  if (parentId === null) return targets.refusal(null)
+  const parent =
+    parentId === dropped.id
+      ? dropped
+      : await get(graphAtom).first({
+          id: parentId,
+          status: 'preferDraft',
+          select: moveItem
+        })
+  return parent ? targets.refusal(parent) : "The new parent can't be found."
+}
