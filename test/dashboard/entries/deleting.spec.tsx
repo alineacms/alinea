@@ -206,6 +206,80 @@ test('archives the entry instead of deleting it', async ({
   ).toHaveCount(0)
 })
 
+test('redirects the url of a deleted page to the picked page', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'beta'
+  })
+
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
+  await expect(
+    dialog.getByText(
+      'If this page was publicly available, links to its URL may still be around elsewhere.',
+      {exact: false}
+    )
+  ).toBeVisible()
+  await expect(
+    dialog.getByText('Redirect the URL to another page (recommended)')
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: 'Choose page…'}).click()
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  // The deleted page can't be picked
+  await expect(picker.getByRole('row', {name: /^Beta/})).toHaveAttribute(
+    'data-unselectable',
+    'true'
+  )
+  await picker.getByRole('row', {name: /^Alpha/}).click()
+  await expect(picker).toHaveCount(0)
+  await expect(dialog.getByText('/alpha', {exact: true})).toBeVisible()
+  await dialog.getByRole('button', {name: 'Delete', exact: true}).click()
+  await expect(dialog).toHaveCount(0)
+
+  // The old url opens the page it redirects to
+  await app.page.evaluate(() => {
+    window.location.hash = '#/edit?url=%2Fbeta'
+  })
+  await expect(app.title).toHaveText('Alpha')
+  await app.page.getByRole('tab', {name: 'Details'}).click()
+  await expect(app.page.getByRole('textbox', {name: 'URL'})).toHaveValue(
+    '/beta'
+  )
+})
+
+test('tells which languages the redirect target is missing', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'localizedTarget',
+    routeRoot: 'localized',
+    title: 'Localized target'
+  })
+
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
+  await dialog
+    .getByRole('group', {name: 'Languages to delete'})
+    .getByText('FR')
+    .click()
+  await expect(
+    dialog.getByText('Redirect the URLs to another page (recommended)')
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: 'Choose page…'}).click()
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  await picker.getByRole('row', {name: /^Localized start/}).click()
+  await expect(
+    dialog.getByText(
+      `"Localized start" isn't available in FR, that URL won't redirect.`
+    )
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: "Don't redirect"}).click()
+  await expect(dialog.getByText('Localized start')).toHaveCount(0)
+})
+
 test('deletes an entry from a language it is not translated in', async ({
   dashboard,
   mount

@@ -16,7 +16,8 @@ function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
   return Array.from(result)
 }
 
-function hasUrlAliases(type: Type): boolean {
+/** Entries of the type keep URL aliases in their metadata */
+export function hasUrlAliases(type: Type): boolean {
   const metadata = Type.field(type, 'metadata')
   if (!metadata) return false
   const options = Field.options(metadata)
@@ -36,15 +37,24 @@ export function dataWithUrlAlias(
   const nextData = aliasUrls.includes(currentUrl)
     ? withoutUrlAlias(data, currentUrl)
     : data
-  const metadata = isRecord(nextData.metadata) ? nextData.metadata : {}
-  const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
-  return {
-    ...nextData,
-    metadata: {
-      ...metadata,
-      aliases: aliases.concat(createUrlAliasRow(previousUrl, aliases))
-    }
-  }
+  return dataWithUrlAliases(nextData, [previousUrl])
+}
+
+/** Adds the urls that are not an alias yet to the aliases in the metadata */
+export function dataWithUrlAliases(
+  data: Record<string, unknown>,
+  urls: Array<string>
+): Record<string, unknown> {
+  const existing = aliasUrlsFromData(data)
+  const added = new Set(urls.filter(url => url && !existing.includes(url)))
+  if (added.size === 0) return data
+  const metadata = isRecord(data.metadata) ? data.metadata : {}
+  const current = Array.isArray(metadata.aliases) ? metadata.aliases : []
+  const aliases = Array.from(added).reduce(
+    (rows, url) => rows.concat(createUrlAliasRow(url, rows)),
+    current
+  )
+  return {...data, metadata: {...metadata, aliases}}
 }
 
 function withoutUrlAlias(

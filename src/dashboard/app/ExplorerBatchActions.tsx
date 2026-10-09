@@ -1,19 +1,19 @@
 import {Button, Toolbar} from '#/components.js'
+import type {DashboardExplorer} from '#/dashboard/atoms/explorer.js'
+import {loadMoveTargetsAtom, type MoveTargets} from '#/dashboard/atoms/move.js'
 import {
   archiveEntriesAtom,
   deleteEntriesAtom,
-  loadDeletePlanAtom,
-  type DeletePlan
-} from '#/dashboard/atoms/delete.js'
-import type {DashboardExplorer} from '#/dashboard/atoms/explorer.js'
-import {loadMoveTargetsAtom, type MoveTargets} from '#/dashboard/atoms/move.js'
+  loadRemovePlanAtom,
+  type RemovePlan
+} from '#/dashboard/atoms/remove.js'
 import styler from '@alinea/styler'
 import {useAtomValueRawSync, useSetAtom} from 'jotai'
 import {type ReactNode, useState, useTransition} from 'react'
 import {IcRoundClose, IcRoundDelete, IcRoundDriveFileMove} from '../icons.js'
-import {DeleteDialog} from './DeleteDialog.js'
 import css from './ExplorerBatchActions.module.css'
 import {MoveDialog} from './MoveDialog.js'
+import {RemoveDialog} from './RemoveDialog.js'
 
 const styles = styler(css)
 
@@ -27,12 +27,12 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
     explorer.selectionActions
   )
   const clearSelection = useSetAtom(explorer.clearSelection)
-  const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
+  const loadRemovePlan = useSetAtom(loadRemovePlanAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
   const archiveEntries = useSetAtom(archiveEntriesAtom)
   const loadMoveTargets = useSetAtom(loadMoveTargetsAtom)
   const [moving, setMoving] = useState<MoveTargets>()
-  const [deletePlan, setDeletePlan] = useState<DeletePlan>()
+  const [deletePlan, setDeletePlan] = useState<RemovePlan>()
   const [isPending, startTransition] = useTransition()
   if (items.length === 0) return null
 
@@ -45,7 +45,7 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
   // Entries with languages are deleted in the listed language only
   function openDeleteDialog() {
     startTransition(async () => {
-      setDeletePlan(await loadDeletePlan(items))
+      setDeletePlan(await loadRemovePlan(items))
     })
   }
 
@@ -65,7 +65,8 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
         onClose={() => setMoving(undefined)}
         onMoved={clearSelection}
       />
-      <DeleteDialog
+      <RemoveDialog
+        action="delete"
         plan={deletePlan}
         onClose={() => setDeletePlan(undefined)}
         onConfirm={async plan => {
