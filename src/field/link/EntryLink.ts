@@ -12,7 +12,7 @@ import {
 import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
 import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
-export interface EntryLink<InferredFields = undefined> extends EntryReference {
+export interface EntryLink<InferredFields = {}> extends EntryReference {
   entryId: string
   entryType: string
   title: string

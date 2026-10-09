@@ -16,7 +16,7 @@ import {
 import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
 import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
-export interface ImageLink<InferredFields = undefined> extends EntryReference {
+export interface ImageLink<InferredFields = {}> extends EntryReference {
   title: string
   alt?: string
   /** Public url of the image file, versioned by its hash */

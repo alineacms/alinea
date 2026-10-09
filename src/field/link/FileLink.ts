@@ -13,7 +13,7 @@ import {
 import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
 import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
-export interface FileLink<InferredFields = undefined> extends EntryReference {
+export interface FileLink<InferredFields = {}> extends EntryReference {
   title: string
   /** Public url of the file */
   url: string

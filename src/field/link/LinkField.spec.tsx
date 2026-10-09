@@ -145,6 +145,10 @@ test('opens multiple-link settings from the linked row', async ({
   const docs = page.getByRole('dialog', {name: 'Alinea documentation'})
   await expect(docs).toBeVisible()
   await expect(docs.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  // The title given in the link picker is the label
+  await expect(docs.getByRole('textbox', {name: 'Label'})).toHaveValue(
+    'Alinea documentation'
+  )
   await expect(docs.getByText('Anchor', {exact: true})).toHaveCount(0)
   await expect(docs.getByRole('textbox', {name: 'URL suffix'})).toHaveCount(0)
   await expect(secondRow).toHaveAttribute('aria-current', 'true')

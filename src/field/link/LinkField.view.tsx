@@ -972,6 +972,7 @@ function LinkLabelField({isDisabled, node, value}: LinkLabelFieldProps) {
   return (
     <ResolvedLinkLabelField
       customLabel={customLabel}
+      fallbackLabel={'_title' in value ? value._title : undefined}
       isDisabled={isDisabled}
       onChange={setCustomLabel}
     />

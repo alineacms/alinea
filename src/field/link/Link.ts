@@ -16,7 +16,7 @@ import {type UrlReference, urlPicker} from '#/picker/url.js'
 import {EntryLink} from './EntryLink.js'
 import type {UrlLink} from './UrlLink.js'
 
-export type Link<InferredFields> =
+export type Link<InferredFields = {}> =
   | EntryLink<InferredFields>
   | UrlLink<InferredFields>
   | FileLink<InferredFields>
