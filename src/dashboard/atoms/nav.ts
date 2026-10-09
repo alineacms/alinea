@@ -318,9 +318,13 @@ async function linkedRoute(
   }
   // The pathname of a page may be encoded, stored urls are not
   const urls = [...new Set([withoutSlash(url), withoutSlash(decoded(url))])]
+  // A live page that took over the url as an alias wins over the archived
+  // page that had it
+  const live = {...query, filter: {_status: {isNot: 'archived' as const}}}
   const found =
-    (await graph.first({...query, url: {in: urls}})) ??
-    (await graph.first({...query, alias: {in: urls}}))
+    (await graph.first({...live, url: {in: urls}})) ??
+    (await graph.first({...live, alias: {in: urls}})) ??
+    (await graph.first({...query, url: {in: urls}}))
   if (!found) return {page: 'splash'}
   return {page: 'entry', ...found, locale: found.locale ?? undefined}
 }

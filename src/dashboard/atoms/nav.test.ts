@@ -188,3 +188,25 @@ test('keeps a navigation made while an edit link is looked up', async () => {
   await lookup
   expect(store.get(pageAtom).type).toBe('users')
 })
+
+test('opens the page an archived page redirects to', async () => {
+  const {db, store} = await linkedStore()
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'target',
+      type: 'Page',
+      workspace: 'main',
+      root: 'pages',
+      locale: 'nl',
+      status: 'published',
+      data: {
+        title: 'Target',
+        path: 'target',
+        metadata: {aliases: [{url: '/nl/hero'}]}
+      }
+    },
+    {op: 'archive', id: 'hero', locale: 'nl'}
+  ])
+  expect((await follow(store, '/nl/hero')).entry).toBe('target')
+})
