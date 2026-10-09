@@ -5,6 +5,7 @@ import {
 } from '#/dashboard/atoms/moveConfirmation.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
+import {useState} from 'react'
 import {IcRoundDriveFileMove} from '../icons.js'
 import css from './MoveConfirmDialog.module.css'
 import {
@@ -20,8 +21,12 @@ const styles = styler(css)
 export function MoveConfirmDialog() {
   const confirmation = useAtomValueRaw(moveConfirmationAtom)
   const setConfirmMoves = useSetAtom(confirmMovesAtom)
-  const pages = confirmation?.pages ?? []
+  // The question stays the same while the dialog closes
+  const [shown, setShown] = useState(confirmation)
+  if (confirmation && confirmation !== shown) setShown(confirmation)
+  const pages = (confirmation ?? shown)?.pages ?? []
   const single = pages.length === 1
+  const title = single && pages[0].title ? `"${pages[0].title}"` : 'this page'
   const answer = (confirmed: boolean) => confirmation?.resolve(confirmed)
   return (
     <DashboardModal
@@ -34,7 +39,7 @@ export function MoveConfirmDialog() {
         <DashboardModalContent>
           <Text as="p">
             {single
-              ? `Are you sure you want to move "${pages[0].title}"? This permanently changes the URL of this page and of all pages below it.`
+              ? `Are you sure you want to move ${title}? This permanently changes the URL of this page and of all pages below it.`
               : `Are you sure you want to move these ${pages.length} pages? This permanently changes their URLs and those of all pages below them.`}
           </Text>
         </DashboardModalContent>
