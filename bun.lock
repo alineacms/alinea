@@ -6,7 +6,7 @@
       "name": "alinea",
       "dependencies": {
         "@alinea/iso": "^0.3.3",
-        "@alinea/sqlite-wasm": "0.3.1",
+        "@alinea/sqlite-wasm": "0.8.1",
         "esbuild": "^0.28.0",
       },
       "devDependencies": {
@@ -172,7 +172,7 @@
 
     "@alinea/iso": ["@alinea/iso@0.3.3", "", {}, "sha512-ftRGW2+sM/9SBbn3zF6hXICNluEInaAMw49IHGKCUBkrsn0SN8mG/+bK1iz9+ibE1Dto736KwDfr3lcBVN5t8g=="],
 
-    "@alinea/sqlite-wasm": ["@alinea/sqlite-wasm@0.3.1", "", {}, "sha512-WwJ39FddYbYC2Cb2FcQekhVuqe4tlz+IX5qjvmxyzUsZCRnhosLVOl011DMdWJDjoMgw7Zhv8Ga0RkVazwfWZw=="],
+    "@alinea/sqlite-wasm": ["@alinea/sqlite-wasm@0.8.1", "", {}, "sha512-WRuVhgeIXo96MwktKHCoR5BZmAL+ngvBhg+1wUIRQ1Ctba4pgvRAxqUU4Ae9eQXBuGW/5EwvshkiGQPtE0uoSg=="],
 
     "@alinea/styler": ["@alinea/styler@1.0.3", "", {}, "sha512-u248xCGPYuGAsC2Z83Jyxplcc92Ai1IdeoZiBmr9HY/yGRSLZAxteStg4ErLOi8BnQQ9g72oEbgK3GJ7wU71zA=="],
 

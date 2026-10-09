@@ -1,7 +1,6 @@
 import type {Client} from '#/core/Client.js'
 import type {Config} from '#/core/Config.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {MemorySource} from '#/core/source/MemorySource.js'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
@@ -29,14 +28,7 @@ export async function boot(gen: ConfigGenerator) {
   if (inWorker) {
     loadWorker(gen)
   } else {
-    let events: EventTarget
-    let worker: DashboardWorker
-    try {
-      ;[events, worker] = createSharedWorker()
-    } catch {
-      console.warn('Shared worker not supported, falling back to local worker.')
-      events = worker = new DashboardWorker(new MemorySource())
-    }
+    const [events, worker] = connect()
     const scripts = document.getElementsByTagName('script')
     const element = scripts[scripts.length - 1]
     const into = document.createElement('div')
@@ -69,20 +61,39 @@ export async function boot(gen: ConfigGenerator) {
   }
 }
 
-function createSharedWorker(): [EventTarget, DashboardWorker] {
+function connect(): [EventTarget, DashboardWorker] {
+  const options = {type: 'module', name: 'Alinea dashboard'} as const
+  try {
+    const worker = new SharedWorker(import.meta.url, options)
+    return [listen(worker.port), wrap(worker.port)]
+  } catch {
+    console.warn('Shared worker not supported, falling back to a worker.')
+  }
+  try {
+    const worker = new Worker(import.meta.url, options)
+    return [listen(worker), wrap(worker)]
+  } catch {
+    console.warn('Worker not supported, running on the main thread.')
+    const worker = new DashboardWorker()
+    return [worker, worker]
+  }
+}
+
+function wrap(endpoint: Comlink.Endpoint) {
+  return Comlink.wrap<DashboardWorker>(endpoint) as unknown as DashboardWorker
+}
+
+function listen(source: EventTarget) {
   const events = new EventTarget()
-  const worker = new SharedWorker(import.meta.url, {
-    type: 'module',
-    name: 'Alinea dashboard'
-  })
-  worker.port.addEventListener('message', ({data}) => {
+  source.addEventListener('message', event => {
+    const {data} = event as MessageEvent
     if (data.type === IndexEvent.type) {
       events.dispatchEvent(new IndexEvent(data.data))
     } else if (data.type === ActivityEvent.type) {
       events.dispatchEvent(new ActivityEvent(data.activities))
     }
   })
-  return [events, Comlink.wrap(worker.port) as any] as const
+  return events
 }
 
 function isWorkerScope() {
