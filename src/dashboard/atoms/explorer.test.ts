@@ -811,6 +811,15 @@ test('moving entries under another parent can be cancelled', async () => {
   expect(await db.first({id: a._id, select: Entry.parentId})).toBe(a._parentId)
 })
 
+test('entries are not moved where their type is not allowed', async () => {
+  const {a, b, db, explorer, store} = await notesFixture()
+  await store.get(explorer.itemsReady(null))
+  // Notes hold no children, so this neither asks nor moves
+  await store.set(explorer.moveInto, [b._id], {key: a._id, position: 'on'})
+  expect(store.get(moveConfirmationAtom)).toBeUndefined()
+  expect(await db.first({id: b._id, select: Entry.parentId})).toBeNull()
+})
+
 /** Answers the question a move under another parent asks */
 async function answerMove(
   store: ReturnType<typeof createStore>,

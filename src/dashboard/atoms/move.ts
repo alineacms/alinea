@@ -1,6 +1,7 @@
 import {Config} from '#/core/Config.js'
 import {MoveOperation} from '#/core/db/Operation.js'
 import {Entry} from '#/core/Entry.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {Filter} from '#/core/Filter.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -12,7 +13,6 @@ import {entries} from '#/core/util/Objects.js'
 import {atom} from 'jotai'
 import {configAtom, graphAtom} from './core.js'
 import type {ExplorerItemData} from './explorer.js'
-import {rootAtoms} from './root.js'
 import {policyAtom} from './user.js'
 
 /** An entry that is about to be moved */
@@ -37,6 +37,8 @@ export interface MoveTargets {
    * and entries missing a language of the moved entries are not a target
    */
   canSelect(item: ExplorerItemData): boolean
+  /** The entry can hold the moved entries and is selectable */
+  accepts(item: MoveSubject): boolean
   /** The entries can be moved to the top level of the root */
   rootAccepts: boolean
 }
@@ -93,14 +95,16 @@ export function moveTargets(
         types.every(type => type && Config.typeContains(config, parent, type))
     )
     .map(([name]) => name)
+  const canSelect = (item: MoveSubject) =>
+    !moving.has(item.id) &&
+    !item.parents.some(parent => moving.has(parent)) &&
+    (!translated || translated.has(item.id)) &&
+    policy.canMove(item)
   return {
     subjects,
     condition: {_type: {in: containers}},
-    canSelect: item =>
-      !moving.has(item.id) &&
-      !item.parents.some(parent => moving.has(parent)) &&
-      (!translated || translated.has(item.id)) &&
-      policy.canMove(item),
+    canSelect,
+    accepts: item => containers.includes(item.type) && canSelect(item),
     rootAccepts:
       movable &&
       typeNames.every(name => rootAcceptsType(config, rootData, name)) &&
@@ -119,7 +123,9 @@ export const loadMoveTargetsAtom = atom(
     const config = get(configAtom)
     const policy = get(policyAtom)
     const [{workspace, root}] = subjects as [MoveSubject]
-    const rootData = get(rootAtoms(workspace, root).data)
+    const rootData = getRoot(
+      getWorkspace(config.workspaces[workspace]).roots[root]
+    )
     const targets = moveTargets(config, policy, rootData, subjects)
     if (!rootData.i18n) return targets
     const graph = get(graphAtom)
