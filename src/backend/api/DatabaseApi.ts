@@ -10,11 +10,25 @@ import {createId} from '#/core/Id.js'
 import type {User, UserInput} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {basename, extname} from '#/core/util/Paths.js'
+import {chunks} from '#/core/util/Arrays.js'
 import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
-import {Builder, type Database, eq, include, sql, table} from 'rado'
+import {
+  and,
+  Builder,
+  Column,
+  ColumnType,
+  type Database,
+  eq,
+  inArray,
+  include,
+  lt,
+  sql,
+  table
+} from 'rado'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
+import type {BlobStore} from './BlobStore.js'
 
 export interface DatabaseOptions {
   db: Database
@@ -36,7 +50,23 @@ const UserRoleTable = table('alinea_user_role', {
   role: column.text().notNull()
 })
 
-const tables = [UploadTable, UserTable, UserRoleTable]
+/** Content blobs every handler instance reads, see `BlobStore`. */
+const BlobTable = table('alinea_blob', {
+  sha: column.varchar(undefined, {length: 40}).primaryKey(),
+  content: largeBlob().notNull(),
+  /** When the blob was last stored or read, in seconds */
+  usedAt: column.integer().notNull()
+})
+
+const tables = [UploadTable, UserTable, UserRoleTable, BlobTable]
+
+/** Blobs per statement, which keeps statements well below their limits. */
+const blobsPerStatement = 50
+const day = 24 * 60 * 60
+/** Blobs no instance read or stored for this long are removed. */
+const blobRetention = 30 * day
+/** The last removal of unused blobs, per database, in seconds. */
+const blobCleanups = new WeakMap<Database, number>()
 const preparedDatabases = new WeakMap<Database, Promise<Database>>()
 
 const selectUser = {
@@ -49,7 +79,7 @@ const selectUser = {
   )
 }
 
-export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
+export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
   #context: RequestContext
   #db: Promise<Database>
 
@@ -110,6 +140,56 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
         'content-disposition': `inline; filename="${entryId}"`
       }
     })
+  }
+
+  async readBlobs(
+    shas: ReadonlyArray<string>
+  ): Promise<Map<string, Uint8Array>> {
+    const db = await this.#db
+    const found = new Map<string, Uint8Array>()
+    for (const batch of chunks(shas, blobsPerStatement)) {
+      const rows = await db
+        .select({sha: BlobTable.sha, content: BlobTable.content})
+        .from(BlobTable)
+        .where(inArray(BlobTable.sha, batch))
+      for (const row of rows) found.set(row.sha, row.content)
+    }
+    // Blobs still read are kept: renewed at most once a day per blob.
+    const now = seconds()
+    for (const batch of chunks([...found.keys()], blobsPerStatement))
+      await db
+        .update(BlobTable)
+        .set({usedAt: now})
+        .where(
+          and(inArray(BlobTable.sha, batch), lt(BlobTable.usedAt, now - day))
+        )
+    return found
+  }
+
+  async storeBlobs(
+    blobs: ReadonlyArray<[sha: string, blob: Uint8Array]>
+  ): Promise<void> {
+    const db = await this.#db
+    const now = seconds()
+    for (const batch of chunks(blobs, blobsPerStatement)) {
+      const shas = batch.map(([sha]) => sha)
+      const stored = new Set(
+        await db
+          .select(BlobTable.sha)
+          .from(BlobTable)
+          .where(inArray(BlobTable.sha, shas))
+      )
+      const rows = batch
+        .filter(([sha]) => !stored.has(sha))
+        .map(([sha, content]) => ({sha, content, usedAt: now}))
+      if (rows.length === 0) continue
+      try {
+        await db.insert(BlobTable).values(rows)
+      } catch {
+        // Another instance stored some of them meanwhile: they are kept.
+      }
+    }
+    await removeUnusedBlobs(db, now)
   }
 
   async enrichUser(user: User): Promise<User> {
@@ -226,6 +306,36 @@ function prepareDatabase(db: Database): Promise<Database> {
   })
   preparedDatabases.set(db, prepared)
   return prepared
+}
+
+/** A blob of any size: a plain MySQL blob holds 64 KB at most. */
+function largeBlob(): Column<Uint8Array> {
+  return new Column({
+    type: new ColumnType(
+      'blob',
+      [],
+      sql.universal({
+        postgres: sql`bytea`,
+        mysql: sql`longblob`,
+        default: sql`blob`
+      })
+    ),
+    mapFromDriverValue(value) {
+      return new Uint8Array(value as ArrayBufferLike)
+    }
+  })
+}
+
+/** Remove blobs no instance read or stored lately, at most once an hour. */
+async function removeUnusedBlobs(db: Database, now: number): Promise<void> {
+  const last = blobCleanups.get(db) ?? 0
+  if (now - last < 60 * 60) return
+  blobCleanups.set(db, now)
+  await db.delete(BlobTable).where(lt(BlobTable.usedAt, now - blobRetention))
+}
+
+function seconds(): number {
+  return Math.floor(Date.now() / 1000)
 }
 
 async function enablePostgresRowLevelSecurity(db: Database): Promise<void> {
