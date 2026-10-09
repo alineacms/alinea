@@ -1,3 +1,4 @@
+import type {Mutation} from '#/core/db/Mutation.js'
 import {databaseVersion} from '#/database/Version.js'
 import * as Comlink from 'comlink'
 import type {CacheConfigName} from './CacheConfig.js'
@@ -11,6 +12,8 @@ export interface Cache {
   /** A worker per name, as the SharedWorker of a dashboard build. */
   build(name: string): Comlink.Remote<CacheBuild>
   load(name: string, config: CacheConfigName): Promise<void>
+  /** Change content on the server, as an editor of another browser. */
+  mutate(mutations: Array<Mutation>): Promise<string>
   errors(): Promise<Array<string>>
   bases(): Promise<Array<CacheBase>>
   databases(): Promise<Array<string>>
@@ -46,6 +49,9 @@ globalThis.cache = {
     const {port1, port2} = new MessageChannel()
     Comlink.expose(await server, port1)
     await build(name).load(config, Comlink.transfer(port2, [port2]))
+  },
+  async mutate(mutations) {
+    return (await (await server).mutate(mutations)).sha
   },
   async errors() {
     const errors = await Promise.all([...builds.values()].map(b => b.errors()))

@@ -8,16 +8,20 @@ import {wasmSqlite} from '#/database/driver/WasmDatabase.js'
 import {versionedCacheName} from '#/database/Version.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {Database} from '@alinea/sqlite-wasm/Database.js'
-import {indexedDBSnapshotStorage} from '@alinea/sqlite-wasm/snapshots'
+import {indexedDBSnapshots} from '@alinea/sqlite-wasm/snapshots'
 import * as Comlink from 'comlink'
 import {cacheConfig, type CacheConfigName} from './CacheConfig.js'
 import type {CacheServer} from './CacheServer.js'
 
 export interface CacheBase {
   key: string
-  group: string
+  branch: string
   tree: unknown
+  /** The snapshot a delta lies over. */
+  parent?: string
   size: number
+  /** Bytes stored: the changed pages of a delta, else the whole database. */
+  bytes: number
   integrity: string
 }
 
@@ -108,23 +112,37 @@ const build = {
   errors(): Array<string> {
     return errors
   },
-  /** The stored bases, each checked for corruption. */
+  /** The stored bases, newest first, each checked for corruption. */
   async bases(): Promise<Array<CacheBase>> {
-    const storage = indexedDBSnapshotStorage(
+    const storage = indexedDBSnapshots(
       `${versionedCacheName('alinea-entry-database')}-snapshots`
     )
     const Database = await wasmSqlite()
-    const bases = await storage.list()
-    return Promise.all(
-      bases.map(async ({key, group, meta, size}) => {
-        const db = await storage.open(Database, key)
-        try {
-          return {key, group, tree: meta.tree, size, integrity: check(db)}
-        } finally {
-          db.close()
-        }
+    const bases = await Promise.all(
+      (await storage.list()).map(async ({key, branch, meta, size, parent}) => {
+        const stored = await storage.store.get(key)
+        // Retain may delete a snapshot after it was listed.
+        if (!stored) return []
+        const bytes =
+          stored.source instanceof Blob
+            ? stored.source.size
+            : stored.source.byteLength
+        const integrity = await storage.open(Database, {key}).then(
+          async session => {
+            try {
+              return check(session.db)
+            } finally {
+              await session.close()
+            }
+          },
+          async error =>
+            (await storage.store.get(key)) ? String(error) : undefined
+        )
+        if (integrity === undefined) return []
+        return [{key, branch, tree: meta.tree, parent, size, bytes, integrity}]
       })
     )
+    return bases.flat()
   }
 }
 

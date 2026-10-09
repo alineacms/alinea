@@ -5,7 +5,7 @@ import type {Source} from '#/core/source/Source.js'
 import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
-import {memorySnapshotStorage} from '@alinea/sqlite-wasm/snapshots'
+import {memorySnapshots} from '@alinea/sqlite-wasm/snapshots'
 import {expect, test} from 'bun:test'
 import {IDBFactory, IDBKeyRange} from 'fake-indexeddb'
 import {sql} from 'rado'
@@ -16,7 +16,7 @@ import {wasmHandle, wasmSqlite} from './driver/WasmDatabase.js'
 const name = 'alinea-entry-database'
 
 test('reopens the newest base without fetching blobs', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const source = await pageSource()
   const options = {name, fingerprint: 'config-1', storage}
   const first = await BrowserEntryStore.open(pages(false), options)
@@ -35,7 +35,7 @@ test('reopens the newest base without fetching blobs', async () => {
 })
 
 test('derives the base of another config again', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const source = await pageSource()
   const first = await BrowserEntryStore.open(pages(false), {
     name,
@@ -61,14 +61,14 @@ test('derives the base of another config again', async () => {
   } finally {
     await next.close()
   }
-  expect((await storage.list()).map(base => base.group)).toEqual([
+  expect((await storage.list()).map(base => base.branch)).toEqual([
     'config-2',
     'config-1'
   ])
 })
 
 test('skips the reindex for a base of the same config', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const options = {name, fingerprint: 'config-1', storage}
   const first = await BrowserEntryStore.open(pages(false), options)
   await first.syncWith(await pageSource())
@@ -82,7 +82,7 @@ test('skips the reindex for a base of the same config', async () => {
 })
 
 test('keeps the newest base of the two newest configs', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const source = await pageSource()
   for (const fingerprint of ['config-1', 'config-2', 'config-3']) {
     const store = await BrowserEntryStore.open(pages(false), {
@@ -93,14 +93,14 @@ test('keeps the newest base of the two newest configs', async () => {
     await store.syncWith(source)
     await store.close()
   }
-  expect((await storage.list()).map(base => base.group)).toEqual([
+  expect((await storage.list()).map(base => base.branch)).toEqual([
     'config-3',
     'config-2'
   ])
 })
 
 test('stores on one base change apart', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const options = {name, fingerprint: 'config-1', storage}
   const first = await BrowserEntryStore.open(pages(false), options)
   await first.syncWith(await pageSource())
@@ -137,7 +137,7 @@ test('stores on one base change apart', async () => {
 })
 
 test('previews an entry over a store on a base', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const options = {name, fingerprint: 'config-1', storage}
   const first = await BrowserEntryStore.open(pages(false), options)
   await first.syncWith(await pageSource())
@@ -164,7 +164,7 @@ test('previews an entry over a store on a base', async () => {
 })
 
 test('stores its own base when another wrote the content in other pages', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const options = {name, fingerprint: 'config-1', storage}
   const source = await pageSource()
   const a = await BrowserEntryStore.open(pages(false), options)
@@ -189,10 +189,10 @@ test('stores its own base when another wrote the content in other pages', async 
 })
 
 test('starts empty from a base that is not a database', async () => {
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   await storage.store.write({
     key: 'corrupt',
-    group: 'config-1',
+    branch: 'config-1',
     meta: {},
     visible: 0,
     size: 4096,
@@ -259,7 +259,7 @@ test('syncs source rows in bounded batches', async () => {
       data: {body}
     }))
   )
-  const storage = memorySnapshotStorage()
+  const storage = memorySnapshots()
   const options = {name, fingerprint: 'config-1', storage}
   const store = await BrowserEntryStore.open(pages(false), options)
   await store.syncWith(source)

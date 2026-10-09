@@ -4,8 +4,8 @@ import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Database as WasmSqlite} from '@alinea/sqlite-wasm/Database.js'
 import {
-  baseOf,
-  indexedDBSnapshotStorage,
+  indexedDBSnapshots,
+  type Session,
   type SnapshotStorage
 } from '@alinea/sqlite-wasm/snapshots'
 import {sql} from 'rado'
@@ -23,7 +23,7 @@ import {wasmHandle, wasmSqlite} from './driver/WasmDatabase.js'
 const cacheSize = -65536
 
 /** Bases of this many configs are kept; the newest is always among them. */
-const keepGroups = 2
+const keepBranches = 2
 
 export interface BrowserEntryStoreOptions {
   name: string
@@ -41,9 +41,8 @@ export interface BrowserEntryStoreOptions {
  * number of workers and dashboard builds can use them at once.
  */
 export class BrowserEntryStore extends EntryStore {
-  #sqlite: WasmSqlite
+  #session: Session<WasmSqlite>
   #storage: SnapshotStorage
-  #fingerprint: string
   #stored: string | undefined
   #written: Promise<unknown> = Promise.resolve()
   #cleanup: Promise<void> = Promise.resolve()
@@ -55,24 +54,29 @@ export class BrowserEntryStore extends EntryStore {
     const {name, fingerprint} = options
     const storage =
       options.storage ??
-      indexedDBSnapshotStorage(`${versionedCacheName(name)}-snapshots`)
+      indexedDBSnapshots(`${versionedCacheName(name)}-snapshots`)
     // Other caches are deleted in the background, they don't affect this one.
     const cleanup =
       !options.storage && globalThis.indexedDB
         ? cleanupOldCaches(indexedDB, name).catch(() => {})
         : Promise.resolve()
     const Database = await wasmSqlite()
-    const sqlite = await openBase(storage, Database, fingerprint)
+    const session = await openBase(storage, Database, fingerprint)
     const store = await BrowserEntryStore.#on(
       config,
-      sqlite,
+      session,
       storage,
       fingerprint
     ).catch(error => {
-      if (!baseOf(sqlite)) throw error
+      if (!session.snapshot) throw error
       // Start over from an empty database rather than one this build cannot
       // read or derive again.
-      return BrowserEntryStore.#on(config, new Database(), storage, fingerprint)
+      return BrowserEntryStore.#on(
+        config,
+        storage.session(new Database(), {branch: fingerprint}),
+        storage,
+        fingerprint
+      )
     })
     store.#cleanup = cleanup
     return store
@@ -80,11 +84,12 @@ export class BrowserEntryStore extends EntryStore {
 
   static async #on(
     config: Config,
-    sqlite: WasmSqlite,
+    session: Session<WasmSqlite>,
     storage: SnapshotStorage,
     fingerprint: string
   ): Promise<BrowserEntryStore> {
-    const group = baseOf(sqlite)?.group
+    const sqlite = session.db
+    const branch = session.snapshot?.branch
     sqlite.run(`pragma cache_size = ${cacheSize}`)
     const {database: db, fork} = wasmHandle(sqlite)
     // Previews fork the store to read a few entries: the default cache of a
@@ -95,23 +100,18 @@ export class BrowserEntryStore extends EntryStore {
       return copy
     }
     try {
-      // Larger pages read a base in fewer, larger reads. Only applies to a
-      // new database.
-      await db.run(sql`pragma page_size = 65536`)
+      // Bases are read a block at a time while reads run forward, so pages
+      // need not be large; smaller ones keep less in memory per change and
+      // save smaller deltas. Only applies to a new database.
+      await db.run(sql`pragma page_size = 16384`)
       await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
       const database = new EntryDatabase(config, db, {fork: preview})
       // Content stored for another config is derived again for this one,
       // instead of syncing every entry from the remote into an empty
       // database.
-      if (group !== undefined && group !== fingerprint)
+      if (branch !== undefined && branch !== fingerprint)
         await withoutJournal(sqlite, () => database.reindex(config))
-      return new BrowserEntryStore(
-        config,
-        database,
-        sqlite,
-        storage,
-        fingerprint
-      )
+      return new BrowserEntryStore(config, database, session, storage)
     } catch (error) {
       await db.close()
       throw error
@@ -121,17 +121,15 @@ export class BrowserEntryStore extends EntryStore {
   private constructor(
     config: Config,
     database: EntryDatabase,
-    sqlite: WasmSqlite,
-    storage: SnapshotStorage,
-    fingerprint: string
+    session: Session<WasmSqlite>,
+    storage: SnapshotStorage
   ) {
     super(config, database, new DatabaseSource(database), {
       ownsDatabase: true,
       sourceFollowsDatabase: true
     })
-    this.#sqlite = sqlite
+    this.#session = session
     this.#storage = storage
-    this.#fingerprint = fingerprint
   }
 
   override async sync(): Promise<string> {
@@ -149,38 +147,37 @@ export class BrowserEntryStore extends EntryStore {
   #checkpoint(revision: string): string {
     if (!this.#storage.supported() || this.#stored === revision) return revision
     this.#stored = revision
-    const sqlite = this.#sqlite
+    const session = this.#session
     const storage = this.#storage
-    const group = this.#fingerprint
-    const key = `${revision}-${group}`
-    // Checkpoints fork the database, which fails during a transaction. The
-    // write itself is not awaited: the database keeps working meanwhile.
-    const write = (key: string) =>
+    const key = `${revision}-${session.branch}`
+    // Saves fork the database, which fails during a transaction. The write
+    // itself is not awaited: the database keeps working meanwhile. A
+    // database that holds no changed pages reads a base with its content
+    // already, as after opening a base another worker stored.
+    const save = (key: string) =>
       this.database
         .whileIdle(async () => ({
-          // The base it reads holds every page already, as after opening a
-          // base another worker stored.
-          written: heldPages(sqlite)
-            ? storage.checkpoint(sqlite, key, {group, meta: {tree: revision}})
-            : Promise.resolve(true)
+          saved: session.held
+            ? session.save({key, meta: {tree: revision}})
+            : undefined
         }))
-        .then(({written}) => written)
+        .then(({saved}) => saved)
     // Another worker may have stored this content in other pages, which
     // the database cannot move onto: it would keep every page it changed in
-    // memory, so it stores a base of its own, which cleanup keeps instead.
-    const written = write(key)
-      .then(
-        written =>
-          written ||
-          baseOf(sqlite)?.key === key ||
-          write(`${key}-${crypto.randomUUID()}`)
+    // memory, so it stores a base of its own (a delta), which retain keeps
+    // instead.
+    const written = save(key)
+      .then(result =>
+        result?.status === 'mismatch'
+          ? save(`${key}-${crypto.randomUUID()}`)
+          : result
       )
-      .then(() => storage.cleanup({keepGroups}))
+      .then(() => storage.retain({branches: keepBranches}))
       .catch(() => {
         if (this.#stored === revision) this.#stored = undefined
       })
-    // A collision writes once more after the first write: close waits for
-    // every checkpoint that is still writing.
+    // A mismatch saves once more after the first save: close waits for
+    // every save that is still writing.
     this.#written = Promise.all([this.#written, written])
     return revision
   }
@@ -190,10 +187,6 @@ export class BrowserEntryStore extends EntryStore {
     await Promise.all([this.#cleanup, this.#written])
     await super.close()
   }
-}
-
-function heldPages(sqlite: WasmSqlite): number {
-  return Number(sqlite.exec('pragma overlay_pages')[0].values[0][0])
 }
 
 /**
@@ -217,18 +210,23 @@ async function withoutJournal<T>(
 
 /**
  * Open the newest base of `fingerprint`, or else the newest of any config,
- * or an empty database.
+ * or an empty database; it saves to `fingerprint` either way.
  */
 async function openBase(
   storage: SnapshotStorage,
   Database: new () => WasmSqlite,
   fingerprint: string
-): Promise<WasmSqlite> {
-  if (!storage.supported()) return new Database()
-  // A base that cannot be read is replaced by the next checkpoint.
+): Promise<Session<WasmSqlite>> {
+  const empty = () => storage.session(new Database(), {branch: fingerprint})
+  if (!storage.supported()) return empty()
+  // A base that cannot be read is replaced by the next save.
   return storage
-    .open(Database, {group: fingerprint, fallback: 'any'})
-    .catch(() => new Database())
+    .open(Database, {
+      branch: fingerprint,
+      choose: bases =>
+        bases.find(base => base.branch === fingerprint) ?? bases[0]
+    })
+    .catch(empty)
 }
 
 /**
