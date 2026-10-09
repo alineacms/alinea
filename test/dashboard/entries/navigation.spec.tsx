@@ -503,6 +503,28 @@ test('opens details for a localised file with null alt text', async ({
   )
 })
 
+test('opens the entry an edit link names by url', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.page.evaluate(() => {
+    window.location.hash = '#/edit?url=%2Fbeta%2F'
+  })
+  await expect(app.title).toHaveText('Beta')
+  await expect(app.page).toHaveURL(/#\/entry\/main\/pages\/workflow-beta$/)
+})
+
+test('opens on the entry of an edit link', async ({dashboard, mount}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    hash: '#/edit?url=%2Fbeta',
+    title: 'Beta'
+  })
+  await expect(app.page).toHaveURL(/#\/entry\/main\/pages\/workflow-beta$/)
+  await expect(app.field('Title')).toHaveValue('Beta')
+})
+
 test('splits document metadata into SEO and Details tabs', async ({
   dashboard,
   mount
