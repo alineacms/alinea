@@ -92,6 +92,11 @@ export function document<
   return Object.assign(result, {[documentMarker]: true})
 }
 
+/** Whether `type` was created with `Config.document` */
+export function isDocument(type: Type): boolean {
+  return documentMarker in type
+}
+
 function fieldNames(definition: FieldsDefinition): Array<string> {
   return entries(definition).flatMap(([name, value]) =>
     Section.isSection(value) ? keys(Section.fields(value)) : [name]

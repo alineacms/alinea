@@ -13,6 +13,10 @@ import type {DropTarget, Key} from '#/components.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {workspacesAtom} from './config.js'
+import {
+  moveConfirmationAtom,
+  type MoveConfirmation
+} from './moveConfirmation.js'
 import {routeAtom} from './nav.js'
 import {rootAtoms} from './root.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -781,16 +785,50 @@ test('entries can be moved into listed containers by id', async () => {
   // Notes hold no children
   expect(canDrop(a._id)).toBe(false)
   // The nested note is not listed but can still be moved
-  await store.set(explorer.moveInto, [nested._id, a._id], {
+  const moving = store.set(explorer.moveInto, [nested._id, a._id], {
     key: folder._id,
     position: 'on'
   })
+  await answerMove(store, true)
+  await moving
   const moved = await db.find({
     id: {in: [nested._id, a._id]},
     select: Entry.parentId
   })
   expect(moved).toEqual([folder._id, folder._id])
 })
+
+test('moving entries under another parent can be cancelled', async () => {
+  const {a, db, explorer, folder, store} = await notesFixture()
+  await store.get(explorer.itemsReady(null))
+  const moving = store.set(explorer.moveInto, [a._id], {
+    key: folder._id,
+    position: 'on'
+  })
+  const confirmation = await answerMove(store, false)
+  await moving
+  expect(confirmation.pages.map(page => page.id)).toEqual([a._id])
+  expect(await db.first({id: a._id, select: Entry.parentId})).toBe(a._parentId)
+})
+
+/** Answers the question a move under another parent asks */
+async function answerMove(
+  store: ReturnType<typeof createStore>,
+  confirmed: boolean
+): Promise<MoveConfirmation> {
+  const confirmation =
+    store.get(moveConfirmationAtom) ??
+    (await new Promise<MoveConfirmation>(resolve => {
+      const unsubscribe = store.sub(moveConfirmationAtom, () => {
+        const next = store.get(moveConfirmationAtom)
+        if (!next) return
+        unsubscribe()
+        resolve(next)
+      })
+    }))
+  confirmation.resolve(confirmed)
+  return confirmation
+}
 
 test('selection actions follow the selected listed entries', async () => {
   const {parent, store} = await createDashboardAtomFixture()

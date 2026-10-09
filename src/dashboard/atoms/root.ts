@@ -21,6 +21,7 @@ import type {
 import type {RootViewProps} from '../cms/ViewProps.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
+import {confirmMoveAtom} from './moveConfirmation.js'
 import {configAtom, graphAtom} from './core.js'
 import {
   loadTreeChildren,
@@ -567,7 +568,7 @@ export class RootAtoms {
   })
   onMove = atom(
     null,
-    async (get, _set, event: DragMoveEvent, tree: TreeAtoms) => {
+    async (get, set, event: DragMoveEvent, tree: TreeAtoms) => {
       const policy = get(policyAtom)
       const permission =
         event.target.position === 'on' ? Permission.Move : Permission.Reorder
@@ -585,19 +586,15 @@ export class RootAtoms {
           locale: item.locale,
           parents: item.parents
         })
-      await moveEntries(
-        get(graphAtom),
-        moving.map(item => item.id),
-        event.target
-      )
+      const ids = moving.map(item => item.id)
+      if (!(await set(confirmMoveAtom, ids, event.target))) return
+      await moveEntries(get(graphAtom), ids, event.target)
     }
   )
-  onDrop = atom(null, async (get, _set, event: DropItemsEvent) => {
-    await moveEntries(
-      get(graphAtom),
-      dashboardEntryDropIds(event.items),
-      event.target
-    )
+  onDrop = atom(null, async (get, set, event: DropItemsEvent) => {
+    const ids = dashboardEntryDropIds(event.items)
+    if (!(await set(confirmMoveAtom, ids, event.target))) return
+    await moveEntries(get(graphAtom), ids, event.target)
   })
 }
 

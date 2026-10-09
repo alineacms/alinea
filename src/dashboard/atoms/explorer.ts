@@ -26,6 +26,7 @@ import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
+import {confirmMoveAtom} from './moveConfirmation.js'
 import {configAtom, graphAtom} from './core.js'
 import {MissingEntryError, treeEntryAtoms} from './entry.js'
 import {
@@ -1050,10 +1051,11 @@ export class ExplorerAtoms {
   /** Moves entries into the target entry */
   moveInto = atom(
     null,
-    async (get, _set, ids: Iterable<string>, target: DropTarget) => {
+    async (get, set, ids: Iterable<string>, target: DropTarget) => {
       const graph = get(graphAtom)
-      for (const id of ids) {
-        if (id === String(target.key)) continue
+      const moving = [...ids].filter(id => id !== String(target.key))
+      if (!(await set(confirmMoveAtom, moving, target))) return
+      for (const id of moving) {
         await graph.move({
           id,
           target: String(target.key),
@@ -1070,7 +1072,7 @@ export class ExplorerAtoms {
     null,
     async (
       get,
-      _set,
+      set,
       ids: Iterable<string>,
       target: DropTarget,
       locale: string | null
@@ -1080,6 +1082,7 @@ export class ExplorerAtoms {
       const moving = [...ids]
         .filter(id => id !== String(target.key))
         .sort((a, b) => listed.indexOf(a) - listed.indexOf(b))
+      if (!(await set(confirmMoveAtom, moving, target))) return
       await moveEntries(get(graphAtom), moving, target)
     }
   )

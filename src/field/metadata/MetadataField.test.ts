@@ -1,4 +1,4 @@
-import {document} from '#/core/Document.js'
+import {document, isDocument} from '#/core/Document.js'
 import {Type, type} from '#/core/Type.js'
 import {Field} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
@@ -235,4 +235,9 @@ test('types with either metadata field store audit details', () => {
   test.ok(hasAuditMetadata(File))
   test.not.ok(hasAuditMetadata(Other))
   test.not.ok(hasAuditMetadata(type('Plain', {fields: {}})))
+})
+
+test('documents are told apart from other types', () => {
+  test.ok(isDocument(document('Page', {fields: {}})))
+  test.not.ok(isDocument(type('Block', {fields: {}})))
 })
