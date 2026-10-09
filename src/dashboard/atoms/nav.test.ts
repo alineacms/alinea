@@ -172,3 +172,19 @@ test('opens the splash for an edit link to an unknown url', async () => {
     entry: undefined
   })
 })
+
+test('looks up an edit link in the root it names', async () => {
+  const {store} = await linkedStore()
+  await store.set(routeAtom, {page: 'edit', url: '/nl/hero', root: 'pages'})
+  expect(store.get(pageAtom).entry).toBe('hero')
+  await store.set(routeAtom, {page: 'edit', url: '/nl/hero', root: 'other'})
+  expect(store.get(pageAtom).entry).toBeUndefined()
+})
+
+test('keeps a navigation made while an edit link is looked up', async () => {
+  const {store} = await linkedStore()
+  const lookup = store.set(routeAtom, {page: 'edit', url: '/nl/hero'})
+  store.set(routeAtom, {page: 'users'})
+  await lookup
+  expect(store.get(pageAtom).type).toBe('users')
+})

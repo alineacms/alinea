@@ -135,12 +135,14 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
   if (update.page === 'users') return {page: 'users'}
   if (update.page === 'splash') return {page: 'splash'}
   if (update.page === 'edit')
-    return {
-      page: 'edit',
-      url: update.url,
-      workspace: update.workspace,
-      root: update.root
-    }
+    return update.url
+      ? {
+          page: 'edit',
+          url: update.url,
+          workspace: update.workspace,
+          root: update.root
+        }
+      : {page: 'splash'}
   return {
     page: 'entry',
     workspace: update.workspace,
@@ -186,6 +188,8 @@ const initialRoute = routeFromHash(
 )
 const currentRouteAtom = atom(initialRoute)
 let ignoredBrowserHash: string | undefined
+/** Counts the lookups of edit links, of which the last one navigates */
+let linkLookups = 0
 
 interface NavigationRequest {
   browser?: boolean
@@ -206,12 +210,23 @@ export const routeAtom = Object.assign(
               replace: update.replace
             } satisfies NavigationRequest)
       if (request.route.page !== 'edit')
-        return navigate(get, set, update, request)
-      // The current page stays until the linked entry is found, and the link
-      // is replaced by the route of the entry in history
+        return navigate(get, set, request, 'sort' in update)
+      // The current page stays, also in the address bar, until the linked
+      // entry is found; a navigation meanwhile wins
+      const current = get(currentRouteAtom)
+      const lookup = ++linkLookups
+      set(
+        locationAtom,
+        location => ({...location, hash: hashFromRoute(current)}),
+        {replace: true}
+      )
       return linkedRoute(get, request.route)
         .catch(() => ({page: 'splash'}) as ResolvedDashboardRoute)
-        .then(route => navigate(get, set, {route}, {route, replace: true}))
+        .then(route => {
+          if (lookup !== linkLookups || get(currentRouteAtom) !== current)
+            return
+          navigate(get, set, {route, replace: true}, true)
+        })
     }
   ),
   {
@@ -238,15 +253,14 @@ export const routeAtom = Object.assign(
 function navigate(
   get: Getter,
   set: Setter,
-  update: DashboardRoute | NavigationRequest,
-  request: NavigationRequest
+  request: NavigationRequest,
+  sortGiven: boolean
 ) {
   let {route} = request
   const key = sortKey(get, request)
   // The url is the source of truth for the sort of an overview, an
   // explicit undefined sort resets it
-  const explicit =
-    request.browser || route.sort !== undefined || 'sort' in update
+  const explicit = request.browser || route.sort !== undefined || sortGiven
   if (key && !explicit) {
     const sort = get(overviewSortMemoryAtom).get(key)
     if (sort) route = {...route, sort: formatOverviewSort(sort)}
@@ -302,21 +316,26 @@ async function linkedRoute(
       root: Entry.root
     }
   }
-  const path = linkedUrl(url)
+  // The pathname of a page may be encoded, stored urls are not
+  const urls = [...new Set([withoutSlash(url), withoutSlash(decoded(url))])]
   const found =
-    (await graph.first({...query, url: path})) ??
-    (await graph.first({...query, alias: path}))
+    (await graph.first({...query, url: {in: urls}})) ??
+    (await graph.first({...query, alias: {in: urls}}))
   if (!found) return {page: 'splash'}
   return {page: 'entry', ...found, locale: found.locale ?? undefined}
 }
 
-/** Entry urls are stored decoded and without a trailing slash */
-function linkedUrl(url: string): string {
-  let path = url
+function decoded(url: string): string {
   try {
-    path = decodeURI(url)
-  } catch {}
-  return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
+    return decodeURI(url)
+  } catch {
+    return url
+  }
+}
+
+/** Entry urls are stored without a trailing slash */
+function withoutSlash(url: string): string {
+  return url.length > 1 && url.endsWith('/') ? url.slice(0, -1) : url
 }
 
 /** The overview whose sort a navigation shows */
