@@ -1,11 +1,9 @@
 // oxlint-disable jsx_a11y/no-autofocus
 import {useDialog} from '#/components.js'
-import {getRoot} from '#/core/Internal.js'
 import {Permission} from '#/core/Role.js'
-import {useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {useAtomValueRawSync, useSetAtom} from 'jotai'
 import {Suspense, startTransition, type ReactNode} from 'react'
 import type {DashboardEntry, ExplorerOptions} from '../atoms/explorer.js'
-import {policyAtom} from '../atoms/user.js'
 import {useDashboardContext} from '../hooks.js'
 import {ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
@@ -43,19 +41,11 @@ interface ExplorerModalProps {
 
 function ImagePickerModalContent({options}: ExplorerModalProps) {
   const modal = useDialog()
-  const {root, workspace} = useDashboardContext()
-  const policy = useAtomValueRaw(policyAtom)
-  const mediaRoot = Object.entries(workspace.roots).find(
-    ([key, value]) =>
-      policy.canExplore({workspace: root.workspace, root: key}) &&
-      Boolean(getRoot(value).isMediaRoot)
-  )?.[0]
+  const {root} = useDashboardContext()
+  // Opens in a media root, of the current workspace if it has one
   const {explorer, tree} = usePickerExplorer(
-    {...options, permission: Permission.Explore},
-    options.location ?? {
-      workspace: root.workspace,
-      root: mediaRoot ?? root.key
-    },
+    {...options, media: true, permission: Permission.Explore},
+    options.location ?? {workspace: root.workspace, root: root.key},
     'card'
   )
   const explorerPage = useAtomValueRawSync(explorer.page)

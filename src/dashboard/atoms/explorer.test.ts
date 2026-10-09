@@ -1001,6 +1001,44 @@ test('pickers offer the locations that can be explored', async () => {
   ])
 })
 
+test('media pickers offer and search only media roots', async () => {
+  const Page = Config.document('Page', {
+    contains: ['Page'],
+    fields: {title: Field.text('Title')}
+  })
+  const workspace = (label: string) =>
+    Config.workspace(label, {
+      source: label,
+      roots: {
+        pages: Config.root('Pages', {contains: ['Page']}),
+        media: Config.media(),
+        uploads: Config.media()
+      }
+    })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {main: workspace('main'), other: workspace('other')}
+  })
+  const db = new LocalDB(config)
+  await db.create({type: Page, root: 'pages', set: {title: 'Shared'}})
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const picker = createExplorerAtoms(
+    {workspace: 'main', root: 'media'},
+    {allowAllWorkspaces: true, media: true}
+  )
+
+  expect(store.get(picker.locations)).toEqual([
+    {workspace: 'main', root: 'media'},
+    {workspace: 'main', root: 'uploads'},
+    {workspace: 'other', root: 'media'},
+    {workspace: 'other', root: 'uploads'}
+  ])
+  store.set(picker.search, 'Shared')
+  store.set(picker.searchScope, 'everything')
+  expect(await store.get(picker.itemsReady(null))).toEqual([])
+})
+
 test('pickers list and search entries that can be explored', async () => {
   const {folder, store} = await exploreFixture()
   const location = {workspace: 'shared', root: 'pages'}
