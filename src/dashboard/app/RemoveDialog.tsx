@@ -13,14 +13,19 @@ import {
   entrySidebarOpenAtom,
   entrySidebarTabAtom
 } from '#/dashboard/atoms/dashboard.js'
-import type {DeletePlan} from '#/dashboard/atoms/delete.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
+import {
+  archiveDirectlyAtom,
+  type RemoveAction,
+  type RemovePlan
+} from '#/dashboard/atoms/remove.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {useTransition} from 'react'
+import {useState, useTransition} from 'react'
 import {IcRoundArchive, IcRoundDelete, IcRoundWarning} from '../icons.js'
-import css from './DeleteDialog.module.css'
 import {countReferenceSources, EntryReferenceList} from './EntryReferences.js'
+import css from './RemoveDialog.module.css'
+import {RemoveRedirect} from './RemoveRedirect.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -30,22 +35,29 @@ import {
 
 const styles = styler(css)
 
-export interface DeleteDialogProps {
-  /** What to delete, loaded before it opens, closed when undefined */
-  plan: DeletePlan | undefined
+export interface RemoveDialogProps {
+  action: RemoveAction
+  /** What to remove, loaded before it opens, closed when undefined */
+  plan: RemovePlan | undefined
   onClose(): void
-  onConfirm(plan: DeletePlan): Promise<void>
-  /** Archives the entries instead, offered when all of them can be */
-  onArchive?(plan: DeletePlan): Promise<void>
+  /** Deletes or archives the entries, as the action says */
+  onConfirm(plan: RemovePlan): Promise<void>
+  /** Archives the entries instead of deleting them, offered when all of them
+   * can be */
+  onArchive?(plan: RemovePlan): Promise<void>
 }
 
-/** Confirms deleting entries, warning about the links that will break */
-export function DeleteDialog({
+/**
+ * Confirms deleting or archiving entries, warning about the links that will
+ * break, and redirects their URLs to another page
+ */
+export function RemoveDialog({
+  action,
   plan,
   onClose,
   onConfirm,
   onArchive
-}: DeleteDialogProps) {
+}: RemoveDialogProps) {
   return (
     <DashboardModal
       open={Boolean(plan)}
@@ -54,11 +66,12 @@ export function DeleteDialog({
       }}
     >
       {plan && (
-        <DeleteDialogContent
+        <RemoveDialogContent
+          action={action}
           plan={plan}
           onClose={onClose}
           onConfirm={onConfirm}
-          onArchive={onArchive}
+          onArchive={action === 'delete' ? onArchive : undefined}
         />
       )}
     </DashboardModal>
@@ -68,31 +81,37 @@ export function DeleteDialog({
 // Hundreds of references would push the actions out of view, list a few
 const maxListedSources = 3
 
-interface DeleteDialogContentProps {
-  plan: DeletePlan
+interface RemoveDialogContentProps {
+  action: RemoveAction
+  plan: RemovePlan
   onClose(): void
-  onConfirm(plan: DeletePlan): Promise<void>
-  onArchive?(plan: DeletePlan): Promise<void>
+  onConfirm(plan: RemovePlan): Promise<void>
+  onArchive?(plan: RemovePlan): Promise<void>
 }
 
-function DeleteDialogContent({
+function RemoveDialogContent({
+  action,
   plan,
   onClose,
   onConfirm,
   onArchive
-}: DeleteDialogContentProps) {
+}: RemoveDialogContentProps) {
   const config = useAtomValueRaw(configAtom)
   const [selectedLocales, setSelectedLocales] = useAtom(plan.selectedLocales)
   const removals = useAtomValueRaw(plan.removals)
   const references = useAtomValueRaw(plan.references)
   const hiddenSources = useAtomValueRaw(plan.hiddenSources)
   const archivable = useAtomValueRaw(plan.archivable)
+  const urls = useAtomValueRaw(plan.urls)
+  const setArchiveDirectly = useSetAtom(archiveDirectlyAtom)
   const setRoute = useSetAtom(routeAtom)
   const setSidebarTab = useSetAtom(entrySidebarTabAtom)
   const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
-  const [isDeleting, startDelete] = useTransition()
+  const [isConfirming, startConfirm] = useTransition()
   const [isArchiving, startArchive] = useTransition()
-  const isPending = isDeleting || isArchiving
+  const [skipDialog, setSkipDialog] = useState(false)
+  const isPending = isConfirming || isArchiving
+  const isDelete = action === 'delete'
   const {subjects, locales} = plan
   const count = subjects.length
   const typeOf = (type: string) => config.schema[type]
@@ -107,22 +126,26 @@ function DeleteDialogContent({
     hiddenSources === 1 ? '1 entry' : `${hiddenSources} entries`
   const total = sources + hiddenSources
   const unlisted = Math.max(0, sources - maxListedSources)
-  // Links to the entries or files inside the deleted ones
+  // Links to the entries or files inside the removed ones
   const nested = references.some(
     ({reference}) => !subjects.some(item => item.id === reference.targetId)
   )
   const onlyFiles = files.length === count
+  const pages = new Set(urls.map(url => url.id)).size
   const [first] = subjects
   // An entry is not translated in the language it is shown in when none is
   // picked at first, it offers the languages it exists in
   const pickLocales =
+    isDelete &&
     locales !== undefined &&
     (locales.length > 1 ||
       (locales.length === 1 && locales[0] !== first.locale))
+  const these = count === 1 ? `This ${noun}` : `${count} items`
 
   function confirm() {
-    startDelete(async () => {
+    startConfirm(async () => {
       await onConfirm(plan)
+      if (!isDelete && skipDialog) setArchiveDirectly(true)
       onClose()
     })
   }
@@ -136,13 +159,20 @@ function DeleteDialogContent({
 
   return (
     <DashboardModalDialog
-      label={count === 1 ? `Delete ${noun}` : `Delete ${count} items`}
+      label={
+        count === 1
+          ? `${isDelete ? 'Delete' : 'Archive'} ${noun}`
+          : `${isDelete ? 'Delete' : 'Archive'} ${count} items`
+      }
     >
       <DashboardModalContent>
         <Text as="p">
-          {onlyFiles
-            ? `${count === 1 ? 'This file' : `${count} files`} will be permanently deleted from the media library and its storage.`
-            : `${count === 1 ? `This ${noun}` : `${count} items`} will be permanently deleted and cannot be recovered afterwards.`}
+          {!isDelete
+            ? // Archived entries are unpublished but can be restored
+              `${these} will be archived and can be restored later.`
+            : onlyFiles
+              ? `${count === 1 ? 'This file' : `${count} files`} will be permanently deleted from the media library and its storage.`
+              : `${these} will be permanently deleted and cannot be recovered afterwards.`}
         </Text>
         {pickLocales && (
           <CheckboxGroup
@@ -158,14 +188,14 @@ function DeleteDialogContent({
             ))}
           </CheckboxGroup>
         )}
-        {files.length > 0 && !onlyFiles && (
+        {isDelete && files.length > 0 && !onlyFiles && (
           <Text as="p">
             {files.length === 1
               ? 'The file is removed from the media library and its storage.'
               : `${files.length} files are removed from the media library and its storage.`}
           </Text>
         )}
-        {folders.length > 0 && (
+        {isDelete && folders.length > 0 && (
           <Text as="p">
             {folders.length === 1
               ? 'The folder is deleted with every file in it.'
@@ -174,7 +204,8 @@ function DeleteDialogContent({
         )}
         {parents.length > 0 && (
           <Text as="p">
-            Entries are deleted with the entries they contain
+            Entries are {isDelete ? 'deleted' : 'archived'} with the entries
+            they contain
             {pickLocales ? ', in the selected languages.' : '.'}
           </Text>
         )}
@@ -247,6 +278,14 @@ function DeleteDialogContent({
               )}
           </>
         )}
+        {total === 0 && pages > 0 && (
+          <Text as="p" color="muted">
+            {pages === 1
+              ? 'If this page was publicly available, links to its URL may still be around elsewhere. It can be useful to redirect its URL to another page.'
+              : 'If these pages were publicly available, links to their URLs may still be around elsewhere. It can be useful to redirect their URLs to another page.'}
+          </Text>
+        )}
+        <RemoveRedirect plan={plan} disabled={isPending} />
       </DashboardModalContent>
       <DashboardModalFooter>
         {onArchive &&
@@ -262,19 +301,40 @@ function DeleteDialogContent({
               Archive instead
             </Button>
           )}
-        <div className={styles.DeleteDialog.actions()}>
+        {!isDelete && (
+          <Checkbox
+            checked={skipDialog}
+            onCheckedChange={setSkipDialog}
+            disabled={isPending}
+          >
+            Don't show this again during this session
+          </Checkbox>
+        )}
+        <div className={styles.RemoveDialog.actions()}>
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            color="destructive"
-            icon={IcRoundDelete}
-            disabled={isPending || removals.length === 0}
-            loading={isDeleting}
-            onClick={confirm}
-          >
-            Delete
-          </Button>
+          {isDelete ? (
+            <Button
+              color="destructive"
+              icon={IcRoundDelete}
+              disabled={isPending || removals.length === 0}
+              loading={isConfirming}
+              onClick={confirm}
+            >
+              Delete
+            </Button>
+          ) : (
+            <Button
+              color="primary"
+              icon={IcRoundArchive}
+              disabled={isPending || removals.length === 0}
+              loading={isConfirming}
+              onClick={confirm}
+            >
+              Archive
+            </Button>
+          )}
         </div>
       </DashboardModalFooter>
     </DashboardModalDialog>

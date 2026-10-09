@@ -10,7 +10,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "When an entry has children, or a root holds entries, the dashboard lists them in an overview: a table, or cards, with the title of each entry and, when they tell the entries apart, its type, status and who edited it last. The `overview` option of a container "
+          "text": "When an entry has children, or a root holds entries, the dashboard lists them in an overview: a table, or cards, with the title and status of each entry and, when they tell the entries apart, its type and who edited it last. The `overview` option of a container "
         },
         {
           "_type": "text",
@@ -708,7 +708,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The title is always the first column. The built-in columns follow, then the columns you define. Columns with `position: 'start'` go between the title and the built-in columns."
+          "text": "The title is always the first column. The built-in columns follow, then the columns you define. Columns with `position: 'start'` go between the title and the built-in columns. Like in the sidebar, an icon after the title marks entries that are not plainly published: drafts, unpublished and archived entries."
         }
       ]
     },
@@ -746,20 +746,6 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`status`: the publication status. Shown when the children differ in status, for example when some are drafts. A list of published entries has no status column."
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_type": "listItem",
-          "content": [
-            {
-              "_type": "paragraph",
-              "content": [
-                {
-                  "_type": "text",
                   "text": "`updated` and `author`: when the entry was last edited and by whom, read from the audit fields of the metadata field (under the key `metadata`, which `Config.document` and `Field.metadata()` add). Shown when at least one child stores that audit data, so lists of entries created before audit data was recorded don't show empty columns."
                 }
               ]
@@ -782,7 +768,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Force them on or off with `builtins`, for example `{status: true}` to always show the status, or `{type: false, updated: false, author: false}` to never show those. A column keyed `type`, `status`, `updated` or `author` replaces that built-in column in place, for example to show the writer of an article instead of the last editor. The `title` key is reserved."
+          "text": "Force them on or off with `builtins`, for example `{type: true}` to always show the type, or `{type: false, updated: false, author: false}` to never show those. A column keyed `type`, `updated` or `author` replaces that built-in column in place, for example to show the writer of an article instead of the last editor. The `title` key is reserved."
         }
       ]
     },

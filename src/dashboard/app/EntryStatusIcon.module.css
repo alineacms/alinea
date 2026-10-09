@@ -1,0 +1,26 @@
+.EntryStatusIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--alinea-radius-sm);
+  color: var(--alinea-fg-muted);
+  background: var(--alinea-muted);
+}
+
+.EntryStatusIcon-icon {
+  width: 13px;
+  height: 13px;
+}
+
+.EntryStatusIcon.is-draft {
+  color: var(--alinea-status-draft-fg);
+  background: var(--alinea-status-draft);
+}
+
+.EntryStatusIcon.is-unpublished {
+  color: var(--alinea-status-unpublished-fg);
+  background: var(--alinea-status-unpublished);
+}

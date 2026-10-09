@@ -1,4 +1,4 @@
-import {Badge, Button, type TableColumn, Timestamp} from '#/components.js'
+import {Button, type TableColumn, Timestamp} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {OverviewCellProps as OverviewCellViewProps} from '#/core/Overview.js'
 import {Type} from '#/core/Type.js'
@@ -72,8 +72,6 @@ export function overviewCellText(
   switch (column.builtin) {
     case 'type':
       return typeLabel(config, row.type)
-    case 'status':
-      return row.status ?? ''
     case 'updated': {
       const updatedAt = auditMetadata(row).updatedAt
       return typeof updatedAt === 'number'
@@ -209,13 +207,6 @@ function OverviewBuiltinCell({column, config, row}: OverviewBuiltinCellProps) {
         <span className={styles.OverviewCell.text()}>
           {typeLabel(config, row.type)}
         </span>
-      )
-    case 'status':
-      if (!row.status) return <OverviewEmpty />
-      return (
-        <Badge size="sm" status={row.status}>
-          {row.status}
-        </Badge>
       )
     case 'updated': {
       const updatedAt = auditMetadata(row).updatedAt
