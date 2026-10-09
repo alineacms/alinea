@@ -1,4 +1,4 @@
-import type {DropTarget} from '#/components.js'
+import type {DropTarget, Key} from '#/components.js'
 import {isDocument} from '#/core/Document.js'
 import {Entry} from '#/core/Entry.js'
 import {atom} from 'jotai'
@@ -7,9 +7,13 @@ import {configAtom, graphAtom} from './core.js'
 import {loadMoveTargetsAtom} from './move.js'
 import {policyAtom} from './user.js'
 
-/** Pages that a move gives another parent, and so another url */
+/**
+ * A dragged move to confirm: the pages it gives another parent, and so
+ * another url, or why it can not move there
+ */
 export interface MoveConfirmation {
   pages: Array<{id: string; title: string}>
+  refusal?: string
   resolve(confirmed: boolean): void
 }
 
@@ -20,6 +24,12 @@ export const confirmMovesAtom = atomWithStorage(
   undefined,
   {getOnInit: true}
 )
+
+/**
+ * The entries being dragged, known from the start of a drag so that drop
+ * targets can turn down the ones they can not hold
+ */
+export const draggedEntriesAtom = atom<ReadonlySet<Key>>(new Set<Key>())
 
 export const moveConfirmationAtom = atom<MoveConfirmation | undefined>(
   undefined
@@ -68,40 +78,46 @@ export const confirmMoveAtom = atom(
     )
     // Reordering among the same children follows the drop rules of the list
     if (moved.length === 0) return true
-    // Entries move within their root, seeded entries stay where they are
-    const policy = get(policyAtom)
-    const misplaced = moved.some(
-      subject =>
-        subject.seeded ||
-        subject.workspace !== dropped.workspace ||
-        subject.root !== dropped.root ||
-        !policy.canMove(subject)
-    )
-    if (misplaced) return false
-    const targets = await set(loadMoveTargetsAtom, moved)
-    const parent =
-      parentId === dropped.id
-        ? dropped
-        : parentId && (await graph.first({...query, id: parentId}))
-    const accepted =
-      parentId === null
-        ? targets.rootAccepts
-        : Boolean(parent && targets.accepts(parent))
-    if (!accepted) return false
+    const ask = (question: Omit<MoveConfirmation, 'resolve'>) =>
+      new Promise<boolean>(resolve =>
+        set(moveConfirmationAtom, {
+          ...question,
+          resolve(confirmed) {
+            set(moveConfirmationAtom, undefined)
+            resolve(confirmed)
+          }
+        })
+      )
+    const refusal = await movingRefusal()
+    if (refusal) return ask({pages: [], refusal}).then(() => false)
     const {schema} = get(configAtom)
     const pages = moved.filter(subject => {
       const type = schema[subject.type]
       return type && isDocument(type)
     })
     if (pages.length === 0 || !get(confirmMovesAtom)) return true
-    return new Promise(resolve =>
-      set(moveConfirmationAtom, {
-        pages: pages.map(({id, title}) => ({id, title})),
-        resolve(confirmed) {
-          set(moveConfirmationAtom, undefined)
-          resolve(confirmed)
-        }
-      })
-    )
+    return ask({pages: pages.map(({id, title}) => ({id, title}))})
+
+    async function movingRefusal(): Promise<string | undefined> {
+      const policy = get(policyAtom)
+      for (const subject of moved) {
+        if (
+          subject.workspace !== dropped!.workspace ||
+          subject.root !== dropped!.root
+        )
+          return 'Entries can only be moved within their own root.'
+        if (subject.seeded)
+          return `"${subject.title}" is part of the site setup and can not be moved.`
+        if (!policy.canMove(subject))
+          return `You can not move "${subject.title}".`
+      }
+      const targets = await set(loadMoveTargetsAtom, moved)
+      if (parentId === null) return targets.refusal(null)
+      const parent =
+        parentId === dropped!.id
+          ? dropped!
+          : await graph.first({...query, id: parentId})
+      return parent ? targets.refusal(parent) : 'The new parent was not found.'
+    }
   }
 )

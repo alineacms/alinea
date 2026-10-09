@@ -185,3 +185,15 @@ test('asks before moving a page under another parent', async ({
     'true'
   )
 })
+
+test('does not offer a parent that can not hold the entry', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  // Pages hold pages, not ordered folders
+  await app.entry('Ordered folder').dragTo(app.entry('Folder'))
+  await expect(app.page.getByRole('dialog')).toHaveCount(0)
+  await expect(app.entry('Ordered folder')).toHaveAttribute('aria-level', '1')
+})

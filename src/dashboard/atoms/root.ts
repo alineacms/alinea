@@ -1,3 +1,4 @@
+import {Config} from '#/core/Config.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {Permission, type Resource} from '#/core/Role.js'
 import {Root, type RootData, type RootI18n} from '#/core/Root.js'
@@ -21,7 +22,8 @@ import type {
 import type {RootViewProps} from '../cms/ViewProps.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
-import {confirmMoveAtom} from './moveConfirmation.js'
+import {confirmMoveAtom, draggedEntriesAtom} from './moveConfirmation.js'
+import {rootAcceptsType} from './move.js'
 import {configAtom, graphAtom} from './core.js'
 import {
   loadTreeChildren,
@@ -557,7 +559,8 @@ export class RootAtoms {
   acceptedDragTypes = [...dashboardEntryDragTypes]
   getItems = atom(
     null,
-    (_get, _set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+    (_get, set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+      set(draggedEntriesAtom, keys)
       return [...keys].map(dashboardEntryDragItem)
     }
   )
@@ -572,9 +575,15 @@ export class RootAtoms {
       const policy = get(policyAtom)
       const permission =
         event.target.position === 'on' ? Permission.Move : Permission.Reorder
-      const {schema} = get(configAtom)
       const {entries} = get(tree.view)
-      if (!treeAcceptsDrop(schema, entries, event.target, event.keys)) return
+      const accepted = treeAcceptsDrop(
+        get(configAtom),
+        get(this.data),
+        entries,
+        event.target,
+        event.keys
+      )
+      if (!accepted) return
       // Move entries in the order they are listed rather than selected
       const moving = get(tree.items).filter(item => event.keys.has(item.id))
       for (const item of moving)
@@ -607,16 +616,33 @@ export const rootAtoms = dispense(
  * children of a parent that does not order them, and never inside themselves
  */
 export function treeAcceptsDrop(
-  schema: Schema,
+  config: Config,
+  rootData: RootData,
   entries: Map<string, RootTreeItem>,
   target: DropTarget,
   keys: ReadonlySet<Key> = new Set()
 ): boolean {
   const entry = entries.get(String(target.key))
   if (!entry || entry.parents.some(id => keys.has(id))) return false
-  if (target.position !== 'on') return !entry.ordered
-  const type = schema[entry.type]
-  return !keys.has(entry.id) && Boolean(type && Type.isContainer(type))
+  const into = target.position === 'on'
+  if (into ? keys.has(entry.id) : entry.ordered) return false
+  const parentId = into ? entry.id : entry.parentId
+  const parent = parentId ? entries.get(parentId) : undefined
+  const parentType = parent && config.schema[parent.type]
+  if (into && !(parentType && Type.isContainer(parentType))) return false
+  // Listed entries that get another parent need one that holds their type,
+  // the others are checked once dropped
+  for (const key of keys) {
+    const dragged = entries.get(String(key))
+    if (!dragged || !config.schema[dragged.type]) continue
+    if (dragged.parentId === parentId) continue
+    if (parentId && !parentType) continue
+    const accepted = parentType
+      ? Config.typeContains(config, parentType, config.schema[dragged.type])
+      : rootAcceptsType(config, rootData, dragged.type)
+    if (!accepted) return false
+  }
+  return true
 }
 
 /** The selected entry, or the location of a selected entry that is not listed */

@@ -13,6 +13,7 @@ import {Type, type EntryDefaultView} from '#/core/Type.js'
 import {typeAtoms} from '../atoms/config.js'
 import {nav, routeAtom, type Page} from '../atoms/nav.js'
 import {configAtom} from '../atoms/core.js'
+import {draggedEntriesAtom} from '../atoms/moveConfirmation.js'
 import {
   locatedItem,
   type RootAtoms,
@@ -274,9 +275,11 @@ function useRootTreeDragDrop(
     acceptedDragTypes: root.acceptedDragTypes,
     canDrop: target =>
       treeAcceptsDrop(
-        store.get(configAtom).schema,
+        store.get(configAtom),
+        store.get(root.data),
         store.get(tree.view).entries,
-        target
+        target,
+        store.get(draggedEntriesAtom)
       ),
     getDragData: getItems,
     onDropItems: drop,

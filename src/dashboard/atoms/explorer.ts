@@ -26,7 +26,7 @@ import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
-import {confirmMoveAtom} from './moveConfirmation.js'
+import {confirmMoveAtom, draggedEntriesAtom} from './moveConfirmation.js'
 import {configAtom, graphAtom} from './core.js'
 import {MissingEntryError, treeEntryAtoms} from './entry.js'
 import {
@@ -1014,7 +1014,8 @@ export class ExplorerAtoms {
   )
   getDragData = atom(
     null,
-    (_get, _set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+    (_get, set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+      set(draggedEntriesAtom, keys)
       return [...keys].map(dashboardEntryDragItem)
     }
   )
