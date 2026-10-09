@@ -1,6 +1,9 @@
 import {document} from '#/core/Document.js'
 import {Type, type} from '#/core/Type.js'
 import {Field} from '#/core/Field.js'
+import {Section} from '#/core/Section.js'
+import {check} from '#/field/check.js'
+import {TabsSection} from '#/field/tabs.js'
 import {text} from '#/field/text.js'
 import {suite} from '@alinea/suite'
 import {
@@ -168,7 +171,7 @@ test('document metadata stays one record split over SEO and details', () => {
   const Page = document('Page', {fields: {}})
   const options = Field.options(Page.metadata)
 
-  test.ok(options.detailsSection)
+  test.ok(options.sections)
   test.equal(Object.keys(Type.fields(Page)), ['title', 'path', 'metadata'])
   test.equal(Object.keys(Type.fields(options.seo)), [
     'title',
@@ -187,6 +190,40 @@ test('document metadata stays one record split over SEO and details', () => {
   test.equal(
     Object.keys(Type.initialValue(Page).metadata as object).sort(),
     Object.keys(Type.fields(options.fields)).sort()
+  )
+})
+
+test('documents add fields to the SEO and details tabs', () => {
+  const Page = document('Page', {
+    fields: {body: text('Body')},
+    seo: {brand: check('Brand the share image')},
+    details: {reviewer: text('Reviewer')}
+  })
+  const [tabsSection] = Type.sections(Page)
+  const [main, seo, details] = (tabsSection[Section.Data] as TabsSection).types
+  test.equal(Object.keys(Type.fields(main)), ['title', 'path', 'body'])
+  test.equal(Object.keys(Type.fields(seo)), ['metadata', 'brand'])
+  test.equal(Object.keys(Type.fields(details)), ['reviewer'])
+  test.equal(Object.keys(Type.fields(Page)), [
+    'title',
+    'path',
+    'body',
+    'metadata',
+    'brand',
+    'reviewer'
+  ])
+})
+
+test('documents let their fields replace the title', () => {
+  const title = text('Headline')
+  const Page = document('Page', {fields: {title}})
+  test.is(Page.title, title)
+})
+
+test('documents refuse a field defined twice', () => {
+  test.throws(
+    () => document('Page', {fields: {}, details: {path: text('Path')}}),
+    'Field "path" is defined twice'
   )
 })
 

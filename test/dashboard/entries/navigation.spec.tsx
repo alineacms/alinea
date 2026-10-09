@@ -510,17 +510,36 @@ test('splits document metadata into SEO and Details tabs', async ({
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
   const createdAt = app.page.getByText('Created at', {exact: true})
 
+  const openGraph = app.page.getByText('Open Graph', {exact: true})
+  const brand = app.page.getByText('Brand the share image', {exact: true})
+  const previews = app.page.getByText('Metadata previews', {exact: true})
+  const reviewer = app.page.getByText('Reviewer', {exact: true})
+
   await app.page.getByRole('tab', {name: 'SEO'}).click()
   await expect(app.field('Description')).toHaveCount(2)
-  await expect(app.page.getByText('Open Graph', {exact: true})).toBeVisible()
+  await expect(openGraph).toBeVisible()
   await expect(createdAt).toHaveCount(0)
+  // Fields a type adds to the SEO tab come before the previews
+  await expect(brand).toBeVisible()
+  expect(await top(openGraph)).toBeLessThan(await top(brand))
+  expect(await top(brand)).toBeLessThan(await top(previews))
+  await expect(reviewer).toHaveCount(0)
 
   await app.page.getByRole('tab', {name: 'Details'}).click()
   await expect(createdAt).toBeVisible()
   await expect(app.page.getByText('Updated by', {exact: true})).toBeVisible()
   await expect(app.page.getByText('URL aliases', {exact: true})).toBeVisible()
   await expect(app.field('Description')).toHaveCount(0)
+  await expect(brand).toHaveCount(0)
+  // and to the Details tab before the created and updated details
+  expect(await top(reviewer)).toBeLessThan(await top(createdAt))
 })
+
+async function top(locator: Locator): Promise<number> {
+  const box = await locator.boundingBox()
+  if (!box) throw new Error('Not visible')
+  return box.y
+}
 
 // Counts the animation frames in which the dashboard is hidden, or the preview
 // tab shows anything but the preview of the entry on screen

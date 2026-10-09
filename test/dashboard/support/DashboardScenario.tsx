@@ -36,7 +36,9 @@ const ScenarioPage = Config.document('Page', {
         }
       }
     })
-  }
+  },
+  seo: {brandShareImage: Field.check('Brand the share image')},
+  details: {reviewer: Field.text('Reviewer')}
 })
 
 const HiddenFolder = Config.document('Hidden folder', {

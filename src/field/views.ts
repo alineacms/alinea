@@ -17,6 +17,7 @@ import {ListFieldView} from './list/ListField.view.js'
 import {
   MetadataDetailsView,
   MetadataFieldView,
+  MetadataPreviewsView,
   MetadataTimestampFieldView,
   MetadataUserFieldView
 } from './metadata/MetadataField.view.js'
@@ -48,6 +49,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.NumberInput]: NumberFieldView,
   [viewKeys.MetadataInput]: MetadataFieldView,
   [viewKeys.MetadataDetailsView]: MetadataDetailsView,
+  [viewKeys.MetadataPreviewsView]: MetadataPreviewsView,
   [viewKeys.MetadataTimestampInput]: MetadataTimestampFieldView,
   [viewKeys.MetadataUserInput]: MetadataUserFieldView,
   [viewKeys.PathInput]: PathFieldView,
