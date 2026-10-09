@@ -102,7 +102,7 @@ export type OverviewSortDirection = 'asc' | 'desc'
 export interface OverviewSort {
   /**
    * A key of `overview.sorts`, of `overview.columns`, or a built-in column:
-   * `title`, `type`, `status`, `updated`, `author`
+   * `title`, `type`, `updated`, `author`
    */
   column: string
   direction: OverviewSortDirection
@@ -224,8 +224,6 @@ export interface OverviewColumn<Value = any> extends OverviewColumnBase<Value> {
 export interface OverviewBuiltins {
   /** The entry type, shown by default when the children have several types */
   type?: boolean
-  /** The publication status, shown by default when the statuses differ */
-  status?: boolean
   /** When the entry was last edited, shown by default when recorded */
   updated?: boolean
   /** Who last edited the entry, shown by default when recorded */
@@ -237,7 +235,7 @@ export interface OverviewOptions {
   /**
    * Columns shown after the title and the built-in columns, or before the
    * built-in columns with `position: 'start'`. A column keyed `type`,
-   * `status`, `updated` or `author` replaces that built-in column.
+   * `updated` or `author` replaces that built-in column.
    */
   columns?: Record<string, OverviewColumn>
   /** Show or hide the built-in columns */

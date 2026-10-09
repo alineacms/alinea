@@ -22,6 +22,7 @@ import type {
   ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
+import {EntryStatusIcon, entryStatus} from './EntryStatusIcon.js'
 import {fileKindVisual} from './FileKind.js'
 import css from './ExplorerCards.module.css'
 
@@ -58,6 +59,8 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   }
   const file = useAtomValueRaw(data.fileInfo)
   const thumbnail = useAtomValueRaw(data.thumbnail)
+  const status = entryStatus(useAtomValueRaw(data.item))
+  const suffix = status && <EntryStatusIcon status={status} />
   const card: ContentCardProps = file
     ? {
         variant: 'media',
@@ -65,6 +68,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
           ? {image: file.preview, color: file.averageColor}
           : fileKindVisual(file.extension)),
         title: label,
+        suffix,
         description: formatExtension(file.extension),
         details: formatFileDetails(file)
       }
@@ -74,18 +78,20 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
           image: thumbnail.preview,
           color: thumbnail.averageColor,
           title: label,
+          suffix,
           description: type.label
         }
       : {
           // Like the tree and table, only entries with children are folders
           icon: icon ?? (hasChildren ? IcTwotoneFolder : IcTwotoneDescription),
           title: label,
+          suffix,
           description: type.label
         }
   return (
     <ContentGridItem
       id={entry.id}
-      textValue={label}
+      textValue={status ? `${label} ${status.label}` : label}
       selectable={isSelectable}
       onAction={hasAction ? onAction : undefined}
       onClick={isSelectable && onPick ? () => onPick(entry) : undefined}

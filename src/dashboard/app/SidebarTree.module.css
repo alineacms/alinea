@@ -77,39 +77,6 @@
   opacity: 1;
 }
 
-.SidebarTree-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: var(--alinea-radius-sm);
-  color: var(--alinea-fg-muted);
-  background: var(--alinea-muted);
-}
-
-.SidebarTree-status-icon {
-  width: 13px;
-  height: 13px;
-}
-
-.SidebarTree-status.is-draft {
-  color: var(--alinea-status-draft-fg);
-  background: var(--alinea-status-draft);
-}
-
-.SidebarTree-status.is-unpublished {
-  color: var(--alinea-status-unpublished-fg);
-  background: var(--alinea-status-unpublished);
-}
-
-.SidebarTree-status.is-archived,
-.SidebarTree-status.is-untranslated {
-  color: var(--alinea-fg-muted);
-  background: var(--alinea-muted);
-}
-
 .SidebarTree-rootButton {
   display: flex;
   align-items: center;

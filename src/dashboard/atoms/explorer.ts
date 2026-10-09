@@ -278,6 +278,8 @@ export interface ExplorerItemData {
   createdAt?: number | null
   id: string
   status?: EntryStatus
+  /** The version is the main one, a draft then was never published */
+  main?: boolean
   title: string
   path: string
   updatedAt?: number | null
@@ -1404,6 +1406,7 @@ const explorerItemSelect = {
   createdAt: Entry.createdAt,
   id: Entry.id,
   status: Entry.status,
+  main: Entry.main,
   title: Entry.title,
   path: Entry.path,
   updatedAt: Entry.updatedAt,

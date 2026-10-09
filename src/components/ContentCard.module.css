@@ -119,13 +119,29 @@
 }
 
 .ContentCard-title {
+  display: flex;
   flex: 0 0 auto;
-  overflow: hidden;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
+}
+
+.ContentCard-title-text {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ContentCard-suffix {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  /* Keeps the title line as high as a title without a suffix */
+  margin-block: -1px;
 }
 
 .ContentCard-description {
