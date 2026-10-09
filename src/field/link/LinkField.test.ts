@@ -96,6 +96,22 @@ test('external links take the title of the link picker as their label', async ()
   )
   expect(titled._label).toBe('Example')
   expect(labeled._label).toBe('Custom')
+  const [cleared] = await Field.queryValue(
+    link.multiple('Links'),
+    [
+      {
+        _id: 'cleared',
+        _type: 'url',
+        _index: 'a0',
+        _url: 'https://example.com',
+        _title: 'Example',
+        _target: '_blank',
+        _label: ''
+      }
+    ],
+    {} as LinkResolver
+  )
+  expect(cleared._label).toBe('')
 })
 
 test('link types default to links without fields', () => {
