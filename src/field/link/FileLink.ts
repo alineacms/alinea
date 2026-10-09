@@ -8,7 +8,8 @@ import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkFieldOptions,
   createLink,
-  createLinks
+  createLinks,
+  type LinkFields
 } from '#/field/link/LinkField.js'
 import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
 import type {EntryReference} from '#/picker/entry/EntryReference.js'
@@ -65,7 +66,7 @@ export function file<Fields = undefined>(
 ) {
   return createLink<
     EntryReference & InferStoredValue<Fields>,
-    FileLink<Type.Infer<Fields>>
+    FileLink<LinkFields<Type.Infer<Fields>>>
   >(label, {
     ...options,
     pickers: {file: filePicker(false, options)}
@@ -86,7 +87,7 @@ export namespace file {
   ) {
     return createLinks<
       EntryReference & ListRow & InferStoredValue<Fields>,
-      FileLink<Type.Infer<Fields>>
+      FileLink<LinkFields<Type.Infer<Fields>>>
     >(label, {
       ...options,
       pickers: {file: filePicker(true, options)}

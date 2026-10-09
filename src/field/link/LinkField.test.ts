@@ -123,7 +123,12 @@ test('link types default to links without fields', () => {
   expectTypeOf<InferQueryValue<typeof withFields>>().toMatchTypeOf<
     Array<Link>
   >()
-  expectTypeOf<
-    InferQueryValue<ReturnType<typeof image>>
-  >().toMatchTypeOf<ImageLink | null>()
+  const cover = image('Cover')
+  const captioned = image('Cover', {fields: {caption: text('Caption')}})
+  // Queried images fit a plain ImageLink, with or without extra fields
+  const images: Array<ImageLink> = [
+    {} as InferQueryValue<typeof cover>,
+    {} as InferQueryValue<typeof captioned>
+  ]
+  expect(images).toHaveLength(2)
 })
