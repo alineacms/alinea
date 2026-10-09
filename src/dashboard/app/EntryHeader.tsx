@@ -15,13 +15,11 @@ import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Entry} from '#/core/Entry.js'
 import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import type {FieldValidationError} from '#/core/Validation.js'
 import {activityAtom} from '../atoms/activity.js'
 import {configAtom} from '../atoms/core.js'
 import {
@@ -148,19 +146,6 @@ function entryUrlConflictInfo(
   }
 }
 
-function entryValidationFailure(
-  error: unknown
-): EntryValidationFailure | undefined {
-  if (error instanceof EntryValidationError)
-    return {errors: error.info.errors, message: error.message}
-  // Errors thrown in the shared worker arrive without their details
-  if (!isRecord(error) || error.name !== 'EntryValidationError') return
-  const info = error.info
-  if (isRecord(info) && Array.isArray(info.errors))
-    return {errors: info.errors as Array<FieldValidationError>}
-  return {message: typeof error.message === 'string' ? error.message : ''}
-}
-
 const variantDescription = {
   published: 'Published',
   unpublished: 'Unpublished',
@@ -274,19 +259,18 @@ export function EntryHeader({
         await action()
       } catch (error) {
         const conflict = entryUrlConflictInfo(error)
-        const failure = entryValidationFailure(error)
         if (conflict) setUrlConflict(conflict)
-        else if (failure) setInvalid(failure)
         else throw error
       }
     })
   }
 
-  // Publishing requires valid fields, drafts are work in progress
+  // Invalid fields are listed before publishing, which the editor may do
+  // anyway; drafts are work in progress
   function runPublish(action: () => void | Promise<void>) {
     // Validated when publishing, not on every edit
     const errors = store.get(localeData.errors(node))
-    if (errors.length > 0) setInvalid({errors})
+    if (errors.length > 0) setInvalid({errors, publish: action})
     else runAction(action)
   }
 
@@ -587,6 +571,7 @@ export function EntryHeader({
       <EntryValidationModal
         failure={invalid}
         onClose={() => setInvalid(undefined)}
+        onPublish={runAction}
       />
       <MoveDialog targets={moving} onClose={() => setMoving(undefined)} />
       <DeleteDialog

@@ -1,0 +1,17 @@
+.BlockSheetStoryFrame {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  min-height: 600px;
+}
+
+.BlockSheetStoryFrame-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.BlockSheetStoryFrame-panel {
+  position: relative;
+  flex: 0 0 360px;
+  border-left: 1px solid var(--alinea-border);
+}

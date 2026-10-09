@@ -1,8 +1,8 @@
+import {createHash} from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import {writeFileIfContentsDiffer} from '#/cli/util/FS.js'
 import type {CMS} from '#/core/CMS.js'
-import {createId} from '#/core/Id.js'
 import {code} from '#/core/util/CodeGen.js'
 import esbuild from 'esbuild'
 import escapeHtml from 'escape-html'
@@ -23,7 +23,6 @@ export async function generateDashboard(
     throw new Error(
       'The staticFile option in config.dashboard must point to an .html file (include the extension)'
     )
-  const buildId = createId()
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/entry'
   }
@@ -34,7 +33,7 @@ export async function generateDashboard(
     ? tsconfigLocation
     : undefined
   const plugins = [viewsPlugin(rootDir, cms), ignorePlugin]
-  await esbuild.build({
+  const result = await esbuild.build({
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
@@ -52,7 +51,6 @@ export async function generateDashboard(
     external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
-      'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
       'process.env.ALINEA_CONFIG_FINGERPRINT':
         JSON.stringify(configFingerprint),
       'process.env.ALINEA_FORCE_AUTH': 'true',
@@ -61,8 +59,13 @@ export async function generateDashboard(
     ...buildOptions,
     plugins,
     tsconfig,
-    logLevel: 'error'
+    logLevel: 'error',
+    metafile: true
   })
+  const buildId = await buildHash(
+    configDir,
+    Object.keys(result.metafile.outputs)
+  )
   const baseUrl = `./${escapeHtml(basename)}`
   await writeFileIfContentsDiffer(
     path.join(rootDir, staticFile),
@@ -82,4 +85,21 @@ export async function generateDashboard(
         </body>
       `.toString()
   )
+}
+
+/**
+ * A hash of the built files: a build that changes nothing keeps its id, so
+ * tabs opened after a deploy share the shared worker and content cache of
+ * tabs opened before it.
+ */
+async function buildHash(
+  workingDir: string,
+  outputs: Array<string>
+): Promise<string> {
+  const hash = createHash('sha256')
+  for (const output of outputs.toSorted()) {
+    hash.update(`${path.basename(output)}\n`)
+    hash.update(await fs.promises.readFile(path.join(workingDir, output)))
+  }
+  return hash.digest('hex').slice(0, 16)
 }

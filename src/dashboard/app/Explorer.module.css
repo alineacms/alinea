@@ -94,7 +94,9 @@
   flex: 0 0 auto;
 }
 
+/* Positions what floats over the list, such as the selection actions */
 .Explorer-viewport {
+  position: relative;
   min-height: 0;
   flex: 1;
   height: 100%;

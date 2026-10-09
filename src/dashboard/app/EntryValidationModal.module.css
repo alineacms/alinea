@@ -15,8 +15,3 @@
   border-radius: 6px;
   background: var(--alinea-danger-subtle);
 }
-
-.EntryValidationModal-message {
-  margin-top: 12px;
-  white-space: pre-wrap;
-}

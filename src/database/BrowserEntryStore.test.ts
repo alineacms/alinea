@@ -9,7 +9,7 @@ import {memorySnapshots} from '@alinea/sqlite-wasm/snapshots'
 import {expect, test} from 'bun:test'
 import {IDBFactory, IDBKeyRange} from 'fake-indexeddb'
 import {sql} from 'rado'
-import {BrowserEntryStore} from './BrowserEntryStore.js'
+import {BrowserEntryStore, isCorruptDatabaseError} from './BrowserEntryStore.js'
 import {databaseVersion, versionedCacheName} from './Version.js'
 import {wasmHandle, wasmSqlite} from './driver/WasmDatabase.js'
 
@@ -186,6 +186,39 @@ test('stores its own base when another wrote the content in other pages', async 
   await c.sync()
   await c.close()
   expect((await storage.list()).map(base => base.key)).toEqual(keys)
+})
+
+test('starts over from a reset', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  await first.close()
+  const fresh = await BrowserEntryStore.open(pages(false), {
+    ...options,
+    reset: true
+  })
+  try {
+    expect(await fresh.find({select: Entry.id})).toEqual([])
+  } finally {
+    await fresh.close()
+  }
+})
+
+test('recognizes corrupt database errors through their causes', () => {
+  const corrupt = Object.assign(new Error('database disk image is malformed'), {
+    code: 'SQLITE_CORRUPT'
+  })
+  expect(isCorruptDatabaseError(corrupt)).toBe(true)
+  expect(
+    isCorruptDatabaseError(new Error('Failed to load', {cause: corrupt}))
+  ).toBe(true)
+  expect(
+    isCorruptDatabaseError(
+      new AggregateError([new Error('offline'), corrupt], 'Both failed')
+    )
+  ).toBe(true)
+  expect(isCorruptDatabaseError(new Error('Remote unavailable'))).toBe(false)
 })
 
 test('starts empty from a base that is not a database', async () => {

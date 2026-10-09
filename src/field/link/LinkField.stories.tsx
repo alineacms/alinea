@@ -3,6 +3,7 @@ import {Field} from '#/core/Field.js'
 import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type, type} from '#/core/Type.js'
+import {BlockSheetStoryFrame} from '#/dashboard/app/BlockSheetStoryFrame.js'
 import {ExternalLinkPicker} from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
@@ -83,10 +84,14 @@ const pageType = type('Page', {
         label: text('Label'),
         note: text('Note', {multiline: true})
       },
-      initialValue: [entryLink, externalLink, childEntryLink]
+      initialValue: [
+        {...entryLink, [Reference.id]: 'resources-home'},
+        externalLink,
+        childEntryLink
+      ]
     }),
     relatedEntries: entry.multiple('Related entries', {
-      initialValue: [entryLink]
+      initialValue: [{...entryLink, [Reference.id]: 'related-entries-home'}]
     })
   }
 })
@@ -99,7 +104,10 @@ const readOnlyType = type('Read-only links', {
     }),
     resources: link.multiple('Read-only links', {
       readOnly: true,
-      initialValue: [entryLink, externalLink]
+      initialValue: [
+        {...entryLink, [Reference.id]: 'read-only-home'},
+        externalLink
+      ]
     })
   }
 })
@@ -152,14 +160,16 @@ export function Example() {
       views={views}
     >
       <EditorScope editor={editor}>
-        <div style={storyStyle}>
-          <SingleLinkFieldView field={relatedLink} />
-          <SingleLinkFieldView
-            field={heroImage as unknown as LinkField<LinkRow, unknown>}
-          />
-          <MultipleLinksFieldView field={resources} />
-          <MultipleLinksFieldView field={relatedEntries} />
-        </div>
+        <BlockSheetStoryFrame>
+          <div style={storyStyle}>
+            <SingleLinkFieldView field={relatedLink} />
+            <SingleLinkFieldView
+              field={heroImage as unknown as LinkField<LinkRow, unknown>}
+            />
+            <MultipleLinksFieldView field={resources} />
+            <MultipleLinksFieldView field={relatedEntries} />
+          </div>
+        </BlockSheetStoryFrame>
       </EditorScope>
     </StoryProvider>
   )
@@ -179,12 +189,14 @@ export function ReadOnly() {
       views={views}
     >
       <EditorScope editor={editor}>
-        <div style={storyStyle}>
-          <SingleLinkFieldView
-            field={readOnlyType.relatedLink as LinkField<LinkRow, unknown>}
-          />
-          <MultipleLinksFieldView field={readOnlyType.resources} />
-        </div>
+        <BlockSheetStoryFrame>
+          <div style={storyStyle}>
+            <SingleLinkFieldView
+              field={readOnlyType.relatedLink as LinkField<LinkRow, unknown>}
+            />
+            <MultipleLinksFieldView field={readOnlyType.resources} />
+          </div>
+        </BlockSheetStoryFrame>
       </EditorScope>
     </StoryProvider>
   )
@@ -206,16 +218,18 @@ export function FilteredEntryFieldWithoutEntryScope() {
       views={views}
     >
       <EditorScope editor={editor}>
-        <div style={storyStyle}>
-          <SingleLinkFieldView
-            field={
-              filteredEntryType.relatedEntry as unknown as LinkField<
-                LinkRow,
-                unknown
-              >
-            }
-          />
-        </div>
+        <BlockSheetStoryFrame>
+          <div style={storyStyle}>
+            <SingleLinkFieldView
+              field={
+                filteredEntryType.relatedEntry as unknown as LinkField<
+                  LinkRow,
+                  unknown
+                >
+              }
+            />
+          </div>
+        </BlockSheetStoryFrame>
       </EditorScope>
     </StoryProvider>
   )

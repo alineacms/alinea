@@ -3,7 +3,9 @@ import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
 import {assert} from '../util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {chunks} from '../util/Arrays.js'
 import type {ChangesBatch} from './Change.js'
+import {hashBlob} from './GitUtils.js'
 import type {GetBlobsOptions, Source} from './Source.js'
 import {type FlatTree, Leaf, ReadonlyTree} from './Tree.js'
 
@@ -31,6 +33,15 @@ const shaCache = new Map<string, ShaCacheEntry>()
 /** Directories GitHub truncated before, listed one level without retrying. */
 const truncatedTrees = new Set<string>()
 
+/** Blobs looked up per GraphQL query, which keeps a query well within 10s. */
+const blobsPerQuery = 100
+
+/**
+ * The smallest query that is asked again in halves when GitHub cannot
+ * answer it: one this small fails, so an outage costs a few queries.
+ */
+const smallestBlobQuery = 25
+
 export function normalizeGithubSourceOptions<
   Options extends GithubSourceOptions
 >(options: Options): Options {
@@ -45,6 +56,8 @@ export class GithubSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #options: GithubSourceOptions
   #limit = pLimit(8)
+  /** Blob queries in flight, each holding up to a hundred blobs in memory. */
+  #blobQueries = pLimit(2)
 
   constructor(options: GithubSourceOptions) {
     this.#options = normalizeGithubSourceOptions(options)
@@ -136,28 +149,121 @@ export class GithubSource implements Source {
     shas: ReadonlyArray<string>,
     options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
+    const batches = Array.from(chunks(shas, blobsPerQuery), batch =>
+      this.#blobQueries(() => this.#queryBlobs(batch, options.signal))
+    )
+    // A failure is thrown where its batch is awaited: the batches after it
+    // must not fail unobserved meanwhile.
+    for (const batch of batches) batch.catch(() => {})
+    for (const batch of batches) yield* await batch
+  }
+
+  /**
+   * Look blobs up in one GraphQL query, which costs a single point of
+   * GitHub's GraphQL budget however many it holds, where the REST API counts
+   * a request per blob. A query GitHub cannot answer in time, such as one
+   * for many large files, is asked again in halves, down to a small one.
+   */
+  async #queryBlobs(
+    shas: Array<string>,
+    signal?: AbortSignal
+  ): Promise<Array<[sha: string, blob: Uint8Array]>> {
+    const blobs = await this.#graphqlBlobs(shas, signal)
+    if (blobs) return blobs
+    if (shas.length <= smallestBlobQuery)
+      throw new HttpError(502, 'Failed to get blobs: GitHub did not answer')
+    const half = Math.ceil(shas.length / 2)
+    return [
+      ...(await this.#queryBlobs(shas.slice(0, half), signal)),
+      ...(await this.#queryBlobs(shas.slice(half), signal))
+    ]
+  }
+
+  /**
+   * Blobs found by one GraphQL query, or undefined if GitHub could not
+   * answer it, such as when it timed out. Blobs it has no text for, such as
+   * binary or very large files, are fetched one by one.
+   */
+  async #graphqlBlobs(
+    shas: Array<string>,
+    signal?: AbortSignal
+  ): Promise<Array<[sha: string, blob: Uint8Array]> | undefined> {
     const {owner, repo, authToken} = this.#options
-    const responses = shas.map(sha => {
-      const promise = this.#limit(() =>
-        fetch(
-          `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
-          {
-            headers: {Authorization: `Bearer ${authToken}`},
-            signal: options.signal
-          }
-        )
+    const params = shas.map((_, i) => `$b${i}: GitObjectID!`).join(', ')
+    const fields = shas
+      .map(
+        (_, i) =>
+          `b${i}: object(oid: $b${i}) { ... on Blob { text isBinary isTruncated } }`
       )
-      return [sha, promise] as const
+      .join('\n')
+    const query = `query ($owner: String!, $repo: String!, ${params}) {
+      repository(owner: $owner, name: $repo) {
+        ${fields}
+      }
+    }`
+    const variables: Record<string, string> = {owner, repo}
+    for (const [i, sha] of shas.entries()) variables[`b${i}`] = sha
+    const response = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({query, variables}),
+      signal
     })
-    for (const [sha, promise] of responses) {
-      const response = await promise
-      if (!response.ok) throw await githubError(response, 'Failed to get blob')
-      const blobData = await response.json()
-      assert(blobData.encoding === 'base64')
-      assert(typeof blobData.content === 'string')
-      assert(blobData.size > 0)
-      yield [sha, Uint8Array.from(atob(blobData.content), c => c.charCodeAt(0))]
+    if (response.status >= 500) return undefined
+    if (!response.ok) throw await githubError(response, 'Failed to get blobs')
+    const result: unknown = await response.json()
+    assert(isRecord(result))
+    const errors = Array.isArray(result.errors) ? result.errors : []
+    if (errors.length > 0) {
+      // GitHub types errors such as NOT_FOUND or RATE_LIMITED, but not a
+      // query it gave up on, such as one that timed out.
+      const typed = errors.some(
+        error => isRecord(error) && typeof error.type === 'string'
+      )
+      if (!typed) return undefined
+      const reasons = errors.map(error =>
+        isRecord(error) ? String(error.message) : String(error)
+      )
+      throw new Error(`Failed to get blobs: ${reasons.join('; ')}`)
     }
+    const data = isRecord(result.data) ? result.data : {}
+    const repository = isRecord(data.repository) ? data.repository : {}
+    const encoder = new TextEncoder()
+    const blobs = Array<[sha: string, blob: Uint8Array]>()
+    for (const [i, sha] of shas.entries()) {
+      const blob = repository[`b${i}`]
+      const text =
+        isRecord(blob) && !blob.isBinary && !blob.isTruncated
+          ? blob.text
+          : undefined
+      // Text is decoded as UTF-8: only bytes that hash back to the sha are
+      // the blob, others, such as text in another encoding, are fetched.
+      const bytes = typeof text === 'string' ? encoder.encode(text) : undefined
+      blobs.push([
+        sha,
+        bytes && (await hashBlob(bytes)) === sha
+          ? bytes
+          : await this.#fetchBlob(sha, signal)
+      ])
+    }
+    return blobs
+  }
+
+  async #fetchBlob(sha: string, signal?: AbortSignal): Promise<Uint8Array> {
+    const {owner, repo, authToken} = this.#options
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
+      {headers: {Authorization: `Bearer ${authToken}`}, signal}
+    )
+    if (!response.ok) throw await githubError(response, 'Failed to get blob')
+    const blobData = await response.json()
+    assert(blobData.encoding === 'base64')
+    assert(typeof blobData.content === 'string')
+    assert(blobData.size > 0)
+    return Uint8Array.from(atob(blobData.content), c => c.charCodeAt(0))
   }
 
   async applyChanges(batch: ChangesBatch) {

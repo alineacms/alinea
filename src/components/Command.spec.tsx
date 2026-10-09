@@ -43,7 +43,7 @@ test('selects items with the keyboard and pointer', async ({mount, page}) => {
   )
 })
 
-test('marks only the item Enter picks, not the hovered one', async ({
+test('marks the hovered item, Enter picks the one with the ring', async ({
   mount,
   page
 }) => {
@@ -53,8 +53,9 @@ test('marks only the item Enter picks, not the hovered one', async ({
   const text = page.getByRole('option', {name: 'Text'})
   const quote = page.getByRole('option', {name: 'Quote'})
   await quote.hover()
-  await expect(text).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
-  await expect(quote).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(quote).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(text).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(text).toHaveCSS('outline-style', 'solid')
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('selected')).toHaveText('text')
 })

@@ -1,4 +1,4 @@
-import {Button, PageFooter, Text, Toolbar} from '#/components.js'
+import {Button, Toolbar} from '#/components.js'
 import {
   archiveEntriesAtom,
   deleteEntriesAtom,
@@ -9,7 +9,7 @@ import type {DashboardExplorer} from '#/dashboard/atoms/explorer.js'
 import {loadMoveTargetsAtom, type MoveTargets} from '#/dashboard/atoms/move.js'
 import styler from '@alinea/styler'
 import {useAtomValueRawSync, useSetAtom} from 'jotai'
-import {useState, useTransition} from 'react'
+import {type ReactNode, useState, useTransition} from 'react'
 import {IcRoundClose, IcRoundDelete, IcRoundDriveFileMove} from '../icons.js'
 import {DeleteDialog} from './DeleteDialog.js'
 import css from './ExplorerBatchActions.module.css'
@@ -83,7 +83,9 @@ export function ExplorerBatchActions({explorer}: ExplorerBatchActionsProps) {
 
 export interface ExplorerBatchActionBarProps {
   count: number
+  /** Every selected entry can be deleted */
   canDelete: boolean
+  /** Every selected entry can be moved */
   canMove: boolean
   isPending?: boolean
   onClear(): void
@@ -91,7 +93,7 @@ export interface ExplorerBatchActionBarProps {
   onMove(): void
 }
 
-/** Shows how many entries are selected and the actions on them */
+/** Floats over the list: how many entries are selected and their actions */
 export function ExplorerBatchActionBar({
   count,
   canDelete,
@@ -102,45 +104,71 @@ export function ExplorerBatchActionBar({
   onMove
 }: ExplorerBatchActionBarProps) {
   return (
-    <PageFooter className={styles.ExplorerBatchActionBar()}>
-      <Toolbar
-        aria-label="Selected entries"
-        className={styles.ExplorerBatchActionBar.toolbar()}
+    <Toolbar
+      aria-label="Selected entries"
+      className={styles.ExplorerBatchActionBar()}
+    >
+      <span className={styles.ExplorerBatchActionBar.count()}>
+        {count} selected
+      </span>
+      <ExplorerBatchAction
+        reason={canMove ? undefined : 'Not all selected entries can be moved'}
       >
         <Button
-          aria-label="Clear selection"
-          icon={IcRoundClose}
-          size="icon-sm"
+          icon={IcRoundDriveFileMove}
+          size="sm"
           variant="ghost"
-          onClick={onClear}
-        />
-        <Text className={styles.ExplorerBatchActionBar.count()}>
-          {count} selected
-        </Text>
-        <div className={styles.ExplorerBatchActionBar.actions()}>
-          {canMove && (
-            <Button
-              icon={IcRoundDriveFileMove}
-              disabled={isPending}
-              loading={isPending}
-              onClick={onMove}
-            >
-              Move to…
-            </Button>
-          )}
-          {canDelete && (
-            <Button
-              color="destructive"
-              icon={IcRoundDelete}
-              disabled={isPending}
-              loading={isPending}
-              onClick={onDelete}
-            >
-              Delete
-            </Button>
-          )}
-        </div>
-      </Toolbar>
-    </PageFooter>
+          disabled={isPending || !canMove}
+          loading={isPending}
+          onClick={onMove}
+        >
+          Move to…
+        </Button>
+      </ExplorerBatchAction>
+      <ExplorerBatchAction
+        reason={
+          canDelete ? undefined : 'Not all selected entries can be deleted'
+        }
+      >
+        <Button
+          color="destructive"
+          icon={IcRoundDelete}
+          size="sm"
+          variant="ghost"
+          disabled={isPending || !canDelete}
+          loading={isPending}
+          onClick={onDelete}
+        >
+          Delete
+        </Button>
+      </ExplorerBatchAction>
+      <span
+        aria-hidden="true"
+        className={styles.ExplorerBatchActionBar.divider()}
+      />
+      <Button
+        aria-label="Clear selection"
+        icon={IcRoundClose}
+        size="icon-sm"
+        variant="ghost"
+        onClick={onClear}
+      />
+    </Toolbar>
+  )
+}
+
+interface ExplorerBatchActionProps {
+  /** Why the action is disabled */
+  reason?: string
+  children: ReactNode
+}
+
+// A disabled button gets no pointer events, so the reason is the title of
+// the element around it
+function ExplorerBatchAction({reason, children}: ExplorerBatchActionProps) {
+  return (
+    <span className={styles.ExplorerBatchActionBar.action()} title={reason}>
+      {children}
+    </span>
   )
 }

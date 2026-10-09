@@ -3,6 +3,7 @@ import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {createHandler} from '#/backend/Handler.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
+import {decodeBlobSequence} from '#/core/BlobTransport.js'
 import {createCMS} from '#/core.js'
 import type {
   AuthOptions,
@@ -754,7 +755,7 @@ test('rejects create mutations without an id', async () => {
   }
 })
 
-test('rejects publishing entries with invalid fields', async () => {
+test('publishes entries with invalid fields through the api', async () => {
   const Article = Config.document('Article', {
     fields: {
       summary: Field.text('Summary', {required: true}),
@@ -805,14 +806,11 @@ test('rejects publishing entries with invalid fields', async () => {
       requestContext()
     )
 
-  const rejected = await create('published', {code: 'B'})
-  test.is(rejected.status, 422)
-  const {error} = (await rejected.json()) as {error: string}
-  test.ok(error.includes('- summary (Summary): Field is required'))
-  test.ok(error.includes('- code (Code): Starts with A'))
-  test.is(writes, 0)
+  // Validation warns editors in the dashboard, it doesn't block writes
+  const published = await create('published', {code: 'B'})
+  test.is(published.status, 200)
+  test.is(writes, 1)
 
-  // Drafts are work in progress and may be invalid
   const draft = await create('draft', {code: 'B'})
   test.is(draft.status, 200)
   const publish = await handle(
@@ -821,10 +819,8 @@ test('rejects publishing entries with invalid fields', async () => {
     ]),
     requestContext()
   )
-  test.is(publish.status, 422)
-
-  const valid = await create('published', {summary: 'Summary', code: 'A1'})
-  test.is(valid.status, 200)
+  test.is(publish.status, 200)
+  test.is(writes, 3)
 })
 
 test('does not report a committed mutation as failed when afterCommit throws', async () => {
@@ -1487,6 +1483,65 @@ function requestContext(): RequestContext {
     isDev: true
   }
 }
+
+test('fetches blobs from the remote once for every client that asks', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  await remoteDb.create({type: Page, set: {title: 'Home'}})
+  const tree = await remoteDb.source.getTree()
+  const shas = tree
+    .flat()
+    .tree.filter(entry => entry.type === 'blob')
+    .map(entry => entry.sha)
+  let fetched = 0
+  let treeRequests = 0
+  const handle = createHandler({
+    cms,
+    db: new LocalDB(cms.config),
+    remote(context) {
+      return composeBackend(
+        {
+          getTreeIfDifferent(sha) {
+            treeRequests += 1
+            return remoteDb.getTreeIfDifferent(sha)
+          },
+          async *getBlobs(requested, options) {
+            fetched += requested.length
+            yield* remoteDb.getBlobs(requested, options)
+          }
+        },
+        {
+          async verify(): Promise<AuthedContext> {
+            return {
+              ...context,
+              token: 'test',
+              user: {roles: ['admin'], sub: 'admin'}
+            }
+          }
+        }
+      )
+    }
+  })
+  // Dashboards in several tabs ask for the same changed content
+  for (let client = 0; client < 3; client++) {
+    const response = await handle(
+      new Request('http://localhost/api?action=blob', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({shas})
+      }),
+      requestContext()
+    )
+    test.is(response.status, 200)
+    const received = Array<string>()
+    for await (const [sha] of decodeBlobSequence(response.body!))
+      received.push(sha)
+    test.equal(received, shas)
+  }
+  test.is(fetched, shas.length)
+  // Once the instance has them, nothing asks the remote again
+  test.is(treeRequests, 1)
+})
 
 test('serves current content when a read cannot sync with the remote', async () => {
   const cms = createCMS({

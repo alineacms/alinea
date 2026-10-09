@@ -72,10 +72,11 @@ test('loads a parent selected from a collapsed branch by id', async ({
 
   await app.page.getByRole('button', {name: 'Create new'}).click()
   const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
-  await createEntry.getByRole('button', {name: 'Link settings'}).click()
-  await app.page
-    .getByRole('dialog', {name: 'Link settings'})
-    .getByRole('button', {name: 'Replace link'})
+  // Outside the entry editor the parent row opens the picker itself
+  await createEntry
+    .getByRole('listitem', {name: 'Link item 1'})
+    .getByRole('button')
+    .first()
     .click()
 
   const picker = app.page.getByRole('dialog', {

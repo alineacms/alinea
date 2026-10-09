@@ -12,14 +12,15 @@ import {
 const styles = styler(css)
 
 export interface EntryValidationFailure {
-  errors?: Array<FieldValidationError>
-  /** Shown when the errors came back from the server without details */
-  message?: string
+  errors: Array<FieldValidationError>
+  /** Publishes the entry as it is */
+  publish(): void | Promise<void>
 }
 
 export interface EntryValidationModalProps {
   failure?: EntryValidationFailure
   onClose(): void
+  onPublish(publish: () => void | Promise<void>): void
 }
 
 /** Focus the first invalid field rendered in the editor */
@@ -35,15 +36,21 @@ function focusFirstInvalidField() {
   control?.focus({preventScroll: true})
 }
 
-/** Explains why an entry cannot be published and lists the invalid fields */
+/** Lists the invalid fields of an entry about to be published */
 export function EntryValidationModal({
   failure,
-  onClose
+  onClose,
+  onPublish
 }: EntryValidationModalProps) {
   const isOpen = Boolean(failure)
   function close() {
     onClose()
     requestAnimationFrame(focusFirstInvalidField)
+  }
+  function publishAnyway() {
+    if (!failure) return
+    onClose()
+    onPublish(failure.publish)
   }
   return (
     <DashboardModal
@@ -53,30 +60,24 @@ export function EntryValidationModal({
       }}
     >
       {isOpen && (
-        <DashboardModalDialog label="Fix invalid fields before publishing">
+        <DashboardModalDialog label="Some fields are invalid">
           <DashboardModalContent>
             <Text as="p">
-              This entry cannot be published until these fields are valid.
+              Fix these fields before publishing, or publish the entry as it is.
             </Text>
-            {failure?.errors?.length ? (
-              <ul className={styles.EntryValidationModal.list()}>
-                {failure.errors.map((error, index) => (
-                  <li
-                    key={index}
-                    className={styles.EntryValidationModal.item()}
-                  >
-                    <Text weight="medium">{error.labels.join(' › ')}</Text>
-                    <Text color="destructive">{error.message}</Text>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <Text as="p" className={styles.EntryValidationModal.message()}>
-                {failure?.message}
-              </Text>
-            )}
+            <ul className={styles.EntryValidationModal.list()}>
+              {failure?.errors.map((error, index) => (
+                <li key={index} className={styles.EntryValidationModal.item()}>
+                  <Text weight="medium">{error.labels.join(' › ')}</Text>
+                  <Text color="destructive">{error.message}</Text>
+                </li>
+              ))}
+            </ul>
           </DashboardModalContent>
           <DashboardModalFooter>
+            <Button variant="ghost" onClick={publishAnyway}>
+              Publish anyway
+            </Button>
             <Button color="primary" onClick={close}>
               Show fields
             </Button>

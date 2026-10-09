@@ -1,30 +1,35 @@
 import {
   Button,
+  Kbd,
+  SheetBody,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
   SortableList,
   SortableListItemTitle,
+  SortableListItemTrigger,
   SortableListItem,
   SortableListItemActions,
   SortableListItemContent,
   SortableListHandle,
-  SortableListItemHeader,
-  SortableListItemSettings,
-  Popover,
-  PopoverContent,
-  PopoverTrigger
+  SortableListItemHeader
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/components.js'
+import {BlockSheet, useBlockSheet} from '#/dashboard/app/BlockSheet.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
-  IcRoundMoreHoriz
+  IcRoundDelete
 } from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import {memo, useMemo, useState} from 'react'
+import {memo, useMemo} from 'react'
 import css from './RichTextBlock.module.css'
 
 const styles = styler(css)
@@ -48,88 +53,110 @@ export const RichTextBlock = memo(function RichTextBlock({
 }: RichTextBlockProps) {
   const label = Type.label(type)
   const typeIcon = getType(type).icon
-  const [actionsOpen, setActionsOpen] = useState(false)
-
-  function closeActions() {
-    setActionsOpen(false)
-  }
+  const sheet = useBlockSheet(id)
+  const badge = (
+    <Badge icon={typeIcon} size="sm">
+      {label}
+    </Badge>
+  )
 
   return (
-    <SortableList
-      className={styles.RichTextBlock()}
-      data-depth="muted"
-      data-read-only={readOnly || undefined}
-      data-richtext-block="true"
-    >
-      <SortableListItem tabIndex={0}>
-        <SortableListItemHeader data-richtext-block-header="true">
-          {!readOnly && (
-            <SortableListHandle
-              aria-label={`Drag ${label} block`}
-              className={styles.RichTextBlock.dragHandle()}
-              data-richtext-drag-handle="true"
-              draggable
-              onDragStart={event => {
-                event.dataTransfer.effectAllowed = 'move'
-                event.dataTransfer.setData(
-                  'application/x-alinea-richtext-block',
-                  id
-                )
-              }}
-            />
-          )}
-          <SortableListItemTitle>
-            <Badge icon={typeIcon} size="sm">
-              {label}
-            </Badge>
-          </SortableListItemTitle>
-          <SortableListItemActions>
-            <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
-              <PopoverTrigger
+    <>
+      <SortableList
+        className={styles.RichTextBlock()}
+        data-depth="muted"
+        data-read-only={readOnly || undefined}
+        data-richtext-block="true"
+      >
+        <SortableListItem tabIndex={0} current={sheet.open}>
+          <SortableListItemHeader data-richtext-block-header="true">
+            {!readOnly && (
+              <SortableListHandle
+                aria-label={`Drag ${label} block`}
+                className={styles.RichTextBlock.dragHandle()}
+                data-richtext-drag-handle="true"
+                draggable
+                onDragStart={event => {
+                  event.dataTransfer.effectAllowed = 'move'
+                  event.dataTransfer.setData(
+                    'application/x-alinea-richtext-block',
+                    id
+                  )
+                }}
+              />
+            )}
+            <SortableListItemTitle>
+              {sheet.available ? (
+                <SortableListItemTrigger
+                  {...sheet.triggerProps}
+                  aria-label={`${label} settings`}
+                  aria-expanded={sheet.open}
+                  onClick={sheet.toggle}
+                >
+                  {badge}
+                </SortableListItemTrigger>
+              ) : (
+                badge
+              )}
+            </SortableListItemTitle>
+            <SortableListItemActions>
+              <Button
                 variant="ghost"
-                aria-label={`${label} actions`}
-                icon={IcRoundMoreHoriz}
+                aria-label={`Remove ${label}`}
+                icon={IcRoundClose}
+                disabled={readOnly}
+                onClick={onDelete}
                 size="icon-sm"
               />
-              <PopoverContent
-                aria-label={`${label} actions`}
-                side="bottom"
-                align="end"
-              >
-                <SortableListItemSettings variant="actions">
-                  <Button
-                    variant="ghost"
-                    icon={IcBaselineContentCopy}
-                    disabled={readOnly}
-                    onClick={() => {
-                      onDuplicate()
-                      closeActions()
-                    }}
-                  >
-                    Duplicate
-                  </Button>
-                </SortableListItemSettings>
-              </PopoverContent>
-            </Popover>
+            </SortableListItemActions>
+          </SortableListItemHeader>
+          <SortableListItemContent data-richtext-block-editor="true">
+            {readOnly ? (
+              <ReadOnlyBlockEditor node={node} type={type} />
+            ) : (
+              <NodeEditor node={node} type={type} />
+            )}
+          </SortableListItemContent>
+        </SortableListItem>
+      </SortableList>
+      <BlockSheet id={id}>
+        <SheetContent onClose={() => sheet.setOpen(false)}>
+          <SheetHeader>
+            {badge}
+            <SheetTitle>{label}</SheetTitle>
+            <Kbd size="sm" aria-hidden>
+              Esc
+            </Kbd>
+            <SheetClose aria-label="Close block settings" />
+          </SheetHeader>
+          <SheetBody />
+          <SheetFooter>
             <Button
               variant="ghost"
-              aria-label={`Remove ${label}`}
-              icon={IcRoundClose}
+              size="sm"
+              icon={IcBaselineContentCopy}
+              disabled={readOnly}
+              onClick={() => {
+                onDuplicate()
+                sheet.setOpen(false)
+              }}
+            >
+              Duplicate
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              color="destructive"
+              icon={IcRoundDelete}
               disabled={readOnly}
               onClick={onDelete}
-              size="icon-sm"
-            />
-          </SortableListItemActions>
-        </SortableListItemHeader>
-        <SortableListItemContent data-richtext-block-editor="true">
-          {readOnly ? (
-            <ReadOnlyBlockEditor node={node} type={type} />
-          ) : (
-            <NodeEditor node={node} type={type} />
-          )}
-        </SortableListItemContent>
-      </SortableListItem>
-    </SortableList>
+            >
+              Delete
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </BlockSheet>
+    </>
   )
 })
 

@@ -2,6 +2,7 @@ import type {Config} from '#/core/Config.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {isRecord} from '#/core/util/Objects.js'
 import type {Database as WasmSqlite} from '@alinea/sqlite-wasm/Database.js'
 import {
   indexedDBSnapshots,
@@ -31,6 +32,11 @@ export interface BrowserEntryStoreOptions {
   fingerprint: string
   /** Where bases are kept, Blobs in IndexedDB by default. */
   storage?: SnapshotStorage
+  /**
+   * Start over from an empty database instead of a stored base, such as
+   * when it turned out to be corrupt.
+   */
+  reset?: boolean
 }
 
 /**
@@ -61,7 +67,9 @@ export class BrowserEntryStore extends EntryStore {
         ? cleanupOldCaches(indexedDB, name).catch(() => {})
         : Promise.resolve()
     const Database = await wasmSqlite()
-    const session = await openBase(storage, Database, fingerprint)
+    const session = options.reset
+      ? storage.session(new Database(), {branch: fingerprint})
+      : await openBase(storage, Database, fingerprint)
     const store = await BrowserEntryStore.#on(
       config,
       session,
@@ -187,6 +195,22 @@ export class BrowserEntryStore extends EntryStore {
     await Promise.all([this.#cleanup, this.#written])
     await super.close()
   }
+}
+
+const corruptCodes = new Set(['SQLITE_CORRUPT', 'SQLITE_NOTADB'])
+const corruptMessage = /database disk image is malformed|file is not a database/
+
+/** Whether an error, or one it holds, reports a damaged SQLite database. */
+export function isCorruptDatabaseError(error: unknown): boolean {
+  if (!isRecord(error)) return false
+  if (typeof error.code === 'string' && corruptCodes.has(error.code))
+    return true
+  if (typeof error.message === 'string' && corruptMessage.test(error.message))
+    return true
+  const errors = Array.isArray(error.errors) ? error.errors : []
+  return (
+    isCorruptDatabaseError(error.cause) || errors.some(isCorruptDatabaseError)
+  )
 }
 
 /**

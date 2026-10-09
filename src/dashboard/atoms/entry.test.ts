@@ -1,4 +1,3 @@
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {Entry} from '#/core/Entry.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -567,7 +566,7 @@ test('publishing reconciles transaction-generated media aliases immediately', as
   expect(store.get(node.isDirty)).toBeFalse()
 })
 
-test('publishing is blocked while fields are invalid, drafts are not', async () => {
+test('invalid fields are reported but do not block publishing', async () => {
   const Article = Config.document('Article', {
     fields: {
       summary: Field.text('Summary', {required: true}),
@@ -603,23 +602,12 @@ test('publishing is blocked while fields are invalid, drafts are not', async () 
   expect(store.get(locale.errors(node))).toEqual([
     {path: ['summary'], labels: ['Summary'], message: 'Field is required'}
   ])
-  const mutate = spyOn(db, 'mutate')
-  let error: unknown
-  try {
-    await store.set(locale.publishEdits, node)
-  } catch (cause) {
-    error = cause
-  }
-  expect(error).toBeInstanceOf(EntryValidationError)
-  expect(mutate).not.toHaveBeenCalled()
-
-  await store.set(locale.saveDraft, node)
-  expect(mutate).toHaveBeenCalledTimes(1)
-  mutate.mockRestore()
-  const draft = await db.first({
+  // The editor chose to publish anyway
+  await store.set(locale.publishEdits, node)
+  const published = await db.first({
     id: created._id,
-    status: 'draft',
+    status: 'published',
     select: Article.summary
   })
-  expect(draft).toBe('')
+  expect(published).toBe('')
 })

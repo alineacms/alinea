@@ -50,6 +50,39 @@ export function States() {
   )
 }
 
+const resultsFrame = {
+  maxWidth: 360,
+  margin: 24,
+  border: '1px solid var(--alinea-border)',
+  borderRadius: 'var(--alinea-radius-lg)',
+  background: 'var(--alinea-overlay)'
+} as const
+
+const inlineRow = {
+  padding: '0 12px 0 14px',
+  borderBottom: '1px solid var(--alinea-border)'
+} as const
+
+/** Without a box, as the top row of the results it searches */
+export function Inline() {
+  const [query, setQuery] = useState('')
+  return (
+    <div style={resultsFrame}>
+      <div style={inlineRow}>
+        <SearchField
+          aria-label="Search"
+          placeholder="Search..."
+          icon={IcRoundSearch}
+          variant="inline"
+          value={query}
+          onValueChange={setQuery}
+        />
+      </div>
+      <p style={{margin: 0, padding: 14}}>Results for "{query}"</p>
+    </div>
+  )
+}
+
 const fruits = ['Apple', 'Banana', 'Cherry']
 
 /** A search field that controls a list of results with the arrow keys */

@@ -563,7 +563,7 @@ test('errors name the field and what is expected', async () => {
     await error({}, 'Post'),
     'Type "Post" is not allowed in root "pages", allowed: Page'
   )
-  // Validation of published entries is done by the transaction
+  // Editors may publish invalid fields anyway, agents fix them first
   const tooMany = await error({features: [{}, {}, {}, {}]})
   test.ok(tooMany.includes('Add at most 3 items'))
 })

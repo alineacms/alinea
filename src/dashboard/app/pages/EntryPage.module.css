@@ -62,3 +62,13 @@
     padding: 12px;
   }
 }
+
+.EntryEditorLayout-sidebar {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}

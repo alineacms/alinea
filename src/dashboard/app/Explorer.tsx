@@ -98,6 +98,8 @@ export interface ExplorerBodyProps {
    */
   onPick?: (entry: DashboardEntry) => void
   page: ExplorerReadyPage
+  /** Floats over the list, such as the actions on the selected entries */
+  children?: ReactNode
 }
 
 interface ExplorerSearchProps {
@@ -316,6 +318,7 @@ export function ExplorerSearch({
       icon={IcRoundSearch}
       loading={isPending || inputValue !== page.search}
       placeholder="Search..."
+      variant="inline"
       value={inputValue}
       onValueChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
@@ -888,7 +891,8 @@ export function ExplorerBody({
   compactTable,
   explorer,
   onPick,
-  page
+  page,
+  children
 }: ExplorerBodyProps) {
   return (
     <PageContent>
@@ -899,6 +903,7 @@ export function ExplorerBody({
           onPick={onPick}
           page={page}
         />
+        {children}
       </div>
     </PageContent>
   )
@@ -927,10 +932,11 @@ export function Explorer({
         readOnly={readOnly ?? (page.isMedia && !page.canUpload)}
         titleControls={titleControls}
       />
-      <ExplorerBody explorer={explorer} page={page} />
-      {explorer.hasRowAction && explorer.selectionMode === 'multiple' && (
-        <ExplorerBatchActions explorer={explorer} />
-      )}
+      <ExplorerBody explorer={explorer} page={page}>
+        {explorer.hasRowAction && explorer.selectionMode === 'multiple' && (
+          <ExplorerBatchActions explorer={explorer} />
+        )}
+      </ExplorerBody>
     </>
   )
 }

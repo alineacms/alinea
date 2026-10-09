@@ -56,6 +56,21 @@ test('rootAtoms returns stable bundles independent of route state', () => {
   expect(root.tree('fr')).not.toBe(root.tree('en'))
 })
 
+test('filters picked in a list stay with that list', () => {
+  const store = createStore()
+  const root = rootAtoms('workspace', 'filter-scope')
+  const whitepapers = root.children('whitepapers')
+  const articles = root.children('articles')
+  store.set(whitepapers.requestedFilters, {access: ['belgium']})
+  // Another collection with the same filter starts unfiltered
+  expect(store.get(articles.requestedFilters)).toEqual({})
+  expect(store.get(root.explorer.requestedFilters)).toEqual({})
+  // Coming back to the list keeps what was picked there
+  expect(store.get(root.children('whitepapers').requestedFilters)).toEqual({
+    access: ['belgium']
+  })
+})
+
 test('root icon uses the Material description fallback', async () => {
   const {store} = await createDashboardAtomFixture()
   const root = rootAtoms('main', 'pages')

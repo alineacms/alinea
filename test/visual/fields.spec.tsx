@@ -139,10 +139,8 @@ themed(() => {
     })
     const list = app.page.getByRole('list', {name: 'Sections'})
     await reveal(list)
-    await list.getByRole('button', {name: 'Callout actions'}).first().click()
-    await expect(
-      app.page.getByRole('dialog', {name: 'Callout actions'})
-    ).toBeVisible()
+    await list.getByRole('button', {name: 'Callout settings'}).first().click()
+    await expect(app.page.getByRole('dialog', {name: 'Callout'})).toBeVisible()
     await app.shot('field-list-settings')
   })
 
@@ -163,7 +161,7 @@ themed(() => {
       hash: '#/entry/main/pages/visual-tabbed',
       title: 'Tabbed page'
     })
-    await app.page.getByRole('button', {name: 'Quote actions'}).click()
+    await app.page.getByRole('button', {name: 'Quote settings'}).click()
     await app.page.getByRole('button', {name: 'Insert before'}).click()
     await expect(
       app.page

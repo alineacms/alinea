@@ -11,9 +11,11 @@ import type {
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Source} from '#/core/source/Source.js'
-import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
+import {
+  BrowserEntryStore,
+  isCorruptDatabaseError
+} from '#/database/BrowserEntryStore.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import pLimit from 'p-limit'
 import {
@@ -24,6 +26,7 @@ import {
 } from './ActivityEvent.js'
 
 const remote = pLimit(1)
+const cacheName = 'alinea-entry-database'
 const syncInterval = 120_000
 
 interface QueuedMutation {
@@ -150,10 +153,7 @@ export class DashboardWorker extends EventTarget {
         void this.#flush(item)
         return item.sha
       } catch (error) {
-        if (
-          error instanceof EntryUrlConflictError ||
-          error instanceof EntryValidationError
-        ) {
+        if (error instanceof EntryUrlConflictError) {
           this.#cancelMutation(item, error)
           throw error
         }
@@ -344,12 +344,7 @@ export class DashboardWorker extends EventTarget {
     this.#localDB = undefined
     this.#localClient = undefined
     try {
-      const db = this.#source
-        ? await EntryStore.memory(config, this.#source)
-        : await BrowserEntryStore.open(config, {
-            name: 'alinea-entry-database',
-            fingerprint: revision
-          })
+      let db = await this.#open(config, revision, false)
       // The replaced store closes in the background: awaiting it here would
       // stall the replacement behind the old store's in-flight work.
       if (this.#defer)
@@ -357,7 +352,13 @@ export class DashboardWorker extends EventTarget {
           // The replaced database finishes outstanding work before closing.
         })
       this.#defer = undefined
-      const cacheFailure = await this.#syncLocalIndex(db)
+      let cacheFailure = await this.#syncLocalIndex(db)
+      // Damaged cached content is not shown: start over from the remote.
+      if (cacheFailure && isCorruptDatabaseError(cacheFailure.error)) {
+        await db.close()
+        db = await this.#open(config, revision, true)
+        cacheFailure = await this.#syncLocalIndex(db)
+      }
       // A replacement without cached content syncs before it takes over, so
       // the dashboard never swaps from a populated store to an empty one.
       // This runs outside the shared remote slot: a sync of the superseded
@@ -388,6 +389,15 @@ export class DashboardWorker extends EventTarget {
       nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
     }
+  }
+
+  #open(
+    config: Config,
+    fingerprint: string,
+    reset: boolean
+  ): Promise<EntryStore> {
+    if (this.#source) return EntryStore.memory(config, this.#source)
+    return BrowserEntryStore.open(config, {name: cacheName, fingerprint, reset})
   }
 
   async #syncLocalIndex(db: EntryStore): Promise<CacheFailure | undefined> {

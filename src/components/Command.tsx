@@ -120,6 +120,7 @@ export function CommandInput({
       }
       className={styles.CommandInput(styler.merge({className}))}
       icon={icon}
+      variant="inline"
     />
   )
 }

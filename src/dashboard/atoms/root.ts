@@ -494,12 +494,6 @@ export class RootAtoms {
    */
   explorerScrollOffset = dispense((_key: string) => atom(0))
 
-  /**
-   * The filters picked in the explorers of this root, kept while the editor
-   * opens entries and folders. Each overview applies the ones it declares.
-   */
-  #explorerFilters = atom<OverviewFilterSelection>({})
-
   children = dispense((parentId: string | null) => {
     const location: ExplorerLocation = {
       workspace: this.workspace,
@@ -526,7 +520,9 @@ export class RootAtoms {
         enableNavigation: true,
         sortState: overviewSortAtom(this.workspace, this.key, parentId),
         rootData: this.data,
-        filterState: this.#explorerFilters,
+        // The filters picked in this list, kept when the editor comes back to
+        // it, like its sort, but not applied to the lists of other entries
+        filterState: atom<OverviewFilterSelection>({}),
         scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
         selectionBehavior: 'toggle',

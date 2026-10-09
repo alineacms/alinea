@@ -12,7 +12,9 @@ import {Root} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import type {User} from '#/core/User.js'
+import {formatFieldPath, validateEntry} from '#/core/Validation.js'
 import {entries, keys} from '#/core/util/Objects.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {Workspace} from '#/core/Workspace.js'
 import {inputData, outputData} from './McpInput.js'
 import type {JsonSchema, McpTool} from './McpServer.js'
@@ -126,6 +128,24 @@ export function createContentTools(
     if (publish !== false) return 'published'
     if (!config.enableDrafts) fail('Drafts are not enabled, leave out publish')
     return 'draft'
+  }
+
+  /**
+   * Editors may publish invalid fields anyway, agents fix them first: the
+   * error lists each field and what is wrong with it.
+   */
+  function checkPublishable(type: Type, data: Record<string, unknown>) {
+    const errors = validateEntry(type, data)
+    if (errors.length === 0) return
+    const draft = config.enableDrafts
+      ? ', or pass publish: false to save a draft'
+      : ''
+    const fields = errors.map(
+      error => `- data.${formatFieldPath(error.path)}: ${error.message}`
+    )
+    fail(
+      `Cannot publish, fix these fields first${draft}:\n${fields.join('\n')}`
+    )
   }
 
   /** The version in a locale, the root's default locale if none is given */
@@ -385,6 +405,12 @@ export function createContentTools(
         if (!data.title) fail('data.title is required')
         // The transaction derives the path from the title
         if (!converted.path) delete data.path
+        const saveAs = status(args.publish)
+        if (saveAs === 'published')
+          checkPublishable(type, {
+            ...data,
+            path: data.path || slugify(String(data.title))
+          })
         const insertOrder = parent && Type.insertOrder(typeOf(parent.type))
         const created = await graph.create({
           type,
@@ -393,7 +419,7 @@ export function createContentTools(
           root,
           parentId,
           locale,
-          status: status(args.publish),
+          status: saveAs,
           insertOrder: insertOrder === 'free' ? undefined : insertOrder,
           set: data,
           user,
@@ -437,6 +463,7 @@ export function createContentTools(
           ...current.data,
           ...converted
         })
+        if (saveAs === 'published') checkPublishable(type, data)
         // The dashboard's save: the whole entry, as a draft or published
         await graph.mutate([
           {
@@ -501,6 +528,13 @@ export function createContentTools(
         )
         if (!from)
           return {id, locale, status: 'published', note: 'Already published'}
+        const pending = (await graph.first({
+          id,
+          locale,
+          status: from,
+          select: {type: Entry.type, data: Entry.data}
+        })) as {type: string; data: Record<string, unknown>} | null
+        if (pending) checkPublishable(typeOf(pending.type), pending.data)
         await graph.publish({id, locale, status: from})
         return {id, locale, status: 'published'}
       }
