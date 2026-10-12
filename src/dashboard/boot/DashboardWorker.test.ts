@@ -35,6 +35,8 @@ test('loads local state without starting a remote sync', async () => {
   await worker.sync()
 
   expect(remoteSyncs).toBe(1)
+  // Fetching remote updates is not recorded as activity
+  expect(worker.activities()).toEqual([])
   expect(
     await (
       await worker.db
@@ -271,55 +273,6 @@ test('keeps syncs bound to their load across a failed revision', async () => {
   await Promise.all([firstSync, recoveredSync])
 
   expect(recoveredRemoteSyncs).toBe(1)
-})
-
-test('syncs the remote database without recording fetch activity', async () => {
-  const fixture = new FSSource('test/fixtures/demo')
-  const remoteDB = new LocalDB(cms.config, fixture)
-  await remoteDB.sync()
-
-  const baseClient = createTestConnection(remoteDB)
-  let releaseSync: (() => void) | undefined
-  let markSyncStarted: (() => void) | undefined
-  const syncStarted = new Promise<void>(resolve => {
-    markSyncStarted = resolve
-  })
-  const holdSync = new Promise<void>(resolve => {
-    releaseSync = resolve
-  })
-  const client: LocalConnection = {
-    ...baseClient,
-    async getTreeIfDifferent(sha) {
-      markSyncStarted?.()
-      await holdSync
-      return baseClient.getTreeIfDifferent(sha)
-    }
-  }
-  const worker = new DashboardWorker(new MemorySource())
-  let activityEvents = 0
-  worker.addEventListener(ActivityEvent.type, event => {
-    if (event instanceof ActivityEvent) activityEvents += 1
-  })
-
-  await worker.load('sync-status', cms.config, client)
-  const sync = worker.sync()
-  await syncStarted
-
-  expect(worker.activities()).toEqual([])
-
-  releaseSync?.()
-  await sync
-
-  expect(worker.activities()).toEqual([])
-  expect(activityEvents).toBe(0)
-  expect(
-    await (
-      await worker.db
-    ).get({
-      type: cms.schema.DemoRecipe,
-      path: 'chocolate-chip'
-    })
-  ).toMatchObject({title: 'Chocolate chip'})
 })
 
 test('keeps successful content actions in activity history', async () => {

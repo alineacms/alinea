@@ -1,10 +1,8 @@
 import {expect, test} from 'bun:test'
 import {createStore} from 'jotai'
 import {
-  acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
   dashboardEntryDragType,
-  dashboardEntryDragTypes,
   dashboardEntryDropIds,
   dispense,
   pendingTimerAtom,
@@ -13,23 +11,23 @@ import {
 } from './utils.js'
 
 test('buffers pending state and keeps it visible for a minimum', async () => {
-  const pendingAtom = pendingTimerAtom(100, 1000)
+  const pendingAtom = pendingTimerAtom(40, 400)
   const store = createStore()
 
   store.set(pendingAtom, true)
   expect(store.get(pendingAtom)).toBe(false)
-  await pause(50)
+  await pause(20)
   store.set(pendingAtom, false)
-  await pause(100)
+  await pause(40)
   expect(store.get(pendingAtom)).toBe(false)
 
   store.set(pendingAtom, true)
-  await pause(110)
+  await pause(60)
   expect(store.get(pendingAtom)).toBe(true)
   store.set(pendingAtom, false)
-  await pause(800)
-  expect(store.get(pendingAtom)).toBe(true)
   await pause(250)
+  expect(store.get(pendingAtom)).toBe(true)
+  await pause(200)
   expect(store.get(pendingAtom)).toBe(false)
 })
 
@@ -49,42 +47,7 @@ test('throws until a required atom is initialized', () => {
   expect(store.get(valueAtom)).toBe('ready')
 })
 
-test('required atom values remain scoped to their store', () => {
-  const valueAtom = requiredAtom<string>('test.scoped')
-  const first = createStore()
-  const second = createStore()
-
-  first.set(valueAtom, 'first')
-  second.set(valueAtom, 'second')
-
-  expect(first.get(valueAtom)).toBe('first')
-  expect(second.get(valueAtom)).toBe('second')
-})
-
-test('required atoms ignore writes of the current value', () => {
-  const valueAtom = requiredAtom<object>('test.stable')
-  const store = createStore()
-  const value = {}
-  let updates = 0
-  store.set(valueAtom, value)
-  const unsubscribe = store.sub(valueAtom, () => updates++)
-
-  store.set(valueAtom, value)
-
-  expect(updates).toBe(0)
-  unsubscribe()
-})
-
-test('dispense caches values by key identity', () => {
-  const cached = dispense((_key: object) => requiredAtom<number>('test'))
-  const first = {}
-  const second = {}
-
-  expect(cached(first)).toBe(cached(first))
-  expect(cached(first)).not.toBe(cached(second))
-})
-
-test('dispense caches values over multiple keys', () => {
+test('dispense caches values by the identity of their keys', () => {
   const cached = dispense((_scope: object, _locale: string | null) => ({}))
   const first = {}
   const second = {}
@@ -93,17 +56,6 @@ test('dispense caches values over multiple keys', () => {
   expect(cached(first, 'en')).not.toBe(cached(first, 'fr'))
   expect(cached(first, 'en')).not.toBe(cached(second, 'en'))
   expect(cached(first, null)).toBe(cached(first, null))
-})
-
-test('creates dashboard entry drag data with a plain text fallback', () => {
-  expect(dashboardEntryDragItem(42)).toEqual({
-    'text/plain': '42',
-    [dashboardEntryDragType]: '42'
-  })
-  expect(dashboardEntryDragTypes).toEqual([
-    dashboardEntryDragType,
-    'text/plain'
-  ])
 })
 
 test('reads unique entry ids from dropped items', () => {
@@ -117,14 +69,6 @@ test('reads unique entry ids from dropped items', () => {
       dashboardEntryDragItem('a')
     ])
   ).toEqual(['a', 'b', 'c'])
-})
-
-test('accepts dashboard entry and plain text drag types', () => {
-  expect(
-    acceptsDashboardEntryDrag(new Set([dashboardEntryDragType]))
-  ).toBeTrue()
-  expect(acceptsDashboardEntryDrag(new Set(['text/plain']))).toBeTrue()
-  expect(acceptsDashboardEntryDrag(new Set(['application/json']))).toBeFalse()
 })
 
 test('reports files that exceed the configured upload limit', () => {

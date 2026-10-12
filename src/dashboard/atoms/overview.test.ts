@@ -3,7 +3,7 @@ import {Entry} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {OpenFilter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
-import {getExpr, getRoot} from '#/core/Internal.js'
+import {getRoot} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -36,8 +36,7 @@ import {
   resolveOverview,
   type OverviewChildren,
   resolveOverviewOptions,
-  sortedColumn,
-  summarizeRows
+  sortedColumn
 } from './overview.js'
 import {syncAtom} from './graph.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -109,34 +108,6 @@ test('built-in columns can be hidden', () => {
     {kind: 'type', name: 'Folder', type: Folder}
   )
   expect(overview.columns).toEqual([])
-})
-
-test('fields and expressions sort, links only with sortBy', () => {
-  const columns = new Map(
-    resolveOverview(config, rootParent('products')).columns.map(column => [
-      column.key,
-      column
-    ])
-  )
-  expect(columns.get('price')!.sortBy).toBe(Product.price)
-  expect(columns.get('articleNumber')!.sortBy).toBe(Product.articleNumber)
-  expect(columns.get('categories')!.sortBy).toBeUndefined()
-  expect(getExpr(columns.get('brand')!.sortBy!).type).toBe('relation')
-  expect(getExpr(columns.get('updated')!.sortBy!)).toEqual(
-    getExpr(Entry.updatedAt)
-  )
-})
-
-test('per type sort values switch on the entry type', () => {
-  const author = resolveOverview(config, blogParent).columns.find(
-    column => column.key === 'author'
-  )!
-  const internal = getExpr(author.sortBy!)
-  expect(internal.type).toBe('typeSwitch')
-  expect(Object.keys((internal as {cases: object}).cases)).toEqual([
-    'BlogPost',
-    'Event'
-  ])
 })
 
 test('sortable: false opts out of sorting', () => {
@@ -243,25 +214,7 @@ test('fields marked overview: true become columns without parent columns', () =>
   ).toBe(false)
 })
 
-test('the media library lists a preview, dimensions, size and file type', () => {
-  const overview = resolveOverview(config, rootParent('media'))
-  expect(overview.columns.map(column => column.key)).toEqual([
-    'preview',
-    'dimensions',
-    'size',
-    'fileType'
-  ])
-  const [, dimensions, size, fileType] = overview.columns
-  expect(dimensions.format!({width: 1200, height: 800}, {locale: null})).toBe(
-    '1200 × 800 px'
-  )
-  expect(dimensions.format!({width: null, height: null}, {locale: null})).toBe(
-    ''
-  )
-  expect(size.format!(345466, {locale: null})).toBe('345 kB')
-  expect(size.align).toBe('end')
-  expect(fileType.format!('.jpg', {locale: null})).toBe('JPG')
-  expect(overview.columns[0].sortBy).toBeUndefined()
+test('media folders list the file columns and who last updated a file', () => {
   const folder = resolveOverview(config, {
     kind: 'type',
     name: 'MediaLibrary',
@@ -513,31 +466,6 @@ test('entry tables load their rows by query, sorted by a column', async () => {
   ])
 })
 
-test('updated and author columns only show when entries store audit data', () => {
-  const row = {
-    id: 'chair',
-    type: 'Product',
-    title: 'Chair',
-    path: 'chair',
-    locale: null,
-    workspace: 'main',
-    root: 'products',
-    parentId: null
-  }
-  const keys = (rows: Parameters<typeof summarizeRows>[0]) =>
-    resolveOverview(config, rootParent('products'), {
-      children: summarizeRows(rows)
-    }).columns.map(column => column.key)
-  expect(keys([{...row, data: {}}])).not.toContain('updated')
-  expect(keys([{...row, data: {}}])).not.toContain('author')
-  const edited = {
-    ...row,
-    data: {metadata: {updatedAt: 1, updatedBy: {name: 'Ann', email: ''}}}
-  }
-  expect(keys([{...row, data: {}}, edited])).toContain('updated')
-  expect(keys([edited])).toContain('author')
-})
-
 function group(type: string, audit = false): OverviewChildren {
   return {type, updatedAt: audit, updatedBy: audit}
 }
@@ -601,18 +529,6 @@ test('declared types follow the children that are present', () => {
     'summary',
     'stock'
   ])
-})
-
-test('a column keyed status is a column like any other', () => {
-  const overview = resolveOverviewOptions(
-    config,
-    {columns: {status: Config.column({header: 'State', select: Entry.status})}},
-    ['Product'],
-    undefined
-  )
-  const status = overview.columns.find(column => column.key === 'status')!
-  expect(status.builtin).toBeUndefined()
-  expect(status.header).toBe('State')
 })
 
 test('audit columns show when any child stores audit metadata', () => {

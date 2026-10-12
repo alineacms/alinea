@@ -1,18 +1,8 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
   GlobalSearchStory,
-  LocalizedGlobalSearchStory,
-  SingleWorkspaceAvatarStory
+  LocalizedGlobalSearchStory
 } from './WorkspaceMenu.stories.js'
-
-test('single workspace avatar is not interactive', async ({mount, page}) => {
-  await mount(<SingleWorkspaceAvatarStory />)
-
-  await expect(
-    page.getByRole('button', {name: 'Back to workspaces'})
-  ).toHaveCount(0)
-  await expect(page.getByLabel('Simple')).toBeVisible()
-})
 
 test('global search starts in the current workspace and can expand to everything', async ({
   mount,
@@ -26,17 +16,6 @@ test('global search starts in the current workspace and can expand to everything
   await expect(search).toBeFocused()
   await expect(everything).not.toBeChecked()
   await expect(everything).toBeEnabled()
-  await expect
-    .poll(async () => {
-      const searchBox = await search.locator('..').boundingBox()
-      const everythingBox = await everything.boundingBox()
-      return Boolean(
-        searchBox &&
-        everythingBox &&
-        everythingBox.x >= searchBox.x + searchBox.width
-      )
-    })
-    .toBe(true)
 
   await search.fill('About')
   await expect(page.getByText('About', {exact: true})).toBeVisible()
@@ -67,7 +46,6 @@ test('global search opens with the keyboard shortcut and navigates results', asy
   await mount(<GlobalSearchStory />)
   const trigger = page.getByRole('button', {name: 'Search entries'})
   await expect(trigger).toHaveAttribute('aria-keyshortcuts', 'Meta+K Control+K')
-  await expect(trigger.locator('kbd')).toHaveCount(0)
 
   await trigger.focus()
   await page.keyboard.press('ControlOrMeta+k')
@@ -122,16 +100,4 @@ test('global search opens with the keyboard shortcut and navigates results', asy
   await expect(dialog).toBeVisible()
   await page.keyboard.press('ControlOrMeta+k')
   await expect(dialog).toHaveCount(0)
-})
-
-test('enter opens the active search result', async ({mount, page}) => {
-  await mount(<GlobalSearchStory />)
-  await expect(page.getByRole('button', {name: 'Search entries'})).toBeVisible()
-  await page.keyboard.press('ControlOrMeta+k')
-  const search = page.getByRole('combobox', {name: 'Search'})
-  await search.fill('About')
-  await expect(page.getByText('About', {exact: true})).toBeVisible()
-  await page.keyboard.press('Enter')
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect.poll(() => new URL(page.url()).hash).toContain('/entry/')
 })

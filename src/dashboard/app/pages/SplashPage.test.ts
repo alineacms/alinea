@@ -3,60 +3,31 @@ import {recentChange} from './SplashPage.js'
 
 const alice = {name: 'Alice', email: 'alice@example.com'}
 const bob = {name: '', email: 'bob@example.com'}
+const unknown = {name: '', email: ''}
 
-test('a creation that was not updated since is the creation', () => {
-  expect(
-    recentChange({
-      createdAt: 100,
-      createdBy: alice,
-      updatedAt: 100,
-      updatedBy: alice
+test('a recent change is a creation or an edit, by whom and when', () => {
+  const cases = [
+    // A creation that was not updated since is the creation
+    [[100, alice, 100, alice], 'Created', 'Alice', 100_000],
+    [[100, alice, null, null], 'Created', 'Alice', 100_000],
+    // An unknown creator falls back to who updated the entry
+    [[100, unknown, 100, alice], 'Created', 'Alice', 100_000],
+    // An update after the creation is an edit by the last editor
+    [[100, alice, 200, bob], 'Edited', 'bob@example.com', 200_000],
+    [[null, null, 200, alice], 'Edited', 'Alice', 200_000]
+  ] as const
+  for (const [
+    [createdAt, createdBy, updatedAt, updatedBy],
+    action,
+    actor,
+    changedAt
+  ] of cases)
+    expect(recentChange({createdAt, createdBy, updatedAt, updatedBy})).toEqual({
+      action,
+      actor,
+      changedAt
     })
-  ).toEqual({action: 'Created', actor: 'Alice', changedAt: 100_000})
-  expect(
-    recentChange({
-      createdAt: 100,
-      createdBy: alice,
-      updatedAt: null,
-      updatedBy: null
-    })
-  ).toEqual({action: 'Created', actor: 'Alice', changedAt: 100_000})
-})
-
-test('an unknown creator falls back to who updated the entry', () => {
-  expect(
-    recentChange({
-      createdAt: 100,
-      createdBy: {name: '', email: ''},
-      updatedAt: 100,
-      updatedBy: alice
-    })
-  ).toEqual({action: 'Created', actor: 'Alice', changedAt: 100_000})
-})
-
-test('an update after the creation is an edit by the last editor', () => {
-  expect(
-    recentChange({
-      createdAt: 100,
-      createdBy: alice,
-      updatedAt: 200,
-      updatedBy: bob
-    })
-  ).toEqual({action: 'Edited', actor: 'bob@example.com', changedAt: 200_000})
-})
-
-test('an update without a recorded creation is an edit', () => {
-  expect(
-    recentChange({
-      createdAt: null,
-      createdBy: null,
-      updatedAt: 200,
-      updatedBy: alice
-    })
-  ).toEqual({action: 'Edited', actor: 'Alice', changedAt: 200_000})
-})
-
-test('without audit timestamps there is no action or time', () => {
+  // Without audit timestamps there is no action or time
   expect(
     recentChange({
       createdAt: null,
