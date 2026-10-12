@@ -56,14 +56,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when nothing outside the `content` directory changed:"
+          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when nothing outside the `content` directory changed since the last deployment. Comparing against `VERCEL_GIT_PREVIOUS_SHA` covers every commit in a push, not only the last one; on the first deployment of a branch it falls back to the previous commit:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjNWfZKlJJcGLyuGry1Hl8DMVK",
-      "code": "{\n  \"ignoreCommand\": \"git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
+      "code": "{\n  \"ignoreCommand\": \"git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- . ':!content' || exit 1\"\n}",
       "fileName": "vercel.json",
       "language": "json",
       "compact": false
