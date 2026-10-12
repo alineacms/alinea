@@ -154,15 +154,10 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
         .where(inArray(BlobTable.sha, batch))
       for (const row of rows) found.set(row.sha, row.content)
     }
-    // Blobs still read are kept: renewed at most once a day per blob.
     const now = seconds()
     for (const batch of chunks([...found.keys()], blobsPerStatement))
-      await db
-        .update(BlobTable)
-        .set({usedAt: now})
-        .where(
-          and(inArray(BlobTable.sha, batch), lt(BlobTable.usedAt, now - day))
-        )
+      await renewBlobs(db, batch, now)
+    await removeUnusedBlobs(db, now)
     return found
   }
 
@@ -171,7 +166,8 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
   ): Promise<void> {
     const db = await this.#db
     const now = seconds()
-    for (const batch of chunks(blobs, blobsPerStatement)) {
+    const unique = [...new Map(blobs)]
+    for (const batch of chunks(unique, blobsPerStatement)) {
       const shas = batch.map(([sha]) => sha)
       const stored = new Set(
         await db
@@ -179,15 +175,15 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
           .from(BlobTable)
           .where(inArray(BlobTable.sha, shas))
       )
+      await renewBlobs(db, [...stored], now)
       const rows = batch
         .filter(([sha]) => !stored.has(sha))
         .map(([sha, content]) => ({sha, content, usedAt: now}))
       if (rows.length === 0) continue
-      try {
-        await db.insert(BlobTable).values(rows)
-      } catch {
-        // Another instance stored some of them meanwhile: they are kept.
-      }
+      await db
+        .insert(BlobTable)
+        .values(rows)
+        .catch(() => insertMissingBlobs(db, rows))
     }
     await removeUnusedBlobs(db, now)
   }
@@ -327,6 +323,48 @@ function largeBlob(): Column<Uint8Array> {
 }
 
 /** Remove blobs no instance read or stored lately, at most once an hour. */
+/** Blobs still used are kept: renewed at most once a day per blob. */
+async function renewBlobs(
+  db: Database,
+  shas: Array<string>,
+  now: number
+): Promise<void> {
+  if (shas.length === 0) return
+  await db
+    .update(BlobTable)
+    .set({usedAt: now})
+    .where(and(inArray(BlobTable.sha, shas), lt(BlobTable.usedAt, now - day)))
+}
+
+interface BlobRow {
+  sha: string
+  content: Uint8Array
+  usedAt: number
+}
+
+/**
+ * Another instance can store some of the same blobs between our select and
+ * insert, which fails the whole insert: retry per blob, skipping those now
+ * stored and failing on anything else.
+ */
+async function insertMissingBlobs(
+  db: Database,
+  rows: Array<BlobRow>
+): Promise<void> {
+  for (const row of rows) {
+    try {
+      await db.insert(BlobTable).values(row)
+    } catch (error) {
+      const stored = await db
+        .select(BlobTable.sha)
+        .from(BlobTable)
+        .where(eq(BlobTable.sha, row.sha))
+        .get()
+      if (!stored) throw error
+    }
+  }
+}
+
 async function removeUnusedBlobs(db: Database, now: number): Promise<void> {
   const last = blobCleanups.get(db) ?? 0
   if (now - last < 60 * 60) return
