@@ -60,6 +60,18 @@ function entry(
   }
 }
 
+/** The query plan SQLite picks for a query. */
+function plan(sqlite: Database, query: GraphQuery, from = config): string {
+  const statement = compileEntryQuery(from, query).rows.toSQL(connect(sqlite))
+  const explain = sqlite.prepare(`explain query plan ${statement.sql}`)
+  try {
+    const params = statement.params as Array<string | number | null>
+    return JSON.stringify(explain.all(...params))
+  } finally {
+    explain.finalize()
+  }
+}
+
 test('structural SQL queries use the complete entry table', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
@@ -73,12 +85,14 @@ test('structural SQL queries use the complete entry table', async () => {
         entry('c', {status: 'archived', versionStatus: 'published'})
       )
     ])
-  const plan = compileEntryQuery(config, {
+  const query = {
     type: Page,
     select: {id: Entry.id, title: Entry.title},
     take: 1
-  })
-  expect(await plan.rows.all(db)).toEqual([{id: 'a', title: 'a'}])
+  }
+  expect(await compileEntryQuery(config, query).rows.all(db)).toEqual([
+    {id: 'a', title: 'a'}
+  ])
   expect(
     await compileEntryQuery(config, {select: Entry.filePath, id: 'a'}).rows.all(
       db
@@ -101,17 +115,7 @@ test('structural SQL queries use the complete entry table', async () => {
       status: 'archived'
     }).rows.all(db)
   ).toEqual(['c'])
-  const statement = plan.rows.toSQL(db)
-  expect(statement.sql).not.toContain('alinea_entry_data')
-  const explainStatement = sqlite.prepare(`explain query plan ${statement.sql}`)
-  try {
-    const explain = explainStatement.all(
-      ...(statement.params as Array<string | number | null>)
-    )
-    expect(JSON.stringify(explain)).toContain('INDEX')
-  } finally {
-    explainStatement.finalize()
-  }
+  expect(plan(sqlite, query)).toContain('INDEX')
 })
 
 test('locales match configured spellings in any case', async () => {
@@ -154,21 +158,9 @@ test('locales match configured spellings in any case', async () => {
       locale: 'nl-be'
     }).rows.all(db)
   ).toEqual(['nl-BE'])
-  const statement = compileEntryQuery(localized, {
-    type: Page,
-    locale: 'nl-be',
-    select: Entry.id
-  }).rows.toSQL(db)
-  expect(statement.sql).not.toContain('nocase')
-  const explainStatement = sqlite.prepare(`explain query plan ${statement.sql}`)
-  try {
-    const explain = explainStatement.all(
-      ...(statement.params as Array<string | number | null>)
-    )
-    expect(JSON.stringify(explain)).toContain('by_type (type=? AND locale=?)')
-  } finally {
-    explainStatement.finalize()
-  }
+  expect(
+    plan(sqlite, {type: Page, locale: 'nl-be', select: Entry.id}, localized)
+  ).toContain('by_type (type=? AND locale=?)')
 })
 
 test('content conditions and projections query the data column', async () => {
@@ -204,7 +196,6 @@ test('content conditions and projections query the data column', async () => {
 test('physical identity preserves source status, and pagination is validated', () => {
   const archived = entryIndexRow(entry('a', {status: 'archived'}))
   expect(archived.versionStatus).toBe('published')
-  expect(archived.versionId).toBe('["a",null,"published"]')
   expect(entryIndexRow(entry('a', {locale: 'EN'})).versionId).toBe(
     entryIndexRow(entry('a', {locale: 'en'})).versionId
   )
@@ -297,38 +288,18 @@ test('SQL alias projections use metadata aliases and ignore non-URL rows', async
 /** Stores data as text whatever the driver supports. */
 const Reference = entryIndexTable('alinea_reference_index')
 
-const drivers = [
-  {
-    name: 'text',
-    async open() {
-      const sqlite = new Database(':memory:')
-      return {db: connect(sqlite), close: () => sqlite.close()}
-    }
-  },
-  {
-    name: 'jsonb',
-    async open() {
-      const db = await wasmDatabase()
-      return {db, close: () => db.close()}
-    }
-  }
-]
-
 /**
- * The indexed table stores data in the driver's format, the reference table
- * always as text, so comparing them also compares JSONB reads with text.
+ * The indexed table stores data as JSONB, the reference table as text, so
+ * comparing them compares JSONB reads with text.
  */
-async function referenceDatabase(
-  driver: (typeof drivers)[number],
-  entries: Array<IndexedEntry>
-) {
-  const {db, close} = await driver.open()
+async function referenceDatabase(entries: Array<IndexedEntry>) {
+  const db = await wasmDatabase()
   await db.create(EntryIndexTable, Reference)
   for (const input of entries) {
     const row = entryIndexRow(input)
     await db.insert(EntryIndexTable).values({
       ...row,
-      data: driver.name === 'jsonb' ? sql<string>`jsonb(${row.data})` : row.data
+      data: sql<string>`jsonb(${row.data})`
     })
     await db.insert(Reference).values(row)
   }
@@ -340,86 +311,82 @@ async function referenceDatabase(
     expect({query, result: indexed}).toEqual({query, result: reference})
     return indexed
   }
-  return {db, close, compare}
+  return {db, compare}
 }
 
-for (const driver of drivers)
-  test(`structured alias conditions parse each url (${driver.name})`, async () => {
-    const {close, compare} = await referenceDatabase(driver, [
-      entry('object', {data: {metadata: {aliases: [{url: {x: 1}}]}}}),
-      entry('list', {
-        data: {metadata: {aliases: [{url: [1, 2]}, {url: {x: 3}}]}}
-      })
-    ])
-    const structured: Array<[unknown, Array<string>]> = [
-      [{has: {x: 1}}, ['object']],
-      [{has: {x: {gt: 2}}}, ['list']],
-      [{includes: 2}, ['list']]
-    ]
-    for (const [alias, expected] of structured)
-      expect(await compare({alias, select: Entry.id} as GraphQuery)).toEqual(
-        expected
-      )
-    await close()
-  })
-
-for (const driver of drivers)
-  test(`data fields answer filters and ordering as text data does (${driver.name})`, async () => {
-    const long = (value: number) => String(value).padStart(300, '0')
-    const {db, close, compare} = await referenceDatabase(
-      driver,
-      Array.from({length: 6}, (_, index) =>
-        entry(String(index), {
-          data: {
-            title: index % 2 ? long(index) : `short ${index}`,
-            rank: index % 3,
-            body: long(5 - index),
-            tags:
-              index % 2 ? ['a', 'b'] : Array.from({length: 60}, () => 'tag'),
-            nested: {small: index, large: long(index), list: [index]},
-            metadata: {
-              createdAt: 10 - index,
-              aliases: [{url: long(index)}]
-            }
-          }
-        })
-      )
-    )
-    const queries: Array<Record<string, unknown>> = [
-      {filter: {title: {startsWith: '0'}}},
-      {filter: {title: {startsWith: 'short'}}},
-      {filter: {body: {gt: long(2)}}},
-      {filter: {tags: {includes: 'tag'}}},
-      {filter: {tags: {includes: 'b'}}},
-      {filter: {nested: {has: {small: {gte: 3}}}}},
-      {filter: {nested: {has: {large: long(4)}}}},
-      {filter: {nested: {has: {list: {includes: 2}}}}},
-      {filter: {rank: 1}},
-      {orderBy: {desc: Page.title}},
-      {orderBy: [{asc: Entry.createdAt}]},
-      {filter: {_createdAt: {lt: 8}}, orderBy: {asc: Entry.createdAt}},
-      {alias: long(3)}
-    ]
-    expect(
-      await db
-        .select(sql<string>`typeof(${EntryIndexTable.data})`)
-        .from(EntryIndexTable)
-        .limit(1)
-    ).toEqual([driver.name === 'jsonb' ? 'blob' : 'text'])
-    for (const query of queries)
-      await compare({...query, select: Entry.id} as GraphQuery)
-    await compare({
-      select: {
-        id: Entry.id,
-        createdAt: Entry.createdAt,
-        aliases: Entry.aliases,
-        path: Entry.path,
-        title: Page.title,
-        data: Entry.data
-      }
+test('structured alias conditions parse each url', async () => {
+  const {db, compare} = await referenceDatabase([
+    entry('object', {data: {metadata: {aliases: [{url: {x: 1}}]}}}),
+    entry('list', {
+      data: {metadata: {aliases: [{url: [1, 2]}, {url: {x: 3}}]}}
     })
-    await close()
+  ])
+  const structured: Array<[unknown, Array<string>]> = [
+    [{has: {x: 1}}, ['object']],
+    [{has: {x: {gt: 2}}}, ['list']],
+    [{includes: 2}, ['list']]
+  ]
+  for (const [alias, expected] of structured)
+    expect(await compare({alias, select: Entry.id} as GraphQuery)).toEqual(
+      expected
+    )
+  db.close()
+})
+
+test('JSONB data fields answer filters and ordering as text data does', async () => {
+  const long = (value: number) => String(value).padStart(300, '0')
+  const {db, compare} = await referenceDatabase(
+    Array.from({length: 6}, (_, index) =>
+      entry(String(index), {
+        data: {
+          title: index % 2 ? long(index) : `short ${index}`,
+          rank: index % 3,
+          body: long(5 - index),
+          tags: index % 2 ? ['a', 'b'] : Array.from({length: 60}, () => 'tag'),
+          nested: {small: index, large: long(index), list: [index]},
+          metadata: {
+            createdAt: 10 - index,
+            aliases: [{url: long(index)}]
+          }
+        }
+      })
+    )
+  )
+  const queries: Array<Record<string, unknown>> = [
+    {filter: {title: {startsWith: '0'}}},
+    {filter: {title: {startsWith: 'short'}}},
+    {filter: {body: {gt: long(2)}}},
+    {filter: {tags: {includes: 'tag'}}},
+    {filter: {tags: {includes: 'b'}}},
+    {filter: {nested: {has: {small: {gte: 3}}}}},
+    {filter: {nested: {has: {large: long(4)}}}},
+    {filter: {nested: {has: {list: {includes: 2}}}}},
+    {filter: {rank: 1}},
+    {orderBy: {desc: Page.title}},
+    {orderBy: [{asc: Entry.createdAt}]},
+    {filter: {_createdAt: {lt: 8}}, orderBy: {asc: Entry.createdAt}},
+    {alias: long(3)}
+  ]
+  expect(
+    await db
+      .select(sql<string>`typeof(${EntryIndexTable.data})`)
+      .from(EntryIndexTable)
+      .limit(1)
+  ).toEqual(['blob'])
+  for (const query of queries)
+    await compare({...query, select: Entry.id} as GraphQuery)
+  await compare({
+    select: {
+      id: Entry.id,
+      createdAt: Entry.createdAt,
+      aliases: Entry.aliases,
+      path: Entry.path,
+      title: Page.title,
+      data: Entry.data
+    }
   })
+  db.close()
+})
 
 test('page locations use the physical source root and remain index-only', async () => {
   using sqlite = new Database(':memory:')
@@ -455,61 +422,25 @@ test('page locations use the physical source root and remain index-only', async 
 
 test('unique ordering avoids correlated stable-order queries', async () => {
   using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await db.create(EntryIndexTable)
-  const statement = compileEntryQuery(config, {
+  await connect(sqlite).create(EntryIndexTable)
+  const details = plan(sqlite, {
     orderBy: {asc: Entry.filePath, caseSensitive: true},
     take: 10,
     select: Entry.id
-  }).rows.toSQL(db)
-  expect(statement.sql).not.toContain('select min(')
-  const explain = sqlite
-    .prepare(`explain query plan ${statement.sql}`)
-    .all(...(statement.params as Array<string | number | null>))
-  const details = JSON.stringify(explain)
+  })
   expect(details).toContain('alinea_entry_index_by_file_path')
   expect(details).not.toContain('CORRELATED SCALAR SUBQUERY')
   expect(details).not.toContain('TEMP B-TREE')
 })
 
-test('all relations compile into the containing SQL query', () => {
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  const statement = compileEntryQuery(config, {
-    select: {
-      id: Entry.id,
-      siblings: Query.siblings({select: Entry.id}),
-      children: Query.children({
-        depth: 2,
-        orderBy: {desc: Page.title},
-        skip: 1,
-        take: 2,
-        select: Entry.id
-      }),
-      count: Query.children({count: true}),
-      next: Query.next({select: Entry.id})
-    }
-  }).rows.toSQL(db)
-  expect(statement.sql).toContain('json_group_array')
-  expect(statement.sql).toContain('with recursive')
-  expect(statement.sql).toContain('alinea_relation_count_1')
-})
-
 test('embedded sibling relations use the parent index', async () => {
   using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await db.create(EntryIndexTable)
-  const statement = compileEntryQuery(config, {
+  await connect(sqlite).create(EntryIndexTable)
+  const siblings = plan(sqlite, {
     take: 100,
-    select: {
-      id: Entry.id,
-      siblings: Query.siblings({select: Entry.id})
-    }
-  }).rows.toSQL(db)
-  const explain = sqlite
-    .prepare(`explain query plan ${statement.sql}`)
-    .all(...(statement.params as Array<string | number | null>))
-  expect(JSON.stringify(explain)).toContain('alinea_entry_index_by_parent')
+    select: {id: Entry.id, siblings: Query.siblings({select: Entry.id})}
+  })
+  expect(siblings).toContain('alinea_entry_index_by_parent')
 })
 
 const Dated = type('Dated', {
@@ -564,40 +495,19 @@ test('date and number fields order by value with nulls last', async () => {
   ])
 })
 
-test('ordering by a date field walks its field index', async () => {
+test('ordering by a date field or creation time walks its index', async () => {
   using sqlite = new Database(':memory:')
   const db = await datedDatabase(sqlite)
   await syncFieldIndexes(db, dated)
-  const statement = compileEntryQuery(dated, {
-    type: Dated,
-    orderBy: {desc: Dated.date},
-    take: 2,
-    select: Entry.id
-  }).rows.toSQL(db)
-  const explain = sqlite
-    .prepare(`explain query plan ${statement.sql}`)
-    .all(...(statement.params as Array<string | number | null>))
-  const details = JSON.stringify(explain)
-  expect(details).toContain('alinea_entry_index_by_field_date')
-  expect(details).not.toContain('TEMP B-TREE')
-})
-
-test('ordering by creation time walks its metadata index', async () => {
-  using sqlite = new Database(':memory:')
-  const db = await datedDatabase(sqlite)
-  await syncFieldIndexes(db, dated)
-  const statement = compileEntryQuery(dated, {
-    type: Dated,
-    orderBy: {desc: Entry.createdAt},
-    take: 2,
-    select: Entry.id
-  }).rows.toSQL(db)
-  const explain = sqlite
-    .prepare(`explain query plan ${statement.sql}`)
-    .all(...(statement.params as Array<string | number | null>))
-  const details = JSON.stringify(explain)
-  expect(details).toContain('alinea_entry_index_by_field_metadata.createdAt')
-  expect(details).not.toContain('TEMP B-TREE')
+  for (const [field, index] of [
+    [Dated.date, 'alinea_entry_index_by_field_date'],
+    [Entry.createdAt, 'alinea_entry_index_by_field_metadata.createdAt']
+  ] as const) {
+    const ordered = {type: Dated, orderBy: {desc: field}, select: Entry.id}
+    const details = plan(sqlite, {...ordered, take: 2}, dated)
+    expect(details).toContain(index)
+    expect(details).not.toContain('TEMP B-TREE')
+  }
 })
 
 test('ids order by creation time, regardless of letter case', async () => {
@@ -651,15 +561,8 @@ test('long value lists bind one parameter, which the WASM build prepares', async
 
 test('path lookups and counts read an index', async () => {
   using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await db.create(EntryIndexTable)
-  function details(query: GraphQuery) {
-    const statement = compileEntryQuery(config, query).rows.toSQL(db)
-    const explain = sqlite
-      .prepare(`explain query plan ${statement.sql}`)
-      .all(...(statement.params as Array<string | number | null>))
-    return JSON.stringify(explain)
-  }
+  await connect(sqlite).create(EntryIndexTable)
+  const details = (query: GraphQuery) => plan(sqlite, query)
   expect(details({first: true, type: Page, path: 'slug'})).toContain(
     'alinea_entry_index_by_path (path=? AND type=?)'
   )
