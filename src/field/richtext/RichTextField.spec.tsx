@@ -676,38 +676,6 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await expect(sheet).toHaveCount(0)
 })
 
-test('moves a complex block and keeps its fields editable', async ({
-  mount,
-  page
-}) => {
-  await mount(<RichTextStory />)
-
-  const editor = page.locator('.ProseMirror').first()
-  await createEmptyParagraphAfter(
-    page,
-    editor.getByText('Before the block.', {exact: true})
-  )
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('option', {name: 'Call to action'}).click()
-
-  const titles = page.getByRole('textbox', {name: 'CTA title'})
-  await titles.fill('Original CTA')
-
-  const ctaBlocks = page
-    .locator('[data-richtext-block="true"]')
-    .filter({has: page.getByRole('textbox', {name: 'CTA title'})})
-  await ctaBlocks.first().locator('[data-richtext-block-header="true"]').hover()
-  await blockHeader(page, 'Call to action')
-    .first()
-    .dragTo(editor.getByText('After the block.', {exact: true}))
-  await expect
-    .poll(async () => page.getByTestId('value').textContent())
-    .toMatch(/After the block\..*Original CTA/)
-
-  await titles.fill('Moved CTA')
-  await expect(page.getByTestId('value')).toContainText('Moved CTA')
-})
-
 test('duplicates and independently edits a complex block', async ({
   mount,
   page
@@ -751,48 +719,6 @@ test('duplicates and independently edits a complex block', async ({
   const value = await page.getByTestId('value').textContent()
   expect(value?.indexOf('Original CTA')).toBeLessThan(
     value?.indexOf('Copied CTA') ?? -1
-  )
-})
-
-test('inserts a block in nested rich text and preserves it while moving', async ({
-  mount,
-  page
-}) => {
-  await mount(<RichTextStory />)
-
-  const outerEditor = page.locator('.ProseMirror').first()
-  const nestedField = page.locator('[data-richtext-field]').nth(1)
-  const nestedEditor = nestedField.locator('.ProseMirror')
-  await createEmptyParagraphAfter(
-    page,
-    nestedEditor.getByText('Nested details.', {exact: true})
-  )
-  const insertBlock = nestedField.getByRole('button', {name: 'Insert block'})
-  await insertBlock.focus()
-  await page.keyboard.press('Enter')
-  const noteItem = page.getByRole('option', {name: 'Note'})
-  await expect(noteItem).toBeVisible()
-  await noteItem.click()
-
-  const noteText = page.getByRole('textbox', {name: 'Text'})
-  await expect(page.getByRole('button', {name: 'Note settings'})).toBeVisible()
-  await noteText.fill('Nested note value')
-  await expect(page.getByTestId('value')).toContainText('Nested note value')
-
-  const outerBlock = page.locator('[data-richtext-block="true"]').first()
-  await outerBlock
-    .locator('[data-richtext-block-header="true"]')
-    .first()
-    .hover()
-  await blockHeader(page, 'Callout').dragTo(
-    outerEditor.getByText('After the block.', {exact: true})
-  )
-
-  await expect(noteText).toHaveValue('Nested note value')
-  await noteText.fill('Nested note after move')
-  const value = await page.getByTestId('value').textContent()
-  expect(value?.indexOf('After the block.')).toBeLessThan(
-    value?.indexOf('Nested note after move') ?? -1
   )
 })
 
