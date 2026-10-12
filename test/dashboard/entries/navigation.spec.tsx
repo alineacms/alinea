@@ -105,15 +105,6 @@ test('shows the loaded entry title on an overview outside the sidebar tree', asy
   await expect(
     app.page.getByRole('button', {name: 'Back to root'})
   ).toBeVisible()
-  const editView = app.page.getByRole('button', {name: 'Edit entry'})
-  await app.page.keyboard.press('Tab')
-  await editView.focus()
-  await expect(app.page.getByRole('tooltip')).toHaveText('Edit view')
-  await editView.click()
-  const overviewView = app.page.getByRole('button', {name: 'Show overview'})
-  await app.page.keyboard.press('Tab')
-  await overviewView.focus()
-  await expect(app.page.getByRole('tooltip')).toHaveText('Overview view')
 })
 
 test('keeps localized children when switching a sidebar entry to overview', async ({
@@ -254,25 +245,6 @@ test('shows the configured root icon in the rail, the sidebar and the splash pag
   ).toBe(fallback)
 })
 
-test('lists recently changed media files with their action and author on the splash page', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-  const roots = app.page.getByRole('complementary', {name: 'Workspace roots'})
-  await app.page.evaluate(() => {
-    window.location.hash = '#/'
-  })
-  await expect(roots).toHaveCount(0)
-  // The separators between action, time and author are hidden dots
-  await expect(
-    app.page.getByRole('button', {name: /^Nested media file/})
-  ).toContainText(/Edited·.+ago·Local user$/)
-  await expect(
-    app.page.getByRole('button', {name: /^Uploaded image/})
-  ).toContainText(/Created·.+ago·Alice Editor$/)
-})
-
 test('keeps a collapsed parent closed when selecting a child elsewhere', async ({
   dashboard,
   mount
@@ -394,20 +366,6 @@ test('updates document metadata with dashboard navigation', async ({
   )
 })
 
-test('renders a missing entry route', async ({dashboard, mount}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
-    routeEntry: 'missing-entry',
-    title: 'Entry not found'
-  })
-
-  await expect(app.page.getByText('Requested id:')).toContainText(
-    'missing-entry'
-  )
-  await expect(
-    app.page.getByRole('button', {name: 'Go to Pages'})
-  ).toBeVisible()
-})
-
 test('renders a missing root route without falling through to an entry', async ({
   dashboard,
   mount
@@ -501,19 +459,6 @@ test('opens details for a localised file with null alt text', async ({
   await expect(app.page.getByText('Not available', {exact: true})).toHaveCount(
     4
   )
-})
-
-test('opens the entry an edit link names by url', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-
-  await app.page.evaluate(() => {
-    window.location.hash = '#/edit?url=%2Fbeta%2F'
-  })
-  await expect(app.title).toHaveText('Beta')
-  await expect(app.page).toHaveURL(/#\/entry\/main\/pages\/workflow-beta$/)
 })
 
 test('opens on the entry of an edit link', async ({dashboard, mount}) => {

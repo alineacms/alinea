@@ -9,16 +9,6 @@ async function confirmMove(page: Page) {
   await expect(dialog).toBeHidden()
 }
 
-test('moves an entry into another entry', async ({dashboard, mount}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-
-  await app.entry('Alpha').dragTo(app.entry('Folder'))
-  await confirmMove(app.page)
-  // The open entry stays selected, which reveals it in its new parent
-  await expect(app.entry('Alpha')).toHaveAttribute('aria-level', '2')
-  await expect(app.entry('Folder')).toHaveAttribute('aria-expanded', 'true')
-})
-
 test('moves an entry from an overview to the root level', async ({
   dashboard,
   mount

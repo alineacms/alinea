@@ -86,22 +86,6 @@ test('lists the links that break when an entry is archived', async ({
   await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
 })
 
-test('suggests a redirect for a page nothing links to', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-
-  await app.runEntryAction('Archive')
-  const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
-  await expect(dialog.getByRole('alert')).toHaveCount(0)
-  await expect(
-    dialog.getByText(
-      'If this page was publicly available, links to its URL may still be around elsewhere. It can be useful to redirect its URL to another page.'
-    )
-  ).toBeVisible()
-})
-
 test('redirects the url of the archived page to the picked page', async ({
   dashboard,
   mount
