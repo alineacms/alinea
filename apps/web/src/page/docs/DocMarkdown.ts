@@ -5,6 +5,7 @@ import {
   componentPropsMarkdown,
   fieldCatalogMarkdown
 } from '@/page/catalog/catalogMarkdown'
+import {diagrams, isDiagramId} from '@/page/diagrams/diagrams'
 
 export type DocEntryMap = Map<string, {url: string}>
 export type DocMediaMap = Map<string, {title: string; location: string}>
@@ -181,6 +182,10 @@ function renderNode(node: RichNode, ctx: RenderContext): string {
         }
       }
       return caption ? `Image: ${caption}` : 'Image'
+    }
+    case 'DiagramBlock': {
+      const id = asString(node.diagram)
+      return isDiagramId(id) ? `Diagram: ${diagrams[id].description}` : ''
     }
     case 'ChapterLinkBlock': {
       const link = node.link

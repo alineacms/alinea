@@ -6,6 +6,7 @@ import {ComponentCatalogBlock} from '../blocks/ComponentCatalogBlock'
 import {ComponentExampleBlock} from '../blocks/ComponentExampleBlock'
 import {ComponentPropsBlock} from '../blocks/ComponentPropsBlock'
 import {CopyPromptBlock} from '../blocks/CopyPromptBlock'
+import {DiagramBlock} from '../blocks/DiagramBlock'
 import {ExampleBlock} from '../blocks/ExampleBlock'
 import {FieldCatalogBlock} from '../blocks/FieldCatalogBlock'
 import {ImageBlock} from '../blocks/ImageBlock'
@@ -18,6 +19,7 @@ export const bodyField = () =>
       CodeBlock,
       CodeVariantsBlock,
       ImageBlock,
+      DiagramBlock,
       NoticeBlock,
       ChapterLinkBlock,
       ExampleBlock,

@@ -36,6 +36,11 @@
       ]
     },
     {
+      "_type": "DiagramBlock",
+      "_id": "3KbBX9r4qtE4onACUO1tO9ydpWj",
+      "diagram": "publishing"
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
