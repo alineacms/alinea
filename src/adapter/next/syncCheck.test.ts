@@ -76,5 +76,8 @@ test('tags a build render with the content sha', async () => {
   )
   mock.module('next/cache.js', () => ({unstable_cache}))
   await tagContentSha()
-  expect(unstable_cache.mock.calls[0][2]).toEqual({tags: [CONTENT_SHA_TAG]})
+  expect(unstable_cache.mock.calls[0][2]).toEqual({
+    revalidate: 300,
+    tags: [CONTENT_SHA_TAG]
+  })
 })

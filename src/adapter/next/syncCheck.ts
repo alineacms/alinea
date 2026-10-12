@@ -53,12 +53,14 @@ async function loadLatestSha(client: Client): Promise<string | undefined> {
 /**
  * Tag a static render with the content sha without looking it up. Renders at
  * build skip `syncIfStale`, so this is how their pages join the tag that
- * commits revalidate.
+ * commits revalidate, and get the same five minute safety net as pages
+ * rendered at runtime.
  */
 export async function tagContentSha(): Promise<void> {
   try {
     const {unstable_cache} = await import('next/cache.js')
     await unstable_cache(async () => true, ['alinea-content-sha-tag'], {
+      revalidate: SHA_REVALIDATE_SECONDS,
       tags: [CONTENT_SHA_TAG]
     })()
   } catch {
