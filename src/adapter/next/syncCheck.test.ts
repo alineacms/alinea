@@ -2,6 +2,7 @@ import type {Client} from '#/core/Client.js'
 import {expect, mock, test} from 'bun:test'
 import {
   CONTENT_SHA_TAG,
+  contentShaWindow,
   revalidateContentSha,
   syncIfStale,
   tagContentSha
@@ -68,6 +69,13 @@ test('marks the content sha stale after a commit instead of expiring it', async 
   mock.module('next/cache.js', () => ({revalidateTag}))
   await revalidateContentSha()
   expect(revalidateTag).toHaveBeenCalledWith(CONTENT_SHA_TAG, 'max')
+})
+
+test('takes the sha window from a positive syncInterval only', () => {
+  expect(contentShaWindow(30)).toBe(30)
+  expect(contentShaWindow(undefined)).toBe(300)
+  expect(contentShaWindow(0)).toBe(300)
+  expect(contentShaWindow(Number.POSITIVE_INFINITY)).toBe(300)
 })
 
 test('tags a build render with the content sha', async () => {

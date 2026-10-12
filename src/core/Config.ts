@@ -28,7 +28,12 @@ export interface Config {
   preview?: Preview
   /** Every edit will pass through a draft status before being published */
   enableDrafts?: boolean
-  /** Fallback interval in seconds for polling content updates (freshness is primarily sha-driven) */
+  /**
+   * Fallback interval in seconds for polling content updates (freshness is
+   * primarily sha-driven). In Next.js it also sets how long renders share the
+   * latest content sha, which bounds how soon edits made outside the handler
+   * show up: five minutes when unset.
+   */
   syncInterval?: number
   /** Maximum file upload size in bytes */
   maxUploadSize?: number

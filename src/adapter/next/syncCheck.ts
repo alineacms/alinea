@@ -12,22 +12,42 @@ interface SyncableDB {
 // every commit also rebuilds those pages in the background. The time-based
 // revalidate below is only a safety net for edits that bypass the handler
 // (direct cloud writes, git pushes that do not redeploy, other deployments):
-// they show up within five minutes.
+// they show up within `syncInterval` seconds, five minutes when unset.
 export const CONTENT_SHA_TAG = 'alinea-content-sha'
 const SHA_REVALIDATE_SECONDS = 300
+
+/**
+ * How long renders share the latest content sha. Configured through the
+ * config's `syncInterval`, never a query's: all renders share one entry.
+ */
+export function contentShaWindow(syncInterval?: number): number {
+  if (
+    syncInterval !== undefined &&
+    syncInterval > 0 &&
+    Number.isFinite(syncInterval)
+  )
+    return syncInterval
+  return SHA_REVALIDATE_SECONDS
+}
 
 // In-flight dedup so concurrent renders share one sha fetch.
 let inflight: Promise<string | undefined> | undefined
 
-function latestSha(client: Client): Promise<string | undefined> {
+function latestSha(
+  client: Client,
+  revalidate: number
+): Promise<string | undefined> {
   if (inflight) return inflight
-  inflight = loadLatestSha(client).finally(() => {
+  inflight = loadLatestSha(client, revalidate).finally(() => {
     inflight = undefined
   })
   return inflight
 }
 
-async function loadLatestSha(client: Client): Promise<string | undefined> {
+async function loadLatestSha(
+  client: Client,
+  revalidate: number
+): Promise<string | undefined> {
   try {
     const {unstable_cache} = await import('next/cache.js')
     // The wrapper is created per call on purpose: the fetcher closes over
@@ -37,7 +57,7 @@ async function loadLatestSha(client: Client): Promise<string | undefined> {
     const getSha = unstable_cache(
       () => client.getSha(),
       ['alinea-content-sha'],
-      {revalidate: SHA_REVALIDATE_SECONDS, tags: [CONTENT_SHA_TAG]}
+      {revalidate, tags: [CONTENT_SHA_TAG]}
     )
     return await getSha()
   } catch {
@@ -53,14 +73,16 @@ async function loadLatestSha(client: Client): Promise<string | undefined> {
 /**
  * Tag a static render with the content sha without looking it up. Renders at
  * build skip `syncIfStale`, so this is how their pages join the tag that
- * commits revalidate, and get the same five minute safety net as pages
+ * commits revalidate, and get the same time-based safety net as pages
  * rendered at runtime.
  */
-export async function tagContentSha(): Promise<void> {
+export async function tagContentSha(
+  revalidate = SHA_REVALIDATE_SECONDS
+): Promise<void> {
   try {
     const {unstable_cache} = await import('next/cache.js')
     await unstable_cache(async () => true, ['alinea-content-sha-tag'], {
-      revalidate: SHA_REVALIDATE_SECONDS,
+      revalidate,
       tags: [CONTENT_SHA_TAG]
     })()
   } catch {
@@ -88,12 +110,14 @@ export async function revalidateContentSha(): Promise<void> {
  * Returns true when the freshness question is settled here (synced, forced,
  * or explicitly disabled) and the caller can skip its throttled sync.
  * Returns false when the sha could not be determined, so the caller falls
- * back to its existing throttle behavior.
+ * back to its existing throttle behavior. `shaWindow` is how long renders
+ * share the latest sha, see `contentShaWindow`.
  */
 export async function syncIfStale(
   db: SyncableDB,
   client: Client,
   syncInterval?: number,
+  shaWindow = SHA_REVALIDATE_SECONDS,
   options?: SyncOptions
 ): Promise<boolean> {
   if (syncInterval === Number.POSITIVE_INFINITY) return true
@@ -101,7 +125,7 @@ export async function syncIfStale(
     await db.syncWith(client, options)
     return true
   }
-  const expected = await latestSha(client)
+  const expected = await latestSha(client, shaWindow)
   if (!expected) return false
   if (expected !== (await db.sha)) await db.syncWith(client, options)
   return true

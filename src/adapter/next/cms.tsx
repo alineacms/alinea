@@ -31,7 +31,7 @@ import {cache} from 'react'
 import {requestContext} from './context.js'
 import {cachedResolve, developmentRevision} from './devCache.js'
 import {RenderStats, summarizeQuery, timed} from './renderStats.js'
-import {syncIfStale, tagContentSha} from './syncCheck.js'
+import {contentShaWindow, syncIfStale, tagContentSha} from './syncCheck.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -105,7 +105,9 @@ export class NextCMS<
   #render = cache((): {stats?: RenderStats} => ({}))
 
   /** Build renders join the content sha tag once, see `tagContentSha`. */
-  #tagContent = cache(() => tagContentSha())
+  #tagContent = cache(() =>
+    tagContentSha(contentShaWindow(this.config.syncInterval))
+  )
 
   /** One content revision per render, see `developmentRevision`. */
   #devRevision = cache(() => developmentRevision())
@@ -288,7 +290,13 @@ export class NextCMS<
         syncWith: () => this.#syncDb(db, client, stats)
       }
       const settled =
-        !isDraft && (await syncIfStale(tracked, client, syncInterval))
+        !isDraft &&
+        (await syncIfStale(
+          tracked,
+          client,
+          syncInterval,
+          contentShaWindow(this.config.syncInterval)
+        ))
       if (!settled)
         await this.throttle(() => this.#syncDb(db, client, stats), syncInterval)
     }
