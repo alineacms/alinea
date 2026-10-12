@@ -3,6 +3,7 @@ import {
   EntryPickerMultiple,
   EntryPickerSingle,
   Example,
+  FilePickerSingle,
   FilteredEntryFieldWithoutEntryScope,
   ImagePickerSingle,
   ReadOnly
@@ -217,6 +218,21 @@ test('switches link picker workspaces and roots', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Deeply nested'}).click()
   await page.getByRole('menuitemradio', {name: 'Simple'}).click()
   await expect(page.getByRole('button', {name: 'Simple'})).toBeVisible()
+})
+
+test('only offers media roots when picking a file', async ({mount, page}) => {
+  await mount(<FilePickerSingle />)
+  await page.getByRole('button', {name: 'Pick a file'}).click()
+
+  const location = page.getByRole('group', {name: 'Explorer location'})
+  await expect(location.getByText('Media', {exact: true})).toBeVisible()
+  await expect(location.getByRole('button', {name: 'Media'})).toHaveCount(0)
+
+  await location.getByRole('button', {name: 'Simple'}).click()
+  await page.getByRole('menuitemradio', {name: 'Many roots'}).click()
+  await expect(location.getByRole('button', {name: 'Many roots'})).toBeVisible()
+  await expect(location.getByText('Media', {exact: true})).toBeVisible()
+  await expect(location.getByRole('button', {name: 'Media'})).toHaveCount(0)
 })
 
 test('keeps a link selected while filtering the picker', async ({

@@ -11,7 +11,8 @@ import {
   type LinkFieldOptions,
   type LinksField,
   createLink,
-  createLinks
+  createLinks,
+  type LinkFields
 } from '#/field/link/LinkField.js'
 import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
 import type {EntryReference} from '#/picker/entry/EntryReference.js'
@@ -51,7 +52,7 @@ export namespace ImageLink {
 
 export interface ImageField<Fields = undefined> extends LinkField<
   EntryReference & InferStoredValue<Fields>,
-  ImageLink<Type.Infer<Fields>>
+  ImageLink<LinkFields<Type.Infer<Fields>>>
 > {}
 
 const imageCondition = {
@@ -96,7 +97,7 @@ export function image<Fields = undefined>(
 ): ImageField<Fields> {
   return createLink<
     EntryReference & InferStoredValue<Fields>,
-    ImageLink<Type.Infer<Fields>>
+    ImageLink<LinkFields<Type.Infer<Fields>>>
   >(label, {
     ...options,
     pickers: {image: imagePicker(false, options)}
@@ -105,7 +106,7 @@ export function image<Fields = undefined>(
 
 export interface ImagesField<Fields = undefined> extends LinksField<
   EntryReference & ListRow & InferStoredValue<Fields>,
-  ImageLink<Type.Infer<Fields>>
+  ImageLink<LinkFields<Type.Infer<Fields>>>
 > {}
 
 export namespace image {
@@ -122,7 +123,7 @@ export namespace image {
   ): ImagesField<Fields> {
     return createLinks<
       EntryReference & ListRow & InferStoredValue<Fields>,
-      ImageLink<Type.Infer<Fields>>
+      ImageLink<LinkFields<Type.Infer<Fields>>>
     >(label, {
       ...options,
       pickers: {image: imagePicker(true, options)}

@@ -936,3 +936,73 @@ test('creates a translation in the root of its other locales', async () => {
   })
   test.equal(translation, {workspace: 'international', root: 'articles'})
 })
+
+async function createRedirectDb() {
+  const db = await createDocumentDb()
+  for (const [id, title] of [
+    ['one', 'One'],
+    ['two', 'Two']
+  ])
+    await db.create({
+      type: DocumentPage,
+      id,
+      root: 'pages',
+      status: 'published',
+      set: {title, path: id}
+    })
+  const metadata = await db.get({id: 'two', select: Entry.data})
+  const redirect = (url: string) => ({
+    op: 'update' as const,
+    id: 'two',
+    locale: null,
+    status: 'published' as const,
+    set: {
+      metadata: {
+        ...metadata.metadata,
+        aliases: Edit.list(DocumentPage.metadata.aliases)
+          .add('alias', {url})
+          .value()
+      }
+    }
+  })
+  return {db, redirect}
+}
+
+test('an alias takes the url of an entry archived in the same commit', async () => {
+  const {db, redirect} = await createRedirectDb()
+  await db.mutate([{op: 'archive', id: 'one', locale: null}, redirect('/one')])
+  test.is(await db.first({alias: '/one', select: Entry.id}), 'two')
+  test.is(await db.first({url: '/one', select: Entry.id}), null)
+  // The archived entry still gets its url back when it is published again
+  await db.publish({id: 'one', locale: null, status: 'archived'})
+  const restored = await db.first({url: '/one', select: Entry.id})
+  test.is(restored, 'one')
+  test.is(await db.first({alias: '/one', select: Entry.id}), 'two')
+})
+
+test('an alias takes the url of an entry deleted in the same commit', async () => {
+  const {db, redirect} = await createRedirectDb()
+  await db.mutate([{op: 'remove', id: 'one', locale: null}, redirect('/one')])
+  test.is(await db.first({id: 'one', status: 'all'}), null)
+  test.is(await db.first({alias: '/one', select: Entry.id}), 'two')
+})
+
+test('a redirect that fails leaves the archived entry in place', async () => {
+  const {db, redirect} = await createRedirectDb()
+  let error: unknown
+  try {
+    await db.mutate([
+      {op: 'archive', id: 'one', locale: null},
+      {...redirect('/one'), id: 'missing'}
+    ])
+  } catch (cause) {
+    error = cause
+  }
+  test.is((error as Error)?.message, 'Entry not found: missing')
+  const status = await db.first({
+    id: 'one',
+    status: 'all',
+    select: Entry.status
+  })
+  test.is(status, 'published')
+})

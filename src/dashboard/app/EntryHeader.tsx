@@ -22,16 +22,18 @@ import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {activityAtom} from '../atoms/activity.js'
 import {configAtom} from '../atoms/core.js'
-import {
-  archiveEntriesAtom,
-  deleteEntriesAtom,
-  loadDeletePlanAtom,
-  type DeletePlan
-} from '../atoms/delete.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
 import {loadMoveTargetsAtom, type MoveTargets} from '../atoms/move.js'
 import {routeAtom} from '../atoms/nav.js'
 import type {ReactiveNode} from '../atoms/ReactiveNode.js'
+import {
+  archiveDirectlyAtom,
+  archiveEntriesAtom,
+  deleteEntriesAtom,
+  loadRemovePlanAtom,
+  type RemoveAction,
+  type RemovePlan
+} from '../atoms/remove.js'
 import {policyAtom} from '../atoms/user.js'
 import {useSaveShortcut} from '../hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
@@ -57,7 +59,6 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {DeleteDialog} from './DeleteDialog.js'
 import css from './EntryHeader.module.css'
 import {
   entryHeaderActions,
@@ -70,6 +71,7 @@ import {
 } from './EntryValidationModal.js'
 import {MoveDialog} from './MoveDialog.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
+import {RemoveDialog} from './RemoveDialog.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -84,6 +86,12 @@ interface EntryHeaderMenuItem {
   label: string
   action: () => void | Promise<void>
   icon?: ComponentType
+}
+
+/** The entries the remove dialog asks to delete or archive */
+interface EntryHeaderRemoval {
+  action: RemoveAction
+  plan: RemovePlan
 }
 
 interface UrlConflictModalProps {
@@ -218,7 +226,7 @@ export function EntryHeader({
   const unpublish = useSetAtom(localeData.unpublish)
   const archive = useSetAtom(localeData.archive)
   const publishArchived = useSetAtom(localeData.publishArchived)
-  const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
+  const loadRemovePlan = useSetAtom(loadRemovePlanAtom)
   const loadMoveTargets = useSetAtom(loadMoveTargetsAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
   const archiveEntries = useSetAtom(archiveEntriesAtom)
@@ -251,7 +259,7 @@ export function EntryHeader({
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const [invalid, setInvalid] = useState<EntryValidationFailure>()
   const [moving, setMoving] = useState<MoveTargets>()
-  const [deletePlan, setDeletePlan] = useState<DeletePlan>()
+  const [removing, setRemoving] = useState<EntryHeaderRemoval>()
 
   function runAction(action: () => void | Promise<void>) {
     startTransition(async () => {
@@ -281,12 +289,21 @@ export function EntryHeader({
     const locale = untranslated
       ? localeData.requestedLocale
       : activeVersion.locale
-    setDeletePlan(
-      await loadDeletePlan([{...activeVersion, hasChildren, locale}], locales)
+    const plan = await loadRemovePlan(
+      [{...activeVersion, hasChildren, locale}],
+      locales
     )
+    setRemoving({action: 'delete', plan})
   }
 
-  async function deleteAndNavigate(plan: DeletePlan) {
+  async function openArchiveDialog() {
+    assert(activeVersion)
+    if (store.get(archiveDirectlyAtom)) return archive()
+    const plan = await loadRemovePlan([{...activeVersion, hasChildren}])
+    setRemoving({action: 'archive', plan})
+  }
+
+  async function deleteAndNavigate(plan: RemovePlan) {
     assert(activeVersion)
     const {locale} = activeVersion
     const selected = store.get(plan.selectedLocales)
@@ -479,7 +496,7 @@ export function EntryHeader({
     menuItems.push({
       id: 'archive',
       label: 'Archive',
-      action: archive,
+      action: openArchiveDialog,
       icon: IcRoundArchive
     })
   if (actions.publish)
@@ -574,10 +591,13 @@ export function EntryHeader({
         onPublish={runAction}
       />
       <MoveDialog targets={moving} onClose={() => setMoving(undefined)} />
-      <DeleteDialog
-        plan={deletePlan}
-        onClose={() => setDeletePlan(undefined)}
-        onConfirm={deleteAndNavigate}
+      <RemoveDialog
+        action={removing?.action ?? 'delete'}
+        plan={removing?.plan}
+        onClose={() => setRemoving(undefined)}
+        onConfirm={
+          removing?.action === 'archive' ? archiveEntries : deleteAndNavigate
+        }
         onArchive={archiveEntries}
       />
     </PageHeader>

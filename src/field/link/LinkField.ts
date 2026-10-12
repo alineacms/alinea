@@ -31,6 +31,14 @@ import {EntryReference} from '#/picker/entry/EntryReference.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
+/**
+ * The extra fields of a queried link: a link without extra fields holds an
+ * empty object, which is also what the link types default to
+ */
+export type LinkFields<InferredFields> = InferredFields extends undefined
+  ? {}
+  : InferredFields
+
 export interface LinkFieldOptions<Value> extends FieldOptions<Value> {
   /**
    * Allow the same entry to be linked more than once.

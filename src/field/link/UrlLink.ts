@@ -6,7 +6,8 @@ import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkFieldOptions,
   createLink,
-  createLinks
+  createLinks,
+  type LinkFields
 } from '#/field/link/LinkField.js'
 import {
   type UrlPickerOptions,
@@ -39,7 +40,7 @@ export function url<Fields>(
 ) {
   return createLink<
     UrlReference & InferStoredValue<Fields>,
-    UrlLink<Type.Infer<Fields>>
+    UrlLink<LinkFields<Type.Infer<Fields>>>
   >(label, {
     ...options,
     pickers: {url: urlPicker(options)}
@@ -47,7 +48,7 @@ export function url<Fields>(
 }
 
 export namespace url {
-  type UrlRows<Fields> = UrlLink<Type.Infer<Fields>> & ListRow
+  type UrlRows<Fields> = UrlLink<LinkFields<Type.Infer<Fields>>> & ListRow
 
   export interface UrlOptions<Fields>
     extends

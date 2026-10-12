@@ -1,13 +1,15 @@
 import {
-  createDeletePlan,
-  type DeletePlan,
-  type DeleteSubject
-} from '#/dashboard/atoms/delete.js'
+  createRemovePlan,
+  type RemoveAction,
+  type RemovedUrl,
+  type RemovePlan,
+  type RemoveSubject
+} from '#/dashboard/atoms/remove.js'
 import type {EntryReferenceWithSource} from '#/dashboard/atoms/entry.js'
 import {cms} from '#/dashboard/fixture/cms.ts?alinea'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {useState} from 'react'
-import {DeleteDialog} from './DeleteDialog.js'
+import {RemoveDialog} from './RemoveDialog.js'
 
 function subject(
   id: string,
@@ -15,7 +17,7 @@ function subject(
   type: string,
   locale: string | null = null,
   hasChildren = false
-): DeleteSubject {
+): RemoveSubject {
   const root = locale ? 'pages' : 'media'
   const workspace = locale ? 'i18n' : 'simple'
   return {id, title, type, workspace, root, locale, parents: [], hasChildren}
@@ -57,28 +59,33 @@ async function wait() {
   await new Promise(resolve => setTimeout(resolve, 600))
 }
 
-interface DeleteDialogStoryProps {
-  subjects: Array<DeleteSubject>
+interface RemoveDialogStoryProps {
+  action?: RemoveAction
+  subjects: Array<RemoveSubject>
   locales?: Array<string>
   references?: Array<EntryReferenceWithSource>
+  urls?: Array<RemovedUrl>
 }
 
-function DeleteDialogStory({
+function RemoveDialogStory({
+  action = 'delete',
   subjects,
   locales,
-  references = []
-}: DeleteDialogStoryProps) {
+  references = [],
+  urls = []
+}: RemoveDialogStoryProps) {
   // Published entries can be archived instead
   const archivable = subjects.map(({id, locale}) => ({id, locale}))
   const open = () =>
-    createDeletePlan({subjects, locales, references, archivable})
-  const [plan, setPlan] = useState<DeletePlan | undefined>(open)
+    createRemovePlan({subjects, locales, references, archivable, urls})
+  const [plan, setPlan] = useState<RemovePlan | undefined>(open)
   return (
     <StoryProvider config={cms.config}>
       <button type="button" onClick={() => setPlan(open())}>
-        Delete
+        {action === 'delete' ? 'Delete' : 'Archive'}
       </button>
-      <DeleteDialog
+      <RemoveDialog
+        action={action}
         plan={plan}
         onClose={() => setPlan(undefined)}
         onConfirm={wait}
@@ -90,7 +97,7 @@ function DeleteDialogStory({
 
 export function DeleteFiles() {
   return (
-    <DeleteDialogStory
+    <RemoveDialogStory
       subjects={[
         subject('one', 'Portrait.jpg', 'MediaFile'),
         subject('two', 'Panorama.jpg', 'MediaFile')
@@ -101,7 +108,7 @@ export function DeleteFiles() {
 
 export function DeleteFilesAndFolders() {
   return (
-    <DeleteDialogStory
+    <RemoveDialogStory
       subjects={[
         subject('one', 'Portrait.jpg', 'MediaFile'),
         subject('photos', 'Photos', 'MediaLibrary', null, true),
@@ -114,7 +121,7 @@ export function DeleteFilesAndFolders() {
 /** Picks the languages and lists the links to the picked ones */
 export function DeleteTranslatedEntry() {
   return (
-    <DeleteDialogStory
+    <RemoveDialogStory
       subjects={[subject('about', 'About us', 'Page', 'en', true)]}
       locales={['en', 'fr']}
       references={[
@@ -122,10 +129,35 @@ export function DeleteTranslatedEntry() {
         reference('about', 'Contact', 'en'),
         reference('about', 'Accueil', 'fr')
       ]}
+      urls={[
+        {id: 'about', locale: 'en', url: '/en/about'},
+        {id: 'about', locale: 'fr', url: '/fr/about'}
+      ]}
+    />
+  )
+}
+
+/** Nothing links to the page, its URL may still be linked to elsewhere */
+export function DeletePageWithoutReferences() {
+  return (
+    <RemoveDialogStory
+      subjects={[subject('about', 'About us', 'Page', 'en')]}
+      urls={[{id: 'about', locale: 'en', url: '/en/about'}]}
+    />
+  )
+}
+
+export function ArchivePage() {
+  return (
+    <RemoveDialogStory
+      action="archive"
+      subjects={[subject('about', 'About us', 'Page', 'en')]}
+      references={[reference('about', 'Home', 'en')]}
+      urls={[{id: 'about', locale: 'en', url: '/en/about'}]}
     />
   )
 }
 
 export default {
-  title: 'Dashboard / DeleteDialog'
+  title: 'Dashboard / RemoveDialog'
 }

@@ -7,12 +7,16 @@ import {Config, Edit, Field} from '#/index.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
+import {createStore} from 'jotai'
 import {
+  archiveDirectlyAtom,
   archiveEntriesAtom,
   deleteEntriesAtom,
-  loadDeletePlanAtom,
-  type DeleteSubject
-} from './delete.js'
+  loadRedirectTargetAtom,
+  loadRemovePlanAtom,
+  redirectPicker,
+  type RemoveSubject
+} from './remove.js'
 import {eventsAtom} from './core.js'
 import {incomingReferencesAtoms} from './entry.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -86,7 +90,7 @@ async function fixture() {
   return {db, store, versions}
 }
 
-const subject: DeleteSubject = {
+const subject: RemoveSubject = {
   id: 'test',
   title: 'Test',
   type: 'Page',
@@ -103,7 +107,7 @@ function sources(references: Array<{source: {title: string}}>) {
 
 test('the dialog deletes the shown language and warns about its links', async () => {
   const {store, versions} = await fixture()
-  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   expect(plan.locales).toEqual(['en', 'nl'])
   expect(store.get(plan.selectedLocales)).toEqual(['en'])
   expect(store.get(plan.removals)).toEqual([{id: 'test', locale: 'en'}])
@@ -121,7 +125,7 @@ test('the dialog deletes the shown language and warns about its links', async ()
 
 test('deleting every language removes the entry and its children', async () => {
   const {store, versions} = await fixture()
-  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   store.set(plan.selectedLocales, ['en', 'nl'])
   expect(sources(store.get(plan.references))).toEqual([
     'Home en',
@@ -134,14 +138,14 @@ test('deleting every language removes the entry and its children', async () => {
 
 test('a batch deletes entries in the language they are listed in', async () => {
   const {db, store, versions} = await fixture()
-  const plain: DeleteSubject = {
+  const plain: RemoveSubject = {
     ...subject,
     id: 'plain',
     root: 'other',
     locale: null,
     hasChildren: false
   }
-  const plan = await store.set(loadDeletePlanAtom, [subject, plain])
+  const plan = await store.set(loadRemovePlanAtom, [subject, plain])
   expect(plan.locales).toBeUndefined()
   expect(store.get(plan.removals)).toEqual([
     {id: 'test', locale: 'en'},
@@ -158,7 +162,7 @@ test('only languages the user can delete are offered', async () => {
     .allowAll()
     .set({locale: 'nl', deny: {delete: true}})
   store.set(preloadUserPolicyAtom, localUser, policy)
-  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   expect(plan.locales).toEqual(['en'])
 })
 
@@ -173,7 +177,7 @@ test('the dialog warns about links to the entries deleted with it', async () => 
       link: Edit.link(Page.link).addEntry('child').value()
     }
   })
-  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   expect(sources(store.get(plan.references))).toEqual([
     'Child link',
     'Home en',
@@ -208,7 +212,7 @@ test('references are reloaded when another entry links to the entry', async () =
 
 test('published entries can be archived instead, in the picked languages', async () => {
   const {db, store} = await fixture()
-  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   expect(store.get(plan.archivable)).toBe(true)
   store.set(plan.selectedLocales, ['en', 'nl'])
   await store.set(archiveEntriesAtom, plan)
@@ -222,30 +226,30 @@ test('published entries can be archived instead, in the picked languages', async
     'nl archived'
   ])
   // Archived entries are not archived again
-  const next = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const next = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   expect(store.get(next.archivable)).toBe(false)
 })
 
 test('only entries that are all published can be archived instead', async () => {
   const {db, store} = await fixture()
   await db.archive({id: 'test', locale: 'nl'})
-  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   expect(store.get(plan.archivable)).toBe(true)
   store.set(plan.selectedLocales, ['en', 'nl'])
   expect(store.get(plan.archivable)).toBe(false)
   store.set(plan.selectedLocales, [])
   expect(store.get(plan.archivable)).toBe(false)
 
-  const plain: DeleteSubject = {
+  const plain: RemoveSubject = {
     ...subject,
     id: 'plain',
     root: 'other',
     locale: null,
     hasChildren: false
   }
-  const batch = await store.set(loadDeletePlanAtom, [subject, plain])
+  const batch = await store.set(loadRemovePlanAtom, [subject, plain])
   expect(store.get(batch.archivable)).toBe(true)
-  const archived = await store.set(loadDeletePlanAtom, [
+  const archived = await store.set(loadRemovePlanAtom, [
     {...subject, locale: 'nl'},
     plain
   ])
@@ -255,7 +259,7 @@ test('only entries that are all published can be archived instead', async () => 
     .allowAll()
     .set({root: other, deny: {archive: true}})
   store.set(preloadUserPolicyAtom, localUser, policy)
-  const denied = await store.set(loadDeletePlanAtom, [subject, plain])
+  const denied = await store.set(loadRemovePlanAtom, [subject, plain])
   expect(store.get(denied.archivable)).toBe(false)
 })
 
@@ -274,7 +278,7 @@ test('links from entries the user can not read are counted, not listed', async (
     .allowAll()
     .set({root: other, deny: {read: true}})
   store.set(preloadUserPolicyAtom, localUser, policy)
-  const plan = await store.set(loadDeletePlanAtom, [subject], ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
   expect(sources(store.get(plan.references))).toEqual(['Home en'])
   // Plain and Secret, which links to the child deleted with the entry
   expect(store.get(plan.hiddenSources)).toBe(2)
@@ -285,11 +289,179 @@ test('links from entries the user can not read are counted, not listed', async (
 test('an entry shown in a language it is not translated in picks none', async () => {
   const {store} = await fixture()
   const plan = await store.set(
-    loadDeletePlanAtom,
+    loadRemovePlanAtom,
     [{...subject, locale: 'fr'}],
     ['en', 'nl']
   )
   expect(plan.locales).toEqual(['en', 'nl'])
   expect(store.get(plan.selectedLocales)).toEqual([])
   expect(store.get(plan.removals)).toEqual([])
+})
+
+async function aliasesOf(db: LocalDB, id: string) {
+  const rows = await db.find({
+    id,
+    status: 'all',
+    select: {locale: Entry.locale, aliases: Entry.aliases}
+  })
+  return rows
+    .map(row => {
+      const urls = (row.aliases ?? []).map(alias => alias.url)
+      return [String(row.locale), ...urls].join(' ')
+    })
+    .sort()
+}
+
+async function createTarget(db: LocalDB, locales: Array<string | null>) {
+  for (const locale of locales)
+    await db.create({
+      type: Page,
+      id: 'target',
+      locale,
+      root: locale ? 'pages' : 'other',
+      set: {title: `Target ${locale}`}
+    })
+}
+
+test('the removed pages have the urls of their published versions', async () => {
+  const {store} = await fixture()
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
+  expect(store.get(plan.urls)).toEqual([
+    {id: 'test', locale: 'en', url: '/en/test'}
+  ])
+  store.set(plan.selectedLocales, ['en', 'nl'])
+  expect(store.get(plan.urls).map(url => url.url)).toEqual([
+    '/en/test',
+    '/nl/test'
+  ])
+})
+
+test('deleting redirects the urls to the target in the same language', async () => {
+  const {db, store, versions} = await fixture()
+  await createTarget(db, ['en', 'nl'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
+  store.set(plan.selectedLocales, ['en', 'nl'])
+  const target = await store.set(loadRedirectTargetAtom, 'target', 'en')
+  expect(target).toEqual({
+    id: 'target',
+    title: 'Target en',
+    url: '/en/target-en',
+    locales: ['en', 'nl']
+  })
+  store.set(plan.redirect, target)
+  expect(store.get(plan.unredirected)).toEqual([])
+  await store.set(deleteEntriesAtom, plan)
+  expect(await versions()).toEqual([])
+  expect(await aliasesOf(db, 'target')).toEqual(['en /en/test', 'nl /nl/test'])
+})
+
+test('urls in a language the target is not in do not redirect', async () => {
+  const {db, store} = await fixture()
+  await createTarget(db, ['en'])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
+  store.set(plan.selectedLocales, ['en', 'nl'])
+  const target = await store.set(loadRedirectTargetAtom, 'target', 'en')
+  store.set(plan.redirect, target)
+  expect(store.get(plan.unredirected)).toEqual([
+    {id: 'test', locale: 'nl', url: '/nl/test'}
+  ])
+  await store.set(deleteEntriesAtom, plan)
+  expect(await aliasesOf(db, 'target')).toEqual(['en /en/test'])
+})
+
+test('a target without languages takes the urls of every language', async () => {
+  const {db, store} = await fixture()
+  await createTarget(db, [null])
+  const plan = await store.set(loadRemovePlanAtom, [subject], ['en', 'nl'])
+  store.set(plan.selectedLocales, ['en', 'nl'])
+  const target = await store.set(loadRedirectTargetAtom, 'target', null)
+  store.set(plan.redirect, target)
+  expect(store.get(plan.unredirected)).toEqual([])
+  await store.set(deleteEntriesAtom, plan)
+  expect(await aliasesOf(db, 'target')).toEqual(['null /en/test /nl/test'])
+})
+
+test('archiving redirects the url in the same commit', async () => {
+  const {db, store} = await fixture()
+  await createTarget(db, ['en'])
+  await db.create({
+    type: Page,
+    id: 'target',
+    locale: 'en',
+    status: 'draft',
+    set: {title: 'Target draft'}
+  })
+  const plan = await store.set(loadRemovePlanAtom, [subject])
+  const target = await store.set(loadRedirectTargetAtom, 'target', 'en')
+  store.set(plan.redirect, target)
+  const commits = Array<number>()
+  const mutate = db.mutate.bind(db)
+  db.mutate = mutations => {
+    commits.push(mutations.length)
+    return mutate(mutations)
+  }
+  await store.set(archiveEntriesAtom, plan)
+  // The archive and the aliases of the published version and draft
+  expect(commits).toEqual([3])
+  const status = await db.first({
+    id: 'test',
+    locale: 'en',
+    status: 'all',
+    select: Entry.status
+  })
+  expect(status).toBe('archived')
+  // The draft keeps the alias when it is published
+  expect(await aliasesOf(db, 'target')).toEqual(['en /en/test', 'en /en/test'])
+})
+
+test('an entry that is not published has no url to redirect', async () => {
+  const {db, store} = await fixture()
+  await db.create({
+    type: Page,
+    id: 'draft',
+    locale: 'en',
+    status: 'draft',
+    set: {title: 'Draft'}
+  })
+  const plan = await store.set(loadRemovePlanAtom, [
+    {...subject, id: 'draft', hasChildren: false}
+  ])
+  expect(store.get(plan.urls)).toEqual([])
+})
+
+test('urls redirect to pages that are not removed and can be edited', () => {
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({root: other, deny: {update: true}})
+  const picker = redirectPicker(config, policy, [subject])
+  const item = (id: string, root = 'pages', parents = Array<string>()) => ({
+    id,
+    title: id,
+    path: id,
+    type: 'Page',
+    workspace: 'main',
+    root,
+    locale: null,
+    parentId: parents.at(-1) ?? null,
+    parents,
+    index: 'a0',
+    data: {},
+    hasChildren: false
+  })
+  expect(picker.condition).toEqual({_type: {in: ['Page']}})
+  expect(picker.locations).toEqual([
+    {workspace: 'main', root: 'pages'},
+    {workspace: 'main', root: 'other'}
+  ])
+  expect(picker.canSelect(item('home'))).toBe(true)
+  expect(picker.canSelect(item('test'))).toBe(false)
+  expect(picker.canSelect(item('child', 'pages', ['test']))).toBe(false)
+  expect(picker.canSelect(item('plain', 'other'))).toBe(false)
+})
+
+test('archiving asks first until the editor stops it', () => {
+  const store = createStore()
+  expect(store.get(archiveDirectlyAtom)).toBe(false)
+  store.set(archiveDirectlyAtom, true)
+  expect(store.get(archiveDirectlyAtom)).toBe(true)
 })

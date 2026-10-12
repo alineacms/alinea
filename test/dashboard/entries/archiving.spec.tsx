@@ -5,6 +5,17 @@ test('archives and restores an entry', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
   await app.runEntryAction('Archive')
+  const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
+  await expect(
+    dialog.getByText('This entry will be archived and can be restored later.')
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: 'Cancel'}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(app.page.getByText('Archived', {exact: true})).toHaveCount(0)
+
+  await app.runEntryAction('Archive')
+  await dialog.getByRole('button', {name: 'Archive', exact: true}).click()
+  await expect(dialog).toHaveCount(0)
   await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
 
   await app.runEntryAction('Publish')
@@ -25,6 +36,11 @@ test('deletes an archived entry and navigates to its parent', async ({
   app.page.on('pageerror', error => pageErrors.push(error))
 
   await app.runEntryAction('Archive')
+  await app.page
+    .getByRole('dialog', {name: 'Archive entry'})
+    .getByRole('button', {name: 'Archive', exact: true})
+    .click()
+  await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
   await app.runEntryAction('Delete')
   await app.page
     .getByRole('dialog', {name: 'Delete entry'})
@@ -41,4 +57,102 @@ test('deletes an archived entry and navigates to its parent', async ({
     'workflow-child'
   )
   expect(pageErrors).toEqual([])
+})
+
+test('lists the links that break when an entry is archived', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'localizedTarget',
+    routeRoot: 'localized',
+    title: 'Localized target'
+  })
+
+  await app.runEntryAction('Archive')
+  const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
+  await expect(dialog.getByRole('alert')).toContainText(
+    'This entry has 1 reference'
+  )
+  await expect(dialog.getByRole('list', {name: 'References'})).toContainText(
+    'Localized linking'
+  )
+  await expect(dialog.getByText('If this page was publicly')).toHaveCount(0)
+  await expect(
+    dialog.getByText('Redirect the URL to another page (recommended)')
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: 'Archive', exact: true}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
+})
+
+test('suggests a redirect for a page nothing links to', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.runEntryAction('Archive')
+  const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
+  await expect(dialog.getByRole('alert')).toHaveCount(0)
+  await expect(
+    dialog.getByText(
+      'If this page was publicly available, links to its URL may still be around elsewhere. It can be useful to redirect its URL to another page.'
+    )
+  ).toBeVisible()
+})
+
+test('redirects the url of the archived page to the picked page', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'beta'
+  })
+
+  await app.runEntryAction('Archive')
+  const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
+  await dialog.getByRole('button', {name: 'Choose page…'}).click()
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  await picker.getByRole('row', {name: /^Alpha/}).click()
+  await expect(picker).toHaveCount(0)
+  await expect(dialog.getByText('/alpha', {exact: true})).toBeVisible()
+  await dialog.getByRole('button', {name: 'Archive', exact: true}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
+
+  await app.openEntry('Alpha')
+  await app.page.getByRole('tab', {name: 'Details'}).click()
+  await expect(app.page.getByRole('textbox', {name: 'URL'})).toHaveValue(
+    '/beta'
+  )
+})
+
+test('archives without asking again during the session', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.runEntryAction('Archive')
+  const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
+  const skip = dialog.getByRole('checkbox', {
+    name: "Don't show this again during this session"
+  })
+  await dialog.getByText("Don't show this again during this session").click()
+  await expect(skip).toBeChecked()
+  await dialog.getByRole('button', {name: 'Archive', exact: true}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
+
+  await app.openEntry('Beta')
+  await app.runEntryAction('Archive')
+  await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
+  await expect(dialog).toHaveCount(0)
+
+  // Deleting always asks
+  await app.runEntryAction('Delete')
+  await expect(
+    app.page.getByRole('dialog', {name: 'Delete entry'})
+  ).toBeVisible()
 })

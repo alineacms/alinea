@@ -1,6 +1,5 @@
 import {
   Button,
-  Icon,
   SidebarContent,
   Tree,
   TreeItem,
@@ -32,22 +31,9 @@ import {
   useStore,
   type WritableAtom
 } from 'jotai'
-import {
-  memo,
-  type ComponentType,
-  type ReactNode,
-  type RefObject,
-  useEffect,
-  useRef
-} from 'react'
-import {
-  IcOutlineArchive,
-  IcRoundEdit,
-  IcRoundTranslate,
-  LucideFile,
-  LucideFolder,
-  RiFlashlightFill
-} from '../icons.js'
+import {memo, type ReactNode, type RefObject, useEffect, useRef} from 'react'
+import {LucideFile, LucideFolder} from '../icons.js'
+import {EntryStatusIcon, entryStatus} from './EntryStatusIcon.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import css from './SidebarTree.module.css'
 
@@ -69,30 +55,6 @@ export interface SidebarTreeExplorerProps {
   rootSelected?: boolean
   selectedLocale: WritableAtom<string | null, [string], unknown>
   tree: TreeAtoms
-}
-
-interface SidebarStatusDisplay {
-  icon: ComponentType
-  label: string
-  status: 'draft' | 'unpublished' | 'archived' | 'untranslated'
-}
-
-function sidebarStatus(
-  item: RootTreeItem,
-  locale: string | null
-): SidebarStatusDisplay | undefined {
-  if (locale && item.locale !== locale)
-    return {
-      icon: IcRoundTranslate,
-      label: 'Untranslated',
-      status: 'untranslated'
-    }
-  if (item.status === 'archived')
-    return {icon: IcOutlineArchive, label: 'Archived', status: 'archived'}
-  if (item.status === 'draft' && item.main)
-    return {icon: RiFlashlightFill, label: 'Unpublished', status: 'unpublished'}
-  if (item.status === 'draft')
-    return {icon: IcRoundEdit, label: 'Draft', status: 'draft'}
 }
 
 interface SidebarTreeItemProps {
@@ -119,13 +81,13 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   selectedItem
 }: SidebarTreeItemProps) {
   const configuredIcon = useAtomValueRaw(typeAtoms(data.type)).icon
-  const displayStatus = sidebarStatus(data, locale)
+  const displayStatus = entryStatus(data, locale)
   const selectedAncestor =
     selectedItem && data.parents.includes(selectedItem.id)
       ? selectedItem
       : undefined
   const selectedStatus = selectedAncestor
-    ? sidebarStatus(selectedAncestor, locale)
+    ? entryStatus(selectedAncestor, locale)
     : undefined
   const rowStatus =
     selectedStatus?.status === 'archived' ||
@@ -152,21 +114,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
         untranslated: isUntranslated
       })}
       suffix={
-        displayStatus ? (
-          <span
-            className={styles.SidebarTree.status({
-              [displayStatus.status]: true
-            })}
-            aria-label={displayStatus.label}
-            role="img"
-            title={displayStatus.label}
-          >
-            <Icon
-              icon={displayStatus.icon}
-              className={styles.SidebarTree.status.icon()}
-            />
-          </span>
-        ) : undefined
+        displayStatus ? <EntryStatusIcon status={displayStatus} /> : undefined
       }
       items={item.children}
     >

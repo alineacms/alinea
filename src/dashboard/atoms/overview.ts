@@ -36,11 +36,10 @@ import {graphAtom} from './core.js'
 import {routeAtom} from './nav.js'
 
 /** The columns every overview can show next to its configured columns */
-export type OverviewBuiltinColumn = 'type' | 'status' | 'updated' | 'author'
+export type OverviewBuiltinColumn = 'type' | 'updated' | 'author'
 
 const builtinColumns: ReadonlyArray<OverviewBuiltinColumn> = [
   'type',
-  'status',
   'updated',
   'author'
 ]
@@ -151,15 +150,6 @@ function builtinColumn(key: OverviewBuiltinColumn): OverviewColumnState {
         collapsible: true,
         sortBy: Entry.type
       }
-    case 'status':
-      return {
-        key,
-        builtin: key,
-        header: 'Status',
-        width: 120,
-        collapsible: true,
-        sortBy: Entry.status
-      }
     case 'updated':
       return {
         key,
@@ -220,7 +210,7 @@ export interface OverviewResolveOptions {
    */
   mixed?: boolean
   /**
-   * The listed children grouped by type and status, see `summarizeRows`.
+   * The listed children grouped by type, see `summarizeRows`.
    * The columns then follow the children: the types present, and built-in
    * columns only when they tell the children apart.
    */
@@ -290,9 +280,6 @@ export function resolveOverviewOptions(
     type: children
       ? new Set(children.map(group => group.type)).size > 1
       : Boolean(options.mixed) || listed.length > 1,
-    status: children
-      ? new Set(children.map(group => group.status)).size > 1
-      : true,
     updated: children ? children.some(group => group.updatedAt) : audited,
     author: children ? children.some(group => group.updatedBy) : audited
   }
@@ -650,6 +637,8 @@ export interface OverviewRow {
   path: string
   url?: string
   status?: EntryStatus
+  /** The version is the main one, a draft then was never published */
+  main?: boolean
   locale: string | null
   workspace: string
   root: string
@@ -802,10 +791,9 @@ export const openEntryAtom = atom(
   }
 )
 
-/** The listed children that share a type and status */
+/** The listed children that share a type */
 export interface OverviewChildren {
   type: string
-  status: EntryStatus
   /** Some of these children store when they were last edited */
   updatedAt: boolean
   /** Some of these children store who last edited them */
@@ -813,7 +801,7 @@ export interface OverviewChildren {
 }
 
 /**
- * Groups rows by type and status, noting whether they store audit
+ * Groups rows by type, noting whether they store audit
  * metadata. Lists load every child of their parent and searches their
  * shown results, so this covers every row and the columns stay put.
  */
@@ -822,17 +810,14 @@ export function summarizeRows(
 ): Array<OverviewChildren> {
   const groups = new Map<string, OverviewChildren>()
   for (const row of rows) {
-    const status = row.status ?? 'published'
-    const key = `${row.type}\u0000${status}`
-    const group = groups.get(key) ?? {
+    const group = groups.get(row.type) ?? {
       type: row.type,
-      status,
       updatedAt: false,
       updatedBy: false
     }
     group.updatedAt ||= hasAuditValue(row, 'updatedAt')
     group.updatedBy ||= hasAuditValue(row, 'updatedBy')
-    groups.set(key, group)
+    groups.set(row.type, group)
   }
   return [...groups.values()]
 }

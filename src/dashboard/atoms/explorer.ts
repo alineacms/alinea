@@ -109,6 +109,8 @@ export interface ExplorerOptions {
   initialSearchScope?: 'workspace' | 'everything'
   location?: ExplorerLocation
   limitLocations?: Array<ExplorerLimitLocation>
+  /** Lists only the media roots, for pickers of files and images */
+  media?: boolean
   mode?: 'browse' | 'search'
   nestedNavigation?: boolean
   /**
@@ -258,7 +260,17 @@ export function explorerLocations(
     : Object.entries(config.workspaces).flatMap(([workspace, value]) =>
         Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
       )
-  return configured.filter(location => policy.check(permission, location))
+  return configured.filter(
+    location =>
+      policy.check(permission, location) &&
+      (!options.media || isMediaLocation(config, location))
+  )
+}
+
+function isMediaLocation(config: Config, location: ExplorerLimitLocation) {
+  const workspace = config.workspaces[location.workspace]
+  const root = workspace && getWorkspace(workspace).roots[location.root]
+  return Boolean(root && getRoot(root).isMediaRoot)
 }
 
 export interface ExplorerItemData {
@@ -266,6 +278,8 @@ export interface ExplorerItemData {
   createdAt?: number | null
   id: string
   status?: EntryStatus
+  /** The version is the main one, a draft then was never published */
+  main?: boolean
   title: string
   path: string
   updatedAt?: number | null
@@ -1392,6 +1406,7 @@ const explorerItemSelect = {
   createdAt: Entry.createdAt,
   id: Entry.id,
   status: Entry.status,
+  main: Entry.main,
   title: Entry.title,
   path: Entry.path,
   updatedAt: Entry.updatedAt,

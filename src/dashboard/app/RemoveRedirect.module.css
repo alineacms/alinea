@@ -1,0 +1,16 @@
+.RemoveRedirect {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.RemoveRedirect-target {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+}

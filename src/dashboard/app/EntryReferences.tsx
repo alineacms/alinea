@@ -150,8 +150,9 @@ function EntryReferenceItem({item, onClick}: EntryReferenceItemProps) {
     >
       <ListItemTitle>{source.title}</ListItemTitle>
       <ListItemDescription>
-        {formatFields(item.fields)} · {source.path}
-        {item.locale && ` · ${formatLocale(item.locale)}`}
+        {formatFields(item.fields)}
+        {/* The language first: long paths are cut off at the end */}
+        {item.locale && ` · ${formatLocale(item.locale)}`} · {source.path}
       </ListItemDescription>
     </ListItem>
   )

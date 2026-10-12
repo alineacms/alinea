@@ -574,12 +574,15 @@ export interface TableTitleProps extends StyleProps {
   title: ReactNode
   /** A small caption above the title, eg. the parent path */
   label?: ReactNode
+  /** Shown right after the title, eg. a status icon */
+  suffix?: ReactNode
 }
 
 export function TableTitle({
   icon,
   title,
   label,
+  suffix,
   className,
   style
 }: TableTitleProps) {
@@ -626,6 +629,14 @@ export function TableTitle({
           {title}
         </span>
       </span>
+      {suffix && (
+        <span
+          data-slot="table-title-suffix"
+          className={styles.TableTitle.suffix()}
+        >
+          {suffix}
+        </span>
+      )}
     </div>
   )
 }

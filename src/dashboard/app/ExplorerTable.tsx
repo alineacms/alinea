@@ -21,6 +21,7 @@ import type {
 } from '../atoms/explorer.js'
 import {titleColumn as overviewTitle} from '../atoms/overview.js'
 import {LucideFile, LucideFolder} from '../icons.js'
+import {EntryStatusIcon, entryStatus} from './EntryStatusIcon.js'
 import {fileKindVisual} from './FileKind.js'
 import css from './ExplorerTable.module.css'
 import {
@@ -167,7 +168,10 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     () => columns.map(column => overviewCellText(config, column, item, links)),
     [columns, config, item, links]
   )
-  const textValue = [label, ...cellTexts].filter(Boolean).join(' ')
+  const status = entryStatus(item)
+  const textValue = [label, status?.label, ...cellTexts]
+    .filter(Boolean)
+    .join(' ')
   return (
     <TableRow
       id={entry.id}
@@ -200,6 +204,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
             <ExplorerTableBreadcrumbs entries={parents} rootLabel={rootLabel} />
           ) : undefined
         }
+        suffix={status && <EntryStatusIcon status={status} />}
       />
       {!compact &&
         columns.map((column, index) => (
