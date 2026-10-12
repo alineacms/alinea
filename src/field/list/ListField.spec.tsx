@@ -1,5 +1,5 @@
 import {expect, type MountResult, test} from '@playwright/experimental-ct-react'
-import {Example, MinMax} from './ListField.stories.js'
+import {Collapsed, Example, MinMax} from './ListField.stories.js'
 
 test('keeps the remove control visible beside the settings button', async ({
   mount,
@@ -135,6 +135,22 @@ test('closes the sheet when focus moves out of it', async ({mount, page}) => {
   await expect(sheet).toHaveCount(0)
 })
 
+test('closes the sheet on the first focus outside it', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  const hero = page
+    .getByRole('list', {name: 'Sections'})
+    .getByRole('listitem')
+    .first()
+  await hero.getByRole('button', {name: 'Hero settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Hero'})
+  await expect(sheet.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  await hero.getByRole('textbox', {name: 'Heading'}).click()
+  await expect(sheet).toHaveCount(0)
+})
+
 test('shows the row actions again after leaving the insert picker', async ({
   mount,
   page
@@ -220,6 +236,40 @@ test('folds a single item', async ({mount, page}) => {
 
   await hero.getByRole('button', {name: 'Expand Hero'}).click()
   await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+})
+
+test('expands a folded row when its settings open', async ({mount, page}) => {
+  await mount(<Example />)
+  const hero = page
+    .getByRole('list', {name: 'Sections'})
+    .getByRole('listitem')
+    .first()
+
+  await hero.getByRole('button', {name: 'Collapse Hero'}).click()
+  await expect(hero.getByRole('textbox')).toHaveCount(0)
+  await hero.getByRole('button', {name: 'Hero settings'}).click()
+  await expect(page.getByRole('dialog', {name: 'Hero'})).toBeVisible()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+
+  // Closing the settings leaves the row open
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', {name: 'Hero'})).toBeHidden()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+})
+
+test('starts folded when the list is collapsed', async ({mount, page}) => {
+  await mount(<Collapsed />)
+  const quotes = page.getByRole('list', {name: 'Quotes'})
+  await expect(quotes.getByRole('listitem')).toHaveCount(2)
+  await expect(quotes.getByRole('textbox')).toHaveCount(0)
+  await expect(
+    page.getByRole('button', {name: 'Expand all items'})
+  ).toBeVisible()
+
+  // Added rows start open, the others stay folded
+  await quotes.getByRole('button', {name: 'Quote', exact: true}).click()
+  await expect(quotes.getByRole('listitem')).toHaveCount(3)
+  await expect(quotes.getByRole('textbox', {name: 'Quote'})).toHaveCount(1)
 })
 
 type Locator = ReturnType<MountResult['locator']>
@@ -345,14 +395,16 @@ test('inserts a row on the border between rows', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
   const before = await rowNames(sections)
-  // The first row has no border above it to insert on
+  // The first row inserts on the top border of the list
   await expect(
     sections.getByRole('button', {name: 'Insert before Hero item 1'})
-  ).toHaveCount(0)
+  ).toHaveCount(1)
   const insert = sections.getByRole('button', {
     name: 'Insert before Quote item 2'
   })
   await insert.hover()
+  // Waits a moment, so passing over the border doesn't flash the line
+  await expect(insert.locator('..')).toHaveCSS('transition-delay', '0.3s')
   await expect(insert.locator('..')).toHaveCSS('opacity', '1')
   await insert.click()
   const picker = page.getByRole('dialog', {name: 'Insert before Quote item 2'})

@@ -36,7 +36,7 @@ export function Basic() {
       <ListLabel aria-label="Collapse all items" expanded hasRows shared>
         Sections
       </ListLabel>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListItem aria-label="Hero item 1">
           <SortableListItemHeader>
             <SortableListItemTitle>
@@ -136,7 +136,7 @@ export function Basic() {
 export function Empty() {
   return (
     <div style={{maxWidth: 720}}>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListAdd>
           <Button variant="ghost" size="sm">
             Add Hero
@@ -182,7 +182,6 @@ export function Reorderable() {
     <div style={{maxWidth: 480}}>
       <SortableList
         aria-label="Sections"
-        data-depth="muted"
         onReorder={event => setItems(items => moveItems(items, event))}
       >
         {items.map(item => (

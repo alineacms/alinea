@@ -301,6 +301,35 @@ export function MinMax() {
   )
 }
 
+const collapsedType = type('Collapsed', {
+  fields: {
+    quotes: list('Quotes', {
+      schema: {quote: quoteBlock},
+      collapsed: true,
+      initialValue: [
+        {_type: 'quote', quote: 'First', author: 'Alinea'},
+        {_type: 'quote', quote: 'Second', author: 'Alinea'}
+      ]
+    })
+  }
+})
+
+export function Collapsed() {
+  const node = useMemo(
+    () => new ReactiveNode(Type.initialValue(collapsedType) as object),
+    []
+  )
+  return (
+    <StoryProvider views={views}>
+      <BlockSheetStoryFrame>
+        <div style={storyStyle}>
+          <NodeEditor node={node} type={collapsedType} />
+        </div>
+      </BlockSheetStoryFrame>
+    </StoryProvider>
+  )
+}
+
 export default {
   title: 'Fields / ListField'
 }

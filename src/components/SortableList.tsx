@@ -18,12 +18,15 @@ import {
   useDrag,
   useDrop
 } from 'react-aria'
-import {IcRoundAdd, IcRoundMoreHoriz} from '#/dashboard/icons.js'
+import {
+  IcRoundAdd,
+  IcRoundMoreHoriz,
+  IcRoundUnfoldLess,
+  IcRoundUnfoldMore
+} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
-import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import css from './SortableList.module.css'
-import {Surface, type SurfaceProps} from './Surface.js'
 import type {DragMoveEvent, DropTarget, IconType, Key} from './types.js'
 
 const styles = styler(css)
@@ -62,7 +65,7 @@ interface SortableListItemContextValue {
 const SortableListItemContext =
   createContext<SortableListItemContextValue | null>(null)
 
-export interface SortableListProps extends SurfaceProps {
+export interface SortableListProps extends ComponentPropsWithoutRef<'div'> {
   /**
    * Enables reordering: items with an `id` can be dragged by their
    * `SortableListHandle`, with a pointer or with the keyboard (Enter on the
@@ -130,10 +133,10 @@ export function SortableList({
   }, [reorderable, dragType, draggingKey, dropTarget])
   return (
     <SortableListContext.Provider value={context}>
-      <Surface
+      <div
         data-slot="sortable-list"
         {...props}
-        className={className}
+        className={styles.SortableList(styler.merge({className}))}
         data-dragging={draggingKey !== null || undefined}
         role={role}
       />
@@ -506,7 +509,7 @@ export interface SortableListItemToggleProps extends Omit<
   ButtonProps,
   'variant' | 'children' | 'size'
 > {
-  /** Whether the item content is shown, rotates the fold icon */
+  /** Whether the item content is shown, picks the unfold icon */
   expanded: boolean
 }
 
@@ -524,13 +527,8 @@ export function SortableListItemToggle({
       variant="ghost"
       className={styles.SortableListItemToggle(styler.merge({className}))}
       size="icon-sm"
-    >
-      <FoldIcon
-        aria-hidden
-        className={styles.SortableListItemToggle.icon()}
-        expanded={expanded}
-      />
-    </Button>
+      icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
+    />
   )
 }
 

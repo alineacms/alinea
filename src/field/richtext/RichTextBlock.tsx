@@ -1,11 +1,11 @@
 import {
   Button,
-  Kbd,
   SheetBody,
   SheetClose,
   SheetContent,
   SheetFooter,
   SheetHeader,
+  SheetSection,
   SheetTitle,
   SortableList,
   SortableListItemTitle,
@@ -14,7 +14,10 @@ import {
   SortableListItemActions,
   SortableListItemContent,
   SortableListHandle,
-  SortableListItemHeader
+  SortableListItemHeader,
+  SortableListItemDescription,
+  SortableListItemToggle,
+  TextField
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
@@ -28,8 +31,8 @@ import {
   IcRoundDelete
 } from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw} from 'jotai'
-import {memo, useMemo} from 'react'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
+import {memo, useMemo, useState} from 'react'
 import css from './RichTextBlock.module.css'
 
 const styles = styler(css)
@@ -54,17 +57,31 @@ export const RichTextBlock = memo(function RichTextBlock({
   const label = Type.label(type)
   const typeIcon = getType(type).icon
   const sheet = useBlockSheet(id)
+  const [expanded, setExpanded] = useState(true)
+  const customLabel =
+    (useAtomValueRaw(node.field('_label')) as string | undefined) ?? ''
+  const setCustomLabel = useSetAtom(node.field('_label'))
+  const displayLabel = customLabel.trim()
   const badge = (
-    <Badge icon={typeIcon} size="sm">
+    <Badge icon={typeIcon} size="sm" color="primary">
       {label}
     </Badge>
+  )
+  const title = (
+    <>
+      {badge}
+      {displayLabel && (
+        <SortableListItemDescription>
+          {displayLabel}
+        </SortableListItemDescription>
+      )}
+    </>
   )
 
   return (
     <>
       <SortableList
         className={styles.RichTextBlock()}
-        data-depth="muted"
         data-read-only={readOnly || undefined}
         data-richtext-block="true"
       >
@@ -86,17 +103,26 @@ export const RichTextBlock = memo(function RichTextBlock({
               />
             )}
             <SortableListItemTitle>
+              <SortableListItemToggle
+                aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+                expanded={expanded}
+                onClick={() => setExpanded(!expanded)}
+              />
               {sheet.available ? (
                 <SortableListItemTrigger
                   {...sheet.triggerProps}
                   aria-label={`${label} settings`}
                   aria-expanded={sheet.open}
-                  onClick={sheet.toggle}
+                  onClick={() => {
+                    // Opening the settings shows the block they belong to
+                    if (!sheet.open) setExpanded(true)
+                    sheet.toggle()
+                  }}
                 >
-                  {badge}
+                  {title}
                 </SortableListItemTrigger>
               ) : (
-                badge
+                title
               )}
             </SortableListItemTitle>
             <SortableListItemActions>
@@ -110,26 +136,34 @@ export const RichTextBlock = memo(function RichTextBlock({
               />
             </SortableListItemActions>
           </SortableListItemHeader>
-          <SortableListItemContent data-richtext-block-editor="true">
-            {readOnly ? (
-              <ReadOnlyBlockEditor node={node} type={type} />
-            ) : (
-              <NodeEditor node={node} type={type} />
-            )}
-          </SortableListItemContent>
+          {expanded && (
+            <SortableListItemContent data-richtext-block-editor="true">
+              {readOnly ? (
+                <ReadOnlyBlockEditor node={node} type={type} />
+              ) : (
+                <NodeEditor node={node} type={type} />
+              )}
+            </SortableListItemContent>
+          )}
         </SortableListItem>
       </SortableList>
       <BlockSheet id={id}>
         <SheetContent onClose={() => sheet.setOpen(false)}>
           <SheetHeader>
             {badge}
-            <SheetTitle>{label}</SheetTitle>
-            <Kbd size="sm" aria-hidden>
-              Esc
-            </Kbd>
+            <SheetTitle>{displayLabel || label}</SheetTitle>
             <SheetClose aria-label="Close block settings" />
           </SheetHeader>
-          <SheetBody />
+          <SheetBody>
+            <SheetSection>
+              <TextField
+                label="Label"
+                disabled={readOnly}
+                onValueChange={value => setCustomLabel(value || undefined)}
+                value={customLabel}
+              />
+            </SheetSection>
+          </SheetBody>
           <SheetFooter>
             <Button
               variant="ghost"
@@ -143,6 +177,8 @@ export const RichTextBlock = memo(function RichTextBlock({
             >
               Duplicate
             </Button>
+          </SheetFooter>
+          <SheetFooter>
             <Button
               variant="ghost"
               size="sm"

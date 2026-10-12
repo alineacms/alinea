@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--alinea-bg);
+  background: var(--alinea-bg-muted);
   color: var(--alinea-fg);
   outline: none;
 }
@@ -18,7 +18,6 @@
   height: 48px;
   padding: 0 8px 0 10px;
   border-bottom: 1px solid var(--alinea-border);
-  background: var(--alinea-bg);
 }
 
 .SheetHeader-back[data-slot] {
@@ -67,16 +66,14 @@
   box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  min-height: 48px;
-  padding: 8px 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 8px;
   border-top: 1px solid var(--alinea-border);
 
-  /* The first destructive action starts the group at the end */
-  > :not([data-color='destructive']) + [data-color='destructive'],
-  > [data-color='destructive']:first-child {
-    margin-left: auto;
+  /* Actions read like menu items, one per line */
+  [data-slot='button'] {
+    font-weight: 500;
   }
 }

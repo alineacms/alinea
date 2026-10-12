@@ -84,5 +84,10 @@ export const linkEntryAtoms = dispense((id: string, locale?: string) => {
       }
     }
   })
-  return unwrap(result, (): LinkEntryState => ({state: 'loading'}))
+  // Keeps showing the loaded entry while it reloads, eg. after a publish
+  return unwrap(
+    result,
+    (previous?: LinkEntryState): LinkEntryState =>
+      previous ?? {state: 'loading'}
+  )
 })

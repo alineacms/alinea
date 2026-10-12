@@ -6,7 +6,10 @@ import css from './ReadOnlyBadge.module.css'
 
 const styles = styler(css)
 
-export interface ReadOnlyBadgeProps extends ComponentPropsWithoutRef<'span'> {}
+export interface ReadOnlyBadgeProps extends Omit<
+  ComponentPropsWithoutRef<'span'>,
+  'color'
+> {}
 
 export function ReadOnlyBadge(props: ReadOnlyBadgeProps) {
   return (

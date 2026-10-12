@@ -1,7 +1,3 @@
-.LinkFieldView-inputHeader {
-  min-height: calc(1.5 * var(--alinea-font-size-base) + 16px);
-}
-
 .LinkFieldView-label {
   align-self: stretch;
   display: inline-flex;
@@ -87,13 +83,10 @@
 .LinkFieldView-previewImagePlaceholder {
   align-self: center;
   aspect-ratio: 1;
-  border-radius: var(--alinea-radius);
+  border-radius: 6px;
   flex-shrink: 0;
-  height: 36px;
-  margin: -2px 0;
-  margin-left: -8px;
-  margin-right: 8px;
-  width: 36px;
+  height: 24px;
+  width: 24px;
 }
 
 .LinkFieldView-previewImage {

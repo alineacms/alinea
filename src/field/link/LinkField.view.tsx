@@ -23,7 +23,6 @@ import {
   SortableListItemToggle,
   SortableListItemFooter,
   SortableListItemHeader,
-  Kbd,
   Popover,
   PopoverAnchor,
   PopoverContent,
@@ -1147,7 +1146,10 @@ function EntryLinkLabel({
   return children(trimmed(customLabel ?? title))
 }
 
-interface LinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
+interface LinkTypeBadgeProps extends Omit<
+  ComponentPropsWithoutRef<'span'>,
+  'color'
+> {
   picker?: Picker<LinkFieldRow>
   type: PickerType
   value: LinkFieldRow
@@ -1159,7 +1161,7 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
   if (type === 'image') return null
   if (type === 'file') {
     return (
-      <Badge {...props} icon={IcRoundAttachFile} size="sm">
+      <Badge {...props} icon={IcRoundAttachFile} size="sm" color="primary">
         File
       </Badge>
     )
@@ -1176,7 +1178,7 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
     )
   }
   return (
-    <Badge {...props} icon={fallbackIcon} size="sm">
+    <Badge {...props} icon={fallbackIcon} size="sm" color="primary">
       {fallbackLabel}
     </Badge>
   )
@@ -1199,7 +1201,10 @@ function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
   )
 }
 
-interface EntryLinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
+interface EntryLinkTypeBadgeProps extends Omit<
+  ComponentPropsWithoutRef<'span'>,
+  'color'
+> {
   entryId: string
   locale?: string
   fallbackIcon: ComponentType
@@ -1219,7 +1224,7 @@ function EntryLinkTypeBadge({
   const type = entry ? config.schema[entry.type] : undefined
   if (!type) {
     return (
-      <Badge {...props} icon={fallbackIcon} size="sm">
+      <Badge {...props} icon={fallbackIcon} size="sm" color="primary">
         {fallbackLabel}
       </Badge>
     )
@@ -1232,6 +1237,7 @@ function EntryLinkTypeBadge({
       )}
       icon={getType(type).icon || IcRoundLink}
       size="sm"
+      color="primary"
     >
       {Type.label(type)}
     </Badge>
@@ -1401,21 +1407,27 @@ interface LinkRowButtonProps {
   children: ReactNode
   sheet: BlockSheetState
   onEdit: () => void
+  /** Called when the settings open, eg. to expand the row */
+  onOpen?: () => void
 }
 
 /**
  * The content of a link row, which names it, opens its settings. Outside an
  * entry editor there are no settings, it replaces the link instead.
  */
-function LinkRowButton({children, sheet, onEdit}: LinkRowButtonProps) {
+function LinkRowButton({children, sheet, onEdit, onOpen}: LinkRowButtonProps) {
   const descriptionId = useId()
+  function toggleSheet() {
+    if (!sheet.open) onOpen?.()
+    sheet.toggle()
+  }
   return (
     <SortableListItemTrigger
       {...sheet.triggerProps}
       aria-describedby={descriptionId}
       aria-expanded={sheet.available ? sheet.open : undefined}
       more={sheet.available}
-      onClick={sheet.available ? sheet.toggle : onEdit}
+      onClick={sheet.available ? toggleSheet : onEdit}
     >
       {children}
       <span id={descriptionId} hidden>
@@ -1457,9 +1469,6 @@ function LinkSheet({
               {label => label ?? 'Link'}
             </LinkLabel>
           </SheetTitle>
-          <Kbd size="sm" aria-hidden>
-            Esc
-          </Kbd>
           <SheetClose aria-label="Close link settings" />
         </SheetHeader>
         <SheetBody>
@@ -1482,6 +1491,8 @@ function LinkSheet({
             type={type}
             value={value}
           />
+        </SheetFooter>
+        <SheetFooter>
           <Button
             variant="ghost"
             size="sm"
@@ -1536,7 +1547,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   return (
     <>
       <SortableListItem aria-label="Link item 1" current={sheet.open}>
-        <SortableListItemHeader className={styles.LinkFieldView.inputHeader()}>
+        <SortableListItemHeader>
           <SortableListItemTitle>
             {options.readOnly ? (
               rowContent
@@ -1650,7 +1661,7 @@ function MultipleLinkRow({
         id={itemId}
         current={sheet.open}
       >
-        {index > 0 && !readOnly && canCreate && (
+        {!readOnly && canCreate && (
           <LinkInsertGap
             field={field}
             index={index}
@@ -1672,7 +1683,13 @@ function MultipleLinkRow({
             {readOnly ? (
               rowContent
             ) : (
-              <LinkRowButton sheet={sheet} onEdit={() => setEditOpen(true)}>
+              <LinkRowButton
+                sheet={sheet}
+                onEdit={() => setEditOpen(true)}
+                onOpen={() => {
+                  if (hasFields && !expanded) onToggleRow(itemId)
+                }}
+              >
                 {rowContent}
               </LinkRowButton>
             )}
@@ -1842,7 +1859,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         />
       )}
       {isEmpty && !readOnly && (
-        <SortableListAdd className={styles.LinkFieldView.inputHeader()}>
+        <SortableListAdd>
           <SingleLinkCreateActions field={field} />
         </SortableListAdd>
       )}

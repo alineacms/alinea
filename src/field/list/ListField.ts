@@ -26,6 +26,8 @@ export interface ListOptions<Definitions extends Schema> extends Omit<
   help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
+  /** Show the rows folded when the entry opens, added rows start open */
+  collapsed?: boolean
   /** Hide this list field */
   hidden?: boolean
   /** Mark the field as invalid while it has fewer items */

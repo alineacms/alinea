@@ -1,10 +1,20 @@
+.SortableList {
+  position: relative;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-bg);
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+}
+
 .SortableListAdd-inner {
   align-items: center;
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
   justify-content: center;
-  min-height: 36px;
+  /* Rows line up with the height of a text input */
+  min-height: calc(1.5 * var(--alinea-font-size-base) + 16px);
   border-top: 1px solid var(--alinea-border);
 }
 
@@ -53,6 +63,11 @@
 .SortableListItemInsert:has(:focus-visible),
 .SortableListItemInsert:has([aria-expanded='true']) {
   opacity: 1;
+}
+
+/* Only shows once the pointer rests on the border, not while passing over */
+.SortableListItemInsert:hover {
+  transition-delay: 300ms;
 }
 
 .SortableListItemInsert-button {
@@ -199,8 +214,34 @@
   align-items: center;
   justify-content: space-between;
   min-width: 0;
-  min-height: 36px;
+  min-height: calc(1.5 * var(--alinea-font-size-base) + 16px);
   padding: 2px 8px;
+  transition: background-color 0.25s ease-out;
+}
+
+/* Sets an open item's header apart from its content */
+:where(.SortableListItem:has(> .SortableListItemContent)) > .SortableListItemHeader {
+  background: var(--alinea-bg-muted);
+}
+
+/* The list does not clip, so the insert line can sit on its top border: the
+   headers in its corners round their own background */
+:is(
+    .SortableList > .SortableListItem:first-child,
+    .SortableList > .SortableListItem-dropTarget:first-child > .SortableListItem
+  )
+  > .SortableListItemHeader {
+  border-start-start-radius: calc(var(--alinea-radius) - 1px);
+  border-start-end-radius: calc(var(--alinea-radius) - 1px);
+}
+
+:is(
+    .SortableList > .SortableListItem:last-child,
+    .SortableList > .SortableListItem-dropTarget:last-child > .SortableListItem
+  )
+  > .SortableListItemHeader:last-child {
+  border-end-start-radius: calc(var(--alinea-radius) - 1px);
+  border-end-end-radius: calc(var(--alinea-radius) - 1px);
 }
 
 .SortableListItemHeader:hover > .SortableListHandle,
@@ -216,7 +257,7 @@
   min-width: 0;
   height: auto;
   min-height: 26px;
-  padding: 0 0 0 4px;
+  padding: 0;
   border-radius: var(--alinea-radius-sm);
   font-weight: inherit;
 }
@@ -305,6 +346,9 @@
 
 .SortableListItemToggle {
   flex: 0 0 auto;
+  /* The icon's inset in the button spaces it from the title, like the gap
+     between the parts of the title. Also cancels the title's 1px border. */
+  margin-right: -9px;
   color: var(--alinea-fg-muted);
 }
 
@@ -314,15 +358,13 @@
   color: var(--alinea-fg);
 }
 
-.SortableListItemToggle-icon {
-  font-size: 16px;
-}
-
 .SortableListItemContent {
   display: grid;
   gap: 12px;
   align-items: normal;
-  padding: 8px 16px 16px 16px;
+  padding: 12px 16px 16px;
+  /* Drawn here so opening an item leaves its header the same height */
+  border-top: 1px solid var(--alinea-border);
 }
 
 .SortableListItemFooter {

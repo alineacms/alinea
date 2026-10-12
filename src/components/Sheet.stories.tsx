@@ -6,7 +6,6 @@ import {
 } from '#/dashboard/icons.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'
-import {Kbd} from './Kbd.js'
 import {
   SheetBody,
   SheetClose,
@@ -43,9 +42,6 @@ export function Example() {
                 Hero
               </Badge>
               <SheetTitle>Landing page intro</SheetTitle>
-              <Kbd size="sm" aria-hidden>
-                Esc
-              </Kbd>
               <SheetClose aria-label="Close block settings" />
             </SheetHeader>
             <SheetBody>
@@ -60,6 +56,8 @@ export function Example() {
               <Button variant="ghost" size="sm" icon={IcBaselineContentCopy}>
                 Copy
               </Button>
+            </SheetFooter>
+            <SheetFooter>
               <Button
                 variant="ghost"
                 size="sm"

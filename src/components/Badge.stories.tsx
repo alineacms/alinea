@@ -41,6 +41,13 @@ export function Usages() {
         </Badge>
       </div>
 
+      <h2 style={headingStyle}>Row type</h2>
+      <div style={rowStyle}>
+        <Badge size="sm" color="primary">
+          Hero
+        </Badge>
+      </div>
+
       <h2 style={headingStyle}>Compact multi-select</h2>
       <div style={rowStyle}>
         <Badge size="sm">Web</Badge>

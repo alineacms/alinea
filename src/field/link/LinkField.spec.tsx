@@ -185,6 +185,24 @@ test('opens multiple-link settings from the linked row', async ({
   await expect(home.getByRole('textbox', {name: 'URL suffix'})).toBeVisible()
 })
 
+test('expands a folded link row when its settings open', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const firstRow = page
+    .getByRole('list', {name: 'Resources'})
+    .getByRole('listitem')
+    .first()
+  await firstRow.getByRole('button', {name: 'Collapse link'}).click()
+  await firstRow.getByRole('button', {name: 'Page Home'}).click()
+  await expect(page.getByRole('dialog', {name: 'Home'})).toBeVisible()
+  await expect(
+    firstRow.getByRole('button', {name: 'Collapse link'})
+  ).toBeVisible()
+})
+
 test('shows read-only link rows without opening their settings', async ({
   mount,
   page
@@ -560,9 +578,10 @@ test('inserts a link on the border between link rows', async ({
 }) => {
   await mount(<Example />)
   const links = page.getByRole('list', {name: 'Resources'})
+  // The first row inserts on the top border of the list
   await expect(
     links.getByRole('button', {name: 'Insert link before link item 1'})
-  ).toHaveCount(0)
+  ).toHaveCount(1)
   const insert = links.getByRole('button', {
     name: 'Insert link before link item 2'
   })

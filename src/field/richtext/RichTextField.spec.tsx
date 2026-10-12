@@ -440,12 +440,49 @@ test('edits nested rich text inside an embedded block', async ({
   await expect(block).toHaveCSS('margin', '16px 0px')
   await expect(block.locator('[data-richtext-block-editor="true"]')).toHaveCSS(
     'padding',
-    '8px 16px 16px'
+    '12px 16px 16px'
   )
   await expect(page.getByText('Details', {exact: true})).toBeVisible()
   await expect(
     page.locator('.ProseMirror').getByText('Nested details.')
   ).toBeVisible()
+})
+
+test('collapses and expands an embedded block', async ({mount, page}) => {
+  await mount(<RichTextStory />)
+
+  const title = page.getByRole('textbox', {name: 'Title'})
+  await expect(title).toBeVisible()
+  await page.getByRole('button', {name: 'Collapse Callout'}).click()
+  await expect(title).toHaveCount(0)
+  await page.getByRole('button', {name: 'Expand Callout'}).click()
+  await expect(title).toHaveValue('Important')
+})
+
+test('expands a collapsed block when its settings open', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  const title = page.getByRole('textbox', {name: 'Title'})
+  await page.getByRole('button', {name: 'Collapse Callout'}).click()
+  await expect(title).toHaveCount(0)
+  await page.getByRole('button', {name: 'Callout settings'}).click()
+  await expect(title).toHaveValue('Important')
+})
+
+test('labels a block from its settings', async ({mount, page}) => {
+  await mount(<RichTextStory />)
+
+  await page.getByRole('button', {name: 'Callout settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Callout'})
+  await sheet.getByRole('textbox', {name: 'Label'}).fill('Intro')
+  await expect(page.getByRole('dialog', {name: 'Intro'})).toBeVisible()
+  await expect(
+    page.locator('[data-richtext-block-header="true"]').getByText('Intro')
+  ).toBeVisible()
+  await expect(page.getByText('"_label":"Intro"')).toBeVisible()
 })
 
 test('shows a text cursor over the editable text only', async ({
@@ -598,8 +635,6 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await expect(
     page.locator('[data-richtext-block="true"] [aria-current="true"]')
   ).toHaveCount(1)
-  await page.keyboard.press('x')
-  await expect(page.getByTestId('dirty')).toHaveText('false')
   await sheet.getByRole('button', {name: 'Duplicate'}).click()
   await expect(titles).toHaveCount(2)
   await expect(sheet).toHaveCount(0)
@@ -1186,7 +1221,7 @@ test('reorders embedded blocks by dragging', async ({mount, page}) => {
   const targetBounds = await blocks.last().boundingBox()
   if (!targetBounds) throw new Error('Drop target not found')
   await handles.first().dragTo(blocks.last(), {
-    targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
+    targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 4}
   })
 
   await expect(titles.first()).toHaveValue('Second')
@@ -1221,7 +1256,7 @@ test('undoes and redoes block duplication and movement', async ({
     .getByLabel('Drag Callout block')
     .first()
     .dragTo(blocks.last(), {
-      targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
+      targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 4}
     })
   await expect(titles.first()).toHaveValue('Second')
   await expect(titles.last()).toHaveValue('Important')

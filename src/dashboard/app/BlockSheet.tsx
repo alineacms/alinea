@@ -36,7 +36,7 @@ const BlockSheetContext = createContext<BlockSheetContextValue | null>(null)
 
 const closed = atom(false)
 const none = atom(null)
-const exit = 150
+const exit = 180
 const triggerAttribute = 'data-block-sheet-trigger'
 
 function blockSheetContext(): BlockSheetContextValue {
@@ -102,10 +102,11 @@ export function BlockSheetSlot({className, style}: BlockSheetSlotProps) {
   )
   return (
     <div
-      ref={ref}
       className={styles.BlockSheetSlot(styler.merge({className}))}
       style={style}
-    />
+    >
+      <div ref={ref} className={styles.BlockSheetSlot.host()} />
+    </div>
   )
 }
 
@@ -219,18 +220,17 @@ export function BlockSheet({id, children}: BlockSheetProps) {
     )
   )
   const open = state === 'open'
-  // Set while a focus event passes through the sheet in the React tree, which
-  // includes popovers that its fields render in portals
-  const focusInside = useRef(false)
+  // The last focus event that passed through the sheet in the React tree,
+  // which includes popovers that its fields render in portals. Matched by
+  // event, the sheet focuses its first field before this listens.
+  const focusInside = useRef<Event | null>(null)
   useEffect(() => {
     if (!context || !open) return
     const close = () =>
       store.set(context.open, current => (current === id ? null : current))
     // Focus moved somewhere else, a trigger toggles the sheet on its own
     const onFocusIn = (event: FocusEvent) => {
-      const inside = focusInside.current
-      focusInside.current = false
-      if (inside) return
+      if (focusInside.current === event) return
       const target = event.target
       if (target instanceof Element && target.closest(`[${triggerAttribute}]`))
         return
@@ -267,8 +267,8 @@ export function BlockSheet({id, children}: BlockSheetProps) {
       className={styles.BlockSheet()}
       data-closing={!open || undefined}
       inert={!open}
-      onFocusCapture={() => {
-        focusInside.current = true
+      onFocusCapture={event => {
+        focusInside.current = event.nativeEvent
       }}
       onBlur={onBlur}
     >

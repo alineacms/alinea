@@ -26,6 +26,18 @@ test('badges expose their size and status', async ({mount, page}) => {
   expect(await color('Published')).not.toBe(await color('Draft'))
 })
 
+test('primary badges use the accent color', async ({mount, page}) => {
+  await mount(<Usages />)
+  const badges = page.locator('[data-slot="badge"]')
+  const hero = badges.filter({hasText: 'Hero'})
+  await expect(hero).toHaveAttribute('data-color', 'primary')
+  const background = (badge: typeof hero) =>
+    badge.evaluate(element => getComputedStyle(element).backgroundColor)
+  expect(await background(hero)).not.toBe(
+    await background(badges.filter({hasText: 'Web'}))
+  )
+})
+
 test('long labels truncate', async ({mount, page}) => {
   await mount(<Usages />)
   const label = page
