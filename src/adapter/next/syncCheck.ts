@@ -10,9 +10,10 @@ interface SyncableDB {
 // Tag for the shared latest-content-sha entry. The Next handler wrapper
 // revalidates it after every commit, so renders learn about new content
 // instantly. The time-based revalidate below is only a safety net for edits
-// that bypass the handler (direct cloud writes).
+// that bypass the handler (direct cloud writes, git pushes that do not
+// redeploy, other deployments): they show up within five minutes.
 export const CONTENT_SHA_TAG = 'alinea-content-sha'
-const SHA_REVALIDATE_SECONDS = 60
+const SHA_REVALIDATE_SECONDS = 300
 
 // In-flight dedup so concurrent renders share one sha fetch.
 let inflight: Promise<string | undefined> | undefined
