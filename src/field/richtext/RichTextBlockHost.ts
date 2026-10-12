@@ -48,9 +48,11 @@ export class RichTextBlockHosts {
         },
         stopEvent(event) {
           const target = event.target
+          // Controls in the dragged header handle their own events
           const dragHandle =
             target instanceof Element &&
-            target.closest('[data-richtext-drag-handle]')
+            target.closest('[data-richtext-drag-handle]') &&
+            !target.closest('button, a, input, [role="button"]')
           if (event.type.startsWith('drag') || event.type === 'drop')
             return false
           return !dragHandle

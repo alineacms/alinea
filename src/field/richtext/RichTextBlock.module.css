@@ -12,40 +12,17 @@
   margin-bottom: 0;
 }
 
-/* A thin strip along the top edge, the rest of the header stays clickable */
-.RichTextBlock-dragHandle {
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  z-index: 3;
-  width: 56px;
-  height: 10px;
+.RichTextBlock-header[draggable='true'] {
   cursor: grab;
-  opacity: 0;
-  pointer-events: none;
-  touch-action: none;
-  transform: translateX(-50%);
-  transition: opacity 140ms ease-out;
 }
 
-.RichTextBlock-dragHandle::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 30px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--alinea-fg-disabled);
-  transform: translate(-50%, -50%);
+.RichTextBlock-anchor {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
 }
 
-.RichTextBlock-dragHandle:active {
-  cursor: grabbing;
-}
-
-.RichTextBlock-header:hover > .RichTextBlock-dragHandle,
-.RichTextBlock-header:focus-within > .RichTextBlock-dragHandle {
-  opacity: 1;
-  pointer-events: auto;
+.RichTextBlock-anchor-field {
+  flex: 1;
+  min-width: 0;
 }

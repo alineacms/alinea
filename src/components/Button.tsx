@@ -39,6 +39,11 @@ export interface ButtonProps extends StyleProps, AriaProps, DataProps {
   'aria-current'?: boolean | 'page' | 'step' | 'location' | 'date' | 'time'
   /** Keyboard shortcuts that activate the button, eg. `Meta+K Control+K` */
   'aria-keyshortcuts'?: string
+  /**
+   * Lets a press on the button start a native drag, eg. of the draggable
+   * element it is in: browsers do not drag from a button otherwise
+   */
+  draggable?: boolean
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void
   ref?: Ref<HTMLButtonElement>
   children?: ReactNode
@@ -57,6 +62,7 @@ export function Button({
   children,
   onClick,
   'aria-keyshortcuts': ariaKeyShortcuts,
+  draggable,
   ...props
 }: ButtonProps) {
   const attributes = {
@@ -74,6 +80,7 @@ export function Button({
         {...attributes}
         aria-keyshortcuts={ariaKeyShortcuts}
         aria-disabled={disabled || undefined}
+        draggable={draggable}
         onClick={event => {
           if (disabled) event.preventDefault()
           else onClick?.(event as MouseEvent<HTMLButtonElement>)
@@ -92,10 +99,14 @@ export function Button({
       isDisabled={disabled}
       isPending={loading}
       render={
-        ariaKeyShortcuts
-          ? // react-aria does not pass aria-keyshortcuts on to the element
+        ariaKeyShortcuts || draggable
+          ? // react-aria does not pass these on to the element
             domProps => (
-              <button {...domProps} aria-keyshortcuts={ariaKeyShortcuts} />
+              <button
+                {...domProps}
+                aria-keyshortcuts={ariaKeyShortcuts}
+                draggable={draggable}
+              />
             )
           : undefined
       }

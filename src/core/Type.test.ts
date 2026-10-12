@@ -144,6 +144,34 @@ test('derives list anchors from labels', () => {
   })
 })
 
+test('derives rich text block anchors from labels', () => {
+  const Rich = type('Rich', {
+    fields: {
+      body: richText('Body', {
+        schema: {
+          Note: type('Note', {fields: {text: text('Text')}})
+        }
+      })
+    }
+  })
+  const value = {
+    body: [
+      {_type: 'Note', _id: 'note-1', _label: 'Read this first'},
+      {_type: 'Note', _id: 'note-2', _label: 'Read this first'}
+    ]
+  }
+
+  const initialized = Type.withInitialValue(Rich, value) as typeof value
+  test.equal(
+    initialized.body.map(block => (block as {_anchor?: string})._anchor),
+    ['read-this-first', 'read-this-first-2']
+  )
+  test.equal(
+    Type.anchors(Rich, initialized).map(anchor => anchor.fieldPath),
+    ['body.note-1.read-this-first', 'body.note-2.read-this-first-2']
+  )
+})
+
 test('does not derive link anchors from labels', () => {
   const Linked = type('Linked', {
     fields: {

@@ -255,10 +255,15 @@
 
 .SortableListItemToggle {
   flex: 0 0 auto;
-  /* The icon's inset in the button spaces it from the title, like the gap
-     between the parts of the title. Also cancels the title's 1px border. */
-  margin-right: -9px;
   color: var(--alinea-fg-muted);
+}
+
+/* A compact button, so the icon sits as far from the title as the parts of
+   the title sit from each other, with room between their hover backgrounds */
+.SortableListItemToggle[data-slot][data-size] {
+  width: 20px;
+  height: 20px;
+  margin-right: -6px;
 }
 
 .SortableListItemToggle:hover,

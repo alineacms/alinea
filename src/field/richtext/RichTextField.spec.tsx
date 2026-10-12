@@ -13,6 +13,13 @@ import {
   RichTextStory
 } from './RichTextField.story.js'
 
+/** The header of a block of `type`, which drags the block */
+function blockHeader(page: Page, type: string) {
+  return page.locator('[data-richtext-drag-handle]').filter({
+    has: page.locator('[data-slot="badge"]', {hasText: new RegExp(`^${type}$`)})
+  })
+}
+
 const pageErrors = new WeakMap<Page, Array<string>>()
 
 test.beforeEach(async ({page}) => {
@@ -483,6 +490,17 @@ test('labels a block from its settings', async ({mount, page}) => {
     page.locator('[data-richtext-block-header="true"]').getByText('Intro')
   ).toBeVisible()
   await expect(page.getByText('"_label":"Intro"')).toBeVisible()
+
+  // The anchor follows the label until it is set by hand
+  const value = page.getByTestId('value')
+  const dialog = page.getByRole('dialog', {name: 'Intro'})
+  await expect(dialog.getByRole('textbox', {name: 'Anchor'})).toHaveValue(
+    'intro'
+  )
+  await expect(value).toContainText('"_anchor":"intro"')
+  await dialog.getByRole('textbox', {name: 'Anchor'}).fill('start-here')
+  await dialog.getByRole('textbox', {name: 'Label'}).fill('Introduction')
+  await expect(value).toContainText('"_anchor":"start-here"')
 })
 
 test('shows a text cursor over the editable text only', async ({
@@ -498,7 +516,7 @@ test('shows a text cursor over the editable text only', async ({
     'cursor',
     'text'
   )
-  await expect(page.getByLabel('Drag Callout block').first()).not.toHaveCSS(
+  await expect(blockHeader(page, 'Callout').first()).not.toHaveCSS(
     'cursor',
     'text'
   )
@@ -511,7 +529,7 @@ test('selects text in block fields without dragging the block', async ({
   await mount(<RichTextStory />)
 
   const host = page.locator('[data-richtext-block-host]').first()
-  const handle = page.getByLabel('Drag Callout block').first()
+  const handle = blockHeader(page, 'Callout').first()
   const title = page.getByRole('textbox', {name: 'Title'})
   await expect(host).not.toHaveAttribute('draggable', 'true')
   await expect(handle).toHaveAttribute('draggable', 'true')
@@ -679,8 +697,7 @@ test('moves a complex block and keeps its fields editable', async ({
     .locator('[data-richtext-block="true"]')
     .filter({has: page.getByRole('textbox', {name: 'CTA title'})})
   await ctaBlocks.first().locator('[data-richtext-block-header="true"]').hover()
-  await page
-    .getByLabel('Drag Call to action block')
+  await blockHeader(page, 'Call to action')
     .first()
     .dragTo(editor.getByText('After the block.', {exact: true}))
   await expect
@@ -767,9 +784,9 @@ test('inserts a block in nested rich text and preserves it while moving', async 
     .locator('[data-richtext-block-header="true"]')
     .first()
     .hover()
-  await page
-    .getByLabel('Drag Callout block')
-    .dragTo(outerEditor.getByText('After the block.', {exact: true}))
+  await blockHeader(page, 'Callout').dragTo(
+    outerEditor.getByText('After the block.', {exact: true})
+  )
 
   await expect(noteText).toHaveValue('Nested note value')
   await noteText.fill('Nested note after move')
@@ -792,7 +809,7 @@ test('keeps outer and inner block fields read only', async ({mount, page}) => {
   await expect(fields.nth(1)).toHaveAttribute('data-read-only', 'true')
   await expect(editors.last()).toHaveAttribute('contenteditable', 'false')
   await expect(page.getByRole('button', {name: 'Insert block'})).toHaveCount(0)
-  await expect(page.getByLabel('Drag Callout block')).toHaveCount(0)
+  await expect(blockHeader(page, 'Callout')).toHaveCount(0)
   await expect(page.locator('[data-richtext-toolbar="true"]')).toHaveCount(0)
   await expect(page.getByRole('textbox', {name: 'Title'})).toBeDisabled()
 
@@ -1063,7 +1080,7 @@ test('survives a mixed editing session around several blocks', async ({
 
   const blocks = page.locator('[data-richtext-block="true"]')
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
-  await page.getByLabel('Drag Callout block').first().dragTo(blocks.last())
+  await blockHeader(page, 'Callout').first().dragTo(blocks.last())
 
   await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(3)
 })
@@ -1091,9 +1108,9 @@ test('drags a single block to another text position', async ({mount, page}) => {
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()
-  await page
-    .getByLabel('Drag Callout block')
-    .dragTo(page.getByText('After the block.', {exact: true}))
+  await blockHeader(page, 'Callout').dragTo(
+    page.getByText('After the block.', {exact: true})
+  )
 
   const value = await page.getByTestId('value').textContent()
   expect(value?.indexOf('After the block.')).toBeLessThan(
@@ -1115,9 +1132,7 @@ test('disallows embedded blocks inside list items', async ({mount, page}) => {
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()
-  await page
-    .getByLabel('Drag Callout block')
-    .dragTo(editor.locator('li').last())
+  await blockHeader(page, 'Callout').dragTo(editor.locator('li').last())
 
   await expect(editor.locator('li [data-richtext-block-host]')).toHaveCount(0)
   await expect(
@@ -1139,7 +1154,7 @@ test('disallows embedded blocks inside tables', async ({mount, page}) => {
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()
-  await page.getByLabel('Drag Callout block').dragTo(cell)
+  await blockHeader(page, 'Callout').dragTo(cell)
 
   await expect(cell.locator('[data-richtext-block-host]')).toHaveCount(0)
   await expect(
@@ -1215,7 +1230,7 @@ test('reorders embedded blocks by dragging', async ({mount, page}) => {
   await titles.nth(1).fill('Second')
 
   const blocks = page.locator('[data-richtext-block="true"]')
-  const handles = page.getByLabel('Drag Callout block')
+  const handles = blockHeader(page, 'Callout')
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
   await expect(handles.first()).toBeVisible()
   const targetBounds = await blocks.last().boundingBox()
@@ -1252,8 +1267,7 @@ test('undoes and redoes block duplication and movement', async ({
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
   const targetBounds = await blocks.last().boundingBox()
   if (!targetBounds) throw new Error('Drop target not found')
-  await page
-    .getByLabel('Drag Callout block')
+  await blockHeader(page, 'Callout')
     .first()
     .dragTo(blocks.last(), {
       targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 4}

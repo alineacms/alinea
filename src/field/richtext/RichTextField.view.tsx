@@ -391,6 +391,13 @@ function RichTextBlockPortals({
     editor.commands.deleteRange({from: position, to: position + 1})
   }
 
+  // The editor drags its selection, a drag from the header moves the block
+  function select(host: RichTextBlockHost) {
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    editor.commands.setNodeSelection(position)
+  }
+
   function duplicate(host: RichTextBlockHost, part: ReactiveRichTextBlock) {
     const position = host.getPos()
     if (typeof position !== 'number') return
@@ -423,6 +430,7 @@ function RichTextBlockPortals({
           readOnly={readOnly}
           onDelete={() => remove(host)}
           onDuplicate={() => duplicate(host, part)}
+          onDragStart={() => select(host)}
         />
       </>,
       host.dom,

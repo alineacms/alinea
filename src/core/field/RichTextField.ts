@@ -190,10 +190,16 @@ function normalizeRichTextAnchors<Blocks>(
   ): Node {
     if (Node.isBlock(node)) {
       activeManualAnchors.clear()
+      const source = blockAnchor(node)
+      const unique = createUniqueAnchor(source, anchors)
+      const anchored =
+        source !== undefined && unique !== node._anchor
+          ? {...node, _anchor: unique}
+          : node
       const type = schema?.[node[Node.type]]
       return type
-        ? (Type.normalizeAnchors(type, node, {anchors}) as Node)
-        : node
+        ? (Type.normalizeAnchors(type, anchored, {anchors}) as Node)
+        : anchored
     }
     if (Node.isText(node)) {
       const marks = node.marks
@@ -364,19 +370,37 @@ function richTextAnchors<Blocks>(
     }
   })
   doc.forEach((row, index) => {
-    if (!schema || !Node.isBlock(row)) return
-    const type = schema[row[Node.type]]
+    if (!Node.isBlock(row)) return
+    const segment = row._id ?? String(index)
+    const anchor = blockAnchor(row)
+    if (anchor && !anchors.has(anchor)) {
+      anchors.add(anchor)
+      result.push({
+        id: anchor,
+        label: `#${anchor}`,
+        fieldPath: referenceFieldPath([...path, segment, anchor]),
+        fieldLabel: label
+      })
+    }
+    const type = schema?.[row[Node.type]]
     if (!type) return
     result.push(
       ...Type.anchors(
         type,
         row as Record<string, unknown>,
-        [...path, row._id ?? String(index)],
+        [...path, segment],
         [...labels, Type.label(type)]
       )
     )
   })
   return result
+}
+
+/** The anchor of a block: set in its settings or derived from its label */
+function blockAnchor(block: Record<string, unknown>): string | undefined {
+  if (typeof block._anchor === 'string') return block._anchor
+  if (typeof block._label === 'string' && block._label)
+    return slugify(block._label)
 }
 
 function richTextReferences<Blocks>(
