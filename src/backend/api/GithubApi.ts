@@ -95,7 +95,13 @@ export class GithubApi
           ? result.errors.filter((error: unknown) => !isMissingFile(error))
           : []
         if (errors.length > 0) {
-          const message = errors.map((e: any) => e.message).join('; ')
+          const message = errors
+            .map((error: unknown) =>
+              isRecord(error) && typeof error.message === 'string'
+                ? error.message
+                : JSON.stringify(error)
+            )
+            .join('; ')
           console.trace(errors)
           throw new Error(message)
         }
