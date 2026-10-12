@@ -31,7 +31,7 @@ import {cache} from 'react'
 import {requestContext} from './context.js'
 import {cachedResolve, developmentRevision} from './devCache.js'
 import {RenderStats, summarizeQuery, timed} from './renderStats.js'
-import {syncIfStale} from './syncCheck.js'
+import {syncIfStale, tagContentSha} from './syncCheck.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -103,6 +103,9 @@ export class NextCMS<
    * returns a fresh holder, so nothing is recorded there.
    */
   #render = cache((): {stats?: RenderStats} => ({}))
+
+  /** Build renders join the content sha tag once, see `tagContentSha`. */
+  #tagContent = cache(() => tagContentSha())
 
   /** One content revision per render, see `developmentRevision`. */
   #devRevision = cache(() => developmentRevision())
@@ -271,7 +274,9 @@ export class NextCMS<
       : (request.syncInterval ?? this.config.syncInterval)
     // A preview cookie already settled freshness through its content hash.
     if (hasPreview) return answer()
-    if (!isBuild) {
+    if (isBuild) {
+      await this.#tagContent()
+    } else {
       // In draft mode Next bypasses the `unstable_cache` behind `syncIfStale`,
       // so asking for the shared sha would cost an uncached request on every
       // render. Without a preview cookie there is no hash to compare against,

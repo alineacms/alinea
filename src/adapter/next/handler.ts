@@ -63,10 +63,11 @@ export function createHandlerWithDatabase(
       return openGeneratedDatabase(config)
     })
   )
-  // Revalidate the shared content sha before the user-provided hook so page
-  // revalidation triggered there already sees the fresh sha when RSC renders
-  // resolve. Invalidation never throws (failures are swallowed inside
-  // revalidateContentSha).
+  // Mark the shared content sha stale before the user-provided hook. Static
+  // pages carrying its tag rebuild in the background with the fresh sha;
+  // dynamic renders, including ones revalidated in the hook, can answer once
+  // from the previous sha while it refreshes. Invalidation never throws
+  // (failures are swallowed inside revalidateContentSha).
   const afterCommit: NonNullable<
     HandlerHooks['afterCommit']
   > = async context => {

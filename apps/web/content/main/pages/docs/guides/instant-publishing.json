@@ -86,7 +86,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Revalidate pages after a commit"
+          "text": "Static pages"
         }
       ]
     },
@@ -96,17 +96,9 @@
       "content": [
         {
           "_type": "text",
-          "text": "Pages that are rendered at request time pick up new content immediately. Static pages were rendered ahead of time and keep serving the old content until they are revalidated. Use the handler's `afterCommit` hook to revalidate them whenever content is published:"
+          "text": "Static pages are revalidated for you. Every page that queries content is tagged, and after each commit the handler marks those pages as stale. The next visit is still answered from the cache while Next.js rebuilds the page in the background, and the visit after that gets the new content. No visitor waits for a render, and no `revalidatePath` call is needed."
         }
       ]
-    },
-    {
-      "_type": "CodeBlock",
-      "_id": "3JjNWi9SZuCF5XeSSkFjDXzvTu4",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidatePath} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  afterCommit() {\n    revalidatePath('/', 'layout')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
-      "fileName": "app/api/cms/route.ts",
-      "language": "",
-      "compact": false
     },
     {
       "_type": "paragraph",
@@ -114,7 +106,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`revalidatePath('/', 'layout')` marks every page as stale, so the next visit to any page renders it with the new content. Narrow it down to specific paths if you only want to revalidate the pages that changed."
+          "text": "Pages rendered at request time sync on their next render. The first one after a commit can still show the previous version while the shared content sha refreshes. Use the handler's `afterCommit` hook if other caches in your app depend on content, for example your own `fetch` tags."
         }
       ]
     }

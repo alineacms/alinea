@@ -7,11 +7,12 @@ interface SyncableDB {
   syncWith(source: RemoteSource, options?: SyncOptions): Promise<string>
 }
 
-// Tag for the shared latest-content-sha entry. The Next handler wrapper
-// revalidates it after every commit, so renders learn about new content
-// instantly. The time-based revalidate below is only a safety net for edits
-// that bypass the handler (direct cloud writes, git pushes that do not
-// redeploy, other deployments): they show up within five minutes.
+// Tag for the shared latest-content-sha entry. Static pages that query
+// content carry it as well, so the Next handler wrapper revalidating it after
+// every commit also rebuilds those pages in the background. The time-based
+// revalidate below is only a safety net for edits that bypass the handler
+// (direct cloud writes, git pushes that do not redeploy, other deployments):
+// they show up within five minutes.
 export const CONTENT_SHA_TAG = 'alinea-content-sha'
 const SHA_REVALIDATE_SECONDS = 300
 
@@ -49,14 +50,32 @@ async function loadLatestSha(client: Client): Promise<string | undefined> {
   }
 }
 
+/**
+ * Tag a static render with the content sha without looking it up. Renders at
+ * build skip `syncIfStale`, so this is how their pages join the tag that
+ * commits revalidate.
+ */
+export async function tagContentSha(): Promise<void> {
+  try {
+    const {unstable_cache} = await import('next/cache.js')
+    await unstable_cache(async () => true, ['alinea-content-sha-tag'], {
+      tags: [CONTENT_SHA_TAG]
+    })()
+  } catch {
+    // Outside Next runtime there is no render to tag.
+  }
+}
+
 export async function revalidateContentSha(): Promise<void> {
   try {
     const {revalidateTag} = await import('next/cache.js')
-    // {expire: 0} expires immediately: required on Next 16+, where the bare
-    // single-arg form is deprecated and the default became
-    // stale-while-revalidate. On older Next the extra argument is ignored
-    // and immediate expiry was the only behavior.
-    revalidateTag(CONTENT_SHA_TAG, {expire: 0})
+    // Mark stale instead of expiring. Static pages carry this tag through the
+    // sha lookup (or tagContentSha at build), so they keep being served while
+    // Next rebuilds them in the background. A rebuild waits for a stale
+    // `unstable_cache` entry to refresh, so it reads the new sha and syncs
+    // before rendering. Dynamic renders do not wait: the first one after a
+    // commit can still answer from the previous sha while the entry refreshes.
+    revalidateTag(CONTENT_SHA_TAG, 'max')
   } catch {
     // Not in a Next runtime, nothing shared to invalidate.
   }
