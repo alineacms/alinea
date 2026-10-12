@@ -3,35 +3,17 @@ import {applyFilePatch, createFilePatch} from './FilePatch.js'
 
 const test = suite(import.meta)
 
-test('roundtrip no change', async () => {
-  const base = 'hello\nworld\n'
-  const patch = await createFilePatch(base, base)
-  const updated = await applyFilePatch(base, patch)
-  test.is(updated, base)
-})
-
-test('roundtrip with middle replacement', async () => {
-  const base = 'alpha beta gamma delta'
-  const next = 'alpha BETA and GAMMA delta'
-  const patch = await createFilePatch(base, next)
-  const updated = await applyFilePatch(base, patch)
-  test.is(updated, next)
-})
-
-test('roundtrip with scattered edits', async () => {
-  const base = 'a\n1\n2\n3\nb\n'
-  const next = 'z\n1\nX\n3\nY\n'
-  const patch = await createFilePatch(base, next)
-  const updated = await applyFilePatch(base, patch)
-  test.is(updated, next)
-})
-
-test('roundtrip unicode', async () => {
-  const base = 'hello 👋\nmañana\n'
-  const next = 'hello 👋\nmanana\n✅\n'
-  const patch = await createFilePatch(base, next)
-  const updated = await applyFilePatch(base, patch)
-  test.is(updated, next)
+test('roundtrip', async () => {
+  const cases = [
+    ['hello\nworld\n', 'hello\nworld\n'],
+    ['alpha beta gamma delta', 'alpha BETA and GAMMA delta'],
+    ['a\n1\n2\n3\nb\n', 'z\n1\nX\n3\nY\n'],
+    ['hello 👋\nmañana\n', 'hello 👋\nmanana\n✅\n']
+  ]
+  for (const [base, next] of cases) {
+    const patch = await createFilePatch(base, next)
+    test.is(await applyFilePatch(base, patch), next)
+  }
 })
 
 test('rejects patch on wrong base', async () => {

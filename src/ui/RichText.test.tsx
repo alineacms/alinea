@@ -174,28 +174,7 @@ test('RichText renders tables with spans', () => {
   expect(cell?.rowSpan).toBe(2)
 })
 
-test('RichText renders image attributes', () => {
-  const doc = [
-    {
-      _type: 'image',
-      src: 'https://example.com/image.jpg',
-      alt: 'Example image',
-      title: 'Example title',
-      width: 640,
-      height: '480'
-    }
-  ] satisfies TextDoc
-
-  render(<RichText doc={doc} />)
-
-  const image = screen.getByRole('img', {name: 'Example image'})
-  expect(image.getAttribute('src')).toBe('https://example.com/image.jpg')
-  expect(image.getAttribute('title')).toBe('Example title')
-  expect(image.getAttribute('width')).toBe('640')
-  expect(image.getAttribute('height')).toBe('480')
-})
-
-test('RichText renders links around images', () => {
+test('RichText renders images and links around them', () => {
   const doc = [
     {
       _type: 'paragraph',
@@ -204,6 +183,9 @@ test('RichText renders links around images', () => {
           _type: 'image',
           src: 'https://example.com/button.jpg',
           alt: 'Contact',
+          title: 'Example title',
+          width: 640,
+          height: '480',
           marks: [
             {
               _type: 'link',
@@ -220,6 +202,10 @@ test('RichText renders links around images', () => {
   render(<RichText doc={doc} />)
 
   const image = screen.getByRole('img', {name: 'Contact'})
+  expect(image.getAttribute('src')).toBe('https://example.com/button.jpg')
+  expect(image.getAttribute('title')).toBe('Example title')
+  expect(image.getAttribute('width')).toBe('640')
+  expect(image.getAttribute('height')).toBe('480')
   const link = image.closest('a')
   expect(link?.getAttribute('href')).toBe('mailto:hello@example.com')
   expect(link?.getAttribute('target')).toBe('_blank')

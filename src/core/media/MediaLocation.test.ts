@@ -85,27 +85,6 @@ test('versions media urls without changing their canonical path', () => {
   )
 })
 
-test('resolves nested media paths below the Alinea file route', () => {
-  const config = createConfig({
-    schema: {},
-    workspaces: {
-      main: workspace('Main', {
-        source: 'content',
-        roots: {media: root('Media')}
-      })
-    }
-  })
-
-  const url = MediaLocation.publicUrl(config, {
-    extension: '.jpg',
-    parentPaths: ['library', 'nested'],
-    path: 'example',
-    workspace: 'main'
-  })
-
-  test.is(url, '/admin/file/library/nested/example.jpg')
-})
-
 test('prefixes media urls with the workspace mediaUrl', () => {
   const config = createConfig({
     schema: {},

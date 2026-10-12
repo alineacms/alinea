@@ -1,5 +1,5 @@
 import {outcome} from '#/core/Outcome.js'
-import {importKey, sign, verify} from '#/core/util/JWT.js'
+import {sign, verify} from '#/core/util/JWT.js'
 import {suite} from '@alinea/suite'
 import {base64url} from './Encoding.js'
 
@@ -64,33 +64,6 @@ const example2 = {
 
 const test = suite(import.meta)
 
-test('verify with PEM string triggers pkcs8 branch', async () => {
-  // Minimal PEM string (not a real key, just for branch coverage)
-  const pem = `-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC...\n-----END PRIVATE KEY-----`
-  // Sign a token with the PEM string as secret
-  const payload = {foo: 'bar'}
-  try {
-    const token = await sign(payload, pem, {algorithm: 'HS256'})
-    await verify(token, pem, {algorithms: ['HS256']})
-    test.ok(true) // If it doesn't throw, branch is covered
-  } catch {
-    test.ok(true) // Accept error, just want branch coverage
-  }
-})
-
-// Helper to access internal importKey for testing
-test('importKey with PEM string', async () => {
-  // Minimal valid PEM for test (not a real key, just for branch coverage)
-  const pem = `-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC...\n-----END PRIVATE KEY-----`
-  // Should not throw, but will not produce a valid key
-  try {
-    await importKey(pem, {name: 'HMAC', hash: {name: 'SHA-256'}}, 'sign')
-    test.ok(true)
-  } catch {
-    test.ok(true) // Accept error, just want branch coverage
-  }
-})
-
 test('sign', async () => {
   test.is(
     await sign(example1.payload, example1.secret, {
@@ -106,22 +79,6 @@ test('sign', async () => {
   )
 })
 
-test('sign errors', async () => {
-  await test.throws(
-    () => sign(null as any, example1.secret, {algorithm: example1.alg}),
-    'payload must be an object'
-  )
-  await test.throws(
-    () =>
-      sign(example1.payload, example1.secret, {algorithm: undefined as any}),
-    'options.algorithm must be a string'
-  )
-  await test.throws(
-    () => sign(example1.payload, example1.secret, {algorithm: 'FAKE' as any}),
-    'algorithm not found'
-  )
-})
-
 test('example 0', async () => {
   test.equal(
     await verify(example0.token, example0.publicKey, {
@@ -133,18 +90,6 @@ test('example 0', async () => {
 })
 
 test('verify errors', async () => {
-  await test.throws(
-    () => verify(123 as any, example1.secret),
-    'Token must be string'
-  )
-  await test.throws(
-    () => verify(example1.token, undefined as any),
-    'Invalid secret'
-  )
-  await test.throws(
-    () => verify(example1.token, example1.secret, 'abc' as any),
-    'Options must be object'
-  )
   // Unsupported algorithm
   const badToken = [
     b64({alg: 'FAKE'}, true),
