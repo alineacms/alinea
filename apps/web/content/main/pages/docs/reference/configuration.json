@@ -525,7 +525,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "How your deployed site keeps its content fresh. The site checks the content revision of the repository and syncs right away when it changed; `syncInterval` is the fallback interval in seconds when that revision can't be determined. Defaults to `60`."
+          "text": "How your deployed site keeps its content fresh. The site checks the content revision of the repository and syncs right away when it changed; `syncInterval` is the fallback interval in seconds when that revision can't be determined. Defaults to `60`. In Next.js a value you set also controls how long renders share the latest revision, which bounds how soon content pushed without the dashboard shows up; without one that is five minutes."
         }
       ]
     },
