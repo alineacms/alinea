@@ -4,7 +4,6 @@ import {
   Badge,
   type DragMoveEvent,
   SortableList,
-  SortableListHandle,
   SortableListItem,
   SortableListItemDescription,
   SortableListItemHeader,
@@ -36,7 +35,6 @@ export function SortableListExample() {
       {sections.map(section => (
         <SortableListItem key={section.id} id={section.id} role="listitem">
           <SortableListItemHeader>
-            <SortableListHandle aria-label={`Drag ${section.label}`} />
             <SortableListItemTitle>
               <Badge size="sm">{section.type}</Badge>
               <SortableListItemDescription>
