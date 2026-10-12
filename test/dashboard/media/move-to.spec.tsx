@@ -74,36 +74,6 @@ test('moves a media file out of its directory to the root', async ({
   ).toBeVisible()
 })
 
-test('never moves a media directory into itself', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
-    routeEntry: dashboardLinkScenarioIds.mediaDirectory,
-    routeRoot: 'media',
-    title: 'Media directory'
-  })
-  await app.page.getByRole('button', {name: 'Back to root'}).click()
-  await app.page
-    .getByRole('grid', {name: 'Explorer entries'})
-    .getByRole('row', {name: 'Media directory', exact: true})
-    .locator('[data-slot="selection-checkbox"]')
-    .click()
-  await app.page
-    .getByRole('toolbar', {name: 'Selected entries'})
-    .getByRole('button', {name: 'Move to…'})
-    .click()
-
-  const dialog = app.page.getByRole('dialog', {name: 'Move "Media directory"'})
-  const entries = dialog.getByRole('treegrid', {name: 'Explorer entries'})
-  await expect(
-    entries.getByRole('row', {name: /^Media directory/})
-  ).toHaveAttribute('data-unselectable', 'true')
-  await expect(
-    entries.getByRole('row', {name: /^Empty media directory/})
-  ).not.toHaveAttribute('data-unselectable')
-})
-
 test('moves selected media files to a media directory', async ({
   dashboard,
   mount

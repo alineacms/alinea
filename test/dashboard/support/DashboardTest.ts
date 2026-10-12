@@ -40,10 +40,6 @@ export class DashboardDriver {
     return this.page.getByRole('row', {name, exact: true})
   }
 
-  get navigationPending(): Locator {
-    return this.page.locator('main[data-navigation-pending]')
-  }
-
   get title(): Locator {
     return this.page.getByRole('heading', {level: 1})
   }

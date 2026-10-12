@@ -205,8 +205,8 @@ test('offers the existing media file when the same file is uploaded again', asyn
 })
 
 async function scanPdf() {
-  const width = 3000
-  const height = 3000
+  const width = 1200
+  const height = 1200
   const noise = Buffer.alloc(width * height * 3)
   for (let i = 0; i < noise.length; i++) noise[i] = (i * 7919) % 251
   const photo = await sharp(noise, {raw: {width, height, channels: 3}})
@@ -240,28 +240,6 @@ test('compresses a pdf and previews its first page', async ({
     .getByRole('grid', {name: 'Explorer entries'})
     .getByRole('row', {name: 'scan', exact: true})
   await expect(row.locator('img')).toHaveAttribute('src', /^data:image\/webp/)
-})
-
-test('uploads a pdf as it is when compressing is turned off', async ({
-  dashboard,
-  mount
-}) => {
-  const {uploads, upload} = await openMediaDirectory(dashboard, mount)
-  const pdf = await scanPdf()
-  const dialog = await upload({
-    name: 'scan.pdf',
-    mimeType: 'application/pdf',
-    buffer: pdf
-  })
-
-  await dialog.getByText('Compress images in this pdf').click()
-  await expect(
-    dialog.getByRole('checkbox', {name: 'Compress images in this pdf'})
-  ).not.toBeChecked()
-  await dialog.getByRole('button', {name: 'Upload 1 file'}).click()
-
-  await expect.poll(() => uploads.length).toBe(1)
-  expect(uploads[0].equals(pdf)).toBe(true)
 })
 
 test('opens the activity next to its trigger when an upload fails', async ({

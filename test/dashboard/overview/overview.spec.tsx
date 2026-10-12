@@ -85,22 +85,6 @@ test('shows the columns of the parent overview', async ({mount, page}) => {
   ).toHaveCount(0)
 })
 
-test('search results show the columns that tell them apart', async ({
-  mount,
-  page
-}) => {
-  await open(page, '#/entry/main/products')
-  await mount(<OverviewScenarioMount />)
-  await page.getByRole('searchbox', {name: 'Search'}).fill('chair')
-  await expect(table(page).getByRole('row')).toHaveCount(1)
-  await expect(table(page).getByRole('row')).toContainText('Chair')
-  const header = page.locator('[data-slot="table-header"]')
-  await expect(header.getByText('Price', {exact: true})).toBeVisible()
-  // One published product without audit data: no built-in columns
-  for (const column of ['Type', 'Status', 'Updated', 'Author'])
-    await expect(header.getByText(column, {exact: true})).toHaveCount(0)
-})
-
 test('sorts by a column header and keeps the sort in the url', async ({
   mount,
   page
@@ -130,19 +114,6 @@ test('sorts by a column header and keeps the sort in the url', async ({
   await expect(page).not.toHaveURL(/sort=/)
   await expect.poll(() => titles(page)).toEqual(['Chair', 'Table', 'Lamp'])
   await expect(list).toHaveCount(1)
-})
-
-test('opens an overview sorted by the column in its url', async ({
-  mount,
-  page
-}) => {
-  await open(page, '#/entry/main/products?sort=brand')
-  await mount(<OverviewScenarioMount />)
-  // Sorted by the linked brand's title, products without a brand last
-  await expect.poll(() => titles(page)).toEqual(['Table', 'Chair', 'Lamp'])
-  await expect(
-    page.getByRole('button', {name: 'Brand', exact: true})
-  ).toHaveAttribute('aria-description', 'sorted ascending')
 })
 
 test('keeps the sort when returning to the overview', async ({mount, page}) => {

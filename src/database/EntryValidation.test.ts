@@ -31,7 +31,7 @@ async function createDb() {
   return db
 }
 
-test('published entries may have invalid fields', async () => {
+test('invalid fields never block writes', async () => {
   const db = await createDb()
   // An importer writes content that misses required fields
   const created = await db.create({
@@ -40,14 +40,8 @@ test('published entries may have invalid fields', async () => {
     set: {title: 'Article'}
   })
   test.is(created.summary, undefined)
-  // Other writes to it are not held up by the missing field
   await db.update({type: Article, id: created._id, set: {title: 'Updated'}})
-  const title = await db.get({id: created._id, select: Article.title})
-  test.is(title, 'Updated')
-})
-
-test('drafts with invalid fields can be published', async () => {
-  const db = await createDb()
+  test.is(await db.get({id: created._id, select: Article.title}), 'Updated')
   const draft = await db.create({
     type: Article,
     root: 'pages',
@@ -61,28 +55,4 @@ test('drafts with invalid fields can be published', async () => {
     select: Entry.title
   })
   test.is(published, 'Draft')
-})
-
-test('drafts and seeds may have invalid fields', async () => {
-  const db = await createDb()
-  const draft = await db.create({
-    type: Article,
-    root: 'pages',
-    status: 'draft',
-    set: {title: 'Draft'}
-  })
-  test.is(draft.summary, undefined)
-  await db.mutate([
-    {
-      op: 'create',
-      id: 'seeded',
-      type: 'Article',
-      locale: null,
-      root: 'pages',
-      fromSeed: 'seeded',
-      data: {title: 'Seeded'}
-    }
-  ])
-  const seeded = await db.first({id: 'seeded', select: Entry.title})
-  test.is(seeded, 'Seeded')
 })

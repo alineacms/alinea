@@ -333,21 +333,15 @@ test('parses strong', () => {
   test.equal(value, expectedDoc)
 })
 
-test('concatenates adjacent plain text segments', () => {
-  const value = new RichTextEditor().addHtml('<p>a<!-- split -->b</p>').value()
+test('concatenates adjacent text segments with identical marks', () => {
+  const html =
+    '<p>a<!-- split -->b</p><p><strong>a</strong><strong>b</strong></p>'
+  const value = new RichTextEditor().addHtml(html).value()
   test.equal(value, [
     {
       _type: 'paragraph',
       content: [{_type: 'text', text: 'ab'}]
-    }
-  ] satisfies TextDoc)
-})
-
-test('concatenates adjacent text segments with identical marks', () => {
-  const value = new RichTextEditor()
-    .addHtml('<p><strong>a</strong><strong>b</strong></p>')
-    .value()
-  test.equal(value, [
+    },
     {
       _type: 'paragraph',
       content: [{_type: 'text', text: 'ab', marks: [{_type: 'bold'}]}]

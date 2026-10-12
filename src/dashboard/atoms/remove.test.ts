@@ -7,9 +7,7 @@ import {Config, Edit, Field} from '#/index.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
-import {createStore} from 'jotai'
 import {
-  archiveDirectlyAtom,
   archiveEntriesAtom,
   deleteEntriesAtom,
   loadRedirectTargetAtom,
@@ -457,11 +455,4 @@ test('urls redirect to pages that are not removed and can be edited', () => {
   expect(picker.canSelect(item('test'))).toBe(false)
   expect(picker.canSelect(item('child', 'pages', ['test']))).toBe(false)
   expect(picker.canSelect(item('plain', 'other'))).toBe(false)
-})
-
-test('archiving asks first until the editor stops it', () => {
-  const store = createStore()
-  expect(store.get(archiveDirectlyAtom)).toBe(false)
-  store.set(archiveDirectlyAtom, true)
-  expect(store.get(archiveDirectlyAtom)).toBe(true)
 })

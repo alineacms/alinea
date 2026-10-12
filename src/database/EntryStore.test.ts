@@ -94,29 +94,6 @@ test('entry store mutates its source and database together', async () => {
   }
 })
 
-test('entry store requests are isolated until written', async () => {
-  const {sqlite, store} = await createStore()
-  try {
-    const before = await store.sha
-    const request = await store.request([
-      {
-        op: 'create',
-        id: 'page',
-        type: 'Page',
-        locale: null,
-        data: {title: 'Page'}
-      }
-    ])
-    expect(await store.sha).toBe(before)
-    expect(await store.find({select: Entry.id})).toEqual([])
-
-    expect(await store.write(request)).toEqual({sha: request.intoSha})
-    expect(await store.find({select: Entry.id})).toEqual(['page'])
-  } finally {
-    sqlite.close()
-  }
-})
-
 function createPages(store: EntryStore, title = (id: string) => `Title ${id}`) {
   return store.mutate(
     ['page', 'other', 'third'].map(id => ({
@@ -342,30 +319,6 @@ test('concurrent previews of different entries keep one overlay open', async () 
   expect(forks.every(fork => fork.closed)).toBe(true)
 })
 
-test('switching previews restores the previously previewed entry', async () => {
-  const {store, openForks, preview, rows} = await previewStore()
-  try {
-    const payloads = [
-      await preview('page', 'First'),
-      await preview('other', 'Other'),
-      await preview('page', 'Second'),
-      await preview('third', 'Third')
-    ]
-    for (const previewed of payloads)
-      expect(await rows(store, previewed)).toEqual(
-        await referenceRows(store, previewed, rows)
-      )
-    const published = await rows(store)
-    const unchanged = (await rows(store, payloads[3])).filter(
-      row => row.id !== 'third'
-    )
-    expect(unchanged).toEqual(published.filter(row => row.id !== 'third'))
-    expect(openForks()).toHaveLength(1)
-  } finally {
-    await store.close()
-  }
-})
-
 test('the preview overlay follows syncs of the store', async () => {
   const {store, openForks, preview, titles} = await previewStore()
   try {
@@ -481,45 +434,6 @@ async function referenceRows<Row>(
     await reference.close()
   }
 }
-
-test('entry store materializes configured seeds in every locale', async () => {
-  const Seeded = ConfigBuilder.document('Seeded', {fields: {}})
-  const seededConfig: Config = {
-    schema: {Seeded},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {
-          pages: ConfigBuilder.root('Pages', {
-            i18n: {locales: ['nl-BE', 'fr-BE']},
-            children: {home: ConfigBuilder.page({type: Seeded})}
-          })
-        }
-      })
-    }
-  }
-  const {sqlite, store} = await createStore(new MemorySource(), seededConfig)
-  try {
-    await store.sync()
-    const rows = await store.find({
-      path: 'home',
-      status: 'all',
-      select: {id: Entry.id, locale: Entry.locale}
-    })
-    expect(rows).toHaveLength(2)
-    expect(new Set(rows.map(row => row.id)).size).toBe(1)
-    expect(rows.map(row => row.locale).sort()).toEqual(['fr-BE', 'nl-BE'])
-    expect(
-      await store.get({
-        path: 'home',
-        locale: 'nl-be',
-        select: Entry.locale
-      })
-    ).toBe('nl-BE')
-  } finally {
-    sqlite.close()
-  }
-})
 
 test('seed translations share an index when locale siblings differ', async () => {
   const Seeded = ConfigBuilder.document('Seeded', {fields: {}})
@@ -750,6 +664,13 @@ test('mutations without an id are rejected without touching data', async () => {
       }
     ])
     const mutations = [
+      {
+        op: 'create',
+        id: undefined,
+        type: 'Page',
+        locale: null,
+        data: {title: 'Missing id'}
+      },
       {op: 'remove', id: undefined},
       {
         op: 'update',

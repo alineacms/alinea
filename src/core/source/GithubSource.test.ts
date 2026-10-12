@@ -1,7 +1,5 @@
 import {suite} from '@alinea/suite'
 import {HttpError} from '../HttpError.js'
-import {diff} from '../source/Source.js'
-import {FSSource} from './FSSource.js'
 import {hashBlob} from './GitUtils.js'
 import {GithubSource, normalizeGithubSourceOptions} from './GithubSource.js'
 import {ReadonlyTree} from './Tree.js'
@@ -400,22 +398,6 @@ test('reports GraphQL errors such as a rate limit right away', async () => {
   } finally {
     globalThis.fetch = originalFetch
   }
-})
-
-test('sync', async () => {
-  if (!process.env.GITHUB_AUTH_TOKEN) return
-  const dir = 'test/fixtures/demo'
-  const fsSource = new FSSource(dir)
-  const ghSource = new GithubSource({
-    owner: 'alineacms',
-    repo: 'alinea',
-    branch: 'main',
-    authToken: process.env.GITHUB_AUTH_TOKEN!,
-    rootDir: 'apps/web',
-    contentDir: 'content/demo'
-  })
-  const batch = await diff(fsSource, ghSource)
-  test.is(batch.changes.length, 0)
 })
 
 function githubSource(): GithubSource {

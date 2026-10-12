@@ -132,19 +132,12 @@ async function queryUploadedFileUrls() {
   }
 }
 
-test('upload urls', async () => {
-  const src = await queryUploadedImageSrc()
-  test.is(src, '/admin/file/example.jpg?v=c5d972d9')
-})
-
-test('upload urls do not expose the public mediaDir', async () => {
-  const src = await queryUploadedImageSrc('/public')
-  test.is(src, '/admin/file/example.jpg?v=c5d972d9')
-})
-
-test('upload urls do not expose a nested mediaDir', async () => {
-  const src = await queryUploadedImageSrc('/public/media')
-  test.is(src, '/admin/file/example.jpg?v=c5d972d9')
+test('upload urls do not expose the mediaDir', async () => {
+  for (const mediaDir of [undefined, '/public', '/public/media'])
+    test.is(
+      await queryUploadedImageSrc(mediaDir),
+      '/admin/file/example.jpg?v=c5d972d9'
+    )
 })
 
 test('file urls use the Alinea file route', async () => {

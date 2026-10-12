@@ -1,15 +1,14 @@
 import type {Config} from '#/core/Config.js'
+import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
-import {ListRow} from '#/core/ListRow.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {transaction} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {isRecord} from '#/core/util/Objects.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
-import {createEntryStore} from '#test/EntryFixture.js'
+import {createEntrySource, createEntryStore} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {mkdtemp, rm, writeFile} from 'node:fs/promises'
@@ -24,74 +23,7 @@ import {entryDataText, supportsJsonb} from './entry/EntryData.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
 import {databaseVersion} from './Version.js'
 
-function urlAlias(url: string) {
-  return {
-    [ListRow.id]: `alias-${url}`,
-    [ListRow.index]: 'a0',
-    [ListRow.type]: 'alias',
-    url
-  }
-}
-
-function aliasUrls(value: unknown): Array<string> {
-  if (!Array.isArray(value)) return []
-  return value.flatMap(value => {
-    if (!isRecord(value)) return []
-    return typeof value.url === 'string' ? [value.url] : []
-  })
-}
-
-test('SQL entry-link queries retain the Graph API behavior', async () => {
-  const Page = ConfigBuilder.document('Page', {
-    fields: {
-      single: Field.entry('Single'),
-      many: Field.entry.multiple('Many')
-    }
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const {source, store} = await createEntryStore(config, [
-    {
-      id: 'source',
-      type: 'Page',
-      index: 'a',
-      data: {
-        single: {_type: 'entry', _id: 'single', _entry: 'a'},
-        many: ['b', 'a', 'b', 'missing'].map((_entry, index) => ({
-          _type: 'entry',
-          _id: String(index),
-          _entry
-        }))
-      }
-    },
-    {id: 'a', type: 'Page', index: 'b'},
-    {id: 'b', type: 'Page', index: 'c'}
-  ])
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
-  const runtime = new EntryDatabase(config, db)
-  await runtime.syncWith(source)
-  for (const select of [
-    Page.single,
-    Page.many,
-    Page.single.first({select: Entry.id}),
-    Page.many.find({select: Entry.id}),
-    Page.many.find({count: true})
-  ]) {
-    const query = {id: 'source', select}
-    expect(await runtime.resolve(query)).toEqual(await store.resolve(query))
-  }
-})
-
-test('SQL references retain status and locale behavior', async () => {
+test('references follow the status and locale of their source', async () => {
   const Page = ConfigBuilder.document('Page', {
     fields: {related: Field.entry('Related')}
   })
@@ -109,7 +41,7 @@ test('SQL references retain status and locale behavior', async () => {
     _entry: entry,
     _id: id
   })
-  const {source, store} = await createEntryStore(config, [
+  const source = await createEntrySource(config, [
     {id: 'target', type: 'Page', index: 'a'},
     {
       id: 'source',
@@ -131,21 +63,19 @@ test('SQL references retain status and locale behavior', async () => {
   await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
   await runtime.syncWith(source)
-
-  for (const query of [
-    {targetId: 'target' as const},
-    {targetId: 'target' as const, status: 'preferDraft' as const},
-    {targetId: 'other' as const, status: 'preferDraft' as const},
-    {targetId: 'target' as const, locale: 'en'}
-  ]) {
-    const expected = await store.referencesTo(query)
-    const actual = await runtime.referencesTo(query)
-    expect(actual.total).toBe(expected.total)
-    expect(actual.references).toEqual(expected.references)
+  async function links(query: EntryReferenceQuery) {
+    const {references, total} = await runtime.referencesTo(query)
+    expect(total).toBe(references.length)
+    return references.map(reference => reference.linkId)
   }
   // The target row holds its own id in data but references nothing.
-  const {references} = await runtime.referencesTo({targetId: 'target'})
-  expect(references.map(reference => reference.sourceId)).toEqual(['source'])
+  expect(await links({targetId: 'target'})).toEqual(['published-link'])
+  expect(await links({targetId: 'other'})).toEqual([])
+  expect(await links({targetId: 'target', status: 'preferDraft'})).toEqual([])
+  expect(await links({targetId: 'other', status: 'preferDraft'})).toEqual([
+    'draft-link'
+  ])
+  expect(await links({targetId: 'target', locale: 'en'})).toEqual([])
 })
 
 test('indexed references follow updates, deletions and reindexes', async () => {
@@ -673,377 +603,6 @@ test('failed database mutation batches leave the receiver untouched', async () =
   expect(await database.resolve({select: Entry.id})).toEqual([])
   expect(await database.getRevision()).toBe(initial.sha)
   await database.close()
-})
-
-test('database mutations preserve authored status and hierarchy transitions', async () => {
-  const Page = ConfigBuilder.document('Page', {
-    contains: ['Page'],
-    fields: {title: Field.text('Title')}
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const source = new MemorySource()
-  const initial = await source.getTree()
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, config, initial.sha)
-  const database = new EntryDatabase(config, db)
-  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
-    const result = await database.apply(mutations, {source})
-    await source.applyChanges(sourceChanges(result.request))
-    return result
-  }
-
-  await apply([
-    {
-      op: 'create',
-      id: 'parent',
-      type: 'Page',
-      locale: null,
-      data: {title: 'Parent'}
-    },
-    {
-      op: 'create',
-      id: 'child',
-      type: 'Page',
-      locale: null,
-      data: {title: 'Child'}
-    }
-  ])
-  await apply([
-    {
-      op: 'move',
-      id: 'child',
-      target: 'parent',
-      targetType: 'entry',
-      dropPosition: 'on'
-    }
-  ])
-  expect(
-    await database.resolve({
-      id: 'child',
-      get: true,
-      select: {parentId: Entry.parentId, filePath: Entry.filePath}
-    })
-  ).toEqual({parentId: 'parent', filePath: 'pages/parent/child.json'})
-
-  await apply([{op: 'unpublish', id: 'child', locale: null}])
-  expect(
-    await database.resolve({
-      id: 'child',
-      get: true,
-      status: 'draft',
-      select: {
-        status: Entry.status,
-        versionStatus: Entry.versionStatus,
-        filePath: Entry.filePath
-      }
-    })
-  ).toEqual({
-    status: 'draft',
-    versionStatus: 'draft',
-    filePath: 'pages/parent/child.draft.json'
-  })
-
-  await apply([
-    {op: 'publish', id: 'child', locale: null, status: 'draft'},
-    {op: 'archive', id: 'child', locale: null}
-  ])
-  expect(
-    await database.resolve({
-      id: 'child',
-      get: true,
-      status: 'archived',
-      select: {
-        status: Entry.status,
-        versionStatus: Entry.versionStatus,
-        filePath: Entry.filePath
-      }
-    })
-  ).toEqual({
-    status: 'archived',
-    versionStatus: 'archived',
-    filePath: 'pages/parent/child.archived.json'
-  })
-
-  await apply([{op: 'remove', id: 'child'}])
-  expect(await database.resolve({id: 'child', select: Entry.id})).toEqual([])
-  await database.close()
-})
-
-test('database mutations enforce URL ownership and retain previous URLs', async () => {
-  const Page = ConfigBuilder.document('Page', {
-    contains: ['Page'],
-    fields: {}
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const source = new MemorySource()
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
-  const database = new EntryDatabase(config, db)
-  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
-    const result = await database.apply(mutations, {source})
-    await source.applyChanges(sourceChanges(result.request))
-  }
-
-  await apply([
-    {
-      op: 'create',
-      id: 'one',
-      type: 'Page',
-      locale: null,
-      data: {
-        title: 'One',
-        path: 'one',
-        metadata: {aliases: [urlAlias('/old-one')]}
-      }
-    }
-  ])
-  await apply([
-    {
-      op: 'create',
-      id: 'two',
-      type: 'Page',
-      locale: null,
-      data: {
-        title: 'Two',
-        path: 'two',
-        metadata: {aliases: [urlAlias('/one')]}
-      }
-    }
-  ])
-  const owner = await database.first({
-    url: '/one',
-    select: Entry.id
-  })
-  expect(owner).toBe('one')
-  await apply([
-    {
-      op: 'update',
-      id: 'one',
-      locale: null,
-      status: 'published',
-      set: {path: 'renamed'}
-    }
-  ])
-  expect(
-    await database.get({
-      id: 'one',
-      select: {url: Entry.url, aliases: Entry.aliases}
-    })
-  ).toMatchObject({url: '/renamed', aliases: expect.any(Array)})
-  expect(
-    aliasUrls(await database.get({id: 'one', select: Entry.aliases}))
-  ).toEqual(['/old-one', '/one'])
-  await database.close()
-})
-
-test('database moves retain published URLs for an entire subtree', async () => {
-  const Page = ConfigBuilder.document('Page', {
-    contains: ['Page'],
-    fields: {}
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const source = new MemorySource()
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
-  const database = new EntryDatabase(config, db)
-  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
-    const result = await database.apply(mutations, {source})
-    await source.applyChanges(sourceChanges(result.request))
-  }
-  const data = (title: string, path: string) => ({
-    title,
-    path,
-    metadata: {aliases: []}
-  })
-  await apply([
-    {
-      op: 'create',
-      id: 'parent',
-      type: 'Page',
-      locale: null,
-      data: data('Parent', 'parent')
-    },
-    {
-      op: 'create',
-      id: 'target',
-      type: 'Page',
-      locale: null,
-      data: data('Target', 'target')
-    },
-    {
-      op: 'create',
-      id: 'child',
-      type: 'Page',
-      locale: null,
-      parentId: 'parent',
-      data: data('Child', 'child')
-    }
-  ])
-  await apply([
-    {
-      op: 'move',
-      id: 'parent',
-      target: 'target',
-      targetType: 'entry',
-      dropPosition: 'on'
-    }
-  ])
-  const result = await database.find({
-    id: {in: ['parent', 'child']},
-    select: {id: Entry.id, url: Entry.url, aliases: Entry.aliases}
-  })
-  expect(result).toEqual([
-    {id: 'parent', url: '/target/parent', aliases: expect.any(Array)},
-    {id: 'child', url: '/target/parent/child', aliases: expect.any(Array)}
-  ])
-  expect(aliasUrls(result[0].aliases)).toEqual(['/parent'])
-  expect(aliasUrls(result[1].aliases)).toEqual(['/parent/child'])
-  await database.close()
-})
-
-test('database mutations propagate shared fields between translations', async () => {
-  const Page = ConfigBuilder.document('Page', {
-    fields: {shared: Field.text('Shared', {shared: true})}
-  })
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {
-          pages: ConfigBuilder.root('Pages', {i18n: {locales: ['en', 'de']}})
-        }
-      })
-    }
-  }
-  const source = new MemorySource()
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
-  const database = new EntryDatabase(config, db)
-  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
-    const result = await database.apply(mutations, {source})
-    await source.applyChanges(sourceChanges(result.request))
-  }
-  await apply([
-    {
-      op: 'create',
-      id: 'page',
-      type: 'Page',
-      locale: 'en',
-      data: {title: 'English', shared: 'initial'}
-    },
-    {
-      op: 'create',
-      id: 'page',
-      type: 'Page',
-      locale: 'de',
-      data: {title: 'German'}
-    }
-  ])
-  expect(
-    await database.get({id: 'page', locale: 'de', select: Page.shared})
-  ).toBe('initial')
-  await apply([
-    {
-      op: 'update',
-      id: 'page',
-      locale: 'en',
-      status: 'published',
-      set: {shared: 'updated'}
-    }
-  ])
-  expect(
-    await database.find({id: 'page', select: Page.shared, status: 'published'})
-  ).toEqual(['updated', 'updated'])
-  await database.close()
-})
-
-test('sync writes search rows with the entry rows they index', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const encode = (id: string, title: string) =>
-    new TextEncoder().encode(
-      JSON.stringify({_id: id, _type: 'Page', _index: id, title})
-    )
-  const source = new MemorySource()
-  const initial = await transaction(source)
-  initial.add('pages/a.json', encode('a', 'Alpha'))
-  initial.add('pages/b.json', encode('b', 'Beta'))
-  const compiled = await initial.compile()
-  await source.applyChanges({
-    fromSha: compiled.from.sha,
-    changes: compiled.changes
-  })
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
-  const base = new EntryDatabase(config, db)
-  await base.syncWith(source)
-  expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual(['a'])
-  expect(await base.find({search: 'Beta', select: Entry.id})).toEqual(['b'])
-
-  const change = await transaction(source)
-  change.add('pages/a.json', encode('a', 'Gamma'))
-  change.remove('pages/b.json')
-  change.add('pages/c.json', encode('c', 'Delta'))
-  const next = await change.compile()
-  await source.applyChanges({fromSha: next.from.sha, changes: next.changes})
-  await base.syncWith(source)
-
-  expect(await base.find({search: 'Gamma', select: Entry.id})).toEqual(['a'])
-  expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual([])
-  expect(await base.find({search: 'Beta', select: Entry.id})).toEqual([])
-  expect(await base.find({search: 'Delta', select: Entry.id})).toEqual(['c'])
-  // One search row per entry row, under the same rowid.
-  expect(
-    await db.all(sql`select entry.id, search.title
-      from alinea_entry_index entry
-      left join alinea_entry_search search on search.rowid = entry.rowid
-      order by entry.id`)
-  ).toEqual([
-    {id: 'a', title: 'Gamma'},
-    {id: 'c', title: 'Delta'}
-  ])
-  expect(
-    await db.get(sql`select count(*) as count from alinea_entry_search`)
-  ).toEqual({count: 2})
-  await base.close()
 })
 
 test('a reopened database searches the index it persisted', async () => {

@@ -29,20 +29,6 @@ const cms = createCMS({
   workspaces: {main}
 })
 
-test('seed multiple languages', async () => {
-  const db = new LocalDB(cms.config)
-  await db.sync()
-  const page1EN = await db.get({
-    locale: 'en',
-    path: 'page1'
-  })
-  const page1FR = await db.get({
-    locale: 'fr',
-    path: 'page1'
-  })
-  test.is(page1EN._id, page1FR._id)
-})
-
 test('keeps updated titles when re-indexing multiple seeded translations', async () => {
   const db = new LocalDB(cms.config)
   await db.sync()

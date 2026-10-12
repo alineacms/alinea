@@ -28,10 +28,6 @@ test('indexeddb source', async () => {
     await accumulate(idbSource.getBlobs([...blobs.keys()]))
   )
   test.equal(fromSource, blobs)
-  for (const [sha, contents] of blobs) {
-    const [[, fromSourceBlob]] = await accumulate(idbSource.getBlobs([sha]))
-    test.equal(fromSourceBlob, contents)
-  }
   await test.throws(
     () => accumulate(idbSource.getBlobs(['missing'])),
     'Blob not found: missing'

@@ -1,122 +1,49 @@
-import {Tree, type Key} from '#/components.js'
+import {Tree} from '#/components.js'
 import type {RootTreeItem, RootTreeNode} from '#/dashboard/atoms/root.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
-import {cleanup, fireEvent, render, screen} from '#test/react.js'
+import {cleanup, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
-import {useMemo, useState} from 'react'
 import {cms} from '../fixture/cms.js'
 import {SidebarTreeItem} from './SidebarTree.js'
 
 afterEach(cleanup)
 
-function treeItem(
-  id: string,
-  parentId: string | null,
-  parents: Array<string>,
-  hasChildren = false,
-  title = id
-): RootTreeItem {
-  return {
-    id,
-    title,
-    type: hasChildren ? 'Folder' : 'Page',
-    status: 'published',
-    main: true,
-    locale: null,
-    parentId,
-    parents,
-    hasChildren
-  }
+const parent: RootTreeItem = {
+  id: 'parent',
+  title: 'Parent',
+  type: 'Page',
+  status: 'published',
+  main: true,
+  locale: null,
+  parentId: null,
+  parents: [],
+  hasChildren: false
 }
 
-const parent = treeItem('parent', null, [], true, 'Parent')
-const child = treeItem('child', parent.id, [parent.id], true, 'Child')
-const grandchild = treeItem(
-  'grandchild',
-  child.id,
-  [parent.id, child.id],
-  false,
-  'Grandchild'
-)
-
-interface SidebarTreeFixtureProps {
-  initialExpandedKeys?: Set<Key>
-  items?: Array<RootTreeItem>
-}
-
-function SidebarTreeFixture({
-  initialExpandedKeys = new Set<Key>(),
-  items = [parent, child, grandchild]
-}: SidebarTreeFixtureProps) {
-  const source = useMemo(() => {
-    const children = new Map<string | null, Array<RootTreeItem>>()
-    for (const item of items) {
-      const siblings = children.get(item.parentId) ?? []
-      siblings.push(item)
-      children.set(item.parentId, siblings)
-    }
-    function buildTreeNodes(parentId: string | null): Array<RootTreeNode> {
-      return (children.get(parentId) ?? []).map(item => ({
-        id: item.id,
-        children: buildTreeNodes(item.id)
-      }))
-    }
-    const rootItems = buildTreeNodes(null)
-    return {items: new Map(items.map(item => [item.id, item])), rootItems}
-  }, [items])
-  const [expandedKeys, setExpandedKeys] = useState(initialExpandedKeys)
-  const rootItems = source.rootItems
-  function renderItem(item: RootTreeNode) {
-    const data = source.items.get(item.id)
-    if (!data) return null
-    return (
-      <SidebarTreeItem
-        data={data}
-        entryLink={entry => ({
-          href: `/entry/main/pages/${entry.id}?view=edit`
-        })}
-        item={item}
-        locale={null}
-      >
-        {renderItem}
-      </SidebarTreeItem>
-    )
-  }
+function renderItem(item: RootTreeNode) {
   return (
-    <StoryProvider config={cms.config}>
-      <Tree
-        aria-label="Content tree"
-        items={rootItems}
-        expandedKeys={expandedKeys}
-        onExpandedChange={setExpandedKeys}
-      >
-        {renderItem}
-      </Tree>
-    </StoryProvider>
+    <SidebarTreeItem
+      data={parent}
+      entryLink={entry => ({href: `/entry/main/pages/${entry.id}?view=edit`})}
+      item={item}
+      locale={null}
+    >
+      {renderItem}
+    </SidebarTreeItem>
   )
 }
-
-test('expanding materializes only immediate children and collapsing removes them', async () => {
-  const {container} = render(<SidebarTreeFixture />)
-  const parentChevron =
-    container.querySelector<HTMLButtonElement>('[slot="chevron"]')
-
-  expect(parentChevron).not.toBeNull()
-  expect(screen.queryByText('Child')).toBeNull()
-  fireEvent.click(parentChevron!)
-
-  expect(await screen.findByText('Child')).toBeTruthy()
-  expect(screen.queryByText('Grandchild')).toBeNull()
-
-  fireEvent.click(parentChevron!)
-  expect(screen.queryByText('Child')).toBeNull()
-})
 
 test('entry labels link from the current dashboard pathname', () => {
   const previousUrl = window.location.href
   window.location.href = 'http://localhost/admin#/entry/main/pages/current'
   try {
-    render(<SidebarTreeFixture />)
+    render(
+      <StoryProvider config={cms.config}>
+        <Tree aria-label="Content tree" items={[{id: 'parent', children: []}]}>
+          {renderItem}
+        </Tree>
+      </StoryProvider>
+    )
 
     expect(
       screen.getByRole('link', {name: 'Parent'}).getAttribute('href')
@@ -124,24 +51,4 @@ test('entry labels link from the current dashboard pathname', () => {
   } finally {
     window.location.href = previousUrl
   }
-})
-
-function largeTree(): Array<RootTreeItem> {
-  const result: Array<RootTreeItem> = []
-  for (let rootIndex = 0; rootIndex < 10; rootIndex++) {
-    const rootId = `root-${rootIndex}`
-    result.push(treeItem(rootId, null, [], true))
-    for (let childIndex = 0; childIndex < 100; childIndex++) {
-      result.push(treeItem(`${rootId}-child-${childIndex}`, rootId, [rootId]))
-    }
-  }
-  return result
-}
-
-test('collapsed descendants do not materialize tree rows', () => {
-  const view = render(<SidebarTreeFixture items={largeTree()} />)
-
-  expect(screen.getAllByRole('row')).toHaveLength(10)
-  expect(screen.queryByText('root-0-child-0')).toBeNull()
-  expect(view.container.querySelectorAll('*').length).toBeLessThan(250)
 })

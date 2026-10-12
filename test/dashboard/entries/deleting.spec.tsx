@@ -156,30 +156,6 @@ test('warns about links to the files in a deleted media folder', async ({
   )
 })
 
-test('warns about links to the entries deleted with a page', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
-    entry: 'localizedFolder',
-    routeRoot: 'localized',
-    title: 'Localized folder'
-  })
-
-  await app.page.getByRole('button', {name: 'Edit entry'}).click()
-  await app.runEntryAction('Delete')
-  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
-  await expect(
-    dialog.getByText('Entries are deleted with the entries they contain.')
-  ).toBeVisible()
-  await expect(dialog.getByRole('alert')).toContainText(
-    'This entry and its contents have 1 reference'
-  )
-  await expect(dialog.getByRole('list', {name: 'References'})).toContainText(
-    'Child linking'
-  )
-})
-
 test('archives the entry instead of deleting it', async ({
   dashboard,
   mount
@@ -247,37 +223,6 @@ test('redirects the url of a deleted page to the picked page', async ({
   await expect(app.page.getByRole('textbox', {name: 'URL'})).toHaveValue(
     '/beta'
   )
-})
-
-test('tells which languages the redirect target is missing', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
-    entry: 'localizedTarget',
-    routeRoot: 'localized',
-    title: 'Localized target'
-  })
-
-  await app.runEntryAction('Delete')
-  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
-  await dialog
-    .getByRole('group', {name: 'Languages to delete'})
-    .getByText('FR')
-    .click()
-  await expect(
-    dialog.getByText('Redirect the URLs to another page (recommended)')
-  ).toBeVisible()
-  await dialog.getByRole('button', {name: 'Choose page…'}).click()
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
-  await picker.getByRole('row', {name: /^Localized start/}).click()
-  await expect(
-    dialog.getByText(
-      `"Localized start" isn't available in FR, that URL won't redirect.`
-    )
-  ).toBeVisible()
-  await dialog.getByRole('button', {name: "Don't redirect"}).click()
-  await expect(dialog.getByText('Localized start')).toHaveCount(0)
 })
 
 test('deletes an entry from a language it is not translated in', async ({

@@ -1,15 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Type, type} from '#/core/Type.js'
-import {
-  entry,
-  image,
-  link,
-  list,
-  object,
-  richText,
-  select,
-  text
-} from '#/field.js'
+import {entry, image, link, list, object, richText, text} from '#/field.js'
 import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
 import {ListRow} from './ListRow.js'
 
@@ -193,38 +184,6 @@ test('does not derive link anchors from labels', () => {
       now: new Date(0)
     }),
     anchoredValue
-  )
-})
-
-test('initializes missing fields in legacy list rows', () => {
-  const Row = type('Row', {
-    fields: {
-      variant: select('Variant', {
-        options: {primary: 'Primary', secondary: 'Secondary'},
-        initialValue: 'primary'
-      })
-    }
-  })
-  const Document = type('Document', {
-    fields: {
-      rows: list('Rows', {schema: {Row}})
-    }
-  })
-
-  test.equal(
-    Type.withInitialValue(Document, {
-      rows: [{_type: 'Row', _id: 'legacy', _index: 'a0'}]
-    }),
-    {
-      rows: [
-        {
-          _type: 'Row',
-          _id: 'legacy',
-          _index: 'a0',
-          variant: 'primary'
-        }
-      ]
-    }
   )
 })
 

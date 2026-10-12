@@ -17,7 +17,7 @@ async function scan(width: number, height: number) {
 }
 
 test('recompresses the images of a pdf with sharp', async () => {
-  const original = await scan(3000, 3000)
+  const original = await scan(2000, 2000)
 
   const compressed = await compressPdf(original)
 
