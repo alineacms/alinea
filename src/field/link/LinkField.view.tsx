@@ -12,14 +12,12 @@ import {
   SortableListItemInsert,
   SortableListItemSettings,
   SortableListAdd,
-  SortableListDragPreview,
   ListError,
   ListLabel,
   SortableListItem,
   SortableListItemActions,
   SortableListItemContent,
   SortableListItemDescription,
-  SortableListHandle,
   SortableListItemToggle,
   SortableListItemFooter,
   SortableListItemHeader,
@@ -106,19 +104,6 @@ const styles = styler(css)
 
 type PickerType = 'entry' | 'url' | 'file' | 'image'
 type EntryPickerType = Exclude<PickerType, 'url'>
-const LINK_FIELD_ROW_DRAG_TYPE = 'application/x-alinea-link-field-row'
-
-interface LinkRowTextProps {
-  node: ReactiveNode<LinkFieldRow>
-}
-
-function LinkRowText({node}: LinkRowTextProps) {
-  const type = useAtomValueRaw(node.field('_type')) as string | undefined
-  if (type === 'entry' || type === 'image' || type === 'file')
-    return <EntryRowLayer node={node} textOnly />
-  if (type === 'url') return <UrlRow node={node} textOnly />
-  return null
-}
 
 function isPickerType(type: string): type is PickerType {
   return (
@@ -142,223 +127,11 @@ function getEntryPickerType(type: PickerType): EntryPickerType {
   return type === 'url' ? 'entry' : type
 }
 
-interface RowLayerProps {
-  hasFields?: boolean
-  node: ReactiveNode<LinkFieldRow>
-  textOnly?: boolean
-}
-
-function EntryRowLayer({hasFields, node, textOnly}: RowLayerProps) {
-  const entryId = useAtomValueRaw(node.field('_entry')) as string | undefined
-  const locale = useAtomValueRaw(node.field('_locale')) as string | undefined
-  const type = useAtomValueRaw(node.field('_type')) as string | undefined
-  if (!entryId) return null
-  return (
-    <EntryRow
-      entryId={entryId}
-      locale={locale}
-      hasFields={hasFields}
-      image={type === 'image'}
-      textOnly={textOnly}
-    />
-  )
-}
-
-interface EntryRowProps {
-  entryId: string
-  locale?: string
-  hasFields?: boolean
-  image?: boolean
-  textOnly?: boolean
-}
-
-function EntryRow({
-  entryId,
-  locale,
-  hasFields,
-  image,
-  textOnly
-}: EntryRowProps) {
-  const state = useLinkEntryState(entryId, locale)
-  if (state.state === 'hasData' && state.data)
-    return (
-      <LoadedEntryRow
-        entry={state.data}
-        hasFields={hasFields}
-        image={image}
-        textOnly={textOnly}
-      />
-    )
-  if (state.state !== 'loading')
-    return (
-      <MissingEntryRow
-        entryId={entryId}
-        hasFields={hasFields}
-        image={image}
-        textOnly={textOnly}
-      />
-    )
-  return (
-    <EntryLoadingRow
-      hasFields={hasFields}
-      image={image}
-      pending={true}
-      textOnly={textOnly}
-    />
-  )
-}
-
 function useLinkEntryState(entryId: string, locale?: string) {
   const scope = useOptionalEntryAtoms()
   // Links stored without a locale follow the locale of the edited entry
   const linkLocale = locale ?? scope?.localeData.requestedLocale ?? undefined
   return useAtomValueRawSync(linkEntryAtoms(entryId, linkLocale))
-}
-
-interface EntryLoadingRowProps {
-  hasFields?: boolean
-  image?: boolean
-  pending: boolean
-  textOnly?: boolean
-}
-
-interface MissingEntryRowProps {
-  entryId: string
-  hasFields?: boolean
-  image?: boolean
-  textOnly?: boolean
-}
-
-function MissingEntryRow({
-  entryId,
-  hasFields,
-  image,
-  textOnly
-}: MissingEntryRowProps) {
-  return (
-    <span className={styles.LinkFieldView.label({missing: true})}>
-      {image && !textOnly && (
-        <span
-          className={styles.LinkFieldView.imagePlaceholder()}
-          data-has-fields={hasFields ? 'true' : undefined}
-          aria-hidden="true"
-        />
-      )}
-      <span className={styles.LinkFieldView.labelText()}>
-        <span className={styles.LinkFieldView.title()}>Missing entry</span>
-        {!textOnly && (
-          <span className={styles.LinkFieldView.meta()}>{entryId}</span>
-        )}
-      </span>
-    </span>
-  )
-}
-
-function EntryLoadingRow({
-  hasFields,
-  image,
-  pending,
-  textOnly
-}: EntryLoadingRowProps) {
-  return (
-    <span
-      className={styles.LinkFieldView.label({loading: true})}
-      aria-busy={pending || undefined}
-    >
-      {image && !textOnly && (
-        <span
-          className={styles.LinkFieldView.imagePlaceholder()}
-          data-has-fields={hasFields ? 'true' : undefined}
-          aria-hidden="true"
-        />
-      )}
-      <span className={styles.LinkFieldView.labelText()}>
-        <span className={styles.LinkFieldView.skeleton({wide: true})} />
-        <span className={styles.LinkFieldView.skeleton()} />
-      </span>
-    </span>
-  )
-}
-
-interface LoadedEntryRowProps {
-  entry: LinkEntrySummary
-  hasFields?: boolean
-  image?: boolean
-  textOnly?: boolean
-}
-
-function LoadedEntryRow({
-  entry,
-  hasFields,
-  image,
-  textOnly
-}: LoadedEntryRowProps) {
-  return (
-    <span className={styles.LinkFieldView.label()}>
-      {image && !textOnly && (
-        <EntryRowImage entry={entry} hasFields={hasFields} />
-      )}
-      <span className={styles.LinkFieldView.labelText()}>
-        <span className={styles.LinkFieldView.title()}>{entry.title}</span>
-        {entry.parents.length > 0 ? (
-          <span className={styles.LinkFieldView.meta()}>
-            <EntryParents parents={entry.parents} />
-          </span>
-        ) : null}
-      </span>
-    </span>
-  )
-}
-
-interface EntryRowImageProps {
-  entry: LinkEntrySummary
-  hasFields?: boolean
-}
-
-function EntryRowImage({entry, hasFields}: EntryRowImageProps) {
-  if (entry.preview) {
-    return (
-      <img
-        alt=""
-        className={styles.LinkFieldView.image()}
-        data-has-fields={hasFields ? 'true' : undefined}
-        src={entry.preview}
-      />
-    )
-  }
-  return null
-}
-
-function UrlRow({node, textOnly}: RowLayerProps) {
-  const title = useAtomValueRaw(node.field('_title')) as string | undefined
-  const url = useAtomValueRaw(node.field('_url')) as string | undefined
-  return (
-    <span className={styles.LinkFieldView.label()}>
-      <span className={styles.LinkFieldView.title()}>
-        {textOnly ? title || url : title || url}
-      </span>
-      {!textOnly && title && url && (
-        <span className={styles.LinkFieldView.meta()}>{url}</span>
-      )}
-    </span>
-  )
-}
-
-interface EntryParentsProps {
-  parents: LinkEntrySummary['parents']
-}
-
-function EntryParents({parents}: EntryParentsProps) {
-  return (
-    <>
-      {parents.map((parent, index) => (
-        <span key={parent.id}>
-          {parent.title}
-          {index < parents.length - 1 ? ' / ' : ''}
-        </span>
-      ))}
-    </>
-  )
 }
 
 function getLinkIcon(type: string) {
@@ -1652,12 +1425,6 @@ function MultipleLinkRow({
     <>
       <SortableListItem
         aria-label={`Link item ${index + 1}`}
-        dragPreview={
-          <SortableListDragPreview
-            icon={getLinkIcon(type)}
-            label={<LinkRowText node={node} />}
-          />
-        }
         id={itemId}
         current={sheet.open}
       >
@@ -1669,9 +1436,6 @@ function MultipleLinkRow({
           />
         )}
         <SortableListItemHeader>
-          {!readOnly && (
-            <SortableListHandle aria-label={`Drag link item ${index + 1}`} />
-          )}
           <SortableListItemTitle>
             {hasFields && (
               <SortableListItemToggle
@@ -1947,7 +1711,6 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const content = (hasRows || !readOnly) && (
     <SortableList
       aria-label={options.label || 'Links'}
-      dragType={LINK_FIELD_ROW_DRAG_TYPE}
       onReorder={readOnly ? undefined : moveRow}
     >
       {nodes.map((node, index) => {

@@ -13,7 +13,6 @@ import {
   SortableListItem,
   SortableListItemActions,
   SortableListItemContent,
-  SortableListHandle,
   SortableListItemHeader,
   SortableListItemDescription,
   SortableListItemToggle,
@@ -86,9 +85,14 @@ export const RichTextBlock = memo(function RichTextBlock({
         data-richtext-block="true"
       >
         <SortableListItem tabIndex={0} current={sheet.open}>
-          <SortableListItemHeader data-richtext-block-header="true">
+          <SortableListItemHeader
+            className={styles.RichTextBlock.header()}
+            data-richtext-block-header="true"
+          >
+            {/* The editor moves blocks with a native drag, which browsers
+                don't start from the buttons that fill the header */}
             {!readOnly && (
-              <SortableListHandle
+              <span
                 aria-label={`Drag ${label} block`}
                 className={styles.RichTextBlock.dragHandle()}
                 data-richtext-drag-handle="true"

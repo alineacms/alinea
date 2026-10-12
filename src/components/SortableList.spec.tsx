@@ -7,100 +7,87 @@ import {
 } from './SortableList.stories.js'
 import {ListLabel} from './List.js'
 
-test('reorders items by dragging the handle', async ({mount, page}) => {
+type Page = Parameters<Parameters<typeof test>[2]>[0]['page']
+
+/** Drags a row by the middle of its header to `y`, in steps */
+async function dragRow(page: Page, row: string, y: number) {
+  const header = page
+    .getByRole('listitem', {name: row})
+    .locator('[data-slot="sortable-list-item-header"]')
+  const box = (await header.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2, y, {steps: 8})
+}
+
+test('reorders items by dragging their header', async ({mount, page}) => {
   await mount(<Reorderable />)
   const order = page.getByTestId('order')
   const list = page.getByRole('list', {name: 'Sections'})
-  const handle = page.getByRole('button', {name: 'Drag Hero'})
-  await expect(handle).toHaveAttribute('data-slot', 'sortable-list-handle')
-
-  // Drop on the lower half of a row to place it after that row
-  await list.getByRole('listitem', {name: 'Hero'}).hover()
+  const hero = list.getByRole('listitem', {name: 'Hero'})
   const image = list.getByRole('listitem', {name: 'Image'})
-  const imageBox = (await image.boundingBox())!
-  // Grab the handle off-center, react-aria treats exact center presses as
-  // screen reader (virtual) drags
-  await handle.dragTo(image, {
-    sourcePosition: {x: 10, y: 6},
-    targetPosition: {x: imageBox.width / 2, y: imageBox.height - 4}
-  })
-  await expect(order).toHaveText('Text, Image, Hero, Links')
 
-  // Drop on the upper half of a row to place it before that row
+  // Past the middle of Image the rows above move up to make room
+  const imageBox = (await image.boundingBox())!
+  await dragRow(page, 'Hero', imageBox.y + imageBox.height * 0.75)
+  await expect(hero).toHaveAttribute('data-dragging')
+  await expect(list).toHaveAttribute('data-dragging')
+  await expect(list.getByRole('listitem', {name: 'Text'})).not.toHaveCSS(
+    'transform',
+    'none'
+  )
+  await expect(list.getByRole('listitem', {name: 'Links'})).toHaveCSS(
+    'transform',
+    'none'
+  )
+  await page.mouse.up()
+  await expect(order).toHaveText('Text, Image, Hero, Links')
+  await expect(list).not.toHaveAttribute('data-dragging')
+  // The release does not click the title the drag started on
+  await expect(page.getByTestId('opened')).toHaveText('None')
+
+  // Above the middle of the first row places it first
   const text = list.getByRole('listitem', {name: 'Text'})
-  await list.getByRole('listitem', {name: 'Links'}).hover()
-  await page.getByRole('button', {name: 'Drag Links'}).dragTo(text, {
-    sourcePosition: {x: 10, y: 6},
-    targetPosition: {x: 20, y: 4}
-  })
+  const textBox = (await text.boundingBox())!
+  await dragRow(page, 'Links', textBox.y + textBox.height * 0.25)
+  await page.mouse.up()
   await expect(order).toHaveText('Links, Text, Image, Hero')
 })
 
-test('shows a drop indicator while dragging', async ({mount, page}) => {
+test('a press without moving clicks the header', async ({mount, page}) => {
+  await mount(<Reorderable />)
+  await page.getByRole('button', {name: 'Image settings'}).click()
+  await expect(page.getByTestId('opened')).toHaveText('Image')
+  await expect(page.getByTestId('order')).toHaveText('Hero, Text, Image, Links')
+})
+
+test('Escape cancels a drag', async ({mount, page}) => {
   await mount(<Reorderable />)
   const list = page.getByRole('list', {name: 'Sections'})
-  await list.getByRole('listitem', {name: 'Hero'}).hover()
-  const handle = page.getByRole('button', {name: 'Drag Hero'})
-  const handleBox = (await handle.boundingBox())!
-  const text = list.getByRole('listitem', {name: 'Text'})
-  const textBox = (await text.boundingBox())!
-  await page.mouse.move(handleBox.x + 10, handleBox.y + 6)
-  await page.mouse.down()
-  // The first move starts the drag, the next ones move over the target
-  await page.mouse.move(handleBox.x + 20, handleBox.y + 20)
-  await page.mouse.move(textBox.x + 20, textBox.y + textBox.height - 4, {
-    steps: 5
-  })
-  const indicator = list.locator(
-    '[data-slot="sortable-list-drop-indicator"][data-active]'
-  )
-  await expect(indicator).toHaveCount(1)
-  await expect(indicator).toHaveAttribute('data-position', 'after')
-  await expect(list.getByRole('listitem', {name: 'Hero'})).toHaveAttribute(
-    'data-dragging',
-    'true'
-  )
+  const links = list.getByRole('listitem', {name: 'Links'})
+  const linksBox = (await links.boundingBox())!
+  await dragRow(page, 'Hero', linksBox.y + linksBox.height / 2)
+  await page.keyboard.press('Escape')
   await page.mouse.up()
-  await expect(indicator).toHaveCount(0)
-  await expect(page.getByTestId('order')).toHaveText('Text, Hero, Image, Links')
+  await expect(page.getByTestId('order')).toHaveText('Hero, Text, Image, Links')
+  await expect(list).not.toHaveAttribute('data-dragging')
 })
 
 test('reorders items with the keyboard', async ({mount, page}) => {
   await mount(<Reorderable />)
   const order = page.getByTestId('order')
-  const handle = page.getByRole('button', {name: 'Drag Hero'})
-  const list = page.getByRole('list', {name: 'Sections'})
-  const indicator = list.locator(
-    '[data-slot="sortable-list-drop-indicator"][data-active]'
-  )
-  await handle.focus()
-  await page.keyboard.press('Enter')
-  // Drop targets start at the dragged row, Tab moves to the rows below it
-  await expect(handle).not.toBeFocused()
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-  await expect(indicator).toHaveCount(1)
-  await page.keyboard.press('Enter')
+  const hero = page.getByRole('button', {name: 'Hero settings'})
+  await hero.focus()
+  await page.keyboard.press('Alt+ArrowDown')
+  await page.keyboard.press('Alt+ArrowDown')
   await expect(order).toHaveText('Text, Image, Hero, Links')
-  await expect(handle).toBeFocused()
-
-  // Shift+Tab passes the drag handle, then moves up from the dragged row
-  await page.keyboard.press('Enter')
-  await expect(handle).not.toBeFocused()
-  await page.keyboard.press('Shift+Tab')
-  await page.keyboard.press('Shift+Tab')
-  await page.keyboard.press('Shift+Tab')
-  await page.keyboard.press('Enter')
-  await expect(order).toHaveText('Hero, Text, Image, Links')
-  await expect(handle).toBeFocused()
-
-  // Escape cancels the drag
-  await page.keyboard.press('Enter')
-  await expect(handle).not.toBeFocused()
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Escape')
-  await expect(handle).toBeFocused()
-  await expect(indicator).toHaveCount(0)
+  await expect(hero).toBeFocused()
+  await page.keyboard.press('Alt+ArrowUp')
+  await expect(order).toHaveText('Text, Hero, Image, Links')
+  await expect(hero).toBeFocused()
+  // The first row can not move further up
+  await page.keyboard.press('Alt+ArrowUp')
+  await page.keyboard.press('Alt+ArrowUp')
   await expect(order).toHaveText('Hero, Text, Image, Links')
 })
 
@@ -158,13 +145,14 @@ test('keeps item state when reordering is switched off', async ({
   page
 }) => {
   await mount(<ToggleReorder />)
+  const list = page.getByRole('list', {name: 'Sections'})
   const title = page.getByRole('textbox', {name: 'Hero title'})
   await title.fill('Welcome')
-  await expect(page.getByRole('button', {name: 'Drag Hero'})).toHaveCount(1)
+  await expect(list).toHaveAttribute('data-reorderable', 'true')
   await page.getByRole('button', {name: 'Lock'}).click()
-  await expect(page.getByRole('button', {name: 'Drag Hero'})).toHaveCount(0)
+  await expect(list).not.toHaveAttribute('data-reorderable')
   await expect(title).toHaveValue('Welcome')
   await page.getByRole('button', {name: 'Edit'}).click()
   await expect(title).toHaveValue('Welcome')
-  await expect(page.getByRole('button', {name: 'Drag Hero'})).toHaveCount(1)
+  await expect(list).toHaveAttribute('data-reorderable', 'true')
 })

@@ -278,73 +278,65 @@ type Locator = ReturnType<MountResult['locator']>
 function rowNames(list: Locator) {
   return list.evaluate(element =>
     Array.from(
-      element.querySelectorAll(
-        ':scope > [data-slot="sortable-list-item-drop-target"]'
-      )
-    ).map(row =>
-      row.querySelector('[role="listitem"]')!.getAttribute('aria-label')
-    )
+      element.querySelectorAll(':scope > [data-slot="sortable-list-item"]')
+    ).map(row => row.getAttribute('aria-label'))
   )
 }
 
-test('reorders rows by dragging the handle', async ({mount, page}) => {
+test('reorders rows by dragging their header', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
   const hero = sections.getByRole('listitem', {name: 'Hero item 1'})
   const quote = sections.getByRole('listitem', {name: 'Quote item 2'})
   await hero.getByRole('button', {name: 'Collapse Hero'}).click()
   await quote.getByRole('button', {name: 'Collapse Quote'}).click()
-  await hero.hover()
+  const header = hero.locator('[data-slot="sortable-list-item-header"]')
+  const box = (await header.boundingBox())!
   const quoteBox = (await quote.boundingBox())!
-  await hero.getByRole('button', {name: 'Drag Hero item 1'}).dragTo(quote, {
-    sourcePosition: {x: 10, y: 6},
-    // Clear of the insert line on the border below the row
-    targetPosition: {x: 40, y: quoteBox.height - 12}
+  // Grabbed on the title, which opens the settings on a click
+  await page.mouse.move(box.x + 120, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + 120, quoteBox.y + quoteBox.height * 0.75, {
+    steps: 8
   })
+  await page.mouse.up()
   await expect(sections.getByRole('listitem').first()).toHaveAccessibleName(
     'Quote item 1'
   )
   await expect(
     sections.getByRole('listitem', {name: 'Hero item 2'})
   ).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('reorders rows with the keyboard', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
-  const handle = sections.getByRole('button', {name: 'Drag Hero item 1'})
-  await handle.focus()
-  await page.keyboard.press('Enter')
-  await expect(handle).not.toBeFocused()
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
+  const settings = sections.getByRole('button', {name: 'Hero settings'})
+  await settings.focus()
+  await page.keyboard.press('Alt+ArrowDown')
   await expect(sections.getByRole('listitem').first()).toHaveAccessibleName(
     'Quote item 1'
   )
-  await expect(
-    sections.getByRole('button', {name: 'Drag Hero item 2'})
-  ).toBeFocused()
+  await expect(settings).toBeFocused()
 })
 
-test('keeps nested list drags inside their own list', async ({mount, page}) => {
+test('keeps nested list moves inside their own list', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
   const before = await rowNames(sections)
   const items = page.getByRole('list', {name: 'Items', exact: true})
   await expect(items.getByRole('listitem')).toHaveCount(2)
-  const handle = items.getByRole('button', {name: /^Drag .* item 1$/})
-  await handle.focus()
-  await page.keyboard.press('Enter')
-  await expect(handle).not.toBeFocused()
-  // Only the two nested rows are drop targets
-  await expect(
-    page.locator('[data-slot="sortable-list-item-drop-target"][tabindex="-1"]')
-  ).toHaveCount(2)
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
+  await items
+    .getByRole('button', {name: / settings$/})
+    .first()
+    .focus()
+  await page.keyboard.press('Alt+ArrowDown')
   await expect(items.getByRole('textbox').first()).toHaveValue(
     'Review responsive layout'
   )
+  // The last nested row can not move out of its list
+  await page.keyboard.press('Alt+ArrowDown')
   expect(await rowNames(sections)).toEqual(before)
 })
 

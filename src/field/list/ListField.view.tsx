@@ -10,12 +10,10 @@ import {
   SortableList,
   SortableListItemTitle,
   SortableListAdd,
-  SortableListDragPreview,
   ListError,
   ListLabel,
   SortableListItemActions,
   SortableListItemContent,
-  SortableListHandle,
   SortableListItemToggle,
   SortableListItemHeader,
   SortableListItemDescription,
@@ -93,9 +91,8 @@ const copyAtom = atomWithStorage<ListValue | undefined>(
   '@alinea/copypaste',
   undefined
 )
-const LIST_FIELD_ROW_DRAG_TYPE = 'application/x-alinea-list-field-row'
 
-interface ListFieldTypeItem {
+export interface ListFieldTypeItem {
   id: string
   label: string
   type: Schema[string]
@@ -202,7 +199,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const content = (hasRows || !readOnly) && (
     <SortableList
       aria-label={options.label || 'List items'}
-      dragType={LIST_FIELD_ROW_DRAG_TYPE}
       onReorder={readOnly ? undefined : moveRow}
     >
       {nodes.map((row, index) => (
@@ -427,7 +423,6 @@ const ListFieldRow = memo(function ListFieldRow({
       <SortableListItem
         aria-label={`${label} item ${index + 1}`}
         current={sheet.open}
-        dragPreview={<SortableListDragPreview icon={typeIcon} label={label} />}
         id={itemId}
       >
         {canCreate && !readOnly && (
@@ -443,7 +438,6 @@ const ListFieldRow = memo(function ListFieldRow({
           label={label}
           customLabel={customLabel}
           anchor={anchorValue}
-          dragLabel={`Drag ${label} item ${index + 1}`}
           readOnly={readOnly}
           sheet={sheet}
           typeIcon={typeIcon}
@@ -553,7 +547,6 @@ function rowAnchor(customLabel: string, anchor?: string): string {
 interface ListFieldRowHeaderProps {
   expanded: boolean
   label: string
-  dragLabel: string
   customLabel: string
   anchor?: string
   readOnly: boolean
@@ -566,7 +559,6 @@ interface ListFieldRowHeaderProps {
 function ListFieldRowHeader({
   expanded,
   label,
-  dragLabel,
   customLabel,
   anchor,
   readOnly,
@@ -593,7 +585,6 @@ function ListFieldRowHeader({
   )
   return (
     <SortableListItemHeader>
-      {!readOnly && <SortableListHandle aria-label={dragLabel} />}
       <SortableListItemTitle>
         <SortableListItemToggle
           aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
@@ -897,7 +888,7 @@ function ListFieldTypePicker({
   )
 }
 
-interface ListFieldTypeCommandProps {
+export interface ListFieldTypeCommandProps {
   items: Array<ListFieldTypeItem>
   label: string
   pasted?: ListValue
@@ -906,7 +897,8 @@ interface ListFieldTypeCommandProps {
   onSelect: (item: ListFieldTypeItem) => void
 }
 
-function ListFieldTypeCommand({
+/** Searchable list of block types, also used to insert rich text blocks */
+export function ListFieldTypeCommand({
   items,
   label,
   pasted,

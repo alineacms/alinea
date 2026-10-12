@@ -134,8 +134,6 @@ import {
 import {
   SortableList,
   SortableListAdd,
-  SortableListDragPreview,
-  SortableListHandle,
   SortableListItem,
   SortableListItemContent,
   SortableListItemDescription,
@@ -678,15 +676,8 @@ function EditorForm({page, onChange}: {page: StoryPage; onChange: () => void}) {
                   key={section.id}
                   id={section.id}
                   aria-label={section.label}
-                  dragPreview={
-                    <SortableListDragPreview
-                      icon={section.icon}
-                      label={section.type}
-                    />
-                  }
                 >
                   <SortableListItemHeader>
-                    <SortableListHandle aria-label={`Drag ${section.label}`} />
                     <SortableListItemTitle>
                       <Badge icon={section.icon} size="sm">
                         {section.type}

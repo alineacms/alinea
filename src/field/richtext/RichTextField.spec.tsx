@@ -670,7 +670,7 @@ test('moves a complex block and keeps its fields editable', async ({
     editor.getByText('Before the block.', {exact: true})
   )
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('option', {name: 'Call to action'}).click()
 
   const titles = page.getByRole('textbox', {name: 'CTA title'})
   await titles.fill('Original CTA')
@@ -703,7 +703,7 @@ test('duplicates and independently edits a complex block', async ({
     editor.getByText('Before the block.', {exact: true})
   )
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('option', {name: 'Call to action'}).click()
 
   const titles = page.getByRole('textbox', {name: 'CTA title'})
   await titles.fill('Original CTA')
@@ -753,9 +753,9 @@ test('inserts a block in nested rich text and preserves it while moving', async 
   const insertBlock = nestedField.getByRole('button', {name: 'Insert block'})
   await insertBlock.focus()
   await page.keyboard.press('Enter')
-  const noteItem = page.getByRole('menuitem', {name: 'Note'})
+  const noteItem = page.getByRole('option', {name: 'Note'})
   await expect(noteItem).toBeVisible()
-  await noteItem.press('Enter')
+  await noteItem.click()
 
   const noteText = page.getByRole('textbox', {name: 'Text'})
   await expect(page.getByRole('button', {name: 'Note settings'})).toBeVisible()
@@ -911,7 +911,7 @@ test('inserts a block at the active text position', async ({mount, page}) => {
   const editor = page.locator('.ProseMirror').first()
   await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Callout'}).click()
+  await page.getByRole('option', {name: 'Callout'}).click()
 
   await expect(
     page.getByRole('button', {name: 'Callout settings'})
@@ -955,7 +955,7 @@ test('inserts a complex CTA block without a detached DOM error', async ({
   const editor = page.locator('.ProseMirror').first()
   await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('option', {name: 'Call to action'}).click()
 
   await expect(page.getByRole('textbox', {name: 'CTA title'})).toBeVisible()
   await expect(page.getByText('Action code', {exact: true})).toBeVisible()
@@ -998,7 +998,7 @@ test('edits complex block controls and moves between nested editors', async ({
     outerEditor.getByText('Before the block.', {exact: true})
   )
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('option', {name: 'Call to action'}).click()
 
   const title = page.getByRole('textbox', {name: 'CTA title'})
   await title.click()
@@ -1052,7 +1052,7 @@ test('survives a mixed editing session around several blocks', async ({
   await page.keyboard.press('Enter')
   await page.keyboard.press('Enter')
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Callout'}).click()
+  await page.getByRole('option', {name: 'Callout'}).click()
 
   await page.getByRole('textbox', {name: 'Title'}).last().fill('Second block')
   await editor.getByText('After the block.', {exact: true}).click()
