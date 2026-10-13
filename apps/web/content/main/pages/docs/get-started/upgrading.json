@@ -37,7 +37,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Run Node.js 24 or higher, locally, in CI and wherever your site runs, and use React 19."
+                  "text": "Run Node.js 24 or higher, locally, in CI (scheduled jobs that run the alinea CLI too) and wherever your site runs, and use React 19."
                 }
               ]
             }
@@ -65,7 +65,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Add `handlerUrl` to your config, it is now required, and make sure `baseUrl.production` is set. Replace `dashboardFile` with `adminPath`."
+                  "text": "Add `handlerUrl` to your config, it is now required, and set `baseUrl.production` (or make `handlerUrl` absolute). Replace `dashboardFile` with `adminPath`."
                 }
               ]
             }
@@ -80,6 +80,20 @@
                 {
                   "_type": "text",
                   "text": "Make sure your Next.js config is wrapped in `withAlinea` and your scripts run `alinea dev -- next dev` and `alinea build -- next build`: media URLs are now served through your site."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Media: replace `image.url` with `image.src` and use the URLs Alinea returns instead of building them from `location`. `alinea build` warns about media files that store a url as their location, `alinea build --fix` repairs them."
                 }
               ]
             }
@@ -121,7 +135,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Rich text: pass `extensions` as a function and upgrade custom extensions to Tiptap 3."
+                  "text": "Rich text: pass `extensions` as a function, upgrade custom extensions to Tiptap 3 and render custom attributes as `data-*` attributes."
                 }
               ]
             }
@@ -163,7 +177,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Custom field views and dashboard code: import hooks from `alinea/cms` and components from `alinea/components` instead of `alinea/dashboard` and `alinea/ui`."
+                  "text": "Custom field views and dashboard code: import hooks from `alinea/cms` and components from `alinea/components` instead of `alinea/dashboard` and `alinea/ui`, replace `useEntryEditor` with `useEntry` and rename the theme tokens your CSS reads."
                 }
               ]
             }
@@ -178,6 +192,36 @@
                 {
                   "_type": "text",
                   "text": "Run `alinea build`, open the dashboard and save an entry to review the diff."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Upgrading from a 2.0 preview instead? See "
+                },
+                {
+                  "_type": "text",
+                  "text": "From a 2.0 preview",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KdUIsy8dIziwIwyB7I9G4huGDH",
+                      "_link": "url",
+                      "href": "#from-a-2-0-preview"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
                 }
               ]
             }
@@ -743,6 +787,32 @@
       ]
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Attributes that a custom extension adds to a node only reach your views and tag overrides of `RichText` as `data-*` attributes: render them as `data-*` in the extension's `renderHTML`. Content saved by 1.7 gets these attributes when it is saved again, see "
+        },
+        {
+          "_type": "text",
+          "text": "Custom attributes",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIuQ6bvlSarSo8eefrWq636I",
+              "_link": "entry",
+              "_entry": "268hjH2OU9fiReg61Wov1SRbPD5",
+              "_anchor": "custom-attributes"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 3,
       "content": [
@@ -823,7 +893,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjzsNtVY9qTKWUAuUkMpUfP9fx",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidatePath, revalidateTag} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({entries, removed}) {\n    // Pages that query content refresh on their own, revalidate your own caches\n    for (const {url} of [...entries, ...removed]) revalidatePath(url)\n    revalidateTag('products', 'max')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidateTag} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({entries, removed}) {\n    // Pages that query content refresh on their own, revalidate your own\n    // caches, eg. a feed that lists products\n    const changed = [...entries, ...removed]\n    if (changed.some(entry => entry.type === 'Product'))\n      revalidateTag('products', 'max')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx"
     },
@@ -832,7 +902,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Errors thrown in `afterCommit` are logged and don't fail the commit. See "
+          "text": "`afterCommit` receives the `mutations`, the `sha` of the new commit, the `user`, the changed `entries` as they are after the commit and the `removed` entries with the url they had. Errors thrown in it are logged and don't fail the commit. See "
         },
         {
           "_type": "text",
@@ -989,7 +1059,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`alinea/ui` now only exports the `RichText` renderer and the `imageBlurUrl` helper (and the deprecated `HStack`/`VStack`). Its `Button`, `Chip`, `Icon`, `Loader`, `Typo` and other components were removed, as were the files behind deep imports like `alinea/ui/Button`. Use the public component library instead, it is what the dashboard itself is built from:"
+          "text": "`alinea/ui` now only exports the `RichText` renderer and the `imageBlurUrl` helper (and the deprecated `HStack`/`VStack`, use `Stack` from `alinea/components`). Its `Button`, `Chip`, `Icon`, `Loader`, `Typo` and other components were removed, as were the files behind deep imports like `alinea/ui/Button`. Use the public component library instead, it is what the dashboard itself is built from:"
         }
       ]
     },
@@ -1041,7 +1111,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The CSS custom properties of 1.7 were renamed and many were removed. Styles that read an old token silently fall back to the property's default. The tokens of `alinea/css` now apply inside elements with `data-alinea-theme` only, the dashboard sets it on `<html>`. See Components for the full list. The closest replacements:"
+          "text": "The CSS custom properties of 1.7 were renamed and many were removed. Styles that read an old token silently fall back to the property's default. The closest replacements:"
         }
       ]
     },
@@ -1191,6 +1261,32 @@
       ]
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The tokens of `alinea/css`, and its resets, now apply inside elements with a `data-alinea-theme` attribute only. The dashboard sets it on `<html>`, so the CSS of your dashboard views reads the tokens as before. A page of your site that imports `alinea/css` to render `alinea/components` needs an element with `data-alinea-theme` around them. See "
+        },
+        {
+          "_type": "text",
+          "text": "Theme tokens",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIpvPxQEpNJw4vHfvPHAWHKg",
+              "_link": "entry",
+              "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ",
+              "_anchor": "theme-tokens"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for the full list."
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 3,
       "content": [
@@ -1222,7 +1318,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`useFieldValue`, `useFieldOptions`, `useFieldError` and `useFieldKey` move to `alinea/cms` too and `useFieldMutator` becomes `useFieldSetter`. Deep imports of dashboard hooks move as well: `useLocale` and `useGraph` from `alinea/dashboard/hook/*` are exported from `alinea/cms`, and `useEntryEditor` is replaced by `useEntry`. `alinea/dashboard/hooks` is internal now. `InputLabel` is now an alias of the `Field` component: it takes `label`, `description`, `error`, `required`, `disabled`, `readOnly`, `icon` and `shared`. Its 1.7 props `help`, `width`, `inline`, `size` and the fold props are gone, so help text passed through `{...options}` is no longer shown: pass it as `description`, or replace it with `FieldChrome` from `alinea/cms`, which reads the label, help text and error from the field. The form atoms (`useForm`, `FormProvider`, `FormRow` and so on) were removed from `alinea/dashboard`. See "
+          "text": "`useFieldValue`, `useFieldOptions`, `useFieldError` and `useFieldKey` move to `alinea/cms` too and `useFieldMutator` becomes `useFieldSetter`. Deep imports of dashboard hooks move as well: `useLocale` and `useGraph` from `alinea/dashboard/hook/*` are exported from `alinea/cms`, and `useEntryEditor` is replaced by `useEntry`. `useEntryEditor` still works as a shim for views that only read the entry: its `activeVersion` has the `id`, `locale`, `path`, `status`, `title` and `type` of the entry, and `activeVersion.data` only has `path`. Reading another property throws, read field values with `useFieldValue(field)` instead. `alinea/dashboard/hooks` is internal now. `InputLabel` is now an alias of the `Field` component: it takes `label`, `description`, `error`, `required`, `disabled`, `readOnly`, `icon` and `shared`. Its 1.7 props `help`, `width`, `inline`, `size` and the fold props are gone, so help text passed through `{...options}` is no longer shown: pass it as `description`, or replace it with `FieldChrome` from `alinea/cms`, which reads the label, help text and error from the field. The form atoms (`useForm`, `FormProvider`, `FormRow` and so on) were removed from `alinea/dashboard`. See "
         },
         {
           "_type": "text",
@@ -1392,6 +1488,215 @@
         {
           "_type": "text",
           "text": "`alinea/yjs` and `alinea/cloud/view/CloudAuth` no longer exist. `alinea/picker/entry/EntryPicker` and `alinea/picker/url/UrlPicker` no longer ship the picker UI: `EntryPickerModal`, `UrlPickerForm` and `UrlPickerModal` were removed without a public replacement. Import the picker option types (`EditorInfo`, `EditorLocation`, `EditorLimitLocation` and `EntryPickerConditions`) from `alinea/field/link`. Code that subclassed fields relied on the removed shape system (`alinea/core/Shape`, `Field.shape`, `Type.shape`): the field constructors no longer take a shape, and `postProcess` became `queryValue`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "From a 2.0 preview"
+        }
+      ],
+      "_anchor": "from-a-2-0-preview"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Projects on a 2.0 preview have most of the above already. These changes landed in the release candidate:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Image links no longer have `url`, use `src`. File links keep `url` and `href`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useEntry()` from `alinea/cms` returns a `DashboardEntry`: the `id`, `type`, `title`, `path`, `url`, `locale`, `status`, `workspace`, `root` and `parentId` of the entry and its saved field values in `data`. The other properties of the internal entry row are gone."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useEntryEditor()`: the publish status moved from `activeVersion.data.status` to `activeVersion.status`. Reading another property of `activeVersion.data` than `path` throws."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useSiblingFieldValue(key)` is deprecated: pass the field to `useFieldValue(field)`, which is typed and also reads fields of a parent row or the entry. `EditFields` takes an object field to render its fields in its scope."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Theme tokens apply inside `data-alinea-theme` only, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Theme tokens",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KdUIpllMFem9dbHuvDuS8bE0p9",
+                      "_link": "url",
+                      "href": "#theme-tokens"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " above. The workspace color is `--alinea-workspace-color`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Select` from `alinea/components` only shows its clear button with `clearable`. `Field.select` still lets editors clear fields that aren't required."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Select`, `ComboBox` and `MultipleSelect` values are strings or numbers, and `onValueChange` is typed like the `value` you pass. Without a `value`, it receives `string | number`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`TimeField` with a `name` submits `14:30` (or `14:30:15` with `granularity=\"second\"`) like a native time input, it used to submit seconds always."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`NumberField` no longer groups digits: pass `formatOptions={{useGrouping: true}}` to show `1,250`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`afterCommit` also receives the changed `entries` and the `removed` entries, so hooks no longer have to look them up from the mutations."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Every field accepts `width`, custom fields don't need to declare it in their options."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`alinea build` accepts an absolute `handlerUrl` without a production `baseUrl`, and its error names the missing `baseUrl` setting."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
