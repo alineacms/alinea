@@ -19,7 +19,8 @@ export type {
   OverviewSort,
   OverviewSortBy,
   OverviewSortDirection,
-  OverviewSortOption
+  OverviewSortOption,
+  OverviewTab
 } from '#/core/Overview.js'
 export type {Root} from '#/core/Root.js'
 export type {Schema} from '#/core/Schema.js'

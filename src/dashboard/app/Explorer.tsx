@@ -54,6 +54,7 @@ import css from './Explorer.module.css'
 import {ExplorerBatchActions} from './ExplorerBatchActions.js'
 import {ExplorerControls} from './ExplorerControls.js'
 import {ExplorerList} from './ExplorerList.js'
+import {ExplorerTabs} from './ExplorerTabs.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
@@ -894,8 +895,11 @@ export function ExplorerBody({
   page,
   children
 }: ExplorerBodyProps) {
-  return (
-    <PageContent>
+  const setTab = useSetAtom(explorer.requestedTab)
+  const [, startTransition] = useTransition()
+  const {tabs} = page.overview
+  const body = (
+    <>
       <div className={styles.Explorer.viewport()}>
         <ExplorerList
           compactTable={compactTable}
@@ -905,6 +909,24 @@ export function ExplorerBody({
         />
         {children}
       </div>
+    </>
+  )
+  return (
+    <PageContent>
+      {page.tab ? (
+        <ExplorerTabs
+          tabs={tabs}
+          value={page.tab}
+          onValueChange={tab =>
+            // The first tab is the default, it keeps the url short
+            startTransition(() => setTab(tab === tabs[0].key ? undefined : tab))
+          }
+        >
+          {body}
+        </ExplorerTabs>
+      ) : (
+        body
+      )}
     </PageContent>
   )
 }

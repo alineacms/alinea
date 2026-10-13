@@ -45,13 +45,15 @@ export const nav = {
     entryId?: string,
     locale?: string | null,
     view?: EntryDefaultView,
-    sort?: string
+    sort?: string,
+    tab?: string
   ) {
     const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
     const path = `/entry/${[workspace, rootPart, entryId].filter(Boolean).join('/')}`
     const params = new URLSearchParams()
     if (view) params.set('view', view)
     if (sort) params.set('sort', sort)
+    if (tab) params.set('tab', tab)
     const search = params.toString()
     return search ? `${path}?${search}` : path
   }

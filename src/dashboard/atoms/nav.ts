@@ -34,6 +34,8 @@ export interface DashboardRoute {
   view?: EntryDefaultView
   /** The column an overview is sorted by, eg. `price` or `-price` */
   sort?: string
+  /** The tab an overview shows, eg. `active` */
+  tab?: string
   /** Replace the current history entry instead of adding one */
   replace?: boolean
 }
@@ -72,6 +74,9 @@ function listKey(
  */
 const overviewSortMemoryAtom = atom(new Map<string, OverviewSort>())
 
+/** The tab of each overview visited in this session, like its sort */
+const overviewTabMemoryAtom = atom(new Map<string, string>())
+
 function routeFromHash(hash: string): ResolvedDashboardRoute {
   const [path, search = ''] = hash.slice(1).split('?')
   const [action, workspace, rootPart = '', entry] = path
@@ -99,6 +104,7 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
     action === 'users' ? 'users' : action === 'entry' ? 'entry' : 'splash'
   const [root, locale] = rootPart.split(':')
   const sort = params.get('sort')
+  const tab = params.get('tab')
   return {
     page,
     workspace: page === 'entry' ? workspace : undefined,
@@ -109,7 +115,8 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
       page === 'entry' && (view === 'edit' || view === 'overview')
         ? view
         : undefined,
-    sort: page === 'entry' && sort ? sort : undefined
+    sort: page === 'entry' && sort ? sort : undefined,
+    tab: page === 'entry' && tab ? tab : undefined
   }
 }
 
@@ -139,7 +146,8 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
     entry: update.entry,
     locale: update.locale,
     view: update.view,
-    sort: update.sort
+    sort: update.sort,
+    tab: update.tab
   }
 }
 
@@ -159,7 +167,8 @@ export function hashFromRoute(route: ResolvedDashboardRoute): string {
           route.entry,
           route.locale,
           route.view,
-          route.sort
+          route.sort,
+          route.tab
         )}`
 }
 
@@ -202,7 +211,10 @@ export const routeAtom = Object.assign(
               replace: update.replace
             } satisfies NavigationRequest)
       if (request.route.page !== 'edit')
-        return navigate(get, set, request, 'sort' in update)
+        return navigate(get, set, request, {
+          sort: 'sort' in update,
+          tab: 'tab' in update
+        })
       // The current page stays, also in the address bar, until the linked
       // entry is found; a navigation meanwhile wins
       const current = get(currentRouteAtom)
@@ -217,7 +229,7 @@ export const routeAtom = Object.assign(
         .then(route => {
           if (lookup !== linkLookups || get(currentRouteAtom) !== current)
             return
-          navigate(get, set, {route, replace: true}, true)
+          navigate(get, set, {route, replace: true}, {sort: true, tab: true})
         })
     }
   ),
@@ -242,20 +254,28 @@ export const routeAtom = Object.assign(
   }
 )
 
+/** Whether a navigation names the sort and the tab, even if undefined */
+interface NavigationGiven {
+  sort: boolean
+  tab: boolean
+}
+
 function navigate(
   get: Getter,
   set: Setter,
   request: NavigationRequest,
-  sortGiven: boolean
+  given: NavigationGiven
 ) {
   let {route} = request
   const key = sortKey(get, request)
-  // The url is the source of truth for the sort of an overview, an
-  // explicit undefined sort resets it
-  const explicit = request.browser || route.sort !== undefined || sortGiven
-  if (key && !explicit) {
+  // The url is the source of truth for the sort and tab of an overview, an
+  // explicit undefined value resets them
+  if (key && !request.browser) {
     const sort = get(overviewSortMemoryAtom).get(key)
-    if (sort) route = {...route, sort: formatOverviewSort(sort)}
+    if (sort && route.sort === undefined && !given.sort)
+      route = {...route, sort: formatOverviewSort(sort)}
+    const tab = get(overviewTabMemoryAtom).get(key)
+    if (tab && route.tab === undefined && !given.tab) route = {...route, tab}
   }
   const previous = get(currentRouteAtom)
   const commit = (
@@ -263,8 +283,10 @@ function navigate(
     syncLocation = !request.browser
   ) => {
     set(currentRouteAtom, route)
-    if (key)
+    if (key) {
       set(overviewSortMemoryAtom, memory => remember(memory, key, route.sort))
+      set(overviewTabMemoryAtom, memory => rememberTab(memory, key, route.tab))
+    }
     if (!syncLocation) return
     set(locationAtom, location => ({...location, hash: hashFromRoute(route)}), {
       replace
@@ -357,7 +379,7 @@ function withoutSlash(url: string): string {
   return url.length > 1 && url.endsWith('/') ? url.slice(0, -1) : url
 }
 
-/** The overview whose sort a navigation shows */
+/** The overview whose sort and tab a navigation shows */
 function sortKey(get: Getter, {browser, route}: NavigationRequest) {
   if (route.page !== 'entry') return undefined
   if (route.workspace && route.root)
@@ -377,6 +399,18 @@ function remember(
   const next = new Map(memory)
   const sort = parseOverviewSort(value)
   if (sort) next.set(key, sort)
+  else next.delete(key)
+  return next
+}
+
+function rememberTab(
+  memory: Map<string, string>,
+  key: string,
+  value: string | undefined
+) {
+  if (memory.get(key) === value) return memory
+  const next = new Map(memory)
+  if (value) next.set(key, value)
   else next.delete(key)
   return next
 }
@@ -469,6 +503,38 @@ export const overviewSortAtom = dispense(
           locale: page.locale ?? undefined,
           view: page.view,
           sort: value,
+          replace: true
+        })
+      }
+    )
+  }
+)
+
+/**
+ * The tab of the overview listing the children of an entry, or of a root
+ * when `entry` is null. The overview of the current page keeps it in the url.
+ */
+export const overviewTabAtom = dispense(
+  (workspace: string, root: string, entry: string | null) => {
+    const key = listKey(workspace, root, entry ?? undefined)
+    return atom(
+      get => get(overviewTabMemoryAtom).get(key),
+      (get, set, tab: string | undefined) => {
+        const page = get(pageAtom)
+        if (
+          page.type !== 'entry' ||
+          listKey(page.workspace, page.root, page.entry) !== key
+        ) {
+          set(overviewTabMemoryAtom, memory => rememberTab(memory, key, tab))
+          return
+        }
+        set(routeAtom, {
+          workspace,
+          root,
+          entry: page.entry,
+          locale: page.locale ?? undefined,
+          view: page.view,
+          tab,
           replace: true
         })
       }

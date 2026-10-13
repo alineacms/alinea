@@ -109,6 +109,13 @@ export interface OverviewFilterState {
   ) => OverviewFilterOptions | Promise<OverviewFilterOptions>
 }
 
+/** A tab of an overview */
+export interface OverviewTabState {
+  key: string
+  label: string
+  filter?: OpenFilter<EntryFields>
+}
+
 /** The keys of the options editors picked, by the key of their filter */
 export interface OverviewFilterSelection {
   [filter: string]: ReadonlyArray<string>
@@ -125,6 +132,8 @@ export interface OverviewState {
   sorts: Array<OverviewSortState>
   /** The filters editors can apply */
   filters: Array<OverviewFilterState>
+  /** The tabs above the list, the first one is selected by default */
+  tabs: Array<OverviewTabState>
   /** The order children are listed in when the editor did not sort */
   sort?: OrderBy | Array<OrderBy>
   layout?: 'table' | 'cards'
@@ -323,6 +332,11 @@ export function resolveOverviewOptions(
     filters: Object.entries(overview?.filters ?? {}).map(([key, filter]) =>
       filterState(key, filter)
     ),
+    tabs: Object.entries(overview?.tabs ?? {}).map(([key, tab]) => ({
+      key,
+      label: tab.label,
+      filter: tab.filter
+    })),
     sort,
     layout: overview?.layout,
     thumbnail: overview?.thumbnail
@@ -643,14 +657,28 @@ export function pickedFilters(
 }
 
 /**
- * The condition of the picked filters: entries match every filter, and any
- * of the options picked of a filter. Undefined when nothing is picked.
+ * The tab the editor picked, or the first tab when it is unknown. Undefined
+ * when the overview has no tabs.
+ */
+export function pickedTab(
+  overview: OverviewState,
+  tab: string | undefined
+): OverviewTabState | undefined {
+  return overview.tabs.find(option => option.key === tab) ?? overview.tabs[0]
+}
+
+/**
+ * The condition of the selected tab and the picked filters: entries match
+ * the tab, every filter, and any of the options picked of a filter.
+ * Undefined when nothing applies.
  */
 export function overviewFilter(
   overview: OverviewState,
-  selection: OverviewFilterSelection
+  selection: OverviewFilterSelection,
+  tab?: string
 ): OpenFilter<EntryFields> | undefined {
   const picked = pickedFilters(overview, selection)
+  const tabFilter = pickedTab(overview, tab)?.filter
   const conditions = overview.filters.flatMap(filter => {
     const options = filter.options.filter(option =>
       picked[filter.key]?.includes(option.key)
@@ -659,6 +687,7 @@ export function overviewFilter(
     if (options.length === 1) return [options[0].filter]
     return [{or: options.map(option => option.filter)}]
   })
+  if (tabFilter) conditions.unshift(tabFilter)
   if (conditions.length === 0) return undefined
   if (conditions.length === 1) return conditions[0]
   return {and: conditions}

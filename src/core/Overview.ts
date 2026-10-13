@@ -201,6 +201,17 @@ export interface OverviewActionProps {
   query: GraphQuery<undefined, Type | Array<Type> | undefined, undefined>
 }
 
+/** A tab above the listed entries, each lists the entries of its filter */
+export interface OverviewTab {
+  /** Shown on the tab, eg. `Active` */
+  label: string
+  /**
+   * The condition entries match when the tab is selected, like the options of
+   * a filter. A tab without a filter lists every child.
+   */
+  filter?: OpenFilter<EntryFilterFields>
+}
+
 interface OverviewColumnBase<Value> {
   /** The column header */
   header: string
@@ -292,6 +303,12 @@ export interface OverviewOptions {
    * applied filter, and the search terms.
    */
   filters?: Record<string, OverviewFilter>
+  /**
+   * Tabs above the listed children, keyed by a name kept in the url. The
+   * first tab is selected by default. Entries match the filter of the
+   * selected tab, the applied filters and the search terms.
+   */
+  tabs?: Record<string, OverviewTab>
   /** The default layout, editors can still switch */
   layout?: 'table' | 'cards'
   /**

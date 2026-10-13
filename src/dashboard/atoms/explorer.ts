@@ -2,7 +2,7 @@ import type {DragTypes, DropTarget, Key} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
-import {filterChecker} from '#/core/Filter.js'
+import {filterChecker, type OpenFilter} from '#/core/Filter.js'
 import {Field} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Graph, GraphQuery} from '#/core/Graph.js'
@@ -42,6 +42,7 @@ import {
   type OverviewState,
   pickedFilters,
   pickedSort,
+  pickedTab,
   resolveOverview,
   sortedColumn,
   summarizeRows,
@@ -154,6 +155,11 @@ export interface ExplorerOptions {
    * explorer. The explorers of a root share them.
    */
   filterState?: PrimitiveAtom<OverviewFilterSelection>
+  /**
+   * The key of the tab the editor picked, defaults to state kept by the
+   * explorer. Page explorers keep it in the url.
+   */
+  tabState?: WritableAtom<string | undefined, [string | undefined], void>
   showSelectionControls?: boolean
   initialSelection?: Array<string>
   /**
@@ -198,6 +204,11 @@ export interface ExplorerSortState {
 
 export interface ExplorerReadyPage {
   canUpload: boolean
+  /**
+   * The condition of the selected tab and the picked filters, undefined when
+   * none applies
+   */
+  filter: OpenFilter<EntryFields> | undefined
   /** The filter options the listed entries match, by filter key */
   filters: OverviewFilterSelection
   isMedia: boolean
@@ -215,6 +226,8 @@ export interface ExplorerReadyPage {
   searchScope: 'workspace' | 'everything'
   searchesEverything: boolean
   sort: ExplorerSortState
+  /** The key of the tab shown, undefined when the overview has no tabs */
+  tab: string | undefined
   view: ExplorerView
 }
 
@@ -246,7 +259,8 @@ export function explorerScrollKey(page: ExplorerReadyPage) {
     page.resultMode,
     page.searchScope,
     page.search.trim(),
-    page.filters
+    page.filters,
+    page.tab ?? null
   ])
 }
 
@@ -625,6 +639,8 @@ export class ExplorerAtoms {
    * key. The page lists the ones that apply to its overview.
    */
   requestedFilters: PrimitiveAtom<OverviewFilterSelection>
+  /** The key of the tab the editor picked, undefined for the first tab */
+  requestedTab: WritableAtom<string | undefined, [string | undefined], void>
   selectedLocale: WritableAtom<
     string | null,
     [SetStateAction<string | null>],
@@ -701,6 +717,7 @@ export class ExplorerAtoms {
       options.sortState ?? atom<OverviewSort | undefined>(undefined)
     this.requestedFilters =
       options.filterState ?? atom<OverviewFilterSelection>({})
+    this.requestedTab = options.tabState ?? atom<string | undefined>(undefined)
     this.mode = options.mode ?? 'browse'
     this.hasRowAction =
       options.onAction !== undefined ||
@@ -864,9 +881,12 @@ export class ExplorerAtoms {
       const requested = get(this.requestedSort)
       const sorted = search.trim() ? undefined : pickedSort(shown, requested)
       const filters = pickedFilters(shown, requestedFilters)
-      const filtered = Object.keys(filters).length > 0
+      const requestedTab = get(this.requestedTab)
+      const tab = pickedTab(shown, requestedTab)
+      const filtered = Object.keys(filters).length > 0 || Boolean(tab?.filter)
       return {
         canUpload,
+        filter: overviewFilter(shown, filters, requestedTab),
         filters,
         isMedia,
         items,
@@ -890,6 +910,7 @@ export class ExplorerAtoms {
           // Entries can not be reordered between hidden ones
           manual: !search.trim() && !sorted && !shown.sort && !filtered
         },
+        tab: tab?.key,
         view
       }
     })
@@ -1228,7 +1249,11 @@ export class ExplorerAtoms {
         root: entry.root,
         parentId: entry.id,
         locale,
-        filter: overviewFilter(overview, requestedFilters),
+        filter: overviewFilter(
+          overview,
+          requestedFilters,
+          get(this.requestedTab)
+        ),
         status: 'preferDraft',
         groupBy: Entry.id,
         orderBy: overviewOrder(overview, get(this.requestedSort)),
@@ -1284,7 +1309,11 @@ export class ExplorerAtoms {
       const overview = await get(this.overview)
       const flatList = resultMode === 'matches'
       const condition = flatList ? this.#options.condition : undefined
-      const picked = overviewFilter(overview, requestedFilters)
+      const picked = overviewFilter(
+        overview,
+        requestedFilters,
+        get(this.requestedTab)
+      )
       // Searching several roots stays within the locations the picker and
       // the policy allow, so matches that can't be listed don't take the
       // place of those that can
@@ -1296,7 +1325,8 @@ export class ExplorerAtoms {
           _root: limit.root
         }))
       }
-      // The search terms, the picker's condition and the picked filters apply
+      // The search terms, the picker's condition, the selected tab and the
+      // picked filters apply
       const filters = [condition, picked, allowed].filter(
         filter => filter !== undefined
       )
