@@ -28,10 +28,21 @@
 
 .OverviewCell-link {
   flex: 0 1 auto;
+  /* Keep the comma next to the text */
+  gap: 0;
 
   &:not(:last-child)::after {
     content: ',';
   }
+}
+
+/* The button is a flex container, text only ends in an ellipsis in an
+   element of its own */
+.OverviewCell-link-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .OverviewCell-thumbnail {
