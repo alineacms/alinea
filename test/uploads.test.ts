@@ -500,3 +500,57 @@ test('uploads record who created the file, saves and replaces who updated it', a
     globalThis.fetch = fetch
   }
 })
+
+test('saving a media file keeps its relative location', async () => {
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+  // Remote uploads return a public url, which is only kept as previewUrl
+  class RemoteDB extends DB {
+    async prepareUpload(file: string): Promise<UploadResponse> {
+      const upload = await super.prepareUpload(file)
+      return {...upload, previewUrl: `https://files.example.com/${file}`}
+    }
+  }
+  const db = new RemoteDB(cmsWithMediaDir('public/media').config)
+  const stored = async (id: string) =>
+    db.get({
+      id,
+      select: {location: MediaFile.location, previewUrl: MediaFile.previewUrl}
+    })
+  try {
+    const upload = await db.upload({file: new File(['one'], 'notes.txt')})
+    const uploaded = await stored(upload._id)
+    test.is(uploaded.location, '/notes.txt_upload-1')
+    test.is(
+      uploaded.previewUrl,
+      'https://files.example.com/public/media/notes.txt'
+    )
+
+    // The dashboard's save, also one that sends the upload url as location
+    const data = await db.get({id: upload._id, select: Entry.data})
+    for (const location of [data.location, uploaded.previewUrl]) {
+      await db.mutate([
+        {
+          op: 'create',
+          id: upload._id,
+          locale: null,
+          type: 'MediaFile',
+          overwrite: true,
+          data: Type.beforeSave(
+            MediaFile,
+            {...data, location, alt: 'Notes'},
+            {action: 'publish', now: new Date()}
+          )
+        }
+      ])
+      test.is((await stored(upload._id)).location, '/notes.txt_upload-1')
+    }
+    await db.update({id: upload._id, set: {title: 'Renamed'}})
+    test.is((await stored(upload._id)).location, '/notes.txt_upload-1')
+  } finally {
+    globalThis.fetch = fetch
+  }
+})

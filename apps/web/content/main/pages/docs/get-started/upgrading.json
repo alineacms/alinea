@@ -476,6 +476,20 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A media file whose `location` is a url (some 1.x saves wrote the upload url there) can't be served. `alinea build` warns about these files; `alinea build --fix` points them at the file of the same name in the `mediaDir` when there is one."
+                }
+              ]
+            }
+          ]
         }
       ]
     },

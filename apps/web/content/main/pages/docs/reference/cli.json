@@ -355,7 +355,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and exits without running the command after `--`. Commit the result."
+          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and points media files whose `location` is a url at the file of the same name in the `mediaDir`. It exits without running the command after `--`. Commit the result."
         }
       ]
     },
