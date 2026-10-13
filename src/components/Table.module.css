@@ -52,6 +52,14 @@
   pointer-events: none;
 }
 
+.Table-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--alinea-table-row-height);
+  color: var(--alinea-fg-muted);
+}
+
 .Table-dropIndicator {
   position: relative;
   height: 0;

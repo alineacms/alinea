@@ -6,6 +6,7 @@ import {
   Empty,
   ExplorerStyle,
   IterableItems,
+  LoadMore,
   NestedRows,
   RowActions,
   RowHandlers
@@ -160,4 +161,20 @@ test('a row action replaces the table action and clicks work without either', as
     .getByRole('row', {name: 'Bob Reviewer'})
     .click()
   await expect(log).toHaveText('Opened alice. Reviewed bob. Clicked bob')
+})
+
+test('shows a spinner while loading and loads more on scroll', async ({
+  mount,
+  page
+}) => {
+  await mount(<LoadMore />)
+  const table = page.getByRole('treegrid', {name: 'Products'})
+  await expect(table.getByRole('progressbar')).toBeVisible()
+  await expect(page.getByTestId('loaded')).toHaveText('Loaded 20 products')
+  await expect(page.getByText('No products')).toHaveCount(0)
+  await page.getByRole('button', {name: 'Price'}).click()
+  await expect(table.getByRole('row').first()).toContainText('10')
+  await table.hover()
+  await page.mouse.wheel(0, 2000)
+  await expect(page.getByTestId('loaded')).toHaveText(/Loaded [46]0 products/)
 })
