@@ -46,6 +46,18 @@ export interface TextFieldProps
   autoComplete?: string
   maxLength?: number
   minLength?: number
+  /** Which virtual keyboard to show, eg. `numeric` for a code */
+  inputMode?:
+    | 'none'
+    | 'text'
+    | 'tel'
+    | 'url'
+    | 'email'
+    | 'numeric'
+    | 'decimal'
+    | 'search'
+  /** A regular expression the value must match to be valid */
+  pattern?: string
   onBlur?: (event: FocusEvent<TextFieldElement>) => void
   onFocus?: (event: FocusEvent<TextFieldElement>) => void
   onKeyDown?: (event: KeyboardEvent<TextFieldElement>) => void

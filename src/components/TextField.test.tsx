@@ -54,3 +54,10 @@ test('TextField renders start and end icons', () => {
   expect(end.getAttribute('data-slot')).toBe('text-field-end-icon')
   expect(start.getAttribute('aria-hidden')).toBe('true')
 })
+
+test('TextField passes inputMode and pattern to the input', () => {
+  render(<TextField label="Code" inputMode="numeric" pattern="[0-9]{4}" />)
+  const input = screen.getByRole('textbox')
+  expect(input.getAttribute('inputmode')).toBe('numeric')
+  expect(input.getAttribute('pattern')).toBe('[0-9]{4}')
+})
