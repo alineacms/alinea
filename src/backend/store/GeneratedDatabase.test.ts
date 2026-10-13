@@ -207,3 +207,66 @@ test('a read-only generated database commits after searching', () =>
       await generated.close()
     }
   }))
+
+/**
+ * The share of the entry table's leaf pages, in key order, whose next leaf
+ * lies a few pages further in the file: rows are looked up in key order, and
+ * readers that read ahead then read the next leaf along. The pages between
+ * are overflow pages of large rows.
+ */
+function entryLeavesInOrder(file: string): number {
+  const sqlite = new Database(file)
+  // Prepared, not queried: a cached statement keeps the file open on Windows
+  const statement = sqlite.prepare<{pageno: number}, []>(
+    `select pageno from dbstat
+     where name = 'alinea_entry_index' and pagetype = 'leaf'
+     order by path`
+  )
+  try {
+    const leaves = statement.all().map(row => row.pageno)
+    let following = 0
+    for (let i = 1; i < leaves.length; i++) {
+      const step = leaves[i]! - leaves[i - 1]!
+      if (step > 0 && step <= 16) following++
+    }
+    return following / Math.max(1, leaves.length - 1)
+  } finally {
+    statement.finalize()
+    sqlite.close()
+  }
+}
+
+test('a rewrite lays out the tables of a file that synced many changes', () =>
+  withDirectory(async dir => {
+    const file = join(dir, 'db.sqlite')
+    const ids = Array.from({length: 400}, (_, i) => `page-${i}`)
+    const titles = (round: number) =>
+      Object.fromEntries(
+        ids.map((id, i) => [
+          id,
+          // Each round makes a tenth of the entries longer
+          i % 10 === round % 10 ? `${id} ${'edit '.repeat(round * 20)}` : id
+        ])
+      )
+    const sqlite = new Database(file)
+    const db = connect(sqlite)
+    await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+    sqlite.close()
+    const open = async (run: (database: EntryDatabase) => Promise<void>) => {
+      const sqlite = new Database(file)
+      const database = new EntryDatabase(config, connect(sqlite))
+      try {
+        await run(database)
+      } finally {
+        await database.close()
+        sqlite.close()
+      }
+    }
+    await open(async database => {
+      for (let round = 0; round <= 30; round++)
+        await database.syncWith(await pages(titles(round)))
+    })
+    expect(entryLeavesInOrder(file)).toBeLessThan(0.9)
+    await open(database => database.compact({rewrite: true}))
+    expect(entryLeavesInOrder(file)).toBe(1)
+  }))

@@ -155,7 +155,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         if (dashboard)
           [, dbSize] = await Promise.all([
             dashboard,
-            current.finalize(),
+            // A build ships the file: lay its tables out in order once
+            current.finalize({rewrite: cmd === 'build'}),
             linkMediaFiles(rootDir, current)
           ])
         let message = `${cmd} ${location} in `
