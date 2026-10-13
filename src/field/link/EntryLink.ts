@@ -58,15 +58,15 @@ export function entry<Fields = undefined>(
   })
 }
 
+export interface EntriesOptions<Fields>
+  extends
+    LinkFieldOptions<
+      Array<EntryReference & ListRow & InferStoredValue<Fields>>
+    >,
+    Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
+
 export namespace entry {
   type EntryRow<Fields> = EntryLink<LinkFields<Type.Infer<Fields>>> & ListRow
-
-  export interface EntriesOptions<Fields>
-    extends
-      LinkFieldOptions<
-        Array<EntryReference & ListRow & InferStoredValue<Fields>>
-      >,
-      Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
   export function multiple<Fields = undefined>(
     label: Label,

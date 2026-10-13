@@ -106,14 +106,14 @@ export interface ImagesField<Fields = undefined> extends LinksField<
   ImageLink<LinkFields<Type.Infer<Fields>>>
 > {}
 
-export namespace image {
-  export interface ImagesOptions<Fields>
-    extends
-      LinkFieldOptions<
-        Array<EntryReference & ListRow & InferStoredValue<Fields>>
-      >,
-      Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
+export interface ImagesOptions<Fields>
+  extends
+    LinkFieldOptions<
+      Array<EntryReference & ListRow & InferStoredValue<Fields>>
+    >,
+    Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
+export namespace image {
   export function multiple<Fields = undefined>(
     label: Label,
     options: WithoutLabel<ImagesOptions<Fields>> = {}
