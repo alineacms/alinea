@@ -86,7 +86,7 @@ export function NumberField({
       isRequired={required}
       isDisabled={disabled}
       isReadOnly={readOnly}
-      isInvalid={Boolean(error)}
+      isInvalid={error ? true : undefined}
       className={styles.NumberField(styler.merge({className}))}
     >
       <Field

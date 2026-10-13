@@ -44,7 +44,11 @@ export interface MultipleSelectProps<V extends Key = Key>
   placeholder?: string
   /** Shown in the list when no item matches the search, defaults to "No options" */
   emptyMessage?: ReactNode
-  /** Name of the hidden form input carrying the values */
+  /**
+   * Name of the hidden form input carrying the values, it submits one entry
+   * per selected value like a native multiple select: read them with
+   * `formData.getAll(name)`
+   */
   name?: string
   /** MultipleSelectItem elements */
   children: ReactNode

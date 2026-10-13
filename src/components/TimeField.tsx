@@ -1,8 +1,10 @@
 import styler from '@alinea/styler'
+import {useContext} from 'react'
 import {
   DateInput,
   DateSegment,
-  TimeField as TimeFieldPrimitive
+  TimeField as TimeFieldPrimitive,
+  TimeFieldStateContext
 } from 'react-aria-components'
 import {Field} from './Field.js'
 import {formatTime, toTime} from './internal/DateValue.js'
@@ -34,6 +36,11 @@ export interface TimeFieldProps
   granularity?: 'minute' | 'second'
   /** Defaults to the locale's hour cycle */
   hourCycle?: 12 | 24
+  /**
+   * Name of the hidden form input, which submits the time like a native
+   * time input: `HH:mm`, or `HH:mm:ss` when granularity is `second`, and an
+   * empty string when no time is set
+   */
   name?: string
   autoFocus?: boolean
 }
@@ -53,6 +60,7 @@ export function TimeField({
   min,
   max,
   granularity = 'minute',
+  name,
   className,
   locale,
   ...props
@@ -104,8 +112,34 @@ export function TimeField({
               />
             )}
           </DateInput>
+          {name && (
+            <TimeFieldValue
+              name={name}
+              granularity={granularity}
+              disabled={disabled}
+            />
+          )}
         </Field>
       </TimeFieldPrimitive>
     </Locale>
+  )
+}
+
+interface TimeFieldValueProps {
+  name: string
+  granularity: 'minute' | 'second'
+  disabled?: boolean
+}
+
+/** react-aria would submit `HH:mm:ss` whatever the granularity */
+function TimeFieldValue({name, granularity, disabled}: TimeFieldValueProps) {
+  const time = useContext(TimeFieldStateContext)?.timeValue
+  return (
+    <input
+      type="hidden"
+      name={name}
+      disabled={disabled}
+      value={time ? formatTime(time, granularity) : ''}
+    />
   )
 }

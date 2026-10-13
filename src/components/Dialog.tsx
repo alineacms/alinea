@@ -16,13 +16,20 @@ import {
 import {IcRoundClose} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
 import css from './Dialog.module.css'
+import {Form, type FormProps, type FormSubmitResult} from './Form.js'
 import {Slot, type SlotProps} from './internal/Slot.js'
 import {
   OptionalTrigger,
   Trigger,
   type TriggerProps
 } from './internal/Trigger.js'
-import type {AriaProps, DataProps, OpenStateProps, StyleProps} from './types.js'
+import type {
+  AriaProps,
+  DataProps,
+  OpenStateProps,
+  StyleProps,
+  ValidationErrors
+} from './types.js'
 
 const styles = styler(css)
 
@@ -72,6 +79,14 @@ export interface DialogContentProps extends StyleProps, AriaProps, DataProps {
   dismissable?: boolean
   /** Defaults to true */
   showCloseButton?: boolean
+  /**
+   * Renders the content as a Form, submitted by a `type="submit"` Button.
+   * The dialog closes once this resolves without returning errors, which
+   * are shown on the fields otherwise.
+   */
+  onSubmit?: FormProps['onSubmit']
+  /** Errors keyed by field name, when the content is a form */
+  validationErrors?: ValidationErrors
   children: ReactNode
 }
 
@@ -80,6 +95,8 @@ export function DialogContent({
   size = 'default',
   dismissable = true,
   showCloseButton = true,
+  onSubmit,
+  validationErrors,
   className,
   style,
   children,
@@ -111,7 +128,13 @@ export function DialogContent({
           aria-describedby={ariaDescribedby}
           className={styles.DialogContent.dialog()}
         >
-          {children}
+          {onSubmit ? (
+            <DialogForm onSubmit={onSubmit} validationErrors={validationErrors}>
+              {children}
+            </DialogForm>
+          ) : (
+            children
+          )}
           {showCloseButton && (
             <DialogClose
               aria-label="Close"
@@ -124,6 +147,30 @@ export function DialogContent({
         </DialogPrimitive>
       </Modal>
     </ModalOverlay>
+  )
+}
+
+interface DialogFormProps {
+  onSubmit: NonNullable<FormProps['onSubmit']>
+  validationErrors?: ValidationErrors
+  children: ReactNode
+}
+
+function DialogForm({onSubmit, validationErrors, children}: DialogFormProps) {
+  const state = useContext(OverlayTriggerStateContext)
+  async function submit(data: FormData): Promise<FormSubmitResult> {
+    const errors = await onSubmit(data)
+    if (!errors || Object.keys(errors).length === 0) state?.close()
+    return errors
+  }
+  return (
+    <Form
+      validationErrors={validationErrors}
+      onSubmit={submit}
+      className={styles.DialogContent.form()}
+    >
+      {children}
+    </Form>
   )
 }
 

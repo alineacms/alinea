@@ -128,7 +128,7 @@ export function TextField({
       isRequired={required}
       isDisabled={disabled}
       isReadOnly={readOnly}
-      isInvalid={Boolean(error)}
+      isInvalid={error ? true : undefined}
       className={styles.TextField(styler.merge({className}))}
       style={style}
     >
