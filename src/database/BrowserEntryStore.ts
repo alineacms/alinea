@@ -37,6 +37,18 @@ export interface BrowserEntryStoreOptions {
    * when it turned out to be corrupt.
    */
   reset?: boolean
+  /**
+   * Called with the key of each base stored in full rather than as a delta.
+   * It keeps the layout of the database it was saved from: pages its syncs
+   * rewrote anywhere in the file. Pass the key to `compact` to store a copy
+   * that reads in order.
+   */
+  onFullSave?(key: string): void
+}
+
+/** Where a compacted copy of base `key` is stored. */
+export function compactedKey(key: string): string {
+  return `${key}-compact`
 }
 
 /**
@@ -52,6 +64,7 @@ export class BrowserEntryStore extends EntryStore {
   #stored: string | undefined
   #written: Promise<unknown> = Promise.resolve()
   #cleanup: Promise<void> = Promise.resolve()
+  #onFullSave: ((key: string) => void) | undefined
 
   static async open(
     config: Config,
@@ -87,7 +100,71 @@ export class BrowserEntryStore extends EntryStore {
       )
     })
     store.#cleanup = cleanup
+    store.#onFullSave = options.onFullSave
     return store
+  }
+
+  /**
+   * Store a compacted copy of base `key` as `compactedKey(key)`: its tables
+   * laid out in order, so reads ahead read what queries need next. Syncs
+   * rewrite pages wherever there is room, and a base saved in full keeps
+   * that layout; searching a scattered base reads it page by page. The copy
+   * is built in memory, about three times the size of the base, and Wasm
+   * memory is never returned: run this in a worker of its own that exits
+   * after. Returns the key of the copy, or undefined if there was no base
+   * `key` or another worker is compacting it.
+   */
+  static async compact(
+    options: Pick<BrowserEntryStoreOptions, 'name' | 'storage'>,
+    key: string
+  ): Promise<string | undefined> {
+    const storage =
+      options.storage ??
+      indexedDBSnapshots(`${versionedCacheName(options.name)}-snapshots`)
+    const run = async () => {
+      const bases = await storage.list()
+      const base = bases.find(base => base.key === key)
+      if (!base) return
+      const target = compactedKey(key)
+      if (bases.some(base => base.key === target)) return target
+      const Database = await wasmSqlite()
+      // Read once in file order, which is how reads ahead read fastest
+      const stored = await storage.open(Database, {key})
+      let bytes: Uint8Array
+      try {
+        bytes = stored.db.export()
+      } finally {
+        await stored.close()
+      }
+      const copy = new Database(bytes)
+      copy.run('vacuum')
+      const session = storage.session(copy, {branch: base.branch})
+      try {
+        const saved = await session.save({key: target, meta: base.meta})
+        return saved.status === 'mismatch' ? undefined : target
+      } finally {
+        await session.close()
+      }
+    }
+    const locks = globalThis.navigator?.locks
+    if (!locks) return run()
+    // One worker compacts a base, the others leave it
+    return locks.request(`alinea-compact-${key}`, {ifAvailable: true}, lock =>
+      lock ? run() : undefined
+    )
+  }
+
+  /**
+   * Whether this store can be replaced by one on `compacted`, the compacted
+   * copy of base `key`: it reads `key` and holds no changes since.
+   */
+  adoptable(key: string): boolean {
+    return this.#session.snapshot?.key === key && this.#session.held === 0
+  }
+
+  /** The key of the base this store reads. */
+  get base(): string | undefined {
+    return this.#session.snapshot?.key
   }
 
   static async #on(
@@ -180,7 +257,15 @@ export class BrowserEntryStore extends EntryStore {
           ? save(`${key}-${crypto.randomUUID()}`)
           : result
       )
-      .then(() => storage.retain({branches: keepBranches}))
+      .then(result => {
+        // A delta lies over its parent, in the parent's layout
+        if (
+          result?.status === 'written' &&
+          result.snapshot.parent === undefined
+        )
+          this.#onFullSave?.(result.snapshot.key)
+        return storage.retain({branches: keepBranches})
+      })
       .catch(() => {
         if (this.#stored === revision) this.#stored = undefined
       })

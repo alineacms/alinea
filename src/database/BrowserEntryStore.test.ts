@@ -9,7 +9,11 @@ import {memorySnapshots} from '@alinea/sqlite-wasm/snapshots'
 import {expect, test} from 'bun:test'
 import {IDBFactory, IDBKeyRange} from 'fake-indexeddb'
 import {sql} from 'rado'
-import {BrowserEntryStore, isCorruptDatabaseError} from './BrowserEntryStore.js'
+import {
+  BrowserEntryStore,
+  compactedKey,
+  isCorruptDatabaseError
+} from './BrowserEntryStore.js'
 import {databaseVersion, versionedCacheName} from './Version.js'
 import {wasmHandle, wasmSqlite} from './driver/WasmDatabase.js'
 
@@ -316,6 +320,107 @@ test('forks keep the page cache size', async () => {
   )
   expect(row?.cache_size).toBe(-65536)
 })
+
+test('reports bases saved in full, not deltas', async () => {
+  const storage = memorySnapshots()
+  const full: Array<string> = []
+  const options = {
+    name,
+    fingerprint: 'config-1',
+    storage,
+    onFullSave: (key: string) => full.push(key)
+  }
+  // Large enough that a changed page touches a small part of it
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await manyPages(2000, 'First'))
+  await first.close()
+  expect(full).toHaveLength(1)
+
+  // One changed page is saved as a delta over the first base
+  const next = await BrowserEntryStore.open(pages(false), options)
+  await next.syncWith(await manyPages(2000, 'First', 1))
+  await next.close()
+  expect(full).toHaveLength(1)
+  const bases = await storage.list()
+  expect(bases[0]!.parent).toBe(full[0])
+})
+
+test('compacts a base into a copy the next store opens', async () => {
+  const storage = memorySnapshots()
+  const full: Array<string> = []
+  const options = {
+    name,
+    fingerprint: 'config-1',
+    storage,
+    onFullSave: (key: string) => full.push(key)
+  }
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await manyPages(200, 'First'))
+  await first.close()
+  const [key] = full
+
+  const compacted = await BrowserEntryStore.compact({name, storage}, key!)
+  expect(compacted).toBe(compactedKey(key!))
+  // A second request finds the copy
+  expect(await BrowserEntryStore.compact({name, storage}, key!)).toBe(compacted)
+  expect(await BrowserEntryStore.compact({name, storage}, 'missing')).toBe(
+    undefined
+  )
+
+  const next = await BrowserEntryStore.open(pages(false), options)
+  try {
+    expect(next.base).toBe(compacted)
+    expect(await next.count({})).toBe(200)
+    expect(await next.find({search: 'page 150', select: Entry.id})).toContain(
+      'page-150'
+    )
+  } finally {
+    await next.close()
+  }
+})
+
+test('a store is adoptable while it holds no changes', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await manyPages(50, 'First'))
+  await first.close()
+
+  const next = await BrowserEntryStore.open(pages(false), options)
+  try {
+    const key = next.base!
+    expect(next.adoptable(key)).toBe(true)
+    expect(next.adoptable('other')).toBe(false)
+    await next.mutate([
+      {
+        op: 'update',
+        id: 'page-1',
+        locale: null,
+        status: 'published',
+        set: {title: 'Changed'}
+      }
+    ])
+    expect(next.adoptable(key)).toBe(false)
+  } finally {
+    await next.close()
+  }
+})
+
+/** `count` pages titled after `title`, the first `changed` of them edited. */
+function manyPages(count: number, title: string, changed = 0) {
+  return createEntrySource(
+    pages(false),
+    Array.from({length: count}, (_, i) => ({
+      id: `page-${i}`,
+      type: 'Page',
+      index: `a${String(i).padStart(4, '0')}`,
+      data: {
+        title: `${title} page ${i}${i < changed ? ' edited' : ''}`,
+        body: 'text'
+      }
+    }))
+  )
+}
 
 function pageSource(): Promise<Source> {
   return createEntrySource(pages(false), [

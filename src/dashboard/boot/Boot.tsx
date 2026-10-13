@@ -6,6 +6,12 @@ import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from '../App.js'
 import {ActivityEvent} from './ActivityEvent.js'
+import {CompactEvent} from './CompactEvent.js'
+import {
+  compactInWorker,
+  compactWorkerName,
+  runCompactWorker
+} from './CompactWorker.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
 import {WorkerDB} from './WorkerDB.js'
@@ -26,9 +32,20 @@ export type ConfigGenerator = AsyncGenerator<ConfigBatch>
 export async function boot(gen: ConfigGenerator) {
   const inWorker = isWorkerScope()
   if (inWorker) {
-    loadWorker(gen)
+    const {name} = globalThis as {name?: string}
+    if (name === compactWorkerName) runCompactWorker()
+    else loadWorker(gen)
   } else {
     const [events, worker] = connect()
+    // A page compacts a base the store saved in full in a worker of its
+    // own: the store's worker keeps serving queries, and a shared worker
+    // cannot start workers. The store then reads the copy.
+    events.addEventListener(CompactEvent.type, event => {
+      const {key} = event as CompactEvent
+      void compactInWorker(import.meta.url, key)
+        .then(compacted => (compacted ? worker.adopt(key) : false))
+        .catch(() => {})
+    })
     const scripts = document.getElementsByTagName('script')
     const element = scripts[scripts.length - 1]
     const into = document.createElement('div')
@@ -91,6 +108,8 @@ function listen(source: EventTarget) {
       events.dispatchEvent(new IndexEvent(data.data))
     } else if (data.type === ActivityEvent.type) {
       events.dispatchEvent(new ActivityEvent(data.activities))
+    } else if (data.type === CompactEvent.type) {
+      events.dispatchEvent(new CompactEvent(data.key))
     }
   })
   return events

@@ -14,6 +14,7 @@ import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
 import {
   BrowserEntryStore,
+  compactedKey,
   isCorruptDatabaseError
 } from '#/database/BrowserEntryStore.js'
 import {EntryStore} from '#/database/EntryStore.js'
@@ -24,9 +25,11 @@ import {
   type ActivityOperation,
   type ActivityTarget
 } from './ActivityEvent.js'
+import {CompactEvent} from './CompactEvent.js'
 
 const remote = pLimit(1)
-const cacheName = 'alinea-entry-database'
+/** The name the dashboard's browser store is kept under. */
+export const cacheName = 'alinea-entry-database'
 const syncInterval = 120_000
 
 interface QueuedMutation {
@@ -56,6 +59,7 @@ export class DashboardWorker extends EventTarget {
   #nextLoad = trigger<LoadedDashboard>()
   #defer: (() => Promise<void>) | undefined
   #currentRevision: string | undefined
+  #config: Config | undefined
   #mutations: Array<QueuedMutation> = []
   #activities: Array<Activity> = []
   #local = pLimit(1)
@@ -338,6 +342,7 @@ export class DashboardWorker extends EventTarget {
   async load(revision: string, config: Config, client: LocalConnection) {
     if (this.#currentRevision === revision) return
     this.#currentRevision = revision
+    this.#config = config
     const hadPrevious = this.#localDB !== undefined
     const nextLoad = this.#localDB ? trigger<LoadedDashboard>() : this.#nextLoad
     this.#nextLoad = nextLoad
@@ -370,24 +375,29 @@ export class DashboardWorker extends EventTarget {
       this.#localDB = db
       this.#localClient = client
       nextLoad.resolve({db, client, cacheFailure})
-      const unsubscribe = db.onChange(change => {
-        this.dispatchEvent(
-          new IndexEvent({
-            op: 'index',
-            sha: change.revision,
-            ids: [...change.changedEntryIds]
-          })
-        )
-      })
-      this.#defer = async () => {
-        unsubscribe()
-        await db.close()
-      }
+      this.#defer = this.#follow(db)
     } catch (cause) {
       this.#currentRevision = undefined
       this.#nextLoad = trigger()
       nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
+    }
+  }
+
+  /** Report the changes of `db`; returns how to stop and close it. */
+  #follow(db: EntryStore): () => Promise<void> {
+    const unsubscribe = db.onChange(change => {
+      this.dispatchEvent(
+        new IndexEvent({
+          op: 'index',
+          sha: change.revision,
+          ids: [...change.changedEntryIds]
+        })
+      )
+    })
+    return async () => {
+      unsubscribe()
+      await db.close()
     }
   }
 
@@ -397,7 +407,49 @@ export class DashboardWorker extends EventTarget {
     reset: boolean
   ): Promise<EntryStore> {
     if (this.#source) return EntryStore.memory(config, this.#source)
-    return BrowserEntryStore.open(config, {name: cacheName, fingerprint, reset})
+    return BrowserEntryStore.open(config, {
+      name: cacheName,
+      fingerprint,
+      reset,
+      onFullSave: key => this.dispatchEvent(new CompactEvent(key))
+    })
+  }
+
+  /**
+   * Read the compacted copy of base `key` instead, if the store still reads
+   * `key` and holds nothing that is not stored: no changes since and no
+   * queued mutations. Otherwise the store keeps its base until the next
+   * one it saves in full.
+   */
+  async adopt(key: string): Promise<boolean> {
+    return this.#local(async () => {
+      const current = this.#localDB
+      const client = this.#localClient
+      const config = this.#config
+      const fingerprint = this.#currentRevision
+      if (!(current instanceof BrowserEntryStore) || !client || !config)
+        return false
+      if (!fingerprint || this.#mutations.length > 0) return false
+      if (!current.adoptable(key)) return false
+      const next = (await this.#open(
+        config,
+        fingerprint,
+        false
+      )) as BrowserEntryStore
+      // A newer base was stored meanwhile
+      if (next.base !== compactedKey(key) || !current.adoptable(key)) {
+        await next.close()
+        return false
+      }
+      const replaced = this.#defer
+      this.#localDB = next
+      this.#nextLoad = trigger()
+      this.#nextLoad.resolve({db: next, client})
+      this.#defer = this.#follow(next)
+      // Queries on the replaced store finish, then it closes
+      void replaced?.().catch(() => {})
+      return true
+    })
   }
 
   async #syncLocalIndex(db: EntryStore): Promise<CacheFailure | undefined> {

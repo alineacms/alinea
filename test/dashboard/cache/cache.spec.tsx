@@ -439,3 +439,35 @@ test('a build loads another config while another edits', async ({page}) => {
   expect(await fetched(page, 'ra')).toBe(0)
   expect(await fetched(page, 'rb')).toBe(0)
 })
+
+test('a base saved in full is compacted and adopted', async ({page}) => {
+  const [seed] = await start(page, {a: 'a'})
+  await stored(page, ['config-a'], seed)
+  await expect
+    .poll(() => page.evaluate(() => cache.build('a').savedInFull()))
+    .toHaveLength(1)
+  const [key] = await page.evaluate(() => cache.build('a').savedInFull())
+  const before = await answers(page, 'a')
+
+  const result = await page.evaluate(key => cache.build('a').compact(key), key!)
+  expect(result).toEqual({compacted: `${key}-compact`, adopted: true})
+  expect(await page.evaluate(() => cache.build('a').base())).toBe(
+    `${key}-compact`
+  )
+  expect(await answers(page, 'a')).toEqual(before)
+
+  // Later changes are stored over the compacted base
+  await edit(page, {a: [update('p0', 'Edited after compacting')]})
+  const [tree] = await sync(page, ['a'])
+  await expect
+    .poll(async () =>
+      (await bases(page))
+        .filter(base => base.tree === tree)
+        .map(base => base.parent)
+    )
+    .toEqual([`${key}-compact`])
+  for (const base of await bases(page)) expect(base.integrity).toBe('ok')
+  expect(await page.evaluate(() => cache.build('a').title('p0'))).toBe(
+    'Edited after compacting'
+  )
+})

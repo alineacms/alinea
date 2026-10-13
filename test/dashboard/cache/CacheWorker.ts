@@ -3,7 +3,9 @@ import {Entry} from '#/core/Entry.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {DashboardWorker} from '#/dashboard/boot/DashboardWorker.js'
+import {CompactEvent} from '#/dashboard/boot/CompactEvent.js'
+import {cacheName, DashboardWorker} from '#/dashboard/boot/DashboardWorker.js'
+import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
 import {wasmSqlite} from '#/database/driver/WasmDatabase.js'
 import {versionedCacheName} from '#/database/Version.js'
 import {createTestConnection} from '#test/CreateConnection.js'
@@ -27,7 +29,12 @@ export interface CacheBase {
 
 const worker = new DashboardWorker()
 const errors: Array<string> = []
+const savedInFull: Array<string> = []
 let fetched = 0
+
+worker.addEventListener(CompactEvent.type, event => {
+  savedInFull.push((event as CompactEvent).key)
+})
 
 addEventListener('error', event => {
   if (event instanceof ErrorEvent) errors.push(event.message)
@@ -108,6 +115,24 @@ const build = {
   },
   fetched(): number {
     return fetched
+  },
+  /** The bases the store saved in full, as the page is told. */
+  savedInFull(): Array<string> {
+    return savedInFull
+  },
+  /**
+   * Compact base `key` as the page's compaction worker does, here in this
+   * worker, then have the store adopt the copy.
+   */
+  async compact(key: string) {
+    const compacted = await BrowserEntryStore.compact({name: cacheName}, key)
+    const adopted = compacted ? await worker.adopt(key) : false
+    return {compacted, adopted}
+  },
+  /** The base the store reads. */
+  async base(): Promise<string | undefined> {
+    const db = await worker.db
+    return db instanceof BrowserEntryStore ? db.base : undefined
   },
   errors(): Array<string> {
     return errors
