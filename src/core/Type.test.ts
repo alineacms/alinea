@@ -523,3 +523,12 @@ test('documents show settings in a Settings tab', () => {
   test.equal(labels, ['Document', 'SEO', 'Details', 'Settings'])
   test.ok(Type.field(Page, 'background'))
 })
+
+test('a type view is a path or a component', () => {
+  const View = () => null
+  const Page = type('Page', {fields: {}, view: View})
+  test.is(Type.referencedViews(Page).length, 0)
+  test.equal(Type.referencedViews(type('Post', {fields: {}, view: '@/Post'})), [
+    '@/Post'
+  ])
+})

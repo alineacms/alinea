@@ -261,7 +261,7 @@ export namespace Type {
 
   const TypeOptions = cito.object({
     defaultView: cito.string.optional,
-    view: cito.string.optional,
+    view: cito.union(cito.string, cito.instance(Function)).optional,
     summaryRow: cito.string.optional,
     summaryThumb: cito.string.optional
   })
