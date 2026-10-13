@@ -1,3 +1,4 @@
+export type {DashboardEntry} from '#/core/DashboardEntry.js'
 export type {Filter} from '#/core/Filter.js'
 export type {Graph, GraphQuery} from '#/core/Graph.js'
 export type {Infer} from '#/core/Infer.js'

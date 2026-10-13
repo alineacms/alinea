@@ -2,8 +2,9 @@
  * The hooks of custom field and dashboard views, exported from `alinea/cms`.
  * Their types do not expose the internal state of the dashboard.
  */
+import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import type {Entry as EntryRecord} from '#/core/Entry.js'
+import type {Entry} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import type {Policy} from '#/core/Role.js'
@@ -14,7 +15,8 @@ import {
   type Dispatch,
   type SetStateAction,
   useCallback,
-  useContext
+  useContext,
+  useMemo
 } from 'react'
 import {graphAtom} from '../atoms/core.js'
 import {routeAtom} from '../atoms/nav.js'
@@ -146,15 +148,32 @@ export function useSiblingFieldValue(key: string) {
 }
 
 /**
- * Returns the selected entry version as a plain Entry object.
+ * Returns the entry being edited, in the selected locale and version.
+ * `entry.data` holds the field values as saved: use `useFieldValue(field)`
+ * for the live value while the editor changes it.
  *
- * Returns null outside an entry scope, or when the current entry cannot be
- * resolved. The returned value follows locale/status selection and does not
- * expose internal atoms.
+ * Returns null outside an entry, eg. in a root view.
  */
-export function useEntry(): EntryRecord<Record<string, unknown>> | null {
-  const scope = useContext(entryContext)
-  return scope?.selectedEntry ?? null
+export function useEntry(): DashboardEntry | null {
+  const selected = useContext(entryContext)?.selectedEntry
+  return useMemo(() => (selected ? dashboardEntry(selected) : null), [selected])
+}
+
+/** @internal */
+export function dashboardEntry(entry: Entry): DashboardEntry {
+  return {
+    id: entry.id,
+    type: entry.type,
+    title: entry.title,
+    path: entry.path,
+    url: entry.url,
+    locale: entry.locale,
+    status: entry.status,
+    workspace: entry.workspace,
+    root: entry.root,
+    parentId: entry.parentId,
+    data: entry.data
+  }
 }
 
 /**

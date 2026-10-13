@@ -30,6 +30,7 @@ export {
   usePreviewMetadata,
   useUser
 } from './dashboard/cms/hooks.js'
+export type {DashboardEntry} from './core/DashboardEntry.js'
 export type {Policy} from './core/Role.js'
 export type {PreviewMetadata} from './core/Preview.js'
 export type {User} from './core/User.js'

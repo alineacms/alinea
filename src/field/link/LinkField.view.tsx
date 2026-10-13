@@ -36,7 +36,7 @@ import {
   TextField
 } from '#/components.js'
 import {Config} from '#/core/Config.js'
-import type {Entry as EntryRecord} from '#/core/Entry.js'
+import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
 import {getType, getWorkspace} from '#/core/Internal.js'
@@ -482,7 +482,7 @@ interface ResolvedEntryPickerOptions {
 function useResolvedEntryPickerOptions(
   options: Partial<EntryPickerOptions>,
   type: PickerType,
-  entry: EntryRecord<Record<string, unknown>> | null
+  entry: DashboardEntry | null
 ): ResolvedEntryPickerOptions {
   const {condition: conditionOption, location: locationOption} = options
   const resolvedAtom = useMemo(() => {

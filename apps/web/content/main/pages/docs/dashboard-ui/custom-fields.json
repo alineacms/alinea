@@ -465,7 +465,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useEntry()`: the entry being edited, with its `id`, `title`, `url`, `workspace`, `root`, `locale`, `status` and the stored `data`. `null` outside an entry."
+                  "text": "`useEntry()`: the entry being edited, with its `id`, `type`, `title`, `path`, `url`, `locale`, `status`, `workspace`, `root`, `parentId` and `data`. `data` holds the field values as saved, read the live value of a field while it is edited with `useFieldValue(field)`. `null` outside an entry."
                 }
               ]
             }
