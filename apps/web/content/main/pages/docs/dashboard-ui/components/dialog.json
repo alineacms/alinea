@@ -101,7 +101,7 @@
         },
         {
           "_type": "text",
-          "text": ": a Button with `type=\"submit\"` submits it with the values of the named fields. The dialog closes once `onSubmit` resolves without errors. Errors it returns, keyed by field name, show on the fields and keep the dialog open. `onClose` on Dialog runs whenever the dialog closes, after `onOpenChange(false)`, for example to reset state."
+          "text": ": a Button with `type=\"submit\"` submits it with the values of the named fields. The dialog closes once `onSubmit` resolves without errors. Errors it returns, keyed by field name, show on the fields and keep the dialog open. `onClose` on Dialog runs whenever the dialog closes, after `onOpenChange(false)`, for example to reset state. The form takes no room of its own (`display: contents`): put spacing such as a `gap` on DialogContent."
         }
       ]
     },
