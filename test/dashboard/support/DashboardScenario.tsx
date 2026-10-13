@@ -10,7 +10,7 @@ import type {Entry} from '#/core/Entry.js'
 import {Config, Field, Query} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {views} from '#/field/views.js'
-import {use, useState} from 'react'
+import {use} from 'react'
 import {
   dashboardLinkScenarioIds,
   dashboardScenarioIds
@@ -592,8 +592,14 @@ async function createDashboardScenario({
   return {client, db}
 }
 
+// Created once per page: a render that suspends before it mounts loses its
+// state, so a promise kept in state would be created again on every retry
+const scenarios = new Map<string, Promise<DashboardScenarioState>>()
+
 export function DashboardScenario(props: DashboardScenarioProps) {
-  const [scenario] = useState(() => createDashboardScenario(props))
+  const key = JSON.stringify(props)
+  let scenario = scenarios.get(key)
+  if (!scenario) scenarios.set(key, (scenario = createDashboardScenario(props)))
   const {client, db} = use(scenario)
   return (
     <App

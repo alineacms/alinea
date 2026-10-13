@@ -12,7 +12,7 @@ import {
   Person,
   config
 } from '#test/overview.js'
-import {use, useState} from 'react'
+import {use} from 'react'
 import {
   overviewPhotoPreview,
   overviewScenarioIds as ids
@@ -194,9 +194,12 @@ async function createOverviewScenario() {
   return {db, client: createTestConnection(db)}
 }
 
+// Created once per page: a render that suspends before it mounts loses its
+// state, so a promise kept in state would be created again on every retry
+let scenario: ReturnType<typeof createOverviewScenario> | undefined
+
 export function OverviewScenario() {
-  const [scenario] = useState(createOverviewScenario)
-  const {client, db} = use(scenario)
+  const {client, db} = use((scenario ??= createOverviewScenario()))
   return (
     <App
       graph={db}
