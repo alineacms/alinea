@@ -4,6 +4,8 @@ import {DashboardScenarioMount} from '../support/DashboardScenarioMount.js'
 test('restores a previous revision as a draft', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
+  // Entries without a preview start with the entry sidebar closed
+  await app.page.getByRole('button', {name: 'Open entry sidebar'}).click()
   await app.page.getByRole('tab', {name: 'History'}).click()
   // Previous versions are expanded by default in a local dashboard
   await expect(
