@@ -79,17 +79,24 @@ test('field indexes follow the ordered fields and metadata of the config', async
   const Article = type('Article', {
     fields: {title: text('Title'), date: date('Date'), rank: number('Rank')}
   })
-  await syncFieldIndexes(db, {schema: {Article}, workspaces: {}})
+  const Note = type('Note', {fields: {title: text('Title')}})
+  await syncFieldIndexes(db, {schema: {Article, Note}, workspaces: {}})
   expect(await indexes()).toEqual([
-    'alinea_entry_index_by_field_date',
+    'alinea_entry_index_by_field_Article:date',
+    'alinea_entry_index_by_field_Article:rank',
     'alinea_entry_index_by_field_metadata.createdAt',
-    'alinea_entry_index_by_field_metadata.updatedAt',
-    'alinea_entry_index_by_field_rank'
+    'alinea_entry_index_by_field_metadata.updatedAt'
   ])
+  // Fields are indexed over the rows of their type
+  const [{sql: definition}] = await db.all<{sql: string}>(
+    sql`select sql from sqlite_master
+      where name = 'alinea_entry_index_by_field_Article:date'`
+  )
+  expect(definition).toEndWith(`where "type" = 'Article'`)
   const Dated = type('Article', {fields: {date: date('Date')}})
   await syncFieldIndexes(db, {schema: {Dated}, workspaces: {}})
   expect(await indexes()).toEqual([
-    'alinea_entry_index_by_field_date',
+    'alinea_entry_index_by_field_Dated:date',
     'alinea_entry_index_by_field_metadata.createdAt',
     'alinea_entry_index_by_field_metadata.updatedAt'
   ])

@@ -19,6 +19,9 @@
 - Overview filters can load their options from the content: `options` takes
   a function that receives the `graph` and `locale`, eg. to list an option per
   category entry.
+- Index date and number fields per type that has them, over the rows of that
+  type only, which keeps these indexes a fraction of their size in the
+  content database.
 - Search matches the hyphenated, spaced and joined spellings of a word:
   `multi-modal` and `multimodal` find each other, and `multi modal`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`

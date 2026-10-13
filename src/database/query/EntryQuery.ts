@@ -419,7 +419,13 @@ export function compileEntryQuery(
       if (!name) throw new Error('Query type is not in the configured schema')
       return name
     })
-    conditions.push(compileCondition(membership.index('type'), {in: names}))
+    // A single type is an equality, which the partial field indexes of the
+    // type match
+    conditions.push(
+      names.length === 1
+        ? eq(entry.type, names[0]!)
+        : compileCondition(membership.index('type'), {in: names})
+    )
   }
   const location = Array.isArray(query.location)
     ? query.location

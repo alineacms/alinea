@@ -104,7 +104,8 @@ function dropFieldIndexes() {
   for (const {name} of sqlite
     .query<{name: string}, []>(
       `select name from sqlite_master where type = 'index'
-       and name like 'alinea_entry_index_by_field_value%'`
+       and name like 'alinea_entry_index_by_field_%'
+       and name not like '%metadata.%'`
     )
     .all())
     sqlite.run(`drop index "${name}"`)
@@ -119,7 +120,7 @@ async function createIndexes(partial: boolean) {
       .map(([typeName]) => typeName)
     const value = jsonField(sql.identifier('data'), [name])
     for (const owner of partial ? owners : [undefined]) {
-      const index = `alinea_entry_index_by_field_${name}${owner ? `:${owner}` : ''}`
+      const index = `alinea_entry_index_by_field_${owner ? `${owner}:` : ''}${name}`
       await db.run(sql`create index ${sql.identifier(index)}
         on ${EntryIndexTable}(${sql.identifier('type')}, ${value},
           ${sql.identifier('index')}, ${sql.identifier('filePath')})
