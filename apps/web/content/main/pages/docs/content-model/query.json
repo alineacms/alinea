@@ -158,6 +158,41 @@
       ]
     },
     {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query fields and type fields"
+        }
+      ],
+      "_anchor": "query-fields-and-type-fields"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "There are two kinds of references you can select. `Query.*` are the built-in properties every entry has, whatever its type: `Query.id`, `Query.title`, `Query.url` and the others above. The fields you define are selected through their type: `BlogPost.intro` is the `intro` field of `BlogPost`, `BlogPost.cover` its cover image. Type fields are typed from their definition and resolved like they are without a select, so `BlogPost.cover` returns an `ImageLink`. Combine both in one `select`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdNsEJTgMPUCiEsY03H18PqRqy",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nconst posts = await cms.find({\n  type: BlogPost,\n  select: {\n    // Built-in properties of the entry\n    id: Query.id,\n    title: Query.title,\n    url: Query.url,\n    // Fields of the BlogPost type\n    intro: BlogPost.intro,\n    cover: BlogPost.cover\n  }\n})\n// Array<{id: string, title: string, url: string, intro: string, cover: ImageLink | null}>",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A type field only has a value on entries of that type, so select it in a query for that `type` (or one filtered on `_type`). `Query` fields work in any query, also one without a `type`, such as a search across all entries. Fields that `Config.document` adds, like `title` and `path`, are available both ways: `Query.title` and `BlogPost.title` return the same value."
+        }
+      ]
+    },
+    {
       "_type": "paragraph",
       "content": [
         {
