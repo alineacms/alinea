@@ -106,6 +106,17 @@ const queries: Record<string, GraphQuery> = {
     previous: Query.previous({select: Entry.id})
   }),
   translations: team(Query.translations({select: Entry.locale})),
+  referencedBy: team({
+    all: Query.referencedBy({select: Entry.id}),
+    link: Query.referencedBy({field: Page.link, select: Entry.id}),
+    count: Query.referencedBy({count: true})
+  }),
+  referenced: {
+    type: Page,
+    locale: 'en',
+    filter: {_referenced: Query.referencedBy({filter: {_id: 'home'}})},
+    select: Entry.id
+  },
   link: {
     first: true,
     id: 'home',

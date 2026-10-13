@@ -18,8 +18,11 @@ import {
   sql,
   type Sql
 } from 'rado'
-import type {EntryIndexTarget} from '../entry/EntryTable.js'
-import {jsonField} from './Condition.js'
+import {
+  EntryReferenceTable,
+  type EntryIndexTarget
+} from '../entry/EntryTable.js'
+import {arrayIncludes, jsonField} from './Condition.js'
 
 /** Expand the stored references as SQL rows, retaining list order and duplicates. */
 export function linkRelation(
@@ -153,4 +156,45 @@ export function relationCondition(
     default:
       throw new Error(`SQL link relation is not implemented: ${query.edge}`)
   }
+}
+
+/** A link field the referencing entries link through */
+export interface ReferenceField {
+  /** Where the field is stored in the entry data */
+  path: Array<string>
+  multiple: boolean
+}
+
+/**
+ * Entries that link to the source: the reference index finds them, a link
+ * field narrows them down to the ones linking through it. They share the
+ * locale of the source, unless either has none.
+ */
+export function referencedByCondition(
+  entry: EntryIndexTarget,
+  source: EntryIndexTarget,
+  field?: ReferenceField,
+  sameLocale = true
+): Sql<boolean> {
+  const references = new Builder()
+    .select(EntryReferenceTable.source)
+    .from(EntryReferenceTable)
+    .where(eq(EntryReferenceTable.targetId, source.id))
+  const value = field && jsonField(entry.data, field.path)
+  const linked = !value
+    ? sql.value(true)
+    : field.multiple
+      ? arrayIncludes(value, item => eq(jsonField(item, ['_entry']), source.id))
+      : eq(jsonField(value, ['_entry']), source.id)
+  return and(
+    inArray(entry.rowid, references),
+    linked,
+    sameLocale
+      ? or(
+          sql<boolean>`${source.locale} is null`,
+          sql<boolean>`${entry.locale} is null`,
+          eq(entry.locale, source.locale)
+        )
+      : sql.value(true)
+  )
 }

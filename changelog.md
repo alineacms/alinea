@@ -11,6 +11,11 @@
   `{field: Article.visibility.germany, deny: {all: true}}`.
 - Select fields inside object fields in queries, such as
   `select: {title: Page.seo.title}`, also in relations like `Query.children`.
+- Query the entries that link to an entry with `Query.referencedBy`, eg.
+  `select: {products: Query.referencedBy({type: Product, field: Product.brand})}`,
+  count them with `count: true` (overview columns that count are sortable) and
+  filter on them: `filter: {_referenced: Query.referencedBy({type: Product,
+  filter: {active: true}})}`.
 - Search matches the hyphenated, spaced and joined spellings of a word:
   `multi-modal` and `multimodal` find each other, and `multi modal`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`

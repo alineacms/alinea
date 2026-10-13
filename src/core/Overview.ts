@@ -24,9 +24,10 @@ export type OverviewColumnPosition = 'start' | 'end'
 export type OverviewColumnWidth = number | `${number}fr`
 
 /**
- * A value to sort entries by: an expression such as a field, or a query of a
+ * A value to sort entries by: an expression such as a field, a query of a
  * linked entry that selects a single expression, eg.
- * `Product.brand.first({select: Entry.title})`
+ * `Product.brand.first({select: Entry.title})`, or a count of related
+ * entries, eg. `Query.referencedBy({type: Product, count: true})`
  */
 export type OverviewSortValue = Expr<any> | EdgeQuery<Expr<any>>
 

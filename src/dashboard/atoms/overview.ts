@@ -20,7 +20,9 @@ import {
   type OverviewOptions,
   type OverviewSort,
   type OverviewSortDirection,
-  type OverviewSortOption
+  type OverviewSortByType,
+  type OverviewSortOption,
+  type OverviewSortValue
 } from '#/core/Overview.js'
 import {Root, type RootData} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
@@ -402,9 +404,11 @@ function customColumn(
 
 /**
  * Whether values of an expression can be ordered: expressions on the entry
- * and fields holding a single value, not links, lists or rich text
+ * and fields holding a single value, not links, lists or rich text, and
+ * counts of related entries
  */
-function isSortable(value: unknown): value is Expr {
+function isSortable(value: unknown): value is OverviewSortValue {
+  if (isRecord(value) && 'edge' in value) return value.count === true
   if (!Overview.isPlainExpr(value)) return false
   if (!hasField(value)) return true
   const field = value as Field
@@ -416,8 +420,8 @@ function isSortable(value: unknown): value is Expr {
 }
 
 /**
- * Columns that select fields or expressions of the entry sort by them,
- * columns of linked entries only sort with `sortBy`
+ * Columns that select fields or expressions of the entry, or count related
+ * entries, sort by them; columns of linked entries only sort with `sortBy`
  */
 function columnSortBy(
   column: OverviewColumn,
@@ -427,10 +431,10 @@ function columnSortBy(
   if (column.sortBy) return Overview.sortExpr(column.sortBy)
   if (!select) return undefined
   if (select.all !== undefined)
-    return isSortable(select.all) ? select.all : undefined
+    return isSortable(select.all) ? Overview.sortExpr(select.all) : undefined
   const cases = Object.entries(select.byType ?? {})
   if (!cases.every(([, value]) => isSortable(value))) return undefined
-  return Overview.sortExpr(Object.fromEntries(cases) as Record<string, Expr>)
+  return Overview.sortExpr(Object.fromEntries(cases) as OverviewSortByType)
 }
 
 /**

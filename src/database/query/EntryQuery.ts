@@ -3,6 +3,7 @@ import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import type {Field} from '#/core/Field.js'
+import type {RelationCondition} from '#/core/Filter.js'
 import type {EdgeQuery, GraphQuery, Status} from '#/core/Graph.js'
 import {
   getExpr,
@@ -14,6 +15,7 @@ import {
 import {getScope, type Entity, type Scope} from '#/core/Scope.js'
 import type {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {LinksField} from '#/field/link/LinkField.js'
 import {
   alias,
   and,
@@ -53,7 +55,11 @@ import {
 } from './Condition.js'
 import {searchableText, searchQuery} from './Search.js'
 
-import {linkRelation, relationCondition} from './Relation.js'
+import {
+  linkRelation,
+  referencedByCondition,
+  relationCondition
+} from './Relation.js'
 
 const builder = new Builder()
 
@@ -309,8 +315,24 @@ export function compileEntryQuery(
   const scope = getScope(config)
   // A related entry's value, eg. to order by the title of a linked entry
   function scalar(relationQuery: EdgeQuery): HasSql {
+    if (relationQuery.count) {
+      const {rows} = compileEntryQuery(
+        config,
+        {...relationQuery, status: query.status ?? 'published'},
+        {
+          source: entry,
+          entry: alias(baseEntry, `alinea_scalar_${depth + 1}`),
+          depth: depth + 1,
+          baseEntry
+        }
+      )
+      const matches = rows.as(`alinea_scalar_count_${depth + 1}`)
+      return sql`(${getQuery(builder.select(count()).from(matches))})`
+    }
     if (!isRecord(relationQuery.select) || !hasExpr(relationQuery.select))
-      throw new Error('A relation expression must select a single expression')
+      throw new Error(
+        'A relation expression must select a single expression or count'
+      )
     const {rows} = compileEntryQuery(
       config,
       {...relationQuery, status: query.status ?? 'published'},
@@ -342,6 +364,15 @@ export function compileEntryQuery(
       const name = scope.nameOf(edge.field)
       if (!name) throw new Error('Link field is not in the configured schema')
       links = linkRelation(source, name, edge.edge === 'entryMultiple')
+    } else if (edge.edge === 'referencedBy') {
+      const field = edge.field
+      const path = field && scope.dataPathOf(field as Field)
+      if (field && !path)
+        throw new Error('Link field is not in the configured schema')
+      const via = path && {path, multiple: field instanceof LinksField}
+      // A locale the query asks for replaces the locale of the source
+      const ownLocale = query.locale === undefined && !query.preferredLocale
+      conditions.push(referencedByCondition(entry, source, via, ownLocale))
     } else conditions.push(relationCondition(entry, edge, source))
   }
   conditions.push(statusCondition(entry, query.status))
@@ -406,8 +437,30 @@ export function compileEntryQuery(
         compileCondition(jsonField(item, ['url']), query.alias, 1)
       )
     )
+  // A related entry exists, eg. `{_referenced: Query.referencedBy(...)}`
+  function related(name: string, condition: RelationCondition): Sql<boolean> {
+    if (name !== '_referenced' || condition.edge !== 'referencedBy')
+      throw new Error(`Unsupported relation condition on ${name}`)
+    const {rows} = compileEntryQuery(
+      config,
+      {
+        ...(condition as EdgeQuery),
+        count: true,
+        status: query.status ?? 'published'
+      },
+      {
+        source: entry,
+        entry: alias(baseEntry, `alinea_exists_${depth + 1}`),
+        depth: depth + 1,
+        baseEntry
+      }
+    )
+    return exists(rows)
+  }
   if (query.filter !== undefined)
-    conditions.push(compileFilter(query.filter, name => membership.field(name)))
+    conditions.push(
+      compileFilter(query.filter, name => membership.field(name), related)
+    )
   if (Array.isArray(query.groupBy))
     throw new Error('groupBy must be a single field')
   const grouping = query.groupBy ? [membership.expr(query.groupBy)] : undefined

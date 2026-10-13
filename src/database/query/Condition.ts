@@ -2,7 +2,8 @@ import {
   parseCondition,
   parseFilter,
   type ConditionNode,
-  type FilterNode
+  type FilterNode,
+  type RelationCondition
 } from '#/core/Filter.js'
 import {
   and,
@@ -24,6 +25,8 @@ import {
 import {jsonExpr} from 'rado/core/expr/Json'
 
 type FieldSql = (name: string) => HasSql
+/** Whether a query of entries related to a field finds an entry */
+type RelationSql = (name: string, query: RelationCondition) => Sql<boolean>
 
 export function jsonField(
   target: HasSql,
@@ -70,25 +73,39 @@ export function compileCondition(
   return conditionSql(field, parseCondition(condition), depth)
 }
 
-export function compileFilter(filter: unknown, field: FieldSql): Sql<boolean> {
-  return filterSql(parseFilter(filter), field, 0)
+export function compileFilter(
+  filter: unknown,
+  field: FieldSql,
+  relation?: RelationSql
+): Sql<boolean> {
+  return filterSql(parseFilter(filter), field, 0, relation)
 }
 
 function filterSql(
   node: FilterNode,
   field: FieldSql,
-  depth: number
+  depth: number,
+  relation?: RelationSql
 ): Sql<boolean> {
   switch (node.op) {
     case 'and': {
-      const clauses = node.nodes.map(node => filterSql(node, field, depth))
+      const clauses = node.nodes.map(node =>
+        filterSql(node, field, depth, relation)
+      )
       return clauses.length ? and(...clauses) : sql.value(true)
     }
     case 'or': {
-      const clauses = node.nodes.map(node => filterSql(node, field, depth))
+      const clauses = node.nodes.map(node =>
+        filterSql(node, field, depth, relation)
+      )
       return clauses.length ? or(...clauses) : sql.value(false)
     }
     case 'field':
+      if (node.condition.op === 'relation') {
+        if (!relation)
+          throw new Error('Relation conditions are not supported here')
+        return relation(node.name, node.condition.query)
+      }
       return conditionSql(field(node.name), node.condition, depth)
   }
 }
@@ -140,6 +157,8 @@ function conditionSql(
         item => conditionSql(item, node.item, depth + 1),
         depth
       )
+    case 'relation':
+      throw new Error('Relation conditions only apply to entries')
   }
 }
 

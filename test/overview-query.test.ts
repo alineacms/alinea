@@ -8,6 +8,8 @@ import {
 import {Overview, type OverviewSortBy} from '#/core/Overview.js'
 import {getScope} from '#/core/Scope.js'
 import {LocalDB} from '#/database/LocalDB.js'
+import {resolveOverviewOptions} from '#/dashboard/atoms/overview.js'
+import {Config, Query} from '#/index.js'
 import {expect, setSystemTime, test} from 'bun:test'
 import {BlogPost, Brand, Event, Person, Product, config} from './overview.js'
 
@@ -52,6 +54,44 @@ test('orders by the title of a linked entry, entries without a link last', async
     select: Entry.title
   })
   expect(desc).toEqual(['Chair', 'Table', 'Lamp'])
+})
+
+test('columns counting the entries linking to an entry sort by the count', async () => {
+  const db = await catalogue()
+  const [acme] = await db.find({
+    type: Brand,
+    filter: {title: 'Acme'},
+    select: Entry.id
+  })
+  await db.create({
+    type: Product,
+    workspace: 'main',
+    root: 'products',
+    set: {title: 'Stool', brand: {_id: 'b3', _type: 'entry', _entry: acme}}
+  })
+  const products = Query.referencedBy({type: Product, count: true})
+  const overview = resolveOverviewOptions(
+    config,
+    {
+      columns: {products: Config.column({header: 'Products', select: products})}
+    },
+    ['Brand'],
+    undefined
+  )
+  const sortBy = overview.columns.find(
+    column => column.key === 'products'
+  )?.sortBy
+  expect(sortBy).toBeDefined()
+  expect(
+    await db.find({
+      root: 'brands',
+      orderBy: {desc: sortBy!},
+      select: {title: Entry.title, products}
+    })
+  ).toEqual([
+    {title: 'Acme', products: 2},
+    {title: 'Zeta', products: 1}
+  ])
 })
 
 test('relation sort expressions survive serialization', async () => {
