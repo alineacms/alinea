@@ -317,6 +317,99 @@ test('forks keep the page cache size', async () => {
   expect(row?.cache_size).toBe(-65536)
 })
 
+test('counts what bases rewrite since a sync from scratch', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await manyPages(500, 'First'))
+  await first.close()
+  const [synced] = await storage.list()
+  expect(synced!.meta.rewritten).toBe(0)
+
+  const next = await BrowserEntryStore.open(pages(false), options)
+  await next.syncWith(await manyPages(500, 'First', 1))
+  await next.close()
+  const [changed] = await storage.list()
+  expect(changed!.meta.rewritten).toBeGreaterThan(0)
+  expect(changed!.meta.rewritten).toBeLessThan(changed!.size)
+})
+
+test('starts over once its bases rewrote more than the database', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const sync = async (source: Source) => {
+    const store = await BrowserEntryStore.open(pages(false), options)
+    await store.syncWith(source)
+    await store.close()
+  }
+  await sync(await manyPages(500, 'Round 0'))
+  // Every round changes every page
+  let round = 0
+  while (true) {
+    const [head] = await storage.list()
+    if (Number(head!.meta.rewritten) > head!.size) break
+    round++
+    await sync(await manyPages(500, `Round ${round}`, 500))
+  }
+
+  const source = await manyPages(500, 'Latest')
+  const requested = countBlobs(source)
+  const next = await BrowserEntryStore.open(pages(false), options)
+  try {
+    expect(await next.count({})).toBe(0)
+    await next.syncWith(source)
+    expect(requested()).toBe(500)
+    expect(await next.count({})).toBe(500)
+  } finally {
+    await next.close()
+  }
+  const [head] = await storage.list()
+  expect(head!.meta.rewritten).toBe(0)
+})
+
+test('a base derived for another config does not count as rewritten', async () => {
+  const storage = memorySnapshots()
+  const source = await manyPages(500, 'First')
+  const open = (searchable: boolean, fingerprint: string) =>
+    BrowserEntryStore.open(pages(searchable), {name, fingerprint, storage})
+  const first = await open(false, 'config-1')
+  await first.syncWith(source)
+  await first.close()
+  // Deriving every entry again rewrites the whole database
+  const derived = await open(true, 'config-2')
+  await derived.syncWith(source)
+  await derived.close()
+  const [head] = await storage.list()
+  expect(head!.branch).toBe('config-2')
+  expect(head!.meta.rewritten).toBe(0)
+
+  const requested = countBlobs(source)
+  const next = await open(true, 'config-2')
+  try {
+    expect(await next.count({})).toBe(500)
+    await next.syncWith(source)
+    expect(requested()).toBe(0)
+  } finally {
+    await next.close()
+  }
+})
+
+/** `count` pages titled after `title`, the first `changed` of them edited. */
+function manyPages(count: number, title: string, changed = 0) {
+  return createEntrySource(
+    pages(false),
+    Array.from({length: count}, (_, i) => ({
+      id: `page-${i}`,
+      type: 'Page',
+      index: `a${String(i).padStart(4, '0')}`,
+      data: {
+        title: `${title} page ${i}${i < changed ? ' edited' : ''}`,
+        body: 'text'
+      }
+    }))
+  )
+}
+
 function pageSource(): Promise<Source> {
   return createEntrySource(pages(false), [
     {

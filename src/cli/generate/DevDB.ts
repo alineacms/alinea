@@ -132,8 +132,9 @@ export class DevDB extends EntryStore {
     return revision
   }
 
-  async finalize(): Promise<number> {
-    await this.database.compact()
+  /** Compact the database, rewriting it in full for a build. */
+  async finalize(options: {rewrite?: boolean} = {}): Promise<number> {
+    await this.database.compact(options)
     return (await fsp.stat(this.#options.databasePath)).size
   }
 

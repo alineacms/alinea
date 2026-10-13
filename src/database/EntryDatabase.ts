@@ -688,14 +688,21 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     )
   }
 
-  async compact(): Promise<void> {
+  /**
+   * Optimize the database and rewrite it when it has pages to reclaim, or
+   * always with `rewrite`. A file that synced many changes keeps the pages of
+   * its tables scattered over it, without any to reclaim: readers that read
+   * ahead, such as the dashboard reading a stored copy, then read it page by
+   * page. Rewriting lays every table out in order.
+   */
+  async compact(options: {rewrite?: boolean} = {}): Promise<void> {
     await this.#queue.run(async () => {
       await this.#db.run(sql`pragma optimize`)
-      // Rewriting the whole file only pays off when it has pages to reclaim.
       const free = await this.#db.get<{freelist_count: number}>(
         sql`pragma freelist_count`
       )
-      if (free?.freelist_count) await this.#db.run(sql`vacuum`)
+      if (options.rewrite || free?.freelist_count)
+        await this.#db.run(sql`vacuum`)
     })
   }
 }

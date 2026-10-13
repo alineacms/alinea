@@ -7,6 +7,7 @@ import type {Database as WasmSqlite} from '@alinea/sqlite-wasm/Database.js'
 import {
   indexedDBSnapshots,
   type Session,
+  type SnapshotInfo,
   type SnapshotStorage
 } from '@alinea/sqlite-wasm/snapshots'
 import {sql} from 'rado'
@@ -25,6 +26,15 @@ const cacheSize = -65536
 
 /** Bases of this many configs are kept; the newest is always among them. */
 const keepBranches = 2
+
+/**
+ * A store starts over from an empty database, synced from scratch, once the
+ * bases it builds on rewrote more than this many times the database's size.
+ * Syncs write changed pages wherever there is room, scattering the tables
+ * over the file, while reads of a base only read ahead well when its tables
+ * are in order. A sync from scratch writes them in order.
+ */
+const rewriteLimit = 1
 
 export interface BrowserEntryStoreOptions {
   name: string
@@ -52,6 +62,12 @@ export class BrowserEntryStore extends EntryStore {
   #stored: string | undefined
   #written: Promise<unknown> = Promise.resolve()
   #cleanup: Promise<void> = Promise.resolve()
+  /**
+   * The entries were derived again from a base of another config. Refetching
+   * everything after each deploy that changes the config costs more than
+   * the layout that deriving leaves, so its first save is not counted.
+   */
+  #derived = false
 
   static async open(
     config: Config,
@@ -67,9 +83,15 @@ export class BrowserEntryStore extends EntryStore {
         ? cleanupOldCaches(indexedDB, name).catch(() => {})
         : Promise.resolve()
     const Database = await wasmSqlite()
-    const session = options.reset
-      ? storage.session(new Database(), {branch: fingerprint})
+    const empty = () => storage.session(new Database(), {branch: fingerprint})
+    let session = options.reset
+      ? empty()
       : await openBase(storage, Database, fingerprint)
+    const base = session.snapshot
+    if (base && rewritten(base) > base.size * rewriteLimit) {
+      await session.close()
+      session = empty()
+    }
     const store = await BrowserEntryStore.#on(
       config,
       session,
@@ -79,12 +101,7 @@ export class BrowserEntryStore extends EntryStore {
       if (!session.snapshot) throw error
       // Start over from an empty database rather than one this build cannot
       // read or derive again.
-      return BrowserEntryStore.#on(
-        config,
-        storage.session(new Database(), {branch: fingerprint}),
-        storage,
-        fingerprint
-      )
+      return BrowserEntryStore.#on(config, empty(), storage, fingerprint)
     })
     store.#cleanup = cleanup
     return store
@@ -117,9 +134,11 @@ export class BrowserEntryStore extends EntryStore {
       // Content stored for another config is derived again for this one,
       // instead of syncing every entry from the remote into an empty
       // database.
-      if (branch !== undefined && branch !== fingerprint)
-        await withoutJournal(sqlite, () => database.reindex(config))
-      return new BrowserEntryStore(config, database, session, storage)
+      const derived = branch !== undefined && branch !== fingerprint
+      if (derived) await withoutJournal(sqlite, () => database.reindex(config))
+      const store = new BrowserEntryStore(config, database, session, storage)
+      store.#derived = derived
+      return store
     } catch (error) {
       await db.close()
       throw error
@@ -162,14 +181,21 @@ export class BrowserEntryStore extends EntryStore {
     // itself is not awaited: the database keeps working meanwhile. A
     // database that holds no changed pages reads a base with its content
     // already, as after opening a base another worker stored.
+    // A database synced from scratch starts counting what its bases rewrite
     const save = (key: string) =>
       this.database
-        .whileIdle(async () => ({
-          saved: session.held
-            ? session.save({key, meta: {tree: revision}})
-            : undefined
-        }))
-        .then(({saved}) => saved)
+        .whileIdle(async () => {
+          if (!session.held) return undefined
+          const base = session.snapshot
+          const added = this.#derived ? 0 : session.held
+          this.#derived = false
+          const meta = {
+            tree: revision,
+            rewritten: base ? rewritten(base) + added : 0
+          }
+          return {saved: session.save({key, meta})}
+        })
+        .then(result => result?.saved)
     // Another worker may have stored this content in other pages, which
     // the database cannot move onto: it would keep every page it changed in
     // memory, so it stores a base of its own (a delta), which retain keeps
@@ -195,6 +221,12 @@ export class BrowserEntryStore extends EntryStore {
     await Promise.all([this.#cleanup, this.#written])
     await super.close()
   }
+}
+
+/** The bytes the bases up to `base` rewrote since a sync from scratch. */
+function rewritten(base: SnapshotInfo): number {
+  const value = base.meta.rewritten
+  return typeof value === 'number' ? value : 0
 }
 
 const corruptCodes = new Set(['SQLITE_CORRUPT', 'SQLITE_NOTADB'])
