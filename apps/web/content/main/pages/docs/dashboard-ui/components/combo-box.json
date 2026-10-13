@@ -25,6 +25,56 @@
       "content": [
         {
           "_type": "text",
+          "text": "Groups and descriptions"
+        }
+      ],
+      "_anchor": "groups-and-descriptions"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Group items under a label with ComboBoxGroup. Like SelectItem, a ComboBoxItem can show an `icon` and a `description` below its label. Values are strings or numbers: `onValueChange` receives the `value` of the picked item, typed like the `value` you pass."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3KdUIv2Nkori1pTzJySxWdQQlac",
+      "example": "ComboBoxGroups"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Load items as you type"
+        }
+      ],
+      "_anchor": "load-items-as-you-type"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To search on a server, pass `filter={false}` so every item you render is shown, and `loading` while a request runs: it shows a spinner in the input, and in the list while it is empty. `useAsyncList` loads the items for the text in the input and cancels a request when a newer one replaces it. A function as `filter` replaces the default matching instead: `(textValue, inputValue) => boolean`."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3KdUIsKQGbfL2lswmYt4k9DakdU",
+      "example": "ComboBoxAsync"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Props"
         }
       ],

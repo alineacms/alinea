@@ -23,6 +23,8 @@ import {CodeExample} from './examples/Code'
 import {CollapsibleExample} from './examples/Collapsible'
 import {ColorSwatchPickerExample} from './examples/ColorSwatchPicker'
 import {ComboBoxExample} from './examples/ComboBox'
+import {ComboBoxAsyncExample} from './examples/ComboBoxAsync'
+import {ComboBoxGroupsExample} from './examples/ComboBoxGroups'
 import {CommandExample} from './examples/Command'
 import {ContentCardExample} from './examples/ContentCard'
 import {ContentGridExample} from './examples/ContentGrid'
@@ -34,6 +36,7 @@ import {DialogExample} from './examples/Dialog'
 import {DialogAlertExample} from './examples/DialogAlert'
 import {DialogFormExample} from './examples/DialogForm'
 import {DialogPreviewExample} from './examples/DialogPreview'
+import {DialogSubmitExample} from './examples/DialogSubmit'
 import {DropZoneExample} from './examples/DropZone'
 import {DropdownMenuExample} from './examples/DropdownMenu'
 import {DropdownMenuPreviewExample} from './examples/DropdownMenuPreview'
@@ -42,6 +45,7 @@ import {EmptyExample} from './examples/Empty'
 import {FieldExample} from './examples/Field'
 import {FileTriggerExample} from './examples/FileTrigger'
 import {FoldIconExample} from './examples/FoldIcon'
+import {FormExample} from './examples/Form'
 import {HeadingExample} from './examples/Heading'
 import {IconExample} from './examples/Icon'
 import {KbdExample} from './examples/Kbd'
@@ -64,10 +68,12 @@ import {SelectStatesExample} from './examples/SelectStates'
 import {SidebarExample} from './examples/Sidebar'
 import {SortableListExample} from './examples/SortableList'
 import {SpinnerExample} from './examples/Spinner'
+import {StackExample} from './examples/Stack'
 import {SurfaceExample} from './examples/Surface'
 import {SwitchExample} from './examples/Switch'
 import {SwitchStatesExample} from './examples/SwitchStates'
 import {TableExample} from './examples/Table'
+import {TableAsyncExample} from './examples/TableAsync'
 import {TableSelectionExample} from './examples/TableSelection'
 import {TabsExample} from './examples/Tabs'
 import {TabsVariantsExample} from './examples/TabsVariants'
@@ -113,6 +119,7 @@ export const componentExampleViews = {
   Dialog: DialogExample,
   DialogAlert: DialogAlertExample,
   DialogForm: DialogFormExample,
+  DialogSubmit: DialogSubmitExample,
   DropdownMenuPreview: DropdownMenuPreviewExample,
   DropdownMenu: DropdownMenuExample,
   DropdownMenuSelection: DropdownMenuSelectionExample,
@@ -123,6 +130,7 @@ export const componentExampleViews = {
   TooltipSides: TooltipSidesExample,
   Table: TableExample,
   TableSelection: TableSelectionExample,
+  TableAsync: TableAsyncExample,
   Badge: BadgeExample,
   BadgeStatuses: BadgeStatusesExample,
   BadgeIcons: BadgeIconsExample,
@@ -139,6 +147,8 @@ export const componentExampleViews = {
   SearchField: SearchFieldExample,
   MultipleSelect: MultipleSelectExample,
   ComboBox: ComboBoxExample,
+  ComboBoxGroups: ComboBoxGroupsExample,
+  ComboBoxAsync: ComboBoxAsyncExample,
   CheckboxGroup: CheckboxGroupExample,
   RadioGroup: RadioGroupExample,
   DateField: DateFieldExample,
@@ -150,6 +160,7 @@ export const componentExampleViews = {
   ColorSwatchPicker: ColorSwatchPickerExample,
   DropZone: DropZoneExample,
   Field: FieldExample,
+  Form: FormExample,
   List: ListExample,
   SortableList: SortableListExample,
   Tree: TreeExample,
@@ -168,6 +179,7 @@ export const componentExampleViews = {
   Blockquote: BlockquoteExample,
   Icon: IconExample,
   FoldIcon: FoldIconExample,
+  Stack: StackExample,
   Surface: SurfaceExample,
   Collapsible: CollapsibleExample,
   Page: PageExample,

@@ -25,6 +25,26 @@
       "content": [
         {
           "_type": "text",
+          "text": "Values"
+        }
+      ],
+      "_anchor": "values"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The value is an array of the `value`s of the picked items, strings or numbers. With a `name` the field submits one form entry per value, like a native multiple select: read them with `formData.getAll(name)`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Props"
         }
       ],

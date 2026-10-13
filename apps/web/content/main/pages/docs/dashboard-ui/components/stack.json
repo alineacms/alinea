@@ -1,0 +1,58 @@
+{
+  "_id": "3KdUInwxHhm3UJM6ZfOGROUaOkx",
+  "_type": "Doc",
+  "_index": "ajV",
+  "title": "Stack",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Lays out its children in a column, or a row with `direction=\"row\"`, with a `gap` between them: a number is in pixels, a string any CSS length. `align` positions the items across the stack (they stretch by default), `justify` along it, and `wrap` lets a row continue on the next line."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3KdUIuwjYszvBYuMAe74BG4VLJn",
+      "example": "Stack"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With `asChild` the stack lays out its single child element instead of rendering a div. `Stack` replaces the deprecated `HStack` and `VStack` of `alinea/ui`: `<Stack direction=\"row\">` is an HStack."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3KdUIqzOgNg3wrJIH8ez7riuykm",
+      "component": "Stack"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    }
+  }
+}

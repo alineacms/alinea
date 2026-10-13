@@ -10,7 +10,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Picks a single value from a list of options. The value is the `value` of the chosen SelectItem, and editors can clear it unless the field is required."
+          "text": "Picks a single value from a list of options. The value is the `value` of the chosen SelectItem, and `onValueChange` receives it, typed like the `value` you pass: values are strings or numbers. Set `clearable` to show a button that clears the value again, `onValueChange` then receives `null`."
         }
       ]
     },
@@ -60,7 +60,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A placeholder shows while nothing is selected. Like the other form controls, a select takes `description`, `error`, `required`, `disabled` and `readOnly`."
+          "text": "A placeholder shows while nothing is selected, and `clearable` adds a button to clear the selection. Like the other form controls, a select takes `description`, `error`, `required`, `disabled` and `readOnly`."
         }
       ]
     },
