@@ -60,7 +60,12 @@ export class BasicAuth implements AuthApi {
     const [scheme, token] = auth.split(' ', 2)
     if (scheme !== 'Basic')
       throw new MissingCredentialsError('Invalid authorization scheme')
-    const [username, password] = atob(token).split(':')
+    // The password may contain colons, the username can't (RFC 7617)
+    const credentials = atob(token)
+    const colon = credentials.indexOf(':')
+    if (colon === -1) throw new InvalidCredentialsError('Invalid credentials')
+    const username = credentials.slice(0, colon)
+    const password = credentials.slice(colon + 1)
     const authorized = await this.#verify(username, password)
     if (!authorized) throw new InvalidCredentialsError('Invalid credentials')
     const user =
