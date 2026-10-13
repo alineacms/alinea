@@ -1,0 +1,205 @@
+/**
+ * Builds and deployments. A build checks out a commit and generates the
+ * database the deployment ships, as `alinea build` does; the deployment
+ * then serves it from isolates that start on demand. The edge routes each
+ * request of the site to one of them.
+ */
+import {EntryDatabase} from '#/database/EntryDatabase.js'
+import {EntryStore} from '#/database/EntryStore.js'
+import {openWasmDatabase} from '#/database/driver/WasmDatabase.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
+import {
+  type ConfigVersion,
+  configFingerprint,
+  labApiKey,
+  labConfig
+} from '../shared/schema.js'
+import {backendDb} from './backendDb.js'
+import {bus} from './bus.js'
+import {type Commit, github} from './github.js'
+import {network} from './network.js'
+
+export type BackendMode = 'self-hosted' | 'cloud'
+
+export interface Deployment {
+  id: string
+  n: number
+  commit: Commit
+  configVersion: ConfigVersion
+  fingerprint: string
+  mode: BackendMode
+  driver: 'libsql' | 'd1'
+  /** The generated database file the build shipped. */
+  database: Uint8Array
+  /** The content sha the generated database is at. */
+  contentSha: string
+  /** Isolate slots, a realm id once the slot started. */
+  isolates: Array<string | undefined>
+  builtAt: number
+}
+
+export type Routing = 'alternate' | 0 | 1
+
+class Deployments {
+  node = 'build'
+  list: Array<Deployment> = []
+  routing: Routing = 'alternate'
+  #turn = 0
+  slots = 2
+
+  get active(): Deployment | undefined {
+    return this.list[this.list.length - 1]
+  }
+
+  async build(
+    commit: Commit,
+    configVersion: ConfigVersion,
+    mode: BackendMode
+  ): Promise<Deployment> {
+    const n = this.list.length + 1
+    bus.log({
+      node: this.node,
+      kind: 'build',
+      text: `build #${n}: check out ${commit.id.slice(0, 7)}, generate the database with config v${configVersion}`
+    })
+    const config = labConfig(configVersion)
+    const fingerprint = configFingerprint(configVersion)
+    const handle = await openWasmDatabase()
+    await EntryDatabase.createSchema(
+      handle.database,
+      config,
+      ReadonlyTree.EMPTY.sha,
+      fingerprint
+    )
+    const database = new EntryDatabase(config, handle.database)
+    const store = new EntryStore(config, database, new MemorySource())
+    const contentSha = await store.syncWith(github.sourceAt(commit))
+    await database.compact({rewrite: true})
+    const bytes = handle.export()
+    await store.close()
+    await database.close()
+    const deployment: Deployment = {
+      id: `d${n}`,
+      n,
+      commit,
+      configVersion,
+      fingerprint,
+      mode,
+      driver: backendDb.driver,
+      database: bytes,
+      contentSha,
+      isolates: Array(this.slots).fill(undefined),
+      builtAt: bus.now()
+    }
+    const previous = this.active
+    this.list.push(deployment)
+    bus.log({
+      node: this.node,
+      kind: 'deploy',
+      text: `deployment #${n} is live: generated database at ${contentSha.slice(0, 7)} (${Math.round(bytes.length / 1024)} KiB), ${mode} backend`
+    })
+    if (previous) this.retire(previous)
+    bus.changed()
+    return deployment
+  }
+
+  retire(deployment: Deployment) {
+    for (const id of deployment.isolates) if (id) network.terminate(id)
+    deployment.isolates = deployment.isolates.map(() => undefined)
+    bus.log({
+      node: this.node,
+      kind: 'retire',
+      text: `deployment #${deployment.n} retired, its isolates stop`
+    })
+  }
+
+  isolateNode(slot: number) {
+    return `isolate-${slot + 1}`
+  }
+
+  /** The realm of a slot of the active deployment, started on demand. */
+  isolate(slot: number): string {
+    const deployment = this.active
+    if (!deployment) throw new Error('Nothing is deployed')
+    const existing = deployment.isolates[slot]
+    if (existing) return existing
+    const id = `${deployment.id}-λ${slot + 1}`
+    const node = this.isolateNode(slot)
+    bus.setState(node, {cold: true})
+    bus.log({
+      node,
+      kind: 'cold-start',
+      text: `cold start of isolate λ${slot + 1} for deployment #${deployment.n}`
+    })
+    network.spawn(
+      {
+        id,
+        kind: 'isolate',
+        env: {
+          NODE_ENV: 'production',
+          NEXT_RUNTIME: 'nodejs',
+          NEXT_PHASE: 'phase-production-server',
+          ALINEA_API_KEY: labApiKey,
+          ALINEA_CLOUD_URL: 'https://cloud.lab'
+        },
+        data: {
+          deployment: deployment.id,
+          configVersion: deployment.configVersion,
+          mode: deployment.mode,
+          driver: deployment.driver
+        }
+      },
+      node,
+      name =>
+        new Worker(new URL('../workers/isolate.ts', import.meta.url), {
+          type: 'module',
+          name
+        })
+    )
+    deployment.isolates[slot] = id
+    bus.changed()
+    return id
+  }
+
+  /** Stop an isolate, as a host does after it idled. */
+  stop(slot: number) {
+    const deployment = this.active
+    const id = deployment?.isolates[slot]
+    if (!deployment || !id) return
+    network.terminate(id)
+    deployment.isolates[slot] = undefined
+    bus.setState(this.isolateNode(slot), undefined)
+    bus.log({
+      node: this.isolateNode(slot),
+      kind: 'stop',
+      text: `isolate λ${slot + 1} stopped: its databases are gone`
+    })
+  }
+
+  /** The slot the edge sends the next request to. */
+  pick(): number {
+    if (this.routing !== 'alternate') return this.routing
+    const slot = this.#turn % this.slots
+    this.#turn++
+    return slot
+  }
+}
+
+export const deployments = new Deployments()
+
+network.rpc('deployment.database', ({deployment}: {deployment: string}) => {
+  const found = deployments.list.find(d => d.id === deployment)
+  if (!found) throw new Error(`No deployment ${deployment}`)
+  return found.database
+})
+
+network.route(url => {
+  if (url.host !== 'site.lab') return
+  const slot = deployments.pick()
+  const realm = deployments.isolate(slot)
+  return {
+    node: deployments.isolateNode(slot),
+    handle: request => network.call(realm, 'request', request)
+  }
+})
