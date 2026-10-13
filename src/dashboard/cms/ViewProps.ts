@@ -27,8 +27,9 @@ export interface SectionViewProps {
 }
 
 /**
- * Props of the component a type points to with `view`. It replaces the
- * default entry editor for entries of that type.
+ * Props of the component a type points to with `view`. It replaces the form
+ * of entries of that type below the entry header, the field hooks edit the
+ * fields of the entry.
  */
 export interface TypeViewProps {
   /** The type of the entry being shown */

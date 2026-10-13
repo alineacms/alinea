@@ -1354,7 +1354,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A type's `view` now only receives `{type}`, the `editor` prop of 1.7 is gone. A custom `auth` view in the config is not used: the dashboard always renders its own sign-in."
+          "text": "A type's `view` now only receives `{type}`, the `editor` prop of 1.7 is gone. The view no longer replaces the whole editor: it renders below the entry header, which publishes and saves drafts, and reads and writes the fields of the entry with the hooks of `alinea/cms`. A custom `auth` view in the config is not used: the dashboard always renders its own sign-in."
         }
       ]
     },
@@ -1693,6 +1693,20 @@
                 {
                   "_type": "text",
                   "text": "`alinea build` accepts an absolute `handlerUrl` without a production `baseUrl`, and its error names the missing `baseUrl` setting."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A type's `view` renders below the entry header, in the editor of the entry: the field hooks of `alinea/cms` and `EditField` edit its fields and the header publishes them. It used to replace the whole editor without access to the fields."
                 }
               ]
             }

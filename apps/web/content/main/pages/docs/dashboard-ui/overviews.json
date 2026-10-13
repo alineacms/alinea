@@ -1553,7 +1553,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "A type's `view` replaces the editor of entries of that type. It receives `TypeViewProps`: `{type}`."
+                  "text": "A type's `view` replaces the form of entries of that type, below the entry header. It receives `TypeViewProps`: `{type}`."
                 }
               ]
             }

@@ -47,6 +47,11 @@
   when the parent defines no columns.
 - Add the `actions` type option: components in the entry header, next to the
   publish button.
+- A type's `view` replaces the form below the entry header instead of the
+  whole editor: the field hooks of `alinea/cms`, `EditField` and `EditFields`
+  edit the fields of the entry, the header publishes or saves them as a draft,
+  the sidebar shows history and references, and leaving with unsaved changes
+  asks to confirm. `view` also accepts a component instead of a path.
 - Add the `settings` type option: fields edited in the settings sheet of a
   list row or rich text block, below its label and anchor. Entries of the type
   show them in a Settings tab. They are stored and queried like other fields.

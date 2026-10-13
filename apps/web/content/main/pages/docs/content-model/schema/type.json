@@ -306,7 +306,24 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`view`: a React component, or a path to one, that replaces the entry editor for this type. It receives `{type}`."
+                  "text": "`view`: a React component, or a path to one, that replaces the form of entries of this type. It renders below the entry header and edits the entry with the hooks of `alinea/cms`. It receives `{type}`. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Replace the form of a type",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KeanD14w2sqIDTSPywxTUuIXeT",
+                      "_link": "entry",
+                      "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+                      "_anchor": "replace-the-form-of-a-type"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
                 }
               ]
             }

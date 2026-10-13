@@ -394,7 +394,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Everything in `alinea/cms` works in field views and in the other components the dashboard renders: `Field.view` sections and custom type and root views."
+          "text": "Everything in `alinea/cms` works in field views and in the other components the dashboard renders for an entry: `Field.view` sections, entry `actions` and a type's `view`. A root's `view` is not part of an entry: the hooks that read the dashboard, such as `useGraph`, `useNavigate`, `useLocale` and `useUser`, and `EntryTable` work there, the field hooks, `EditField` and `EditFields` don't, and `useEntry()` returns `null`."
         }
       ]
     },
@@ -774,6 +774,49 @@
       "code": "import {useEntry} from 'alinea/cms'\nimport {Field, Link} from 'alinea/components'\n\nexport function ProductUrls() {\n  const entry = useEntry()\n  if (!entry) return null\n  return (\n    <Field label=\"Public URL\" description=\"Where this product is published\">\n      <Link href={entry.url} target=\"_blank\">\n        {entry.url}\n      </Link>\n    </Field>\n  )\n}",
       "fileName": "fields/ProductUrls.view.tsx",
       "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Replace the form of a type"
+        }
+      ],
+      "_anchor": "replace-the-form-of-a-type"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A type's `view` replaces the form of its entries with your own component, for example to edit the fields in a layout of your own. The entry header stays above it, with the title, the status, the publish and draft buttons, the type's `actions` and the sidebar with history and references. The view fills the rest of the editor, without padding."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KeamZAiBzOZFJbOrrGeblbhiQg",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  view: '@/views/ProductView.view#ProductView',\n  fields: {\n    summary: Field.text('Summary', {multiline: true}),\n    price: Field.number('Price')\n  }\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KeamUXV3tiOKnyFeyaSMrzPFxr",
+      "code": "import {EditField, useField} from 'alinea/cms'\nimport {TextField} from 'alinea/components'\nimport {Product} from '@/schema/Product'\n\nexport function ProductView() {\n  const [summary = '', setSummary] = useField(Product.summary)\n  return (\n    <div style={{display: 'grid', gap: 16, padding: 24}}>\n      <TextField\n        label=\"Summary\"\n        multiline\n        value={summary}\n        onValueChange={setSummary}\n      />\n      <EditField field={Product.price} />\n    </div>\n  )\n}",
+      "fileName": "views/ProductView.view.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The view receives `TypeViewProps`: the `type` of the entry. It edits the entry like the form does: the field hooks, `EditField` and `EditFields` read and write the fields of the entry, the changes show up as unsaved edits in the header and are kept until the editor publishes or saves a draft, and leaving the entry with unsaved changes asks to confirm first. To fill the editor, size the view with `height: 100%`."
+        }
+      ]
     },
     {
       "_type": "heading",

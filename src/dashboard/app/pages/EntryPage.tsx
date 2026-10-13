@@ -102,9 +102,7 @@ export const entryPage = page(async (page, get) => {
     }
     const selectedNode = await get(localeData.selectedNode)
     const richTextImages = await get(localeData.richTextImages)
-    const parentNeedsTranslation = type.customView
-      ? false
-      : await get(localeData.parentNeedsTranslation)
+    const parentNeedsTranslation = await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
     const copyTranslationSource = get(localeData.copyTranslationSource)
     const isSidebarOpen = get(entrySidebarOpen(Boolean(get(entry.preview))))
@@ -376,6 +374,17 @@ function EntryEditorContent({
     if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0
   }, [entry.id])
 
+  const translationBanner = isUntranslated && (
+    <EntryTranslationBanner
+      copyFromSource={copyTranslationSource}
+      parentNeedsTranslation={parentNeedsTranslation}
+      sourceLocale={sourceLocale}
+      sourceLocales={sourceLocales}
+      onCopyFromSourceChange={setCopyTranslationSource}
+      onSourceLocaleChange={setSourceLocale}
+    />
+  )
+
   let editorBody = (
     <>
       <PageContent
@@ -384,16 +393,9 @@ function EntryEditorContent({
         className={styles.EntryEditor.body()}
       >
         <div className={styles.EntryEditor.fields()}>
-          {isUntranslated && (
+          {translationBanner && (
             <div className={styles.EntryEditor.banner()}>
-              <EntryTranslationBanner
-                copyFromSource={copyTranslationSource}
-                parentNeedsTranslation={parentNeedsTranslation}
-                sourceLocale={sourceLocale}
-                sourceLocales={sourceLocales}
-                onCopyFromSourceChange={setCopyTranslationSource}
-                onSourceLocaleChange={setSourceLocale}
-              />
+              {translationBanner}
             </div>
           )}
 
@@ -420,16 +422,22 @@ function EntryEditorContent({
     )
   }
 
+  // A type view takes the place of the form and edits the same node, so the
+  // header, sidebar and route guard save and guard its changes
   if (View) {
-    return (
-      <EntryScope
-        entry={entry}
-        localeData={localeData}
-        richTextImages={richTextImages}
-        selectedEntry={selectedEntry}
-      >
-        <View type={type.type} />
-      </EntryScope>
+    editorBody = (
+      <>
+        {translationBanner && (
+          <div className={styles.EntryEditor.viewBanner()}>
+            {translationBanner}
+          </div>
+        )}
+        <PageContent ref={editorBodyRef} className={styles.EntryEditor.view()}>
+          <NodeEditor node={node} type={withSettingsTab(type.type)}>
+            <View type={type.type} />
+          </NodeEditor>
+        </PageContent>
+      </>
     )
   }
 

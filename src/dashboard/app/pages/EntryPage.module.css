@@ -21,6 +21,16 @@
   background: var(--alinea-bg-muted);
 }
 
+.EntryEditor-viewBanner {
+  flex-shrink: 0;
+  padding: 16px 16px 0;
+}
+
+.EntryEditor-view {
+  min-width: 0;
+  min-height: 0;
+}
+
 .EntryEditor-toolbar {
   z-index: 1;
   overflow: hidden;
@@ -62,6 +72,10 @@
 
   .EntryEditor-body {
     padding: 8px;
+  }
+
+  .EntryEditor-viewBanner {
+    padding: 8px 8px 0;
   }
 
   .MissingEntry {

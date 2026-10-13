@@ -360,7 +360,11 @@ export interface TypeConfig<Definition, Settings = {}> {
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 
-  /** A React component used to view an entry of this type in the dashboard */
+  /**
+   * A React component, or a path to one, that replaces the form of entries of
+   * this type below the entry header. It edits the fields of the entry with
+   * the hooks of `alinea/cms`.
+   */
   view?: View<{type: Type}>
   /** The default dashboard view for entries of this type */
   defaultView?: EntryDefaultView

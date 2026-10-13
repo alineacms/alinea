@@ -78,7 +78,7 @@ export async function entrySidebar(
 ): Promise<EntrySidebarProps | undefined> {
   const typeName = get(entry.type)
   const type = get(typeAtoms(typeName))
-  if (type.customView || get(localeData.untranslated)) return undefined
+  if (get(localeData.untranslated)) return undefined
   const allowedTabs = entrySidebarTabs(type.type, Boolean(get(entry.preview)))
   const requestedTab = get(entrySidebarTabAtom)
   const selectedTab = allowedTabs.includes(requestedTab)
