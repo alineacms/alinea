@@ -329,6 +329,41 @@
       "content": [
         {
           "_type": "text",
+          "text": "Custom attributes"
+        }
+      ],
+      "_anchor": "custom-attributes"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Attributes that a custom extension adds to a node are stored with the node, but only the `data-*` attributes its `renderHTML` produces reach the rendered elements and your tag overrides. Render an attribute as `data-*` to use it on your site:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdNsCtfAMPUs1cWPHoxXk0PCmZ",
+      "code": "import {Field} from 'alinea'\nimport {extensions} from 'alinea/field/richtext'\n\nconst Checklist = extensions.BulletList.extend({\n  addAttributes() {\n    return {\n      ...this.parent?.(),\n      checklist: {\n        default: null,\n        renderHTML: attributes =>\n          attributes.checklist ? {'data-checklist': 'true'} : {}\n      }\n    }\n  }\n})\n\nexport const body = Field.richText('Body', {\n  extensions: defaults => ({...defaults, BulletList: Checklist})\n})\n\n// <RichText doc={body} ul={<ul className=\"list\" />} /> renders\n// <ul data-checklist=\"true\" class=\"list\">",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content saved by Alinea 1.x only has the raw attribute (`checklist: true`). Its `data-*` attribute is added when the entry is saved again in the dashboard, until then views don't receive it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
           "text": "Blocks"
         }
       ],
