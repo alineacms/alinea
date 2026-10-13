@@ -20,8 +20,22 @@ import {base64, btoa} from '#/core/util/Encoding.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {join, relative} from '#/core/util/Paths.js'
+import pLimit from 'p-limit'
 
-export interface GithubOptions extends GithubSourceOptions {}
+export interface GithubOptions extends GithubSourceOptions {
+  /**
+   * Commit as this author instead of the account that owns the token. Such
+   * commits are written through the REST API, which GraphQL commits do not
+   * allow, so GitHub does not mark them as verified and each save spends
+   * three REST requests, plus one per uploaded file.
+   */
+  author?: GithubCommitAuthor
+}
+
+export interface GithubCommitAuthor {
+  name: string
+  email: string
+}
 
 export class GithubApi
   extends GithubSource
@@ -41,11 +55,12 @@ export class GithubApi
 
   /**
    * Commit through GraphQL, which also answers the content sha before and
-   * after: a save spends none of the REST rate limit.
+   * after: a save spends none of the REST rate limit. A configured author
+   * commits through REST, writing only the commit there.
    */
   async #write(request: CommitRequest): Promise<{sha: string}> {
-    const {oid: currentCommit, contentSha: currentSha} =
-      await this.#getLatestCommit()
+    const current = await this.#getLatestCommit()
+    const currentSha = current.contentSha
 
     if (currentSha !== request.fromSha)
       throw new ShaMismatchError(currentSha, request.fromSha)
@@ -56,11 +71,18 @@ export class GithubApi
     if (user?.name && user.email) {
       commitMessage += `\n\nCo-authored-by: ${user.name} <${user.email}>`
     }
-    const newCommit = await this.#applyChangesToRepo(
-      currentCommit,
-      request.changes,
-      commitMessage
-    )
+    const newCommit = this.#options.author
+      ? await this.#commitThroughRest(
+          current,
+          request.changes,
+          commitMessage,
+          this.#options.author
+        )
+      : await this.#applyChangesToRepo(
+          current.oid,
+          request.changes,
+          commitMessage
+        )
 
     return {sha: newCommit.contentSha}
   }
@@ -281,41 +303,181 @@ export class GithubApi
       })
   }
 
+  /**
+   * Write a commit with its own author through the REST API: a tree on the
+   * current one, the commit, and the branch moved to it. Uploaded files are
+   * stored as blobs first, entries are passed in the tree as text.
+   */
+  async #commitThroughRest(
+    parent: CommitState,
+    changes: Array<CommitChange>,
+    commitMessage: string,
+    author: GithubCommitAuthor
+  ): Promise<CommitState> {
+    const {branch} = this.#options
+    // Without its base the tree would hold only the changed files, and the
+    // commit would remove everything else.
+    if (!parent.treeOid)
+      throw new Error(`GitHub did not answer the tree of ${parent.oid}`)
+    const limit = pLimit(4)
+    let entries = await Promise.all(
+      changes.map(change => limit(() => this.#treeEntry(change)))
+    )
+    const writeTree = () =>
+      this.#rest('POST', 'git/trees', {
+        base_tree: parent.treeOid,
+        tree: entries
+      })
+    let tree: unknown
+    try {
+      tree = await writeTree()
+    } catch (error) {
+      // GitHub refuses a tree that removes a path its base does not have,
+      // such as a file already removed outside the dashboard.
+      const removed = entries.filter(entry => entry.sha === null)
+      if (
+        !(error instanceof HttpError && error.code === 422) ||
+        !removed.length
+      )
+        throw error
+      const existing = await this.#existingPaths(
+        parent.oid,
+        removed.map(entry => entry.path)
+      )
+      // Every removed path exists: GitHub refused the tree for another reason
+      if (existing.size === removed.length) throw error
+      entries = entries.filter(
+        entry => entry.sha !== null || existing.has(entry.path)
+      )
+      tree = await writeTree()
+    }
+    assert(isRecord(tree) && typeof tree.sha === 'string')
+    const commit = await this.#rest('POST', 'git/commits', {
+      message: commitMessage,
+      tree: tree.sha,
+      parents: [parent.oid],
+      author
+    })
+    assert(isRecord(commit) && typeof commit.sha === 'string')
+    const ref = `git/refs/heads/${branch.split('/').map(encodeURIComponent).join('/')}`
+    try {
+      await this.#rest('PATCH', ref, {sha: commit.sha, force: false})
+    } catch (error) {
+      // The branch moved since the current commit was read. Other refusals,
+      // such as branch protection, are reported as they are.
+      if (
+        error instanceof HttpError &&
+        error.code === 422 &&
+        /fast.forward/i.test(error.message)
+      )
+        throw new HttpError(409, error.message)
+      throw error
+    }
+    return this.#getCommit(commit.sha)
+  }
+
+  /** The paths that exist in a commit. */
+  async #existingPaths(
+    commit: string,
+    paths: Array<string>
+  ): Promise<Set<string>> {
+    const {owner, repo, authToken} = this.#options
+    const params = paths.map((_, i) => `$p${i}: String!`).join(', ')
+    const fields = paths
+      .map((_, i) => `p${i}: object(expression: $p${i}) { oid }`)
+      .join('\n')
+    const variables: Record<string, string> = {owner, repo}
+    for (const [i, path] of paths.entries())
+      variables[`p${i}`] = `${commit}:${path}`
+    const result = await this.#graphQL(
+      `query ExistingPaths($owner: String!, $repo: String!, ${params}) {
+      repository(owner: $owner, name: $repo) {
+        ${fields}
+      }
+    }`,
+      variables,
+      authToken
+    )
+    const repository = result.data.repository
+    return new Set(paths.filter((_, i) => isRecord(repository[`p${i}`])))
+  }
+
+  async #treeEntry(change: CommitChange): Promise<RestTreeEntry> {
+    const path = this.#changePath(change)
+    const mode = '100644'
+    switch (change.op) {
+      case 'addContent':
+        return {path, mode, type: 'blob', content: change.contents}
+      case 'uploadFile': {
+        const blob = await this.#rest('POST', 'git/blobs', {
+          content: await this.#fetchUploadedContent(change.url),
+          encoding: 'base64'
+        })
+        assert(isRecord(blob) && typeof blob.sha === 'string')
+        return {path, mode, type: 'blob', sha: blob.sha}
+      }
+      case 'deleteContent':
+      case 'removeFile':
+        return {path, mode, type: 'blob', sha: null}
+    }
+  }
+
+  /** The repository path a change writes or removes. */
+  #changePath(change: CommitChange): string {
+    switch (change.op) {
+      case 'addContent':
+      case 'deleteContent':
+        return repositoryPath(this.contentLocation, change.path)
+      case 'uploadFile':
+      case 'removeFile':
+        return repositoryPath(this.#options.rootDir, change.location)
+    }
+  }
+
+  async #rest(method: string, path: string, body: object): Promise<unknown> {
+    const {owner, repo, authToken} = this.#options
+    const response = await this.githubFetch(
+      `https://api.github.com/repos/${owner}/${repo}/${path}`,
+      {
+        method,
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }
+    )
+    if (!response.ok)
+      throw new HttpError(
+        response.status,
+        `GitHub ${method} ${path} failed: ${await response.text()}`
+      )
+    return response.json()
+  }
+
   async #processChanges(changes: Array<CommitChange>): Promise<{
     additions: {path: string; contents: string}[]
     deletions: {path: string}[]
   }> {
-    const {rootDir} = this.#options
     const additions = Array<{path: string; contents: string}>()
     const deletions = Array<{path: string}>()
 
     for (const change of changes) {
+      const path = this.#changePath(change)
       switch (change.op) {
-        case 'addContent': {
-          additions.push({
-            path: repositoryPath(this.contentLocation, change.path),
-            contents: btoa(change.contents!)
-          })
+        case 'addContent':
+          additions.push({path, contents: btoa(change.contents)})
           break
-        }
-        case 'uploadFile': {
-          const file = repositoryPath(rootDir, change.location)
+        case 'uploadFile':
           additions.push({
-            path: file,
+            path,
             contents: await this.#fetchUploadedContent(change.url)
           })
           break
-        }
-        case 'deleteContent': {
-          const file = repositoryPath(this.contentLocation, change.path)
-          deletions.push({path: file})
+        case 'deleteContent':
+        case 'removeFile':
+          deletions.push({path})
           break
-        }
-        case 'removeFile': {
-          const file = repositoryPath(rootDir, change.location)
-          deletions.push({path: file})
-          break
-        }
       }
     }
 
@@ -339,6 +501,21 @@ export class GithubApi
     ).then(result => commitState(result.data.repository.ref.target))
   }
 
+  async #getCommit(oid: string): Promise<CommitState> {
+    const {owner, repo, authToken} = this.#options
+    return this.#graphQL(
+      `query GetCommit($owner: String!, $repo: String!, $oid: GitObjectID!, $content: String!) {
+      repository(owner: $owner, name: $repo) {
+        object(oid: $oid) {
+          ${commitStateFields}
+        }
+      }
+    }`,
+      {owner, repo, oid, content: this.contentLocation},
+      authToken
+    ).then(result => commitState(result.data.repository.object))
+  }
+
   async #fetchUploadedContent(url: string): Promise<string> {
     const response = await fetch(url)
     if (!response.ok)
@@ -351,24 +528,38 @@ function repositoryPath(...segments: Array<string>): string {
   return relative('/', join('/', ...segments))
 }
 
-/** A commit, and the sha of its content directory. */
+/** A commit, its tree and the sha of its content directory. */
 interface CommitState {
   oid: string
+  /** Missing when GitHub did not answer it, the REST commit then fails. */
+  treeOid: string | undefined
   contentSha: string
 }
 
 /** The fields of a commit that `commitState` reads, given `$content`. */
-const commitStateFields = `oid ... on Commit { file(path: $content) { oid } }`
+const commitStateFields = `oid ... on Commit { tree { oid } file(path: $content) { oid } }`
+
+/** A file of a tree written through the REST API, removed when sha is null. */
+interface RestTreeEntry {
+  path: string
+  mode: '100644'
+  type: 'blob'
+  content?: string
+  sha?: string | null
+}
 
 function commitState(commit: unknown): CommitState {
   assert(isRecord(commit) && typeof commit.oid === 'string')
+  const tree = commit.tree
+  const treeOid =
+    isRecord(tree) && typeof tree.oid === 'string' ? tree.oid : undefined
   const file = commit.file
   // A content directory without entries is not in the commit at all.
   const contentSha =
     isRecord(file) && typeof file.oid === 'string'
       ? file.oid
       : ReadonlyTree.EMPTY.sha
-  return {oid: commit.oid, contentSha}
+  return {oid: commit.oid, treeOid, contentSha}
 }
 
 /**

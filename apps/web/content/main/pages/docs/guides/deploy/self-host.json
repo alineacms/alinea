@@ -264,6 +264,15 @@
       ]
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To commit under another name, such as when your host only deploys commits of its members, pass `author: {name, email}`. GitHub links the commit to the account that owns the email. These commits are written through the REST API: GitHub does not mark them as verified, and each save spends three REST requests, plus one per uploaded file, where commits by the token owner spend none."
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
