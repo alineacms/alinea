@@ -60,8 +60,12 @@ const BlobTable = table('alinea_blob', {
 
 const tables = [UploadTable, UserTable, UserRoleTable, BlobTable]
 
-/** Blobs per statement, which keeps statements well below their limits. */
+/** Parameters bound per statement: D1 allows 100, the fewest of all drivers. */
+const maxParams = 100
+/** Shas per select or update, which bind a few parameters besides them. */
 const blobsPerStatement = 50
+/** Rows per insert, each binding its sha, content and usedAt. */
+const blobsPerInsert = Math.floor(maxParams / 3)
 const day = 24 * 60 * 60
 /** Blobs no instance read or stored for this long are removed. */
 const blobRetention = 30 * day
@@ -167,7 +171,7 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
     const db = await this.#db
     const now = seconds()
     const unique = [...new Map(blobs)]
-    for (const batch of chunks(unique, blobsPerStatement)) {
+    for (const batch of chunks(unique, blobsPerInsert)) {
       const shas = batch.map(([sha]) => sha)
       const stored = new Set(
         await db

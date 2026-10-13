@@ -103,6 +103,30 @@ test('blobs no instance used for a month are removed', async () => {
   test.equal([...found.keys()].toSorted(), [b, c])
 })
 
+test('blobs are inserted in batches that bind at most 100 parameters', async () => {
+  const sqlite = new BunSqlite(':memory:')
+  const db = driver['bun:sqlite'](sqlite)
+  const target: {prepare(sql: string, options?: object): unknown} = db.driver
+  const prepare = target.prepare.bind(target)
+  const inserts: Array<number> = []
+  // Fail like D1 does on a statement binding more than 100 parameters
+  target.prepare = (sql, options) => {
+    const params = sql.split('?').length - 1
+    if (params > 100) throw new Error('Too many parameters')
+    if (sql.startsWith('insert into "alinea_blob"')) inserts.push(params)
+    return prepare(sql, options)
+  }
+  const api = new DatabaseApi(testContext(), {db})
+  const blobs = Array.from({length: 120}, (_, index) => {
+    const sha = index.toString(16).padStart(40, '0')
+    return [sha, new TextEncoder().encode(sha)] as [string, Uint8Array]
+  })
+  await api.storeBlobs(blobs)
+  test.equal(inserts, [99, 99, 99, 63])
+  const found = await api.readBlobs(blobs.map(([sha]) => sha))
+  test.is(found.size, 120)
+})
+
 test('mysql tables index the email and hold large uploads', async () => {
   const queries: Array<string> = []
   const client = {
