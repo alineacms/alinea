@@ -211,7 +211,7 @@
         },
         {
           "_type": "text",
-          "text": " The CLI exits with \"Alinea requires Node version 24 or higher\" on older versions. The bundled content database is opened with Node's built-in `node:sqlite` (or `bun:sqlite` under Bun), so the runtime that serves your site needs Node 24 too, not only the machine that builds it."
+          "text": " The CLI exits with \"Alinea requires Node version 24 or higher\" on older versions. The bundled content database is opened with Node's built-in `node:sqlite` (or `bun:sqlite` under Bun), so the runtime that serves your site needs Node 24 too, not only the machine that builds it. The same goes for scheduled CI jobs that run the alinea CLI, such as a nightly `alinea build` or a script that imports content: update the Node version in those workflows as well."
         }
       ]
     },
@@ -230,7 +230,7 @@
         },
         {
           "_type": "text",
-          "text": " `react` and `react-dom` 19 are now peer dependencies and the CLI checks for them. In practice that means Next.js 15 or newer."
+          "text": " `react` and `react-dom` 19 are now peer dependencies and the CLI checks for them. In practice that means Next.js 15 or newer. Check third-party React renderers too: libraries built on React 18 internals, such as older versions of react-three-fiber or react-pixi, break under React 19. Upgrade them to a version that supports React 19."
         }
       ]
     },
