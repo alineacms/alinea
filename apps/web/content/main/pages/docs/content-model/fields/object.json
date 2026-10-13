@@ -123,15 +123,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Select and sort on the object as a whole: the inner fields aren't registered in the schema, so `Venue.address.city` can't be used in `select` or `orderBy`. To filter on an inner value, use `has`:"
+          "text": "Without a `select` the object is returned as a whole. Select or sort on a field inside it through the object, `Venue.address.city`, and filter on inner values with `has`:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3JkEzz3GrIZocFhTXS0PMzYJzQ9",
-      "code": "import {cms} from '@/cms'\nimport {Config, Field} from 'alinea'\n\nexport const Venue = Config.document('Venue', {\n  fields: {\n    address: Field.object('Address', {\n      fields: {\n        street: Field.text('Street'),\n        city: Field.text('City')\n      }\n    })\n  }\n})\n\nconst venuesInGhent = await cms.find({\n  type: Venue,\n  filter: {address: {has: {city: 'Ghent'}}},\n  select: {address: Venue.address}\n})",
-      "fileName": "",
+      "_id": "3KdUIuNhfpvvRnZwqNLAeyyBIPQ",
+      "code": "import {cms} from '@/cms'\nimport {Config, Field, Query} from 'alinea'\n\nexport const Venue = Config.document('Venue', {\n  fields: {\n    address: Field.object('Address', {\n      fields: {\n        street: Field.text('Street'),\n        city: Field.text('City')\n      }\n    })\n  }\n})\n\nconst venuesInGhent = await cms.find({\n  type: Venue,\n  filter: {address: {has: {city: 'Ghent'}}},\n  select: {title: Query.title, street: Venue.address.street},\n  orderBy: {asc: Venue.address.street}\n})\n// Array<{title: string, street: string}>",
       "language": "tsx"
     },
     {
