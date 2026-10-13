@@ -11,6 +11,8 @@
   `{field: Article.visibility.germany, deny: {all: true}}`.
 - Select fields inside object fields in queries, such as
   `select: {title: Page.seo.title}`, also in relations like `Query.children`.
+- Search matches the hyphenated, spaced and joined spellings of a word:
+  `multi-modal` and `multimodal` find each other, and `multi modal`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`
   signs in the local user with that role, for saves, hooks and `cms.user()`.
 - The `collapsed: false` type option expands an entry's children in the
