@@ -27,6 +27,8 @@ import type {AriaProps, DataProps, OpenStateProps, StyleProps} from './types.js'
 const styles = styler(css)
 
 export interface DialogProps extends OpenStateProps {
+  /** Called when the dialog closes, after `onOpenChange(false)` */
+  onClose?: () => void
   children: ReactNode
 }
 
@@ -34,13 +36,17 @@ export function Dialog({
   open,
   defaultOpen,
   onOpenChange,
+  onClose,
   children
 }: DialogProps) {
   return (
     <DialogTriggerPrimitive
       isOpen={open}
       defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={next => {
+        onOpenChange?.(next)
+        if (!next) onClose?.()
+      }}
     >
       <OptionalTrigger />
       {children}
