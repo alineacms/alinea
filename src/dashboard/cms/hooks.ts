@@ -6,6 +6,7 @@ import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
+import type {EntryDefaultView} from '#/core/Type.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import type {Policy} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
@@ -19,7 +20,11 @@ import {
   useMemo
 } from 'react'
 import {graphAtom} from '../atoms/core.js'
-import {routeAtom} from '../atoms/nav.js'
+import {
+  hashFromRoute,
+  type ResolvedDashboardRoute,
+  routeAtom
+} from '../atoms/nav.js'
 import {previewMetadataAtom} from '../atoms/preview.js'
 import {policyAtom, userAtom} from '../atoms/user.js'
 import {
@@ -205,35 +210,67 @@ export function useLocale(): string | null {
 
 /** A place in the dashboard to navigate to */
 export interface DashboardLocation {
-  /** Name of the workspace */
-  workspace: string
-  /** Name of the root */
-  root: string
+  /** Name of the workspace, leave out with `root` to open an entry by id */
+  workspace?: string
+  /** Name of the root, leave out with `workspace` to open an entry by id */
+  root?: string
   /** Id of the entry to open, leave out to open the root */
   entryId?: string
   /** Locale to open, for roots with translations */
   locale?: string | null
+  /**
+   * Open the entry's form (`edit`) or the list of its children (`overview`),
+   * for entries with both
+   */
+  view?: EntryDefaultView
+}
+
+function dashboardRoute(location: DashboardLocation): ResolvedDashboardRoute {
+  const locale = location.locale ?? undefined
+  // Without workspace and root, the edit page looks up the entry by id
+  if (location.entryId && !location.workspace && !location.root)
+    return {page: 'edit', entry: location.entryId, locale, view: location.view}
+  return {
+    page: 'entry',
+    workspace: location.workspace,
+    root: location.root,
+    entry: location.entryId,
+    locale,
+    view: location.view
+  }
 }
 
 /**
  * Returns a function that navigates the dashboard to an entry or root. The
  * user is asked to confirm first when the current entry has unsaved changes.
+ * An entry can be opened by its id alone, its workspace and root are looked
+ * up.
  *
  * @example
  * const navigate = useNavigate()
- * navigate({workspace: entry.workspace, root: entry.root, entryId: entry.id})
+ * navigate({entryId: post.id, locale: 'en'})
+ * navigate({workspace: 'main', root: 'pages'})
  */
 export function useNavigate(): (location: DashboardLocation) => void {
   const setRoute = useSetAtom(routeAtom)
   return useCallback(
-    (location: DashboardLocation) =>
-      setRoute({
-        page: 'entry',
-        workspace: location.workspace,
-        root: location.root,
-        entry: location.entryId,
-        locale: location.locale ?? undefined
-      }),
+    (location: DashboardLocation) => setRoute(dashboardRoute(location)),
     [setRoute]
+  )
+}
+
+/**
+ * Returns the href of a place in the dashboard, for a link that also opens
+ * in a new tab. An entry can be linked by its id alone.
+ *
+ * @example
+ * <a href={useHref({entryId: post.id})}>{post.title}</a>
+ */
+export function useHref(location: DashboardLocation): string {
+  const {workspace, root, entryId, locale, view} = location
+  return useMemo(
+    () =>
+      hashFromRoute(dashboardRoute({workspace, root, entryId, locale, view})),
+    [workspace, root, entryId, locale, view]
   )
 }

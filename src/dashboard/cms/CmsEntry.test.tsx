@@ -35,6 +35,7 @@ test('alinea/cms exports the custom UI api', () => {
     'useFieldSetter',
     'useFieldValue',
     'useGraph',
+    'useHref',
     'useLocale',
     'useNavigate',
     'usePolicy',

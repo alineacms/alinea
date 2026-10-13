@@ -24,6 +24,7 @@ export {
   type DashboardLocation,
   useEntry,
   useGraph,
+  useHref,
   useLocale,
   useNavigate,
   usePolicy,

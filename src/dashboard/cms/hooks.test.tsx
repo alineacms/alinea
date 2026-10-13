@@ -1,6 +1,6 @@
 import {cleanup, render, screen} from '#test/react.js'
 import type {Entry} from '#/core/Entry.js'
-import {useEntry} from '#/cms.js'
+import {type DashboardLocation, useEntry, useHref} from '#/cms.js'
 import {afterEach, expect, test} from 'bun:test'
 import {atom} from 'jotai'
 import {EntryAtoms} from '../atoms/entry.js'
@@ -69,4 +69,24 @@ test('useEntry returns null outside an entry', () => {
   }
   render(<View />)
   expect(screen.getByText('null')).toBeDefined()
+})
+
+test('useHref links entries by id or by location', () => {
+  function Link(location: DashboardLocation) {
+    return <a href={useHref(location)}>link</a>
+  }
+  const href = (location: DashboardLocation) => {
+    render(<Link {...location} />)
+    const value = screen.getByText('link').getAttribute('href')
+    cleanup()
+    return value
+  }
+  expect(href({entryId: 'about'})).toBe('#/edit?id=about')
+  expect(href({entryId: 'about', locale: 'en', view: 'edit'})).toBe(
+    '#/edit?id=about&locale=en&view=edit'
+  )
+  expect(
+    href({workspace: 'main', root: 'pages', entryId: 'about', locale: 'en'})
+  ).toBe('#/entry/main/pages:en/about')
+  expect(href({workspace: 'main', root: 'pages'})).toBe('#/entry/main/pages')
 })

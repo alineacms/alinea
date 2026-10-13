@@ -537,7 +537,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useNavigate()`: returns a function that opens an entry or root in the dashboard: `navigate({workspace, root, entryId})`. The editor is asked to confirm first when there are unsaved changes."
+                  "text": "`useNavigate()`: returns a function that opens an entry or root in the dashboard: `navigate({entryId, locale})` looks up the entry's workspace and root, `navigate({workspace, root})` opens a root. Pass `view: 'edit'` or `view: 'overview'` to pick the form or the list of children. The editor is asked to confirm first when there are unsaved changes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useHref(location)`: the href of the same locations, for a link that also opens in a new tab: `<a href={useHref({entryId: post.id})}>`."
                 }
               ]
             }

@@ -18,7 +18,10 @@ export const routeGuardAtom = atom<Atom<boolean> | null>(null)
 export const routeBlockAtom = atom<RouteBlock | null>(null)
 
 export interface DashboardRoute {
-  /** An edit link names an entry by its url, until it is looked up */
+  /**
+   * An edit link names an entry by its url, or by its id without workspace
+   * and root, until it is looked up
+   */
   page?: 'splash' | 'entry' | 'users' | 'edit'
   url?: string
   workspace?: string
@@ -32,7 +35,7 @@ export interface DashboardRoute {
   replace?: boolean
 }
 
-interface ResolvedDashboardRoute extends DashboardRoute {
+export interface ResolvedDashboardRoute extends DashboardRoute {
   page: 'splash' | 'entry' | 'users' | 'edit'
 }
 
@@ -48,6 +51,13 @@ export const nav = {
     const params = new URLSearchParams({url})
     if (workspace) params.set('workspace', workspace)
     if (root) params.set('root', root)
+    return `/edit?${params}`
+  },
+  /** The editor of an entry by id, its workspace and root are looked up */
+  link(entryId: string, locale?: string | null, view?: EntryDefaultView) {
+    const params = new URLSearchParams({id: entryId})
+    if (locale) params.set('locale', locale)
+    if (view) params.set('view', view)
     return `/edit?${params}`
   },
   entry(
@@ -105,6 +115,15 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
     .slice(1) as Array<string | undefined>
   const params = new URLSearchParams(search)
   const url = params.get('url')
+  const id = params.get('id')
+  const view = params.get('view')
+  if (action === 'edit' && id)
+    return {
+      page: 'edit',
+      entry: id,
+      locale: params.get('locale') ?? undefined,
+      view: view === 'edit' || view === 'overview' ? view : undefined
+    }
   if (action === 'edit' && url)
     return {
       page: 'edit',
@@ -115,7 +134,6 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
   const page =
     action === 'users' ? 'users' : action === 'entry' ? 'entry' : 'splash'
   const [root, locale] = rootPart.split(':')
-  const view = params.get('view')
   const sort = params.get('sort')
   return {
     page,
@@ -134,6 +152,13 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
 function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
   if (update.page === 'users') return {page: 'users'}
   if (update.page === 'splash') return {page: 'splash'}
+  if (update.page === 'edit' && update.entry)
+    return {
+      page: 'edit',
+      entry: update.entry,
+      locale: update.locale,
+      view: update.view
+    }
   if (update.page === 'edit')
     return update.url
       ? {
@@ -154,7 +179,10 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
   }
 }
 
-function hashFromRoute(route: ResolvedDashboardRoute) {
+/** @internal */
+export function hashFromRoute(route: ResolvedDashboardRoute): string {
+  if (route.page === 'edit' && route.entry)
+    return `#${nav.link(route.entry, route.locale, route.view)}`
   if (route.page === 'edit')
     return `#${nav.edit(route.url ?? '/', route.workspace, route.root)}`
   return route.page === 'splash'
@@ -299,12 +327,35 @@ function navigate(
   commit()
 }
 
-/** The route of the entry an edit link names by url, or the splash page */
+/**
+ * The route of the entry an edit link names by id or url, or the splash page
+ */
 async function linkedRoute(
   get: Getter,
-  {url = '/', workspace, root}: ResolvedDashboardRoute
+  route: ResolvedDashboardRoute
 ): Promise<ResolvedDashboardRoute> {
+  const {url = '/', workspace, root} = route
   const graph = get(graphAtom)
+  if (route.entry) {
+    const found = await graph.first({
+      id: route.entry,
+      status: 'preferDraft',
+      select: {
+        workspace: Entry.workspace,
+        root: Entry.root,
+        locale: Entry.locale
+      }
+    })
+    if (!found) return {page: 'splash'}
+    return {
+      page: 'entry',
+      workspace: found.workspace,
+      root: found.root,
+      entry: route.entry,
+      locale: route.locale ?? found.locale ?? undefined,
+      view: route.view
+    }
+  }
   const query = {
     workspace,
     root,
