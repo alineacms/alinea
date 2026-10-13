@@ -1035,6 +1035,56 @@ test('retries a forwarded commit conflict by response status', async () => {
   test.is(afterCommits, 1)
 })
 
+test('does not commit again when a sync moved past a landed commit', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  const db = new LocalDB(cms.config)
+  let writes = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(remoteDb, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async write(request) {
+          writes += 1
+          const result = await remoteDb.write(request)
+          // Another commit lands and a read syncs both in before this
+          // commit is applied locally
+          await remoteDb.create({type: Page, set: {title: 'Other'}})
+          await db.syncWith(remoteDb)
+          return result
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    mutationRequest([
+      {
+        op: 'create',
+        id: 'landed-entry',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Landed'}
+      }
+    ]),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.is(writes, 1)
+  test.is(await db.sha, await remoteDb.sha)
+  const titles = await db.find({type: Page, select: Entry.title})
+  test.equal(titles.toSorted(), ['Landed', 'Other'])
+})
+
 test('serves the history of entries the user can read', async () => {
   const cms = createCMS({
     schema: {Page},

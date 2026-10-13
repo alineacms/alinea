@@ -393,20 +393,15 @@ export function createHandler({
         const before = hooks.afterCommit
           ? await committedEntries(local, mutations)
           : []
-        const attempt = async (retry = 0) => {
+        const attempt = async (retry = 0): Promise<string> => {
           if (retry > 0) await local.syncWith(cnx)
           const request = {
             ...(await local.request(mutations, policy)),
             user: user.claims
           }
+          let sha: string
           try {
-            let {sha} = await cnx.write(request)
-            if (sha === request.intoSha) {
-              await local.write(request)
-            } else {
-              sha = await local.syncWith(cnx)
-            }
-            return sha
+            sha = (await cnx.write(request)).sha
           } catch (error) {
             const isConflict =
               error instanceof ShaMismatchError ||
@@ -415,6 +410,16 @@ export function createHandler({
             if (isConflict && retry < 3) return attempt(retry + 1)
             throw error
           }
+          // The commit landed: failing to apply it here must not commit it
+          // again, eg. when a read synced a later commit in meanwhile. Catch
+          // up with the remote instead, or with its next sync.
+          try {
+            if (sha === request.intoSha) await local.write(request)
+            else sha = await local.syncWith(cnx)
+          } catch {
+            sha = await local.syncWith(cnx).catch(() => sha)
+          }
+          return sha
         }
         const sha = await attempt()
         try {
