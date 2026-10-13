@@ -153,6 +153,8 @@ export class GithubApi
       requestCount++
       // Get history for all file versions of the current file
       const versions = [...queue].filter(v => !seen.has(v))
+      // A rename back to a name already seen has no new history
+      if (versions.length === 0) break
       for (const v of versions) seen.add(v)
       queue.length = 0
       const aliasMap = versions.map((v, idx) => ({
@@ -160,10 +162,13 @@ export class GithubApi
         version: v,
         path: join(rootDir, v)
       }))
+      // Paths are passed as variables: interpolated, a quote in a file name
+      // would end the string and change the query
+      const params = aliasMap.map(({alias}) => `$${alias}: String!`).join(', ')
       const query = aliasMap
         .map(
-          ({alias, path}) => `
-          ${alias}: history(path: "${path}", first: 100) {
+          ({alias}) => `
+          ${alias}: history(path: $${alias}, first: 100) {
             nodes {
               oid
               committedDate
@@ -175,14 +180,16 @@ export class GithubApi
         .join('')
 
       const gql = `
-        query GetFileHistory($owner: String!, $repo: String!, $branch: String!) {
+        query GetFileHistory($owner: String!, $repo: String!, $branch: String!, ${params}) {
           repository(owner: $owner, name: $repo) {
             ref(qualifiedName: $branch) {
               target { ... on Commit {${query}} }
             }
           }
         }`
-      const result = await this.#graphQL(gql, {owner, repo, branch}, authToken)
+      const variables: Record<string, string> = {owner, repo, branch}
+      for (const {alias, path} of aliasMap) variables[alias] = path
+      const result = await this.#graphQL(gql, variables, authToken)
 
       for (const {alias, version, path} of aliasMap) {
         const commits = result.data.repository.ref.target[alias]?.nodes || []
