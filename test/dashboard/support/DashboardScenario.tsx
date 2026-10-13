@@ -116,6 +116,17 @@ const slowPreviewConfig = Config.create({
   preview: SlowPreview
 })
 
+const browserPreviewOrigin = 'http://preview.example'
+
+const browserPreviewConfig = Config.create({
+  enableDrafts: true,
+  schema: {HiddenFolder, OrderedFolder, Page: ScenarioPage},
+  workspaces: {main, references},
+  baseUrl: browserPreviewOrigin,
+  handlerUrl: '/api/cms',
+  preview: true
+})
+
 interface DashboardScenarioState {
   client: LocalConnection
   db: LocalDB
@@ -127,6 +138,8 @@ export interface DashboardScenarioProps {
   readDelay?: number
   // Render entry previews with a component that suspends while it loads
   slowPreview?: boolean
+  // Preview entries in an iframe of the site at browserPreviewOrigin
+  browserPreview?: boolean
   // Fail the first request for the list of users
   failFirstUserList?: boolean
 }
@@ -180,12 +193,17 @@ const users: Array<User> = [
   }
 ]
 
+function scenarioConfig({slowPreview, browserPreview}: DashboardScenarioProps) {
+  if (browserPreview) return browserPreviewConfig
+  return slowPreview ? slowPreviewConfig : config
+}
+
 async function createDashboardScenario({
   readDelay = 0,
-  slowPreview,
-  failFirstUserList
+  failFirstUserList,
+  ...props
 }: DashboardScenarioProps): Promise<DashboardScenarioState> {
-  const db = new ScenarioDB(slowPreview ? slowPreviewConfig : config)
+  const db = new ScenarioDB(scenarioConfig(props))
   await db.sync()
   await db.create({
     id: dashboardScenarioIds.alpha,
@@ -581,7 +599,7 @@ export function DashboardScenario(props: DashboardScenarioProps) {
     <App
       graph={db}
       events={db.events}
-      config={props.slowPreview ? slowPreviewConfig : config}
+      config={scenarioConfig(props)}
       client={client}
       views={views}
       local
