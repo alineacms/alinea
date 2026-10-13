@@ -3,6 +3,7 @@ import {
   type DecodedPreviewRequest,
   decodePreviewRequest
 } from '#/backend/resolver/ParsePreview.js'
+import {dashboardUrl} from './dashboardUrl.js'
 import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
@@ -30,7 +31,7 @@ import {cache} from 'react'
 import {requestContext} from './context.js'
 import {cachedResolve, developmentRevision} from './devCache.js'
 import {RenderStats, summarizeQuery, timed} from './renderStats.js'
-import {syncIfStale} from './syncCheck.js'
+import {contentShaWindow, syncIfStale, tagContentSha} from './syncCheck.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -102,6 +103,11 @@ export class NextCMS<
    * returns a fresh holder, so nothing is recorded there.
    */
   #render = cache((): {stats?: RenderStats} => ({}))
+
+  /** Build renders join the content sha tag once, see `tagContentSha`. */
+  #tagContent = cache(() =>
+    tagContentSha(contentShaWindow(this.config.syncInterval))
+  )
 
   /** One content revision per render, see `developmentRevision`. */
   #devRevision = cache(() => developmentRevision())
@@ -270,7 +276,9 @@ export class NextCMS<
       : (request.syncInterval ?? this.config.syncInterval)
     // A preview cookie already settled freshness through its content hash.
     if (hasPreview) return answer()
-    if (!isBuild) {
+    if (isBuild) {
+      await this.#tagContent()
+    } else {
       // In draft mode Next bypasses the `unstable_cache` behind `syncIfStale`,
       // so asking for the shared sha would cost an uncached request on every
       // render. Without a preview cookie there is no hash to compare against,
@@ -282,7 +290,13 @@ export class NextCMS<
         syncWith: () => this.#syncDb(db, client, stats)
       }
       const settled =
-        !isDraft && (await syncIfStale(tracked, client, syncInterval))
+        !isDraft &&
+        (await syncIfStale(
+          tracked,
+          client,
+          syncInterval,
+          contentShaWindow(this.config.syncInterval)
+        ))
       if (!settled)
         await this.throttle(() => this.#syncDb(db, client, stats), syncInterval)
     }
@@ -347,19 +361,12 @@ export class NextCMS<
     if (!stats) return null
     const {default: dynamic} = await import('next/dynamic.js')
     const {isDev, handlerUrl} = await requestContext(this.config)
-    let adminPath = Config.adminPath(this.config)
-    if (!adminPath.startsWith('/')) adminPath = `/${adminPath}`
-    // In development the site proxies the admin path to the dev server, link
-    // to the dashboard as the site serves it, resolved against its origin
-    const dashboardUrl = isDev
-      ? adminPath
-      : new URL(`${adminPath}.html`, handlerUrl).href
     const NextPreviews = dynamic(() => import('./previews.js'), {
       ssr: false
     })
     return (
       <NextPreviews
-        dashboardUrl={dashboardUrl}
+        dashboardUrl={dashboardUrl(this.config, isDev, handlerUrl)}
         widget={widget}
         stats={widget && showStats ? stats.settled() : undefined}
         workspace={workspace}

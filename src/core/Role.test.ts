@@ -48,12 +48,6 @@ const a = {id: 'a'}
 const b = {id: 'b', parents: ['a']}
 const c = {id: 'c', parents: ['a', 'b']}
 
-test('root', async () => {
-  const policy = new WriteablePolicy(scope)
-  await admin.permissions(policy, undefined!)
-  test.ok(policy.canAll(a))
-})
-
 const editB = role('Edit B', {
   permissions(policy) {
     policy.set({
@@ -76,6 +70,12 @@ test('editB', async () => {
   test.not.ok(policy.canDelete(b))
   test.not.ok(policy.canCreate(b))
   test.not.ok(policy.canRead(a))
+  test.not.ok(policy.canDelete(c))
+  test.not.ok(policy.canCreate(c))
+  test.not.ok(policy.canPublish(b))
+  test.not.ok(policy.canArchive(b))
+  test.not.ok(policy.canUpload(b))
+  test.not.ok(policy.canManageMembers())
 })
 
 const explicitDeny = role('Explicit Deny', {
@@ -100,12 +100,22 @@ test('explicitDeny', async () => {
   test.ok(policy.canRead(b))
   test.ok(policy.canCreate(c))
   test.not.ok(policy.canRead(c))
+  // All permissions except read, and with it explore, remain on c
+  test.ok(policy.canUpdate(c))
+  test.ok(policy.canDelete(c))
+  test.ok(policy.canReorder(c))
+  test.ok(policy.canMove(c))
+  test.ok(policy.canPublish(c))
+  test.ok(policy.canArchive(c))
+  test.ok(policy.canUpload(c))
+  test.not.ok(policy.canExplore(c))
 })
 
 test('admin permissions', async () => {
   const policy = new WriteablePolicy(scope)
   await admin.permissions(policy, undefined!)
 
+  test.ok(policy.canAll(a))
   test.ok(policy.canCreate(a))
   test.ok(policy.canRead(a))
   test.ok(policy.canUpdate(a))
@@ -119,19 +129,6 @@ test('admin permissions', async () => {
   test.ok(policy.canManageMembers())
 })
 
-test('editB negative checks', async () => {
-  const policy = new WriteablePolicy(scope)
-  await editB.permissions(policy, undefined!)
-
-  // Should not have permissions other than read/update on b and c
-  test.not.ok(policy.canDelete(c))
-  test.not.ok(policy.canCreate(c))
-  test.not.ok(policy.canPublish(b))
-  test.not.ok(policy.canArchive(b))
-  test.not.ok(policy.canUpload(b))
-  test.not.ok(policy.canManageMembers())
-})
-
 test('manage members permission', () => {
   const policy = new WriteablePolicy(scope)
   policy.set({
@@ -142,22 +139,6 @@ test('manage members permission', () => {
 
   test.ok(policy.canManageMembers())
   test.not.ok(policy.canRead(a))
-})
-
-test('explicitDeny negative checks', async () => {
-  const policy = new WriteablePolicy(scope)
-  await explicitDeny.permissions(policy, undefined!)
-
-  // Should have all permissions except read, and with it explore, on c
-  test.ok(policy.canUpdate(c))
-  test.ok(policy.canDelete(c))
-  test.ok(policy.canReorder(c))
-  test.ok(policy.canMove(c))
-  test.ok(policy.canPublish(c))
-  test.ok(policy.canArchive(c))
-  test.ok(policy.canUpload(c))
-  test.not.ok(policy.canExplore(c))
-  test.not.ok(policy.canRead(c))
 })
 
 test('inheritance logic', async () => {
@@ -195,33 +176,19 @@ test('get returns effective permissions after denies', () => {
   test.ok(permissions.read)
 })
 
-test('default deny', async () => {
-  const policy = new WriteablePolicy(scope)
-  // No permissions applied
-  test.not.ok(policy.canRead(a))
-  test.not.ok(policy.canCreate(a))
-  test.not.ok(policy.canUpdate(a))
-  test.not.ok(policy.canDelete(a))
-  test.not.ok(policy.canReorder(a))
-  test.not.ok(policy.canMove(a))
-  test.not.ok(policy.canPublish(a))
-  test.not.ok(policy.canArchive(a))
-  test.not.ok(policy.canUpload(a))
-  test.not.ok(policy.canExplore(a))
-})
-
-test('blank policy', () => {
-  const policy = new Policy()
-  test.not.ok(policy.canRead(a))
-  test.not.ok(policy.canCreate(a))
-  test.not.ok(policy.canUpdate(a))
-  test.not.ok(policy.canDelete(a))
-  test.not.ok(policy.canReorder(a))
-  test.not.ok(policy.canMove(a))
-  test.not.ok(policy.canPublish(a))
-  test.not.ok(policy.canArchive(a))
-  test.not.ok(policy.canUpload(a))
-  test.not.ok(policy.canExplore(a))
+test('default deny', () => {
+  for (const policy of [new WriteablePolicy(scope), new Policy()]) {
+    test.not.ok(policy.canRead(a))
+    test.not.ok(policy.canCreate(a))
+    test.not.ok(policy.canUpdate(a))
+    test.not.ok(policy.canDelete(a))
+    test.not.ok(policy.canReorder(a))
+    test.not.ok(policy.canMove(a))
+    test.not.ok(policy.canPublish(a))
+    test.not.ok(policy.canArchive(a))
+    test.not.ok(policy.canUpload(a))
+    test.not.ok(policy.canExplore(a))
+  }
 })
 
 test('Policy.from creates a copy', async () => {
@@ -334,13 +301,6 @@ test('WriteablePolicy chaining', async () => {
     .set({id: a.id, allow: {update: true}})
   test.not.ok(policy.canRead(a))
   test.ok(policy.canUpdate(a))
-})
-
-test('role factory returns correct label and config', () => {
-  const r = role('Test', {permissions() {}, description: 'desc'})
-  test.is(r.label, 'Test')
-  test.is(r.description, 'desc')
-  test.ok(typeof r.permissions === 'function')
 })
 
 test('WriteablePolicy.applyAll merges with allowAll', () => {

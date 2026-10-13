@@ -97,7 +97,7 @@ export function mediaOverview(): OverviewOptions {
     MediaLibrary: new Expr({type: 'value', value: 0})
   })
   return {
-    builtins: {type: false, status: false},
+    builtins: {type: false},
     // Folders first in their manual order, files have none and come after,
     // newest first: entry ids start with their creation time. Indexes are
     // keys that only order as stored.

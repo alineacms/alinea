@@ -6,31 +6,7 @@ import {entryFileName, entryFilepath} from './EntryFilenames.js'
 
 const test = suite(import.meta)
 
-test('entryFilepath includes root and status suffix', () => {
-  const config = createConfig({
-    schema: {},
-    workspaces: {
-      main: workspace('Main', {
-        source: 'content/main',
-        roots: {
-          pages: root('Pages')
-        }
-      })
-    }
-  })
-
-  const entry = {
-    workspace: 'main',
-    root: 'pages',
-    locale: null,
-    path: 'Hello',
-    status: 'draft' as const
-  }
-
-  test.is(entryFilepath(config, entry, ['Blog']), 'pages/blog/hello.draft.json')
-})
-
-test('entryFileName uses source plus filepath without duplicating root', () => {
+test('file paths include the root, status suffix and source', () => {
   const config = createConfig({
     schema: {},
     workspaces: {
@@ -51,6 +27,10 @@ test('entryFileName uses source plus filepath without duplicating root', () => {
     status: 'published' as const
   }
 
+  test.is(
+    entryFilepath(config, {...entry, status: 'draft'}, ['Blog']),
+    'pages/blog/hello.draft.json'
+  )
   test.is(
     entryFileName(config, entry, ['Blog']),
     'content/main/pages/blog/hello.json'

@@ -31,32 +31,28 @@ test('unpublishes and republishes an entry', async ({dashboard, mount}) => {
   ).toBeVisible()
 })
 
-test('blocks publishing while a field is invalid', async ({
+test('warns about invalid fields before publishing', async ({
   dashboard,
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const publish = app.page.getByRole('button', {name: 'Publish', exact: true})
 
   await app.field('Title').fill('Invalid')
   await expect(app.page.getByText('Pick another title')).toBeVisible()
-  await app.page.getByRole('button', {name: 'Publish'}).click()
-  const dialog = app.page.getByRole('dialog', {
-    name: 'Fix invalid fields before publishing'
-  })
+  await publish.click()
+  const dialog = app.page.getByRole('dialog', {name: 'Some fields are invalid'})
   await expect(dialog.getByText('Title', {exact: true})).toBeVisible()
   await expect(dialog.getByText('Pick another title')).toBeVisible()
   await dialog.getByRole('button', {name: 'Show fields'}).click()
   await expect(dialog).toHaveCount(0)
   await expect(app.field('Title')).toBeFocused()
 
-  // Drafts are work in progress and may be saved with errors
-  await app.page.getByRole('button', {name: 'Save draft'}).click()
+  await publish.click()
+  await dialog.getByRole('button', {name: 'Publish anyway'}).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(app.title).toHaveText('Invalid')
   await expect(
     app.page.locator('header').getByText('Draft', {exact: true})
-  ).toBeVisible()
-
-  await app.field('Title').fill('Valid')
-  await app.page.getByRole('button', {name: 'Publish'}).click()
-  await expect(app.title).toHaveText('Valid')
-  await expect(dialog).toHaveCount(0)
+  ).toHaveCount(0)
 })

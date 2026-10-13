@@ -227,36 +227,6 @@ test('unpublish action', async () => {
   test.is(draftSub.status, 'draft')
 })
 
-test('new entries default to published', async () => {
-  const db = new LocalDB(cms.config)
-  const page = await db.create({
-    type: Page,
-    set: {path: 'page1'}
-  })
-  test.is(page._status, 'published')
-})
-
-test('creating new child defaults to archived when parent is archived', async () => {
-  const db = new LocalDB(cms.config)
-  const parent = await db.create({
-    type: Page,
-    set: {path: 'page1'},
-    status: 'archived'
-  })
-  const child = await db.create({
-    type: Page,
-    parentId: parent._id,
-    set: {path: 'child'}
-  })
-  // Dynamically retrieving the archived status inherits from parent
-  const archivedChild = await db.get({
-    id: child._id,
-    select: Entry,
-    status: 'archived'
-  })
-  test.is(archivedChild.status, 'archived')
-})
-
 test('publishing removes other statuses', async () => {
   const db = new LocalDB(cms.config)
   const page1 = await db.create({

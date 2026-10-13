@@ -26,6 +26,7 @@ import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
+import {confirmMoveAtom, draggedEntriesAtom} from './moveConfirmation.js'
 import {configAtom, graphAtom} from './core.js'
 import {MissingEntryError, treeEntryAtoms} from './entry.js'
 import {
@@ -108,6 +109,8 @@ export interface ExplorerOptions {
   initialSearchScope?: 'workspace' | 'everything'
   location?: ExplorerLocation
   limitLocations?: Array<ExplorerLimitLocation>
+  /** Lists only the media roots, for pickers of files and images */
+  media?: boolean
   mode?: 'browse' | 'search'
   nestedNavigation?: boolean
   /**
@@ -257,7 +260,17 @@ export function explorerLocations(
     : Object.entries(config.workspaces).flatMap(([workspace, value]) =>
         Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
       )
-  return configured.filter(location => policy.check(permission, location))
+  return configured.filter(
+    location =>
+      policy.check(permission, location) &&
+      (!options.media || isMediaLocation(config, location))
+  )
+}
+
+function isMediaLocation(config: Config, location: ExplorerLimitLocation) {
+  const workspace = config.workspaces[location.workspace]
+  const root = workspace && getWorkspace(workspace).roots[location.root]
+  return Boolean(root && getRoot(root).isMediaRoot)
 }
 
 export interface ExplorerItemData {
@@ -265,6 +278,8 @@ export interface ExplorerItemData {
   createdAt?: number | null
   id: string
   status?: EntryStatus
+  /** The version is the main one, a draft then was never published */
+  main?: boolean
   title: string
   path: string
   updatedAt?: number | null
@@ -1013,7 +1028,8 @@ export class ExplorerAtoms {
   )
   getDragData = atom(
     null,
-    (_get, _set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+    (_get, set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+      set(draggedEntriesAtom, keys)
       return [...keys].map(dashboardEntryDragItem)
     }
   )
@@ -1050,10 +1066,11 @@ export class ExplorerAtoms {
   /** Moves entries into the target entry */
   moveInto = atom(
     null,
-    async (get, _set, ids: Iterable<string>, target: DropTarget) => {
+    async (get, set, ids: Iterable<string>, target: DropTarget) => {
       const graph = get(graphAtom)
-      for (const id of ids) {
-        if (id === String(target.key)) continue
+      const moving = [...ids].filter(id => id !== String(target.key))
+      if (!(await set(confirmMoveAtom, moving, target))) return
+      for (const id of moving) {
         await graph.move({
           id,
           target: String(target.key),
@@ -1070,7 +1087,7 @@ export class ExplorerAtoms {
     null,
     async (
       get,
-      _set,
+      set,
       ids: Iterable<string>,
       target: DropTarget,
       locale: string | null
@@ -1080,6 +1097,7 @@ export class ExplorerAtoms {
       const moving = [...ids]
         .filter(id => id !== String(target.key))
         .sort((a, b) => listed.indexOf(a) - listed.indexOf(b))
+      if (!(await set(confirmMoveAtom, moving, target))) return
       await moveEntries(get(graphAtom), moving, target)
     }
   )
@@ -1388,6 +1406,7 @@ const explorerItemSelect = {
   createdAt: Entry.createdAt,
   id: Entry.id,
   status: Entry.status,
+  main: Entry.main,
   title: Entry.title,
   path: Entry.path,
   updatedAt: Entry.updatedAt,

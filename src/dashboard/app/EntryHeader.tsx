@@ -15,25 +15,25 @@ import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import type {Entry} from '#/core/Entry.js'
 import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import type {FieldValidationError} from '#/core/Validation.js'
 import {activityAtom} from '../atoms/activity.js'
 import {configAtom} from '../atoms/core.js'
-import {
-  archiveEntriesAtom,
-  deleteEntriesAtom,
-  loadDeletePlanAtom,
-  type DeletePlan
-} from '../atoms/delete.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
 import {loadMoveTargetsAtom, type MoveTargets} from '../atoms/move.js'
 import {routeAtom} from '../atoms/nav.js'
 import type {ReactiveNode} from '../atoms/ReactiveNode.js'
+import {
+  archiveDirectlyAtom,
+  archiveEntriesAtom,
+  deleteEntriesAtom,
+  loadRemovePlanAtom,
+  type RemoveAction,
+  type RemovePlan
+} from '../atoms/remove.js'
 import {policyAtom} from '../atoms/user.js'
 import {useSaveShortcut} from '../hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
@@ -59,7 +59,6 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {DeleteDialog} from './DeleteDialog.js'
 import css from './EntryHeader.module.css'
 import {
   entryHeaderActions,
@@ -72,6 +71,7 @@ import {
 } from './EntryValidationModal.js'
 import {MoveDialog} from './MoveDialog.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
+import {RemoveDialog} from './RemoveDialog.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -86,6 +86,12 @@ interface EntryHeaderMenuItem {
   label: string
   action: () => void | Promise<void>
   icon?: ComponentType
+}
+
+/** The entries the remove dialog asks to delete or archive */
+interface EntryHeaderRemoval {
+  action: RemoveAction
+  plan: RemovePlan
 }
 
 interface UrlConflictModalProps {
@@ -146,19 +152,6 @@ function entryUrlConflictInfo(
       root: info.root
     }
   }
-}
-
-function entryValidationFailure(
-  error: unknown
-): EntryValidationFailure | undefined {
-  if (error instanceof EntryValidationError)
-    return {errors: error.info.errors, message: error.message}
-  // Errors thrown in the shared worker arrive without their details
-  if (!isRecord(error) || error.name !== 'EntryValidationError') return
-  const info = error.info
-  if (isRecord(info) && Array.isArray(info.errors))
-    return {errors: info.errors as Array<FieldValidationError>}
-  return {message: typeof error.message === 'string' ? error.message : ''}
 }
 
 const variantDescription = {
@@ -233,7 +226,7 @@ export function EntryHeader({
   const unpublish = useSetAtom(localeData.unpublish)
   const archive = useSetAtom(localeData.archive)
   const publishArchived = useSetAtom(localeData.publishArchived)
-  const loadDeletePlan = useSetAtom(loadDeletePlanAtom)
+  const loadRemovePlan = useSetAtom(loadRemovePlanAtom)
   const loadMoveTargets = useSetAtom(loadMoveTargetsAtom)
   const deleteEntries = useSetAtom(deleteEntriesAtom)
   const archiveEntries = useSetAtom(archiveEntriesAtom)
@@ -266,7 +259,7 @@ export function EntryHeader({
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const [invalid, setInvalid] = useState<EntryValidationFailure>()
   const [moving, setMoving] = useState<MoveTargets>()
-  const [deletePlan, setDeletePlan] = useState<DeletePlan>()
+  const [removing, setRemoving] = useState<EntryHeaderRemoval>()
 
   function runAction(action: () => void | Promise<void>) {
     startTransition(async () => {
@@ -274,19 +267,18 @@ export function EntryHeader({
         await action()
       } catch (error) {
         const conflict = entryUrlConflictInfo(error)
-        const failure = entryValidationFailure(error)
         if (conflict) setUrlConflict(conflict)
-        else if (failure) setInvalid(failure)
         else throw error
       }
     })
   }
 
-  // Publishing requires valid fields, drafts are work in progress
+  // Invalid fields are listed before publishing, which the editor may do
+  // anyway; drafts are work in progress
   function runPublish(action: () => void | Promise<void>) {
     // Validated when publishing, not on every edit
     const errors = store.get(localeData.errors(node))
-    if (errors.length > 0) setInvalid({errors})
+    if (errors.length > 0) setInvalid({errors, publish: action})
     else runAction(action)
   }
 
@@ -297,12 +289,21 @@ export function EntryHeader({
     const locale = untranslated
       ? localeData.requestedLocale
       : activeVersion.locale
-    setDeletePlan(
-      await loadDeletePlan([{...activeVersion, hasChildren, locale}], locales)
+    const plan = await loadRemovePlan(
+      [{...activeVersion, hasChildren, locale}],
+      locales
     )
+    setRemoving({action: 'delete', plan})
   }
 
-  async function deleteAndNavigate(plan: DeletePlan) {
+  async function openArchiveDialog() {
+    assert(activeVersion)
+    if (store.get(archiveDirectlyAtom)) return archive()
+    const plan = await loadRemovePlan([{...activeVersion, hasChildren}])
+    setRemoving({action: 'archive', plan})
+  }
+
+  async function deleteAndNavigate(plan: RemovePlan) {
     assert(activeVersion)
     const {locale} = activeVersion
     const selected = store.get(plan.selectedLocales)
@@ -495,7 +496,7 @@ export function EntryHeader({
     menuItems.push({
       id: 'archive',
       label: 'Archive',
-      action: archive,
+      action: openArchiveDialog,
       icon: IcRoundArchive
     })
   if (actions.publish)
@@ -587,12 +588,16 @@ export function EntryHeader({
       <EntryValidationModal
         failure={invalid}
         onClose={() => setInvalid(undefined)}
+        onPublish={runAction}
       />
       <MoveDialog targets={moving} onClose={() => setMoving(undefined)} />
-      <DeleteDialog
-        plan={deletePlan}
-        onClose={() => setDeletePlan(undefined)}
-        onConfirm={deleteAndNavigate}
+      <RemoveDialog
+        action={removing?.action ?? 'delete'}
+        plan={removing?.plan}
+        onClose={() => setRemoving(undefined)}
+        onConfirm={
+          removing?.action === 'archive' ? archiveEntries : deleteAndNavigate
+        }
         onArchive={archiveEntries}
       />
     </PageHeader>

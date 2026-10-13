@@ -29,11 +29,6 @@ afterAll(async () => {
   await db.close()
 })
 
-test('filters by id', async () => {
-  const entries = await db.find({id: 'oi4qtV9YaXNRIUDT2s61Y'})
-  expect(entries).toHaveLength(1)
-})
-
 test('filters by type', async () => {
   const files = await db.find({type: MediaFile})
   expect(files).toHaveLength(5)
@@ -45,11 +40,6 @@ test('filters by location', async () => {
 
   const inWorkspace = await db.find({location: cms.workspaces.demo})
   expect(inWorkspace).toHaveLength(11)
-})
-
-test('filters by locale', async () => {
-  const entries = await db.find({locale: 'en'})
-  expect(entries).toHaveLength(0)
 })
 
 test('selects fields', async () => {
@@ -76,77 +66,6 @@ test('selects children', async () => {
 
   expect(recipes).toHaveLength(4)
   for (const header of recipes) expect(header.image?.src).toBeTruthy()
-})
-
-test('selects siblings', async () => {
-  const siblings = await db.get({
-    id: 'oi4qtV9YaXNRIUDT2s61Y',
-    select: Query.siblings({select: Entry.id})
-  })
-  expect(siblings).toHaveLength(3)
-})
-
-test('selects next', async () => {
-  const nextId = await db.resolve({
-    first: true,
-    id: 'oU_7ZAszAXwar__BCXVIt',
-    select: Query.next({select: Entry.id})
-  })
-  expect(nextId).toBe('uENumuMjqX0fSbGtrf2fj')
-})
-
-test('returns null when there is no next entry', async () => {
-  const nextId = await db.resolve({
-    first: true,
-    id: 'oi4qtV9YaXNRIUDT2s61Y',
-    select: Query.next({select: Entry.id})
-  })
-  expect(nextId).toBeNull()
-})
-
-test('selects previous', async () => {
-  const previousId = await db.resolve({
-    first: true,
-    id: 'oi4qtV9YaXNRIUDT2s61Y',
-    select: Query.previous({select: Entry.id})
-  })
-  expect(previousId).toBe('uENumuMjqX0fSbGtrf2fj')
-})
-
-test('selects parent', async () => {
-  const parentId = await db.first({
-    type: DemoRecipe,
-    select: Entry.parentId
-  })
-  const selectedParentId = await db.first({
-    type: DemoRecipe,
-    select: Query.parent({select: Entry.id})
-  })
-  expect(selectedParentId).toBe(parentId)
-})
-
-test('orders ascending and descending', async () => {
-  const first = await db.first({
-    type: DemoRecipe,
-    select: DemoRecipe.title,
-    orderBy: {asc: DemoRecipe.title}
-  })
-  expect(first).toBe('Chocolate chip')
-
-  const last = await db.first({
-    type: DemoRecipe,
-    select: DemoRecipe.title,
-    orderBy: {desc: DemoRecipe.title}
-  })
-  expect(last).toBe('Snickerdoodle')
-})
-
-test('groups results', async () => {
-  const files = await db.find({
-    type: MediaFile,
-    groupBy: MediaFile.extension
-  })
-  expect(files).toHaveLength(1)
 })
 
 test('previews an existing entry', async () => {

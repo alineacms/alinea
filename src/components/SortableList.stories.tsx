@@ -13,8 +13,6 @@ import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 import {
   SortableList,
   SortableListAdd,
-  SortableListDragPreview,
-  SortableListHandle,
   SortableListItem,
   SortableListItemActions,
   SortableListItemContent,
@@ -23,7 +21,8 @@ import {
   SortableListItemHeader,
   SortableListItemSettings,
   SortableListItemTitle,
-  SortableListItemToggle
+  SortableListItemToggle,
+  SortableListItemTrigger
 } from './SortableList.js'
 import {TextField} from './TextField.js'
 import type {DragMoveEvent} from './types.js'
@@ -36,7 +35,7 @@ export function Basic() {
       <ListLabel aria-label="Collapse all items" expanded hasRows shared>
         Sections
       </ListLabel>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListItem aria-label="Hero item 1">
           <SortableListItemHeader>
             <SortableListItemTitle>
@@ -136,7 +135,7 @@ export function Basic() {
 export function Empty() {
   return (
     <div style={{maxWidth: 720}}>
-      <SortableList aria-label="Sections" data-depth="muted">
+      <SortableList aria-label="Sections">
         <SortableListAdd>
           <Button variant="ghost" size="sm">
             Add Hero
@@ -145,10 +144,6 @@ export function Empty() {
       </SortableList>
     </div>
   )
-}
-
-export function DragPreview() {
-  return <SortableListDragPreview icon={IcRoundPanorama} label="Hero" />
 }
 
 interface ReorderItem {
@@ -178,34 +173,32 @@ function moveItems<T extends {id: string}>(
 
 export function Reorderable() {
   const [items, setItems] = useState(reorderItems)
+  const [opened, setOpened] = useState<string | null>(null)
   return (
     <div style={{maxWidth: 480}}>
       <SortableList
         aria-label="Sections"
-        data-depth="muted"
         onReorder={event => setItems(items => moveItems(items, event))}
       >
         {items.map(item => (
-          <SortableListItem
-            aria-label={item.label}
-            dragPreview={
-              <SortableListDragPreview icon={item.icon} label={item.label} />
-            }
-            id={item.id}
-            key={item.id}
-          >
+          <SortableListItem aria-label={item.label} id={item.id} key={item.id}>
             <SortableListItemHeader>
-              <SortableListHandle aria-label={`Drag ${item.label}`} />
               <SortableListItemTitle>
-                <Badge icon={item.icon} size="sm">
-                  {item.label}
-                </Badge>
+                <SortableListItemTrigger
+                  aria-label={`${item.label} settings`}
+                  onClick={() => setOpened(item.label)}
+                >
+                  <Badge icon={item.icon} size="sm">
+                    {item.label}
+                  </Badge>
+                </SortableListItemTrigger>
               </SortableListItemTitle>
             </SortableListItemHeader>
           </SortableListItem>
         ))}
       </SortableList>
       <p data-testid="order">{items.map(item => item.label).join(', ')}</p>
+      <p data-testid="opened">{opened ?? 'None'}</p>
     </div>
   )
 }
@@ -225,7 +218,6 @@ export function ToggleReorder() {
         {reorderItems.map(item => (
           <SortableListItem aria-label={item.label} id={item.id} key={item.id}>
             <SortableListItemHeader>
-              <SortableListHandle aria-label={`Drag ${item.label}`} />
               <input aria-label={`${item.label} title`} />
             </SortableListItemHeader>
           </SortableListItem>

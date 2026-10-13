@@ -7419,7 +7419,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": " syncs new content into the running site right after the commit, so the next request renders it. Content-only commits can skip the deployment altogether, and an `afterCommit` hook revalidates static pages. See "
+                  "text": " syncs new content into the running site right after the commit, so the next request renders it. Content-only commits can skip the deployment altogether, and static pages are rebuilt in the background. See "
                 },
                 {
                   "_type": "text",

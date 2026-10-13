@@ -24,6 +24,11 @@
     line-height: 18px;
   }
 
+  &[data-color='primary'] {
+    background: var(--alinea-primary-subtle);
+    color: var(--alinea-primary-subtle-fg);
+  }
+
   &[data-status='published'] {
     background: var(--alinea-status-published);
     color: var(--alinea-status-published-fg);

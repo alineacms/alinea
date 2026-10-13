@@ -13,6 +13,8 @@ interface MountDashboardOptions {
   routeEntry?: string
   routeRoot?: string
   routeWorkspace?: string
+  /** The hash the dashboard opens on, instead of the entry route */
+  hash?: string
   theme?: 'light' | 'dark'
   title?: string
 }
@@ -36,10 +38,6 @@ export class DashboardDriver {
 
   entry(name: string): Locator {
     return this.page.getByRole('row', {name, exact: true})
-  }
-
-  get navigationPending(): Locator {
-    return this.page.locator('main[data-navigation-pending]')
   }
 
   get title(): Locator {
@@ -92,9 +90,12 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
           else localStorage.removeItem('alinea-dashboard-theme')
           document.documentElement.removeAttribute('data-theme')
         }, options.theme)
-        await page.evaluate(hash => {
-          window.history.replaceState(null, '', hash)
-        }, `#/entry/${workspace}/${root}/${id}`)
+        await page.evaluate(
+          hash => {
+            window.history.replaceState(null, '', hash)
+          },
+          options.hash ?? `#/entry/${workspace}/${root}/${id}`
+        )
         const component = await render()
         const driver = new DashboardDriver(page, component)
         const expectedTitle =

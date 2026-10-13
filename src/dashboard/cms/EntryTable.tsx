@@ -30,6 +30,7 @@ import type {Root} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {getScope} from '#/core/Scope.js'
 import {Type} from '#/core/Type.js'
+import {EntryStatusIcon, entryStatus} from '../app/EntryStatusIcon.js'
 import {
   OverviewCell,
   overviewCellText,
@@ -324,14 +325,16 @@ function EntryTableRow({config, overview, row}: EntryTableRowProps) {
   const texts = overview.columns.map(column =>
     overviewCellText(config, column, row, links)
   )
+  const status = entryStatus(row)
   return (
     <TableRow
       id={row.id}
-      textValue={[row.title, ...texts].filter(Boolean).join(' ')}
+      textValue={[row.title, status?.label, ...texts].filter(Boolean).join(' ')}
     >
       <TableTitle
         icon={(type && getType(type).icon) || LucideFile}
         title={row.title}
+        suffix={status && <EntryStatusIcon status={status} />}
       />
       {overview.columns.map((column, index) => (
         <TableCell

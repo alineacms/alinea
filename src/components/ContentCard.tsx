@@ -12,6 +12,8 @@ const styles = styler(css)
 
 export interface ContentCardProps extends StyleProps {
   title: ReactNode
+  /** Shown right after the title, eg. a status icon */
+  suffix?: ReactNode
   /**
    * `icon` (the default) shows the icon on a neutral background, `media`
    * previews a file: its image on the `color` placeholder, or a file icon
@@ -36,6 +38,7 @@ export interface ContentCardProps extends StyleProps {
 /** The contents of a ContentGridItem, mirroring the dashboard explorer cards */
 export function ContentCard({
   title,
+  suffix,
   variant = 'icon',
   icon,
   iconColor,
@@ -105,7 +108,20 @@ export function ContentCard({
           data-slot="content-card-title"
           className={styles.ContentCard.title()}
         >
-          {title}
+          <span
+            data-slot="content-card-title-text"
+            className={styles.ContentCard.title.text()}
+          >
+            {title}
+          </span>
+          {suffix && (
+            <span
+              data-slot="content-card-suffix"
+              className={styles.ContentCard.suffix()}
+            >
+              {suffix}
+            </span>
+          )}
         </div>
         {(description || details) && (
           <div

@@ -12,6 +12,7 @@ import {ComponentCatalogView} from '@/page/blocks/ComponentCatalogView'
 import {ComponentExampleView} from '@/page/blocks/ComponentExampleView'
 import {ComponentPropsView} from '@/page/blocks/ComponentPropsView'
 import {CopyPromptView} from '@/page/blocks/CopyPromptView'
+import {DiagramView} from '@/page/blocks/DiagramView'
 import {ExampleBlockView} from '@/page/blocks/ExampleBlockView'
 import {FieldCatalogView} from '@/page/blocks/FieldCatalogView'
 import {ImageBlockView} from '@/page/blocks/ImageBlockView'
@@ -168,6 +169,7 @@ const DocExample = docBlock(ExampleBlockView)
 const DocChapterLink = docBlock(ChapterLinkView)
 const DocNotice = docBlock(NoticeView)
 const DocImage = docBlock(ImageBlockView)
+const DocDiagram = docBlock(DiagramView)
 const DocCopyPrompt = docBlock(CopyPromptView)
 const DocFieldCatalog = docBlock(FieldCatalogView, true)
 const DocComponentCatalog = docBlock(ComponentCatalogView, true)
@@ -202,6 +204,7 @@ function DocText({doc}: DocTextProps) {
       ChapterLinkBlock={DocChapterLink}
       NoticeBlock={DocNotice}
       ImageBlock={DocImage}
+      DiagramBlock={DocDiagram}
       CopyPromptBlock={DocCopyPrompt}
       FieldCatalogBlock={DocFieldCatalog}
       ComponentCatalogBlock={DocComponentCatalog}

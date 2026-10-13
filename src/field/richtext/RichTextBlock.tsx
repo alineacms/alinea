@@ -1,11 +1,11 @@
 import {
   Button,
-  Kbd,
   SheetBody,
   SheetClose,
   SheetContent,
   SheetFooter,
   SheetHeader,
+  SheetSection,
   SheetTitle,
   SortableList,
   SortableListItemTitle,
@@ -13,23 +13,32 @@ import {
   SortableListItem,
   SortableListItemActions,
   SortableListItemContent,
-  SortableListHandle,
-  SortableListItemHeader
+  SortableListItemHeader,
+  SortableListItemDescription,
+  SortableListItemToggle,
+  TextField,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/components.js'
 import {BlockSheet, useBlockSheet} from '#/dashboard/app/BlockSheet.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {useEntry} from '#/dashboard/hooks.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
-  IcRoundDelete
+  IcRoundDelete,
+  IcRoundLink
 } from '#/dashboard/icons.js'
+import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw} from 'jotai'
-import {memo, useMemo} from 'react'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
+import {memo, useMemo, useState} from 'react'
 import css from './RichTextBlock.module.css'
 
 const styles = styler(css)
@@ -41,6 +50,8 @@ export interface RichTextBlockProps {
   readOnly: boolean
   onDelete: () => void
   onDuplicate: () => void
+  /** Called as the header starts a drag, before the editor handles it */
+  onDragStart: () => void
 }
 
 export const RichTextBlock = memo(function RichTextBlock({
@@ -49,54 +60,99 @@ export const RichTextBlock = memo(function RichTextBlock({
   type,
   readOnly,
   onDelete,
-  onDuplicate
+  onDuplicate,
+  onDragStart
 }: RichTextBlockProps) {
   const label = Type.label(type)
   const typeIcon = getType(type).icon
   const sheet = useBlockSheet(id)
+  const [expanded, setExpanded] = useState(true)
+  const customLabel =
+    (useAtomValueRaw(node.field('_label')) as string | undefined) ?? ''
+  const setCustomLabel = useSetAtom(node.field('_label'))
+  const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
+  const setAnchor = useSetAtom(node.field('_anchor'))
+  const entryUrl = useEntry()?.url
+  const displayLabel = customLabel.trim()
+  const displayAnchor = (anchor ?? slugify(displayLabel)).trim()
+  const link =
+    entryUrl && displayAnchor ? `${entryUrl}#${displayAnchor}` : undefined
+
+  // The anchor follows the label until it is changed by hand, like list rows
+  function updateCustomLabel(nextValue: string) {
+    setCustomLabel(nextValue || undefined)
+    if (anchor === undefined || anchor === slugify(customLabel))
+      setAnchor(slugify(nextValue) || undefined)
+  }
+
+  function updateAnchor(nextValue: string) {
+    setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
+  }
   const badge = (
-    <Badge icon={typeIcon} size="sm">
+    <Badge icon={typeIcon} size="sm" color="primary">
       {label}
     </Badge>
+  )
+  const title = (
+    <>
+      {badge}
+      {displayLabel ? (
+        <SortableListItemDescription>
+          {displayLabel}
+        </SortableListItemDescription>
+      ) : (
+        displayAnchor && <Badge size="sm">#{displayAnchor}</Badge>
+      )}
+    </>
   )
 
   return (
     <>
       <SortableList
         className={styles.RichTextBlock()}
-        data-depth="muted"
         data-read-only={readOnly || undefined}
         data-richtext-block="true"
       >
         <SortableListItem tabIndex={0} current={sheet.open}>
-          <SortableListItemHeader data-richtext-block-header="true">
-            {!readOnly && (
-              <SortableListHandle
-                aria-label={`Drag ${label} block`}
-                className={styles.RichTextBlock.dragHandle()}
-                data-richtext-drag-handle="true"
-                draggable
-                onDragStart={event => {
-                  event.dataTransfer.effectAllowed = 'move'
-                  event.dataTransfer.setData(
-                    'application/x-alinea-richtext-block',
-                    id
-                  )
-                }}
-              />
-            )}
+          <SortableListItemHeader
+            className={styles.RichTextBlock.header()}
+            data-richtext-block-header="true"
+            // The editor moves blocks, dragging the header drags the block
+            data-richtext-drag-handle={readOnly ? undefined : 'true'}
+            draggable={!readOnly}
+            onDragStartCapture={onDragStart}
+            onDragStart={event => {
+              event.dataTransfer.effectAllowed = 'move'
+              event.dataTransfer.setData(
+                'application/x-alinea-richtext-block',
+                id
+              )
+            }}
+          >
             <SortableListItemTitle>
+              {/* Browsers only drag from a button that is draggable itself */}
+              <SortableListItemToggle
+                draggable={!readOnly}
+                aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+                expanded={expanded}
+                onClick={() => setExpanded(!expanded)}
+              />
               {sheet.available ? (
                 <SortableListItemTrigger
                   {...sheet.triggerProps}
+                  draggable={!readOnly}
                   aria-label={`${label} settings`}
                   aria-expanded={sheet.open}
-                  onClick={sheet.toggle}
+                  onClick={() => {
+                    // Opening the settings shows the block they belong to
+                    if (!sheet.open) setExpanded(true)
+                    sheet.toggle()
+                  }}
                 >
-                  {badge}
+                  {title}
                 </SortableListItemTrigger>
               ) : (
-                badge
+                title
               )}
             </SortableListItemTitle>
             <SortableListItemActions>
@@ -110,26 +166,59 @@ export const RichTextBlock = memo(function RichTextBlock({
               />
             </SortableListItemActions>
           </SortableListItemHeader>
-          <SortableListItemContent data-richtext-block-editor="true">
-            {readOnly ? (
-              <ReadOnlyBlockEditor node={node} type={type} />
-            ) : (
-              <NodeEditor node={node} type={type} />
-            )}
-          </SortableListItemContent>
+          {expanded && (
+            <SortableListItemContent data-richtext-block-editor="true">
+              {readOnly ? (
+                <ReadOnlyBlockEditor node={node} type={type} />
+              ) : (
+                <NodeEditor node={node} type={type} />
+              )}
+            </SortableListItemContent>
+          )}
         </SortableListItem>
       </SortableList>
       <BlockSheet id={id}>
         <SheetContent onClose={() => sheet.setOpen(false)}>
           <SheetHeader>
             {badge}
-            <SheetTitle>{label}</SheetTitle>
-            <Kbd size="sm" aria-hidden>
-              Esc
-            </Kbd>
+            <SheetTitle>
+              {displayLabel || (displayAnchor && `#${displayAnchor}`) || label}
+            </SheetTitle>
             <SheetClose aria-label="Close block settings" />
           </SheetHeader>
-          <SheetBody />
+          <SheetBody>
+            <SheetSection>
+              <TextField
+                label="Label"
+                disabled={readOnly}
+                onValueChange={updateCustomLabel}
+                value={customLabel}
+              />
+              <div className={styles.RichTextBlock.anchor()}>
+                <div className={styles.RichTextBlock.anchor.field()}>
+                  <SlugField
+                    fieldValue={anchor}
+                    label="Anchor"
+                    isDisabled={readOnly}
+                    onChange={updateAnchor}
+                    source={customLabel}
+                  />
+                </div>
+                {link && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      variant="ghost"
+                      size="icon"
+                      icon={IcRoundLink}
+                      aria-label="Copy link to block"
+                      onClick={() => navigator.clipboard.writeText(link)}
+                    />
+                    <TooltipContent>Copy link to block</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </SheetSection>
+          </SheetBody>
           <SheetFooter>
             <Button
               variant="ghost"
@@ -143,6 +232,8 @@ export const RichTextBlock = memo(function RichTextBlock({
             >
               Duplicate
             </Button>
+          </SheetFooter>
+          <SheetFooter>
             <Button
               variant="ghost"
               size="sm"

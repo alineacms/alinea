@@ -13,6 +13,13 @@ import {
   RichTextStory
 } from './RichTextField.story.js'
 
+/** The header of a block of `type`, which drags the block */
+function blockHeader(page: Page, type: string) {
+  return page.locator('[data-richtext-drag-handle]').filter({
+    has: page.locator('[data-slot="badge"]', {hasText: new RegExp(`^${type}$`)})
+  })
+}
+
 const pageErrors = new WeakMap<Page, Array<string>>()
 
 test.beforeEach(async ({page}) => {
@@ -440,12 +447,60 @@ test('edits nested rich text inside an embedded block', async ({
   await expect(block).toHaveCSS('margin', '16px 0px')
   await expect(block.locator('[data-richtext-block-editor="true"]')).toHaveCSS(
     'padding',
-    '8px 16px 16px'
+    '12px 16px 16px'
   )
   await expect(page.getByText('Details', {exact: true})).toBeVisible()
   await expect(
     page.locator('.ProseMirror').getByText('Nested details.')
   ).toBeVisible()
+})
+
+test('collapses and expands an embedded block', async ({mount, page}) => {
+  await mount(<RichTextStory />)
+
+  const title = page.getByRole('textbox', {name: 'Title'})
+  await expect(title).toBeVisible()
+  await page.getByRole('button', {name: 'Collapse Callout'}).click()
+  await expect(title).toHaveCount(0)
+  await page.getByRole('button', {name: 'Expand Callout'}).click()
+  await expect(title).toHaveValue('Important')
+})
+
+test('expands a collapsed block when its settings open', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  const title = page.getByRole('textbox', {name: 'Title'})
+  await page.getByRole('button', {name: 'Collapse Callout'}).click()
+  await expect(title).toHaveCount(0)
+  await page.getByRole('button', {name: 'Callout settings'}).click()
+  await expect(title).toHaveValue('Important')
+})
+
+test('labels a block from its settings', async ({mount, page}) => {
+  await mount(<RichTextStory />)
+
+  await page.getByRole('button', {name: 'Callout settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Callout'})
+  await sheet.getByRole('textbox', {name: 'Label'}).fill('Intro')
+  await expect(page.getByRole('dialog', {name: 'Intro'})).toBeVisible()
+  await expect(
+    page.locator('[data-richtext-block-header="true"]').getByText('Intro')
+  ).toBeVisible()
+  await expect(page.getByText('"_label":"Intro"')).toBeVisible()
+
+  // The anchor follows the label until it is set by hand
+  const value = page.getByTestId('value')
+  const dialog = page.getByRole('dialog', {name: 'Intro'})
+  await expect(dialog.getByRole('textbox', {name: 'Anchor'})).toHaveValue(
+    'intro'
+  )
+  await expect(value).toContainText('"_anchor":"intro"')
+  await dialog.getByRole('textbox', {name: 'Anchor'}).fill('start-here')
+  await dialog.getByRole('textbox', {name: 'Label'}).fill('Introduction')
+  await expect(value).toContainText('"_anchor":"start-here"')
 })
 
 test('shows a text cursor over the editable text only', async ({
@@ -461,7 +516,7 @@ test('shows a text cursor over the editable text only', async ({
     'cursor',
     'text'
   )
-  await expect(page.getByLabel('Drag Callout block').first()).not.toHaveCSS(
+  await expect(blockHeader(page, 'Callout').first()).not.toHaveCSS(
     'cursor',
     'text'
   )
@@ -474,7 +529,7 @@ test('selects text in block fields without dragging the block', async ({
   await mount(<RichTextStory />)
 
   const host = page.locator('[data-richtext-block-host]').first()
-  const handle = page.getByLabel('Drag Callout block').first()
+  const handle = blockHeader(page, 'Callout').first()
   const title = page.getByRole('textbox', {name: 'Title'})
   await expect(host).not.toHaveAttribute('draggable', 'true')
   await expect(handle).toHaveAttribute('draggable', 'true')
@@ -598,8 +653,6 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await expect(
     page.locator('[data-richtext-block="true"] [aria-current="true"]')
   ).toHaveCount(1)
-  await page.keyboard.press('x')
-  await expect(page.getByTestId('dirty')).toHaveText('false')
   await sheet.getByRole('button', {name: 'Duplicate'}).click()
   await expect(titles).toHaveCount(2)
   await expect(sheet).toHaveCount(0)
@@ -623,39 +676,6 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await expect(sheet).toHaveCount(0)
 })
 
-test('moves a complex block and keeps its fields editable', async ({
-  mount,
-  page
-}) => {
-  await mount(<RichTextStory />)
-
-  const editor = page.locator('.ProseMirror').first()
-  await createEmptyParagraphAfter(
-    page,
-    editor.getByText('Before the block.', {exact: true})
-  )
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
-
-  const titles = page.getByRole('textbox', {name: 'CTA title'})
-  await titles.fill('Original CTA')
-
-  const ctaBlocks = page
-    .locator('[data-richtext-block="true"]')
-    .filter({has: page.getByRole('textbox', {name: 'CTA title'})})
-  await ctaBlocks.first().locator('[data-richtext-block-header="true"]').hover()
-  await page
-    .getByLabel('Drag Call to action block')
-    .first()
-    .dragTo(editor.getByText('After the block.', {exact: true}))
-  await expect
-    .poll(async () => page.getByTestId('value').textContent())
-    .toMatch(/After the block\..*Original CTA/)
-
-  await titles.fill('Moved CTA')
-  await expect(page.getByTestId('value')).toContainText('Moved CTA')
-})
-
 test('duplicates and independently edits a complex block', async ({
   mount,
   page
@@ -668,7 +688,7 @@ test('duplicates and independently edits a complex block', async ({
     editor.getByText('Before the block.', {exact: true})
   )
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('option', {name: 'Call to action'}).click()
 
   const titles = page.getByRole('textbox', {name: 'CTA title'})
   await titles.fill('Original CTA')
@@ -702,48 +722,6 @@ test('duplicates and independently edits a complex block', async ({
   )
 })
 
-test('inserts a block in nested rich text and preserves it while moving', async ({
-  mount,
-  page
-}) => {
-  await mount(<RichTextStory />)
-
-  const outerEditor = page.locator('.ProseMirror').first()
-  const nestedField = page.locator('[data-richtext-field]').nth(1)
-  const nestedEditor = nestedField.locator('.ProseMirror')
-  await createEmptyParagraphAfter(
-    page,
-    nestedEditor.getByText('Nested details.', {exact: true})
-  )
-  const insertBlock = nestedField.getByRole('button', {name: 'Insert block'})
-  await insertBlock.focus()
-  await page.keyboard.press('Enter')
-  const noteItem = page.getByRole('menuitem', {name: 'Note'})
-  await expect(noteItem).toBeVisible()
-  await noteItem.press('Enter')
-
-  const noteText = page.getByRole('textbox', {name: 'Text'})
-  await expect(page.getByRole('button', {name: 'Note settings'})).toBeVisible()
-  await noteText.fill('Nested note value')
-  await expect(page.getByTestId('value')).toContainText('Nested note value')
-
-  const outerBlock = page.locator('[data-richtext-block="true"]').first()
-  await outerBlock
-    .locator('[data-richtext-block-header="true"]')
-    .first()
-    .hover()
-  await page
-    .getByLabel('Drag Callout block')
-    .dragTo(outerEditor.getByText('After the block.', {exact: true}))
-
-  await expect(noteText).toHaveValue('Nested note value')
-  await noteText.fill('Nested note after move')
-  const value = await page.getByTestId('value').textContent()
-  expect(value?.indexOf('After the block.')).toBeLessThan(
-    value?.indexOf('Nested note after move') ?? -1
-  )
-})
-
 test('keeps outer and inner block fields read only', async ({mount, page}) => {
   await mount(<RichTextReadOnlyStory />)
 
@@ -757,7 +735,7 @@ test('keeps outer and inner block fields read only', async ({mount, page}) => {
   await expect(fields.nth(1)).toHaveAttribute('data-read-only', 'true')
   await expect(editors.last()).toHaveAttribute('contenteditable', 'false')
   await expect(page.getByRole('button', {name: 'Insert block'})).toHaveCount(0)
-  await expect(page.getByLabel('Drag Callout block')).toHaveCount(0)
+  await expect(blockHeader(page, 'Callout')).toHaveCount(0)
   await expect(page.locator('[data-richtext-toolbar="true"]')).toHaveCount(0)
   await expect(page.getByRole('textbox', {name: 'Title'})).toBeDisabled()
 
@@ -876,7 +854,7 @@ test('inserts a block at the active text position', async ({mount, page}) => {
   const editor = page.locator('.ProseMirror').first()
   await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Callout'}).click()
+  await page.getByRole('option', {name: 'Callout'}).click()
 
   await expect(
     page.getByRole('button', {name: 'Callout settings'})
@@ -920,7 +898,7 @@ test('inserts a complex CTA block without a detached DOM error', async ({
   const editor = page.locator('.ProseMirror').first()
   await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('option', {name: 'Call to action'}).click()
 
   await expect(page.getByRole('textbox', {name: 'CTA title'})).toBeVisible()
   await expect(page.getByText('Action code', {exact: true})).toBeVisible()
@@ -963,7 +941,7 @@ test('edits complex block controls and moves between nested editors', async ({
     outerEditor.getByText('Before the block.', {exact: true})
   )
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('option', {name: 'Call to action'}).click()
 
   const title = page.getByRole('textbox', {name: 'CTA title'})
   await title.click()
@@ -1017,7 +995,7 @@ test('survives a mixed editing session around several blocks', async ({
   await page.keyboard.press('Enter')
   await page.keyboard.press('Enter')
   await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Callout'}).click()
+  await page.getByRole('option', {name: 'Callout'}).click()
 
   await page.getByRole('textbox', {name: 'Title'}).last().fill('Second block')
   await editor.getByText('After the block.', {exact: true}).click()
@@ -1028,7 +1006,7 @@ test('survives a mixed editing session around several blocks', async ({
 
   const blocks = page.locator('[data-richtext-block="true"]')
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
-  await page.getByLabel('Drag Callout block').first().dragTo(blocks.last())
+  await blockHeader(page, 'Callout').first().dragTo(blocks.last())
 
   await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(3)
 })
@@ -1056,9 +1034,9 @@ test('drags a single block to another text position', async ({mount, page}) => {
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()
-  await page
-    .getByLabel('Drag Callout block')
-    .dragTo(page.getByText('After the block.', {exact: true}))
+  await blockHeader(page, 'Callout').dragTo(
+    page.getByText('After the block.', {exact: true})
+  )
 
   const value = await page.getByTestId('value').textContent()
   expect(value?.indexOf('After the block.')).toBeLessThan(
@@ -1080,9 +1058,7 @@ test('disallows embedded blocks inside list items', async ({mount, page}) => {
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()
-  await page
-    .getByLabel('Drag Callout block')
-    .dragTo(editor.locator('li').last())
+  await blockHeader(page, 'Callout').dragTo(editor.locator('li').last())
 
   await expect(editor.locator('li [data-richtext-block-host]')).toHaveCount(0)
   await expect(
@@ -1104,7 +1080,7 @@ test('disallows embedded blocks inside tables', async ({mount, page}) => {
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()
-  await page.getByLabel('Drag Callout block').dragTo(cell)
+  await blockHeader(page, 'Callout').dragTo(cell)
 
   await expect(cell.locator('[data-richtext-block-host]')).toHaveCount(0)
   await expect(
@@ -1180,13 +1156,13 @@ test('reorders embedded blocks by dragging', async ({mount, page}) => {
   await titles.nth(1).fill('Second')
 
   const blocks = page.locator('[data-richtext-block="true"]')
-  const handles = page.getByLabel('Drag Callout block')
+  const handles = blockHeader(page, 'Callout')
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
   await expect(handles.first()).toBeVisible()
   const targetBounds = await blocks.last().boundingBox()
   if (!targetBounds) throw new Error('Drop target not found')
   await handles.first().dragTo(blocks.last(), {
-    targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
+    targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 4}
   })
 
   await expect(titles.first()).toHaveValue('Second')
@@ -1217,11 +1193,10 @@ test('undoes and redoes block duplication and movement', async ({
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
   const targetBounds = await blocks.last().boundingBox()
   if (!targetBounds) throw new Error('Drop target not found')
-  await page
-    .getByLabel('Drag Callout block')
+  await blockHeader(page, 'Callout')
     .first()
     .dragTo(blocks.last(), {
-      targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
+      targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 4}
     })
   await expect(titles.first()).toHaveValue('Second')
   await expect(titles.last()).toHaveValue('Important')

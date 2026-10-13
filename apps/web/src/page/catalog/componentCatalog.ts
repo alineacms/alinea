@@ -247,7 +247,6 @@ export const componentCatalog: Array<ComponentCatalogGroup> = [
           'SortableList',
           'SortableListItem',
           'SortableListItemHeader',
-          'SortableListHandle',
           'SortableListItemTitle',
           'SortableListItemDescription',
           'SortableListItemActions',
@@ -255,7 +254,6 @@ export const componentCatalog: Array<ComponentCatalogGroup> = [
           'SortableListItemContent',
           'SortableListItemFooter',
           'SortableListItemSettings',
-          'SortableListDragPreview',
           'SortableListAdd'
         ],
         keywords: 'drag reorder',

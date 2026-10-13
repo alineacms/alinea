@@ -1,3 +1,4 @@
+import {Config} from '#/core/Config.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {Permission, type Resource} from '#/core/Role.js'
 import {Root, type RootData, type RootI18n} from '#/core/Root.js'
@@ -21,6 +22,8 @@ import type {
 import type {RootViewProps} from '../cms/ViewProps.js'
 import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
+import {confirmMoveAtom, draggedEntriesAtom} from './moveConfirmation.js'
+import {rootAcceptsType} from './move.js'
 import {configAtom, graphAtom} from './core.js'
 import {
   loadTreeChildren,
@@ -494,12 +497,6 @@ export class RootAtoms {
    */
   explorerScrollOffset = dispense((_key: string) => atom(0))
 
-  /**
-   * The filters picked in the explorers of this root, kept while the editor
-   * opens entries and folders. Each overview applies the ones it declares.
-   */
-  #explorerFilters = atom<OverviewFilterSelection>({})
-
   children = dispense((parentId: string | null) => {
     const location: ExplorerLocation = {
       workspace: this.workspace,
@@ -526,7 +523,9 @@ export class RootAtoms {
         enableNavigation: true,
         sortState: overviewSortAtom(this.workspace, this.key, parentId),
         rootData: this.data,
-        filterState: this.#explorerFilters,
+        // The filters picked in this list, kept when the editor comes back to
+        // it, like its sort, but not applied to the lists of other entries
+        filterState: atom<OverviewFilterSelection>({}),
         scrollOffset: this.explorerScrollOffset,
         selectedLocaleAtom: this.#explorerLocale,
         selectionBehavior: 'toggle',
@@ -560,7 +559,8 @@ export class RootAtoms {
   acceptedDragTypes = [...dashboardEntryDragTypes]
   getItems = atom(
     null,
-    (_get, _set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+    (_get, set, keys: ReadonlySet<Key>): Array<Record<string, string>> => {
+      set(draggedEntriesAtom, keys)
       return [...keys].map(dashboardEntryDragItem)
     }
   )
@@ -571,13 +571,19 @@ export class RootAtoms {
   })
   onMove = atom(
     null,
-    async (get, _set, event: DragMoveEvent, tree: TreeAtoms) => {
+    async (get, set, event: DragMoveEvent, tree: TreeAtoms) => {
       const policy = get(policyAtom)
       const permission =
         event.target.position === 'on' ? Permission.Move : Permission.Reorder
-      const {schema} = get(configAtom)
       const {entries} = get(tree.view)
-      if (!treeAcceptsDrop(schema, entries, event.target, event.keys)) return
+      const accepted = treeAcceptsDrop(
+        get(configAtom),
+        get(this.data),
+        entries,
+        event.target,
+        event.keys
+      )
+      if (!accepted) return
       // Move entries in the order they are listed rather than selected
       const moving = get(tree.items).filter(item => event.keys.has(item.id))
       for (const item of moving)
@@ -589,19 +595,15 @@ export class RootAtoms {
           locale: item.locale,
           parents: item.parents
         })
-      await moveEntries(
-        get(graphAtom),
-        moving.map(item => item.id),
-        event.target
-      )
+      const ids = moving.map(item => item.id)
+      if (!(await set(confirmMoveAtom, ids, event.target))) return
+      await moveEntries(get(graphAtom), ids, event.target)
     }
   )
-  onDrop = atom(null, async (get, _set, event: DropItemsEvent) => {
-    await moveEntries(
-      get(graphAtom),
-      dashboardEntryDropIds(event.items),
-      event.target
-    )
+  onDrop = atom(null, async (get, set, event: DropItemsEvent) => {
+    const ids = dashboardEntryDropIds(event.items)
+    if (!(await set(confirmMoveAtom, ids, event.target))) return
+    await moveEntries(get(graphAtom), ids, event.target)
   })
 }
 
@@ -614,16 +616,33 @@ export const rootAtoms = dispense(
  * children of a parent that does not order them, and never inside themselves
  */
 export function treeAcceptsDrop(
-  schema: Schema,
+  config: Config,
+  rootData: RootData,
   entries: Map<string, RootTreeItem>,
   target: DropTarget,
   keys: ReadonlySet<Key> = new Set()
 ): boolean {
   const entry = entries.get(String(target.key))
   if (!entry || entry.parents.some(id => keys.has(id))) return false
-  if (target.position !== 'on') return !entry.ordered
-  const type = schema[entry.type]
-  return !keys.has(entry.id) && Boolean(type && Type.isContainer(type))
+  const into = target.position === 'on'
+  if (into ? keys.has(entry.id) : entry.ordered) return false
+  const parentId = into ? entry.id : entry.parentId
+  const parent = parentId ? entries.get(parentId) : undefined
+  const parentType = parent && config.schema[parent.type]
+  if (into && !(parentType && Type.isContainer(parentType))) return false
+  // Listed entries that get another parent need one that holds their type,
+  // the others are checked once dropped
+  for (const key of keys) {
+    const dragged = entries.get(String(key))
+    if (!dragged || !config.schema[dragged.type]) continue
+    if (dragged.parentId === parentId) continue
+    if (parentId && !parentType) continue
+    const accepted = parentType
+      ? Config.typeContains(config, parentType, config.schema[dragged.type])
+      : rootAcceptsType(config, rootData, dragged.type)
+    if (!accepted) return false
+  }
+  return true
 }
 
 /** The selected entry, or the location of a selected entry that is not listed */

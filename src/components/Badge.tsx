@@ -15,6 +15,8 @@ const styles = styler(css)
 export interface BadgeProps extends StyleProps, AriaProps, DataProps {
   icon?: IconType | ReactElement
   size?: 'default' | 'sm'
+  /** `primary` tints the badge with the accent color, eg. to name a type */
+  color?: 'default' | 'primary'
   /** Colors the badge like the matching entry status */
   status?: ContentStatus
   title?: string
@@ -24,6 +26,7 @@ export interface BadgeProps extends StyleProps, AriaProps, DataProps {
 export function Badge({
   icon,
   size = 'default',
+  color,
   status,
   className,
   children,
@@ -34,6 +37,7 @@ export function Badge({
       data-slot="badge"
       {...props}
       data-size={size}
+      data-color={color}
       data-status={status}
       className={styles.Badge(styler.merge({className}))}
     >

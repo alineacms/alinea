@@ -12,6 +12,17 @@
   margin-bottom: 0;
 }
 
-.RichTextBlock-dragHandle {
-  touch-action: none;
+.RichTextBlock-header[draggable='true'] {
+  cursor: grab;
+}
+
+.RichTextBlock-anchor {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.RichTextBlock-anchor-field {
+  flex: 1;
+  min-width: 0;
 }

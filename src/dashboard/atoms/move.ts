@@ -1,6 +1,7 @@
 import {Config} from '#/core/Config.js'
 import {MoveOperation} from '#/core/db/Operation.js'
 import {Entry} from '#/core/Entry.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {Filter} from '#/core/Filter.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -12,7 +13,6 @@ import {entries} from '#/core/util/Objects.js'
 import {atom} from 'jotai'
 import {configAtom, graphAtom} from './core.js'
 import type {ExplorerItemData} from './explorer.js'
-import {rootAtoms} from './root.js'
 import {policyAtom} from './user.js'
 
 /** An entry that is about to be moved */
@@ -37,6 +37,11 @@ export interface MoveTargets {
    * and entries missing a language of the moved entries are not a target
    */
   canSelect(item: ExplorerItemData): boolean
+  /**
+   * Why the entries can not move into `parent`, or to the top level of the
+   * root with null; undefined when they can
+   */
+  refusal(parent: MoveSubject | null): string | undefined
   /** The entries can be moved to the top level of the root */
   rootAccepts: boolean
 }
@@ -93,14 +98,40 @@ export function moveTargets(
         types.every(type => type && Config.typeContains(config, parent, type))
     )
     .map(([name]) => name)
+  const canSelect = (item: MoveSubject) =>
+    !moving.has(item.id) &&
+    !item.parents.some(parent => moving.has(parent)) &&
+    (!translated || translated.has(item.id)) &&
+    policy.canMove(item)
   return {
     subjects,
     condition: {_type: {in: containers}},
-    canSelect: item =>
-      !moving.has(item.id) &&
-      !item.parents.some(parent => moving.has(parent)) &&
-      (!translated || translated.has(item.id)) &&
-      policy.canMove(item),
+    canSelect,
+    refusal(parent) {
+      if (!movable) return "These entries can't be moved."
+      const single = subjects.length === 1
+      const these = single ? `"${first.title}"` : 'these entries'
+      const These = single ? these : 'These entries'
+      const kinds = typeNames
+        .map(name => Type.label(config.schema[name]!))
+        .join(' or ')
+      if (!parent) {
+        if (!typeNames.every(name => rootAcceptsType(config, rootData, name)))
+          return `${rootData.label} doesn't hold ${kinds} at its top level.`
+        if (!policy.canMove({workspace: first.workspace, root: first.root}))
+          return `You can't move entries to the top level of ${rootData.label}.`
+        return undefined
+      }
+      if (moving.has(parent.id) || parent.parents.some(id => moving.has(id)))
+        return `${These} can't be moved into itself.`
+      if (!containers.includes(parent.type))
+        return `"${parent.title}" can't hold ${kinds}.`
+      if (translated && !translated.has(parent.id))
+        return `"${parent.title}" doesn't exist in every language of ${these}.`
+      if (!policy.canMove(parent))
+        return `You can't move entries into "${parent.title}".`
+      return undefined
+    },
     rootAccepts:
       movable &&
       typeNames.every(name => rootAcceptsType(config, rootData, name)) &&
@@ -119,7 +150,9 @@ export const loadMoveTargetsAtom = atom(
     const config = get(configAtom)
     const policy = get(policyAtom)
     const [{workspace, root}] = subjects as [MoveSubject]
-    const rootData = get(rootAtoms(workspace, root).data)
+    const rootData = getRoot(
+      getWorkspace(config.workspaces[workspace]).roots[root]
+    )
     const targets = moveTargets(config, policy, rootData, subjects)
     if (!rootData.i18n) return targets
     const graph = get(graphAtom)

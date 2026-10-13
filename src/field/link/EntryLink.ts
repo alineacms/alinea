@@ -7,12 +7,13 @@ import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkFieldOptions,
   createLink,
-  createLinks
+  createLinks,
+  type LinkFields
 } from '#/field/link/LinkField.js'
 import {type EntryPickerOptions, entryPicker} from '#/picker/entry.js'
 import type {EntryReference} from '#/picker/entry/EntryReference.js'
 
-export interface EntryLink<InferredFields = undefined> extends EntryReference {
+export interface EntryLink<InferredFields = {}> extends EntryReference {
   entryId: string
   entryType: string
   title: string
@@ -42,7 +43,7 @@ export function entry<Fields = undefined>(
 ) {
   return createLink<
     EntryReference & InferStoredValue<Fields>,
-    EntryLink<Type.Infer<Fields>>
+    EntryLink<LinkFields<Type.Infer<Fields>>>
   >(label, {
     ...options,
     isEntryField: true,
@@ -58,7 +59,7 @@ export function entry<Fields = undefined>(
 }
 
 export namespace entry {
-  type EntryRow<Fields> = EntryLink<Type.Infer<Fields>> & ListRow
+  type EntryRow<Fields> = EntryLink<LinkFields<Type.Infer<Fields>>> & ListRow
 
   interface EntryOptions<Fields>
     extends

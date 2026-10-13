@@ -1,136 +1,211 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
-import {MemorySource} from '#/core/source/MemorySource.js'
+import {createEntryRow} from '#/core/util/EntryRows.js'
+import type {Source} from '#/core/source/Source.js'
 import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
-import {versionedCacheName} from './Version.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
-import {FakeLocks} from '#test/FakeLocks.js'
+import {memorySnapshots} from '@alinea/sqlite-wasm/snapshots'
 import {expect, test} from 'bun:test'
-import {IDBKeyRange, indexedDB} from 'fake-indexeddb'
-import {indexedDBStorage} from '@alinea/sqlite-wasm/indexeddb'
-import {
-  BrowserEntryStore,
-  holdCache,
-  isCorruptDatabaseError
-} from './BrowserEntryStore.js'
+import {IDBFactory, IDBKeyRange} from 'fake-indexeddb'
+import {sql} from 'rado'
+import {BrowserEntryStore, isCorruptDatabaseError} from './BrowserEntryStore.js'
+import {databaseVersion, versionedCacheName} from './Version.js'
+import {wasmHandle, wasmSqlite} from './driver/WasmDatabase.js'
 
-// The stores keep their pages in this IndexedDB implementation.
-const idb = {indexedDB, IDBKeyRange}
+const name = 'alinea-entry-database'
 
-test('only one worker holds a cache', async () => {
-  const locks = new FakeLocks()
-  const name = `alinea-browser-held-${crypto.randomUUID()}`
-  expect(await holdCache(name, {locks})).toBe(true)
-  // A worker of another build would write the same pages.
-  expect(await holdCache(name, {locks})).toBe(false)
-  expect(await holdCache(name, {locks, wait: 20})).toBe(false)
-  const waiting = holdCache(name, {locks, wait: Infinity})
-  locks.drop(`${versionedCacheName(name)}-pages`)
-  expect(await waiting).toBe(true)
-})
+test('reopens the newest base without fetching blobs', async () => {
+  const storage = memorySnapshots()
+  const source = await pageSource()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(source)
+  await first.close()
 
-test('no worker holds a cache without Web Locks', async () => {
-  const name = `alinea-browser-no-locks-${crypto.randomUUID()}`
-  expect(await holdCache(name, {locks: undefined})).toBe(false)
-  // Web Locks that refuse, as in a sandboxed context.
-  const refusing = {
-    request: () => Promise.reject(new DOMException('Denied', 'SecurityError'))
-  }
-  expect(await holdCache(name, {locks: refusing})).toBe(false)
-})
-
-test('browser entry store snapshots read the cache without storing', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const options = {
-    ...idb,
-    name: `alinea-browser-snapshot-${crypto.randomUUID()}`,
-    revision: 'config-1'
-  }
-  const holder = await BrowserEntryStore.open(config, options)
-  await holder.mutate([
-    {op: 'create', id: 'page', type: 'Page', locale: null, data: {title: 'A'}}
-  ])
-  // Another worker: the same IndexedDB, seen from another realm.
-  const snapshot = await BrowserEntryStore.snapshot(config, {
-    ...options,
-    indexedDB: new Proxy(indexedDB, {})
-  })
-  if (!snapshot) throw new Error('Expected a snapshot')
-  expect(await snapshot.find({select: Entry.id})).toEqual(['page'])
-  await snapshot.mutate([
-    {op: 'create', id: 'other', type: 'Page', locale: null, data: {title: 'B'}}
-  ])
-  await snapshot.close()
-  await holder.close()
-  const reopened = await BrowserEntryStore.open(config, options)
+  const requested = countBlobs(source)
+  const next = await BrowserEntryStore.open(pages(false), options)
   try {
-    expect(await reopened.find({select: Entry.id})).toEqual(['page'])
+    expect(await next.find({select: Entry.title})).toEqual(['Page'])
+    await next.syncWith(source)
+    expect(requested()).toBe(0)
   } finally {
-    await reopened.close()
+    await next.close()
   }
 })
 
-test('browser entry store snapshots of an empty cache are undefined', async () => {
-  const snapshot = await BrowserEntryStore.snapshot(
-    {schema: {}, workspaces: {}},
-    {
-      ...idb,
-      name: `alinea-browser-no-snapshot-${crypto.randomUUID()}`,
-      revision: 'config-1'
-    }
-  )
-  expect(snapshot).toBeUndefined()
+test('derives the base of another config again', async () => {
+  const storage = memorySnapshots()
+  const source = await pageSource()
+  const first = await BrowserEntryStore.open(pages(false), {
+    name,
+    fingerprint: 'config-1',
+    storage
+  })
+  await first.syncWith(source)
+  expect(await first.find({search: 'needle', select: Entry.id})).toEqual([])
+  await first.close()
+
+  const requested = countBlobs(source)
+  const next = await BrowserEntryStore.open(pages(true), {
+    name,
+    fingerprint: 'config-2',
+    storage
+  })
+  try {
+    expect(await next.find({search: 'needle', select: Entry.id})).toEqual([
+      'page'
+    ])
+    await next.syncWith(source)
+    expect(requested()).toBe(0)
+  } finally {
+    await next.close()
+  }
+  expect((await storage.list()).map(base => base.branch)).toEqual([
+    'config-2',
+    'config-1'
+  ])
 })
 
-test('browser entry stores start over from a reset', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
+test('skips the reindex for a base of the same config', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  await first.close()
+  const next = await BrowserEntryStore.open(pages(true), options)
+  try {
+    expect(await next.find({search: 'needle', select: Entry.id})).toEqual([])
+  } finally {
+    await next.close()
   }
-  const options = {
-    ...idb,
-    name: `alinea-browser-reset-${crypto.randomUUID()}`,
-    revision: 'config-1'
+})
+
+test('keeps the newest base of the two newest configs', async () => {
+  const storage = memorySnapshots()
+  const source = await pageSource()
+  for (const fingerprint of ['config-1', 'config-2', 'config-3']) {
+    const store = await BrowserEntryStore.open(pages(false), {
+      name,
+      fingerprint,
+      storage
+    })
+    await store.syncWith(source)
+    await store.close()
   }
-  const damaged = await BrowserEntryStore.open(config, options)
-  await damaged.mutate([
-    {
-      op: 'create',
-      id: 'page',
+  expect((await storage.list()).map(base => base.branch)).toEqual([
+    'config-3',
+    'config-2'
+  ])
+})
+
+test('stores on one base change apart', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  await first.close()
+
+  const a = await BrowserEntryStore.open(pages(false), options)
+  const b = await BrowserEntryStore.open(pages(false), options)
+  try {
+    const create = (id: string) => ({
+      op: 'create' as const,
+      id,
       type: 'Page',
       locale: null,
-      data: {title: 'Page'}
-    }
-  ])
-  await damaged.close()
-  const fresh = await BrowserEntryStore.open(config, {...options, reset: true})
-  expect(await fresh.find({select: Entry.id})).toEqual([])
-  await fresh.close()
-  const reopened = await BrowserEntryStore.open(config, options)
-  try {
-    expect(await reopened.find({select: Entry.id})).toEqual([])
+      data: {title: id}
+    })
+    await a.mutate([create('a')])
+    await a.sync()
+    await b.mutate([create('b')])
+    await b.sync()
+    expect((await a.find({select: Entry.id})).toSorted()).toEqual(['a', 'page'])
+    expect((await b.find({select: Entry.id})).toSorted()).toEqual(['b', 'page'])
   } finally {
-    await reopened.close()
+    await Promise.all([a.close(), b.close()])
+  }
+  const next = await BrowserEntryStore.open(pages(false), options)
+  try {
+    expect((await next.find({select: Entry.id})).toSorted()).toEqual([
+      'b',
+      'page'
+    ])
+  } finally {
+    await next.close()
   }
 })
 
-test('corrupt database errors are recognized through their causes', () => {
+test('previews an entry over a store on a base', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  await first.close()
+  const store = await BrowserEntryStore.open(pages(false), options)
+  try {
+    const entry = await store.get({id: 'page', select: Entry})
+    const {rowHash: _rowHash, fileHash: _fileHash, ...base} = entry
+    const previewed = await createEntryRow(
+      pages(false),
+      {...base, title: 'Preview', data: {...entry.data, title: 'Preview'}},
+      entry.status
+    )
+    const titles = (preview?: Entry) =>
+      store.find({
+        select: Entry.title,
+        preview: preview && {entry: preview}
+      })
+    expect(await titles(previewed)).toEqual(['Preview'])
+    expect(await titles()).toEqual(['Page'])
+  } finally {
+    await store.close()
+  }
+})
+
+test('stores its own base when another wrote the content in other pages', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const source = await pageSource()
+  const a = await BrowserEntryStore.open(pages(false), options)
+  const b = await BrowserEntryStore.open(pages(false), options)
+  // Through another revision first, b lays out the same content differently.
+  const other = await createEntrySource(pages(false), [
+    {id: 'other', type: 'Page', index: 'a1', data: {title: 'Other'}}
+  ])
+  await b.syncWith(other)
+  await a.syncWith(source)
+  await a.close()
+  const revision = await b.syncWith(source)
+  await b.close()
+  const keys = (await storage.list()).map(base => base.key)
+  expect(keys).toHaveLength(1)
+  expect(keys[0]).toStartWith(`${revision}-config-1-`)
+  // A store opened on that base holds nothing new to store.
+  const c = await BrowserEntryStore.open(pages(false), options)
+  await c.sync()
+  await c.close()
+  expect((await storage.list()).map(base => base.key)).toEqual(keys)
+})
+
+test('starts over from a reset', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  await first.close()
+  const fresh = await BrowserEntryStore.open(pages(false), {
+    ...options,
+    reset: true
+  })
+  try {
+    expect(await fresh.find({select: Entry.id})).toEqual([])
+  } finally {
+    await fresh.close()
+  }
+})
+
+test('recognizes corrupt database errors through their causes', () => {
   const corrupt = Object.assign(new Error('database disk image is malformed'), {
     code: 'SQLITE_CORRUPT'
   })
@@ -146,166 +221,70 @@ test('corrupt database errors are recognized through their causes', () => {
   expect(isCorruptDatabaseError(new Error('Remote unavailable'))).toBe(false)
 })
 
-test('browser entry stores reopen a persisted SQLite file', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const source = new MemorySource()
-  const name = `alinea-browser-db-${crypto.randomUUID()}`
-  const options = {...idb, name, revision: 'config-1'}
-  const initial = await BrowserEntryStore.open(config, options)
-  const mutation = initial.mutate([
-    {
-      op: 'create',
-      id: 'page',
-      type: 'Page',
-      locale: null,
-      data: {title: 'Page'}
-    }
-  ])
-  await Promise.all([mutation, initial.close()])
-
-  let requestedBlobs = 0
-  const getBlobs = source.getBlobs.bind(source)
-  source.getBlobs = async function* (shas, blobOptions) {
-    requestedBlobs += shas.length
-    yield* getBlobs(shas, blobOptions)
-  }
-  const reopened = await BrowserEntryStore.open(config, options)
-  try {
-    await reopened.sync()
-    expect(requestedBlobs).toBe(0)
-    expect(await reopened.find({select: Entry.title})).toEqual(['Page'])
-  } finally {
-    await reopened.close()
-  }
-})
-
-test('browser entry stores discard a corrupt persisted SQLite file', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const source = new MemorySource()
-  const name = `alinea-browser-corrupt-${crypto.randomUUID()}`
-  // A stored page that is not a SQLite file, in the layout of the storage.
-  const request = indexedDB.open(`${versionedCacheName(name)}-pages`, 1)
-  request.onupgradeneeded = () => {
-    request.result.createObjectStore('chunks')
-    request.result.createObjectStore('meta')
-  }
-  const pages = await requestResult(request)
-  const transaction = pages.transaction(['chunks', 'meta'], 'readwrite')
-  transaction.objectStore('chunks').put(new Uint8Array(4096).fill(7), 0)
-  transaction.objectStore('meta').put({size: 4096, chunkSize: 4096}, 'database')
-  await transactionComplete(transaction)
-  pages.close()
-
-  const store = await BrowserEntryStore.open(config, {
-    name,
-    revision: 'config-1',
-    ...idb
+test('starts empty from a base that is not a database', async () => {
+  const storage = memorySnapshots()
+  await storage.store.write({
+    key: 'corrupt',
+    branch: 'config-1',
+    meta: {},
+    visible: 0,
+    size: 4096,
+    chunkSize: 4096,
+    pages: [0],
+    page: () => new Uint8Array(4096).fill(7)
   })
-  try {
-    expect(await store.sync()).toBe((await source.getTree()).sha)
-    expect(await store.find({select: Entry.id})).toEqual([])
-  } finally {
-    await store.close()
-  }
-})
-
-test('browser entry stores clean up databases from other versions and layouts', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const name = `alinea-browser-version-${crypto.randomUUID()}`
-  const oldName = `${name}-old-version`
-  // The file as one record, as this version stored it before.
-  const oldLayout = versionedCacheName(name)
-  for (const cacheName of [oldName, oldLayout]) {
-    const cache = await openCache(cacheName)
-    const transaction = cache.transaction('database', 'readwrite')
-    transaction.objectStore('database').put(
-      {
-        revision: 'config-1',
-        data: new Uint8Array([1, 2, 3])
-      },
-      'entries'
-    )
-    await transactionComplete(transaction)
-    cache.close()
-  }
-
-  const store = await BrowserEntryStore.open(config, {
+  const store = await BrowserEntryStore.open(pages(false), {
     name,
-    revision: 'config-1',
-    ...idb
+    fingerprint: 'config-1',
+    storage
   })
   try {
     expect(await store.find({select: Entry.id})).toEqual([])
   } finally {
     await store.close()
   }
-  const names = (await indexedDB.databases()).map(database => database.name)
-  expect(names).toContain(`${versionedCacheName(name)}-pages`)
-  expect(names).not.toContain(oldName)
-  expect(names).not.toContain(oldLayout)
 })
 
-test('browser entry stores keep caches that another worker holds', async () => {
-  const name = `alinea-browser-held-version-${crypto.randomUUID()}`
-  const heldVersion = `${name}-v1-pages`
-  const unheldVersion = `${name}-v2-pages`
-  for (const cacheName of [heldVersion, unheldVersion])
-    (await openCache(cacheName)).close()
-  const locks = new FakeLocks()
-  // A tab of another version still uses its cache.
-  void locks.request(heldVersion, {}, () => new Promise<void>(() => {}))
-
-  const store = await BrowserEntryStore.open(
-    {schema: {}, workspaces: {}},
-    {...idb, locks, name, revision: 'config-1'}
-  )
-  await store.close()
-  const names = (await indexedDB.databases()).map(database => database.name)
-  expect(names).toContain(heldVersion)
-  expect(names).not.toContain(unheldVersion)
-})
-
-test('browser entry stores sync source rows in bounded batches', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
+test('keeps content in memory without snapshot storage', async () => {
+  // IndexedDB snapshots read Blobs with FileReaderSync, which Bun lacks.
+  const store = await BrowserEntryStore.open(pages(false), {
+    name,
+    fingerprint: 'config-1'
+  })
+  try {
+    await store.syncWith(await pageSource())
+    expect(await store.find({select: Entry.title})).toEqual(['Page'])
+  } finally {
+    await store.close()
   }
+})
+
+test('deletes the caches of older versions and layouts', async () => {
+  const restore = installIndexedDB()
+  try {
+    const oldVersion = `${name}-v1`
+    const oldLayout = `${versionedCacheName(name)}-pages`
+    const newVersion = `${name}-v${databaseVersion + 1}-snapshots`
+    for (const cache of [oldVersion, oldLayout, newVersion])
+      await createCache(indexedDB, cache)
+    const store = await BrowserEntryStore.open(pages(false), {
+      name,
+      fingerprint: 'config-1'
+    })
+    await store.close()
+    const names = (await indexedDB.databases()).map(database => database.name)
+    expect(names).not.toContain(oldVersion)
+    expect(names).not.toContain(oldLayout)
+    expect(names).toContain(newVersion)
+  } finally {
+    restore()
+  }
+})
+
+test('syncs source rows in bounded batches', async () => {
   const body = 'x'.repeat(8 * 1024)
   const source = await createEntrySource(
-    config,
+    pages(false),
     Array.from({length: 800}, (_, index) => ({
       id: `page-${index}`,
       type: 'Page',
@@ -313,23 +292,81 @@ test('browser entry stores sync source rows in bounded batches', async () => {
       data: {body}
     }))
   )
-  const store = await BrowserEntryStore.open(config, {
-    name: `alinea-browser-batched-${crypto.randomUUID()}`,
-    revision: 'config-1',
-    ...idb
-  })
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const store = await BrowserEntryStore.open(pages(false), options)
+  await store.syncWith(source)
+  expect(await store.count({})).toBe(800)
+  await store.close()
+  const next = await BrowserEntryStore.open(pages(false), options)
   try {
-    await store.syncWith(source)
-    expect(await store.count({})).toBe(800)
+    expect(await next.count({})).toBe(800)
   } finally {
-    await store.close()
+    await next.close()
   }
 })
 
-function openCache(name: string): Promise<IDBDatabase> {
-  const request = indexedDB.open(name, 1)
+test('forks keep the page cache size', async () => {
+  const Database = await wasmSqlite()
+  const sqlite = new Database()
+  sqlite.run('pragma cache_size = -65536')
+  const fork = await wasmHandle(sqlite).fork()
+  const row = await fork.database.get<{cache_size: number}>(
+    sql`pragma cache_size`
+  )
+  expect(row?.cache_size).toBe(-65536)
+})
+
+function pageSource(): Promise<Source> {
+  return createEntrySource(pages(false), [
+    {
+      id: 'page',
+      type: 'Page',
+      index: 'a0',
+      data: {title: 'Page', body: 'needle'}
+    }
+  ])
+}
+
+/** Count the blobs requested from `source` from now on. */
+function countBlobs(source: Source): () => number {
+  let requested = 0
+  const getBlobs = source.getBlobs.bind(source)
+  source.getBlobs = async function* (shas, options) {
+    requested += shas.length
+    yield* getBlobs(shas, options)
+  }
+  return () => requested
+}
+
+async function createCache(factory: IDBFactory, cache: string) {
+  const request = factory.open(cache, 1)
   request.onupgradeneeded = () => request.result.createObjectStore('database')
-  return requestResult(request)
+  const db = await requestResult(request)
+  const transaction = db.transaction('database', 'readwrite')
+  transaction.objectStore('database').put(new Uint8Array([1, 2, 3]), 'entries')
+  await transactionComplete(transaction)
+  db.close()
+}
+
+/** Install an empty IndexedDB as a worker has it, until the returned call. */
+function installIndexedDB(): () => void {
+  const globals = {indexedDB: new IDBFactory(), IDBKeyRange}
+  const previous = new Map<string, PropertyDescriptor | undefined>()
+  for (const [key, value] of Object.entries(globals)) {
+    previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
+    Object.defineProperty(globalThis, key, {
+      value,
+      configurable: true,
+      writable: true
+    })
+  }
+  return () => {
+    for (const [key, descriptor] of previous) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor)
+      else delete (globalThis as Record<string, unknown>)[key]
+    }
+  }
 }
 
 function pages(searchable: boolean): Config {
@@ -349,101 +386,3 @@ function pages(searchable: boolean): Config {
     }
   }
 }
-
-test('browser entry stores keep persisted content across dashboard builds', async () => {
-  const source = await createEntrySource(pages(false), [
-    {
-      id: 'page',
-      type: 'Page',
-      index: 'a',
-      data: {title: 'Page', body: 'needle'}
-    }
-  ])
-  const name = `alinea-browser-rebuild-${crypto.randomUUID()}`
-  const first = await BrowserEntryStore.open(pages(false), {
-    name,
-    revision: 'build-1',
-    ...idb
-  })
-  await first.syncWith(source)
-  expect(await first.find({search: 'needle', select: Entry.id})).toEqual([])
-  await first.close()
-
-  let requestedBlobs = 0
-  const getBlobs = source.getBlobs.bind(source)
-  source.getBlobs = async function* (shas, blobOptions) {
-    requestedBlobs += shas.length
-    yield* getBlobs(shas, blobOptions)
-  }
-  // The next build changes the config: the content is kept and derived again.
-  const next = await BrowserEntryStore.open(pages(true), {
-    name,
-    revision: 'build-2',
-    ...idb
-  })
-  try {
-    expect(await next.find({select: Entry.title})).toEqual(['Page'])
-    expect(await next.find({search: 'needle', select: Entry.id})).toEqual([
-      'page'
-    ])
-    await next.syncWith(source)
-    expect(requestedBlobs).toBe(0)
-  } finally {
-    await next.close()
-  }
-})
-
-test('browser entry stores reopened with the same revision skip the reindex', async () => {
-  const source = await createEntrySource(pages(false), [
-    {
-      id: 'page',
-      type: 'Page',
-      index: 'a',
-      data: {title: 'Page', body: 'needle'}
-    }
-  ])
-  const name = `alinea-browser-same-config-${crypto.randomUUID()}`
-  const options = {name, revision: 'config-1', ...idb}
-  const first = await BrowserEntryStore.open(pages(false), options)
-  await first.syncWith(source)
-  await first.close()
-  // The search index only changes when the entries are derived again, which a
-  // store reopened with the revision it was derived for skips.
-  const next = await BrowserEntryStore.open(pages(true), options)
-  try {
-    expect(await next.find({select: Entry.title})).toEqual(['Page'])
-    expect(await next.find({search: 'needle', select: Entry.id})).toEqual([])
-  } finally {
-    await next.close()
-  }
-})
-
-test('browser entry stores keep new databases in 64 KB pages', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const name = `alinea-browser-db-${crypto.randomUUID()}`
-  const store = await BrowserEntryStore.open(config, {
-    ...idb,
-    name,
-    revision: 'config-1'
-  })
-  await store.close()
-  const {default: init} = await import('@alinea/sqlite-wasm')
-  const {Database} = await init()
-  const storage = indexedDBStorage(`${versionedCacheName(name)}-pages`, idb)
-  const db = await Database.sync(storage)
-  try {
-    expect(db.exec('pragma page_size')[0].values).toEqual([[65536]])
-  } finally {
-    db.detach()
-    await storage.delete()
-  }
-})

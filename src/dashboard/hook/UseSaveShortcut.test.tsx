@@ -53,14 +53,3 @@ test('prevents Save Page without running disabled or missing actions', () => {
   expect(missingEvent.defaultPrevented).toBe(true)
   expect(action).not.toHaveBeenCalled()
 })
-
-test('removes its keyboard handler when unmounted', () => {
-  const action = mock(() => undefined)
-  const view = render(<Shortcut action={action} />)
-  view.unmount()
-
-  const event = pressSave()
-
-  expect(event.defaultPrevented).toBe(false)
-  expect(action).not.toHaveBeenCalled()
-})

@@ -6,7 +6,6 @@ import {getScope} from './Scope.js'
 import {track} from './Tracker.js'
 import {
   formatFieldPath,
-  formatValidationErrors,
   policyFieldOptions,
   validateEntry
 } from './Validation.js'
@@ -172,9 +171,6 @@ test('nested fields in lists, objects, rich text blocks and tabs', () => {
     'Block',
     'Block title'
   ])
-  expect(formatValidationErrors(errors.slice(1, 2))).toBe(
-    '- group.name (Group › Name): Field is required'
-  )
 })
 
 test('hidden and read-only fields are ignored', () => {

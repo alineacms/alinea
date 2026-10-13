@@ -30,7 +30,6 @@ test('without declared sorts the title and sortable columns sort', () => {
   expect(products.sorts.map(sort => sort.key)).toEqual([
     'title',
     'articleNumber',
-    'status',
     'updated',
     'author',
     'brand',

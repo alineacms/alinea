@@ -1,11 +1,12 @@
-import {Atom, atom, Getter} from 'jotai'
+import {Atom, atom, type Getter, type Setter} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
+import {Entry} from '#/core/Entry.js'
 import {getRoot} from '#/core/Internal.js'
 import type {OverviewSort} from '#/core/Overview.js'
 import type {EntryDefaultView} from '#/core/Type.js'
 import {ReactNode} from 'react'
 import {workspaceAtom, workspacesAtom} from './config.js'
-import {configAtom} from './core.js'
+import {configAtom, graphAtom} from './core.js'
 import {policyAtom} from './user.js'
 import {dispense} from './utils.js'
 
@@ -17,7 +18,9 @@ export const routeGuardAtom = atom<Atom<boolean> | null>(null)
 export const routeBlockAtom = atom<RouteBlock | null>(null)
 
 export interface DashboardRoute {
-  page?: 'splash' | 'entry' | 'users'
+  /** An edit link names an entry by its url, until it is looked up */
+  page?: 'splash' | 'entry' | 'users' | 'edit'
+  url?: string
   workspace?: string
   root?: string
   entry?: string
@@ -30,7 +33,7 @@ export interface DashboardRoute {
 }
 
 interface ResolvedDashboardRoute extends DashboardRoute {
-  page: 'splash' | 'entry' | 'users'
+  page: 'splash' | 'entry' | 'users' | 'edit'
 }
 
 export const nav = {
@@ -39,6 +42,13 @@ export const nav = {
   },
   users() {
     return '/users'
+  },
+  /** The editor of the entry at `url`, as linked from a page of the site */
+  edit(url: string, workspace?: string, root?: string) {
+    const params = new URLSearchParams({url})
+    if (workspace) params.set('workspace', workspace)
+    if (root) params.set('root', root)
+    return `/edit?${params}`
   },
   entry(
     workspace?: string,
@@ -93,10 +103,18 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
   const [action, workspace, rootPart = '', entry] = path
     .split('/')
     .slice(1) as Array<string | undefined>
+  const params = new URLSearchParams(search)
+  const url = params.get('url')
+  if (action === 'edit' && url)
+    return {
+      page: 'edit',
+      url,
+      workspace: params.get('workspace') ?? undefined,
+      root: params.get('root') ?? undefined
+    }
   const page =
     action === 'users' ? 'users' : action === 'entry' ? 'entry' : 'splash'
   const [root, locale] = rootPart.split(':')
-  const params = new URLSearchParams(search)
   const view = params.get('view')
   const sort = params.get('sort')
   return {
@@ -116,6 +134,15 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
 function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
   if (update.page === 'users') return {page: 'users'}
   if (update.page === 'splash') return {page: 'splash'}
+  if (update.page === 'edit')
+    return update.url
+      ? {
+          page: 'edit',
+          url: update.url,
+          workspace: update.workspace,
+          root: update.root
+        }
+      : {page: 'splash'}
   return {
     page: 'entry',
     workspace: update.workspace,
@@ -128,6 +155,8 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
 }
 
 function hashFromRoute(route: ResolvedDashboardRoute) {
+  if (route.page === 'edit')
+    return `#${nav.edit(route.url ?? '/', route.workspace, route.root)}`
   return route.page === 'splash'
     ? `#${nav.splash()}`
     : route.page === 'users'
@@ -159,6 +188,8 @@ const initialRoute = routeFromHash(
 )
 const currentRouteAtom = atom(initialRoute)
 let ignoredBrowserHash: string | undefined
+/** Counts the lookups of edit links, of which the last one navigates */
+let linkLookups = 0
 
 interface NavigationRequest {
   browser?: boolean
@@ -178,52 +209,24 @@ export const routeAtom = Object.assign(
               route: routeFromUpdate(update),
               replace: update.replace
             } satisfies NavigationRequest)
-      let {route} = request
-      const key = sortKey(get, request)
-      // The url is the source of truth for the sort of an overview, an
-      // explicit undefined sort resets it
-      const explicit =
-        request.browser || route.sort !== undefined || 'sort' in update
-      if (key && !explicit) {
-        const sort = get(overviewSortMemoryAtom).get(key)
-        if (sort) route = {...route, sort: formatOverviewSort(sort)}
-      }
-      const previous = get(currentRouteAtom)
-      const commit = (
-        replace = request.replace ?? false,
-        syncLocation = !request.browser
-      ) => {
-        set(currentRouteAtom, route)
-        if (key)
-          set(overviewSortMemoryAtom, memory =>
-            remember(memory, key, route.sort)
-          )
-        if (!syncLocation) return
-        set(
-          locationAtom,
-          location => ({...location, hash: hashFromRoute(route)}),
-          {replace}
-        )
-      }
-      const guard = get(routeGuardAtom)
-      if (guard && get(guard)) {
-        if (request.browser) {
-          ignoredBrowserHash = hashFromRoute(previous)
-          set(
-            locationAtom,
-            location => ({...location, hash: hashFromRoute(previous)}),
-            {replace: true}
-          )
-        }
-        set(routeBlockAtom, {
-          confirm() {
-            set(routeBlockAtom, null)
-            commit(request.browser, true)
-          }
+      if (request.route.page !== 'edit')
+        return navigate(get, set, request, 'sort' in update)
+      // The current page stays, also in the address bar, until the linked
+      // entry is found; a navigation meanwhile wins
+      const current = get(currentRouteAtom)
+      const lookup = ++linkLookups
+      set(
+        locationAtom,
+        location => ({...location, hash: hashFromRoute(current)}),
+        {replace: true}
+      )
+      return linkedRoute(get, request.route)
+        .catch(() => ({page: 'splash'}) as ResolvedDashboardRoute)
+        .then(route => {
+          if (lookup !== linkLookups || get(currentRouteAtom) !== current)
+            return
+          navigate(get, set, {route, replace: true}, true)
         })
-        return
-      }
-      commit()
     }
   ),
   {
@@ -246,6 +249,98 @@ export const routeAtom = Object.assign(
     }
   }
 )
+
+function navigate(
+  get: Getter,
+  set: Setter,
+  request: NavigationRequest,
+  sortGiven: boolean
+) {
+  let {route} = request
+  const key = sortKey(get, request)
+  // The url is the source of truth for the sort of an overview, an
+  // explicit undefined sort resets it
+  const explicit = request.browser || route.sort !== undefined || sortGiven
+  if (key && !explicit) {
+    const sort = get(overviewSortMemoryAtom).get(key)
+    if (sort) route = {...route, sort: formatOverviewSort(sort)}
+  }
+  const previous = get(currentRouteAtom)
+  const commit = (
+    replace = request.replace ?? false,
+    syncLocation = !request.browser
+  ) => {
+    set(currentRouteAtom, route)
+    if (key)
+      set(overviewSortMemoryAtom, memory => remember(memory, key, route.sort))
+    if (!syncLocation) return
+    set(locationAtom, location => ({...location, hash: hashFromRoute(route)}), {
+      replace
+    })
+  }
+  const guard = get(routeGuardAtom)
+  if (guard && get(guard)) {
+    if (request.browser) {
+      ignoredBrowserHash = hashFromRoute(previous)
+      set(
+        locationAtom,
+        location => ({...location, hash: hashFromRoute(previous)}),
+        {replace: true}
+      )
+    }
+    set(routeBlockAtom, {
+      confirm() {
+        set(routeBlockAtom, null)
+        commit(request.browser, true)
+      }
+    })
+    return
+  }
+  commit()
+}
+
+/** The route of the entry an edit link names by url, or the splash page */
+async function linkedRoute(
+  get: Getter,
+  {url = '/', workspace, root}: ResolvedDashboardRoute
+): Promise<ResolvedDashboardRoute> {
+  const graph = get(graphAtom)
+  const query = {
+    workspace,
+    root,
+    status: 'preferDraft' as const,
+    select: {
+      entry: Entry.id,
+      locale: Entry.locale,
+      workspace: Entry.workspace,
+      root: Entry.root
+    }
+  }
+  // The pathname of a page may be encoded, stored urls are not
+  const urls = [...new Set([withoutSlash(url), withoutSlash(decoded(url))])]
+  // A live page that took over the url as an alias wins over the archived
+  // page that had it
+  const live = {...query, filter: {_status: {isNot: 'archived' as const}}}
+  const found =
+    (await graph.first({...live, url: {in: urls}})) ??
+    (await graph.first({...live, alias: {in: urls}})) ??
+    (await graph.first({...query, url: {in: urls}}))
+  if (!found) return {page: 'splash'}
+  return {page: 'entry', ...found, locale: found.locale ?? undefined}
+}
+
+function decoded(url: string): string {
+  try {
+    return decodeURI(url)
+  } catch {
+    return url
+  }
+}
+
+/** Entry urls are stored without a trailing slash */
+function withoutSlash(url: string): string {
+  return url.length > 1 && url.endsWith('/') ? url.slice(0, -1) : url
+}
 
 /** The overview whose sort a navigation shows */
 function sortKey(get: Getter, {browser, route}: NavigationRequest) {
@@ -272,7 +367,7 @@ function remember(
 }
 
 export interface Page {
-  type: 'splash' | 'users' | 'entry'
+  type: 'splash' | 'users' | 'entry' | 'edit'
   workspace: string | undefined
   root: string | undefined
   requestedRoot?: string
@@ -284,6 +379,15 @@ export interface Page {
 export const pageAtom = atom(get => resolvePage(get, get(routeAtom)))
 
 function resolvePage(get: Getter, route: ResolvedDashboardRoute): Page {
+  if (route.page === 'edit')
+    return {
+      type: 'edit',
+      workspace: undefined,
+      root: undefined,
+      entry: undefined,
+      locale: null,
+      view: undefined
+    }
   const config = get(configAtom)
   const policy = get(policyAtom)
   const workspaces = get(workspacesAtom)

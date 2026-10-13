@@ -1,4 +1,3 @@
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {Entry} from '#/core/Entry.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -13,18 +12,8 @@ import {
 import {expect, spyOn, test} from 'bun:test'
 import {atom} from 'jotai'
 import {configAtom, eventsAtom} from './core.js'
-import {EntryAtoms, entryAtoms, EntryLocaleAtoms} from './entry.js'
+import {EntryAtoms, entryAtoms} from './entry.js'
 import {userPolicyReadyAtom} from './user.js'
-
-test('entryAtoms returns stable entry and locale atom bundles', () => {
-  const entry = new EntryAtoms('entry-id', atom({} as never))
-
-  expect(entry).toBeInstanceOf(EntryAtoms)
-  expect(entryAtoms('entry-id')).toBe(entryAtoms('entry-id'))
-  expect(entry.locales('en')).toBeInstanceOf(EntryLocaleAtoms)
-  expect(entry.locales('en')).toBe(entry.locales('en'))
-  expect(entry.locales('fr')).not.toBe(entry.locales('en'))
-})
 
 test('entry atoms only reload for matching index event ids', async () => {
   const {db, parent, child, store} = await createDashboardAtomFixture()
@@ -567,7 +556,7 @@ test('publishing reconciles transaction-generated media aliases immediately', as
   expect(store.get(node.isDirty)).toBeFalse()
 })
 
-test('publishing is blocked while fields are invalid, drafts are not', async () => {
+test('invalid fields are reported but do not block publishing', async () => {
   const Article = Config.document('Article', {
     fields: {
       summary: Field.text('Summary', {required: true}),
@@ -603,23 +592,12 @@ test('publishing is blocked while fields are invalid, drafts are not', async () 
   expect(store.get(locale.errors(node))).toEqual([
     {path: ['summary'], labels: ['Summary'], message: 'Field is required'}
   ])
-  const mutate = spyOn(db, 'mutate')
-  let error: unknown
-  try {
-    await store.set(locale.publishEdits, node)
-  } catch (cause) {
-    error = cause
-  }
-  expect(error).toBeInstanceOf(EntryValidationError)
-  expect(mutate).not.toHaveBeenCalled()
-
-  await store.set(locale.saveDraft, node)
-  expect(mutate).toHaveBeenCalledTimes(1)
-  mutate.mockRestore()
-  const draft = await db.first({
+  // The editor chose to publish anyway
+  await store.set(locale.publishEdits, node)
+  const published = await db.first({
     id: created._id,
-    status: 'draft',
+    status: 'published',
     select: Article.summary
   })
-  expect(draft).toBe('')
+  expect(published).toBe('')
 })

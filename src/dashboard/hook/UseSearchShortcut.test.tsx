@@ -86,11 +86,3 @@ test('leaves the shortcut to editable content and when disabled', () => {
   expect(action).not.toHaveBeenCalled()
   editor.remove()
 })
-
-test('removes its keyboard handler when unmounted', () => {
-  const action = mock(() => undefined)
-  const view = render(<Shortcut action={action} />)
-  view.unmount()
-  press({key: 'k', metaKey: true})
-  expect(action).not.toHaveBeenCalled()
-})

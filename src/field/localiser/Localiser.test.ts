@@ -407,6 +407,7 @@ test('localised field applies underlying field postprocess before replacing', as
     _url: 'https://example.com/de',
     _title: 'Deutsch',
     _target: '_blank',
+    _label: 'Deutsch',
     href: 'https://example.com/de',
     url: 'https://example.com/de',
     title: 'Deutsch',

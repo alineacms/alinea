@@ -464,7 +464,7 @@ function EntryEditorContent({
             <DashboardModalContent>
               This entry has unsaved changes
               {dirtyActions.publish && hasErrors
-                ? ', fix the invalid fields before publishing'
+                ? ', and some fields are invalid'
                 : ''}
             </DashboardModalContent>
             <DashboardModalFooter>
@@ -477,9 +477,8 @@ function EntryEditorContent({
                     onClick={publishAndConfirm}
                     color={canSaveDraft ? 'secondary' : 'primary'}
                     icon={IcRoundCheck}
-                    disabled={hasErrors}
                   >
-                    Publish
+                    {hasErrors ? 'Publish anyway' : 'Publish'}
                   </Button>
                 )}
                 {dirtyActions.saveDraft && (

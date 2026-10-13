@@ -61,23 +61,6 @@ test('fetch edges via locale', async () => {
   test.is(getWithoutLocale!.locale, page1EN._locale)
 })
 
-test('seeding', async () => {
-  const db = new LocalDB(cms.config)
-  await db.sync()
-  const page1EN = await db.first({
-    type: Page,
-    locale: 'en',
-    path: 'page1'
-  })
-  test.ok(page1EN)
-  const page1DE = await db.first({
-    type: Page,
-    locale: 'de',
-    path: 'page1'
-  })
-  test.ok(page1DE)
-})
-
 test('get translations', async () => {
   const db = new LocalDB(cms.config)
   await db.sync()

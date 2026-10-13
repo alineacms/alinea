@@ -221,7 +221,7 @@
         },
         {
           "_type": "text",
-          "text": ". Use the `afterCommit` hook to revalidate pages after editors publish, see "
+          "text": ". Static pages are revalidated in the background after editors publish, see "
         },
         {
           "_type": "text",
@@ -257,14 +257,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Two hooks on the handler run for every commit, whatever it contains. `beforeCommit` receives the changes before they are committed: inspect or rewrite them and return the mutations to commit, or return nothing to keep them as they are. `afterCommit` runs once the commit is made, with the mutations and the `sha` of the new commit: revalidate pages, notify your team or trigger a deploy."
+          "text": "Two hooks on the handler run for every commit, whatever it contains. `beforeCommit` receives the changes before they are committed: inspect or rewrite them and return the mutations to commit, or return nothing to keep them as they are. `afterCommit` runs once the commit is made, with the mutations and the `sha` of the new commit: revalidate caches of your own, notify your team or trigger a deploy."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JzngSfwhhn4Bxsitzy4zdMLp4J",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidatePath} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({sha}) {\n    revalidatePath('/', 'layout')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidateTag} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({sha}) {\n    // Pages that query content refresh on their own, revalidate your own caches\n    revalidateTag('products', 'max')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx"
     },

@@ -29,7 +29,7 @@ test('translates an entry without copying and publishes the path it shows', asyn
 
   await app.page.getByRole('button', {name: 'Publish'}).click()
   await expect(
-    app.page.getByRole('dialog', {name: 'Fix invalid fields before publishing'})
+    app.page.getByRole('dialog', {name: 'Some fields are invalid'})
   ).toHaveCount(0)
   await expect(
     app.page.locator('header').getByText('Draft', {exact: true})

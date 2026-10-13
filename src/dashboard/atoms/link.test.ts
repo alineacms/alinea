@@ -1,4 +1,5 @@
 import {expect, spyOn, test} from 'bun:test'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createStore, type Atom} from 'jotai'
 import {Config, Field} from '#/index.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -8,9 +9,12 @@ import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
 import {
   createDashboardAtomFixture,
+  DashboardTestPage,
+  TestEvents,
   createDashboardStore
 } from '#test/DashboardFixture.js'
 import {entryAtoms} from './entry.js'
+import {eventsAtom} from './core.js'
 import {linkEntryAtoms, type LinkEntryState} from './link.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 
@@ -57,6 +61,36 @@ test('batches link entry reads started in the same turn', async () => {
     data: {id: child._id, title: 'Child'}
   })
   resolve.mockRestore()
+})
+
+test('keeps the loaded entry while it reloads', async () => {
+  const {child, db, store} = await createDashboardAtomFixture()
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  await store.get(userPolicyReadyAtom)
+  const linkEntry = linkEntryAtoms(child._id)
+  const states: Array<LinkEntryState> = []
+  const unsubscribe = store.sub(linkEntry, () =>
+    states.push(store.get(linkEntry))
+  )
+  await waitForChange(store, linkEntry)
+  expect(store.get(linkEntry)).toMatchObject({state: 'hasData'})
+
+  await db.update({
+    type: DashboardTestPage,
+    id: child._id,
+    set: {title: 'Child renamed'}
+  })
+  const reloaded = waitForChange(store, linkEntry)
+  events.emit(new IndexEvent({op: 'index', sha: 'child-sha', ids: [child._id]}))
+  await reloaded
+  unsubscribe()
+
+  expect(store.get(linkEntry)).toMatchObject({
+    state: 'hasData',
+    data: {title: 'Child renamed'}
+  })
+  expect(states.map(state => state.state)).not.toContain('loading')
 })
 
 test('contains link entry load errors in the atom state', async () => {

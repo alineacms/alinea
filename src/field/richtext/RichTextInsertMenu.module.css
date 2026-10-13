@@ -2,6 +2,9 @@
   z-index: 1;
 }
 
-.RichTextInsertMenu-label {
-  min-width: 0;
+.RichTextInsertMenu-popover {
+  width: 280px;
+  min-width: 280px;
+  overflow: hidden;
+  padding: 0;
 }

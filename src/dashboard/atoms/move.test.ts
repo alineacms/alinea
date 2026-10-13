@@ -116,32 +116,22 @@ function targetsFor(
   return {ids: picked.map(page => page.id), rootAccepts: targets.rootAccepts}
 }
 
-test('only picks entries whose type contains the moved type', () => {
-  expect(targetsFor([subject('post', 'Post', ['home', 'blog'])])).toEqual({
-    ids: ['blog'],
+test('only picks targets that can hold every moved entry', () => {
+  const post = subject('post', 'Post', ['home', 'blog'])
+  const about = subject('about', 'Page', ['home'])
+  const team = subject('team', 'Page', ['home', 'about'])
+  // Only entries whose type contains the moved type
+  expect(targetsFor([post])).toEqual({ids: ['blog'], rootAccepts: false})
+  // Never the entry itself or its children, nor hidden container types
+  expect(targetsFor([about])).toEqual({ids: ['home'], rootAccepts: true})
+  expect(targetsFor([team]).ids).not.toContain('archive')
+  // Every moved entry must fit
+  expect(targetsFor([team, post])).toEqual({ids: [], rootAccepts: false})
+  // Entries of unknown types can not be moved
+  expect(targetsFor([subject('post', 'Unknown')])).toEqual({
+    ids: [],
     rootAccepts: false
   })
-})
-
-test('never moves an entry into itself or its children', () => {
-  expect(targetsFor([subject('about', 'Page', ['home'])])).toEqual({
-    ids: ['home'],
-    rootAccepts: true
-  })
-})
-
-test('skips hidden container types', () => {
-  const {ids} = targetsFor([subject('team', 'Page', ['home', 'about'])])
-  expect(ids).not.toContain('archive')
-})
-
-test('every moved entry must fit in a target', () => {
-  expect(
-    targetsFor([
-      subject('team', 'Page', ['home', 'about']),
-      subject('post', 'Post', ['home', 'blog'])
-    ])
-  ).toEqual({ids: [], rootAccepts: false})
 })
 
 test('entries inside another moved entry move along with it', () => {
@@ -163,13 +153,6 @@ test('entries inside another moved entry move along with it', () => {
   })
 })
 
-test('entries of unknown types can not be moved', () => {
-  expect(targetsFor([subject('post', 'Unknown')])).toEqual({
-    ids: [],
-    rootAccepts: false
-  })
-})
-
 test('follows the move permission of the target', () => {
   const policy = new WriteablePolicy(getScope(config))
     .allowAll()
@@ -186,51 +169,6 @@ test('roots accept the types they contain, or anything without contains', () => 
   expect(rootAcceptsType(config, rootData('open'), 'Post')).toBe(true)
   expect(rootAcceptsType(config, rootData('media'), 'MediaFile')).toBe(true)
   expect(rootAcceptsType(config, rootData('media'), 'MediaLibrary')).toBe(true)
-})
-
-test('moves media files into a folder and back to the root', async () => {
-  const db = new LocalDB(config)
-  await db.sync()
-  const folder = await db.create({
-    type: MediaLibrary,
-    workspace: 'main',
-    root: 'media',
-    set: {title: 'Folder', path: 'folder'}
-  })
-  const files = await Promise.all(
-    ['one', 'two'].map(name =>
-      db.create({
-        type: MediaFile,
-        workspace: 'main',
-        root: 'media',
-        set: {title: name, path: name, location: `${name}.jpg`}
-      })
-    )
-  )
-  const store = createDashboardStore(config, db)
-  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
-  await store.get(userPolicyReadyAtom)
-  const parentIds = async () => {
-    const moved = await db.find({
-      id: {in: files.map(file => file._id)},
-      select: {parentId: Entry.parentId}
-    })
-    return moved.map(file => file.parentId)
-  }
-
-  await store.set(
-    moveEntriesAtom,
-    files.map(file => subject(file._id, 'MediaFile', [], 'media')),
-    folder._id
-  )
-  expect(await parentIds()).toEqual([folder._id, folder._id])
-
-  await store.set(
-    moveEntriesAtom,
-    files.map(file => subject(file._id, 'MediaFile', [folder._id], 'media')),
-    null
-  )
-  expect(await parentIds()).toEqual([null, null])
 })
 
 test('moves an entry together with a child also in the batch', async () => {
@@ -329,4 +267,44 @@ test('moves every entry or none', async () => {
     select: Entry.parentId
   })
   expect(parents.every(parentId => parentId === null)).toBe(true)
+})
+
+test('tells why entries can not move somewhere', () => {
+  const refusal = (
+    subjects: Array<MoveSubject>,
+    parent: MoveSubject | null,
+    {
+      policy = Policy.ALLOW_ALL,
+      root = 'pages',
+      translated = undefined as ReadonlySet<string> | undefined
+    } = {}
+  ) =>
+    moveTargets(config, policy, rootData(root), subjects, translated).refusal(
+      parent
+    )
+  const post = subject('post', 'Post', ['home', 'blog'])
+  expect(refusal([post], subject('blog', 'Blog', ['home']))).toBeUndefined()
+  expect(refusal([post], subject('home', 'Page'))).toBe(
+    '"home" can\'t hold Post.'
+  )
+  expect(refusal([post], null)).toBe(
+    "Pages doesn't hold Post at its top level."
+  )
+  expect(
+    refusal(
+      [subject('about', 'Page', ['home'])],
+      subject('team', 'Page', ['home', 'about'])
+    )
+  ).toBe('"about" can\'t be moved into itself.')
+  expect(
+    refusal([post], subject('blog', 'Blog', ['home']), {
+      translated: new Set()
+    })
+  ).toBe('"blog" doesn\'t exist in every language of "post".')
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({id: 'blog', deny: {move: true}})
+  expect(refusal([post], subject('blog', 'Blog', ['home']), {policy})).toBe(
+    'You can\'t move entries into "blog".'
+  )
 })

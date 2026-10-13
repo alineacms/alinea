@@ -1,6 +1,5 @@
 import {describe, expect, test} from 'bun:test'
 import {
-  entryDirtyActions,
   entryHeaderActions,
   entryHeaderPrimaryActions,
   type EntryHeaderActions,
@@ -265,27 +264,4 @@ describe('entryHeaderPrimaryActions', () => {
       ).toEqual({...noPrimaryActions, ...actionCase.expected})
     })
   }
-})
-
-describe('entryDirtyActions', () => {
-  test('allows publish and draft when both are available', () => {
-    expect(entryDirtyActions(true, true)).toEqual({
-      publish: true,
-      saveDraft: true
-    })
-  })
-
-  test('disables draft when drafts are unavailable', () => {
-    expect(entryDirtyActions(true, false)).toEqual({
-      publish: true,
-      saveDraft: false
-    })
-  })
-
-  test('disables publish and draft without access', () => {
-    expect(entryDirtyActions(false, false)).toEqual({
-      publish: false,
-      saveDraft: false
-    })
-  })
 })

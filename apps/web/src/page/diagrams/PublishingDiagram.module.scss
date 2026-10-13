@@ -1,0 +1,141 @@
+@use '@/style' as *;
+
+.PublishingDiagram {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// Narrow screens scroll the drawing instead of shrinking its text
+.PublishingDiagram-scroll {
+  overflow-x: auto;
+  @include scrollbar;
+}
+
+.PublishingDiagram-svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  font-family: var(--web-body-font);
+}
+
+.PublishingDiagram-line {
+  fill: none;
+  stroke: var(--web-foreground-muted);
+  stroke-width: 1;
+
+  &.is-accent {
+    stroke: var(--web-accent);
+  }
+
+  &.is-faint {
+    stroke: color-mix(
+      in srgb,
+      var(--web-foreground-muted) 50%,
+      var(--web-background)
+    );
+    stroke-dasharray: 2 4;
+  }
+}
+
+.PublishingDiagram-head {
+  fill: none;
+  stroke: var(--web-foreground-muted);
+  stroke-width: 1.2;
+
+  &.is-accent {
+    stroke: var(--web-accent);
+  }
+
+  &.is-faint {
+    stroke: color-mix(
+      in srgb,
+      var(--web-foreground-muted) 50%,
+      var(--web-background)
+    );
+  }
+}
+
+.PublishingDiagram-box {
+  fill: var(--web-background);
+  stroke: var(--web-outline-strong);
+  stroke-width: 1;
+
+  &.is-accent {
+    stroke: var(--web-accent);
+  }
+
+  &.is-muted {
+    fill: var(--web-surface-soft);
+    stroke: none;
+  }
+}
+
+.PublishingDiagram-title {
+  font-size: 15px;
+  font-weight: 500;
+  fill: var(--web-foreground);
+
+  &.is-muted {
+    fill: var(--web-foreground-faded);
+  }
+}
+
+.PublishingDiagram-detail {
+  font-size: 13px;
+  fill: var(--web-foreground-faded);
+
+  &.is-code {
+    font-family: var(--web-mono-font);
+    font-size: 12.5px;
+  }
+
+  &.is-muted {
+    fill: var(--web-foreground-muted);
+  }
+}
+
+.PublishingDiagram-label {
+  font-family: var(--web-mono-font);
+  font-size: 12px;
+  fill: var(--web-foreground-muted);
+
+  &.is-accent {
+    fill: var(--web-accent);
+  }
+}
+
+.PublishingDiagram-live {
+  fill: var(--web-positive);
+}
+
+.PublishingDiagram-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--web-outline);
+  font: var(--web-docs-font-compact);
+  color: var(--web-foreground-faded);
+
+  @include s {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+.PublishingDiagram-step-number {
+  margin-right: 8px;
+  font-family: var(--web-mono-font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--web-accent);
+}
+
+.PublishingDiagram-step-code {
+  font-family: var(--web-mono-font);
+  font-size: 13px;
+  color: var(--web-foreground);
+}

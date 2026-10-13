@@ -10,18 +10,15 @@ import {
   SortableList,
   SortableListItemTitle,
   SortableListAdd,
-  SortableListDragPreview,
   ListError,
   ListLabel,
   SortableListItemActions,
   SortableListItemContent,
-  SortableListHandle,
   SortableListItemToggle,
   SortableListItemHeader,
   SortableListItemDescription,
   SortableListItemInsert,
   SortableListItemTrigger,
-  Kbd,
   Popover,
   PopoverAnchor,
   PopoverContent,
@@ -79,19 +76,10 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import type {ComponentType} from 'react'
-import {
-  createContext,
-  memo,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
+import {memo, useCallback, useMemo, useRef, useState} from 'react'
 import css from './ListField.module.css'
 
 const styles = styler(css)
-const ListFieldDepthContext = createContext(0)
 
 interface ListValue {
   _id: string
@@ -103,9 +91,8 @@ const copyAtom = atomWithStorage<ListValue | undefined>(
   '@alinea/copypaste',
   undefined
 )
-const LIST_FIELD_ROW_DRAG_TYPE = 'application/x-alinea-list-field-row'
 
-interface ListFieldTypeItem {
+export interface ListFieldTypeItem {
   id: string
   label: string
   type: Schema[string]
@@ -124,7 +111,6 @@ export interface ListFieldViewProps {
 }
 
 export function ListFieldView({field}: ListFieldViewProps) {
-  const depth = useContext(ListFieldDepthContext)
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
   const list = useFieldNode(field) as ReactiveNode<Array<ListValue>>
@@ -148,7 +134,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
   const canCreate = options.max === undefined || nodes.length < options.max
-  const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
   const rowIdsAtom = useMemo(
     () =>
       atom(get => {
@@ -158,6 +143,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
     [list]
   )
   const rowIds = useAtomValueRaw(rowIdsAtom)
+  const [foldedIds, setFoldedIds] = useState<Set<string>>(
+    () => new Set(options.collapsed ? rowIds : [])
+  )
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, {keys, target}: DragMoveEvent) => {
@@ -188,7 +176,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
     [list]
   )
   const copyRow = useSetAtom(copyRowAtom)
-  const allExpanded = nodes.length > 0 && foldedIds.size === 0
+  const allExpanded = nodes.length > 0 && rowIds.every(id => !foldedIds.has(id))
 
   function toggleAll() {
     setFoldedIds(allExpanded ? new Set(rowIds) : new Set())
@@ -211,8 +199,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const content = (hasRows || !readOnly) && (
     <SortableList
       aria-label={options.label || 'List items'}
-      data-depth={depth % 2 === 0 ? 'muted' : 'base'}
-      dragType={LIST_FIELD_ROW_DRAG_TYPE}
       onReorder={readOnly ? undefined : moveRow}
     >
       {nodes.map((row, index) => (
@@ -247,7 +233,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
   )
 
   return (
-    <ListFieldDepthContext.Provider value={depth + 1}>
+    <>
       <ListLabel
         required={options.required}
         aria-label={
@@ -269,7 +255,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
       </ListLabel>
       {content}
       {error && <ListError>{error}</ListError>}
-    </ListFieldDepthContext.Provider>
+    </>
   )
 }
 
@@ -381,34 +367,6 @@ interface ListFieldRowProps {
   onInsertRow: (index: number, row: ListValue) => void
 }
 
-interface ListFieldSheetActionProps {
-  icon: ComponentType
-  label: string
-  disabled?: boolean
-  onClick: () => void
-}
-
-function ListFieldSheetAction({
-  icon,
-  label,
-  disabled,
-  onClick
-}: ListFieldSheetActionProps) {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        variant="ghost"
-        size="icon-sm"
-        icon={icon}
-        aria-label={label}
-        disabled={disabled}
-        onClick={onClick}
-      />
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
 const ListFieldRow = memo(function ListFieldRow({
   canCreate,
   index,
@@ -465,10 +423,9 @@ const ListFieldRow = memo(function ListFieldRow({
       <SortableListItem
         aria-label={`${label} item ${index + 1}`}
         current={sheet.open}
-        dragPreview={<SortableListDragPreview icon={typeIcon} label={label} />}
         id={itemId}
       >
-        {index > 0 && canCreate && !readOnly && (
+        {canCreate && !readOnly && (
           <ListFieldInsertGap
             items={typeItems}
             label={`Insert before ${label} item ${index + 1}`}
@@ -481,7 +438,6 @@ const ListFieldRow = memo(function ListFieldRow({
           label={label}
           customLabel={customLabel}
           anchor={anchorValue}
-          dragLabel={`Drag ${label} item ${index + 1}`}
           readOnly={readOnly}
           sheet={sheet}
           typeIcon={typeIcon}
@@ -591,7 +547,6 @@ function rowAnchor(customLabel: string, anchor?: string): string {
 interface ListFieldRowHeaderProps {
   expanded: boolean
   label: string
-  dragLabel: string
   customLabel: string
   anchor?: string
   readOnly: boolean
@@ -604,7 +559,6 @@ interface ListFieldRowHeaderProps {
 function ListFieldRowHeader({
   expanded,
   label,
-  dragLabel,
   customLabel,
   anchor,
   readOnly,
@@ -618,7 +572,7 @@ function ListFieldRowHeader({
   const showAnchor = Boolean(displayAnchor && !displayLabel)
   const title = (
     <>
-      <Badge icon={typeIcon} size="sm">
+      <Badge icon={typeIcon} size="sm" color="primary">
         {label}
       </Badge>
       {displayLabel && (
@@ -631,7 +585,6 @@ function ListFieldRowHeader({
   )
   return (
     <SortableListItemHeader>
-      {!readOnly && <SortableListHandle aria-label={dragLabel} />}
       <SortableListItemTitle>
         <SortableListItemToggle
           aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
@@ -643,7 +596,11 @@ function ListFieldRowHeader({
             {...sheet.triggerProps}
             aria-label={`${label} settings`}
             aria-expanded={sheet.open}
-            onClick={sheet.toggle}
+            onClick={() => {
+              // Opening the settings shows the row they belong to
+              if (!sheet.open && !expanded) onToggle()
+              sheet.toggle()
+            }}
           >
             {title}
           </SortableListItemTrigger>
@@ -741,13 +698,10 @@ function ListFieldRowSheet({
   return (
     <SheetContent onClose={onClose}>
       <SheetHeader>
-        <Badge icon={typeIcon} size="sm">
+        <Badge icon={typeIcon} size="sm" color="primary">
           {label}
         </Badge>
         <SheetTitle>{title}</SheetTitle>
-        <Kbd size="sm" aria-hidden>
-          Esc
-        </Kbd>
         <SheetClose aria-label="Close block settings" />
       </SheetHeader>
       {insertPosition ? (
@@ -819,23 +773,34 @@ function ListFieldRowSheet({
             </Button>
           </SheetFooter>
           <SheetFooter>
-            <ListFieldSheetAction
+            <Button
+              variant="ghost"
+              size="sm"
               icon={IcBaselineContentCopy}
-              label="Copy"
               onClick={copy}
-            />
-            <ListFieldSheetAction
+            >
+              Copy
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               icon={IcRoundArrowUpward}
-              label="Move up"
               disabled={readOnly || isFirstRow}
               onClick={onMoveUp}
-            />
-            <ListFieldSheetAction
+            >
+              Move up
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               icon={IcRoundArrowDownward}
-              label="Move down"
               disabled={readOnly || isLastRow}
               onClick={onMoveDown}
-            />
+            >
+              Move down
+            </Button>
+          </SheetFooter>
+          <SheetFooter>
             <Button
               variant="ghost"
               size="sm"
@@ -923,7 +888,7 @@ function ListFieldTypePicker({
   )
 }
 
-interface ListFieldTypeCommandProps {
+export interface ListFieldTypeCommandProps {
   items: Array<ListFieldTypeItem>
   label: string
   pasted?: ListValue
@@ -932,7 +897,8 @@ interface ListFieldTypeCommandProps {
   onSelect: (item: ListFieldTypeItem) => void
 }
 
-function ListFieldTypeCommand({
+/** Searchable list of block types, also used to insert rich text blocks */
+export function ListFieldTypeCommand({
   items,
   label,
   pasted,

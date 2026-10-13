@@ -156,30 +156,6 @@ test('warns about links to the files in a deleted media folder', async ({
   )
 })
 
-test('warns about links to the entries deleted with a page', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
-    entry: 'localizedFolder',
-    routeRoot: 'localized',
-    title: 'Localized folder'
-  })
-
-  await app.page.getByRole('button', {name: 'Edit entry'}).click()
-  await app.runEntryAction('Delete')
-  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
-  await expect(
-    dialog.getByText('Entries are deleted with the entries they contain.')
-  ).toBeVisible()
-  await expect(dialog.getByRole('alert')).toContainText(
-    'This entry and its contents have 1 reference'
-  )
-  await expect(dialog.getByRole('list', {name: 'References'})).toContainText(
-    'Child linking'
-  )
-})
-
 test('archives the entry instead of deleting it', async ({
   dashboard,
   mount
@@ -204,6 +180,49 @@ test('archives the entry instead of deleting it', async ({
   await expect(
     dialog.getByRole('button', {name: 'Archive instead'})
   ).toHaveCount(0)
+})
+
+test('redirects the url of a deleted page to the picked page', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'beta'
+  })
+
+  await app.runEntryAction('Delete')
+  const dialog = app.page.getByRole('dialog', {name: 'Delete entry'})
+  await expect(
+    dialog.getByText(
+      'If this page was publicly available, links to its URL may still be around elsewhere.',
+      {exact: false}
+    )
+  ).toBeVisible()
+  await expect(
+    dialog.getByText('Redirect the URL to another page (recommended)')
+  ).toBeVisible()
+  await dialog.getByRole('button', {name: 'Choose page…'}).click()
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  // The deleted page can't be picked
+  await expect(picker.getByRole('row', {name: /^Beta/})).toHaveAttribute(
+    'data-unselectable',
+    'true'
+  )
+  await picker.getByRole('row', {name: /^Alpha/}).click()
+  await expect(picker).toHaveCount(0)
+  await expect(dialog.getByText('/alpha', {exact: true})).toBeVisible()
+  await dialog.getByRole('button', {name: 'Delete', exact: true}).click()
+  await expect(dialog).toHaveCount(0)
+
+  // The old url opens the page it redirects to
+  await app.page.evaluate(() => {
+    window.location.hash = '#/edit?url=%2Fbeta'
+  })
+  await expect(app.title).toHaveText('Alpha')
+  await app.page.getByRole('tab', {name: 'Details'}).click()
+  await expect(app.page.getByRole('textbox', {name: 'URL'})).toHaveValue(
+    '/beta'
+  )
 })
 
 test('deletes an entry from a language it is not translated in', async ({

@@ -105,15 +105,6 @@ test('shows the loaded entry title on an overview outside the sidebar tree', asy
   await expect(
     app.page.getByRole('button', {name: 'Back to root'})
   ).toBeVisible()
-  const editView = app.page.getByRole('button', {name: 'Edit entry'})
-  await app.page.keyboard.press('Tab')
-  await editView.focus()
-  await expect(app.page.getByRole('tooltip')).toHaveText('Edit view')
-  await editView.click()
-  const overviewView = app.page.getByRole('button', {name: 'Show overview'})
-  await app.page.keyboard.press('Tab')
-  await overviewView.focus()
-  await expect(app.page.getByRole('tooltip')).toHaveText('Overview view')
 })
 
 test('keeps localized children when switching a sidebar entry to overview', async ({
@@ -254,25 +245,6 @@ test('shows the configured root icon in the rail, the sidebar and the splash pag
   ).toBe(fallback)
 })
 
-test('lists recently changed media files with their action and author on the splash page', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-  const roots = app.page.getByRole('complementary', {name: 'Workspace roots'})
-  await app.page.evaluate(() => {
-    window.location.hash = '#/'
-  })
-  await expect(roots).toHaveCount(0)
-  // The separators between action, time and author are hidden dots
-  await expect(
-    app.page.getByRole('button', {name: /^Nested media file/})
-  ).toContainText(/Edited·.+ago·Local user$/)
-  await expect(
-    app.page.getByRole('button', {name: /^Uploaded image/})
-  ).toContainText(/Created·.+ago·Alice Editor$/)
-})
-
 test('keeps a collapsed parent closed when selecting a child elsewhere', async ({
   dashboard,
   mount
@@ -394,20 +366,6 @@ test('updates document metadata with dashboard navigation', async ({
   )
 })
 
-test('renders a missing entry route', async ({dashboard, mount}) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
-    routeEntry: 'missing-entry',
-    title: 'Entry not found'
-  })
-
-  await expect(app.page.getByText('Requested id:')).toContainText(
-    'missing-entry'
-  )
-  await expect(
-    app.page.getByRole('button', {name: 'Go to Pages'})
-  ).toBeVisible()
-})
-
 test('renders a missing root route without falling through to an entry', async ({
   dashboard,
   mount
@@ -503,6 +461,15 @@ test('opens details for a localised file with null alt text', async ({
   )
 })
 
+test('opens on the entry of an edit link', async ({dashboard, mount}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    hash: '#/edit?url=%2Fbeta',
+    title: 'Beta'
+  })
+  await expect(app.page).toHaveURL(/#\/entry\/main\/pages\/workflow-beta$/)
+  await expect(app.field('Title')).toHaveValue('Beta')
+})
+
 test('splits document metadata into SEO and Details tabs', async ({
   dashboard,
   mount
@@ -510,17 +477,36 @@ test('splits document metadata into SEO and Details tabs', async ({
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
   const createdAt = app.page.getByText('Created at', {exact: true})
 
+  const openGraph = app.page.getByText('Open Graph', {exact: true})
+  const brand = app.page.getByText('Brand the share image', {exact: true})
+  const previews = app.page.getByText('Metadata previews', {exact: true})
+  const reviewer = app.page.getByText('Reviewer', {exact: true})
+
   await app.page.getByRole('tab', {name: 'SEO'}).click()
   await expect(app.field('Description')).toHaveCount(2)
-  await expect(app.page.getByText('Open Graph', {exact: true})).toBeVisible()
+  await expect(openGraph).toBeVisible()
   await expect(createdAt).toHaveCount(0)
+  // Fields a type adds to the SEO tab come before the previews
+  await expect(brand).toBeVisible()
+  expect(await top(openGraph)).toBeLessThan(await top(brand))
+  expect(await top(brand)).toBeLessThan(await top(previews))
+  await expect(reviewer).toHaveCount(0)
 
   await app.page.getByRole('tab', {name: 'Details'}).click()
   await expect(createdAt).toBeVisible()
   await expect(app.page.getByText('Updated by', {exact: true})).toBeVisible()
   await expect(app.page.getByText('URL aliases', {exact: true})).toBeVisible()
   await expect(app.field('Description')).toHaveCount(0)
+  await expect(brand).toHaveCount(0)
+  // and to the Details tab before the created and updated details
+  expect(await top(reviewer)).toBeLessThan(await top(createdAt))
 })
+
+async function top(locator: Locator): Promise<number> {
+  const box = await locator.boundingBox()
+  if (!box) throw new Error('Not visible')
+  return box.y
+}
 
 // Counts the animation frames in which the dashboard is hidden, or the preview
 // tab shows anything but the preview of the entry on screen

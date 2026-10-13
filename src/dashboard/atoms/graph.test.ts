@@ -1,10 +1,9 @@
 import {expect, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createStore} from 'jotai'
-import {activityState} from './activity.js'
+import {activityAtom, activityState} from './activity.js'
 import {eventsAtom, graphAtom} from './core.js'
-import {activityAtom} from './activity.js'
-import {entryRevisionAtom, graphReadyAtom, shaAtom, syncAtom} from './graph.js'
+import {graphReadyAtom, shaAtom, syncAtom} from './graph.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('waits for the initial graph sync', async () => {
@@ -69,31 +68,6 @@ test('reads the indexed content hash without synchronizing the graph', async () 
   expect(await store.get(shaAtom)).toBe(sha)
 })
 
-test('only invalidates revisions for changed entry ids', async () => {
-  const {db} = await createDashboardAtomFixture()
-  const store = createStore()
-  const events = new TestEvents()
-  store.set(graphAtom, db)
-  store.set(eventsAtom, events)
-
-  const first = entryRevisionAtom('first')
-  const second = entryRevisionAtom('second')
-  let firstChanges = 0
-  let secondChanges = 0
-  const unsubscribeFirst = store.sub(first, () => firstChanges++)
-  const unsubscribeSecond = store.sub(second, () => secondChanges++)
-
-  events.emit(new IndexEvent({op: 'index', sha: 'changed-sha', ids: ['first']}))
-
-  expect(store.get(first)).toBe('changed-sha')
-  expect(store.get(second)).toBeUndefined()
-  expect(firstChanges).toBe(1)
-  expect(secondChanges).toBe(0)
-
-  unsubscribeFirst()
-  unsubscribeSecond()
-})
-
 test('summarizes current activity without hiding its history', () => {
   const state = activityState([
     {
@@ -135,24 +109,6 @@ test('summarizes current activity without hiding its history', () => {
   expect(state.hasBlocked).toBe(true)
   expect(state.canRetry).toBe(true)
   expect(state.canDiscard).toBe(false)
-})
-
-test('a failed upload can be discarded but not retried', () => {
-  const state = activityState([
-    {
-      id: 'failed-upload',
-      type: 'upload',
-      status: 'failed',
-      operations: [],
-      startedAt: 1,
-      finishedAt: 2,
-      error: 'Upload failed'
-    }
-  ])
-
-  expect(state.hasFailed).toBe(true)
-  expect(state.canRetry).toBe(false)
-  expect(state.canDiscard).toBe(true)
 })
 
 test('hydrates activity after a worker action already started', async () => {

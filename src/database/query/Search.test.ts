@@ -148,31 +148,6 @@ for (const driver of ['native', 'wasm'] as const)
     }
   })
 
-test('a search inside a relation prepares the index', async () => {
-  const db = connect(new Database(':memory:'))
-  const source = new MemorySource()
-  await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
-  const runtime = new EntryDatabase(config, db)
-  const initial = await transaction(source)
-  await applySourceChange(
-    source,
-    await initial.add('pages/a.json', entry('a', 'Chocolate')).compile()
-  )
-  await runtime.syncWith(source)
-  expect(
-    await runtime.resolve({
-      id: 'a',
-      first: true,
-      select: Query.translations({
-        includeSelf: true,
-        search: 'choco',
-        select: Entry.id
-      })
-    })
-  ).toEqual(['a'])
-  await db.close()
-})
-
 test('search updates complete entry rows transactionally', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)

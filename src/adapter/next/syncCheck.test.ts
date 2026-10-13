@@ -1,6 +1,12 @@
 import type {Client} from '#/core/Client.js'
 import {expect, mock, test} from 'bun:test'
-import {syncIfStale} from './syncCheck.js'
+import {
+  CONTENT_SHA_TAG,
+  contentShaWindow,
+  revalidateContentSha,
+  syncIfStale,
+  tagContentSha
+} from './syncCheck.js'
 
 function dbWith(sha: string) {
   const syncWith = mock(async () => sha)
@@ -56,4 +62,30 @@ test('skips sync when the isolate db matches the shared sha', async () => {
   const settled = await syncIfStale(db, client, 3600)
   expect(settled).toBe(true)
   expect(syncWith).not.toHaveBeenCalled()
+})
+
+test('marks the content sha stale after a commit instead of expiring it', async () => {
+  const revalidateTag = mock(() => {})
+  mock.module('next/cache.js', () => ({revalidateTag}))
+  await revalidateContentSha()
+  expect(revalidateTag).toHaveBeenCalledWith(CONTENT_SHA_TAG, 'max')
+})
+
+test('takes the sha window from a positive syncInterval only', () => {
+  expect(contentShaWindow(30)).toBe(30)
+  expect(contentShaWindow(undefined)).toBe(300)
+  expect(contentShaWindow(0)).toBe(300)
+  expect(contentShaWindow(Number.POSITIVE_INFINITY)).toBe(300)
+})
+
+test('tags a build render with the content sha', async () => {
+  const unstable_cache = mock(
+    (fn: () => Promise<unknown>, _key: Array<string>, _options: object) => fn
+  )
+  mock.module('next/cache.js', () => ({unstable_cache}))
+  await tagContentSha()
+  expect(unstable_cache.mock.calls[0][2]).toEqual({
+    revalidate: 300,
+    tags: [CONTENT_SHA_TAG]
+  })
 })

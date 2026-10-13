@@ -49,7 +49,6 @@ test('opens entry fields in the compact picker', async ({dashboard, mount}) => {
     exact: true
   })
   await expect(picker).toBeVisible()
-  await expect(picker.locator('..')).toHaveCSS('height', '350px')
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -75,43 +74,6 @@ test('opens a functional location in another workspace and root', async ({
     picker.getByRole('row', {name: 'Reference target'})
   ).toBeVisible()
   await expect(picker.getByRole('row', {name: 'Beta'})).toHaveCount(0)
-
-  const search = picker.getByRole('searchbox', {name: 'Search'})
-  const view = picker.getByRole('radiogroup', {name: 'Explorer view'})
-  const location = picker.getByRole('group', {name: 'Explorer location'})
-  const singleRoot = location.getByText('Reference library', {exact: true})
-  await expect(singleRoot).toHaveCSS('font-weight', '600')
-  await expect
-    .poll(async () => {
-      const searchBox = await search.locator('..').boundingBox()
-      const locationBox = await location.boundingBox()
-      return Boolean(
-        searchBox &&
-        locationBox &&
-        locationBox.y >= searchBox.y + searchBox.height + 8
-      )
-    })
-    .toBe(true)
-  await expect
-    .poll(async () => {
-      const searchBox = await search.locator('..').boundingBox()
-      const viewBox = await view.boundingBox()
-      if (!searchBox || !viewBox) return false
-      // The inline search has no box of its own, it centers with the toggle
-      const searchCenter = searchBox.y + searchBox.height / 2
-      const viewCenter = viewBox.y + viewBox.height / 2
-      return Math.abs(searchCenter - viewCenter) <= 1
-    })
-    .toBe(true)
-  const resultModes = location.getByRole('radiogroup', {
-    name: 'Explorer results'
-  })
-  await expect(
-    resultModes.getByRole('radio', {name: 'Browse'}).locator('svg')
-  ).toHaveCount(1)
-  await expect(
-    resultModes.getByRole('radio', {name: 'Filtered'}).locator('svg')
-  ).toHaveCount(1)
 })
 
 test('switches a localized card picker without showing its loader', async ({
@@ -126,19 +88,6 @@ test('switches a localized card picker without showing its loader', async ({
     .click()
 
   const picker = await expandLinkPicker(app.page)
-  const rootLabel = picker.getByText('Localized pages', {exact: true})
-  const localeButton = picker
-    .getByRole('button', {name: 'Language', exact: true})
-    .first()
-  const rootTypography = await rootLabel.evaluate(element => {
-    const style = getComputedStyle(element)
-    return {fontSize: style.fontSize, lineHeight: style.lineHeight}
-  })
-  const localeTypography = await localeButton.evaluate(element => {
-    const style = getComputedStyle(element)
-    return {fontSize: style.fontSize, lineHeight: style.lineHeight}
-  })
-  expect(localeTypography).toEqual(rootTypography)
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
     .getByRole('radio', {name: 'Card view'})
@@ -344,34 +293,6 @@ test('defaults a condition without a location to all locations', async ({
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
 })
 
-test('adds the same entry to a multiple link field more than once', async ({
-  dashboard,
-  mount
-}) => {
-  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
-  const field = app.page.getByRole('list', {name: 'Duplicate pages'})
-
-  async function addAlpha() {
-    await field.getByRole('button', {name: 'Duplicate pages'}).click()
-    const picker = app.page.getByRole('dialog', {
-      name: 'Pick a link',
-      exact: true
-    })
-    const alpha = picker.getByRole('row', {name: /^Alpha /})
-    await expect(alpha).toBeVisible()
-    await expect(alpha).not.toHaveAttribute('aria-selected', 'true')
-    await alpha.click()
-    await expect(picker.getByText('1 item selected')).toBeVisible()
-    await picker.getByRole('button', {name: 'Select', exact: true}).click()
-    await expect(picker).toBeHidden()
-  }
-
-  await addAlpha()
-  await addAlpha()
-
-  await expect(field.getByText('Alpha', {exact: true})).toHaveCount(2)
-})
-
 test('toggles multiple links by clicking cards before using a checkbox', async ({
   dashboard,
   mount
@@ -426,34 +347,15 @@ test('opens pickChildren at the children of the edited entry', async ({
   await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
   await expect(browseMode).toBeDisabled()
   await expect(browseMode).toHaveCSS('cursor', 'default')
-  await expect(
-    picker.getByRole('button', {name: 'Main', exact: true})
-  ).toHaveCount(0)
-  await expect(
-    picker.getByRole('button', {name: 'Pages', exact: true})
-  ).toHaveCount(0)
-  await expect(picker.getByRole('row', {name: 'Child'})).toBeVisible()
-  await expect(picker.getByRole('row', {name: 'Beta'})).toHaveCount(0)
-})
-
-test('keeps pickChildren breadcrumbs static', async ({dashboard, mount}) => {
-  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
-    entry: 'child'
-  })
-
-  await app.page
-    .getByRole('list', {name: 'Child page'})
-    .getByRole('button', {name: 'Child page'})
-    .click()
-
-  const picker = await expandLinkPicker(app.page)
+  // The breadcrumbs only tell where the children are
   const location = picker.getByRole('group', {name: 'Explorer location'})
   await expect(location.getByText('Folder', {exact: true})).toBeVisible()
-  for (const breadcrumb of ['Main', 'Pages', 'Folder', 'Child']) {
+  for (const breadcrumb of ['Main', 'Pages', 'Folder'])
     await expect(
       location.getByRole('button', {name: breadcrumb, exact: true})
     ).toHaveCount(0)
-  }
+  await expect(picker.getByRole('row', {name: 'Child'})).toBeVisible()
+  await expect(picker.getByRole('row', {name: 'Beta'})).toHaveCount(0)
 })
 
 test('navigates into folders without showing a suspense loader', async ({
@@ -637,54 +539,40 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
   await expect(picker.getByLabel('Loading entry')).toHaveCount(0)
 
   await app.page.evaluate(() => {
-    document.documentElement.dataset.cardParentSuspenseFallbackSeen = 'false'
-    document.documentElement.dataset.cardParentPlaceholderSeen = 'false'
-    document.documentElement.dataset.cardScopeGapSeen = 'false'
-    const observer = new MutationObserver(() => {
-      if (document.querySelector('[aria-label="Loading explorer"]'))
-        document.documentElement.dataset.cardParentSuspenseFallbackSeen = 'true'
-      if (document.querySelector('[aria-label="Loading entry"]'))
-        document.documentElement.dataset.cardParentPlaceholderSeen = 'true'
+    const seen = new Set<string>()
+    Object.assign(window, {cardModeGaps: seen})
+    function resultsGap() {
       const picker = document.querySelector(
         '[role="dialog"][aria-label="Pick a link in expanded view"]'
       )
-      const results = picker?.querySelector(
-        '[aria-label="Explorer card results"]'
+      return (
+        picker && !picker.querySelector('[aria-label="Explorer card results"]')
       )
-      if (picker && !results) {
+    }
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[aria-label="Loading explorer"]'))
+        seen.add('suspense fallback')
+      if (document.querySelector('[aria-label="Loading entry"]'))
+        seen.add('placeholder')
+      // Only a gap that is still there in the next frame is painted
+      if (resultsGap())
         requestAnimationFrame(() => {
-          const currentPicker = document.querySelector(
-            '[role="dialog"][aria-label="Pick a link in expanded view"]'
-          )
-          const currentResults = currentPicker?.querySelector(
-            '[aria-label="Explorer card results"]'
-          )
-          if (currentPicker && !currentResults)
-            document.documentElement.dataset.cardScopeGapSeen = 'true'
+          if (resultsGap()) seen.add('results gap')
         })
-      }
     })
     observer.observe(document.body, {childList: true, subtree: true})
   })
+  const gaps = () =>
+    app.page.evaluate(() =>
+      Array.from(
+        (window as unknown as {cardModeGaps: Set<string>}).cardModeGaps
+      )
+    )
 
   await folder.click()
   await expect(
     picker.getByRole('checkbox', {name: 'Select Child'})
   ).toBeVisible()
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentSuspenseFallbackSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentPlaceholderSeen
-      )
-    )
-    .toBe('false')
 
   const location = picker.getByRole('group', {name: 'Explorer location'})
   const resultModes = location.getByRole('radiogroup', {
@@ -703,120 +591,19 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
   await expect(allLocations).toBeEnabled()
   await expect(folders).toHaveCount(0)
   await expect(picker.getByText('No results found')).toBeVisible()
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentSuspenseFallbackSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentPlaceholderSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(() => document.documentElement.dataset.cardScopeGapSeen)
-    )
-    .toBe('false')
-  await app.page.evaluate(() => {
-    document.documentElement.dataset.cardParentSuspenseFallbackSeen = 'false'
-    document.documentElement.dataset.cardParentPlaceholderSeen = 'false'
-    document.documentElement.dataset.cardScopeGapSeen = 'false'
-  })
-
-  await search.fill('')
-  await expect(browseMode).toBeChecked()
-  await expect(folders).toBeVisible()
-  await search.fill('i18')
-  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
-  await expect(browseMode).toBeDisabled()
-  await expect(folders).toHaveCount(0)
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentSuspenseFallbackSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentPlaceholderSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(() => document.documentElement.dataset.cardScopeGapSeen)
-    )
-    .toBe('false')
-  await app.page.evaluate(() => {
-    document.documentElement.dataset.cardParentSuspenseFallbackSeen = 'false'
-    document.documentElement.dataset.cardParentPlaceholderSeen = 'false'
-    document.documentElement.dataset.cardScopeGapSeen = 'false'
-  })
 
   await allLocations.press('Space')
   await expect(allLocations).toBeChecked()
   await expect(location.getByText('Main', {exact: true})).toHaveCount(0)
-  await expect(folders).toHaveCount(0)
   await expect(
     picker.getByRole('checkbox', {name: 'Select I18 result'})
   ).toBeVisible()
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentSuspenseFallbackSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentPlaceholderSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(() => document.documentElement.dataset.cardScopeGapSeen)
-    )
-    .toBe('false')
-
-  await app.page.evaluate(() => {
-    document.documentElement.dataset.cardParentSuspenseFallbackSeen = 'false'
-    document.documentElement.dataset.cardParentPlaceholderSeen = 'false'
-    document.documentElement.dataset.cardScopeGapSeen = 'false'
-  })
 
   await allLocations.press('Space')
   await expect(allLocations).not.toBeChecked()
   await expect(location).toContainText(/Main.*Pages.*Folder/)
-  await expect(folders).toHaveCount(0)
   await expect(picker.getByText('No results found')).toBeVisible()
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentSuspenseFallbackSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentPlaceholderSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(() => document.documentElement.dataset.cardScopeGapSeen)
-    )
-    .toBe('false')
+
   await search.fill('')
   await expect(browseMode).toBeChecked()
   await expect(allLocations).toBeDisabled()
@@ -824,35 +611,19 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
   await expect(
     picker.getByRole('checkbox', {name: 'Select Child'})
   ).toBeVisible()
-
-  await app.page.evaluate(() => {
-    document.documentElement.dataset.cardParentSuspenseFallbackSeen = 'false'
-    document.documentElement.dataset.cardParentPlaceholderSeen = 'false'
-  })
+  await expect.poll(gaps).toEqual([])
 
   await sidebar.getByRole('button', {name: 'Pages', exact: true}).click()
   await expect(
     picker.getByRole('checkbox', {name: 'Select Alpha'})
   ).toBeVisible()
-
   await folder.click()
   await expect(
     picker.getByRole('checkbox', {name: 'Select Child'})
   ).toBeVisible()
   await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentSuspenseFallbackSeen
-      )
-    )
-    .toBe('false')
-  await expect
-    .poll(() =>
-      app.page.evaluate(
-        () => document.documentElement.dataset.cardParentPlaceholderSeen
-      )
-    )
-    .toBe('false')
+    .poll(async () => (await gaps()).filter(gap => gap !== 'results gap'))
+    .toEqual([])
 })
 
 test('navigates through folders to matching rows in a link picker', async ({

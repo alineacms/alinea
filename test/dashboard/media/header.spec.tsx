@@ -93,12 +93,15 @@ for (const readDelay of [0, 20]) {
     const tree = main.getByRole('treegrid', {name: 'Content tree'})
     const explorer = main.getByRole('grid', {name: 'Explorer entries'})
     const back = main.locator('[data-slot="page-back"]')
+    const root = main.getByRole('button', {name: 'Media', exact: true})
     const header = await recordHeader(app.page)
 
     async function expectRoot() {
       await expect(app.page).toHaveURL(/#\/entry\/main\/media$/)
       await expect(app.title).toHaveCount(0)
       await expect(back).toHaveCount(0)
+      await expect(root).toHaveAttribute('aria-current', 'page')
+      await expect(tree.getByRole('row', {selected: true})).toHaveCount(0)
       await expect(
         explorer.getByRole('row', {name: 'Legacy image', exact: true})
       ).toBeVisible()
@@ -106,6 +109,10 @@ for (const readDelay of [0, 20]) {
     async function expectFolder() {
       await expect(app.title).toHaveText('Media folder')
       await expect(back).toHaveAccessibleName('Back to root')
+      await expect(root).not.toHaveAttribute('aria-current', 'page')
+      await expect(
+        tree.getByRole('row', {name: /^Media folder/})
+      ).toHaveAttribute('aria-selected', 'true')
       await expect(
         explorer.getByRole('row', {name: 'Nested media folder', exact: true})
       ).toBeVisible()
@@ -144,7 +151,7 @@ for (const readDelay of [0, 20]) {
       tree.getByRole('row', {name: /^Nested media folder/})
     ).toHaveCount(0)
     await expectNestedFolder()
-    await main.getByRole('button', {name: 'Media', exact: true}).click()
+    await root.click()
     await expectRoot()
 
     // Return through the browser history

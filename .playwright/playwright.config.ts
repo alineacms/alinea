@@ -14,9 +14,7 @@ export default defineConfig({
     '**/node_modules/**',
     // Worktrees of agents are checked out under .claude. Anchor to the root so
     // a worktree, which itself lives under .claude, still finds its own specs.
-    `${rootDir}/.claude/**`,
-    // Visual regression specs run with playwright.visual.config.ts
-    '**/test/visual/**'
+    `${rootDir}/.claude/**`
   ],
   workers: 3,
   use: {

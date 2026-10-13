@@ -81,6 +81,9 @@ const authenticatedAtom = atom(async get => {
     />
   )
 
+  // An edit link is replaced by the route of its entry once it is found
+  if (page.type === 'edit') return new Promise<ReactNode>(() => {})
+
   if (page.type === 'users') {
     if (!canManageMembers) {
       return (

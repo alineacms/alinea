@@ -35,11 +35,15 @@ export class GithubApi
     this.#options = normalized
   }
 
+  write(request: CommitRequest): Promise<{sha: string}> {
+    return this.spending('save', () => this.#write(request))
+  }
+
   /**
    * Commit through GraphQL, which also answers the content sha before and
    * after: a save spends none of the REST rate limit.
    */
-  async write(request: CommitRequest): Promise<{sha: string}> {
+  async #write(request: CommitRequest): Promise<{sha: string}> {
     const {oid: currentCommit, contentSha: currentSha} =
       await this.#getLatestCommit()
 
@@ -61,15 +65,17 @@ export class GithubApi
     return {sha: newCommit.contentSha}
   }
 
-  async revisions(file: string): Promise<Array<Revision>> {
-    return this.#getFileCommitHistory(file)
+  revisions(file: string): Promise<Array<Revision>> {
+    return this.spending('history', () => this.#getFileCommitHistory(file))
   }
 
   async revisionData(
     file: string,
     revisionId: string
   ): Promise<EntryRecord | undefined> {
-    const content = await this.#getFileContentAtCommit(file, revisionId)
+    const content = await this.spending('revision', () =>
+      this.#getFileContentAtCommit(file, revisionId)
+    )
     try {
       return content ? (JSON.parse(content) as EntryRecord) : undefined
     } catch (error) {
@@ -78,7 +84,7 @@ export class GithubApi
   }
 
   async #graphQL(query: string, variables: object, token: string) {
-    return fetch('https://api.github.com/graphql', {
+    return this.githubFetch('https://api.github.com/graphql', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -175,7 +181,7 @@ export class GithubApi
 
         // Follow rename of the earliest commit
         const earliest = commits[commits.length - 1].oid
-        const res = await fetch(
+        const res = await this.githubFetch(
           `https://api.github.com/repos/${owner}/${repo}/commits/${earliest}`,
           {headers: {Authorization: `Bearer ${authToken}`}}
         )

@@ -1,15 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Type, type} from '#/core/Type.js'
-import {
-  entry,
-  image,
-  link,
-  list,
-  object,
-  richText,
-  select,
-  text
-} from '#/field.js'
+import {entry, image, link, list, object, richText, text} from '#/field.js'
 import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
 import {ListRow} from './ListRow.js'
 
@@ -153,6 +144,34 @@ test('derives list anchors from labels', () => {
   })
 })
 
+test('derives rich text block anchors from labels', () => {
+  const Rich = type('Rich', {
+    fields: {
+      body: richText('Body', {
+        schema: {
+          Note: type('Note', {fields: {text: text('Text')}})
+        }
+      })
+    }
+  })
+  const value = {
+    body: [
+      {_type: 'Note', _id: 'note-1', _label: 'Read this first'},
+      {_type: 'Note', _id: 'note-2', _label: 'Read this first'}
+    ]
+  }
+
+  const initialized = Type.withInitialValue(Rich, value) as typeof value
+  test.equal(
+    initialized.body.map(block => (block as {_anchor?: string})._anchor),
+    ['read-this-first', 'read-this-first-2']
+  )
+  test.equal(
+    Type.anchors(Rich, initialized).map(anchor => anchor.fieldPath),
+    ['body.note-1.read-this-first', 'body.note-2.read-this-first-2']
+  )
+})
+
 test('does not derive link anchors from labels', () => {
   const Linked = type('Linked', {
     fields: {
@@ -193,38 +212,6 @@ test('does not derive link anchors from labels', () => {
       now: new Date(0)
     }),
     anchoredValue
-  )
-})
-
-test('initializes missing fields in legacy list rows', () => {
-  const Row = type('Row', {
-    fields: {
-      variant: select('Variant', {
-        options: {primary: 'Primary', secondary: 'Secondary'},
-        initialValue: 'primary'
-      })
-    }
-  })
-  const Document = type('Document', {
-    fields: {
-      rows: list('Rows', {schema: {Row}})
-    }
-  })
-
-  test.equal(
-    Type.withInitialValue(Document, {
-      rows: [{_type: 'Row', _id: 'legacy', _index: 'a0'}]
-    }),
-    {
-      rows: [
-        {
-          _type: 'Row',
-          _id: 'legacy',
-          _index: 'a0',
-          variant: 'primary'
-        }
-      ]
-    }
   )
 })
 

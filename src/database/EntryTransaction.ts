@@ -43,8 +43,6 @@ import type {
   UploadFileMutation
 } from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
-import {EntryValidationError} from '#/core/db/EntryValidationError.js'
-import {policyFieldOptions, validateEntry} from '#/core/Validation.js'
 import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
@@ -446,19 +444,6 @@ export class EntryTransaction implements AsyncDisposable {
       entry => entry.locale === locale && entry.active
     )
     if (current) this.#assertUpdate(current, {path, ...data})
-    // Seeds are placeholders an editor fills in later
-    if (status === 'published' && !fromSeed)
-      this.#assertValid(
-        id,
-        type,
-        {...data, title, path},
-        {
-          workspace,
-          root,
-          locale,
-          parents: parent ? [...parent.parents, parent.id] : []
-        }
-      )
     if (status === 'published')
       data = await this.#publishedData(
         {id, type, path, parentId, workspace, root, locale, data},
@@ -515,7 +500,6 @@ export class EntryTransaction implements AsyncDisposable {
     const filePath = entryVersionFile(childrenDir, entry.versionStatus)
     if (entry.versionStatus === 'published') {
       this.#policy.assert(Permission.Publish, entry)
-      this.#assertValid(id, entry.type, {...data, path}, entry)
       if (filePath !== entry.filePath) await this.#rename(id, locale, path)
       data = await this.#publishedData(
         {
@@ -564,7 +548,6 @@ export class EntryTransaction implements AsyncDisposable {
         locale
       }
     )
-    this.#assertValid(id, entry.type, {...entry.data, path}, entry)
     const childrenDir = paths.join(entry.parentDir, path)
     const data = await this.#publishedData(
       {
@@ -1038,32 +1021,6 @@ export class EntryTransaction implements AsyncDisposable {
       for (const path of changedPaths(key, field, before[key], after[key]))
         this.#policy.assert(Permission.Update, {...entry, field: path})
     }
-  }
-
-  /** Published versions must pass field validation, drafts may not yet */
-  #assertValid(
-    id: string,
-    typeName: string,
-    data: Record<string, unknown>,
-    resource: Pick<Resource, 'workspace' | 'root' | 'locale' | 'parents'>
-  ): void {
-    const config = this.#workingDatabase.config
-    const type = config.schema[typeName]
-    assert(type, `Type not found: ${typeName}`)
-    // Validate what an editor sees: stored values over initial values
-    const errors = validateEntry(type, Type.withInitialValue(type, data), {
-      fieldOptions: policyFieldOptions(config, this.#policy, {
-        workspace: resource.workspace,
-        root: resource.root,
-        locale: resource.locale,
-        parents: resource.parents,
-        type: typeName,
-        id
-      })
-    })
-    if (errors.length === 0) return
-    const title = typeof data.title === 'string' ? data.title : undefined
-    throw new EntryValidationError({entryId: id, title, errors})
   }
 
   /**

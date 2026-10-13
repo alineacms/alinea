@@ -96,3 +96,117 @@ test('opens the root marked openByDefault without a requested root', () => {
   })
   expect(store.get(pageAtom).root).toBe('pages')
 })
+
+async function linkedStore() {
+  const config = Config.create({
+    schema: {Page: DashboardTestPage},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content/main',
+        roots: {
+          pages: Config.root('Pages', {
+            contains: ['Page'],
+            i18n: {locales: ['en', 'nl']}
+          })
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'hero',
+      type: 'Page',
+      workspace: 'main',
+      root: 'pages',
+      locale: 'nl',
+      status: 'published',
+      data: {title: 'Hero', path: 'hero'}
+    }
+  ])
+  const store = createDashboardStore(config, db)
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+  return {db, store}
+}
+
+async function follow(store: ReturnType<typeof dashboardStore>, url: string) {
+  await store.set(routeAtom, {page: 'edit', url})
+  return store.get(pageAtom)
+}
+
+test('opens the entry an edit link names by url', async () => {
+  const {store} = await linkedStore()
+  expect(await follow(store, '/nl/hero')).toMatchObject({
+    type: 'entry',
+    workspace: 'main',
+    root: 'pages',
+    entry: 'hero',
+    locale: 'nl'
+  })
+})
+
+test('opens an edit link with a trailing slash or encoded path', async () => {
+  const {store} = await linkedStore()
+  expect((await follow(store, '/nl/hero/')).entry).toBe('hero')
+  expect((await follow(store, '/nl/h%65ro')).entry).toBe('hero')
+})
+
+test('opens the entry an edit link names by a former url', async () => {
+  const {db, store} = await linkedStore()
+  await db.mutate([
+    {
+      op: 'update',
+      id: 'hero',
+      locale: 'nl',
+      status: 'published',
+      set: {path: 'heroes'}
+    }
+  ])
+  expect((await follow(store, '/nl/hero')).entry).toBe('hero')
+})
+
+test('opens the splash for an edit link to an unknown url', async () => {
+  const {store} = await linkedStore()
+  expect(await follow(store, '/nl/missing')).toMatchObject({
+    entry: undefined
+  })
+})
+
+test('looks up an edit link in the root it names', async () => {
+  const {store} = await linkedStore()
+  await store.set(routeAtom, {page: 'edit', url: '/nl/hero', root: 'pages'})
+  expect(store.get(pageAtom).entry).toBe('hero')
+  await store.set(routeAtom, {page: 'edit', url: '/nl/hero', root: 'other'})
+  expect(store.get(pageAtom).entry).toBeUndefined()
+})
+
+test('keeps a navigation made while an edit link is looked up', async () => {
+  const {store} = await linkedStore()
+  const lookup = store.set(routeAtom, {page: 'edit', url: '/nl/hero'})
+  store.set(routeAtom, {page: 'users'})
+  await lookup
+  expect(store.get(pageAtom).type).toBe('users')
+})
+
+test('opens the page an archived page redirects to', async () => {
+  const {db, store} = await linkedStore()
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'target',
+      type: 'Page',
+      workspace: 'main',
+      root: 'pages',
+      locale: 'nl',
+      status: 'published',
+      data: {
+        title: 'Target',
+        path: 'target',
+        metadata: {aliases: [{url: '/nl/hero'}]}
+      }
+    },
+    {op: 'archive', id: 'hero', locale: 'nl'}
+  ])
+  expect((await follow(store, '/nl/hero')).entry).toBe('target')
+})

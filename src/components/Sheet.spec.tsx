@@ -36,7 +36,7 @@ test('starts the header with a back button that closes', async ({
   await expect(sheet).toBeHidden()
 })
 
-test('renders sections and pushes destructive actions to the end', async ({
+test('renders sections and lists actions one per line', async ({
   mount,
   page
 }) => {
@@ -44,12 +44,13 @@ test('renders sections and pushes destructive actions to the end', async ({
   const titles = page.locator('[data-slot="sheet-section-title"]')
   await expect(titles).toHaveText(['Block', 'Anchor'])
   await expect(titles.first()).toHaveCSS('text-transform', 'uppercase')
-  const footer = page.locator('[data-slot="sheet-footer"]')
-  const footerBox = (await footer.boundingBox())!
-  const deleteBox = (await footer
+  const copyBox = (await page
+    .getByRole('button', {name: 'Copy'})
+    .boundingBox())!
+  const deleteBox = (await page
     .getByRole('button', {name: 'Delete'})
     .boundingBox())!
-  expect(
-    footerBox.x + footerBox.width - deleteBox.x - deleteBox.width
-  ).toBeCloseTo(12)
+  expect(deleteBox.x).toBeCloseTo(copyBox.x)
+  expect(deleteBox.width).toBeCloseTo(copyBox.width)
+  expect(deleteBox.y).toBeGreaterThan(copyBox.y + copyBox.height)
 })

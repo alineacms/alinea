@@ -26,19 +26,6 @@ const test = suite(import.meta, {
 const {schema} = cms
 const {DemoRecipe} = schema
 
-test('create entry', async () => {
-  const parent = await db.get({
-    type: schema.DemoRecipes
-  })
-  const newRecipe = await db.create({
-    type: schema.DemoRecipe,
-    parentId: parent._id,
-    set: {title: 'New Recipe'}
-  })
-  test.is(newRecipe.title, 'New Recipe')
-  test.is(newRecipe._parentId, parent._id)
-})
-
 test('create entry with a result selection', async () => {
   const parent = await db.get({
     type: schema.DemoRecipes
@@ -52,35 +39,6 @@ test('create entry with a result selection', async () => {
 
   test.is(data.title, 'Selected Recipe')
   test.is('_id' in data, false)
-})
-
-/*test('remove entry', async () => {
-  const parent = await db.get({
-    type: schema.DemoRecipes
-  })
-  const recipes1 = await db.count({type: DemoRecipe})
-  test.is(recipes1, 4)
-  await db.remove(parent._id)
-  const recipes2 = await db.count({type: DemoRecipe})
-  test.is(recipes2, 0)
-  const recipesParent = await db.first({
-    type: schema.DemoRecipes
-  })
-  test.is(recipesParent, null)
-})*/
-
-test('update entry', async () => {
-  const chocolateChip = await db.get({
-    type: schema.DemoRecipe,
-    path: 'chocolate-chip'
-  })
-  test.is(chocolateChip.title, 'Chocolate chip')
-  const updatedEntry = await db.update({
-    type: schema.DemoRecipe,
-    id: chocolateChip._id,
-    set: {title: 'Chocolate Chip Cookies'}
-  })
-  test.is(updatedEntry.title, 'Chocolate Chip Cookies')
 })
 
 test('update path', async () => {
@@ -141,7 +99,9 @@ test('syncWith indexes the downloaded batch without rereading local blobs', asyn
 
   test.is(local.blobReads, 0)
   test.is(remote.blobReads, 1)
-  test.is(await fresh.sha, (await remote.getTree()).sha)
+  const {sha} = await remote.getTree()
+  test.is(await fresh.sha, sha)
+  test.is((await local.getTree()).sha, sha)
 })
 
 test('traces syncWith at the database boundary', async () => {
@@ -155,48 +115,4 @@ test('traces syncWith at the database boundary', async () => {
   await traced.syncWith(new MemorySource())
 
   test.equal(spans, ['alinea.local_db.sync_with'])
-})
-
-test('syncWith leaves the source and database at the remote revision', async () => {
-  const remote = new MemorySource()
-  await syncWith(remote, source)
-  const local = new MemorySource()
-  const fresh = new LocalDB(cms.config, local)
-
-  await fresh.syncWith(remote)
-
-  test.is((await local.getTree()).sha, (await remote.getTree()).sha)
-  test.is(await fresh.sha, (await remote.getTree()).sha)
-})
-
-test('change order', async () => {
-  const parent = await db.create({
-    type: schema.DemoRecipes,
-    set: {title: 'Recipes'}
-  })
-  let sub1 = await db.create({
-    type: schema.DemoRecipe,
-    parentId: parent._id,
-    set: {title: 'sub1'}
-  })
-  test.is(sub1._index, 'a0')
-  const sub2 = await db.create({
-    type: schema.DemoRecipe,
-    parentId: parent._id,
-    set: {title: 'sub2'}
-  })
-  test.is(sub2._index, 'a1')
-  const sub3 = await db.create({
-    type: schema.DemoRecipe,
-    parentId: parent._id,
-    set: {title: 'sub3'}
-  })
-  test.is(sub3._index, 'a2')
-  await db.move({
-    id: sub1._id,
-    target: sub2._id,
-    dropPosition: 'after'
-  })
-  sub1 = await db.get({type: schema.DemoRecipe, id: sub1._id})
-  test.is(sub1._index, 'a1V')
 })

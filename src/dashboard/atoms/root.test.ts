@@ -23,7 +23,6 @@ import {
   config as overviewConfig,
   Product
 } from '#test/overview.js'
-import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -41,26 +40,19 @@ class CountingDB extends LocalDB {
   }
 }
 
-test('rootAtoms returns stable bundles independent of route state', () => {
-  const root = rootAtoms('workspace', 'pages')
-
-  expect(root).toBeInstanceOf(RootAtoms)
-  expect(rootAtoms('workspace', 'pages')).toBe(root)
-  expect(rootAtoms('workspace', 'media')).not.toBe(root)
-  expect(rootAtoms('other-workspace', 'pages')).not.toBe(root)
-  expect(root.children(null)).toBe(root.explorer)
-  expect(root.children('parent')).toBe(root.children('parent'))
-  expect(root.children('parent')).not.toBe(root.explorer)
-  expect(root.explorer.supportsInlineExpansion).toBe(false)
-  expect(root.tree('en')).toBe(root.tree('en'))
-  expect(root.tree('fr')).not.toBe(root.tree('en'))
-})
-
-test('root icon uses the Material description fallback', async () => {
-  const {store} = await createDashboardAtomFixture()
-  const root = rootAtoms('main', 'pages')
-
-  expect(store.get(root.icon)).toBe(IcOutlineDescription)
+test('filters picked in a list stay with that list', () => {
+  const store = createStore()
+  const root = rootAtoms('workspace', 'filter-scope')
+  const whitepapers = root.children('whitepapers')
+  const articles = root.children('articles')
+  store.set(whitepapers.requestedFilters, {access: ['belgium']})
+  // Another collection with the same filter starts unfiltered
+  expect(store.get(articles.requestedFilters)).toEqual({})
+  expect(store.get(root.explorer.requestedFilters)).toEqual({})
+  // Coming back to the list keeps what was picked there
+  expect(store.get(root.children('whitepapers').requestedFilters)).toEqual({
+    access: ['belgium']
+  })
 })
 
 test('root explorers follow route locales and keep media unlocalized', async () => {

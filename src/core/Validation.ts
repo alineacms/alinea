@@ -181,14 +181,3 @@ export function formatFieldPath(path: FieldPath): string {
   }
   return result
 }
-
-export function formatValidationErrors(
-  errors: ReadonlyArray<FieldValidationError>
-): string {
-  return errors
-    .map(
-      error =>
-        `- ${formatFieldPath(error.path)} (${error.labels.join(' › ')}): ${error.message}`
-    )
-    .join('\n')
-}

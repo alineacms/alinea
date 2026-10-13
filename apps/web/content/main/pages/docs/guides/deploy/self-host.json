@@ -466,7 +466,7 @@
         },
         {
           "_type": "text",
-          "text": ". Without an `uploads` part it also stores uploaded files until they are committed. Alinea creates its tables (`alinea_user`, `alinea_user_role` and `alinea_upload`) on first use. On PostgreSQL it enables row level security on them, so they are not exposed through Supabase's API."
+          "text": ". Without an `uploads` part it also stores uploaded files until they are committed. It keeps the content files fetched from or committed to GitHub, so every server instance reads them from the database instead of fetching them from GitHub again; files no instance used for 30 days are removed. Alinea creates its tables (`alinea_user`, `alinea_user_role`, `alinea_upload` and `alinea_blob`) on first use. On PostgreSQL it enables row level security on them, so they are not exposed through Supabase's API."
         }
       ]
     },

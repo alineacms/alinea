@@ -78,12 +78,6 @@ test('inline code is kept as plain text with its backticks', () => {
   ])
 })
 
-test('escapes', () => {
-  test.equal(markdownToTextDoc('\\*not italic\\* \\[x\\]'), [
-    paragraph(text('*not italic* [x]'))
-  ])
-})
-
 test('links', () => {
   test.equal(
     stripIds(

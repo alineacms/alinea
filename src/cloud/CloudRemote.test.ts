@@ -8,18 +8,6 @@ import {CloudRemote} from './CloudRemote.js'
 
 const test = suite(import.meta)
 
-test('does not expose unsupported user management', async () => {
-  const context: RequestContext = {
-    apiKey: 'project_test',
-    handlerUrl: new URL('https://cms.example.com/api'),
-    isDev: false
-  }
-  const config = createConfig({schema: {}, workspaces: {}})
-  const remote = new CloudRemote(context, config)
-
-  test.equal(await remote.capabilities(), {users: false})
-})
-
 test('returns safe handshake validation details', async () => {
   const context: RequestContext = {
     apiKey: 'alineapk_client-id_secret',

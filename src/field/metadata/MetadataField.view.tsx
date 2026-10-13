@@ -72,17 +72,21 @@ export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
 export function MetadataFieldView({field}: MetadataFieldViewProps) {
   const options = useFieldOptions(field)
   const node = useFieldNode<object>(field)
-  const metadata = usePreviewMetadata()
   return (
     <>
       <NodeEditor
         node={node}
         readOnly={options.readOnly}
-        type={options.detailsSection ? options.seo : options.fields}
+        type={options.sections ? options.seo : options.fields}
       />
-      <MetadataPreview metadata={metadata} origin={origin} />
+      {!options.sections && <MetadataPreviewsView />}
     </>
   )
+}
+
+export function MetadataPreviewsView() {
+  const metadata = usePreviewMetadata()
+  return <MetadataPreview metadata={metadata} origin={origin} />
 }
 
 export interface MetadataDetailsViewProps {

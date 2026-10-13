@@ -54,14 +54,15 @@ export interface MetadataOptions extends FieldOptions<Metadata> {
   fields: Type<MetadataFields>
   seo: Type<MetadataSeoFields>
   details: Type<MetadataDetailsFields>
-  /** The details are rendered by a separate `metadataDetails` section */
-  detailsSection?: boolean
+  /** The details and previews are rendered by the separate
+   * `metadataDetails` and `metadataPreviews` sections */
+  sections?: boolean
 }
 
 export interface MetadataConfig {
-  /** Leave the details out of the field view, render them with
-   * `metadataDetails(field)` instead */
-  detailsSection?: boolean
+  /** Leave the details and previews out of the field view, render them
+   * with `metadataDetails(field)` and `metadataPreviews()` instead */
+  sections?: boolean
 }
 
 export class MetadataField extends RecordField<Metadata, MetadataOptions> {}
@@ -70,7 +71,7 @@ export interface MetadataField extends MetadataFields {}
 
 export function metadata(
   label = 'Metadata',
-  {detailsSection}: MetadataConfig = {}
+  {sections}: MetadataConfig = {}
 ): MetadataField {
   const seo = type('SEO', {
     fields: {
@@ -114,7 +115,7 @@ export function metadata(
       fields,
       seo,
       details,
-      detailsSection
+      sections
     },
     defaultValue() {
       return Type.initialValue(fields) as unknown as Metadata
@@ -136,7 +137,20 @@ export class MetadataDetailsSection implements SectionData {
 }
 
 /** Renders the created/updated details and aliases of a metadata field
- * created with `detailsSection: true` */
+ * created with `sections: true` */
 export function metadataDetails(field: MetadataField): Section {
   return section(new MetadataDetailsSection(field))
+}
+
+export class MetadataPreviewsSection implements SectionData {
+  view = viewKeys.MetadataPreviewsView
+  definition = {}
+  fields = {}
+  sections = []
+}
+
+/** Renders the search and Open Graph previews of the entry, for a metadata
+ * field created with `sections: true` */
+export function metadataPreviews(): Section {
+  return section(new MetadataPreviewsSection())
 }

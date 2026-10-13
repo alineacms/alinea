@@ -3,6 +3,7 @@ import {
   EntryPickerMultiple,
   EntryPickerSingle,
   Example,
+  FilePickerSingle,
   FilteredEntryFieldWithoutEntryScope,
   ImagePickerSingle,
   ReadOnly
@@ -145,6 +146,10 @@ test('opens multiple-link settings from the linked row', async ({
   const docs = page.getByRole('dialog', {name: 'Alinea documentation'})
   await expect(docs).toBeVisible()
   await expect(docs.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  // The title given in the link picker is the label
+  await expect(docs.getByRole('textbox', {name: 'Label'})).toHaveValue(
+    'Alinea documentation'
+  )
   await expect(docs.getByText('Anchor', {exact: true})).toHaveCount(0)
   await expect(docs.getByRole('textbox', {name: 'URL suffix'})).toHaveCount(0)
   await expect(secondRow).toHaveAttribute('aria-current', 'true')
@@ -180,6 +185,24 @@ test('opens multiple-link settings from the linked row', async ({
   await expect(home.getByRole('textbox', {name: 'URL suffix'})).toBeVisible()
 })
 
+test('expands a folded link row when its settings open', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const firstRow = page
+    .getByRole('list', {name: 'Resources'})
+    .getByRole('listitem')
+    .first()
+  await firstRow.getByRole('button', {name: 'Collapse link'}).click()
+  await firstRow.getByRole('button', {name: 'Page Home'}).click()
+  await expect(page.getByRole('dialog', {name: 'Home'})).toBeVisible()
+  await expect(
+    firstRow.getByRole('button', {name: 'Collapse link'})
+  ).toBeVisible()
+})
+
 test('shows read-only link rows without opening their settings', async ({
   mount,
   page
@@ -213,6 +236,21 @@ test('switches link picker workspaces and roots', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Deeply nested'}).click()
   await page.getByRole('menuitemradio', {name: 'Simple'}).click()
   await expect(page.getByRole('button', {name: 'Simple'})).toBeVisible()
+})
+
+test('only offers media roots when picking a file', async ({mount, page}) => {
+  await mount(<FilePickerSingle />)
+  await page.getByRole('button', {name: 'Pick a file'}).click()
+
+  const location = page.getByRole('group', {name: 'Explorer location'})
+  await expect(location.getByText('Media', {exact: true})).toBeVisible()
+  await expect(location.getByRole('button', {name: 'Media'})).toHaveCount(0)
+
+  await location.getByRole('button', {name: 'Simple'}).click()
+  await page.getByRole('menuitemradio', {name: 'Many roots'}).click()
+  await expect(location.getByRole('button', {name: 'Many roots'})).toBeVisible()
+  await expect(location.getByText('Media', {exact: true})).toBeVisible()
+  await expect(location.getByRole('button', {name: 'Media'})).toHaveCount(0)
 })
 
 test('keeps a link selected while filtering the picker', async ({
@@ -497,7 +535,7 @@ test('truncates long link labels', async ({mount, page}) => {
   })
 })
 
-test('reorders multiple links by dragging the handle', async ({
+test('reorders multiple links by dragging their header', async ({
   mount,
   page
 }) => {
@@ -506,32 +544,30 @@ test('reorders multiple links by dragging the handle', async ({
   const first = resources.getByRole('listitem', {name: 'Link item 1'})
   const second = resources.getByRole('listitem', {name: 'Link item 2'})
   await expect(second).toContainText('Alinea documentation')
-  // Hover the row header to reveal the drag handle
-  await second.hover({position: {x: 40, y: 10}})
-  await second.getByRole('button', {name: 'Drag link item 2'}).dragTo(first, {
-    sourcePosition: {x: 10, y: 6},
-    targetPosition: {x: 40, y: 4}
-  })
+  const header = second.locator('[data-slot="sortable-list-item-header"]')
+  const box = (await header.boundingBox())!
+  const firstBox = (await first.boundingBox())!
+  await page.mouse.move(box.x + 80, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + 80, firstBox.y + 4, {steps: 8})
+  await page.mouse.up()
   await expect(
     resources.getByRole('listitem', {name: 'Link item 1'})
   ).toContainText('Alinea documentation')
+  // The drop does not open the settings of the dragged link
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('reorders multiple links with the keyboard', async ({mount, page}) => {
   await mount(<Example />)
   const resources = page.getByRole('list', {name: 'Resources'})
-  const handle = resources.getByRole('button', {name: 'Drag link item 1'})
-  await handle.focus()
-  await page.keyboard.press('Enter')
-  await expect(handle).not.toBeFocused()
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
+  const home = resources.getByRole('button', {name: 'Page Home'})
+  await home.focus()
+  await page.keyboard.press('Alt+ArrowDown')
   await expect(
     resources.getByRole('listitem', {name: 'Link item 1'})
   ).toContainText('Alinea documentation')
-  await expect(
-    resources.getByRole('button', {name: 'Drag link item 2'})
-  ).toBeFocused()
+  await expect(home).toBeFocused()
 })
 
 test('inserts a link on the border between link rows', async ({
@@ -540,9 +576,10 @@ test('inserts a link on the border between link rows', async ({
 }) => {
   await mount(<Example />)
   const links = page.getByRole('list', {name: 'Resources'})
+  // The first row inserts on the top border of the list
   await expect(
     links.getByRole('button', {name: 'Insert link before link item 1'})
-  ).toHaveCount(0)
+  ).toHaveCount(1)
   const insert = links.getByRole('button', {
     name: 'Insert link before link item 2'
   })

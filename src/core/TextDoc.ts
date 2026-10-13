@@ -102,6 +102,10 @@ export interface ImageNode extends ElementNode {
 export interface BlockNode {
   _id: string
   _type: string
+  /** A label editors give the block, its anchor follows it by default */
+  _label?: string
+  /** Lets links point to the block, unique within the entry */
+  _anchor?: string
 }
 
 export namespace BlockNode {

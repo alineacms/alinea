@@ -288,7 +288,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Required fields and validation messages are shown on the field while an editor works on the entry. An entry can't be published while a field fails these checks: the dashboard lists the invalid fields, and publishing through the API or the MCP server is rejected with the field paths and messages. Drafts can be saved with errors, and hidden or read-only fields are not checked."
+          "text": "Required fields and validation messages are shown on the field while an editor works on the entry. When an editor publishes an entry with fields that fail these checks, the dashboard lists them so they can be fixed first, or published anyway. Writes through the API are not checked, so importers can publish content that is still incomplete. The MCP server refuses to publish invalid entries and tells the agent which fields to fix. Drafts can be saved with errors, and hidden or read-only fields are not checked."
         }
       ]
     },

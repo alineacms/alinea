@@ -3,138 +3,138 @@ import {
   type ComponentPropsWithRef,
   type ComponentPropsWithoutRef,
   createContext,
-  type DOMAttributes,
-  type ReactNode,
-  type RefObject,
+  type PointerEvent,
   useContext,
   useMemo,
-  useRef,
-  useState
+  useRef
 } from 'react'
+import {flushSync} from 'react-dom'
 import {
-  DragPreview,
-  type DragPreviewRenderer,
-  mergeProps,
-  useDrag,
-  useDrop
-} from 'react-aria'
-import {IcRoundAdd, IcRoundMoreHoriz} from '#/dashboard/icons.js'
+  IcRoundAdd,
+  IcRoundMoreHoriz,
+  IcRoundUnfoldLess,
+  IcRoundUnfoldMore
+} from '#/dashboard/icons.js'
 import {Button, type ButtonProps} from './Button.js'
-import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
+import {pressSortableItem} from './internal/sortableDrag.js'
 import css from './SortableList.module.css'
-import {Surface, type SurfaceProps} from './Surface.js'
-import type {DragMoveEvent, DropTarget, IconType, Key} from './types.js'
+import type {DragMoveEvent, Key} from './types.js'
 
 const styles = styler(css)
 
-const DEFAULT_DRAG_TYPE = 'alinea/sortable-list-item'
-
-type ItemDropPosition = 'before' | 'after'
-
-interface ItemDropTarget extends DropTarget {
-  position: ItemDropPosition
-}
-
 interface SortableListContextValue {
-  reorderable: boolean
-  dragType: string
-  draggingKey: Key | null
-  dropTarget: ItemDropTarget | null
-  /** Whether the current drag was started with a pointer (native drag) */
-  pointerDrag: RefObject<boolean>
-  /** Element of the dragged item */
-  source: RefObject<HTMLElement | null>
-  startDrag(key: Key, item: HTMLElement | null, pointer: boolean): void
-  endDrag(): void
-  setDropTarget(target: ItemDropTarget | null, exit?: boolean): void
-  drop(target: ItemDropTarget): void
+  /** Registers the element of a reorderable item */
+  register(key: Key, element: HTMLElement | null): void
+  press(key: Key, event: PointerEvent<HTMLElement>): void
+  /** Moves the item one place up or down */
+  step(key: Key, direction: -1 | 1): boolean
 }
 
 const SortableListContext = createContext<SortableListContextValue | null>(null)
 
-interface SortableListItemContextValue {
-  dragProps: DOMAttributes<HTMLElement>
-  dragging: boolean
-  handle: RefObject<HTMLSpanElement>
-}
+/** The key of a reorderable item, for its header */
+const SortableListItemContext = createContext<Key | null>(null)
 
-const SortableListItemContext =
-  createContext<SortableListItemContextValue | null>(null)
-
-export interface SortableListProps extends SurfaceProps {
+export interface SortableListProps extends ComponentPropsWithoutRef<'div'> {
   /**
-   * Enables reordering: items with an `id` can be dragged by their
-   * `SortableListHandle`, with a pointer or with the keyboard (Enter on the
-   * handle, Tab to an item, Enter to drop). Called with the key of the dragged
-   * item and the item it was dropped before or after.
-   * Items only drop within the list they were dragged from.
+   * Enables reordering: items with an `id` follow the pointer when their
+   * `SortableListItemHeader` is dragged, the other items move aside as it
+   * passes them. With focus in the header, Alt+ArrowUp and Alt+ArrowDown
+   * move an item. Called with the key of the moved item and the item it was
+   * dropped before or after. Update the order synchronously: the dropped item
+   * glides into the place it renders in right after this returns.
    */
   onReorder?: (event: DragMoveEvent) => void
-  /** Mime type the dragged items carry, defaults to `alinea/sortable-list-item` */
-  dragType?: string
 }
 
 export function SortableList({
   className,
   role = 'list',
   onReorder,
-  dragType = DEFAULT_DRAG_TYPE,
   ...props
 }: SortableListProps) {
-  const [draggingKey, setDraggingKey] = useState<Key | null>(null)
-  const [dropTarget, setDropTargetState] = useState<ItemDropTarget | null>(null)
-  const pointerDrag = useRef(false)
-  const source = useRef<HTMLElement | null>(null)
-  const dragged = useRef<Key | null>(null)
+  const ref = useRef<HTMLDivElement>(null)
+  const keys = useRef(new Map<HTMLElement, Key>())
   const reorderRef = useRef(onReorder)
   reorderRef.current = onReorder
   const reorderable = Boolean(onReorder)
-  const context = useMemo<SortableListContextValue>(() => {
+  const context = useMemo<SortableListContextValue | null>(() => {
+    if (!reorderable) return null
+    function items() {
+      const list = ref.current
+      if (!list) return []
+      return Array.from(list.children).filter(
+        (child): child is HTMLElement =>
+          child instanceof HTMLElement && keys.current.has(child)
+      )
+    }
+    function element(key: Key) {
+      for (const [element, current] of keys.current)
+        if (current === key) return element
+    }
+    function move(
+      item: HTMLElement,
+      target: HTMLElement,
+      position: 'before' | 'after'
+    ) {
+      const key = keys.current.get(item)
+      const targetKey = keys.current.get(target)
+      // Either one left the list while the item was dragged
+      if (key === undefined || targetKey === undefined) return
+      // Renders the new order before the dragged item settles into it
+      flushSync(() =>
+        reorderRef.current?.({
+          keys: new Set([key]),
+          target: {key: targetKey, position}
+        })
+      )
+    }
     return {
-      reorderable,
-      dragType,
-      draggingKey,
-      dropTarget,
-      pointerDrag,
-      source,
-      startDrag(key, item, pointer) {
-        dragged.current = key
-        source.current = item
-        pointerDrag.current = pointer
-        setDraggingKey(key)
+      register(key, element) {
+        for (const [current, value] of keys.current)
+          if (value === key) keys.current.delete(current)
+        if (element) keys.current.set(element, key)
       },
-      endDrag() {
-        dragged.current = null
-        source.current = null
-        pointerDrag.current = false
-        setDraggingKey(null)
-        setDropTargetState(null)
-      },
-      setDropTarget(target, exit) {
-        setDropTargetState(current => {
-          if (!exit) return target
-          // Only clear the target if it was not replaced by another item yet
-          return current && target && current.key !== target.key
-            ? current
-            : null
+      press(key, event) {
+        const list = ref.current
+        const item = element(key)
+        if (!list || !item) return
+        pressSortableItem({
+          event: event.nativeEvent,
+          list,
+          item,
+          items,
+          onDrop: move
         })
       },
-      drop(target) {
-        const key = dragged.current
-        setDropTargetState(null)
-        if (key === null || key === target.key) return
-        reorderRef.current?.({keys: new Set([key]), target})
+      step(key, direction) {
+        const item = element(key)
+        if (!item) return false
+        const elements = items()
+        const from = elements.indexOf(item)
+        const to = from + direction
+        if (from === -1 || to < 0 || to >= elements.length) return false
+        const focused = document.activeElement
+        move(item, elements[to], direction > 0 ? 'after' : 'before')
+        // Moving the element in the document can drop its focus
+        if (
+          focused instanceof HTMLElement &&
+          focused !== document.activeElement
+        )
+          focused.focus()
+        return true
       }
     }
-  }, [reorderable, dragType, draggingKey, dropTarget])
+  }, [reorderable])
   return (
     <SortableListContext.Provider value={context}>
-      <Surface
+      <div
         data-slot="sortable-list"
         {...props}
-        className={className}
-        data-dragging={draggingKey !== null || undefined}
+        className={styles.SortableList(styler.merge({className}))}
+        data-reorderable={reorderable || undefined}
+        ref={ref}
         role={role}
       />
     </SortableListContext.Provider>
@@ -150,236 +150,81 @@ export interface SortableListItemProps extends Omit<
    * the list has `onReorder`. The id is not rendered as a DOM id.
    */
   id?: Key
-  /** Rendered under the pointer while dragging, eg. a `SortableListDragPreview` */
-  dragPreview?: ReactNode
   /** Highlights the item, eg. while its settings are open next to the list */
   current?: boolean
 }
 
 export function SortableListItem({
   id,
-  dragPreview,
+  className,
+  current,
   ...props
 }: SortableListItemProps) {
   const list = useContext(SortableListContext)
-  if (list && id !== undefined)
-    return (
-      <ReorderableItem
-        {...props}
-        dragPreview={dragPreview}
-        id={id}
-        list={list}
-      />
-    )
+  const key = list && id !== undefined ? id : null
   return (
-    <SortableListItemContext.Provider value={null}>
-      <SortableListItemElement {...props} />
-    </SortableListItemContext.Provider>
-  )
-}
-
-interface SortableListItemElementProps extends Omit<
-  SortableListItemProps,
-  'id' | 'dragPreview'
-> {
-  dragging?: boolean
-}
-
-function SortableListItemElement({
-  className,
-  dragging,
-  current,
-  ...props
-}: SortableListItemElementProps) {
-  return (
-    <div
-      data-slot="sortable-list-item"
-      role="listitem"
-      {...props}
-      aria-current={current || undefined}
-      className={styles.SortableListItem(styler.merge({className}))}
-      data-dragging={dragging || undefined}
-    />
-  )
-}
-
-interface ReorderableItemProps extends Omit<SortableListItemProps, 'id'> {
-  id: Key
-  list: SortableListContextValue
-}
-
-function ReorderableItem({
-  id,
-  list,
-  dragPreview,
-  children,
-  ...props
-}: ReorderableItemProps) {
-  const ref = useRef<HTMLDivElement>(null)
-  const handle = useRef<HTMLSpanElement>(null)
-  const preview = useRef<DragPreviewRenderer | null>(null)
-  const nativeDrag = useRef(false)
-  const {reorderable, dragType, draggingKey, dropTarget} = list
-  const {dragProps, isDragging} = useDrag({
-    isDisabled: !reorderable,
-    getItems() {
-      return [{'text/plain': String(id), [dragType]: String(id)}]
-    },
-    getAllowedDropOperations() {
-      return ['move']
-    },
-    onDragStart() {
-      list.startDrag(id, ref.current, nativeDrag.current)
-    },
-    onDragEnd() {
-      const keyboard = !nativeDrag.current
-      nativeDrag.current = false
-      list.endDrag()
-      // Keep keyboard focus on the moved item
-      if (keyboard)
-        requestAnimationFrame(() => {
-          if (handle.current?.isConnected) handle.current.focus()
-        })
-    },
-    preview: dragPreview ? preview : undefined
-  })
-  const handleDragProps = useMemo<DOMAttributes<HTMLElement>>(
-    () => ({
-      ...dragProps,
-      onDragStart(event) {
-        // Native drag events are only fired for pointer drags
-        nativeDrag.current = true
-        dragProps.onDragStart?.(event)
-      }
-    }),
-    [dragProps]
-  )
-  function dropPosition(y: number): ItemDropPosition {
-    const item = ref.current
-    if (!item) return 'after'
-    if (!list.pointerDrag.current) {
-      // Keyboard drops take the place of the target item
-      const source = list.source.current
-      if (!source || source === item) return 'after'
-      const sourceFollows =
-        item.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING
-      return sourceFollows ? 'before' : 'after'
-    }
-    return y < item.offsetHeight / 2 ? 'before' : 'after'
-  }
-  function acceptDrop(
-    types: {has(type: string): boolean},
-    allowedOperations: Array<string>
-  ) {
-    return types.has(dragType) && allowedOperations.includes('move')
-      ? 'move'
-      : 'cancel'
-  }
-  const {dropProps} = useDrop({
-    ref,
-    isDisabled: draggingKey === null,
-    getDropOperation: acceptDrop,
-    getDropOperationForPoint: acceptDrop,
-    onDropEnter(event) {
-      list.setDropTarget({key: id, position: dropPosition(event.y)})
-    },
-    onDropMove(event) {
-      list.setDropTarget({key: id, position: dropPosition(event.y)})
-    },
-    onDropExit() {
-      list.setDropTarget({key: id, position: 'after'}, true)
-    },
-    onDrop(event) {
-      list.drop({key: id, position: dropPosition(event.y)})
-    }
-  })
-  const active = dropTarget?.key === id ? dropTarget.position : undefined
-  const itemContext = useMemo<SortableListItemContextValue | null>(
-    () =>
-      reorderable
-        ? {dragProps: handleDragProps, dragging: isDragging, handle}
-        : null,
-    [reorderable, handleDragProps, isDragging]
-  )
-  return (
-    <SortableListItemContext.Provider value={itemContext}>
+    <SortableListItemContext.Provider value={key}>
       <div
-        {...dropProps}
-        className={styles.SortableListItem.dropTarget()}
-        data-slot="sortable-list-item-drop-target"
-        ref={ref}
-        tabIndex={draggingKey !== null ? -1 : undefined}
-      >
-        <SortableListItemElement {...props} dragging={isDragging}>
-          {dragPreview && (
-            <DragPreview ref={preview}>{() => <>{dragPreview}</>}</DragPreview>
-          )}
-          {children}
-        </SortableListItemElement>
-        <div
-          aria-hidden
-          className={styles.SortableListItem.dropIndicator()}
-          data-active={active === 'before' || undefined}
-          data-position="before"
-          data-slot="sortable-list-drop-indicator"
-        />
-        <div
-          aria-hidden
-          className={styles.SortableListItem.dropIndicator()}
-          data-active={active === 'after' || undefined}
-          data-position="after"
-          data-slot="sortable-list-drop-indicator"
-        />
-      </div>
+        data-slot="sortable-list-item"
+        role="listitem"
+        {...props}
+        aria-current={current || undefined}
+        aria-keyshortcuts={
+          key === null ? undefined : 'Alt+ArrowUp Alt+ArrowDown'
+        }
+        className={styles.SortableListItem(styler.merge({className}))}
+        ref={key === null ? undefined : element => list?.register(key, element)}
+      />
     </SortableListItemContext.Provider>
   )
 }
 
 export interface SortableListItemHeaderProps extends ComponentPropsWithoutRef<'div'> {}
 
-/** Top bar of an item, holds its handle, title and actions */
+/**
+ * Top bar of an item, holds its title and actions. Drags the item when the
+ * list has `onReorder`, a press that does not move still clicks.
+ */
 export function SortableListItemHeader({
   className,
+  onPointerDownCapture,
+  onKeyDown,
+  onDragStart,
   ...props
 }: SortableListItemHeaderProps) {
+  const list = useContext(SortableListContext)
+  const key = useContext(SortableListItemContext)
   return (
     <div
       data-slot="sortable-list-item-header"
       {...props}
       className={styles.SortableListItemHeader(styler.merge({className}))}
-    />
-  )
-}
-
-export interface SortableListHandleProps extends ComponentPropsWithoutRef<'span'> {}
-
-/**
- * Drags its `SortableListItem` when the list has `onReorder`. Focusable in
- * that case: press Enter to start a keyboard drag. Place it in the
- * `SortableListItemHeader`, it shows while the header is hovered or focused.
- */
-export function SortableListHandle({
-  className,
-  ...props
-}: SortableListHandleProps) {
-  const item = useContext(SortableListItemContext)
-  if (!item)
-    return (
-      <span
-        data-slot="sortable-list-handle"
-        {...props}
-        className={styles.SortableListHandle(styler.merge({className}))}
-      />
-    )
-  return (
-    <span
-      data-slot="sortable-list-handle"
-      role="button"
-      tabIndex={0}
-      {...mergeProps(props, item.dragProps)}
-      className={styles.SortableListHandle(styler.merge({className}))}
-      data-dragging={item.dragging || undefined}
-      ref={item.handle}
+      data-reorderable={(list !== null && key !== null) || undefined}
+      // Captured, the buttons in the header stop the press from bubbling
+      onPointerDownCapture={event => {
+        onPointerDownCapture?.(event)
+        if (!list || key === null) return
+        // Touch scrolls the page, items move with their settings there
+        if (event.button !== 0 || event.pointerType === 'touch') return
+        // Menus open as the press starts, moving then picks from them
+        const target = event.target as Element
+        if (target.closest('[aria-haspopup="menu"], [aria-haspopup="listbox"]'))
+          return
+        list.press(key, event)
+      }}
+      onKeyDown={event => {
+        onKeyDown?.(event)
+        if (!list || key === null || event.defaultPrevented) return
+        if (!event.altKey) return
+        const direction =
+          event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0
+        if (direction && list.step(key, direction)) event.preventDefault()
+      }}
+      onDragStart={event => {
+        onDragStart?.(event)
+        // Images and links in the header would start a native drag instead
+        if (list && key !== null) event.preventDefault()
+      }}
     />
   )
 }
@@ -391,13 +236,11 @@ export function SortableListItemTitle({
   className,
   ...props
 }: SortableListItemTitleProps) {
-  const item = useContext(SortableListItemContext)
   return (
     <div
       data-slot="sortable-list-item-title"
       {...props}
       className={styles.SortableListItemTitle(styler.merge({className}))}
-      data-dragging={item?.dragging || undefined}
     />
   )
 }
@@ -506,7 +349,7 @@ export interface SortableListItemToggleProps extends Omit<
   ButtonProps,
   'variant' | 'children' | 'size'
 > {
-  /** Whether the item content is shown, rotates the fold icon */
+  /** Whether the item content is shown, picks the unfold icon */
   expanded: boolean
 }
 
@@ -524,13 +367,8 @@ export function SortableListItemToggle({
       variant="ghost"
       className={styles.SortableListItemToggle(styler.merge({className}))}
       size="icon-sm"
-    >
-      <FoldIcon
-        aria-hidden
-        className={styles.SortableListItemToggle.icon()}
-        expanded={expanded}
-      />
-    </Button>
+      icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
+    />
   )
 }
 
@@ -584,38 +422,6 @@ export function SortableListItemSettings({
       className={styles.SortableListItemSettings(styler.merge({className}))}
       data-variant={variant}
     />
-  )
-}
-
-export interface SortableListDragPreviewProps extends ComponentPropsWithoutRef<'div'> {
-  icon?: IconType
-  label: ReactNode
-}
-
-/** Card shown under the pointer while dragging an item */
-export function SortableListDragPreview({
-  className,
-  icon,
-  label,
-  ...props
-}: SortableListDragPreviewProps) {
-  return (
-    <div
-      data-slot="sortable-list-drag-preview"
-      {...props}
-      className={styles.SortableListDragPreview(styler.merge({className}))}
-    >
-      {icon && (
-        <div className={styles.SortableListDragPreview.icon()}>
-          <Icon aria-hidden icon={icon} />
-        </div>
-      )}
-      <div className={styles.SortableListDragPreview.body()}>
-        <strong className={styles.SortableListDragPreview.title()}>
-          {label}
-        </strong>
-      </div>
-    </div>
   )
 }
 

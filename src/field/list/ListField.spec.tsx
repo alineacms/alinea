@@ -1,5 +1,5 @@
 import {expect, type MountResult, test} from '@playwright/experimental-ct-react'
-import {Example, MinMax} from './ListField.stories.js'
+import {Collapsed, Example, MinMax} from './ListField.stories.js'
 
 test('keeps the remove control visible beside the settings button', async ({
   mount,
@@ -135,6 +135,22 @@ test('closes the sheet when focus moves out of it', async ({mount, page}) => {
   await expect(sheet).toHaveCount(0)
 })
 
+test('closes the sheet on the first focus outside it', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  const hero = page
+    .getByRole('list', {name: 'Sections'})
+    .getByRole('listitem')
+    .first()
+  await hero.getByRole('button', {name: 'Hero settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Hero'})
+  await expect(sheet.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  await hero.getByRole('textbox', {name: 'Heading'}).click()
+  await expect(sheet).toHaveCount(0)
+})
+
 test('shows the row actions again after leaving the insert picker', async ({
   mount,
   page
@@ -222,79 +238,105 @@ test('folds a single item', async ({mount, page}) => {
   await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
 })
 
+test('expands a folded row when its settings open', async ({mount, page}) => {
+  await mount(<Example />)
+  const hero = page
+    .getByRole('list', {name: 'Sections'})
+    .getByRole('listitem')
+    .first()
+
+  await hero.getByRole('button', {name: 'Collapse Hero'}).click()
+  await expect(hero.getByRole('textbox')).toHaveCount(0)
+  await hero.getByRole('button', {name: 'Hero settings'}).click()
+  await expect(page.getByRole('dialog', {name: 'Hero'})).toBeVisible()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+
+  // Closing the settings leaves the row open
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', {name: 'Hero'})).toBeHidden()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+})
+
+test('starts folded when the list is collapsed', async ({mount, page}) => {
+  await mount(<Collapsed />)
+  const quotes = page.getByRole('list', {name: 'Quotes'})
+  await expect(quotes.getByRole('listitem')).toHaveCount(2)
+  await expect(quotes.getByRole('textbox')).toHaveCount(0)
+  await expect(
+    page.getByRole('button', {name: 'Expand all items'})
+  ).toBeVisible()
+
+  // Added rows start open, the others stay folded
+  await quotes.getByRole('button', {name: 'Quote', exact: true}).click()
+  await expect(quotes.getByRole('listitem')).toHaveCount(3)
+  await expect(quotes.getByRole('textbox', {name: 'Quote'})).toHaveCount(1)
+})
+
 type Locator = ReturnType<MountResult['locator']>
 
 /** Accessible names of the direct rows of a list */
 function rowNames(list: Locator) {
   return list.evaluate(element =>
     Array.from(
-      element.querySelectorAll(
-        ':scope > [data-slot="sortable-list-item-drop-target"]'
-      )
-    ).map(row =>
-      row.querySelector('[role="listitem"]')!.getAttribute('aria-label')
-    )
+      element.querySelectorAll(':scope > [data-slot="sortable-list-item"]')
+    ).map(row => row.getAttribute('aria-label'))
   )
 }
 
-test('reorders rows by dragging the handle', async ({mount, page}) => {
+test('reorders rows by dragging their header', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
   const hero = sections.getByRole('listitem', {name: 'Hero item 1'})
   const quote = sections.getByRole('listitem', {name: 'Quote item 2'})
   await hero.getByRole('button', {name: 'Collapse Hero'}).click()
   await quote.getByRole('button', {name: 'Collapse Quote'}).click()
-  await hero.hover()
+  const header = hero.locator('[data-slot="sortable-list-item-header"]')
+  const box = (await header.boundingBox())!
   const quoteBox = (await quote.boundingBox())!
-  await hero.getByRole('button', {name: 'Drag Hero item 1'}).dragTo(quote, {
-    sourcePosition: {x: 10, y: 6},
-    // Clear of the insert line on the border below the row
-    targetPosition: {x: 40, y: quoteBox.height - 12}
+  // Grabbed on the title, which opens the settings on a click
+  await page.mouse.move(box.x + 120, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + 120, quoteBox.y + quoteBox.height * 0.75, {
+    steps: 8
   })
+  await page.mouse.up()
   await expect(sections.getByRole('listitem').first()).toHaveAccessibleName(
     'Quote item 1'
   )
   await expect(
     sections.getByRole('listitem', {name: 'Hero item 2'})
   ).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('reorders rows with the keyboard', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
-  const handle = sections.getByRole('button', {name: 'Drag Hero item 1'})
-  await handle.focus()
-  await page.keyboard.press('Enter')
-  await expect(handle).not.toBeFocused()
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
+  const settings = sections.getByRole('button', {name: 'Hero settings'})
+  await settings.focus()
+  await page.keyboard.press('Alt+ArrowDown')
   await expect(sections.getByRole('listitem').first()).toHaveAccessibleName(
     'Quote item 1'
   )
-  await expect(
-    sections.getByRole('button', {name: 'Drag Hero item 2'})
-  ).toBeFocused()
+  await expect(settings).toBeFocused()
 })
 
-test('keeps nested list drags inside their own list', async ({mount, page}) => {
+test('keeps nested list moves inside their own list', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
   const before = await rowNames(sections)
   const items = page.getByRole('list', {name: 'Items', exact: true})
   await expect(items.getByRole('listitem')).toHaveCount(2)
-  const handle = items.getByRole('button', {name: /^Drag .* item 1$/})
-  await handle.focus()
-  await page.keyboard.press('Enter')
-  await expect(handle).not.toBeFocused()
-  // Only the two nested rows are drop targets
-  await expect(
-    page.locator('[data-slot="sortable-list-item-drop-target"][tabindex="-1"]')
-  ).toHaveCount(2)
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
+  await items
+    .getByRole('button', {name: / settings$/})
+    .first()
+    .focus()
+  await page.keyboard.press('Alt+ArrowDown')
   await expect(items.getByRole('textbox').first()).toHaveValue(
     'Review responsive layout'
   )
+  // The last nested row can not move out of its list
+  await page.keyboard.press('Alt+ArrowDown')
   expect(await rowNames(sections)).toEqual(before)
 })
 
@@ -345,14 +387,16 @@ test('inserts a row on the border between rows', async ({mount, page}) => {
   await mount(<Example />)
   const sections = page.getByRole('list', {name: 'Sections'})
   const before = await rowNames(sections)
-  // The first row has no border above it to insert on
+  // The first row inserts on the top border of the list
   await expect(
     sections.getByRole('button', {name: 'Insert before Hero item 1'})
-  ).toHaveCount(0)
+  ).toHaveCount(1)
   const insert = sections.getByRole('button', {
     name: 'Insert before Quote item 2'
   })
   await insert.hover()
+  // Waits a moment, so passing over the border doesn't flash the line
+  await expect(insert.locator('..')).toHaveCSS('transition-delay', '0.3s')
   await expect(insert.locator('..')).toHaveCSS('opacity', '1')
   await insert.click()
   const picker = page.getByRole('dialog', {name: 'Insert before Quote item 2'})

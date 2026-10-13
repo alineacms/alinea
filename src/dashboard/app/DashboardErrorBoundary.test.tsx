@@ -34,32 +34,9 @@ function MissingEntryDashboard() {
   return <p>Root</p>
 }
 
-test('shows dashboard load failures inside the app', () => {
+test('shows dashboard load failures and their cause inside the app', () => {
   const consoleError = spyOn(console, 'error').mockImplementation(() => {})
   const reload = spyOn(window.location, 'reload').mockImplementation(() => {})
-  try {
-    render(
-      <Provider>
-        <DashboardErrorBoundary>
-          <BrokenDashboard />
-        </DashboardErrorBoundary>
-      </Provider>
-    )
-
-    expect(
-      screen.getByRole('heading', {name: 'Oops, something went wrong'})
-    ).toBeDefined()
-    expect(screen.getByText('Dashboard data failed to load')).toBeDefined()
-    fireEvent.click(screen.getByRole('button', {name: 'Reload dashboard'}))
-    expect(reload).toHaveBeenCalledTimes(1)
-  } finally {
-    consoleError.mockRestore()
-    reload.mockRestore()
-  }
-})
-
-test('shows the dashboard database failure cause', () => {
-  const consoleError = spyOn(console, 'error').mockImplementation(() => {})
   try {
     render(
       <Provider>
@@ -68,12 +45,18 @@ test('shows the dashboard database failure cause', () => {
         </DashboardErrorBoundary>
       </Provider>
     )
+
+    expect(
+      screen.getByRole('heading', {name: 'Oops, something went wrong'})
+    ).toBeDefined()
+    const message = screen.getByText(/Failed to load database/).textContent
+    expect(message).toContain('Caused by: Remote database unavailable')
+    fireEvent.click(screen.getByRole('button', {name: 'Reload dashboard'}))
+    expect(reload).toHaveBeenCalledTimes(1)
   } finally {
     consoleError.mockRestore()
+    reload.mockRestore()
   }
-
-  const message = screen.getByText(/Failed to load database/).textContent
-  expect(message).toContain('Caused by: Remote database unavailable')
 })
 
 test('recovers from a dashboard error after navigation', () => {
