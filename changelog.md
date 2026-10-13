@@ -67,6 +67,17 @@
   require `validateClaims`. Drafts are no longer stored in the database.
 - Remove the components from `alinea/ui` except `RichText`, and the form atoms
   from `alinea/dashboard`. The `useField` hooks are deprecated.
+- `alinea/cms`: `useEntry()` returns a `DashboardEntry` (no index internals),
+  field hooks read fields of the row, a parent row or the entry when passed
+  that field (`useSiblingFieldValue` is deprecated), `useNavigate` and the
+  new `useHref` open entries by id, `EditFields` renders the fields of an
+  object field in its scope, and the entry editor sets
+  `--alinea-header-height` again.
+- Add the `actions` type option: components in the entry header.
+- Add `width` to the options of every field, and fix `Field.create` typing
+  for options that extend `FieldOptions`.
+- `afterCommit` receives the committed `entries` and the `removed` entries
+  with the url they had.
 - Fix read-only roles for nested fields and upload permissions in nested media
   folders.
 - Fix the locale of translations created in another root.
