@@ -42,6 +42,11 @@ export interface AsyncList<T> {
   hasMore: boolean
   loadMore(): void
   reload(): void
+  /** Replaces an item, eg. after saving it, without loading the list again */
+  update(key: Key, item: T | ((previous: T) => T)): void
+  remove(...keys: Array<Key>): void
+  prepend(...items: Array<T>): void
+  append(...items: Array<T>): void
   sortDescriptor?: SortDescriptor
   sort(descriptor: SortDescriptor): void
   filterText: string
@@ -98,6 +103,10 @@ export function useAsyncList<T, C = string>({
     hasMore,
     loadMore: list.loadMore,
     reload: list.reload,
+    update: list.update,
+    remove: list.remove,
+    prepend: list.prepend,
+    append: list.append,
     sortDescriptor: fromAria(list.sortDescriptor as AriaSort | undefined),
     sort: descriptor => list.sort(toAria(descriptor)!),
     filterText: list.filterText,

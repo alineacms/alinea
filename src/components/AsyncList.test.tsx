@@ -64,3 +64,28 @@ test('selection takes read only sets', async () => {
   act(() => result.current.setSelectedKeys(keys))
   expect(result.current.selectedKeys).toEqual(new Set([2]))
 })
+
+test('edits loaded items without loading again', async () => {
+  let loads = 0
+  const {result} = renderHook(() =>
+    useAsyncList<Product>({
+      async load() {
+        loads++
+        return {items: products}
+      }
+    })
+  )
+  await waitFor(() => expect(result.current.items.length).toBe(3))
+  act(() => result.current.update(2, {id: 2, title: 'Desk'}))
+  act(() => result.current.update(3, item => ({...item, title: 'Light'})))
+  act(() => result.current.remove(1))
+  act(() => result.current.prepend({id: 4, title: 'Stool'}))
+  act(() => result.current.append({id: 5, title: 'Shelf'}))
+  expect(result.current.items.map(item => item.title)).toEqual([
+    'Stool',
+    'Desk',
+    'Light',
+    'Shelf'
+  ])
+  expect(loads).toBe(1)
+})

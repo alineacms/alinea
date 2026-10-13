@@ -60,7 +60,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`onLoadMore` is called when the rows are scrolled close to the end, to fetch the next page. While `loading` is set, a spinner shows below the rows, or in place of them while there are none. `useAsyncList` keeps the loaded pages: its `load` function receives the `cursor` the previous page returned, and `loadMore` does nothing once a page returns no cursor. Its `items`, `loading`, `loadMore`, `sortDescriptor` and `sort`, and `selectedKeys` and `setSelectedKeys` plug into the props of the table."
+          "text": "`onLoadMore` is called when the rows are scrolled close to the end, to fetch the next page. While `loading` is set, a spinner shows below the rows, or in place of them while there are none. `useAsyncList` keeps the loaded pages: its `load` function receives the `cursor` the previous page returned, and `loadMore` does nothing once a page returns no cursor. Its `items`, `loading`, `loadMore`, `sortDescriptor` and `sort`, and `selectedKeys` and `setSelectedKeys` plug into the props of the table. `update(key, item)`, `remove(...keys)`, `prepend(...items)` and `append(...items)` change the loaded items without loading them again, for example after a dialog saves a row."
         }
       ]
     },
@@ -72,7 +72,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3KdUIrXYiuHny0wesssjx0RlEim",
-      "code": "import {useAsyncList} from 'alinea/components'\n\nconst list = useAsyncList({\n  async load({cursor, filterText, sort, signal}) {\n    const res = await fetch(`/api/products?page=${cursor ?? 1}`, {signal})\n    const {items, next} = await res.json()\n    // Leave out the cursor, or return null, on the last page\n    return {items, cursor: next}\n  }\n})\n// list.items, list.loading, list.hasMore, list.error,\n// list.loadMore(), list.reload(), list.setFilterText(text), list.sort(sort)",
+      "code": "import {useAsyncList} from 'alinea/components'\n\nconst list = useAsyncList({\n  async load({cursor, filterText, sort, signal}) {\n    const res = await fetch(`/api/products?page=${cursor ?? 1}`, {signal})\n    const {items, next} = await res.json()\n    // Leave out the cursor, or return null, on the last page\n    return {items, cursor: next}\n  }\n})\n// list.items, list.loading, list.hasMore, list.error,\n// list.loadMore(), list.reload(), list.setFilterText(text), list.sort(sort),\n// list.update(id, item), list.remove(id), list.prepend(item)",
       "language": "tsx"
     },
     {
