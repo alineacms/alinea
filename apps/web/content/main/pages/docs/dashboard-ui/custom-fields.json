@@ -437,7 +437,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useSiblingFieldValue(key)`: the value of another field in the same entry, list row or object, by its key."
+                  "text": "Other fields: pass any field of the same list row or object, of a parent row or of the entry to these hooks, it resolves in the nearest scope that holds it. Import the type from your schema (`useFieldValue(BlogPost.title)`) or pass the field through your field's options. `useSiblingFieldValue(key)` is deprecated."
                 }
               ]
             }

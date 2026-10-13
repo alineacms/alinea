@@ -26,8 +26,7 @@ import {
   dashboardContext,
   entryContext,
   useEditor,
-  useFieldInfo,
-  useFieldNode
+  useFieldInfo
 } from '../contexts.js'
 
 /**
@@ -65,12 +64,23 @@ export function usePreviewMetadata(): PreviewMetadata | undefined {
 /**
  * Returns the stored value of a field in the entry, list row or object being
  * edited. Use it in a view that only reads the value.
+ *
+ * The field-based hooks (`useFieldValue`, `useField`, `useFieldSetter`, ...)
+ * also read the fields around a custom field: pass a field of the same row,
+ * of a parent row or of the entry, and it resolves in the nearest scope that
+ * holds it. Import the type from your schema or pass the field through the
+ * options of your field.
+ *
+ * @example
+ * // In the view of a field inside a list row of `BlogPost`
+ * const title = useFieldValue(BlogPost.title) // a field of the entry
+ * const price = useFieldValue(options.price) // a field passed as option
  */
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): StoredValue {
-  const node = useFieldNode<StoredValue>(field)
-  return useAtomValueRaw(node.value) as StoredValue
+  const info = useFieldInfo(field)
+  return useAtomValueRaw(info.value) as StoredValue
 }
 
 /**
@@ -139,8 +149,12 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
 /**
  * Returns the stored value of another field in the same entry, list row or
  * object, by its key.
+ *
+ * @deprecated Pass the field to `useFieldValue` instead, which is typed and
+ * also reads fields of a parent row or the entry:
+ * `useFieldValue(BlogPost.title)`.
  */
-export function useSiblingFieldValue(key: string) {
+export function useSiblingFieldValue(key: string): unknown {
   const editor = useEditor()
   const info = editor.field(key)
   assert(info, `Field not found: ${key}`)

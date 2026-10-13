@@ -9,6 +9,7 @@ import {
   type FieldViewProps,
   useField,
   useFieldKey,
+  useFieldValue,
   useLocale,
   useSiblingFieldValue
 } from '#/cms.js'
@@ -119,4 +120,40 @@ test('a custom field view reads and writes its value through alinea/cms', () => 
   fireEvent.change(input, {target: {value: '7'}})
   expect(screen.getByText('rating:7 of Chair in no locale')).toBeDefined()
   expect(screen.getByText('Too high')).toBeDefined()
+})
+
+test('field hooks read fields of the row and of the entry', () => {
+  const Row = Config.type('Row', {
+    fields: {title: Field.text('Label'), price: Field.number('Price')}
+  })
+  const Post = Config.document('Post', {
+    fields: {title: Field.text('Title')}
+  })
+  function Summary() {
+    const title = useFieldValue(Post.title)
+    const label = useFieldValue(Row.title)
+    const price = useFieldValue(Row.price)
+    const [, setTitle] = useField(Post.title)
+    return (
+      <button type="button" onClick={() => setTitle('Desk')}>
+        {title}:{label}:{price}
+      </button>
+    )
+  }
+  const entryNode = new ReactiveNode<object>({title: 'Chair'})
+  const entry = new EntryEditor(Post, entryNode)
+  const row = new EntryEditor(
+    Row,
+    new ReactiveNode<object>({title: 'Leg', price: 5}),
+    entry
+  )
+  render(
+    <DashboardScopeInternal dashboard={testDashboard()}>
+      <EditorScope editor={row}>
+        <Summary />
+      </EditorScope>
+    </DashboardScopeInternal>
+  )
+  fireEvent.click(screen.getByText('Chair:Leg:5'))
+  expect(screen.getByText('Desk:Leg:5')).toBeDefined()
 })

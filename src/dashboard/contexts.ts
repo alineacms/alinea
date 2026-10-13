@@ -62,21 +62,24 @@ export function useEditor() {
 }
 
 /**
- * Returns the editor metadata for a field in the active editor scope.
+ * Returns the editor metadata for a field in the active editor scope, or in
+ * the scope of a parent row or the entry when the field belongs there.
  */
 export function useFieldInfo(field: Field) {
   const editor = useEditor()
+  // Alinea 1.x hooks took the key of a field
+  if (typeof field === 'string')
+    throw new Error(`Pass the field instead of its key: ${field}`)
   const info = editor.get(field)
   assert(info, 'Field info not found in editor')
   return info
 }
 
 /**
- * Returns the reactive node backing a field in the active editor.
+ * Returns the reactive node backing a field in the editor it belongs to.
  */
 export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
-  const {key} = useFieldInfo(field)
-  const editor = useEditor()
+  const {key, editor} = useFieldInfo(field)
   const nodes = useAtomValueRaw(editor.node.nodes) as Record<
     string,
     ReactiveNode

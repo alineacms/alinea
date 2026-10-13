@@ -52,6 +52,8 @@ export interface EditorSection {
 }
 
 export interface EditorField {
+  /** The editor of the entry, row or object the field belongs to */
+  editor: EditorModel
   key: string
   value: WritableAtom<unknown, [unknown], void>
   options: Atom<FieldOptions<unknown>>
