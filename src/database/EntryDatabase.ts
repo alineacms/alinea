@@ -98,6 +98,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #tree?: ReadonlyTree
   #initialTree?: ReadonlyTree
   #recordsTree: boolean
+  /**
+   * Overlays answer one preview payload and are thrown away; they keep the
+   * statistics of the database they fork.
+   */
+  #analyzes = true
   /** The connection is already inside a transaction: never open nested ones. */
   #transactional = false
   #changeListeners = new Set<EntryChangeListener>()
@@ -172,6 +177,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       recordsTree: false
     })
     overlay.#tree = tree
+    overlay.#analyzes = false
     try {
       await overlay.syncWith(source)
       return overlay
@@ -512,7 +518,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   async #optimize(): Promise<void> {
-    if (!this.#transactional) await analyze(this.#db)
+    if (this.#analyzes && !this.#transactional) await analyze(this.#db)
   }
 
   getRevision(): Promise<string> {
