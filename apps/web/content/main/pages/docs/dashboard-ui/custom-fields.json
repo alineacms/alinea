@@ -328,6 +328,15 @@
       "language": "tsx"
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The entry editor sets `--alinea-header-height` to the height of its header. A view that fills the visible editor can size itself with it, for example `height: calc(100dvh - var(--alinea-header-height))`."
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [

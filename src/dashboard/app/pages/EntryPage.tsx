@@ -433,7 +433,7 @@ function EntryEditorContent({
   }
 
   const mainEditor = (
-    <PageLayout>
+    <PageLayout className={styles.EntryEditor()}>
       <EntryHeader
         controls={
           hasChildren || defaultView === 'overview' ? (

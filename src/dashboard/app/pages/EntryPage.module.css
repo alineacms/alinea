@@ -1,3 +1,9 @@
+/* The height of the entry header, custom field views fill the editor with
+   eg. `height: calc(100dvh - var(--alinea-header-height))` */
+.EntryEditor {
+  --alinea-header-height: 48px;
+}
+
 .EntryEditor-body {
   min-height: 0;
   min-width: 0;
