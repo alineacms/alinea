@@ -37,6 +37,8 @@ export interface TextFieldProps
   multiline?: boolean
   /** Minimum number of rows of a multiline field */
   rows?: number
+  /** Maximum number of rows a multiline field grows to before it scrolls */
+  maxRows?: number
   /** Icon displayed inside the input, before the text */
   startIcon?: IconType | ReactElement
   /** Icon displayed inside the input, after the text */
@@ -46,6 +48,18 @@ export interface TextFieldProps
   autoComplete?: string
   maxLength?: number
   minLength?: number
+  /** Which virtual keyboard to show, eg. `numeric` for a code */
+  inputMode?:
+    | 'none'
+    | 'text'
+    | 'tel'
+    | 'url'
+    | 'email'
+    | 'numeric'
+    | 'decimal'
+    | 'search'
+  /** A regular expression the value must match to be valid */
+  pattern?: string
   onBlur?: (event: FocusEvent<TextFieldElement>) => void
   onFocus?: (event: FocusEvent<TextFieldElement>) => void
   onKeyDown?: (event: KeyboardEvent<TextFieldElement>) => void
@@ -70,6 +84,7 @@ export function TextField({
   type = 'text',
   multiline,
   rows = 1,
+  maxRows,
   startIcon,
   endIcon,
   autoComplete,
@@ -103,6 +118,10 @@ export function TextField({
     onKeyDown
   }
   const adornments = {start: Boolean(startIcon), end: Boolean(endIcon)}
+  // Rows of 1.5em plus the vertical padding and border of the control
+  const limit = maxRows
+    ? {maxHeight: `calc(${maxRows * 1.5}em + 18px)`}
+    : undefined
   return (
     <TextFieldPrimitive
       data-slot="text-field"
@@ -116,7 +135,7 @@ export function TextField({
       isRequired={required}
       isDisabled={disabled}
       isReadOnly={readOnly}
-      isInvalid={Boolean(error)}
+      isInvalid={error ? true : undefined}
       className={styles.TextField(styler.merge({className}))}
       style={style}
     >
@@ -145,7 +164,11 @@ export function TextField({
                 {...inputProps}
                 {...control}
                 rows={rows}
-                className={styles.TextFieldControl(adornments)}
+                className={styles.TextFieldControl({
+                  ...adornments,
+                  limited: Boolean(maxRows)
+                })}
+                style={limit}
               />
               <div
                 aria-hidden="true"
@@ -154,6 +177,7 @@ export function TextField({
                   ...adornments,
                   shadow: true
                 })}
+                style={limit}
               >
                 {`${current || placeholder || ''} `}
               </div>

@@ -1,5 +1,10 @@
 import styler from '@alinea/styler'
-import type {MouseEvent, ReactNode, Ref} from 'react'
+import type {
+  HTMLAttributeReferrerPolicy,
+  MouseEvent,
+  ReactNode,
+  Ref
+} from 'react'
 import css from './Link.module.css'
 import type {AriaProps, DataProps, StyleProps} from './types.js'
 
@@ -10,6 +15,13 @@ export interface LinkProps extends StyleProps, AriaProps, DataProps {
   target?: string
   rel?: string
   download?: boolean | string
+  /** Tooltip text */
+  title?: string
+  tabIndex?: number
+  lang?: string
+  hrefLang?: string
+  referrerPolicy?: HTMLAttributeReferrerPolicy
+  'aria-current'?: boolean | 'page' | 'step' | 'location' | 'date' | 'time'
   /** `plain` underlines on hover, `underline` is always underlined */
   variant?: 'plain' | 'underline'
   disabled?: boolean

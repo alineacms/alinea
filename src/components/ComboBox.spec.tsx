@@ -1,5 +1,11 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {CustomValue, Example, States} from './ComboBox.stories.js'
+import {
+  CustomValue,
+  Example,
+  Groups,
+  ServerSearch,
+  States
+} from './ComboBox.stories.js'
 
 test('filters options and selects one', async ({mount, page}) => {
   await mount(<Example />)
@@ -56,4 +62,22 @@ test('default, disabled and invalid states', async ({mount, page}) => {
     'true'
   )
   await expect(page.getByText('Please select an item.')).toBeVisible()
+})
+
+test('groups items with a label and description', async ({mount, page}) => {
+  await mount(<Groups />)
+  await page.getByRole('combobox').fill('page')
+  await expect(page.locator('[data-slot="combobox-group-label"]')).toHaveText([
+    'Pages'
+  ])
+  await expect(page.getByRole('option')).toHaveCount(2)
+  await expect(page.getByRole('option', {name: /Landing page/})).toContainText(
+    'A page built from blocks'
+  )
+})
+
+test('server search shows every loaded item', async ({mount, page}) => {
+  await mount(<ServerSearch />)
+  await page.getByRole('combobox').fill('ado')
+  await expect(page.getByRole('option')).toHaveCount(2)
 })

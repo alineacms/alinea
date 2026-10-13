@@ -49,6 +49,7 @@ export function Multiline() {
         onValueChange={setText}
       />
       <TextField multiline rows={4} label="At least four rows" />
+      <TextField multiline maxRows={3} label="At most three rows" />
     </div>
   )
 }

@@ -106,6 +106,9 @@ function applyDashboardTheme(theme: DashboardTheme) {
       })
     })
   }
+  // The dashboard's tokens apply inside elements with data-alinea-theme
+  if (!documentElement.hasAttribute('data-alinea-theme'))
+    documentElement.setAttribute('data-alinea-theme', '')
   if (theme === 'system') documentElement.removeAttribute('data-theme')
   else documentElement.dataset.theme = theme
 }

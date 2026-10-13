@@ -52,6 +52,8 @@ export function PopoverSurface({
       : ({'--alinea-trigger-width': `${triggerWidth}px`} as CSSProperties)
   return (
     <PopoverPrimitive
+      // Popovers render outside the page, they need the theme of their own
+      data-alinea-theme=""
       {...props}
       style={{...style, ...widthStyle}}
       className={styles.PopoverSurface(

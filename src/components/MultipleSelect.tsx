@@ -28,21 +28,27 @@ import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
+  Key,
   OpenStateProps,
   StyleProps
 } from './types.js'
 
 const styles = styler(css)
 
-export interface MultipleSelectProps
+export interface MultipleSelectProps<V extends Key = Key>
   extends FieldSharedProps, OpenStateProps, StyleProps, AriaProps, DataProps {
-  value?: Array<string>
-  defaultValue?: Array<string>
-  onValueChange?: (value: Array<string>) => void
+  /** The values of the selected MultipleSelectItems */
+  value?: Array<V>
+  defaultValue?: Array<V>
+  onValueChange?: (value: Array<V>) => void
   placeholder?: string
   /** Shown in the list when no item matches the search, defaults to "No options" */
   emptyMessage?: ReactNode
-  /** Name of the hidden form input carrying the values */
+  /**
+   * Name of the hidden form input carrying the values, it submits one entry
+   * per selected value like a native multiple select: read them with
+   * `formData.getAll(name)`
+   */
   name?: string
   /** MultipleSelectItem elements */
   children: ReactNode
@@ -52,7 +58,7 @@ export interface MultipleSelectProps
  * A labelled field to pick several values from a searchable list, the
  * selected values are shown as removable tags.
  */
-export function MultipleSelect({
+export function MultipleSelect<V extends Key = Key>({
   label,
   description,
   error,
@@ -73,7 +79,7 @@ export function MultipleSelect({
   style,
   children,
   ...props
-}: MultipleSelectProps) {
+}: MultipleSelectProps<V>) {
   const triggerRef = useRef<HTMLDivElement | null>(null)
   const triggerButtonRef = useRef<HTMLButtonElement | null>(null)
   const [isOpen, setOpen] = useState(defaultOpen ?? false)
@@ -96,7 +102,7 @@ export function MultipleSelect({
       selectionMode="multiple"
       value={value}
       defaultValue={defaultValue}
-      onChange={keys => onValueChange?.(keys.map(String))}
+      onChange={keys => onValueChange?.(keys as Array<V>)}
       // A read only select can be focused but not opened
       isOpen={!readOnly && (open ?? isOpen)}
       onOpenChange={next => {
@@ -247,7 +253,7 @@ export function MultipleSelect({
 }
 
 export interface MultipleSelectItemProps extends StyleProps {
-  value: string
+  value: Key
   /** Text used for searching and the tag, defaults to string children */
   textValue?: string
   disabled?: boolean

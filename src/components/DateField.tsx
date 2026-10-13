@@ -22,6 +22,10 @@ export interface DateFieldProps
   min?: string
   /** The latest valid date, `YYYY-MM-DD` */
   max?: string
+  /**
+   * Name of the hidden form input, which submits the date like a native
+   * date input: `YYYY-MM-DD`, or an empty string when no date is set
+   */
   name?: string
   autoFocus?: boolean
 }

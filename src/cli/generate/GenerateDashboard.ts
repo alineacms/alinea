@@ -71,6 +71,7 @@ export async function generateDashboard(
     path.join(rootDir, staticFile),
     code`
         <!DOCTYPE html>
+        <html data-alinea-theme>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
         <link href="${baseUrl}/entry.css?${buildId}" rel="stylesheet" />

@@ -1,0 +1,49 @@
+.Stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  &[data-direction='row'] {
+    flex-direction: row;
+  }
+
+  &[data-align='start'] {
+    align-items: flex-start;
+  }
+
+  &[data-align='center'] {
+    align-items: center;
+  }
+
+  &[data-align='end'] {
+    align-items: flex-end;
+  }
+
+  &[data-align='stretch'] {
+    align-items: stretch;
+  }
+
+  &[data-align='baseline'] {
+    align-items: baseline;
+  }
+
+  &[data-justify='start'] {
+    justify-content: flex-start;
+  }
+
+  &[data-justify='center'] {
+    justify-content: center;
+  }
+
+  &[data-justify='end'] {
+    justify-content: flex-end;
+  }
+
+  &[data-justify='between'] {
+    justify-content: space-between;
+  }
+
+  &[data-wrap] {
+    flex-wrap: wrap;
+  }
+}

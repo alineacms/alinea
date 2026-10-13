@@ -23,6 +23,7 @@ export function Example() {
         label="Design software"
         description="Pick the tool you use most"
         placeholder="Select software"
+        clearable
         value={value}
         onValueChange={setValue}
       >

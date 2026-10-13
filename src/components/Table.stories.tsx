@@ -4,6 +4,7 @@ import {
   IcRoundRefresh,
   LucideFile
 } from '#/dashboard/icons.js'
+import {useAsyncList} from './AsyncList.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {
@@ -509,4 +510,69 @@ export function RowHandlers() {
 
 export default {
   title: 'Pure components / Table'
+}
+
+interface Product {
+  id: number
+  title: string
+  price: number
+}
+
+const productColumns: Array<TableColumn> = [
+  {id: 'title', header: 'Title', sortable: true},
+  {id: 'price', header: 'Price', width: 120, align: 'end', sortable: true}
+]
+
+const products: Array<Product> = Array.from({length: 60}, (_, index) => ({
+  id: index + 1,
+  title: `Product ${index + 1}`,
+  price: ((index * 37) % 90) + 10
+}))
+
+/** Rows from a (simulated) server, sorted there and loaded page by page */
+export function LoadMore() {
+  const list = useAsyncList<Product, number>({
+    initialSort: {column: 'title', direction: 'asc'},
+    async load({cursor = 0, sort, signal}) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      signal.throwIfAborted()
+      const sorted = products.toSorted((a, b) => {
+        const column = sort?.column === 'price' ? 'price' : 'id'
+        const order = a[column] - b[column]
+        return sort?.direction === 'desc' ? -order : order
+      })
+      const next = cursor + 20
+      return {
+        items: sorted.slice(cursor, next),
+        cursor: next < sorted.length ? next : undefined
+      }
+    }
+  })
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+      <div style={{height: 320}}>
+        <Table
+          aria-label="Products"
+          items={list.items}
+          columns={productColumns}
+          sortDescriptor={list.sortDescriptor}
+          onSortChange={list.sort}
+          loading={list.loading}
+          onLoadMore={list.loadMore}
+          selectionMode="multiple"
+          selectedKeys={list.selectedKeys}
+          onSelectionChange={list.setSelectedKeys}
+          renderEmptyState={() => 'No products'}
+        >
+          {product => (
+            <TableRow id={product.id} textValue={product.title}>
+              <TableTitle title={product.title} />
+              <TableCell align="end">{product.price}</TableCell>
+            </TableRow>
+          )}
+        </Table>
+      </div>
+      <p data-testid="loaded">Loaded {list.items.length} products</p>
+    </div>
+  )
 }
