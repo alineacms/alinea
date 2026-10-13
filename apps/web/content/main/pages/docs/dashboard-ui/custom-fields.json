@@ -82,7 +82,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3KdUIpTruj0xLdrfmNvbyhKMWnp",
-      "code": "import {Field} from 'alinea'\nimport type {FieldOptions, WithoutLabel} from 'alinea/core'\n\nexport interface RatingOptions extends FieldOptions<number> {\n  max?: number\n}\n\nexport type RatingField = Field.Create<number, RatingOptions>\n\nexport function rating(\n  label: string,\n  options: WithoutLabel<RatingOptions> = {}\n): RatingField {\n  return Field.create({label, options, view: '@/fields/Rating.view'})\n}",
+      "code": "import {Field} from 'alinea'\nimport type {FieldOptions, WithoutLabel} from 'alinea'\n\nexport interface RatingOptions extends FieldOptions<number> {\n  max?: number\n}\n\nexport type RatingField = Field.Create<number, RatingOptions>\n\nexport function rating(\n  label: string,\n  options: WithoutLabel<RatingOptions> = {}\n): RatingField {\n  return Field.create({label, options, view: '@/fields/Rating.view'})\n}",
       "fileName": "fields/Rating.ts",
       "language": "tsx"
     },

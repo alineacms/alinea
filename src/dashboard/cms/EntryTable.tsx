@@ -11,7 +11,7 @@ import {
 } from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
-import type {EntryFields} from '#/core/EntryFields.js'
+import type {EntryFields, EntryFilterFields} from '#/core/EntryFields.js'
 import type {OpenFilter} from '#/core/Filter.js'
 import {
   getRoot,
@@ -82,9 +82,10 @@ export interface EntryTableProps {
   type?: Type | Array<Type>
   /**
    * Only list entries matching this filter, like the `filter` of a query,
-   * eg. `{brand: {has: {_entry: entryId}}}`
+   * eg. `{brand: {has: {_entry: entryId}}}` or
+   * `{_referenced: Query.referencedBy({type: Product})}`
    */
-  filter?: OpenFilter<EntryFields>
+  filter?: OpenFilter<EntryFilterFields>
   /** Only list entries of this workspace */
   workspace?: string
   /** Only list entries of this root */

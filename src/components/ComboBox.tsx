@@ -282,6 +282,7 @@ export interface ComboBoxItemProps extends StyleProps {
   /** Text used for filtering and the input, defaults to string children */
   textValue?: string
   disabled?: boolean
+  /** Icon shown before the label in the list */
   icon?: IconType | ReactElement
   /** Secondary text shown below the label in the list */
   description?: ReactNode
