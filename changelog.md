@@ -9,6 +9,8 @@
   allows `explore`, denying `read` denies it unless `explore` is allowed.
 - Target fields inside object fields in role permissions, such as
   `{field: Article.visibility.germany, deny: {all: true}}`.
+- Select fields inside object fields in queries, such as
+  `select: {title: Page.seo.title}`, also in relations like `Query.children`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`
   signs in the local user with that role, for saves, hooks and `cms.user()`.
 - The `collapsed: false` type option expands an entry's children in the

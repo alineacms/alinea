@@ -51,6 +51,7 @@ export class Scope {
   #paths: Map<Entity, Array<string>> = new Map()
   #locales: Map<string, Array<string>> = new Map()
   #nested: Map<Entity, Array<string>> = new Map()
+  #nestedKeys: Map<string, Entity> = new Map()
   #shared: Set<Entity> = new Set()
 
   constructor(config: Config) {
@@ -78,11 +79,13 @@ export class Scope {
     for (const [typeName, type] of entries(config.schema))
       for (const [fieldName, field] of entries(type))
         this.#insertNested(field, ['Field', typeName, fieldName])
+    for (const [field, path] of this.#nested)
+      this.#nestedKeys.set(path.join('.'), field)
   }
 
   // Fields of object fields get a key, eg. Field.Type.object.field, so roles
-  // can target them. They are kept apart from the other entities: queries
-  // select top level fields only. A field instance used in more than one
+  // can target them and queries can select them. They are kept apart from the
+  // other entities, which have a name. A field instance used in more than one
   // place has no single key, so it can't be targeted.
   #insertNested(field: Field, path: Array<string>) {
     if (!hasType(field)) return
@@ -129,6 +132,20 @@ export class Scope {
     return this.#paths.get(entity)?.at(-1)
   }
 
+  /**
+   * Where a field stores its value in the entry data, eg. `['seo', 'title']`
+   * for a field of an object field
+   */
+  dataPathOf(field: Field): Array<string> | undefined {
+    if (this.#shared.has(field))
+      throw new Error(
+        'Field is used in more than one place, select the field containing it'
+      )
+    const path = this.#paths.get(field) ?? this.#nested.get(field)
+    if (path?.[0] !== 'Field') return
+    return path.slice(2)
+  }
+
   /** Configured spellings of a locale, matched case-insensitively. */
   locales(locale: string): Array<string> {
     return this.#locales.get(locale.toLowerCase()) ?? [locale]
@@ -136,8 +153,8 @@ export class Scope {
 
   stringify(input: any): string {
     const result = JSON.stringify(input, (key, value) => {
-      if (this.#paths.has(value))
-        return {[ENTITY_KEY]: this.#paths.get(value)?.join('.')}
+      const path = this.#paths.get(value) ?? this.#nested.get(value)
+      if (path) return {[ENTITY_KEY]: path.join('.')}
       if (value && typeof value === 'object' && hasExpr(value))
         return {[EXPR_KEY]: getExpr(value)}
       return value
@@ -151,7 +168,10 @@ export class Scope {
         const props = Object.keys(value)
         if (props.length === 1) {
           const [key] = props
-          if (key === ENTITY_KEY) return this.#keys.get(value[key])
+          if (key === ENTITY_KEY)
+            return (
+              this.#keys.get(value[key]) ?? this.#nestedKeys.get(value[key])
+            )
           if (key === EXPR_KEY) return new Expr(value[key])
         }
       }

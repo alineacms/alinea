@@ -178,10 +178,10 @@ class Expressions {
           ? this.selection(internal.name, internal.path)
           : this.index(internal.name, internal.path)
       case 'field': {
-        const name = this.#scope.nameOf(expression)
-        if (!name)
+        const path = this.#scope.dataPathOf(expression as Field)
+        if (!path)
           throw new Error('Field expression is not in the configured schema')
-        return this.data([name], selecting)
+        return this.data(path, selecting)
       }
       case 'value':
         return sql.value(internal.value)
