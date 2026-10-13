@@ -1,4 +1,4 @@
-export type {DashboardEntry} from '#/core/DashboardEntry.js'
+export type {DashboardEntry, EntryActionProps} from '#/core/DashboardEntry.js'
 export type {Filter} from '#/core/Filter.js'
 export type {Graph, GraphQuery, QuerySettings} from '#/core/Graph.js'
 export type {Infer} from '#/core/Infer.js'

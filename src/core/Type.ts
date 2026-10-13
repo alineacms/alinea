@@ -1,3 +1,4 @@
+import type {EntryActionProps} from './DashboardEntry.js'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {Config} from './Config.js'
@@ -272,11 +273,12 @@ export namespace Type {
   }
 
   export function referencedViews(type: Type): Array<string> {
-    const {view, summaryRow, summaryThumb, overview} = getType(type)
+    const {view, summaryRow, summaryThumb, overview, actions} = getType(type)
     return [
       view,
       summaryRow,
       summaryThumb,
+      ...(actions ?? []),
       ...Overview.referencedViews(overview),
       ...viewsOfDefinition(getType(type).fields)
     ].filter(v => typeof v === 'string')
@@ -322,6 +324,12 @@ export interface TypeConfig<Definition> {
   contains?: Array<string | Type>
   /** How the dashboard lists the children of entries of this type */
   overview?: OverviewOptions
+  /**
+   * Components rendered in the header of the entry editor, next to the
+   * publish button, eg. a button that exports or sends the entry. They can
+   * read the fields of the entry with the hooks of `alinea/cms`.
+   */
+  actions?: Array<View<EntryActionProps>>
   /**
    * Order children entries in the sidebar content tree
    * @deprecated Use `overview.sort`

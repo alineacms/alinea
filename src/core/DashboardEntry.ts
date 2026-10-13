@@ -10,3 +10,14 @@ export interface DashboardEntry<
    */
   data: Data
 }
+
+/** Props of an entry `actions` view, rendered in the entry header */
+export interface EntryActionProps {
+  /** The entry being edited, in the selected version */
+  entry: DashboardEntry
+  /**
+   * The locale the entry is edited in, which differs from `entry.locale`
+   * while a translation is not saved yet
+   */
+  locale: string | null
+}

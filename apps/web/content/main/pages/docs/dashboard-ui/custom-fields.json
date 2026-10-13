@@ -666,7 +666,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`OverviewCellProps`, `OverviewActionProps`, `OverviewEntry`: the props of an overview column's `view` and of an overview action, and the entry they receive."
+                  "text": "`OverviewCellProps`, `OverviewActionProps`, `OverviewEntry`: the props of an overview column's `view` and of an overview action, and the entry they receive. `EntryActionProps` and `DashboardEntry`: the props of an entry action and the entry `useEntry()` returns."
                 }
               ]
             }
@@ -706,6 +706,40 @@
       "_id": "3JkF1qRklf6emNbglBotdOHkqUs",
       "code": "import {useEntry} from 'alinea/cms'\nimport {Field, Link} from 'alinea/components'\n\nexport function ProductUrls() {\n  const entry = useEntry()\n  if (!entry) return null\n  return (\n    <Field label=\"Public URL\" description=\"Where this product is published\">\n      <Link href={entry.url} target=\"_blank\">\n        {entry.url}\n      </Link>\n    </Field>\n  )\n}",
       "fileName": "fields/ProductUrls.view.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add actions to the entry header"
+        }
+      ],
+      "_anchor": "add-actions-to-the-entry-header"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Buttons that act on the entry, such as an export or a button that creates a related entry, go in the `actions` of its type. They render in the entry header next to the publish button and receive `EntryActionProps`: the `entry` and the `locale` it is edited in. The hooks of `alinea/cms` read and write its fields."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "c4pRrIghxO3B9MRmZSA6Ls9rEpg",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {title: Field.text('Title')},\n  actions: ['@/views/ExportProduct.view#ExportProduct']\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "rmx8EESiXykb0eBt5rWYDQeJizY",
+      "code": "import {type EntryActionProps, useFieldValue} from 'alinea/cms'\nimport {Button} from 'alinea/components'\nimport {Product} from '@/schema/Product'\n\nexport function ExportProduct({entry}: EntryActionProps) {\n  const title = useFieldValue(Product.title)\n  return (\n    <Button onClick={() => window.open(`/api/export/${entry.id}`)}>\n      Export {title}\n    </Button>\n  )\n}",
+      "fileName": "views/ExportProduct.view.tsx",
       "language": "tsx"
     },
     {
