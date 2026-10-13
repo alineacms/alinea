@@ -3,6 +3,7 @@ import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {Entry} from '#/core/Entry.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -822,6 +823,77 @@ test('catches up once per loaded store', async () => {
   await succeeded
 })
 
+// Known limitation: stored content shows before it caught up with the
+// remote, so a form can be built from an entry the remote changed meanwhile.
+// The save waits for the catch-up, but like every mutation it carries no base
+// revision, and the entry form sends all of its data: the remote edit to
+// another field is silently overwritten (fails on the title below). A todo
+// until saves can detect this; `bun test --todo` runs it.
+test.todo('keeps remote edits to an entry saved from stored content', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const stored = new MemorySource()
+  await syncWith(stored, fixture)
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, fixture)
+  const remoteDB = new LocalDB(cms.config, remoteSource)
+  await remoteDB.sync()
+  const recipe = await remoteDB.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  await remoteDB.update({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id,
+    set: {title: 'Remote title'}
+  })
+  const baseClient = createTestConnection(remoteDB)
+  let release = () => {}
+  const hold = new Promise<void>(resolve => {
+    release = resolve
+  })
+  const client: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      await hold
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(stored)
+  await worker.load('stale-edit', cms.config, client)
+  await worker.ready()
+  const db = await worker.db
+  const data = await db.get({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id,
+    select: Entry.data
+  })
+  expect(data.title).toBe('Chocolate chip')
+  const saved = mutationActivity(worker, 'stale-edit', 'succeeded')
+
+  // The form saves the stored entry with another field edited
+  const queued = worker.queue('stale-edit', [
+    {
+      op: 'create',
+      id: recipe._id,
+      type: 'DemoRecipe',
+      locale: null,
+      status: 'published',
+      overwrite: true,
+      data: {...data, intro: []}
+    }
+  ])
+  release()
+  await queued
+  await saved
+
+  const result = await remoteDB.get({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id
+  })
+  expect(result.intro).toEqual([])
+  expect(result.title).toBe('Remote title')
+})
+
 async function createStoredFixture(local?: MemorySource) {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)
@@ -866,6 +938,19 @@ function syncActivity(worker: DashboardWorker, status: string) {
         )
       )
         resolve()
+    })
+  })
+}
+
+function mutationActivity(worker: DashboardWorker, id: string, status: string) {
+  return new Promise<void>(resolve => {
+    const settled = () =>
+      worker
+        .activities()
+        .some(activity => activity.id === id && activity.status === status)
+    if (settled()) return resolve()
+    worker.addEventListener(ActivityEvent.type, () => {
+      if (settled()) resolve()
     })
   })
 }
