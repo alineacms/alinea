@@ -21,9 +21,10 @@ import {routeAtom, type DashboardRoute} from '#/dashboard/atoms/nav.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {workspaceAtom, workspacesAtom} from '#/dashboard/atoms/config.js'
 import {canManageMembersAtom, policyAtom} from '#/dashboard/atoms/user.js'
+import {dispense} from '#/dashboard/atoms/utils.js'
 import {useUser} from '#/dashboard/hooks.js'
 import {styler} from '@alinea/styler'
-import {useSetAtom, type Getter} from 'jotai'
+import {atom, useSetAtom, type Getter} from 'jotai'
 import type {ComponentType, MouseEvent, ReactNode} from 'react'
 import {
   IcBaselineAccountCircle,
@@ -89,10 +90,77 @@ interface WorkspaceRootSummary {
   label: string
 }
 
+/**
+ * The most recently changed entries of a workspace the user can read, at the
+ * current content. Kept per workspace: the page is evaluated again when any
+ * of its dependencies changes while it loads, and asks again for what it
+ * already asked.
+ */
+const recentEntriesAtom = dispense((key: string) =>
+  atom(async get => {
+    await get(shaAtom)
+    const graph = get(graphAtom)
+    const policy = get(policyAtom)
+    const workspace = get(workspaceAtom(key))
+    // The most recent versions by their last update, and, of those without
+    // one, by id, which holds their creation time: two walks of an index per
+    // workspace. Versions of one entry come once per locale, so take enough
+    // to find the entries shown in every locale.
+    const readableRoots = Object.keys(workspace.roots).filter(root =>
+      policy.canRead({workspace: key, root})
+    )
+    if (!readableRoots.length) return []
+    const everyRoot =
+      readableRoots.length === Object.keys(workspace.roots).length
+    const locales = Math.max(
+      1,
+      ...readableRoots.map(
+        root => getRoot(workspace.roots[root]!).i18n?.locales.length ?? 1
+      )
+    )
+    const candidates = await Promise.all(
+      [
+        {orderBy: {desc: Entry.updatedAt}},
+        {orderBy: {desc: Entry.id}, filter: {_updatedAt: null}}
+      ].map(order =>
+        graph.find({
+          ...order,
+          workspace: key,
+          root: everyRoot ? undefined : {in: readableRoots},
+          status: 'preferDraft',
+          take: recentEntryCount * locales,
+          select: recentEntrySelection
+        })
+      )
+    )
+    const readable = candidates.flat().filter(entry => policy.canRead(entry))
+    const now = Date.now()
+    const trustsIdTimestamps = readable.every(entry => {
+      const timestamp = timestampFromId(entry.id)
+      return (
+        timestamp === undefined || timestamp <= now + futureTimestampTolerance
+      )
+    })
+    // The most recent change of each entry, of any of its locales
+    const latest = new Map<string, RecentEntryCandidate>()
+    for (const row of readable) {
+      const entry = toRecentEntry(row, trustsIdTimestamps, now)
+      if (!entry) continue
+      const seen = latest.get(entry.id)
+      if (!seen || entry.changedAt > seen.changedAt) latest.set(entry.id, entry)
+    }
+    // Entries changed at the same time, such as an import, newest id first
+    return Array.from(latest.values())
+      .sort(
+        (a, b) =>
+          b.changedAt - a.changedAt || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0)
+      )
+      .slice(0, recentEntryCount)
+  })
+)
+
 export async function splashPage(get: Getter): Promise<ReactNode> {
   const canManageMembers = await get(canManageMembersAtom)
-  await get(shaAtom)
-  const graph = get(graphAtom)
   const config = get(configAtom)
   const policy = get(policyAtom)
   const summaries = await Promise.all(
@@ -106,63 +174,7 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
           return [{icon, key: rootKey, label}]
         }
       )
-      // The most recent versions by their last update, and, of those without
-      // one, by id, which holds their creation time: two walks of an index
-      // per workspace. Versions of one entry come once per locale, so take
-      // enough to find the entries shown in every locale.
-      const readableRoots = roots.map(root => root.key)
-      const everyRoot =
-        readableRoots.length === Object.keys(workspace.roots).length
-      const locales = Math.max(
-        1,
-        ...readableRoots.map(
-          root => getRoot(workspace.roots[root]!).i18n?.locales.length ?? 1
-        )
-      )
-      const candidates = readableRoots.length
-        ? await Promise.all(
-            [
-              {orderBy: {desc: Entry.updatedAt}},
-              {orderBy: {desc: Entry.id}, filter: {_updatedAt: null}}
-            ].map(order =>
-              graph.find({
-                ...order,
-                workspace: key,
-                root: everyRoot ? undefined : {in: readableRoots},
-                status: 'preferDraft',
-                take: recentEntryCount * locales,
-                select: recentEntrySelection
-              })
-            )
-          )
-        : []
-      const readableCandidates = candidates
-        .flat()
-        .filter(entry => policy.canRead(entry))
-      const now = Date.now()
-      const trustsIdTimestamps = readableCandidates.every(entry => {
-        const timestamp = timestampFromId(entry.id)
-        return (
-          timestamp === undefined || timestamp <= now + futureTimestampTolerance
-        )
-      })
-      // The most recent change of each entry, of any of its locales
-      const latest = new Map<string, RecentEntryCandidate>()
-      for (const row of readableCandidates) {
-        const entry = toRecentEntry(row, trustsIdTimestamps, now)
-        if (!entry) continue
-        const seen = latest.get(entry.id)
-        if (!seen || entry.changedAt > seen.changedAt)
-          latest.set(entry.id, entry)
-      }
-      // Entries changed at the same time, such as an import, newest id first
-      const recentEntries = Array.from(latest.values())
-        .sort(
-          (a, b) =>
-            b.changedAt - a.changedAt ||
-            (a.id < b.id ? 1 : a.id > b.id ? -1 : 0)
-        )
-        .slice(0, recentEntryCount)
+      const recentEntries = await get(recentEntriesAtom(key))
       const entries = recentEntries.map(entry => {
         const type = config.schema[entry.type]
         return {
