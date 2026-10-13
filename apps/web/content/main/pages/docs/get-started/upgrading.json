@@ -484,6 +484,15 @@
       "content": [
         {
           "_type": "text",
+          "text": "Image links only have `src`: the `url` property, which held the same value, was removed so that spreading an image into `<img>` or `next/image` (`<Image {...image} />`) doesn't put a `url` attribute on the element. Replace `image.url` with `image.src`. File links keep `url` and `href`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
           "text": "A workspace can set `mediaUrl` to add a prefix to its media URLs, which helps when several workspaces have files with the same name."
         }
       ]

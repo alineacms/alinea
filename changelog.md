@@ -56,7 +56,8 @@
 - Require `handlerUrl` in the config. `dashboardFile` is deprecated in favor of
   `adminPath`.
 - Serve media files through `${adminPath}/file/...` on the site: image and file
-  links now return that URL instead of the stored location.
+  links now return that URL instead of the stored location. Image links only
+  have `src`, their `url` property is removed.
 - Change `Config.media()` to take root options, children move to `children`.
 - Remove the options of `Field.metadata()` and the `step` option of
   `Field.time()`.

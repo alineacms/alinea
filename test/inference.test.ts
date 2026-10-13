@@ -112,7 +112,7 @@ async function withStore<T>(run: (store: LocalDB) => Promise<T>) {
   }
 }
 
-test('url, file and image links include their url', async () => {
+test('url and file links include their url, image links their src', async () => {
   await withStore(async store => {
     const links = await store.get({
       id: 'parent',
@@ -124,13 +124,14 @@ test('url, file and image links include their url', async () => {
     })
     expectTypeOf(links.website!.url).toEqualTypeOf<string>()
     expectTypeOf(links.download!.url).toEqualTypeOf<string>()
-    expectTypeOf(links.image!.url).toEqualTypeOf<string>()
+    expectTypeOf(links.image!.src).toEqualTypeOf<string>()
     expect(links.website?.url).toBe('https://example.com')
     expect(links.website?.href).toBe('https://example.com')
     expect(links.download?.url).toMatch(/photo\.jpg$/)
     expect(links.download?.href).toBe(links.download?.url)
-    expect(links.image?.url).toMatch(/photo\.jpg\?v=photo-hash$/)
-    expect(links.image?.src).toBe(links.image?.url)
+    expect(links.image?.src).toMatch(/photo\.jpg\?v=photo-hash$/)
+    // Spreading an image into <img> or next/image should not leak a url prop
+    expect('url' in links.image!).toBe(false)
   })
 })
 
