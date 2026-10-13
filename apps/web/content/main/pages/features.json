@@ -990,7 +990,7 @@
         "_type": "entry",
         "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP"
       },
-      "command": "npx alinea@preview init",
+      "command": "npx alinea@rc init",
       "anchor": ""
     }
   ],

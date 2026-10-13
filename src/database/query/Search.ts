@@ -92,12 +92,24 @@ export function searchQuery(
   // Quote individual tokens and bind the entire expression: user text cannot
   // inject FTS operators, column selectors, quotes or SQL syntax. A word the
   // index splits, such as multi-modal, also matches its joined spelling.
-  const terms = words
-    .map(word => {
-      if (word.length === 1) return term(word[0]!)
-      return `((${word.map(term).join(' AND ')}) OR ${term(word.join(''))})`
-    })
-    .join(' AND ')
+  function wordTerm(word: Array<string>): string {
+    if (word.length === 1) return term(word[0]!)
+    return `((${word.map(term).join(' AND ')}) OR ${term(word.join(''))})`
+  }
+  // Two words next to each other also match their joined spelling, so multi
+  // modal finds multimodal. The alternatives multiply with every word, so
+  // longer searches only match their words.
+  function phraseTerm(from: number): string {
+    const word = words![from]!
+    if (from === words!.length - 1) return wordTerm(word)
+    const rest = phraseTerm(from + 1)
+    const separate = `${wordTerm(word)} AND ${rest}`
+    if (words!.length > maxJoinedWords) return separate
+    const joined = term([...word, ...words![from + 1]!].join(''))
+    const after = from + 2 < words!.length ? ` AND ${phraseTerm(from + 2)}` : ''
+    return `((${separate}) OR (${joined}${after}))`
+  }
+  const terms = words.length ? phraseTerm(0) : ''
   const search = sql.identifier(getTable(EntrySearchTable).name)
   const match = sql`${search} match ${terms}`
   const relevance = sql<number>`bm25(${search}, 20, 1)`
@@ -121,6 +133,8 @@ export function searchQuery(
   }
 }
 
+/** Searches up to this many words also match adjacent words joined. */
+const maxJoinedWords = 5
 /** The edit distance allowed per character of a term. */
 const fuzzyFactor = 0.1
 const maxFuzzyDistance = 6

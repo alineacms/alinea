@@ -169,7 +169,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjtPsftrqgAWFbrpuAxjPXTc8H",
-      "code": "npm install alinea@preview",
+      "code": "npm install alinea@rc",
       "fileName": "",
       "language": "shellscript"
     },
@@ -178,7 +178,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "With other package managers: `pnpm add alinea@preview`, `yarn add alinea@preview` or `bun add alinea@preview`."
+          "text": "With other package managers: `pnpm add alinea@rc`, `yarn add alinea@rc` or `bun add alinea@rc`."
         }
       ]
     },
@@ -196,7 +196,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjtPyZvgZ0Wc5gLLj8daL70eNs",
-      "code": "npx alinea@preview init",
+      "code": "npx alinea@rc init",
       "fileName": "",
       "language": "shellscript"
     },

@@ -13,7 +13,7 @@ export interface InstallCommandProps {
 }
 
 export function InstallCommand({
-  command = 'npx alinea@preview init',
+  command = 'npx alinea@rc init',
   className
 }: InstallCommandProps) {
   const [copied, setCopied] = useState(false)

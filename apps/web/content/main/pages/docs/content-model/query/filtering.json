@@ -531,7 +531,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Hyphenated words also match their joined spelling: `multi-modal` finds \"multimodal\" and \"multi modal\", and `multimodal` finds \"multi-modal\" and \"multi modal\"."
+                  "text": "Hyphenated, spaced and joined spellings find each other: `multi-modal`, `multi modal` and `multimodal` all match \"multi-modal\", \"multi modal\" and \"multimodal\"."
                 }
               ]
             }

@@ -58,8 +58,8 @@
   `select: {title: Page.seo.title}`, also in relations like `Query.children`
   and in `orderBy`.
 - Bundle a SQLite content database with full text fuzzy search. Search matches
-  the hyphenated, spaced and joined spellings of a word: `multi-modal` and
-  `multimodal` find each other and `multi modal`. Date and number fields are
+  the hyphenated, spaced and joined spellings of a word: `multi-modal`,
+  `multi modal` and `multimodal` all find each other. Date and number fields are
   indexed per type that has them, which keeps these indexes small.
 - Record URL aliases in the metadata field when an entry's URL changes, and
   resolve them in queries (`alias` filter, `Query.aliases`). The metadata field

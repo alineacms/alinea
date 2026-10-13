@@ -292,7 +292,10 @@ test('hyphenated, spaced and joined spellings find each other', async () => {
     const search = async (term: string) =>
       (await runtime.resolve({search: term, select: Entry.id})).sort()
     expect(await search('multi-modal')).toEqual(['a', 'b', 'c'])
-    expect(await search('multi modal')).toEqual(['a', 'c'])
+    expect(await search('multi modal')).toEqual(['a', 'b', 'c'])
+    // Joining adjacent words keeps the other words required
+    expect(await search('multi modal systems')).toEqual(['b'])
+    expect(await search('a multi modal')).toEqual(['a', 'c'])
     expect(await search('multimodal')).toEqual(['a', 'b', 'c'])
     expect(await search('multi-mod')).toEqual(['a', 'b', 'c'])
     expect(await search('moda')).toEqual(['a', 'c', 'd'])
