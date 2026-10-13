@@ -7,7 +7,8 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config} from '#/index.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
-import {Product, config} from '#test/overview.js'
+import {Brand, Product, config} from '#test/overview.js'
+import type {OverviewFilter} from '#/core/Overview.js'
 import {expect, setSystemTime, test} from 'bun:test'
 import {atom} from 'jotai'
 import {createExplorerAtoms} from './explorer.js'
@@ -19,6 +20,7 @@ import {
   resolveOverview,
   sortedColumn
 } from './overview.js'
+import {syncAtom} from './graph.js'
 import {userPolicyReadyAtom} from './user.js'
 
 function rootParent(root: 'products' | 'media'): OverviewParent {
@@ -245,4 +247,80 @@ test('explorers filter media by file type, keeping folders', async () => {
     'Archive'
   ])
   expect((await store.get(explorer.pageReady)).filters).toEqual({})
+})
+
+test('filter options can be loaded from the content', async () => {
+  const brandFilter: OverviewFilter = {
+    label: 'Brand',
+    async options({graph, locale}) {
+      const brands = await graph.find({
+        type: Brand,
+        locale,
+        select: {id: Entry.id, title: Entry.title},
+        orderBy: {asc: Entry.title}
+      })
+      return Object.fromEntries(
+        brands.map(brand => [
+          brand.id,
+          {label: brand.title, filter: {brand: {has: {_entry: brand.id}}}}
+        ])
+      )
+    }
+  }
+  const catalogue = Config.create({
+    schema: config.schema,
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {
+          products: Config.root('Products', {
+            contains: ['Product'],
+            overview: {filters: {brand: brandFilter}}
+          }),
+          brands: Config.root('Brands', {contains: ['Brand']})
+        }
+      })
+    }
+  })
+  const db = new LocalDB(catalogue)
+  await db.sync()
+  const brand = (title: string) =>
+    db.create({type: Brand, workspace: 'main', root: 'brands', set: {title}})
+  const acme = await brand('Acme')
+  await brand('Zeta')
+  const product = (title: string, set: Record<string, unknown> = {}) =>
+    db.create({
+      type: Product,
+      workspace: 'main',
+      root: 'products',
+      set: {title, ...set}
+    })
+  await product('Chair', {
+    brand: {_id: createId(), _type: 'entry', _entry: acme._id}
+  })
+  await product('Lamp')
+  const store = createDashboardStore(catalogue, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'products'},
+    {rootData: atom(getRoot(catalogue.workspaces.main.products))}
+  )
+  const overview = await store.get(explorer.overview)
+  const [filter] = overview.filters
+  expect(filter.options.map(option => option.label)).toEqual(['Acme', 'Zeta'])
+  store.set(explorer.toggleFilter, filter, acme._id)
+  expect(
+    (await store.get(explorer.itemsReady(null))).map(item => item.title)
+  ).toEqual(['Chair'])
+  const page = await store.get(explorer.pageReady)
+  expect(page.overview.filters[0].options).toHaveLength(2)
+  // New entries add options
+  await brand('Beta')
+  await store.set(syncAtom)
+  const updated = await store.get(explorer.overview)
+  expect(updated.filters[0].options.map(option => option.label)).toEqual([
+    'Acme',
+    'Beta',
+    'Zeta'
+  ])
 })

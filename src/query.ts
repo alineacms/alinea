@@ -1,4 +1,5 @@
 import {Entry} from '#/core/Entry.js'
+import type {Expr} from '#/core/Expr.js'
 import type {
   GraphQuery,
   IncludeGuard,
@@ -7,6 +8,7 @@ import type {
   SelectionGuard,
   TypeGuard
 } from '#/core/Graph.js'
+import type {HasField} from '#/core/Internal.js'
 
 export const id = Entry.id
 export const title = Entry.title
@@ -116,4 +118,23 @@ export function previous<
   query: GraphQuery<Selection, Type, Include> & Modifiers
 ): RelationQuery<'previous', Selection, Type, Include, Modifiers> {
   return {edge: 'previous' as const, ...query}
+}
+
+/**
+ * The entries that link to the entry, eg. the products of a brand:
+ * `Query.referencedBy({type: Product})`. Set `field` to only follow one
+ * link field, eg. `{type: Product, field: Product.brand}`.
+ */
+export function referencedBy<
+  Selection extends SelectionGuard = undefined,
+  Type extends TypeGuard = undefined,
+  Include extends IncludeGuard = undefined,
+  Modifiers extends QueryModifiers = {}
+>(
+  query: GraphQuery<Selection, Type, Include> &
+    Modifiers & {field?: HasField & Expr}
+): RelationQuery<'referencedBy', Selection, Type, Include, Modifiers> & {
+  field?: HasField & Expr
+} {
+  return {edge: 'referencedBy' as const, ...query}
 }

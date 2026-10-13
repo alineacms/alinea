@@ -1,5 +1,6 @@
 import type {EntryStatus} from './Entry.js'
 import {Entry} from './Entry.js'
+import type {Related} from './Filter.js'
 
 export interface EntryFields {
   _id: string
@@ -19,8 +20,11 @@ export interface EntryFields {
 
 /** The fields filters can match, next to those of the entry */
 export interface EntryFilterFields extends EntryFields {
-  /** Whether another entry links to the entry */
-  _referenced: boolean
+  /**
+   * Whether another entry links to the entry, or an entry that matches a
+   * query, eg. `{_referenced: Query.referencedBy({type: Product})}`
+   */
+  _referenced: Related<{edge: 'referencedBy'}>
 }
 
 export const EntryFields = {

@@ -9,6 +9,21 @@
   allows `explore`, denying `read` denies it unless `explore` is allowed.
 - Target fields inside object fields in role permissions, such as
   `{field: Article.visibility.germany, deny: {all: true}}`.
+- Select fields inside object fields in queries, such as
+  `select: {title: Page.seo.title}`, also in relations like `Query.children`.
+- Query the entries that link to an entry with `Query.referencedBy`, eg.
+  `select: {products: Query.referencedBy({type: Product, field: Product.brand})}`,
+  count them with `count: true` (overview columns that count are sortable) and
+  filter on them: `filter: {_referenced: Query.referencedBy({type: Product,
+  filter: {active: true}})}`.
+- Overview filters can load their options from the content: `options` takes
+  a function that receives the `graph` and `locale`, eg. to list an option per
+  category entry.
+- Index date and number fields per type that has them, over the rows of that
+  type only, which keeps these indexes a fraction of their size in the
+  content database.
+- Search matches the hyphenated, spaced and joined spellings of a word:
+  `multi-modal` and `multimodal` find each other, and `multi modal`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`
   signs in the local user with that role, for saves, hooks and `cms.user()`.
 - The `collapsed: false` type option expands an entry's children in the
