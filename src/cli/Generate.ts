@@ -116,11 +116,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     for await (const cms of builds) {
       Config.handlerUrl(cms.config)
       if (cmd === 'build') {
-        const baseUrl = Config.baseUrl(cms.config, 'production')
-        if (!baseUrl) {
-          reportFatal(
-            'No baseUrl was set for the production build in Alinea config'
-          )
+        try {
+          Config.serverHandlerUrl(cms.config, 'production')
+        } catch (error) {
+          reportFatal(error instanceof Error ? error.message : String(error))
           process.exit(1)
         }
       }

@@ -65,7 +65,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Add `handlerUrl` to your config, it is now required. Replace `dashboardFile` with `adminPath`."
+                  "text": "Add `handlerUrl` to your config, it is now required, and make sure `baseUrl.production` is set. Replace `dashboardFile` with `adminPath`."
                 }
               ]
             }
@@ -280,6 +280,33 @@
           "text": "The handler now matches its path exactly, so requests have to use the configured URL (a trailing slash no longer matches)."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "baseUrl is required for production"
+        }
+      ],
+      "_anchor": "baseurl-is-required-for-production"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Your site reaches the handler at `handlerUrl` resolved against `baseUrl`, also in production, to check for new content. Without a production `baseUrl` (and with a relative `handlerUrl`), `alinea build` exits and queries throw `Missing baseUrl in Alinea config: set baseUrl.production to the url of your site`. Alinea doesn't fall back to the request origin or to hosting provider variables: set the production URL of your site yourself, for example from an environment variable you define:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdNsGg8dJk4LlVzynsrT0dFJ6v",
+      "code": "export const cms = createCMS({\n  schema,\n  workspaces,\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: process.env.SITE_URL ?? 'https://example.com'\n  },\n  handlerUrl: '/api/cms'\n})",
+      "language": "tsx",
+      "fileName": "cms.ts"
     },
     {
       "_type": "heading",
