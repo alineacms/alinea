@@ -103,6 +103,43 @@ test('blobs no instance used for a month are removed', async () => {
   test.equal([...found.keys()].toSorted(), [b, c])
 })
 
+test('mysql tables index the email and hold large uploads', async () => {
+  const queries: Array<string> = []
+  const client = {
+    async query(query: string | {sql: string}) {
+      queries.push(typeof query === 'string' ? query : query.sql)
+      return [[], []]
+    }
+  }
+  const api = new DatabaseApi(testContext(), {
+    db: driver.mysql2(client as never)
+  })
+  await api.listUsers()
+  const create = (name: string) =>
+    queries.find(query => query.startsWith(`create table \`${name}\``))
+  test.ok(
+    create('alinea_user')?.includes('`email` varchar(255) not null unique')
+  )
+  test.ok(create('alinea_upload')?.includes('`content` longblob not null'))
+  test.ok(create('alinea_blob')?.includes('`content` longblob not null'))
+})
+
+test('sqlite keeps its existing column types', async () => {
+  const sqlite = new BunSqlite(':memory:')
+  const api = new DatabaseApi(testContext(), {
+    db: driver['bun:sqlite'](sqlite)
+  })
+  await api.listUsers()
+  const schema = (name: string) =>
+    sqlite
+      .query<{sql: string}, [string]>(
+        'select sql from sqlite_master where name = ?'
+      )
+      .get(name)?.sql
+  test.ok(schema('alinea_user')?.includes('"email" text not null unique'))
+  test.ok(schema('alinea_upload')?.includes('"content" blob not null'))
+})
+
 function testContext(): RequestContext {
   return {
     isDev: true,

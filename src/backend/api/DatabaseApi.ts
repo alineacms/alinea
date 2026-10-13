@@ -36,12 +36,12 @@ export interface DatabaseOptions {
 
 const UploadTable = table('alinea_upload', {
   entryId: column.varchar(undefined, {length: 27}).primaryKey(),
-  content: column.blob().notNull()
+  content: largeBlob().notNull()
 })
 
 const UserTable = table('alinea_user', {
   id: column.id(),
-  email: column.text().notNull().unique(),
+  email: indexedText().notNull().unique(),
   name: column.text()
 })
 
@@ -322,7 +322,23 @@ function largeBlob(): Column<Uint8Array> {
   })
 }
 
-/** Remove blobs no instance read or stored lately, at most once an hour. */
+/**
+ * Text MySQL can index: it rejects a unique key on a text column, which has
+ * no length. Other databases keep text, so existing tables stay as they are.
+ */
+function indexedText(): Column<string> {
+  return new Column({
+    type: new ColumnType(
+      'text',
+      [],
+      sql.universal({
+        mysql: sql`varchar(255)`,
+        default: sql`text`
+      })
+    )
+  })
+}
+
 /** Blobs still used are kept: renewed at most once a day per blob. */
 async function renewBlobs(
   db: Database,
@@ -365,6 +381,7 @@ async function insertMissingBlobs(
   }
 }
 
+/** Remove blobs no instance read or stored lately, at most once an hour. */
 async function removeUnusedBlobs(db: Database, now: number): Promise<void> {
   const last = blobCleanups.get(db) ?? 0
   if (now - last < 60 * 60) return
