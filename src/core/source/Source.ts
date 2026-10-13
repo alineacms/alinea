@@ -26,6 +26,21 @@ export interface Source extends RemoteSource {
   ): Promise<void>
 }
 
+/** Pin the tree while streaming blobs from the revision already fetched. */
+export function sourceAtTree(
+  source: RemoteSource,
+  tree: ReadonlyTree
+): RemoteSource {
+  return {
+    async getTreeIfDifferent(revision) {
+      return revision === tree.sha ? undefined : tree
+    },
+    getBlobs(shas, options) {
+      return source.getBlobs(shas, options)
+    }
+  }
+}
+
 export async function applyChangesFrom(
   source: Source,
   remote: RemoteSource,

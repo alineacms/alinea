@@ -31,6 +31,7 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {type RemoteSource, sourceAtTree} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -108,9 +109,9 @@ export function createHandler({
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
     /** Reads keep serving the current content when the remote is unreachable. */
-    async function syncForRead(cnx: RemoteConnection): Promise<void> {
+    async function syncForRead(source: RemoteSource): Promise<void> {
       try {
-        await local.syncWith(cnx)
+        await local.syncWith(source)
       } catch (error) {
         console.warn(
           `Alinea could not sync with the remote, serving current content: ${
@@ -446,7 +447,18 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await syncForRead(cnx)
+        // The remote tells whether the client is current in one request, where
+        // syncing an instance behind it first downloads every change
+        let source: RemoteSource = cnx
+        try {
+          const remoteTree = await cnx.getTreeIfDifferent(sha)
+          if (!remoteTree) return Response.json(null)
+          source = sourceAtTree(cnx, remoteTree)
+        } catch {
+          // The sync below warns about an unreachable remote and serves the
+          // current content
+        }
+        await syncForRead(source)
         const tree = await local.getTreeIfDifferent(sha)
         return compressResponse(request, Response.json(tree ?? null))
       }

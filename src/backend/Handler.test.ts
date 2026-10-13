@@ -1679,6 +1679,41 @@ test('responds with the content sha after syncing', async () => {
   test.is(sha, await db.sha)
 })
 
+test('answers a current tree request without syncing first', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  await remoteDb.create({type: Page, set: {title: 'Home'}})
+  const db = new LocalDB(cms.config)
+  const before = await db.sha
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(remoteDb, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const tree = (sha: string) =>
+    handle(
+      new Request(`http://localhost/api?action=tree&sha=${sha}`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    ).then(response => response.json())
+
+  test.is(await tree(await remoteDb.sha), null)
+  test.is(await db.sha, before)
+  test.is((await tree(before)).sha, await remoteDb.sha)
+  test.is(await db.sha, await remoteDb.sha)
+})
+
 test('rejects unauthenticated sha requests like tree requests', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
