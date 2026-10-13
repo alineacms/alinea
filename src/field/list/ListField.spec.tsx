@@ -1,5 +1,5 @@
 import {expect, type MountResult, test} from '@playwright/experimental-ct-react'
-import {Collapsed, Example, MinMax} from './ListField.stories.js'
+import {Collapsed, Example, MinMax, WithoutLabel} from './ListField.stories.js'
 
 test('keeps the remove control visible beside the settings button', async ({
   mount,
@@ -272,6 +272,13 @@ test('starts folded when the list is collapsed', async ({mount, page}) => {
   await quotes.getByRole('button', {name: 'Quote', exact: true}).click()
   await expect(quotes.getByRole('listitem')).toHaveCount(3)
   await expect(quotes.getByRole('textbox', {name: 'Quote'})).toHaveCount(1)
+})
+
+test('a list without a label has no fold toggle', async ({mount, page}) => {
+  await mount(<WithoutLabel />)
+  await expect(page.getByRole('listitem')).toHaveCount(1)
+  await expect(page.locator('[data-slot="list-label"]')).toHaveCount(0)
+  await expect(page.getByRole('button', {name: /all items/})).toHaveCount(0)
 })
 
 type Locator = ReturnType<MountResult['locator']>

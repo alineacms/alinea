@@ -133,6 +133,8 @@ export function ListFieldView({field}: ListFieldViewProps) {
     [schemaEntries]
   )
   const readOnly = Boolean(options.readOnly)
+  // A fold without a label next to it is a stray chevron
+  const labelled = Boolean(options.label)
   const hasRows = nodes.length > 0
   const canCreate = options.max === undefined || nodes.length < options.max
   const rowIdsAtom = useMemo(
@@ -250,7 +252,8 @@ export function ListFieldView({field}: ListFieldViewProps) {
         onClick={toggleAll}
         description={options.help}
         shared={options.shared}
-        inline={options.inline}
+        showFold={labelled}
+        inline={options.inline || !labelled}
       >
         {options.label}
       </ListLabel>

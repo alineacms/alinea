@@ -333,6 +333,32 @@ export function Collapsed() {
   )
 }
 
+const unlabelledType = type('Unlabelled', {
+  fields: {
+    quotes: list('', {
+      schema: {quote: quoteBlock},
+      initialValue: [{_type: 'quote', quote: 'First', author: 'Alinea'}]
+    })
+  }
+})
+
+/** A list without a label shows its rows without a fold toggle above them */
+export function WithoutLabel() {
+  const node = useMemo(
+    () => new ReactiveNode(Type.initialValue(unlabelledType) as object),
+    []
+  )
+  return (
+    <StoryProvider views={views}>
+      <BlockSheetStoryFrame>
+        <div style={storyStyle}>
+          <NodeEditor node={node} type={unlabelledType} />
+        </div>
+      </BlockSheetStoryFrame>
+    </StoryProvider>
+  )
+}
+
 export default {
   title: 'Fields / ListField'
 }
