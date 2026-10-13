@@ -455,7 +455,7 @@ export function createHandler({
         let entries = await owners()
         // Another instance may have created the entry since this one synced
         if (entries.length === 0) {
-          await syncForRead(cnx)
+          await syncForRead(local.syncWith(cnx))
           entries = await owners()
         }
         if (entries.length === 0)
