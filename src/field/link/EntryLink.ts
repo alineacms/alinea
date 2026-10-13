@@ -32,7 +32,7 @@ export namespace EntryLink {
   export const path = Entry.path
 }
 
-interface EntryOptions<Fields>
+export interface EntryOptions<Fields>
   extends
     LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
     Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
@@ -61,7 +61,7 @@ export function entry<Fields = undefined>(
 export namespace entry {
   type EntryRow<Fields> = EntryLink<LinkFields<Type.Infer<Fields>>> & ListRow
 
-  interface EntryOptions<Fields>
+  export interface EntriesOptions<Fields>
     extends
       LinkFieldOptions<
         Array<EntryReference & ListRow & InferStoredValue<Fields>>
@@ -70,7 +70,7 @@ export namespace entry {
 
   export function multiple<Fields = undefined>(
     label: Label,
-    options: WithoutLabel<EntryOptions<Fields>> = {}
+    options: WithoutLabel<EntriesOptions<Fields>> = {}
   ) {
     return createLinks<
       EntryReference & ListRow & InferStoredValue<Fields>,
