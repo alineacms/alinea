@@ -3,7 +3,6 @@ import {useEntry} from '../hooks.js'
 
 export interface EntryEditorVersionData {
   path: string
-  status: EntryStatus
 }
 
 export interface EntryEditorVersion {
@@ -11,6 +10,7 @@ export interface EntryEditorVersion {
   id: string
   locale: string | null
   path: string
+  status: EntryStatus
   title: string
   type: string
 }
@@ -36,13 +36,15 @@ export function useEntryEditor(): EntryEditor | undefined {
   const entry = useEntry()
   if (!entry) return undefined
   const version = strictObject('entry editor activeVersion', {
+    // In 1.x data held the field values: only path is kept here, reading
+    // another field (a custom `status` too) throws instead of guessing
     data: strictObject('entry editor activeVersion.data', {
-      path: entry.path,
-      status: entry.status
+      path: entry.path
     }),
     id: entry.id,
     locale: entry.locale,
     path: entry.path,
+    status: entry.status,
     title: entry.title,
     type: entry.type
   })
@@ -66,7 +68,9 @@ function strictObject<Value extends object>(
       if (typeof property === 'symbol')
         return Reflect.get(target, property, receiver)
       if (property in target) return Reflect.get(target, property, receiver)
-      throw new Error(`${label}.${property} is not supported in dashboard v2`)
+      throw new Error(
+        `${label}.${property} is not supported in dashboard v2, read the entry with useEntry() from alinea/cms`
+      )
     }
   })
 }
