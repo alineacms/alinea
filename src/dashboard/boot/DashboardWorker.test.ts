@@ -619,6 +619,60 @@ async function createFailedMutationFixture() {
   }
 }
 
+test('settles a commit that landed when its response was lost', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, fixture)
+  const remoteDB = new LocalDB(cms.config, remoteSource)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let commits = 0
+  const client: LocalConnection = {
+    ...baseClient,
+    async mutate(mutations) {
+      commits += 1
+      await baseClient.mutate(mutations)
+      throw new Error('Connection lost')
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('landed-commit', cms.config, client)
+  await worker.sync()
+  const settled = new Promise<void>(resolve => {
+    worker.addEventListener(ActivityEvent.type, event => {
+      if (
+        event instanceof ActivityEvent &&
+        event.activities.some(
+          activity =>
+            activity.id === 'landed' &&
+            (activity.status === 'succeeded' || activity.status === 'failed')
+        )
+      )
+        resolve()
+    })
+  })
+
+  await worker.queue('landed', [
+    {
+      op: 'create',
+      id: 'landed-recipe',
+      type: 'DemoRecipe',
+      parentId: '2cGLQZvsCCxnguLrwCfPDL8uFkm',
+      locale: null,
+      status: 'published',
+      data: {title: 'Landed recipe', path: 'landed-recipe'}
+    }
+  ])
+  await settled
+  await worker.retryActivity()
+
+  expect(commits).toBe(1)
+  expect(
+    worker.activities().find(activity => activity.id === 'landed')
+  ).toMatchObject({status: 'succeeded'})
+  expect(await worker.sha()).toBe(await remoteDB.sha)
+})
+
 test('a sync queued on a superseded browser store syncs the replacement', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)

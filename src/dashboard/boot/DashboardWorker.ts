@@ -304,15 +304,20 @@ export class DashboardWorker extends EventTarget {
           await this.#syncWithClient(db, client)
         this.#completeMutation(item)
       } catch (error) {
+        let revision: string | undefined
+        try {
+          revision = await this.#syncWithClient(db, client)
+        } catch {
+          // The recovery sync failure is silent and retried later.
+        }
+        // A commit can land while its response is lost. The remote then has
+        // exactly the content the mutations made here: committing them again
+        // would fail on a created id or commit them twice.
+        if (revision && revision === item.sha)
+          return this.#completeMutation(item)
         this.#blocked = true
         this.#failActivity(item.activity, error)
-        try {
-          await this.#syncWithClient(db, client)
-          item.sha = undefined
-        } catch {
-          // The mutation failure is already recorded; the recovery sync
-          // failure is silent and retried later.
-        }
+        if (revision) item.sha = undefined
       }
     })
   }
