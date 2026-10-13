@@ -1,0 +1,10 @@
+.ListBoxGroup {
+  display: block;
+}
+
+.ListBoxGroup-label {
+  padding: 4px 6px;
+  color: var(--alinea-fg-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}

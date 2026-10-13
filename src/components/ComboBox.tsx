@@ -1,6 +1,7 @@
 import styler from '@alinea/styler'
 import {
   type MutableRefObject,
+  type ReactElement,
   type ReactNode,
   type RefObject,
   useContext,
@@ -18,6 +19,7 @@ import {IcRoundClose, IcRoundKeyboardArrowDown} from '#/dashboard/icons.js'
 import css from './ComboBox.module.css'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
+import {ListBoxGroup} from './internal/ListBoxGroup.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'
 import {PopoverSurface} from './internal/PopoverSurface.js'
 import {Spinner} from './Spinner.js'
@@ -25,6 +27,7 @@ import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
+  IconType,
   Key,
   OpenStateProps,
   StyleProps
@@ -62,7 +65,7 @@ export interface ComboBoxProps<V extends Key = Key>
   /** Name of the hidden form input carrying the value */
   name?: string
   autoFocus?: boolean
-  /** ComboBoxItem elements */
+  /** ComboBoxItem and ComboBoxGroup elements */
   children: ReactNode
 }
 
@@ -279,9 +282,27 @@ export interface ComboBoxItemProps extends StyleProps {
   /** Text used for filtering and the input, defaults to string children */
   textValue?: string
   disabled?: boolean
+  icon?: IconType | ReactElement
+  /** Secondary text shown below the label in the list */
+  description?: ReactNode
   children: ReactNode
 }
 
 export function ComboBoxItem(props: ComboBoxItemProps) {
   return <ListBoxOption slot="combobox-item" {...props} />
+}
+
+export interface ComboBoxGroupProps extends AriaProps {
+  label?: ReactNode
+  children: ReactNode
+}
+
+export function ComboBoxGroup(props: ComboBoxGroupProps) {
+  return (
+    <ListBoxGroup
+      slot="combobox-group"
+      labelSlot="combobox-group-label"
+      {...props}
+    />
+  )
 }

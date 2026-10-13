@@ -1,6 +1,11 @@
 import {act, cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
-import {ComboBox, ComboBoxItem, type ComboBoxProps} from './ComboBox.js'
+import {
+  ComboBox,
+  ComboBoxGroup,
+  ComboBoxItem,
+  type ComboBoxProps
+} from './ComboBox.js'
 
 afterEach(cleanup)
 
@@ -52,4 +57,21 @@ test('ComboBox keeps number values', () => {
 test('ComboBox shows a spinner while loading', () => {
   render(<Products loading />)
   expect(screen.getByRole('progressbar', {name: 'Loading'})).toBeTruthy()
+})
+
+test('ComboBox groups items and shows item descriptions', () => {
+  render(
+    <ComboBox label="Entry type">
+      <ComboBoxGroup label="Pages">
+        <ComboBoxItem value="page" description="A plain page">
+          Page
+        </ComboBoxItem>
+      </ComboBoxGroup>
+    </ComboBox>
+  )
+  type('p')
+  expect(screen.getByText('Pages').dataset.slot).toBe('combobox-group-label')
+  expect(screen.getByText('A plain page').dataset.slot).toBe(
+    'combobox-item-description'
+  )
 })

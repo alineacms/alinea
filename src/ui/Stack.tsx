@@ -46,7 +46,8 @@ function stackStyle(props: StackProps): CSSProperties {
 }
 
 /**
- * @deprecated Compatibility component for legacy dashboard extensions.
+ * @deprecated Compatibility component for legacy dashboard extensions, use
+ * `Stack` from `alinea/components`.
  */
 export const VStack = forwardRef<HTMLElement, StackProps>(function VStack(
   {
@@ -89,7 +90,8 @@ export const VStack = forwardRef<HTMLElement, StackProps>(function VStack(
 })
 
 /**
- * @deprecated Compatibility component for legacy dashboard extensions.
+ * @deprecated Compatibility component for legacy dashboard extensions, use
+ * `<Stack direction="row">` from `alinea/components`.
  */
 export const HStack = forwardRef<HTMLElement, StackProps>(
   function HStack(props, ref) {

@@ -122,7 +122,7 @@ export const componentCatalog: Array<ComponentCatalogGroup> = [
       {
         name: 'ComboBox',
         description: 'A text input that filters a list of options.',
-        parts: ['ComboBox', 'ComboBoxItem'],
+        parts: ['ComboBox', 'ComboBoxItem', 'ComboBoxGroup'],
         keywords: 'autocomplete'
       },
       {

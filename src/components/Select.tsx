@@ -10,9 +10,7 @@ import {
 } from 'react'
 import {
   Button,
-  Header,
   ListBox,
-  ListBoxSection,
   Select as SelectPrimitive,
   SelectStateContext,
   SelectValue,
@@ -21,6 +19,7 @@ import {
 import {IcRoundClose, IcRoundKeyboardArrowDown} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
+import {ListBoxGroup} from './internal/ListBoxGroup.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'
 import {PopoverSurface} from './internal/PopoverSurface.js'
 import css from './Select.module.css'
@@ -242,20 +241,9 @@ export interface SelectGroupProps extends AriaProps {
   children: ReactNode
 }
 
-export function SelectGroup({label, children, ...props}: SelectGroupProps) {
+export function SelectGroup(props: SelectGroupProps) {
   return (
-    <ListBoxSection
-      data-slot="select-group"
-      {...props}
-      className={styles.SelectGroup()}
-    >
-      {label && (
-        <Header data-slot="select-label" className={styles.SelectGroup.label()}>
-          {label}
-        </Header>
-      )}
-      {children}
-    </ListBoxSection>
+    <ListBoxGroup slot="select-group" labelSlot="select-label" {...props} />
   )
 }
 

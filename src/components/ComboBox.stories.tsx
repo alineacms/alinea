@@ -1,6 +1,6 @@
 import {useState} from 'react'
 import {useAsyncList} from './AsyncList.js'
-import {ComboBox, ComboBoxItem} from './ComboBox.js'
+import {ComboBox, ComboBoxGroup, ComboBoxItem} from './ComboBox.js'
 
 const software = [
   {value: 'photoshop', label: 'Adobe Photoshop'},
@@ -125,6 +125,30 @@ export function ServerSearch() {
           {item.label}
         </ComboBoxItem>
       ))}
+    </ComboBox>
+  )
+}
+
+export function Groups() {
+  return (
+    <ComboBox
+      label="Entry type"
+      placeholder="Search types"
+      style={{width: 280}}
+    >
+      <ComboBoxGroup label="Pages">
+        <ComboBoxItem value="page" description="A plain page">
+          Page
+        </ComboBoxItem>
+        <ComboBoxItem value="landing" description="A page built from blocks">
+          Landing page
+        </ComboBoxItem>
+      </ComboBoxGroup>
+      <ComboBoxGroup label="Blog">
+        <ComboBoxItem value="post" description="An article in the blog">
+          Blog post
+        </ComboBoxItem>
+      </ComboBoxGroup>
     </ComboBox>
   )
 }

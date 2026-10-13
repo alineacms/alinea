@@ -32,6 +32,18 @@ test('multiline fields render a growing textarea', async ({mount, page}) => {
   ).toHaveAttribute('rows', '4')
 })
 
+test('multiline fields stop growing at maxRows', async ({mount, page}) => {
+  await mount(<Multiline />)
+  const area = page.getByRole('textbox', {name: 'At most three rows'})
+  await area.fill('one\ntwo\nthree')
+  const full = (await area.boundingBox())!.height
+  await area.fill('one\ntwo\nthree\nfour\nfive\nsix')
+  expect((await area.boundingBox())!.height).toBe(full)
+  await expect
+    .poll(() => area.evaluate(el => el.scrollHeight > el.clientHeight))
+    .toBe(true)
+})
+
 test('reflects required, invalid, disabled and read-only', async ({
   mount,
   page
