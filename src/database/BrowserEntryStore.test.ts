@@ -321,7 +321,7 @@ test('forks keep the page cache size', async () => {
   expect(row?.cache_size).toBe(-65536)
 })
 
-test('reports bases saved in full, not deltas', async () => {
+test('reports bases saved in full over an earlier one', async () => {
   const storage = memorySnapshots()
   const full: Array<string> = []
   const options = {
@@ -330,34 +330,35 @@ test('reports bases saved in full, not deltas', async () => {
     storage,
     onFullSave: (key: string) => full.push(key)
   }
-  // Large enough that a changed page touches a small part of it
+  // A sync from scratch writes its tables in order: nothing to report
   const first = await BrowserEntryStore.open(pages(false), options)
   await first.syncWith(await manyPages(2000, 'First'))
   await first.close()
-  expect(full).toHaveLength(1)
+  expect(full).toEqual([])
 
   // One changed page is saved as a delta over the first base
-  const next = await BrowserEntryStore.open(pages(false), options)
-  await next.syncWith(await manyPages(2000, 'First', 1))
-  await next.close()
-  expect(full).toHaveLength(1)
-  const bases = await storage.list()
-  expect(bases[0]!.parent).toBe(full[0])
+  const second = await BrowserEntryStore.open(pages(false), options)
+  await second.syncWith(await manyPages(2000, 'First', 1))
+  await second.close()
+  expect(full).toEqual([])
+  expect((await storage.list())[0]!.parent).toBeDefined()
+
+  // Changing every page saves the base in full, over the earlier one
+  const third = await BrowserEntryStore.open(pages(false), options)
+  await third.syncWith(await manyPages(2000, 'Second', 2000))
+  await third.close()
+  const [head] = await storage.list()
+  expect(head!.parent).toBeUndefined()
+  expect(full).toEqual([head!.key])
 })
 
 test('compacts a base into a copy the next store opens', async () => {
   const storage = memorySnapshots()
-  const full: Array<string> = []
-  const options = {
-    name,
-    fingerprint: 'config-1',
-    storage,
-    onFullSave: (key: string) => full.push(key)
-  }
+  const options = {name, fingerprint: 'config-1', storage}
   const first = await BrowserEntryStore.open(pages(false), options)
   await first.syncWith(await manyPages(200, 'First'))
   await first.close()
-  const [key] = full
+  const key = (await storage.list())[0]!.key
 
   const compacted = await BrowserEntryStore.compact({name, storage}, key!)
   expect(compacted).toBe(compactedKey(key!))

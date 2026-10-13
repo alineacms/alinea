@@ -38,10 +38,10 @@ export interface BrowserEntryStoreOptions {
    */
   reset?: boolean
   /**
-   * Called with the key of each base stored in full rather than as a delta.
-   * It keeps the layout of the database it was saved from: pages its syncs
-   * rewrote anywhere in the file. Pass the key to `compact` to store a copy
-   * that reads in order.
+   * Called with the key of each base stored in full over an earlier one,
+   * rather than as a delta. It keeps the layout of the database it was saved
+   * from: pages its syncs rewrote anywhere in the file. Pass the key to
+   * `compact` to store a copy that reads in order.
    */
   onFullSave?(key: string): void
 }
@@ -111,8 +111,8 @@ export class BrowserEntryStore extends EntryStore {
    * that layout; searching a scattered base reads it page by page. The copy
    * is built in memory, about three times the size of the base, and Wasm
    * memory is never returned: run this in a worker of its own that exits
-   * after. Returns the key of the copy, or undefined if there was no base
-   * `key` or another worker is compacting it.
+   * after, one at a time. Returns the key of the copy, or undefined if there
+   * was no base `key`.
    */
   static async compact(
     options: Pick<BrowserEntryStoreOptions, 'name' | 'storage'>,
@@ -121,37 +121,29 @@ export class BrowserEntryStore extends EntryStore {
     const storage =
       options.storage ??
       indexedDBSnapshots(`${versionedCacheName(options.name)}-snapshots`)
-    const run = async () => {
-      const bases = await storage.list()
-      const base = bases.find(base => base.key === key)
-      if (!base) return
-      const target = compactedKey(key)
-      if (bases.some(base => base.key === target)) return target
-      const Database = await wasmSqlite()
-      // Read once in file order, which is how reads ahead read fastest
-      const stored = await storage.open(Database, {key})
-      let bytes: Uint8Array
-      try {
-        bytes = stored.db.export()
-      } finally {
-        await stored.close()
-      }
-      const copy = new Database(bytes)
-      copy.run('vacuum')
-      const session = storage.session(copy, {branch: base.branch})
-      try {
-        const saved = await session.save({key: target, meta: base.meta})
-        return saved.status === 'mismatch' ? undefined : target
-      } finally {
-        await session.close()
-      }
+    const bases = await storage.list()
+    const base = bases.find(base => base.key === key)
+    if (!base) return
+    const target = compactedKey(key)
+    if (bases.some(base => base.key === target)) return target
+    const Database = await wasmSqlite()
+    // Read once in file order, which is how reads ahead read fastest
+    const stored = await storage.open(Database, {key})
+    let bytes: Uint8Array
+    try {
+      bytes = stored.db.export()
+    } finally {
+      await stored.close()
     }
-    const locks = globalThis.navigator?.locks
-    if (!locks) return run()
-    // One worker compacts a base, the others leave it
-    return locks.request(`alinea-compact-${key}`, {ifAvailable: true}, lock =>
-      lock ? run() : undefined
-    )
+    const copy = new Database(bytes)
+    copy.run('vacuum')
+    const session = storage.session(copy, {branch: base.branch})
+    try {
+      const saved = await session.save({key: target, meta: base.meta})
+      return saved.status === 'mismatch' ? undefined : target
+    } finally {
+      await session.close()
+    }
   }
 
   /**
@@ -165,6 +157,11 @@ export class BrowserEntryStore extends EntryStore {
   /** The key of the base this store reads. */
   get base(): string | undefined {
     return this.#session.snapshot?.key
+  }
+
+  /** Delete the stored bases no store reads and that are not kept. */
+  async retain(): Promise<void> {
+    await this.#storage.retain({branches: keepBranches})
   }
 
   static async #on(
@@ -239,6 +236,9 @@ export class BrowserEntryStore extends EntryStore {
     // itself is not awaited: the database keeps working meanwhile. A
     // database that holds no changed pages reads a base with its content
     // already, as after opening a base another worker stored.
+    // A store synced from scratch writes its tables in order, only a base
+    // saved over an earlier one keeps that one's scattered layout
+    const over = session.snapshot
     const save = (key: string) =>
       this.database
         .whileIdle(async () => ({
@@ -260,6 +260,7 @@ export class BrowserEntryStore extends EntryStore {
       .then(result => {
         // A delta lies over its parent, in the parent's layout
         if (
+          over &&
           result?.status === 'written' &&
           result.snapshot.parent === undefined
         )

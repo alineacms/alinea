@@ -446,8 +446,11 @@ export class DashboardWorker extends EventTarget {
       this.#nextLoad = trigger()
       this.#nextLoad.resolve({db: next, client})
       this.#defer = this.#follow(next)
-      // Queries on the replaced store finish, then it closes
-      void replaced?.().catch(() => {})
+      // Queries on the replaced store finish, then it closes, and the base
+      // it read is no longer kept
+      void replaced?.()
+        .then(() => next.retain())
+        .catch(() => {})
       return true
     })
   }

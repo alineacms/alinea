@@ -440,21 +440,26 @@ test('a build loads another config while another edits', async ({page}) => {
   expect(await fetched(page, 'rb')).toBe(0)
 })
 
-test('a base saved in full is compacted and adopted', async ({page}) => {
+test('a compacted base is adopted and stored over', async ({page}) => {
   const [seed] = await start(page, {a: 'a'})
   await stored(page, ['config-a'], seed)
-  await expect
-    .poll(() => page.evaluate(() => cache.build('a').savedInFull()))
-    .toHaveLength(1)
-  const [key] = await page.evaluate(() => cache.build('a').savedInFull())
+  const key = await page.evaluate(() => cache.build('a').base())
   const before = await answers(page, 'a')
 
-  const result = await page.evaluate(key => cache.build('a').compact(key), key!)
-  expect(result).toEqual({compacted: `${key}-compact`, adopted: true})
+  expect(await page.evaluate(key => cache.build('a').compact(key), key!)).toBe(
+    `${key}-compact`
+  )
+  expect(await page.evaluate(key => cache.build('a').adopt(key), key!)).toBe(
+    true
+  )
   expect(await page.evaluate(() => cache.build('a').base())).toBe(
     `${key}-compact`
   )
   expect(await answers(page, 'a')).toEqual(before)
+  // The replaced base is no longer kept
+  await expect
+    .poll(async () => (await bases(page)).map(base => base.key))
+    .toEqual([`${key}-compact`])
 
   // Later changes are stored over the compacted base
   await edit(page, {a: [update('p0', 'Edited after compacting')]})
@@ -470,4 +475,27 @@ test('a base saved in full is compacted and adopted', async ({page}) => {
   expect(await page.evaluate(() => cache.build('a').title('p0'))).toBe(
     'Edited after compacting'
   )
+})
+
+test('a store that moved on keeps its base', async ({page}) => {
+  const [seed] = await start(page, {a: 'a'})
+  await stored(page, ['config-a'], seed)
+  const key = await page.evaluate(() => cache.build('a').base())
+  expect(await page.evaluate(key => cache.build('a').compact(key), key!)).toBe(
+    `${key}-compact`
+  )
+
+  // An edit stored meanwhile makes the store read another base
+  await edit(page, {a: [update('p0', 'Edited before adopting')]})
+  const [tree] = await sync(page, ['a'])
+  await expect
+    .poll(() => page.evaluate(() => cache.build('a').base()))
+    .not.toBe(key)
+  expect(await page.evaluate(key => cache.build('a').adopt(key), key!)).toBe(
+    false
+  )
+  expect(await page.evaluate(() => cache.build('a').title('p0'))).toBe(
+    'Edited before adopting'
+  )
+  expect((await bases(page)).some(base => base.tree === tree)).toBe(true)
 })
