@@ -20,6 +20,11 @@ test('latin', () => {
   for (const [input, slug] of cases) test.is(slugify(input), slug)
 })
 
+test('soft hyphens', () => {
+  test.is(slugify('Hyphen\u00adation in\u00adside'), 'hyphenation-inside')
+  test.is(isSeparator('\u00ad'), false)
+})
+
 test('accented', () => {
   test.is(slugify('àáâäå'), 'aaaaa')
   test.is(slugify('Ångström'), 'angstrom')
