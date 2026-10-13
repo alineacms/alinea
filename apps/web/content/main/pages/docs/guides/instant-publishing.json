@@ -52,6 +52,15 @@
     },
     {
       "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Only set this up once your deployed site has a backend that syncs content at runtime: Alinea Cloud or a self-hosted backend. Without one, a deployment is how new content reaches your site, so skipping content-only builds would leave published changes offline."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
@@ -101,7 +110,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Static pages are revalidated for you. Every page that queries content is tagged, and after each commit the handler marks those pages as stale. The next visit is still answered from the cache while Next.js rebuilds the page in the background, and the visit after that gets the new content. No visitor waits for a render, and no `revalidatePath` call is needed."
+          "text": "Static pages are revalidated for you. Every page that queries content is tagged, and after each commit the handler marks those pages as stale. The next visit is still answered from the cache while Next.js rebuilds the page in the background, and the visit after that gets the new content. No visitor waits for a render, and no `revalidatePath` call is needed. This includes pages generated with `generateStaticParams`: revalidation code in `afterCommit` that refreshes them by hand, such as `revalidateTag('_N_T_/layout')` or `revalidatePath('/', 'layout')`, can be removed."
         }
       ]
     },
