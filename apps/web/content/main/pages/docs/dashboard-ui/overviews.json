@@ -256,6 +256,36 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`tabs`: tabs above the listed entries, keyed by a name kept in the url. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Tabs",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KeXtFKAA3GvlLwcuUk4FzZYti3",
+                      "_link": "url",
+                      "href": "#tabs"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`layout`: `'table'` or `'cards'`, the layout the overview opens in. Editors can still switch."
                 }
               ]
@@ -295,6 +325,36 @@
                       "_id": "3Jlm0pWnzXZleMwg2wichxreMaq",
                       "_link": "url",
                       "href": "#actions"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`header`: a component rendered between the toolbar and the listed entries, such as totals. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Header",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KeXt8kQY4t9liQWDFeH0k93dOr",
+                      "_link": "url",
+                      "href": "#header"
                     }
                   ]
                 },
@@ -1016,6 +1076,33 @@
       "content": [
         {
           "_type": "text",
+          "text": "Tabs"
+        }
+      ],
+      "_anchor": "tabs"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`tabs` shows tabs above the listed entries, apart from the filter and sort menu. Each tab has a `label` and an optional `filter`, like the options of a filter. A tab without a filter lists every child. The first tab is selected when the overview opens. The key of the selected tab is kept in the url (`?tab=active`) and the overview remembers it when the editor returns to it. Entries match the filter of the tab, the applied filters and the search terms."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KeXtFO5V6NMR9eCFHOEfeckkp4",
+      "code": "import {Config} from 'alinea'\n\nexport const Products = Config.document('Products', {\n  contains: ['Product'],\n  overview: {\n    tabs: {\n      all: {label: 'All'},\n      active: {label: 'Active', filter: {status: 'active'}},\n      archived: {label: 'Archived', filter: {status: 'archived'}}\n    }\n  },\n  fields: {}\n})",
+      "fileName": "schema/Products.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Mixed lists"
         }
       ],
@@ -1071,6 +1158,33 @@
       "_id": "3Jlm0o4F2VhC1asd5448QQcDLit",
       "code": "import {Query} from 'alinea'\nimport {type OverviewActionProps, useGraph} from 'alinea/cms'\nimport {Button} from 'alinea/components'\nimport {Product} from '@/schema/Product'\n\nexport function ExportProducts({query}: OverviewActionProps) {\n  const graph = useGraph()\n  async function exportCsv() {\n    const rows = await graph.find({\n      ...query,\n      select: {\n        title: Query.title,\n        articleNumber: Product.articleNumber,\n        price: Product.price\n      }\n    })\n    const csv = rows\n      .map(row => [row.title, row.articleNumber, row.price].join(';'))\n      .join('\\n')\n    const link = document.createElement('a')\n    link.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}))\n    link.download = 'products.csv'\n    link.click()\n  }\n  return (\n    <Button variant=\"outline\" onClick={exportCsv}>\n      Export\n    </Button>\n  )\n}",
       "fileName": "views/ExportProducts.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Header"
+        }
+      ],
+      "_anchor": "header"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`header` renders a component between the toolbar (and the tabs) and the listed entries, for example totals or a chart of what is listed. It receives `OverviewHeaderProps`: the `workspace`, `root` and `parentId` of the list, the `locale`, the `search` terms, the `filter` of the selected tab and the applied filters (undefined when none applies) and a `query` for the listed entries, without paging. Like `actions`, it takes a component or a path to one: `header: '@/views/ProductTotals'`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KeXt8mDroTuOITmJA9d06cTzJO",
+      "code": "import {type OverviewHeaderProps, useGraph} from 'alinea/cms'\nimport {Stack, Text} from 'alinea/components'\nimport {useEffect, useState} from 'react'\nimport {Product} from '@/schema/Product'\n\nexport function ProductTotals({query}: OverviewHeaderProps) {\n  const graph = useGraph()\n  const [prices, setPrices] = useState<Array<number | null>>([])\n  useEffect(() => {\n    graph.find({...query, select: Product.price}).then(setPrices)\n  }, [graph, query])\n  const total = prices.reduce<number>((sum, price) => sum + (price ?? 0), 0)\n  return (\n    <Stack direction=\"row\" gap={24}>\n      <Text>{prices.length} products</Text>\n      <Text>€{total} in total</Text>\n    </Stack>\n  )\n}",
+      "fileName": "views/ProductTotals.tsx",
       "language": "tsx"
     },
     {

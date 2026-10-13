@@ -38,7 +38,9 @@
   author columns, sorting by column header (kept in the URL), the default
   `sort`, `layout`, card `thumbnail` and toolbar `actions`. Filters can load
   their options from the content with a function that receives the `graph`
-  and `locale`. The media library lists previews, dimensions, sizes and file
+  and `locale`. `tabs` list the entries of a filter per tab above the list
+  (the selected tab is kept in the URL), and `header` renders a view between
+  the toolbar and the list, eg. totals of the listed entries. The media library lists previews, dimensions, sizes and file
   types. `EntryTable` in `alinea/cms` renders the same columns in custom
   views. `overview.sort` replaces `orderChildrenBy`, `summaryRow` and
   `summaryThumb` are deprecated and the `overview` field option only applies
