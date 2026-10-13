@@ -166,6 +166,29 @@ export async function syncFieldIndexes(
       on ${EntryIndexTable}(${sql.identifier('type')}, ${value},
         ${sql.identifier('index')}, ${sql.identifier('filePath')}) ${where}`)
   }
+  await createRecentIndexes(db)
+}
+
+/**
+ * Index the entries of each workspace by their last update, and by id, which
+ * holds the creation time of entries without audit metadata. Queries for the
+ * few most recently changed entries of a workspace walk them and stop,
+ * instead of reading every entry: on a stored base that is read page by page
+ * that took seconds. The columns follow the order of those queries, with the
+ * tie breakers queries add.
+ */
+async function createRecentIndexes(db: Database): Promise<void> {
+  const workspace = sql.identifier('workspace')
+  const index = sql.identifier('index')
+  const filePath = sql.identifier('filePath')
+  const updatedAt = jsonField(sql.identifier('data'), ['metadata', 'updatedAt'])
+  await db.run(sql`create index if not exists
+    ${sql.identifier('alinea_entry_index_recent_updated')}
+    on ${EntryIndexTable}(${workspace}, ${updatedAt}, ${index}, ${filePath})`)
+  await db.run(sql`create index if not exists
+    ${sql.identifier('alinea_entry_index_recent_id')}
+    on ${EntryIndexTable}(${workspace}, ${sql.identifier('id')} desc,
+      ${index}, ${filePath})`)
 }
 
 /** An Entry plus the physical-version and local-index fields. */

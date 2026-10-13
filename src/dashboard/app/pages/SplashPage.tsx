@@ -39,7 +39,6 @@ import css from './SplashPage.module.css'
 
 const styles = styler(css)
 const recentEntryCount = 3
-const recentCandidateWindowSize = recentEntryCount
 const visibleRootCount = 2
 const futureTimestampTolerance = 24 * 60 * 60 * 1000
 
@@ -107,28 +106,36 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
           return [{icon, key: rootKey, label}]
         }
       )
-      const candidates = await Promise.all(
-        roots.flatMap(({key: root}) => [
-          graph.find({
-            workspace: key,
-            root,
-            status: 'preferDraft',
-            groupBy: Entry.id,
-            orderBy: {desc: Entry.updatedAt},
-            take: recentCandidateWindowSize,
-            select: recentEntrySelection
-          }),
-          graph.find({
-            workspace: key,
-            root,
-            status: 'preferDraft',
-            groupBy: Entry.id,
-            orderBy: {desc: Entry.id},
-            take: recentCandidateWindowSize,
-            select: recentEntrySelection
-          })
-        ])
+      // The most recent versions by their last update, and, of those without
+      // one, by id, which holds their creation time: two walks of an index
+      // per workspace. Versions of one entry come once per locale, so take
+      // enough to find the entries shown in every locale.
+      const readableRoots = roots.map(root => root.key)
+      const everyRoot =
+        readableRoots.length === Object.keys(workspace.roots).length
+      const locales = Math.max(
+        1,
+        ...readableRoots.map(
+          root => getRoot(workspace.roots[root]!).i18n?.locales.length ?? 1
+        )
       )
+      const candidates = readableRoots.length
+        ? await Promise.all(
+            [
+              {orderBy: {desc: Entry.updatedAt}},
+              {orderBy: {desc: Entry.id}, filter: {_updatedAt: null}}
+            ].map(order =>
+              graph.find({
+                ...order,
+                workspace: key,
+                root: everyRoot ? undefined : {in: readableRoots},
+                status: 'preferDraft',
+                take: recentEntryCount * locales,
+                select: recentEntrySelection
+              })
+            )
+          )
+        : []
       const readableCandidates = candidates
         .flat()
         .filter(entry => policy.canRead(entry))
@@ -139,16 +146,22 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
           timestamp === undefined || timestamp <= now + futureTimestampTolerance
         )
       })
-      const recentEntries = Array.from(
-        new Map(
-          readableCandidates.map(entry => [
-            entry.id,
-            toRecentEntry(entry, trustsIdTimestamps, now)
-          ])
-        ).values()
-      )
-        .filter((entry): entry is RecentEntryCandidate => Boolean(entry))
-        .sort((a, b) => b.changedAt - a.changedAt)
+      // The most recent change of each entry, of any of its locales
+      const latest = new Map<string, RecentEntryCandidate>()
+      for (const row of readableCandidates) {
+        const entry = toRecentEntry(row, trustsIdTimestamps, now)
+        if (!entry) continue
+        const seen = latest.get(entry.id)
+        if (!seen || entry.changedAt > seen.changedAt)
+          latest.set(entry.id, entry)
+      }
+      // Entries changed at the same time, such as an import, newest id first
+      const recentEntries = Array.from(latest.values())
+        .sort(
+          (a, b) =>
+            b.changedAt - a.changedAt ||
+            (a.id < b.id ? 1 : a.id > b.id ? -1 : 0)
+        )
         .slice(0, recentEntryCount)
       const entries = recentEntries.map(entry => {
         const type = config.schema[entry.type]
