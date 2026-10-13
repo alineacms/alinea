@@ -56,6 +56,8 @@ export interface ToolbarButton {
 export interface ToolbarMenu {
   icon?: (ctx: RichTextToolbarContext) => IconType
   label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
+  /** Marks the menu trigger, eg. while a value other than the default applies */
+  active?: (ctx: RichTextToolbarContext) => boolean
   items: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
 }
 
@@ -90,14 +92,17 @@ const styleLabels = {
   h5: 'Heading 5'
 }
 
+const headingLevels = [1, 2, 3, 4, 5] as const
+
 export const headings = {
   icon: () => <IcRoundUnfoldMore />,
   label({editor}) {
-    const level = ([1, 2, 3, 4, 5] as const).find(level =>
+    const level = headingLevels.find(level =>
       editor.isActive('heading', {level})
     )
     return level ? styleLabels[`h${level}`] : styleLabels.paragraph
   },
+  active: ({editor}) => editor.isActive('heading'),
   items: {
     styles: {
       group: {
@@ -107,22 +112,27 @@ export const headings = {
         },
         h1: {
           label: () => <h1>Heading 1</h1>,
+          active: ({editor}) => editor.isActive('heading', {level: 1}),
           onSelect: ({exec}) => exec().setHeading({level: 1}).run()
         },
         h2: {
           label: () => <h2>Heading 2</h2>,
+          active: ({editor}) => editor.isActive('heading', {level: 2}),
           onSelect: ({exec}) => exec().setHeading({level: 2}).run()
         },
         h3: {
           label: () => <h3>Heading 3</h3>,
+          active: ({editor}) => editor.isActive('heading', {level: 3}),
           onSelect: ({exec}) => exec().setHeading({level: 3}).run()
         },
         h4: {
           label: () => <h4>Heading 4</h4>,
+          active: ({editor}) => editor.isActive('heading', {level: 4}),
           onSelect: ({exec}) => exec().setHeading({level: 4}).run()
         },
         h5: {
           label: () => <h5>Heading 5</h5>,
+          active: ({editor}) => editor.isActive('heading', {level: 5}),
           onSelect: ({exec}) => exec().setHeading({level: 5}).run()
         }
       }
@@ -282,11 +292,15 @@ export const alignment = {
     if (editor.isActive({textAlign: 'justify'})) return <IcAlignJustify />
     return <IcAlignLeft />
   },
+  // Left is the default alignment, it needs no active state
+  active: ({editor}) =>
+    (['center', 'right', 'justify'] as const).some(textAlign =>
+      editor.isActive({textAlign})
+    ),
   items: {
     left: {
       icon: () => <IcAlignLeft />,
       label: 'Left',
-      active: ({editor}) => editor.isActive({textAlign: 'left'}),
       onSelect: ({exec}) => exec().setTextAlign('left').run()
     },
     center: {
