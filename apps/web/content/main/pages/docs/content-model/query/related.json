@@ -10,7 +10,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A single query can also fetch entries related to the ones it finds: their parents, children and siblings, their translations, and the entries they link to. Put a relation in `select` (or in `include` when you don't select), and it's resolved in the same query."
+          "text": "A single query can also fetch entries related to the ones it finds: their parents, children and siblings, their translations, the entries they link to and the entries that link to them. Put a relation in `select` (or in `include` when you don't select), and it's resolved in the same query."
         }
       ]
     },
@@ -290,25 +290,74 @@
       "content": [
         {
           "_type": "text",
-          "text": "The other direction"
+          "text": "Entries that link here"
         }
       ],
-      "_anchor": "the-other-direction"
+      "_anchor": "entries-that-link-here"
     },
     {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "Links are stored on the entry that links, so \"all posts by this author\" is a filter on the posts. Filter on the id of the target, stored as `_entry`:"
+          "text": "Links are stored on the entry that links. `Query.referencedBy` finds the entries that link to the entry, through any of their fields, including links in rich text. Pass `type` to only find entries of that type, and `field` to only follow one link field of it. Like the other relations it takes the query options, `count: true` and `first: true`:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3JkF02Iepon3xd2vXVF2GvlX69B",
-      "code": "import {cms} from '@/cms'\nimport {Author, BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nexport async function authorPage(path: string) {\n  const author = await cms.get({\n    type: Author,\n    path,\n    select: {id: Query.id, name: Query.title, bio: Author.bio}\n  })\n  const posts = await cms.find({\n    type: BlogPost,\n    // Single link: has, multiple links: includes\n    filter: {author: {has: {_entry: author.id}}},\n    select: {title: Query.title, url: Query.url},\n    orderBy: {desc: BlogPost.publishDate}\n  })\n  return {author, posts}\n}",
-      "fileName": "",
+      "_id": "3KdUIqSIuHVEywrPhxCDaRplVnr",
+      "code": "import {cms} from '@/cms'\nimport {Author, BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nexport async function authorPage(path: string) {\n  return cms.get({\n    type: Author,\n    path,\n    select: {\n      name: Query.title,\n      bio: Author.bio,\n      // The posts whose author field links to this author\n      posts: Query.referencedBy({\n        type: BlogPost,\n        field: BlogPost.author,\n        select: {title: Query.title, url: Query.url},\n        orderBy: {desc: BlogPost.publishDate}\n      }),\n      // Every entry linking to the author, in any field\n      mentions: Query.referencedBy({count: true})\n    }\n  })\n}",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The entries that link to a translated entry are looked up in its locale. For an entry without a locale, such as a shared author, the linking entries of every locale are returned: pass `locale` to only get those of one locale."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The same relation is a filter condition: `_referenced` holds for entries that an entry of the query links to. `{_referenced: true}` matches entries that anything links to and `{_referenced: false}` entries nothing links to, such as unused media files:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIoLZ9cWb41ufd9932Iab2Pp",
+      "code": "import {cms} from '@/cms'\nimport {Author, BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\n// Authors of at least one featured post\nconst featuredAuthors = await cms.find({\n  type: Author,\n  filter: {\n    _referenced: Query.referencedBy({\n      type: BlogPost,\n      field: BlogPost.author,\n      filter: {featured: true}\n    })\n  },\n  select: Query.title\n})",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Filtering on the link"
+        }
+      ],
+      "_anchor": "filtering-on-the-link"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The other way around, \"the posts by this author\" is a filter on the posts: links store the id of their target as `_entry`. This is the way to go when you start from the posts, for example to page through them:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIrC7b70NWURCxraxa04PgIc",
+      "code": "import {cms} from '@/cms'\nimport {BlogPost} from '@/schema'\nimport {Query} from 'alinea'\n\nexport async function postsBy(authorId: string, page: number) {\n  return cms.find({\n    type: BlogPost,\n    // Single link: has, multiple links: includes\n    filter: {author: {has: {_entry: authorId}}},\n    select: {title: Query.title, url: Query.url},\n    orderBy: {desc: BlogPost.publishDate},\n    skip: page * 10,\n    take: 10\n  })\n}",
       "language": "tsx"
     },
     {
@@ -324,7 +373,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3JkEzzRgFhRnrH2po9iiOOCbHK2",
+              "_id": "3KdUItno7SDiKNmiZjYpFfEkBoA",
               "_link": "entry",
               "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz"
             }
@@ -340,7 +389,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3JkF06qrh4BsaFOsWUfJ3fYCyLT",
+              "_id": "3KdUIsAPPhtEzhwufJG5HWtg0FB",
               "_link": "entry",
               "_entry": "3AZY63OxjiPWzVM4siKRVbqLNF1"
             }

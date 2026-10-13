@@ -25,6 +25,26 @@
       "content": [
         {
           "_type": "text",
+          "text": "Formatting"
+        }
+      ],
+      "_anchor": "formatting"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`formatOptions` takes the options of `Intl.NumberFormat`, such as a currency or a unit, and the number is shown and parsed in the locale of the dashboard. Digits are not grouped by default, since number fields often hold years or ids: pass `formatOptions={{useGrouping: true}}` to show `1,250` rather than `1250`. The value is a number, or `null` when the field is empty."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Props"
         }
       ],

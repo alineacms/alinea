@@ -369,7 +369,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": " can select: a field (`Product.price`), an expression (`Query.url`), a query of linked entries, or an object of those."
+                  "text": " can select: a field (`Product.price`), an expression (`Query.url`), a query of linked entries, a relation such as `Query.referencedBy`, or an object of those."
                 }
               ]
             }
@@ -788,9 +788,25 @@
       "content": [
         {
           "_type": "text",
-          "text": "Editors sort an overview by clicking a column header, or from the filter and sort menu. The title, the built-in columns, expressions of the entry (such as `Query.title`) and fields that hold a single value (text, number, date, select, check, path, ...) are sortable. Columns that select links, lists, multiple selects, rich text or JSON need `sortBy`: an expression, or a query of a linked entry that selects a single expression, such as `Product.brand.first({select: Query.title})`. Set `sortable: false` to turn sorting off for a column."
+          "text": "Editors sort an overview by clicking a column header, or from the filter and sort menu. The title, the built-in columns, expressions of the entry (such as `Query.title`) and fields that hold a single value (text, number, date, select, check, path, ...) are sortable, and so are columns that count related entries, such as `Query.referencedBy({type: Product, count: true})`. Columns that select links, lists, multiple selects, rich text or JSON need `sortBy`: an expression, or a query of a linked entry that selects a single expression, such as `Product.brand.first({select: Query.title})`. Set `sortable: false` to turn sorting off for a column."
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A column that counts the products of each brand, which editors can sort by:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIpvjIbzcN3LZQzhFi3RBCBS",
+      "code": "import {Config, Query} from 'alinea'\nimport {Product} from './Product'\n\nexport const Brands = Config.document('Brands', {\n  contains: ['Brand'],\n  fields: {},\n  overview: {\n    columns: {\n      products: Config.column({\n        header: 'Products',\n        width: 100,\n        align: 'end',\n        select: Query.referencedBy({\n          type: Product,\n          field: Product.brand,\n          count: true\n        })\n      })\n    }\n  }\n})",
+      "fileName": "schema/Brands.ts",
+      "language": "tsx"
     },
     {
       "_type": "paragraph",
@@ -952,6 +968,50 @@
     },
     {
       "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options from the content"
+        }
+      ],
+      "_anchor": "options-from-the-content"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`options` can also be a function that loads them, for example an option per category entry. It receives the `graph` to query and the `locale` of the overview, and runs when the overview opens. Filters can match on the entries that link to a listed entry too, with `_referenced` (see "
+        },
+        {
+          "_type": "text",
+          "text": "Entries that link here",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIopM5FvaS7EPZjKeTIyIh8U",
+              "_link": "entry",
+              "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ",
+              "_anchor": "entries-that-link-here"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "):"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIuG2uvsUKiiRmnAlnBbrO0Z",
+      "code": "import {Config, Query} from 'alinea'\nimport {Category, Product} from './Product'\n\nexport const Products = Config.document('Products', {\n  contains: ['Product'],\n  overview: {\n    filters: {\n      category: {\n        label: 'Category',\n        multiple: true,\n        async options({graph, locale}) {\n          const categories = await graph.find({\n            type: Category,\n            locale,\n            select: {id: Query.id, title: Query.title},\n            orderBy: {asc: Query.title}\n          })\n          return Object.fromEntries(\n            categories.map(category => [\n              category.id,\n              {\n                label: category.title,\n                filter: {categories: {includes: {_entry: category.id}}}\n              }\n            ])\n          )\n        }\n      },\n      usage: {\n        label: 'Usage',\n        options: {\n          linked: {label: 'Linked from other entries', filter: {_referenced: true}},\n          unused: {label: 'Not linked anywhere', filter: {_referenced: false}}\n        }\n      }\n    }\n  },\n  fields: {}\n})",
+      "fileName": "schema/Products.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {
@@ -1098,6 +1158,10 @@
                 {
                   "_type": "text",
                   "text": ", such as `{brand: {has: {_entry: entry.id}}}`."
+                },
+                {
+                  "_type": "text",
+                  "text": " Conditions on related entries work too: `{_referenced: Query.referencedBy({type: Product, filter: {stock: {gt: 0}}})}` lists the entries that a product in stock links to."
                 }
               ]
             }

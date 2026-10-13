@@ -376,7 +376,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A theme only sets the inputs, as `light-dark()` pairs where a value differs per color scheme. Every other token is derived from them:"
+          "text": "A theme only sets the inputs, as `light-dark()` pairs where a value differs per color scheme. Every other token is derived from them. Set them on the element with `data-alinea-theme`, for example `<div data-alinea-theme className=\"brand-theme\">`:"
         }
       ]
     },
@@ -387,6 +387,15 @@
       "language": "css",
       "compact": false,
       "code": ".brand-theme {\n  --alinea-radius: 6px;\n  --alinea-bg: light-dark(#ffffff, #18181b);\n  --alinea-fg: light-dark(#27272a, #e4e4e7);\n  --alinea-primary: light-dark(#2f6b45, #5fbf82);\n}"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Popovers, dialogs and tooltips render outside that element and carry the attribute themselves, so a class on the page doesn't reach them: use `[data-alinea-theme]` as the selector to theme every part of the components on a page."
+        }
+      ]
     },
     {
       "_type": "paragraph",

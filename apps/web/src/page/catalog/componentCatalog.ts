@@ -203,6 +203,13 @@ export const componentCatalog: Array<ComponentCatalogGroup> = [
           'FieldSharedBadge'
         ],
         keywords: 'label'
+      },
+      {
+        name: 'Form',
+        description: 'Submits its fields and shows their validation errors.',
+        parts: ['Form'],
+        keywords: 'validation submit',
+        preview: {width: 300, scale: 0.75}
       }
     ]
   },
@@ -219,7 +226,8 @@ export const componentCatalog: Array<ComponentCatalogGroup> = [
           'TableRow',
           'TableCell',
           'TableThumbnail',
-          'TableTitle'
+          'TableTitle',
+          'useAsyncList'
         ],
         keywords: 'grid data',
         preview: {width: 460, scale: 0.64}
@@ -460,6 +468,13 @@ export const componentCatalog: Array<ComponentCatalogGroup> = [
     title: 'Layout',
     items: [
       {
+        name: 'Stack',
+        description: 'Lays out its children in a row or column with a gap.',
+        parts: ['Stack'],
+        keywords: 'flex hstack vstack',
+        preview: {width: 320, scale: 0.75}
+      },
+      {
         name: 'Surface',
         description: 'A bordered panel for a group of content.',
         parts: ['Surface', 'SurfaceHeader', 'SurfaceContent', 'SurfaceRow'],
@@ -592,6 +607,7 @@ export const componentExampleIds = [
   'Dialog',
   'DialogAlert',
   'DialogForm',
+  'DialogSubmit',
   'DropdownMenuPreview',
   'DropdownMenu',
   'DropdownMenuSelection',
@@ -602,6 +618,7 @@ export const componentExampleIds = [
   'TooltipSides',
   'Table',
   'TableSelection',
+  'TableAsync',
   'Badge',
   'BadgeStatuses',
   'BadgeIcons',
@@ -618,6 +635,8 @@ export const componentExampleIds = [
   'SearchField',
   'MultipleSelect',
   'ComboBox',
+  'ComboBoxGroups',
+  'ComboBoxAsync',
   'CheckboxGroup',
   'RadioGroup',
   'DateField',
@@ -629,6 +648,7 @@ export const componentExampleIds = [
   'ColorSwatchPicker',
   'DropZone',
   'Field',
+  'Form',
   'List',
   'SortableList',
   'Tree',
@@ -647,6 +667,7 @@ export const componentExampleIds = [
   'Blockquote',
   'Icon',
   'FoldIcon',
+  'Stack',
   'Surface',
   'Collapsible',
   'Page',

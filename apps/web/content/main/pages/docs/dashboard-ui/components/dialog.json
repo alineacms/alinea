@@ -75,6 +75,47 @@
       "content": [
         {
           "_type": "text",
+          "text": "Submit a form"
+        }
+      ],
+      "_anchor": "submit-a-form"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass `onSubmit` to DialogContent to render its content as a "
+        },
+        {
+          "_type": "text",
+          "text": "Form",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIotR1rHR8TNvsmlRCk3YjDo",
+              "_link": "entry",
+              "_entry": "3KdUIqjhk43irg9yIcQtrzg0jr3"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": a Button with `type=\"submit\"` submits it with the values of the named fields. The dialog closes once `onSubmit` resolves without errors. Errors it returns, keyed by field name, show on the fields and keep the dialog open. `onClose` on Dialog runs whenever the dialog closes, after `onOpenChange(false)`, for example to reset state."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3KdUIngTViA7dNdOcB7LFDRlJT0",
+      "example": "DialogSubmit"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Props"
         }
       ],

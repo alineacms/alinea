@@ -183,7 +183,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "It is required for production builds when `handlerUrl` is relative: `alinea build` exits, and queries on your site throw, with `Missing baseUrl in Alinea config: set baseUrl.production to the url of your site`."
+                  "text": "It is required for production builds when `handlerUrl` is relative: `alinea build` exits, and queries on your site throw, with `Missing baseUrl in Alinea config: set baseUrl.production to the url of your site, …`. An absolute `handlerUrl` doesn't need it."
                 }
               ]
             }

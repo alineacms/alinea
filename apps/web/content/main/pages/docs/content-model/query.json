@@ -121,7 +121,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Query` has `id`, `title`, `type`, `index`, `workspace`, `root`, `status`, `parentId`, `locale`, `path`, `url`, `aliases`, `createdAt` and `updatedAt`, plus the relation helpers such as `Query.children` described in "
+          "text": "`Query` has `id`, `title`, `type`, `index`, `workspace`, `root`, `status`, `parentId`, `locale`, `path`, `url`, `aliases`, `createdAt` and `updatedAt`, plus the relation helpers such as `Query.children` and `Query.referencedBy` described in "
         },
         {
           "_type": "text",
@@ -191,6 +191,37 @@
           "text": "A type field only has a value on entries of that type, so select it in a query for that `type` (or one filtered on `_type`). `Query` fields work in any query, also one without a `type`, such as a search across all entries. Fields that `Config.document` adds, like `title` and `path`, are available both ways: `Query.title` and `BlogPost.title` return the same value."
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Fields inside an "
+        },
+        {
+          "_type": "text",
+          "text": "object field",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUInzriY5XHiYNSLAuTIoQoXV",
+              "_link": "entry",
+              "_entry": "290i4FnT1HBujZ2qoNZPm4EX69B"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " are selected through the object: `Page.seo.title` returns the `title` of the `seo` object, typed like the field. That works wherever a field can be selected, also inside relations such as `Query.children`, and in `orderBy`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUInkgxucjtxhDCYKroqxwnZr",
+      "code": "import {cms} from '@/cms'\nimport {Config, Field, Query} from 'alinea'\n\nexport const Page = Config.document('Page', {\n  fields: {\n    seo: Field.object('SEO', {\n      fields: {\n        title: Field.text('SEO title'),\n        description: Field.text('SEO description')\n      }\n    })\n  }\n})\n\nconst pages = await cms.find({\n  type: Page,\n  select: {url: Query.url, title: Page.seo.title},\n  orderBy: {asc: Page.seo.title}\n})\n// Array<{url: string, title: string}>",
+      "language": "tsx"
     },
     {
       "_type": "paragraph",

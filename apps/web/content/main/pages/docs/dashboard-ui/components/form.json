@@ -1,0 +1,95 @@
+{
+  "_id": "3KdUIqjhk43irg9yIcQtrzg0jr3",
+  "_type": "Doc",
+  "_index": "aQV",
+  "title": "Form",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A form whose fields show their validation errors. `onSubmit` receives the `FormData` of the named fields instead of the browser submitting the form. It can return errors keyed by field name, also from a promise, which show on those fields until they are edited."
+        }
+      ]
+    },
+    {
+      "_type": "ComponentExampleBlock",
+      "_id": "3KdUIorz5aqwfAGfJt9oj2cKbUl",
+      "example": "Form"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Validation"
+        }
+      ],
+      "_anchor": "validation"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Native constraints are checked when the form is submitted: `required`, and `pattern`, `minLength` and `maxLength` on a TextField. `validationErrors` shows errors you already have, for example from a server, keyed by field name like the ones `onSubmit` returns. An `error` set on a field itself takes precedence."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The form controls of `alinea/components` take a `name` to be submitted under: text, number and select controls submit their value as a string, dates and times as ISO strings (`2026-09-23`, `14:30`) and MultipleSelect one entry per picked value. To submit a form from a dialog, pass `onSubmit` to "
+        },
+        {
+          "_type": "text",
+          "text": "DialogContent",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIpLF4ML5v9tEKAShbMgkyGv",
+              "_link": "entry",
+              "_entry": "3JmLPBKZIL5sK74npgc0DlIbKvQ",
+              "_anchor": "submit-a-form"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": the dialog closes once it succeeds."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "ComponentPropsBlock",
+      "_id": "3KdUIrh9JGyXRm35imrpYVqUgeP",
+      "component": "Form"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    }
+  }
+}

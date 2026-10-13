@@ -320,6 +320,37 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`actions`: components rendered in the header of the entry editor, next to the publish button, such as an export button. Each is a component or a path to one and receives `EntryActionProps`: the `entry` and the `locale` it is edited in. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Add actions to the entry header",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KdUIopaXEgTVrqmMte5hcOdacS",
+                      "_link": "entry",
+                      "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+                      "_anchor": "add-actions-to-the-entry-header"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`orderChildrenBy` (deprecated): sort children by one or more fields. Use `overview.sort`, which still accepts the same value."
                 }
               ]

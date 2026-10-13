@@ -120,9 +120,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "Pages rendered at request time sync on their next render. The first one after a commit can still show the previous version while the shared content sha refreshes. Content pushed to your repository without the dashboard, for example a local edit, skips the handler: pages pick it up within five minutes, or within `syncInterval` seconds when your config sets it. Use the handler's `afterCommit` hook if other caches in your app depend on content, for example your own `fetch` tags."
+          "text": "Pages rendered at request time sync on their next render. The first one after a commit can still show the previous version while the shared content sha refreshes. Content pushed to your repository without the dashboard, for example a local edit, skips the handler: pages pick it up within five minutes, or within `syncInterval` seconds when your config sets it. Use the handler's `afterCommit` hook if other caches in your app depend on content, for example your own `fetch` tags. It receives the changed `entries` and the `removed` ones, see [Commit hooks](page:guides/deploy#commit-hooks):"
         }
       ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIs8FgUDZI0TFJKOp5Gg1ixO",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidateTag} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  afterCommit({entries, removed}) {\n    const changed = [...entries, ...removed]\n    if (changed.some(entry => entry.type === 'Product'))\n      revalidateTag('products', 'max')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx"
     }
   ],
   "metadata": {

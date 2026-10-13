@@ -25,6 +25,26 @@
       "content": [
         {
           "_type": "text",
+          "text": "Value"
+        }
+      ],
+      "_anchor": "value"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The value is an ISO time string: `14:30`, or `14:30:15` with `granularity=\"second\"`. With a `name` the field submits the same string in a form, like a native time input, and an empty string when no time is set. `hourCycle` only changes how the time is shown."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Props"
         }
       ],

@@ -25,6 +25,26 @@
       "content": [
         {
           "_type": "text",
+          "text": "Attributes"
+        }
+      ],
+      "_anchor": "attributes"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Besides `href`, the link passes `target`, `rel`, `download`, `title`, `tabIndex`, `lang`, `hrefLang`, `referrerPolicy` and `aria-current` to its `<a>`. Mark the link to the page that is shown with `aria-current=\"page\"`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Props"
         }
       ],

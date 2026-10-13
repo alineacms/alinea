@@ -5,7 +5,7 @@ import {Select, SelectItem} from 'alinea/components'
 export function SelectStatesExample() {
   return (
     <div style={{display: 'grid', gap: 16, width: 280}}>
-      <Select label="Category" placeholder="Choose a category">
+      <Select label="Category" placeholder="Choose a category" clearable>
         <SelectItem value="bedroom">Bedroom</SelectItem>
         <SelectItem value="dining">Dining</SelectItem>
       </Select>
