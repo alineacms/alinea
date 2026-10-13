@@ -26,8 +26,10 @@ export interface GithubOptions extends GithubSourceOptions {
   /**
    * Commit as this author instead of the account that owns the token. Such
    * commits are written through the REST API, which GraphQL commits do not
-   * allow, so GitHub does not mark them as verified and each save spends
-   * three REST requests, plus one per uploaded file.
+   * allow, so GitHub does not mark them as verified. A save usually spends
+   * three REST requests, plus one per uploaded file. Removing a file that is
+   * already gone costs one more tree request, and a branch that moved in
+   * the meantime repeats the save.
    */
   author?: GithubCommitAuthor
 }
