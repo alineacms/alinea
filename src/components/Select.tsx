@@ -44,6 +44,8 @@ export interface SelectProps<V extends Key = Key>
   /** Called with the selected value, or null when the value is cleared */
   onValueChange?: (value: V | null) => void
   placeholder?: string
+  /** Show a button that clears the value */
+  clearable?: boolean
   /** Name of the hidden form input carrying the value */
   name?: string
   autoFocus?: boolean
@@ -54,8 +56,8 @@ export interface SelectProps<V extends Key = Key>
 }
 
 /**
- * A labelled field to pick a single value from a list. The value can be
- * cleared unless the field is required.
+ * A labelled field to pick a single value from a list. Set `clearable` to
+ * let the value be cleared again.
  */
 export function Select<V extends Key = Key>({
   label,
@@ -73,6 +75,7 @@ export function Select<V extends Key = Key>({
   defaultOpen,
   onOpenChange,
   placeholder,
+  clearable,
   size = 'default',
   className,
   style,
@@ -115,7 +118,7 @@ export function Select<V extends Key = Key>({
         <SelectTrigger
           triggerRef={triggerRef}
           size={size}
-          clearable={!required && !disabled && !readOnly}
+          clearable={Boolean(clearable) && !disabled && !readOnly}
           invalid={Boolean(error)}
           readOnly={readOnly}
         />

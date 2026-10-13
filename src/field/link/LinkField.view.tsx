@@ -822,6 +822,7 @@ function EntryAnchorFieldInner({
   const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
   return (
     <Select
+      clearable
       disabled={isDisabled || anchors.length === 0}
       label="Anchor"
       onValueChange={next => onChange(next ?? undefined)}

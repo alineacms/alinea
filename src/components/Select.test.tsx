@@ -21,3 +21,26 @@ test('Select keeps number values', () => {
   fireEvent.click(screen.getByRole('option', {name: 'Small'}))
   expect(values).toEqual([1])
 })
+
+test('Select is only clearable when asked', () => {
+  const values: Array<string | null> = []
+  const view = render(
+    <Select label="Status" defaultValue="draft">
+      <SelectItem value="draft">Draft</SelectItem>
+    </Select>
+  )
+  expect(screen.queryByRole('button', {name: 'Clear'})).toBeNull()
+  view.unmount()
+  render(
+    <Select
+      label="Status"
+      defaultValue="draft"
+      clearable
+      onValueChange={value => values.push(value)}
+    >
+      <SelectItem value="draft">Draft</SelectItem>
+    </Select>
+  )
+  fireEvent.click(screen.getByRole('button', {name: 'Clear'}))
+  expect(values).toEqual([null])
+})

@@ -20,6 +20,7 @@ import {Field} from './Field.js'
 import {Icon} from './Icon.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'
 import {PopoverSurface} from './internal/PopoverSurface.js'
+import {Spinner} from './Spinner.js'
 import type {
   AriaProps,
   DataProps,
@@ -30,6 +31,10 @@ import type {
 } from './types.js'
 
 const styles = styler(css)
+
+function showAll() {
+  return true
+}
 
 export interface ComboBoxProps<V extends Key = Key>
   extends FieldSharedProps, OpenStateProps, StyleProps, AriaProps, DataProps {
@@ -46,6 +51,14 @@ export interface ComboBoxProps<V extends Key = Key>
   allowsCustomValue?: boolean
   /** Shown in the list when no item matches, the list stays closed if unset */
   emptyMessage?: ReactNode
+  /**
+   * Whether an item is shown for the typed text, defaults to a case and
+   * accent insensitive match anywhere in its text. Pass false to show every
+   * item, eg. when the server already filtered them.
+   */
+  filter?: false | ((textValue: string, inputValue: string) => boolean)
+  /** Shows a spinner, eg. while the items for the typed text load */
+  loading?: boolean
   /** Name of the hidden form input carrying the value */
   name?: string
   autoFocus?: boolean
@@ -74,6 +87,8 @@ export function ComboBox<V extends Key = Key>({
   onOpenChange,
   placeholder,
   emptyMessage,
+  filter,
+  loading,
   autoFocus,
   className,
   style,
@@ -102,6 +117,7 @@ export function ComboBox<V extends Key = Key>({
       isRequired={required}
       isInvalid={error ? true : undefined}
       allowsEmptyCollection={emptyMessage !== undefined}
+      defaultFilter={filter === false ? showAll : filter}
     >
       <Field
         label={label}
@@ -124,6 +140,7 @@ export function ComboBox<V extends Key = Key>({
           autoFocus={autoFocus}
           invalid={Boolean(error)}
           clearable={!disabled && !readOnly}
+          loading={loading}
         />
         <PopoverSurface
           data-slot="combobox-content"
@@ -137,7 +154,7 @@ export function ComboBox<V extends Key = Key>({
                 data-slot="combobox-empty"
                 className={styles.ComboBoxContent.empty()}
               >
-                {emptyMessage}
+                {loading ? <Spinner size="sm" /> : emptyMessage}
               </div>
             )}
           >
@@ -192,6 +209,7 @@ interface ComboBoxTriggerProps {
   autoFocus?: boolean
   invalid: boolean
   clearable: boolean
+  loading?: boolean
 }
 
 function ComboBoxTrigger({
@@ -199,7 +217,8 @@ function ComboBoxTrigger({
   placeholder,
   autoFocus,
   invalid,
-  clearable
+  clearable,
+  loading
 }: ComboBoxTriggerProps) {
   const state = useContext(ComboBoxStateContext)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -218,6 +237,13 @@ function ComboBoxTrigger({
         autoFocus={autoFocus}
         className={styles.ComboBoxTrigger.input()}
       />
+      {loading && (
+        <Spinner
+          size="sm"
+          data-slot="combobox-spinner"
+          className={styles.ComboBoxTrigger.spinner()}
+        />
+      )}
       {hasClear && (
         <Button
           slot={null}

@@ -57,6 +57,10 @@
   }
 }
 
+.ComboBoxTrigger-spinner {
+  color: var(--alinea-fg-muted);
+}
+
 .ComboBoxTrigger-action {
   position: relative;
   z-index: 0;
