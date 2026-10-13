@@ -34,7 +34,7 @@ test('useEntryEditor keeps the publish status out of the field data', () => {
     <EntryScope
       {...scope({
         id: 'entry-id',
-        path: 'invoice',
+        path: 'about',
         status: 'published',
         data: {status: 'draft'}
       })}
@@ -42,7 +42,7 @@ test('useEntryEditor keeps the publish status out of the field data', () => {
       <Version />
     </EntryScope>
   )
-  expect(screen.getByText('published:invoice')).toBeDefined()
+  expect(screen.getByText('published:about')).toBeDefined()
   // A custom `status` field used to read as the publish status
   expect(readStatusField!).toThrow(/useEntry\(\)/)
 })
