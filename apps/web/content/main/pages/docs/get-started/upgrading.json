@@ -65,7 +65,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Add `handlerUrl` to your config, it is now required. Replace `dashboardFile` with `adminPath`."
+                  "text": "Add `handlerUrl` to your config, it is now required, and make sure `baseUrl.production` is set. Replace `dashboardFile` with `adminPath`."
                 }
               ]
             }
@@ -211,7 +211,7 @@
         },
         {
           "_type": "text",
-          "text": " The CLI exits with \"Alinea requires Node version 24 or higher\" on older versions. The bundled content database is opened with Node's built-in `node:sqlite` (or `bun:sqlite` under Bun), so the runtime that serves your site needs Node 24 too, not only the machine that builds it."
+          "text": " The CLI exits with \"Alinea requires Node version 24 or higher\" on older versions. The bundled content database is opened with Node's built-in `node:sqlite` (or `bun:sqlite` under Bun), so the runtime that serves your site needs Node 24 too, not only the machine that builds it. The same goes for scheduled CI jobs that run the alinea CLI, such as a nightly `alinea build` or a script that imports content: update the Node version in those workflows as well."
         }
       ]
     },
@@ -230,7 +230,7 @@
         },
         {
           "_type": "text",
-          "text": " `react` and `react-dom` 19 are now peer dependencies and the CLI checks for them. In practice that means Next.js 15 or newer."
+          "text": " `react` and `react-dom` 19 are now peer dependencies and the CLI checks for them. In practice that means Next.js 15 or newer. Check third-party React renderers too: libraries built on React 18 internals, such as older versions of react-three-fiber or react-pixi, break under React 19. Upgrade them to a version that supports React 19."
         }
       ]
     },
@@ -280,6 +280,33 @@
           "text": "The handler now matches its path exactly, so requests have to use the configured URL (a trailing slash no longer matches)."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "baseUrl is required for production"
+        }
+      ],
+      "_anchor": "baseurl-is-required-for-production"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Your site reaches the handler at `handlerUrl` resolved against `baseUrl`, also in production, to check for new content. Without a production `baseUrl` (and with a relative `handlerUrl`), `alinea build` exits and queries throw `Missing baseUrl in Alinea config: set baseUrl.production to the url of your site`. Alinea doesn't fall back to the request origin or to hosting provider variables: set the production URL of your site yourself, for example from an environment variable you define:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdNsGg8dJk4LlVzynsrT0dFJ6v",
+      "code": "export const cms = createCMS({\n  schema,\n  workspaces,\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: process.env.SITE_URL ?? 'https://example.com'\n  },\n  handlerUrl: '/api/cms'\n})",
+      "language": "tsx",
+      "fileName": "cms.ts"
     },
     {
       "_type": "heading",
@@ -449,6 +476,53 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A media file whose `location` is a url (some 1.x saves wrote the upload url there) can't be served. `alinea build` warns about these files; `alinea build --fix` points them at the file of the same name in the `mediaDir` when there is one."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Image links only have `src`: the `url` property, which held the same value, was removed so that spreading an image into `<img>` or `next/image` (`<Image {...image} />`) doesn't put a `url` attribute on the element. Replace `image.url` with `image.src`. File links keep `url` and `href`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Don't derive media URLs from the stored file. Code that reads `location`, or parses the 1.x file names (`name.<id>.ext`) to build a URL or find an id, breaks on `/admin/file/...` URLs. Use the URL Alinea returns instead: `src` for images, `url` (or `href`) for files, and `_url` when you query media files directly:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdNsBv9XvWGYgddavcRENiz7UX",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\nimport {MediaFile} from 'alinea/core'\n\n// 1.7: built the url from the stored location\n// const src = file.location\n\nconst files = await cms.find({\n  type: MediaFile,\n  select: {title: Query.title, url: Query.url}\n})\n// Without a select each result has its url as `_url`",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`ImageLink` no longer needs a type parameter when the image field has no extra fields: replace `ImageLink<undefined>` with `ImageLink`."
         }
       ]
     },

@@ -132,6 +132,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`settings`: fields that editors set in the settings sheet of a block, below its label and anchor, instead of in the block's form. Entries of the type show them in a Settings tab. They are stored and queried like the other fields, so their names can't repeat a field name."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`contains`: the types that can be created as children of this entry, by schema name or by reference. Without it, entries of this type can't have children."
                 }
               ]

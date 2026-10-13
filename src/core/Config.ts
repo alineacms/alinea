@@ -87,6 +87,28 @@ export namespace Config {
     return config.handlerUrl
   }
 
+  /**
+   * The handler as reached from server renders. There is no request to take
+   * an origin from in static renders, and reading one would make every route
+   * dynamic, so a relative handlerUrl needs a baseUrl.
+   */
+  export function serverHandlerUrl(
+    config: Config,
+    env = process.env.NODE_ENV ?? 'production'
+  ): URL {
+    const handlerUrl = Config.handlerUrl(config)
+    const absolute = URL.parse(handlerUrl)
+    if (absolute) return absolute
+    const base = Config.baseUrl(config, env)
+    if (!base)
+      throw new Error(
+        `Missing baseUrl in Alinea config: set baseUrl.${env} to the url of ` +
+          `your site, server renders reach the handler at ${handlerUrl} ` +
+          `through it`
+      )
+    return new URL(handlerUrl, base)
+  }
+
   export function adminPath(config: Config) {
     if (config.adminPath) return normalizeUrlPath(config.adminPath)
     const file = config.dashboardFile ?? 'admin.html'

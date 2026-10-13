@@ -18,6 +18,7 @@ import {slugify} from '#/core/util/Slugs.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
+import {remoteLocations} from './MediaLocations.js'
 
 export interface DevDBOptions {
   config: Config
@@ -157,17 +158,27 @@ export class DevDB extends EntryStore {
       data: Record<string, unknown>
       seeded: string | null
     }>
+    // Point media locations that are urls at the file of the same name in
+    // the mediaDir, when there is exactly one
+    const local = new Map(
+      (await remoteLocations(this.#options.rootDir, this))
+        .filter(file => file.local !== undefined)
+        .map(file => [`${file.id}:${file.locale}:${file.status}`, file.local])
+    )
     const mutations = entries
       .filter(entry => !entry.seeded)
-      .map(
-        (entry): Mutation => ({
+      .map((entry): Mutation => {
+        const location = local.get(
+          `${entry.id}:${entry.locale}:${entry.status}`
+        )
+        return {
           op: 'update',
           id: entry.id,
           locale: entry.locale,
           status: entry.status,
-          set: entry.data
-        })
-      )
+          set: location ? {...entry.data, location} : entry.data
+        }
+      })
     if (!mutations.length) return
     const planned = await this.request(mutations)
     const batch = sourceChanges(planned)

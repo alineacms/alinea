@@ -46,6 +46,9 @@ const heroBlock = type('Hero', {
   fields: {
     heading: text('Heading'),
     body: text('Body', {multiline: true})
+  },
+  settings: {
+    background: text('Background color')
   }
 })
 

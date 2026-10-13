@@ -1,5 +1,6 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
@@ -14,10 +15,11 @@ import type {GenerateContext} from './generate/GenerateContext.js'
 import {generatedPaths} from './generate/GeneratedPaths.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
 import {linkMediaFiles} from './generate/LinkMediaFiles.js'
+import {remoteLocations} from './generate/MediaLocations.js'
 import {dirname} from './util/Dirname.js'
 import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {reportError, reportFatal} from './util/Report.js'
+import {reportError, reportFatal, reportWarning} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -116,11 +118,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     for await (const cms of builds) {
       Config.handlerUrl(cms.config)
       if (cmd === 'build') {
-        const baseUrl = Config.baseUrl(cms.config, 'production')
-        if (!baseUrl) {
-          reportFatal(
-            'No baseUrl was set for the production build in Alinea config'
-          )
+        try {
+          Config.serverHandlerUrl(cms.config, 'production')
+        } catch (error) {
+          reportFatal(error instanceof Error ? error.message : String(error))
           process.exit(1)
         }
       }
@@ -177,6 +178,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         continue
       }
       for await (const db of indexing) {
+        if (!afterGenerateCalled) await warnRemoteLocations(rootDir, db)
         yield {cms, db, configFingerprint}
         if (onAfterGenerate && !afterGenerateCalled) {
           const recordCount = await db.count({})
@@ -195,5 +197,18 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     }
   } finally {
     await db?.close()
+  }
+}
+
+async function warnRemoteLocations(rootDir: string, db: DevDB) {
+  for (const file of await remoteLocations(rootDir, db)) {
+    const mediaDir = MediaLocation.directory(db.config, file.workspace)
+    reportWarning(
+      `Media file ${file.file} has a url as location, it can't be served`,
+      `location: ${file.location}`,
+      file.local
+        ? `Run \`alinea build --fix\` to point it at ${join(mediaDir, file.local)}`
+        : `Point location at the file in ${mediaDir || 'the public dir'}, eg. "/${basename(new URL(file.location).pathname)}"`
+    )
   }
 }

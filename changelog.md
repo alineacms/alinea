@@ -26,6 +26,9 @@
   `multi-modal` and `multimodal` find each other, and `multi modal`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`
   signs in the local user with that role, for saves, hooks and `cms.user()`.
+- Add the `settings` type option: fields edited in the settings sheet of a
+  list row or rich text block, below its label and anchor. Entries of the type
+  show them in a Settings tab. They are stored and queried like other fields.
 - The `collapsed: false` type option expands an entry's children in the
   sidebar content tree from the start.
 - Rebuild the dashboard on React Aria Components, with keyboard navigation,
@@ -71,7 +74,8 @@
 - Require `handlerUrl` in the config. `dashboardFile` is deprecated in favor of
   `adminPath`.
 - Serve media files through `${adminPath}/file/...` on the site: image and file
-  links now return that URL instead of the stored location.
+  links now return that URL instead of the stored location. Image links only
+  have `src`, their `url` property is removed.
 - Change `Config.media()` to take root options, children move to `children`.
 - Remove the options of `Field.metadata()` and the `step` option of
   `Field.time()`.

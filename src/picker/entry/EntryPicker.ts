@@ -135,7 +135,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       const version = typeof rest.hash === 'string' ? rest.hash : undefined
       const versionedSrc =
         typeof src === 'string' ? MediaLocation.versionedUrl(src, version) : src
-      assign(row, rest, {extension, src: versionedSrc, url: versionedSrc})
+      assign(row, rest, {extension, src: versionedSrc})
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
     }
   }

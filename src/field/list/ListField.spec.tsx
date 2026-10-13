@@ -56,8 +56,10 @@ test('names the sheet after the row label', async ({mount, page}) => {
     })
   ).toHaveValue('intro')
   await expect(page.getByText(/^Link here/)).toHaveCount(0)
-  // The only section needs no title
-  await expect(page.locator('[data-slot="sheet-section-title"]')).toHaveCount(0)
+  // The label and anchor need no title, the type's settings follow below one
+  await expect(page.locator('[data-slot="sheet-section-title"]')).toHaveText([
+    'Settings'
+  ])
   await expect(hero.getByText('Intro', {exact: true})).toBeVisible()
 })
 
@@ -406,4 +408,23 @@ test('inserts a row on the border between rows', async ({mount, page}) => {
   const after = await rowNames(sections)
   expect(after).toHaveLength(before.length + 1)
   expect(after[1]).toBe('Stat item 2')
+})
+
+test('edits the settings of a row in its sheet', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  const hero = sections.getByRole('listitem').first()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+  // Settings are not part of the row's form
+  await expect(
+    hero.getByRole('textbox', {name: 'Background color'})
+  ).toHaveCount(0)
+  await hero.getByRole('button', {name: 'Hero settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Hero'})
+  const background = sheet.getByRole('textbox', {name: 'Background color'})
+  await expect(sheet.getByRole('heading', {name: 'Settings'})).toBeVisible()
+  await background.fill('Blue')
+  await page.keyboard.press('Escape')
+  await hero.getByRole('button', {name: 'Hero settings'}).click()
+  await expect(background).toHaveValue('Blue')
 })

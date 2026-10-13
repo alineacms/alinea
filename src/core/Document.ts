@@ -1,7 +1,8 @@
 import {
   IcRoundBolt,
   IcRoundDescription,
-  IcRoundInfo
+  IcRoundInfo,
+  IcOutlineSettings
 } from '#/dashboard/icons.js'
 import {
   type MetadataField,
@@ -30,9 +31,9 @@ export type Document = {
   metadata: MetadataField
 }
 
-export type DocumentConfig<Fields, Seo, Details> = (
-  | TypeConfig<Fields>
-  | ContainerTypeConfig<Fields>
+export type DocumentConfig<Fields, Seo, Details, Settings = {}> = (
+  | TypeConfig<Fields, Settings>
+  | ContainerTypeConfig<Fields, Settings>
 ) & {
   /** Fields shown in the SEO tab, above the previews */
   seo?: Seo
@@ -51,39 +52,50 @@ function documentFields() {
 export function document<
   Fields extends FieldsDefinition = {},
   Seo extends FieldsDefinition = {},
-  Details extends FieldsDefinition = {}
+  Details extends FieldsDefinition = {},
+  Settings extends FieldsDefinition = {}
 >(
   label: string,
   {
     fields = {} as Fields,
     seo = {} as Seo,
     details = {} as Details,
+    settings = {} as Settings,
     ...config
-  }: DocumentConfig<Fields, Seo, Details>
-): Type<Document & Fields & Seo & Details> {
+  }: DocumentConfig<Fields, Seo, Details, Settings>
+): Type<Document & Fields & Seo & Details & Settings> {
   const {title, path, metadata} = documentFields()
   // Fields may replace the title and path; the other tabs add fields.
   const taken = new Set([
     ...keys({title, path, metadata}),
     ...fieldNames(fields)
   ])
-  for (const name of [...fieldNames(seo), ...fieldNames(details)]) {
+  for (const name of [
+    ...fieldNames(seo),
+    ...fieldNames(details),
+    ...fieldNames(settings)
+  ]) {
     if (taken.has(name)) throw new Error(`Field "${name}" is defined twice`)
     taken.add(name)
   }
-  const fieldsWithMeta: Document & Fields & Seo & Details = <any>tabs(
-    tab('Document', {
-      icon: IcRoundDescription,
-      fields: {title, path, ...fields}
-    }),
-    tab('SEO', {
-      icon: IcRoundBolt,
-      fields: {metadata, ...seo, ...metadataPreviews()}
-    }),
-    tab('Details', {
-      icon: IcRoundInfo,
-      fields: {...details, ...metadataDetails(metadata)}
-    })
+  const fieldsWithMeta: Document & Fields & Seo & Details & Settings = <any>(
+    tabs(
+      tab('Document', {
+        icon: IcRoundDescription,
+        fields: {title, path, ...fields}
+      }),
+      tab('SEO', {
+        icon: IcRoundBolt,
+        fields: {metadata, ...seo, ...metadataPreviews()}
+      }),
+      tab('Details', {
+        icon: IcRoundInfo,
+        fields: {...details, ...metadataDetails(metadata)}
+      }),
+      ...(keys(settings).length > 0
+        ? [tab('Settings', {icon: IcOutlineSettings, fields: settings})]
+        : [])
+    )
   )
   const result = type(label, {
     ...config,
