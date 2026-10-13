@@ -257,7 +257,7 @@ export class OAuth2 implements AuthApi {
         throw error
       // Access token is not valid, but we have a refresh token
       const token = {accessToken, refreshToken, expiresAt: null}
-      const newToken = await this.#client.refreshToken(token).catch(cause => {
+      const newToken = await refreshOnce(this.#client, token).catch(cause => {
         throw new InvalidCredentialsError('Failed to refresh token', {
           cause: [cause, error]
         })
@@ -283,6 +283,33 @@ export class OAuth2 implements AuthApi {
       )
     }
   }
+}
+
+/**
+ * Refreshes by refresh token, kept a minute after they start. Providers that
+ * rotate refresh tokens end the session when one is used twice, which
+ * parallel requests with an expiring access token would do, as would those
+ * sent before the browser stored the new cookies.
+ */
+const refreshes = new Map<string, {token: Promise<OAuth2Token>; at: number}>()
+const refreshReuse = 60 * 1000
+
+function refreshOnce(
+  client: OAuth2Client,
+  token: OAuth2Token & {refreshToken: string}
+): Promise<OAuth2Token> {
+  const now = Date.now()
+  for (const [key, refresh] of refreshes)
+    if (now - refresh.at >= refreshReuse) refreshes.delete(key)
+  const key = token.refreshToken
+  const existing = refreshes.get(key)
+  if (existing) return existing.token
+  const refresh = {token: client.refreshToken(token), at: now}
+  refreshes.set(key, refresh)
+  refresh.token.catch(() => {
+    if (refreshes.get(key) === refresh) refreshes.delete(key)
+  })
+  return refresh.token
 }
 
 function selectKey(jwks: Array<WebKey>, header: JWTHeader): JsonWebKey {
