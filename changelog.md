@@ -11,6 +11,9 @@
   `{field: Article.visibility.germany, deny: {all: true}}`.
 - Commit hooks receive the `user` that commits. `alinea dev --role <name>`
   signs in the local user with that role, for saves, hooks and `cms.user()`.
+- Add the `settings` type option: fields edited in the settings sheet of a
+  list row or rich text block, below its label and anchor. Entries of the type
+  show them in a Settings tab. They are stored and queried like other fields.
 - The `collapsed: false` type option expands an entry's children in the
   sidebar content tree from the start.
 - Rebuild the dashboard on React Aria Components, with keyboard navigation,

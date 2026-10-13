@@ -48,6 +48,7 @@ import {
   type BlockSheetState,
   useBlockSheet
 } from '#/dashboard/app/BlockSheet.js'
+import {BlockSettings} from '#/dashboard/app/BlockSettings.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
@@ -75,7 +76,7 @@ import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
-import type {ComponentType} from 'react'
+import type {ComponentType, ReactNode} from 'react'
 import {memo, useCallback, useMemo, useRef, useState} from 'react'
 import css from './ListField.module.css'
 
@@ -454,6 +455,13 @@ const ListFieldRow = memo(function ListFieldRow({
       <BlockSheet id={itemId}>
         <ListFieldRowSheet
           anchor={anchorValue}
+          settings={
+            <BlockSettings
+              node={row as ReactiveNode<object>}
+              type={type}
+              readOnly={readOnly}
+            />
+          }
           canInsert={canCreate}
           customLabel={customLabel}
           isFirstRow={index === 0}
@@ -626,6 +634,8 @@ type InsertPosition = 'before' | 'after'
 
 interface ListFieldRowSheetProps {
   anchor?: string
+  /** Settings of the row's type, rendered below the label and anchor */
+  settings?: ReactNode
   canInsert: boolean
   customLabel: string
   isFirstRow: boolean
@@ -648,6 +658,7 @@ interface ListFieldRowSheetProps {
 
 function ListFieldRowSheet({
   anchor,
+  settings,
   canInsert,
   customLabel,
   isFirstRow,
@@ -751,6 +762,7 @@ function ListFieldRowSheet({
                 )}
               </div>
             </SheetSection>
+            {settings}
           </SheetBody>
           <SheetFooter>
             <Button

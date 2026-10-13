@@ -135,6 +135,12 @@ export namespace Type {
     return getType(type).sections
   }
 
+  /** Fields edited in the settings of a block, or a Settings tab of an entry */
+  export function settings(type: Type): FieldsDefinition | undefined {
+    const {settings} = getType(type)
+    return settings && keys(settings).length > 0 ? settings : undefined
+  }
+
   export function isContainer(type: Type) {
     return Boolean(getType(type).contains)
   }
@@ -316,8 +322,14 @@ export interface FieldsDefinition {
   [key: string]: Field
 }
 
-export interface TypeConfig<Definition> {
+export interface TypeConfig<Definition, Settings = {}> {
   fields: Definition
+  /**
+   * Fields shown in the settings sheet of a block, below its label and
+   * anchor. Entries of the type show them in a Settings tab. They are stored
+   * and queried like the other fields.
+   */
+  settings?: Settings
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
   /** How the dashboard lists the children of entries of this type */
@@ -366,8 +378,8 @@ export interface TypeConfig<Definition> {
 }
 
 /** Types that only hold children can leave out their fields */
-export interface ContainerTypeConfig<Definition> extends Omit<
-  TypeConfig<Definition>,
+export interface ContainerTypeConfig<Definition, Settings = {}> extends Omit<
+  TypeConfig<Definition, Settings>,
   'fields' | 'contains'
 > {
   fields?: Definition
@@ -375,29 +387,38 @@ export interface ContainerTypeConfig<Definition> extends Omit<
   contains: Array<string | Type>
 }
 
-export interface TypeInternal extends TypeConfig<FieldsDefinition> {
+export interface TypeInternal extends TypeConfig<
+  FieldsDefinition,
+  FieldsDefinition
+> {
   label: string
   allFields: Record<string, Field>
   sections: Array<Section>
 }
 
 /** Create a new type */
-export function type<Fields extends FieldsDefinition = {}>(
+export function type<
+  Fields extends FieldsDefinition = {},
+  Settings extends FieldsDefinition = {}
+>(
   label: string,
-  config: TypeConfig<Fields> | ContainerTypeConfig<Fields>
-): Type<Fields> {
+  config: TypeConfig<Fields, Settings> | ContainerTypeConfig<Fields, Settings>
+): Type<Fields & Settings> {
   const instance = createType(label, config)
   Type.validate(instance)
   return instance
 }
 
-export function createType<Fields extends FieldsDefinition = {}>(
+export function createType<
+  Fields extends FieldsDefinition = {},
+  Settings extends FieldsDefinition = {}
+>(
   label: string,
   {
     fields: definition = {} as Fields,
     ...config
-  }: TypeConfig<Fields> | ContainerTypeConfig<Fields>
-): Type<Fields> {
+  }: TypeConfig<Fields, Settings> | ContainerTypeConfig<Fields, Settings>
+): Type<Fields & Settings> {
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
   const addCurrent = () => {
@@ -421,7 +442,23 @@ export function createType<Fields extends FieldsDefinition = {}>(
     }
   }
   addCurrent()
-  const allFields = fromEntries(fields) as Fields
+  // Settings are stored with the other fields, but left out of the sections
+  // that make up the form
+  const taken = new Set(fields.map(([key]) => key))
+  for (const [key, value] of entries(config.settings ?? {})) {
+    const own = Section.isSection(value)
+      ? entries(Section.fields(value))
+      : Field.isField(value)
+        ? [[key, value] as [string, Field]]
+        : []
+    for (const [name, field] of own) {
+      if (taken.has(name))
+        throw new Error(`Field "${name}" is defined twice in Type "${label}"`)
+      taken.add(name)
+      fields.push([name, field])
+    }
+  }
+  const allFields = fromEntries(fields) as Fields & Settings
   return {
     ...allFields,
     [internalType]: {
