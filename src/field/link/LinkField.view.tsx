@@ -88,6 +88,7 @@ import {
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
+import {assertPickerCondition} from '#/picker/entry/EntryPicker.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -508,6 +509,7 @@ function useResolvedEntryPickerOptions(
         condition,
         location
       ])
+      if (nextCondition) assertPickerCondition(nextCondition)
       return {condition: nextCondition, location: nextLocation}
     })
     return unwrap(resolved, previous => previous ?? initialValue)

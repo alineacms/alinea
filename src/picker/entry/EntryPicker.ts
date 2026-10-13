@@ -1,7 +1,7 @@
 import type {EntryFields} from '#/core/EntryFields.js'
 import {Entry} from '#/core/Entry.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
-import type {OpenFilter} from '#/core/Filter.js'
+import {filterChecker, type OpenFilter} from '#/core/Filter.js'
 import type {Graph, Projection} from '#/core/Graph.js'
 import type {Label} from '#/core/Label.js'
 import type {Picker} from '#/core/Picker.js'
@@ -73,6 +73,10 @@ export interface EntryPickerOptions<
 export function entryPicker<Ref extends EntryReference, Fields>(
   options: EntryPickerOptions<Fields>
 ): Picker<Ref, EntryPickerOptions<Fields>> {
+  // The dashboard checks conditions against loaded entries, which can't run a
+  // relation query: report a static condition with one when the config loads
+  if (options.condition && typeof options.condition !== 'function')
+    assertPickerCondition(options.condition)
   const fieldType = Type.isType(options.fields)
     ? options.fields
     : options.fields && type('Entry fields', {fields: options.fields as any})
@@ -186,4 +190,18 @@ function linkedLocalisation(
   if (!rootConfig) return
   const rootData = Root.data(rootConfig)
   return Root.mediaI18n(rootData) ?? rootData.i18n
+}
+
+/** @internal Throws for conditions an entry picker can't check, eg. relation filters */
+export function assertPickerCondition(
+  condition: OpenFilter<EntryFields>
+): void {
+  try {
+    filterChecker(condition)
+  } catch (error) {
+    throw new Error(
+      `Invalid entry picker condition: ${(error as Error).message}`,
+      {cause: error}
+    )
+  }
 }

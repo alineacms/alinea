@@ -231,9 +231,14 @@ function conditionCheck(node: ConditionNode): FilterCheck<unknown> {
       return value => Array.isArray(value) && value.some(check)
     }
     case 'relation':
-      throw new Error('Relation conditions can only be queried')
+      throw new Error(relationMessage)
   }
 }
+
+const relationMessage =
+  'Relation filters such as `_referenced: Query.referencedBy(...)` only work ' +
+  'in queries (graph.find, EntryTable, overview filters), they cannot be ' +
+  'checked against loaded entries'
 
 function defaultField(input: unknown, name: string): unknown {
   return isRecord(input) ? input[name] : undefined

@@ -81,3 +81,8 @@ test('nested has and includes filters address the stored value', () => {
   ).toBe(true)
   expect(check({_meta: {kind: 'post'}, _tags: [], _ids: []})).toBe(false)
 })
+
+test('relation conditions cannot be checked against loaded entries', () => {
+  const filter = {_referenced: {edge: 'referencedBy', type: 'Product'}}
+  expect(() => filterChecker(filter)).toThrow(/only work in queries/)
+})
