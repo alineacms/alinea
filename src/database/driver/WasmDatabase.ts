@@ -17,9 +17,7 @@ export interface WasmDatabaseHandle extends DatabaseHandle {
 const cacheSize = -16384
 
 /** The WASM SQLite database class, loaded on first use. */
-export async function wasmSqlite(): Promise<
-  new (data?: ArrayBufferView) => WasmSqlite
-> {
+export async function wasmSqlite(): Promise<new () => WasmSqlite> {
   const {default: init} = await import('@alinea/sqlite-wasm')
   const {Database} = await init()
   return Database

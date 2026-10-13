@@ -3,8 +3,7 @@ import {Entry} from '#/core/Entry.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {cacheName, DashboardWorker} from '#/dashboard/boot/DashboardWorker.js'
-import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
+import {DashboardWorker} from '#/dashboard/boot/DashboardWorker.js'
 import {wasmSqlite} from '#/database/driver/WasmDatabase.js'
 import {versionedCacheName} from '#/database/Version.js'
 import {createTestConnection} from '#test/CreateConnection.js'
@@ -109,19 +108,6 @@ const build = {
   },
   fetched(): number {
     return fetched
-  },
-  /** Compact base `key` as the page's compaction worker does, here. */
-  compact(key: string): Promise<string | undefined> {
-    return BrowserEntryStore.compact({name: cacheName}, key)
-  },
-  /** Have the store read the compacted copy of base `key`. */
-  adopt(key: string): Promise<boolean> {
-    return worker.adopt(key)
-  },
-  /** The base the store reads. */
-  async base(): Promise<string | undefined> {
-    const db = await worker.db
-    return db instanceof BrowserEntryStore ? db.base : undefined
   },
   errors(): Array<string> {
     return errors

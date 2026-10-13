@@ -2,15 +2,11 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import * as Comlink from 'comlink'
 import {ActivityEvent} from './ActivityEvent.js'
 import type {ConfigGenerator} from './Boot.js'
-import {CompactEvent} from './CompactEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
 interface Target {
   postMessage(message: unknown): void
 }
-
-/** The events of the worker that its pages receive. */
-const forwarded = [IndexEvent.type, ActivityEvent.type, CompactEvent.type]
 
 export async function loadWorker(gen: ConfigGenerator) {
   const worker = new DashboardWorker()
@@ -20,10 +16,12 @@ export async function loadWorker(gen: ConfigGenerator) {
       try {
         target.postMessage({...event, type: event.type})
       } catch {
-        for (const type of forwarded) worker.removeEventListener(type, listen)
+        worker.removeEventListener(IndexEvent.type, listen)
+        worker.removeEventListener(ActivityEvent.type, listen)
       }
     }
-    for (const type of forwarded) worker.addEventListener(type, listen)
+    worker.addEventListener(IndexEvent.type, listen)
+    worker.addEventListener(ActivityEvent.type, listen)
   }
 
   // A shared worker serves every tab through a port per connection, while a
