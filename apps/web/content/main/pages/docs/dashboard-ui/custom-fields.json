@@ -75,6 +75,22 @@
       "content": [
         {
           "_type": "text",
+          "text": "To describe the options as an interface, extend `FieldOptions` from `alinea/core` and type the options argument with `WithoutLabel`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIpTruj0xLdrfmNvbyhKMWnp",
+      "code": "import {Field} from 'alinea'\nimport type {FieldOptions, WithoutLabel} from 'alinea/core'\n\nexport interface RatingOptions extends FieldOptions<number> {\n  max?: number\n}\n\nexport type RatingField = Field.Create<number, RatingOptions>\n\nexport function rating(\n  label: string,\n  options: WithoutLabel<RatingOptions> = {}\n): RatingField {\n  return Field.create({label, options, view: '@/fields/Rating.view'})\n}",
+      "fileName": "fields/Rating.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
           "text": "`Field.create` takes:"
         }
       ]
@@ -337,6 +353,32 @@
       ]
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Style your own markup with the "
+        },
+        {
+          "_type": "text",
+          "text": "theme tokens",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIqo4pH0DxB2GthPMRXOzbla",
+              "_link": "entry",
+              "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ",
+              "_anchor": "theme-tokens"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", such as `--alinea-fg-muted`, `--alinea-border` and `--alinea-radius`, so it follows light and dark mode. `--alinea-workspace-color` holds the `color` of the current workspace."
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
@@ -453,6 +495,22 @@
           ]
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A field in the rows of a list can read a field of the entry, here to suggest the post title as a caption:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIsevl0pPRvKp7R1zLgJrZQq",
+      "code": "import {\n  type FieldViewProps,\n  useField,\n  useFieldOptions,\n  useFieldValue\n} from 'alinea/cms'\nimport {TextField} from 'alinea/components'\nimport {BlogPost} from '@/schema'\nimport type {CaptionField} from './Caption'\n\nexport function CaptionView({field}: FieldViewProps<CaptionField>) {\n  const [value, setValue] = useField(field)\n  const {label} = useFieldOptions(field)\n  // A field of the entry, read from inside a list row\n  const title = useFieldValue(BlogPost.title)\n  return (\n    <TextField\n      label={label}\n      value={value}\n      placeholder={title}\n      onValueChange={setValue}\n    />\n  )\n}",
+      "fileName": "fields/Caption.view.tsx",
+      "language": "tsx"
     },
     {
       "_type": "paragraph",
@@ -811,6 +869,20 @@
                 {
                   "_type": "text",
                   "text": "`useLocale`, `useGraph` and `useEntryEditor` from `alinea/dashboard/hook/*` become `useLocale`, `useGraph` and `useEntry` from `alinea/cms`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useEntryEditor` still works as a shim for views that only read the entry: `activeVersion` has the `id`, `locale`, `path`, `status`, `title` and `type` of the entry, and `activeVersion.data` only has `path`. Reading another field of it throws, read field values with `useFieldValue(field)` instead. `useEntry()` returns the same entry as a `DashboardEntry`, with its saved field values in `data`."
                 }
               ]
             }
