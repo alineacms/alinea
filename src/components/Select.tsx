@@ -29,18 +29,20 @@ import type {
   DataProps,
   FieldSharedProps,
   IconType,
+  Key,
   OpenStateProps,
   StyleProps
 } from './types.js'
 
 const styles = styler(css)
 
-export interface SelectProps
+export interface SelectProps<V extends Key = Key>
   extends FieldSharedProps, OpenStateProps, StyleProps, AriaProps, DataProps {
-  value?: string | null
-  defaultValue?: string | null
+  /** The value of the selected SelectItem */
+  value?: V | null
+  defaultValue?: V | null
   /** Called with the selected value, or null when the value is cleared */
-  onValueChange?: (value: string | null) => void
+  onValueChange?: (value: V | null) => void
   placeholder?: string
   /** Name of the hidden form input carrying the value */
   name?: string
@@ -55,7 +57,7 @@ export interface SelectProps
  * A labelled field to pick a single value from a list. The value can be
  * cleared unless the field is required.
  */
-export function Select({
+export function Select<V extends Key = Key>({
   label,
   description,
   error,
@@ -76,7 +78,7 @@ export function Select({
   style,
   children,
   ...props
-}: SelectProps) {
+}: SelectProps<V>) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const [isOpen, setOpen] = useState(defaultOpen ?? false)
   return (
@@ -87,9 +89,7 @@ export function Select({
       style={style}
       selectedKey={value}
       defaultSelectedKey={defaultValue}
-      onSelectionChange={key =>
-        onValueChange?.(key === null ? null : String(key))
-      }
+      onSelectionChange={key => onValueChange?.(key as V | null)}
       // A read only select can be focused but not opened
       isOpen={!readOnly && (open ?? isOpen)}
       onOpenChange={next => {
@@ -220,7 +220,7 @@ function preventSelectionKeys(event: KeyboardEvent) {
 }
 
 export interface SelectItemProps extends StyleProps {
-  value: string
+  value: Key
   disabled?: boolean
   icon?: IconType | ReactElement
   /** Text used for typeahead and the value, defaults to string children */

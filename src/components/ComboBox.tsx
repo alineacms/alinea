@@ -24,18 +24,20 @@ import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
+  Key,
   OpenStateProps,
   StyleProps
 } from './types.js'
 
 const styles = styler(css)
 
-export interface ComboBoxProps
+export interface ComboBoxProps<V extends Key = Key>
   extends FieldSharedProps, OpenStateProps, StyleProps, AriaProps, DataProps {
-  value?: string | null
-  defaultValue?: string | null
+  /** The value of the selected ComboBoxItem */
+  value?: V | null
+  defaultValue?: V | null
   /** Called with the selected value, or null when the selection is cleared */
-  onValueChange?: (value: string | null) => void
+  onValueChange?: (value: V | null) => void
   inputValue?: string
   defaultInputValue?: string
   onInputValueChange?: (value: string) => void
@@ -52,7 +54,7 @@ export interface ComboBoxProps
 }
 
 /** A labelled text input that filters a list of options to pick from */
-export function ComboBox({
+export function ComboBox<V extends Key = Key>({
   label,
   description,
   error,
@@ -77,7 +79,7 @@ export function ComboBox({
   style,
   children,
   ...props
-}: ComboBoxProps) {
+}: ComboBoxProps<V>) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const syncing = useRef(false)
   return (
@@ -88,9 +90,7 @@ export function ComboBox({
       style={style}
       selectedKey={value}
       defaultSelectedKey={defaultValue}
-      onSelectionChange={key =>
-        onValueChange?.(key === null ? null : String(key))
-      }
+      onSelectionChange={key => onValueChange?.(key as V | null)}
       inputValue={inputValue}
       defaultInputValue={defaultInputValue}
       onInputChange={onInputValueChange}
@@ -249,7 +249,7 @@ function ComboBoxTrigger({
 }
 
 export interface ComboBoxItemProps extends StyleProps {
-  value: string
+  value: Key
   /** Text used for filtering and the input, defaults to string children */
   textValue?: string
   disabled?: boolean

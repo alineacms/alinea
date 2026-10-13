@@ -3,7 +3,7 @@ import type {CSSProperties, ReactElement, ReactNode} from 'react'
 import {ListBoxItem, Text} from 'react-aria-components'
 import {IcRoundCheck} from '#/dashboard/icons.js'
 import {Icon} from '../Icon.js'
-import type {IconType} from '../types.js'
+import type {IconType, Key} from '../types.js'
 import css from './ListBoxOption.module.css'
 
 const styles = styler(css)
@@ -11,7 +11,7 @@ const styles = styler(css)
 export interface ListBoxOptionProps {
   /** Prefix for the data-slot attributes, eg. "select-item" */
   slot: string
-  value: string
+  value: Key
   textValue?: string
   disabled?: boolean
   icon?: IconType | ReactElement

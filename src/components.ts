@@ -1,5 +1,6 @@
 export * from './components/Alert.js'
 export * from './components/AppShell.js'
+export * from './components/AsyncList.js'
 export * from './components/Badge.js'
 export * from './components/Blockquote.js'
 export * from './components/Breadcrumbs.js'
