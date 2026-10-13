@@ -247,8 +247,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       })
     await syncFieldIndexes(db, config)
     // A database stored before statistics were kept has none until its
-    // content changes.
-    await analyze(db)
+    // content changes. Optimizing existing ones could rewrite them on every
+    // open: SQLite can misjudge the entry table's size by over 25 times, and
+    // the browser then stores a delta for unchanged content.
+    if (!(await hasStatistics(db))) await analyze(db)
   }
 
   /**
@@ -723,14 +725,20 @@ async function analyze(db: Database): Promise<void> {
   try {
     // SQLite before 3.46 analyzes every row without a limit.
     await db.run(sql`pragma analysis_limit = 400`)
-    const entries = getTable(EntryIndexTable).name
-    const stats = await db.get(
-      sql`select 1 from sqlite_master where name = 'sqlite_stat1'`
-    )
-    const analyzed =
-      stats &&
-      (await db.get(sql`select 1 from sqlite_stat1 where tbl = ${entries}`))
     // Older SQLite only optimizes tables it has statistics for.
-    await db.run(analyzed ? sql`pragma optimize = 0x10002` : sql`analyze`)
+    await db.run(
+      (await hasStatistics(db)) ? sql`pragma optimize = 0x10002` : sql`analyze`
+    )
   } catch {}
+}
+
+async function hasStatistics(db: Database): Promise<boolean> {
+  const entries = getTable(EntryIndexTable).name
+  const stats = await db.get(
+    sql`select 1 from sqlite_master where name = 'sqlite_stat1'`
+  )
+  return Boolean(
+    stats &&
+    (await db.get(sql`select 1 from sqlite_stat1 where tbl = ${entries}`))
+  )
 }

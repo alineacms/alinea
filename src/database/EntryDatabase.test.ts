@@ -743,3 +743,40 @@ test('databases written with an older layout are rebuilt', async () => {
     await db.get(sql`select version from alinea_database_metadata`)
   ).toEqual({version: databaseVersion})
 })
+
+test('opening keeps the statistics there are', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const handle = await openWasmDatabase()
+  const db = handle.database
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(config, db)
+  await database.syncWith(
+    await createEntrySource(
+      config,
+      Array.from({length: 50}, (_, i) => ({
+        id: `page-${i}`,
+        type: 'Page',
+        index: `a${String(i).padStart(2, '0')}`,
+        data: {title: `Page ${i}`}
+      }))
+    )
+  )
+  // SQLite can misjudge the size of the entry table by 25 times
+  await db.run(sql`update sqlite_stat1 set stat = '1'
+    where tbl = 'alinea_entry_index' and idx is null`)
+  await db.run(sql`update sqlite_stat1 set stat = '1 1'
+    where tbl = 'alinea_entry_index' and idx is not null`)
+  await db.run(sql`analyze sqlite_schema`)
+  const before = handle.export()
+  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
+  expect(Buffer.compare(handle.export(), before)).toBe(0)
+})
