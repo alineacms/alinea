@@ -8,6 +8,7 @@ import {App} from '../App.js'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
+import {SyncEvent} from './SyncEvent.js'
 import {WorkerDB} from './WorkerDB.js'
 
 export interface ConfigBatch {
@@ -94,6 +95,8 @@ function listen(source: EventTarget) {
       events.dispatchEvent(new IndexEvent(data.data))
     } else if (data.type === ActivityEvent.type) {
       events.dispatchEvent(new ActivityEvent(data.activities))
+    } else if (data.type === SyncEvent.type) {
+      events.dispatchEvent(new SyncEvent(data.progress))
     }
   })
   return events

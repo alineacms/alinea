@@ -10,8 +10,10 @@ import {
   uploadProgressAtom
 } from '../atoms/activity.js'
 import {eventsAtom} from '../atoms/core.js'
+import {syncProgressAtom} from '../atoms/graph.js'
 import {routeAtom} from '../atoms/nav.js'
 import {ActivityEvent} from '../boot/ActivityEvent.js'
+import {SyncEvent} from '../boot/SyncEvent.js'
 import {ActivityStatus as ActivityStatusView} from './ActivityStatus.js'
 
 afterEach(cleanup)
@@ -19,8 +21,9 @@ afterEach(cleanup)
 function ActivityPendingSubscription() {
   const [appPending] = useAtomValueRaw(appAtom)
   const activity = useAtomValueRaw(activityAtom)
+  const sync = useAtomValueRaw(syncProgressAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
-  const pending = appPending || activity.isMutating
+  const pending = appPending || activity.isMutating || Boolean(sync)
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])
@@ -264,6 +267,31 @@ test('shows a media upload as one filename-based activity', async () => {
     entry: parent._id,
     locale: undefined,
     view: undefined
+  })
+  view.unmount()
+})
+
+test('shows the progress of a background sync', async () => {
+  const {store} = await createDashboardAtomFixture()
+  const events = store.get(eventsAtom)
+  const view = render(
+    <Provider store={store}>
+      <ActivityStatus />
+    </Provider>
+  )
+  await screen.findByRole('button', {name: 'Content is up to date'})
+
+  act(() => {
+    events.dispatchEvent(new SyncEvent({loaded: 30, total: 120}))
+  })
+  expect(screen.getByRole('button', {name: 'Syncing content'})).toBeTruthy()
+  const spinner = await screen.findByRole('progressbar', {
+    name: 'Syncing content'
+  })
+  expect(spinner.getAttribute('aria-valuenow')).toBe('25')
+
+  act(() => {
+    events.dispatchEvent(new SyncEvent())
   })
   view.unmount()
 })

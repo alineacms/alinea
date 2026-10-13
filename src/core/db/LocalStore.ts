@@ -7,6 +7,14 @@ import type {WriteableGraph} from './WriteableGraph.js'
 export interface SyncOptions {
   /** Skip entry validation for a remote whose entries were already validated. */
   validate?: boolean
+  /** Called as files arrive from the remote, once there are files to fetch. */
+  onProgress?(progress: SyncProgress): void
+}
+
+/** Files fetched from the remote during a sync. */
+export interface SyncProgress {
+  loaded: number
+  total: number
 }
 
 /**

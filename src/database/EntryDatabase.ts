@@ -267,7 +267,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           previousTree: this.#tree?.sha === current ? this.#tree : undefined,
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
-          recordsTree: this.#recordsTree
+          recordsTree: this.#recordsTree,
+          onProgress: options?.onProgress
         })
         this.#tree = tree
         if (changed.length > 0) await this.#optimize()

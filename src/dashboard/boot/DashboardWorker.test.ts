@@ -11,6 +11,7 @@ import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
+import {SyncEvent} from './SyncEvent.js'
 
 test('loads local state without starting a remote sync', async () => {
   const fixture = new FSSource('test/fixtures/demo')
@@ -45,6 +46,31 @@ test('loads local state without starting a remote sync', async () => {
       path: 'chocolate-chip'
     })
   ).toMatchObject({title: 'Chocolate chip'})
+})
+
+test('reports the progress of a remote sync', async () => {
+  const remoteDB = new LocalDB(cms.config, new FSSource('test/fixtures/demo'))
+  await remoteDB.sync()
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('sync-progress', cms.config, createTestConnection(remoteDB))
+  const events = Array<SyncEvent['progress']>()
+  worker.addEventListener(SyncEvent.type, event => {
+    if (event instanceof SyncEvent) events.push(event.progress)
+  })
+
+  await worker.sync()
+
+  const total = events[0]?.total ?? 0
+  expect(total).toBeGreaterThan(0)
+  expect(events[0]).toEqual({loaded: 0, total})
+  expect(events.at(-2)).toEqual({loaded: total, total})
+  expect(events.at(-1)).toBeUndefined()
+
+  events.length = 0
+  await worker.sync()
+
+  // Nothing changed upstream, so there is nothing to report
+  expect(events).toEqual([])
 })
 
 test('serializes concurrent sync requests and waits for each result', async () => {

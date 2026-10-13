@@ -61,6 +61,9 @@
   the hyphenated, spaced and joined spellings of a word: `multi-modal`,
   `multi modal` and `multimodal` all find each other. Date and number fields are
   indexed per type that has them, which keeps these indexes small.
+- Show the progress of the content sync below the dashboard's loading spinner
+  (`Syncing content · 1,240 of 4,800 files`) and in the activity status for
+  later syncs. `syncWith` takes an `onProgress` callback.
 - Record URL aliases in the metadata field when an entry's URL changes, and
   resolve them in queries (`alias` filter, `Query.aliases`). The metadata field
   also stores `createdAt`, `createdBy`, `updatedAt` and `updatedBy`.

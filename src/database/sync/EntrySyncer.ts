@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {TaskQueue} from '#/core/util/Async.js'
@@ -18,6 +19,7 @@ export interface EntrySyncOptions {
    * reopened and synced from it. Defaults to true.
    */
   recordsTree?: boolean
+  onProgress?(progress: SyncProgress): void
 }
 
 /** Prepared, serialized source synchronization for one database connection. */
@@ -61,7 +63,8 @@ export class EntrySyncer {
       previousTree,
       withinTransaction = false,
       validate = true,
-      recordsTree = true
+      recordsTree = true,
+      onProgress
     }: EntrySyncOptions
   ): Promise<Array<string>> {
     const queries = await this.#prepared()
@@ -84,7 +87,8 @@ export class EntrySyncer {
         source,
         storedTree ?? ReadonlyTree.EMPTY,
         tree,
-        queries
+        queries,
+        onProgress
       )
       const changed = await deriveEntries(
         this.#config,

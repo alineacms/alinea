@@ -9,6 +9,7 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
+import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
@@ -24,10 +25,13 @@ import {
   type ActivityOperation,
   type ActivityTarget
 } from './ActivityEvent.js'
+import {SyncEvent} from './SyncEvent.js'
 
 const remote = pLimit(1)
 const cacheName = 'alinea-entry-database'
 const syncInterval = 120_000
+// Progress arrives per fetched file, pages need only a few updates a second
+const progressInterval = 100
 
 interface QueuedMutation {
   id: string
@@ -281,7 +285,19 @@ export class DashboardWorker extends EventTarget {
     // Failures throw to the caller and background syncs retry on the next
     // interval. The initial sync failure blocks graph readiness, so a broken
     // initial sync still surfaces as a load error.
-    return db.syncWith(client, {validate: false})
+    let reported = 0
+    const onProgress = (progress: SyncProgress) => {
+      const now = Date.now()
+      const done = progress.loaded >= progress.total
+      if (!done && now - reported < progressInterval) return
+      reported = now
+      this.dispatchEvent(new SyncEvent(progress))
+    }
+    try {
+      return await db.syncWith(client, {validate: false, onProgress})
+    } finally {
+      if (reported) this.dispatchEvent(new SyncEvent())
+    }
   }
 
   #failActivity(activity: Activity, error: unknown) {

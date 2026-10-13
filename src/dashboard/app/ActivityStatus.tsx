@@ -37,6 +37,7 @@ import {
   discardActivityAtom,
   retryActivityAtom
 } from '../atoms/activity.js'
+import {syncProgressAtom} from '../atoms/graph.js'
 import {routeAtom} from '../atoms/nav.js'
 import type {Activity} from '../boot/ActivityEvent.js'
 import {IcRoundCheck, IcRoundHistory, IcRoundWarning} from '../icons.js'
@@ -83,6 +84,7 @@ export function ActivityStatus({
 }: ActivityStatusProps) {
   const [appPending] = useAtomValueRawSync(appAtom)
   const activity = useAtomValueRaw(activityAtom)
+  const sync = useAtomValueRaw(syncProgressAtom)
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)
   const [isOpen, setIsOpen] = useState(false)
@@ -93,7 +95,11 @@ export function ActivityStatus({
   )
   const wasFailed = useRef(false)
   const lastActivityLabel = useRef('Finishing up')
-  const activityLabel = getActivityLabel(appPending, activity.isMutating)
+  const activityLabel = getActivityLabel(
+    appPending,
+    activity.isMutating,
+    Boolean(sync)
+  )
   const showSpinner = useAtomValueRaw(activityPendingAtom)
   if (activityLabel !== undefined) lastActivityLabel.current = activityLabel
   const visibleActivityLabel =
@@ -107,7 +113,15 @@ export function ActivityStatus({
   )
 
   const icon = showSpinner ? (
-    <Spinner aria-label={label} className={styles.ActivityStatus.icon()} />
+    <Spinner
+      aria-label={label}
+      value={
+        sync && sync.loaded < sync.total
+          ? Math.round((sync.loaded / sync.total) * 100)
+          : undefined
+      }
+      className={styles.ActivityStatus.icon()}
+    />
   ) : activity.hasFailed ? (
     <IcRoundWarning
       aria-hidden="true"
@@ -282,9 +296,14 @@ function ActivityItem({activity}: ActivityItemProps) {
   )
 }
 
-function getActivityLabel(isNavigating: boolean, isMutating: boolean) {
+function getActivityLabel(
+  isNavigating: boolean,
+  isMutating: boolean,
+  isSyncing: boolean
+) {
   if (isNavigating) return 'Loading page'
   if (isMutating) return 'Syncing changes'
+  if (isSyncing) return 'Syncing content'
 }
 
 function getStatusLabel(

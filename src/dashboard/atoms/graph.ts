@@ -1,7 +1,9 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
+import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import {selectAtom} from 'jotai/utils'
+import {SyncEvent} from '../boot/SyncEvent.js'
 import {eventsAtom, graphAtom} from './core.js'
 import {dispense} from './utils.js'
 
@@ -30,6 +32,29 @@ const indexStateAtom = Object.assign(
       events.addEventListener(IndexEvent.type, listen)
       return () => {
         events.removeEventListener(IndexEvent.type, listen)
+      }
+    }
+  ),
+  {onMount: (init: () => () => void) => init()}
+)
+
+const syncProgressValueAtom = atom<SyncProgress | undefined>(undefined)
+
+/** The files fetched by a running sync from the remote. */
+export const syncProgressAtom = Object.assign(
+  atom(
+    get => get(syncProgressValueAtom),
+    (get, set) => {
+      const events = get(eventsAtom)
+      const listen = (event: Event) => {
+        if (event instanceof SyncEvent)
+          set(syncProgressValueAtom, event.progress)
+      }
+      events.addEventListener(SyncEvent.type, listen)
+      return () => {
+        events.removeEventListener(SyncEvent.type, listen)
+        // The end of a sync is missed while nothing listens
+        set(syncProgressValueAtom, undefined)
       }
     }
   ),
