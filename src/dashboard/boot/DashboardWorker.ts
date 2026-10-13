@@ -2,6 +2,7 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
+import {createId} from '#/core/Id.js'
 import {getScope} from '#/core/Scope.js'
 import {trigger} from '#/core/Trigger.js'
 import type {
@@ -45,6 +46,9 @@ interface LoadedDashboard {
   db: EntryStore
   client: LocalConnection
   cacheFailure?: CacheFailure
+  /** The store opened with content it can show before syncing. */
+  stored: boolean
+  caughtUp?: Promise<void>
 }
 
 interface CacheFailure {
@@ -96,6 +100,66 @@ export class DashboardWorker extends EventTarget {
       if (superseded) return this.sync()
       throw error
     }
+  }
+
+  /**
+   * Resolve once the dashboard can show content. Stored content shows right
+   * away and catches up with the remote as an activity; an empty store, or
+   * one whose cached content failed, waits for its first sync.
+   */
+  async ready(): Promise<void> {
+    const loaded = await this.#nextLoad
+    if (!loaded.stored) return void (await this.sync())
+    // Once per store: another tab of the shared worker shows the same catch-up
+    loaded.caughtUp ??= this.#catchUp()
+  }
+
+  #catchUp(): Promise<void> {
+    const activity: Activity = {
+      id: createId(),
+      type: 'sync',
+      status: 'running',
+      operations: [{op: 'sync'}],
+      startedAt: Date.now()
+    }
+    this.#activities.unshift(activity)
+    return this.#syncActivities([activity])
+  }
+
+  async #syncActivities(activities: Array<Activity>): Promise<void> {
+    for (const activity of activities) {
+      activity.status = 'running'
+      activity.finishedAt = undefined
+      activity.error = undefined
+    }
+    this.#emitActivity()
+    try {
+      await this.sync()
+    } catch (error) {
+      // Another sync may have settled them meanwhile
+      for (const activity of activities)
+        if (activity.status === 'running') this.#failActivity(activity, error)
+      // The interval sync keeps trying: the first that succeeds settles them
+      this.#startSyncing()
+    }
+  }
+
+  /** Content that synced is caught up: settle the catch-up activities. */
+  #settleSyncs() {
+    const syncs = this.#activities.filter(
+      activity =>
+        activity.type === 'sync' &&
+        (activity.status === 'running' || activity.status === 'failed')
+    )
+    if (syncs.length === 0) return
+    const finishedAt = Date.now()
+    for (const activity of syncs) {
+      activity.status = 'succeeded'
+      activity.finishedAt = finishedAt
+      activity.error = undefined
+    }
+    this.#trimActivities()
+    this.#emitActivity()
   }
 
   async #syncLoaded(load: Promise<LoadedDashboard>): Promise<string> {
@@ -169,6 +233,10 @@ export class DashboardWorker extends EventTarget {
   }
 
   async retryActivity(): Promise<void> {
+    const syncs = this.#activities.filter(
+      activity => activity.type === 'sync' && activity.status === 'failed'
+    )
+    if (syncs.length > 0) await this.#syncActivities(syncs)
     if (this.#blocked) await this.#retryMutations()
   }
 
@@ -283,8 +351,9 @@ export class DashboardWorker extends EventTarget {
     // Fetch syncs are intentionally not recorded as activities: they run on
     // every load and on an interval, so history rows would just be noise.
     // Failures throw to the caller and background syncs retry on the next
-    // interval. The initial sync failure blocks graph readiness, so a broken
-    // initial sync still surfaces as a load error.
+    // interval. Only the catch-up of stored content that shows before its
+    // first sync is recorded, see ready(). Without stored content the first
+    // sync blocks graph readiness, so it surfaces as a load error.
     let reported = 0
     const onProgress = (progress: SyncProgress) => {
       const now = Date.now()
@@ -294,7 +363,9 @@ export class DashboardWorker extends EventTarget {
       this.dispatchEvent(new SyncEvent(progress))
     }
     try {
-      return await db.syncWith(client, {validate: false, onProgress})
+      const revision = await db.syncWith(client, {validate: false, onProgress})
+      this.#settleSyncs()
+      return revision
     } finally {
       if (reported) this.dispatchEvent(new SyncEvent())
     }
@@ -316,7 +387,7 @@ export class DashboardWorker extends EventTarget {
         activity.status === 'pending' ||
         activity.status === 'running' ||
         activity.status === 'blocked' ||
-        (activity.type === 'mutation' && activity.status === 'failed')
+        activity.status === 'failed'
       )
         continue
       this.#activities.splice(index, 1)
@@ -379,13 +450,19 @@ export class DashboardWorker extends EventTarget {
       // the dashboard never swaps from a populated store to an empty one.
       // This runs outside the shared remote slot: a sync of the superseded
       // store may still hold it, and that one must not block the swap.
-      if (hadPrevious && (await db.source.getTree()).isEmpty)
+      const empty = (await db.source.getTree()).isEmpty
+      if (hadPrevious && empty)
         await this.#syncWithClient(db, client).catch(() => {
           // The page's own sync surfaces the failure once the store is live.
         })
       this.#localDB = db
       this.#localClient = client
-      nextLoad.resolve({db, client, cacheFailure})
+      nextLoad.resolve({
+        db,
+        client,
+        cacheFailure,
+        stored: !cacheFailure && !empty
+      })
       const unsubscribe = db.onChange(change => {
         this.dispatchEvent(
           new IndexEvent({

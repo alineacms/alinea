@@ -98,7 +98,7 @@ export function ActivityStatus({
   const activityLabel = getActivityLabel(
     appPending,
     activity.isMutating,
-    Boolean(sync)
+    activity.isSyncing || Boolean(sync)
   )
   const showSpinner = useAtomValueRaw(activityPendingAtom)
   if (activityLabel !== undefined) lastActivityLabel.current = activityLabel
@@ -370,6 +370,7 @@ function activityStatusColor(status: Activity['status']) {
 }
 
 function formatActivityTitle(activity: Activity) {
+  if (activity.type === 'sync') return 'Content updates'
   const uploadTitle = formatUploadTitle(activity)
   if (uploadTitle) return uploadTitle
   const titles = [
@@ -385,11 +386,15 @@ function formatActivityTitle(activity: Activity) {
 
 function formatActivityDescription(activity: Activity) {
   const details =
-    activity.type === 'mutation' && isFileActivity(activity)
-      ? fileMutationDescription(activity.status)
-      : activity.operations
-          .map(operation => formatActivityOperation(operation, activity.status))
-          .join(' · ')
+    activity.type === 'sync'
+      ? syncDescription(activity.status)
+      : activity.type === 'mutation' && isFileActivity(activity)
+        ? fileMutationDescription(activity.status)
+        : activity.operations
+            .map(operation =>
+              formatActivityOperation(operation, activity.status)
+            )
+            .join(' · ')
   const time = (
     <Timestamp date={activity.finishedAt ?? activity.startedAt} format="time" />
   )
@@ -422,6 +427,12 @@ function formatUploadTitle(activity: Activity) {
   return created.title.endsWith(extension)
     ? created.title
     : `${created.title}${extension}`
+}
+
+function syncDescription(status: Activity['status']) {
+  if (status === 'failed') return 'Could not fetch updates'
+  if (status === 'succeeded') return 'Up to date'
+  return 'Fetching updates'
 }
 
 function fileMutationDescription(status: Activity['status']) {

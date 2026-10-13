@@ -39,6 +39,21 @@ test('waits for the initial graph sync', async () => {
   expect(settled).toBe(true)
 })
 
+test('waits for a graph that reports when it is ready', async () => {
+  const {db} = await createDashboardAtomFixture()
+  let syncs = 0
+  db.sync = async () => {
+    syncs++
+    return db.sha
+  }
+  const store = createStore()
+  store.set(graphAtom, Object.assign(db, {ready: async () => {}}))
+
+  await store.get(graphReadyAtom)
+
+  expect(syncs).toBe(0)
+})
+
 test('reads the indexed content hash without synchronizing the graph', async () => {
   const {db} = await createDashboardAtomFixture()
   const store = createStore()
@@ -109,6 +124,39 @@ test('summarizes current activity without hiding its history', () => {
   expect(state.hasBlocked).toBe(true)
   expect(state.canRetry).toBe(true)
   expect(state.canDiscard).toBe(false)
+})
+
+test('retries a failed catch-up with the remote', () => {
+  const state = activityState([
+    {
+      id: 'sync',
+      type: 'sync',
+      status: 'failed',
+      operations: [{op: 'sync'}],
+      startedAt: 1,
+      finishedAt: 2,
+      error: 'Remote unavailable'
+    }
+  ])
+
+  expect(state.hasFailed).toBe(true)
+  expect(state.canRetry).toBe(true)
+  expect(state.canDiscard).toBe(false)
+})
+
+test('a running catch-up syncs content without mutating', () => {
+  const state = activityState([
+    {
+      id: 'sync',
+      type: 'sync',
+      status: 'running',
+      operations: [{op: 'sync'}],
+      startedAt: 1
+    }
+  ])
+
+  expect(state.isMutating).toBe(false)
+  expect(state.isSyncing).toBe(true)
 })
 
 test('hydrates activity after a worker action already started', async () => {

@@ -81,8 +81,13 @@ export const syncAtom = atom(null, async (get, set) => {
 
 export const graphReadyAtom = atom(async get => {
   const graph = get(graphAtom)
+  if (isReadyGraph(graph)) return graph.ready()
   if (isSyncableGraph(graph)) await graph.sync()
 })
+
+interface ReadyGraph {
+  ready: () => Promise<void>
+}
 
 interface SyncableGraph {
   sync: () => Promise<string>
@@ -102,4 +107,10 @@ function isSyncableGraph(
   graph: WriteableGraph
 ): graph is WriteableGraph & SyncableGraph {
   return typeof (graph as Partial<SyncableGraph>).sync === 'function'
+}
+
+function isReadyGraph(
+  graph: WriteableGraph
+): graph is WriteableGraph & ReadyGraph {
+  return typeof (graph as Partial<ReadyGraph>).ready === 'function'
 }

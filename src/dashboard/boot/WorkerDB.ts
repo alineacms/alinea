@@ -44,6 +44,10 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.resolve(body) as Promise<AnyQueryResult<Query>>
   }
 
+  ready(): Promise<void> {
+    return this.#worker.ready()
+  }
+
   sync(): Promise<string> {
     return this.#worker.sync()
   }

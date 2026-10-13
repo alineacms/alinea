@@ -23,7 +23,8 @@ function ActivityPendingSubscription() {
   const activity = useAtomValueRaw(activityAtom)
   const sync = useAtomValueRaw(syncProgressAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
-  const pending = appPending || activity.isMutating || Boolean(sync)
+  const pending =
+    appPending || activity.isMutating || activity.isSyncing || Boolean(sync)
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])
@@ -148,6 +149,51 @@ test('removes transient upload progress when the worker takes over', async () =>
   )
   expect(screen.queryByRole('progressbar', {name: 'Uploading'})).toBeNull()
   expect(screen.queryByText('photo.jpg')).toBeNull()
+  view.unmount()
+})
+
+test('shows the catch-up with the remote as content updates', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  const events = store.get(eventsAtom)
+  const running = {
+    id: 'catch-up',
+    type: 'sync' as const,
+    status: 'running' as const,
+    operations: [{op: 'sync'}],
+    startedAt: Date.now()
+  }
+  Object.assign(db, {
+    async activities() {
+      return [running]
+    }
+  })
+
+  const view = render(
+    <Provider store={store}>
+      <ActivityStatus />
+    </Provider>
+  )
+  fireEvent.click(await screen.findByRole('button', {name: 'Syncing content'}))
+  expect(screen.getByText('Content updates')).toBeTruthy()
+  expect(screen.getByText(/Fetching updates/)).toBeTruthy()
+  expect(screen.getByRole('progressbar', {name: 'Syncing'})).toBeTruthy()
+
+  act(() =>
+    events.dispatchEvent(
+      new ActivityEvent([
+        {
+          ...running,
+          status: 'failed',
+          error: 'Remote unavailable',
+          finishedAt: Date.now()
+        }
+      ])
+    )
+  )
+  expect(screen.getByText(/Could not fetch updates/)).toBeTruthy()
+  expect(screen.getByText('Remote unavailable')).toBeTruthy()
+  expect(screen.getByRole('button', {name: 'Retry'})).toBeTruthy()
+  expect(screen.queryByRole('button', {name: 'Discard'})).toBeNull()
   view.unmount()
 })
 

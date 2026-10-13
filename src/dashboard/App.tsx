@@ -242,7 +242,11 @@ function DashboardApp(props: AppProps): ReactNode {
   // Mounting the theme applies the stored preference to the document
   useAtomValueRaw(themeAtom)
   const pending =
-    appPending || shown !== app || activity.isMutating || Boolean(sync)
+    appPending ||
+    shown !== app ||
+    activity.isMutating ||
+    activity.isSyncing ||
+    Boolean(sync)
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])

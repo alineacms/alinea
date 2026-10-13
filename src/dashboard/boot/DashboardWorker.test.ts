@@ -692,3 +692,126 @@ test('a new dashboard build syncs before replacing a store without content', asy
     })
   ).toMatchObject({title: 'Chocolate chip'})
 })
+
+test('shows stored content before catching up with the remote', async () => {
+  const {release, syncs, worker} = await createStoredFixture()
+
+  await worker.ready()
+
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'running', operations: [{op: 'sync'}]}
+  ])
+  const succeeded = syncActivity(worker, 'succeeded')
+  release()
+  await succeeded
+  expect(syncs()).toBe(1)
+})
+
+test('retries a failed catch-up', async () => {
+  const {release, setUnavailable, worker} = await createStoredFixture()
+  setUnavailable(true)
+  release()
+  const failed = syncActivity(worker, 'failed')
+
+  await worker.ready()
+  await failed
+
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'failed', error: 'Remote unavailable'}
+  ])
+  setUnavailable(false)
+  await worker.retryActivity()
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'succeeded', error: undefined}
+  ])
+})
+
+test('a later sync settles a failed catch-up', async () => {
+  const {release, setUnavailable, worker} = await createStoredFixture()
+  setUnavailable(true)
+  release()
+  const failed = syncActivity(worker, 'failed')
+  await worker.ready()
+  await failed
+
+  setUnavailable(false)
+  await worker.sync()
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'succeeded', error: undefined}
+  ])
+})
+
+test('waits for the first sync of an empty store', async () => {
+  const {release, worker} = await createStoredFixture(new MemorySource())
+  let settled = false
+
+  const ready = worker.ready().then(() => {
+    settled = true
+  })
+  await new Promise(resolve => setTimeout(resolve, 10))
+  expect(settled).toBe(false)
+
+  release()
+  await ready
+  expect(worker.activities()).toEqual([])
+})
+
+test('catches up once per loaded store', async () => {
+  const {release, worker} = await createStoredFixture()
+
+  await Promise.all([worker.ready(), worker.ready()])
+  await worker.ready()
+
+  expect(worker.activities()).toHaveLength(1)
+  const succeeded = syncActivity(worker, 'succeeded')
+  release()
+  await succeeded
+})
+
+async function createStoredFixture(local?: MemorySource) {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const stored = local ?? new MemorySource()
+  if (!local) await syncWith(stored, fixture)
+  const baseClient = createTestConnection(remoteDB)
+  let unavailable = false
+  let syncs = 0
+  let release = () => {}
+  const hold = new Promise<void>(resolve => {
+    release = resolve
+  })
+  const client: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      syncs += 1
+      await hold
+      if (unavailable) throw new Error('Remote unavailable')
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(stored)
+  await worker.load('stored', cms.config, client)
+  return {
+    release,
+    setUnavailable(value: boolean) {
+      unavailable = value
+    },
+    syncs: () => syncs,
+    worker
+  }
+}
+
+function syncActivity(worker: DashboardWorker, status: string) {
+  return new Promise<void>(resolve => {
+    worker.addEventListener(ActivityEvent.type, event => {
+      if (
+        event instanceof ActivityEvent &&
+        event.activities.some(
+          activity => activity.type === 'sync' && activity.status === status
+        )
+      )
+        resolve()
+    })
+  })
+}
