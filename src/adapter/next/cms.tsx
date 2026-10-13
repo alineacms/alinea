@@ -4,7 +4,7 @@ import {
   decodePreviewRequest
 } from '#/backend/resolver/ParsePreview.js'
 import {dashboardUrl} from './dashboardUrl.js'
-import {createThrottledSync} from '#/backend/util/Syncable.js'
+import {createThrottledSync, syncWait} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
@@ -21,6 +21,7 @@ import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
 import {getScope} from '#/core/Scope.js'
 import {trace} from '#/core/Trace.js'
+import {within} from '#/core/util/Async.js'
 import type {User} from '#/core/User.js'
 import type {PreviewStat} from '#/preview/widget.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
@@ -148,7 +149,10 @@ export class NextCMS<
         timed(row, () => this.#syncDb(db, client, undefined))
       )
     try {
-      const sha = await db.syncWith(client, preValidatedRemote)
+      const sha = await within(
+        db.syncWith(client, preValidatedRemote),
+        syncWait
+      )
       this.#syncedAt = Date.now()
       return sha
     } catch (error) {

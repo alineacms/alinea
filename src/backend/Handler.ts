@@ -35,6 +35,7 @@ import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {type RemoteSource, sourceAtTree} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
+import {within} from '#/core/util/Async.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {isAbsolute, normalize, relative} from '#/core/util/Paths.js'
@@ -45,7 +46,7 @@ import {HandleAction} from './HandleAction.js'
 import {proxyMediaUrl} from './api/ProxyMedia.js'
 import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
-import {createThrottledSync} from './util/Syncable.js'
+import {createThrottledSync, syncWait} from './util/Syncable.js'
 
 const PrepareBody = object({
   filename: string,
@@ -111,9 +112,9 @@ export function createHandler({
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
     /** Reads keep serving the current content when the remote is unreachable. */
-    async function syncForRead(source: RemoteSource): Promise<void> {
+    async function syncForRead(sync: Promise<unknown>): Promise<void> {
       try {
-        await local.syncWith(source)
+        await within(sync, syncWait)
       } catch (error) {
         console.warn(
           `Alinea could not sync with the remote, serving current content: ${
@@ -125,7 +126,8 @@ export function createHandler({
 
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
-      return throttle(() => syncForRead(cnx), syncInterval)
+      // Waits outside the throttle: reads queued behind a hung sync answer too
+      return syncForRead(throttle(() => local.syncWith(cnx), syncInterval))
     }
 
     try {
@@ -367,7 +369,7 @@ export function createHandler({
             'contentHash' in preview &&
             (await local.sha) !== preview.contentHash
           )
-            await syncForRead(cnx)
+            await syncForRead(local.syncWith(cnx))
           query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
@@ -475,14 +477,14 @@ export function createHandler({
           // The sync below warns about an unreachable remote and serves the
           // current content
         }
-        await syncForRead(source)
+        await syncForRead(local.syncWith(source))
         const tree = await local.getTreeIfDifferent(sha)
         return compressResponse(request, Response.json(tree ?? null))
       }
 
       if (action === HandleAction.Sha && request.method === 'GET') {
         expectJson()
-        await syncForRead(cnx)
+        await syncForRead(local.syncWith(cnx))
         return Response.json(await local.sha)
       }
 
@@ -493,7 +495,7 @@ export function createHandler({
         // is asked for each change once instead of for every client.
         let tree = await local.source.getTree()
         if (!dev && shas.some(sha => !tree.hasSha(sha))) {
-          await syncForRead(cnx)
+          await syncForRead(local.syncWith(cnx))
           tree = await local.source.getTree()
         }
         const fromLocal: Array<string> = []

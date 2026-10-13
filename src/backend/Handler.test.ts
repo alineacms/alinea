@@ -2,6 +2,7 @@ import {BasicAuth} from '#/backend/api/BasicAuth.js'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {type AfterCommitContext, createHandler} from '#/backend/Handler.js'
+import {syncWait} from '#/backend/util/Syncable.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {decodeBlobSequence} from '#/core/BlobTransport.js'
 import {createCMS} from '#/core.js'
@@ -18,6 +19,7 @@ import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
+import {jest} from 'bun:test'
 
 const test = suite(import.meta)
 
@@ -1712,6 +1714,57 @@ test('serves current content when a read cannot sync with the remote', async () 
     test.is(warnings.length, 1)
     test.ok(warnings[0]!.includes('Remote unavailable'))
   } finally {
+    console.warn = warn
+  }
+})
+
+test('answers reads with current content while a sync hangs', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    syncInterval: 0
+  })
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  db.syncWith = () => new Promise(() => {})
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const warn = console.warn
+  const warnings: Array<string> = []
+  console.warn = (message: string) => warnings.push(message)
+  jest.useFakeTimers()
+  try {
+    const sha = new Request('http://localhost/api?action=sha', {
+      headers: {accept: 'application/json'}
+    })
+    // The second resolve queues behind the hung sync of the first
+    const requests = [resolveRequest({}), resolveRequest({}), sha]
+    const statuses: Array<number> = []
+    for (const request of requests)
+      void handle(request, requestContext()).then(response =>
+        statuses.push(response.status)
+      )
+    for (let tick = 0; tick < 20 && statuses.length < 3; tick++) {
+      await new Promise(resolve => setImmediate(resolve))
+      jest.advanceTimersByTime(syncWait)
+    }
+    test.equal(statuses, [200, 200, 200])
+    test.ok(warnings.every(warning => warning.includes('Timed out')))
+  } finally {
+    jest.useRealTimers()
     console.warn = warn
   }
 })
