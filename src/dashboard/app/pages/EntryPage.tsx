@@ -19,7 +19,7 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
-import {entrySidebarOpenAtom} from '#/dashboard/atoms/dashboard.js'
+import {entrySidebarOpen} from '#/dashboard/atoms/dashboard.js'
 import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {
   entryAtoms,
@@ -106,7 +106,7 @@ export const entryPage = page(async (page, get) => {
       : await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
     const copyTranslationSource = get(localeData.copyTranslationSource)
-    const isSidebarOpen = get(entrySidebarOpenAtom)
+    const isSidebarOpen = get(entrySidebarOpen(Boolean(get(entry.preview))))
     const sidebar = await entrySidebar(get, entry, localeData, isSidebarOpen)
     return (
       <EntryEditorContent
@@ -330,7 +330,9 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
-  const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
+  const setSidebarOpen = useSetAtom(
+    entrySidebarOpen(Boolean(useAtomValueRaw(entry.preview)))
+  )
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary

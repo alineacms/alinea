@@ -11,6 +11,7 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {
   entrySidebarOpenAtom,
+  entrySidebarOpenWithoutPreviewAtom,
   entrySidebarTabAtom
 } from '#/dashboard/atoms/dashboard.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
@@ -107,6 +108,9 @@ function RemoveDialogContent({
   const setRoute = useSetAtom(routeAtom)
   const setSidebarTab = useSetAtom(entrySidebarTabAtom)
   const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
+  const setSidebarOpenWithoutPreview = useSetAtom(
+    entrySidebarOpenWithoutPreviewAtom
+  )
   const [isConfirming, startConfirm] = useTransition()
   const [isArchiving, startArchive] = useTransition()
   const [skipDialog, setSkipDialog] = useState(false)
@@ -259,7 +263,10 @@ function RemoveDialogContent({
                       view: 'edit'
                     })
                     setSidebarTab('references')
+                    // Asked for explicitly: open it whether or not the
+                    // entry has a preview
                     setSidebarOpen(true)
+                    setSidebarOpenWithoutPreview(true)
                   }}
                 >
                   See all {sources} references

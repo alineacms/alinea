@@ -49,6 +49,17 @@ export const entrySidebarOpenAtom = atom(
     !window.matchMedia?.('(max-width: 768px)').matches
 )
 
+/**
+ * Entries without a preview only have history and references in the sidebar,
+ * so it starts closed for them (like the 1.x preview pane) and remembers its
+ * own state, leaving the room to the form and wide custom views
+ */
+export const entrySidebarOpenWithoutPreviewAtom = atom(false)
+
+export function entrySidebarOpen(hasPreview: boolean) {
+  return hasPreview ? entrySidebarOpenAtom : entrySidebarOpenWithoutPreviewAtom
+}
+
 export const themeAtom = Object.assign(
   atom(
     get => get(themeStorageAtom),

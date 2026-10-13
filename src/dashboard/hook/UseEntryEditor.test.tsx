@@ -22,7 +22,8 @@ test('useEntryEditor keeps the publish status out of the field data', () => {
   function Version() {
     const editor = useEntryEditor()!
     const version = editor.activeVersion
-    readStatusField = () => (version.data as Record<string, unknown>).status
+    readStatusField = () =>
+      (version.data as unknown as Record<string, unknown>).status
     return (
       <span>
         {version.status}:{version.data.path}

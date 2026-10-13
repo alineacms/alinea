@@ -79,7 +79,7 @@ export async function entrySidebar(
   const typeName = get(entry.type)
   const type = get(typeAtoms(typeName))
   if (type.customView || get(localeData.untranslated)) return undefined
-  const allowedTabs = entrySidebarTabs(type.type)
+  const allowedTabs = entrySidebarTabs(type.type, Boolean(get(entry.preview)))
   const requestedTab = get(entrySidebarTabAtom)
   const selectedTab = allowedTabs.includes(requestedTab)
     ? requestedTab
@@ -109,9 +109,12 @@ export async function entrySidebar(
   return {entry, localeData, selectedTab, previousVersionsOpen, previewEntry}
 }
 
-function entrySidebarTabs(type: Type): Array<EntrySidebarTab> {
+function entrySidebarTabs(
+  type: Type,
+  hasPreview: boolean
+): Array<EntrySidebarTab> {
   if (type === MediaFile) return ['references']
-  if (type === MediaLibrary) return ['history', 'references']
+  if (type === MediaLibrary || !hasPreview) return ['history', 'references']
   return ['preview', 'history', 'references']
 }
 
@@ -127,9 +130,11 @@ export function EntrySidebar({
   const type = useAtomValueRaw(typeAtoms(typeName)).type
   const setSelectedTab = useSetAtom(entrySidebarTabAtom)
   const isMediaFile = type === MediaFile
-  const isMediaLibrary = type === MediaLibrary
-  const hasPreview = !isMediaFile && !isMediaLibrary
-  const allowedTabs = entrySidebarTabs(type)
+  const allowedTabs = entrySidebarTabs(
+    type,
+    Boolean(useAtomValueRaw(entry.preview))
+  )
+  const hasPreview = allowedTabs.includes('preview')
   return (
     <Sidebar side="right">
       <Tabs
