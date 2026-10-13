@@ -11,8 +11,7 @@ import {
   useField,
   useFieldKey,
   useFieldValue,
-  useLocale,
-  useSiblingFieldValue
+  useLocale
 } from '#/cms.js'
 import {afterEach, expect, test} from 'bun:test'
 import {useId} from 'react'
@@ -36,7 +35,6 @@ test('alinea/cms exports the custom UI api', () => {
     'useFieldSetter',
     'useFieldValue',
     'useGraph',
-    'useHref',
     'useLocale',
     'useNavigate',
     'usePolicy',
@@ -51,7 +49,7 @@ type RangeField = Field.Create<number, {max?: number; help?: string}>
 function RangeView({field}: FieldViewProps<RangeField>) {
   const [value = 0, setValue] = useField(field)
   const key = useFieldKey(field)
-  const title = useSiblingFieldValue('title') as string
+  const title = useFieldValue('title') as string
   const locale = useLocale()
   const id = useId()
   return (

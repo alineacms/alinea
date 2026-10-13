@@ -34,9 +34,22 @@ export type {
 } from '#/core/TextDoc.js'
 export type {EntryUrlMeta, Type} from '#/core/Type.js'
 export type {Workspace} from '#/core/Workspace.js'
-export type {EntryLink, EntryOptions} from '#/field/link/EntryLink.js'
-export type {FileLink, FileOptions} from '#/field/link/FileLink.js'
-export type {ImageLink, ImageOptions} from '#/field/link/ImageLink.js'
+export type {DashboardLocation} from '#/dashboard/Href.js'
+export type {
+  EntriesOptions,
+  EntryLink,
+  EntryOptions
+} from '#/field/link/EntryLink.js'
+export type {
+  FileLink,
+  FileOptions,
+  FilesOptions
+} from '#/field/link/FileLink.js'
+export type {
+  ImageLink,
+  ImageOptions,
+  ImagesOptions
+} from '#/field/link/ImageLink.js'
 export type {Link} from '#/field/link/Link.js'
 export type {UrlLink} from '#/field/link/UrlLink.js'
 export type {EntryReference} from '#/picker/entry/EntryReference.js'

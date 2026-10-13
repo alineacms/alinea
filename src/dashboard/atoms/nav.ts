@@ -9,6 +9,9 @@ import {workspaceAtom, workspacesAtom} from './config.js'
 import {configAtom, graphAtom} from './core.js'
 import {policyAtom} from './user.js'
 import {dispense} from './utils.js'
+import {nav} from '../Href.js'
+
+export {nav}
 
 export interface RouteBlock {
   confirm: () => void | Promise<void>
@@ -37,45 +40,6 @@ export interface DashboardRoute {
 
 export interface ResolvedDashboardRoute extends DashboardRoute {
   page: 'splash' | 'entry' | 'users' | 'edit'
-}
-
-export const nav = {
-  splash() {
-    return '/'
-  },
-  users() {
-    return '/users'
-  },
-  /** The editor of the entry at `url`, as linked from a page of the site */
-  edit(url: string, workspace?: string, root?: string) {
-    const params = new URLSearchParams({url})
-    if (workspace) params.set('workspace', workspace)
-    if (root) params.set('root', root)
-    return `/edit?${params}`
-  },
-  /** The editor of an entry by id, its workspace and root are looked up */
-  link(entryId: string, locale?: string | null, view?: EntryDefaultView) {
-    const params = new URLSearchParams({id: entryId})
-    if (locale) params.set('locale', locale)
-    if (view) params.set('view', view)
-    return `/edit?${params}`
-  },
-  entry(
-    workspace?: string,
-    root?: string,
-    entryId?: string,
-    locale?: string | null,
-    view?: EntryDefaultView,
-    sort?: string
-  ) {
-    const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
-    const path = `/entry/${[workspace, rootPart, entryId].filter(Boolean).join('/')}`
-    const params = new URLSearchParams()
-    if (view) params.set('view', view)
-    if (sort) params.set('sort', sort)
-    const search = params.toString()
-    return search ? `${path}?${search}` : path
-  }
 }
 
 /** The url parameter of an overview sort: the column, prefixed with - when descending */

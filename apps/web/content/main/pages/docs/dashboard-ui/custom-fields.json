@@ -488,7 +488,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Other fields: pass any field of the same list row or object, of a parent row or of the entry to these hooks, it resolves in the nearest scope that holds it. Import the type from your schema (`useFieldValue(BlogPost.title)`) or pass the field through your field's options. `useSiblingFieldValue(key)` is deprecated."
+                  "text": "Other fields: pass any field of the same list row or object, of a parent row or of the entry to these hooks, it resolves in the nearest scope that holds it. Import the type from your schema (`useFieldValue(BlogPost.title)`) or pass the field through your field's options. A view shared by types that each define their own field passes its key instead: `useFieldValue('path')` reads that field of the same row, untyped. `useSiblingFieldValue(key)` is deprecated."
                 }
               ]
             }
@@ -618,7 +618,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useHref(location)`: the href of the same locations, for a link that also opens in a new tab: `<a href={useHref({entryId: post.id})}>`."
+                  "text": "`href(location)` from `alinea`: the href of the same locations, for a link that also opens in a new tab: `<a href={href({entryId: post.id})}>`. It is a plain function, so it also works in table rows, in the `help` of a field and on the server, where you prefix the dashboard's url: `${baseUrl}/admin${href({entryId})}`."
                 }
               ]
             }

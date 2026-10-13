@@ -9,7 +9,8 @@
 - Add `alinea/components`, the public component library the dashboard is built
   from, to build custom fields and views. It includes `Stack`, `Form` (field
   errors from native constraints, `validationErrors` or what `onSubmit`
-  returns) and `useAsyncList` to load items page by page or as you type.
+  returns) and `useAsyncList` to load items page by page or as you type, and
+  to update, remove or add loaded items without loading them again.
   `DialogContent` submits a form with `onSubmit`, `Dialog` has `onClose`,
   `Table` has `loading` and `onLoadMore`, `ComboBox` has groups, item
   descriptions and icons, `filter` and `loading`, and `TextField` has
@@ -21,9 +22,11 @@
   `--alinea-workspace-color`.
 - Add `alinea/cms` for custom fields and views: field hooks that read and
   write the fields of the row, a parent row or the entry when passed that
-  field, `useEntry()` returning a `DashboardEntry`, `useNavigate` and `useHref`
-  to open entries by id, `EditField` and `EditFields` (also for the fields of
-  an object field), `FieldChrome` and `EntryTable`. The entry editor sets
+  field (`useFieldValue` also takes the key of a field of the row),
+  `useEntry()` returning a `DashboardEntry`, `useNavigate` to open entries by
+  id, `EditField` and `EditFields` (also for the fields of an object field),
+  `FieldChrome` and `EntryTable`. `href({entryId})` from `alinea` links to an
+  entry in the dashboard, also outside of it. The entry editor sets
   `--alinea-header-height`. `useSiblingFieldValue` and the `useField` hooks of
   `alinea/dashboard` are deprecated, the `useEntryEditor` shim reads the
   publish status from `activeVersion.status`.

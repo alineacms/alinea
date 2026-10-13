@@ -21,10 +21,8 @@ export {
 
 // Entry and dashboard context
 export {
-  type DashboardLocation,
   useEntry,
   useGraph,
-  useHref,
   useLocale,
   useNavigate,
   usePolicy,
@@ -32,6 +30,7 @@ export {
   useUser
 } from './dashboard/cms/hooks.js'
 export type {DashboardEntry, EntryActionProps} from './core/DashboardEntry.js'
+export type {DashboardLocation} from './dashboard/Href.js'
 export type {Policy} from './core/Role.js'
 export type {PreviewMetadata} from './core/Preview.js'
 export type {User} from './core/User.js'

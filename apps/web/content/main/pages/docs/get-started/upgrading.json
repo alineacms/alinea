@@ -1564,7 +1564,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useSiblingFieldValue(key)` is deprecated: pass the field to `useFieldValue(field)`, which is typed and also reads fields of a parent row or the entry. `EditFields` takes an object field to render its fields in its scope."
+                  "text": "`useSiblingFieldValue(key)` is deprecated: pass the field to `useFieldValue(field)`, which is typed and also reads fields of a parent row or the entry, or its key: `useFieldValue('path')`. `EditFields` takes an object field to render its fields in its scope."
                 }
               ]
             }

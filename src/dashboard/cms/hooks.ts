@@ -20,11 +20,8 @@ import {
   useMemo
 } from 'react'
 import {graphAtom} from '../atoms/core.js'
-import {
-  hashFromRoute,
-  type ResolvedDashboardRoute,
-  routeAtom
-} from '../atoms/nav.js'
+import {type ResolvedDashboardRoute, routeAtom} from '../atoms/nav.js'
+import type {DashboardLocation} from '../Href.js'
 import {previewMetadataAtom} from '../atoms/preview.js'
 import {policyAtom, userAtom} from '../atoms/user.js'
 import {
@@ -76,16 +73,28 @@ export function usePreviewMetadata(): PreviewMetadata | undefined {
  * holds it. Import the type from your schema or pass the field through the
  * options of your field.
  *
+ * A view shared by types that each define their own field can pass its key
+ * instead, which reads the field of the same row, untyped.
+ *
  * @example
  * // In the view of a field inside a list row of `BlogPost`
  * const title = useFieldValue(BlogPost.title) // a field of the entry
  * const price = useFieldValue(options.price) // a field passed as option
+ * const path = useFieldValue('path') // the path field of this type
  */
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
-): StoredValue {
-  const info = useFieldInfo(field)
-  return useAtomValueRaw(info.value) as StoredValue
+): StoredValue
+export function useFieldValue(key: string): unknown
+export function useFieldValue(field: Field | string): unknown {
+  const editor = useEditor()
+  const info =
+    typeof field === 'string' ? editor.field(field) : editor.get(field)
+  assert(
+    info,
+    `Field not found: ${typeof field === 'string' ? field : 'field'}`
+  )
+  return useAtomValueRaw(info.value)
 }
 
 /**
@@ -155,15 +164,12 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
  * Returns the stored value of another field in the same entry, list row or
  * object, by its key.
  *
- * @deprecated Pass the field to `useFieldValue` instead, which is typed and
- * also reads fields of a parent row or the entry:
- * `useFieldValue(BlogPost.title)`.
+ * @deprecated Use `useFieldValue`: pass the field, which is typed and also
+ * reads fields of a parent row or the entry (`useFieldValue(BlogPost.title)`),
+ * or its key (`useFieldValue('title')`).
  */
 export function useSiblingFieldValue(key: string): unknown {
-  const editor = useEditor()
-  const info = editor.field(key)
-  assert(info, `Field not found: ${key}`)
-  return useAtomValueRaw(info.value)
+  return useFieldValue(key)
 }
 
 /**
@@ -208,23 +214,6 @@ export function useLocale(): string | null {
   return dashboard?.page.locale ?? null
 }
 
-/** A place in the dashboard to navigate to */
-export interface DashboardLocation {
-  /** Name of the workspace, leave out with `root` to open an entry by id */
-  workspace?: string
-  /** Name of the root, leave out with `workspace` to open an entry by id */
-  root?: string
-  /** Id of the entry to open, leave out to open the root */
-  entryId?: string
-  /** Locale to open, for roots with translations */
-  locale?: string | null
-  /**
-   * Open the entry's form (`edit`) or the list of its children (`overview`),
-   * for entries with both
-   */
-  view?: EntryDefaultView
-}
-
 function dashboardRoute(location: DashboardLocation): ResolvedDashboardRoute {
   const locale = location.locale ?? undefined
   // Without workspace and root, the edit page looks up the entry by id
@@ -256,21 +245,5 @@ export function useNavigate(): (location: DashboardLocation) => void {
   return useCallback(
     (location: DashboardLocation) => setRoute(dashboardRoute(location)),
     [setRoute]
-  )
-}
-
-/**
- * Returns the href of a place in the dashboard, for a link that also opens
- * in a new tab. An entry can be linked by its id alone.
- *
- * @example
- * <a href={useHref({entryId: post.id})}>{post.title}</a>
- */
-export function useHref(location: DashboardLocation): string {
-  const {workspace, root, entryId, locale, view} = location
-  return useMemo(
-    () =>
-      hashFromRoute(dashboardRoute({workspace, root, entryId, locale, view})),
-    [workspace, root, entryId, locale, view]
   )
 }
