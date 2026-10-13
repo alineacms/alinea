@@ -607,7 +607,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`EditField`, `EditFields`: render a field, or a record of fields, with the view it is configured with, for example to lay out existing fields in a `Field.view` section."
+                  "text": "`EditField`, `EditFields`: render a field, or a record of fields, with the view it is configured with, for example to lay out existing fields in a `Field.view` section. Pass an object field to `EditFields` to render its fields, or some of them, in the scope of the object: `<EditFields field={Product.dimensions} fields={{width: Product.dimensions.width}} />`."
                 }
               ]
             }

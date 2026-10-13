@@ -1,12 +1,20 @@
 import {Surface, SurfaceContent} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
+import type {ObjectField} from '#/field/object.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
 import {memo} from 'react'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
-import {useEditor, useFieldOptions, useFieldView} from '../hooks.js'
+import {
+  EditorScope,
+  useEditor,
+  useFieldNode,
+  useFieldOptions,
+  useFieldView,
+  useNodeEditor
+} from '../hooks.js'
 import css from './EntryFields.module.css'
 
 const styles = styler(css)
@@ -48,15 +56,32 @@ const EntryFormSection = memo(function EntryFormSection({
 })
 
 export interface EditFieldsProps {
+  /**
+   * An object field to render the fields of, in the scope of its value.
+   * Without `fields` all its fields are rendered.
+   */
+  field?: ObjectField<object>
   /** The fields and sections to render, keyed by name */
-  fields: Record<string, Field | Section>
+  fields?: Record<string, Field | Section>
 }
 
 /**
  * Renders a set of fields and sections with their configured views, laid out
  * like the default entry form (including each field's `width`).
+ *
+ * @example
+ * // Some fields of an object field, in a custom view of that object
+ * <EditFields
+ *   field={Product.dimensions}
+ *   fields={{width: Product.dimensions.width}}
+ * />
  */
-export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
+export const EditFields = memo(function EditFields({
+  field,
+  fields
+}: EditFieldsProps) {
+  if (field) return <ObjectFields field={field} fields={fields} />
+  if (!fields) return null
   return (
     <div className={styles.EditFields()}>
       {Object.entries(fields).map(([name, value]) => {
@@ -75,6 +100,22 @@ export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
     </div>
   )
 })
+
+interface ObjectFieldsProps {
+  field: ObjectField<object>
+  fields?: Record<string, Field | Section>
+}
+
+function ObjectFields({field, fields}: ObjectFieldsProps) {
+  const type = useFieldOptions(field).fields
+  const node = useFieldNode<object>(field)
+  const editor = useNodeEditor(node, type)
+  return (
+    <EditorScope editor={editor}>
+      {fields ? <EditFields fields={fields} /> : <FieldsEditor />}
+    </EditorScope>
+  )
+}
 
 export interface EditFieldProps {
   /** The field to render, it must belong to the entry, row or object being edited */

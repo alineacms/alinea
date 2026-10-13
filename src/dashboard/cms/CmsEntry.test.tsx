@@ -5,6 +5,7 @@ import {createTestConnection} from '#test/CreateConnection.js'
 import * as cms from '#/cms.js'
 import {
   EditField,
+  EditFields,
   FieldChrome,
   type FieldViewProps,
   useField,
@@ -157,4 +158,44 @@ test('field hooks read fields of the row and of the entry', () => {
   )
   fireEvent.click(screen.getByText('Chair:Leg:5'))
   expect(screen.getByText('Desk:Leg:5')).toBeDefined()
+})
+
+type SizeField = Field.Create<number>
+
+function SizeView({field}: FieldViewProps<SizeField>) {
+  const [value, setValue] = useField(field)
+  return (
+    <button type="button" onClick={() => setValue(value + 1)}>
+      {useFieldKey(field)}:{value}
+    </button>
+  )
+}
+
+function size(label: string): SizeField {
+  return Field.create({label, options: {}, view: SizeView})
+}
+
+test('EditFields renders fields of an object field in its scope', () => {
+  const Box = Config.document('Box', {
+    fields: {
+      dimensions: Field.object('Dimensions', {
+        fields: {width: size('Width'), height: size('Height')}
+      })
+    }
+  })
+  const node = new ReactiveNode<object>({dimensions: {width: 2, height: 3}})
+  const editor = new EntryEditor(Box, node)
+  render(
+    <DashboardScopeInternal dashboard={testDashboard()}>
+      <EditorScope editor={editor}>
+        <EditFields
+          field={Box.dimensions}
+          fields={{width: Box.dimensions.width}}
+        />
+      </EditorScope>
+    </DashboardScopeInternal>
+  )
+  expect(screen.queryByText('height:3')).toBeNull()
+  fireEvent.click(screen.getByText('width:2'))
+  expect(screen.getByText('width:3')).toBeDefined()
 })
