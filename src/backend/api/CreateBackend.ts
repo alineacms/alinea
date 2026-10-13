@@ -3,6 +3,7 @@ import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {assert} from '#/core/util/Assert.js'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
+import {isBlobStore, storedBlobs, storedWrites} from './BlobStore.js'
 import {DatabaseApi} from './DatabaseApi.js'
 import {GithubApi, type GithubOptions} from './GithubApi.js'
 import {OAuth2, type OAuth2Options} from './OAuth2.js'
@@ -105,13 +106,18 @@ export function composeBackend(
           throw new Error(`Backend does not implement ${name}`)
         }
   }
+  // A part that stores blobs, such as the database, answers the blobs it
+  // has before the remote is asked, and keeps what is fetched or committed.
+  const blobStore = impl.find(isBlobStore)
   return {
     authenticate: call('authenticate'),
     verify: call('verify'),
     capabilities: call('capabilities'),
     getTreeIfDifferent: call('getTreeIfDifferent'),
-    getBlobs: call('getBlobs'),
-    write: call('write'),
+    getBlobs: blobStore
+      ? storedBlobs(blobStore, call('getBlobs'))
+      : call('getBlobs'),
+    write: blobStore ? storedWrites(blobStore, call('write')) : call('write'),
     revisions: call('revisions'),
     revisionData: call('revisionData'),
     getDraft: call('getDraft'),

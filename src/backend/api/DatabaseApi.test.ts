@@ -52,6 +52,57 @@ test('users are matched case-insensitively and roles are replaced', async () => 
   }
 })
 
+test('blobs are stored once and found by their sha', async () => {
+  const sqlite = new BunSqlite(':memory:')
+  const api = new DatabaseApi(testContext(), {
+    db: driver['bun:sqlite'](sqlite)
+  })
+  const first = new TextEncoder().encode('{"title": "First"}')
+  const second = new TextEncoder().encode('{"title": "Second"}')
+  await api.storeBlobs([['a'.repeat(40), first]])
+  // Storing a blob again, as another instance may, keeps the first copy
+  await api.storeBlobs([
+    ['a'.repeat(40), first],
+    ['b'.repeat(40), second],
+    ['b'.repeat(40), second]
+  ])
+  const found = await api.readBlobs([
+    'a'.repeat(40),
+    'b'.repeat(40),
+    'c'.repeat(40)
+  ])
+  test.equal([...found.keys()].toSorted(), ['a'.repeat(40), 'b'.repeat(40)])
+  test.equal(found.get('a'.repeat(40)), first)
+  test.equal(found.get('b'.repeat(40)), second)
+})
+
+test('blobs no instance used for a month are removed', async () => {
+  const sqlite = new BunSqlite(':memory:')
+  const api = new DatabaseApi(testContext(), {
+    db: driver['bun:sqlite'](sqlite)
+  })
+  const blob = new TextEncoder().encode('{}')
+  const [a, b, c] = ['a', 'b', 'c'].map(char => char.repeat(40))
+  await api.storeBlobs([
+    [a, blob],
+    [b, blob],
+    [c, blob]
+  ])
+  const monthAgo = Math.floor(Date.now() / 1000) - 31 * 24 * 60 * 60
+  sqlite.run('update alinea_blob set usedAt = ?', [monthAgo])
+  // Read or stored since, so still in use
+  await api.readBlobs([b])
+  await api.storeBlobs([[c, blob]])
+  // Cleanup runs at most once an hour per database, after reads too: a fresh
+  // one does
+  const later = new DatabaseApi(testContext(), {
+    db: driver['bun:sqlite'](sqlite)
+  })
+  await later.readBlobs(['d'.repeat(40)])
+  const found = await later.readBlobs([a, b, c])
+  test.equal([...found.keys()].toSorted(), [b, c])
+})
+
 function testContext(): RequestContext {
   return {
     isDev: true,
