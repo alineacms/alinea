@@ -2,6 +2,9 @@ import type {Locator, Page} from 'playwright'
 import {expect, test} from '../support/DashboardTest.js'
 import {DashboardScenarioMount} from '../support/DashboardScenarioMount.js'
 
+// Entries with a preview open the entry sidebar by default, which these tests
+// resize; entries without one start with it closed
+
 function divider(page: Page, side: 'left' | 'right') {
   return page.locator(
     `[data-side="${side}"] > .split-view > .sash-container > .sash`
@@ -34,7 +37,9 @@ test('resizes both sidebars and preserves widths through navigation and toggling
   dashboard,
   mount
 }) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const app = await dashboard.mount(() =>
+    mount(<DashboardScenarioMount slowPreview />)
+  )
   const left = pane(app.page, 'left')
   const right = pane(app.page, 'right')
   await expect.poll(() => width(left)).toBe(320)
@@ -81,7 +86,9 @@ test('restores the saved sidebar width after navigating away and back while clos
   dashboard,
   mount
 }) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const app = await dashboard.mount(() =>
+    mount(<DashboardScenarioMount slowPreview />)
+  )
   const right = pane(app.page, 'right')
   await expect.poll(() => width(right)).toBe(320)
   await drag(app.page, divider(app.page, 'right'), -80)
@@ -106,7 +113,9 @@ test('keeps mobile panels usable and the editor mounted across breakpoints', asy
   dashboard,
   mount
 }) => {
-  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const app = await dashboard.mount(() =>
+    mount(<DashboardScenarioMount slowPreview />)
+  )
   await app.field('Title').evaluate(element => {
     element.dataset.resizingMarker = 'preserved'
   })
