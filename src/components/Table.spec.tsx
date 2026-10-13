@@ -4,6 +4,7 @@ import {
   CustomRootView,
   DragAndDrop,
   Empty,
+  EmptyAutoHeight,
   ExplorerStyle,
   IterableItems,
   LoadMore,
@@ -67,6 +68,19 @@ test('nested rows', async ({mount, page}) => {
 test('empty state', async ({mount, page}) => {
   await mount(<Empty />)
   await expect(page.getByText('No articles yet')).toBeVisible()
+})
+
+test('empty and loading states sit below the header', async ({mount, page}) => {
+  await mount(<EmptyAutoHeight />)
+  const headers = page.locator('[data-slot="table-header"]')
+  for (const slot of ['table-empty', 'table-loading']) {
+    const state = await page.locator(`[data-slot="${slot}"]`).boundingBox()
+    const header = await headers
+      .nth(slot === 'table-empty' ? 0 : 1)
+      .boundingBox()
+    expect(state!.y).toBeGreaterThanOrEqual(header!.y + header!.height)
+    expect(state!.height).toBeGreaterThan(0)
+  }
 })
 
 test('renders rows from a one-shot iterable', async ({mount, page}) => {

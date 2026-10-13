@@ -402,6 +402,38 @@ export function Empty() {
   )
 }
 
+/** Tables that grow with their rows, eg. in a custom view, with none yet */
+export function EmptyAutoHeight() {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <Table
+        aria-label="Empty articles"
+        items={[]}
+        columns={articleColumns}
+        renderEmptyState={() => 'No articles yet'}
+      >
+        {(article: Article) => (
+          <TableRow id={article.id} textValue={article.title}>
+            <TableTitle title={article.title} />
+          </TableRow>
+        )}
+      </Table>
+      <Table
+        aria-label="Loading articles"
+        items={[]}
+        columns={articleColumns}
+        loading
+      >
+        {(article: Article) => (
+          <TableRow id={article.id} textValue={article.title}>
+            <TableTitle title={article.title} />
+          </TableRow>
+        )}
+      </Table>
+    </div>
+  )
+}
+
 const memberColumns: Array<TableColumn> = [
   {id: 'name', header: 'Name', minWidth: 200},
   {id: 'role', header: 'Role', minWidth: 160},
