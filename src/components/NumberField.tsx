@@ -30,6 +30,10 @@ export interface NumberFieldProps
   min?: number
   max?: number
   step?: number
+  /**
+   * How the number is shown and parsed. Digits are not grouped unless
+   * `useGrouping` is set: number fields often hold years and ids
+   */
   formatOptions?: Intl.NumberFormatOptions
   placeholder?: string
   /** Show increment and decrement buttons, defaults to true */
@@ -60,6 +64,7 @@ export function NumberField({
   onValueChange,
   min,
   max,
+  formatOptions,
   placeholder,
   steppers = true,
   onBlur,
@@ -75,6 +80,7 @@ export function NumberField({
       value={toInternal(value)}
       defaultValue={toInternal(defaultValue)}
       onChange={next => onValueChange?.(Number.isNaN(next) ? null : next)}
+      formatOptions={{useGrouping: false, ...formatOptions}}
       minValue={min}
       maxValue={max}
       isRequired={required}
