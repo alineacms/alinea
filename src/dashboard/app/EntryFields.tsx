@@ -46,8 +46,10 @@ const FormSection = memo(function FormSection({section}: FormSectionProps) {
 const EntryFormSection = memo(function EntryFormSection({
   section
 }: FormSectionProps) {
+  const visible = useAtomValueRaw(section.visible)
   const fields = <FormSection section={section} />
   if (Section.view(section.section)) return fields
+  if (!visible) return null
   return (
     <Surface>
       <SurfaceContent>{fields}</SurfaceContent>
@@ -80,6 +82,7 @@ export const EditFields = memo(function EditFields({
   field,
   fields
 }: EditFieldsProps) {
+  const editor = useEditor()
   if (field) return <ObjectFields field={field} fields={fields} />
   if (!fields) return null
   return (
@@ -93,7 +96,7 @@ export const EditFields = memo(function EditFields({
             className={styles.EditField.slot()}
             style={{flexBasis: fieldWidth()}}
           >
-            <FormSection section={new EntryEditorSection(value)} />
+            <FormSection section={new EntryEditorSection(editor, value)} />
           </div>
         )
       })}

@@ -5,6 +5,7 @@ import {Section} from '#/core/Section.js'
 import type {FieldGetter} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
+import {HiddenField} from '#/field/hidden.js'
 import {
   fieldError,
   policyFieldOptions,
@@ -49,6 +50,8 @@ export interface EditorSection {
     | ((props: {section: Section}) => ReactNode)
     | undefined
   >
+  /** The section has a view or at least one field that is not hidden */
+  visible: Atom<boolean>
 }
 
 export interface EditorField {
@@ -92,7 +95,7 @@ export class EntryEditor implements EditorModel {
       Type.anchors(type, get(node.value) as Record<string, unknown>)
     )
     this.sections = Type.sections(type).map(
-      section => new EntryEditorSection(section)
+      section => new EntryEditorSection(this, section)
     )
   }
 
@@ -116,7 +119,10 @@ export function rootEditor(editor: EditorModel): EditorModel {
 }
 
 export class EntryEditorSection implements EditorSection {
-  constructor(public section: Section) {}
+  constructor(
+    public editor: EditorModel,
+    public section: Section
+  ) {}
 
   view = atom(get => {
     const view = Section.view(this.section)
@@ -125,6 +131,17 @@ export class EntryEditorSection implements EditorSection {
         | ComponentType<{section: Section}>
         | undefined
     return view
+  })
+
+  visible = atom(get => {
+    if (Section.view(this.section)) return true
+    return Object.values(Section.definition(this.section)).some(value => {
+      // Nested sections render themselves
+      if (!Field.isField(value)) return true
+      if (value instanceof HiddenField) return false
+      const info = this.editor.get(value)
+      return !info || !get(info.options).hidden
+    })
   })
 }
 
