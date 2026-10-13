@@ -17,32 +17,36 @@ interface View {
   /** The feature, the screenshot and the crop it zooms into */
   feature: string
   shot: string
-  zoom: string
-  origin: string
+  zoom: number
+  /** The focus point as an offset from the center, in percent of the shot */
+  x: number
+  y: number
 }
 
 interface StageState {
   active: View
-  /** Shown before, it stays below and keeps its crop while the next fades in */
+  /** Shown before, it stays below while the next fades in */
   previous: View
 }
 
-const start: View = {feature: '', shot: '0', zoom: '1', origin: '50% 50%'}
+const start: View = {feature: '', shot: '0', zoom: 1, x: 0, y: 0}
 
 function viewOf(element: Element): View {
   const data = (name: string) => element.getAttribute(`data-${name}`)
   return {
     feature: data('feature') ?? '',
     shot: data('shot') ?? '0',
-    zoom: data('zoom') ?? '1',
-    origin: `${data('focus-x') ?? 50}% ${data('focus-y') ?? 50}%`
+    zoom: Number(data('zoom') ?? 1),
+    x: Number(data('focus-x') ?? 50) - 50,
+    y: Number(data('focus-y') ?? 50) - 50
   }
 }
 
 /**
  * Shows the screenshot of the feature that is hovered or focused, marked by
- * `data-shot` on the feature, and zooms into its crop. The stylesheet shows
- * the matching screenshot.
+ * `data-shot` on the feature, and zooms into its crop. All screenshots follow
+ * the same view, so moving between features pans and zooms from where the
+ * view is instead of starting over. The stylesheet shows the matching shot.
  */
 export function ProductShotStage({className, children}: ProductShotStageProps) {
   const [{active, previous}, setState] = useState<StageState>({
@@ -59,11 +63,13 @@ export function ProductShotStage({className, children}: ProductShotStageProps) {
         : {active: next, previous: current.active}
     )
   }
+  // Zooming around the focus point is a scale around the center plus this
+  // shift: animating it moves the view smoothly, unlike transform-origin
+  const shift = 1 - active.zoom
   const style = {
     '--web-shot-zoom': active.zoom,
-    '--web-shot-origin': active.origin,
-    '--web-shot-previous-zoom': previous.zoom,
-    '--web-shot-previous-origin': previous.origin
+    '--web-shot-x': `${shift * active.x}%`,
+    '--web-shot-y': `${shift * active.y}%`
   } as CSSProperties
   return (
     <div
