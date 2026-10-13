@@ -5,7 +5,11 @@ import {
   MediaLibrary,
   mediaOverview
 } from '#/core/media/MediaTypes.js'
-import {Overview, type OverviewSortBy} from '#/core/Overview.js'
+import {
+  Overview,
+  type OverviewFilterOptions,
+  type OverviewSortBy
+} from '#/core/Overview.js'
 import {getScope} from '#/core/Scope.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {resolveOverviewOptions} from '#/dashboard/atoms/overview.js'
@@ -312,7 +316,8 @@ test('the unused media filter lists the files no entry links to', async () => {
     root: 'blog',
     set: {title: 'Post', cover: {_id: 'c1', _type: 'image', _entry: used._id}}
   })
-  const unused = mediaOverview().filters!.usage.options.unused.filter
+  const usage = mediaOverview().filters!.usage.options as OverviewFilterOptions
+  const unused = usage.unused.filter
   const titles = () =>
     db.find({
       root: 'media',

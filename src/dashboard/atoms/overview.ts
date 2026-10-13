@@ -16,6 +16,8 @@ import {
   type OverviewColumnWidth,
   type OverviewEntry,
   type OverviewFilter,
+  type OverviewFilterContext,
+  type OverviewFilterOptions,
   type OverviewFormatContext,
   type OverviewOptions,
   type OverviewSort,
@@ -99,7 +101,12 @@ export interface OverviewFilterState {
   key: string
   label: string
   multiple: boolean
+  /** The options, empty until `loadFilterOptions` loaded those of `load` */
   options: Array<OverviewFilterOptionState>
+  /** Loads the options of filters that build them from the content */
+  load?: (
+    context: OverviewFilterContext
+  ) => OverviewFilterOptions | Promise<OverviewFilterOptions>
 }
 
 /** The keys of the options editors picked, by the key of their filter */
@@ -366,17 +373,41 @@ function columnSorts(
   )
 }
 
-function filterState(key: string, filter: OverviewFilter): OverviewFilterState {
-  return {
+function filterOptions(
+  options: OverviewFilterOptions
+): Array<OverviewFilterOptionState> {
+  return Object.entries(options).map(([key, option]) => ({
     key,
-    label: filter.label,
-    multiple: filter.multiple ?? false,
-    options: Object.entries(filter.options).map(([key, option]) => ({
-      key,
-      label: option.label,
-      filter: option.filter
-    }))
-  }
+    label: option.label,
+    filter: option.filter
+  }))
+}
+
+function filterState(key: string, filter: OverviewFilter): OverviewFilterState {
+  const base = {key, label: filter.label, multiple: filter.multiple ?? false}
+  const {options} = filter
+  if (typeof options === 'function')
+    return {...base, options: [], load: options}
+  return {...base, options: filterOptions(options)}
+}
+
+/** Whether an overview has filters whose options load from the content */
+export function hasFilterLoaders(overview: OverviewState): boolean {
+  return overview.filters.some(filter => filter.load)
+}
+
+/** Loads the options of the filters that build them from the content */
+export async function loadFilterOptions(
+  overview: OverviewState,
+  context: OverviewFilterContext
+): Promise<OverviewState> {
+  if (!hasFilterLoaders(overview)) return overview
+  const filters = await Promise.all(
+    overview.filters.map(async ({load, ...filter}) =>
+      load ? {...filter, options: filterOptions(await load(context))} : filter
+    )
+  )
+  return {...overview, filters}
 }
 
 function customColumn(

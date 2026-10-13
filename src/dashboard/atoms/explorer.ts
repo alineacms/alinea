@@ -32,6 +32,8 @@ import {MissingEntryError, treeEntryAtoms} from './entry.js'
 import {
   columnLinkIds,
   loadColumnValues,
+  hasFilterLoaders,
+  loadFilterOptions,
   loadOverviewParent,
   overviewFilter,
   type OverviewFilterSelection,
@@ -846,15 +848,19 @@ export class ExplorerAtoms {
       const items = await itemsPromise
       // The columns follow the loaded rows, every child of the parent or
       // the search results: their types, and built-in columns that differ
-      const shown = resolveOverview(
-        get(configAtom),
-        await get(get(this.#overviewParent)),
-        {
-          children: summarizeRows(
-            items.map(item => get(get(item.data).data.item))
-          )
-        }
-      )
+      const shown = {
+        ...resolveOverview(
+          get(configAtom),
+          await get(get(this.#overviewParent)),
+          {
+            children: summarizeRows(
+              items.map(item => get(get(item.data).data.item))
+            )
+          }
+        ),
+        // The filters do not follow the rows, their options are loaded
+        filters: overview.filters
+      }
       const requested = get(this.requestedSort)
       const sorted = search.trim() ? undefined : pickedSort(shown, requested)
       const filters = pickedFilters(shown, requestedFilters)
@@ -932,8 +938,15 @@ export class ExplorerAtoms {
    */
   overview = atom(async get => {
     const parent = await get(get(this.#overviewParent))
-    return resolveOverview(get(configAtom), parent, {
+    const overview = resolveOverview(get(configAtom), parent, {
       mixed: !get(this.#listedParent)
+    })
+    if (!hasFilterLoaders(overview)) return overview
+    // Options built from the content follow its changes
+    get(shaAtom)
+    return loadFilterOptions(overview, {
+      graph: get(graphAtom),
+      locale: get(this.selectedLocale)
     })
   })
   #parentAt = dispense(
