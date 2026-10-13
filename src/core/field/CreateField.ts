@@ -3,12 +3,14 @@ import {Field as FieldInstance} from '../Field.js'
 import type {Expand} from '../util/Types.js'
 import type {View} from '../View.js'
 
-export interface Create<Value, Options = object> extends Field<
+// A type alias rather than an interface: fields are then compared by their
+// options, so `Create<V, WithoutLabel<Opts>>` is assignable to `Create<V, Opts>`
+export type Create<Value, Options = object> = Field<
   Value,
   Value,
   (value: Value) => void,
   FieldOptions<Value> & Options
-> {}
+>
 
 export type Options<F> = Expand<
   F extends Field<any, any, any, infer Options>

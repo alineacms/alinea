@@ -66,7 +66,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Field.Create<Value, Options>` is the type of a field that stores `Value` (anything JSON can hold) and accepts your `Options` next to the standard ones: `initialValue`, `required`, `readOnly`, `hidden`, `shared` and `validate`. Queries return the stored value as it is."
+          "text": "`Field.Create<Value, Options>` is the type of a field that stores `Value` (anything JSON can hold) and accepts your `Options` next to the standard ones: `initialValue`, `required`, `readOnly`, `hidden`, `shared`, `validate` and `width`, the width of the field in the entry form. Queries return the stored value as it is."
         }
       ]
     },

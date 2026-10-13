@@ -81,16 +81,12 @@ export interface EditFieldProps {
   field: Field
 }
 
-interface FieldLayoutOptions extends FieldOptions<unknown> {
-  width?: number
-}
-
 /**
  * Renders a field with its configured view, as the default entry form does.
  * Renders nothing for hidden fields.
  */
 export const EditField = memo(function EditField({field}: EditFieldProps) {
-  const options = useFieldOptions(field) as FieldLayoutOptions
+  const options = useFieldOptions(field) as FieldOptions<unknown>
   const View = useFieldView(field)
   if (options.hidden || field instanceof HiddenField) return null
   if (!View) return <div>Missing view for field: {Field.label(field)}</div>
