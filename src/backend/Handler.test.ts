@@ -1033,44 +1033,115 @@ test('retries a forwarded commit conflict by response status', async () => {
   test.is(afterCommits, 1)
 })
 
-test('routes history requests with a file to revisions', async () => {
-  const cms = createCMS({schema: {Page}, workspaces: {main}})
+test('serves the history of entries the user can read', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    roles: {
+      reader: role('Reader', {
+        permissions(policy) {
+          policy.set({allow: {read: true}})
+        }
+      }),
+      guest: role('Guest', {
+        permissions() {}
+      })
+    }
+  })
   const db = new LocalDB(cms.config)
+  const about = await db.create({
+    type: Page,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'About', path: 'about'}
+  })
   const revisions: Array<Revision> = [
-    {ref: 'abc', createdAt: 0, file: 'content/pages/example.json'}
+    {ref: 'abc', createdAt: 0, file: 'content/pages/about.json'}
   ]
-  const requestedFiles: Array<string> = []
+  const record = {_id: about._id, _type: 'Page', _index: 'a0', title: 'Old'}
+  const requested: Array<string> = []
+  let roles = ['reader']
   const handle = createHandler({
     cms,
     db,
     remote(context) {
       return composeBackend({
         async verify(): Promise<AuthedContext> {
-          return {
-            ...context,
-            token: 'test',
-            user: {roles: ['admin'], sub: 'admin'}
-          }
+          return {...context, token: 'test', user: {roles, sub: 'ada'}}
         },
         async revisions(file) {
-          requestedFiles.push(file)
+          requested.push(file)
           return revisions
+        },
+        async revisionData(file, ref) {
+          requested.push(`${ref}:${file}`)
+          return record
         }
       })
     }
   })
+  const history = (query: string) =>
+    handle(
+      new Request(`http://localhost/api?action=history&${query}`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    )
 
-  const response = await handle(
-    new Request(
-      'http://localhost/api?action=history&file=content/pages/example.json',
-      {headers: {accept: 'application/json'}}
-    ),
-    requestContext()
+  const list = await history('file=content/pages/about.json')
+  test.is(list.status, 200)
+  test.equal(await list.json(), revisions)
+  // A revision can hold the entry under a name it had before
+  const renamed = await history('file=content/pages/old.json&revisionId=abc')
+  test.is(renamed.status, 200)
+  test.equal(await renamed.json(), record)
+
+  roles = ['guest']
+  test.is((await history('file=content/pages/about.json')).status, 401)
+  test.is(
+    (await history('file=content/pages/old.json&revisionId=abc')).status,
+    401
   )
+  test.equal(requested, [
+    'content/pages/about.json',
+    'abc:content/pages/old.json',
+    'abc:content/pages/old.json'
+  ])
+})
 
-  test.is(response.status, 200)
-  test.equal(requestedFiles, ['content/pages/example.json'])
-  test.equal(await response.json(), revisions)
+test('serves no history for files outside of entries', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const requested: Array<string> = []
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {...context, token: 'test', user: {roles: ['admin'], sub: 'a'}}
+        },
+        async revisions(file) {
+          requested.push(file)
+          return []
+        },
+        async revisionData(file) {
+          requested.push(file)
+          return {_id: 'x', _type: 'Page', _index: 'a0'}
+        }
+      })
+    }
+  })
+  const history = (query: string) =>
+    handle(
+      new Request(`http://localhost/api?action=history&${query}`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    )
+  test.is((await history('file=content/pages/missing.json')).status, 404)
+  test.is((await history('file=package.json&revisionId=abc')).status, 404)
+  test.equal(requested, ['package.json'])
 })
 
 test('redirects an unbuilt nested media file to its preview', async () => {

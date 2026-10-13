@@ -22,20 +22,22 @@ import {
 } from './CommitEntries.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
-import {Permission, Policy} from '#/core/Role.js'
+import {Permission, Policy, type Resource} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {type RemoteSource, sourceAtTree} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {isAbsolute, normalize} from '#/core/util/Paths.js'
+import {fileVersions} from '#/core/util/EntryFilenames.js'
+import {isAbsolute, normalize, relative} from '#/core/util/Paths.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
@@ -432,13 +434,28 @@ export function createHandler({
 
       // History
       if (action === HandleAction.History && request.method === 'GET') {
-        expectUser()
+        const user = expectUser()
         expectJson()
         const file = string(url.searchParams.get('file'))
         const revisionId = string.nullable(url.searchParams.get('revisionId'))
-        const result = await (revisionId
-          ? cnx.revisionData(file, revisionId)
-          : cnx.revisions(file))
+        const record = revisionId
+          ? await cnx.revisionData(file, revisionId)
+          : undefined
+        // The remote answers for any file: serve the history of an entry only
+        // to users who can read it
+        const contentDir = Config.contentDir(cms.config)
+        const owners = () => historyEntries(local, contentDir, file, record)
+        let entries = await owners()
+        // Another instance may have created the entry since this one synced
+        if (entries.length === 0) {
+          await syncForRead(cnx)
+          entries = await owners()
+        }
+        if (entries.length === 0)
+          throw new HttpError(ErrorCode.NotFound, 'Entry not found')
+        const policy = await user.policy
+        for (const entry of entries) policy.assert(Permission.Read, entry)
+        const result = revisionId ? record : await cnx.revisions(file)
         return Response.json(result ?? null)
       }
 
@@ -577,6 +594,37 @@ export function createHandler({
       )
     }
   }
+}
+
+const historyResource = {
+  id: Entry.id,
+  type: Entry.type,
+  workspace: Entry.workspace,
+  root: Entry.root,
+  parents: Entry.parents,
+  locale: Entry.locale
+}
+
+/** The entries, in every status, whose history a file holds. */
+async function historyEntries(
+  local: LocalStore,
+  contentDir: string,
+  file: string,
+  record?: EntryRecord
+): Promise<Array<Resource>> {
+  const filePath = relative(contentDir, file)
+  if (filePath.startsWith('../')) return []
+  const status = 'all'
+  const select = historyResource
+  const atFile = await local.find({
+    filePath: {in: fileVersions(filePath)},
+    status,
+    select
+  })
+  const id = record?._id
+  if (atFile.length > 0 || typeof id !== 'string') return atFile
+  // A revision can hold the entry under a name it had before
+  return local.find({id, status, select})
 }
 
 function redirectFile(location: string, cacheControl: string): Response {
