@@ -52,7 +52,8 @@ export {EntryTable, type EntryTableProps} from './dashboard/cms/EntryTable.js'
 export type {
   OverviewActionProps,
   OverviewCellProps,
-  OverviewEntry
+  OverviewEntry,
+  OverviewHeaderProps
 } from './core/Overview.js'
 
 // View props

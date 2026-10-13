@@ -212,6 +212,27 @@ export interface OverviewTab {
   filter?: OpenFilter<EntryFilterFields>
 }
 
+/** Props of an `overview.header` view */
+export interface OverviewHeaderProps {
+  workspace: string
+  root: string
+  /** The entry whose children are listed, null for the root */
+  parentId: string | null
+  locale: string | null
+  /** The search terms entered in the overview */
+  search: string
+  /**
+   * The condition of the selected tab and the applied filters, undefined
+   * when none applies
+   */
+  filter: OpenFilter<EntryFilterFields> | undefined
+  /**
+   * A query for the listed entries, without paging. Pass it to
+   * `useGraph().find({...query, select})`, eg. to total them.
+   */
+  query: GraphQuery<undefined, Type | Array<Type> | undefined, undefined>
+}
+
 interface OverviewColumnBase<Value> {
   /** The column header */
   header: string
@@ -318,6 +339,11 @@ export interface OverviewOptions {
   thumbnail?: Expr<any> | Record<string, Expr<any>>
   /** Components rendered in the overview toolbar, eg. an export button */
   actions?: Array<View<OverviewActionProps>>
+  /**
+   * A component rendered above the listed children, eg. totals or a chart of
+   * the listed entries
+   */
+  header?: View<OverviewHeaderProps>
 }
 
 /** Create a column for an overview */
@@ -337,6 +363,7 @@ export namespace Overview {
     if (!overview) return []
     const views: Array<unknown> = [
       ...(overview.actions ?? []),
+      overview.header,
       ...values(overview.columns ?? {}).map(column => column.view)
     ]
     return views.filter((view): view is string => typeof view === 'string')

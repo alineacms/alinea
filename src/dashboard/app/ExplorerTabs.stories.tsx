@@ -2,14 +2,17 @@ import {
   Badge,
   Page,
   PageContent,
+  Stack,
   Table,
   TableCell,
   type TableColumn,
   TableRow,
-  TableTitle
+  TableTitle,
+  Text
 } from '#/components.js'
 import {type CSSProperties, useState} from 'react'
 import type {OverviewTabState} from '../atoms/overview.js'
+import {ExplorerOverviewHeader} from './ExplorerOverviewHeader.js'
 import {ExplorerTabs} from './ExplorerTabs.js'
 
 interface Product {
@@ -49,8 +52,26 @@ function listed(tab: string) {
     : products.filter(product => product.status === tab)
 }
 
-/** `overview.tabs`: each tab lists the products of its filter */
-export function Tabs() {
+interface ProductTotalsProps {
+  items: Array<Product>
+}
+
+/** What an `overview.header` view could show: totals of the listed entries */
+function ProductTotals({items}: ProductTotalsProps) {
+  const total = items.reduce((sum, product) => sum + product.price, 0)
+  return (
+    <Stack direction="row" gap={24}>
+      <Text>{items.length} products</Text>
+      <Text>{price.format(total)} in total</Text>
+    </Stack>
+  )
+}
+
+interface ProductsStoryProps {
+  header?: boolean
+}
+
+function ProductsStory({header}: ProductsStoryProps) {
   const [tab, setTab] = useState('all')
   const items = listed(tab)
   return (
@@ -58,6 +79,11 @@ export function Tabs() {
       <Page>
         <PageContent>
           <ExplorerTabs tabs={tabs} value={tab} onValueChange={setTab}>
+            {header && (
+              <ExplorerOverviewHeader>
+                <ProductTotals items={items} />
+              </ExplorerOverviewHeader>
+            )}
             <Table aria-label="Products" items={items} columns={columns}>
               {product => (
                 <TableRow id={product.id} textValue={product.title}>
@@ -74,6 +100,16 @@ export function Tabs() {
       </Page>
     </div>
   )
+}
+
+/** `overview.tabs`: each tab lists the products of its filter */
+export function Tabs() {
+  return <ProductsStory />
+}
+
+/** `overview.header` above the list, here totals of the listed products */
+export function TabsWithHeader() {
+  return <ProductsStory header />
 }
 
 export default {

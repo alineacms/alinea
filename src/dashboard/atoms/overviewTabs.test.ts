@@ -1,5 +1,6 @@
 import '#test/react.js'
 import {getRoot} from '#/core/Internal.js'
+import {Overview, type OverviewHeaderProps} from '#/core/Overview.js'
 import {Policy} from '#/core/Role.js'
 import {localUser} from '#/core/User.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -24,6 +25,10 @@ const Product = Config.document('Product', {
   }
 })
 
+function ProductTotals(_props: OverviewHeaderProps) {
+  return null
+}
+
 const config = Config.create({
   schema: {Product},
   workspaces: {
@@ -43,7 +48,8 @@ const config = Config.create({
                 label: 'Price',
                 options: {cheap: {label: 'Cheap', filter: {price: {lt: 50}}}}
               }
-            }
+            },
+            header: ProductTotals
           }
         }),
         other: Config.root('Other', {contains: ['Product']})
@@ -57,13 +63,14 @@ const products: OverviewParent = {
   data: getRoot(config.workspaces.main.products)
 }
 
-test('tabs resolve with the overview', () => {
+test('tabs and the header resolve with the overview', () => {
   const overview = resolveOverview(config, products)
   expect(overview.tabs.map(tab => [tab.key, tab.label])).toEqual([
     ['all', 'All'],
     ['active', 'Active'],
     ['archived', 'Archived']
   ])
+  expect(overview.header).toBe(ProductTotals)
   expect(pickedTab(overview, 'archived')?.key).toBe('archived')
   // Unknown tabs fall back to the first
   expect(pickedTab(overview, 'nope')?.key).toBe('all')
@@ -80,6 +87,15 @@ test('the filter of the tab combines with the picked filters', () => {
   expect(overviewFilter(overview, {price: ['cheap']}, 'archived')).toEqual({
     and: [{status: 'archived'}, cheap]
   })
+})
+
+test('header views are bundled with the dashboard', () => {
+  expect(
+    Overview.referencedViews({
+      actions: ['@/views/Export'],
+      header: '@/views/Totals'
+    })
+  ).toEqual(['@/views/Export', '@/views/Totals'])
 })
 
 async function catalogue() {

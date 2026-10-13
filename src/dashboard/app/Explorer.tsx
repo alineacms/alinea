@@ -17,7 +17,7 @@ import {
   ToggleGroupItem
 } from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
-import type {OverviewActionProps} from '#/core/Overview.js'
+import type {OverviewActionProps, OverviewHeaderProps} from '#/core/Overview.js'
 import {resolveView} from '#/core/View.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from './ViewToggle.js'
@@ -54,6 +54,7 @@ import css from './Explorer.module.css'
 import {ExplorerBatchActions} from './ExplorerBatchActions.js'
 import {ExplorerControls} from './ExplorerControls.js'
 import {ExplorerList} from './ExplorerList.js'
+import {ExplorerOverviewHeader} from './ExplorerOverviewHeader.js'
 import {ExplorerTabs} from './ExplorerTabs.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
@@ -888,6 +889,32 @@ export function ExplorerHeader({
   )
 }
 
+interface ExplorerHeaderViewProps {
+  page: ExplorerReadyPage
+}
+
+/** The view configured with `overview.header`, above the listed entries */
+function ExplorerHeaderView({page}: ExplorerHeaderViewProps) {
+  const views = useAtomValueRaw(viewsAtom)
+  const {location, overview} = page
+  if (!overview.header || !location.root) return null
+  const Header = resolveView<OverviewHeaderProps>(views, overview.header)
+  if (!Header) return null
+  return (
+    <ExplorerOverviewHeader>
+      <Header
+        workspace={location.workspace}
+        root={location.root}
+        parentId={location.parentId ?? null}
+        locale={page.locale}
+        search={page.search}
+        filter={page.filter}
+        query={page.query}
+      />
+    </ExplorerOverviewHeader>
+  )
+}
+
 export function ExplorerBody({
   compactTable,
   explorer,
@@ -900,6 +927,7 @@ export function ExplorerBody({
   const {tabs} = page.overview
   const body = (
     <>
+      <ExplorerHeaderView page={page} />
       <div className={styles.Explorer.viewport()}>
         <ExplorerList
           compactTable={compactTable}

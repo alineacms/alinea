@@ -19,6 +19,7 @@ import {
   type OverviewFilterContext,
   type OverviewFilterOptions,
   type OverviewFormatContext,
+  type OverviewHeaderProps,
   type OverviewOptions,
   type OverviewSort,
   type OverviewSortDirection,
@@ -139,6 +140,7 @@ export interface OverviewState {
   layout?: 'table' | 'cards'
   thumbnail?: OverviewSelection
   actions: Array<View<OverviewActionProps>>
+  header?: View<OverviewHeaderProps>
   /** The names of the types the parent contains */
   types: Array<string>
 }
@@ -343,6 +345,7 @@ export function resolveOverviewOptions(
       ? selection(overview.thumbnail, typeNames)
       : undefined,
     actions: overview?.actions ?? [],
+    header: overview?.header,
     types: listed
   }
 }

@@ -15,6 +15,7 @@ export type {
   OverviewFilterOption,
   OverviewFilterOptions,
   OverviewFormatContext,
+  OverviewHeaderProps,
   OverviewOptions,
   OverviewSort,
   OverviewSortBy,
