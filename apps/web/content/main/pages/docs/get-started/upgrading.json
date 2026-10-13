@@ -507,6 +507,30 @@
       "content": [
         {
           "_type": "text",
+          "text": "Don't derive media URLs from the stored file. Code that reads `location`, or parses the 1.x file names (`name.<id>.ext`) to build a URL or find an id, breaks on `/admin/file/...` URLs. Use the URL Alinea returns instead: `src` for images, `url` (or `href`) for files, and `_url` when you query media files directly:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdNsBv9XvWGYgddavcRENiz7UX",
+      "code": "import {cms} from '@/cms'\nimport {Query} from 'alinea'\nimport {MediaFile} from 'alinea/core'\n\n// 1.7: built the url from the stored location\n// const src = file.location\n\nconst files = await cms.find({\n  type: MediaFile,\n  select: {title: Query.title, url: Query.url}\n})\n// Without a select each result has its url as `_url`",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`ImageLink` no longer needs a type parameter when the image field has no extra fields: replace `ImageLink<undefined>` with `ImageLink`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
           "text": "A workspace can set `mediaUrl` to add a prefix to its media URLs, which helps when several workspaces have files with the same name."
         }
       ]
