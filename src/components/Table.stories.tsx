@@ -434,6 +434,42 @@ export function EmptyAutoHeight() {
   )
 }
 
+const longColumns: Array<TableColumn> = [
+  {id: 'title', header: 'Title', width: '1fr', minWidth: 160},
+  {
+    id: 'publicationDate',
+    header: 'Date of first publication on the website',
+    width: 120,
+    sortable: true
+  },
+  {id: 'createdBy', header: 'Author of the original version', width: 100}
+]
+
+/** Column headers wider than their column end in an ellipsis */
+export function LongHeaders() {
+  const [sort, setSort] = useState<SortDescriptor>({
+    column: 'publicationDate',
+    direction: 'desc'
+  })
+  return (
+    <Table
+      aria-label="Articles"
+      items={sortArticles(articles.slice(0, 3), sort)}
+      columns={longColumns}
+      sortDescriptor={sort}
+      onSortChange={setSort}
+    >
+      {article => (
+        <TableRow id={article.id} textValue={article.title}>
+          <TableTitle title={article.title} />
+          <TableCell>{article.publicationDate}</TableCell>
+          <TableCell>{article.createdBy}</TableCell>
+        </TableRow>
+      )}
+    </Table>
+  )
+}
+
 const memberColumns: Array<TableColumn> = [
   {id: 'name', header: 'Name', minWidth: 200},
   {id: 'role', header: 'Role', minWidth: 160},

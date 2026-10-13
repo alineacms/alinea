@@ -118,9 +118,16 @@
   }
 }
 
+.TableHeader-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .TableHeader-sort {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   gap: 2px;
   margin: 0 -4px;
   padding: 2px 4px;
@@ -142,6 +149,7 @@
 }
 
 .TableHeader-sortIcon {
+  flex: 0 0 auto;
   font-size: 14px;
 }
 

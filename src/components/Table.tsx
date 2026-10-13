@@ -349,7 +349,15 @@ function TableHeader({sortDescriptor, onSortChange}: TableHeaderProps) {
             : undefined
         const label = (
           <>
-            {column.header}
+            <span
+              data-slot="table-head-label"
+              className={styles.TableHeader.label()}
+              title={
+                typeof column.header === 'string' ? column.header : undefined
+              }
+            >
+              {column.header}
+            </span>
             {sorted && (
               <Icon
                 icon={

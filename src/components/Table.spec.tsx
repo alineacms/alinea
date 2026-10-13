@@ -8,6 +8,7 @@ import {
   ExplorerStyle,
   IterableItems,
   LoadMore,
+  LongHeaders,
   NestedRows,
   RowActions,
   RowHandlers
@@ -80,6 +81,24 @@ test('empty and loading states sit below the header', async ({mount, page}) => {
       .boundingBox()
     expect(state!.y).toBeGreaterThanOrEqual(header!.y + header!.height)
     expect(state!.height).toBeGreaterThan(0)
+  }
+})
+
+test('long column headers end in an ellipsis', async ({mount, page}) => {
+  await mount(<LongHeaders />)
+  const heads = page.locator('[data-slot="table-head"]')
+  for (const index of [1, 2]) {
+    const head = heads.nth(index)
+    const label = head.locator('[data-slot="table-head-label"]')
+    const headBox = await head.boundingBox()
+    const labelBox = await label.boundingBox()
+    expect(labelBox!.x + labelBox!.width).toBeLessThanOrEqual(
+      headBox!.x + headBox!.width
+    )
+    expect(await label.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(
+      true
+    )
+    await expect(label).toHaveAttribute('title', /.+/)
   }
 })
 
