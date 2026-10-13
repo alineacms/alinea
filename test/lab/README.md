@@ -1,13 +1,20 @@
 # Sync lab
 
-One page that runs Alinea's own sync code (the handler, the CMS of server
-renders, the dashboard's shared worker, the WASM databases and their overlays)
-against simulated hosts, and draws where content lives and how it moves.
+The engine of the sync lab page of the website (`/lab`): it runs Alinea's own
+sync code (the handler, the CMS of server renders, the dashboard's shared
+worker, the WASM databases and their overlays) against simulated hosts. The
+page draws where content lives and how it moves, for any number of users and
+tabs.
 
 ```sh
-bun lab          # http://localhost:4700
+bun lab          # the lab page alone, on http://localhost:4700/lab/
+bun lab:build    # build the engine the website loads, into apps/web/public/lab
 bun lab:check    # every scenario headless, fails on a failed check
 ```
+
+The page itself lives in the website, `apps/web/src/page/lab`, and talks to
+the engine only through `labEngine.ts`. The website's build runs
+`lab:build`; for `bun web`, run it once yourself.
 
 ## What runs for real
 

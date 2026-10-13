@@ -1,0 +1,109 @@
+@use '@/style' as *;
+
+.LabLog {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.LabLog-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--web-outline);
+}
+
+.LabLog-title {
+  font-family: var(--web-title-font);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.LabLog-filter {
+  width: 260px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--web-outline-strong);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--web-foreground);
+  background: var(--web-background);
+}
+
+.LabLog-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--web-foreground-faded);
+}
+
+.LabLog-count {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--web-foreground-muted);
+}
+
+.LabLog-list {
+  flex: 1;
+  min-height: 0;
+  list-style: none;
+  overflow: auto;
+  font-family: var(--web-mono-font);
+  font-size: 12px;
+  line-height: 1.6;
+  @include scrollbar;
+}
+
+.LabLog-row {
+  display: flex;
+  gap: 14px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover,
+  &.is-selected {
+    background: var(--web-accent-soft);
+  }
+
+  &.is-step {
+    margin-top: 6px;
+    font-weight: 500;
+    color: var(--web-accent);
+  }
+
+  &:is(
+    .is-finding,
+    .is-conflict,
+    .is-fault,
+    .is-error,
+    .is-refused,
+    .is-dropped
+  ) {
+    color: var(--web-warning);
+  }
+}
+
+.LabLog-row-time {
+  flex: none;
+  width: 52px;
+  color: var(--web-foreground-muted);
+}
+
+.LabLog-row-node {
+  flex: none;
+  width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--web-foreground-faded);
+}
+
+.LabLog-row-text {
+  min-width: 0;
+}

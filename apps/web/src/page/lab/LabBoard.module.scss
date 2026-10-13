@@ -1,0 +1,184 @@
+.LabBoard {
+  position: relative;
+  width: 100%;
+}
+
+.LabBoard-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.LabBoard-edges,
+.LabBoard-packets {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.LabBoard-packets {
+  z-index: 3;
+}
+
+.LabBoard-edge {
+  stroke: var(--web-outline-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.LabBoard-packet {
+  circle {
+    stroke: var(--web-background);
+    stroke-width: 2;
+    fill: var(--web-accent);
+  }
+
+  text {
+    font-family: var(--web-mono-font);
+    font-size: 10.5px;
+    fill: var(--web-foreground);
+    paint-order: stroke;
+    stroke: var(--web-background);
+    stroke-width: 3px;
+  }
+
+  &.is-response circle {
+    fill: var(--web-positive);
+  }
+
+  &.is-event circle {
+    fill: var(--web-foreground-muted);
+  }
+
+  &.is-error circle {
+    fill: var(--web-warning);
+  }
+}
+
+.LabBoard-group {
+  position: absolute;
+  border: 1px dashed var(--web-outline-strong);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--web-surface-soft) 60%, transparent);
+}
+
+.LabBoard-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 8px 0 10px;
+}
+
+.LabBoard-group-avatar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--web-accent-foreground);
+  background: var(--web-accent);
+}
+
+.LabBoard-group-user {
+  font-family: var(--web-title-font);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.LabBoard-group-spacer {
+  flex: 1;
+}
+
+.LabBoard-group-empty {
+  padding: 4px 12px;
+  font-size: 12.5px;
+  color: var(--web-foreground-muted);
+}
+
+.LabBoard-node {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--web-outline-strong);
+  border-radius: 10px;
+  background: var(--web-surface);
+  font-size: 12.5px;
+  line-height: 1.45;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease-out,
+    box-shadow 0.3s ease-out;
+
+  &:hover {
+    border-color: var(--web-foreground-muted);
+  }
+
+  &.is-selected {
+    border-color: var(--web-accent);
+    box-shadow: 0 0 0 1px var(--web-accent);
+  }
+
+  &.is-lit {
+    box-shadow: 0 0 0 3px var(--web-accent-soft);
+  }
+
+  &.is-tab {
+    border-radius: 8px;
+  }
+}
+
+.LabBoard-node-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px 3px;
+  font-family: var(--web-title-font);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 2px;
+    background: var(--web-foreground-muted);
+
+    .LabBoard-node.is-tab &,
+    .LabBoard-node.is-worker &,
+    .LabBoard-node.is-storage & {
+      background: var(--web-accent);
+    }
+
+    .LabBoard-node.is-isolate &,
+    .LabBoard-node.is-build & {
+      background: var(--web-foreground);
+    }
+
+    .LabBoard-node.is-git & {
+      background: var(--web-positive);
+    }
+
+    .LabBoard-node.is-store &,
+    .LabBoard-node.is-cloud & {
+      background: var(--web-warning);
+    }
+  }
+}
+
+.LabBoard-node-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 10px 8px;
+  overflow: auto;
+}

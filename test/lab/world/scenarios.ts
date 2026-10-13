@@ -224,11 +224,11 @@ export const scenarios: Array<Scenario> = [
       )
       ctx.check(
         'the worker asked for the tree',
-        ctx.requests(a.node, 'tree').length > 0
+        ctx.requests(a.worker, 'tree').length > 0
       )
       ctx.check(
         'then downloaded the blobs',
-        ctx.requests(a.node, 'blob').length > 0
+        ctx.requests(a.worker, 'blob').length > 0
       )
       await ctx.waitFor(async () => {
         await a.inspectStorage()
@@ -263,12 +263,12 @@ export const scenarios: Array<Scenario> = [
       ctx.check(
         'the worker opened the stored base',
         ctx.events(
-          e => e.node === a.node && e.text.startsWith('opened stored base')
+          e => e.node === a.worker && e.text.startsWith('opened stored base')
         ).length > 0
       )
       ctx.check(
         'the catch-up sync ran as an activity',
-        ctx.events(e => e.node === a.node && e.kind === 'syncWith').length >
+        ctx.events(e => e.node === a.worker && e.kind === 'syncWith').length >
           0 || tab.activities.some(x => x.type === 'sync')
       )
       await ctx.waitFor(async () => {
@@ -279,7 +279,7 @@ export const scenarios: Array<Scenario> = [
         'the pushed change arrived',
         title(tab, 'about') === 'About (while away)'
       )
-      const blobs = ctx.requests(a.node, 'blob')
+      const blobs = ctx.requests(a.worker, 'blob')
       ctx.check(
         'only the changed file was downloaded',
         blobs.length <= 1,
@@ -716,7 +716,7 @@ export const scenarios: Array<Scenario> = [
       )
       ctx.check(
         'it downloaded no blobs',
-        ctx.requests(a.node, 'blob').length === 0
+        ctx.requests(a.worker, 'blob').length === 0
       )
       ctx.check('the tab shows the content', tab.entries.length === 3)
       const config = labConfig(2)
@@ -748,7 +748,7 @@ export const scenarios: Array<Scenario> = [
       const tab = await openTab(ctx, a)
       ctx.check(
         'no new shared worker started',
-        ctx.events(e => e.node === a.node && e.kind === 'worker').length === 0
+        ctx.events(e => e.node === a.worker && e.kind === 'worker').length === 0
       )
       await a.sync(tab)
       ctx.check('the tab is at the head', tab.sha === head())

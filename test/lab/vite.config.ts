@@ -6,6 +6,7 @@ const shim = (file: string) =>
   fileURLToPath(new URL(`./shims/${file}`, import.meta.url))
 
 const srcDir = fileURLToPath(new URL('../../src/', import.meta.url))
+const webDir = fileURLToPath(new URL('../../apps/web/', import.meta.url))
 
 /**
  * The lab renders none of Alinea's components, but its modules import their
@@ -27,17 +28,23 @@ function skipAlineaStyles(): Plugin {
   }
 }
 
-/** Serve the lab: `bun lab`, then open http://localhost:4700 */
+/**
+ * `bun lab` serves the lab page of the website on http://localhost:4700,
+ * without the rest of the website. `bun lab:build` builds the engine the
+ * website loads into `apps/web/public/lab`.
+ */
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
+  base: '/lab/',
   plugins: [
-    // Fast refresh needs a window: only the page's own components get it
-    react({include: /test\/lab\/(main|ui\/.*)\.tsx$/}),
+    // Fast refresh needs a window: only the page's components get it
+    react({include: /(test\/lab\/main|apps\/web\/src\/.*)\.tsx$/}),
     skipAlineaStyles()
   ],
   resolve: {
     conditions: ['alinea-src', ...defaultClientConditions],
     alias: [
+      {find: /^@\//, replacement: `${webDir}src/`},
       {find: /^next\/cache(\.js)?$/, replacement: shim('next-cache.ts')},
       {find: /^next\/headers(\.js)?$/, replacement: shim('next-headers.ts')},
       {
@@ -48,8 +55,18 @@ export default defineConfig({
       {find: /^@alinea\/generated\/.*$/, replacement: shim('generated.ts')}
     ]
   },
-  css: {modules: {generateScopedName: 'lab-[local]'}},
+  css: {modules: {generateScopedName: '[name]__[local]'}},
   worker: {format: 'es'},
+  build: {
+    outDir: `${webDir}public/lab`,
+    emptyOutDir: true,
+    rollupOptions: {
+      input: fileURLToPath(new URL('./engine.ts', import.meta.url)),
+      // The website imports the engine by name and calls its exports
+      preserveEntrySignatures: 'exports-only',
+      output: {entryFileNames: 'engine.js'}
+    }
+  },
   server: {port: 4700, host: '127.0.0.1', fs: {allow: ['../..']}},
   optimizeDeps: {
     // Workers discover these late, which would reload the page mid-run

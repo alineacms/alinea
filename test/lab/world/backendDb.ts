@@ -126,7 +126,7 @@ class BackendDatabase {
     }))
   }
 
-  async blobs() {
+  async blobs(): Promise<Array<{sha: string; size: number; usedAt: number}>> {
     const db = await this.db
     try {
       const result = db.exec(

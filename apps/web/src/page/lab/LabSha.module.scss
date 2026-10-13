@@ -1,0 +1,37 @@
+.LabSha {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--web-mono-font);
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--web-foreground);
+  white-space: nowrap;
+
+  &.is-empty {
+    color: var(--web-foreground-muted);
+  }
+
+  &.is-behind {
+    color: var(--web-foreground-faded);
+  }
+}
+
+.LabSha-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--LabSha-color);
+
+  .LabSha.is-behind & {
+    background: transparent;
+    box-shadow: inset 0 0 0 2px var(--LabSha-color);
+  }
+}
+
+.LabSha-flag {
+  font-family: var(--web-body-font);
+  font-size: 11px;
+  color: var(--web-warning);
+}

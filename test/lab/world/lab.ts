@@ -11,7 +11,7 @@ import {PREVIEW_COOKIE_NAME} from '#/preview/PreviewCookies.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {type ConfigVersion, labConfig} from '../shared/schema.js'
 import {type BackendDriver, backendDb} from './backendDb.js'
-import {type Browser, browsers, type Tab} from './browsers.js'
+import {type Browser, browsers, resetUsers, type Tab} from './browsers.js'
 import {bus} from './bus.js'
 import {clock} from './clock.js'
 import {pageIds, pushTitle, seedRepository} from './content.js'
@@ -54,6 +54,7 @@ class Lab {
     this.mode = options.mode ?? this.mode
     backendDb.driver = options.driver ?? backendDb.driver
     for (const browser of browsers) await browser.clearStorage()
+    resetUsers()
     for (const deployment of deployments.list) deployments.retire(deployment)
     deployments.list = []
     deployments.routing = 'alternate'
@@ -168,8 +169,7 @@ class Lab {
       patch: await createFilePatch(format(entry), format(next))
     })
     bus.log({
-      node: browser.node,
-      part: tab.label,
+      node: tab.node,
       kind: 'preview',
       text: `${tab.label} previews "${title}": patch of ${payload.length} chars against ${(await tab.graph.sha).slice(0, 7)}`
     })

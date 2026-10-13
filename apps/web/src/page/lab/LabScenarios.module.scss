@@ -1,0 +1,124 @@
+.LabScenarios {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.LabScenarios-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.LabScenarios-group-title {
+  font-family: var(--web-body-font);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--web-foreground-muted);
+}
+
+.LabScenarios-scenario {
+  border: 1px solid var(--web-outline);
+  border-radius: 10px;
+  background: var(--web-surface);
+
+  &.is-running {
+    border-color: var(--web-accent);
+  }
+
+  &.is-failed {
+    border-color: var(--web-warning);
+  }
+}
+
+.LabScenarios-scenario-run {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  &:is(:hover, :focus-visible):not(:disabled) {
+    color: var(--web-accent);
+  }
+}
+
+.LabScenarios-scenario-icon {
+  flex: none;
+  width: 12px;
+  font-size: 11px;
+  line-height: 20px;
+  color: var(--web-accent);
+
+  .LabScenarios-scenario.is-passed & {
+    color: var(--web-positive);
+  }
+
+  .LabScenarios-scenario.is-finding &,
+  .LabScenarios-scenario.is-failed & {
+    color: var(--web-warning);
+  }
+}
+
+.LabScenarios-scenario-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 12px 12px 34px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.LabScenarios-scenario-summary {
+  color: var(--web-foreground-faded);
+}
+
+.LabScenarios-scenario-step {
+  color: var(--web-accent);
+}
+
+.LabScenarios-checks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.LabScenarios-check {
+  display: flex;
+  gap: 8px;
+
+  &.is-fail,
+  &.is-finding {
+    color: var(--web-warning);
+  }
+}
+
+.LabScenarios-check-icon {
+  flex: none;
+  width: 12px;
+  font-weight: 600;
+
+  .LabScenarios-check.is-pass & {
+    color: var(--web-positive);
+  }
+
+  .LabScenarios-check.is-info & {
+    color: var(--web-accent);
+  }
+}
+
+.LabScenarios-check-detail {
+  color: var(--web-foreground-muted);
+}

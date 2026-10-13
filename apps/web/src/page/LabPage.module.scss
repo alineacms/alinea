@@ -1,0 +1,80 @@
+@use '@/style' as *;
+
+.LabPage {
+  padding-bottom: var(--web-section-gap);
+}
+
+.LabPage-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  max-width: calc(var(--web-reading-width) + 2 * var(--web-gutter));
+  margin-inline: auto;
+  padding: 80px var(--web-gutter) 48px;
+
+  @include sm {
+    padding-top: 48px;
+  }
+}
+
+.LabPage-title {
+  font-family: var(--web-title-font);
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+
+  @include sm {
+    font-size: 36px;
+  }
+}
+
+.LabPage-intro {
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--web-foreground-faded);
+
+  @include sm {
+    font-size: 17px;
+  }
+}
+
+// The lab takes the width it gets
+.LabPage-app {
+  width: 100%;
+  max-width: calc(1760px + 2 * var(--web-gutter));
+  margin-inline: auto;
+  padding-inline: min(var(--web-gutter), 40px);
+}
+
+.LabPage-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: calc(var(--web-reading-width) + 2 * var(--web-gutter));
+  margin-inline: auto;
+  padding: 80px var(--web-gutter) 0;
+}
+
+.LabPage-notes-title {
+  font: var(--web-docs-font-h2);
+  letter-spacing: var(--web-docs-tracking-heading);
+}
+
+.LabPage-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 20px;
+  font: var(--web-docs-font-body);
+  color: var(--web-foreground-faded);
+
+  code {
+    font-family: var(--web-mono-font);
+    font-size: 14px;
+    color: var(--web-foreground);
+  }
+}

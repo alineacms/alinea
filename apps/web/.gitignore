@@ -41,3 +41,6 @@ next-env.d.ts
 .env
 .cache/
 /screenshots/
+
+# The sync lab engine, see bun lab:build
+/public/lab/

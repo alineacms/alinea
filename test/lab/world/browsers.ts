@@ -28,6 +28,8 @@ export interface TabEntry {
 export interface Tab {
   id: number
   label: string
+  /** Node of the tab on the board */
+  node: string
   build: string
   configVersion: ConfigVersion
   port: MessagePort
@@ -46,7 +48,12 @@ let nextTab = 1
 export class Browser {
   id: string
   user: string
+  /** The user's group on the board */
   node: string
+  /** The shared worker of the browser */
+  worker: string
+  /** Its IndexedDB */
+  storage: string
   tabs: Array<Tab> = []
   /** Bumped when the browser quits: the next tab starts a new worker. */
   generation = 1
@@ -55,7 +62,9 @@ export class Browser {
   constructor(id: string, user: string) {
     this.id = id
     this.user = user
-    this.node = `browser-${id}`
+    this.node = `user-${id}`
+    this.worker = `${this.node}/worker`
+    this.storage = `${this.node}/idb`
   }
 
   realmId(build: string) {
@@ -81,7 +90,7 @@ export class Browser {
       shared = create(name)
     } else {
       bus.log({
-        node: this.node,
+        node: this.worker,
         kind: 'worker',
         text: `start shared worker for ${build}`
       })
@@ -92,7 +101,7 @@ export class Browser {
           env: {NODE_ENV: 'production'},
           data: {browser: this.node, user: this.user, build, configVersion}
         },
-        this.node,
+        this.worker,
         workerName => {
           name = workerName
           return (shared = create(workerName))
@@ -109,8 +118,9 @@ export class Browser {
     const graph = new WorkerDB(config, worker, {} as LocalConnection, events)
     const label = `tab ${nextTab}`
     const tab: Tab = {
-      id: nextTab++,
+      id: nextTab,
       label,
+      node: `${this.node}/tab-${nextTab++}`,
       build,
       configVersion,
       port,
@@ -121,18 +131,26 @@ export class Browser {
       ready: false
     }
     this.tabs.push(tab)
-    bus.log({
-      node: this.node,
-      part: label,
-      kind: 'tab',
-      text: `${label} opened (${build})`
+    bus.log({node: tab.node, kind: 'tab', text: `${label} opened (${build})`})
+    bus.send({
+      from: tab.node,
+      to: this.worker,
+      label: 'connect',
+      duration: network.latency,
+      kind: 'request'
     })
     events.addEventListener(IndexEvent.type, event => {
       const {data} = event as IndexEvent
       if (data.op !== 'index') return
+      bus.send({
+        from: this.worker,
+        to: tab.node,
+        label: 'index',
+        duration: network.latency,
+        kind: 'event'
+      })
       bus.log({
-        node: this.node,
-        part: label,
+        node: tab.node,
         kind: 'index',
         text: `${label} notified: worker db at ${data.sha.slice(0, 7)}, ${data.ids.length} entr${data.ids.length === 1 ? 'y' : 'ies'} changed`
       })
@@ -148,18 +166,28 @@ export class Browser {
     })
     port.start()
     bus.changed()
+    const mark = bus.events.at(-1)?.id ?? 0
     try {
       await graph.ready()
       tab.ready = true
+      const opened = bus.events.some(
+        e =>
+          e.id > mark &&
+          e.node === this.worker &&
+          e.text.startsWith('opened stored base')
+      )
+      if (opened)
+        bus.send({
+          from: this.storage,
+          to: this.worker,
+          label: 'open base',
+          duration: network.latency,
+          kind: 'response'
+        })
       await this.refresh(tab)
     } catch (error) {
       tab.error = error instanceof Error ? error.message : String(error)
-      bus.log({
-        node: this.node,
-        part: label,
-        kind: 'error',
-        text: `${label}: ${tab.error}`
-      })
+      bus.log({node: tab.node, kind: 'error', text: `${label}: ${tab.error}`})
     }
     void this.inspectStorage()
     return tab
@@ -186,12 +214,7 @@ export class Browser {
   closeTab(tab: Tab) {
     tab.port.close()
     this.tabs = this.tabs.filter(t => t !== tab)
-    bus.log({
-      node: this.node,
-      part: tab.label,
-      kind: 'tab',
-      text: `${tab.label} closed`
-    })
+    bus.log({node: tab.node, kind: 'tab', text: `${tab.label} closed`})
     bus.changed()
   }
 
@@ -219,10 +242,16 @@ export class Browser {
       set: {title}
     }
     bus.log({
-      node: this.node,
-      part: tab.label,
+      node: tab.node,
       kind: 'save',
       text: `${this.user} saves "${title}" in ${tab.label}`
+    })
+    bus.send({
+      from: tab.node,
+      to: this.worker,
+      label: 'mutate',
+      duration: network.latency,
+      kind: 'request'
     })
     try {
       const result = await tab.graph.mutate([mutation])
@@ -230,12 +259,7 @@ export class Browser {
       return result
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      bus.log({
-        node: this.node,
-        part: tab.label,
-        kind: 'error',
-        text: `save failed: ${message}`
-      })
+      bus.log({node: tab.node, kind: 'error', text: `save failed: ${message}`})
       await this.refresh(tab)
       throw error
     }
@@ -243,10 +267,16 @@ export class Browser {
 
   async sync(tab: Tab) {
     bus.log({
-      node: this.node,
-      part: tab.label,
+      node: tab.node,
       kind: 'sync',
       text: `${tab.label} asks the worker to sync`
+    })
+    bus.send({
+      from: tab.node,
+      to: this.worker,
+      label: 'sync',
+      duration: network.latency,
+      kind: 'request'
     })
     try {
       await tab.graph.sync()
@@ -274,6 +304,15 @@ export class Browser {
     try {
       const store = indexedDBSnapshotStore(this.storeName())
       const bases = await store.list()
+      const before = bus.states[this.node]?.bases?.length ?? 0
+      if (bases.length > before)
+        bus.send({
+          from: this.worker,
+          to: this.storage,
+          label: 'save base',
+          duration: network.latency,
+          kind: 'event'
+        })
       bus.patchState(this.node, {
         bases: bases.sort((a, b) => b.createdAt - a.createdAt)
       })
@@ -289,7 +328,7 @@ export class Browser {
       const request = indexedDB.deleteDatabase(this.storeName())
       request.onsuccess = request.onerror = request.onblocked = () => resolve()
     })
-    bus.log({node: this.node, kind: 'clear', text: 'site data cleared'})
+    bus.log({node: this.storage, kind: 'clear', text: 'site data cleared'})
     await this.inspectStorage()
   }
 }
@@ -310,4 +349,30 @@ function listen(source: MessagePort) {
   return events
 }
 
+const people = [
+  ['a', 'ada'],
+  ['b', 'grace'],
+  ['c', 'linus'],
+  ['d', 'margaret']
+]
+
+/** The users editing, each in a browser of their own. */
 export const browsers = [new Browser('a', 'ada'), new Browser('b', 'grace')]
+
+export const maxUsers = people.length
+
+/** Another user opens the dashboard on their own machine. */
+export function addUser(): Browser | undefined {
+  const next = people[browsers.length]
+  if (!next) return
+  const browser = new Browser(next[0], next[1])
+  browsers.push(browser)
+  bus.log({node: browser.node, kind: 'user', text: `${browser.user} joins`})
+  bus.changed()
+  return browser
+}
+
+/** Back to the two users every scenario starts with. */
+export function resetUsers() {
+  browsers.splice(2)
+}

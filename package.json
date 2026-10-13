@@ -82,6 +82,7 @@
     "format": "oxfmt --write src test apps/web/src",
     "format:check": "oxfmt --check src test apps/web/src",
     "lab": "vite --config test/lab/vite.config.ts",
+    "lab:build": "vite build --config test/lab/vite.config.ts",
     "lab:check": "bun test/lab/check.ts",
     "lint": "oxlint",
     "prepublishOnly": "bun run build && bun run docs",

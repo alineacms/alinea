@@ -1,0 +1,132 @@
+@use '@/style' as *;
+
+.Lab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.Lab-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--web-outline);
+  border-radius: 12px;
+  background: var(--web-surface);
+}
+
+.Lab-toolbar-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--web-foreground-faded);
+}
+
+.Lab-toolbar-value {
+  min-width: 44px;
+  font-family: var(--web-mono-font);
+  font-size: 13px;
+  color: var(--web-foreground);
+}
+
+.Lab-toolbar-spacer {
+  flex: 1;
+}
+
+.Lab-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  font-size: 13px;
+  color: var(--web-foreground-muted);
+}
+
+.Lab-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 999px;
+
+  &.is-sha {
+    background: conic-gradient(#e8603f, #3fb3e8, #8b3fe8, #e8603f);
+  }
+
+  &.is-request {
+    background: var(--web-accent);
+  }
+
+  &.is-response {
+    background: var(--web-positive);
+  }
+
+  &.is-event {
+    background: var(--web-foreground-muted);
+  }
+
+  &.is-error {
+    background: var(--web-warning);
+  }
+}
+
+.Lab-grid {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr) 320px;
+  grid-template-areas: 'scenarios board inspector';
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 1279.999px) {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas:
+      'board board'
+      'scenarios inspector';
+  }
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'board' 'inspector' 'scenarios';
+  }
+}
+
+.Lab-scenarios,
+.Lab-inspector {
+  position: sticky;
+  top: calc(var(--web-header-height) + 16px);
+  max-height: calc(100vh - var(--web-header-height) - 32px);
+  overflow: auto;
+  @include scrollbar;
+
+  @media (max-width: 1279.999px) {
+    position: static;
+    max-height: none;
+  }
+}
+
+.Lab-scenarios {
+  grid-area: scenarios;
+}
+
+.Lab-inspector {
+  grid-area: inspector;
+}
+
+.Lab-board {
+  grid-area: board;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--web-outline);
+  border-radius: 14px;
+  background: var(--web-band);
+}
+
+.Lab-log {
+  height: 300px;
+  padding: 14px 16px;
+  border: 1px solid var(--web-outline);
+  border-radius: 12px;
+  background: var(--web-surface);
+}
