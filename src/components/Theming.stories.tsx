@@ -38,7 +38,7 @@ export function Themes() {
     root.dataset.theme = scheme === 'system' ? '' : scheme
     if (className) root.classList.add(...className.split(' '))
     return () => {
-      delete root.dataset.alineaTheme
+      root.dataset.alineaTheme = ''
       delete root.dataset.theme
       if (className) root.classList.remove(...className.split(' '))
     }

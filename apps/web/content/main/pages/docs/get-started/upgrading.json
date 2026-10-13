@@ -957,6 +957,171 @@
       "content": [
         {
           "_type": "text",
+          "text": "Theme tokens"
+        }
+      ],
+      "_anchor": "theme-tokens"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The CSS custom properties of 1.7 were renamed and many were removed. Styles that read an old token silently fall back to the property's default. The tokens of `alinea/css` now apply inside elements with `data-alinea-theme` only, the dashboard sets it on `<html>`. See Components for the full list. The closest replacements:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-background` → `--alinea-bg`, `--alinea-content` → `--alinea-backdrop`, `--alinea-lift`, `--alinea-inner` and `--alinea-toolbar` → `--alinea-bg-muted`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-foreground` → `--alinea-fg`, `--alinea-foreground-faded` → `--alinea-fg-muted`, `--alinea-title-foreground` → `--alinea-fg-strong`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-outline` and `--alinea-inner-outline` → `--alinea-border`, `--alinea-highlight` → `--alinea-muted`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-fields` → `--alinea-input`, `--alinea-fields-foreground` → `--alinea-field-label`, `--alinea-fields-focus` and `--alinea-focus-foreground` → `--alinea-ring`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-selected` stays, `--alinea-selected-foreground` → `--alinea-selected-fg`, `--alinea-selected-faded` → `--alinea-primary-subtle`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-button-background` → `--alinea-primary`, `--alinea-button-foreground` → `--alinea-primary-fg`, `--alinea-error` → `--alinea-danger`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-accent` (the workspace color) → `--alinea-workspace-color`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-variant-info-*` → `--alinea-primary-subtle` and `--alinea-primary-subtle-fg`, `--alinea-variant-success-*` → `--alinea-success-subtle(-fg)`, `--alinea-variant-progress-*` → `--alinea-warning-subtle(-fg)`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-modal-background` → `--alinea-scrim`, `--alinea-shadow` → `--alinea-shadow-raised`, `--alinea-border-radius` → `--alinea-radius`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Removed without a replacement: `--alinea-hue`, `--alinea-saturation`, `--alinea-positive`, `--alinea-negative`, `--alinea-button-hover`, `--alinea-accent-foreground`, `--alinea-divider-top`, `--alinea-divider-bottom`, `--alinea-tabs-trigger-*`, `--alinea-fields-table`, `--alinea-fields-header`, `--alinea-fields-shadow`, `--alinea-fields-selected` and the `create` and `disabled` variants. Derive hover and disabled shades with `color-mix()` and `opacity`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
           "text": "Custom field views"
         }
       ],

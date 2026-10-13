@@ -17,6 +17,8 @@ export interface DashboardThemeProps {
  */
 export function DashboardTheme({className, children}: DashboardThemeProps) {
   return (
-    <div className={styles.root(styler.merge({className}))}>{children}</div>
+    <div data-alinea-theme className={styles.root(styler.merge({className}))}>
+      {children}
+    </div>
   )
 }

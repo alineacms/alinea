@@ -355,7 +355,7 @@ export default function Playground({declarations, exported}: PlaygroundProps) {
             {view !== 'source' && canRun && (
               <Suspense fallback={<Loader absolute />}>
                 <PreviewProvider demo={demo}>
-                  <div className={styles.root.previewPane()}>
+                  <div data-alinea-theme className={styles.root.previewPane()}>
                     {state.error ? (
                       <PreviewError error={state.error} />
                     ) : (

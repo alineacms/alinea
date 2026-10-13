@@ -145,7 +145,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The components are styled by the dashboard's stylesheet and theme, so they are meant for code that runs inside the dashboard."
+          "text": "The components are styled by the dashboard's stylesheet and theme. They are meant for code that runs inside the dashboard, but work on other pages too (see Theme tokens below)."
         }
       ]
     },
@@ -348,6 +348,220 @@
         {
           "_type": "text",
           "text": ") or an element. The icons of the dashboard itself are exported from `alinea/dashboard/icons`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Theme tokens"
+        }
+      ],
+      "_anchor": "theme-tokens"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The components are styled with CSS custom properties. `alinea/css` declares them, and its resets, only on elements with a `data-alinea-theme` attribute, so loading the stylesheet doesn't restyle the rest of a page. The dashboard sets the attribute on `<html>`, and popovers, dialogs and tooltips set it on themselves since they render outside the page. To use the components on a page of your site, import `alinea/css` and render them inside an element with `data-alinea-theme`. Add `data-theme=\"light\"` or `data-theme=\"dark\"` to that element to fix the color scheme, otherwise it follows the page."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A theme only sets the inputs, as `light-dark()` pairs where a value differs per color scheme. Every other token is derived from them:"
+        }
+      ]
+    },
+    {
+      "_id": "3KdRBMWfptkCX27NxD2Hms6iOwA",
+      "_type": "CodeBlock",
+      "fileName": "theme.css",
+      "language": "css",
+      "compact": false,
+      "code": ".brand-theme {\n  --alinea-radius: 6px;\n  --alinea-bg: light-dark(#ffffff, #18181b);\n  --alinea-fg: light-dark(#27272a, #e4e4e7);\n  --alinea-primary: light-dark(#2f6b45, #5fbf82);\n}"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Inputs:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-font`, `--alinea-mono-font`, `--alinea-font-size-base` and `--alinea-radius`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-backdrop` (behind panels), `--alinea-bg` (panels), `--alinea-fg` (text) and `--alinea-border`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-primary`, `--alinea-danger`, `--alinea-warning` and `--alinea-success`, with `--alinea-primary-fg`, `--alinea-danger-fg` and `--alinea-warning-fg` for text on them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-ring`: the focus ring."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`--alinea-workspace-color`: the `color` option of the current workspace, set by the dashboard. It falls back to `--alinea-primary`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Derived tokens, to read in your own styles:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Text: `--alinea-fg-strong`, `--alinea-fg-muted`, `--alinea-fg-disabled` and `--alinea-field-label`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Surfaces: `--alinea-bg-muted`, `--alinea-muted` (hover backgrounds), `--alinea-input`, `--alinea-overlay`, `--alinea-scrim` (behind dialogs) and `--alinea-border-strong`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Tones: `--alinea-selected` and `--alinea-selected-fg`, and a `-subtle` background with a `-subtle-fg` text color for `primary`, `danger`, `warning` and `success`, eg. `--alinea-danger-subtle`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Entry statuses: `--alinea-status-published`, `--alinea-status-draft` and `--alinea-status-unpublished`, each with a `-fg` color."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Shape and motion: `--alinea-radius-sm`, `--alinea-radius-lg`, `--alinea-radius-xl`, `--alinea-shadow-raised`, `--alinea-shadow-muted`, `--alinea-shadow-tooltip`, `--alinea-shadow-modal` and `--alinea-transition`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The color palette the default theme is built from (`--alinea-gray-500`, `--alinea-blue-800`, ...) is not part of this list and can change."
         }
       ]
     }

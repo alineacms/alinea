@@ -35,6 +35,9 @@ export async function boot(gen: ConfigGenerator) {
     into.id = 'root'
     if (element.parentElement === document.head) document.body.append(into)
     else element.parentElement!.replaceChild(into, element)
+    const html = document.documentElement
+    if (!html.hasAttribute('data-alinea-theme'))
+      html.setAttribute('data-alinea-theme', '')
     const root = createRoot(into)
     let lastRevision: string | undefined
     for await (const batch of gen) {

@@ -109,6 +109,8 @@ export function DialogContent({
   return (
     <ModalOverlay
       data-slot="dialog-overlay"
+      // Dialogs render outside the page, they need the theme of their own
+      data-alinea-theme=""
       isDismissable={dismissable}
       className={styles.DialogContent.overlay()}
     >
