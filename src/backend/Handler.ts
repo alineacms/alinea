@@ -14,6 +14,12 @@ import type {
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
+import type {DashboardEntry} from '#/core/DashboardEntry.js'
+import {
+  committedEntries,
+  type RemovedEntry,
+  removedEntries
+} from './CommitEntries.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
 import {Entry} from '#/core/Entry.js'
@@ -57,6 +63,13 @@ export interface BeforeCommitContext {
 
 export interface AfterCommitContext extends BeforeCommitContext {
   sha: string
+  /**
+   * The entries the mutations changed as they are after the commit: the
+   * latest version in each locale
+   */
+  entries: Array<DashboardEntry>
+  /** Entries that no longer exist after the commit, with the url they had */
+  removed: Array<RemovedEntry>
 }
 
 export interface HandlerHooks {
@@ -372,6 +385,9 @@ export function createHandler({
           user: user.claims
         })
         if (adjusted) mutations = adjusted
+        const before = hooks.afterCommit
+          ? await committedEntries(local, mutations)
+          : []
         const attempt = async (retry = 0) => {
           if (retry > 0) await local.syncWith(cnx)
           const request = {
@@ -397,7 +413,16 @@ export function createHandler({
         }
         const sha = await attempt()
         try {
-          await hooks.afterCommit?.({mutations, sha, user: user.claims})
+          if (hooks.afterCommit) {
+            const entries = await committedEntries(local, mutations)
+            await hooks.afterCommit({
+              mutations,
+              sha,
+              user: user.claims,
+              entries,
+              removed: removedEntries(before, entries)
+            })
+          }
         } catch (error) {
           console.error('Alinea afterCommit hook failed', error)
         }

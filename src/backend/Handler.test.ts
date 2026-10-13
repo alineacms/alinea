@@ -1,7 +1,7 @@
 import {BasicAuth} from '#/backend/api/BasicAuth.js'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
-import {createHandler} from '#/backend/Handler.js'
+import {type AfterCommitContext, createHandler} from '#/backend/Handler.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {decodeBlobSequence} from '#/core/BlobTransport.js'
 import {createCMS} from '#/core.js'
@@ -537,6 +537,69 @@ test('runs commit hooks around a successful commit', async () => {
     removeResult.sha
   ])
   test.equal([...users], ['admin'])
+})
+
+test('afterCommit receives the committed and removed entries', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const contexts: Array<AfterCommitContext> = []
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    },
+    afterCommit(context) {
+      contexts.push(context)
+    }
+  })
+  await handle(
+    mutationRequest([
+      {
+        op: 'create',
+        id: 'about',
+        type: 'Page',
+        locale: null,
+        data: {title: 'About', path: 'about'}
+      }
+    ]),
+    requestContext()
+  )
+  await handle(mutationRequest([{op: 'remove', id: 'about'}]), requestContext())
+  const [created, removed] = contexts
+  test.equal(
+    created.entries.map(({id, type, title, url, status, data}) => ({
+      id,
+      type,
+      title,
+      url,
+      status,
+      path: data.path
+    })),
+    [
+      {
+        id: 'about',
+        type: 'Page',
+        title: 'About',
+        url: '/about',
+        status: 'published',
+        path: 'about'
+      }
+    ]
+  )
+  test.equal(created.removed, [])
+  test.equal(removed.entries, [])
+  test.equal(removed.removed, [
+    {id: 'about', type: 'Page', locale: null, url: '/about'}
+  ])
 })
 
 test('runs commit hooks for publish, unpublish and move mutations', async () => {

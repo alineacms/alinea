@@ -749,7 +749,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjzsNtVY9qTKWUAuUkMpUfP9fx",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidateTag} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({sha}) {\n    // Pages that query content refresh on their own, revalidate your own caches\n    revalidateTag('products', 'max')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidatePath, revalidateTag} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  beforeCommit({mutations}) {\n    // Inspect or rewrite the changes, return the mutations to commit\n    return mutations\n  },\n  afterCommit({entries, removed}) {\n    // Pages that query content refresh on their own, revalidate your own caches\n    for (const {url} of [...entries, ...removed]) revalidatePath(url)\n    revalidateTag('products', 'max')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx"
     },
