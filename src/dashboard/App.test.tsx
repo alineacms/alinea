@@ -64,6 +64,50 @@ test('does not synchronize the graph until authentication has settled', async ()
   unsubscribe()
 })
 
+test('the loading screen stays up through the first sync after signing in', async () => {
+  const {config, db, store} = await createDashboardAtomFixture()
+  let resolveAuth: ((result: AuthResult) => void) | undefined
+  let releaseSync: (() => void) | undefined
+  let markSyncStarted: (() => void) | undefined
+  const authResult = new Promise<AuthResult>(resolve => {
+    resolveAuth = resolve
+  })
+  const syncStarted = new Promise<void>(resolve => {
+    markSyncStarted = resolve
+  })
+  const holdSync = new Promise<void>(resolve => {
+    releaseSync = resolve
+  })
+  db.sync = async () => {
+    markSyncStarted?.()
+    await holdSync
+    return db.sha
+  }
+  const client = new Client({config, url: '/api/cms'})
+  client.authStatus = () => authResult
+  store.set(localAtom, false)
+  store.set(clientAtom, client)
+  const unsubscribe = store.sub(appAtom, () => {})
+
+  const authenticate = store.set(authAtom, {type: 'check'})
+  await new Promise(resolve => setTimeout(resolve, 0))
+  expect(store.get(appAtom)[1]).toBeUndefined()
+
+  resolveAuth?.({
+    type: AuthResultType.Authenticated,
+    user: localUser,
+    capabilities: {users: false}
+  })
+  await authenticate
+  await syncStarted
+  const [pending, app] = store.get(appAtom)
+  expect(pending).toBe(true)
+  expect(app).toBeUndefined()
+
+  releaseSync?.()
+  unsubscribe()
+})
+
 test('the loading screen shows the progress of a sync', async () => {
   const {store} = await createDashboardAtomFixture()
   const events = store.get(eventsAtom)

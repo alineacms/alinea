@@ -61,6 +61,9 @@ export const appAtom = atomWithPending(
   atom(async get => {
     const auth = get(authAtom)
     if (auth.status === 'authenticated') return get(authenticatedAtom)
+    // The loading screen stays up while the session is checked and, kept by
+    // atomWithPending, through the first sync once it's authenticated
+    if (auth.status === 'loading') return undefined
     return <AuthView />
   })
 )
