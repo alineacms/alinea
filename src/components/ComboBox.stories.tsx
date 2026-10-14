@@ -1,5 +1,6 @@
 import {useState} from 'react'
-import {ComboBox, ComboBoxItem} from './ComboBox.js'
+import {useAsyncList} from './AsyncList.js'
+import {ComboBox, ComboBoxGroup, ComboBoxItem} from './ComboBox.js'
 
 const software = [
   {value: 'photoshop', label: 'Adobe Photoshop'},
@@ -94,4 +95,60 @@ export function States() {
 
 export default {
   title: 'Pure components / ComboBox'
+}
+
+/** Items come from a (simulated) server that filters on the typed text */
+export function ServerSearch() {
+  const list = useAsyncList<{value: string; label: string}>({
+    getKey: item => item.value,
+    async load({filterText, signal}) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      signal.throwIfAborted()
+      const query = filterText.toLowerCase()
+      return {
+        items: software.filter(item => item.label.toLowerCase().includes(query))
+      }
+    }
+  })
+  return (
+    <ComboBox
+      label="Design software"
+      placeholder="Search software"
+      inputValue={list.filterText}
+      onInputValueChange={list.setFilterText}
+      filter={false}
+      loading={list.loading}
+      emptyMessage="No software found"
+    >
+      {list.items.map(item => (
+        <ComboBoxItem key={item.value} value={item.value}>
+          {item.label}
+        </ComboBoxItem>
+      ))}
+    </ComboBox>
+  )
+}
+
+export function Groups() {
+  return (
+    <ComboBox
+      label="Entry type"
+      placeholder="Search types"
+      style={{width: 280}}
+    >
+      <ComboBoxGroup label="Pages">
+        <ComboBoxItem value="page" description="A plain page">
+          Page
+        </ComboBoxItem>
+        <ComboBoxItem value="landing" description="A page built from blocks">
+          Landing page
+        </ComboBoxItem>
+      </ComboBoxGroup>
+      <ComboBoxGroup label="Blog">
+        <ComboBoxItem value="post" description="An article in the blog">
+          Blog post
+        </ComboBoxItem>
+      </ComboBoxGroup>
+    </ComboBox>
+  )
 }

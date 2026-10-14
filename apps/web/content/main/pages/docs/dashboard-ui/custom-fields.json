@@ -66,9 +66,25 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Field.Create<Value, Options>` is the type of a field that stores `Value` (anything JSON can hold) and accepts your `Options` next to the standard ones: `initialValue`, `required`, `readOnly`, `hidden`, `shared` and `validate`. Queries return the stored value as it is."
+          "text": "`Field.Create<Value, Options>` is the type of a field that stores `Value` (anything JSON can hold) and accepts your `Options` next to the standard ones: `initialValue`, `required`, `readOnly`, `hidden`, `shared`, `validate` and `width`, the width of the field in the entry form. Queries return the stored value as it is."
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To describe the options as an interface, extend `FieldOptions` from `alinea/core` and type the options argument with `WithoutLabel`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIpTruj0xLdrfmNvbyhKMWnp",
+      "code": "import {Field} from 'alinea'\nimport type {FieldOptions, WithoutLabel} from 'alinea'\n\nexport interface RatingOptions extends FieldOptions<number> {\n  max?: number\n}\n\nexport type RatingField = Field.Create<number, RatingOptions>\n\nexport function rating(\n  label: string,\n  options: WithoutLabel<RatingOptions> = {}\n): RatingField {\n  return Field.create({label, options, view: '@/fields/Rating.view'})\n}",
+      "fileName": "fields/Rating.ts",
+      "language": "tsx"
     },
     {
       "_type": "paragraph",
@@ -328,6 +344,41 @@
       "language": "tsx"
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The entry editor sets `--alinea-header-height` to the height of its header. A view that fills the visible editor can size itself with it, for example `height: calc(100dvh - var(--alinea-header-height))`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Style your own markup with the "
+        },
+        {
+          "_type": "text",
+          "text": "theme tokens",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIqo4pH0DxB2GthPMRXOzbla",
+              "_link": "entry",
+              "_entry": "3JjNWjycrc5b8HEqhLEx7vLGHqQ",
+              "_anchor": "theme-tokens"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", such as `--alinea-fg-muted`, `--alinea-border` and `--alinea-radius`, so it follows light and dark mode. `--alinea-workspace-color` holds the `color` of the current workspace."
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
@@ -343,7 +394,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Everything in `alinea/cms` works in field views and in the other components the dashboard renders: `Field.view` sections and custom type and root views."
+          "text": "Everything in `alinea/cms` works in field views and in the other components the dashboard renders for an entry: `Field.view` sections, entry `actions` and a type's `view`. A root's `view` is not part of an entry: the hooks that read the dashboard, such as `useGraph`, `useNavigate`, `useLocale` and `useUser`, and `EntryTable` work there, the field hooks, `EditField` and `EditFields` don't, and `useEntry()` returns `null`."
         }
       ]
     },
@@ -437,13 +488,29 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useSiblingFieldValue(key)`: the value of another field in the same entry, list row or object, by its key."
+                  "text": "Other fields: pass any field of the same list row or object, of a parent row or of the entry to these hooks, it resolves in the nearest scope that holds it. Import the type from your schema (`useFieldValue(BlogPost.title)`) or pass the field through your field's options. A view shared by types that each define their own field passes its key instead: `useFieldValue('path')` reads that field of the same row, untyped. `useSiblingFieldValue(key)` is deprecated."
                 }
               ]
             }
           ]
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A field in the rows of a list can read a field of the entry, here to suggest the post title as a caption:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIsevl0pPRvKp7R1zLgJrZQq",
+      "code": "import {\n  type FieldViewProps,\n  useField,\n  useFieldOptions,\n  useFieldValue\n} from 'alinea/cms'\nimport {TextField} from 'alinea/components'\nimport {BlogPost} from '@/schema'\nimport type {CaptionField} from './Caption'\n\nexport function CaptionView({field}: FieldViewProps<CaptionField>) {\n  const [value, setValue] = useField(field)\n  const {label} = useFieldOptions(field)\n  // A field of the entry, read from inside a list row\n  const title = useFieldValue(BlogPost.title)\n  return (\n    <TextField\n      label={label}\n      value={value}\n      placeholder={title}\n      onValueChange={setValue}\n    />\n  )\n}",
+      "fileName": "fields/Caption.view.tsx",
+      "language": "tsx"
     },
     {
       "_type": "paragraph",
@@ -465,7 +532,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useEntry()`: the entry being edited, with its `id`, `title`, `url`, `workspace`, `root`, `locale`, `status` and the stored `data`. `null` outside an entry."
+                  "text": "`useEntry()`: the entry being edited, with its `id`, `type`, `title`, `path`, `url`, `locale`, `status`, `workspace`, `root`, `parentId` and `data`. `data` holds the field values as saved, read the live value of a field while it is edited with `useFieldValue(field)`. `null` outside an entry."
                 }
               ]
             }
@@ -537,7 +604,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`useNavigate()`: returns a function that opens an entry or root in the dashboard: `navigate({workspace, root, entryId})`. The editor is asked to confirm first when there are unsaved changes."
+                  "text": "`useNavigate()`: returns a function that opens an entry or root in the dashboard: `navigate({entryId, locale})` looks up the entry's workspace and root, `navigate({workspace, root})` opens a root. Pass `view: 'edit'` or `view: 'overview'` to pick the form or the list of children. The editor is asked to confirm first when there are unsaved changes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`href(location)` from `alinea`: the href of the same locations, for a link that also opens in a new tab: `<a href={href({entryId: post.id})}>`. It is a plain function, so it also works in table rows, in the `help` of a field and on the server, where you prefix the dashboard's url: `${baseUrl}/admin${href({entryId})}`."
                 }
               ]
             }
@@ -593,7 +674,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`EditField`, `EditFields`: render a field, or a record of fields, with the view it is configured with, for example to lay out existing fields in a `Field.view` section."
+                  "text": "`EditField`, `EditFields`: render a field, or a record of fields, with the view it is configured with, for example to lay out existing fields in a `Field.view` section. Pass an object field to `EditFields` to render its fields, or some of them, in the scope of the object: `<EditFields field={Product.dimensions} fields={{width: Product.dimensions.width}} />`."
                 }
               ]
             }
@@ -652,7 +733,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`OverviewCellProps`, `OverviewActionProps`, `OverviewEntry`: the props of an overview column's `view` and of an overview action, and the entry they receive."
+                  "text": "`OverviewCellProps`, `OverviewActionProps`, `OverviewEntry`: the props of an overview column's `view` and of an overview action, and the entry they receive. `EntryActionProps` and `DashboardEntry`: the props of an entry action and the entry `useEntry()` returns."
                 }
               ]
             }
@@ -692,6 +773,83 @@
       "_id": "3JkF1qRklf6emNbglBotdOHkqUs",
       "code": "import {useEntry} from 'alinea/cms'\nimport {Field, Link} from 'alinea/components'\n\nexport function ProductUrls() {\n  const entry = useEntry()\n  if (!entry) return null\n  return (\n    <Field label=\"Public URL\" description=\"Where this product is published\">\n      <Link href={entry.url} target=\"_blank\">\n        {entry.url}\n      </Link>\n    </Field>\n  )\n}",
       "fileName": "fields/ProductUrls.view.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Replace the form of a type"
+        }
+      ],
+      "_anchor": "replace-the-form-of-a-type"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A type's `view` replaces the form of its entries with your own component, for example to edit the fields in a layout of your own. The entry header stays above it, with the title, the status, the publish and draft buttons, the type's `actions` and the sidebar with history and references. The view fills the rest of the editor, without padding."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KeamZAiBzOZFJbOrrGeblbhiQg",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  view: '@/views/ProductView.view#ProductView',\n  fields: {\n    summary: Field.text('Summary', {multiline: true}),\n    price: Field.number('Price')\n  }\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KeamUXV3tiOKnyFeyaSMrzPFxr",
+      "code": "import {EditField, useField} from 'alinea/cms'\nimport {TextField} from 'alinea/components'\nimport {Product} from '@/schema/Product'\n\nexport function ProductView() {\n  const [summary = '', setSummary] = useField(Product.summary)\n  return (\n    <div style={{display: 'grid', gap: 16, padding: 24}}>\n      <TextField\n        label=\"Summary\"\n        multiline\n        value={summary}\n        onValueChange={setSummary}\n      />\n      <EditField field={Product.price} />\n    </div>\n  )\n}",
+      "fileName": "views/ProductView.view.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The view receives `TypeViewProps`: the `type` of the entry. It edits the entry like the form does: the field hooks, `EditField` and `EditFields` read and write the fields of the entry, the changes show up as unsaved edits in the header and are kept until the editor publishes or saves a draft, and leaving the entry with unsaved changes asks to confirm first. To fill the editor, size the view with `height: 100%`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add actions to the entry header"
+        }
+      ],
+      "_anchor": "add-actions-to-the-entry-header"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Buttons that act on the entry, such as an export or a button that creates a related entry, go in the `actions` of its type. They render in the entry header next to the publish button and receive `EntryActionProps`: the `entry` and the `locale` it is edited in. The hooks of `alinea/cms` read and write its fields."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "c4pRrIghxO3B9MRmZSA6Ls9rEpg",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {title: Field.text('Title')},\n  actions: ['@/views/ExportProduct.view#ExportProduct']\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "rmx8EESiXykb0eBt5rWYDQeJizY",
+      "code": "import {type EntryActionProps, useFieldValue} from 'alinea/cms'\nimport {Button} from 'alinea/components'\nimport {Product} from '@/schema/Product'\n\nexport function ExportProduct({entry}: EntryActionProps) {\n  const title = useFieldValue(Product.title)\n  return (\n    <Button onClick={() => window.open(`/api/export/${entry.id}`)}>\n      Export {title}\n    </Button>\n  )\n}",
+      "fileName": "views/ExportProduct.view.tsx",
       "language": "tsx"
     },
     {
@@ -754,6 +912,20 @@
                 {
                   "_type": "text",
                   "text": "`useLocale`, `useGraph` and `useEntryEditor` from `alinea/dashboard/hook/*` become `useLocale`, `useGraph` and `useEntry` from `alinea/cms`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`useEntryEditor` still works as a shim for views that only read the entry: `activeVersion` has the `id`, `locale`, `path`, `status`, `title` and `type` of the entry, and `activeVersion.data` only has `path`. Reading another field of it throws, read field values with `useFieldValue(field)` instead. `useEntry()` returns the same entry as a `DashboardEntry`, with its saved field values in `data`."
                 }
               ]
             }

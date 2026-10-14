@@ -70,7 +70,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     // the bundled database instead of asking the cloud and failing.
     if (!validApiKey(ctx.apiKey)) return
     return parseOutcome<Tree | null>(
-      fetch(
+      read(
         cloudConfig.tree,
         json({
           method: 'POST',
@@ -91,7 +91,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const ctx = this.#context
-    const response = await fetch(cloudConfig.blobs, {
+    const response = await read(cloudConfig.blobs, {
       method: 'POST',
       body: JSON.stringify({shas}),
       signal: options.signal,
@@ -258,7 +258,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     const {entryId, locale} = parseDraftKey(draftKey)
     type CloudDraft = {fileHash: string; update: string; commitHash: string}
     const data = await parseOutcome<CloudDraft | null>(
-      fetch(`${cloudConfig.drafts}/${draftKey}`, json({headers: bearer(ctx)}))
+      read(`${cloudConfig.drafts}/${draftKey}`, json({headers: bearer(ctx)}))
     )
     return data?.update
       ? {
@@ -291,7 +291,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
   revisions(file: string): Promise<Array<Revision>> {
     const ctx = this.#context
     return parseOutcome<Array<Revision>>(
-      fetch(
+      read(
         `${cloudConfig.history}?${new URLSearchParams({file})}`,
         json({headers: bearer(ctx)})
       )
@@ -304,7 +304,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
   ): Promise<EntryRecord | undefined> {
     const ctx = this.#context
     return parseOutcome<EntryRecord | undefined>(
-      fetch(
+      read(
         `${cloudConfig.history}?${new URLSearchParams({file, ref: revisionId})}`,
         json({headers: bearer(ctx)})
       )
@@ -319,7 +319,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
   listUsers(): Promise<Array<User>> {
     const ctx = this.#context
     return parseOutcome<Array<User>>(
-      fetch(cloudConfig.users, json({headers: bearer(ctx)}))
+      read(cloudConfig.users, json({headers: bearer(ctx)}))
     )
   }
 
@@ -362,6 +362,29 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
         })
       )
     )
+  }
+}
+
+// Reads give up when the cloud does not respond in time, so a hung cloud
+// fails syncs instead of holding them, and the reads waiting on them, forever.
+// Only the response has to arrive in time: a large blob download takes as
+// long as it needs. Writes have no limit, a slow commit may still land and
+// must not be reported as failed.
+const readTimeout = 30_000
+
+async function read(url: string, init: RequestInit): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => {
+    const message = `No response from ${url} within ${readTimeout / 1000}s`
+    controller.abort(new HttpError(504, message))
+  }, readTimeout)
+  const signal = init.signal
+    ? AbortSignal.any([init.signal, controller.signal])
+    : controller.signal
+  try {
+    return await fetch(url, {...init, signal})
+  } finally {
+    clearTimeout(timer)
   }
 }
 

@@ -271,7 +271,7 @@ function OverviewItem({value, onOpenEntry}: OverviewValueProps): ReactNode {
       className={styles.OverviewCell.link()}
       onClick={() => onOpenEntry(entryId)}
     >
-      {text}
+      <span className={styles.OverviewCell.link.text()}>{text}</span>
     </Button>
   )
 }

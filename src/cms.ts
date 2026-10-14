@@ -21,7 +21,6 @@ export {
 
 // Entry and dashboard context
 export {
-  type DashboardLocation,
   useEntry,
   useGraph,
   useLocale,
@@ -30,6 +29,8 @@ export {
   usePreviewMetadata,
   useUser
 } from './dashboard/cms/hooks.js'
+export type {DashboardEntry, EntryActionProps} from './core/DashboardEntry.js'
+export type {DashboardLocation} from './dashboard/Href.js'
 export type {Policy} from './core/Role.js'
 export type {PreviewMetadata} from './core/Preview.js'
 export type {User} from './core/User.js'
@@ -51,7 +52,8 @@ export {EntryTable, type EntryTableProps} from './dashboard/cms/EntryTable.js'
 export type {
   OverviewActionProps,
   OverviewCellProps,
-  OverviewEntry
+  OverviewEntry,
+  OverviewHeaderProps
 } from './core/Overview.js'
 
 // View props

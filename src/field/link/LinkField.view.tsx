@@ -36,7 +36,7 @@ import {
   TextField
 } from '#/components.js'
 import {Config} from '#/core/Config.js'
-import type {Entry as EntryRecord} from '#/core/Entry.js'
+import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
 import {getType, getWorkspace} from '#/core/Internal.js'
@@ -88,6 +88,7 @@ import {
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
+import {assertPickerCondition} from '#/picker/entry/EntryPicker.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -482,7 +483,7 @@ interface ResolvedEntryPickerOptions {
 function useResolvedEntryPickerOptions(
   options: Partial<EntryPickerOptions>,
   type: PickerType,
-  entry: EntryRecord<Record<string, unknown>> | null
+  entry: DashboardEntry | null
 ): ResolvedEntryPickerOptions {
   const {condition: conditionOption, location: locationOption} = options
   const resolvedAtom = useMemo(() => {
@@ -508,6 +509,7 @@ function useResolvedEntryPickerOptions(
         condition,
         location
       ])
+      if (nextCondition) assertPickerCondition(nextCondition)
       return {condition: nextCondition, location: nextLocation}
     })
     return unwrap(resolved, previous => previous ?? initialValue)
@@ -822,6 +824,7 @@ function EntryAnchorFieldInner({
   const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
   return (
     <Select
+      clearable
       disabled={isDisabled || anchors.length === 0}
       label="Anchor"
       onValueChange={next => onChange(next ?? undefined)}

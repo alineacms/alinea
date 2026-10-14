@@ -2,7 +2,7 @@ import {cms} from '#test/cms.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {DemoRecipes} from '#test/schema/DemoRecipes.js'
-import {afterAll, beforeAll, expect, test} from 'bun:test'
+import {afterAll, beforeAll, expect, expectTypeOf, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import {createCMS} from '#/core.js'
@@ -707,6 +707,39 @@ test('preserves missing, null and nested field projections', async () => {
     })
     expect(Object.hasOwn(parent, 'createdAt')).toBe(true)
     expect(parent.createdAt).toBeUndefined()
+  })
+})
+
+test('selects a field of an object field', async () => {
+  await withAdvancedStore(async store => {
+    const alpha = await store.get({
+      id: 'child-1',
+      select: {title: Entry.title, inner: Article.meta.inner}
+    })
+    expectTypeOf(alpha.inner).toEqualTypeOf<string>()
+    expect(alpha).toEqual({title: 'Alpha', inner: 'x'})
+    expect(await store.get({id: 'child-1', select: Article.meta.inner})).toBe(
+      'x'
+    )
+    const children = await store.get({
+      id: 'parent',
+      select: Query.children({
+        type: Article,
+        select: {id: Entry.id, inner: Article.meta.inner}
+      })
+    })
+    expect(children).toEqual([
+      {id: 'child-1', inner: 'x'},
+      {id: 'child-2', inner: 'y'}
+    ])
+    expect(
+      await store.find({
+        type: Article,
+        orderBy: {desc: Article.meta.inner},
+        filter: {meta: {has: {inner: {in: ['x', 'y']}}}},
+        select: Entry.id
+      })
+    ).toEqual(['child-2', 'child-1'])
   })
 })
 

@@ -3,14 +3,18 @@ import {LocalDB} from '#/database/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
+import {DashboardWorker} from '#/dashboard/boot/DashboardWorker.js'
+import {WorkerDB} from '#/dashboard/boot/WorkerDB.js'
 import {IcRoundFormatListNumbered} from '#/dashboard/icons.js'
 import type {Entry} from '#/core/Entry.js'
 import {Config, Field, Query} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {views} from '#/field/views.js'
-import {use, useState} from 'react'
+import {use} from 'react'
 import {
   dashboardLinkScenarioIds,
   dashboardScenarioIds
@@ -116,9 +120,21 @@ const slowPreviewConfig = Config.create({
   preview: SlowPreview
 })
 
+const browserPreviewOrigin = 'http://preview.example'
+
+const browserPreviewConfig = Config.create({
+  enableDrafts: true,
+  schema: {HiddenFolder, OrderedFolder, Page: ScenarioPage},
+  workspaces: {main, references},
+  baseUrl: browserPreviewOrigin,
+  handlerUrl: '/api/cms',
+  preview: true
+})
+
 interface DashboardScenarioState {
   client: LocalConnection
-  db: LocalDB
+  graph: WriteableGraph
+  events: EventTarget
 }
 
 export interface DashboardScenarioProps {
@@ -127,8 +143,13 @@ export interface DashboardScenarioProps {
   readDelay?: number
   // Render entry previews with a component that suspends while it loads
   slowPreview?: boolean
+  // Preview entries in an iframe of the site at browserPreviewOrigin
+  browserPreview?: boolean
   // Fail the first request for the list of users
   failFirstUserList?: boolean
+  // Sync the content from a remote through the dashboard worker, which sends
+  // each file after this many milliseconds
+  syncDelay?: number
 }
 
 class ScenarioDB extends LocalDB {
@@ -180,12 +201,18 @@ const users: Array<User> = [
   }
 ]
 
+function scenarioConfig({slowPreview, browserPreview}: DashboardScenarioProps) {
+  if (browserPreview) return browserPreviewConfig
+  return slowPreview ? slowPreviewConfig : config
+}
+
 async function createDashboardScenario({
   readDelay = 0,
-  slowPreview,
-  failFirstUserList
+  failFirstUserList,
+  syncDelay,
+  ...props
 }: DashboardScenarioProps): Promise<DashboardScenarioState> {
-  const db = new ScenarioDB(slowPreview ? slowPreviewConfig : config)
+  const db = new ScenarioDB(scenarioConfig(props))
   await db.sync()
   await db.create({
     id: dashboardScenarioIds.alpha,
@@ -571,17 +598,40 @@ async function createDashboardScenario({
       } satisfies EntryRecord)
     }
   }
-  return {client, db}
+  if (!syncDelay) return {client, graph: db, events: db.events}
+  const remote: LocalConnection = {
+    ...client,
+    async *getBlobs(shas, options) {
+      for await (const blob of client.getBlobs(shas, options)) {
+        await new Promise(resolve => setTimeout(resolve, syncDelay))
+        yield blob
+      }
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+  const workerConfig = scenarioConfig(props)
+  await worker.load('scenario', workerConfig, remote)
+  return {
+    client: remote,
+    graph: new WorkerDB(workerConfig, worker, remote, worker),
+    events: worker
+  }
 }
 
+// Created once per page: a render that suspends before it mounts loses its
+// state, so a promise kept in state would be created again on every retry
+const scenarios = new Map<string, Promise<DashboardScenarioState>>()
+
 export function DashboardScenario(props: DashboardScenarioProps) {
-  const [scenario] = useState(() => createDashboardScenario(props))
-  const {client, db} = use(scenario)
+  const key = JSON.stringify(props)
+  let scenario = scenarios.get(key)
+  if (!scenario) scenarios.set(key, (scenario = createDashboardScenario(props)))
+  const {client, graph, events} = use(scenario)
   return (
     <App
-      graph={db}
-      events={db.events}
-      config={props.slowPreview ? slowPreviewConfig : config}
+      graph={graph}
+      events={events}
+      config={scenarioConfig(props)}
       client={client}
       views={views}
       local

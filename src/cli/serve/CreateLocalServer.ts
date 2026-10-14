@@ -342,6 +342,7 @@ export function createLocalServer(
           : `${url.pathname}/`
         return new Response(
           `<!DOCTYPE html>
+          <html data-alinea-theme>
           <meta charset="utf-8" />
           <base href="${path}" />
           <link rel="icon" href="data:," />

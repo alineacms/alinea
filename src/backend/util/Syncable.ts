@@ -1,5 +1,12 @@
 import pLimit from 'p-limit'
 
+/**
+ * How long a read waits for a sync with the remote. A slower or hung remote
+ * must not hold up every read: past this the read answers with the content
+ * it has, while the sync carries on.
+ */
+export const syncWait = 10_000
+
 export function createThrottledSync(): (
   sync: () => Promise<unknown>,
   interval?: number

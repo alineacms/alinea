@@ -52,6 +52,15 @@
     },
     {
       "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Only set this up once your deployed site has a backend that syncs content at runtime: Alinea Cloud or a self-hosted backend. Without one, a deployment is how new content reaches your site, so skipping content-only builds would leave published changes offline."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
@@ -101,7 +110,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Static pages are revalidated for you. Every page that queries content is tagged, and after each commit the handler marks those pages as stale. The next visit is still answered from the cache while Next.js rebuilds the page in the background, and the visit after that gets the new content. No visitor waits for a render, and no `revalidatePath` call is needed."
+          "text": "Static pages are revalidated for you. Every page that queries content is tagged, and after each commit the handler marks those pages as stale. The next visit is still answered from the cache while Next.js rebuilds the page in the background, and the visit after that gets the new content. No visitor waits for a render, and no `revalidatePath` call is needed. This includes pages generated with `generateStaticParams`: revalidation code in `afterCommit` that refreshes them by hand, such as `revalidateTag('_N_T_/layout')` or `revalidatePath('/', 'layout')`, can be removed."
         }
       ]
     },
@@ -111,9 +120,16 @@
       "content": [
         {
           "_type": "text",
-          "text": "Pages rendered at request time sync on their next render. The first one after a commit can still show the previous version while the shared content sha refreshes. Content pushed to your repository without the dashboard, for example a local edit, skips the handler: pages pick it up within five minutes, or within `syncInterval` seconds when your config sets it. Use the handler's `afterCommit` hook if other caches in your app depend on content, for example your own `fetch` tags."
+          "text": "Pages rendered at request time sync on their next render. The first one after a commit can still show the previous version while the shared content sha refreshes. Content pushed to your repository without the dashboard, for example a local edit, skips the handler: pages pick it up within five minutes, or within `syncInterval` seconds when your config sets it. Use the handler's `afterCommit` hook if other caches in your app depend on content, for example your own `fetch` tags. It receives the changed `entries` and the `removed` ones, see [Commit hooks](page:guides/deploy#commit-hooks):"
         }
       ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KdUIs8FgUDZI0TFJKOp5Gg1ixO",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {revalidateTag} from 'next/cache'\n\nconst handler = createHandler({\n  cms,\n  afterCommit({entries, removed}) {\n    const changed = [...entries, ...removed]\n    if (changed.some(entry => entry.type === 'Product'))\n      revalidateTag('products', 'max')\n  }\n})\n\nexport const GET = handler\nexport const POST = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx"
     }
   ],
   "metadata": {

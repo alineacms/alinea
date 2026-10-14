@@ -1,0 +1,30 @@
+.ExplorerTabs {
+  flex: 1;
+  min-height: 0;
+}
+
+.ExplorerTabs-bar {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg);
+}
+
+.ExplorerTabs-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 0;
+
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ExplorerTabs-bar {
+    padding: 0 8px;
+  }
+}

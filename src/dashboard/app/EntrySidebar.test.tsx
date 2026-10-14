@@ -10,6 +10,10 @@ import {EntrySidebar, entrySidebar} from './EntrySidebar.js'
 
 afterEach(cleanup)
 
+function ComponentPreview() {
+  return <p>Preview</p>
+}
+
 test('loads sidebar data only when its tab is selected', async () => {
   const selectedEntry: Entry = {
     active: true,
@@ -49,7 +53,11 @@ test('loads sidebar data only when its tab is selected', async () => {
       entries: [selectedEntry]
     } as never)
   )
+  // The test schema's Page has no preview, this test is about one that does
+  entry.preview = atom(() => ComponentPreview)
   const localeData = entry.locales(null)
+  localeData.previewEntryReady = atom(async () => selectedEntry)
+  localeData.previewEntry = atom(selectedEntry)
   const references = {
     references: [],
     hidden: [],
@@ -135,6 +143,7 @@ test('loads sidebar data only when its tab is selected', async () => {
       entries: [nextSelectedEntry]
     } as never)
   )
+  nextEntry.preview = atom(() => ComponentPreview)
   let nextReferenceLoads = 0
   nextEntry.incomingReferencesReady = atom(async () => {
     nextReferenceLoads++
@@ -322,4 +331,51 @@ test('loads previous versions in place when running locally', async () => {
 
   store.set(entry.previousVersionsOpen, false)
   expect(store.get(entry.previousVersionsOpen)).toBe(false)
+})
+
+test('entries without a preview have no preview tab and open history', async () => {
+  const selectedEntry = {
+    active: true,
+    data: {title: 'Entry'},
+    id: 'entry-id',
+    locale: null,
+    main: true,
+    parentId: null,
+    root: 'pages',
+    status: 'published',
+    title: 'Entry',
+    type: 'Page',
+    workspace: 'simple'
+  } as unknown as Entry
+  const entry = new EntryAtoms(
+    selectedEntry.id,
+    atom({
+      id: selectedEntry.id,
+      type: selectedEntry.type,
+      parentId: null,
+      workspace: selectedEntry.workspace,
+      root: selectedEntry.root,
+      hasChildren: false,
+      parents: [],
+      entries: [selectedEntry]
+    } as never)
+  )
+  entry.preview = atom(false)
+  const localeData = entry.locales(null)
+  localeData.historyReady = atom(async () => [])
+  localeData.historyState = atomWithPending(localeData.historyReady)
+  const store = createStore()
+  store.set(configAtom, cms.config)
+  store.set(localAtom, false)
+  const sidebar = await entrySidebar(store.get, entry, localeData)
+  expect(sidebar?.selectedTab).toBe('history')
+  render(
+    <Provider store={store}>
+      <EntrySidebar {...sidebar!} />
+    </Provider>
+  )
+  expect(screen.queryByRole('tab', {name: 'Preview'})).toBeNull()
+  expect(
+    screen.getByRole('tab', {name: 'History'}).getAttribute('aria-selected')
+  ).toBe('true')
 })

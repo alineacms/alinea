@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {mapConcurrent} from './Async.js'
+import {mapConcurrent, within} from './Async.js'
 
 const test = suite(import.meta)
 
@@ -60,4 +60,16 @@ test('aborts without waiting for pending work', async () => {
   controller.abort(error)
 
   await test.throws(() => next, 'Cancelled')
+})
+
+test('within settles like the promise when it is in time', async () => {
+  test.is(await within(Promise.resolve('done'), 1000), 'done')
+  await test.throws(() => within(Promise.reject(new Error('Failed')), 1000))
+})
+
+test('within rejects when the promise takes too long', async () => {
+  await test.throws(
+    () => within(new Promise(() => {}), 10),
+    'Timed out after 0.01s'
+  )
 })

@@ -1,7 +1,18 @@
-/* Color palette, only read by the default theme below */
-:root {
-  color-scheme: light dark;
+/*
+  Tokens apply inside an element with data-alinea-theme, so the stylesheet
+  can be loaded on a page without restyling it. The dashboard sets it on
+  <html>; overlays that render outside of it (popovers, dialogs, tooltips)
+  set it on themselves. Palette and inputs are declared on the outermost
+  themed element only, so a theme set on it is inherited by nested ones.
+*/
 
+/* The document follows the system color scheme unless data-theme is set */
+:root[data-alinea-theme] {
+  color-scheme: light dark;
+}
+
+/* Color palette, only read by the default theme below */
+:where([data-alinea-theme]:not([data-alinea-theme] *)) {
   --alinea-gray-0: #ffffff;
   --alinea-gray-50: #f9fafb;
   --alinea-gray-100: #f3f4f7;
@@ -59,7 +70,7 @@
   Theme inputs. A theme only needs to set these, as light-dark() pairs where
   the value differs per color scheme. Everything else is derived from them.
 */
-:root {
+:where([data-alinea-theme]:not([data-alinea-theme] *)) {
   --alinea-font: 'Inter', sans-serif;
   --alinea-mono-font: 'JetBrains Mono', monospace;
   --alinea-font-size-base: 0.8125rem;
@@ -78,13 +89,14 @@
   --alinea-warning-fg: var(--alinea-gray-900);
   --alinea-success: light-dark(var(--alinea-green-600), var(--alinea-green-500));
   --alinea-ring: var(--alinea-blue-500);
+  /* The color option of the current workspace, set by the dashboard */
+  --alinea-workspace-color: var(--alinea-primary);
 }
 
 /*
   Derived tokens. Declared on every themed element so they are recomputed
   from the inputs a nested [data-alinea-theme] overrides.
 */
-:root,
 [data-alinea-theme] {
   --alinea-transition: 0.2s ease-out;
   --alinea-radius-sm: calc(var(--alinea-radius) / 2);
@@ -148,10 +160,10 @@
   --alinea-shadow-modal: 0 2px 13px rgb(0 0 0 / 11%);
 }
 
-:root[data-theme='light'] {
+[data-alinea-theme][data-theme='light'] {
   color-scheme: light;
 }
 
-:root[data-theme='dark'] {
+[data-alinea-theme][data-theme='dark'] {
   color-scheme: dark;
 }

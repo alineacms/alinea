@@ -2,8 +2,11 @@ import {createHandler} from '#/backend/Handler.js'
 import {createCMS} from '#/core.js'
 import {createConfig} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
+import type {HttpError} from '#/core/HttpError.js'
 import {LocalDB} from '#/database/LocalDB.js'
+import {Config} from '#/index.js'
 import {suite} from '@alinea/suite'
+import {jest} from 'bun:test'
 import {CloudRemote} from './CloudRemote.js'
 
 const test = suite(import.meta)
@@ -93,6 +96,40 @@ test('serves bundled content without asking the cloud when no api key is set', a
     )
     test.is(requests, 0)
   } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('gives up on reads the cloud does not answer', async () => {
+  const context: RequestContext = {
+    apiKey: 'alineapk_client-id_secret',
+    handlerUrl: new URL('https://cms.example.com/api'),
+    isDev: false
+  }
+  const config = createConfig({
+    schema: {},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  })
+  const remote = new CloudRemote(context, config)
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = ((_: string, init: RequestInit) =>
+    new Promise((_, reject) => {
+      init.signal!.addEventListener('abort', () => reject(init.signal!.reason))
+    })) as unknown as typeof fetch
+  jest.useFakeTimers()
+  try {
+    const failed = remote
+      .getTreeIfDifferent('sha')
+      .catch((error: HttpError) => error)
+    jest.advanceTimersByTime(30_000)
+    test.is(((await failed) as HttpError).code, 504)
+  } finally {
+    jest.useRealTimers()
     globalThis.fetch = originalFetch
   }
 })

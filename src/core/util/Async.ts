@@ -124,6 +124,18 @@ export function genEffect<T, TReturn>(
   }
 }
 
+/** Settle like `promise`, or reject when it takes longer than `ms`. */
+export function within<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`Timed out after ${ms / 1000}s`)),
+      ms
+    )
+  })
+  return Promise.race([promise, expired]).finally(() => clearTimeout(timer))
+}
+
 /** Run tasks one after another; a failed task does not block the next one. */
 export class TaskQueue {
   #tail: Promise<unknown> = Promise.resolve()

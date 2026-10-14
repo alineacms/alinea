@@ -1,6 +1,82 @@
 # Changelog
 
 ## [2.0.0]
+- Rebuild the dashboard on React Aria Components, with keyboard navigation,
+  focus management and screen reader support throughout, a new theme with dark
+  mode, a responsive layout, entry history and a references panel that shows
+  which entries link to the current one. The entry sidebar starts closed for
+  entries without a preview.
+- Add `alinea/components`, the public component library the dashboard is built
+  from, to build custom fields and views. It includes `Stack`, `Form` (field
+  errors from native constraints, `validationErrors` or what `onSubmit`
+  returns) and `useAsyncList` to load items page by page or as you type, and
+  to update, remove or add loaded items without loading them again.
+  `DialogContent` submits a form with `onSubmit`, `Dialog` has `onClose`,
+  `Table` has `loading` and `onLoadMore`, `ComboBox` has groups, item
+  descriptions and icons, `filter` and `loading`, and `TextField` has
+  `maxRows`, `inputMode` and `pattern`. Collection keys are strings or numbers.
+  Dashboard icons are available from `alinea/dashboard/icons`.
+- The theme tokens and resets of `alinea/css` apply inside elements with
+  `data-alinea-theme`, which the dashboard sets on `<html>`, so the stylesheet
+  can be loaded on a site without restyling it. The workspace color is
+  `--alinea-workspace-color`.
+- Add `alinea/cms` for custom fields and views: field hooks that read and
+  write the fields of the row, a parent row or the entry when passed that
+  field (`useFieldValue` also takes the key of a field of the row),
+  `useEntry()` returning a `DashboardEntry`, `useNavigate` to open entries by
+  id, `EditField` and `EditFields` (also for the fields of an object field),
+  `FieldChrome` and `EntryTable`. `href({entryId})` from `alinea` links to an
+  entry in the dashboard, also outside of it. The entry editor sets
+  `--alinea-header-height`. `useSiblingFieldValue` and the `useField` hooks of
+  `alinea/dashboard` are deprecated, the `useEntryEditor` shim reads the
+  publish status from `activeVersion.status`.
+- Add `Field.localiser` to keep every locale of a value in a single field, with
+  fallbacks.
+- Add the `overview` option to container types and roots to configure how the
+  dashboard lists their children: columns (`Config.column`) with per-type
+  selects, formatting and custom cells, built-in type, status, updated and
+  author columns, sorting by column header (kept in the URL), the default
+  `sort`, `layout`, card `thumbnail` and toolbar `actions`. Filters can load
+  their options from the content with a function that receives the `graph`
+  and `locale`. `tabs` list the entries of a filter per tab above the list
+  (the selected tab is kept in the URL), and `header` renders a view between
+  the toolbar and the list, eg. totals of the listed entries. The media library lists previews, dimensions, sizes and file
+  types. `EntryTable` in `alinea/cms` renders the same columns in custom
+  views. `overview.sort` replaces `orderChildrenBy`, `summaryRow` and
+  `summaryThumb` are deprecated and the `overview` field option only applies
+  when the parent defines no columns.
+- Add the `actions` type option: components in the entry header, next to the
+  publish button.
+- A type's `view` replaces the form below the entry header instead of the
+  whole editor: the field hooks of `alinea/cms`, `EditField` and `EditFields`
+  edit the fields of the entry, the header publishes or saves them as a draft,
+  the sidebar shows history and references, and leaving with unsaved changes
+  asks to confirm. `view` also accepts a component instead of a path.
+- Add the `settings` type option: fields edited in the settings sheet of a
+  list row or rich text block, below its label and anchor. Entries of the type
+  show them in a Settings tab. They are stored and queried like other fields.
+- The `collapsed: false` type option expands an entry's children in the
+  sidebar content tree from the start.
+- Add `width` to the options of every field, and fix `Field.create` typing
+  for options that extend `FieldOptions`.
+- Query the entries that link to an entry with `Query.referencedBy`, eg.
+  `select: {products: Query.referencedBy({type: Product, field: Product.brand})}`,
+  count them with `count: true` (overview columns that count are sortable) and
+  filter on them: `filter: {_referenced: Query.referencedBy({type: Product,
+  filter: {active: true}})}`.
+- Select fields inside object fields in queries, such as
+  `select: {title: Page.seo.title}`, also in relations like `Query.children`
+  and in `orderBy`.
+- Bundle a SQLite content database with full text fuzzy search. Search matches
+  the hyphenated, spaced and joined spellings of a word: `multi-modal`,
+  `multi modal` and `multimodal` all find each other. Date and number fields are
+  indexed per type that has them, which keeps these indexes small.
+- Show the progress of the content sync below the dashboard's loading spinner
+  (`Syncing content · 1,240 of 4,800 files`) and in the activity status for
+  later syncs. `syncWith` takes an `onProgress` callback.
+- Record URL aliases in the metadata field when an entry's URL changes, and
+  resolve them in queries (`alias` filter, `Query.aliases`). The metadata field
+  also stores `createdAt`, `createdBy`, `updatedAt` and `updatedBy`.
 - Roles combine per role: a deny only applies within the role that sets it, so
   another role of the same user can still allow the action. Before, a deny in
   any role blocked it for the user.
@@ -9,41 +85,17 @@
   allows `explore`, denying `read` denies it unless `explore` is allowed.
 - Target fields inside object fields in role permissions, such as
   `{field: Article.visibility.germany, deny: {all: true}}`.
-- Commit hooks receive the `user` that commits. `alinea dev --role <name>`
-  signs in the local user with that role, for saves, hooks and `cms.user()`.
-- The `collapsed: false` type option expands an entry's children in the
-  sidebar content tree from the start.
-- Rebuild the dashboard on React Aria Components, with keyboard navigation,
-  focus management and screen reader support throughout, a new theme with dark
-  mode, a responsive layout, entry history and a references panel that shows
-  which entries link to the current one.
-- Add `alinea/components`, the public component library the dashboard is built
-  from, to build custom fields and views. Dashboard icons are available from
-  `alinea/dashboard/icons`.
-- Add `Field.localiser` to keep every locale of a value in a single field, with
-  fallbacks.
-- Add the `overview` option to container types and roots to configure how the
-  dashboard lists their children: columns (`Config.column`) with per-type
-  selects, formatting and custom cells, built-in type, status, updated and
-  author columns, sorting by column header (kept in the URL), the default
-  `sort`, `layout`, card `thumbnail` and toolbar `actions`. The media library
-  lists previews, dimensions, sizes and file types. `EntryTable` in
-  `alinea/cms` renders the same columns in custom views. `overview.sort`
-  replaces `orderChildrenBy`, `summaryRow` and `summaryThumb` are deprecated
-  and the `overview` field option only applies when the parent defines no
-  columns.
-- Record URL aliases in the metadata field when an entry's URL changes, and
-  resolve them in queries (`alias` filter, `Query.aliases`). The metadata field
-  also stores `createdAt`, `createdBy`, `updatedAt` and `updatedBy`.
 - Add `beforeCommit` and `afterCommit` handler hooks to rewrite changes before
-  they are committed, or to revalidate, notify and deploy after.
+  they are committed, or to revalidate, notify and deploy after. Both receive
+  the `user` that commits, `afterCommit` also the committed `entries` and the
+  `removed` entries with the url they had. `alinea dev --role <name>` signs in
+  the local user with that role, for saves, hooks and `cms.user()`.
 - Publish instantly: deployed sites sync new content as soon as it is committed,
   driven by the repository sha. `syncInterval` is now a fallback, defaulting to
   60 seconds.
 - Add an MCP server to `alinea dev` (`http://localhost:4500/mcp`) so coding
   agents can read the schema and create, edit, publish, move and delete entries
   and upload media through the dashboard's save path.
-- Bundle a SQLite content database with full text fuzzy search.
 - Add the `adminPath`, `maxUploadSize` and `tracer` config options, and a
   workspace `mediaUrl` option.
 - Add `Field.select.multiple`, `min` and `max` for lists, images and link
@@ -53,10 +105,13 @@
   `database`, `github`, `uploads`) with S3 and Supabase uploads and user
   management.
 - Require Node.js 24 or higher and React 19.
-- Require `handlerUrl` in the config. `dashboardFile` is deprecated in favor of
-  `adminPath`.
+- Require `handlerUrl` in the config, and a production `baseUrl` unless
+  `handlerUrl` is absolute: server renders reach the handler through it.
+  `dashboardFile` is deprecated in favor of `adminPath`.
 - Serve media files through `${adminPath}/file/...` on the site: image and file
-  links now return that URL instead of the stored location.
+  links now return that URL instead of the stored location. Image links only
+  have `src`, their `url` property is removed. `alinea build` warns about
+  media files with a url as location and `alinea build --fix` repairs them.
 - Change `Config.media()` to take root options, children move to `children`.
 - Remove the options of `Field.metadata()` and the `step` option of
   `Field.time()`.
@@ -66,7 +121,7 @@
 - Remove the `remote` handler option and the unused entry hooks. OAuth2 backends
   require `validateClaims`. Drafts are no longer stored in the database.
 - Remove the components from `alinea/ui` except `RichText`, and the form atoms
-  from `alinea/dashboard`. The `useField` hooks are deprecated.
+  from `alinea/dashboard`.
 - Fix read-only roles for nested fields and upload permissions in nested media
   folders.
 - Fix the locale of translations created in another root.
@@ -75,6 +130,8 @@
   dashboard origin.
 - Fix rich text parsing of marks around images and keep `data-` attributes on
   rich text nodes.
+- Fix `alinea build` keeping a config watcher alive while the forwarded command
+  runs, and a live preview refreshing twice in React strict mode.
 
 ## [1.7.0]
 - Add user roles and permission policies. Permissions can now be scoped by

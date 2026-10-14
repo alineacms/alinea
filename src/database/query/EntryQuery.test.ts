@@ -500,7 +500,7 @@ test('ordering by a date field or creation time walks its index', async () => {
   const db = await datedDatabase(sqlite)
   await syncFieldIndexes(db, dated)
   for (const [field, index] of [
-    [Dated.date, 'alinea_entry_index_by_field_date'],
+    [Dated.date, 'alinea_entry_index_by_field_Dated:date'],
     [Entry.createdAt, 'alinea_entry_index_by_field_metadata.createdAt']
   ] as const) {
     const ordered = {type: Dated, orderBy: {desc: field}, select: Entry.id}
@@ -508,6 +508,9 @@ test('ordering by a date field or creation time walks its index', async () => {
     expect(details).toContain(index)
     expect(details).not.toContain('TEMP B-TREE')
   }
+  const filtered = {type: Dated, filter: {rank: {gt: 1}}, select: Entry.id}
+  const ranked = plan(sqlite, filtered as GraphQuery, dated)
+  expect(ranked).toContain('alinea_entry_index_by_field_Dated:rank')
 })
 
 test('ids order by creation time, regardless of letter case', async () => {

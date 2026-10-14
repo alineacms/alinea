@@ -14,21 +14,31 @@ import type {
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
+import type {DashboardEntry} from '#/core/DashboardEntry.js'
+import {
+  committedEntries,
+  type RemovedEntry,
+  removedEntries
+} from './CommitEntries.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
-import {Permission, Policy} from '#/core/Role.js'
+import {Permission, Policy, type Resource} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {type RemoteSource, sourceAtTree} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
+import {within} from '#/core/util/Async.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {isAbsolute, normalize} from '#/core/util/Paths.js'
+import {fileVersions} from '#/core/util/EntryFilenames.js'
+import {isAbsolute, normalize, relative} from '#/core/util/Paths.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
@@ -36,7 +46,7 @@ import {HandleAction} from './HandleAction.js'
 import {proxyMediaUrl} from './api/ProxyMedia.js'
 import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
-import {createThrottledSync} from './util/Syncable.js'
+import {createThrottledSync, syncWait} from './util/Syncable.js'
 
 const PrepareBody = object({
   filename: string,
@@ -57,6 +67,13 @@ export interface BeforeCommitContext {
 
 export interface AfterCommitContext extends BeforeCommitContext {
   sha: string
+  /**
+   * The entries the mutations changed as they are after the commit: the
+   * latest version in each locale
+   */
+  entries: Array<DashboardEntry>
+  /** Entries that no longer exist after the commit, with the url they had */
+  removed: Array<RemovedEntry>
 }
 
 export interface HandlerHooks {
@@ -95,9 +112,9 @@ export function createHandler({
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
     /** Reads keep serving the current content when the remote is unreachable. */
-    async function syncForRead(cnx: RemoteConnection): Promise<void> {
+    async function syncForRead(sync: Promise<unknown>): Promise<void> {
       try {
-        await local.syncWith(cnx)
+        await within(sync, syncWait)
       } catch (error) {
         console.warn(
           `Alinea could not sync with the remote, serving current content: ${
@@ -109,7 +126,8 @@ export function createHandler({
 
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
-      return throttle(() => syncForRead(cnx), syncInterval)
+      // Waits outside the throttle: reads queued behind a hung sync answer too
+      return syncForRead(throttle(() => local.syncWith(cnx), syncInterval))
     }
 
     try {
@@ -351,7 +369,7 @@ export function createHandler({
             'contentHash' in preview &&
             (await local.sha) !== preview.contentHash
           )
-            await syncForRead(cnx)
+            await syncForRead(local.syncWith(cnx))
           query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
@@ -372,20 +390,18 @@ export function createHandler({
           user: user.claims
         })
         if (adjusted) mutations = adjusted
-        const attempt = async (retry = 0) => {
+        const before = hooks.afterCommit
+          ? await committedEntries(local, mutations)
+          : []
+        const attempt = async (retry = 0): Promise<string> => {
           if (retry > 0) await local.syncWith(cnx)
           const request = {
             ...(await local.request(mutations, policy)),
             user: user.claims
           }
+          let sha: string
           try {
-            let {sha} = await cnx.write(request)
-            if (sha === request.intoSha) {
-              await local.write(request)
-            } else {
-              sha = await local.syncWith(cnx)
-            }
-            return sha
+            sha = (await cnx.write(request)).sha
           } catch (error) {
             const isConflict =
               error instanceof ShaMismatchError ||
@@ -394,10 +410,29 @@ export function createHandler({
             if (isConflict && retry < 3) return attempt(retry + 1)
             throw error
           }
+          // The commit landed: failing to apply it here must not commit it
+          // again, eg. when a read synced a later commit in meanwhile. Catch
+          // up with the remote instead, or with its next sync.
+          try {
+            if (sha === request.intoSha) await local.write(request)
+            else sha = await local.syncWith(cnx)
+          } catch {
+            sha = await local.syncWith(cnx).catch(() => sha)
+          }
+          return sha
         }
         const sha = await attempt()
         try {
-          await hooks.afterCommit?.({mutations, sha, user: user.claims})
+          if (hooks.afterCommit) {
+            const entries = await committedEntries(local, mutations)
+            await hooks.afterCommit({
+              mutations,
+              sha,
+              user: user.claims,
+              entries,
+              removed: removedEntries(before, entries)
+            })
+          }
         } catch (error) {
           console.error('Alinea afterCommit hook failed', error)
         }
@@ -406,13 +441,28 @@ export function createHandler({
 
       // History
       if (action === HandleAction.History && request.method === 'GET') {
-        expectUser()
+        const user = expectUser()
         expectJson()
         const file = string(url.searchParams.get('file'))
         const revisionId = string.nullable(url.searchParams.get('revisionId'))
-        const result = await (revisionId
-          ? cnx.revisionData(file, revisionId)
-          : cnx.revisions(file))
+        const record = revisionId
+          ? await cnx.revisionData(file, revisionId)
+          : undefined
+        // The remote answers for any file: serve the history of an entry only
+        // to users who can read it
+        const contentDir = Config.contentDir(cms.config)
+        const owners = () => historyEntries(local, contentDir, file, record)
+        let entries = await owners()
+        // Another instance may have created the entry since this one synced
+        if (entries.length === 0) {
+          await syncForRead(local.syncWith(cnx))
+          entries = await owners()
+        }
+        if (entries.length === 0)
+          throw new HttpError(ErrorCode.NotFound, 'Entry not found')
+        const policy = await user.policy
+        for (const entry of entries) policy.assert(Permission.Read, entry)
+        const result = revisionId ? record : await cnx.revisions(file)
         return Response.json(result ?? null)
       }
 
@@ -421,14 +471,25 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await syncForRead(cnx)
+        // The remote tells whether the client is current in one request, where
+        // syncing an instance behind it first downloads every change
+        let source: RemoteSource = cnx
+        try {
+          const remoteTree = await cnx.getTreeIfDifferent(sha)
+          if (!remoteTree) return Response.json(null)
+          source = sourceAtTree(cnx, remoteTree)
+        } catch {
+          // The sync below warns about an unreachable remote and serves the
+          // current content
+        }
+        await syncForRead(local.syncWith(source))
         const tree = await local.getTreeIfDifferent(sha)
         return compressResponse(request, Response.json(tree ?? null))
       }
 
       if (action === HandleAction.Sha && request.method === 'GET') {
         expectJson()
-        await syncForRead(cnx)
+        await syncForRead(local.syncWith(cnx))
         return Response.json(await local.sha)
       }
 
@@ -439,7 +500,7 @@ export function createHandler({
         // is asked for each change once instead of for every client.
         let tree = await local.source.getTree()
         if (!dev && shas.some(sha => !tree.hasSha(sha))) {
-          await syncForRead(cnx)
+          await syncForRead(local.syncWith(cnx))
           tree = await local.source.getTree()
         }
         const fromLocal: Array<string> = []
@@ -540,6 +601,37 @@ export function createHandler({
       )
     }
   }
+}
+
+const historyResource = {
+  id: Entry.id,
+  type: Entry.type,
+  workspace: Entry.workspace,
+  root: Entry.root,
+  parents: Entry.parents,
+  locale: Entry.locale
+}
+
+/** The entries, in every status, whose history a file holds. */
+async function historyEntries(
+  local: LocalStore,
+  contentDir: string,
+  file: string,
+  record?: EntryRecord
+): Promise<Array<Resource>> {
+  const filePath = relative(contentDir, file)
+  if (filePath.startsWith('../')) return []
+  const status = 'all'
+  const select = historyResource
+  const atFile = await local.find({
+    filePath: {in: fileVersions(filePath)},
+    status,
+    select
+  })
+  const id = record?._id
+  if (atFile.length > 0 || typeof id !== 'string') return atFile
+  // A revision can hold the entry under a name it had before
+  return local.find({id, status, select})
 }
 
 function redirectFile(location: string, cacheControl: string): Response {

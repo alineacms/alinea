@@ -28,6 +28,12 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .Spinner-indicator {
+    transition: none;
+  }
+}
+
 @keyframes Spinner-spin {
   to {
     transform: rotate(270deg);

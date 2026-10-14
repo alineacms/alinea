@@ -210,3 +210,20 @@ test('opens the page an archived page redirects to', async () => {
   ])
   expect((await follow(store, '/nl/hero')).entry).toBe('target')
 })
+
+test('opens the entry an edit link names by id', async () => {
+  const {store} = await linkedStore()
+  await store.set(routeAtom, {page: 'edit', entry: 'hero', view: 'edit'})
+  expect(store.get(pageAtom)).toMatchObject({
+    type: 'entry',
+    workspace: 'main',
+    root: 'pages',
+    entry: 'hero',
+    locale: 'nl',
+    view: 'edit'
+  })
+  await store.set(routeAtom, {page: 'edit', entry: 'hero', locale: 'en'})
+  expect(store.get(pageAtom)).toMatchObject({entry: 'hero', locale: 'en'})
+  await store.set(routeAtom, {page: 'edit', entry: 'missing'})
+  expect(store.get(pageAtom).entry).toBeUndefined()
+})

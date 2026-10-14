@@ -31,6 +31,7 @@ export function SelectFieldView<
       error={error}
       disabled={options.readOnly}
       required={options.required}
+      clearable={!options.required}
       aria-label={options.inline ? options.label : undefined}
       label={options.inline ? undefined : options.label}
       shared={options.shared}

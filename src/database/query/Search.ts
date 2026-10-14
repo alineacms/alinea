@@ -41,10 +41,30 @@ export function searchableText(entry: EntryIndexTarget): Sql<string> {
     where ${search.rowid} = ${entry.rowid})`
 }
 
-export function searchTokens(input: string | Array<string> | undefined) {
+const tokenPattern = /[\p{L}\p{N}\p{M}]+/gu
+
+/**
+ * The words of a search, each with the tokens the index splits it in: the
+ * index splits `multi-modal` in `multi` and `modal`.
+ */
+export function searchWords(
+  input: string | Array<string> | undefined
+): Array<Array<string>> | undefined {
   const text = Array.isArray(input) ? input.join(' ') : input
   if (!text) return undefined
-  return text.match(/[\p{L}\p{N}\p{M}]+/gu) ?? []
+  return text
+    .split(/\s+/)
+    .map(word => word.match(tokenPattern) ?? [])
+    .filter(tokens => tokens.length > 0)
+}
+
+/** The tokens of a search, and the joined spelling of split words. */
+export function searchTokens(input: string | Array<string> | undefined) {
+  const words = searchWords(input)
+  if (!words) return undefined
+  return words.flatMap(tokens =>
+    tokens.length > 1 ? [...tokens, tokens.join('')] : tokens
+  )
 }
 
 export interface SearchQueryOptions {
@@ -57,23 +77,39 @@ export function searchQuery(
   entry: EntryIndexTarget,
   options: SearchQueryOptions = {}
 ): SearchQuery | undefined {
-  const tokens = searchTokens(input)
-  if (!tokens) return undefined
+  const words = searchWords(input)
+  if (!words) return undefined
+  const tokens = words.flat()
+  function term(token: string): string {
+    const spellings = [
+      `"${token}"*`,
+      ...(options.alternatives?.(token) ?? []).map(
+        term => `"${term.replaceAll('"', '')}"`
+      )
+    ]
+    return spellings.length > 1 ? `(${spellings.join(' OR ')})` : spellings[0]!
+  }
   // Quote individual tokens and bind the entire expression: user text cannot
-  // inject FTS operators, column selectors, quotes or SQL syntax.
-  const terms = tokens
-    .map(token => {
-      const spellings = [
-        `"${token}"*`,
-        ...(options.alternatives?.(token) ?? []).map(
-          term => `"${term.replaceAll('"', '')}"`
-        )
-      ]
-      return spellings.length > 1
-        ? `(${spellings.join(' OR ')})`
-        : spellings[0]!
-    })
-    .join(' AND ')
+  // inject FTS operators, column selectors, quotes or SQL syntax. A word the
+  // index splits, such as multi-modal, also matches its joined spelling.
+  function wordTerm(word: Array<string>): string {
+    if (word.length === 1) return term(word[0]!)
+    return `((${word.map(term).join(' AND ')}) OR ${term(word.join(''))})`
+  }
+  // Two words next to each other also match their joined spelling, so multi
+  // modal finds multimodal. The alternatives multiply with every word, so
+  // longer searches only match their words.
+  function phraseTerm(from: number): string {
+    const word = words![from]!
+    if (from === words!.length - 1) return wordTerm(word)
+    const rest = phraseTerm(from + 1)
+    const separate = `${wordTerm(word)} AND ${rest}`
+    if (words!.length > maxJoinedWords) return separate
+    const joined = term([...word, ...words![from + 1]!].join(''))
+    const after = from + 2 < words!.length ? ` AND ${phraseTerm(from + 2)}` : ''
+    return `((${separate}) OR (${joined}${after}))`
+  }
+  const terms = words.length ? phraseTerm(0) : ''
   const search = sql.identifier(getTable(EntrySearchTable).name)
   const match = sql`${search} match ${terms}`
   const relevance = sql<number>`bm25(${search}, 20, 1)`
@@ -97,11 +133,15 @@ export function searchQuery(
   }
 }
 
+/** Searches up to this many words also match adjacent words joined. */
+const maxJoinedWords = 5
 /** The edit distance allowed per character of a term. */
 const fuzzyFactor = 0.1
 const maxFuzzyDistance = 6
 const maxAlternatives = 10
 const maxNumberMatches = 50
+/** The shortest part a joined token splits in, shorter parts match too much. */
+const minSplitLength = 2
 const vocabulary = 'alinea_entry_search_vocab'
 
 /** The edits a token may be away from an indexed term: none below five
@@ -167,6 +207,7 @@ export class SearchVocabulary {
   #loaded: string | undefined
   #byLength = new Map<number, Array<VocabularyTerm>>()
   #numbered: Array<VocabularyTerm> = []
+  #terms = new Set<string>()
 
   async load(db: Database, revision: string): Promise<void> {
     if (this.#loaded === revision) return
@@ -191,6 +232,7 @@ export class SearchVocabulary {
     }
     this.#byLength = byLength
     this.#numbered = numbered
+    this.#terms = new Set(rows.map(row => row.term))
     this.#loaded = revision
   }
 
@@ -198,7 +240,24 @@ export class SearchVocabulary {
    * token are left to the prefix match. */
   alternatives(token: string): Array<string> {
     const query = normalizeToken(token)
-    return [...this.#numberMatches(query), ...this.#closeSpellings(query)]
+    return [
+      ...this.#numberMatches(query),
+      ...this.#closeSpellings(query),
+      ...this.#splits(query)
+    ]
+  }
+
+  /** Indexed pairs of terms a token joins, as phrases: multimodal finds
+   * multi-modal and multi modal. */
+  #splits(query: string): Array<string> {
+    const splits: Array<string> = []
+    for (let at = minSplitLength; at <= query.length - minSplitLength; at++) {
+      const head = query.slice(0, at)
+      const tail = query.slice(at)
+      if (this.#terms.has(head) && this.#terms.has(tail))
+        splits.push(`${head} ${tail}`)
+    }
+    return splits
   }
 
   /** Indexed terms containing a number that starts with the digits of a

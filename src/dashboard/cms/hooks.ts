@@ -2,9 +2,11 @@
  * The hooks of custom field and dashboard views, exported from `alinea/cms`.
  * Their types do not expose the internal state of the dashboard.
  */
+import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import type {Entry as EntryRecord} from '#/core/Entry.js'
+import type {Entry} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
+import type {EntryDefaultView} from '#/core/Type.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import type {Policy} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
@@ -14,18 +16,19 @@ import {
   type Dispatch,
   type SetStateAction,
   useCallback,
-  useContext
+  useContext,
+  useMemo
 } from 'react'
 import {graphAtom} from '../atoms/core.js'
-import {routeAtom} from '../atoms/nav.js'
+import {type ResolvedDashboardRoute, routeAtom} from '../atoms/nav.js'
+import type {DashboardLocation} from '../Href.js'
 import {previewMetadataAtom} from '../atoms/preview.js'
 import {policyAtom, userAtom} from '../atoms/user.js'
 import {
   dashboardContext,
   entryContext,
   useEditor,
-  useFieldInfo,
-  useFieldNode
+  useFieldInfo
 } from '../contexts.js'
 
 /**
@@ -63,12 +66,35 @@ export function usePreviewMetadata(): PreviewMetadata | undefined {
 /**
  * Returns the stored value of a field in the entry, list row or object being
  * edited. Use it in a view that only reads the value.
+ *
+ * The field-based hooks (`useFieldValue`, `useField`, `useFieldSetter`, ...)
+ * also read the fields around a custom field: pass a field of the same row,
+ * of a parent row or of the entry, and it resolves in the nearest scope that
+ * holds it. Import the type from your schema or pass the field through the
+ * options of your field.
+ *
+ * A view shared by types that each define their own field can pass its key
+ * instead, which reads the field of the same row, untyped.
+ *
+ * @example
+ * // In the view of a field inside a list row of `BlogPost`
+ * const title = useFieldValue(BlogPost.title) // a field of the entry
+ * const price = useFieldValue(options.price) // a field passed as option
+ * const path = useFieldValue('path') // the path field of this type
  */
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
-): StoredValue {
-  const node = useFieldNode<StoredValue>(field)
-  return useAtomValueRaw(node.value) as StoredValue
+): StoredValue
+export function useFieldValue(key: string): unknown
+export function useFieldValue(field: Field | string): unknown {
+  const editor = useEditor()
+  const info =
+    typeof field === 'string' ? editor.field(field) : editor.get(field)
+  assert(
+    info,
+    `Field not found: ${typeof field === 'string' ? field : 'field'}`
+  )
+  return useAtomValueRaw(info.value)
 }
 
 /**
@@ -137,24 +163,42 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
 /**
  * Returns the stored value of another field in the same entry, list row or
  * object, by its key.
+ *
+ * @deprecated Use `useFieldValue`: pass the field, which is typed and also
+ * reads fields of a parent row or the entry (`useFieldValue(BlogPost.title)`),
+ * or its key (`useFieldValue('title')`).
  */
-export function useSiblingFieldValue(key: string) {
-  const editor = useEditor()
-  const info = editor.field(key)
-  assert(info, `Field not found: ${key}`)
-  return useAtomValueRaw(info.value)
+export function useSiblingFieldValue(key: string): unknown {
+  return useFieldValue(key)
 }
 
 /**
- * Returns the selected entry version as a plain Entry object.
+ * Returns the entry being edited, in the selected locale and version.
+ * `entry.data` holds the field values as saved: use `useFieldValue(field)`
+ * for the live value while the editor changes it.
  *
- * Returns null outside an entry scope, or when the current entry cannot be
- * resolved. The returned value follows locale/status selection and does not
- * expose internal atoms.
+ * Returns null outside an entry, eg. in a root view.
  */
-export function useEntry(): EntryRecord<Record<string, unknown>> | null {
-  const scope = useContext(entryContext)
-  return scope?.selectedEntry ?? null
+export function useEntry(): DashboardEntry | null {
+  const selected = useContext(entryContext)?.selectedEntry
+  return useMemo(() => (selected ? dashboardEntry(selected) : null), [selected])
+}
+
+/** @internal */
+export function dashboardEntry(entry: Entry): DashboardEntry {
+  return {
+    id: entry.id,
+    type: entry.type,
+    title: entry.title,
+    path: entry.path,
+    url: entry.url,
+    locale: entry.locale,
+    status: entry.status,
+    workspace: entry.workspace,
+    root: entry.root,
+    parentId: entry.parentId,
+    data: entry.data
+  }
 }
 
 /**
@@ -170,37 +214,36 @@ export function useLocale(): string | null {
   return dashboard?.page.locale ?? null
 }
 
-/** A place in the dashboard to navigate to */
-export interface DashboardLocation {
-  /** Name of the workspace */
-  workspace: string
-  /** Name of the root */
-  root: string
-  /** Id of the entry to open, leave out to open the root */
-  entryId?: string
-  /** Locale to open, for roots with translations */
-  locale?: string | null
+function dashboardRoute(location: DashboardLocation): ResolvedDashboardRoute {
+  const locale = location.locale ?? undefined
+  // Without workspace and root, the edit page looks up the entry by id
+  if (location.entryId && !location.workspace && !location.root)
+    return {page: 'edit', entry: location.entryId, locale, view: location.view}
+  return {
+    page: 'entry',
+    workspace: location.workspace,
+    root: location.root,
+    entry: location.entryId,
+    locale,
+    view: location.view
+  }
 }
 
 /**
  * Returns a function that navigates the dashboard to an entry or root. The
  * user is asked to confirm first when the current entry has unsaved changes.
+ * An entry can be opened by its id alone, its workspace and root are looked
+ * up.
  *
  * @example
  * const navigate = useNavigate()
- * navigate({workspace: entry.workspace, root: entry.root, entryId: entry.id})
+ * navigate({entryId: post.id, locale: 'en'})
+ * navigate({workspace: 'main', root: 'pages'})
  */
 export function useNavigate(): (location: DashboardLocation) => void {
   const setRoute = useSetAtom(routeAtom)
   return useCallback(
-    (location: DashboardLocation) =>
-      setRoute({
-        page: 'entry',
-        workspace: location.workspace,
-        root: location.root,
-        entry: location.entryId,
-        locale: location.locale ?? undefined
-      }),
+    (location: DashboardLocation) => setRoute(dashboardRoute(location)),
     [setRoute]
   )
 }

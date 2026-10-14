@@ -37,6 +37,19 @@ export interface ClientOptions {
   unauthorized?: () => void
 }
 
+// Reads give up when the handler does not respond in time, so a hung handler
+// fails a sync instead of holding it, and everything queued behind it. Only
+// the response has to arrive in time: a large blob download takes as long as
+// it needs. The handler answers reads within its own sync wait, while
+// mutations and uploads may take as long as they need.
+const readTimeout = 60_000
+const reads = new Set<HandleAction>([
+  HandleAction.Tree,
+  HandleAction.Sha,
+  HandleAction.Blob,
+  HandleAction.Resolve
+])
+
 export class Client implements LocalConnection {
   #options: ClientOptions
   constructor(options: ClientOptions) {
@@ -255,10 +268,17 @@ export class Client implements LocalConnection {
     const controller = new AbortController()
     const signal = controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
+    const timer = reads.has(params.action)
+      ? setTimeout(() => {
+          const seconds = readTimeout / 1000
+          controller.abort(new Error(`No response within ${seconds}s`))
+        }, readTimeout)
+      : undefined
     const promise = fetch(location, {
       ...applyAuth(init),
       signal
     })
+      .finally(() => clearTimeout(timer))
       .catch(err => {
         throw new HttpError(
           500,

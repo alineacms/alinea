@@ -4,7 +4,20 @@
 }
 
 .AppLoading-progress {
+  position: relative;
+  display: flex;
   animation: AppLoading-progress-fade-in 250ms ease-out both;
+}
+
+/* Placed below the spinner so it stays centered when the status appears */
+.AppLoading-status {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-top: 0.75rem;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes AppLoading-progress-fade-in {

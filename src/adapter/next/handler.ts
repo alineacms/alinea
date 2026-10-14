@@ -7,6 +7,7 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
+import {committedEntries, removedEntries} from '#/backend/CommitEntries.js'
 import {HandleAction} from '#/backend/HandleAction.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
@@ -18,6 +19,7 @@ import {
   type RequestContext
 } from '#/core/Connection.js'
 import {HttpError} from '#/core/HttpError.js'
+import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {User} from '#/core/User.js'
@@ -116,11 +118,14 @@ export function createHandlerWithDatabase(
     })
     let sha: string
     let user: User | undefined
+    let before: Array<DashboardEntry> = []
     try {
       user = await devServer.user()
       if (!user) return failure(401, 'Unauthorized')
       const adjusted = await options.beforeCommit?.({mutations, user})
       if (adjusted) mutations = [...adjusted]
+      if (options.afterCommit)
+        before = await committedEntries(devServer, mutations).catch(() => [])
       ;({sha} = await devServer.mutate(mutations))
     } catch (error) {
       // Report what the dev server rejected, such as a missing permission.
@@ -128,7 +133,16 @@ export function createHandlerWithDatabase(
       throw error
     }
     try {
-      await afterCommit({mutations, sha, user})
+      const entries = options.afterCommit
+        ? await committedEntries(devServer, mutations)
+        : []
+      await afterCommit({
+        mutations,
+        sha,
+        user,
+        entries,
+        removed: removedEntries(before, entries)
+      })
     } catch (error) {
       console.error('Alinea afterCommit hook failed', error)
     }

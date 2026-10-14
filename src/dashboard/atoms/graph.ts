@@ -1,7 +1,9 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
+import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import {selectAtom} from 'jotai/utils'
+import {SyncEvent} from '../boot/SyncEvent.js'
 import {eventsAtom, graphAtom} from './core.js'
 import {dispense} from './utils.js'
 
@@ -36,6 +38,29 @@ const indexStateAtom = Object.assign(
   {onMount: (init: () => () => void) => init()}
 )
 
+const syncProgressValueAtom = atom<SyncProgress | undefined>(undefined)
+
+/** The files fetched by a running sync from the remote. */
+export const syncProgressAtom = Object.assign(
+  atom(
+    get => get(syncProgressValueAtom),
+    (get, set) => {
+      const events = get(eventsAtom)
+      const listen = (event: Event) => {
+        if (event instanceof SyncEvent)
+          set(syncProgressValueAtom, event.progress)
+      }
+      events.addEventListener(SyncEvent.type, listen)
+      return () => {
+        events.removeEventListener(SyncEvent.type, listen)
+        // The end of a sync is missed while nothing listens
+        set(syncProgressValueAtom, undefined)
+      }
+    }
+  ),
+  {onMount: (init: () => () => void) => init()}
+)
+
 export const shaAtom = atom(async get => {
   const current = get(indexStateAtom).sha
   if (current) return current
@@ -56,8 +81,13 @@ export const syncAtom = atom(null, async (get, set) => {
 
 export const graphReadyAtom = atom(async get => {
   const graph = get(graphAtom)
+  if (isReadyGraph(graph)) return graph.ready()
   if (isSyncableGraph(graph)) await graph.sync()
 })
+
+interface ReadyGraph {
+  ready: () => Promise<void>
+}
 
 interface SyncableGraph {
   sync: () => Promise<string>
@@ -77,4 +107,10 @@ function isSyncableGraph(
   graph: WriteableGraph
 ): graph is WriteableGraph & SyncableGraph {
   return typeof (graph as Partial<SyncableGraph>).sync === 'function'
+}
+
+function isReadyGraph(
+  graph: WriteableGraph
+): graph is WriteableGraph & ReadyGraph {
+  return typeof (graph as Partial<ReadyGraph>).ready === 'function'
 }

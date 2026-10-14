@@ -1,7 +1,8 @@
 import {BasicAuth} from '#/backend/api/BasicAuth.js'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
-import {createHandler} from '#/backend/Handler.js'
+import {type AfterCommitContext, createHandler} from '#/backend/Handler.js'
+import {syncWait} from '#/backend/util/Syncable.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {decodeBlobSequence} from '#/core/BlobTransport.js'
 import {createCMS} from '#/core.js'
@@ -18,6 +19,7 @@ import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
+import {jest} from 'bun:test'
 
 const test = suite(import.meta)
 
@@ -539,6 +541,69 @@ test('runs commit hooks around a successful commit', async () => {
   test.equal([...users], ['admin'])
 })
 
+test('afterCommit receives the committed and removed entries', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const contexts: Array<AfterCommitContext> = []
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    },
+    afterCommit(context) {
+      contexts.push(context)
+    }
+  })
+  await handle(
+    mutationRequest([
+      {
+        op: 'create',
+        id: 'about',
+        type: 'Page',
+        locale: null,
+        data: {title: 'About', path: 'about'}
+      }
+    ]),
+    requestContext()
+  )
+  await handle(mutationRequest([{op: 'remove', id: 'about'}]), requestContext())
+  const [created, removed] = contexts
+  test.equal(
+    created.entries.map(({id, type, title, url, status, data}) => ({
+      id,
+      type,
+      title,
+      url,
+      status,
+      path: data.path
+    })),
+    [
+      {
+        id: 'about',
+        type: 'Page',
+        title: 'About',
+        url: '/about',
+        status: 'published',
+        path: 'about'
+      }
+    ]
+  )
+  test.equal(created.removed, [])
+  test.equal(removed.entries, [])
+  test.equal(removed.removed, [
+    {id: 'about', type: 'Page', locale: null, url: '/about'}
+  ])
+})
+
 test('runs commit hooks for publish, unpublish and move mutations', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
@@ -970,18 +1035,16 @@ test('retries a forwarded commit conflict by response status', async () => {
   test.is(afterCommits, 1)
 })
 
-test('routes history requests with a file to revisions', async () => {
+test('does not commit again when a sync moved past a landed commit', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
   const db = new LocalDB(cms.config)
-  const revisions: Array<Revision> = [
-    {ref: 'abc', createdAt: 0, file: 'content/pages/example.json'}
-  ]
-  const requestedFiles: Array<string> = []
+  let writes = 0
   const handle = createHandler({
     cms,
     db,
     remote(context) {
-      return composeBackend({
+      return composeBackend(remoteDb, {
         async verify(): Promise<AuthedContext> {
           return {
             ...context,
@@ -989,25 +1052,148 @@ test('routes history requests with a file to revisions', async () => {
             user: {roles: ['admin'], sub: 'admin'}
           }
         },
-        async revisions(file) {
-          requestedFiles.push(file)
-          return revisions
+        async write(request) {
+          writes += 1
+          const result = await remoteDb.write(request)
+          // Another commit lands and a read syncs both in before this
+          // commit is applied locally
+          await remoteDb.create({type: Page, set: {title: 'Other'}})
+          await db.syncWith(remoteDb)
+          return result
         }
       })
     }
   })
 
   const response = await handle(
-    new Request(
-      'http://localhost/api?action=history&file=content/pages/example.json',
-      {headers: {accept: 'application/json'}}
-    ),
+    mutationRequest([
+      {
+        op: 'create',
+        id: 'landed-entry',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Landed'}
+      }
+    ]),
     requestContext()
   )
 
   test.is(response.status, 200)
-  test.equal(requestedFiles, ['content/pages/example.json'])
-  test.equal(await response.json(), revisions)
+  test.is(writes, 1)
+  test.is(await db.sha, await remoteDb.sha)
+  const titles = await db.find({type: Page, select: Entry.title})
+  test.equal(titles.toSorted(), ['Landed', 'Other'])
+})
+
+test('serves the history of entries the user can read', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    roles: {
+      reader: role('Reader', {
+        permissions(policy) {
+          policy.set({allow: {read: true}})
+        }
+      }),
+      guest: role('Guest', {
+        permissions() {}
+      })
+    }
+  })
+  const db = new LocalDB(cms.config)
+  const about = await db.create({
+    type: Page,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'About', path: 'about'}
+  })
+  const revisions: Array<Revision> = [
+    {ref: 'abc', createdAt: 0, file: 'content/pages/about.json'}
+  ]
+  const record = {_id: about._id, _type: 'Page', _index: 'a0', title: 'Old'}
+  const requested: Array<string> = []
+  let roles = ['reader']
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {...context, token: 'test', user: {roles, sub: 'ada'}}
+        },
+        async revisions(file) {
+          requested.push(file)
+          return revisions
+        },
+        async revisionData(file, ref) {
+          requested.push(`${ref}:${file}`)
+          return record
+        }
+      })
+    }
+  })
+  const history = (query: string) =>
+    handle(
+      new Request(`http://localhost/api?action=history&${query}`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    )
+
+  const list = await history('file=content/pages/about.json')
+  test.is(list.status, 200)
+  test.equal(await list.json(), revisions)
+  // A revision can hold the entry under a name it had before
+  const renamed = await history('file=content/pages/old.json&revisionId=abc')
+  test.is(renamed.status, 200)
+  test.equal(await renamed.json(), record)
+
+  roles = ['guest']
+  test.is((await history('file=content/pages/about.json')).status, 401)
+  test.is(
+    (await history('file=content/pages/old.json&revisionId=abc')).status,
+    401
+  )
+  test.equal(requested, [
+    'content/pages/about.json',
+    'abc:content/pages/old.json',
+    'abc:content/pages/old.json'
+  ])
+})
+
+test('serves no history for files outside of entries', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const requested: Array<string> = []
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {...context, token: 'test', user: {roles: ['admin'], sub: 'a'}}
+        },
+        async revisions(file) {
+          requested.push(file)
+          return []
+        },
+        async revisionData(file) {
+          requested.push(file)
+          return {_id: 'x', _type: 'Page', _index: 'a0'}
+        }
+      })
+    }
+  })
+  const history = (query: string) =>
+    handle(
+      new Request(`http://localhost/api?action=history&${query}`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    )
+  test.is((await history('file=content/pages/missing.json')).status, 404)
+  test.is((await history('file=package.json&revisionId=abc')).status, 404)
+  test.equal(requested, ['package.json'])
 })
 
 test('redirects an unbuilt nested media file to its preview', async () => {
@@ -1582,6 +1768,57 @@ test('serves current content when a read cannot sync with the remote', async () 
   }
 })
 
+test('answers reads with current content while a sync hangs', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    syncInterval: 0
+  })
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  db.syncWith = () => new Promise(() => {})
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const warn = console.warn
+  const warnings: Array<string> = []
+  console.warn = (message: string) => warnings.push(message)
+  jest.useFakeTimers()
+  try {
+    const sha = new Request('http://localhost/api?action=sha', {
+      headers: {accept: 'application/json'}
+    })
+    // The second resolve queues behind the hung sync of the first
+    const requests = [resolveRequest({}), resolveRequest({}), sha]
+    const statuses: Array<number> = []
+    for (const request of requests)
+      void handle(request, requestContext()).then(response =>
+        statuses.push(response.status)
+      )
+    for (let tick = 0; tick < 20 && statuses.length < 3; tick++) {
+      await new Promise(resolve => setImmediate(resolve))
+      jest.advanceTimersByTime(syncWait)
+    }
+    test.equal(statuses, [200, 200, 200])
+    test.ok(warnings.every(warning => warning.includes('Timed out')))
+  } finally {
+    jest.useRealTimers()
+    console.warn = warn
+  }
+})
+
 test('responds with the content sha after syncing', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const remoteDb = new LocalDB(cms.config)
@@ -1614,6 +1851,41 @@ test('responds with the content sha after syncing', async () => {
   const sha = await response.json()
   test.is(sha, await remoteDb.sha)
   test.is(sha, await db.sha)
+})
+
+test('answers a current tree request without syncing first', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  await remoteDb.create({type: Page, set: {title: 'Home'}})
+  const db = new LocalDB(cms.config)
+  const before = await db.sha
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(remoteDb, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const tree = (sha: string) =>
+    handle(
+      new Request(`http://localhost/api?action=tree&sha=${sha}`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    ).then(response => response.json())
+
+  test.is(await tree(await remoteDb.sha), null)
+  test.is(await db.sha, before)
+  test.is((await tree(before)).sha, await remoteDb.sha)
+  test.is(await db.sha, await remoteDb.sha)
 })
 
 test('rejects unauthenticated sha requests like tree requests', async () => {

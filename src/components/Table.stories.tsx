@@ -4,6 +4,7 @@ import {
   IcRoundRefresh,
   LucideFile
 } from '#/dashboard/icons.js'
+import {useAsyncList} from './AsyncList.js'
 import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {
@@ -401,6 +402,74 @@ export function Empty() {
   )
 }
 
+/** Tables that grow with their rows, eg. in a custom view, with none yet */
+export function EmptyAutoHeight() {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+      <Table
+        aria-label="Empty articles"
+        items={[]}
+        columns={articleColumns}
+        renderEmptyState={() => 'No articles yet'}
+      >
+        {(article: Article) => (
+          <TableRow id={article.id} textValue={article.title}>
+            <TableTitle title={article.title} />
+          </TableRow>
+        )}
+      </Table>
+      <Table
+        aria-label="Loading articles"
+        items={[]}
+        columns={articleColumns}
+        loading
+      >
+        {(article: Article) => (
+          <TableRow id={article.id} textValue={article.title}>
+            <TableTitle title={article.title} />
+          </TableRow>
+        )}
+      </Table>
+    </div>
+  )
+}
+
+const longColumns: Array<TableColumn> = [
+  {id: 'title', header: 'Title', width: '1fr', minWidth: 160},
+  {
+    id: 'publicationDate',
+    header: 'Date of first publication on the website',
+    width: 120,
+    sortable: true
+  },
+  {id: 'createdBy', header: 'Author of the original version', width: 100}
+]
+
+/** Column headers wider than their column end in an ellipsis */
+export function LongHeaders() {
+  const [sort, setSort] = useState<SortDescriptor>({
+    column: 'publicationDate',
+    direction: 'desc'
+  })
+  return (
+    <Table
+      aria-label="Articles"
+      items={sortArticles(articles.slice(0, 3), sort)}
+      columns={longColumns}
+      sortDescriptor={sort}
+      onSortChange={setSort}
+    >
+      {article => (
+        <TableRow id={article.id} textValue={article.title}>
+          <TableTitle title={article.title} />
+          <TableCell>{article.publicationDate}</TableCell>
+          <TableCell>{article.createdBy}</TableCell>
+        </TableRow>
+      )}
+    </Table>
+  )
+}
+
 const memberColumns: Array<TableColumn> = [
   {id: 'name', header: 'Name', minWidth: 200},
   {id: 'role', header: 'Role', minWidth: 160},
@@ -509,4 +578,69 @@ export function RowHandlers() {
 
 export default {
   title: 'Pure components / Table'
+}
+
+interface Product {
+  id: number
+  title: string
+  price: number
+}
+
+const productColumns: Array<TableColumn> = [
+  {id: 'title', header: 'Title', sortable: true},
+  {id: 'price', header: 'Price', width: 120, align: 'end', sortable: true}
+]
+
+const products: Array<Product> = Array.from({length: 60}, (_, index) => ({
+  id: index + 1,
+  title: `Product ${index + 1}`,
+  price: ((index * 37) % 90) + 10
+}))
+
+/** Rows from a (simulated) server, sorted there and loaded page by page */
+export function LoadMore() {
+  const list = useAsyncList<Product, number>({
+    initialSort: {column: 'title', direction: 'asc'},
+    async load({cursor = 0, sort, signal}) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      signal.throwIfAborted()
+      const sorted = products.toSorted((a, b) => {
+        const column = sort?.column === 'price' ? 'price' : 'id'
+        const order = a[column] - b[column]
+        return sort?.direction === 'desc' ? -order : order
+      })
+      const next = cursor + 20
+      return {
+        items: sorted.slice(cursor, next),
+        cursor: next < sorted.length ? next : undefined
+      }
+    }
+  })
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+      <div style={{height: 320}}>
+        <Table
+          aria-label="Products"
+          items={list.items}
+          columns={productColumns}
+          sortDescriptor={list.sortDescriptor}
+          onSortChange={list.sort}
+          loading={list.loading}
+          onLoadMore={list.loadMore}
+          selectionMode="multiple"
+          selectedKeys={list.selectedKeys}
+          onSelectionChange={list.setSelectedKeys}
+          renderEmptyState={() => 'No products'}
+        >
+          {product => (
+            <TableRow id={product.id} textValue={product.title}>
+              <TableTitle title={product.title} />
+              <TableCell align="end">{product.price}</TableCell>
+            </TableRow>
+          )}
+        </Table>
+      </div>
+      <p data-testid="loaded">Loaded {list.items.length} products</p>
+    </div>
+  )
 }

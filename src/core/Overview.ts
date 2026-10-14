@@ -4,6 +4,7 @@ import {Expr} from './Expr.js'
 import type {OpenFilter} from './Filter.js'
 import type {
   EdgeQuery,
+  Graph,
   GraphQuery,
   InferProjection,
   Order,
@@ -24,9 +25,10 @@ export type OverviewColumnPosition = 'start' | 'end'
 export type OverviewColumnWidth = number | `${number}fr`
 
 /**
- * A value to sort entries by: an expression such as a field, or a query of a
+ * A value to sort entries by: an expression such as a field, a query of a
  * linked entry that selects a single expression, eg.
- * `Product.brand.first({select: Entry.title})`
+ * `Product.brand.first({select: Entry.title})`, or a count of related
+ * entries, eg. `Query.referencedBy({type: Product, count: true})`
  */
 export type OverviewSortValue = Expr<any> | EdgeQuery<Expr<any>>
 
@@ -135,12 +137,45 @@ export interface OverviewFilterOption {
   filter: OpenFilter<EntryFilterFields>
 }
 
+/** The choices of an overview filter, keyed by a name unique within it */
+export interface OverviewFilterOptions {
+  [key: string]: OverviewFilterOption
+}
+
+/** What the options of an overview filter can be loaded with */
+export interface OverviewFilterContext {
+  /** Query the content, eg. to list an option per entry of a type */
+  graph: Graph
+  /** The locale the overview lists, null for unlocalised roots */
+  locale: string | null
+}
+
 /** A filter editors can apply in the "Filter and sort" menu of an overview */
 export interface OverviewFilter {
   /** The heading of the options in the menu, eg. `File type` */
   label: string
-  /** The choices, keyed by a name that is unique within the filter */
-  options: Record<string, OverviewFilterOption>
+  /**
+   * The choices, keyed by a name that is unique within the filter, or a
+   * function that loads them, eg. an option per category:
+   *
+   * ```ts
+   * async options({graph}) {
+   *   const categories = await graph.find({
+   *     type: Category,
+   *     select: {id: Entry.id, title: Entry.title}
+   *   })
+   *   return Object.fromEntries(categories.map(category => [category.id, {
+   *     label: category.title,
+   *     filter: {category: {has: {_entry: category.id}}}
+   *   }]))
+   * }
+   * ```
+   */
+  options:
+    | OverviewFilterOptions
+    | ((
+        context: OverviewFilterContext
+      ) => OverviewFilterOptions | Promise<OverviewFilterOptions>)
   /**
    * Editors can pick several options, entries then match any of them.
    * Defaults to false: picking an option replaces the picked one.
@@ -162,6 +197,38 @@ export interface OverviewActionProps {
   /**
    * A query for the listed entries in their current order, without paging.
    * Pass it to `useGraph().find({...query, select})`, eg. to export them.
+   */
+  query: GraphQuery<undefined, Type | Array<Type> | undefined, undefined>
+}
+
+/** A tab above the listed entries, each lists the entries of its filter */
+export interface OverviewTab {
+  /** Shown on the tab, eg. `Active` */
+  label: string
+  /**
+   * The condition entries match when the tab is selected, like the options of
+   * a filter. A tab without a filter lists every child.
+   */
+  filter?: OpenFilter<EntryFilterFields>
+}
+
+/** Props of an `overview.header` view */
+export interface OverviewHeaderProps {
+  workspace: string
+  root: string
+  /** The entry whose children are listed, null for the root */
+  parentId: string | null
+  locale: string | null
+  /** The search terms entered in the overview */
+  search: string
+  /**
+   * The condition of the selected tab and the applied filters, undefined
+   * when none applies
+   */
+  filter: OpenFilter<EntryFilterFields> | undefined
+  /**
+   * A query for the listed entries, without paging. Pass it to
+   * `useGraph().find({...query, select})`, eg. to total them.
    */
   query: GraphQuery<undefined, Type | Array<Type> | undefined, undefined>
 }
@@ -257,6 +324,12 @@ export interface OverviewOptions {
    * applied filter, and the search terms.
    */
   filters?: Record<string, OverviewFilter>
+  /**
+   * Tabs above the listed children, keyed by a name kept in the url. The
+   * first tab is selected by default. Entries match the filter of the
+   * selected tab, the applied filters and the search terms.
+   */
+  tabs?: Record<string, OverviewTab>
   /** The default layout, editors can still switch */
   layout?: 'table' | 'cards'
   /**
@@ -266,6 +339,11 @@ export interface OverviewOptions {
   thumbnail?: Expr<any> | Record<string, Expr<any>>
   /** Components rendered in the overview toolbar, eg. an export button */
   actions?: Array<View<OverviewActionProps>>
+  /**
+   * A component rendered above the listed children, eg. totals or a chart of
+   * the listed entries
+   */
+  header?: View<OverviewHeaderProps>
 }
 
 /** Create a column for an overview */
@@ -285,6 +363,7 @@ export namespace Overview {
     if (!overview) return []
     const views: Array<unknown> = [
       ...(overview.actions ?? []),
+      overview.header,
       ...values(overview.columns ?? {}).map(column => column.view)
     ]
     return views.filter((view): view is string => typeof view === 'string')

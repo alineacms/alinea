@@ -43,13 +43,22 @@
 }
 
 .Table-empty {
-  position: absolute;
-  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Fill a body with a fixed height, a table that grows with its rows has a
+     body without height when there are none so keep room below the header */
+  height: 100%;
+  min-height: calc(var(--alinea-table-row-height) * 2);
   color: var(--alinea-fg-muted);
-  pointer-events: none;
+}
+
+.Table-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--alinea-table-row-height);
+  color: var(--alinea-fg-muted);
 }
 
 .Table-dropIndicator {
@@ -109,9 +118,16 @@
   }
 }
 
+.TableHeader-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .TableHeader-sort {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   gap: 2px;
   margin: 0 -4px;
   padding: 2px 4px;
@@ -133,6 +149,7 @@
 }
 
 .TableHeader-sortIcon {
+  flex: 0 0 auto;
   font-size: 14px;
 }
 

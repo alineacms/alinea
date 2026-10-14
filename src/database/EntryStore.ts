@@ -4,7 +4,7 @@ import type {
   RemoteSource,
   Source
 } from '#/core/source/Source.js'
-import {applyChangesFrom} from '#/core/source/Source.js'
+import {applyChangesFrom, sourceAtTree} from '#/core/source/Source.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Entry} from '#/core/Entry.js'
@@ -294,16 +294,4 @@ async function changesSince(
   const changes = new OverlaySource(source, from)
   await changes.applyChangesFrom(source, from.diff(tree), tree)
   return changes
-}
-
-/** Pin the tree while streaming blobs from the revision already fetched. */
-function sourceAtTree(source: RemoteSource, tree: ReadonlyTree): RemoteSource {
-  return {
-    async getTreeIfDifferent(revision) {
-      return revision === tree.sha ? undefined : tree
-    },
-    getBlobs(shas, options) {
-      return source.getBlobs(shas, options)
-    }
-  }
 }

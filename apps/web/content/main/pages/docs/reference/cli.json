@@ -355,7 +355,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and exits without running the command after `--`. Commit the result."
+          "text": "`--config` and `--dir` work as for `alinea dev`. `--fix` rewrites content files whose data doesn't match the schema, filling missing or invalid properties with their defaults, and points media files whose `location` is a url at the file of the same name in the `mediaDir`. It exits without running the command after `--`. Commit the result."
         }
       ]
     },
@@ -364,7 +364,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The build stops with an error when the config can't be loaded, when `handlerUrl` is missing or when `baseUrl` has no production URL, see "
+          "text": "The build stops with an error when the config can't be loaded, when `handlerUrl` is missing or when `baseUrl` has no production URL while `handlerUrl` is relative, see "
         },
         {
           "_type": "text",
@@ -381,6 +381,15 @@
         {
           "_type": "text",
           "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea dev` and `alinea build` warn about media files whose `location` is a url, which can't be served (some 1.x saves wrote the upload url there). The warning names the file and, when the `mediaDir` holds a file of the same name, suggests `alinea build --fix` to point the location at it."
         }
       ]
     },

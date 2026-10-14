@@ -272,6 +272,39 @@ test('numbers match indexed numbers with leading zeros or letters in front', asy
   }
 })
 
+test('hyphenated, spaced and joined spellings find each other', async () => {
+  const db = connect(new Database(':memory:'))
+  try {
+    const source = new MemorySource()
+    await EntryDatabase.createSchema(db, config, (await source.getTree()).sha)
+    const runtime = new EntryDatabase(config, db)
+    const change = await transaction(source)
+    await applySourceChange(
+      source,
+      await change
+        .add('pages/a.json', entry('a', 'A multi-modal hub'))
+        .add('pages/b.json', entry('b', 'Multimodal systems'))
+        .add('pages/c.json', entry('c', 'Other', 'a multi modal body'))
+        .add('pages/d.json', entry('d', 'Modal dialogs'))
+        .compile()
+    )
+    await runtime.syncWith(source)
+    const search = async (term: string) =>
+      (await runtime.resolve({search: term, select: Entry.id})).sort()
+    expect(await search('multi-modal')).toEqual(['a', 'b', 'c'])
+    expect(await search('multi modal')).toEqual(['a', 'b', 'c'])
+    // Joining adjacent words keeps the other words required
+    expect(await search('multi modal systems')).toEqual(['b'])
+    expect(await search('a multi modal')).toEqual(['a', 'c'])
+    expect(await search('multimodal')).toEqual(['a', 'b', 'c'])
+    expect(await search('multi-mod')).toEqual(['a', 'b', 'c'])
+    expect(await search('moda')).toEqual(['a', 'c', 'd'])
+    await runtime.close()
+  } finally {
+    await db.close()
+  }
+})
+
 async function sourceWith(
   entries: Record<string, [title: string, body?: string]>
 ): Promise<MemorySource> {

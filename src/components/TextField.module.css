@@ -87,6 +87,11 @@
     overflow-wrap: anywhere;
   }
 
+  /* Past maxRows the shadow stops growing and the textarea scrolls */
+  .TextFieldGrow &.is-limited {
+    overflow-y: auto;
+  }
+
   &.is-start {
     padding-left: calc(20px + 1em);
   }

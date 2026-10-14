@@ -22,8 +22,6 @@ export interface ImageLink<InferredFields = {}> extends EntryReference {
   alt?: string
   /** Public url of the image file, versioned by its hash */
   src: string
-  /** Same as src */
-  url: string
   extension: string
   size: number
   hash: string
@@ -39,7 +37,6 @@ export namespace ImageLink {
   export const title = Entry.title
   export const alt = MediaFile.alt
   export const src = Entry.url
-  export const url = Entry.url
   export const extension = MediaFile.extension
   export const size = MediaFile.size
   export const hash = MediaFile.hash
@@ -109,14 +106,14 @@ export interface ImagesField<Fields = undefined> extends LinksField<
   ImageLink<LinkFields<Type.Infer<Fields>>>
 > {}
 
-export namespace image {
-  export interface ImagesOptions<Fields>
-    extends
-      LinkFieldOptions<
-        Array<EntryReference & ListRow & InferStoredValue<Fields>>
-      >,
-      Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
+export interface ImagesOptions<Fields>
+  extends
+    LinkFieldOptions<
+      Array<EntryReference & ListRow & InferStoredValue<Fields>>
+    >,
+    Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
+export namespace image {
   export function multiple<Fields = undefined>(
     label: Label,
     options: WithoutLabel<ImagesOptions<Fields>> = {}

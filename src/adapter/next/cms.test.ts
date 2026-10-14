@@ -2,6 +2,7 @@ import {nextMocks} from '#test/NextMocks.js'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {syncWait} from '#/backend/util/Syncable.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
@@ -12,7 +13,7 @@ import {chunkCookieValue} from '#/preview/ChunkCookieValue.js'
 import {PREVIEW_COOKIE_NAME} from '#/preview/PreviewCookies.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import * as iso from '@alinea/iso'
-import {afterEach, beforeEach, expect, mock, test} from 'bun:test'
+import {afterEach, beforeEach, expect, jest, mock, test} from 'bun:test'
 import PLazy from 'p-lazy'
 import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
@@ -283,6 +284,42 @@ test('serves the bundled database when the handler cannot be synced', async () =
   expect(status.syncedAt).toBeUndefined()
 })
 
+test('serves the bundled database while a sync with the handler hangs', async () => {
+  nextMocks.draftMode = false
+  const db = {
+    sha: 'bundled-content-hash',
+    syncWith: mock(() => new Promise<string>(() => {})),
+    resolve: mock(async (query: GraphQuery) => query)
+  }
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+  cms.bundledDb = PLazy.from(async () => db as unknown as LocalDB)
+  const warn = console.warn
+  console.warn = mock(() => {})
+  try {
+    await settleWithin(cms.resolve({syncInterval: 0}), syncWait)
+    expect(db.resolve).toHaveBeenCalledTimes(1)
+    expect(console.warn).toHaveBeenCalledTimes(1)
+  } finally {
+    console.warn = warn
+  }
+})
+
+test('gives up on a handler that does not answer', async () => {
+  process.env.NEXT_RUNTIME = 'edge'
+  handlerFetch = mock(
+    (_, init) =>
+      new Promise<Response>((_, reject) => {
+        init?.signal?.addEventListener('abort', () =>
+          reject(init.signal!.reason)
+        )
+      })
+  )
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+
+  const status = await settleWithin(cms.status(), 60_000)
+  expect(status.sha).toBeUndefined()
+})
+
 test('answers development queries from the dev server at every revision', async () => {
   nextMocks.draftMode = false
   nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
@@ -377,3 +414,22 @@ test('syncs through a handler that answers in the same process', async () => {
 
   expect(titles).toEqual(['Committed elsewhere'])
 })
+
+/** Run fake timers forward until `promise` settles. */
+async function settleWithin<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let settled = false
+  const settle = () => {
+    settled = true
+  }
+  promise.then(settle, settle)
+  jest.useFakeTimers()
+  try {
+    for (let tick = 0; tick < 20 && !settled; tick++) {
+      await new Promise(resolve => setImmediate(resolve))
+      jest.advanceTimersByTime(ms)
+    }
+  } finally {
+    jest.useRealTimers()
+  }
+  return promise
+}

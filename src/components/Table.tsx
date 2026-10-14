@@ -10,10 +10,13 @@ import {
 } from 'react'
 import {
   Button as ButtonPrimitive,
+  Collection,
   ListLayout,
   Tree,
   TreeItem,
   TreeItemContent,
+  TreeLoadMoreItem,
+  TreeStateContext,
   Virtualizer
 } from 'react-aria-components'
 import {
@@ -25,6 +28,7 @@ import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import {SelectionCheckbox} from './internal/SelectionCheckbox.js'
 import {useDragDrop} from './internal/useDragDrop.js'
+import {Spinner} from './Spinner.js'
 import {Surface} from './Surface.js'
 import type {
   AriaProps,
@@ -88,6 +92,16 @@ export interface TableProps<T extends object>
    */
   onRowAction?: (key: Key) => void
   renderEmptyState?: () => ReactNode
+  /**
+   * Shows a spinner in place of the rows while there are none, below the
+   * rows otherwise
+   */
+  loading?: boolean
+  /**
+   * Called when the rows are scrolled close to the end, to load the next
+   * page (see useAsyncList)
+   */
+  onLoadMore?: () => void
   /**
    * Rows are cached per item, list the values `children` reads besides the
    * item to render them again when those change
@@ -180,6 +194,8 @@ export function Table<T extends object>({
   onSortChange,
   onRowAction,
   renderEmptyState,
+  loading,
+  onLoadMore,
   dependencies = [],
   getDragData,
   acceptedDragTypes,
@@ -242,13 +258,16 @@ export function Table<T extends object>({
         )}
         <Virtualizer
           layout={ListLayout}
-          layoutOptions={{rowHeight, padding: 0, gap: 0}}
+          layoutOptions={{
+            rowHeight,
+            loaderHeight: rowHeight,
+            padding: 0,
+            gap: 0
+          }}
         >
           <Tree
             {...props}
             key={dnd.key}
-            items={items}
-            dependencies={[context, ...dependencies]}
             selectionMode={selectionMode}
             selectionBehavior={selectionBehavior}
             selectedKeys={selectedKeys}
@@ -264,13 +283,13 @@ export function Table<T extends object>({
             onAction={onRowAction && noop}
             dragAndDropHooks={dnd.dragAndDropHooks}
             renderEmptyState={
-              renderEmptyState
+              loading || renderEmptyState
                 ? () => (
                     <div
-                      data-slot="table-empty"
+                      data-slot={loading ? 'table-loading' : 'table-empty'}
                       className={styles.Table.empty()}
                     >
-                      {renderEmptyState()}
+                      {loading ? <Spinner /> : renderEmptyState?.()}
                     </div>
                   )
                 : undefined
@@ -282,11 +301,29 @@ export function Table<T extends object>({
               })
             }
           >
-            {children}
+            <Collection items={items} dependencies={[context, ...dependencies]}>
+              {children}
+            </Collection>
+            {(loading !== undefined || onLoadMore) && (
+              <TreeLoadMoreItem isLoading={loading} onLoadMore={onLoadMore}>
+                <TableLoader />
+              </TreeLoadMoreItem>
+            )}
           </Tree>
         </Virtualizer>
       </Surface>
     </TableContext.Provider>
+  )
+}
+
+/** The spinner below the rows, the empty state shows it when there are none */
+function TableLoader() {
+  const state = useContext(TreeStateContext)
+  if (!state?.collection.size) return null
+  return (
+    <div data-slot="table-loader" className={styles.Table.loader()}>
+      <Spinner size="sm" />
+    </div>
   )
 }
 
@@ -312,7 +349,15 @@ function TableHeader({sortDescriptor, onSortChange}: TableHeaderProps) {
             : undefined
         const label = (
           <>
-            {column.header}
+            <span
+              data-slot="table-head-label"
+              className={styles.TableHeader.label()}
+              title={
+                typeof column.header === 'string' ? column.header : undefined
+              }
+            >
+              {column.header}
+            </span>
             {sorted && (
               <Icon
                 icon={

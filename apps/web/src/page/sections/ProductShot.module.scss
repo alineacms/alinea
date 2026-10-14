@@ -239,30 +239,32 @@
   }
 }
 
-// The stage marks the hovered or focused feature, its screenshot shows
+// The stage marks the hovered or focused feature, its screenshot shows. All
+// screenshots follow one view, so the next feature pans and zooms from where
+// the view is instead of starting from the full screenshot again
 .layout[data-active] .root-layer {
   opacity: 0;
+  transform: translate(var(--web-shot-x, 0%), var(--web-shot-y, 0%))
+    scale(var(--web-shot-zoom, 1));
+  transition:
+    opacity 0.25s ease-out,
+    transform 0.7s ease-in-out;
 }
 
-// The next screenshot fades in on top of the previous one, which stays fully
-// visible below it, so the panel never shows through both
+// The next screenshot shows below the previous one, which fades out on top:
+// the panel never shows through, also when returning to a screenshot that is
+// already visible below
 @for $shot from 0 through 8 {
   .layout[data-previous='#{$shot}'] .root-layer[data-shot='#{$shot}'] {
-    z-index: 1;
-    opacity: 1;
-    transform: scale(var(--web-shot-previous-zoom, 1));
-    transform-origin: var(--web-shot-previous-origin, 50% 50%);
+    z-index: 2;
   }
 
-  // Fade in, then zoom into the crop of the feature
   .layout[data-active='#{$shot}'] .root-layer[data-shot='#{$shot}'] {
-    z-index: 2;
+    z-index: 1;
     opacity: 1;
-    transform: scale(var(--web-shot-zoom, 1));
-    transform-origin: var(--web-shot-origin, 50% 50%);
     transition:
-      opacity 0.25s ease-out,
-      transform 0.7s ease-in-out 0.2s;
+      opacity 0s,
+      transform 0.7s ease-in-out;
   }
 
   .layout[data-feature='#{$shot}']

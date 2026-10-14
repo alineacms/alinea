@@ -1,5 +1,6 @@
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -211,7 +212,12 @@ function renderEntry(
       )
     return (
       <DropdownMenu key={name}>
-        <DropdownMenuTrigger variant="ghost" icon={icon}>
+        <DropdownMenuTrigger
+          variant="ghost"
+          icon={icon}
+          aria-label={label ? undefined : ariaLabel}
+          active={entry.active?.(context)}
+        >
           {label}
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -233,6 +239,21 @@ function renderEntry(
   }
   const label = resolve(entry.label, context)
   const title = entry.title ?? text(label) ?? humanize(name)
+  if (menu && entry.active) {
+    return (
+      <DropdownMenuCheckboxItem
+        key={name}
+        icon={entry.icon?.(context)}
+        textValue={title}
+        disabled={entry.disabled?.(context)}
+        checked={entry.active(context)}
+        onCheckedChange={() => entry.onSelect(context)}
+        closeOnSelect
+      >
+        {label ?? title}
+      </DropdownMenuCheckboxItem>
+    )
+  }
   if (menu) {
     return (
       <DropdownMenuItem

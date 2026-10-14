@@ -13,7 +13,7 @@ import type {Page} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms, TreeView} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import type {PropsWithChildren} from 'react'
+import {type PropsWithChildren, useLayoutEffect} from 'react'
 import {DashboardScope, useDashboardContext} from '../hooks.js'
 import {IcRoundAdd} from '../icons.js'
 import {SidebarTree} from './SidebarTree.js'
@@ -47,6 +47,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <DashboardScope value={{page, root, workspace}}>
+      <WorkspaceColor color={workspace.color} />
       <AppShell>
         <WorkspaceRoots canManageMembers={canManageMembers} page={page} />
         <AppShellContent>
@@ -75,6 +76,25 @@ export function DashboardLayout({
       <MoveConfirmDialog />
     </DashboardScope>
   )
+}
+
+interface WorkspaceColorProps {
+  color: string
+}
+
+/**
+ * Exposes the workspace color as --alinea-workspace-color, on the document
+ * so dialogs and popovers rendered outside the layout can use it too
+ */
+function WorkspaceColor({color}: WorkspaceColorProps) {
+  useLayoutEffect(() => {
+    const {style} = document.documentElement
+    style.setProperty('--alinea-workspace-color', color)
+    return () => {
+      style.removeProperty('--alinea-workspace-color')
+    }
+  }, [color])
+  return null
 }
 
 interface SidebarCreateEntryButtonProps {

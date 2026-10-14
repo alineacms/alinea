@@ -614,11 +614,15 @@ test('keeps toolbar popouts open', async ({mount, page}) => {
     .click()
   await page.getByRole('button', {name: 'Normal text'}).click()
 
-  await expect(page.getByRole('menuitem', {name: 'Heading 1'})).toBeVisible()
+  await expect(
+    page.getByRole('menuitemcheckbox', {name: 'Heading 1'})
+  ).toBeVisible()
   await expect(page.locator('[data-richtext-toolbar="true"]')).toBeVisible()
 
-  await page.getByRole('menuitem', {name: 'Heading 1'}).click()
-  await expect(page.getByRole('menuitem', {name: 'Heading 1'})).toBeHidden()
+  await page.getByRole('menuitemcheckbox', {name: 'Heading 1'}).click()
+  await expect(
+    page.getByRole('menuitemcheckbox', {name: 'Heading 1'})
+  ).toBeHidden()
   await expect(page.locator('[data-richtext-toolbar="true"]')).toBeVisible()
 })
 
@@ -631,7 +635,7 @@ test('toolbar follows the selection within the editor', async ({
 
   await editor.getByText('Select this text', {exact: false}).click()
   await page.getByRole('button', {name: 'Normal text'}).click()
-  await page.getByRole('menuitem', {name: 'Heading 1'}).click()
+  await page.getByRole('menuitemcheckbox', {name: 'Heading 1'}).click()
   await expect(page.getByRole('button', {name: 'Heading 1'})).toBeVisible()
 
   // Moving the caret without leaving the editor updates the toolbar

@@ -1,3 +1,9 @@
+/* The height of the entry header, custom field views fill the editor with
+   eg. `height: calc(100dvh - var(--alinea-header-height))` */
+.EntryEditor {
+  --alinea-header-height: 48px;
+}
+
 .EntryEditor-body {
   min-height: 0;
   min-width: 0;
@@ -13,6 +19,16 @@
 
 .EntryEditor-banner {
   background: var(--alinea-bg-muted);
+}
+
+.EntryEditor-viewBanner {
+  flex-shrink: 0;
+  padding: 16px 16px 0;
+}
+
+.EntryEditor-view {
+  min-width: 0;
+  min-height: 0;
 }
 
 .EntryEditor-toolbar {
@@ -56,6 +72,10 @@
 
   .EntryEditor-body {
     padding: 8px;
+  }
+
+  .EntryEditor-viewBanner {
+    padding: 8px 8px 0;
   }
 
   .MissingEntry {

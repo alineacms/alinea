@@ -132,6 +132,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`settings`: fields that editors set in the settings sheet of a block, below its label and anchor, instead of in the block's form. Entries of the type show them in a Settings tab. They are stored and queried like the other fields, so their names can't repeat a field name."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`contains`: the types that can be created as children of this entry, by schema name or by reference. Without it, entries of this type can't have children."
                 }
               ]
@@ -292,7 +306,55 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`view`: a React component, or a path to one, that replaces the entry editor for this type. It receives `{type}`."
+                  "text": "`view`: a React component, or a path to one, that replaces the form of entries of this type. It renders below the entry header and edits the entry with the hooks of `alinea/cms`. It receives `{type}`. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Replace the form of a type",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KeanD14w2sqIDTSPywxTUuIXeT",
+                      "_link": "entry",
+                      "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+                      "_anchor": "replace-the-form-of-a-type"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`actions`: components rendered in the header of the entry editor, next to the publish button, such as an export button. Each is a component or a path to one and receives `EntryActionProps`: the `entry` and the `locale` it is edited in. See "
+                },
+                {
+                  "_type": "text",
+                  "text": "Add actions to the entry header",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KdUIopaXEgTVrqmMte5hcOdacS",
+                      "_link": "entry",
+                      "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+                      "_anchor": "add-actions-to-the-entry-header"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
                 }
               ]
             }

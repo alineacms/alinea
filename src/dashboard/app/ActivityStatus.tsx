@@ -37,6 +37,7 @@ import {
   discardActivityAtom,
   retryActivityAtom
 } from '../atoms/activity.js'
+import {syncProgressAtom} from '../atoms/graph.js'
 import {routeAtom} from '../atoms/nav.js'
 import type {Activity} from '../boot/ActivityEvent.js'
 import {IcRoundCheck, IcRoundHistory, IcRoundWarning} from '../icons.js'
@@ -83,6 +84,7 @@ export function ActivityStatus({
 }: ActivityStatusProps) {
   const [appPending] = useAtomValueRawSync(appAtom)
   const activity = useAtomValueRaw(activityAtom)
+  const sync = useAtomValueRaw(syncProgressAtom)
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)
   const [isOpen, setIsOpen] = useState(false)
@@ -93,7 +95,11 @@ export function ActivityStatus({
   )
   const wasFailed = useRef(false)
   const lastActivityLabel = useRef('Finishing up')
-  const activityLabel = getActivityLabel(appPending, activity.isMutating)
+  const activityLabel = getActivityLabel(
+    appPending,
+    activity.isMutating,
+    activity.isSyncing || Boolean(sync)
+  )
   const showSpinner = useAtomValueRaw(activityPendingAtom)
   if (activityLabel !== undefined) lastActivityLabel.current = activityLabel
   const visibleActivityLabel =
@@ -107,7 +113,15 @@ export function ActivityStatus({
   )
 
   const icon = showSpinner ? (
-    <Spinner aria-label={label} className={styles.ActivityStatus.icon()} />
+    <Spinner
+      aria-label={label}
+      value={
+        sync && sync.loaded < sync.total
+          ? Math.round((sync.loaded / sync.total) * 100)
+          : undefined
+      }
+      className={styles.ActivityStatus.icon()}
+    />
   ) : activity.hasFailed ? (
     <IcRoundWarning
       aria-hidden="true"
@@ -282,9 +296,14 @@ function ActivityItem({activity}: ActivityItemProps) {
   )
 }
 
-function getActivityLabel(isNavigating: boolean, isMutating: boolean) {
+function getActivityLabel(
+  isNavigating: boolean,
+  isMutating: boolean,
+  isSyncing: boolean
+) {
   if (isNavigating) return 'Loading page'
   if (isMutating) return 'Syncing changes'
+  if (isSyncing) return 'Syncing content'
 }
 
 function getStatusLabel(
@@ -351,6 +370,7 @@ function activityStatusColor(status: Activity['status']) {
 }
 
 function formatActivityTitle(activity: Activity) {
+  if (activity.type === 'sync') return 'Content updates'
   const uploadTitle = formatUploadTitle(activity)
   if (uploadTitle) return uploadTitle
   const titles = [
@@ -366,11 +386,15 @@ function formatActivityTitle(activity: Activity) {
 
 function formatActivityDescription(activity: Activity) {
   const details =
-    activity.type === 'mutation' && isFileActivity(activity)
-      ? fileMutationDescription(activity.status)
-      : activity.operations
-          .map(operation => formatActivityOperation(operation, activity.status))
-          .join(' · ')
+    activity.type === 'sync'
+      ? syncDescription(activity.status)
+      : activity.type === 'mutation' && isFileActivity(activity)
+        ? fileMutationDescription(activity.status)
+        : activity.operations
+            .map(operation =>
+              formatActivityOperation(operation, activity.status)
+            )
+            .join(' · ')
   const time = (
     <Timestamp date={activity.finishedAt ?? activity.startedAt} format="time" />
   )
@@ -403,6 +427,12 @@ function formatUploadTitle(activity: Activity) {
   return created.title.endsWith(extension)
     ? created.title
     : `${created.title}${extension}`
+}
+
+function syncDescription(status: Activity['status']) {
+  if (status === 'failed') return 'Could not fetch updates'
+  if (status === 'succeeded') return 'Up to date'
+  return 'Fetching updates'
 }
 
 function fileMutationDescription(status: Activity['status']) {

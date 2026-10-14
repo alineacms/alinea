@@ -1,9 +1,9 @@
 import type {Config} from '#/core/Config.js'
+import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
-import {accumulate} from '#/core/util/Async.js'
 import {entryIndexRow} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
@@ -116,7 +116,8 @@ export async function mergeTrees(
   source: RemoteSource,
   previousTree: ReadonlyTree,
   tree: ReadonlyTree,
-  queries: SyncQueries
+  queries: SyncQueries,
+  onProgress?: (progress: SyncProgress) => void
 ): Promise<SyncChanges> {
   const changes: SyncChanges = {
     touched: new Set(),
@@ -140,10 +141,15 @@ export async function mergeTrees(
       Math.max(minPartSize, Math.ceil(added.length / parallelParts))
     )
   )
-  const reads = parts.map(files => {
-    const shas = [...new Set(files.map(file => file.fileHash))]
-    const blobs = accumulate(source.getBlobs(shas)).then(
-      found => new Map(found)
+  const requests = parts.map(files => [
+    ...new Set(files.map(file => file.fileHash))
+  ])
+  const total = requests.reduce((sum, shas) => sum + shas.length, 0)
+  let loaded = 0
+  if (total) onProgress?.({loaded, total})
+  const reads = requests.map(shas => {
+    const blobs = readBlobs(source, shas, () =>
+      onProgress?.({loaded: ++loaded, total})
     )
     // A failed read is thrown once its part is written.
     blobs.catch(() => {})
@@ -188,6 +194,19 @@ export async function mergeTrees(
     changes
   )
   return changes
+}
+
+async function readBlobs(
+  source: RemoteSource,
+  shas: ReadonlyArray<string>,
+  onBlob: () => void
+): Promise<Map<string, Uint8Array>> {
+  const blobs = new Map<string, Uint8Array>()
+  for await (const [sha, blob] of source.getBlobs(shas)) {
+    blobs.set(sha, blob)
+    onBlob()
+  }
+  return blobs
 }
 
 function sourceDirectorySha(tree: ReadonlyTree, path: string): string {

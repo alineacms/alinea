@@ -183,7 +183,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`alinea build` exits with `No baseUrl was set for the production build` when there is no production URL."
+                  "text": "It is required for production builds when `handlerUrl` is relative: `alinea build` exits, and queries on your site throw, with `Missing baseUrl in Alinea config: set baseUrl.production to the url of your site, …`. An absolute `handlerUrl` doesn't need it."
                 }
               ]
             }
@@ -202,6 +202,15 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Server renders have no request to take the origin from (static pages and pages from `generateStaticParams` are rendered without one, and reading the request headers would make every route dynamic), so Alinea doesn't guess it. Set `baseUrl.production`, or make `handlerUrl` absolute."
         }
       ]
     },

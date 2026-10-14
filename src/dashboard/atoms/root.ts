@@ -33,7 +33,13 @@ import {
   type TreeEntrySummary
 } from './entry.js'
 import {shaAtom} from './graph.js'
-import {overviewSortAtom, type Page, pageAtom, routeAtom} from './nav.js'
+import {
+  overviewSortAtom,
+  overviewTabAtom,
+  type Page,
+  pageAtom,
+  routeAtom
+} from './nav.js'
 import type {OverviewFilterSelection} from './overview.js'
 import {policyAtom} from './user.js'
 import {
@@ -522,6 +528,7 @@ export class RootAtoms {
       {
         enableNavigation: true,
         sortState: overviewSortAtom(this.workspace, this.key, parentId),
+        tabState: overviewTabAtom(this.workspace, this.key, parentId),
         rootData: this.data,
         // The filters picked in this list, kept when the editor comes back to
         // it, like its sort, but not applied to the lists of other entries

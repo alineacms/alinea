@@ -1,4 +1,4 @@
-import {Page as PageLayout, Spinner} from '#/components.js'
+import {Page as PageLayout, Spinner, Text} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
@@ -35,7 +35,7 @@ import {themeAtom} from './atoms/dashboard.js'
 import {workspaceAtom, workspacesAtom} from './atoms/config.js'
 import {useDashboardStore} from './atoms/core.js'
 import {entryAtoms, MissingEntryError} from './atoms/entry.js'
-import {graphReadyAtom} from './atoms/graph.js'
+import {graphReadyAtom, syncProgressAtom} from './atoms/graph.js'
 import {pageAtom, type Page} from './atoms/nav.js'
 import {rootAtoms} from './atoms/root.js'
 import {canManageMembersAtom, userPolicyReadyAtom} from './atoms/user.js'
@@ -237,21 +237,43 @@ function DashboardApp(props: AppProps): ReactNode {
   // the nearest boundary above the dashboard.
   const shown = useDeferredValue(app)
   const activity = useAtomValueRaw(activityAtom)
+  const sync = useAtomValueRaw(syncProgressAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
   // Mounting the theme applies the stored preference to the document
   useAtomValueRaw(themeAtom)
-  const pending = appPending || shown !== app || activity.isMutating
+  const pending =
+    appPending ||
+    shown !== app ||
+    activity.isMutating ||
+    activity.isSyncing ||
+    Boolean(sync)
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])
   return shown ?? <AppLoading />
 }
 
-function AppLoading() {
+const fileCount = new Intl.NumberFormat()
+
+export function AppLoading() {
+  const sync = useAtomValueRaw(syncProgressAtom)
+  const fetching = sync && sync.loaded < sync.total
   return (
     <PageLayout className={styles.AppLoading()}>
       <div className={styles.AppLoading.progress()}>
-        <Spinner aria-label="Loading dashboard" />
+        <Spinner
+          aria-label="Loading dashboard"
+          value={
+            fetching ? Math.round((sync.loaded / sync.total) * 100) : undefined
+          }
+        />
+        {sync && (
+          <Text size="sm" color="muted" className={styles.AppLoading.status()}>
+            {fetching
+              ? `Syncing content · ${fileCount.format(sync.loaded)} of ${fileCount.format(sync.total)} files`
+              : 'Indexing content'}
+          </Text>
+        )}
       </div>
     </PageLayout>
   )

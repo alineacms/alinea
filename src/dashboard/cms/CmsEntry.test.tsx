@@ -5,12 +5,13 @@ import {createTestConnection} from '#test/CreateConnection.js'
 import * as cms from '#/cms.js'
 import {
   EditField,
+  EditFields,
   FieldChrome,
   type FieldViewProps,
   useField,
   useFieldKey,
-  useLocale,
-  useSiblingFieldValue
+  useFieldValue,
+  useLocale
 } from '#/cms.js'
 import {afterEach, expect, test} from 'bun:test'
 import {useId} from 'react'
@@ -48,7 +49,7 @@ type RangeField = Field.Create<number, {max?: number; help?: string}>
 function RangeView({field}: FieldViewProps<RangeField>) {
   const [value = 0, setValue] = useField(field)
   const key = useFieldKey(field)
-  const title = useSiblingFieldValue('title') as string
+  const title = useFieldValue('title') as string
   const locale = useLocale()
   const id = useId()
   return (
@@ -119,4 +120,80 @@ test('a custom field view reads and writes its value through alinea/cms', () => 
   fireEvent.change(input, {target: {value: '7'}})
   expect(screen.getByText('rating:7 of Chair in no locale')).toBeDefined()
   expect(screen.getByText('Too high')).toBeDefined()
+})
+
+test('field hooks read fields of the row and of the entry', () => {
+  const Row = Config.type('Row', {
+    fields: {title: Field.text('Label'), price: Field.number('Price')}
+  })
+  const Post = Config.document('Post', {
+    fields: {title: Field.text('Title')}
+  })
+  function Summary() {
+    const title = useFieldValue(Post.title)
+    const label = useFieldValue(Row.title)
+    const price = useFieldValue(Row.price)
+    const [, setTitle] = useField(Post.title)
+    return (
+      <button type="button" onClick={() => setTitle('Desk')}>
+        {title}:{label}:{price}
+      </button>
+    )
+  }
+  const entryNode = new ReactiveNode<object>({title: 'Chair'})
+  const entry = new EntryEditor(Post, entryNode)
+  const row = new EntryEditor(
+    Row,
+    new ReactiveNode<object>({title: 'Leg', price: 5}),
+    entry
+  )
+  render(
+    <DashboardScopeInternal dashboard={testDashboard()}>
+      <EditorScope editor={row}>
+        <Summary />
+      </EditorScope>
+    </DashboardScopeInternal>
+  )
+  fireEvent.click(screen.getByText('Chair:Leg:5'))
+  expect(screen.getByText('Desk:Leg:5')).toBeDefined()
+})
+
+type SizeField = Field.Create<number>
+
+function SizeView({field}: FieldViewProps<SizeField>) {
+  const [value, setValue] = useField(field)
+  return (
+    <button type="button" onClick={() => setValue(value + 1)}>
+      {useFieldKey(field)}:{value}
+    </button>
+  )
+}
+
+function size(label: string): SizeField {
+  return Field.create({label, options: {}, view: SizeView})
+}
+
+test('EditFields renders fields of an object field in its scope', () => {
+  const Box = Config.document('Box', {
+    fields: {
+      dimensions: Field.object('Dimensions', {
+        fields: {width: size('Width'), height: size('Height')}
+      })
+    }
+  })
+  const node = new ReactiveNode<object>({dimensions: {width: 2, height: 3}})
+  const editor = new EntryEditor(Box, node)
+  render(
+    <DashboardScopeInternal dashboard={testDashboard()}>
+      <EditorScope editor={editor}>
+        <EditFields
+          field={Box.dimensions}
+          fields={{width: Box.dimensions.width}}
+        />
+      </EditorScope>
+    </DashboardScopeInternal>
+  )
+  expect(screen.queryByText('height:3')).toBeNull()
+  fireEvent.click(screen.getByText('width:2'))
+  expect(screen.getByText('width:3')).toBeDefined()
 })

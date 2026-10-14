@@ -34,6 +34,11 @@ export interface FieldOptions<StoredValue> {
   required?: boolean
   /** Validate the given value */
   validate?(value: StoredValue): boolean | string | undefined
+  /**
+   * The width of the field in the entry form, a fraction between 0 and 1.
+   * Fields that fit next to each other share a row.
+   */
+  width?: number
 }
 
 export interface EntryAnchorTarget {

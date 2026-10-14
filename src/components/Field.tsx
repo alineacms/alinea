@@ -1,10 +1,15 @@
 import styler from '@alinea/styler'
-import type {ReactNode} from 'react'
-import {Label as LabelPrimitive, Text} from 'react-aria-components'
+import {type ReactNode, useContext} from 'react'
+import {
+  FieldErrorContext,
+  Label as LabelPrimitive,
+  Text
+} from 'react-aria-components'
 import {Badge} from './Badge.js'
 import {IcRoundPublic} from '#/dashboard/icons.js'
 import css from './Field.module.css'
 import {Icon} from './Icon.js'
+import {FormScope} from './internal/FormScope.js'
 import type {FieldSharedProps, StyleProps} from './types.js'
 
 const styles = styler(css)
@@ -33,13 +38,22 @@ export function Field({
   style,
   children
 }: FieldProps) {
+  const validation = useContext(FieldErrorContext)
+  const inForm = useContext(FormScope)
+  // Inside a Form the errors of react-aria's validation (native constraints
+  // and Form validationErrors) are shown when the field has none of its own
+  const message =
+    error ||
+    (inForm && validation?.isInvalid
+      ? validation.validationErrors.join(' ')
+      : undefined)
   const hasHeader = label || icon || description || shared
-  if (!hasHeader && !error && !children) return null
+  if (!hasHeader && !message && !children) return null
   return (
     <div
       data-slot="field"
       // Lets the dashboard find the first invalid field to focus
-      data-invalid={error ? true : undefined}
+      data-invalid={message ? true : undefined}
       className={styles.Field(styler.merge({className}))}
       style={style}
     >
@@ -65,7 +79,7 @@ export function Field({
         </div>
       )}
       {children}
-      {error && <FieldError>{error}</FieldError>}
+      {message && <FieldError>{message}</FieldError>}
     </div>
   )
 }

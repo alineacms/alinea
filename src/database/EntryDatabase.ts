@@ -98,6 +98,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #tree?: ReadonlyTree
   #initialTree?: ReadonlyTree
   #recordsTree: boolean
+  /**
+   * Overlays answer one preview payload and are thrown away; they keep the
+   * statistics of the database they fork.
+   */
+  #analyzes = true
   /** The connection is already inside a transaction: never open nested ones. */
   #transactional = false
   #changeListeners = new Set<EntryChangeListener>()
@@ -172,6 +177,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       recordsTree: false
     })
     overlay.#tree = tree
+    overlay.#analyzes = false
     try {
       await overlay.syncWith(source)
       return overlay
@@ -241,8 +247,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       })
     await syncFieldIndexes(db, config)
     // A database stored before statistics were kept has none until its
-    // content changes.
-    await analyze(db)
+    // content changes. Optimizing existing ones could rewrite them on every
+    // open: SQLite can misjudge the entry table's size by over 25 times, and
+    // the browser then stores a delta for unchanged content.
+    if (!(await hasStatistics(db))) await analyze(db)
   }
 
   /**
@@ -267,7 +275,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           previousTree: this.#tree?.sha === current ? this.#tree : undefined,
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
-          recordsTree: this.#recordsTree
+          recordsTree: this.#recordsTree,
+          onProgress: options?.onProgress
         })
         this.#tree = tree
         if (changed.length > 0) await this.#optimize()
@@ -511,7 +520,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   async #optimize(): Promise<void> {
-    if (!this.#transactional) await analyze(this.#db)
+    if (this.#analyzes && !this.#transactional) await analyze(this.#db)
   }
 
   getRevision(): Promise<string> {
@@ -687,14 +696,21 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     )
   }
 
-  async compact(): Promise<void> {
+  /**
+   * Optimize the database and rewrite it when it has pages to reclaim, or
+   * always with `rewrite`. A file that synced many changes keeps the pages of
+   * its tables scattered over it, without any to reclaim: readers that read
+   * ahead, such as the dashboard reading a stored copy, then read it page by
+   * page. Rewriting lays every table out in order.
+   */
+  async compact(options: {rewrite?: boolean} = {}): Promise<void> {
     await this.#queue.run(async () => {
       await this.#db.run(sql`pragma optimize`)
-      // Rewriting the whole file only pays off when it has pages to reclaim.
       const free = await this.#db.get<{freelist_count: number}>(
         sql`pragma freelist_count`
       )
-      if (free?.freelist_count) await this.#db.run(sql`vacuum`)
+      if (options.rewrite || free?.freelist_count)
+        await this.#db.run(sql`vacuum`)
     })
   }
 }
@@ -709,14 +725,20 @@ async function analyze(db: Database): Promise<void> {
   try {
     // SQLite before 3.46 analyzes every row without a limit.
     await db.run(sql`pragma analysis_limit = 400`)
-    const entries = getTable(EntryIndexTable).name
-    const stats = await db.get(
-      sql`select 1 from sqlite_master where name = 'sqlite_stat1'`
-    )
-    const analyzed =
-      stats &&
-      (await db.get(sql`select 1 from sqlite_stat1 where tbl = ${entries}`))
     // Older SQLite only optimizes tables it has statistics for.
-    await db.run(analyzed ? sql`pragma optimize = 0x10002` : sql`analyze`)
+    await db.run(
+      (await hasStatistics(db)) ? sql`pragma optimize = 0x10002` : sql`analyze`
+    )
   } catch {}
+}
+
+async function hasStatistics(db: Database): Promise<boolean> {
+  const entries = getTable(EntryIndexTable).name
+  const stats = await db.get(
+    sql`select 1 from sqlite_master where name = 'sqlite_stat1'`
+  )
+  return Boolean(
+    stats &&
+    (await db.get(sql`select 1 from sqlite_stat1 where tbl = ${entries}`))
+  )
 }

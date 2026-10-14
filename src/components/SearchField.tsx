@@ -96,7 +96,7 @@ export function SearchField({
       isRequired={required}
       isDisabled={disabled}
       isReadOnly={readOnly}
-      isInvalid={Boolean(error)}
+      isInvalid={error ? true : undefined}
       className={styles.SearchField(styler.merge({className}))}
     >
       <Field

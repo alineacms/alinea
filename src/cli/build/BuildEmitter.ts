@@ -9,8 +9,16 @@ export type BuildInfo =
   | {type: 'start'; result: undefined}
   | {type: 'done'; result: BuildResult}
 
-export function buildEmitter(config: BuildOptions): Emitter<BuildInfo> {
-  let context: BuildContext
+export interface BuildEmitterOptions {
+  /** Rebuild on changes, otherwise build once and stop esbuild */
+  watch?: boolean
+}
+
+export function buildEmitter(
+  config: BuildOptions,
+  {watch = true}: BuildEmitterOptions = {}
+): Emitter<BuildInfo> {
+  let context: BuildContext | undefined
   let canceled = false
   const results = createEmitter<BuildInfo>({
     onReturn() {
@@ -34,9 +42,16 @@ export function buildEmitter(config: BuildOptions): Emitter<BuildInfo> {
         }
       ]
     })
-    .then(ctx => {
+    .then(async ctx => {
       context = ctx
-      if (!canceled) ctx.watch()
+      // Returned before the context was ready: nothing disposed it yet
+      if (canceled) return ctx.dispose()
+      if (watch) return ctx.watch()
+      // A build runs once; a live context keeps the esbuild service process
+      // around for as long as the forwarded command runs (and can outlive it)
+      await ctx.rebuild().catch(() => {})
+      context = undefined
+      await ctx.dispose()
     }, results.throw)
   return results
 }

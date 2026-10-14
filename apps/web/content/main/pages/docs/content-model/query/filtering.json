@@ -87,6 +87,37 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_referenced`: whether another entry links to the entry. `true` or `false`, or a `Query.referencedBy(...)` query that the linking entry has to match, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Entries that link here",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3KdUIu0ZhdzbTSVePGjmzJtAZmi",
+                      "_link": "entry",
+                      "_entry": "3AZ7Pb9hX7bQdNL4diYY1I3kmsJ",
+                      "_anchor": "entries-that-link-here"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -487,6 +518,20 @@
                 {
                   "_type": "text",
                   "text": "The input is split into words, and an entry must match every word."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Hyphenated, spaced and joined spellings find each other: `multi-modal`, `multi modal` and `multimodal` all match \"multi-modal\", \"multi modal\" and \"multimodal\"."
                 }
               ]
             }

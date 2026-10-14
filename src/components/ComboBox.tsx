@@ -1,6 +1,7 @@
 import styler from '@alinea/styler'
 import {
   type MutableRefObject,
+  type ReactElement,
   type ReactNode,
   type RefObject,
   useContext,
@@ -18,24 +19,33 @@ import {IcRoundClose, IcRoundKeyboardArrowDown} from '#/dashboard/icons.js'
 import css from './ComboBox.module.css'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
+import {ListBoxGroup} from './internal/ListBoxGroup.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'
 import {PopoverSurface} from './internal/PopoverSurface.js'
+import {Spinner} from './Spinner.js'
 import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
+  IconType,
+  Key,
   OpenStateProps,
   StyleProps
 } from './types.js'
 
 const styles = styler(css)
 
-export interface ComboBoxProps
+function showAll() {
+  return true
+}
+
+export interface ComboBoxProps<V extends Key = Key>
   extends FieldSharedProps, OpenStateProps, StyleProps, AriaProps, DataProps {
-  value?: string | null
-  defaultValue?: string | null
+  /** The value of the selected ComboBoxItem */
+  value?: V | null
+  defaultValue?: V | null
   /** Called with the selected value, or null when the selection is cleared */
-  onValueChange?: (value: string | null) => void
+  onValueChange?: (value: V | null) => void
   inputValue?: string
   defaultInputValue?: string
   onInputValueChange?: (value: string) => void
@@ -44,15 +54,23 @@ export interface ComboBoxProps
   allowsCustomValue?: boolean
   /** Shown in the list when no item matches, the list stays closed if unset */
   emptyMessage?: ReactNode
+  /**
+   * Whether an item is shown for the typed text, defaults to a case and
+   * accent insensitive match anywhere in its text. Pass false to show every
+   * item, eg. when the server already filtered them.
+   */
+  filter?: false | ((textValue: string, inputValue: string) => boolean)
+  /** Shows a spinner, eg. while the items for the typed text load */
+  loading?: boolean
   /** Name of the hidden form input carrying the value */
   name?: string
   autoFocus?: boolean
-  /** ComboBoxItem elements */
+  /** ComboBoxItem and ComboBoxGroup elements */
   children: ReactNode
 }
 
 /** A labelled text input that filters a list of options to pick from */
-export function ComboBox({
+export function ComboBox<V extends Key = Key>({
   label,
   description,
   error,
@@ -72,12 +90,14 @@ export function ComboBox({
   onOpenChange,
   placeholder,
   emptyMessage,
+  filter,
+  loading,
   autoFocus,
   className,
   style,
   children,
   ...props
-}: ComboBoxProps) {
+}: ComboBoxProps<V>) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const syncing = useRef(false)
   return (
@@ -88,9 +108,7 @@ export function ComboBox({
       style={style}
       selectedKey={value}
       defaultSelectedKey={defaultValue}
-      onSelectionChange={key =>
-        onValueChange?.(key === null ? null : String(key))
-      }
+      onSelectionChange={key => onValueChange?.(key as V | null)}
       inputValue={inputValue}
       defaultInputValue={defaultInputValue}
       onInputChange={onInputValueChange}
@@ -102,6 +120,7 @@ export function ComboBox({
       isRequired={required}
       isInvalid={error ? true : undefined}
       allowsEmptyCollection={emptyMessage !== undefined}
+      defaultFilter={filter === false ? showAll : filter}
     >
       <Field
         label={label}
@@ -124,6 +143,7 @@ export function ComboBox({
           autoFocus={autoFocus}
           invalid={Boolean(error)}
           clearable={!disabled && !readOnly}
+          loading={loading}
         />
         <PopoverSurface
           data-slot="combobox-content"
@@ -137,7 +157,7 @@ export function ComboBox({
                 data-slot="combobox-empty"
                 className={styles.ComboBoxContent.empty()}
               >
-                {emptyMessage}
+                {loading ? <Spinner size="sm" /> : emptyMessage}
               </div>
             )}
           >
@@ -192,6 +212,7 @@ interface ComboBoxTriggerProps {
   autoFocus?: boolean
   invalid: boolean
   clearable: boolean
+  loading?: boolean
 }
 
 function ComboBoxTrigger({
@@ -199,7 +220,8 @@ function ComboBoxTrigger({
   placeholder,
   autoFocus,
   invalid,
-  clearable
+  clearable,
+  loading
 }: ComboBoxTriggerProps) {
   const state = useContext(ComboBoxStateContext)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -218,6 +240,13 @@ function ComboBoxTrigger({
         autoFocus={autoFocus}
         className={styles.ComboBoxTrigger.input()}
       />
+      {loading && (
+        <Spinner
+          size="sm"
+          data-slot="combobox-spinner"
+          className={styles.ComboBoxTrigger.spinner()}
+        />
+      )}
       {hasClear && (
         <Button
           slot={null}
@@ -249,13 +278,32 @@ function ComboBoxTrigger({
 }
 
 export interface ComboBoxItemProps extends StyleProps {
-  value: string
+  value: Key
   /** Text used for filtering and the input, defaults to string children */
   textValue?: string
   disabled?: boolean
+  /** Icon shown before the label in the list */
+  icon?: IconType | ReactElement
+  /** Secondary text shown below the label in the list */
+  description?: ReactNode
   children: ReactNode
 }
 
 export function ComboBoxItem(props: ComboBoxItemProps) {
   return <ListBoxOption slot="combobox-item" {...props} />
+}
+
+export interface ComboBoxGroupProps extends AriaProps {
+  label?: ReactNode
+  children: ReactNode
+}
+
+export function ComboBoxGroup(props: ComboBoxGroupProps) {
+  return (
+    <ListBoxGroup
+      slot="combobox-group"
+      labelSlot="combobox-group-label"
+      {...props}
+    />
+  )
 }

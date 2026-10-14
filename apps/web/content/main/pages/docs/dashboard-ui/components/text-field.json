@@ -60,7 +60,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A multiline field starts at `rows` lines and grows as editors type."
+          "text": "A multiline field starts at `rows` lines and grows as editors type, up to `maxRows` lines when you set it, then it scrolls."
         }
       ]
     },
@@ -93,6 +93,42 @@
       "_type": "ComponentExampleBlock",
       "_id": "3JmLPmfr0bp6JKsXjarlV6Y75qL",
       "example": "TextFieldIcons"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Native input attributes"
+        }
+      ],
+      "_anchor": "native-input-attributes"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`type`, `name`, `autoComplete`, `inputMode`, `pattern`, `minLength` and `maxLength` are passed to the input. `inputMode` picks the virtual keyboard on touch devices, eg. `numeric` for a code, and `pattern` is a regular expression the value must match, checked when the field is in a "
+        },
+        {
+          "_type": "text",
+          "text": "Form",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3KdUIsNXMrOek55dMPlcUR28hi0",
+              "_link": "entry",
+              "_entry": "3KdUIqjhk43irg9yIcQtrzg0jr3"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
     },
     {
       "_type": "heading",

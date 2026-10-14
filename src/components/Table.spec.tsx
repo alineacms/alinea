@@ -4,8 +4,11 @@ import {
   CustomRootView,
   DragAndDrop,
   Empty,
+  EmptyAutoHeight,
   ExplorerStyle,
   IterableItems,
+  LoadMore,
+  LongHeaders,
   NestedRows,
   RowActions,
   RowHandlers
@@ -66,6 +69,37 @@ test('nested rows', async ({mount, page}) => {
 test('empty state', async ({mount, page}) => {
   await mount(<Empty />)
   await expect(page.getByText('No articles yet')).toBeVisible()
+})
+
+test('empty and loading states sit below the header', async ({mount, page}) => {
+  await mount(<EmptyAutoHeight />)
+  const headers = page.locator('[data-slot="table-header"]')
+  for (const slot of ['table-empty', 'table-loading']) {
+    const state = await page.locator(`[data-slot="${slot}"]`).boundingBox()
+    const header = await headers
+      .nth(slot === 'table-empty' ? 0 : 1)
+      .boundingBox()
+    expect(state!.y).toBeGreaterThanOrEqual(header!.y + header!.height)
+    expect(state!.height).toBeGreaterThan(0)
+  }
+})
+
+test('long column headers end in an ellipsis', async ({mount, page}) => {
+  await mount(<LongHeaders />)
+  const heads = page.locator('[data-slot="table-head"]')
+  for (const index of [1, 2]) {
+    const head = heads.nth(index)
+    const label = head.locator('[data-slot="table-head-label"]')
+    const headBox = await head.boundingBox()
+    const labelBox = await label.boundingBox()
+    expect(labelBox!.x + labelBox!.width).toBeLessThanOrEqual(
+      headBox!.x + headBox!.width
+    )
+    expect(await label.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(
+      true
+    )
+    await expect(label).toHaveAttribute('title', /.+/)
+  }
 })
 
 test('renders rows from a one-shot iterable', async ({mount, page}) => {
@@ -160,4 +194,20 @@ test('a row action replaces the table action and clicks work without either', as
     .getByRole('row', {name: 'Bob Reviewer'})
     .click()
   await expect(log).toHaveText('Opened alice. Reviewed bob. Clicked bob')
+})
+
+test('shows a spinner while loading and loads more on scroll', async ({
+  mount,
+  page
+}) => {
+  await mount(<LoadMore />)
+  const table = page.getByRole('treegrid', {name: 'Products'})
+  await expect(table.getByRole('progressbar')).toBeVisible()
+  await expect(page.getByTestId('loaded')).toHaveText('Loaded 20 products')
+  await expect(page.getByText('No products')).toHaveCount(0)
+  await page.getByRole('button', {name: 'Price'}).click()
+  await expect(table.getByRole('row').first()).toContainText('10')
+  await table.hover()
+  await page.mouse.wheel(0, 2000)
+  await expect(page.getByTestId('loaded')).toHaveText(/Loaded [46]0 products/)
 })

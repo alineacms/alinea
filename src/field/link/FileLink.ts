@@ -73,14 +73,14 @@ export function file<Fields = undefined>(
   })
 }
 
-export namespace file {
-  export interface FilesOptions<Fields>
-    extends
-      LinkFieldOptions<
-        Array<EntryReference & ListRow & InferStoredValue<Fields>>
-      >,
-      Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
+export interface FilesOptions<Fields>
+  extends
+    LinkFieldOptions<
+      Array<EntryReference & ListRow & InferStoredValue<Fields>>
+    >,
+    Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
+export namespace file {
   export function multiple<Fields = undefined>(
     label: Label,
     options: WithoutLabel<FilesOptions<Fields>> = {}

@@ -593,3 +593,106 @@ test('leaves out removals of paths the parent does not have', async () => {
     mock.restore()
   }
 })
+
+test('history passes paths as variables and follows renames', async () => {
+  const originalFetch = globalThis.fetch
+  const queries: Array<{query: string; variables: Record<string, unknown>}> = []
+  const commit = (oid: string, date: string, message: string) => ({
+    oid,
+    committedDate: date,
+    message,
+    author: {name: 'Ada', email: 'ada@example.com'}
+  })
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url === 'https://api.github.com/graphql') {
+        const body = JSON.parse(String(init?.body))
+        queries.push(body)
+        const nodes =
+          queries.length === 1
+            ? [commit('c2', '2026-02-01T00:00:00Z', 'Update')]
+            : [commit('c1', '2026-01-01T00:00:00Z', 'Create')]
+        return Response.json({
+          data: {repository: {ref: {target: {file0: {nodes}}}}}
+        })
+      }
+      if (url === 'https://api.github.com/repos/owner/repo/commits/c2')
+        return Response.json({
+          files: [
+            {
+              filename: 'web/content/pages/"about".json',
+              previous_filename: 'web/content/pages/old.json'
+            }
+          ]
+        })
+      if (url === 'https://api.github.com/repos/owner/repo/commits/c1')
+        return Response.json({files: []})
+      throw new Error(`Unexpected request: ${url}`)
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const api = new GithubApi({
+      authToken: 'token',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      rootDir: 'web',
+      contentDir: 'content'
+    })
+    const revisions = await api.revisions('content/pages/"about".json')
+    test.equal(
+      revisions.map(({ref, file}) => ({ref, file})),
+      [
+        {ref: 'c2', file: 'content/pages/"about".json'},
+        {ref: 'c1', file: 'content/pages/old.json'}
+      ]
+    )
+    for (const {query} of queries) test.not.ok(query.includes('about'))
+    test.equal(queries[0].variables, {
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      file0: 'web/content/pages/"about".json',
+      file1: 'web/content/pages/"about".draft.json',
+      file2: 'web/content/pages/"about".archived.json'
+    })
+    test.is(queries[1].variables.file0, 'web/content/pages/old.json')
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('reads an entry at a revision', async () => {
+  const originalFetch = globalThis.fetch
+  let variables: unknown
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      variables = JSON.parse(String(init?.body)).variables
+      return Response.json({
+        data: {repository: {object: {text: '{"_id": "about", "title": "A"}'}}}
+      })
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const api = new GithubApi({
+      authToken: 'token',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      rootDir: '',
+      contentDir: 'content'
+    })
+    const record = await api.revisionData('content/pages/about.json', 'c1')
+    test.equal(record, {_id: 'about', title: 'A'})
+    test.equal(variables, {
+      owner: 'owner',
+      repo: 'repo',
+      expression: 'c1:content/pages/about.json'
+    })
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})

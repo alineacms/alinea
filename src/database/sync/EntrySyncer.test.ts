@@ -2,6 +2,7 @@ import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import type {Config} from '#/core/Config.js'
+import type {SyncProgress} from '#/core/db/LocalStore.js'
 import {Entry} from '#/core/Entry.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -608,6 +609,60 @@ test('a large sync fetches its blobs in a few requests', async () => {
     const result = await runtime.syncWith(remote)
     expect(result.changedEntryIds.length).toBe(4000)
     expect(requests).toHaveLength(4)
+  } finally {
+    await runtime.close()
+    sqlite.close()
+  }
+})
+
+test('a sync reports the files it fetches', async () => {
+  const source = new MemorySource()
+  await change(source, tx => {
+    for (let index = 0; index < 2500; index++)
+      tx.add(`pages/recipes/r${index}.json`, recipe(`r${index}`, `R${index}`))
+  })
+  const requests = Array<number>()
+  const remote: Source = {
+    getTree: () => source.getTree(),
+    getTreeIfDifferent: sha => source.getTreeIfDifferent(sha),
+    getBlobs(shas, options) {
+      requests.push(shas.length)
+      return source.getBlobs(shas, options)
+    },
+    applyChanges: batch => source.applyChanges(batch)
+  }
+  const {sqlite, runtime} = await openRuntime(cms.config)
+  try {
+    const progress = Array<SyncProgress>()
+    const onProgress = (update: SyncProgress) => progress.push(update)
+    await runtime.syncWith(remote, {onProgress})
+    expect(requests).toEqual([1000, 1000, 500])
+    expect(progress).toHaveLength(2501)
+    expect(progress[0]).toEqual({loaded: 0, total: 2500})
+    expect(progress.at(-1)).toEqual({loaded: 2500, total: 2500})
+    expect(progress.every((update, index) => update.loaded === index)).toBe(
+      true
+    )
+
+    progress.length = 0
+    await runtime.syncWith(remote, {onProgress})
+    expect(progress).toEqual([])
+
+    await change(source, tx => {
+      tx.add('pages/recipes/r0.json', recipe('r0', 'Changed'))
+    })
+    await runtime.syncWith(remote, {onProgress})
+    expect(progress).toEqual([
+      {loaded: 0, total: 1},
+      {loaded: 1, total: 1}
+    ])
+
+    progress.length = 0
+    await change(source, tx => {
+      tx.remove('pages/recipes/r1.json')
+    })
+    await runtime.syncWith(remote, {onProgress})
+    expect(progress).toEqual([])
   } finally {
     await runtime.close()
     sqlite.close()

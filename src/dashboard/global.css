@@ -1,15 +1,18 @@
 @import '../theme.css';
 @import 'allotment/dist/style.css';
 
-html,
-body,
-#root {
+/* The page the dashboard renders in, which sets data-alinea-theme on <html> */
+:where(html[data-alinea-theme]),
+:where(html[data-alinea-theme]) body,
+:where(html[data-alinea-theme]) #root {
   height: 100%;
   margin: 0;
   font-family: var(--alinea-font);
 }
 
-* {
+/* Resets apply to themed elements only, so the stylesheet leaves the rest of
+   a page alone, and without specificity so component styles win */
+:where([data-alinea-theme], [data-alinea-theme] *) {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
@@ -23,13 +26,13 @@ body[data-disable-transition='true'] {
   }
 }
 
-a {
+:where([data-alinea-theme] a) {
   color: inherit;
   font: inherit;
   text-decoration: none;
 }
 
-button {
+:where([data-alinea-theme] button) {
   background: none;
   border: none;
   color: inherit;

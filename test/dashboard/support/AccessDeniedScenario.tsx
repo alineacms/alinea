@@ -4,7 +4,7 @@ import {Config, Field} from '#/index.js'
 import {views} from '#/field/views.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {LocalDB} from '#/database/LocalDB.js'
-import {use, useState} from 'react'
+import {use} from 'react'
 
 const Page = Config.document('Page', {
   fields: {title: Field.text('Title')}
@@ -27,11 +27,15 @@ async function createAccessDeniedScenario(policy: Policy) {
   return {client: createTestConnection(db), db}
 }
 
+// Created once per page: a render that suspends before it mounts loses its
+// state, so a promise kept in state would be created again on every retry
+let denied: ReturnType<typeof createAccessDeniedScenario> | undefined
+let userDenied: ReturnType<typeof createAccessDeniedScenario> | undefined
+
 export function AccessDeniedScenario() {
-  const [scenario] = useState(() =>
-    createAccessDeniedScenario(Policy.ALLOW_NONE)
+  const {client, db} = use(
+    (denied ??= createAccessDeniedScenario(Policy.ALLOW_NONE))
   )
-  const {client, db} = use(scenario)
   return (
     <App
       client={client}
@@ -45,10 +49,9 @@ export function AccessDeniedScenario() {
 }
 
 export function UserAccessDeniedScenario() {
-  const [scenario] = useState(() =>
-    createAccessDeniedScenario(new Policy(Permission.Read))
+  const {client, db} = use(
+    (userDenied ??= createAccessDeniedScenario(new Policy(Permission.Read)))
   )
-  const {client, db} = use(scenario)
   return (
     <App
       client={client}

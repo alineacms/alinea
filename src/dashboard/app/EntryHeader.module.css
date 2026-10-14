@@ -1,3 +1,7 @@
+.EntryHeader {
+  min-height: var(--alinea-header-height, 48px);
+}
+
 @media (max-width: 768px) {
   .EntryHeader {
     gap: 4px;

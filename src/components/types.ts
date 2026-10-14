@@ -139,3 +139,8 @@ export type ContentStatus =
   | 'unpublished'
   | 'archived'
   | 'untranslated'
+
+/** Error messages keyed by the `name` of a form field */
+export interface ValidationErrors {
+  [name: string]: string | Array<string>
+}

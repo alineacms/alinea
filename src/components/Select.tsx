@@ -10,9 +10,7 @@ import {
 } from 'react'
 import {
   Button,
-  Header,
   ListBox,
-  ListBoxSection,
   Select as SelectPrimitive,
   SelectStateContext,
   SelectValue,
@@ -21,6 +19,7 @@ import {
 import {IcRoundClose, IcRoundKeyboardArrowDown} from '#/dashboard/icons.js'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
+import {ListBoxGroup} from './internal/ListBoxGroup.js'
 import {ListBoxOption} from './internal/ListBoxOption.js'
 import {PopoverSurface} from './internal/PopoverSurface.js'
 import css from './Select.module.css'
@@ -29,19 +28,23 @@ import type {
   DataProps,
   FieldSharedProps,
   IconType,
+  Key,
   OpenStateProps,
   StyleProps
 } from './types.js'
 
 const styles = styler(css)
 
-export interface SelectProps
+export interface SelectProps<V extends Key = Key>
   extends FieldSharedProps, OpenStateProps, StyleProps, AriaProps, DataProps {
-  value?: string | null
-  defaultValue?: string | null
+  /** The value of the selected SelectItem */
+  value?: V | null
+  defaultValue?: V | null
   /** Called with the selected value, or null when the value is cleared */
-  onValueChange?: (value: string | null) => void
+  onValueChange?: (value: V | null) => void
   placeholder?: string
+  /** Show a button that clears the value */
+  clearable?: boolean
   /** Name of the hidden form input carrying the value */
   name?: string
   autoFocus?: boolean
@@ -52,10 +55,10 @@ export interface SelectProps
 }
 
 /**
- * A labelled field to pick a single value from a list. The value can be
- * cleared unless the field is required.
+ * A labelled field to pick a single value from a list. Set `clearable` to
+ * let the value be cleared again.
  */
-export function Select({
+export function Select<V extends Key = Key>({
   label,
   description,
   error,
@@ -71,12 +74,13 @@ export function Select({
   defaultOpen,
   onOpenChange,
   placeholder,
+  clearable,
   size = 'default',
   className,
   style,
   children,
   ...props
-}: SelectProps) {
+}: SelectProps<V>) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const [isOpen, setOpen] = useState(defaultOpen ?? false)
   return (
@@ -87,9 +91,7 @@ export function Select({
       style={style}
       selectedKey={value}
       defaultSelectedKey={defaultValue}
-      onSelectionChange={key =>
-        onValueChange?.(key === null ? null : String(key))
-      }
+      onSelectionChange={key => onValueChange?.(key as V | null)}
       // A read only select can be focused but not opened
       isOpen={!readOnly && (open ?? isOpen)}
       onOpenChange={next => {
@@ -115,7 +117,7 @@ export function Select({
         <SelectTrigger
           triggerRef={triggerRef}
           size={size}
-          clearable={!required && !disabled && !readOnly}
+          clearable={Boolean(clearable) && !disabled && !readOnly}
           invalid={Boolean(error)}
           readOnly={readOnly}
         />
@@ -220,7 +222,7 @@ function preventSelectionKeys(event: KeyboardEvent) {
 }
 
 export interface SelectItemProps extends StyleProps {
-  value: string
+  value: Key
   disabled?: boolean
   icon?: IconType | ReactElement
   /** Text used for typeahead and the value, defaults to string children */
@@ -239,20 +241,9 @@ export interface SelectGroupProps extends AriaProps {
   children: ReactNode
 }
 
-export function SelectGroup({label, children, ...props}: SelectGroupProps) {
+export function SelectGroup(props: SelectGroupProps) {
   return (
-    <ListBoxSection
-      data-slot="select-group"
-      {...props}
-      className={styles.SelectGroup()}
-    >
-      {label && (
-        <Header data-slot="select-label" className={styles.SelectGroup.label()}>
-          {label}
-        </Header>
-      )}
-      {children}
-    </ListBoxSection>
+    <ListBoxGroup slot="select-group" labelSlot="select-label" {...props} />
   )
 }
 

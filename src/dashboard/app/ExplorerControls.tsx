@@ -69,36 +69,39 @@ export function ExplorerControlsMenu({
   const filtered = Object.keys(picked).length > 0
   return (
     <div className={styles.ExplorerControls()}>
-      {filters.map(filter => (
-        <div
-          key={filter.key}
-          role="group"
-          aria-label={filter.label}
-          className={styles.ExplorerControls.section()}
-        >
-          <Text
-            as="p"
-            size="sm"
-            color="muted"
-            className={styles.ExplorerControls.label()}
+      {filters
+        // Options loaded from the content can be none
+        .filter(filter => filter.options.length > 0)
+        .map(filter => (
+          <div
+            key={filter.key}
+            role="group"
+            aria-label={filter.label}
+            className={styles.ExplorerControls.section()}
           >
-            {filter.label}
-          </Text>
-          <div className={styles.ExplorerControls.filterOptions()}>
-            {filter.options.map(option => (
-              <Toggle
-                key={option.key}
-                size="sm"
-                variant="outline"
-                pressed={Boolean(picked[filter.key]?.includes(option.key))}
-                onPressedChange={() => onToggleFilter(filter, option.key)}
-              >
-                {option.label}
-              </Toggle>
-            ))}
+            <Text
+              as="p"
+              size="sm"
+              color="muted"
+              className={styles.ExplorerControls.label()}
+            >
+              {filter.label}
+            </Text>
+            <div className={styles.ExplorerControls.filterOptions()}>
+              {filter.options.map(option => (
+                <Toggle
+                  key={option.key}
+                  size="sm"
+                  variant="outline"
+                  pressed={Boolean(picked[filter.key]?.includes(option.key))}
+                  onPressedChange={() => onToggleFilter(filter, option.key)}
+                >
+                  {option.label}
+                </Toggle>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
       <div
         role="group"
         aria-label="Sort by"

@@ -1,3 +1,4 @@
+import type {EntryActionProps} from './DashboardEntry.js'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {Config} from './Config.js'
@@ -135,6 +136,12 @@ export namespace Type {
     return getType(type).sections
   }
 
+  /** Fields edited in the settings of a block, or a Settings tab of an entry */
+  export function settings(type: Type): FieldsDefinition | undefined {
+    const {settings} = getType(type)
+    return settings && keys(settings).length > 0 ? settings : undefined
+  }
+
   export function isContainer(type: Type) {
     return Boolean(getType(type).contains)
   }
@@ -254,7 +261,7 @@ export namespace Type {
 
   const TypeOptions = cito.object({
     defaultView: cito.string.optional,
-    view: cito.string.optional,
+    view: cito.union(cito.string, cito.instance(Function)).optional,
     summaryRow: cito.string.optional,
     summaryThumb: cito.string.optional
   })
@@ -272,11 +279,12 @@ export namespace Type {
   }
 
   export function referencedViews(type: Type): Array<string> {
-    const {view, summaryRow, summaryThumb, overview} = getType(type)
+    const {view, summaryRow, summaryThumb, overview, actions} = getType(type)
     return [
       view,
       summaryRow,
       summaryThumb,
+      ...(actions ?? []),
       ...Overview.referencedViews(overview),
       ...viewsOfDefinition(getType(type).fields)
     ].filter(v => typeof v === 'string')
@@ -316,12 +324,24 @@ export interface FieldsDefinition {
   [key: string]: Field
 }
 
-export interface TypeConfig<Definition> {
+export interface TypeConfig<Definition, Settings = {}> {
   fields: Definition
+  /**
+   * Fields shown in the settings sheet of a block, below its label and
+   * anchor. Entries of the type show them in a Settings tab. They are stored
+   * and queried like the other fields.
+   */
+  settings?: Settings
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
   /** How the dashboard lists the children of entries of this type */
   overview?: OverviewOptions
+  /**
+   * Components rendered in the header of the entry editor, next to the
+   * publish button, eg. a button that exports or sends the entry. They can
+   * read the fields of the entry with the hooks of `alinea/cms`.
+   */
+  actions?: Array<View<EntryActionProps>>
   /**
    * Order children entries in the sidebar content tree
    * @deprecated Use `overview.sort`
@@ -340,7 +360,11 @@ export interface TypeConfig<Definition> {
   /** An icon (React component) to represent this type in the dashboard */
   icon?: ComponentType
 
-  /** A React component used to view an entry of this type in the dashboard */
+  /**
+   * A React component, or a path to one, that replaces the form of entries of
+   * this type below the entry header. It edits the fields of the entry with
+   * the hooks of `alinea/cms`.
+   */
   view?: View<{type: Type}>
   /** The default dashboard view for entries of this type */
   defaultView?: EntryDefaultView
@@ -366,8 +390,8 @@ export interface TypeConfig<Definition> {
 }
 
 /** Types that only hold children can leave out their fields */
-export interface ContainerTypeConfig<Definition> extends Omit<
-  TypeConfig<Definition>,
+export interface ContainerTypeConfig<Definition, Settings = {}> extends Omit<
+  TypeConfig<Definition, Settings>,
   'fields' | 'contains'
 > {
   fields?: Definition
@@ -375,29 +399,38 @@ export interface ContainerTypeConfig<Definition> extends Omit<
   contains: Array<string | Type>
 }
 
-export interface TypeInternal extends TypeConfig<FieldsDefinition> {
+export interface TypeInternal extends TypeConfig<
+  FieldsDefinition,
+  FieldsDefinition
+> {
   label: string
   allFields: Record<string, Field>
   sections: Array<Section>
 }
 
 /** Create a new type */
-export function type<Fields extends FieldsDefinition = {}>(
+export function type<
+  Fields extends FieldsDefinition = {},
+  Settings extends FieldsDefinition = {}
+>(
   label: string,
-  config: TypeConfig<Fields> | ContainerTypeConfig<Fields>
-): Type<Fields> {
+  config: TypeConfig<Fields, Settings> | ContainerTypeConfig<Fields, Settings>
+): Type<Fields & Settings> {
   const instance = createType(label, config)
   Type.validate(instance)
   return instance
 }
 
-export function createType<Fields extends FieldsDefinition = {}>(
+export function createType<
+  Fields extends FieldsDefinition = {},
+  Settings extends FieldsDefinition = {}
+>(
   label: string,
   {
     fields: definition = {} as Fields,
     ...config
-  }: TypeConfig<Fields> | ContainerTypeConfig<Fields>
-): Type<Fields> {
+  }: TypeConfig<Fields, Settings> | ContainerTypeConfig<Fields, Settings>
+): Type<Fields & Settings> {
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
   const addCurrent = () => {
@@ -421,7 +454,23 @@ export function createType<Fields extends FieldsDefinition = {}>(
     }
   }
   addCurrent()
-  const allFields = fromEntries(fields) as Fields
+  // Settings are stored with the other fields, but left out of the sections
+  // that make up the form
+  const taken = new Set(fields.map(([key]) => key))
+  for (const [key, value] of entries(config.settings ?? {})) {
+    const own = Section.isSection(value)
+      ? entries(Section.fields(value))
+      : Field.isField(value)
+        ? [[key, value] as [string, Field]]
+        : []
+    for (const [name, field] of own) {
+      if (taken.has(name))
+        throw new Error(`Field "${name}" is defined twice in Type "${label}"`)
+      taken.add(name)
+      fields.push([name, field])
+    }
+  }
+  const allFields = fromEntries(fields) as Fields & Settings
   return {
     ...allFields,
     [internalType]: {

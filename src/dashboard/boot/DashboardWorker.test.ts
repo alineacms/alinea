@@ -3,6 +3,7 @@ import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {Entry} from '#/core/Entry.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -11,6 +12,7 @@ import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
+import {SyncEvent} from './SyncEvent.js'
 
 test('loads local state without starting a remote sync', async () => {
   const fixture = new FSSource('test/fixtures/demo')
@@ -45,6 +47,31 @@ test('loads local state without starting a remote sync', async () => {
       path: 'chocolate-chip'
     })
   ).toMatchObject({title: 'Chocolate chip'})
+})
+
+test('reports the progress of a remote sync', async () => {
+  const remoteDB = new LocalDB(cms.config, new FSSource('test/fixtures/demo'))
+  await remoteDB.sync()
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('sync-progress', cms.config, createTestConnection(remoteDB))
+  const events = Array<SyncEvent['progress']>()
+  worker.addEventListener(SyncEvent.type, event => {
+    if (event instanceof SyncEvent) events.push(event.progress)
+  })
+
+  await worker.sync()
+
+  const total = events[0]?.total ?? 0
+  expect(total).toBeGreaterThan(0)
+  expect(events[0]).toEqual({loaded: 0, total})
+  expect(events.at(-2)).toEqual({loaded: total, total})
+  expect(events.at(-1)).toBeUndefined()
+
+  events.length = 0
+  await worker.sync()
+
+  // Nothing changed upstream, so there is nothing to report
+  expect(events).toEqual([])
 })
 
 test('serializes concurrent sync requests and waits for each result', async () => {
@@ -593,6 +620,60 @@ async function createFailedMutationFixture() {
   }
 }
 
+test('settles a commit that landed when its response was lost', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, fixture)
+  const remoteDB = new LocalDB(cms.config, remoteSource)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let commits = 0
+  const client: LocalConnection = {
+    ...baseClient,
+    async mutate(mutations) {
+      commits += 1
+      await baseClient.mutate(mutations)
+      throw new Error('Connection lost')
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('landed-commit', cms.config, client)
+  await worker.sync()
+  const settled = new Promise<void>(resolve => {
+    worker.addEventListener(ActivityEvent.type, event => {
+      if (
+        event instanceof ActivityEvent &&
+        event.activities.some(
+          activity =>
+            activity.id === 'landed' &&
+            (activity.status === 'succeeded' || activity.status === 'failed')
+        )
+      )
+        resolve()
+    })
+  })
+
+  await worker.queue('landed', [
+    {
+      op: 'create',
+      id: 'landed-recipe',
+      type: 'DemoRecipe',
+      parentId: '2cGLQZvsCCxnguLrwCfPDL8uFkm',
+      locale: null,
+      status: 'published',
+      data: {title: 'Landed recipe', path: 'landed-recipe'}
+    }
+  ])
+  await settled
+  await worker.retryActivity()
+
+  expect(commits).toBe(1)
+  expect(
+    worker.activities().find(activity => activity.id === 'landed')
+  ).toMatchObject({status: 'succeeded'})
+  expect(await worker.sha()).toBe(await remoteDB.sha)
+})
+
 test('a sync queued on a superseded browser store syncs the replacement', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)
@@ -666,3 +747,210 @@ test('a new dashboard build syncs before replacing a store without content', asy
     })
   ).toMatchObject({title: 'Chocolate chip'})
 })
+
+test('shows stored content before catching up with the remote', async () => {
+  const {release, syncs, worker} = await createStoredFixture()
+
+  await worker.ready()
+
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'running', operations: [{op: 'sync'}]}
+  ])
+  const succeeded = syncActivity(worker, 'succeeded')
+  release()
+  await succeeded
+  expect(syncs()).toBe(1)
+})
+
+test('retries a failed catch-up', async () => {
+  const {release, setUnavailable, worker} = await createStoredFixture()
+  setUnavailable(true)
+  release()
+  const failed = syncActivity(worker, 'failed')
+
+  await worker.ready()
+  await failed
+
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'failed', error: 'Remote unavailable'}
+  ])
+  setUnavailable(false)
+  await worker.retryActivity()
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'succeeded', error: undefined}
+  ])
+})
+
+test('a later sync settles a failed catch-up', async () => {
+  const {release, setUnavailable, worker} = await createStoredFixture()
+  setUnavailable(true)
+  release()
+  const failed = syncActivity(worker, 'failed')
+  await worker.ready()
+  await failed
+
+  setUnavailable(false)
+  await worker.sync()
+  expect(worker.activities()).toMatchObject([
+    {type: 'sync', status: 'succeeded', error: undefined}
+  ])
+})
+
+test('waits for the first sync of an empty store', async () => {
+  const {release, worker} = await createStoredFixture(new MemorySource())
+  let settled = false
+
+  const ready = worker.ready().then(() => {
+    settled = true
+  })
+  await new Promise(resolve => setTimeout(resolve, 10))
+  expect(settled).toBe(false)
+
+  release()
+  await ready
+  expect(worker.activities()).toEqual([])
+})
+
+test('catches up once per loaded store', async () => {
+  const {release, worker} = await createStoredFixture()
+
+  await Promise.all([worker.ready(), worker.ready()])
+  await worker.ready()
+
+  expect(worker.activities()).toHaveLength(1)
+  const succeeded = syncActivity(worker, 'succeeded')
+  release()
+  await succeeded
+})
+
+// Known limitation: stored content shows before it caught up with the
+// remote, so a form can be built from an entry the remote changed meanwhile.
+// The save waits for the catch-up, but like every mutation it carries no base
+// revision, and the entry form sends all of its data: the remote edit to
+// another field is silently overwritten (fails on the title below). A todo
+// until saves can detect this; `bun test --todo` runs it.
+test.todo('keeps remote edits to an entry saved from stored content', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const stored = new MemorySource()
+  await syncWith(stored, fixture)
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, fixture)
+  const remoteDB = new LocalDB(cms.config, remoteSource)
+  await remoteDB.sync()
+  const recipe = await remoteDB.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  await remoteDB.update({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id,
+    set: {title: 'Remote title'}
+  })
+  const baseClient = createTestConnection(remoteDB)
+  let release = () => {}
+  const hold = new Promise<void>(resolve => {
+    release = resolve
+  })
+  const client: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      await hold
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(stored)
+  await worker.load('stale-edit', cms.config, client)
+  await worker.ready()
+  const db = await worker.db
+  const data = await db.get({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id,
+    select: Entry.data
+  })
+  expect(data.title).toBe('Chocolate chip')
+  const saved = mutationActivity(worker, 'stale-edit', 'succeeded')
+
+  // The form saves the stored entry with another field edited
+  const queued = worker.queue('stale-edit', [
+    {
+      op: 'create',
+      id: recipe._id,
+      type: 'DemoRecipe',
+      locale: null,
+      status: 'published',
+      overwrite: true,
+      data: {...data, intro: []}
+    }
+  ])
+  release()
+  await queued
+  await saved
+
+  const result = await remoteDB.get({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id
+  })
+  expect(result.intro).toEqual([])
+  expect(result.title).toBe('Remote title')
+})
+
+async function createStoredFixture(local?: MemorySource) {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const stored = local ?? new MemorySource()
+  if (!local) await syncWith(stored, fixture)
+  const baseClient = createTestConnection(remoteDB)
+  let unavailable = false
+  let syncs = 0
+  let release = () => {}
+  const hold = new Promise<void>(resolve => {
+    release = resolve
+  })
+  const client: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      syncs += 1
+      await hold
+      if (unavailable) throw new Error('Remote unavailable')
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(stored)
+  await worker.load('stored', cms.config, client)
+  return {
+    release,
+    setUnavailable(value: boolean) {
+      unavailable = value
+    },
+    syncs: () => syncs,
+    worker
+  }
+}
+
+function syncActivity(worker: DashboardWorker, status: string) {
+  return new Promise<void>(resolve => {
+    worker.addEventListener(ActivityEvent.type, event => {
+      if (
+        event instanceof ActivityEvent &&
+        event.activities.some(
+          activity => activity.type === 'sync' && activity.status === status
+        )
+      )
+        resolve()
+    })
+  })
+}
+
+function mutationActivity(worker: DashboardWorker, id: string, status: string) {
+  return new Promise<void>(resolve => {
+    const settled = () =>
+      worker
+        .activities()
+        .some(activity => activity.id === id && activity.status === status)
+    if (settled()) return resolve()
+    worker.addEventListener(ActivityEvent.type, () => {
+      if (settled()) resolve()
+    })
+  })
+}

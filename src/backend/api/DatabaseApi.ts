@@ -36,12 +36,12 @@ export interface DatabaseOptions {
 
 const UploadTable = table('alinea_upload', {
   entryId: column.varchar(undefined, {length: 27}).primaryKey(),
-  content: column.blob().notNull()
+  content: largeBlob().notNull()
 })
 
 const UserTable = table('alinea_user', {
   id: column.id(),
-  email: column.text().notNull().unique(),
+  email: indexedText().notNull().unique(),
   name: column.text()
 })
 
@@ -60,8 +60,12 @@ const BlobTable = table('alinea_blob', {
 
 const tables = [UploadTable, UserTable, UserRoleTable, BlobTable]
 
-/** Blobs per statement, which keeps statements well below their limits. */
+/** Parameters bound per statement: D1 allows 100, the fewest of all drivers. */
+const maxParams = 100
+/** Shas per select or update, which bind a few parameters besides them. */
 const blobsPerStatement = 50
+/** Rows per insert, each binding its sha, content and usedAt. */
+const blobsPerInsert = Math.floor(maxParams / 3)
 const day = 24 * 60 * 60
 /** Blobs no instance read or stored for this long are removed. */
 const blobRetention = 30 * day
@@ -167,7 +171,7 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
     const db = await this.#db
     const now = seconds()
     const unique = [...new Map(blobs)]
-    for (const batch of chunks(unique, blobsPerStatement)) {
+    for (const batch of chunks(unique, blobsPerInsert)) {
       const shas = batch.map(([sha]) => sha)
       const stored = new Set(
         await db
@@ -322,7 +326,23 @@ function largeBlob(): Column<Uint8Array> {
   })
 }
 
-/** Remove blobs no instance read or stored lately, at most once an hour. */
+/**
+ * Text MySQL can index: it rejects a unique key on a text column, which has
+ * no length. Other databases keep text, so existing tables stay as they are.
+ */
+function indexedText(): Column<string> {
+  return new Column({
+    type: new ColumnType(
+      'text',
+      [],
+      sql.universal({
+        mysql: sql`varchar(255)`,
+        default: sql`text`
+      })
+    )
+  })
+}
+
 /** Blobs still used are kept: renewed at most once a day per blob. */
 async function renewBlobs(
   db: Database,
@@ -365,6 +385,7 @@ async function insertMissingBlobs(
   }
 }
 
+/** Remove blobs no instance read or stored lately, at most once an hour. */
 async function removeUnusedBlobs(db: Database, now: number): Promise<void> {
   const last = blobCleanups.get(db) ?? 0
   if (now - last < 60 * 60) return

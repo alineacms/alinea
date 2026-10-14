@@ -22,15 +22,32 @@ interface ArrayOps<Fields> {
   includes?: Filter<Fields>
 }
 
+declare const related: unique symbol
+
+/**
+ * A field matched by a query of related entries, eg. `_referenced`. Its
+ * condition holds when the query finds an entry.
+ */
+export interface Related<Query> {
+  [related]: Query
+}
+
+/** A query of related entries used as a condition */
+export interface RelationCondition {
+  edge: string
+}
+
 type FieldOps<Fields> = {
   [K in keyof Fields]?: Condition<Fields[K]>
 }
 
-export type Condition<Value> = [Value] extends [Primitive]
-  ? Ops<Value> | Value
-  : [Value] extends [Array<any>]
-    ? ArrayOps<Value[0]>
-    : ObjectOps<Value>
+export type Condition<Value> = [Value] extends [Related<infer Query>]
+  ? Condition<boolean> | Query
+  : [Value] extends [Primitive]
+    ? Ops<Value> | Value
+    : [Value] extends [Array<any>]
+      ? ArrayOps<Value[0]>
+      : ObjectOps<Value>
 
 /** A condition on a field whose type is not known */
 export type AnyCondition =
@@ -38,6 +55,7 @@ export type AnyCondition =
   | Ops<unknown>
   | ArrayOps<unknown>
   | ObjectOps<unknown>
+  | RelationCondition
 
 /**
  * A filter on known fields that also accepts conditions on any other field,
@@ -71,6 +89,8 @@ export type ConditionNode =
   | {op: 'startsWith'; value: string}
   | {op: 'has'; filter: FilterNode}
   | {op: 'includes'; item: ConditionNode}
+  /** Holds when the query of related entries finds an entry */
+  | {op: 'relation'; query: RelationCondition}
 
 export function parseFilter(filter: unknown): FilterNode {
   if (!isRecord(filter)) throw new Error('A query filter must be an object')
@@ -92,6 +112,8 @@ export function parseFilter(filter: unknown): FilterNode {
 export function parseCondition(condition: unknown): ConditionNode {
   if (condition === undefined) return {op: 'and', nodes: []}
   if (!isRecord(condition)) return {op: 'is', value: condition}
+  if (typeof condition.edge === 'string')
+    return {op: 'relation', query: {...condition, edge: condition.edge}}
   const nodes = Array<ConditionNode>()
   for (const [op, value] of Object.entries(condition)) {
     if (value === undefined) continue
@@ -208,8 +230,15 @@ function conditionCheck(node: ConditionNode): FilterCheck<unknown> {
       const check = conditionCheck(node.item)
       return value => Array.isArray(value) && value.some(check)
     }
+    case 'relation':
+      throw new Error(relationMessage)
   }
 }
+
+const relationMessage =
+  'Relation filters such as `_referenced: Query.referencedBy(...)` only work ' +
+  'in queries (graph.find, EntryTable, overview filters), they cannot be ' +
+  'checked against loaded entries'
 
 function defaultField(input: unknown, name: string): unknown {
   return isRecord(input) ? input[name] : undefined

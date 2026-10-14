@@ -79,6 +79,8 @@ export function TooltipContent({
   return (
     <TooltipPrimitive
       data-slot="tooltip-content"
+      // Tooltips render outside the page, they need the theme of their own
+      data-alinea-theme=""
       {...props}
       placement={placement(side, align)}
       offset={sideOffset}

@@ -8,6 +8,9 @@ import {
 } from 'react'
 import '../src/dashboard/global.css'
 
+// Like the dashboard, stories render inside a themed document
+document.documentElement.setAttribute('data-alinea-theme', '')
+
 interface StoryErrorBoundaryState {
   error?: Error
 }

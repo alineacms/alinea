@@ -125,19 +125,23 @@ const fieldIndexPrefix = 'alinea_entry_index_by_field_'
 export const orderedMetadata = new Set(['createdAt', 'updatedAt'])
 
 /**
- * Index the stored value of every ordered field in the config, per type, and
- * of the ordered metadata. Field names are identifiers, so the dotted metadata
- * names cannot collide with them.
+ * Index the stored value of every ordered field in the config, and of the
+ * ordered metadata. A field is indexed per type that has it, over the rows of
+ * that type only: queries of one type find the index, and the rows of other
+ * types don't take up space in it. The metadata is indexed over every row.
+ * Index names are `type:field` and `metadata.name`, which can't collide.
  */
 export async function syncFieldIndexes(
   db: Database,
   config: Config
 ): Promise<void> {
-  const wanted = new Set<string>()
-  for (const name of orderedMetadata) wanted.add(`metadata.${name}`)
-  for (const type of Object.values(config.schema))
+  const wanted = new Map<string, {type?: string; path: Array<string>}>()
+  for (const name of orderedMetadata)
+    wanted.set(`metadata.${name}`, {path: ['metadata', name]})
+  for (const [typeName, type] of Object.entries(config.schema))
     for (const [name, field] of Object.entries(Type.fields(type)))
-      if (isOrderedField(field)) wanted.add(name)
+      if (isOrderedField(field))
+        wanted.set(`${typeName}:${name}`, {type: typeName, path: [name]})
   const rows = await db.all<{name: string}>(
     sql`select name from sqlite_master where type = 'index'`
   )
@@ -148,15 +152,43 @@ export async function syncFieldIndexes(
   for (const name of existing)
     if (!wanted.has(name))
       await db.run(sql`drop index ${sql.identifier(fieldIndexPrefix + name)}`)
-  for (const name of wanted) {
+  for (const [name, {type, path}] of wanted) {
     if (existing.has(name)) continue
     // Index expressions cannot name their table, but match the queries'
     // qualified column all the same.
-    const value = jsonField(sql.identifier('data'), name.split('.'))
+    const value = jsonField(sql.identifier('data'), path)
+    const where = type
+      ? sql`where ${sql.identifier('type')} = ${sql.inline(type)}`
+      : sql``
+    // Partial indexes lead with the type too: the planner then searches them
+    // for queries of the type, rather than its index by type.
     await db.run(sql`create index ${sql.identifier(fieldIndexPrefix + name)}
       on ${EntryIndexTable}(${sql.identifier('type')}, ${value},
-        ${sql.identifier('index')}, ${sql.identifier('filePath')})`)
+        ${sql.identifier('index')}, ${sql.identifier('filePath')}) ${where}`)
   }
+  await createRecentIndexes(db)
+}
+
+/**
+ * Index the entries of each workspace by their last update, and by id, which
+ * holds the creation time of entries without audit metadata. Queries for the
+ * few most recently changed entries of a workspace walk them and stop,
+ * instead of reading every entry: on a stored base that is read page by page
+ * that took seconds. The columns follow the order of those queries, with the
+ * tie breakers queries add.
+ */
+async function createRecentIndexes(db: Database): Promise<void> {
+  const workspace = sql.identifier('workspace')
+  const index = sql.identifier('index')
+  const filePath = sql.identifier('filePath')
+  const updatedAt = jsonField(sql.identifier('data'), ['metadata', 'updatedAt'])
+  await db.run(sql`create index if not exists
+    ${sql.identifier('alinea_entry_index_recent_updated')}
+    on ${EntryIndexTable}(${workspace}, ${updatedAt}, ${index}, ${filePath})`)
+  await db.run(sql`create index if not exists
+    ${sql.identifier('alinea_entry_index_recent_id')}
+    on ${EntryIndexTable}(${workspace}, ${sql.identifier('id')} desc,
+      ${index}, ${filePath})`)
 }
 
 /** An Entry plus the physical-version and local-index fields. */

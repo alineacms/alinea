@@ -22,6 +22,7 @@ import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {activityAtom} from '../atoms/activity.js'
 import {configAtom} from '../atoms/core.js'
+import {EntryActions} from './EntryActions.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '../atoms/entry.js'
 import {loadMoveTargetsAtom, type MoveTargets} from '../atoms/move.js'
 import {routeAtom} from '../atoms/nav.js'
@@ -572,6 +573,12 @@ export function EntryHeader({
         </DropdownMenu>
       )}
       <PageActions className={styles.EntryHeader.actions()}>
+        <EntryActions
+          type={type}
+          node={node}
+          entry={selectedEntry}
+          locale={localeData.requestedLocale}
+        />
         {primaryAction}
         {onSidebarOpenChange && !isSidebarOpen && (
           <EntrySidebarToggle

@@ -39,12 +39,15 @@ export async function* compileConfig(ctx: GenerateContext) {
   const location = path
     .relative(process.cwd(), configLocation)
     .replace(/\\/g, '/')
-  const builds = buildEmitter({
-    ...config,
-    outdir: outDir,
-    entryPoints: {config: configLocation},
-    sourcemap: true
-  })
+  const builds = buildEmitter(
+    {
+      ...config,
+      outdir: outDir,
+      entryPoints: {config: configLocation},
+      sourcemap: true
+    },
+    {watch: cmd === 'dev'}
+  )
   const halt = (error: Error) => {
     reportError(error)
     if (cmd === 'dev') return
@@ -54,6 +57,8 @@ export async function* compileConfig(ctx: GenerateContext) {
     if (type !== 'done') continue
     if (result.errors.length) {
       reportFatal(`Could not compile Alinea config file @ ${location}`)
+      // Without a watcher there is no next build to wait for
+      if (cmd === 'build') process.exit(1)
       continue
     }
     try {

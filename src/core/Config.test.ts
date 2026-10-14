@@ -53,6 +53,34 @@ test('requires an explicitly configured handler URL', () => {
   test.is(Config.handlerUrl({...config, handlerUrl: '/custom'}), '/custom')
 })
 
+test('resolves the handler for server renders against baseUrl', () => {
+  const config = createConfig({
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {source: 'content', roots: {}})
+    },
+    handlerUrl: '/api/cms'
+  })
+  test.throws(
+    () => Config.serverHandlerUrl(config, 'production'),
+    'set baseUrl.production'
+  )
+  test.is(
+    Config.serverHandlerUrl(
+      {...config, baseUrl: {production: 'example.com'}},
+      'production'
+    ).href,
+    'https://example.com/api/cms'
+  )
+  test.is(
+    Config.serverHandlerUrl(
+      {...config, handlerUrl: 'https://cms.example.com/api'},
+      'production'
+    ).href,
+    'https://cms.example.com/api'
+  )
+})
+
 test('derives legacy dashboard settings from adminPath', () => {
   const config = createConfig({
     adminPath: 'cms',

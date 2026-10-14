@@ -19,7 +19,7 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
-import {entrySidebarOpenAtom} from '#/dashboard/atoms/dashboard.js'
+import {entrySidebarOpen} from '#/dashboard/atoms/dashboard.js'
 import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {
   entryAtoms,
@@ -53,6 +53,7 @@ import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
 import {EntryFields} from './../EntryFields.js'
 import {NodeEditor} from './../NodeEditor.js'
+import {withSettingsTab} from '../SettingsTab.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {entryDirtyActions} from './../EntryHeaderActions.js'
 import {
@@ -101,12 +102,10 @@ export const entryPage = page(async (page, get) => {
     }
     const selectedNode = await get(localeData.selectedNode)
     const richTextImages = await get(localeData.richTextImages)
-    const parentNeedsTranslation = type.customView
-      ? false
-      : await get(localeData.parentNeedsTranslation)
+    const parentNeedsTranslation = await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
     const copyTranslationSource = get(localeData.copyTranslationSource)
-    const isSidebarOpen = get(entrySidebarOpenAtom)
+    const isSidebarOpen = get(entrySidebarOpen(Boolean(get(entry.preview))))
     const sidebar = await entrySidebar(get, entry, localeData, isSidebarOpen)
     return (
       <EntryEditorContent
@@ -330,7 +329,9 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
-  const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
+  const setSidebarOpen = useSetAtom(
+    entrySidebarOpen(Boolean(useAtomValueRaw(entry.preview)))
+  )
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
@@ -373,6 +374,17 @@ function EntryEditorContent({
     if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0
   }, [entry.id])
 
+  const translationBanner = isUntranslated && (
+    <EntryTranslationBanner
+      copyFromSource={copyTranslationSource}
+      parentNeedsTranslation={parentNeedsTranslation}
+      sourceLocale={sourceLocale}
+      sourceLocales={sourceLocales}
+      onCopyFromSourceChange={setCopyTranslationSource}
+      onSourceLocaleChange={setSourceLocale}
+    />
+  )
+
   let editorBody = (
     <>
       <PageContent
@@ -381,20 +393,13 @@ function EntryEditorContent({
         className={styles.EntryEditor.body()}
       >
         <div className={styles.EntryEditor.fields()}>
-          {isUntranslated && (
+          {translationBanner && (
             <div className={styles.EntryEditor.banner()}>
-              <EntryTranslationBanner
-                copyFromSource={copyTranslationSource}
-                parentNeedsTranslation={parentNeedsTranslation}
-                sourceLocale={sourceLocale}
-                sourceLocales={sourceLocales}
-                onCopyFromSourceChange={setCopyTranslationSource}
-                onSourceLocaleChange={setSourceLocale}
-              />
+              {translationBanner}
             </div>
           )}
 
-          <NodeEditor node={node} type={type.type}>
+          <NodeEditor node={node} type={withSettingsTab(type.type)}>
             <EntryFields />
           </NodeEditor>
         </div>
@@ -417,21 +422,27 @@ function EntryEditorContent({
     )
   }
 
+  // A type view takes the place of the form and edits the same node, so the
+  // header, sidebar and route guard save and guard its changes
   if (View) {
-    return (
-      <EntryScope
-        entry={entry}
-        localeData={localeData}
-        richTextImages={richTextImages}
-        selectedEntry={selectedEntry}
-      >
-        <View type={type.type} />
-      </EntryScope>
+    editorBody = (
+      <>
+        {translationBanner && (
+          <div className={styles.EntryEditor.viewBanner()}>
+            {translationBanner}
+          </div>
+        )}
+        <PageContent ref={editorBodyRef} className={styles.EntryEditor.view()}>
+          <NodeEditor node={node} type={withSettingsTab(type.type)}>
+            <View type={type.type} />
+          </NodeEditor>
+        </PageContent>
+      </>
     )
   }
 
   const mainEditor = (
-    <PageLayout>
+    <PageLayout className={styles.EntryEditor()}>
       <EntryHeader
         controls={
           hasChildren || defaultView === 'overview' ? (

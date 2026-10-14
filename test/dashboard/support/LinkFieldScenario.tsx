@@ -5,7 +5,7 @@ import {App} from '#/dashboard/App.js'
 import {views} from '#/field/views.js'
 import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
-import {use, useState} from 'react'
+import {use} from 'react'
 import {
   dashboardLinkScenarioIds as linkScenarioIds,
   dashboardScenarioIds
@@ -280,9 +280,12 @@ function createPage(
   })
 }
 
+// Created once per page: a render that suspends before it mounts loses its
+// state, so a promise kept in state would be created again on every retry
+let scenario: ReturnType<typeof createLinkFieldScenario> | undefined
+
 export function LinkFieldScenario() {
-  const [scenario] = useState(createLinkFieldScenario)
-  const {client, db} = use(scenario)
+  const {client, db} = use((scenario ??= createLinkFieldScenario()))
   return (
     <App
       graph={db}
