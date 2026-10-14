@@ -151,7 +151,7 @@ async function settled(ctx: Context, browser: Browser, tab: Tab) {
   return lastActivity(tab)
 }
 
-/** Wait until an isolate refreshed the content sha the renders share. */
+/** Wait until a pages instance refreshed the content sha the renders share. */
 async function shaRefreshed(ctx: Context) {
   return ctx.waitFor(
     () =>
@@ -170,7 +170,7 @@ export const scenarios: Array<Scenario> = [
     group: 'Site',
     title: 'First visit after a deploy',
     summary:
-      'An isolate starts cold on the generated database, asks the shared data cache for the content sha, misses, asks the handler, which syncs with git.',
+      'A pages instance starts cold on the generated database, asks the shared data cache for the content sha, misses, and asks the handler, which syncs with git.',
     async run(ctx) {
       await lab.reset()
       ctx.step('A visitor requests the site')
@@ -179,10 +179,10 @@ export const scenarios: Array<Scenario> = [
         'page renders from the cms copy of the generated database',
         page.pages.length === 3
       )
-      const state = bus.states['isolate-1']
+      const state = bus.states['pages-1']
       ctx.check(
-        'the isolate opened two separate copies: handler and cms',
-        Boolean(state?.shas?.handler && state?.shas?.cms),
+        'the pages instance answered from its own copy of the generated database',
+        Boolean(state?.shas?.pages),
         JSON.stringify(state?.shas)
       )
       ctx.check(
@@ -200,7 +200,7 @@ export const scenarios: Array<Scenario> = [
       await lab.visit({slot: 0})
       ctx.check(
         'no request reaches the handler for the sha',
-        ctx.requests('isolate-1', 'GET sha').length === 0
+        ctx.requests('pages-1', 'GET sha').length === 0
       )
     }
   },
@@ -361,14 +361,14 @@ export const scenarios: Array<Scenario> = [
       'A commit marks the cached content sha stale. The next render still reads the stale sha and refreshes it in the background; the render after that syncs and shows the edit.',
     async run(ctx) {
       await lab.reset()
-      ctx.step('Both isolates serve a visitor once')
+      ctx.step('Both pages instances serve a visitor once')
       await lab.visit({slot: 0})
       await lab.visit({slot: 1})
       const tab = await openTab(ctx, a)
       ctx.step('Ada saves')
       await a.save(tab, pageIds.home, 'Home, saved')
       await settled(ctx, a, tab)
-      ctx.step('A visitor hits λ2')
+      ctx.step('A visitor hits pages λ2')
       const first = await lab.visit({slot: 1})
       const firstTitle = renderedTitle('visitor', 'home')
       if (firstTitle === 'Home')
@@ -379,17 +379,17 @@ export const scenarios: Array<Scenario> = [
       else ctx.info('the first render after the commit was fresh')
       void first
       await shaRefreshed(ctx)
-      ctx.check('in the background λ2 refreshed the cached sha', true)
-      ctx.step('Another visitor hits λ2')
+      ctx.check('in the background pages λ2 refreshed the cached sha', true)
+      ctx.step('Another visitor hits pages λ2')
       await lab.visit({slot: 1})
       ctx.check(
         'the next render shows the edit',
         renderedTitle('visitor', 'home') === 'Home, saved'
       )
-      ctx.step('And λ1')
+      ctx.step('And pages λ1')
       await lab.visit({slot: 0})
       ctx.check(
-        'λ1 serves the edit too',
+        'pages λ1 serves the edit too',
         renderedTitle('visitor', 'home') === 'Home, saved'
       )
     }
@@ -554,7 +554,7 @@ export const scenarios: Array<Scenario> = [
       const tab = await openTab(ctx, a)
       const before = github.commits.length
       deployments.routing = 0
-      network.dropNextResponse('isolate-1', 'mutate')
+      network.dropNextResponse('handler-1', 'mutate')
       ctx.step('Ada saves; the response of the handler is lost')
       await a.save(tab, pageIds.home, 'Home, answer lost').catch(() => {})
       const activity = await settled(ctx, a, tab)
@@ -681,7 +681,7 @@ export const scenarios: Array<Scenario> = [
         ctx.events(e => e.kind === 'overlay' || e.kind === 'preview').length > 0
       )
       ctx.check('nothing was committed', head() === shaBefore)
-      ctx.step('A visitor renders on the same isolate')
+      ctx.step('A visitor renders on the same pages instance')
       await lab.visit({slot: page.slot})
       ctx.check(
         'visitors see the published title',
@@ -694,7 +694,7 @@ export const scenarios: Array<Scenario> = [
     group: 'Deploy',
     title: 'Deploy a config change',
     summary:
-      'A new config changes the fingerprint: isolates restart on the new generated database, and the next dashboard tab gets a new shared worker that derives its entries again from the stored base instead of downloading everything.',
+      'A new config changes the fingerprint: handler and pages restart on the new generated database, and the next dashboard tab gets a new shared worker that derives its entries again from the stored base instead of downloading everything.',
     async run(ctx) {
       await lab.reset()
       await openTab(ctx, a)
@@ -737,7 +737,7 @@ export const scenarios: Array<Scenario> = [
     group: 'Deploy',
     title: 'Deploy without a config change',
     summary:
-      'The dashboard build is unchanged, so open tabs keep their shared worker and its store: only the isolates restart.',
+      'The dashboard build is unchanged, so open tabs keep their shared worker and its store: only the handler and the pages restart.',
     async run(ctx) {
       await lab.reset()
       await openTab(ctx, a)
@@ -754,7 +754,7 @@ export const scenarios: Array<Scenario> = [
       ctx.check('the tab is at the head', tab.sha === head())
       await lab.visit({slot: 0})
       ctx.check(
-        'the cold isolate serves the deployed content',
+        'the cold pages instance serves the deployed content',
         renderedTitle('visitor', 'blog') === 'Blog, deployed'
       )
     }
@@ -762,9 +762,9 @@ export const scenarios: Array<Scenario> = [
   {
     id: 'restart',
     group: 'Site',
-    title: 'An isolate restarts',
+    title: 'A pages instance restarts',
     summary:
-      'A restarted isolate opens the generated database of its build again, which may be far behind. With a fresh shared sha its first render syncs before answering.',
+      'A restarted pages instance opens the generated database of its build again, which may be far behind. With a fresh shared sha its first render syncs before answering.',
     async run(ctx) {
       await lab.reset()
       await lab.visit({slot: 0})
@@ -774,11 +774,13 @@ export const scenarios: Array<Scenario> = [
       await shaRefreshed(ctx)
       await lab.visit({slot: 1})
       ctx.check(
-        'λ2 serves the edit',
+        'pages λ2 serves the edit',
         renderedTitle('visitor', 'home') === 'Home, after the build'
       )
-      ctx.step("λ1 stops and starts again: its databases are the build's again")
-      deployments.stop(0)
+      ctx.step(
+        "Pages λ1 stops and starts again: its database is the build's again"
+      )
+      deployments.stop('pages', 0)
       const page = await lab.visit({slot: 0})
       ctx.check(
         'the first render after the restart is at the head',
@@ -825,11 +827,11 @@ export const scenarios: Array<Scenario> = [
     group: 'Backends',
     title: 'Every instance migrates the backend database',
     summary:
-      'Each isolate prepares its DatabaseApi once: rado compares every table with the schema and migrates what differs. On SQLite databases (libSQL, Turso) compare what the second instance does.',
+      'Each handler instance prepares its DatabaseApi once: rado compares every table with the schema and migrates what differs. On SQLite databases (libSQL, Turso) compare what the second instance does.',
     async run(ctx) {
       await lab.reset({driver: 'libsql'})
       ctx.step(
-        'Ada opens the dashboard: both isolates serve its first requests'
+        'Ada opens the dashboard: both handler instances serve its first requests'
       )
       deployments.routing = 'alternate'
       await openTab(ctx, a)

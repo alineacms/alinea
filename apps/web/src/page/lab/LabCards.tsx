@@ -1,6 +1,7 @@
 import styler from '@alinea/styler'
 import type {
   Fault,
+  InstanceView,
   LabActions,
   LabView,
   RenderView,
@@ -107,7 +108,7 @@ function Rendered({render, view}: {render?: RenderView; view: LabView}) {
   return (
     <div className={styles.LabCards.stack()}>
       <Row>
-        <Muted>λ{render.slot + 1}</Muted>
+        <Muted>pages λ{render.slot + 1}</Muted>
         <LabSha sha={render.sha} head={view.head} title="Render" />
       </Row>
       {render.error && (
@@ -199,66 +200,85 @@ function ago(view: LabView, at?: number) {
   return `${Math.round(seconds / 60)}m ago`
 }
 
-export function LabIsolateCard({
+export function LabInstanceCard({
   view,
   actions,
-  slot
-}: LabCardProps & {slot: number}) {
-  const isolate = view.isolates[slot]
-  const pinned = view.routing === slot
+  instance
+}: LabCardProps & {instance: InstanceView}) {
+  const handler = instance.role === 'handler'
+  const pinned = handler && view.routing === instance.slot
   return (
     <div className={styles.LabCards.stack()}>
       <Row>
         <Status
           tone={
-            isolate.warm ? 'positive' : isolate.running ? 'active' : undefined
+            instance.warm ? 'positive' : instance.running ? 'active' : undefined
           }
         >
-          {isolate.warm ? 'warm' : isolate.running ? 'starting' : 'not running'}
+          {instance.warm
+            ? 'warm'
+            : instance.running
+              ? 'starting'
+              : 'not running'}
         </Status>
         <span className={styles.LabCards.spacer()} />
-        <FaultSelect node={isolate.node} view={view} actions={actions} />
+        {handler && (
+          <FaultSelect node={instance.node} view={view} actions={actions} />
+        )}
       </Row>
-      {isolate.stores.map(store => (
-        <div key={store.name} className={styles.LabCards.store()}>
-          <span className={styles.LabCards.store.label()}>{store.name}</span>
-          <LabSha
-            sha={store.sha}
-            head={view.head}
-            title={`${store.name} database`}
-          />
-          <span className={styles.LabCards.ellipsis()}>{store.home}</span>
-        </div>
-      ))}
+      <div className={styles.LabCards.store()}>
+        <LabSha
+          sha={instance.sha}
+          head={view.head}
+          title="Its copy of the generated database"
+        />
+        <span className={styles.LabCards.ellipsis()}>{instance.home}</span>
+      </div>
       <Muted>
-        changed {ago(view, isolate.changedAt)} · {isolate.queries} queries
+        changed {ago(view, instance.changedAt)}
+        {handler ? '' : ` · ${instance.queries} queries`}
       </Muted>
       <Row>
+        {handler && (
+          <LabButton
+            size="small"
+            variant={pinned ? 'primary' : 'secondary'}
+            onClick={() =>
+              actions.setRouting(
+                pinned ? 'alternate' : (instance.slot as 0 | 1)
+              )
+            }
+            title="Route every request to the handler here"
+          >
+            {pinned ? 'Pinned' : 'Pin'}
+          </LabButton>
+        )}
         <LabButton
           size="small"
-          variant={pinned ? 'primary' : 'secondary'}
-          onClick={() =>
-            actions.setRouting(pinned ? 'alternate' : (slot as 0 | 1))
-          }
-          title="Route every request of the site here"
-        >
-          {pinned ? 'Pinned' : 'Pin'}
-        </LabButton>
-        <LabButton
-          size="small"
-          disabled={!isolate.running}
-          onClick={() => actions.stop(slot)}
+          disabled={!instance.running}
+          onClick={() => actions.stop(instance.role, instance.slot)}
           title="Stop this instance, as a host does after it idled"
         >
           Stop
         </LabButton>
-        <LabButton
-          size="small"
-          onClick={() => actions.loseNextSave(slot)}
-          title="The next save this isolate handles runs, but its answer never arrives"
-        >
-          Lose save answer
-        </LabButton>
+        {handler ? (
+          <LabButton
+            size="small"
+            onClick={() => actions.loseNextSave(instance.slot)}
+            title="The next save this handler runs commits, but its answer never arrives"
+          >
+            Lose save answer
+          </LabButton>
+        ) : (
+          <LabButton
+            size="small"
+            disabled={view.busy}
+            onClick={() => actions.visit(instance.slot)}
+            title="A visitor requests a page from this instance"
+          >
+            Visit
+          </LabButton>
+        )}
       </Row>
     </div>
   )
@@ -278,7 +298,7 @@ export function LabBuildCard({view, actions}: LabCardProps) {
         <select
           className={styles.LabCards.fault()}
           value={String(view.routing)}
-          title="How the edge routes requests"
+          title="How the edge routes requests to the handler"
           onChange={event => {
             const value = event.target.value
             actions.setRouting(
@@ -286,9 +306,9 @@ export function LabBuildCard({view, actions}: LabCardProps) {
             )
           }}
         >
-          <option value="alternate">edge alternates</option>
-          <option value="0">edge: λ1 only</option>
-          <option value="1">edge: λ2 only</option>
+          <option value="alternate">alternate</option>
+          <option value="0">λ1 only</option>
+          <option value="1">λ2 only</option>
         </select>
       </Row>
       <ul className={styles.LabCards.list('divided')}>

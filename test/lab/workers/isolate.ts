@@ -65,7 +65,7 @@ function users(username: string, password: string): User | false {
  * The generated database of the deployment, read into memory: the wasm
  * fallback of `runtimeDatabase` where the native overlay VFS is missing.
  */
-function openGenerated(name: 'handler' | 'cms') {
+function openGenerated(name: 'handler' | 'pages') {
   return async (): Promise<LocalStore> => {
     const bytes = await callMain<Uint8Array>('deployment.database', {
       deployment: data.deployment
@@ -98,7 +98,7 @@ function openGenerated(name: 'handler' | 'cms') {
 const backendDb =
   data.driver === 'd1' ? connectD1(labD1() as any) : connectLibsql(labLibsql())
 
-const cms = new NextCMS(config, openGenerated('cms'))
+const cms = new NextCMS(config, openGenerated('pages'))
 const handler = createHandlerWithDatabase(
   {
     cms,

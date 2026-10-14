@@ -1,6 +1,6 @@
 /**
  * The lab network: realms post their `fetch` calls here, and the network
- * routes them by host to a service of the page or to an isolate, with a
+ * routes them by host to a service of the page or to an instance, with a
  * latency per hop and the faults set on a node. Every hop is drawn as a
  * packet and logged.
  */
@@ -271,7 +271,11 @@ class Network {
         const {event} = message
         bus.log({
           node,
-          part: event.node,
+          // A realm named after its part, eg. a user's worker, logs it once
+          part:
+            node.endsWith(`/${event.node}`) || node.startsWith(`${event.node}-`)
+              ? undefined
+              : event.node,
           kind: event.kind,
           text: event.text,
           detail: event.detail,

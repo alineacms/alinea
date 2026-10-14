@@ -15,7 +15,7 @@ import {
   LabCloudCard,
   LabDeveloperCard,
   LabGitCard,
-  LabIsolateCard,
+  LabInstanceCard,
   LabPreviewCard,
   LabStorageCard,
   LabTabCard,
@@ -80,12 +80,15 @@ function boardNodes(engine: LabEngine, view: LabView): Array<BoardNode> {
       content: <LabPreviewCard {...props} />
     }
   )
-  for (const isolate of view.isolates)
+  for (const instance of [...view.handlers, ...view.pages])
     nodes.push({
-      id: isolate.node,
-      title: `Isolate λ${isolate.slot + 1}`,
-      kind: 'isolate',
-      content: <LabIsolateCard {...props} slot={isolate.slot} />
+      id: instance.node,
+      title:
+        instance.role === 'handler'
+          ? `Handler λ${instance.slot + 1} · /api/cms`
+          : `Pages λ${instance.slot + 1} · RSC`,
+      kind: instance.role,
+      content: <LabInstanceCard {...props} instance={instance} />
     })
   nodes.push(
     {

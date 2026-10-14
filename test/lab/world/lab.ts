@@ -84,9 +84,9 @@ class Lab {
     } = {}
   ): Promise<Rendered> {
     const node = options.node ?? 'visitor'
-    const slot = options.slot ?? deployments.pick()
-    const realm = deployments.isolate(slot)
-    const to = deployments.isolateNode(slot)
+    const slot = options.slot ?? deployments.pick('pages')
+    const realm = deployments.instance('pages', slot)
+    const to = deployments.instanceNode('pages', slot)
     const label = options.draft ? 'GET / (draft)' : 'GET /'
     bus.send({
       from: node,
@@ -137,8 +137,8 @@ class Lab {
       node,
       kind: 'render',
       text: rendered.error
-        ? `render on λ${slot + 1} failed: ${rendered.error}`
-        : `rendered on λ${slot + 1} at ${rendered.sha?.slice(0, 7)}: ${rendered.pages.map(p => p.title).join(' · ')}`
+        ? `render on pages λ${slot + 1} failed: ${rendered.error}`
+        : `rendered on pages λ${slot + 1} at ${rendered.sha?.slice(0, 7)}: ${rendered.pages.map(p => p.title).join(' · ')}`
     })
     return rendered
   }

@@ -34,18 +34,30 @@ export interface Deployment {
   database: Uint8Array
   /** The content sha the generated database is at. */
   contentSha: string
-  /** Isolate slots, a realm id once the slot started. */
-  isolates: Array<string | undefined>
+  /** Instances of each role, a realm id once the slot started. */
+  instances: Record<Role, Array<string | undefined>>
   builtAt: number
 }
 
 export type Routing = 'alternate' | 0 | 1
 
+/**
+ * What an instance serves: the route handler (`/api/cms`), which the
+ * dashboard and the pages sync with, or the server rendered pages of the
+ * site. A host runs them as separate functions.
+ */
+export type Role = 'handler' | 'pages'
+
+export const roles: Array<Role> = ['handler', 'pages']
+
+const roleTitle: Record<Role, string> = {handler: 'handler', pages: 'pages'}
+
 class Deployments {
   node = 'build'
   list: Array<Deployment> = []
+  /** How the edge routes requests to the handler. */
   routing: Routing = 'alternate'
-  #turn = 0
+  #turn: Record<Role, number> = {handler: 0, pages: 0}
   slots = 2
 
   get active(): Deployment | undefined {
@@ -89,7 +101,10 @@ class Deployments {
       driver: backendDb.driver,
       database: bytes,
       contentSha,
-      isolates: Array(this.slots).fill(undefined),
+      instances: {
+        handler: Array(this.slots).fill(undefined),
+        pages: Array(this.slots).fill(undefined)
+      },
       builtAt: bus.now()
     }
     const previous = this.active
@@ -105,32 +120,36 @@ class Deployments {
   }
 
   retire(deployment: Deployment) {
-    for (const id of deployment.isolates) if (id) network.terminate(id)
-    deployment.isolates = deployment.isolates.map(() => undefined)
+    for (const role of roles) {
+      for (const id of deployment.instances[role]) if (id) network.terminate(id)
+      deployment.instances[role] = deployment.instances[role].map(
+        () => undefined
+      )
+    }
     bus.log({
       node: this.node,
       kind: 'retire',
-      text: `deployment #${deployment.n} retired, its isolates stop`
+      text: `deployment #${deployment.n} retired, its instances stop`
     })
   }
 
-  isolateNode(slot: number) {
-    return `isolate-${slot + 1}`
+  instanceNode(role: Role, slot: number) {
+    return `${role}-${slot + 1}`
   }
 
-  /** The realm of a slot of the active deployment, started on demand. */
-  isolate(slot: number): string {
+  /** The realm of an instance of the active deployment, started on demand. */
+  instance(role: Role, slot: number): string {
     const deployment = this.active
     if (!deployment) throw new Error('Nothing is deployed')
-    const existing = deployment.isolates[slot]
+    const existing = deployment.instances[role][slot]
     if (existing) return existing
-    const id = `${deployment.id}-λ${slot + 1}`
-    const node = this.isolateNode(slot)
+    const id = `${deployment.id}-${role}-${slot + 1}`
+    const node = this.instanceNode(role, slot)
     bus.setState(node, {cold: true})
     bus.log({
       node,
       kind: 'cold-start',
-      text: `cold start of isolate λ${slot + 1} for deployment #${deployment.n}`
+      text: `cold start of ${roleTitle[role]} λ${slot + 1} for deployment #${deployment.n}`
     })
     network.spawn(
       {
@@ -157,31 +176,32 @@ class Deployments {
           name
         })
     )
-    deployment.isolates[slot] = id
+    deployment.instances[role][slot] = id
     bus.changed()
     return id
   }
 
-  /** Stop an isolate, as a host does after it idled. */
-  stop(slot: number) {
+  /** Stop an instance, as a host does after it idled. */
+  stop(role: Role, slot: number) {
     const deployment = this.active
-    const id = deployment?.isolates[slot]
+    const id = deployment?.instances[role][slot]
     if (!deployment || !id) return
     network.terminate(id)
-    deployment.isolates[slot] = undefined
-    bus.setState(this.isolateNode(slot), undefined)
+    deployment.instances[role][slot] = undefined
+    const node = this.instanceNode(role, slot)
+    bus.setState(node, undefined)
     bus.log({
-      node: this.isolateNode(slot),
+      node,
       kind: 'stop',
-      text: `isolate λ${slot + 1} stopped: its databases are gone`
+      text: `${roleTitle[role]} λ${slot + 1} stopped: its database copy is gone`
     })
   }
 
-  /** The slot the edge sends the next request to. */
-  pick(): number {
-    if (this.routing !== 'alternate') return this.routing
-    const slot = this.#turn % this.slots
-    this.#turn++
+  /** The instance the edge sends the next request to. */
+  pick(role: Role): number {
+    if (role === 'handler' && this.routing !== 'alternate') return this.routing
+    const slot = this.#turn[role] % this.slots
+    this.#turn[role]++
     return slot
   }
 }
@@ -194,12 +214,13 @@ network.rpc('deployment.database', ({deployment}: {deployment: string}) => {
   return found.database
 })
 
+// Every request to the site's handler url reaches an instance of the handler
 network.route(url => {
   if (url.host !== 'site.lab') return
-  const slot = deployments.pick()
-  const realm = deployments.isolate(slot)
+  const slot = deployments.pick('handler')
+  const realm = deployments.instance('handler', slot)
   return {
-    node: deployments.isolateNode(slot),
+    node: deployments.instanceNode('handler', slot),
     handle: request => network.call(realm, 'request', request)
   }
 })

@@ -29,11 +29,11 @@ export default function LabPage() {
         <p className={styles.LabPage.intro()}>
           Content lives in git, and in a copy of a database everywhere it is
           read: in the browser of every editor, and in every instance of your
-          site. Below, Alinea's own code runs in your browser: the route handler
-          and the CMS of server renders in workers standing in for serverless
-          instances, and the dashboard's shared worker for each user, with its
-          store in IndexedDB. Run a scenario, or edit, visit, push and deploy
-          yourself.
+          site. Below, Alinea's own code runs in your browser: the handler at
+          /api/cms that the dashboard connects to, the server rendered pages
+          that sync with it, and the dashboard's shared worker for each user,
+          with its store in IndexedDB. Run a scenario, or edit, visit, push and
+          deploy yourself.
         </p>
       </header>
       <div className={styles.LabPage.app()}>
@@ -43,9 +43,11 @@ export default function LabPage() {
         <h2 className={styles.LabPage.notes.title()}>What is real here</h2>
         <ul className={styles.LabPage.notes.list()}>
           <li>
-            Isolates run <code>createHandlerWithDatabase</code> and{' '}
-            <code>NextCMS</code> as <code>alinea/next</code> sets them up, each
-            on its own copy of the generated database.
+            Handler instances run <code>createHandlerWithDatabase</code>, the
+            route behind <code>/api/cms</code>, and page instances run the{' '}
+            <code>NextCMS</code> of server components, as{' '}
+            <code>alinea/next</code> sets them up: each on its own copy of the
+            generated database.
           </li>
           <li>
             Every user runs the dashboard's shared worker:{' '}

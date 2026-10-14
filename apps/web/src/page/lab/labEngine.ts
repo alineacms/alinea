@@ -8,6 +8,8 @@ export type BackendMode = 'self-hosted' | 'cloud'
 export type BackendDriver = 'libsql' | 'd1'
 export type Fault = 'down' | 'hang' | 'drop-response'
 export type Routing = 'alternate' | 0 | 1
+/** The route handler (`/api/cms`) or the server rendered pages of the site */
+export type Role = 'handler' | 'pages'
 export type CheckKind = 'pass' | 'fail' | 'info' | 'finding'
 
 export interface LabEngine {
@@ -40,7 +42,7 @@ export interface LabActions {
   developerPush(): Promise<void>
   pushConfig(): Promise<void>
   deploy(): Promise<void>
-  stop(slot: number): void
+  stop(role: Role, slot: number): void
   loseNextSave(slot: number): void
   setRouting(routing: Routing): void
   setFault(node: string, fault: Fault | undefined): void
@@ -61,7 +63,10 @@ export interface LabView {
   head?: string
   users: Array<UserView>
   maxUsers: number
-  isolates: Array<IsolateView>
+  /** Instances of the route handler, which the edge routes to */
+  handlers: Array<InstanceView>
+  /** Instances rendering the pages of the site */
+  pages: Array<InstanceView>
   routing: Routing
   deployments: Array<DeploymentView>
   git: GitView
@@ -110,14 +115,17 @@ export interface TabView {
   error?: string
 }
 
-export interface IsolateView {
+export interface InstanceView {
+  role: Role
   slot: number
   node: string
   running: boolean
   warm: boolean
   deployment?: number
-  /** The handler's and the cms's copy of the generated database. */
-  stores: Array<{name: string; sha?: string; home?: string}>
+  /** Its copy of the generated database */
+  sha?: string
+  /** The title of the home page in that copy */
+  home?: string
   changedAt?: number
   queries: number
 }

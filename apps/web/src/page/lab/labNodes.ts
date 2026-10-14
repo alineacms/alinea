@@ -4,7 +4,8 @@ export type NodeKind =
   | 'tab'
   | 'worker'
   | 'storage'
-  | 'isolate'
+  | 'handler'
+  | 'pages'
   | 'store'
   | 'git'
   | 'cloud'
@@ -53,7 +54,7 @@ export const nodeInfo: Record<string, NodeInfo> = {
     title: 'Visitor',
     about:
       'A request for a page of the site. Server renders query the CMS, which answers from the bundled database once it is at the latest content sha (syncIfStale).',
-    lab: 'Rendered in an isolate: NextCMS.find on its copy of the generated database.',
+    lab: 'Rendered by an instance of the pages: NextCMS.find on its copy of the generated database.',
     code: ['src/adapter/next/cms.tsx', 'src/adapter/next/syncCheck.ts']
   },
   preview: {
@@ -67,30 +68,40 @@ export const nodeInfo: Record<string, NodeInfo> = {
       'src/database/EntryStore.ts'
     ]
   },
-  isolate: {
-    title: 'Isolate',
+  handler: {
+    title: 'Handler · /api/cms',
     about:
-      'A serverless instance of the deployment. The route handler and the CMS of server renders each open their own in-memory copy of the generated database, and keep it in sync with the remote on their own.',
-    lab: 'A Web Worker running createHandlerWithDatabase and NextCMS. The generated database is read into WASM memory, as runtimeDatabase does where the native overlay is missing.',
+      'The route handler of the site, eg. /api/cms. The dashboard reads and commits through it, and the pages ask it for the latest content. It keeps its own in-memory copy of the generated database, synced with git (or the cloud) before it answers.',
+    lab: 'A Web Worker per instance running createHandlerWithDatabase, as alinea/next sets it up. The generated database is read into WASM memory, as runtimeDatabase does where the native overlay is missing.',
     code: [
       'src/adapter/next/handler.ts',
       'src/backend/Handler.ts',
-      'src/adapter/next/cms.tsx',
       'src/backend/store/GeneratedDatabase.ts',
       'src/database/EntryStore.ts'
+    ]
+  },
+  pages: {
+    title: 'Pages · RSC',
+    about:
+      "The site's server rendered pages (React Server Components). Their CMS answers queries from its own copy of the generated database, after it checks the content sha in the data cache and syncs through the handler when it is behind.",
+    lab: 'A Web Worker per instance running NextCMS, as alinea/next sets it up, with next/cache and next/headers replaced by the lab.',
+    code: [
+      'src/adapter/next/cms.tsx',
+      'src/adapter/next/syncCheck.ts',
+      'src/backend/store/GeneratedDatabase.ts'
     ]
   },
   build: {
     title: 'Build & deploy',
     about:
-      'A deploy builds a commit and generates the SQLite database of its content, which ships with the deployment. Every isolate starts from it.',
+      'A deploy builds a commit and generates the SQLite database of its content, which ships with the deployment. Every handler and page instance starts from it.',
     lab: 'Builds in the page: an entry store synced from the commit, exported as the database file.',
     code: ['src/cli/Generate.ts', 'src/database/EntryDatabase.ts']
   },
   'data-cache': {
     title: 'Next data cache',
     about:
-      "The host's data cache, shared by every isolate. Alinea keeps the latest content sha in it for syncInterval seconds (60 here) under a tag that commits through the handler revalidate. Stale entries answer once more while they refresh.",
+      "The host's data cache, shared by every instance. Alinea keeps the latest content sha in it for syncInterval seconds (60 here) under a tag that commits through the handler revalidate. Stale entries answer once more while they refresh.",
     lab: 'next/cache is replaced by a cache on the page, with stale-while-revalidate.',
     code: ['src/adapter/next/syncCheck.ts']
   },
@@ -98,7 +109,7 @@ export const nodeInfo: Record<string, NodeInfo> = {
     title: 'Backend database',
     about:
       'The database of a self-hosted backend. DatabaseApi keeps users, uploads and the content blobs any instance fetched or committed, so instances that are behind read them here instead of asking git again.',
-    lab: 'WASM SQLite on the page, which isolates reach through a libSQL or D1 client.',
+    lab: 'WASM SQLite on the page, which handler instances reach through a libSQL or D1 client.',
     code: [
       'src/backend/api/DatabaseApi.ts',
       'src/backend/api/BlobStore.ts',
@@ -116,7 +127,7 @@ export const nodeInfo: Record<string, NodeInfo> = {
     title: 'Git repository',
     about:
       'The source of truth. Every database records the content sha it is at: the git tree of the content directory.',
-    lab: 'A branch of commits on the page. Self-hosted isolates reach it through a client with the contract of GithubApi.',
+    lab: 'A branch of commits on the page. Self-hosted handlers reach it through a client with the contract of GithubApi.',
     code: ['src/backend/api/GithubApi.ts', 'src/core/source/GithubSource.ts']
   },
   developer: {
@@ -133,7 +144,8 @@ export function infoOf(node: string): NodeInfo | undefined {
   if (node.includes('/tab-')) return nodeInfo.tab
   if (node.endsWith('/worker')) return nodeInfo.worker
   if (node.endsWith('/idb')) return nodeInfo.storage
-  if (node.startsWith('isolate-')) return nodeInfo.isolate
+  if (node.startsWith('handler-')) return nodeInfo.handler
+  if (node.startsWith('pages-')) return nodeInfo.pages
   return nodeInfo[node]
 }
 
@@ -183,7 +195,7 @@ export function boardLayout(view: LabView): BoardLayout {
     nodes[user.worker] = {x: 12, y: tabY, w: 196, h: 76}
     nodes[user.storage] = {x: 220, y: tabY, w: 108, h: 76}
     edges.push([user.worker, user.storage])
-    edges.push([user.worker, 'isolate-1'], [user.worker, 'isolate-2'])
+    edges.push([user.worker, 'handler-1'], [user.worker, 'handler-2'])
     y = tabY + 76 + 12
     groups[user.node] = {x: 0, y: top, w: groupWidth, h: y - top}
     y += 16
@@ -192,36 +204,42 @@ export function boardLayout(view: LabView): BoardLayout {
   nodes.preview = {x: 174, y, w: 166, h: 132}
   const left = y + 132
   edges.push(
-    ['visitor', 'isolate-1'],
-    ['visitor', 'isolate-2'],
-    ['preview', 'isolate-1'],
-    ['preview', 'isolate-2']
+    ['visitor', 'pages-1'],
+    ['visitor', 'pages-2'],
+    ['preview', 'pages-1'],
+    ['preview', 'pages-2']
   )
   const services = columns.services
-  nodes['isolate-1'] = {x: services, y: 0, w: 252, h: 196}
-  nodes['isolate-2'] = {x: services, y: 212, w: 252, h: 196}
-  nodes.build = {x: services, y: 424, w: 252, h: 232}
+  // Handlers near the dashboards that call them, pages near the visitors
+  nodes['handler-1'] = {x: services, y: 0, w: 252, h: 150}
+  nodes['handler-2'] = {x: services, y: 162, w: 252, h: 150}
+  nodes['pages-1'] = {x: services, y: 344, w: 252, h: 150}
+  nodes['pages-2'] = {x: services, y: 506, w: 252, h: 150}
   const stores = columns.stores
   nodes['data-cache'] = {x: stores, y: 0, w: 204, h: 150}
   nodes['backend-db'] = {x: stores, y: 166, w: 204, h: 196}
   nodes.cloud = {x: stores, y: 378, w: 204, h: 112}
   const git = columns.git
-  nodes.github = {x: git, y: 0, w: 212, h: 490}
+  nodes.github = {x: git, y: 0, w: 212, h: 384}
+  nodes.build = {x: git, y: 400, w: 212, h: 256}
   nodes.developer = {x: stores, y: 506, w: 204, h: 150}
   edges.push(
-    ['isolate-1', 'isolate-2'],
-    ['isolate-1', 'data-cache'],
-    ['isolate-2', 'data-cache'],
-    ['isolate-1', 'backend-db'],
-    ['isolate-2', 'backend-db'],
-    ['isolate-1', 'cloud'],
-    ['isolate-2', 'cloud'],
-    ['isolate-1', 'github'],
-    ['isolate-2', 'github'],
+    ['pages-1', 'handler-1'],
+    ['pages-1', 'handler-2'],
+    ['pages-2', 'handler-1'],
+    ['pages-2', 'handler-2'],
+    ['pages-1', 'data-cache'],
+    ['pages-2', 'data-cache'],
+    ['handler-1', 'data-cache'],
+    ['handler-2', 'data-cache'],
+    ['handler-1', 'backend-db'],
+    ['handler-2', 'backend-db'],
+    ['handler-1', 'cloud'],
+    ['handler-2', 'cloud'],
+    ['handler-1', 'github'],
+    ['handler-2', 'github'],
     ['cloud', 'github'],
     ['github', 'build'],
-    ['build', 'isolate-1'],
-    ['build', 'isolate-2'],
     ['developer', 'github']
   )
   return {

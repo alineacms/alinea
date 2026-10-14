@@ -160,7 +160,8 @@
       background: var(--web-accent);
     }
 
-    .LabBoard-node.is-isolate &,
+    .LabBoard-node.is-handler &,
+    .LabBoard-node.is-pages &,
     .LabBoard-node.is-build & {
       background: var(--web-foreground);
     }

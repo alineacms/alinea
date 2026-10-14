@@ -15,7 +15,7 @@ import {bus} from './world/bus.js'
 import {clock} from './world/clock.js'
 import {pageIds, pages} from './world/content.js'
 import {dataCache} from './world/dataCache.js'
-import {deployments} from './world/deployments.js'
+import {deployments, type Role, roles} from './world/deployments.js'
 import {github} from './world/github.js'
 import {lab} from './world/lab.js'
 import {network} from './world/network.js'
@@ -58,6 +58,27 @@ function titleOf(text: string | undefined) {
   } catch {
     return ''
   }
+}
+
+function instances(role: Role) {
+  const active = deployments.active
+  return [0, 1].map(slot => {
+    const node = deployments.instanceNode(role, slot)
+    const state = bus.states[node]
+    const running = Boolean(active?.instances[role][slot])
+    return {
+      role,
+      slot,
+      node,
+      running,
+      warm: Boolean(running && state?.shas?.[role]),
+      deployment: active?.n,
+      sha: state?.shas?.[role],
+      home: state?.titles?.[role]?.[pageIds.home],
+      changedAt: state?.syncedAt?.[role],
+      queries: state?.resolves ?? 0
+    }
+  })
 }
 
 let cached: {version: number; view: LabView} | undefined
@@ -114,25 +135,8 @@ function view(): LabView {
         }
       })
     })),
-    isolates: [0, 1].map(slot => {
-      const node = deployments.isolateNode(slot)
-      const state = bus.states[node]
-      const running = Boolean(active?.isolates[slot])
-      return {
-        slot,
-        node,
-        running,
-        warm: Boolean(running && state?.shas),
-        deployment: active?.n,
-        stores: ['handler', 'cms'].map(name => ({
-          name,
-          sha: state?.shas?.[name],
-          home: state?.titles?.[name]?.[pageIds.home]
-        })),
-        changedAt: state?.syncedAt?.handler,
-        queries: state?.resolves ?? 0
-      }
-    }),
+    handlers: instances('handler'),
+    pages: instances('pages'),
     routing: deployments.routing,
     deployments: [...deployments.list].reverse().map(d => ({
       n: d.n,
@@ -237,9 +241,10 @@ function table(columns: Array<string>, rows: Array<Array<unknown>>) {
 
 async function inspect(node: string): Promise<Array<InspectSection>> {
   const short = (sha?: string) => sha?.slice(0, 7) ?? '—'
-  if (node.startsWith('isolate-')) {
+  const role = roles.find(role => node.startsWith(`${role}-`))
+  if (role) {
     const slot = Number(node.slice(-1)) - 1
-    const realm = deployments.active?.isolates[slot]
+    const realm = deployments.active?.instances[role][slot]
     if (!realm)
       return [
         {
@@ -372,13 +377,15 @@ async function inspect(node: string): Promise<Array<InspectSection>> {
         {
           title: 'Deployments',
           table: table(
-            ['#', 'commit', 'content', 'fingerprint', 'isolates'],
+            ['#', 'commit', 'content', 'fingerprint', 'handler + pages'],
             deployments.list.map(d => [
               d.n,
               short(d.commit.id),
               short(d.contentSha),
               d.fingerprint,
-              d.isolates.filter(Boolean).length
+              roles
+                .map(role => d.instances[role].filter(Boolean).length)
+                .join(' + ')
             ])
           )
         }
@@ -448,9 +455,12 @@ export const engine: LabEngine = {
     pushConfig: () =>
       attempt(() => lab.pushConfig(github.head.configVersion === 1 ? 2 : 1)),
     deploy: () => attempt(() => lab.deploy()),
-    stop: slot => deployments.stop(slot),
+    stop: (role, slot) => deployments.stop(role, slot),
     loseNextSave: slot =>
-      network.dropNextResponse(deployments.isolateNode(slot), 'mutate'),
+      network.dropNextResponse(
+        deployments.instanceNode('handler', slot),
+        'mutate'
+      ),
     setRouting: routing => {
       deployments.routing = routing
       bus.changed()
