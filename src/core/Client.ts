@@ -8,6 +8,7 @@ import {
 import type {Config} from './Config.js'
 import type {
   BackendCapabilities,
+  ChangesTransport,
   DraftTransport,
   LocalConnection,
   Revision,
@@ -21,7 +22,8 @@ import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
-import type {GetBlobsOptions} from './source/Source.js'
+import type {GetBlobsOptions, SourceChanges} from './source/Source.js'
+import {UnknownTreeError} from './source/UnknownTreeError.js'
 import type {User, UserInput} from './User.js'
 import {base64} from './util/Encoding.js'
 import {isRecord} from './util/Objects.js'
@@ -205,6 +207,29 @@ export class Client implements LocalConnection {
     })
       .then<Tree | null>(this.#failOnHttpError)
       .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
+  }
+
+  async getChanges(sha: string): Promise<SourceChanges | undefined> {
+    const body = await this.#requestJson({
+      action: HandleAction.Tree,
+      sha,
+      changes: 'true'
+    }).then<unknown>(this.#failOnHttpError)
+    if (body === null) return undefined
+    // A handler that does not know the tree, or predates changes and sent the
+    // whole tree, leaves the client to ask for that
+    if (!isRecord(body) || !Array.isArray(body.changes))
+      throw new UnknownTreeError(sha)
+    const {fromSha, intoSha, changes} = body as unknown as ChangesTransport
+    return {
+      fromSha,
+      intoSha,
+      changes: changes.map(change =>
+        change.op === 'delete'
+          ? change
+          : {...change, contents: base64.parse(change.contents)}
+      )
+    }
   }
 
   getSha(): Promise<string> {

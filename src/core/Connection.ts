@@ -4,6 +4,7 @@ import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
+import type {ChangeFile, DeleteChange} from './source/Change.js'
 import type {GetBlobsOptions} from './source/Source.js'
 import type {ReadonlyTree} from './source/Tree.js'
 import type {User, UserInput} from './User.js'
@@ -152,6 +153,18 @@ export function withDevelopmentKey(
     ...upload,
     headers: {...upload.headers, [developmentKeyHeader]: apiKey}
   }
+}
+
+/** Source changes on the wire, with base64 encoded contents. */
+export interface ChangesTransport {
+  fromSha: string
+  intoSha: string
+  changes: Array<DeleteChange | AddChangeTransport>
+}
+
+export interface AddChangeTransport extends ChangeFile {
+  op: 'add'
+  contents: string
 }
 
 export interface DraftTransport {

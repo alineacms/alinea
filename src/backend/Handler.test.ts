@@ -17,6 +17,7 @@ import {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
+import {base64} from '#/core/util/Encoding.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
 import {jest} from 'bun:test'
@@ -1911,4 +1912,90 @@ test('rejects unauthenticated sha requests like tree requests', async () => {
   const sha = await handle(request('action=sha'), requestContext())
   test.is(tree.status, 401)
   test.is(sha.status, 401)
+})
+
+test('tells a client behind what changed since its tree', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  const home = await remoteDb.create({type: Page, set: {title: 'Home'}})
+  await remoteDb.create({type: Page, set: {title: 'About'}})
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(remoteDb, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const changes = (sha: string) =>
+    handle(
+      new Request(`http://localhost/api?action=tree&sha=${sha}&changes=true`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    ).then(response => response.json())
+
+  // The instance synced the tree the client has
+  await db.syncWith(remoteDb)
+  const before = await remoteDb.sha
+  test.is(await changes(before), null)
+  await remoteDb.update({type: Page, id: home._id, set: {title: 'Welcome'}})
+  const latest = await remoteDb.sha
+  const response = await changes(before)
+  test.is(response.fromSha, before)
+  test.is(response.intoSha, latest)
+  test.is(response.changes.length, 1)
+  const [change] = response.changes
+  test.is(change.op, 'add')
+  const contents = new TextDecoder().decode(base64.parse(change.contents))
+  test.ok(contents.includes('Welcome'))
+  test.is(await changes(latest), null)
+  test.equal(await changes('0'.repeat(40)), {unknown: true})
+})
+
+test('sends the whole tree rather than many changes', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(remoteDb, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const before = await remoteDb.sha
+  await db.syncWith(remoteDb)
+  await remoteDb.mutate(
+    Array.from({length: 501}, (_, i) => ({
+      op: 'create' as const,
+      id: `page-${i}`,
+      type: 'Page',
+      locale: null,
+      data: {title: `Page ${i}`}
+    }))
+  )
+  const response = await handle(
+    new Request(`http://localhost/api?action=tree&sha=${before}&changes=true`, {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+  test.equal(await response.json(), {unknown: true})
 })

@@ -8,6 +8,7 @@ import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
+  ChangesTransport,
   DraftTransport,
   RemoteConnection,
   RequestContext
@@ -32,7 +33,11 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import {type RemoteSource, sourceAtTree} from '#/core/source/Source.js'
+import {
+  bundleContents,
+  type RemoteSource,
+  sourceAtTree
+} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {within} from '#/core/util/Async.js'
@@ -483,6 +488,11 @@ export function createHandler({
           // current content
         }
         await syncForRead(local.syncWith(source))
+        if (params.has('changes'))
+          return compressResponse(
+            request,
+            Response.json(await changesSince(local, sha))
+          )
         const tree = await local.getTreeIfDifferent(sha)
         return compressResponse(request, Response.json(tree ?? null))
       }
@@ -600,6 +610,46 @@ export function createHandler({
         {status}
       )
     }
+  }
+}
+
+/**
+ * Changes past these take about as long to apply as the whole tree does to
+ * download, and would hold a large response in memory.
+ */
+const maxChanges = 500
+const maxChangesBytes = 4 * 1024 * 1024
+
+/**
+ * What changed since tree `sha`, with the contents base64 encoded, or
+ * `{unknown: true}` when the client is better off taking the whole tree.
+ */
+async function changesSince(
+  local: LocalStore,
+  sha: string
+): Promise<ChangesTransport | {unknown: true} | null> {
+  const latest = await local.source.getTree()
+  if (latest.sha === sha) return null
+  const unknown = {unknown: true} as const
+  const known = await local.treeAt(sha)
+  if (!known) return unknown
+  const batch = known.diff(latest)
+  if (batch.changes.length > maxChanges) return unknown
+  const {changes} = await bundleContents(local.source, batch)
+  let bytes = 0
+  for (const change of changes) {
+    if (change.op === 'delete') continue
+    if (!change.contents) return unknown
+    if ((bytes += change.contents.length) > maxChangesBytes) return unknown
+  }
+  return {
+    fromSha: sha,
+    intoSha: latest.sha,
+    changes: changes.map(change =>
+      change.op === 'delete'
+        ? change
+        : {...change, contents: base64.stringify(change.contents!)}
+    )
   }
 }
 
