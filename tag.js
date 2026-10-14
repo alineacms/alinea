@@ -35,7 +35,8 @@ const version = semver.startsWith('v') ? semver : `v${semver}`
 
 // Check if requested version has release notes
 const changelog = readFileSync('changelog.md', 'utf-8')
-if (!version.includes('preview') && !changelog.includes(`## [${semver}]`)) {
+const prerelease = version.includes('-')
+if (!prerelease && !changelog.includes(`## [${semver}]`)) {
   console.log(`No release notes found for version ${semver}`)
   process.exit(1)
 }
