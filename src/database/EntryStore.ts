@@ -4,7 +4,7 @@ import type {
   RemoteSource,
   Source
 } from '#/core/source/Source.js'
-import {applyChangesFrom, sourceAtTree} from '#/core/source/Source.js'
+import {applyChangesFrom, latestTree} from '#/core/source/Source.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Entry} from '#/core/Entry.js'
@@ -195,16 +195,15 @@ export class EntryStore
         return this.database.getRevision()
       }
       const localTree = await this.source.getTree()
-      const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
-      if (!remoteTree) return this.#sync()
-      const batch = localTree.diff(remoteTree)
-      const knownRemote = sourceAtTree(remote, remoteTree)
-      await this.database.syncWith(knownRemote, options)
+      const latest = await latestTree(remote, localTree)
+      if (!latest) return this.#sync()
+      const batch = localTree.diff(latest.tree)
+      await this.database.syncWith(latest.source, options)
       await applyChangesFrom(
         this.source,
         new DatabaseSource(this.database),
         batch,
-        remoteTree
+        latest.tree
       )
       await this.#seed()
       return this.database.getRevision()
@@ -252,6 +251,11 @@ export class EntryStore
 
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
     return this.source.getTreeIfDifferent(sha)
+  }
+
+  async treeAt(sha: string): Promise<ReadonlyTree | undefined> {
+    const tree = await this.source.getTree()
+    return tree.sha === sha ? tree : this.database.treeAt(sha)
   }
 
   getBlobs(shas: ReadonlyArray<string>, options?: GetBlobsOptions) {

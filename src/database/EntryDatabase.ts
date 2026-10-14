@@ -12,6 +12,7 @@ import type {FileStat} from '#/core/source/FSSource.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {
+  latestTree,
   SourceTransaction,
   type GetBlobsOptions,
   type RemoteSource,
@@ -51,6 +52,11 @@ import {sqliteBatchSize} from './sync/SyncQueries.js'
 import {databaseVersion} from './Version.js'
 
 const defaultConfigFingerprint = 'runtime'
+/**
+ * Synced trees kept besides the first one, so changes since them can be told.
+ * Each one of a large project takes a few MB.
+ */
+const recentTrees = 3
 /** Temporary table holding the source payloads while a reindex runs. */
 const reindexBlobsName = 'alinea_reindex_blobs'
 
@@ -97,6 +103,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #syncQueue = new TaskQueue()
   #tree?: ReadonlyTree
   #initialTree?: ReadonlyTree
+  /** The first tree this database had, and the last ones it synced. */
+  #trees = new Map<string, ReadonlyTree>()
   #recordsTree: boolean
   /**
    * Overlays answer one preview payload and are thrown away; they keep the
@@ -263,22 +271,25 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   ): Promise<EntrySyncResult> {
     this.#assertOpen()
     return this.#syncQueue.run(async () => {
-      const current = await this.#queue.run(() => this.#getRevision(this.#db))
-      const tree = await source.getTreeIfDifferent(current)
-      if (!tree) return {revision: current, changedEntryIds: []}
+      // Another instance on the same database file (the dev server and the
+      // site, or a restarted process) may have moved the revision on, then
+      // the stored tree is the one to diff against
+      const state = await this.#queue.run(() => this.#readTreeState())
+      const current = state.revision
+      const previousTree = state.tree?.sha === current ? state.tree : undefined
+      const latest = await latestTree(source, previousTree ?? current)
+      if (!latest) return {revision: current, changedEntryIds: []}
+      const {tree} = latest
       this.#initialTree ??= tree
       const changedEntryIds = await this.#queue.run(async () => {
-        const changed = await this.#syncer.sync(source, tree, current, {
-          // Another instance on the same database file (the dev server and
-          // the site, or a restarted process) may have moved the revision on,
-          // then the stored tree is the one to diff against
-          previousTree: this.#tree?.sha === current ? this.#tree : undefined,
+        const changed = await this.#syncer.sync(latest.source, tree, current, {
+          previousTree,
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
           recordsTree: this.#recordsTree,
           onProgress: options?.onProgress
         })
-        this.#tree = tree
+        this.#remember((this.#tree = tree))
         if (changed.length > 0) await this.#optimize()
         return changed
       })
@@ -377,7 +388,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         await this.#optimize()
         return reindexed
       })
-      this.#tree = result.tree
+      this.#remember((this.#tree = result.tree))
       // The revision stayed, the indexed text did not.
       this.#vocabulary = new SearchVocabulary()
       const change = {
@@ -441,7 +452,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           const request = await transaction.toRequest()
           // Set while the connection is held: reads after the commit find
           // the tree, which the state may not record.
-          if (commit) this.#tree = await workingSource.getTree()
+          if (commit)
+            this.#remember((this.#tree = await workingSource.getTree()))
           return {
             revision: request.intoSha,
             changedEntryIds: transaction.changedEntryIds,
@@ -547,7 +559,23 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       .get()
     if (row == null) throw new Error('Missing database state')
     this.#tree = row.tree ? new ReadonlyTree(row.tree) : undefined
+    if (this.#tree) this.#remember(this.#tree)
     return {revision: row.revision, tree: this.#tree}
+  }
+
+  /** A tree this database had recently, to tell what changed since. */
+  treeAt(sha: string): ReadonlyTree | undefined {
+    return this.#trees.get(sha)
+  }
+
+  #remember(tree: ReadonlyTree): void {
+    if (this.#trees.has(tree.sha)) return
+    this.#trees.set(tree.sha, tree)
+    if (this.#trees.size <= recentTrees + 1) return
+    // The first tree is the one an instance was built with, which clients
+    // that loaded its pages have
+    const [, oldest] = this.#trees.keys()
+    this.#trees.delete(oldest!)
   }
 
   async *getBlobs(

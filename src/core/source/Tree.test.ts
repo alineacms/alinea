@@ -167,3 +167,27 @@ test('applyChanges sha mismatch', async () => {
     })
   }, 'SHA mismatch')
 })
+
+test('changes since a tree rebuild the other tree', async () => {
+  const a = 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391'
+  const b = 'dffd6021bb2bd5b0af676290809ec3a53191dd81'
+  const c = '8c7e5a667f1b771847fe88c01c3de34413a1b220'
+  const before = new WriteableTree()
+  before.add('pages/about.json', a)
+  before.add('pages/blog/post.json', a)
+  before.add('pages/blog/other.json', b)
+  before.add('media/file.json', a)
+  before.add('removed/deep/file.json', b)
+  const after = new WriteableTree()
+  after.add('pages/about.json', c)
+  after.add('pages/blog', b)
+  after.add('media/file.json', a)
+  after.add('added/file.json', c)
+  const from = await before.compile()
+  const into = await after.compile()
+  const batch = from.diff(into)
+  const rebuilt = await from.withChanges(batch)
+  test.is(rebuilt.sha, into.sha)
+  test.is(rebuilt.get('media'), from.get('media'))
+  test.equal((await into.withChanges(into.diff(from))).sha, from.sha)
+})

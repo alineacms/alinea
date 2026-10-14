@@ -2,7 +2,12 @@ import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
-import {transaction} from '#/core/source/Source.js'
+import {
+  bundleContents,
+  type RemoteSource,
+  transaction
+} from '#/core/source/Source.js'
+import {UnknownTreeError} from '#/core/source/UnknownTreeError.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {createEntryRow} from '#/core/util/EntryRows.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
@@ -691,4 +696,107 @@ test('mutations without an id are rejected without touching data', async () => {
   } finally {
     sqlite.close()
   }
+})
+
+/** A remote telling the changes since the trees the store had recently. */
+function changesOf(store: EntryStore, knows = true) {
+  const requests = {trees: 0, changes: 0, blobs: 0}
+  const remote: RemoteSource = {
+    getTreeIfDifferent(sha) {
+      requests.trees++
+      return store.getTreeIfDifferent(sha)
+    },
+    async getChanges(sha) {
+      requests.changes++
+      const latest = await store.source.getTree()
+      if (latest.sha === sha) return undefined
+      const known = knows ? await store.treeAt(sha) : undefined
+      if (!known) throw new UnknownTreeError(sha)
+      const batch = await bundleContents(store.source, known.diff(latest))
+      return {...batch, intoSha: latest.sha}
+    },
+    getBlobs(shas, options) {
+      requests.blobs++
+      return store.getBlobs(shas, options)
+    }
+  }
+  return {remote, requests}
+}
+
+/** Sync two stores, one through the changes and one through the tree. */
+async function syncBoth(remote: EntryStore, follows: boolean, knows = true) {
+  const {remote: changes, requests} = changesOf(remote, knows)
+  const viaChanges = (await createStore()).store
+  const viaTree = (await createStore()).store
+  const local = follows ? sourcedFromDatabase(viaChanges) : viaChanges
+  const pages = (store: EntryStore) =>
+    store.find({select: {id: Entry.id, title: Entry.title}, status: 'all'})
+  await local.syncWith(changes)
+  await viaTree.syncWith(remote)
+  const before = {...requests}
+  await remote.mutate([
+    {
+      op: 'update',
+      id: 'page',
+      locale: null,
+      status: 'published',
+      set: {title: 'Changed'}
+    },
+    {op: 'remove', id: 'other'}
+  ])
+  await local.syncWith(changes)
+  await viaTree.syncWith(remote)
+  expect(await local.sha).toBe(await remote.sha)
+  expect(await viaTree.sha).toBe(await remote.sha)
+  expect((await local.source.getTree()).sha).toBe(await remote.sha)
+  expect(await pages(local)).toEqual(await pages(viaTree))
+  return {
+    trees: requests.trees - before.trees,
+    changes: requests.changes - before.changes,
+    blobs: requests.blobs - before.blobs
+  }
+}
+
+test('a store behind syncs the changes since its tree', async () => {
+  const {store: remote} = await pagesStore()
+  expect(await syncBoth(remote, false)).toEqual({
+    trees: 0,
+    changes: 1,
+    blobs: 0
+  })
+})
+
+test('a store sourced from its database syncs the changes', async () => {
+  const {store: remote} = await pagesStore()
+  expect(await syncBoth(remote, true)).toEqual({
+    trees: 0,
+    changes: 1,
+    blobs: 0
+  })
+})
+
+test('a store takes the whole tree when the remote lost its own', async () => {
+  for (const follows of [true, false]) {
+    const {store: remote} = await pagesStore()
+    expect(await syncBoth(remote, follows, false)).toEqual({
+      trees: 1,
+      changes: 1,
+      blobs: 1
+    })
+  }
+})
+
+test('a database keeps its first tree and the last ones it synced', async () => {
+  const {store: remote} = await createStore()
+  const {store} = await createStore()
+  const trees = [await remote.source.getTree()]
+  for (const id of ['a', 'b', 'c', 'd', 'e', 'f']) {
+    await remote.mutate([
+      {op: 'create', id, type: 'Page', locale: null, data: {title: id}}
+    ])
+    await store.syncWith(remote)
+    trees.push(await remote.source.getTree())
+  }
+  const kept = trees.map(tree => store.database.treeAt(tree.sha) !== undefined)
+  expect(kept).toEqual([true, false, false, false, true, true, true])
 })

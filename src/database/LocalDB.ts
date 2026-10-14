@@ -18,6 +18,7 @@ import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Policy} from '#/core/Role.js'
+import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {EntryStore} from './EntryStore.js'
 
 /**
@@ -76,6 +77,10 @@ export class LocalDB
 
   getBlobs(shas: ReadonlyArray<string>, options?: GetBlobsOptions) {
     return this.source.getBlobs(shas, options)
+  }
+
+  async treeAt(sha: string): Promise<ReadonlyTree | undefined> {
+    return (await this.#store).treeAt(sha)
   }
 
   sync(): Promise<string> {

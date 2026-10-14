@@ -1,5 +1,6 @@
 import type {Policy} from '#/core/Role.js'
 import type {RemoteSource, Source} from '#/core/source/Source.js'
+import type {ReadonlyTree} from '#/core/source/Tree.js'
 import type {CommitRequest} from './CommitRequest.js'
 import type {Mutation} from './Mutation.js'
 import type {WriteableGraph} from './WriteableGraph.js'
@@ -30,6 +31,8 @@ export interface LocalStore extends WriteableGraph, RemoteSource {
   sync(): Promise<string>
   syncWith(remote: RemoteSource, options?: SyncOptions): Promise<string>
   includedAtBuild(filePath: string): boolean | Promise<boolean>
+  /** The source tree at `sha`, when this store had it recently. */
+  treeAt(sha: string): Promise<ReadonlyTree | undefined>
   request(
     mutations: ReadonlyArray<Mutation>,
     policy?: Policy

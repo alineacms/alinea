@@ -2,13 +2,24 @@ import {accumulate} from '../util/Async.js'
 import type {Change, ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {ReadonlyTree, WriteableTree} from './Tree.js'
+import {UnknownTreeError} from './UnknownTreeError.js'
 
 export interface GetBlobsOptions {
   signal?: AbortSignal
 }
 
+/** The changes from a tree up to the latest one, with their contents. */
+export interface SourceChanges extends ChangesBatch {
+  intoSha: string
+}
+
 export interface RemoteSource {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
+  /**
+   * What changed since tree `sha`, or undefined when it is the latest. Throws
+   * an UnknownTreeError when the remote does not know `sha`.
+   */
+  getChanges?(sha: string): Promise<SourceChanges | undefined>
   getBlobs(
     shas: ReadonlyArray<string>,
     options?: GetBlobsOptions
@@ -37,6 +48,82 @@ export function sourceAtTree(
     },
     getBlobs(shas, options) {
       return source.getBlobs(shas, options)
+    }
+  }
+}
+
+/** The latest tree of a remote, with a source serving its blobs. */
+export interface LatestTree {
+  tree: ReadonlyTree
+  source: RemoteSource
+}
+
+/**
+ * The latest tree of a remote, or undefined when `from` is current. A remote
+ * that knows the tree `from` sends what changed since, with the contents,
+ * rather than the whole latest tree.
+ */
+export async function latestTree(
+  remote: RemoteSource,
+  from: ReadonlyTree | string
+): Promise<LatestTree | undefined> {
+  if (typeof from !== 'string' && remote.getChanges) {
+    const latest = await fromChanges(remote, from)
+    if (latest !== null) return latest
+  }
+  const tree = await remote.getTreeIfDifferent(
+    typeof from === 'string' ? from : from.sha
+  )
+  return tree && {tree, source: sourceAtTree(remote, tree)}
+}
+
+/** The latest tree built from changes, or null to fetch the whole tree. */
+async function fromChanges(
+  remote: RemoteSource,
+  from: ReadonlyTree
+): Promise<LatestTree | undefined | null> {
+  let changes: SourceChanges | undefined
+  try {
+    changes = await remote.getChanges!(from.sha)
+  } catch (error) {
+    if (error instanceof UnknownTreeError) return null
+    throw error
+  }
+  if (!changes) return undefined
+  // Changes that do not lead to the latest tree exactly, such as a file that
+  // only changed its mode, are not trusted
+  try {
+    const tree = await from.withChanges(changes)
+    if (tree.sha === changes.intoSha)
+      return {tree, source: sourceWithContents(remote, tree, changes)}
+  } catch {}
+  return null
+}
+
+/** Serve the contents of a batch, and other blobs from the source. */
+function sourceWithContents(
+  source: RemoteSource,
+  tree: ReadonlyTree,
+  batch: ChangesBatch
+): RemoteSource {
+  const contents = new Map(
+    batch.changes.flatMap(change =>
+      change.op === 'add' && change.contents
+        ? [[change.sha, change.contents] as const]
+        : []
+    )
+  )
+  return {
+    async getTreeIfDifferent(revision) {
+      return revision === tree.sha ? undefined : tree
+    },
+    async *getBlobs(shas, options) {
+      const missing = shas.filter(sha => !contents.has(sha))
+      for (const sha of shas) {
+        const blob = contents.get(sha)
+        if (blob) yield [sha, blob]
+      }
+      if (missing.length > 0) yield* source.getBlobs(missing, options)
     }
   }
 }
