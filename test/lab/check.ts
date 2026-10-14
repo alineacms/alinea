@@ -1,8 +1,11 @@
 /**
  * Run every scenario of the lab in a headless browser and report its checks:
- * `bun lab:check [scenario ...]`. Fails when a check fails; findings are
- * reported without failing. Set LAB_CHROMIUM to use another Chromium.
+ * `bun lab:check [--built] [scenario ...]`. Fails when a check fails;
+ * findings are reported without failing. With `--built` the scenarios run on
+ * the engine `bun lab:build` wrote, served as the website serves it. Set
+ * LAB_CHROMIUM to use another Chromium.
  */
+import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {chromium} from 'playwright'
 import {createServer} from 'vite'
@@ -13,16 +16,49 @@ interface Check {
   detail?: string
 }
 
-const only = process.argv.slice(2)
+const args = process.argv.slice(2)
+const built = args.includes('--built')
+const only = args.filter(arg => arg !== '--built')
 const verbose = Boolean(process.env.LAB_EVENTS)
-const server = await createServer({
-  configFile: fileURLToPath(new URL('./vite.config.ts', import.meta.url)),
-  server: {port: 0},
-  logLevel: 'warn'
-})
-await server.listen()
-const url = server.resolvedUrls?.local[0]
-if (!url) throw new Error('The lab server did not start')
+const server = built ? serveBuilt() : await serveSource()
+const url = server.url
+
+/** The lab page from source, through Vite. */
+async function serveSource() {
+  const vite = await createServer({
+    configFile: fileURLToPath(new URL('./vite.config.ts', import.meta.url)),
+    server: {port: 0},
+    logLevel: 'warn'
+  })
+  await vite.listen()
+  const url = vite.resolvedUrls?.local[0]
+  if (!url) throw new Error('The lab server did not start')
+  return {url, close: () => vite.close()}
+}
+
+/** The built engine from the website's public files, as the page loads it. */
+function serveBuilt() {
+  const publicDir = fileURLToPath(
+    new URL('../../apps/web/public', import.meta.url)
+  )
+  const page = `<!doctype html><meta charset="utf-8"><script type="module">
+    const {start} = await import('/lab/engine.js')
+    await start()
+  </script>`
+  const bun = Bun.serve({
+    port: 0,
+    async fetch(request) {
+      const {pathname} = new URL(request.url)
+      if (pathname === '/')
+        return new Response(page, {headers: {'content-type': 'text/html'}})
+      const file = Bun.file(join(publicDir, pathname))
+      if (!pathname.startsWith('/lab/') || !(await file.exists()))
+        return new Response('Not found', {status: 404})
+      return new Response(file)
+    }
+  })
+  return {url: bun.url.href, close: async () => bun.stop()}
+}
 const browser = await chromium.launch({
   executablePath: process.env.LAB_CHROMIUM
 })

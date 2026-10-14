@@ -28,18 +28,42 @@ function skipAlineaStyles(): Plugin {
   }
 }
 
+const labDir = fileURLToPath(new URL('.', import.meta.url))
+
+/**
+ * The repository declares no side effects, which would let a build drop the
+ * lab modules imported for theirs: the routes they register on the lab
+ * network and the environment they set up for a realm.
+ */
+function keepLabSideEffects(): Plugin {
+  return {
+    name: 'lab-keep-side-effects',
+    enforce: 'pre',
+    async resolveId(source, importer, options) {
+      if (!importer?.startsWith(labDir)) return
+      const resolved = await this.resolve(source, importer, {
+        ...options,
+        skipSelf: true
+      })
+      if (!resolved?.id.startsWith(labDir)) return resolved
+      return {...resolved, moduleSideEffects: true}
+    }
+  }
+}
+
 /**
  * `bun lab` serves the lab page of the website on http://localhost:4700,
  * without the rest of the website. `bun lab:build` builds the engine the
  * website loads into `apps/web/public/lab`.
  */
-export default defineConfig({
+export default defineConfig(({command}) => ({
   root: fileURLToPath(new URL('.', import.meta.url)),
   base: '/lab/',
   plugins: [
     // Fast refresh needs a window: only the page's components get it
     react({include: /(test\/lab\/main|apps\/web\/src\/.*)\.tsx$/}),
-    skipAlineaStyles()
+    skipAlineaStyles(),
+    keepLabSideEffects()
   ],
   resolve: {
     conditions: ['alinea-src', ...defaultClientConditions],
@@ -56,6 +80,9 @@ export default defineConfig({
     ]
   },
   css: {modules: {generateScopedName: '[name]__[local]'}},
+  // Every realm sets its own environment, see shared/realm.ts: a build must
+  // read it at runtime instead of inlining an empty one
+  define: command === 'build' ? {'process.env': 'globalThis.process.env'} : {},
   worker: {format: 'es'},
   build: {
     outDir: `${webDir}public/lab`,
@@ -89,4 +116,4 @@ export default defineConfig({
     ],
     exclude: ['@alinea/sqlite-wasm']
   }
-})
+}))
