@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
-import type {SyncProgress} from '#/core/db/LocalStore.js'
+import type {SyncOptions} from '#/core/db/LocalStore.js'
+import {timeStep} from '#/core/db/SyncStats.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
@@ -117,7 +118,7 @@ export async function mergeTrees(
   previousTree: ReadonlyTree,
   tree: ReadonlyTree,
   queries: SyncQueries,
-  onProgress?: (progress: SyncProgress) => void
+  {onProgress, stats}: SyncOptions = {}
 ): Promise<SyncChanges> {
   const changes: SyncChanges = {
     touched: new Set(),
@@ -146,6 +147,7 @@ export async function mergeTrees(
   ])
   const total = requests.reduce((sum, shas) => sum + shas.length, 0)
   let loaded = 0
+  if (stats) stats.files += total
   if (total) onProgress?.({loaded, total})
   const reads = requests.map(shas => {
     const blobs = readBlobs(source, shas, () =>
@@ -155,45 +157,58 @@ export async function mergeTrees(
     blobs.catch(() => {})
     return blobs
   })
-  if (deleted.length) {
-    const stored = await removeVersions(queries, changes, deleted)
-    const found = new Set(stored.map(row => row.filePath))
-    for (const filePath of deleted)
-      assert(found.has(filePath), `Missing version to delete: ${filePath}`)
-  }
+  if (deleted.length)
+    await timeStep(stats, 'write', async () => {
+      const stored = await removeVersions(queries, changes, deleted)
+      const found = new Set(stored.map(row => row.filePath))
+      for (const filePath of deleted)
+        assert(found.has(filePath), `Missing version to delete: ${filePath}`)
+    })
   for (const [index, files] of parts.entries()) {
-    const rows = parseFiles(config, tree, files, await reads[index])
-    await removeVersions(
-      queries,
-      changes,
-      rows.map(row => row.filePath),
-      rows.map(row => row.versionId)
+    const blobs = await timeStep(stats, 'blobs', () => reads[index])
+    const rows = await timeStep(stats, 'parse', () =>
+      parseFiles(config, tree, files, blobs)
     )
-    const references = Array<[versionId: string, targetId: string]>()
-    for (const row of rows) {
-      await queries.insertEntry.run(insertEntryValues(row))
-      await queries.insertSearch.run({
-        title: row.title,
-        body: row.searchableText
-      })
-      for (const target of row.references)
-        references.push([row.versionId, target])
-      changes.touched.add(row.id)
-      changes.inserted.add(row.versionId)
-      if (hasChildren(row.childrenSha)) changes.parents.add(row.id)
-    }
-    // A statement per row took a second for 20,000 entries.
-    if (references.length)
-      await queries.insertReferences.run({pairs: JSON.stringify(references)})
+    await timeStep(stats, 'write', () => writeRows(queries, changes, rows))
   }
-
-  await updateDirectoryHashes(
-    queries,
-    tree,
-    diff.map(change => change.path),
-    changes
+  await timeStep(stats, 'write', () =>
+    updateDirectoryHashes(
+      queries,
+      tree,
+      diff.map(change => change.path),
+      changes
+    )
   )
   return changes
+}
+
+async function writeRows(
+  queries: SyncQueries,
+  changes: SyncChanges,
+  rows: ReturnType<typeof parseFiles>
+): Promise<void> {
+  await removeVersions(
+    queries,
+    changes,
+    rows.map(row => row.filePath),
+    rows.map(row => row.versionId)
+  )
+  const references = Array<[versionId: string, targetId: string]>()
+  for (const row of rows) {
+    await queries.insertEntry.run(insertEntryValues(row))
+    await queries.insertSearch.run({
+      title: row.title,
+      body: row.searchableText
+    })
+    for (const target of row.references)
+      references.push([row.versionId, target])
+    changes.touched.add(row.id)
+    changes.inserted.add(row.versionId)
+    if (hasChildren(row.childrenSha)) changes.parents.add(row.id)
+  }
+  // A statement per row took a second for 20,000 entries.
+  if (references.length)
+    await queries.insertReferences.run({pairs: JSON.stringify(references)})
 }
 
 async function readBlobs(

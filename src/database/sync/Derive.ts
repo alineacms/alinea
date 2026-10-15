@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import type {SyncStats} from '#/core/db/LocalStore.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {assert} from '#/core/util/Assert.js'
 import {entryUrl, parseEntryFilePath} from '#/core/util/EntryFilenames.js'
@@ -347,9 +348,11 @@ export async function deriveEntries(
   config: Config,
   queries: SyncQueries,
   changes: SyncChanges,
-  validate: boolean
+  validate: boolean,
+  stats?: SyncStats
 ): Promise<Array<string>> {
   const versions = await loadVersions(queries, changes)
+  if (stats) stats.versions += versions.size
   const before = new Map<Version, string>()
   const languages = new Map<string, Language>()
   for (const version of versions.values()) {

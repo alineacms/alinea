@@ -20,6 +20,7 @@ import type {
 } from '#/core/db/EntryReference.js'
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
 import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
+import {timeStep} from '#/core/db/SyncStats.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
@@ -195,16 +196,20 @@ export class EntryStore
         return this.database.getRevision()
       }
       const localTree = await this.source.getTree()
-      const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
+      const remoteTree = await timeStep(options?.stats, 'tree', () =>
+        remote.getTreeIfDifferent(localTree.sha)
+      )
       if (!remoteTree) return this.#sync()
       const batch = localTree.diff(remoteTree)
       const knownRemote = sourceAtTree(remote, remoteTree)
       await this.database.syncWith(knownRemote, options)
-      await applyChangesFrom(
-        this.source,
-        new DatabaseSource(this.database),
-        batch,
-        remoteTree
+      await timeStep(options?.stats, 'write', () =>
+        applyChangesFrom(
+          this.source,
+          new DatabaseSource(this.database),
+          batch,
+          remoteTree
+        )
       )
       await this.#seed()
       return this.database.getRevision()

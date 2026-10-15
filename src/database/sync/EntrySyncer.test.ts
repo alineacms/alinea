@@ -3,6 +3,7 @@ import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import type {Config} from '#/core/Config.js'
 import type {SyncProgress} from '#/core/db/LocalStore.js'
+import {syncStats} from '#/core/db/SyncStats.js'
 import {Entry} from '#/core/Entry.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -663,6 +664,31 @@ test('a sync reports the files it fetches', async () => {
     })
     await runtime.syncWith(remote, {onProgress})
     expect(progress).toEqual([])
+  } finally {
+    await runtime.close()
+    sqlite.close()
+  }
+})
+
+test('a sync measures its steps and the versions it derives', async () => {
+  const source = new MemorySource()
+  await change(source, tx => {
+    for (let index = 0; index < 3; index++)
+      tx.add(`pages/recipes/r${index}.json`, recipe(`r${index}`, `R${index}`))
+  })
+  const {sqlite, runtime} = await openRuntime(cms.config)
+  try {
+    await runtime.syncWith(source)
+    await change(source, tx => {
+      tx.add('pages/recipes/r0.json', recipe('r0', 'Changed'))
+    })
+    const stats = syncStats()
+    await runtime.syncWith(source, {stats})
+    expect(Object.keys(stats.steps)).toEqual(
+      expect.arrayContaining(['tree', 'blobs', 'parse', 'write', 'derive'])
+    )
+    expect(stats.files).toBe(1)
+    expect(stats.versions).toBe(1)
   } finally {
     await runtime.close()
     sqlite.close()

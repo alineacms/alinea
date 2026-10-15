@@ -14,6 +14,7 @@ import type {
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
+import {loggedSync} from '#/core/db/SyncStats.js'
 import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import {
   committedEntries,
@@ -124,10 +125,16 @@ export function createHandler({
       }
     }
 
+    /** Log why and how long each sync took, except with files on disk. */
+    function sync(remote: RemoteSource, reason: string): Promise<string> {
+      if (dev) return local.syncWith(remote)
+      return loggedSync(local, remote, reason)
+    }
+
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
       // Waits outside the throttle: reads queued behind a hung sync answer too
-      return syncForRead(throttle(() => local.syncWith(cnx), syncInterval))
+      return syncForRead(throttle(() => sync(cnx, 'interval'), syncInterval))
     }
 
     try {
@@ -369,7 +376,9 @@ export function createHandler({
             'contentHash' in preview &&
             (await local.sha) !== preview.contentHash
           )
-            await syncForRead(local.syncWith(cnx))
+            await syncForRead(
+              sync(cnx, `preview at ${preview.contentHash.slice(0, 7)}`)
+            )
           query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
@@ -384,7 +393,7 @@ export function createHandler({
         expectJson()
         const policy = await user.policy
         let mutations = (await body) as ReadonlyArray<Mutation>
-        await local.syncWith(cnx)
+        await sync(cnx, 'commit')
         const adjusted = await hooks.beforeCommit?.({
           mutations,
           user: user.claims
@@ -394,7 +403,7 @@ export function createHandler({
           ? await committedEntries(local, mutations)
           : []
         const attempt = async (retry = 0): Promise<string> => {
-          if (retry > 0) await local.syncWith(cnx)
+          if (retry > 0) await sync(cnx, 'commit retry')
           const request = {
             ...(await local.request(mutations, policy)),
             user: user.claims
@@ -415,9 +424,9 @@ export function createHandler({
           // up with the remote instead, or with its next sync.
           try {
             if (sha === request.intoSha) await local.write(request)
-            else sha = await local.syncWith(cnx)
+            else sha = await sync(cnx, 'after commit')
           } catch {
-            sha = await local.syncWith(cnx).catch(() => sha)
+            sha = await sync(cnx, 'after commit').catch(() => sha)
           }
           return sha
         }
@@ -455,7 +464,7 @@ export function createHandler({
         let entries = await owners()
         // Another instance may have created the entry since this one synced
         if (entries.length === 0) {
-          await syncForRead(local.syncWith(cnx))
+          await syncForRead(sync(cnx, 'history of an unknown entry'))
           entries = await owners()
         }
         if (entries.length === 0)
@@ -474,6 +483,7 @@ export function createHandler({
         // The remote tells whether the client is current in one request, where
         // syncing an instance behind it first downloads every change
         let source: RemoteSource = cnx
+        const start = performance.now()
         try {
           const remoteTree = await cnx.getTreeIfDifferent(sha)
           if (!remoteTree) return Response.json(null)
@@ -482,14 +492,17 @@ export function createHandler({
           // The sync below warns about an unreachable remote and serves the
           // current content
         }
-        await syncForRead(local.syncWith(source))
+        // The sync starts from the remote tree fetched above, log its wait
+        const remoteMs = Math.round(performance.now() - start)
+        const reason = `tree from ${sha.slice(0, 7)}, remote tree ${remoteMs} ms`
+        await syncForRead(sync(source, reason))
         const tree = await local.getTreeIfDifferent(sha)
         return compressResponse(request, Response.json(tree ?? null))
       }
 
       if (action === HandleAction.Sha && request.method === 'GET') {
         expectJson()
-        await syncForRead(local.syncWith(cnx))
+        await syncForRead(sync(cnx, 'sha'))
         return Response.json(await local.sha)
       }
 
@@ -500,7 +513,7 @@ export function createHandler({
         // is asked for each change once instead of for every client.
         let tree = await local.source.getTree()
         if (!dev && shas.some(sha => !tree.hasSha(sha))) {
-          await syncForRead(local.syncWith(cnx))
+          await syncForRead(sync(cnx, 'blobs of a newer tree'))
           tree = await local.source.getTree()
         }
         const fromLocal: Array<string> = []

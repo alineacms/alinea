@@ -16,6 +16,7 @@ import {
 } from '#/core/Connection.js'
 import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {loggedSync, syncStats} from '#/core/db/SyncStats.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
@@ -142,27 +143,32 @@ export class NextCMS<
   async #syncDb(
     db: LocalStore,
     client: Client,
-    stats: RenderStats | undefined
+    reason: string,
+    render: RenderStats | undefined
   ): Promise<string> {
-    if (stats)
-      return stats.track({kind: 'sync', summary: 'sync'}, row =>
-        timed(row, () => this.#syncDb(db, client, undefined))
-      )
-    try {
-      const sha = await within(
-        db.syncWith(client, preValidatedRemote),
-        syncWait
-      )
-      this.#syncedAt = Date.now()
-      return sha
-    } catch (error) {
-      console.warn(
-        `Alinea could not sync with the handler, serving current content: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      )
-      return db.sha
+    const stats = syncStats()
+    const sync = async () => {
+      try {
+        const sha = await within(
+          loggedSync(db, client, reason, {...preValidatedRemote, stats}),
+          syncWait
+        )
+        this.#syncedAt = Date.now()
+        return sha
+      } catch (error) {
+        console.warn(
+          `Alinea could not sync with the handler, serving current content: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        )
+        return db.sha
+      }
     }
+    if (!render) return sync()
+    return render.track(
+      {kind: 'sync', summary: `sync (${reason})`, sync: stats},
+      row => timed(row, sync)
+    )
   }
 
   #applyPreview = cache(async () => {
@@ -212,6 +218,7 @@ export class NextCMS<
       await this.#syncDb(
         db,
         createClient(this.config, context),
+        `preview at ${decoded.contentHash.slice(0, 7)}`,
         this.#render().stats
       )
     return applyPreviewUpdate(db, decoded)
@@ -291,7 +298,7 @@ export class NextCMS<
       // as this isolate's last sync.
       const tracked = {
         sha: db.sha,
-        syncWith: () => this.#syncDb(db, client, stats)
+        syncWith: () => this.#syncDb(db, client, 'stale', stats)
       }
       const settled =
         !isDraft &&
@@ -302,7 +309,10 @@ export class NextCMS<
           contentShaWindow(this.config.syncInterval)
         ))
       if (!settled)
-        await this.throttle(() => this.#syncDb(db, client, stats), syncInterval)
+        await this.throttle(
+          () => this.#syncDb(db, client, 'interval', stats),
+          syncInterval
+        )
     }
     return answer()
   }

@@ -5,6 +5,7 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
+import {timeStep} from '#/core/db/SyncStats.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Graph, type AnyQueryResult, type GraphQuery} from '#/core/Graph.js'
 import {Policy} from '#/core/Role.js'
@@ -264,7 +265,9 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#assertOpen()
     return this.#syncQueue.run(async () => {
       const current = await this.#queue.run(() => this.#getRevision(this.#db))
-      const tree = await source.getTreeIfDifferent(current)
+      const tree = await timeStep(options?.stats, 'tree', () =>
+        source.getTreeIfDifferent(current)
+      )
       if (!tree) return {revision: current, changedEntryIds: []}
       this.#initialTree ??= tree
       const changedEntryIds = await this.#queue.run(async () => {
@@ -276,10 +279,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
           recordsTree: this.#recordsTree,
-          onProgress: options?.onProgress
+          onProgress: options?.onProgress,
+          stats: options?.stats
         })
         this.#tree = tree
-        if (changed.length > 0) await this.#optimize()
+        if (changed.length > 0)
+          await timeStep(options?.stats, 'analyze', () => this.#optimize())
         return changed
       })
       const change = {revision: tree.sha, changedEntryIds}

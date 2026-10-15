@@ -9,12 +9,32 @@ export interface SyncOptions {
   validate?: boolean
   /** Called as files arrive from the remote, once there are files to fetch. */
   onProgress?(progress: SyncProgress): void
+  /** Filled in with where the sync spent its time, see `loggedSync`. */
+  stats?: SyncStats
 }
 
 /** Files fetched from the remote during a sync. */
 export interface SyncProgress {
   loaded: number
   total: number
+}
+
+export type SyncStep =
+  | 'tree'
+  | 'blobs'
+  | 'parse'
+  | 'write'
+  | 'derive'
+  | 'analyze'
+
+/** Where a sync spent its time and how much it changed. */
+export interface SyncStats {
+  /** Milliseconds per step: tree and blobs wait for the remote. */
+  steps: Partial<Record<SyncStep, number>>
+  /** Files fetched from the remote */
+  files: number
+  /** Entry versions derived again */
+  versions: number
 }
 
 /**

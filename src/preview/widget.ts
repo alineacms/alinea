@@ -1,3 +1,5 @@
+import type {SyncStats} from '#/core/db/LocalStore.js'
+import {syncSteps} from '#/core/db/SyncStats.js'
 import type {DOMAttributes} from 'react'
 
 export interface PreviewStat {
@@ -14,6 +16,8 @@ export interface PreviewStat {
   /** SQL statements this row's work ran, such as a preview's sync. */
   statements?: number
   sqlMs?: number
+  /** Where a sync spent its time */
+  sync?: SyncStats
 }
 
 /** One of the slowest SQL statements of a render. */
@@ -253,14 +257,17 @@ export function registerPreviewWidget() {
     #logStats = () => {
       if (!this.#stats) return
       const {rows, statements, sqlMs, renderMs, slowest, database} = this.#stats
-      const table: Array<Record<string, unknown>> = rows.map(row => ({
-        type: row.kind,
-        what: row.summary,
-        source: row.source ?? '',
-        ms: round(row.durationMs),
-        statements: row.statements ?? '',
-        sqlMs: row.sqlMs === undefined ? '' : round(row.sqlMs)
-      }))
+      const table: Array<Record<string, unknown>> = rows.flatMap(row => [
+        {
+          type: row.kind,
+          what: row.summary,
+          source: row.source ?? '',
+          ms: round(row.durationMs),
+          statements: row.statements ?? '',
+          sqlMs: row.sqlMs === undefined ? '' : round(row.sqlMs)
+        },
+        ...stepRows(row.sync)
+      ])
       if (database)
         table.push({
           type: 'database',
@@ -370,6 +377,27 @@ export function registerPreviewWidget() {
       queries: rows.filter(row => row.kind === 'query'),
       syncs: rows.filter(row => row.kind === 'sync')
     }
+  }
+  // Tree and blobs wait for the handler, which may sync with the remote
+  // first; the other steps run here.
+  function stepRows(stats: SyncStats | undefined) {
+    if (!stats) return []
+    const {steps, files, versions} = stats
+    return syncSteps.flatMap(step => {
+      const ms = steps[step]
+      if (ms === undefined) return []
+      return {
+        type: 'sync step',
+        what:
+          step === 'blobs'
+            ? `blobs, ${files} files`
+            : step === 'derive'
+              ? `derive, ${versions} versions`
+              : step,
+        source: step === 'tree' || step === 'blobs' ? 'handler' : 'database',
+        ms: round(ms)
+      }
+    })
   }
   function round(ms: number) {
     return Math.round(ms * 10) / 10
