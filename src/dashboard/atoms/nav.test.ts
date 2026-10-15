@@ -142,7 +142,8 @@ test('opens the entry an edit link names by url', async () => {
     workspace: 'main',
     root: 'pages',
     entry: 'hero',
-    locale: 'nl'
+    locale: 'nl',
+    view: 'edit'
   })
 })
 

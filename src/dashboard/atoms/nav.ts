@@ -363,7 +363,14 @@ async function linkedRoute(
     (await graph.first({...live, alias: {in: urls}})) ??
     (await graph.first({...query, url: {in: urls}}))
   if (!found) return {page: 'splash'}
-  return {page: 'entry', ...found, locale: found.locale ?? undefined}
+  // Linked from the site to edit it, so an entry with children opens in the
+  // editor instead of its overview
+  return {
+    page: 'entry',
+    ...found,
+    locale: found.locale ?? undefined,
+    view: 'edit'
+  }
 }
 
 function decoded(url: string): string {
