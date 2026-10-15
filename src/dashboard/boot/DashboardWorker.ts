@@ -111,7 +111,12 @@ export class DashboardWorker extends EventTarget {
     const loaded = await this.#nextLoad
     if (!loaded.stored) return void (await this.sync())
     // Once per store: another tab of the shared worker shows the same catch-up
-    loaded.caughtUp ??= this.#catchUp()
+    if (!loaded.caughtUp) return void (loaded.caughtUp = this.#catchUp())
+    // A graph replaced on the same store, as on a dev server refetch after
+    // content changed on disk, still has to fetch those changes
+    this.sync().catch(() => {
+      // Background sync failures are silent and retried on the next interval.
+    })
   }
 
   #catchUp(): Promise<void> {

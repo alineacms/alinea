@@ -2,6 +2,7 @@ import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Entry} from '#/core/Entry.js'
 import {FSSource} from '#/core/source/FSSource.js'
@@ -821,6 +822,45 @@ test('catches up once per loaded store', async () => {
   const succeeded = syncActivity(worker, 'succeeded')
   release()
   await succeeded
+})
+
+test('syncs a replaced graph of a caught up store', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const stored = new MemorySource()
+  await syncWith(stored, fixture)
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, fixture)
+  const remoteDB = new LocalDB(cms.config, remoteSource)
+  await remoteDB.sync()
+  const worker = new DashboardWorker(stored)
+  await worker.load('replaced', cms.config, createTestConnection(remoteDB))
+  const caughtUp = syncActivity(worker, 'succeeded')
+  await worker.ready()
+  await caughtUp
+  const recipe = await remoteDB.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  await remoteDB.update({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id,
+    set: {title: 'Remote title'}
+  })
+  const indexed = new Promise(resolve =>
+    worker.addEventListener(IndexEvent.type, resolve, {once: true})
+  )
+
+  // The dev server's refetch renders the dashboard with a new graph
+  await worker.ready()
+  await indexed
+
+  const db = await worker.db
+  const title = await db.get({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id,
+    select: Entry.title
+  })
+  expect(title).toBe('Remote title')
 })
 
 // Known limitation: stored content shows before it caught up with the
