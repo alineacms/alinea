@@ -20,8 +20,10 @@ export async function createGeneratedDatabase(
     includedAtBuild(filePath) {
       return initialTree?.has(filePath) ?? false
     },
-    // Nothing reopens the in-memory writes: skip storing the synced tree.
-    recordsTree: false
+    // Nothing reopens the in-memory writes: skip storing the synced tree,
+    // and keep the statistics of the build instead of analyzing them.
+    recordsTree: false,
+    analyzes: false
   })
   try {
     await assertReadableData(db)

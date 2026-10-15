@@ -64,6 +64,11 @@ export interface EntryDatabaseOptions {
    * reopened and synced from it. An overlay keeps its tree in memory.
    */
   recordsTree?: boolean
+  /**
+   * Whether syncs that change entries refresh the query planner statistics.
+   * A database that keeps the statistics it was built with skips the cost.
+   */
+  analyzes?: boolean
 }
 
 export interface EntryApplyOptions {
@@ -99,11 +104,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #tree?: ReadonlyTree
   #initialTree?: ReadonlyTree
   #recordsTree: boolean
-  /**
-   * Overlays answer one preview payload and are thrown away; they keep the
-   * statistics of the database they fork.
-   */
-  #analyzes = true
+  #analyzes: boolean
   /** The connection is already inside a transaction: never open nested ones. */
   #transactional = false
   #changeListeners = new Set<EntryChangeListener>()
@@ -121,6 +122,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#db = db
     this.#syncer = new EntrySyncer(config, db)
     this.#recordsTree = options.recordsTree ?? true
+    this.#analyzes = options.analyzes ?? true
   }
 
   get config(): Config {
@@ -175,10 +177,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     const overlay = new EntryDatabase(this.#config, copy.database, {
       ...this.#options,
       fork: copy.fork,
-      recordsTree: false
+      recordsTree: false,
+      // Overlays answer one preview payload and are thrown away: they keep
+      // the statistics of the database they fork.
+      analyzes: false
     })
     overlay.#tree = tree
-    overlay.#analyzes = false
     try {
       await overlay.syncWith(source)
       return overlay

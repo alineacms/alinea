@@ -123,6 +123,33 @@ test('overlay mutations leave the shared base search index untouched', () =>
     }
   }))
 
+test('syncing a generated database runs no analyze', () =>
+  withDirectory(async dir => {
+    const file = join(dir, 'database.sqlite')
+    await (await generate(file, await pages({a: 'Base A'}))).close()
+    const statements = Array<string>()
+    const store = await createGeneratedDatabase(
+      config,
+      await runtimeDatabase({
+        path: file,
+        overlay: true,
+        logQuery: query => statements.push(query.sql)
+      })
+    )
+    try {
+      await store.syncWith(await pages({a: 'Base A', b: 'Base B'}))
+      expect(await store.find({search: 'Base', select: Entry.id})).toEqual([
+        'a',
+        'b'
+      ])
+      expect(statements.filter(sql => /analyze|optimize/i.test(sql))).toEqual(
+        []
+      )
+    } finally {
+      await store.close()
+    }
+  }))
+
 test('a readonly handler follows a dev server writing the same file', () =>
   withDirectory(async dir => {
     const file = join(dir, 'database.sqlite')
