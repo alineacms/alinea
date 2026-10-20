@@ -9,13 +9,19 @@
   outline: none;
   cursor: pointer;
 
+  /* The selected option is tinted like the selected entry in the sidebar */
   &[aria-selected='true'] {
+    background: color-mix(in oklab, var(--alinea-selected), var(--alinea-bg) 60%);
     color: var(--alinea-selected-fg);
     font-weight: 500;
   }
 
   &.is-highlighted {
     background: var(--alinea-muted);
+  }
+
+  &[aria-selected='true'].is-highlighted {
+    background: var(--alinea-selected);
   }
 
   /* The subtle background only marks the item under the pointer, keyboard
