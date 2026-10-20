@@ -189,8 +189,11 @@ const initialRoute = routeFromHash(
 )
 const currentRouteAtom = atom(initialRoute)
 let ignoredBrowserHash: string | undefined
-/** Counts the lookups of edit links, of which the last one navigates */
-let linkLookups = 0
+/**
+ * The pending lookup of an edit link, the last one navigates, and the hash
+ * put back in the address bar meanwhile
+ */
+const linkLookupAtom = atom<{hash: string} | undefined>(undefined)
 
 interface NavigationRequest {
   browser?: boolean
@@ -210,6 +213,11 @@ export const routeAtom = Object.assign(
               route: routeFromUpdate(update),
               replace: update.replace
             } satisfies NavigationRequest)
+      // Changing the hash fires both popstate and hashchange, the second one
+      // reads the hash put back for a lookup, which is not a navigation
+      const pending = get(linkLookupAtom)
+      if (request.browser && pending?.hash === hashFromRoute(request.route))
+        return
       if (request.route.page !== 'edit')
         return navigate(get, set, request, {
           sort: 'sort' in update,
@@ -218,17 +226,17 @@ export const routeAtom = Object.assign(
       // The current page stays, also in the address bar, until the linked
       // entry is found; a navigation meanwhile wins
       const current = get(currentRouteAtom)
-      const lookup = ++linkLookups
-      set(
-        locationAtom,
-        location => ({...location, hash: hashFromRoute(current)}),
-        {replace: true}
-      )
+      const lookup = {hash: hashFromRoute(current)}
+      set(linkLookupAtom, lookup)
+      set(locationAtom, location => ({...location, hash: lookup.hash}), {
+        replace: true
+      })
       return linkedRoute(get, request.route)
         .catch(() => ({page: 'splash'}) as ResolvedDashboardRoute)
         .then(route => {
-          if (lookup !== linkLookups || get(currentRouteAtom) !== current)
-            return
+          if (get(linkLookupAtom) !== lookup) return
+          set(linkLookupAtom, undefined)
+          if (get(currentRouteAtom) !== current) return
           navigate(get, set, {route, replace: true}, {sort: true, tab: true})
         })
     }
