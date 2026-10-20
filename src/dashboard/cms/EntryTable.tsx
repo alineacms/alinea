@@ -52,7 +52,9 @@ import {useLocale} from '../hooks.js'
 import {LucideFile} from '../icons.js'
 import styler from '@alinea/styler'
 import {
+  type Atom,
   atom,
+  type PrimitiveAtom,
   useAtomValueRaw,
   useAtomValueRawSync,
   useSetAtom,
@@ -126,9 +128,13 @@ export interface EntryTableProps {
  * />
  */
 export function EntryTable(props: EntryTableProps) {
+  // The table owns its atoms, made outside the suspending content: a
+  // component that suspends before it mounts loses its memoized values, so
+  // it would load new rows on every retry
+  const table = useEntryTable(props)
   return (
     <Suspense fallback={<EntryTableLoading {...props} />}>
-      <EntryTableContent {...props} />
+      <EntryTableContent {...props} table={table} />
     </Suspense>
   )
 }
@@ -191,10 +197,23 @@ function overviewOf(
   return overview as OverviewOptions
 }
 
-function EntryTableContent(props: EntryTableProps) {
+interface EntryTableState {
+  config: Config
+  locale: string | null
+  types: Array<string>
+  configured: OverviewOptions | undefined
+  overview: OverviewState
+  atoms: EntryTableAtoms
+}
+
+interface EntryTableAtoms {
+  requested: PrimitiveAtom<OverviewSort | undefined>
+  ready: Atom<Promise<Array<ExplorerItemData>>>
+  rows: Atom<Array<ExplorerItemData> | undefined>
+}
+
+function useEntryTable(props: EntryTableProps): EntryTableState {
   const config = useAtomValueRaw(configAtom)
-  const store = useStore()
-  const openEntry = useSetAtom(openEntryAtom)
   const contextLocale = useLocale()
   const locale = props.locale === undefined ? contextLocale : props.locale
   const types = typeNames(config, props.type)
@@ -241,6 +260,17 @@ function EntryTableContent(props: EntryTableProps) {
     return {requested, ready, rows: unwrap(ready, previous => previous)}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
+  return {config, locale, types, configured, overview, atoms}
+}
+
+interface EntryTableContentProps extends EntryTableProps {
+  table: EntryTableState
+}
+
+function EntryTableContent(props: EntryTableContentProps) {
+  const {config, locale, types, configured, overview, atoms} = props.table
+  const store = useStore()
+  const openEntry = useSetAtom(openEntryAtom)
   const requested = useAtomValueRaw(atoms.requested)
   const setRequested = useSetAtom(atoms.requested)
   const loaded = useAtomValueRawSync(atoms.rows)
