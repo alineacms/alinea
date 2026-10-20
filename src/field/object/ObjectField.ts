@@ -13,6 +13,8 @@ export interface ObjectOptions<Definition> extends FieldOptions<
   help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
+  /** Show the fields folded when the entry opens */
+  collapsed?: boolean
 }
 
 export class ObjectField<Definition> extends RecordField<
