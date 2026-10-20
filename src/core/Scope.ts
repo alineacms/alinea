@@ -53,6 +53,7 @@ export class Scope {
   #nested: Map<Entity, Array<string>> = new Map()
   #nestedKeys: Map<string, Entity> = new Map()
   #shared: Set<Entity> = new Set()
+  #adopted: WeakMap<object, Entity> = new WeakMap()
 
   constructor(config: Config) {
     for (const [workspaceName, workspace] of entries(config.workspaces)) {
@@ -102,12 +103,13 @@ export class Scope {
   }
 
   workspaceOf(root: HasRoot): HasWorkspace {
-    const path = this.#paths.get(root)
+    const path = this.#paths.get(this.#current(root))
     if (!path) throw new Error(`Root not found in scope: ${root}`)
     return this.#keys.get(path[0]) as Workspace
   }
 
   keyOf(entity: Entity) {
+    entity = this.#current(entity)
     if (this.#shared.has(entity))
       throw new Error(
         'Field is used in more than one place, target the field containing it'
@@ -119,17 +121,18 @@ export class Scope {
 
   /** The type of a field and its path in there, such as `seo.title` */
   fieldOf(field: Field): [type: string, path: string] | undefined {
+    field = this.#current(field)
     const path = this.#paths.get(field) ?? this.#nested.get(field)
     if (path?.[0] !== 'Field') return
     return [path[1], path.slice(2).join('.')]
   }
 
   locationOf(entity: Entity) {
-    return this.#paths.get(entity)?.slice(1)
+    return this.#paths.get(this.#current(entity))?.slice(1)
   }
 
   nameOf(entity: Entity) {
-    return this.#paths.get(entity)?.at(-1)
+    return this.#paths.get(this.#current(entity))?.at(-1)
   }
 
   /**
@@ -137,6 +140,7 @@ export class Scope {
    * for a field of an object field
    */
   dataPathOf(field: Field): Array<string> | undefined {
+    field = this.#current(field)
     if (this.#shared.has(field))
       throw new Error(
         'Field is used in more than one place, select the field containing it'
@@ -152,7 +156,8 @@ export class Scope {
   }
 
   stringify(input: any): string {
-    const result = JSON.stringify(input, (key, value) => {
+    const result = JSON.stringify(input, (key, raw) => {
+      const value = this.#current(raw)
       const path = this.#paths.get(value) ?? this.#nested.get(value)
       if (path) return {[ENTITY_KEY]: path.join('.')}
       if (value && typeof value === 'object' && hasExpr(value))
@@ -178,6 +183,25 @@ export class Scope {
       return value
     })
     return result
+  }
+
+  /**
+   * Recognize the entities of a previous build of this config by their key.
+   * The dev server replaces the config of its database when the schema
+   * changes, while the handler of the previous config still answers queries
+   * that name its own types and fields.
+   */
+  adopt(previous: Scope) {
+    for (const [key, entity] of [...previous.#keys, ...previous.#nestedKeys]) {
+      const current = this.#keys.get(key) ?? this.#nestedKeys.get(key)
+      if (current && current !== entity) this.#adopted.set(entity, current)
+    }
+  }
+
+  /** The entity of this config for an entity of an adopted build */
+  #current<T>(entity: T): T {
+    if (!entity || typeof entity !== 'object') return entity
+    return (this.#adopted.get(entity) as T | undefined) ?? entity
   }
 
   #insert(entity: Entity, key: string) {

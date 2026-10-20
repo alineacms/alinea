@@ -28,3 +28,38 @@ test('fields of object fields survive serialization', () => {
   const parsed = scope.parse<typeof select>(scope.stringify(select))
   expect(parsed.title).toBe(Page.seo.meta.title)
 })
+
+test('recognizes the entities of an adopted build of the config', () => {
+  // After a schema change the dev server builds new types and fields, while
+  // the handler of the previous build still parses queries into its own
+  const build = () => {
+    const Translations = type('Translations', {
+      fields: {
+        greeting: text('Greeting'),
+        seo: object('SEO', {fields: {title: text('Title')}})
+      }
+    })
+    return {
+      Translations,
+      scope: getScope({schema: {Translations}, workspaces: {}})
+    }
+  }
+  const previous = build()
+  const next = build()
+  expect(next.scope.nameOf(previous.Translations)).toBeUndefined()
+  next.scope.adopt(previous.scope)
+  expect(next.scope.nameOf(previous.Translations)).toBe('Translations')
+  expect(next.scope.dataPathOf(previous.Translations.greeting)).toEqual([
+    'greeting'
+  ])
+  expect(next.scope.dataPathOf(previous.Translations.seo.title)).toEqual([
+    'seo',
+    'title'
+  ])
+  const query = next.scope.parse<{type: unknown}>(
+    next.scope.stringify({type: previous.Translations})
+  )
+  expect(query.type).toBe(next.Translations)
+  // The previous build does not recognize the next one
+  expect(previous.scope.nameOf(next.Translations)).toBeUndefined()
+})
