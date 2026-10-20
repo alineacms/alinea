@@ -26,6 +26,23 @@
   overflow: hidden;
 }
 
+.LinkPickerCompact-parent {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.LinkPickerCompact-parent-title {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .LinkPickerCompact-footer {
   display: flex;
   flex: 0 0 auto;
