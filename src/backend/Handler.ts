@@ -88,6 +88,8 @@ export interface HandlerOptions extends HandlerHooks {
   cms: CMS
   db: LocalStore | Promise<LocalStore>
   remote?: (context: RequestContext) => RemoteConnection
+  /** Log why and how long each sync took, for a deployed handler */
+  logSyncs?: boolean
   forwardMutations?(
     request: Request,
     context: AuthedContext
@@ -99,6 +101,7 @@ export function createHandler({
   remote = context => new CloudRemote(context, cms.config),
   db,
   forwardMutations,
+  logSyncs = false,
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
@@ -127,7 +130,7 @@ export function createHandler({
 
     /** Log why and how long each sync took, except with files on disk. */
     function sync(remote: RemoteSource, reason: string): Promise<string> {
-      if (dev) return local.syncWith(remote)
+      if (dev || !logSyncs) return local.syncWith(remote)
       return loggedSync(local, remote, reason)
     }
 

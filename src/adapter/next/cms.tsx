@@ -149,10 +149,13 @@ export class NextCMS<
     const stats = syncStats()
     const sync = async () => {
       try {
-        const sha = await within(
-          loggedSync(db, client, reason, {...preValidatedRemote, stats}),
-          syncWait
-        )
+        const options = {...preValidatedRemote, stats}
+        // Only deployments log their syncs, `next dev` would be noisy
+        const synced =
+          process.env.NODE_ENV === 'production'
+            ? loggedSync(db, client, reason, options)
+            : db.syncWith(client, options)
+        const sha = await within(synced, syncWait)
         this.#syncedAt = Date.now()
         return sha
       } catch (error) {

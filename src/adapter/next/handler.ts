@@ -80,6 +80,7 @@ export function createHandlerWithDatabase(
     ...options,
     remote,
     db,
+    logSyncs: process.env.NODE_ENV === 'production',
     afterCommit
   })
 
