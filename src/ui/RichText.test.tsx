@@ -335,6 +335,29 @@ test('RichText uses provided heading ids and ignores left alignment', () => {
   expect(heading.style.textAlign).toBe('')
 })
 
+test('RichText places an anchor where an anchor mark starts', () => {
+  const marked = {_type: 'anchor', id: 'fees'}
+  const doc = [
+    {
+      _type: 'paragraph',
+      content: [
+        {_type: 'text', text: 'See '},
+        // One anchor over differently formatted text marks each text node
+        {_type: 'text', text: 'the fees', marks: [{_type: 'bold'}, marked]},
+        {_type: 'text', text: ' below', marks: [marked]}
+      ]
+    }
+  ] satisfies TextDoc
+  // A view for links does not apply to anchors
+  function Link({children}: PropsWithChildren) {
+    return <span>{children}</span>
+  }
+  const {container} = render(<RichText doc={doc} a={Link} />)
+  expect(container.innerHTML).toBe(
+    '<p>See <a id="fees" name="fees"></a><b>the fees</b> below</p>'
+  )
+})
+
 test('RichText renders custom block nodes', () => {
   interface Blocks {
     Callout: {message: string}
