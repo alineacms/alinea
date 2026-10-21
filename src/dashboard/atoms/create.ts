@@ -1,3 +1,4 @@
+import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
@@ -57,12 +58,16 @@ export const createEntryAtom = atom(
         ? [request.parentId, ...(parent?.parents ?? [])]
         : []
     })
-    const data = Type.withInitialValue(type, {
-      ...Type.initialValue(type),
-      ...copiedData,
-      title,
-      path: slugify(title)
-    })
+    const data = Type.withInitialValue(
+      type,
+      {
+        ...Type.initialValue(type),
+        ...copiedData,
+        title,
+        path: slugify(title)
+      },
+      {fieldI18n: Config.fieldI18n(config, request.workspace, request.root)}
+    )
     const created = await graph.create({
       type,
       workspace: request.workspace,

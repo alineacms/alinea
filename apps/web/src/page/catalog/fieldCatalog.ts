@@ -16,7 +16,7 @@ export type FieldPreviewKey =
   | 'list'
   | 'object'
   | 'tabs'
-  | 'localiser'
+  | 'localised'
 
 export interface FieldCatalogItem {
   key: FieldPreviewKey
@@ -191,11 +191,12 @@ export const fieldCatalog: Array<FieldCatalogGroup> = [
         href: '/docs/fields/tabs'
       },
       {
-        key: 'localiser',
-        name: 'Localiser',
-        call: 'Field.localiser',
+        key: 'localised',
+        name: 'Localised',
+        call: 'Field.localised',
         stores: 'value per locale',
-        description: 'Keeps every translation of a value in a single field.',
+        description:
+          'Keeps every translation of a value in a single field, in the locales of its root.',
         href: '/docs/internationalization#localised-fields',
         isNew: true
       }

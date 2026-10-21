@@ -22,7 +22,7 @@ export interface MediaAltFieldViewProps {
 
 export function MediaAltFieldView({field}: MediaAltFieldViewProps) {
   const {entry} = useEntryAtoms()
-  const i18n = useAtomValueRaw(entry.mediaI18n)
+  const i18n = useAtomValueRaw(entry.fieldI18n)
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)

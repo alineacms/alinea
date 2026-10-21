@@ -4,6 +4,8 @@ import type {
 } from '#/core/db/EntryReference.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
+import type {RootI18n} from './Root.js'
+import type {Type} from './Type.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
 import type {User} from './User.js'
 import {isEmptyValue} from './util/Objects.js'
@@ -50,6 +52,12 @@ export interface EntryAnchorTarget {
 
 export interface FieldAnchorContext {
   anchors: Set<string>
+}
+
+/** Where a value is edited or created, for fields that depend on its root */
+export interface FieldInitialContext {
+  /** The locales of a root that translates fields, see `Field.localised` */
+  fieldI18n?: RootI18n
 }
 
 export interface FieldLocalizeContext {
@@ -112,8 +120,13 @@ export interface FieldData<
   Options
 > extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   referencedViews?: Array<string>
+  /** The types of the values nested in this field: list rows, blocks, ... */
+  nestedTypes?: Array<Type>
   defaultValue?: () => StoredValue
-  withInitialValue?: (value: StoredValue) => StoredValue
+  withInitialValue?: (
+    value: StoredValue,
+    context?: FieldInitialContext
+  ) => StoredValue
   applyLinks?: (value: StoredValue, loader: LinkResolver) => Promise<void>
   searchableText?: (value: StoredValue) => string
   /** Whether the value counts as missing for the `required` option */
@@ -177,9 +190,15 @@ export namespace Field {
 
   export function withInitialValue<StoredValue>(
     field: HasField,
-    value: StoredValue
+    value: StoredValue,
+    context?: FieldInitialContext
   ): StoredValue {
-    return getField(field).withInitialValue?.(value) ?? value
+    return getField(field).withInitialValue?.(value, context) ?? value
+  }
+
+  /** The types of the values nested in a field, such as list rows */
+  export function nestedTypes(field: HasField): Array<Type> {
+    return getField(field).nestedTypes ?? []
   }
 
   export function view<

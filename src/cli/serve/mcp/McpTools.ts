@@ -134,8 +134,14 @@ export function createContentTools(
    * Editors may publish invalid fields anyway, agents fix them first: the
    * error lists each field and what is wrong with it.
    */
-  function checkPublishable(type: Type, data: Record<string, unknown>) {
-    const errors = validateEntry(type, data)
+  function checkPublishable(
+    type: Type,
+    data: Record<string, unknown>,
+    location: {workspace: string; root: string}
+  ) {
+    const errors = validateEntry(type, data, {
+      fieldI18n: Config.fieldI18n(config, location.workspace, location.root)
+    })
     if (errors.length === 0) return
     const draft = config.enableDrafts
       ? ', or pass publish: false to save a draft'
@@ -397,20 +403,25 @@ export function createContentTools(
           )
         const converted = inputData(type, args.data)
         await checkLinks(type, converted)
-        const data = Type.withInitialValue(type, {
-          ...Type.initialValue(type),
-          ...source?.data,
-          ...converted
-        })
+        const data = Type.withInitialValue(
+          type,
+          {
+            ...Type.initialValue(type),
+            ...source?.data,
+            ...converted
+          },
+          {fieldI18n: Config.fieldI18n(config, workspace, root)}
+        )
         if (!data.title) fail('data.title is required')
         // The transaction derives the path from the title
         if (!converted.path) delete data.path
         const saveAs = status(args.publish)
         if (saveAs === 'published')
-          checkPublishable(type, {
-            ...data,
-            path: data.path || slugify(String(data.title))
-          })
+          checkPublishable(
+            type,
+            {...data, path: data.path || slugify(String(data.title))},
+            {workspace, root}
+          )
         const insertOrder = parent && Type.insertOrder(typeOf(parent.type))
         const created = await graph.create({
           type,
@@ -458,12 +469,16 @@ export function createContentTools(
         )
           return {...output(current), note: 'No changes'}
         // Like the dashboard's editor: every field, in field order
-        const data = Type.withInitialValue(type, {
-          ...Type.initialValue(type),
-          ...current.data,
-          ...converted
-        })
-        if (saveAs === 'published') checkPublishable(type, data)
+        const data = Type.withInitialValue(
+          type,
+          {
+            ...Type.initialValue(type),
+            ...current.data,
+            ...converted
+          },
+          {fieldI18n: Config.fieldI18n(config, current.workspace, current.root)}
+        )
+        if (saveAs === 'published') checkPublishable(type, data, current)
         // The dashboard's save: the whole entry, as a draft or published
         await graph.mutate([
           {
@@ -532,9 +547,20 @@ export function createContentTools(
           id,
           locale,
           status: from,
-          select: {type: Entry.type, data: Entry.data}
-        })) as {type: string; data: Record<string, unknown>} | null
-        if (pending) checkPublishable(typeOf(pending.type), pending.data)
+          select: {
+            type: Entry.type,
+            data: Entry.data,
+            workspace: Entry.workspace,
+            root: Entry.root
+          }
+        })) as {
+          type: string
+          data: Record<string, unknown>
+          workspace: string
+          root: string
+        } | null
+        if (pending)
+          checkPublishable(typeOf(pending.type), pending.data, pending)
         await graph.publish({id, locale, status: from})
         return {id, locale, status: 'published'}
       }

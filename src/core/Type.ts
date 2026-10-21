@@ -8,6 +8,7 @@ import {
   Field,
   type EntryAnchorTarget,
   type FieldAnchorContext,
+  type FieldInitialContext,
   type FieldLocalizeContext,
   type FieldBeforeSaveContext
 } from './Field.js'
@@ -173,7 +174,8 @@ export namespace Type {
 
   export function withInitialValue(
     type: Type,
-    value: Record<string, unknown>
+    value: Record<string, unknown>,
+    context?: FieldInitialContext
   ): Record<string, unknown> {
     const merged = mergeInitialValue(value, initialValue(type)) as Record<
       string,
@@ -182,7 +184,7 @@ export namespace Type {
     let next = merged
     for (const [key, field] of entries(fields(type))) {
       const before = merged[key]
-      const after = Field.withInitialValue(field, before)
+      const after = Field.withInitialValue(field, before, context)
       if (after === before) continue
       if (next === merged) next = {...merged}
       next[key] = after

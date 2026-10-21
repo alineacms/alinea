@@ -1,5 +1,6 @@
 import type {Config} from './Config.js'
 import {Field, type FieldOptions} from './Field.js'
+import type {RootI18n} from './Root.js'
 import type {Policy, Resource} from './Role.js'
 import {getScope} from './Scope.js'
 import {type FieldGetter, optionTrackerOf} from './Tracker.js'
@@ -32,12 +33,16 @@ export interface FieldValidationContext {
   /** The records enclosing the field, outermost first, to resolve trackers */
   scopes: Array<ValidationScope>
   fieldOptions?: FieldOptionsResolver
+  /** The locales of a root that translates fields, see `Field.localised` */
+  fieldI18n?: RootI18n
 }
 
 export interface ValidateEntryOptions {
   /** @deprecated Unused, validation does not depend on the locale */
   locale?: string | null
   fieldOptions?: FieldOptionsResolver
+  /** The locales of the entry's root, if it translates fields */
+  fieldI18n?: RootI18n
 }
 
 /**
@@ -169,7 +174,8 @@ export function validateEntry(
     path: [],
     labels: [],
     scopes: [],
-    fieldOptions: options.fieldOptions
+    fieldOptions: options.fieldOptions,
+    fieldI18n: options.fieldI18n
   })
 }
 

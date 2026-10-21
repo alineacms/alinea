@@ -1,6 +1,7 @@
 import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
+import {entries, fromEntries, isRecord, keys} from '#/core/util/Objects.js'
 import {fieldError} from '#/core/Validation.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {selectLocale} from './SelectLocale.js'
@@ -8,7 +9,11 @@ import {selectLocale} from './SelectLocale.js'
 export type LocalisedValue<Locale extends string, Value> = Record<Locale, Value>
 
 export interface Localisation<Locale extends string = string, Value = unknown> {
-  locales: ReadonlyArray<Locale>
+  /**
+   * The locales of the value, undefined for a field that uses the locales of
+   * the root of its entry
+   */
+  locales?: ReadonlyArray<Locale>
   fallback?: (requested: Locale) => ReadonlyArray<Locale>
   inner: Field<Value, unknown, unknown, FieldOptions<Value>>
 }
@@ -54,6 +59,7 @@ export interface SelectLocalisedValueOptions<Locale extends string, Value> {
   defaultValue?: Value
 }
 
+/** @deprecated Use `Field.localised(field, {locales})` */
 export function localiser<const Locale extends string>({
   locales,
   fallback
@@ -213,4 +219,182 @@ export function selectLocalisedValue<Locale extends string, Value>({
 
 function isAvailable<Value>(value: Value | undefined): value is Value {
   return value !== undefined && value !== null && value !== ''
+}
+
+/**
+ * Holds a value of `field` per locale. With `locales` the value always has
+ * those locales. Without, it uses the locales of the root of its entry: in a
+ * root that translates fields (`i18n: {translate: 'fields'}`) it holds a
+ * value per locale, in a root without `i18n` the plain value. Roots that
+ * translate entries throw, their entries are a translation already.
+ */
+export function localised<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+): LocalisedField<string, StoredValue, QueryValue, Options>
+export function localised<
+  const Locale extends string,
+  StoredValue,
+  QueryValue,
+  Mutator,
+  Options
+>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>,
+  options: LocaliserOptions<Locale>
+): LocalisedField<Locale, StoredValue, QueryValue, Options>
+export function localised<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>,
+  options?: LocaliserOptions<string>
+): LocalisedField<string, StoredValue, QueryValue, Options> {
+  return options ? localiser(options)(field) : rootLocalised(field)
+}
+
+/** Whether a field takes its locales from the root of its entry */
+export function inheritsLocales(field: Field): boolean {
+  return field instanceof LocalisedField && !field.localisation.locales
+}
+
+type StoredLocales<Value> = Array<[locale: string | undefined, value: Value]>
+
+/**
+ * The values of a field that uses the locales of its root: a value per
+ * locale, or the plain value in a root without i18n. The inner value is never
+ * a record, see `Config.validate`, so a record is a value per locale.
+ */
+function storedLocales<Value>(value: unknown): StoredLocales<Value> {
+  if (isRecord(value)) return entries(value) as StoredLocales<Value>
+  if (value === undefined || value === null) return []
+  return [[undefined, value as Value]]
+}
+
+function rootLocalised<StoredValue, QueryValue, Mutator, Options>(
+  field: Field<StoredValue, QueryValue, Mutator, Options>
+): LocalisedField<string, StoredValue, QueryValue, Options> {
+  const data = getField(field)
+  type Stored = LocalisedValue<string, StoredValue>
+  return new LocalisedField<string, StoredValue, QueryValue, Options>(
+    {
+      referencedViews:
+        typeof data.view === 'string'
+          ? [data.view, ...(data.referencedViews ?? [])]
+          : data.referencedViews,
+      view: viewKeys.LocalisedInput,
+      options: {...data.options, initialValue: undefined} as Omit<
+        Options,
+        'initialValue' | 'validate'
+      > &
+        FieldOptions<Stored>,
+      withInitialValue(value, context) {
+        const locales = context?.fieldI18n?.locales
+        if (!locales) {
+          if (isRecord(value)) return value
+          return Field.withInitialValue(field, value as StoredValue) as Stored
+        }
+        // A plain value, stored before the root translated fields, holds for
+        // every locale
+        const record: Record<string, StoredValue> = isRecord(value)
+          ? {...(value as Record<string, StoredValue>)}
+          : value === undefined || value === null
+            ? {}
+            : fromEntries(locales.map(locale => [locale, value as StoredValue]))
+        for (const locale of locales)
+          record[locale] = Field.withInitialValue(
+            field,
+            record[locale] ?? (Field.initialValue(field) as StoredValue)
+          )
+        return record as Stored
+      },
+      async applyLinks(value, loader) {
+        await Promise.all(
+          storedLocales<StoredValue>(value).map(([, inner]) =>
+            Field.applyLinks(field, inner, loader)
+          )
+        )
+      },
+      searchableText(value) {
+        return storedLocales<StoredValue>(value)
+          .map(([, inner]) => Field.searchableText(field, inner))
+          .join('')
+      },
+      references(value, context) {
+        return storedLocales<StoredValue>(value).flatMap(([locale, inner]) =>
+          Field.references(field, inner, {
+            ...context,
+            path: locale ? [...context.path, locale] : context.path
+          })
+        )
+      },
+      anchors(value, context) {
+        return storedLocales<StoredValue>(value).flatMap(([locale, inner]) =>
+          Field.anchors(field, inner, {
+            ...context,
+            path: locale ? [...context.path, locale] : context.path
+          })
+        )
+      },
+      normalizeAnchors(value, context) {
+        if (!isRecord(value))
+          return Field.normalizeAnchors(
+            field,
+            value as StoredValue,
+            context
+          ) as Stored
+        let next = value
+        for (const [locale, before] of entries(value)) {
+          const after = Field.normalizeAnchors(field, before, context)
+          if (after === before) continue
+          if (next === value) next = {...value}
+          next[locale] = after
+        }
+        return next
+      },
+      isEmpty(value) {
+        return storedLocales<StoredValue>(value).every(([, inner]) =>
+          Field.isEmpty(field, inner)
+        )
+      },
+      valueErrors(value, options, context) {
+        const locales = context.fieldI18n?.locales
+        const values: StoredLocales<StoredValue> = locales
+          ? locales.map(locale => [
+              locale,
+              isRecord(value)
+                ? (value as Record<string, StoredValue>)[locale]
+                : (value as StoredValue)
+            ])
+          : storedLocales<StoredValue>(value)
+        if (values.length === 0) values.push([undefined, value as StoredValue])
+        return values.flatMap(([locale, inner]) => {
+          const path = locale ? [...context.path, locale] : context.path
+          const labels = locale
+            ? [...context.labels, locale.toUpperCase()]
+            : context.labels
+          const message = fieldError(field, options, inner)
+          return [
+            ...(message ? [{path, labels, message}] : []),
+            ...Field.nestedErrors(field, inner, {...context, path, labels})
+          ]
+        })
+      },
+      async queryValue(value, loader) {
+        const selected = isRecord(value)
+          ? selectLocalisedValue({
+              value: value as Stored,
+              locale: loader.locale,
+              locales: loader.fieldI18n?.locales ?? keys(value),
+              fallback: loader.fieldI18n?.fallback,
+              defaultValue: Field.initialValue(field) as StoredValue
+            })
+          : ((value ?? Field.initialValue(field)) as StoredValue)
+        return Field.queryValue(field, selected, loader)
+      }
+    },
+    {
+      inner: field as Field<
+        StoredValue,
+        unknown,
+        unknown,
+        FieldOptions<StoredValue>
+      >
+    }
+  )
 }

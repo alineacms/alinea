@@ -30,8 +30,13 @@
   `--alinea-header-height`. `useSiblingFieldValue` and the `useField` hooks of
   `alinea/dashboard` are deprecated, the `useEntryEditor` shim reads the
   publish status from `activeVersion.status`.
-- Add `Field.localiser` to keep every locale of a value in a single field, with
-  fallbacks.
+- Add `i18n: {translate: 'fields'}` to keep a single entry per item in a
+  translated root, and `Field.localised` to keep every locale of a value in a
+  single field, with fallbacks. Without `locales` it takes the locales of the
+  root of its entry and throws in roots that translate entries, with `locales`
+  it works in any root. Queries for a locale find the entries of roots that
+  translate fields to it. The media root translates fields, `Field.localiser`
+  is deprecated.
 - Add the `overview` option to container types and roots to configure how the
   dashboard lists their children: columns (`Config.column`) with per-type
   selects, formatting and custom cells, built-in type, status, updated and

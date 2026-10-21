@@ -47,11 +47,12 @@ export class ListFieldBase<
     const customLocalizeLinks = meta.localizeLinks
     super({
       referencedViews: Schema.referencedViews(schema),
+      nestedTypes: Object.values(schema),
       ...meta,
       defaultValue() {
         return meta.options.initialValue ?? []
       },
-      withInitialValue(value) {
+      withInitialValue(value, context) {
         if (!Array.isArray(value)) return value
         let next = value
         value.forEach((row, index) => {
@@ -59,7 +60,8 @@ export class ListFieldBase<
           if (!type) return
           const initialized = Type.withInitialValue(
             type,
-            row as Record<string, unknown>
+            row as Record<string, unknown>,
+            context
           )
           if (initialized === row) return
           if (next === value) next = [...value]

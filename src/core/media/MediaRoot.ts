@@ -14,10 +14,8 @@ export function createMediaRoot<Children extends Record<string, Page>>(
     overview: mediaOverview(),
     ...options,
     isMediaRoot: true,
-    i18n: undefined,
-    // We move i18n into a separate property to persist it,
-    // but don't treat media files as localised
-    _media: {i18n: options?.i18n}
+    // A file is a single entry, its alt text holds a value per locale
+    i18n: options?.i18n && {...options.i18n, translate: 'fields' as const}
   }
   return root('Media', rootOptions) as MediaRoot<Children>
 }

@@ -189,7 +189,7 @@ function linkedLocalisation(
   const rootConfig = workspaceConfig?.[root]
   if (!rootConfig) return
   const rootData = Root.data(rootConfig)
-  return Root.mediaI18n(rootData) ?? rootData.i18n
+  return Root.fieldI18n(rootData) ?? rootData.i18n
 }
 
 /** @internal Throws for conditions an entry picker can't check, eg. relation filters */

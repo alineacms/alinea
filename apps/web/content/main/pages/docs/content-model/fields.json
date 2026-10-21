@@ -340,7 +340,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`shared` only works on fields at the top level of a type, not on fields inside an object, list or rich text block. It isn't supported on path fields. To translate a single value while sharing the rest of an entry, use `Field.localiser` instead."
+          "text": "`shared` only works on fields at the top level of a type, not on fields inside an object, list or rich text block. It isn't supported on path fields. To translate a single value while sharing the rest of an entry, use `Field.localised` with `locales` instead."
         }
       ]
     },

@@ -278,11 +278,15 @@ export class EntryLocaleAtoms {
         })
       }
     }
-    const value = Type.withInitialValue(type, {
-      ...Type.initialValue(type),
-      ...data,
-      ...(isUntranslated ? {path: undefined} : undefined)
-    })
+    const value = Type.withInitialValue(
+      type,
+      {
+        ...Type.initialValue(type),
+        ...data,
+        ...(isUntranslated ? {path: undefined} : undefined)
+      },
+      {fieldI18n: Config.fieldI18n(config, entry.workspace, entry.root)}
+    )
     return new ReactiveNode<object>(value, readOnly)
   })
   richTextImages = atom(async get => {
@@ -443,6 +447,7 @@ export class EntryLocaleAtoms {
       const type = config.schema[data.type]
       assert(type, `Type "${data.type}" not found in config`)
       return validateEntry(type, this.#value(get, node), {
+        fieldI18n: Config.fieldI18n(config, data.workspace, data.root),
         fieldOptions: policyFieldOptions(config, get(policyAtom), {
           workspace: data.workspace,
           root: data.root,
@@ -666,7 +671,7 @@ export class EntryAtoms {
       rootData.preview ??
       workspaceData.preview ??
       config.preview
-    return {defaultView, mediaI18n: Root.mediaI18n(rootData), preview}
+    return {defaultView, fieldI18n: Root.fieldI18n(rootData), preview}
   })
 
   type = atom(get => get(this.data).type)
@@ -685,7 +690,7 @@ export class EntryAtoms {
   parentUnpublished = atom(get =>
     get(this.data).parents.some(parent => parent.status === 'draft')
   )
-  mediaI18n = atom(get => get(this.#settings).mediaI18n)
+  fieldI18n = atom(get => get(this.#settings).fieldI18n)
   preview = atom(get => get(this.#settings).preview)
   translationSourceLocales = atom(get => {
     const data = get(this.data)
