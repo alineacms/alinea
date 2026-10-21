@@ -34,6 +34,7 @@ import {useAtomValueRaw} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
 import {thumbHashToDataURL} from 'thumbhash'
+import {EditFields} from '../EntryFields.js'
 import {NodeEditor} from '../NodeEditor.js'
 import css from './FileEditor.module.css'
 import {FilePreview, type FocusPoint} from './FilePreview.js'
@@ -201,7 +202,8 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
             className={styles.FileEditor.tabPanel()}
           >
             <div className={styles.FileEditor.details()}>
-              <NodeEditor node={node} type={tab} />
+              {/* Edited with the file, so its fields can track the others */}
+              <EditFields fields={getType(tab).fields} />
             </div>
           </TabsContent>
         ))}

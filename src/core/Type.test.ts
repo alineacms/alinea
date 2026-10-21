@@ -521,3 +521,11 @@ test('a type view is a path or a component', () => {
     '@/Post'
   ])
 })
+
+test('the views of tabs are referenced, to be bundled', () => {
+  const Program = type('Program', {
+    fields: {},
+    tabs: {analytics: tab('Analytics', {view: '@/views/Analytics#Analytics'})}
+  })
+  test.ok(Type.referencedViews(Program).includes('@/views/Analytics#Analytics'))
+})

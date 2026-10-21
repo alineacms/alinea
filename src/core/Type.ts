@@ -288,7 +288,9 @@ export namespace Type {
       summaryThumb,
       ...(actions ?? []),
       ...Overview.referencedViews(overview),
-      ...viewsOfDefinition(getType(type).fields)
+      ...viewsOfDefinition(getType(type).fields),
+      // Tabs are left out of the fields, their views are bundled too
+      ...values(getType(type).tabs ?? {}).flatMap(referencedViews)
     ].filter(v => typeof v === 'string')
   }
 }
