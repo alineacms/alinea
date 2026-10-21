@@ -211,7 +211,10 @@ export interface ExplorerSortState {
 
 export interface ExplorerReadyPage {
   canUpload: boolean
-  /** The file types an upload to the location can become */
+  /**
+   * The file types an upload to the location can become. Media roots take
+   * uploads everywhere, see `Config.uploadCandidates`.
+   */
   uploadTypes: Array<string>
   /**
    * The condition of the selected tab and the picked filters, undefined when
@@ -872,13 +875,16 @@ export class ExplorerAtoms {
       const canUpload = get(policyAtom).canUpload(
         uploadResource(location, parent)
       )
-      const uploadTypes = location.root
-        ? Config.uploadTypes(get(configAtom), {
-            workspace: location.workspace,
-            root: location.root,
-            parentType: parent?.type
-          })
-        : []
+      const uploadLocation = location.root && {
+        workspace: location.workspace,
+        root: location.root,
+        parentType: parent?.type
+      }
+      const uploadTypes = !uploadLocation
+        ? []
+        : isMedia
+          ? Config.uploadCandidates(get(configAtom), uploadLocation)
+          : Config.uploadTypes(get(configAtom), uploadLocation)
       const items = await itemsPromise
       // The columns follow the loaded rows, every child of the parent or
       // the search results: their types, and built-in columns that differ

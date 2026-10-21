@@ -65,6 +65,8 @@ export interface EntryPickerOptions<
   defaultView?: 'row' | 'thumb'
   /** @internal Picks uploaded files: any of them, or images */
   files?: 'file' | 'image'
+  /** @deprecated Has no effect, image and file pickers list uploaded files */
+  showMedia?: boolean
   max?: number
   label?: string
   title?: Label

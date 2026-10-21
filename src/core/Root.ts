@@ -83,6 +83,9 @@ export namespace Root {
     return root.fieldI18n
   }
 
+  /** @deprecated Use `Root.fieldI18n` */
+  export const mediaI18n = fieldI18n
+
   export function preview(root: Root): Preview | undefined {
     return getRoot(root).preview
   }

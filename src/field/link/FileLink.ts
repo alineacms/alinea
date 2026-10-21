@@ -42,7 +42,9 @@ export function filePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
-    // The files of every file type, see Config.fileCondition
+    // The files of every file type, see Config.fileCondition. A condition of
+    // the field does not apply, as before.
+    condition: undefined,
     files: 'file',
     defaultView: 'thumb',
     selection: {

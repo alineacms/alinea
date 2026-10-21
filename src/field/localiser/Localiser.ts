@@ -286,8 +286,17 @@ function rootLocalised<StoredValue, QueryValue, Mutator, Options>(
       withInitialValue(value, context) {
         const locales = context?.fieldI18n?.locales
         if (!locales) {
-          if (isRecord(value)) return value
-          return Field.withInitialValue(field, value as StoredValue) as Stored
+          if (!isRecord(value))
+            return Field.withInitialValue(field, value as StoredValue) as Stored
+          // Without the root the stored locales get their defaults
+          let next = value as Record<string, StoredValue>
+          for (const [locale, before] of entries(next)) {
+            const after = Field.withInitialValue(field, before)
+            if (after === before) continue
+            if (next === value) next = {...next}
+            next[locale] = after
+          }
+          return next as Stored
         }
         // A plain value, stored before the root translated fields, holds for
         // every locale

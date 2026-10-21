@@ -441,9 +441,7 @@ async function uploadType(
       })
     : undefined
   const location = {workspace, root, parentType: parentType ?? undefined}
-  const types = Config.uploadTypes(config, location)
-  if (types.length === 0)
-    throw new HttpError(400, `Files can't be uploaded to root "${root}" here`)
+  const types = Config.uploadCandidates(config, location)
   const accepting = types.filter(name =>
     fileTypeAccepts(config.schema[name], fileName, mimeType)
   )

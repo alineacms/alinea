@@ -134,16 +134,15 @@ test('an upload can pick one of the file types that accept it', async () => {
   })
 })
 
-test('an upload that no file type accepts fails', async () => {
+test('an upload that no file type here accepts fails', async () => {
   await withUploads(async db => {
     await test.throws(
       () => db.upload({file: file('export.zip'), root: 'library'}),
       'No file type here accepts export.zip'
     )
-    await test.throws(
-      () => db.upload({file: file('photo.jpg'), root: 'pages'}),
-      "Files can't be uploaded"
-    )
+    // A location without file types takes media files, as before
+    const media = await db.upload({file: file('photo.jpg'), root: 'pages'})
+    test.is(await db.first({id: media._id, select: Entry.type}), 'MediaFile')
   })
 })
 

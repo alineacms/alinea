@@ -1,4 +1,5 @@
 import {createCMS} from '#/core.js'
+import {Entry} from '#/core/Entry.js'
 import {Root} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {validateEntry} from '#/core/Validation.js'
@@ -72,10 +73,23 @@ test('a field with the locales of its root holds no object without i18n', () => 
     () =>
       createCMS({
         schema: {Settings},
-        workspaces: {main: workspace({pages: Config.root('Pages')})}
+        workspaces: {
+          main: workspace({
+            pages: Config.root('Pages', {contains: ['Settings']})
+          })
+        }
       }),
     'Field.localised("Address") in type "Settings" holds an object'
   )
+  // Roots without contains take every type, the type is meant for others
+  createCMS({
+    schema: {Settings},
+    workspaces: {
+      main: workspace({
+        pages: Config.root('Pages', {i18n: {locales: ['en', 'de']}})
+      })
+    }
+  })
   // A plain value can't be mistaken for a value per locale
   createCMS({
     schema: {Product},
@@ -174,4 +188,26 @@ test('queries read the value of the requested locale with the root fallback', as
   // A root without i18n holds the plain value, and has no locales
   test.is(await read('table', 'de'), null)
   test.is((await read('table', null))?.caption, 'Table')
+})
+
+test('queries for a locale leave out media files, as before', async () => {
+  const cms = createCMS({
+    schema: {Product},
+    workspaces: {
+      main: workspace({
+        media: Config.media({i18n: {locales: ['en', 'de']}})
+      })
+    }
+  })
+  const {store} = await createEntryStore(cms.config, [
+    {
+      id: 'folder',
+      type: 'MediaLibrary',
+      index: 'a0',
+      root: 'media',
+      data: {path: 'folder', title: 'Folder'}
+    }
+  ])
+  test.equal(await store.resolve({locale: 'de', select: Entry.id}), [])
+  test.equal(await store.resolve({locale: null, select: Entry.id}), ['folder'])
 })

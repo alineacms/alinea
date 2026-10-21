@@ -288,6 +288,35 @@ export function localeCondition(
     : inArray(entry.locale, spellings)
 }
 
+interface FieldTranslatedRoot {
+  workspace: string
+  root: string
+  locales: Set<string>
+}
+
+const fieldTranslatedRoots = new WeakMap<Config, Array<FieldTranslatedRoot>>()
+
+/**
+ * The roots declared with `i18n: {translate: 'fields'}`. Media roots translate
+ * fields too, but their files keep matching only queries without a locale, as
+ * they did before.
+ */
+function translatedFieldRoots(config: Config): Array<FieldTranslatedRoot> {
+  let result = fieldTranslatedRoots.get(config)
+  if (result) return result
+  result = entries(config.workspaces).flatMap(([workspace, data]) =>
+    entries(getWorkspace(data).roots).flatMap(([root, rootConfig]) => {
+      const rootData = Root.data(rootConfig)
+      const i18n = Root.fieldI18n(rootData)
+      if (!i18n || rootData.isMediaRoot) return []
+      const locales = new Set(i18n.locales.map(l => l.toLowerCase()))
+      return [{workspace, root, locales}]
+    })
+  )
+  fieldTranslatedRoots.set(config, result)
+  return result
+}
+
 /**
  * Rows in a locale, or of a root that translates fields to that locale: such
  * a root keeps a single entry, unlocalized, for all of its locales
@@ -301,14 +330,14 @@ function queryLocaleCondition(
   const own = localeCondition(scope, entry, locale)
   if (locale === null) return own
   const requested = locale.toLowerCase()
-  const roots = entries(config.workspaces).flatMap(([workspace, data]) =>
-    entries(getWorkspace(data).roots).flatMap(([root, rootConfig]) => {
-      const locales = Root.fieldI18n(Root.data(rootConfig))?.locales ?? []
-      return locales.some(locale => locale.toLowerCase() === requested)
-        ? [and(eq(entry.workspace, workspace), eq(entry.root, root))]
-        : []
-    })
-  )
+  const roots = translatedFieldRoots(config)
+    .filter(candidate => candidate.locales.has(requested))
+    .map(candidate =>
+      and(
+        eq(entry.workspace, candidate.workspace),
+        eq(entry.root, candidate.root)
+      )
+    )
   if (roots.length === 0) return own
   return or(own, and(isNull(entry.locale), or(...roots)))
 }

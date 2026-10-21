@@ -60,7 +60,9 @@ function imagePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
-    // The images of every file type, see Config.fileCondition
+    // The images of every file type, see Config.fileCondition. A condition of
+    // the field does not apply, as before.
+    condition: undefined,
     files: 'image',
     defaultView: 'thumb',
     selection: {

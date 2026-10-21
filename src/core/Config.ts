@@ -171,10 +171,19 @@ export namespace Config {
     return false
   }
 
+  const schemaFileTypes = new WeakMap<Config, Array<Type<FileFields>>>()
+
   /** The file types of the schema, see `Config.file` */
   export function fileTypes(config: Config): Array<Type<FileFields>> {
-    // Every file type has the fields of an upload
-    return values(config.schema).filter(isFileType) as Array<Type<FileFields>>
+    let result = schemaFileTypes.get(config)
+    if (!result) {
+      // Every file type has the fields of an upload
+      result = values(config.schema).filter(isFileType) as Array<
+        Type<FileFields>
+      >
+      schemaFileTypes.set(config, result)
+    }
+    return result
   }
 
   /**
@@ -220,14 +229,26 @@ export namespace Config {
     return names
   }
 
-  /** The upload types of a location that accept a file */
+  /**
+   * The file types an upload to a location can become. A location without
+   * file types takes media files, as uploads did before file types existed.
+   */
+  export function uploadCandidates(
+    config: Config,
+    location: {workspace: string; root: string; parentType?: string}
+  ): Array<string> {
+    const types = uploadTypes(config, location)
+    return types.length > 0 ? types : ['MediaFile']
+  }
+
+  /** The upload candidates of a location that accept a file */
   export function acceptingTypes(
     config: Config,
     location: {workspace: string; root: string; parentType?: string},
     fileName: string,
     mimeType?: string
   ): Array<string> {
-    return uploadTypes(config, location).filter(name =>
+    return uploadCandidates(config, location).filter(name =>
       fileTypeAccepts(config.schema[name], fileName, mimeType)
     )
   }
@@ -390,15 +411,15 @@ function validateLocalisedFields(config: Config) {
   }
 }
 
-/** The types entries of a root can have, also as descendants */
+/**
+ * The types a root lists, also as descendants. A root without `contains`
+ * takes every type, those are left out: a type with localised fields is
+ * meant for the roots that list it.
+ */
 function rootTypes(config: Config, root: Root): Set<Type> {
-  const contains = Root.contains(root)
-  const queue =
-    contains.length === 0
-      ? values(config.schema)
-      : contains.map(inner =>
-          typeof inner === 'string' ? config.schema[inner] : inner
-        )
+  const queue = Root.contains(root).map(inner =>
+    typeof inner === 'string' ? config.schema[inner] : inner
+  )
   const result = new Set<Type>()
   for (const type of queue) {
     if (!type || result.has(type)) continue
