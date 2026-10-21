@@ -95,5 +95,6 @@ file reaches `react-aria-components`, `react-aria`, `react-stately`,
   `@internationalized/*` (enforced by `bun lint`; tests and stories are
   exempt). Use the public components from `#/components.js` and add what is
   missing there instead.
-- Finished components get a Ladle story under `title: 'Pure components / X'`
-  and a Playwright spec (`X.spec.tsx`) mounting those stories.
+- Add a Ladle story (under `title: 'Pure components / X'`) or a Playwright
+  spec (`X.spec.tsx`) mounting it only when it is useful, eg. for a new
+  component or behaviour that is easy to break.

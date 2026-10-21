@@ -12,8 +12,9 @@ import {
 } from 'react'
 import {IcRoundArrowBack, IcRoundClose} from '#/dashboard/icons.js'
 import {Button} from './Button.js'
+import {Icon} from './Icon.js'
 import css from './Sheet.module.css'
-import type {AriaProps, DataProps, StyleProps} from './types.js'
+import type {AriaProps, DataProps, IconType, StyleProps} from './types.js'
 
 const styles = styler(css)
 
@@ -175,10 +176,13 @@ export function SheetBody({className, ...props}: SheetBodyProps) {
 
 export interface SheetSectionProps extends SheetPartProps {
   title?: ReactNode
+  /** Shown before the title */
+  icon?: IconType
 }
 
 export function SheetSection({
   title,
+  icon,
   className,
   children,
   ...props
@@ -194,6 +198,13 @@ export function SheetSection({
           data-slot="sheet-section-title"
           className={styles.SheetSection.title()}
         >
+          {icon && (
+            <Icon
+              icon={icon}
+              data-slot="sheet-section-icon"
+              className={styles.SheetSection.title.icon()}
+            />
+          )}
           {title}
         </h3>
       )}

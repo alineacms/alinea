@@ -53,6 +53,9 @@
 }
 
 .SheetSection-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
   color: var(--alinea-fg-muted);
   font-size: 11px;
@@ -60,6 +63,11 @@
   letter-spacing: 0.02em;
   line-height: 16px;
   text-transform: uppercase;
+}
+
+.SheetSection-title-icon {
+  flex-shrink: 0;
+  font-size: 14px;
 }
 
 .SheetFooter {

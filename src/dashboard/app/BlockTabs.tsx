@@ -1,4 +1,5 @@
 import {SheetSection} from '#/components.js'
+import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
 import type {EditorNode} from '../atoms/editor.js'
@@ -15,7 +16,11 @@ export function BlockTabs({node, type, readOnly}: BlockTabsProps) {
   const tabs = Type.tabs(type)
   if (!tabs) return null
   return entries(tabs).map(([key, tab]) => (
-    <SheetSection key={key} title={String(Type.label(tab))}>
+    <SheetSection
+      key={key}
+      title={String(Type.label(tab))}
+      icon={getType(tab).icon}
+    >
       <NodeEditor node={node} type={tab} readOnly={readOnly} />
     </SheetSection>
   ))
