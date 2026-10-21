@@ -63,7 +63,8 @@ export interface EntryPickerOptions<
 > extends EntryPickerConditions {
   selection: Projection
   defaultView?: 'row' | 'thumb'
-  showMedia?: boolean
+  /** @internal Picks uploaded files: any of them, or images */
+  files?: 'file' | 'image'
   max?: number
   label?: string
   title?: Label

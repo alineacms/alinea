@@ -486,10 +486,17 @@ function useResolvedEntryPickerOptions(
   entry: DashboardEntry | null
 ): ResolvedEntryPickerOptions {
   const {condition: conditionOption, location: locationOption} = options
+  const config = useAtomValueRaw(configAtom)
+  const {files: filesOption} = options
   const resolvedAtom = useMemo(() => {
+    // Image and file pickers list uploaded files, on top of their condition
+    const files = filesOption && Config.fileCondition(config, filesOption)
+    const withFiles = (condition: Filter | undefined) =>
+      files ? (condition ? {and: [files, condition]} : files) : condition
     const initialValue: ResolvedEntryPickerOptions = {
-      condition:
-        typeof conditionOption === 'function' ? undefined : conditionOption,
+      condition: withFiles(
+        typeof conditionOption === 'function' ? undefined : conditionOption
+      ),
       location:
         typeof locationOption === 'function' ? undefined : locationOption
     }
@@ -510,10 +517,10 @@ function useResolvedEntryPickerOptions(
         location
       ])
       if (nextCondition) assertPickerCondition(nextCondition)
-      return {condition: nextCondition, location: nextLocation}
+      return {condition: withFiles(nextCondition), location: nextLocation}
     })
     return unwrap(resolved, previous => previous ?? initialValue)
-  }, [conditionOption, entry, locationOption, type])
+  }, [conditionOption, config, entry, filesOption, locationOption, type])
   return useAtomValueRawSync(resolvedAtom)
 }
 

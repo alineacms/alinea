@@ -1,5 +1,6 @@
 // Config creation
 export {createMediaRoot as media} from '#/core/media/MediaRoot.js'
+export {file} from '#/core/media/MediaTypes.js'
 export {createConfig as create} from './core/Config.js'
 export {document} from './core/Document.js'
 export {column} from './core/Overview.js'

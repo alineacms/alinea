@@ -3,7 +3,7 @@ import type {WithoutLabel} from '#/core/Field.js'
 import type {InferStoredValue} from '#/core/Infer.js'
 import type {Label} from '#/core/Label.js'
 import type {Type} from '#/core/Type.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData} from '#/core/media/MediaTypes.js'
 import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkFieldOptions,
@@ -29,11 +29,9 @@ export namespace FileLink {
   export const title = Entry.title
   export const url = Entry.url
   export const href = Entry.url
-  export const extension = MediaFile.extension
-  export const size = MediaFile.size
+  export const extension = FileData.extension
+  export const size = FileData.size
 }
-
-const fileCondition = {_type: 'MediaFile'}
 
 export function filePicker<Fields>(
   multiple: boolean,
@@ -44,8 +42,8 @@ export function filePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
-    condition: fileCondition,
-    showMedia: true,
+    // The files of every file type, see Config.fileCondition
+    files: 'file',
     defaultView: 'thumb',
     selection: {
       ...FileLink,

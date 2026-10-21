@@ -3,7 +3,7 @@ import path from 'node:path'
 import {Config} from '#/core/Config.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData} from '#/core/media/MediaTypes.js'
 import {basename, join} from '#/core/util/Paths.js'
 import type {EntryStore} from '#/database/EntryStore.js'
 
@@ -29,7 +29,7 @@ export async function remoteLocations(
 ): Promise<Array<RemoteLocation>> {
   const {config} = db
   const files = await db.find({
-    type: MediaFile,
+    type: Config.fileTypes(config),
     status: 'all',
     select: {
       id: Entry.id,
@@ -37,7 +37,7 @@ export async function remoteLocations(
       status: Entry.versionStatus,
       workspace: Entry.workspace,
       filePath: Entry.filePath,
-      location: MediaFile.location
+      location: FileData.location
     }
   })
   const remote = files.filter(

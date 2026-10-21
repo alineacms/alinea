@@ -15,7 +15,9 @@ import {
 import {Config} from '#/core/Config.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {fileFieldKeys, type FileFields} from '#/core/media/MediaTypes.js'
+import {Type} from '#/core/Type.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
 import {base64} from '#/core/util/Encoding.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {
@@ -37,14 +39,6 @@ import {FilePreview, type FocusPoint} from './FilePreview.js'
 
 const styles = styler(css)
 
-const fileFields = type('File', {
-  fields: {
-    title: MediaFile.title,
-    path: MediaFile.path,
-    alt: MediaFile.alt
-  }
-})
-
 export interface FileEditorProps {
   parentPaths: Array<string>
   workspace: string
@@ -52,19 +46,31 @@ export interface FileEditorProps {
 
 export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const config = useAtomValueRaw(configAtom)
-  const path = useFieldValue(MediaFile.path)
-  const extension = useFieldValue(MediaFile.extension)
+  const editor = useEditor()
+  // Every file type has the fields of an upload
+  const fields = Type.fields(editor.type) as unknown as FileFields
+  // The title and path, and the fields the file type adds
+  const editable = useMemo(() => {
+    const added = entries(Type.fields(editor.type)).filter(
+      ([key]) => !fileFieldKeys.has(key)
+    )
+    return type('File', {
+      fields: {title: fields.title, path: fields.path, ...fromEntries(added)}
+    })
+  }, [editor.type, fields])
+  const path = useFieldValue(fields.path)
+  const extension = useFieldValue(fields.extension)
   const isImage = isImageExtension(extension)
-  const size = useFieldValue(MediaFile.size)
-  const width = useFieldValue(MediaFile.width)
-  const height = useFieldValue(MediaFile.height)
-  const preview = useFieldValue(MediaFile.preview)
-  const thumbHash = useFieldValue(MediaFile.thumbHash)
+  const size = useFieldValue(fields.size)
+  const width = useFieldValue(fields.width)
+  const height = useFieldValue(fields.height)
+  const preview = useFieldValue(fields.preview)
+  const thumbHash = useFieldValue(fields.thumbHash)
   const placeholder = useMemo(() => {
     if (!thumbHash) return undefined
     return thumbHashToDataURL(base64.parse(thumbHash))
   }, [thumbHash])
-  const [focusPoint = {x: 0.5, y: 0.5}] = useField(MediaFile.focus)
+  const [focusPoint = {x: 0.5, y: 0.5}] = useField(fields.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
   const publicLocation = MediaLocation.publicUrl(config, {
     extension,
@@ -81,7 +87,7 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
       : liveUrl.href
     : undefined
   const displayedFocusPoint = hoverPoint ?? focusPoint
-  const node = useEditor().node
+  const node = editor.node
   return (
     <Surface className={styles.FileEditor.surface()}>
       <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
@@ -99,11 +105,12 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
         </div>
         <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
           <div className={styles.FileEditor.fields()}>
-            <NodeEditor node={node} type={fileFields} />
+            <NodeEditor node={node} type={editable} />
           </div>
           <div className={styles.FileEditor()}>
             {isImage && (
               <FilePreview
+                focus={fields.focus}
                 liveUrl={liveUrl?.href}
                 preview={preview}
                 placeholder={placeholder}
@@ -168,7 +175,7 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
         </TabsContent>
         <TabsContent value="details" className={styles.FileEditor.tabPanel()}>
           <div className={styles.FileEditor.details()}>
-            <FileDetails />
+            <FileDetails metadata={fields.metadata} />
           </div>
         </TabsContent>
       </Tabs>
@@ -176,10 +183,14 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   )
 }
 
+interface FileDetailsProps {
+  metadata: FileFields['metadata']
+}
+
 /** Who created and last updated the file and when, and its URL aliases */
-function FileDetails() {
-  const options = useFieldOptions(MediaFile.metadata)
-  const node = useFieldNode<object>(MediaFile.metadata)
+function FileDetails({metadata}: FileDetailsProps) {
+  const options = useFieldOptions(metadata)
+  const node = useFieldNode<object>(metadata)
   return (
     <NodeEditor node={node} readOnly={options.readOnly} type={options.fields} />
   )

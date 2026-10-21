@@ -13,26 +13,39 @@ import {
   type OverviewFilterOption,
   type OverviewOptions
 } from '../Overview.js'
-import {type Type, type} from '../Type.js'
+import {
+  type FieldsDefinition,
+  type Type,
+  type TypeConfig,
+  type
+} from '../Type.js'
+import {fileAccepts} from './FileAccept.js'
 import {type MediaFileKind, storedExtensions} from './FileKinds.js'
-import {mediaAlt} from './MediaAltField.js'
+import {mediaAlt, type MediaAltValue} from './MediaAltField.js'
 import {MediaLocation} from './MediaLocation.js'
 
-export type MediaFile = Type.Infer<typeof MediaFile>
-export const MediaFile = type('Media file', {
-  hidden: true,
-  // Lists that know the extension show the icon of the kind of file instead
-  icon: IcRoundInsertDriveFile,
-  entryUrl({config, data, defaultUrl, parentPaths, path, workspace}) {
-    return MediaLocation.entryUrl(config, {
-      data,
-      defaultUrl,
-      parentPaths,
-      path,
-      workspace
-    })
-  },
-  fields: {
+const fileMarker = Symbol.for('@alinea.File')
+
+interface FileTypeData {
+  accept?: string
+}
+
+export interface FileTypeConfig<Fields> extends Omit<
+  TypeConfig<Fields>,
+  'fields'
+> {
+  fields?: Fields
+  /**
+   * The files of this type, like the accept attribute of a file input:
+   * extensions (`.pdf,.docx`), media types (`application/pdf`) or groups of
+   * them (`image/*`). Without, the type takes every file.
+   */
+  accept?: string
+}
+
+/** The data alinea keeps of every uploaded file */
+function fileFields() {
+  return {
     title: text('Title', {width: 0.5}),
     path: path('Path', {width: 0.5}),
     metadata: auditMetadata(),
@@ -43,10 +56,6 @@ export const MediaFile = type('Media file', {
     hash: hidden<string>('Hash'),
     /** The hash of the file as uploaded, before it was scaled down */
     sourceHash: hidden<string>('Source hash'),
-    alt: mediaAlt('Alt text', {
-      multiline: true,
-      help: 'Describe the image for screen readers and SEO'
-    }),
     width: hidden<number>('Image width'),
     height: hidden<number>('Image height'),
     preview: hidden<string>('Preview'),
@@ -54,7 +63,110 @@ export const MediaFile = type('Media file', {
     focus: hidden<{x: number; y: number}>('Focus'),
     thumbHash: hidden<string>('Blur hash')
   }
-})
+}
+
+export type FileFields = ReturnType<typeof fileFields>
+
+/** The keys of the fields every file type has */
+export const fileFieldKeys: ReadonlySet<string> = new Set(
+  Object.keys(fileFields())
+)
+
+function fileType<Fields extends FieldsDefinition>(
+  label: string,
+  fields: Fields,
+  {accept, ...config}: Omit<FileTypeConfig<Fields>, 'fields'>
+): Type<Fields> {
+  const result = type(label, {
+    // Files are created by uploading them
+    hidden: true,
+    // Lists that know the extension show the icon of the kind of file instead
+    icon: IcRoundInsertDriveFile,
+    entryUrl({config, data, defaultUrl, parentPaths, path, workspace}) {
+      return MediaLocation.entryUrl(config, {
+        data,
+        defaultUrl,
+        parentPaths,
+        path,
+        workspace
+      })
+    },
+    ...config,
+    fields
+  })
+  const data: FileTypeData = {accept}
+  return Object.assign(result, {[fileMarker]: data})
+}
+
+/**
+ * A type of uploaded file. Its entries keep the data of the file next to the
+ * fields of the type. An upload becomes the first file type the location
+ * contains that accepts the file.
+ */
+export function file<Fields extends FieldsDefinition = {}>(
+  label: string,
+  {fields = {} as Fields, ...config}: FileTypeConfig<Fields> = {}
+): Type<FileFields & Fields> {
+  return fileType(label, {...fileFields(), ...fields}, config)
+}
+
+/** Whether `type` was created with `Config.file` */
+export function isFileType(type: Type | undefined): boolean {
+  return Boolean(type && fileMarker in type)
+}
+
+/** Whether a file type takes a file */
+export function fileTypeAccepts(
+  type: Type,
+  fileName: string,
+  mimeType?: string
+): boolean {
+  const data = (type as Type & {[fileMarker]?: FileTypeData})[fileMarker]
+  return Boolean(data) && fileAccepts(data?.accept, fileName, mimeType)
+}
+
+function fileExpr<Value>(name: string) {
+  return new Expr<Value>({type: 'entryField', name, path: []})
+}
+
+/** The data of uploaded files, of whichever file type */
+export const FileData = {
+  location: fileExpr<string>('location'),
+  previewUrl: fileExpr<string>('previewUrl'),
+  extension: fileExpr<string>('extension'),
+  size: fileExpr<number>('size'),
+  hash: fileExpr<string>('hash'),
+  sourceHash: fileExpr<string>('sourceHash'),
+  alt: fileExpr<MediaAltValue>('alt'),
+  width: fileExpr<number>('width'),
+  height: fileExpr<number>('height'),
+  preview: fileExpr<string>('preview'),
+  averageColor: fileExpr<string>('averageColor'),
+  focus: fileExpr<{x: number; y: number}>('focus'),
+  thumbHash: fileExpr<string>('thumbHash')
+}
+
+export type MediaFile = Type.Infer<typeof MediaFile>
+const {width, height, preview, averageColor, focus, thumbHash, ...leading} =
+  fileFields()
+// The fields keep the order of earlier versions, which stored files have
+export const MediaFile = fileType(
+  'Media file',
+  {
+    ...leading,
+    alt: mediaAlt('Alt text', {
+      multiline: true,
+      help: 'Describe the image for screen readers and SEO'
+    }),
+    width,
+    height,
+    preview,
+    averageColor,
+    focus,
+    thumbHash
+  },
+  {}
+)
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
@@ -115,13 +227,13 @@ export function mediaOverview(): OverviewOptions {
         direction: 'desc'
       },
       title: {label: 'Title', by: Entry.title},
-      size: {label: 'Size', by: MediaFile.size, direction: 'desc'},
+      size: {label: 'Size', by: FileData.size, direction: 'desc'},
       dimensions: {
         label: 'Dimensions',
-        by: [MediaFile.width, MediaFile.height],
+        by: [FileData.width, FileData.height],
         direction: 'desc'
       },
-      fileType: {label: 'File type', by: [MediaFile.extension, Entry.title]}
+      fileType: {label: 'File type', by: [FileData.extension, Entry.title]}
     },
     filters: {
       show: {
@@ -170,9 +282,9 @@ export function mediaOverview(): OverviewOptions {
         collapsible: false,
         sortable: false,
         select: {
-          preview: MediaFile.preview,
-          averageColor: MediaFile.averageColor,
-          extension: MediaFile.extension
+          preview: FileData.preview,
+          averageColor: FileData.averageColor,
+          extension: FileData.extension
         },
         view: viewKeys.MediaPreviewCell
       }),
@@ -180,8 +292,8 @@ export function mediaOverview(): OverviewOptions {
         header: 'Dimensions',
         position: 'start',
         width: 150,
-        select: {width: MediaFile.width, height: MediaFile.height},
-        sortBy: MediaFile.width,
+        select: {width: FileData.width, height: FileData.height},
+        sortBy: FileData.width,
         format: ({width, height}) =>
           width && height ? `${width} × ${height} px` : ''
       }),
@@ -190,7 +302,7 @@ export function mediaOverview(): OverviewOptions {
         position: 'start',
         width: 110,
         align: 'end',
-        select: MediaFile.size,
+        select: FileData.size,
         format: size =>
           typeof size === 'number' && Number.isFinite(size) && size >= 0
             ? prettyBytes(size)
@@ -200,7 +312,7 @@ export function mediaOverview(): OverviewOptions {
         header: 'File type',
         position: 'start',
         width: 110,
-        select: MediaFile.extension,
+        select: FileData.extension,
         format: extension =>
           extension ? extension.replace(/^\./, '').toUpperCase() : ''
       })

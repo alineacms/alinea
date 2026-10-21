@@ -194,7 +194,8 @@ export function ExplorerList({
     selectedLocale
   )
   const upload = useSetAtom(explorer.upload)
-  const acceptsDrops = page.isMedia && page.canUpload && !locationIsPending
+  const acceptsDrops =
+    page.uploadTypes.length > 0 && page.canUpload && !locationIsPending
   // Explorers of the dashboard move entries, pickers do not
   const canMove = explorer.hasRowAction && !locationIsPending
   // Entries in their stored order can be reordered, sorting only changes

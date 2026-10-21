@@ -1,9 +1,8 @@
 import {Entry} from '../Entry.js'
 import type {Schema} from '../Schema.js'
-import type {MediaFile as MediaFileType} from './MediaTypes.js'
+import {FileData} from './MediaTypes.js'
 
-export function summarySelection(schema: Schema) {
-  const MediaFile = schema.MediaFile as typeof MediaFileType
+export function summarySelection(_schema: Schema) {
   return {
     id: Entry.id,
     locale: Entry.locale,
@@ -13,14 +12,14 @@ export function summarySelection(schema: Schema) {
     title: Entry.title,
     path: Entry.path,
     url: Entry.url,
-    extension: MediaFile.extension,
-    size: MediaFile.size,
-    preview: MediaFile.preview,
-    thumbHash: MediaFile.thumbHash,
-    averageColor: MediaFile.averageColor,
-    focus: MediaFile.focus,
-    width: MediaFile.width,
-    height: MediaFile.height,
+    extension: FileData.extension,
+    size: FileData.size,
+    preview: FileData.preview,
+    thumbHash: FileData.thumbHash,
+    averageColor: FileData.averageColor,
+    focus: FileData.focus,
+    width: FileData.width,
+    height: FileData.height,
     parents: {
       edge: 'parents' as const,
       select: {

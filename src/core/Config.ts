@@ -1,10 +1,17 @@
 import type {ImageResizeOptions} from '#/core/media/ImageTransform.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {
+  type FileFields,
+  fileTypeAccepts,
+  isFileType,
+  MediaFile,
+  MediaLibrary
+} from '#/core/media/MediaTypes.js'
 import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
 import {admin, type Role} from './Role.js'
 import {Root, type RootI18n} from './Root.js'
+import {imageExtensions} from './media/IsImage.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
 import type {Tracer} from './Trace.js'
@@ -162,6 +169,67 @@ export namespace Config {
       }
     }
     return false
+  }
+
+  /** The file types of the schema, see `Config.file` */
+  export function fileTypes(config: Config): Array<Type<FileFields>> {
+    // Every file type has the fields of an upload
+    return values(config.schema).filter(isFileType) as Array<Type<FileFields>>
+  }
+
+  /**
+   * The condition of uploaded files: entries of a file type, or only those
+   * holding an image
+   */
+  export function fileCondition(
+    config: Config,
+    files: 'file' | 'image'
+  ): Record<string, unknown> {
+    const names = Schema.typeNames(config.schema)
+    const types = fileTypes(config).map(type => names.get(type)!)
+    if (files === 'file') return {_type: {in: types}}
+    const extensions = [
+      ...imageExtensions,
+      // Older versions stored the extension in the case of the file name
+      ...imageExtensions.map(extension => extension.toUpperCase())
+    ]
+    return {_type: {in: types}, extension: {in: extensions}}
+  }
+
+  /**
+   * The file types an upload to a location can become, in order: those the
+   * parent entry's type contains, or else those the root contains. Media
+   * roots also take media files at their top level.
+   */
+  export function uploadTypes(
+    config: Config,
+    location: {workspace: string; root: string; parentType?: string}
+  ): Array<string> {
+    const workspace = config.workspaces[location.workspace]
+    const root = workspace && getWorkspace(workspace).roots[location.root]
+    if (!root) return []
+    const parent = location.parentType
+      ? config.schema[location.parentType]
+      : undefined
+    const contains = parent ? Type.contains(parent) : Root.contains(root)
+    const names = Schema.contained(config.schema, contains).filter(name =>
+      isFileType(config.schema[name])
+    )
+    if (!parent && Root.isMediaRoot(root) && !names.includes('MediaFile'))
+      names.unshift('MediaFile')
+    return names
+  }
+
+  /** The upload types of a location that accept a file */
+  export function acceptingTypes(
+    config: Config,
+    location: {workspace: string; root: string; parentType?: string},
+    fileName: string,
+    mimeType?: string
+  ): Array<string> {
+    return uploadTypes(config, location).filter(name =>
+      fileTypeAccepts(config.schema[name], fileName, mimeType)
+    )
   }
 
   export function typeContains(

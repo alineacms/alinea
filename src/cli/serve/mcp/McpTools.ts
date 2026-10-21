@@ -8,6 +8,7 @@ import {Entry} from '#/core/Entry.js'
 import type {Status} from '#/core/Graph.js'
 import type {ImagePreviewDetails} from '#/core/media/CreatePreview.js'
 import {isImageCrop, isImageRotation} from '#/core/media/ImageTransform.js'
+import {isFileType} from '#/core/media/MediaTypes.js'
 import {Root} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
@@ -201,7 +202,7 @@ export function createContentTools(
     for (const {targetId, fieldPath, linkType} of links) {
       const type = types.get(targetId)
       if (!type) fail(`data.${fieldPath}: entry "${targetId}" does not exist`)
-      if (linkType && linkType !== 'entry' && type !== 'MediaFile')
+      if (linkType && linkType !== 'entry' && !isFileType(schema[type]))
         fail(
           `data.${fieldPath}: "${targetId}" is a ${type}, upload_file returns media ids`
         )
@@ -361,7 +362,7 @@ export function createContentTools(
         const typeName =
           str(args, 'type') ?? source?.type ?? fail('Pass the type')
         const type = typeOf(typeName)
-        if (typeName === 'MediaFile') fail('Upload media with upload_file')
+        if (isFileType(type)) fail('Upload files with upload_file')
         const parentId = str(args, 'parentId') ?? source?.parentId ?? null
         const parent = parentId
           ? (((await graph.first({
@@ -649,15 +650,19 @@ export function createContentTools(
     {
       name: 'upload_file',
       description:
-        'Add a local file to the media library, images get their dimensions and preview. Returns the media id for image and file fields. replace swaps the file of a media entry, keeping its id.',
+        'Add a local file to the media library, or to another root that holds files, images get their dimensions and preview. Returns the file id for image and file fields. replace swaps the file of a file entry, keeping its id.',
       inputSchema: input(
         {
           path: string(
             `File path, relative to ${rootDir} or absolute within the git repository`
           ),
           workspace: string('Defaults to the first workspace'),
-          parentId: string('Media folder (MediaLibrary) to upload into'),
-          replace: string('Media entry whose file to replace'),
+          root: string('Defaults to the media root of the workspace'),
+          parentId: string('Folder to upload into, eg. a MediaLibrary entry'),
+          type: string(
+            'The file type to create, defaults to the first the folder or root contains that accepts the file'
+          ),
+          replace: string('File entry whose file to replace'),
           title: string('Defaults to the file name'),
           alt: {
             type: ['string', 'object'],
@@ -716,9 +721,9 @@ export function createContentTools(
               select: summary
             })) as Summary | null)
           : undefined
-        const expected = replace ? 'MediaFile' : 'MediaLibrary'
-        if (target && existing?.type !== expected)
-          fail(`"${target}" is not a ${expected} entry`)
+        if (target && !existing) fail(`"${target}" does not exist`)
+        if (replace && !isFileType(schema[existing!.type]))
+          fail(`"${replace}" is not a file entry`)
         const workspace =
           existing?.workspace ??
           str(args, 'workspace') ??
@@ -732,11 +737,13 @@ export function createContentTools(
           workspace,
           root:
             existing?.root ??
+            str(args, 'root') ??
             Workspace.defaultMediaRoot(
               config.workspaces[workspace] ??
                 fail(`Workspace "${workspace}" not found`)
             ),
           parentId: replace ? existing!.parentId : parentId,
+          type: str(args, 'type'),
           replaceId: replace,
           user,
           createPreview: options.createPreview,

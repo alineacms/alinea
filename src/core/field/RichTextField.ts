@@ -16,7 +16,7 @@ import {createId} from '../Id.js'
 import type {InferStoredValue} from '../Infer.js'
 import {mediaAltText} from '../media/MediaAltField.js'
 import {MediaLocation} from '../media/MediaLocation.js'
-import {MediaFile} from '../media/MediaTypes.js'
+import {FileData} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
   type ImageNode,
@@ -39,8 +39,8 @@ export type RichTextMutator<R> = {
 const linkInfoFields = {
   id: Entry.id,
   url: Entry.url,
-  alt: MediaFile.alt,
-  hash: MediaFile.hash
+  alt: FileData.alt,
+  hash: FileData.hash
 }
 
 export class RichTextField<

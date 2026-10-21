@@ -1,5 +1,5 @@
 import {MediaPreview, type FocusPoint} from '#/components.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import type {FileFields} from '#/core/media/MediaTypes.js'
 import {useField} from '#/dashboard/hooks.js'
 import {styler} from '@alinea/styler'
 import {useEffect, useState} from 'react'
@@ -10,6 +10,8 @@ const styles = styler(css)
 export type {FocusPoint}
 
 export interface FilePreviewProps {
+  /** The focus point field of the file's type */
+  focus: FileFields['focus']
   liveUrl?: string
   preview: string
   /** Thumbhash data url shown behind the image */
@@ -20,6 +22,7 @@ export interface FilePreviewProps {
 }
 
 export function FilePreview({
+  focus,
   liveUrl,
   preview,
   placeholder,
@@ -27,9 +30,7 @@ export function FilePreview({
   height,
   onHoverPointChange
 }: FilePreviewProps) {
-  const [focusPoint = {x: 0.5, y: 0.5}, setFocusPoint] = useField(
-    MediaFile.focus
-  )
+  const [focusPoint = {x: 0.5, y: 0.5}, setFocusPoint] = useField(focus)
   const [previewSource, setPreviewSource] = useState<string | undefined>(
     liveUrl ? undefined : preview
   )

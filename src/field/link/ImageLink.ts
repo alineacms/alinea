@@ -3,8 +3,7 @@ import type {WithoutLabel} from '#/core/Field.js'
 import type {InferStoredValue} from '#/core/Infer.js'
 import type {Label} from '#/core/Label.js'
 import type {Type} from '#/core/Type.js'
-import {imageExtensions} from '#/core/media/IsImage.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData} from '#/core/media/MediaTypes.js'
 import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkField,
@@ -35,32 +34,22 @@ export interface ImageLink<InferredFields = {}> extends EntryReference {
 
 export namespace ImageLink {
   export const title = Entry.title
-  export const alt = MediaFile.alt
+  export const alt = FileData.alt
   export const src = Entry.url
-  export const extension = MediaFile.extension
-  export const size = MediaFile.size
-  export const hash = MediaFile.hash
-  export const width = MediaFile.width
-  export const height = MediaFile.height
-  export const averageColor = MediaFile.averageColor
-  export const thumbHash = MediaFile.thumbHash
-  export const focus = MediaFile.focus
+  export const extension = FileData.extension
+  export const size = FileData.size
+  export const hash = FileData.hash
+  export const width = FileData.width
+  export const height = FileData.height
+  export const averageColor = FileData.averageColor
+  export const thumbHash = FileData.thumbHash
+  export const focus = FileData.focus
 }
 
 export interface ImageField<Fields = undefined> extends LinkField<
   EntryReference & InferStoredValue<Fields>,
   ImageLink<LinkFields<Type.Infer<Fields>>>
 > {}
-
-const imageCondition = {
-  _type: 'MediaFile',
-  extension: {
-    in: [
-      ...imageExtensions,
-      ...imageExtensions.map(e => e.toUpperCase()) //Fix for historic files with case-insensitive extensions
-    ]
-  }
-}
 
 function imagePicker<Fields>(
   multiple: boolean,
@@ -71,9 +60,8 @@ function imagePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
-    condition: imageCondition,
-
-    showMedia: true,
+    // The images of every file type, see Config.fileCondition
+    files: 'image',
     defaultView: 'thumb',
     selection: {
       ...ImageLink,

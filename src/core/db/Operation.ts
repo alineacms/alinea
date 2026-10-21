@@ -1,4 +1,4 @@
-import type {Config} from '../Config.js'
+import {Config} from '../Config.js'
 import {Entry, type EntryStatus} from '../Entry.js'
 import {Field} from '../Field.js'
 import {HttpError} from '../HttpError.js'
@@ -15,7 +15,7 @@ import {
 import {isImage} from '../media/IsImage.js'
 import {isPdf} from '../media/Pdf.js'
 import {MediaLocation} from '../media/MediaLocation.js'
-import {MediaFile} from '../media/MediaTypes.js'
+import {fileTypeAccepts} from '../media/MediaTypes.js'
 import {assertUploadSize} from '../media/UploadLimits.js'
 import {assert} from '../util/Assert.js'
 import {Schema} from '../Schema.js'
@@ -250,6 +250,12 @@ export interface UploadQuery {
   workspace?: string
   root?: string
   parentId?: string | null
+  /**
+   * The file type the upload becomes, one of those the location contains.
+   * Defaults to the first of them that accepts the file, a replaced file
+   * keeps its type.
+   */
+  type?: string
   createPreview?(blob: Blob): Promise<ImagePreviewDetails | undefined>
   /** Rotate and crop the image before it is uploaded */
   edit?: ImageEdit
@@ -296,6 +302,12 @@ export class UploadOperation extends Operation {
         : file
       let contentType =
         file instanceof Blob ? file.type : 'application/octet-stream'
+      const typeName = await uploadType(db, query, {
+        workspace,
+        root,
+        fileName,
+        mimeType: file instanceof Blob ? file.type : undefined
+      })
       const source = blob
       const edited = hasImageEdit(edit)
       assert(
@@ -368,11 +380,11 @@ export class UploadOperation extends Operation {
         id: entryId,
         locale: null,
         parentId: _parentId ?? null,
-        type: 'MediaFile',
+        type: typeName,
         root,
         workspace,
         data: Type.beforeSave(
-          MediaFile,
+          db.config.schema[typeName],
           {
             title,
             location: fileLocation,
@@ -397,6 +409,60 @@ export class UploadOperation extends Operation {
     })
     this.id = query.replaceId ?? createId()
   }
+}
+
+interface UploadTarget {
+  workspace: string
+  root: string
+  fileName: string
+  mimeType?: string
+}
+
+/** The file type an upload becomes, see `UploadQuery.type` */
+async function uploadType(
+  db: WriteableGraph,
+  query: UploadQuery,
+  {workspace, root, fileName, mimeType}: UploadTarget
+): Promise<string> {
+  const {config} = db
+  if (query.replaceId) {
+    const current = await db.first({
+      id: query.replaceId,
+      select: Entry.type,
+      status: 'preferDraft'
+    })
+    if (current) return current
+  }
+  const parentType = query.parentId
+    ? await db.first({
+        id: query.parentId,
+        select: Entry.type,
+        status: 'preferDraft'
+      })
+    : undefined
+  const location = {workspace, root, parentType: parentType ?? undefined}
+  const types = Config.uploadTypes(config, location)
+  if (types.length === 0)
+    throw new HttpError(400, `Files can't be uploaded to root "${root}" here`)
+  const accepting = types.filter(name =>
+    fileTypeAccepts(config.schema[name], fileName, mimeType)
+  )
+  if (query.type) {
+    if (!types.includes(query.type))
+      throw new HttpError(
+        400,
+        `"${query.type}" can't be uploaded here, use one of ${types.join(', ')}`
+      )
+    if (!accepting.includes(query.type))
+      throw new HttpError(400, `"${query.type}" does not accept ${fileName}`)
+    return query.type
+  }
+  if (accepting.length === 0)
+    throw new HttpError(
+      400,
+      `No file type here accepts ${fileName}, the types are ${types.join(', ')}`
+    )
+  return accepting[0]
 }
 
 /**

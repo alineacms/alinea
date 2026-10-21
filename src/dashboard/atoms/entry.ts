@@ -8,7 +8,7 @@ import {Field} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
@@ -314,8 +314,8 @@ export class EntryLocaleAtoms {
       select: {
         id: Entry.id,
         url: Entry.url,
-        alt: MediaFile.alt,
-        hash: MediaFile.hash
+        alt: FileData.alt,
+        hash: FileData.hash
       }
     })
     const baseUrl =

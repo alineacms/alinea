@@ -291,6 +291,7 @@ test('ready pages describe the listed parent and its parents', async () => {
   expect(page.parent).toEqual({
     id: child._id,
     title: 'Child',
+    type: child._type,
     parents: [parent._id],
     path: [{id: parent._id, title: 'Parent draft'}]
   })
