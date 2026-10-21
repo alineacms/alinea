@@ -17,7 +17,8 @@ import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {fileFieldKeys, type FileFields} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
-import {entries, fromEntries} from '#/core/util/Objects.js'
+import {getType} from '#/core/Internal.js'
+import {entries, fromEntries, keys, values} from '#/core/util/Objects.js'
 import {base64} from '#/core/util/Encoding.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {
@@ -49,10 +50,16 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const editor = useEditor()
   // Every file type has the fields of an upload
   const fields = Type.fields(editor.type) as unknown as FileFields
-  // The title and path, and the fields the file type adds
+  const extraTabs = entries(Type.tabs(editor.type) ?? {})
+  // The title and path, and the fields the file type adds outside its tabs
   const editable = useMemo(() => {
+    const inTabs = new Set(
+      values(Type.tabs(editor.type) ?? {}).flatMap(tab =>
+        keys(Type.fields(tab))
+      )
+    )
     const added = entries(Type.fields(editor.type)).filter(
-      ([key]) => !fileFieldKeys.has(key)
+      ([key]) => !fileFieldKeys.has(key) && !inTabs.has(key)
     )
     return type('File', {
       fields: {title: fields.title, path: fields.path, ...fromEntries(added)}
@@ -101,6 +108,15 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
               <Icon icon={IcRoundInfo} />
               Details
             </TabsTrigger>
+            {extraTabs.map(([key, tab]) => {
+              const {icon} = getType(tab)
+              return (
+                <TabsTrigger key={key} value={`tab-${key}`}>
+                  {icon && <Icon icon={icon} />}
+                  {Type.label(tab)}
+                </TabsTrigger>
+              )
+            })}
           </TabsList>
         </div>
         <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
@@ -178,6 +194,17 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
             <FileDetails metadata={fields.metadata} />
           </div>
         </TabsContent>
+        {extraTabs.map(([key, tab]) => (
+          <TabsContent
+            key={key}
+            value={`tab-${key}`}
+            className={styles.FileEditor.tabPanel()}
+          >
+            <div className={styles.FileEditor.details()}>
+              <NodeEditor node={node} type={tab} />
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
     </Surface>
   )

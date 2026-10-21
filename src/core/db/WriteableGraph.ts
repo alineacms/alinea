@@ -128,9 +128,12 @@ export abstract class WriteableGraph extends Graph {
     await this.commit(op)
     // Every file type has the data of an upload, typed as a media file
     const fileTypes = Config.fileTypes(this.config)
-    return this.get({type: fileTypes, id: op.id}) as Promise<
-      EntryFields & Infer<typeof MediaFile>
-    >
+    // A folder can be a draft, the file is found in it all the same
+    return this.get({
+      type: fileTypes,
+      id: op.id,
+      status: 'preferDraft'
+    }) as Promise<EntryFields & Infer<typeof MediaFile>>
   }
 
   async commit(...operations: Array<Operation>) {

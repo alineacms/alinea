@@ -285,6 +285,108 @@
       "content": [
         {
           "_type": "text",
+          "text": "File types"
+        }
+      ],
+      "_anchor": "file-types"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A media root holds media files: an upload becomes a `MediaFile` entry with an alt text. Use `Config.file` to define your own types of files, with fields of their own, and place them in any root, just like other types. A file type gets the data of the upload (location, extension, size, hash and, for images, the dimensions, preview and focus point) next to its fields."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LWr7wahcuLHYJfnJV8MW9KUyvd",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Photo = Config.file('Photo', {\n  accept: 'image/*',\n  fields: {\n    alt: Field.localised(Field.text('Alt text')),\n    credit: Field.text('Credit')\n  }\n})\n\nexport const Logo = Config.file('Logo', {accept: 'image/*'})\nexport const Download = Config.file('Download', {accept: '.pdf,.docx'})\n\nexport const Folder = Config.type('Folder', {\n  contains: ['Folder', 'Photo', 'Logo', 'Download'],\n  fields: {}\n})\n\nConfig.root('Library', {\n  contains: ['Folder', 'Photo', 'Download'],\n  i18n: {locales: ['en', 'nl'], translate: 'fields'}\n})",
+      "fileName": "schema/Library.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`accept` lists the files of the type, like the accept attribute of a file input: extensions (`.pdf`), media types (`application/pdf`) and groups of them (`image/*`). Without it the type takes every file."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Editors can upload wherever the folder they are in, or the root at the top level, contains a file type. An upload becomes the first of those types that accepts the file. When several accept it, the upload dialog asks which one to use, and files none of them accepts are left out."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Image and file fields pick files of every file type. Queries select the data of a file with `ImageLink` and `FileLink`, and your own fields with the fields of the file type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "File types follow the rules of media files: uploading publishes them, they have no drafts, and deleting an entry deletes its file."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "In a root that translates fields, `Field.localised` fields of files hold a value per locale, as the alt text of media files does."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Limits and production"
         }
       ],

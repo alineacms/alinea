@@ -37,6 +37,16 @@
   it works in any root. Queries for a locale find the entries of roots that
   translate fields to it. The media root translates fields, `Field.localiser`
   is deprecated.
+- Add `Config.file` to define types of uploaded files, with fields of their
+  own and an `accept` list, and upload into any root or folder that contains
+  them. An upload becomes the first file type that accepts it, the upload
+  dialog asks which one when several do. Image and file fields pick files of
+  every file type, the media root is built on the `MediaFile` file type.
+  Files are only uploaded where the folder or root contains a file type, the
+  `upload_file` MCP tool takes a `root` and `type`.
+- Add `tabs` to `Config.type`, `Config.document` and `Config.file` to add tabs
+  to the entry editor, and a `view` to `Field.tab`, eg. an Analytics tab that
+  shows a custom component.
 - Add the `overview` option to container types and roots to configure how the
   dashboard lists their children: columns (`Config.column`) with per-type
   selects, formatting and custom cells, built-in type, status, updated and

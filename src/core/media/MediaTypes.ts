@@ -15,6 +15,7 @@ import {
 } from '../Overview.js'
 import {
   type FieldsDefinition,
+  type TabFields,
   type Type,
   type TypeConfig,
   type
@@ -103,11 +104,19 @@ function fileType<Fields extends FieldsDefinition>(
  * fields of the type. An upload becomes the first file type the location
  * contains that accepts the file.
  */
-export function file<Fields extends FieldsDefinition = {}>(
+export function file<
+  Fields extends FieldsDefinition = {},
+  Tabs extends Record<string, Type> = {}
+>(
   label: string,
-  {fields = {} as Fields, ...config}: FileTypeConfig<Fields> = {}
-): Type<FileFields & Fields> {
-  return fileType(label, {...fileFields(), ...fields}, config)
+  {
+    fields = {} as Fields,
+    ...config
+  }: FileTypeConfig<Fields> & {tabs?: Tabs} = {}
+): Type<FileFields & Fields & TabFields<Tabs>> {
+  return fileType(label, {...fileFields(), ...fields}, config) as Type<
+    FileFields & Fields & TabFields<Tabs>
+  >
 }
 
 /** Whether `type` was created with `Config.file` */

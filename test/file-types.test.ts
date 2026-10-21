@@ -165,3 +165,20 @@ test('files of every file type can be linked as images and files', async () => {
     test.ok(CoreConfig.fileCondition(cms.config, 'file'))
   })
 })
+
+test('files upload into a draft folder', async () => {
+  await withUploads(async db => {
+    const folder = await db.create({
+      type: Folder,
+      root: 'library',
+      status: 'draft',
+      set: {title: 'Drafts', path: 'drafts'}
+    })
+    const photo = await db.upload({
+      file: file('photo.jpg'),
+      root: 'library',
+      parentId: folder._id
+    })
+    test.is(photo._parentId, folder._id)
+  })
+})

@@ -53,7 +53,7 @@ import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
 import {EntryFields} from './../EntryFields.js'
 import {NodeEditor} from './../NodeEditor.js'
-import {withSettingsTab} from '../SettingsTab.js'
+import {entryForm} from '../EntryForm.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {entryDirtyActions} from './../EntryHeaderActions.js'
 import {
@@ -399,7 +399,7 @@ function EntryEditorContent({
             </div>
           )}
 
-          <NodeEditor node={node} type={withSettingsTab(type.type)}>
+          <NodeEditor node={node} type={entryForm(type.type)}>
             <EntryFields />
           </NodeEditor>
         </div>
@@ -433,7 +433,7 @@ function EntryEditorContent({
           </div>
         )}
         <PageContent ref={editorBodyRef} className={styles.EntryEditor.view()}>
-          <NodeEditor node={node} type={withSettingsTab(type.type)}>
+          <NodeEditor node={node} type={entryForm(type.type)}>
             <View type={type.type} />
           </NodeEditor>
         </PageContent>
