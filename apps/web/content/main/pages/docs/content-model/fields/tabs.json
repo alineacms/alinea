@@ -176,7 +176,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Documents show these tabs after their Details tab. Other types show their fields on a Content tab, followed by these tabs and the Settings tab of their `settings`. Files show them after the File and Details tabs."
+                  "text": "Documents show these tabs after their Details tab. Other types show their fields on a Content tab, followed by these tabs. Files show them after the File and Details tabs, and list rows and rich text blocks as sections of their settings sheet."
                 }
               ]
             }

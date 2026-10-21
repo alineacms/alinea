@@ -24,6 +24,7 @@ import {list} from '#/field/list.js'
 import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
 import {text} from '#/field/text.js'
+import {tab} from '#/field/tabs.js'
 import '#/theme.css'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
@@ -47,8 +48,8 @@ const heroBlock = type('Hero', {
     heading: text('Heading'),
     body: text('Body', {multiline: true})
   },
-  settings: {
-    background: text('Background color')
+  tabs: {
+    style: tab('Style', {fields: {background: text('Background color')}})
   }
 })
 

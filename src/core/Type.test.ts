@@ -3,7 +3,7 @@ import {document} from '#/core/Document.js'
 import {Section} from '#/core/Section.js'
 import {Type, type} from '#/core/Type.js'
 import type {TabsSection} from '#/field/tabs/Tabs.js'
-import {entry, image, link, list, object, richText, text} from '#/field.js'
+import {entry, image, link, list, object, richText, tab, text} from '#/field.js'
 import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
 import {ListRow} from './ListRow.js'
 
@@ -486,15 +486,15 @@ test('container types can leave out their fields', () => {
   test.ok(invalid)
 })
 
-test('settings are stored as fields but left out of the form', () => {
+test('tabs are stored as fields but left out of the form', () => {
   const Hero = type('Hero', {
     fields: {heading: text('Heading')},
-    settings: {background: text('Background')}
+    tabs: {style: tab('Style', {fields: {background: text('Background')}})}
   })
   const row: Type.Infer<typeof Hero> = {heading: 'Hello', background: 'blue'}
   test.is(row.background, 'blue')
   test.equal(Object.keys(Type.fields(Hero)), ['heading', 'background'])
-  test.equal(Object.keys(Type.settings(Hero)!), ['background'])
+  test.equal(Object.keys(Type.tabs(Hero)!), ['style'])
   test.equal(
     Type.sections(Hero).flatMap(section =>
       Object.keys(Section.fields(section))
@@ -502,26 +502,15 @@ test('settings are stored as fields but left out of the form', () => {
     ['heading']
   )
   test.is(Type.initialValue(Hero).background, '')
-  test.is(Type.settings(type('Plain', {fields: {}})), undefined)
+  test.is(Type.tabs(type('Plain', {fields: {}})), undefined)
   test.throws(
     () =>
       type('Twice', {
         fields: {heading: text('Heading')},
-        settings: {heading: text('Heading')}
+        tabs: {style: tab('Style', {fields: {heading: text('Heading')}})}
       }),
     'defined twice'
   )
-})
-
-test('documents show settings in a Settings tab', () => {
-  const Page = document('Page', {
-    fields: {body: text('Body')},
-    settings: {background: text('Background')}
-  })
-  const [tabs] = Type.sections(Page)
-  const labels = (tabs[Section.Data] as TabsSection).types.map(Type.label)
-  test.equal(labels, ['Document', 'SEO', 'Details', 'Settings'])
-  test.ok(Type.field(Page, 'background'))
 })
 
 test('a type view is a path or a component', () => {

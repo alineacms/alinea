@@ -48,7 +48,7 @@ import {
   type BlockSheetState,
   useBlockSheet
 } from '#/dashboard/app/BlockSheet.js'
-import {BlockSettings} from '#/dashboard/app/BlockSettings.js'
+import {BlockTabs} from '#/dashboard/app/BlockTabs.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
@@ -458,8 +458,8 @@ const ListFieldRow = memo(function ListFieldRow({
       <BlockSheet id={itemId}>
         <ListFieldRowSheet
           anchor={anchorValue}
-          settings={
-            <BlockSettings
+          tabs={
+            <BlockTabs
               node={row as ReactiveNode<object>}
               type={type}
               readOnly={readOnly}
@@ -637,8 +637,8 @@ type InsertPosition = 'before' | 'after'
 
 interface ListFieldRowSheetProps {
   anchor?: string
-  /** Settings of the row's type, rendered below the label and anchor */
-  settings?: ReactNode
+  /** The tabs of the row's type, rendered below the label and anchor */
+  tabs?: ReactNode
   canInsert: boolean
   customLabel: string
   isFirstRow: boolean
@@ -661,7 +661,7 @@ interface ListFieldRowSheetProps {
 
 function ListFieldRowSheet({
   anchor,
-  settings,
+  tabs,
   canInsert,
   customLabel,
   isFirstRow,
@@ -765,7 +765,7 @@ function ListFieldRowSheet({
                 )}
               </div>
             </SheetSection>
-            {settings}
+            {tabs}
           </SheetBody>
           <SheetFooter>
             <Button

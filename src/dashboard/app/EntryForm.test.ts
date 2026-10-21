@@ -9,10 +9,10 @@ import {entryForm} from './EntryForm.js'
 
 const test = suite(import.meta)
 
-test('entries of a type with settings show them in a Settings tab', () => {
+test('entries of a type with tabs show its fields in a Content tab', () => {
   const Product = type('Product', {
     fields: {name: text('Name')},
-    settings: {sku: text('SKU')}
+    tabs: {settings: tab('Settings', {fields: {sku: text('SKU')}})}
   })
   const form = entryForm(Product)
   test.is(entryForm(Product), form)
@@ -25,10 +25,9 @@ test('entries of a type with settings show them in a Settings tab', () => {
   test.is(entryForm(plain), plain)
 })
 
-test('custom tabs follow the content, before the settings', () => {
+test('tabs follow the content in their order', () => {
   const Product = type('Product', {
     fields: {name: text('Name')},
-    settings: {sku: text('SKU')},
     tabs: {
       planning: tab('Planning', {fields: {start: text('Start')}}),
       analytics: tab('Analytics', {view: '@/views/Analytics#Analytics'})
@@ -38,12 +37,7 @@ test('custom tabs follow the content, before the settings', () => {
   test.is(Type.field(Product, 'start'), Product.start)
   const [tabs] = Type.sections(entryForm(Product))
   const data = tabs[Section.Data] as TabsSection
-  test.equal(data.types.map(Type.label), [
-    'Content',
-    'Planning',
-    'Analytics',
-    'Settings'
-  ])
+  test.equal(data.types.map(Type.label), ['Content', 'Planning', 'Analytics'])
   test.equal(Type.sections(data.types[2]).length, 1)
 })
 

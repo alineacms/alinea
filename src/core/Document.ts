@@ -1,8 +1,7 @@
 import {
   IcRoundBolt,
   IcRoundDescription,
-  IcRoundInfo,
-  IcOutlineSettings
+  IcRoundInfo
 } from '#/dashboard/icons.js'
 import {
   type MetadataField,
@@ -32,9 +31,9 @@ export type Document = {
   metadata: MetadataField
 }
 
-export type DocumentConfig<Fields, Seo, Details, Settings = {}, Tabs = {}> = (
-  | TypeConfig<Fields, Settings>
-  | ContainerTypeConfig<Fields, Settings>
+export type DocumentConfig<Fields, Seo, Details, Tabs = {}> = (
+  | TypeConfig<Fields>
+  | ContainerTypeConfig<Fields>
 ) & {
   /** Tabs after the Details tab, eg. an Analytics tab with a view */
   tabs?: Tabs
@@ -56,7 +55,6 @@ export function document<
   Fields extends FieldsDefinition = {},
   Seo extends FieldsDefinition = {},
   Details extends FieldsDefinition = {},
-  Settings extends FieldsDefinition = {},
   Tabs extends Record<string, Type> = {}
 >(
   label: string,
@@ -64,11 +62,10 @@ export function document<
     fields = {} as Fields,
     seo = {} as Seo,
     details = {} as Details,
-    settings = {} as Settings,
     tabs: extraTabs = {} as Tabs,
     ...config
-  }: DocumentConfig<Fields, Seo, Details, Settings, Tabs>
-): Type<Document & Fields & Seo & Details & Settings & TabFields<Tabs>> {
+  }: DocumentConfig<Fields, Seo, Details, Tabs>
+): Type<Document & Fields & Seo & Details & TabFields<Tabs>> {
   const {title, path, metadata} = documentFields()
   // Fields may replace the title and path; the other tabs add fields.
   const taken = new Set([
@@ -78,18 +75,14 @@ export function document<
   for (const name of [
     ...fieldNames(seo),
     ...fieldNames(details),
-    ...values(extraTabs).flatMap(tab => keys(Type.fields(tab))),
-    ...fieldNames(settings)
+    ...values(extraTabs).flatMap(tab => keys(Type.fields(tab)))
   ]) {
     if (taken.has(name)) throw new Error(`Field "${name}" is defined twice`)
     taken.add(name)
   }
-  const fieldsWithMeta: Document &
-    Fields &
-    Seo &
-    Details &
-    Settings &
-    TabFields<Tabs> = <any>tabs(
+  const fieldsWithMeta: Document & Fields & Seo & Details & TabFields<Tabs> = <
+    any
+  >tabs(
     tab('Document', {
       icon: IcRoundDescription,
       fields: {title, path, ...fields}
@@ -103,10 +96,7 @@ export function document<
       fields: {...details, ...metadataDetails(metadata)}
     }),
     // Custom tabs, eg. an Analytics tab with a view
-    ...values(extraTabs),
-    ...(keys(settings).length > 0
-      ? [tab('Settings', {icon: IcOutlineSettings, fields: settings})]
-      : [])
+    ...values(extraTabs)
   )
   const result = type(label, {
     ...config,

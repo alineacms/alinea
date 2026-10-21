@@ -247,7 +247,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Next to `fields`, a document takes `seo` and `details`: fields added to the SEO and Details tabs. `settings` adds a Settings tab with its fields."
+          "text": "Next to `fields`, a document takes `seo` and `details`: fields added to the SEO and Details tabs. `tabs` adds tabs after the Details tab, see Tabs."
         }
       ]
     },
