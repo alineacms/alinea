@@ -106,6 +106,8 @@ export interface ExplorerBodyProps {
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
+  /** A search field of its own, instead of the header row of the results */
+  boxed?: boolean
   explorer: DashboardExplorer
   onEntryAction?: (entry: DashboardEntry) => void
   onEscape?: () => void
@@ -146,6 +148,7 @@ interface ExplorerHeaderParentMainProps {
 
 export function ExplorerSearch({
   autoFocus,
+  boxed,
   explorer,
   onEntryAction,
   onEscape,
@@ -320,7 +323,7 @@ export function ExplorerSearch({
       icon={IcRoundSearch}
       loading={isPending || inputValue !== page.search}
       placeholder="Search..."
-      variant="inline"
+      variant={boxed ? 'default' : 'inline'}
       value={inputValue}
       onValueChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
@@ -420,21 +423,39 @@ function ExplorerResultMode({
   )
 }
 
+export interface ExplorerParentBackProps {
+  explorer: DashboardExplorer
+  parent: ExplorerParent
+}
+
+/** Lists the children of the parent of the listed entries, or the root */
+export function ExplorerParentBack({
+  explorer,
+  parent
+}: ExplorerParentBackProps) {
+  const setLocation = useSetAtom(explorer.location)
+  const [, startTransition] = useTransition()
+  const parentId = parent.parents.at(-1)
+  return (
+    <PageBack
+      label={parentId ? 'Back to parent entry' : 'Back to root'}
+      onClick={() =>
+        startTransition(() =>
+          setLocation(location => ({...location, parentId}))
+        )
+      }
+    />
+  )
+}
+
 function ExplorerHeaderParentMain({
   explorer,
   parent: current,
   titleControls
 }: ExplorerHeaderParentMainProps) {
-  const setLocation = useSetAtom(explorer.location)
-  const parentId = current.parents.at(-1)
   return (
     <div className={styles.ExplorerHeader.main()}>
-      <PageBack
-        label={parentId ? 'Back to parent entry' : 'Back to root'}
-        onClick={() => {
-          setLocation(location => ({...location, parentId}))
-        }}
-      />
+      <ExplorerParentBack explorer={explorer} parent={current} />
       <PageTitle>{current.title}</PageTitle>
       {titleControls}
     </div>
@@ -855,6 +876,7 @@ export function ExplorerHeader({
           <div className={styles.Explorer.searchSlot()}>
             <ExplorerSearch
               autoFocus={autoFocusSearch}
+              boxed={navigate}
               explorer={explorer}
               onEscape={onSearchEscape}
               page={page}
@@ -872,6 +894,11 @@ export function ExplorerHeader({
             className={styles.ExplorerHeader.location()}
             role="group"
           >
+            {page.parent &&
+              page.resultMode === 'browse' &&
+              !explorer.pickChildren && (
+                <ExplorerParentBack explorer={explorer} parent={page.parent} />
+              )}
             <ExplorerResultMode
               canBrowse={canBrowse}
               explorer={explorer}

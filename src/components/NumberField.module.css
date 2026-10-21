@@ -10,7 +10,7 @@
   border-radius: var(--alinea-radius);
   background-color: var(--alinea-input);
   transition: var(--alinea-transition);
-  transition-property: border-color, box-shadow, opacity;
+  transition-property: border-color, box-shadow, background-color, opacity;
 
   &:hover {
     border-color: var(--alinea-border-strong);
@@ -20,6 +20,11 @@
   &:focus-within {
     border-color: var(--alinea-primary);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
+  }
+
+  /* A focused value is highlighted like a focused date segment */
+  &:has(.NumberFieldInput:focus:not([readonly])) {
+    background-color: var(--alinea-primary-subtle);
   }
 
   &:has(.NumberFieldInput[aria-invalid='true']) {
@@ -54,6 +59,10 @@
 
   &::placeholder {
     color: var(--alinea-fg-disabled);
+  }
+
+  &:focus:not([readonly]) {
+    color: var(--alinea-primary);
   }
 
   &[readonly] {

@@ -42,6 +42,40 @@ function textContent(doc: TextDoc): string {
   }, '')
 }
 
+/** The node `withAnchors` places in a document where an anchor starts */
+const anchorNode = 'anchor'
+
+function isAnchor(mark: Mark): boolean {
+  return mark[Mark.type] === 'anchor'
+}
+
+/**
+ * Anchor marks name a place in the text, so links can jump to it. Each id is
+ * placed once, before the first text it marks: a mark over differently
+ * formatted text is stored on each of its text nodes.
+ */
+function withAnchors(doc: TextDoc, placed = new Set<string>()): TextDoc {
+  return doc.flatMap((node): Array<Node> => {
+    if (Node.isText(node)) {
+      const marks = node[TextNode.marks]
+      if (!marks?.some(isAnchor)) return [node]
+      const anchors = marks.flatMap(mark => {
+        const id = mark.id
+        if (!isAnchor(mark) || !id || placed.has(id)) return []
+        placed.add(id)
+        return [{[Node.type]: anchorNode, id}]
+      })
+      return [
+        ...anchors,
+        {...node, [TextNode.marks]: marks.filter(mark => !isAnchor(mark))}
+      ]
+    }
+    const content = Node.isElement(node) && node[ElementNode.content]
+    if (!content) return [node]
+    return [{...node, [ElementNode.content]: withAnchors(content, placed)}]
+  })
+}
+
 interface TableProps extends TableHTMLAttributes<HTMLTableElement> {}
 
 function Table({children, ...props}: TableProps) {
@@ -239,6 +273,13 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
       marks,
       ...attrs
     } = node
+    if (type === anchorNode) {
+      const id = typeof attrs.id === 'string' ? attrs.id : undefined
+      // React's types leave out `name` as it is obsolete in HTML, some
+      // older scripts still find anchors by it
+      const anchor: Record<string, string | undefined> = {id, name: id}
+      return <a {...anchor} />
+    }
     const element = nodeElement(type, attrs, content)
     const View =
       type === 'table'
@@ -320,7 +361,7 @@ export function RichText<Blocks extends object = {}>({
   if (!Array.isArray(doc)) return null
   return (
     <Fragment>
-      {doc.map((node, i) => {
+      {withAnchors(doc).map((node, i) => {
         return (
           <RichTextNodeView
             key={i}

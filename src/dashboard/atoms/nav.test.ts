@@ -228,3 +228,17 @@ test('opens the entry an edit link names by id', async () => {
   await store.set(routeAtom, {page: 'edit', entry: 'missing'})
   expect(store.get(pageAtom).entry).toBeUndefined()
 })
+
+test('follows an edit link from the address bar', async () => {
+  const {store} = await linkedStore()
+  const current = store.get(routeAtom)
+  const lookup = store.set(routeAtom, {
+    browser: true,
+    route: {page: 'edit', entry: 'hero'}
+  })
+  // A browser fires popstate and then hashchange for a new hash, the second
+  // one reads the hash of the current page, put back during the lookup
+  store.set(routeAtom, {browser: true, route: {...current}})
+  await lookup
+  expect(store.get(pageAtom)).toMatchObject({entry: 'hero', locale: 'nl'})
+})

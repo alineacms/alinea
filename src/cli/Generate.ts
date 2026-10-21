@@ -1,6 +1,7 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
+import {getScope} from '#/core/Scope.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
@@ -143,8 +144,14 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         dashboardUrl: await options.dashboardUrl
       }
       try {
-        if (db) await db.reconfigure(databaseOptions)
-        else db = await DevDB.create(databaseOptions)
+        if (db) {
+          // The handler of the previous config answers until the next one is
+          // served, its queries are compiled against the next config
+          getScope(cms.config).adopt(getScope(db.config))
+          await db.reconfigure(databaseOptions)
+        } else {
+          db = await DevDB.create(databaseOptions)
+        }
       } catch (error) {
         if (error instanceof Error) reportError(error)
         if (cmd === 'build') process.exit(1)

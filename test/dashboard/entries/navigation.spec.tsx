@@ -466,7 +466,10 @@ test('opens on the entry of an edit link', async ({dashboard, mount}) => {
     hash: '#/edit?url=%2Fbeta',
     title: 'Beta'
   })
-  await expect(app.page).toHaveURL(/#\/entry\/main\/pages\/workflow-beta$/)
+  // Linked from the site to edit it, so it opens in the editor
+  await expect(app.page).toHaveURL(
+    /#\/entry\/main\/pages\/workflow-beta\?view=edit$/
+  )
   await expect(app.field('Title')).toHaveValue('Beta')
 })
 
