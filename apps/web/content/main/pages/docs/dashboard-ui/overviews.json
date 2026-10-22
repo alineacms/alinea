@@ -399,7 +399,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`header` (required): the column header."
+                  "text": "`header` (required): the column header, text or a React element."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`info`: explains the column in a popover, opened from an info button next to the header. Pass text or a React element, eg. `info: <p>Units in stock across all warehouses.</p>`."
                 }
               ]
             }

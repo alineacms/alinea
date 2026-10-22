@@ -28,7 +28,7 @@ import {
   type WritableAtom
 } from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {ComponentType, SetStateAction} from 'react'
+import type {ComponentType, ReactNode, SetStateAction} from 'react'
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
 import {confirmMoveAtom, draggedEntriesAtom} from './moveConfirmation.js'
@@ -202,7 +202,7 @@ export interface ExplorerSortState {
   /** The column the editor sorted by */
   requested?: OverviewSort
   /** The label of the order the editor picked */
-  label?: string
+  label?: ReactNode
   /** The column shown as sorted, also for the parent's default order */
   column?: OverviewSort
   /** Entries are listed in their stored order and can be reordered */
