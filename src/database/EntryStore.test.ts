@@ -421,6 +421,57 @@ test('previews of a database that cannot fork roll back', async () => {
   }
 })
 
+test('previews leave out archived and unpublished entries', async () => {
+  const {store} = await createForkableStore()
+  try {
+    await createPages(store, () => 'Published')
+    await store.mutate([
+      {
+        op: 'create',
+        id: 'page',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Draft'},
+        status: 'draft'
+      },
+      {op: 'archive', id: 'other', locale: null},
+      {
+        op: 'create',
+        id: 'unpublished',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Unpublished'},
+        status: 'draft'
+      }
+    ])
+    const titles = (previewed?: Entry) =>
+      store.find({
+        status: 'preview',
+        select: Entry.title,
+        preview: previewed && {entry: previewed}
+      })
+    const previewed = (id: string) =>
+      store.get({id, select: Entry, status: 'preferDraft'})
+    expect(await titles()).toEqual(['Draft', 'Published'])
+    // The previewed entry shows in any status
+    const archived = await previewed('other')
+    expect(await titles(archived)).toEqual(['Draft', 'Published', 'Published'])
+    const {
+      rowHash: _rowHash,
+      fileHash: _fileHash,
+      ...unpublished
+    } = await previewed('unpublished')
+    const edited = await createEntryRow(
+      config,
+      {...unpublished, data: {...unpublished.data, title: 'Edited'}},
+      unpublished.status
+    )
+    expect(await titles(edited)).toEqual(['Draft', 'Published', 'Edited'])
+  } finally {
+    await store.close()
+  }
+})
+
 /** Rows of a preview through an overlay created for it alone. */
 async function referenceRows<Row>(
   store: EntryStore,

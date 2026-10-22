@@ -257,13 +257,25 @@ class Expressions {
 /** Rows visible under a query status; the default addresses published rows. */
 export function statusCondition(
   entry: EntryIndexTarget,
-  status: Status = 'published'
+  status: Status = 'published',
+  previewed?: string
 ): Sql<boolean> {
   switch (status) {
     case 'all':
       return sql.value(true)
     case 'preferDraft':
       return eq(entry.active, true)
+    case 'preview':
+      // The draft of a published language is never its main version, while
+      // an archived or unpublished language shows its main version as active
+      return and(
+        eq(entry.active, true),
+        or(
+          eq(entry.status, 'published'),
+          eq(entry.main, false),
+          previewed === undefined ? undefined : eq(entry.id, previewed)
+        )
+      )
     case 'preferPublished':
       return eq(entry.main, true)
     default:
@@ -366,7 +378,8 @@ export function compileEntryQuery(
     baseEntry = entry
   } = options
   const search = options.search ?? searchQuery(query.search, entry)
-  if (query.preview)
+  // A previewed entry is synced in by then, an encoded payload is not
+  if (query.preview && !('entry' in query.preview))
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
   // A related entry's value, eg. to order by the title of a linked entry
@@ -431,7 +444,7 @@ export function compileEntryQuery(
       conditions.push(referencedByCondition(entry, source, via, ownLocale))
     } else conditions.push(relationCondition(entry, edge, source))
   }
-  conditions.push(statusCondition(entry, query.status))
+  conditions.push(statusCondition(entry, query.status, query.preview?.entry.id))
   for (const key of [
     'id',
     'parentId',
