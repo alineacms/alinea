@@ -444,7 +444,11 @@ export function compileEntryQuery(
       conditions.push(referencedByCondition(entry, source, via, ownLocale))
     } else conditions.push(relationCondition(entry, edge, source))
   }
-  conditions.push(statusCondition(entry, query.status, query.preview?.entry.id))
+  // Only the page itself shows the previewed entry, never listings: the
+  // preview cookie outlives navigating to another page in the preview
+  const previewed =
+    query.first || query.get ? query.preview?.entry.id : undefined
+  conditions.push(statusCondition(entry, query.status, previewed))
   for (const key of [
     'id',
     'parentId',

@@ -450,12 +450,20 @@ test('previews leave out archived and unpublished entries', async () => {
         select: Entry.title,
         preview: previewed && {entry: previewed}
       })
+    const lookup = (id: string, previewed: Entry) =>
+      store.first({
+        id,
+        status: 'preview',
+        select: Entry.title,
+        preview: {entry: previewed}
+      })
     const previewed = (id: string) =>
       store.get({id, select: Entry, status: 'preferDraft'})
     expect(await titles()).toEqual(['Draft', 'Published'])
-    // The previewed entry shows in any status
+    // The previewed entry shows in any status on its own page, not in lists
     const archived = await previewed('other')
-    expect(await titles(archived)).toEqual(['Draft', 'Published', 'Published'])
+    expect(await titles(archived)).toEqual(['Draft', 'Published'])
+    expect(await lookup('other', archived)).toBe('Published')
     const {
       rowHash: _rowHash,
       fileHash: _fileHash,
@@ -466,7 +474,8 @@ test('previews leave out archived and unpublished entries', async () => {
       {...unpublished, data: {...unpublished.data, title: 'Edited'}},
       unpublished.status
     )
-    expect(await titles(edited)).toEqual(['Draft', 'Published', 'Edited'])
+    expect(await titles(edited)).toEqual(['Draft', 'Published'])
+    expect(await lookup('unpublished', edited)).toBe('Edited')
   } finally {
     await store.close()
   }
