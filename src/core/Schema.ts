@@ -1,4 +1,4 @@
-import {getType} from './Internal.js'
+import {getReplaced, getType} from './Internal.js'
 import {Type} from './Type.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
@@ -46,7 +46,13 @@ export namespace Schema {
   }
 
   export function typeNames(schema: Schema): Map<Type, string> {
-    return new Map(entries(schema).map(([key, type]) => [type, key]))
+    const names = new Map(entries(schema).map(([key, type]) => [type, key]))
+    // A built-in type is known by the name of the type standing in for it
+    for (const [key, type] of entries(schema)) {
+      const replaced = getReplaced(type) as Type | undefined
+      if (replaced && !names.has(replaced)) names.set(replaced, key)
+    }
+    return names
   }
 
   export function contained(

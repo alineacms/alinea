@@ -370,6 +370,11 @@ export function createConfig<Definition extends Config>(
     throw new Error(
       `"MediaFile" is a reserved Type name, create it with Config.mediaFile`
     )
+  for (const [name, type] of entries(definition.schema))
+    if (name !== 'MediaFile' && getReplaced(type))
+      throw new Error(
+        `Type "${name}" is created with Config.mediaFile, name it "MediaFile"`
+      )
   if (
     definition.schema.MediaLibrary &&
     definition.schema.MediaLibrary !== MediaLibrary

@@ -4,7 +4,11 @@ import {createCMS} from '#/core.js'
 import {Config as CoreConfig} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
+import {getType} from '#/core/Internal.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import {Root} from '#/core/Root.js'
+import {Schema} from '#/core/Schema.js'
+import {rootAcceptsType} from '#/dashboard/atoms/move.js'
 import {LocalDB} from '#/database/LocalDB.js'
 
 const test = suite(import.meta)
@@ -249,6 +253,37 @@ test('the schema can define MediaFile with tabs of its own', () => {
       }),
     '"MediaFile" is a reserved Type name, create it with Config.mediaFile'
   )
+  test.throws(
+    () =>
+      createCMS({
+        schema: {Asset: Config.mediaFile()},
+        workspaces: {
+          main: Config.workspace('Main', {
+            source: 'content',
+            roots: {media: Config.media()}
+          })
+        }
+      }),
+    'Type "Asset" is created with Config.mediaFile, name it "MediaFile"'
+  )
+  test.throws(
+    () => Config.mediaFile({fields: {location: Field.text('Location')}}),
+    'Field "location" is defined twice in Type "Media file"'
+  )
+})
+
+test('the built-in MediaFile is known as the MediaFile of the schema', () => {
+  const {config} = mediaCms
+  const media = mediaCms.workspaces.main.media
+  test.is(Schema.typeNames(config.schema).get(MediaFile), 'MediaFile')
+  test.ok(CoreConfig.rootContains(config, media, MediaFile))
+  test.ok(CoreConfig.rootContains(config, media, AnalyticsMediaFile))
+  test.ok(rootAcceptsType(config, Root.data(media), 'MediaFile'))
+  // Types can list the built-in MediaFile in what they contain
+  const Gallery = Config.type('Gallery', {contains: [MediaFile], fields: {}})
+  test.equal(Schema.contained(config.schema, getType(Gallery).contains!), [
+    'MediaFile'
+  ])
 })
 
 test('queries naming MediaFile find the MediaFile of the schema', async () => {

@@ -393,7 +393,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3L3CWnTEvH6gRwtu1A51dqUDSOB",
-      "code": "import {Config, Field} from 'alinea'\n\nexport const cms = createCMS({\n  schema: {\n    ...schema,\n    MediaFile: Config.mediaFile({\n      tabs: {\n        analytics: Field.tab('Analytics', {view: '@/views/MediaAnalytics'})\n      }\n    })\n  },\n  workspaces\n})",
+      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  schema: {\n    ...schema,\n    MediaFile: Config.mediaFile({\n      tabs: {\n        analytics: Field.tab('Analytics', {view: '@/views/MediaAnalytics'})\n      }\n    })\n  },\n  workspaces\n})",
       "fileName": "cms.tsx",
       "language": "tsx"
     },
