@@ -117,6 +117,18 @@ test('initial values have every locale of the root', () => {
   )
 })
 
+test('a plain object stored before the root translated fields holds for each locale', () => {
+  const Spec = Config.type('Spec', {
+    fields: {
+      details: Field.localised(
+        Field.object('Details', {fields: {size: Field.text('Size')}})
+      )
+    }
+  })
+  const data = Type.withInitialValue(Spec, {details: {size: 'L'}}, {fieldI18n})
+  test.equal(data.details, {en: {size: 'L'}, de: {size: 'L'}, fr: {size: 'L'}})
+})
+
 test('required applies to each locale of the root', () => {
   const errors = validateEntry(
     Product,

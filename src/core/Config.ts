@@ -208,7 +208,7 @@ export namespace Config {
   /**
    * The file types an upload to a location can become, in order: those the
    * parent entry's type contains, or else those the root contains. Media
-   * roots also take media files at their top level.
+   * roots and their folders also take media files, after their own types.
    */
   export function uploadTypes(
     config: Config,
@@ -220,12 +220,15 @@ export namespace Config {
     const parent = location.parentType
       ? config.schema[location.parentType]
       : undefined
-    const contains = parent ? Type.contains(parent) : Root.contains(root)
+    // Media folders hold what their root holds
+    const inRoot = !parent || parent === MediaLibrary
+    const contains = inRoot ? Root.contains(root) : Type.contains(parent)
     const names = Schema.contained(config.schema, contains).filter(name =>
       isFileType(config.schema[name])
     )
-    if (!parent && Root.isMediaRoot(root) && !names.includes('MediaFile'))
-      names.unshift('MediaFile')
+    // After the root's own file types, so those are picked first
+    if (inRoot && Root.isMediaRoot(root) && !names.includes('MediaFile'))
+      names.push('MediaFile')
     return names
   }
 

@@ -375,6 +375,18 @@ export class UploadOperation extends Operation {
         url: info.previewUrl,
         location: MediaLocation.storagePath(db.config, workspace, fileLocation)
       }
+      const fileType = db.config.schema[typeName]
+      const uploaded = {
+        title,
+        location: fileLocation,
+        // Local uploads have no preview url, leave the empty value out
+        ...(info.previewUrl ? {previewUrl: info.previewUrl} : {}),
+        extension,
+        size: body.byteLength,
+        hash,
+        ...(sourceHash ? {sourceHash} : {}),
+        ...previewData
+      }
       const createEntry: Mutation = {
         op: 'create',
         id: entryId,
@@ -384,18 +396,13 @@ export class UploadOperation extends Operation {
         root,
         workspace,
         data: Type.beforeSave(
-          db.config.schema[typeName],
-          {
-            title,
-            location: fileLocation,
-            // Local uploads have no preview url, leave the empty value out
-            ...(info.previewUrl ? {previewUrl: info.previewUrl} : {}),
-            extension,
-            size: body.byteLength,
-            hash,
-            ...(sourceHash ? {sourceHash} : {}),
-            ...previewData
-          },
+          fileType,
+          // A replaced file keeps the fields stored with it, see overwrite
+          query.replaceId
+            ? uploaded
+            : Type.withInitialValue(fileType, uploaded, {
+                fieldI18n: Config.fieldI18n(db.config, workspace, root)
+              }),
           {
             action: query.replaceId ? 'update' : 'create',
             user: query.user,
@@ -431,7 +438,12 @@ async function uploadType(
       select: Entry.type,
       status: 'preferDraft'
     })
-    if (current) return current
+    if (current) {
+      const type = config.schema[current]
+      if (type && !fileTypeAccepts(type, fileName, mimeType))
+        throw new HttpError(400, `"${current}" does not accept ${fileName}`)
+      return current
+    }
   }
   const parentType = query.parentId
     ? await db.first({

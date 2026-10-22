@@ -13,7 +13,10 @@ const Photo = Config.file('Photo', {
   fields: {credit: Field.text('Credit')}
 })
 const Logo = Config.file('Logo', {accept: 'image/*'})
-const Download = Config.file('Download', {accept: '.pdf'})
+const Download = Config.file('Download', {
+  accept: '.pdf',
+  fields: {listed: Field.check('Listed', {initialValue: true})}
+})
 const Folder = Config.type('Folder', {
   contains: ['Folder', 'Photo', 'Logo', 'Download'],
   fields: {}
@@ -33,7 +36,8 @@ const cms = createCMS({
         library: Config.root('Library', {
           contains: ['Folder', 'Logos', 'Photo', 'Download']
         }),
-        media: Config.media()
+        media: Config.media(),
+        assets: Config.media({contains: ['MediaLibrary', 'Photo']})
       }
     })
   }
@@ -93,6 +97,37 @@ test('a location takes the file types it contains', () => {
     ),
     ['Photo', 'Logo']
   )
+})
+
+test('media roots and their folders take their own file types first', () => {
+  const assets = {workspace: 'main', root: 'assets'}
+  test.equal(CoreConfig.uploadTypes(cms.config, assets), ['Photo', 'MediaFile'])
+  test.equal(
+    CoreConfig.uploadTypes(cms.config, {...assets, parentType: 'MediaLibrary'}),
+    ['Photo', 'MediaFile']
+  )
+})
+
+test('an upload has the initial values of its file type', async () => {
+  await withUploads(async db => {
+    const pdf = await db.upload({file: file('terms.pdf'), root: 'library'})
+    test.is(await db.first({id: pdf._id, select: Download.listed}), true)
+  })
+})
+
+test('a replaced file keeps a file type that accepts it', async () => {
+  await withUploads(async db => {
+    const photo = await db.upload({file: file('photo.jpg'), root: 'library'})
+    await test.throws(
+      () =>
+        db.upload({
+          file: file('terms.pdf'),
+          root: 'library',
+          replaceId: photo._id
+        }),
+      '"Photo" does not accept terms.pdf'
+    )
+  })
 })
 
 test('an upload becomes the first file type that accepts it', async () => {

@@ -234,7 +234,8 @@ export const requestUploadsAtom = atom(
     const {destination, replaceId} = request
     const graph = get(graphAtom)
     const policy = get(policyAtom)
-    const fileTypes = Config.fileTypes(get(configAtom))
+    const config = get(configAtom)
+    const fileTypes = Config.fileTypes(config)
     policy.assert(Permission.Upload, {
       workspace: destination.workspace,
       root: destination.root,
@@ -251,28 +252,11 @@ export const requestUploadsAtom = atom(
         }
       })
     )
-    const config = get(configAtom)
-    const parentType = destination.parentId
-      ? await graph.first({
-          id: destination.parentId,
-          select: Entry.type,
-          status: 'preferDraft'
-        })
-      : undefined
-    const location = {
-      workspace: destination.workspace,
-      root: destination.root,
-      parentType: parentType ?? undefined
-    }
-    const uploadTypes = (file: File): Array<UploadType> =>
-      Config.acceptingTypes(config, location, file.name, file.type).map(
-        name => ({name, label: String(Type.label(config.schema[name]))})
-      )
     const hashes = scanned.map(file => file.hash)
     const slugs = files.map(file =>
       slugify(basename(file.name, extname(file.name)))
     )
-    const [duplicates, siblings, replaced] = await Promise.all([
+    const [duplicates, siblings, replaced, parentType] = await Promise.all([
       graph.find({
         type: fileTypes,
         workspace: destination.workspace,
@@ -298,8 +282,24 @@ export const requestUploadsAtom = atom(
             select: matchSelection,
             status: 'preferPublished'
           })
-        : null
+        : null,
+      destination.parentId
+        ? graph.first({
+            id: destination.parentId,
+            select: Entry.type,
+            status: 'preferDraft'
+          })
+        : undefined
     ])
+    const location = {
+      workspace: destination.workspace,
+      root: destination.root,
+      parentType: parentType ?? undefined
+    }
+    const uploadTypes = (file: File): Array<UploadType> =>
+      Config.acceptingTypes(config, location, file.name, file.type).map(
+        name => ({name, label: String(Type.label(config.schema[name]))})
+      )
     const uploads = files.map((file, index): PendingUpload => {
       const {hash, imageSize} = scanned[index]
       const duplicate = duplicates.find(

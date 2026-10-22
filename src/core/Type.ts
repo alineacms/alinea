@@ -411,7 +411,6 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   sections: Array<Section>
 }
 
-/** Create a new type */
 /** The fields of the tabs of a type, see `TypeConfig.tabs` */
 export type TabFields<Tabs> = [keyof Tabs] extends [never]
   ? {}
@@ -419,6 +418,7 @@ export type TabFields<Tabs> = [keyof Tabs] extends [never]
       {[K in keyof Tabs]: Tabs[K] extends Type<infer F> ? F : never}[keyof Tabs]
     >
 
+/** Create a new type */
 export function type<
   Fields extends FieldsDefinition = {},
   Tabs extends Record<string, Type> = {}

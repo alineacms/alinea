@@ -266,6 +266,19 @@ function storedLocales<Value>(value: unknown): StoredLocales<Value> {
   return [[undefined, value as Value]]
 }
 
+/**
+ * Whether a value holds a value per locale of its root. A plain value stored
+ * before the root translated fields can be an object itself, keyed by other
+ * names than its locales.
+ */
+function isPerLocale(
+  value: unknown,
+  locales: ReadonlyArray<string> | undefined
+): value is Record<string, unknown> {
+  if (!isRecord(value)) return false
+  return !locales || keys(value).every(key => locales.includes(key))
+}
+
 function rootLocalised<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): LocalisedField<string, StoredValue, QueryValue, Options> {
@@ -300,7 +313,7 @@ function rootLocalised<StoredValue, QueryValue, Mutator, Options>(
         }
         // A plain value, stored before the root translated fields, holds for
         // every locale
-        const record: Record<string, StoredValue> = isRecord(value)
+        const record: Record<string, StoredValue> = isPerLocale(value, locales)
           ? {...(value as Record<string, StoredValue>)}
           : value === undefined || value === null
             ? {}
@@ -366,7 +379,7 @@ function rootLocalised<StoredValue, QueryValue, Mutator, Options>(
         const values: StoredLocales<StoredValue> = locales
           ? locales.map(locale => [
               locale,
-              isRecord(value)
+              isPerLocale(value, locales)
                 ? (value as Record<string, StoredValue>)[locale]
                 : (value as StoredValue)
             ])
@@ -385,7 +398,7 @@ function rootLocalised<StoredValue, QueryValue, Mutator, Options>(
         })
       },
       async queryValue(value, loader) {
-        const selected = isRecord(value)
+        const selected = isPerLocale(value, loader.fieldI18n?.locales)
           ? selectLocalisedValue({
               value: value as Stored,
               locale: loader.locale,
