@@ -5,6 +5,7 @@ import type {QuerySettings} from '#/core/Graph.js'
 import type {Field} from '#/core/Field.js'
 import {getRoot, getType, hasType} from '#/core/Internal.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
+import {isFileType} from '#/core/media/MediaTypes.js'
 import {Permission, type Policy, type Resource} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import type {ChangesBatch} from '#/core/source/Change.js'
@@ -323,7 +324,7 @@ export class EntryTransaction implements AsyncDisposable {
     }
     this.#policy.assert(Permission.Create, resource)
     // Media has no drafts: uploading it is what publishes it
-    const media = type === 'MediaFile' || type === 'MediaLibrary'
+    const media = this.#isFile(type) || type === 'MediaLibrary'
     if (status === 'published')
       this.#policy.assert(
         media ? Permission.Upload : Permission.Publish,
@@ -357,7 +358,7 @@ export class EntryTransaction implements AsyncDisposable {
     if (existingPath && existingPath !== path && status === 'published')
       await this.#rename(id, locale, path)
 
-    if (overwrite && existingMain?.type === 'MediaFile') {
+    if (overwrite && existingMain && this.#isFile(existingMain.type)) {
       const stored = existingMain.data
       // Only a replace uploads the new file in this same commit
       const replacesFile =
@@ -778,10 +779,7 @@ export class EntryTransaction implements AsyncDisposable {
       if (entry.versionStatus === 'published')
         assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       this.#sourceTransaction.remove(entry.filePath)
-      if (
-        entry.type === 'MediaFile' &&
-        !skipLocations.has(entry.data.location)
-      ) {
+      if (this.#isFile(entry.type) && !skipLocations.has(entry.data.location)) {
         skipLocations.add(entry.data.location)
         this.#removeMediaFile(entry)
       }
@@ -796,7 +794,7 @@ export class EntryTransaction implements AsyncDisposable {
         this.#policy.assert(Permission.Delete, child)
         if (child.versionStatus === 'published')
           assert(!child.seeded, `Cannot remove seeded entry ${child.filePath}`)
-        if (child.type === 'MediaFile') this.#removeMediaFile(child)
+        if (this.#isFile(child.type)) this.#removeMediaFile(child)
       }
       this.#sourceTransaction.remove(entry.childrenDir)
     }
@@ -947,10 +945,9 @@ export class EntryTransaction implements AsyncDisposable {
 
   async #assertUniqueUrls(candidate: UrlCandidate): Promise<void> {
     const url = await this.#resolvedUrl(candidate)
-    const scope =
-      candidate.type === 'MediaFile'
-        ? {}
-        : {workspace: candidate.workspace, root: candidate.root}
+    const scope = this.#isFile(candidate.type)
+      ? {}
+      : {workspace: candidate.workspace, root: candidate.root}
     const existing = await this.#workingDatabase.first({
       ...scope,
       url,
@@ -1276,6 +1273,11 @@ export class EntryTransaction implements AsyncDisposable {
       orderBy,
       select: Entry.index
     })
+  }
+
+  /** Whether entries of a type are uploaded files, see `Config.file` */
+  #isFile(type: string): boolean {
+    return isFileType(this.#workingDatabase.config.schema[type])
   }
 
   #removeMediaFile(entry: Entry): void {

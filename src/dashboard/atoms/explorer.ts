@@ -1,5 +1,5 @@
 import type {DragTypes, DropTarget, Key} from '#/components.js'
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {filterChecker, type OpenFilter} from '#/core/Filter.js'
@@ -7,7 +7,12 @@ import {Field} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Graph, GraphQuery} from '#/core/Graph.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {
+  FileData,
+  isFileType,
+  MediaFile,
+  MediaLibrary
+} from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Policy, type Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
@@ -180,6 +185,8 @@ export interface ExplorerPathEntry {
 
 /** The entry whose children are listed */
 export interface ExplorerParent extends ExplorerPathEntry {
+  /** Its type, which decides what can be uploaded into it */
+  type: string
   /** The ids of its parents, from the root down */
   parents: Array<string>
   /** Its parents the editor can see, from the root down */
@@ -204,6 +211,11 @@ export interface ExplorerSortState {
 
 export interface ExplorerReadyPage {
   canUpload: boolean
+  /**
+   * The file types an upload to the location can become. Media roots take
+   * uploads everywhere, see `Config.uploadCandidates`.
+   */
+  uploadTypes: Array<string>
   /**
    * The condition of the selected tab and the picked filters, undefined when
    * none applies
@@ -407,7 +419,7 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
   const schema = config.schema
   const wanted = items.map(item => {
     const type = schema[item.type]
-    if (!type || type === MediaFile || type === MediaLibrary)
+    if (!type || isFileType(type) || type === MediaLibrary)
       return {thumbnail: undefined, links: []}
     return {
       thumbnail: thumbnails ? cardThumbnailId(get, overview, item) : undefined,
@@ -434,8 +446,8 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
       root: Entry.root,
       locale: Entry.locale,
       parents: Entry.parents,
-      preview: MediaFile.preview,
-      averageColor: MediaFile.averageColor
+      preview: FileData.preview,
+      averageColor: FileData.averageColor
     }
   })
   const byId = new Map<string, Array<LinkedEntryRow>>()
@@ -519,7 +531,7 @@ export class ExplorerEntryData {
   fileInfo = atom((get): Infer<typeof MediaFile> | null => {
     const item = get(this.item)
     const type = get(configAtom).schema[item.type]
-    return type === MediaFile ? (item.data as Infer<typeof MediaFile>) : null
+    return isFileType(type) ? (item.data as Infer<typeof MediaFile>) : null
   })
   linked = atom(
     (get): ReadonlyMap<string, ExplorerLinkedEntry> =>
@@ -675,6 +687,7 @@ export class ExplorerAtoms {
       return {
         id: entry.id,
         title: entry.title,
+        type: entry.type,
         parents: entry.parents,
         path: parents.flatMap(parent =>
           parent ? [{id: parent.id, title: parent.title}] : []
@@ -862,6 +875,16 @@ export class ExplorerAtoms {
       const canUpload = get(policyAtom).canUpload(
         uploadResource(location, parent)
       )
+      const uploadLocation = location.root && {
+        workspace: location.workspace,
+        root: location.root,
+        parentType: parent?.type
+      }
+      const uploadTypes = !uploadLocation
+        ? []
+        : isMedia
+          ? Config.uploadCandidates(get(configAtom), uploadLocation)
+          : Config.uploadTypes(get(configAtom), uploadLocation)
       const items = await itemsPromise
       // The columns follow the loaded rows, every child of the parent or
       // the search results: their types, and built-in columns that differ
@@ -886,6 +909,7 @@ export class ExplorerAtoms {
       const filtered = Object.keys(filters).length > 0 || Boolean(tab?.filter)
       return {
         canUpload,
+        uploadTypes,
         filter: overviewFilter(shown, filters, requestedTab),
         filters,
         isMedia,

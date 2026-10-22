@@ -23,7 +23,7 @@ import {
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -113,7 +113,7 @@ function entrySidebarTabs(
   type: Type,
   hasPreview: boolean
 ): Array<EntrySidebarTab> {
-  if (type === MediaFile) return ['references']
+  if (isFileType(type)) return ['references']
   if (type === MediaLibrary || !hasPreview) return ['history', 'references']
   return ['preview', 'history', 'references']
 }
@@ -129,7 +129,7 @@ export function EntrySidebar({
   const typeName = useAtomValueRaw(entry.type)
   const type = useAtomValueRaw(typeAtoms(typeName)).type
   const setSelectedTab = useSetAtom(entrySidebarTabAtom)
-  const isMediaFile = type === MediaFile
+  const isMediaFile = isFileType(type)
   const allowedTabs = entrySidebarTabs(
     type,
     Boolean(useAtomValueRaw(entry.preview))

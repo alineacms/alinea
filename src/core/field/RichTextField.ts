@@ -16,7 +16,7 @@ import {createId} from '../Id.js'
 import type {InferStoredValue} from '../Infer.js'
 import {mediaAltText} from '../media/MediaAltField.js'
 import {MediaLocation} from '../media/MediaLocation.js'
-import {MediaFile} from '../media/MediaTypes.js'
+import {FileData} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
   type ImageNode,
@@ -39,8 +39,8 @@ export type RichTextMutator<R> = {
 const linkInfoFields = {
   id: Entry.id,
   url: Entry.url,
-  alt: MediaFile.alt,
-  hash: MediaFile.hash
+  alt: FileData.alt,
+  hash: FileData.hash
 }
 
 export class RichTextField<
@@ -67,18 +67,19 @@ export class RichTextField<
     const customReferences = meta.references
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
+      nestedTypes: schema ? Object.values(schema) : [],
       ...meta,
       defaultValue() {
         return meta.options.initialValue ?? ([] as TextDoc<Blocks>)
       },
-      withInitialValue(value) {
+      withInitialValue(value, context) {
         if (!schema || !Array.isArray(value)) return value
         let next = value
         value.forEach((node, index) => {
           if (!Node.isBlock(node)) return
           const type = schema[node[Node.type]]
           if (!type) return
-          const initialized = Type.withInitialValue(type, node)
+          const initialized = Type.withInitialValue(type, node, context)
           if (initialized === node) return
           if (next === value) next = [...value]
           next[index] = initialized as TextDoc<Blocks>[number]

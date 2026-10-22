@@ -1,6 +1,6 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
-import {isRecord} from '#/core/util/Objects.js'
+import {isRecord, keys} from '#/core/util/Objects.js'
 import {resolveView} from '#/core/View.js'
 import {DateField} from '#/field/date/DateField.js'
 import {
@@ -63,7 +63,8 @@ function unlocalise(
     selectLocalisedValue({
       value: (value ?? {}) as Record<string, unknown>,
       locale: context.locale ?? null,
-      locales,
+      // A field that uses the locales of its root has the locales it stores
+      locales: locales ?? keys(value ?? {}),
       fallback
     }),
     context

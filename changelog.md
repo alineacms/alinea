@@ -30,8 +30,25 @@
   `--alinea-header-height`. `useSiblingFieldValue` and the `useField` hooks of
   `alinea/dashboard` are deprecated, the `useEntryEditor` shim reads the
   publish status from `activeVersion.status`.
-- Add `Field.localiser` to keep every locale of a value in a single field, with
-  fallbacks.
+- Add `i18n: {translate: 'fields'}` to keep a single entry per item in a
+  translated root, and `Field.localised` to keep every locale of a value in a
+  single field, with fallbacks. Without `locales` it takes the locales of the
+  root of its entry and throws in roots that translate entries, with `locales`
+  it works in any root. Queries for a locale find the entries of roots that
+  translate fields to it, files of the media root still only match queries
+  without a locale. `Field.localiser` is deprecated.
+- Add `Config.file` to define types of uploaded files, with fields of their
+  own and an `accept` list, and upload into any root or folder that contains
+  them. An upload becomes the first file type that accepts it, the upload
+  dialog asks which one when several do. Image and file fields pick files of
+  every file type, the media root is built on the `MediaFile` file type.
+  Uploads to a location without file types still become media files, the
+  `upload_file` MCP tool takes a `root` and `type`.
+- Add `tabs` to `Config.type`, `Config.document` and `Config.file`, and a
+  `view` to `Field.tab`, eg. an Analytics tab that shows a custom component.
+  Entries show the tabs in the entry editor, list rows and rich text blocks as
+  sections of their settings sheet, below the label and anchor. Their fields
+  are stored and queried like the other fields.
 - Add the `overview` option to container types and roots to configure how the
   dashboard lists their children: columns (`Config.column`) with per-type
   selects, formatting and custom cells, built-in type, status, updated and
@@ -52,9 +69,6 @@
   edit the fields of the entry, the header publishes or saves them as a draft,
   the sidebar shows history and references, and leaving with unsaved changes
   asks to confirm. `view` also accepts a component instead of a path.
-- Add the `settings` type option: fields edited in the settings sheet of a
-  list row or rich text block, below its label and anchor. Entries of the type
-  show them in a Settings tab. They are stored and queried like other fields.
 - The `collapsed: false` type option expands an entry's children in the
   sidebar content tree from the start.
 - Add `width` to the options of every field, and fix `Field.create` typing

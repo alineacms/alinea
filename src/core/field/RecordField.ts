@@ -19,13 +19,15 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
   ) {
     super({
       referencedViews: Type.referencedViews(type),
+      nestedTypes: [type],
       defaultValue() {
         return Type.initialValue(type) as Row
       },
-      withInitialValue(value) {
+      withInitialValue(value, context) {
         return Type.withInitialValue(
           type,
-          (value ?? {}) as Record<string, unknown>
+          (value ?? {}) as Record<string, unknown>,
+          context
         ) as Row
       },
       applyLinks(value, loader) {

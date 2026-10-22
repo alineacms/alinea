@@ -710,7 +710,7 @@ test('upload_file creates and replaces media entries', async () => {
     path: 'red.png',
     replace: page.id
   })
-  test.ok(notMedia.text.includes('is not a MediaFile entry'))
+  test.ok(notMedia.text.includes('is not a file entry'))
   // Images rotate and crop with sharp before they are uploaded
   const edited = await env.ok('upload_file', {
     path: 'red.png',

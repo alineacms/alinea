@@ -23,7 +23,8 @@ export const DashboardTestPage = Config.document('Page', {
 const main = Config.workspace('Main', {
   source: '.',
   roots: {
-    pages: Config.root('Pages', {contains: ['Page']})
+    pages: Config.root('Pages', {contains: ['Page']}),
+    media: Config.media()
   }
 })
 

@@ -1,3 +1,4 @@
+import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {compressPdf} from '#/core/media/CompressPdf.browser.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
@@ -6,10 +7,11 @@ import {
   type ImageEdit
 } from '#/core/media/ImageTransform.js'
 import {isImage} from '#/core/media/IsImage.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData} from '#/core/media/MediaTypes.js'
 import {isPdf} from '#/core/media/Pdf.js'
 import {transformImage} from '#/core/media/TransformImage.browser.js'
 import {createId} from '#/core/Id.js'
+import {Type} from '#/core/Type.js'
 import {Permission} from '#/core/Role.js'
 import {createFileHash} from '#/core/util/ContentHash.js'
 import {basename, extname} from '#/core/util/Paths.js'
@@ -29,6 +31,8 @@ export interface UploadDestination {
 
 export interface UploadItem {
   file: File
+  /** The file type the upload becomes, see `UploadQuery.type` */
+  type?: string
   edit?: ImageEdit
   /** The media entry whose file this upload replaces */
   replaceId?: string
@@ -75,10 +79,11 @@ export const uploadFilesAtom = atom(
     if (uploads.length === 0) return []
     set(uploadProgressAtom, {type: 'start', uploads, destination})
     const uploaded = await Promise.all(
-      uploads.map(async ({id, file, edit, replaceId, compress}) => {
+      uploads.map(async ({id, file, type, edit, replaceId, compress}) => {
         try {
           const entry = await graph.upload({
             file,
+            ...(type ? {type} : {}),
             createPreview,
             transformImage,
             ...(compress !== false ? {compressPdf} : {}),
@@ -136,9 +141,22 @@ export interface MediaMatch {
  */
 export type PendingUploadAction = 'upload' | 'existing' | 'replace'
 
+/** A file type an upload can become */
+export interface UploadType {
+  name: string
+  label: string
+}
+
 export interface PendingUpload {
   id: string
   file: File
+  /**
+   * The file types of the location that accept the file, in order. Empty
+   * when none does, the file is not uploaded then.
+   */
+  types: Array<UploadType>
+  /** The file type picked from `types`, the first by default */
+  type?: string
   /** An object url of images the browser can show */
   previewUrl?: string
   /**
@@ -195,11 +213,12 @@ const matchSelection = {
   parents: Entry.parents,
   url: Entry.url,
   path: Entry.path,
-  extension: MediaFile.extension,
-  preview: MediaFile.preview,
-  averageColor: MediaFile.averageColor,
-  hash: MediaFile.hash,
-  sourceHash: MediaFile.sourceHash
+  type: Entry.type,
+  extension: FileData.extension,
+  preview: FileData.preview,
+  averageColor: FileData.averageColor,
+  hash: FileData.hash,
+  sourceHash: FileData.sourceHash
 }
 
 /**
@@ -215,6 +234,8 @@ export const requestUploadsAtom = atom(
     const {destination, replaceId} = request
     const graph = get(graphAtom)
     const policy = get(policyAtom)
+    const config = get(configAtom)
+    const fileTypes = Config.fileTypes(config)
     policy.assert(Permission.Upload, {
       workspace: destination.workspace,
       root: destination.root,
@@ -235,9 +256,9 @@ export const requestUploadsAtom = atom(
     const slugs = files.map(file =>
       slugify(basename(file.name, extname(file.name)))
     )
-    const [duplicates, siblings, replaced] = await Promise.all([
+    const [duplicates, siblings, replaced, parentType] = await Promise.all([
       graph.find({
-        type: MediaFile,
+        type: fileTypes,
         workspace: destination.workspace,
         filter: {or: [{hash: {in: hashes}}, {sourceHash: {in: hashes}}]},
         select: matchSelection,
@@ -246,7 +267,7 @@ export const requestUploadsAtom = atom(
       replaceId
         ? []
         : graph.find({
-            type: MediaFile,
+            type: fileTypes,
             workspace: destination.workspace,
             root: destination.root,
             parentId: destination.parentId ?? null,
@@ -256,13 +277,29 @@ export const requestUploadsAtom = atom(
           }),
       replaceId
         ? graph.first({
-            type: MediaFile,
+            type: fileTypes,
             id: replaceId,
             select: matchSelection,
             status: 'preferPublished'
           })
-        : null
+        : null,
+      destination.parentId
+        ? graph.first({
+            id: destination.parentId,
+            select: Entry.type,
+            status: 'preferDraft'
+          })
+        : undefined
     ])
+    const location = {
+      workspace: destination.workspace,
+      root: destination.root,
+      parentType: parentType ?? undefined
+    }
+    const uploadTypes = (file: File): Array<UploadType> =>
+      Config.acceptingTypes(config, location, file.name, file.type).map(
+        name => ({name, label: String(Type.label(config.schema[name]))})
+      )
     const uploads = files.map((file, index): PendingUpload => {
       const {hash, imageSize} = scanned[index]
       const duplicate = duplicates.find(
@@ -279,12 +316,15 @@ export const requestUploadsAtom = atom(
             root: match.root,
             id: match.id,
             parents: match.parents,
-            type: 'MediaFile'
+            type: match.type
           })
       )
+      const types = uploadTypes(file)
       return {
         id: createId(),
         file,
+        types,
+        ...(types.length > 0 ? {type: types[0].name} : {}),
         ...(isImage(file.name) ? {previewUrl: URL.createObjectURL(file)} : {}),
         ...(isPdf(file.name) ? {compress: true} : {}),
         ...(imageSize ? {imageSize} : {}),
@@ -334,7 +374,9 @@ export const updatePendingUploadAtom = atom(
     get,
     set,
     id: string,
-    update: Partial<Pick<PendingUpload, 'action' | 'edit' | 'compress'>>
+    update: Partial<
+      Pick<PendingUpload, 'action' | 'edit' | 'compress' | 'type'>
+    >
   ) => {
     const pending = get(pendingUploadsState)
     if (!pending) return
@@ -388,9 +430,12 @@ export const confirmPendingUploadsAtom = atom(null, async (get, set) => {
           ? (replace?.id ?? upload.conflict?.id)
           : undefined
       if (upload.action === 'existing' && upload.duplicate) return []
+      // A replaced file keeps its type, other files need one that takes them
+      if (!replaceId && !upload.type) return []
       return [
         {
           file: upload.file,
+          ...(upload.type && !replaceId ? {type: upload.type} : {}),
           ...(upload.edit ? {edit: upload.edit} : {}),
           ...(upload.compress === false ? {compress: false} : {}),
           ...(replaceId ? {replaceId} : {})

@@ -19,15 +19,16 @@ export class UnionField<
     const customLocalizeLinks = meta.localizeLinks
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
+      nestedTypes: schema ? Object.values(schema) : [],
       ...meta,
       defaultValue() {
         return meta.options.initialValue ?? ({} as StoredValue)
       },
-      withInitialValue(value) {
+      withInitialValue(value, context) {
         if (!value) return value
         const type = schema[value[UnionRow.type]]
         if (!type) return value
-        return Type.withInitialValue(type, value) as StoredValue
+        return Type.withInitialValue(type, value, context) as StoredValue
       },
       async applyLinks(value, loader) {
         if (!value) return

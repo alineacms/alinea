@@ -60,7 +60,7 @@ function row(id: string, type: string, index: string, data: object) {
   return {_id: id, _type: type, _index: index, ...data}
 }
 
-const localise = Field.localiser({locales: ['en', 'nl', 'fr']})
+const locales = ['en', 'nl', 'fr']
 
 const Hero = Config.type('Hero', {fields: {title: Field.text('Title')}})
 const Gallery = Config.type('Gallery', {fields: {title: Field.text('Title')}})
@@ -207,8 +207,8 @@ const definitions: Record<FieldPreviewKey, () => FieldPreviewDefinition> = {
     }),
     value: {title: 'Summer collection'}
   }),
-  localiser: () => ({
-    type: single(localise(Field.text('Headline'))),
+  localised: () => ({
+    type: single(Field.localised(Field.text('Headline'), {locales})),
     value: {
       field: {
         en: 'Made for long days',

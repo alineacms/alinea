@@ -7,7 +7,9 @@ import {text} from '#/field/text.js'
 test('file picker allows any media file, including images', () => {
   const picker = filePicker(false, {})
 
-  expect(picker.options.condition).toEqual({_type: 'MediaFile'})
+  // The dashboard lists the files of every file type, see Config.fileCondition
+  expect(picker.options.files).toBe('file')
+  expect(picker.options.condition).toBeUndefined()
 })
 
 test('generic link locations only constrain page links', () => {
@@ -43,7 +45,8 @@ test('generic link page picker options do not leak into the file picker', () => 
     expect(fileOptions.limitLocations).toBeUndefined()
     expect(fileOptions.pickChildren).toBeUndefined()
     expect(fileOptions.enableNavigation).toBeUndefined()
-    expect(fileOptions.condition).toEqual({_type: 'MediaFile'})
+    expect(fileOptions.condition).toBeUndefined()
+    expect(fileOptions.files).toBe('file')
     expect(fileOptions.defaultView).toBe('thumb')
     expect(fileOptions.max).toBe(multiple ? undefined : 1)
     expect(fileOptions.fields).toBe(fields)

@@ -3,7 +3,7 @@ import {Entry} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
 import {getRoot} from '#/core/Internal.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {FileData, MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config} from '#/index.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
@@ -62,7 +62,7 @@ test('the media library declares its sorts and filters', () => {
   })
   expect(
     overviewOrder(media, {column: 'dimensions', direction: 'desc'})
-  ).toEqual([{desc: MediaFile.width}, {desc: MediaFile.height}])
+  ).toEqual([{desc: FileData.width}, {desc: FileData.height}])
   // Declared orders keyed like a column mark that column
   expect(sortedColumn(media, {column: 'size', direction: 'asc'})).toEqual({
     column: 'size',

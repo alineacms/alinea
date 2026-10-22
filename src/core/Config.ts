@@ -1,10 +1,17 @@
 import type {ImageResizeOptions} from '#/core/media/ImageTransform.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {
+  type FileFields,
+  fileTypeAccepts,
+  isFileType,
+  MediaFile,
+  MediaLibrary
+} from '#/core/media/MediaTypes.js'
 import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
 import {admin, type Role} from './Role.js'
-import {Root} from './Root.js'
+import {Root, type RootI18n} from './Root.js'
+import {imageExtensions} from './media/IsImage.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
 import type {Tracer} from './Trace.js'
@@ -13,6 +20,11 @@ import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
 import * as paths from './util/Paths.js'
 import {Workspace, type WorkspaceInternal} from './Workspace.js'
+import {RecordField} from './field/RecordField.js'
+import {UnionField} from './field/UnionField.js'
+import {Field} from './Field.js'
+import {JsonField} from '#/field/json/JsonField.js'
+import {inheritsLocales, LocalisedField} from '#/field/localiser/Localiser.js'
 
 /** Configuration options */
 export interface Config {
@@ -159,6 +171,91 @@ export namespace Config {
     return false
   }
 
+  const schemaFileTypes = new WeakMap<Config, Array<Type<FileFields>>>()
+
+  /** The file types of the schema, see `Config.file` */
+  export function fileTypes(config: Config): Array<Type<FileFields>> {
+    let result = schemaFileTypes.get(config)
+    if (!result) {
+      // Every file type has the fields of an upload
+      result = values(config.schema).filter(isFileType) as Array<
+        Type<FileFields>
+      >
+      schemaFileTypes.set(config, result)
+    }
+    return result
+  }
+
+  /**
+   * The condition of uploaded files: entries of a file type, or only those
+   * holding an image
+   */
+  export function fileCondition(
+    config: Config,
+    files: 'file' | 'image'
+  ): Record<string, unknown> {
+    const names = Schema.typeNames(config.schema)
+    const types = fileTypes(config).map(type => names.get(type)!)
+    if (files === 'file') return {_type: {in: types}}
+    const extensions = [
+      ...imageExtensions,
+      // Older versions stored the extension in the case of the file name
+      ...imageExtensions.map(extension => extension.toUpperCase())
+    ]
+    return {_type: {in: types}, extension: {in: extensions}}
+  }
+
+  /**
+   * The file types an upload to a location can become, in order: those the
+   * parent entry's type contains, or else those the root contains. Media
+   * roots and their folders also take media files, after their own types.
+   */
+  export function uploadTypes(
+    config: Config,
+    location: {workspace: string; root: string; parentType?: string}
+  ): Array<string> {
+    const workspace = config.workspaces[location.workspace]
+    const root = workspace && getWorkspace(workspace).roots[location.root]
+    if (!root) return []
+    const parent = location.parentType
+      ? config.schema[location.parentType]
+      : undefined
+    // Media folders hold what their root holds
+    const inRoot = !parent || parent === MediaLibrary
+    const contains = inRoot ? Root.contains(root) : Type.contains(parent)
+    const names = Schema.contained(config.schema, contains).filter(name =>
+      isFileType(config.schema[name])
+    )
+    // After the root's own file types, so those are picked first
+    if (inRoot && Root.isMediaRoot(root) && !names.includes('MediaFile'))
+      names.push('MediaFile')
+    return names
+  }
+
+  /**
+   * The file types an upload to a location can become. A location without
+   * file types takes media files, as uploads did before file types existed.
+   */
+  export function uploadCandidates(
+    config: Config,
+    location: {workspace: string; root: string; parentType?: string}
+  ): Array<string> {
+    const types = uploadTypes(config, location)
+    return types.length > 0 ? types : ['MediaFile']
+  }
+
+  /** The upload candidates of a location that accept a file */
+  export function acceptingTypes(
+    config: Config,
+    location: {workspace: string; root: string; parentType?: string},
+    fileName: string,
+    mimeType?: string
+  ): Array<string> {
+    return uploadCandidates(config, location).filter(name =>
+      fileTypeAccepts(config.schema[name], fileName, mimeType)
+    )
+  }
+
   export function typeContains(
     config: Config,
     parentType: Type,
@@ -208,8 +305,21 @@ export namespace Config {
     return paths.join(result, ...rest)
   }
 
+  /** The locales of the `Field.localised` fields of a root, if it has them */
+  export function fieldI18n(
+    config: Config,
+    workspace: string,
+    root: string
+  ): RootI18n | undefined {
+    const workspaceConfig = config.workspaces[workspace]
+    const rootConfig =
+      workspaceConfig && getWorkspace(workspaceConfig).roots[root]
+    return rootConfig && Root.fieldI18n(Root.data(rootConfig))
+  }
+
   export function validate(config: Config) {
     Schema.validate(config.schema)
+    validateLocalisedFields(config)
     const all = entries(config.workspaces)
     let sourceDir: string
     for (const [key, workspace] of all) {
@@ -271,4 +381,84 @@ export function createConfig<Definition extends Config>(
   Config.validate(res)
   normalized.add(res)
   return res
+}
+
+/**
+ * A `Field.localised` without locales of its own takes them from the root of
+ * its entry. Roots that translate entries have no use for it, and a root
+ * without i18n stores the plain value, which can't be told apart from a value
+ * per locale when it is an object itself.
+ */
+function validateLocalisedFields(config: Config) {
+  const typeNames = Schema.typeNames(config.schema)
+  for (const [workspaceName, workspace] of entries(config.workspaces)) {
+    for (const [rootName, root] of entries(getWorkspace(workspace).roots)) {
+      const data = Root.data(root)
+      if (data.fieldI18n) continue
+      for (const type of rootTypes(config, root)) {
+        for (const field of localisedFields(type)) {
+          const inner = field.localisation.inner
+          const where = `Field.localised("${Field.label(field)}") in type "${typeNames.get(type)}"`
+          const location = `root "${rootName}" of workspace "${workspaceName}"`
+          if (data.i18n)
+            throw new Error(
+              `${where} takes the locales of its root, but ${location} translates entries. Use i18n: {translate: 'fields'}, or pass the locales to Field.localised.`
+            )
+          if (holdsRecord(inner))
+            throw new Error(
+              `${where} holds an object, which needs locales: ${location} has no i18n. Use i18n: {translate: 'fields'}, or pass the locales to Field.localised.`
+            )
+        }
+      }
+    }
+  }
+}
+
+/**
+ * The types a root lists, also as descendants. A root without `contains`
+ * takes every type, those are left out: a type with localised fields is
+ * meant for the roots that list it.
+ */
+function rootTypes(config: Config, root: Root): Set<Type> {
+  const queue = Root.contains(root).map(inner =>
+    typeof inner === 'string' ? config.schema[inner] : inner
+  )
+  const result = new Set<Type>()
+  for (const type of queue) {
+    if (!type || result.has(type)) continue
+    result.add(type)
+    for (const inner of Type.contains(type))
+      queue.push(typeof inner === 'string' ? config.schema[inner] : inner)
+  }
+  return result
+}
+
+/** The fields of a type that take the locales of their root, also nested */
+function localisedFields(
+  type: Type,
+  seen = new Set<Type>()
+): Array<LocalisedField<string, unknown, unknown, unknown>> {
+  if (seen.has(type)) return []
+  seen.add(type)
+  return values(Type.fields(type)).flatMap(field => {
+    const own = inheritsLocales(field)
+      ? [field as LocalisedField<string, unknown, unknown, unknown>]
+      : []
+    const inner =
+      field instanceof LocalisedField ? field.localisation.inner : field
+    return [
+      ...own,
+      ...Field.nestedTypes(inner).flatMap(nested =>
+        localisedFields(nested, seen)
+      )
+    ]
+  })
+}
+
+function holdsRecord(field: Field): boolean {
+  return (
+    field instanceof RecordField ||
+    field instanceof UnionField ||
+    field instanceof JsonField
+  )
 }

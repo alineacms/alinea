@@ -7,6 +7,8 @@ import {
   ListItemDescription,
   ListItemTitle,
   ListItemVisual,
+  Select,
+  SelectItem,
   Text,
   ToggleGroup,
   ToggleGroupItem
@@ -39,6 +41,7 @@ export interface PendingUploadChange {
   action?: PendingUploadAction
   edit?: ImageEdit
   compress?: boolean
+  type?: string
 }
 
 export interface PendingUploadsViewProps {
@@ -81,7 +84,11 @@ export function PendingUploadsView({
     )
   }
   const {replace, uploads} = pending
-  const uploading = uploads.filter(upload => upload.action !== 'existing')
+  // Files no file type takes are left out
+  const uploading = uploads.filter(
+    upload =>
+      upload.action !== 'existing' && (replace || upload.types.length > 0)
+  )
   const label = replace
     ? `Replace ${replace.title}`
     : `Upload ${formatCount(uploads.length)}`
@@ -135,7 +142,10 @@ function PendingUploadRow({
   onEdit,
   onRemove
 }: PendingUploadRowProps) {
-  const {file, duplicate, conflict, action, edit, imageSize, compress} = upload
+  const {file, duplicate, conflict, action, edit, imageSize, compress, types} =
+    upload
+  // A replaced file keeps its type, a new one becomes a type of the folder
+  const uploads = !replacing && action !== 'existing'
   const canEdit = imageSize && action !== 'existing'
   const hasChoice = !replacing && (duplicate || conflict)
   return (
@@ -203,6 +213,29 @@ function PendingUploadRow({
             {conflict ? 'Keep both' : 'Upload anyway'}
           </ToggleGroupItem>
         </ToggleGroup>
+      )}
+      {uploads && types.length === 0 && (
+        <Text as="p" size="sm" className={styles.PendingUploadsView.notice()}>
+          <Icon icon={IcRoundInfo} />
+          No file type here takes this file, it is not uploaded
+        </Text>
+      )}
+      {uploads && types.length > 1 && (
+        <Select
+          label="Upload as"
+          size="sm"
+          value={upload.type ?? null}
+          onValueChange={type => {
+            if (type) onChange({type: String(type)})
+          }}
+          className={styles.PendingUploadsView.type()}
+        >
+          {types.map(type => (
+            <SelectItem key={type.name} value={type.name}>
+              {type.label}
+            </SelectItem>
+          ))}
+        </Select>
       )}
       {compress !== undefined && action !== 'existing' && (
         <Checkbox

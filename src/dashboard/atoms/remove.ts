@@ -5,7 +5,7 @@ import {Entry} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {Filter} from '#/core/Filter.js'
 import {getWorkspace} from '#/core/Internal.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Policy} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
 import type {Type} from '#/core/Type.js'
@@ -203,7 +203,7 @@ function redirectLocale(
 
 /** Pages have a public URL and keep the URLs that redirect to them */
 function hasUrl(type: Type | undefined): boolean {
-  if (!type || type === MediaFile || type === MediaLibrary) return false
+  if (!type || isFileType(type) || type === MediaLibrary) return false
   return hasUrlAliases(type)
 }
 
@@ -317,7 +317,7 @@ export const loadRemovePlanAtom = atom(
     const archivable = versions.flatMap(({id, locale, status, active}) => {
       const subject = subjectOf(id)
       if (!subject || !active || status !== 'published') return []
-      if (config.schema[subject.type] === MediaFile) return []
+      if (isFileType(config.schema[subject.type])) return []
       if (!policy.canArchive({...subject, locale})) return []
       return [{id, locale}]
     })

@@ -5,7 +5,14 @@ import {
   type SectionDefinition,
   section
 } from '#/core/Section.js'
-import {Type, type} from '#/core/Type.js'
+import {
+  type FieldsDefinition,
+  Type,
+  type,
+  type TypeConfig
+} from '#/core/Type.js'
+import {view} from '#/field/view.js'
+import type {ReactNode} from 'react'
 import {entries, fromEntries} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 
@@ -39,5 +46,27 @@ export function tabs<const Types extends Array<Type>>(
   return section(new TabsSection(types))
 }
 
-/** Create a tab */
-export const tab = type
+export interface TabOptions<Fields> extends Omit<
+  TypeConfig<Fields>,
+  'fields' | 'contains' | 'settings' | 'tabs' | 'view'
+> {
+  fields?: Fields
+  /**
+   * A view shown in the tab, after its fields: the path of a component, as
+   * with `Field.view`, or an element
+   */
+  view?: string | ReactNode
+}
+
+/** Create a tab, with fields or a view or both */
+export function tab<Fields extends FieldsDefinition = {}>(
+  label: string,
+  {fields = {} as Fields, view: tabView, ...config}: TabOptions<Fields>
+): Type<Fields> {
+  return type(label, {
+    ...config,
+    fields: (tabView === undefined
+      ? fields
+      : {...fields, ...view(tabView)}) as Fields
+  })
+}

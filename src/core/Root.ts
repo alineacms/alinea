@@ -14,11 +14,16 @@ export interface RootI18n {
   /** The locales entries in this root are translated into, the first is the default */
   locales: ReadonlyArray<string>
   /**
-   * Locales to try, in order, when a per-locale value is empty for the
-   * requested locale. Used by `Config.media({i18n})` to pick the alt text of
-   * images. It does not affect which entry version a query returns: content
-   * roots store a separate entry per locale and a query for a locale without
-   * a translation returns nothing.
+   * How content is translated: `entries` (the default) keeps an entry per
+   * locale, `fields` keeps a single entry whose `Field.localised` fields hold
+   * a value per locale
+   */
+  translate?: 'entries' | 'fields'
+  /**
+   * Locales to try, in order, when a `Field.localised` value is empty for
+   * the requested locale. It does not affect which entry version a query
+   * returns: a root that translates entries stores a separate entry per
+   * locale and a query for a locale without a translation returns nothing.
    */
   fallback?: (requested: string) => ReadonlyArray<string>
 }
@@ -49,10 +54,12 @@ export interface ChildrenDefinition {
 
 export interface RootData extends RootMeta {
   label: string
-}
-
-interface RootMediaData {
-  _media?: {i18n?: RootI18n}
+  /**
+   * The i18n of a root that translates fields. Such a root keeps a single
+   * entry per item, so its `i18n` is left out for everything that keeps an
+   * entry per locale.
+   */
+  fieldI18n?: RootI18n
 }
 
 export type Root<Children extends ChildrenDefinition = ChildrenDefinition> =
@@ -71,8 +78,9 @@ export namespace Root {
     return getRoot(root)
   }
 
-  export function mediaI18n(root: RootData): RootI18n | undefined {
-    return (root as RootData & RootMediaData)._media?.i18n
+  /** The locales the `Field.localised` fields of a root hold a value in */
+  export function fieldI18n(root: RootData): RootI18n | undefined {
+    return root.fieldI18n
   }
 
   export function preview(root: Root): Preview | undefined {
@@ -150,15 +158,21 @@ export interface RootOptions<Children> extends RootMeta {
 
 export interface RootInternal extends RootOptions<ChildrenDefinition> {
   label: string
+  fieldI18n?: RootI18n
 }
 
 export function root<Entries extends ChildrenDefinition>(
   label: string,
   config: RootOptions<Entries> = {}
 ): Root<Entries> {
+  const {i18n} = config
+  const data: RootInternal =
+    i18n?.translate === 'fields'
+      ? {...config, label, i18n: undefined, fieldI18n: i18n}
+      : {...config, label}
   const instance = <Root<Entries>>{
     ...config.children,
-    [internalRoot]: {...config, label}
+    [internalRoot]: data
   }
   return instance
 }

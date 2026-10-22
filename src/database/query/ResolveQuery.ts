@@ -1,4 +1,4 @@
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import {Field} from '#/core/Field.js'
 import type {
   GraphQuery,
@@ -7,6 +7,7 @@ import type {
   Status
 } from '#/core/Graph.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
+import type {RootI18n} from '#/core/Root.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
 import {compileEntryQuery, type ProjectionPlan} from './EntryQuery.js'
@@ -117,11 +118,13 @@ function createLinkBatcher(
 function createLinkResolver(
   locale: string | null,
   context: EntryQueryContext,
-  links: LinkLoader
+  links: LinkLoader,
+  fieldI18n?: RootI18n
 ): LinkResolver {
   const loader: LinkResolver = {
     config: context.config,
     locale,
+    fieldI18n,
     includedAtBuild(filePath) {
       return context.includedAtBuild(filePath)
     },
@@ -197,14 +200,24 @@ async function projectRow(
   inheritedLocale: string | null = null
 ): Promise<unknown> {
   if (!plan.wrapped) return row
-  const projected = row as {value: unknown; locale: string | null}
+  const projected = row as {
+    value: unknown
+    locale: string | null
+    workspace: string
+    root: string
+  }
   let value = projected.value
   if (!plan.relations.length && !plan.fields.length) return value
   // Field values resolve in the locale of their row, or for an untranslated
   // entry the locale the query asked for, or else the locale of the entry
   // that selected it.
   const locale = projected.locale ?? plan.locale ?? inheritedLocale
-  const loader = createLinkResolver(locale, context, links)
+  const fieldI18n = Config.fieldI18n(
+    context.config,
+    projected.workspace,
+    projected.root
+  )
+  const loader = createLinkResolver(locale, context, links, fieldI18n)
   await Promise.all(
     plan.fields.map(async selected => {
       if (!selected.path.length) {

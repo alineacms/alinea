@@ -45,7 +45,7 @@ test('reports invalid uploads while continuing with valid files', async () => {
 
   await store.set(uploadFilesAtom, {
     workspace: 'main',
-    root: 'pages',
+    root: 'media',
     uploads: [{file: invalid}, {file: valid}]
   })
 
@@ -58,7 +58,7 @@ test('reports invalid uploads while continuing with valid files', async () => {
       type: 'upload',
       status: 'failed',
       error: expect.stringContaining('invalid.zip'),
-      upload: {workspace: 'main', root: 'pages', parentId: undefined}
+      upload: {workspace: 'main', root: 'media', parentId: undefined}
     })
   )
   expect(failedActivity).toHaveLength(1)
@@ -77,7 +77,7 @@ test('explorer uploads wait for the upload dialog', async () => {
   const upload = spyOn(db, 'upload').mockResolvedValue({
     _id: 'uploaded'
   } as never)
-  const explorer = createExplorerAtoms({workspace: 'main', root: 'pages'}, {})
+  const explorer = createExplorerAtoms({workspace: 'main', root: 'media'}, {})
   const file = new File(['pdf'], 'brochure.pdf')
 
   const cancelled = store.set(explorer.upload, [file])
@@ -104,7 +104,7 @@ test('files added while the dialog is open join the listed files', async () => {
   const upload = spyOn(db, 'upload').mockImplementation(
     async query => ({_id: (query.file as File).name}) as never
   )
-  const destination = {workspace: 'main', root: 'pages'}
+  const destination = {workspace: 'main', root: 'media'}
   const request = (name: string, parentId?: string) =>
     store.set(requestUploadsAtom, {
       files: [new File(['pdf'], name)],

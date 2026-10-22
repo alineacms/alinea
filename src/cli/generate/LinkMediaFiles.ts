@@ -3,7 +3,7 @@ import path from 'node:path'
 import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData} from '#/core/media/MediaTypes.js'
 import {contains, join} from '#/core/util/Paths.js'
 import type {DevDB} from './DevDB.js'
 
@@ -22,13 +22,13 @@ export async function linkMediaFiles(
   const linkDir = join(publicDir, fileRoot)
   await fs.rm(linkDir, {recursive: true, force: true})
   const files = await db.find({
-    type: MediaFile,
+    type: Config.fileTypes(config),
     status: 'published',
     main: true,
     select: {
       url: Entry.url,
       workspace: Entry.workspace,
-      location: MediaFile.location
+      location: FileData.location
     }
   })
   const linked = new Set<string>()

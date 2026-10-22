@@ -7,7 +7,7 @@ import {
   CheckboxGroup,
   Text
 } from '#/components.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {
   entrySidebarOpenAtom,
@@ -119,7 +119,7 @@ function RemoveDialogContent({
   const {subjects, locales} = plan
   const count = subjects.length
   const typeOf = (type: string) => config.schema[type]
-  const files = subjects.filter(item => typeOf(item.type) === MediaFile)
+  const files = subjects.filter(item => isFileType(typeOf(item.type)))
   const folders = subjects.filter(item => typeOf(item.type) === MediaLibrary)
   const parents = subjects.filter(
     item => item.hasChildren && typeOf(item.type) !== MediaLibrary

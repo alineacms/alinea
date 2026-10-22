@@ -3,10 +3,9 @@ import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
-import {imageExtensions} from '#/core/media/IsImage.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData, MediaFile} from '#/core/media/MediaTypes.js'
 import {Reference} from '#/core/Reference.js'
 import {type as createType, Type} from '#/core/Type.js'
 import type {EntryPickerConditions} from '#/picker/entry/EntryPicker.js'
@@ -183,7 +182,7 @@ function PickRichTextImage({picker}: PickTextLinkProps) {
       }}
     >
       <ImagePicker
-        condition={richTextImageCondition}
+        condition={Config.fileCondition(config, 'image')}
         initialSelection={initialSelection}
         label="Pick image"
         selectionBehavior="replace"
@@ -206,8 +205,8 @@ async function resolveRichTextImage(
     status: 'preferDraft',
     select: {
       url: Entry.url,
-      alt: MediaFile.alt,
-      hash: MediaFile.hash
+      alt: FileData.alt,
+      hash: FileData.hash
     }
   })
   if (!image) throw new Error(`Image entry not found: ${entryId}`)
@@ -223,16 +222,6 @@ async function resolveRichTextImage(
     alt: mediaAltText(image.alt, locale),
     link,
     src: MediaLocation.versionedUrl(src, image.hash)
-  }
-}
-
-const richTextImageCondition = {
-  _type: 'MediaFile',
-  extension: {
-    in: [
-      ...imageExtensions,
-      ...imageExtensions.map(extension => extension.toUpperCase())
-    ]
   }
 }
 

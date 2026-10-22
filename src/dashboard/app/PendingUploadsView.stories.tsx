@@ -44,6 +44,8 @@ function match(title: string): MediaMatch {
   }
 }
 
+const mediaFile = {name: 'MediaFile', label: 'Media file'}
+
 function upload(
   id: string,
   file: Pick<PendingUpload, 'file' | 'previewUrl' | 'imageSize' | 'compress'>,
@@ -52,6 +54,8 @@ function upload(
   return {
     id,
     ...file,
+    types: [mediaFile],
+    type: mediaFile.name,
     action: 'upload',
     ...extra
   }
@@ -96,6 +100,29 @@ const replaceFile: PendingUploads = {
   ]
 }
 
+const photoTypes = [
+  {name: 'Photo', label: 'Photo'},
+  {name: 'Logo', label: 'Logo'}
+]
+
+const fileTypes: PendingUploads = {
+  destination,
+  uploads: [
+    upload('photo', photo('harbour-at-dawn.jpg', 1600, 1000, 200), {
+      types: photoTypes,
+      type: 'Photo'
+    }),
+    upload(
+      'archive',
+      {file: new File(['zip'], 'export.zip')},
+      {
+        types: [],
+        type: undefined
+      }
+    )
+  ]
+}
+
 const frameStyle: CSSProperties = {width: 640, margin: 16}
 
 function Story({initial}: {initial: PendingUploads}) {
@@ -124,10 +151,11 @@ function Story({initial}: {initial: PendingUploads}) {
           onConfirm={() =>
             setResult(
               JSON.stringify(
-                pending.uploads.map(({file, action, edit}) => ({
+                pending.uploads.map(({file, action, edit, type}) => ({
                   file: file.name,
                   action,
-                  edit
+                  edit,
+                  type
                 })),
                 null,
                 2
@@ -151,6 +179,10 @@ export function ExistingFiles() {
 
 export function Replace() {
   return <Story initial={replaceFile} />
+}
+
+export function FileTypes() {
+  return <Story initial={fileTypes} />
 }
 
 export default {

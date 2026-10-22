@@ -8,6 +8,7 @@ import {
   Field,
   type EntryAnchorTarget,
   type FieldAnchorContext,
+  type FieldInitialContext,
   type FieldLocalizeContext,
   type FieldBeforeSaveContext
 } from './Field.js'
@@ -22,7 +23,7 @@ import type {EntryReferenceTarget} from './db/EntryReference.js'
 import type {SummaryProps} from './media/Summary.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, isRecord, keys, values} from './util/Objects.js'
-import type {Expand} from './util/Types.js'
+import type {Expand, UnionToIntersection} from './util/Types.js'
 
 export interface EntryUrlInput {
   config: Config
@@ -136,10 +137,10 @@ export namespace Type {
     return getType(type).sections
   }
 
-  /** Fields edited in the settings of a block, or a Settings tab of an entry */
-  export function settings(type: Type): FieldsDefinition | undefined {
-    const {settings} = getType(type)
-    return settings && keys(settings).length > 0 ? settings : undefined
+  /** The tabs of the type, see `TypeConfig.tabs` */
+  export function tabs(type: Type): Record<string, Type> | undefined {
+    const {tabs} = getType(type)
+    return tabs && keys(tabs).length > 0 ? tabs : undefined
   }
 
   export function isContainer(type: Type) {
@@ -173,7 +174,8 @@ export namespace Type {
 
   export function withInitialValue(
     type: Type,
-    value: Record<string, unknown>
+    value: Record<string, unknown>,
+    context?: FieldInitialContext
   ): Record<string, unknown> {
     const merged = mergeInitialValue(value, initialValue(type)) as Record<
       string,
@@ -182,7 +184,7 @@ export namespace Type {
     let next = merged
     for (const [key, field] of entries(fields(type))) {
       const before = merged[key]
-      const after = Field.withInitialValue(field, before)
+      const after = Field.withInitialValue(field, before, context)
       if (after === before) continue
       if (next === merged) next = {...merged}
       next[key] = after
@@ -286,7 +288,9 @@ export namespace Type {
       summaryThumb,
       ...(actions ?? []),
       ...Overview.referencedViews(overview),
-      ...viewsOfDefinition(getType(type).fields)
+      ...viewsOfDefinition(getType(type).fields),
+      // Tabs are left out of the fields, their views are bundled too
+      ...values(getType(type).tabs ?? {}).flatMap(referencedViews)
     ].filter(v => typeof v === 'string')
   }
 }
@@ -324,14 +328,16 @@ export interface FieldsDefinition {
   [key: string]: Field
 }
 
-export interface TypeConfig<Definition, Settings = {}> {
+export interface TypeConfig<Definition> {
   fields: Definition
   /**
-   * Fields shown in the settings sheet of a block, below its label and
-   * anchor. Entries of the type show them in a Settings tab. They are stored
-   * and queried like the other fields.
+   * Tabs next to the fields, eg.
+   * `{analytics: Field.tab('Analytics', {view: '@/views/Analytics'})}`.
+   * Entries show them in the entry editor, list rows and rich text blocks in
+   * their settings sheet. The fields of a tab are stored and queried like the
+   * other fields.
    */
-  settings?: Settings
+  tabs?: Record<string, Type>
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
   /** How the dashboard lists the children of entries of this type */
@@ -390,8 +396,8 @@ export interface TypeConfig<Definition, Settings = {}> {
 }
 
 /** Types that only hold children can leave out their fields */
-export interface ContainerTypeConfig<Definition, Settings = {}> extends Omit<
-  TypeConfig<Definition, Settings>,
+export interface ContainerTypeConfig<Definition> extends Omit<
+  TypeConfig<Definition>,
   'fields' | 'contains'
 > {
   fields?: Definition
@@ -399,38 +405,39 @@ export interface ContainerTypeConfig<Definition, Settings = {}> extends Omit<
   contains: Array<string | Type>
 }
 
-export interface TypeInternal extends TypeConfig<
-  FieldsDefinition,
-  FieldsDefinition
-> {
+export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   label: string
   allFields: Record<string, Field>
   sections: Array<Section>
 }
 
+/** The fields of the tabs of a type, see `TypeConfig.tabs` */
+export type TabFields<Tabs> = [keyof Tabs] extends [never]
+  ? {}
+  : UnionToIntersection<
+      {[K in keyof Tabs]: Tabs[K] extends Type<infer F> ? F : never}[keyof Tabs]
+    >
+
 /** Create a new type */
 export function type<
   Fields extends FieldsDefinition = {},
-  Settings extends FieldsDefinition = {}
+  Tabs extends Record<string, Type> = {}
 >(
   label: string,
-  config: TypeConfig<Fields, Settings> | ContainerTypeConfig<Fields, Settings>
-): Type<Fields & Settings> {
+  config: (TypeConfig<Fields> | ContainerTypeConfig<Fields>) & {tabs?: Tabs}
+): Type<Fields & TabFields<Tabs>> {
   const instance = createType(label, config)
   Type.validate(instance)
-  return instance
+  return instance as Type<Fields & TabFields<Tabs>>
 }
 
-export function createType<
-  Fields extends FieldsDefinition = {},
-  Settings extends FieldsDefinition = {}
->(
+export function createType<Fields extends FieldsDefinition = {}>(
   label: string,
   {
     fields: definition = {} as Fields,
     ...config
-  }: TypeConfig<Fields, Settings> | ContainerTypeConfig<Fields, Settings>
-): Type<Fields & Settings> {
+  }: TypeConfig<Fields> | ContainerTypeConfig<Fields>
+): Type<Fields> {
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
   const addCurrent = () => {
@@ -454,10 +461,13 @@ export function createType<
     }
   }
   addCurrent()
-  // Settings are stored with the other fields, but left out of the sections
-  // that make up the form
+  // Tabs are stored with the other fields, but left out of the sections that
+  // make up the form
   const taken = new Set(fields.map(([key]) => key))
-  for (const [key, value] of entries(config.settings ?? {})) {
+  const tabFields = values(config.tabs ?? {}).flatMap(tab =>
+    entries(Type.fields(tab))
+  )
+  for (const [key, value] of tabFields) {
     const own = Section.isSection(value)
       ? entries(Section.fields(value))
       : Field.isField(value)
@@ -470,7 +480,7 @@ export function createType<
       fields.push([name, field])
     }
   }
-  const allFields = fromEntries(fields) as Fields & Settings
+  const allFields = fromEntries(fields) as Fields
   return {
     ...allFields,
     [internalType]: {

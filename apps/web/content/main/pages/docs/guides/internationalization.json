@@ -307,14 +307,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Field.localiser` wraps a field so that it stores a value for every locale in one entry. Editors fill in all languages next to each other. Queries return the plain value for the locale of the entry you query, so the result has the type of the wrapped field."
+          "text": "Some content is a single item in every language, with only a few of its fields translated: a product with one price and a translated name, or a settings entry. Set `translate: 'fields'` on the `i18n` of its root to keep one entry per item, and wrap the fields that differ per language in `Field.localised`. They take the locales of the root."
         }
       ]
     },
     {
       "_type": "CodeBlock",
-      "_id": "3JkF0d06QorcEPZBk69ZRXOj4U0",
-      "code": "import {Config, Field} from 'alinea'\n\nconst localise = Field.localiser({\n  locales: ['en', 'fr', 'nl'],\n  // Used when the requested locale has no value\n  fallback: locale => (locale === 'en' ? [] : ['en'])\n})\n\nexport const Product = Config.document('Product', {\n  fields: {\n    description: Field.richText('Description'),\n    badge: localise(Field.text('Badge', {shared: true}))\n  }\n})",
+      "_id": "3KjaK3E7uwMIfIytMVb9GiXF462",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Product = Config.document('Product', {\n  fields: {\n    price: Field.number('Price'),\n    name: Field.localised(Field.text('Name', {required: true}))\n  }\n})\n\nConfig.root('Products', {\n  contains: ['Product'],\n  i18n: {\n    locales: ['en', 'fr', 'nl'],\n    translate: 'fields',\n    // Used when the requested locale has no value\n    fallback: locale => (locale === 'en' ? [] : ['en'])\n  }\n})",
       "fileName": "schema/Product.ts",
       "language": "tsx"
     },
@@ -323,7 +323,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The stored value is an object keyed by locale, such as `{\"en\": \"New\", \"fr\": \"Nouveau\", \"nl\": \"Nieuw\"}`. Combined with `shared: true`, as above, short labels are managed in one place while the rest of the entry is translated per locale."
+          "text": "Editors fill in the localised fields per language, in tabs next to each other, and `required` applies to every locale. The stored value is an object keyed by locale, such as `{\"en\": \"Chair\", \"fr\": \"Chaise\", \"nl\": \"Stoel\"}`. Queries return the plain value for the locale you ask for, so the result has the type of the wrapped field. The entries of the root are found for each of its locales, and `fallback` returns the locales to try when the requested value is empty (missing, `null` or `\"\"`)."
         }
       ]
     },
@@ -338,7 +338,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`locales`: the locales to store, at least one."
+                  "text": "In a root that translates entries (the default) `Field.localised` throws: each entry is a translation already."
                 }
               ]
             }
@@ -352,7 +352,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`fallback`: returns the locales to try, in order, when the value for the requested locale is empty (missing, `null` or `\"\"`)."
+                  "text": "In a root without `i18n` it stores the plain value of the wrapped field. A field that holds an object, such as `Field.object`, needs locales there and throws."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Localised fields also work inside objects, list rows and rich text blocks."
                 }
               ]
             }
@@ -361,11 +375,38 @@
       ]
     },
     {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Fixed locales"
+        }
+      ],
+      "_anchor": "fixed-locales"
+    },
+    {
       "_type": "paragraph",
       "content": [
         {
           "_type": "text",
-          "text": "An entry without a locale, in a root without `i18n`, gets the value for the locale you ask for with `preferredLocale`, or for the locale of the entry that links to it. Without either it gets the first locale. Localised fields also work inside objects, list rows and rich text blocks."
+          "text": "Pass `locales` to store a value for those locales in any root, independent of its `i18n`. Combined with `shared: true` in a root that translates entries, short labels are managed in one place while the rest of the entry is translated per locale."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3KoUZzsQBZw8MB4aAUypBgDM57k",
+      "code": "const badge = Field.localised(Field.text('Badge', {shared: true}), {\n  locales: ['en', 'fr', 'nl'],\n  fallback: locale => (locale === 'en' ? [] : ['en'])\n})",
+      "fileName": "schema/Product.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An entry without a locale gets the value for the locale you ask for with `preferredLocale`, or for the locale of the entry that links to it. Without either it gets the first locale. `Field.localiser` is the previous name of this form and is deprecated."
         }
       ]
     },
@@ -385,7 +426,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Media files are shared between languages. Their alt text can be translated: add `i18n` to the media root with `Config.media({i18n: {locales: ['en', 'fr', 'nl']}})`."
+          "text": "Media files are shared between languages: the media root translates fields. Their alt text can be translated, add `i18n` to the media root with `Config.media({i18n: {locales: ['en', 'fr', 'nl']}})`."
         }
       ]
     },

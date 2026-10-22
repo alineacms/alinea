@@ -173,14 +173,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Options that change how a block looks rather than what it says, such as a background or a layout variant, can go in the type's `settings`. Editors find them in the block's settings sheet, below the label and anchor, which keeps the block form short. They're stored on the row next to its other fields:"
+          "text": "Options that change how a block looks rather than what it says, such as a background or a layout variant, can go in a tab of the type's `tabs`. Editors find each tab as a section of the block's settings sheet, below the label and anchor, which keeps the block form short. Their fields are stored on the row next to its other fields:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3KdNsDNjXJiJUJt8aoK2rsu4gJr",
-      "code": "const HeroBlock = Config.type('Hero', {\n  fields: {\n    title: Field.text('Title'),\n    text: Field.richText('Text')\n  },\n  settings: {\n    background: Field.select('Background', {\n      options: {light: 'Light', dark: 'Dark'},\n      initialValue: 'light'\n    })\n  }\n})\n\n// A queried row: {_type: 'HeroBlock', title, text, background, ...}",
+      "code": "const HeroBlock = Config.type('Hero', {\n  fields: {\n    title: Field.text('Title'),\n    text: Field.richText('Text')\n  },\n  tabs: {\n    style: Field.tab('Style', {\n      fields: {\n        background: Field.select('Background', {\n          options: {light: 'Light', dark: 'Dark'},\n          initialValue: 'light'\n        })\n      }\n    })\n  }\n})\n\n// A queried row: {_type: 'HeroBlock', title, text, background, ...}",
       "language": "tsx"
     },
     {

@@ -144,6 +144,66 @@
       "content": [
         {
           "_type": "text",
+          "text": "Entry tabs"
+        }
+      ],
+      "_anchor": "entry-tabs"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass `tabs` to `Config.type`, `Config.document` or `Config.file` to add tabs to the entry editor, next to the tabs alinea shows. A tab holds fields, a `view` or both: a view is a component, given as a path like with `Field.view`, that can read the entry with the hooks of `alinea/cms`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LQ02ciC3Ch0WR3RFaWXNZZDIJ1",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Program = Config.document('Program', {\n  fields: {intro: Field.text('Intro')},\n  tabs: {\n    planning: Field.tab('Planning', {\n      fields: {start: Field.date('Start')}\n    }),\n    analytics: Field.tab('Analytics', {\n      view: '@/views/ProgramAnalytics#ProgramAnalytics'\n    })\n  }\n})",
+      "fileName": "schema/Program.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Documents show these tabs after their Details tab. Other types show their fields on a Content tab, followed by these tabs. Files show them after the File and Details tabs, and list rows and rich text blocks as sections of their settings sheet."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The fields of a tab are stored and queried like the other fields of the type, so their names must be unique across the type."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Reusing tabs"
         }
       ],

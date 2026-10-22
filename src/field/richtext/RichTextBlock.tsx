@@ -25,7 +25,7 @@ import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/components.js'
-import {BlockSettings} from '#/dashboard/app/BlockSettings.js'
+import {BlockTabs} from '#/dashboard/app/BlockTabs.js'
 import {BlockSheet, useBlockSheet} from '#/dashboard/app/BlockSheet.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -219,7 +219,7 @@ export const RichTextBlock = memo(function RichTextBlock({
                 )}
               </div>
             </SheetSection>
-            <BlockSettings node={node} type={type} readOnly={readOnly} />
+            <BlockTabs node={node} type={type} readOnly={readOnly} />
           </SheetBody>
           <SheetFooter>
             <Button

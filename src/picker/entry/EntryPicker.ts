@@ -63,7 +63,8 @@ export interface EntryPickerOptions<
 > extends EntryPickerConditions {
   selection: Projection
   defaultView?: 'row' | 'thumb'
-  showMedia?: boolean
+  /** @internal Picks uploaded files: any of them, or images */
+  files?: 'file' | 'image'
   max?: number
   label?: string
   title?: Label
@@ -189,7 +190,7 @@ function linkedLocalisation(
   const rootConfig = workspaceConfig?.[root]
   if (!rootConfig) return
   const rootData = Root.data(rootConfig)
-  return Root.mediaI18n(rootData) ?? rootData.i18n
+  return Root.fieldI18n(rootData) ?? rootData.i18n
 }
 
 /** @internal Throws for conditions an entry picker can't check, eg. relation filters */

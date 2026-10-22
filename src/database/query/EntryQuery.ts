@@ -1,4 +1,6 @@
 import type {Config} from '#/core/Config.js'
+import {getWorkspace} from '#/core/Internal.js'
+import {Root} from '#/core/Root.js'
 import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
@@ -14,7 +16,7 @@ import {
 } from '#/core/Internal.js'
 import {getScope, type Entity, type Scope} from '#/core/Scope.js'
 import type {Type} from '#/core/Type.js'
-import {isRecord} from '#/core/util/Objects.js'
+import {entries, isRecord} from '#/core/util/Objects.js'
 import {LinksField} from '#/field/link/LinkField.js'
 import {
   alias,
@@ -286,6 +288,60 @@ export function localeCondition(
     : inArray(entry.locale, spellings)
 }
 
+interface FieldTranslatedRoot {
+  workspace: string
+  root: string
+  locales: Set<string>
+}
+
+const fieldTranslatedRoots = new WeakMap<Config, Array<FieldTranslatedRoot>>()
+
+/**
+ * The roots declared with `i18n: {translate: 'fields'}`. Media roots translate
+ * fields too, but their files keep matching only queries without a locale, as
+ * they did before.
+ */
+function translatedFieldRoots(config: Config): Array<FieldTranslatedRoot> {
+  let result = fieldTranslatedRoots.get(config)
+  if (result) return result
+  result = entries(config.workspaces).flatMap(([workspace, data]) =>
+    entries(getWorkspace(data).roots).flatMap(([root, rootConfig]) => {
+      const rootData = Root.data(rootConfig)
+      const i18n = Root.fieldI18n(rootData)
+      if (!i18n || rootData.isMediaRoot) return []
+      const locales = new Set(i18n.locales.map(l => l.toLowerCase()))
+      return [{workspace, root, locales}]
+    })
+  )
+  fieldTranslatedRoots.set(config, result)
+  return result
+}
+
+/**
+ * Rows in a locale, or of a root that translates fields to that locale: such
+ * a root keeps a single entry, unlocalized, for all of its locales
+ */
+function queryLocaleCondition(
+  config: Config,
+  scope: Scope,
+  entry: EntryIndexTarget,
+  locale: string | null
+): Sql<boolean> {
+  const own = localeCondition(scope, entry, locale)
+  if (locale === null) return own
+  const requested = locale.toLowerCase()
+  const roots = translatedFieldRoots(config)
+    .filter(candidate => candidate.locales.has(requested))
+    .map(candidate =>
+      and(
+        eq(entry.workspace, candidate.workspace),
+        eq(entry.root, candidate.root)
+      )
+    )
+  if (roots.length === 0) return own
+  return or(own, and(isNull(entry.locale), or(...roots)))
+}
+
 interface EntryQueryOptions {
   source?: EntryIndexTarget
   search?: ReturnType<typeof searchQuery>
@@ -401,7 +457,7 @@ export function compileEntryQuery(
       conditions.push(compileCondition(membership.index(key), value))
   }
   if (query.locale !== undefined && edge?.edge !== 'translations')
-    conditions.push(localeCondition(scope, entry, query.locale))
+    conditions.push(queryLocaleCondition(config, scope, entry, query.locale))
   else if (query.preferredLocale && edge?.edge !== 'translations')
     conditions.push(
       or(
@@ -653,6 +709,9 @@ export function compileEntryQuery(
         ? {
             value: selection,
             locale: entry.locale,
+            // Localised fields read the locales of the root of their entry
+            workspace: entry.workspace,
+            root: entry.root,
             ...(options.withId ? {id: entry.id} : {}),
             ...(selfFirst ? {selfFirst} : {})
           }

@@ -6,6 +6,7 @@ import type {
   EntryReferenceQuery,
   EntryReferenceResult
 } from './EntryReference.js'
+import {Config} from '../Config.js'
 import {Entry} from '../Entry.js'
 import type {EntryFields} from '../EntryFields.js'
 import {Graph, type InferProjection, type Projection} from '../Graph.js'
@@ -125,10 +126,14 @@ export abstract class WriteableGraph extends Graph {
   async upload(query: UploadQuery) {
     const op = new UploadOperation(query)
     await this.commit(op)
+    // Every file type has the data of an upload, typed as a media file
+    const fileTypes = Config.fileTypes(this.config)
+    // A folder can be a draft, the file is found in it all the same
     return this.get({
-      type: MediaFile,
-      id: op.id
-    })
+      type: fileTypes,
+      id: op.id,
+      status: 'preferDraft'
+    }) as Promise<EntryFields & Infer<typeof MediaFile>>
   }
 
   async commit(...operations: Array<Operation>) {

@@ -810,7 +810,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
-      {page.isMedia && uploadCount > 0 && (
+      {page.uploadTypes.length > 0 && uploadCount > 0 && (
         <ActivityStatus ariaLabel={uploadLabel} side="bottom">
           {uploadCount}
         </ActivityStatus>
@@ -834,13 +834,15 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />
-        {page.isMedia && page.canUpload && !locationIsPending && (
-          <FileTrigger multiple onSelect={files => upload(files)}>
-            <Button icon={IcRoundUploadFile} color="primary">
-              Upload media
-            </Button>
-          </FileTrigger>
-        )}
+        {page.uploadTypes.length > 0 &&
+          page.canUpload &&
+          !locationIsPending && (
+            <FileTrigger multiple onSelect={files => upload(files)}>
+              <Button icon={IcRoundUploadFile} color="primary">
+                Upload media
+              </Button>
+            </FileTrigger>
+          )}
       </div>
     </div>
   )

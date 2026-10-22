@@ -13,3 +13,8 @@
 .PendingUploadsView-compress {
   margin-top: 4px;
 }
+
+.PendingUploadsView-type {
+  max-width: 240px;
+  margin-top: 6px;
+}

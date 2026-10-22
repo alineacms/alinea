@@ -15,7 +15,7 @@ import {
   TooltipTrigger
 } from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
@@ -53,7 +53,7 @@ import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
 import {EntryFields} from './../EntryFields.js'
 import {NodeEditor} from './../NodeEditor.js'
-import {withSettingsTab} from '../SettingsTab.js'
+import {entryForm} from '../EntryForm.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {entryDirtyActions} from './../EntryHeaderActions.js'
 import {
@@ -333,7 +333,7 @@ function EntryEditorContent({
     entrySidebarOpen(Boolean(useAtomValueRaw(entry.preview)))
   )
   const editorBodyRef = useRef<HTMLDivElement>(null)
-  const isMediaFile = type.type === MediaFile
+  const isMediaFile = isFileType(type.type)
   const isMediaLibrary = type.type === MediaLibrary
   const isMedia = isMediaFile || isMediaLibrary
   const activeVersion = Array.from(versions.values()).find(
@@ -399,7 +399,7 @@ function EntryEditorContent({
             </div>
           )}
 
-          <NodeEditor node={node} type={withSettingsTab(type.type)}>
+          <NodeEditor node={node} type={entryForm(type.type)}>
             <EntryFields />
           </NodeEditor>
         </div>
@@ -433,7 +433,7 @@ function EntryEditorContent({
           </div>
         )}
         <PageContent ref={editorBodyRef} className={styles.EntryEditor.view()}>
-          <NodeEditor node={node} type={withSettingsTab(type.type)}>
+          <NodeEditor node={node} type={entryForm(type.type)}>
             <View type={type.type} />
           </NodeEditor>
         </PageContent>

@@ -28,7 +28,7 @@ import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {FileData} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -185,11 +185,11 @@ export function createHandler({
           url: Entry.url,
           filePath: Entry.filePath,
           workspace: Entry.workspace,
-          location: MediaFile.location,
-          previewUrl: MediaFile.previewUrl
+          location: FileData.location,
+          previewUrl: FileData.previewUrl
         }
         const query = {
-          type: MediaFile,
+          type: Config.fileTypes(cms.config),
           status: 'published' as const,
           main: true,
           select

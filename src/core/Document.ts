@@ -1,8 +1,7 @@
 import {
   IcRoundBolt,
   IcRoundDescription,
-  IcRoundInfo,
-  IcOutlineSettings
+  IcRoundInfo
 } from '#/dashboard/icons.js'
 import {
   type MetadataField,
@@ -17,11 +16,12 @@ import {Section} from './Section.js'
 import {
   type ContainerTypeConfig,
   type FieldsDefinition,
-  type Type,
+  type TabFields,
+  Type,
   type TypeConfig,
   type
 } from './Type.js'
-import {entries, keys} from './util/Objects.js'
+import {entries, keys, values} from './util/Objects.js'
 
 const documentMarker = Symbol.for('@alinea.Document')
 
@@ -31,10 +31,12 @@ export type Document = {
   metadata: MetadataField
 }
 
-export type DocumentConfig<Fields, Seo, Details, Settings = {}> = (
-  | TypeConfig<Fields, Settings>
-  | ContainerTypeConfig<Fields, Settings>
+export type DocumentConfig<Fields, Seo, Details, Tabs = {}> = (
+  | TypeConfig<Fields>
+  | ContainerTypeConfig<Fields>
 ) & {
+  /** Tabs after the Details tab, eg. an Analytics tab with a view */
+  tabs?: Tabs
   /** Fields shown in the SEO tab, above the previews */
   seo?: Seo
   /** Fields shown in the Details tab, above the created and updated details */
@@ -53,17 +55,17 @@ export function document<
   Fields extends FieldsDefinition = {},
   Seo extends FieldsDefinition = {},
   Details extends FieldsDefinition = {},
-  Settings extends FieldsDefinition = {}
+  Tabs extends Record<string, Type> = {}
 >(
   label: string,
   {
     fields = {} as Fields,
     seo = {} as Seo,
     details = {} as Details,
-    settings = {} as Settings,
+    tabs: extraTabs = {} as Tabs,
     ...config
-  }: DocumentConfig<Fields, Seo, Details, Settings>
-): Type<Document & Fields & Seo & Details & Settings> {
+  }: DocumentConfig<Fields, Seo, Details, Tabs>
+): Type<Document & Fields & Seo & Details & TabFields<Tabs>> {
   const {title, path, metadata} = documentFields()
   // Fields may replace the title and path; the other tabs add fields.
   const taken = new Set([
@@ -73,29 +75,28 @@ export function document<
   for (const name of [
     ...fieldNames(seo),
     ...fieldNames(details),
-    ...fieldNames(settings)
+    ...values(extraTabs).flatMap(tab => keys(Type.fields(tab)))
   ]) {
     if (taken.has(name)) throw new Error(`Field "${name}" is defined twice`)
     taken.add(name)
   }
-  const fieldsWithMeta: Document & Fields & Seo & Details & Settings = <any>(
-    tabs(
-      tab('Document', {
-        icon: IcRoundDescription,
-        fields: {title, path, ...fields}
-      }),
-      tab('SEO', {
-        icon: IcRoundBolt,
-        fields: {metadata, ...seo, ...metadataPreviews()}
-      }),
-      tab('Details', {
-        icon: IcRoundInfo,
-        fields: {...details, ...metadataDetails(metadata)}
-      }),
-      ...(keys(settings).length > 0
-        ? [tab('Settings', {icon: IcOutlineSettings, fields: settings})]
-        : [])
-    )
+  const fieldsWithMeta: Document & Fields & Seo & Details & TabFields<Tabs> = <
+    any
+  >tabs(
+    tab('Document', {
+      icon: IcRoundDescription,
+      fields: {title, path, ...fields}
+    }),
+    tab('SEO', {
+      icon: IcRoundBolt,
+      fields: {metadata, ...seo, ...metadataPreviews()}
+    }),
+    tab('Details', {
+      icon: IcRoundInfo,
+      fields: {...details, ...metadataDetails(metadata)}
+    }),
+    // Custom tabs, eg. an Analytics tab with a view
+    ...values(extraTabs)
   )
   const result = type(label, {
     ...config,
