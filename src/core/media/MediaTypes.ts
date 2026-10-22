@@ -7,6 +7,8 @@ import {viewKeys} from '#/dashboard/ViewKeys.js'
 import prettyBytes from 'pretty-bytes'
 import {Entry} from '../Entry.js'
 import {Expr} from '../Expr.js'
+import {internalReplaces} from '../Internal.js'
+import {keys} from '../util/Objects.js'
 import {
   column,
   Overview,
@@ -159,23 +161,49 @@ export type MediaFile = Type.Infer<typeof MediaFile>
 const {width, height, preview, averageColor, focus, thumbHash, ...leading} =
   fileFields()
 // The fields keep the order of earlier versions, which stored files have
-export const MediaFile = fileType(
-  'Media file',
-  {
-    ...leading,
-    alt: mediaAlt('Alt text', {
-      multiline: true,
-      help: 'Describe the image for screen readers and SEO'
-    }),
-    width,
-    height,
-    preview,
-    averageColor,
-    focus,
-    thumbHash
-  },
-  {}
-)
+const mediaFileFields = {
+  ...leading,
+  alt: mediaAlt('Alt text', {
+    multiline: true,
+    help: 'Describe the image for screen readers and SEO'
+  }),
+  width,
+  height,
+  preview,
+  averageColor,
+  focus,
+  thumbHash
+}
+export const MediaFile = fileType('Media file', mediaFileFields, {})
+
+export interface MediaFileConfig<Fields, Tabs> {
+  /** Fields next to the title and path of the file */
+  fields?: Fields
+  tabs?: Tabs
+}
+
+/**
+ * Media files with tabs or fields of your own, as the `MediaFile` of the
+ * schema: `schema: {MediaFile: Config.mediaFile({tabs: {...}})}`. Files
+ * uploaded before have them too, and queries naming `MediaFile` find it.
+ */
+export function mediaFile<
+  Fields extends FieldsDefinition = {},
+  Tabs extends Record<string, Type> = {}
+>({fields = {} as Fields, tabs}: MediaFileConfig<Fields, Tabs> = {}): Type<
+  typeof mediaFileFields & Fields & TabFields<Tabs>
+> {
+  for (const name of keys(fields))
+    if (name in mediaFileFields)
+      throw new Error(`Field "${name}" is defined twice in Type "Media file"`)
+  // The fields of MediaFile itself, so queries selecting them find these
+  const result = fileType(
+    'Media file',
+    {...mediaFileFields, ...fields},
+    {tabs}
+  ) as Type<typeof mediaFileFields & Fields & TabFields<Tabs>>
+  return Object.assign(result, {[internalReplaces]: MediaFile})
+}
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {

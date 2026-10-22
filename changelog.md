@@ -49,6 +49,9 @@
   Entries show the tabs in the entry editor, list rows and rich text blocks as
   sections of their settings sheet, below the label and anchor. Their fields
   are stored and queried like the other fields.
+- Define `MediaFile` in the schema with `Config.mediaFile` to give media files
+  tabs or fields of your own. Files uploaded before have them too, and queries
+  naming `MediaFile` find it.
 - Add the `overview` option to container types and roots to configure how the
   dashboard lists their children: columns (`Config.column`) with per-type
   selects, formatting and custom cells, built-in type, status, updated and

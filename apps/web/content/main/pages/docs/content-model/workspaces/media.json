@@ -382,6 +382,22 @@
       ]
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The built-in `MediaFile` type takes tabs and fields of your own as well: define it in the schema with `Config.mediaFile`. Files uploaded before have them too, and queries naming `MediaFile` find it."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3L3CWnTEvH6gRwtu1A51dqUDSOB",
+      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  schema: {\n    ...schema,\n    MediaFile: Config.mediaFile({\n      tabs: {\n        analytics: Field.tab('Analytics', {view: '@/views/MediaAnalytics'})\n      }\n    })\n  },\n  workspaces\n})",
+      "fileName": "cms.tsx",
+      "language": "tsx"
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [

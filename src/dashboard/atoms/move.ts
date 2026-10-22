@@ -4,7 +4,6 @@ import {Entry} from '#/core/Entry.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {Filter} from '#/core/Filter.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {Policy} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
@@ -58,7 +57,7 @@ export function rootAcceptsType(
 ): boolean {
   const contains = rootData.contains
   if (!contains?.length) return true
-  if (rootData.isMediaRoot && config.schema[typeName] === MediaFile) return true
+  if (rootData.isMediaRoot && typeName === 'MediaFile') return true
   return Schema.contained(config.schema, contains).includes(typeName)
 }
 

@@ -4,6 +4,7 @@ import {Expr} from './Expr.js'
 import type {Field} from './Field.js'
 import {
   getExpr,
+  getReplaced,
   getRoot,
   getType,
   type HasRoot,
@@ -14,7 +15,7 @@ import {
 import type {Page} from './Page.js'
 import type {Root} from './Root.js'
 import type {Type} from './Type.js'
-import {entries} from './util/Objects.js'
+import {entries, values} from './util/Objects.js'
 
 export type Entity = Workspace | Root | Type | Field | Expr | Page
 
@@ -80,6 +81,11 @@ export class Scope {
     for (const [typeName, type] of entries(config.schema))
       for (const [fieldName, field] of entries(type))
         this.#insertNested(field, ['Field', typeName, fieldName])
+    // Queries naming a built-in type find the type standing in for it
+    for (const type of values(config.schema)) {
+      const replaced = getReplaced(type)
+      if (replaced) this.#adopted.set(replaced, type)
+    }
     for (const [field, path] of this.#nested)
       this.#nestedKeys.set(path.join('.'), field)
   }

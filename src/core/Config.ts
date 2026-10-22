@@ -8,7 +8,7 @@ import {
 } from '#/core/media/MediaTypes.js'
 import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'
-import {getWorkspace} from './Internal.js'
+import {getReplaced, getWorkspace} from './Internal.js'
 import {admin, type Role} from './Role.js'
 import {Root, type RootI18n} from './Root.js'
 import {imageExtensions} from './media/IsImage.js'
@@ -157,9 +157,9 @@ export namespace Config {
   ): boolean {
     const allowed = Root.contains(root)
     if (allowed.length === 0) return true
-    if (Root.isMediaRoot(root) && childType === MediaFile) return true
     const scope = getScope(config)
     const typeName = scope.nameOf(childType)
+    if (Root.isMediaRoot(root) && typeName === 'MediaFile') return true
     for (const type of allowed) {
       if (typeof type === 'string') {
         if (type === typeName) return true
@@ -365,8 +365,16 @@ export function createConfig<Definition extends Config>(
   definition: Definition
 ): Definition {
   if (normalized.has(definition)) return definition
-  if (definition.schema.MediaFile && definition.schema.MediaFile !== MediaFile)
-    throw new Error(`"MediaFile" is a reserved Type name`)
+  const mediaFile = definition.schema.MediaFile ?? MediaFile
+  if (mediaFile !== MediaFile && getReplaced(mediaFile) !== MediaFile)
+    throw new Error(
+      `"MediaFile" is a reserved Type name, create it with Config.mediaFile`
+    )
+  for (const [name, type] of entries(definition.schema))
+    if (name !== 'MediaFile' && getReplaced(type))
+      throw new Error(
+        `Type "${name}" is created with Config.mediaFile, name it "MediaFile"`
+      )
   if (
     definition.schema.MediaLibrary &&
     definition.schema.MediaLibrary !== MediaLibrary
@@ -376,7 +384,7 @@ export function createConfig<Definition extends Config>(
     ...definition,
     roles: {admin, ...definition.roles},
     publicDir: definition.publicDir ?? '/public',
-    schema: {...definition.schema, MediaLibrary, MediaFile}
+    schema: {...definition.schema, MediaLibrary, MediaFile: mediaFile}
   }
   Config.validate(res)
   normalized.add(res)

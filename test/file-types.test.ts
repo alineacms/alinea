@@ -4,6 +4,11 @@ import {createCMS} from '#/core.js'
 import {Config as CoreConfig} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
+import {getType} from '#/core/Internal.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
+import {Root} from '#/core/Root.js'
+import {Schema} from '#/core/Schema.js'
+import {rootAcceptsType} from '#/dashboard/atoms/move.js'
 import {LocalDB} from '#/database/LocalDB.js'
 
 const test = suite(import.meta)
@@ -215,4 +220,100 @@ test('files upload into a draft folder', async () => {
     })
     test.is(photo._parentId, folder._id)
   })
+})
+
+const AnalyticsMediaFile = Config.mediaFile({
+  tabs: {
+    analytics: Field.tab('Analytics', {fields: {views: Field.number('Views')}})
+  }
+})
+
+const mediaCms = createCMS({
+  schema: {MediaFile: AnalyticsMediaFile},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {media: Config.media()}
+    })
+  }
+})
+
+test('the schema can define MediaFile with tabs of its own', () => {
+  test.is(mediaCms.config.schema.MediaFile, AnalyticsMediaFile)
+  test.throws(
+    () =>
+      createCMS({
+        schema: {MediaFile: Config.file('Media file')},
+        workspaces: {
+          main: Config.workspace('Main', {
+            source: 'content',
+            roots: {media: Config.media()}
+          })
+        }
+      }),
+    '"MediaFile" is a reserved Type name, create it with Config.mediaFile'
+  )
+  test.throws(
+    () =>
+      createCMS({
+        schema: {Asset: Config.mediaFile()},
+        workspaces: {
+          main: Config.workspace('Main', {
+            source: 'content',
+            roots: {media: Config.media()}
+          })
+        }
+      }),
+    'Type "Asset" is created with Config.mediaFile, name it "MediaFile"'
+  )
+  test.throws(
+    () => Config.mediaFile({fields: {location: Field.text('Location')}}),
+    'Field "location" is defined twice in Type "Media file"'
+  )
+})
+
+test('the built-in MediaFile is known as the MediaFile of the schema', () => {
+  const {config} = mediaCms
+  const media = mediaCms.workspaces.main.media
+  test.is(Schema.typeNames(config.schema).get(MediaFile), 'MediaFile')
+  test.ok(CoreConfig.rootContains(config, media, MediaFile))
+  test.ok(CoreConfig.rootContains(config, media, AnalyticsMediaFile))
+  test.ok(rootAcceptsType(config, Root.data(media), 'MediaFile'))
+  // Types can list the built-in MediaFile in what they contain
+  const Gallery = Config.type('Gallery', {contains: [MediaFile], fields: {}})
+  test.equal(Schema.contained(config.schema, getType(Gallery).contains!), [
+    'MediaFile'
+  ])
+})
+
+test('queries naming MediaFile find the MediaFile of the schema', async () => {
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+  try {
+    const db = new DB(mediaCms.config)
+    await db.sync()
+    const upload = await db.upload({file: file('photo.jpg')})
+    await db.update({
+      type: AnalyticsMediaFile,
+      id: upload._id,
+      set: {views: 3}
+    })
+    test.equal(
+      await db.first({
+        type: MediaFile,
+        id: upload._id,
+        select: {
+          type: Entry.type,
+          extension: MediaFile.extension,
+          views: AnalyticsMediaFile.views
+        }
+      }),
+      {type: 'MediaFile', extension: '.jpg', views: 3}
+    )
+  } finally {
+    globalThis.fetch = fetch
+  }
 })
