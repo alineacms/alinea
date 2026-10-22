@@ -530,10 +530,10 @@ function entryPickerSearchScope(
   enableNavigation: boolean | undefined,
   type: PickerType
 ) {
-  if (type === 'file' || type === 'image') return 'workspace' as const
+  if (type === 'file' || type === 'image') return 'root' as const
   return condition && !location && enableNavigation !== true
     ? ('everything' as const)
-    : ('workspace' as const)
+    : ('root' as const)
 }
 
 function entryPickerResultMode(

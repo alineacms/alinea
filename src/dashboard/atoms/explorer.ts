@@ -69,6 +69,9 @@ export const searchResultLimit = 100
 
 export type ExplorerView = 'card' | 'row'
 
+/** Where results are listed from: the root, its workspace or all workspaces */
+export type ExplorerScope = 'root' | 'workspace' | 'everything'
+
 export interface ExplorerLocation {
   workspace: string
   root?: string
@@ -114,7 +117,7 @@ export interface ExplorerOptions {
   enableNavigation?: boolean
   initialView?: ExplorerView
   initialResultMode?: ExplorerResultMode
-  initialSearchScope?: 'workspace' | 'everything'
+  initialSearchScope?: ExplorerScope
   location?: ExplorerLocation
   limitLocations?: Array<ExplorerLimitLocation>
   /** Lists only the media roots, for pickers of files and images */
@@ -235,7 +238,10 @@ export interface ExplorerReadyPage {
   root: ExplorerRootData
   resultMode: ExplorerResultMode
   search: string
-  searchScope: 'workspace' | 'everything'
+  /** The scope the editor picked */
+  searchScope: ExplorerScope
+  /** The scope the results are listed from */
+  scope: ExplorerScope
   searchesEverything: boolean
   sort: ExplorerSortState
   /** The key of the tab shown, undefined when the overview has no tabs */
@@ -269,7 +275,7 @@ export function explorerScrollKey(page: ExplorerReadyPage) {
     page.locale,
     page.view,
     page.resultMode,
-    page.searchScope,
+    page.scope,
     page.search.trim(),
     page.filters,
     page.tab ?? null
@@ -618,7 +624,8 @@ export class ExplorerAtoms {
   readonly showSelectionControls
   readonly breadcrumbs
   readonly autoSelectFirstItem
-  readonly rootScope: 'current' | 'workspace'
+  /** The scope results are listed from unless the editor picks a wider one */
+  readonly rootScope: 'root' | 'workspace'
   readonly hasRowAction
   readonly mode: 'browse' | 'search'
   readonly hasSelection
@@ -629,10 +636,12 @@ export class ExplorerAtoms {
   readonly hasCondition
   readonly permission: Permission
   readonly canSearchEverything: Atom<boolean>
+  /** The scope the results are listed from */
+  readonly scope: Atom<ExplorerScope>
   readonly searchesEverything: Atom<boolean>
 
   search = atom('')
-  searchScope: PrimitiveAtom<'workspace' | 'everything'>
+  searchScope: PrimitiveAtom<ExplorerScope>
   resultMode: WritableAtom<ExplorerResultMode, [ExplorerResultMode], void>
   selection: PrimitiveAtom<'all' | Set<Key>>
   expandedKeys = atom(new Set<Key>())
@@ -707,9 +716,11 @@ export class ExplorerAtoms {
   ) {
     this.#options = options
     this.allowAllWorkspaces = options.allowAllWorkspaces ?? false
+    this.mode = options.mode ?? 'browse'
+    this.rootScope = this.mode === 'search' ? 'workspace' : 'root'
     const initialSearchScope = this.allowAllWorkspaces
-      ? (options.initialSearchScope ?? 'workspace')
-      : 'workspace'
+      ? (options.initialSearchScope ?? this.rootScope)
+      : this.rootScope
     const initialResultMode =
       options.initialResultMode ??
       (options.condition || options.pickChildren ? 'matches' : 'browse')
@@ -731,11 +742,9 @@ export class ExplorerAtoms {
     this.requestedFilters =
       options.filterState ?? atom<OverviewFilterSelection>({})
     this.requestedTab = options.tabState ?? atom<string | undefined>(undefined)
-    this.mode = options.mode ?? 'browse'
     this.hasRowAction =
       options.onAction !== undefined ||
       (options.enableNavigation === true && options.onConfirm === undefined)
-    this.rootScope = this.mode === 'search' ? 'workspace' : 'current'
     this.selectionMode = options.selectionMode ?? 'single'
     this.selectionBehavior = options.selectionBehavior ?? 'replace'
     this.showSelectionControls =
@@ -758,12 +767,13 @@ export class ExplorerAtoms {
           this.hasCondition ||
           Boolean(get(this.search).trim()))
     )
-    this.searchesEverything = atom(
-      get =>
-        get(this.canSearchEverything) &&
-        get(this.resultMode) === 'matches' &&
-        get(this.searchScope) === 'everything'
+    // Wider scopes list matches, browsing stays within the root
+    this.scope = atom(get =>
+      get(this.canSearchEverything) && get(this.resultMode) === 'matches'
+        ? get(this.searchScope)
+        : this.rootScope
     )
+    this.searchesEverything = atom(get => get(this.scope) === 'everything')
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>((options.preselect ?? true) ? options.initialSelection : [])
     )
@@ -840,7 +850,7 @@ export class ExplorerAtoms {
       const search = get(this.search)
       const resultMode = get(this.resultMode)
       const searchScope = get(this.searchScope)
-      const searchesEverything = get(this.searchesEverything)
+      const scope = get(this.scope)
       const isMedia = get(this.isMedia)
       const requestedFilters = get(this.requestedFilters)
       const requestedRoot = get(this.root)
@@ -864,7 +874,7 @@ export class ExplorerAtoms {
       const needsTree =
         view === 'card' &&
         resultMode === 'browse' &&
-        !searchesEverything &&
+        scope === 'root' &&
         !this.pickChildren &&
         !options.limitLocations?.length
       const treeReady = needsTree
@@ -926,7 +936,8 @@ export class ExplorerAtoms {
         root,
         search,
         searchScope,
-        searchesEverything,
+        scope,
+        searchesEverything: scope === 'everything',
         sort: {
           requested: sorted ? requested : undefined,
           label: sorted?.label,
@@ -951,7 +962,7 @@ export class ExplorerAtoms {
   /** The parent of the listed children, undefined for search results */
   #listedParent = atom(get => {
     const location = get(this.location)
-    const scoped = !get(this.searchesEverything) && this.rootScope === 'current'
+    const scoped = get(this.scope) === 'root'
     if (!scoped || get(this.resultMode) === 'matches') return undefined
     return this.#parentAt(
       location.workspace,
@@ -967,7 +978,7 @@ export class ExplorerAtoms {
     const listed = get(this.#listedParent)
     if (listed) return listed
     const location = get(this.location)
-    const scoped = !get(this.searchesEverything) && this.rootScope === 'current'
+    const scoped = get(this.scope) === 'root'
     return scoped
       ? this.#parentAt(
           location.workspace,
@@ -1322,12 +1333,10 @@ export class ExplorerAtoms {
     atom(async (get): Promise<ExplorerQuery | undefined> => {
       const location = get(this.location)
       const search = get(this.search).trim()
-      const searchesEverything = get(this.searchesEverything)
-      const searchesMultipleRoots =
-        searchesEverything || this.rootScope === 'workspace'
+      const scope = get(this.scope)
+      const searchesMultipleRoots = scope !== 'root'
       const resultMode = get(this.resultMode)
-      if (!searchesEverything && !location.root && this.rootScope === 'current')
-        return undefined
+      if (scope === 'root' && !location.root) return undefined
       if (this.mode === 'search' && !search) return undefined
       const requestedFilters = get(this.requestedFilters)
       const overview = await get(this.overview)
@@ -1356,16 +1365,13 @@ export class ExplorerAtoms {
       )
       const filter = filters.length > 1 ? {and: filters} : filters[0]
       return {
-        workspace: searchesEverything ? undefined : location.workspace,
-        root:
-          searchesEverything || this.rootScope === 'workspace'
-            ? undefined
-            : location.root,
+        workspace: scope === 'everything' ? undefined : location.workspace,
+        root: scope === 'root' ? location.root : undefined,
         parentId: this.pickChildren
           ? (location.parentId ?? null)
           : flatList
             ? undefined
-            : searchesEverything
+            : scope === 'everything'
               ? null
               : (location.parentId ?? null),
         locale: searchesMultipleRoots ? undefined : locale,
@@ -1385,14 +1391,14 @@ export class ExplorerAtoms {
       if (!query) return []
       const location = get(this.location)
       const search = get(this.search).trim()
-      const searchesEverything = get(this.searchesEverything)
+      const scope = get(this.scope)
       const flatList = get(this.resultMode) === 'matches'
       const config = get(configAtom)
       const graph = get(graphAtom)
       const overview = await get(this.overview)
       const selectedLocationParentId =
         this.searchDepth === 'current' &&
-        !searchesEverything &&
+        scope === 'root' &&
         flatList &&
         !this.pickChildren &&
         location.root &&
