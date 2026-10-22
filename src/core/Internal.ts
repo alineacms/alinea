@@ -45,3 +45,8 @@ export type HasExpr = {
 }
 export const hasExpr = (obj: object): obj is HasExpr => internalExpr in obj
 export const getExpr = (obj: HasExpr) => obj[internalExpr]
+
+/** A type standing in for a built-in type, see `Config.mediaFile` */
+export const internalReplaces = Symbol.for('@alinea.Replaces')
+export const getReplaced = (obj: object): HasType | undefined =>
+  (obj as {[internalReplaces]?: HasType})[internalReplaces]

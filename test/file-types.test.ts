@@ -4,6 +4,7 @@ import {createCMS} from '#/core.js'
 import {Config as CoreConfig} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {LocalDB} from '#/database/LocalDB.js'
 
 const test = suite(import.meta)
@@ -215,4 +216,69 @@ test('files upload into a draft folder', async () => {
     })
     test.is(photo._parentId, folder._id)
   })
+})
+
+const AnalyticsMediaFile = Config.mediaFile({
+  tabs: {
+    analytics: Field.tab('Analytics', {fields: {views: Field.number('Views')}})
+  }
+})
+
+const mediaCms = createCMS({
+  schema: {MediaFile: AnalyticsMediaFile},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {media: Config.media()}
+    })
+  }
+})
+
+test('the schema can define MediaFile with tabs of its own', () => {
+  test.is(mediaCms.config.schema.MediaFile, AnalyticsMediaFile)
+  test.throws(
+    () =>
+      createCMS({
+        schema: {MediaFile: Config.file('Media file')},
+        workspaces: {
+          main: Config.workspace('Main', {
+            source: 'content',
+            roots: {media: Config.media()}
+          })
+        }
+      }),
+    '"MediaFile" is a reserved Type name, create it with Config.mediaFile'
+  )
+})
+
+test('queries naming MediaFile find the MediaFile of the schema', async () => {
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+  try {
+    const db = new DB(mediaCms.config)
+    await db.sync()
+    const upload = await db.upload({file: file('photo.jpg')})
+    await db.update({
+      type: AnalyticsMediaFile,
+      id: upload._id,
+      set: {views: 3}
+    })
+    test.equal(
+      await db.first({
+        type: MediaFile,
+        id: upload._id,
+        select: {
+          type: Entry.type,
+          extension: MediaFile.extension,
+          views: AnalyticsMediaFile.views
+        }
+      }),
+      {type: 'MediaFile', extension: '.jpg', views: 3}
+    )
+  } finally {
+    globalThis.fetch = fetch
+  }
 })
