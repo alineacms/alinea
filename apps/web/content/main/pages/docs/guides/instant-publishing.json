@@ -65,17 +65,27 @@
       "content": [
         {
           "_type": "text",
-          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when nothing outside the `content` directory changed since the last deployment. Comparing against `VERCEL_GIT_PREVIOUS_SHA` covers every commit in a push, not only the last one; on the first deployment of a branch it falls back to the previous commit:"
+          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when the latest commit changed nothing outside the `content` directory:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjNWfZKlJJcGLyuGry1Hl8DMVK",
-      "code": "{\n  \"ignoreCommand\": \"git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- . ':!content' || exit 1\"\n}",
+      "code": "{\n  \"ignoreCommand\": \"git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
       "fileName": "vercel.json",
       "language": "json",
       "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "It only looks at the latest commit. Every publish from the dashboard is a commit of its own, so that covers them. A push of several commits that ends with a content-only commit, such as a merge that pulled in published content, skips its build too: build it from the Vercel dashboard when that happens."
+        }
+      ]
     },
     {
       "_type": "NoticeBlock",
@@ -91,6 +101,83 @@
               "text": "Adjust `content` if your content lives in a different directory."
             }
           ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Check that it works"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A skipped build shows as Canceled in the deployments of your Vercel project, and the list hides canceled deployments by default. Filter on Status → Canceled to find them: their log ends with \"Ignored Build Step command returned exit code 0\". To check the whole setup:"
+        }
+      ]
+    },
+    {
+      "_type": "orderedList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Publish a change in the dashboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Find the deployment of its commit: it shows as Canceled."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Load the page: it shows the change without a redeploy."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This checks both halves of the setup: content-only commits skip their build, and the site syncs their content at runtime."
         }
       ]
     },
