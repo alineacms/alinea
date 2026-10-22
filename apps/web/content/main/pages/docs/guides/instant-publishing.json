@@ -65,14 +65,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when nothing outside the `content` directory changed since the last deployment that built:"
+          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when the latest commit changed nothing outside the `content` directory:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjNWfZKlJJcGLyuGry1Hl8DMVK",
-      "code": "{\n  \"ignoreCommand\": \"base=${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}; git cat-file -e $base^{commit} 2>/dev/null || base=HEAD^; git diff --quiet $base HEAD -- . ':!content' || exit 1\"\n}",
+      "code": "{\n  \"ignoreCommand\": \"git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
       "fileName": "vercel.json",
       "language": "json",
       "compact": false
@@ -83,7 +83,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "`VERCEL_GIT_PREVIOUS_SHA` is the commit of the last deployment that built, so the comparison covers every commit pushed since, not only the last one. Vercel clones only the last 10 commits, though, and once content commits skip their builds, the last build soon lies further back than that. When its commit is missing from the clone, or on the first deployment of a branch, the command compares against the previous commit instead. Comparing against a missing commit would fail, and a failing command builds, so every content commit would quietly be built again."
+          "text": "It only looks at the latest commit. Every publish from the dashboard is a commit of its own, so that covers them. A push of several commits that ends with a content-only commit, such as a merge that pulled in published content, skips its build too: build it from the Vercel dashboard when that happens."
         }
       ]
     },
