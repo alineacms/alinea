@@ -1,7 +1,7 @@
 import {cms} from '@/cms'
 import {ExampleView} from '@/ExampleView'
 import {FormView} from '@/FormView'
-import {submitForm} from '@/submitForm'
+import {prepareUpload, submitForm} from '@/submitForm'
 import {Entry} from 'alinea/core'
 import type {FormDefinition} from 'alinea/form'
 import type {Metadata} from 'next'
@@ -137,6 +137,7 @@ export default async function Example(props: PageProps) {
         title={title}
         definition={content.inputs as FormDefinition}
         action={submitForm.bind(null, page.id)}
+        upload={prepareUpload.bind(null, page.id)}
       />
     )
   return (

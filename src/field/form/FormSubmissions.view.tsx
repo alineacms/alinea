@@ -27,7 +27,11 @@ import {
   TableRow,
   Text
 } from '#/components.js'
-import type {Submission, SubmissionStatus} from '#/core/Connection.js'
+import type {
+  FormFileRef,
+  Submission,
+  SubmissionStatus
+} from '#/core/Connection.js'
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
@@ -41,7 +45,8 @@ import {
   IcRoundCheck,
   IcRoundDelete,
   IcRoundDownload,
-  IcRoundUnarchive
+  IcRoundUnarchive,
+  IcRoundUploadFile
 } from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
 import {
@@ -53,6 +58,7 @@ import {
 } from 'jotai'
 import {useMemo, useState} from 'react'
 import {
+  type FormAnswer,
   answerGroups,
   answerText,
   formInputs,
@@ -356,24 +362,35 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
         {groups.map((group, index) => (
           <SheetSection key={index} title={group.title}>
             <DataList>
-              {group.answers.map(({input, text, state}) => (
-                <DataListItem key={input.id}>
-                  <DataListLabel>{input.label}</DataListLabel>
-                  <DataListValue>
-                    {state === 'answered' ? (
-                      text
-                    ) : (
-                      <Text
-                        color="muted"
-                        className={styles.FormSubmissions.missing()}
-                      >
-                        {state === 'hidden' ? 'not shown' : 'left empty'}
-                      </Text>
-                    )}
-                  </DataListValue>
-                </DataListItem>
-              ))}
+              {group.answers
+                .filter(answer => !isFileAnswer(answer))
+                .map(({input, text, state}) => (
+                  <DataListItem key={input.id}>
+                    <DataListLabel>{input.label}</DataListLabel>
+                    <DataListValue>
+                      {state === 'answered' ? (
+                        text
+                      ) : (
+                        <Text
+                          color="muted"
+                          className={styles.FormSubmissions.missing()}
+                        >
+                          {state === 'hidden' ? 'not shown' : 'left empty'}
+                        </Text>
+                      )}
+                    </DataListValue>
+                  </DataListItem>
+                ))}
             </DataList>
+            {/* Files show below the answers of their section, as cards */}
+            {group.answers.filter(isFileAnswer).map(({input}) => (
+              <SubmissionFiles
+                key={input.id}
+                entryId={entryId}
+                input={input.label}
+                files={submission.values[input.key]}
+              />
+            ))}
           </SheetSection>
         ))}
         <SheetSection title="Sent">
@@ -439,6 +456,64 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
       </SheetFooter>
     </SheetContent>
   )
+}
+
+function isFileAnswer(answer: FormAnswer): boolean {
+  return answer.state === 'answered' && answer.input.attributes.type === 'file'
+}
+
+interface SubmissionFilesProps {
+  entryId: string
+  /** The label of the file input */
+  input: string
+  files: unknown
+}
+
+/** The files a visitor sent, downloaded with the rights of the editor */
+function SubmissionFiles({entryId, input, files}: SubmissionFilesProps) {
+  const store = useStore()
+  const list = Array.isArray(files) ? (files as Array<FormFileRef>) : []
+
+  async function download(file: FormFileRef) {
+    const blob = await store.get(clientAtom).submissionFile(entryId, file.id)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.name
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className={styles.FormSubmissions.files()}>
+      {list.map(file => (
+        <div key={file.id} className={styles.FormSubmissions.file()}>
+          <IcRoundUploadFile className={styles.FormSubmissions.file.icon()} />
+          <div className={styles.FormSubmissions.file.label()}>
+            <Text weight="medium" truncate>
+              {file.name}
+            </Text>
+            <Text size="sm" color="muted">
+              {input} · {formatSize(file.size)} · private
+            </Text>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            icon={IcRoundDownload}
+            aria-label={`Download ${file.name}`}
+            onClick={() => download(file)}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
 /** The first answer of a submission names it, eg. the name of the visitor */

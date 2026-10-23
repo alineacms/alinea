@@ -1,4 +1,5 @@
 import type {Submission} from '#/core/Connection.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {formState} from './FormConditions.js'
 import type {FormDefinition, FormInputData} from './FormDefinition.js'
 
@@ -58,7 +59,10 @@ export function answerText(input: FormInputData, value: unknown): string {
   return values
     .map(value => {
       const choice = input.choices?.find(choice => choice.value === value)
-      return choice ? choice.label : String(value)
+      if (choice) return choice.label
+      // Files are kept as references, their name stands for them
+      if (isRecord(value) && typeof value.name === 'string') return value.name
+      return String(value)
     })
     .join(', ')
 }

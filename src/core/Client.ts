@@ -10,6 +10,8 @@ import type {
   BackendCapabilities,
   DraftTransport,
   LocalConnection,
+  PrepareUploadRequest,
+  PrepareUploadResult,
   Revision,
   Submission,
   SubmissionStatus,
@@ -211,6 +213,25 @@ export class Client implements LocalConnection {
       {action: HandleAction.Submissions, entryId, id},
       {method: 'DELETE'}
     ).then(res => this.#failOnHttpError(res, false))
+  }
+
+  async submissionFile(entryId: string, id: string): Promise<Blob> {
+    const response = await this.#request({
+      action: HandleAction.SubmissionFile,
+      entryId,
+      id
+    })
+    if (!response.ok) throw new Error(`Could not download the file`)
+    return response.blob()
+  }
+
+  prepareFormUpload(
+    request: PrepareUploadRequest
+  ): Promise<PrepareUploadResult> {
+    return this.#requestJson(
+      {action: HandleAction.FormUpload},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<PrepareUploadResult>(this.#failOnHttpError)
   }
 
   revisions(file: string): Promise<Array<Revision>> {

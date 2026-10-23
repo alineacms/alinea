@@ -2,6 +2,8 @@
 
 import {type FormState, formState} from '#/field/form/FormConditions.js'
 import {formSpam} from '#/field/form/FormSpam.js'
+import type {PrepareUploadResult} from '#/core/Connection.js'
+import type {FormUploadFile} from '#/core/Forms.js'
 import type {FormErrors, FormResult} from '#/field/form/FormSubmission.js'
 import type {
   FormDefinition,
@@ -75,6 +77,12 @@ export interface FormProps extends Omit<
    * Its errors show on their inputs and its confirmation replaces the form.
    */
   action?: (data: FormData) => Promise<FormResult>
+  /**
+   * Asks for a ticket to upload a file, eg. a server action that calls
+   * `cms.forms.prepareUpload`. The browser then uploads files itself, which
+   * keeps them out of the action. Without it files are sent to the action.
+   */
+  upload?: (file: FormUploadFile) => Promise<PrepareUploadResult>
   /** Errors by the key of the input, when the form is sent another way */
   errors?: FormErrors
   /** The text of the submit button, unless its view has children */
@@ -89,6 +97,7 @@ export function Form({
   definition,
   views = {},
   action,
+  upload,
   errors,
   submitLabel = 'Send',
   onChange,
@@ -101,8 +110,10 @@ export function Form({
     [definition, values]
   )
   const [result, send, pending] = useActionState(
-    async (_: FormResult | undefined, data: FormData) => {
-      const result = await action!(data)
+    async (_: FormResult | undefined, posted: FormData) => {
+      const uploaded = upload ? await uploadFiles(upload, posted) : posted
+      if (!(uploaded instanceof FormData)) return uploaded
+      const result = await action!(uploaded)
       if (result.ok && result.redirect) window.location.assign(result.redirect)
       return result
     },
@@ -231,6 +242,41 @@ function FormSection({section, views, errors, state}: FormSectionProps) {
       />
     ))
   ])
+}
+
+/** The answers with each file replaced by the token of its upload */
+async function uploadFiles(
+  upload: (file: FormUploadFile) => Promise<PrepareUploadResult>,
+  posted: FormData
+): Promise<FormData | FormResult> {
+  const data = new FormData()
+  const errors: FormErrors = {}
+  for (const [key, value] of posted) {
+    if (typeof value === 'string') {
+      data.append(key, value)
+      continue
+    }
+    if (value.size === 0) continue
+    const ticket = await upload({
+      input: key,
+      name: value.name,
+      size: value.size,
+      type: value.type
+    })
+    if (!ticket.ok) {
+      errors[key] = ticket.message
+      continue
+    }
+    const response = await fetch(ticket.url, {
+      method: ticket.method,
+      headers: {'content-type': value.type || 'application/octet-stream'},
+      body: value
+    })
+    if (response.ok) data.append(key, ticket.token)
+    else errors[key] = await response.text()
+  }
+  if (Object.keys(errors).length > 0) return {ok: false, errors}
+  return data
 }
 
 /** The answers the form starts with, by key */

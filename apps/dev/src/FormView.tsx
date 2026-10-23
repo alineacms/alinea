@@ -1,5 +1,7 @@
 'use client'
 
+import type {PrepareUploadResult} from 'alinea/core/Connection'
+import type {FormUploadFile} from 'alinea/core/Forms'
 import type {FormDefinition, FormResult} from 'alinea/form'
 import {Form} from 'alinea/ui'
 import styles from './FormView.module.css'
@@ -8,6 +10,7 @@ export interface FormViewProps {
   title: string
   definition: FormDefinition
   action: (data: FormData) => Promise<FormResult>
+  upload: (file: FormUploadFile) => Promise<PrepareUploadResult>
 }
 
 const views = {
@@ -25,12 +28,22 @@ const views = {
 }
 
 /** A form entry rendered with the default HTML of `<Form>` */
-export function FormView({title, definition, action}: FormViewProps) {
+export function FormView({
+  title,
+  definition,
+  action,
+  upload
+}: FormViewProps) {
   return (
     <main className={styles.FormView}>
       <p className={styles.FormViewEyebrow}>Form</p>
       <h1 className={styles.FormViewTitle}>{title}</h1>
-      <Form definition={definition} views={views} action={action} />
+      <Form
+        definition={definition}
+        views={views}
+        action={action}
+        upload={upload}
+      />
     </main>
   )
 }

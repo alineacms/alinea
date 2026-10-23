@@ -1,40 +1,51 @@
 import type {Config} from '#/core/Config.js'
-import {Field} from '#/core/Field.js'
-import type {FormMailer, FormsOptions} from '#/core/Forms.js'
-import {type FormMailOut, formMails} from '#/field/form/FormMails.js'
 import type {SubmissionsApi, SubmitRequest} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
+import {Field} from '#/core/Field.js'
+import type {FormMailer, FormsOptions} from '#/core/Forms.js'
 import type {Graph} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {Type} from '#/core/Type.js'
 import {entries, isRecord} from '#/core/util/Objects.js'
+import {formInputs} from '#/field/form/FormAnswers.js'
+import {
+  type FormInputData,
+  formDefinition
+} from '#/field/form/FormDefinition.js'
 import {FormField} from '#/field/form/FormField.js'
+import {type FormMailOut, formMails} from '#/field/form/FormMails.js'
 import {isSpam} from '#/field/form/FormSpam.js'
-import {isFormType} from '#/field/form/FormType.js'
-import {EntryReference} from '#/picker/entry/EntryReference.js'
 import {
   type FormResult,
   validateSubmission
 } from '#/field/form/FormSubmission.js'
+import {isFormType} from '#/field/form/FormType.js'
+import {EntryReference} from '#/picker/entry/EntryReference.js'
+import {fileInputs, loadForm} from './FormLoad.js'
+import {resolveFiles} from './FormUploads.js'
+
+const storeMethods = [
+  'storeSubmission',
+  'listSubmissions',
+  'updateSubmission',
+  'deleteSubmission',
+  'storeFormFile',
+  'formFiles',
+  'attachFormFiles',
+  'readFormFile'
+] as const
 
 /** The submissions of the backend, which needs a database to keep them */
 export function submissionStore(api: SubmissionsApi): Required<SubmissionsApi> {
-  const {storeSubmission, listSubmissions, updateSubmission, deleteSubmission} =
-    api
-  if (
-    !storeSubmission ||
-    !listSubmissions ||
-    !updateSubmission ||
-    !deleteSubmission
-  )
-    throw new HttpError(501, 'Configure a database to store submissions')
-  return {
-    storeSubmission: storeSubmission.bind(api),
-    listSubmissions: listSubmissions.bind(api),
-    updateSubmission: updateSubmission.bind(api),
-    deleteSubmission: deleteSubmission.bind(api)
+  const store: Record<string, unknown> = {}
+  for (const name of storeMethods) {
+    const method = api[name]
+    if (!method)
+      throw new HttpError(501, 'Configure a database to store submissions')
+    store[name] = method.bind(api)
   }
+  return store as Required<SubmissionsApi>
 }
 
 export function parseSubmitRequest(body: unknown): SubmitRequest {
@@ -62,34 +73,29 @@ export function parseSubmitRequest(body: unknown): SubmitRequest {
 export async function submitForm(
   config: Config,
   graph: Graph,
-  store: SubmissionsApi,
+  api: SubmissionsApi,
   request: SubmitRequest,
-  forms: FormsOptions = {}
+  {forms = {}, secret}: {forms?: FormsOptions; secret: string}
 ): Promise<FormResult> {
-  const entry = await graph.first({
-    id: request.entryId,
-    ...(request.locale ? {locale: request.locale} : {}),
-    status: 'published',
-    select: {type: Entry.type, locale: Entry.locale, data: Entry.data}
-  })
-  if (!entry) throw new HttpError(404, 'Form not found')
-  const type = config.schema[entry.type]
-  const fields = type ? entries(Type.fields(type)) : []
-  const [key, field] =
-    fields.find(
-      ([key, field]) =>
-        field instanceof FormField &&
-        (request.field === undefined || key === request.field)
-    ) ?? []
-  if (!key || !(field instanceof FormField))
-    throw new HttpError(400, 'The entry has no form')
-  const data = new FormData()
-  for (const [name, value] of request.data) data.append(name, value)
-  if (isSpam(data)) return {ok: true}
-  const rows = (entry.data as Record<string, unknown>)[key]
-  const result = validateSubmission(field, rows, data)
+  const {entry, type, data, key, field, rows, inputs} = await loadForm(
+    config,
+    graph,
+    request
+  )
+  const store = submissionStore(api)
+  const posted = new FormData()
+  for (const [name, value] of request.data) posted.append(name, value)
+  if (isSpam(posted)) return {ok: true}
+  const files = await resolveFiles(
+    store,
+    secret,
+    request.entryId,
+    fileInputs(inputs),
+    posted
+  )
+  if (!files.ok) return {ok: false, errors: files.errors}
+  const result = validateSubmission(field, rows, files.data)
   if (!result.ok) return {ok: false, errors: result.errors}
-  const content = entry.data as Record<string, unknown>
   const notified =
     type && isFormType(type)
       ? await sendMails(
@@ -97,13 +103,14 @@ export async function submitForm(
           formMails(
             Field.options(field).inputs,
             rows,
-            content.mails,
+            data.mails,
             result.values
           )
         )
       : []
-  await submissionStore(store).storeSubmission({
-    id: createId(),
+  const id = createId()
+  await store.storeSubmission({
+    id,
     entryId: request.entryId,
     locale: entry.locale ?? null,
     field: key,
@@ -113,8 +120,26 @@ export async function submitForm(
     status: 'new',
     notified
   })
+  // Files of inputs the rules hid stay behind and are cleaned up later
+  await store.attachFormFiles(
+    request.entryId,
+    id,
+    submittedFiles(result.values)
+  )
   if (!type || !isFormType(type)) return {ok: true}
-  return afterSending(graph, entry.data as Record<string, unknown>)
+  return afterSending(graph, data)
+}
+
+function submittedFiles(values: Record<string, unknown>): Array<string> {
+  return Object.values(values).flatMap(value =>
+    Array.isArray(value)
+      ? value.flatMap(item =>
+          isRecord(item) && typeof item.id === 'string' && 'size' in item
+            ? [item.id]
+            : []
+        )
+      : []
+  )
 }
 
 /**

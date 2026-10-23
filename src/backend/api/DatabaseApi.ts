@@ -309,7 +309,7 @@ function prepareDatabase(db: Database): Promise<Database> {
 }
 
 /** A blob of any size: a plain MySQL blob holds 64 KB at most. */
-function largeBlob(): Column<Uint8Array> {
+export function largeBlob(): Column<Uint8Array> {
   return new Column({
     type: new ColumnType(
       'blob',

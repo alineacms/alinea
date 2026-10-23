@@ -5,6 +5,8 @@ export enum HandleAction {
   Resolve = 'resolve',
   Submit = 'submit',
   Submissions = 'submissions',
+  SubmissionFile = 'submissionFile',
+  FormUpload = 'formUpload',
   Pending = 'pending',
   Sync = 'sync',
   Draft = 'draft',

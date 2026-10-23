@@ -135,6 +135,10 @@ export function composeBackend(
     storeSubmission: call('storeSubmission'),
     listSubmissions: call('listSubmissions'),
     updateSubmission: call('updateSubmission'),
-    deleteSubmission: call('deleteSubmission')
+    deleteSubmission: call('deleteSubmission'),
+    storeFormFile: call('storeFormFile'),
+    formFiles: call('formFiles'),
+    attachFormFiles: call('attachFormFiles'),
+    readFormFile: call('readFormFile')
   }
 }

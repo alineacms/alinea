@@ -44,6 +44,9 @@ export function createTestConnection(
       )
       return Promise.resolve()
     },
+    submissionFile() {
+      return Promise.resolve(new Blob(['file']))
+    },
     deleteSubmission(entryId, id) {
       submissions = submissions.filter(
         submission => submission.entryId !== entryId || submission.id !== id

@@ -62,6 +62,8 @@ export interface LocalConnection
     status: SubmissionStatus
   ): Promise<void>
   deleteSubmission(entryId: string, id: string): Promise<void>
+  /** A file of a submission, for editors who can read its form */
+  submissionFile(entryId: string, id: string): Promise<Blob>
 }
 
 export interface SyncApi {
@@ -119,6 +121,43 @@ export interface Submission {
 
 export type SubmissionStatus = 'new' | 'read' | 'archived'
 
+/** A file a visitor added to a file input, as the answer refers to it */
+export interface FormFileRef {
+  id: string
+  name: string
+  size: number
+  type: string
+}
+
+/** A file of a form as it is stored */
+export interface StoredFormFile extends FormFileRef {
+  entryId: string
+  /** The key of the file input */
+  input: string
+  /** The submission it belongs to, null until it is submitted */
+  submissionId: string | null
+  content: Uint8Array
+  /** When it was uploaded, in seconds */
+  createdAt: number
+}
+
+/** What a site asks for before a visitor uploads a file to a form */
+export interface PrepareUploadRequest {
+  entryId: string
+  locale?: string | null
+  field?: string
+  /** The key of the file input */
+  input: string
+  name: string
+  size: number
+  type: string
+}
+
+/** Where to upload the file, and the token the submission refers to it by */
+export type PrepareUploadResult =
+  | {ok: true; url: string; method: 'PUT'; token: string}
+  | {ok: false; message: string}
+
 /** What a site sends to the handler for a visitor's answers */
 export interface SubmitRequest {
   /** The id of the entry holding the form */
@@ -151,6 +190,22 @@ export interface SubmissionsApi {
     status: SubmissionStatus
   ): Promise<void>
   deleteSubmission?(entryId: string, id: string): Promise<void>
+  /** Keeps an uploaded file until it is submitted, or a day at most */
+  storeFormFile?(file: StoredFormFile): Promise<void>
+  /** The files of a form with these ids, without their content */
+  formFiles?(
+    entryId: string,
+    ids: Array<string>
+  ): Promise<Array<Omit<StoredFormFile, 'content'>>>
+  attachFormFiles?(
+    entryId: string,
+    submissionId: string,
+    ids: Array<string>
+  ): Promise<void>
+  readFormFile?(
+    entryId: string,
+    id: string
+  ): Promise<StoredFormFile | undefined>
 }
 
 export interface Connection

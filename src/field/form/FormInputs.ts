@@ -17,6 +17,8 @@ import {date as dateField} from '#/field/date.js'
 import {number as numberField} from '#/field/number.js'
 import {text as textField} from '#/field/text.js'
 import {choices, options} from './FormChoices.js'
+import type {FormFileRef} from '#/core/Connection.js'
+import {isAccepted} from './FormFileTypes.js'
 import {input} from './FormInput.js'
 
 const email_ = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -152,11 +154,34 @@ export const file = input('File', {
     }),
     multiple: checkField('Multiple', {description: 'Allow several files'})
   },
+  // The server turns uploaded files into references, see `resolveFiles`
+  parse: raw => {
+    const files = raw.flatMap(value => {
+      if (typeof value !== 'string') return []
+      try {
+        const file = JSON.parse(value) as FormFileRef
+        return typeof file.id === 'string' ? [file] : []
+      } catch {
+        return []
+      }
+    })
+    return files.length > 0 ? files : undefined
+  },
   attributes: settings => ({
     type: 'file',
     accept: settings.accept,
     multiple: settings.multiple
-  })
+  }),
+  validate: (files: Array<FormFileRef>, settings) => {
+    if (!settings.multiple && files.length > 1) return 'Add one file'
+    const limit = settings.maxSize ? settings.maxSize * 1024 * 1024 : undefined
+    for (const file of files) {
+      if (limit && file.size > limit)
+        return `Choose files of at most ${settings.maxSize} MB`
+      if (!isAccepted(settings.accept ?? '', file))
+        return `Choose files of type ${settings.accept}`
+    }
+  }
 })
 
 export const radio = input('Radio', {

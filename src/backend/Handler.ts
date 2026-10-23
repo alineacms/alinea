@@ -3,6 +3,12 @@ import {
   submissionStore,
   submitForm
 } from '#/backend/FormSubmit.js'
+import {
+  parsePrepareRequest,
+  prepareUpload,
+  receiveUpload,
+  uploadCors
+} from '#/backend/FormUploads.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {
@@ -280,6 +286,13 @@ export function createHandler({
           return await cnx.previewUpload(entryId)
       }
 
+      // Visitors upload the files of a form from their browser, the signed
+      // ticket the site asked for is all it takes
+      if (action === HandleAction.FormUpload && request.method === 'OPTIONS')
+        return new Response(null, {status: 204, headers: uploadCors})
+      if (action === HandleAction.FormUpload && request.method === 'PUT')
+        return receiveUpload(request, cnx, context.apiKey)
+
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
@@ -402,8 +415,51 @@ export function createHandler({
         const submit = parseSubmitRequest(await body)
         await periodicSync(cnx, cms.config.syncInterval)
         return Response.json(
-          await submitForm(cms.config, local, cnx, submit, forms)
+          await submitForm(cms.config, local, cnx, submit, {
+            forms,
+            secret: context.apiKey
+          })
         )
+      }
+
+      // A ticket to upload a file to a form, for the server of the site
+      if (action === HandleAction.FormUpload && request.method === 'POST') {
+        expectJson()
+        const prepare = parsePrepareRequest(await body)
+        await periodicSync(cnx, cms.config.syncInterval)
+        return Response.json(
+          await prepareUpload(cms.config, local, prepare, {
+            secret: context.apiKey,
+            handlerUrl: context.handlerUrl
+          })
+        )
+      }
+
+      // A file of a submission, for editors who can read its form
+      if (action === HandleAction.SubmissionFile && request.method === 'GET') {
+        const user = expectUser()
+        const entryId = string(url.searchParams.get('entryId'))
+        const entry = await local.first({
+          id: entryId,
+          status: 'preferPublished',
+          select: historyResource
+        })
+        if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
+        const policy = await user.policy
+        policy.assert(Permission.Read, entry)
+        const file = await submissionStore(cnx).readFormFile(
+          entryId,
+          string(url.searchParams.get('id'))
+        )
+        if (!file) throw new HttpError(ErrorCode.NotFound, 'File not found')
+        return new Response(new Uint8Array(file.content), {
+          headers: {
+            'content-type': 'application/octet-stream',
+            'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+            'x-content-type-options': 'nosniff',
+            'cache-control': 'private, no-store'
+          }
+        })
       }
 
       // The submissions of a form, for editors who can read its entry
