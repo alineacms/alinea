@@ -53,9 +53,24 @@
           "required": true,
           "width": "full",
           "options": [
-            {"_id": "it", "_index": "a0", "_type": "option", "label": "IT"},
-            {"_id": "facilities", "_index": "a1", "_type": "option", "label": "Facilities"},
-            {"_id": "hr", "_index": "a2", "_type": "option", "label": "HR"}
+            {
+              "_id": "it",
+              "_index": "a0",
+              "_type": "option",
+              "label": "IT"
+            },
+            {
+              "_id": "facilities",
+              "_index": "a1",
+              "_type": "option",
+              "label": "Facilities"
+            },
+            {
+              "_id": "hr",
+              "_index": "a2",
+              "_type": "option",
+              "label": "HR"
+            }
           ]
         },
         {
@@ -66,17 +81,58 @@
           "width": "half",
           "placeholder": "Choose a device",
           "options": [
-            {"_id": "laptop", "_index": "a0", "_type": "option", "label": "Laptop"},
-            {"_id": "desktop", "_index": "a1", "_type": "option", "label": "Desktop"},
-            {"_id": "phone", "_index": "a2", "_type": "option", "label": "Phone"}
-          ]
+            {
+              "_id": "laptop",
+              "_index": "a0",
+              "_type": "option",
+              "label": "Laptop"
+            },
+            {
+              "_id": "desktop",
+              "_index": "a1",
+              "_type": "option",
+              "label": "Desktop"
+            },
+            {
+              "_id": "phone",
+              "_index": "a2",
+              "_type": "option",
+              "label": "Phone"
+            }
+          ],
+          "showWhen": {
+            "match": "all",
+            "rules": [
+              {
+                "id": "rule-device",
+                "input": "service-service",
+                "op": "is",
+                "value": [
+                  "it"
+                ]
+              }
+            ]
+          }
         },
         {
           "_id": "service-room",
           "_index": "a2",
           "_type": "text",
           "label": "Room number",
-          "width": "half"
+          "width": "half",
+          "showWhen": {
+            "match": "all",
+            "rules": [
+              {
+                "id": "rule-room",
+                "input": "service-service",
+                "op": "is",
+                "value": [
+                  "facilities"
+                ]
+              }
+            ]
+          }
         },
         {
           "_id": "service-description",
@@ -96,7 +152,17 @@
           "width": "full",
           "accept": ".png, .jpg, .pdf",
           "maxSize": 10,
-          "multiple": true
+          "multiple": true,
+          "showWhen": {
+            "match": "all",
+            "rules": [
+              {
+                "id": "rule-shots",
+                "input": "service-device",
+                "op": "filled"
+              }
+            ]
+          }
         },
         {
           "_id": "service-rating",

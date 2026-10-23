@@ -81,6 +81,7 @@ export const tel = input('Phone', {
 })
 
 export const number = input('Number', {
+  kind: 'number',
   icon: IcRoundNumbers,
   settings: {
     min: numberField('Minimum', {width: 0.5}),
@@ -118,6 +119,7 @@ export const textarea = input('Textarea', {
 })
 
 export const date = input('Date', {
+  kind: 'date',
   icon: IcRoundDateRange,
   settings: {
     min: dateField('Earliest date', {width: 0.5}),
@@ -138,6 +140,7 @@ export const date = input('Date', {
 })
 
 export const file = input('File', {
+  kind: 'file',
   icon: IcRoundUploadFile,
   settings: {
     accept: textField('Accepted files', {

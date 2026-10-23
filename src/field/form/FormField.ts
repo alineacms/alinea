@@ -1,9 +1,11 @@
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {ListFieldBase} from '#/core/field/ListField.js'
+import {ScalarField} from '#/core/field/ScalarField.js'
 import type {Schema} from '#/core/Schema.js'
 import {type Type, type} from '#/core/Type.js'
 import {entries, fromEntries, keys} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {IcRoundCallSplit} from '#/dashboard/icons.js'
 import {check} from '#/field/check.js'
 import {path} from '#/field/path.js'
 import {select} from '#/field/select.js'
@@ -18,6 +20,8 @@ import {
   formDefinition,
   formErrors
 } from './FormDefinition.js'
+import type {FormCondition} from './FormConditions.js'
+import {readingOrder, ruleErrors} from './FormRules.js'
 import type {Input} from './FormInput.js'
 
 /** Optional settings to configure a form field */
@@ -71,7 +75,10 @@ export function form<Inputs extends Record<string, Input>>(
     options: {label, ...options, schema},
     view: viewKeys.FormInput,
     nestedErrors(value, context) {
-      return formErrors(inputs, value, context.path, context.labels)
+      return [
+        ...formErrors(inputs, value, context.path, context.labels),
+        ...ruleErrors(readingOrder(inputs, value, context.path, context.labels))
+      ]
     },
     // Publishing a draft does not save it again, so keys are fixed whenever
     // the form is saved
@@ -120,8 +127,31 @@ function createRowType(input: Input): Type {
       }),
       ...(keys(settings).length > 0 && {
         settings: tab(input.label, {fields: settings})
+      }),
+      logic: tab('Logic', {
+        icon: IcRoundCallSplit,
+        fields: {
+          showWhen: condition('Show this input', 'show'),
+          disableWhen: condition('Disable this input', 'disable')
+        }
       })
     }
+  })
+}
+
+export interface FormConditionOptions extends FieldOptions<FormCondition | null> {
+  /** Whether the rules show or disable the input */
+  effect: 'show' | 'disable'
+}
+
+/** The rules of an input or section, edited in its Logic tab */
+function condition(
+  label: string,
+  effect: FormConditionOptions['effect']
+): ScalarField<FormCondition | null, FormConditionOptions> {
+  return new ScalarField<FormCondition | null, FormConditionOptions>({
+    options: {label, effect, initialValue: null},
+    view: viewKeys.FormConditionInput
   })
 }
 
@@ -153,6 +183,10 @@ function sectionType(
           label: text('Title', {required: true}),
           help: text('Description', {multiline: true})
         }
+      }),
+      logic: tab('Logic', {
+        icon: IcRoundCallSplit,
+        fields: {showWhen: condition('Show this section', 'show')}
       })
     }
   })

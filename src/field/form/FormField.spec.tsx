@@ -24,7 +24,8 @@ test('edits an input in its sheet, without a label and anchor', async ({
   const sheet = page.getByRole('dialog', {name: 'Description'})
   await expect(page.locator('[data-slot="sheet-section-title"]')).toHaveText([
     'Input',
-    'Textarea'
+    'Textarea',
+    'Logic'
   ])
   await expect(sheet.getByRole('textbox', {name: 'Anchor'})).toHaveCount(0)
   await expect(sheet.getByRole('textbox', {name: 'Key'})).toHaveValue(
@@ -84,4 +85,43 @@ test('edits the options of a choice under its row', async ({mount, page}) => {
   await third.getByRole('button', {name: 'Option settings'}).click()
   const sheet = page.getByRole('dialog', {name: 'HR'})
   await expect(sheet.getByRole('textbox', {name: 'Value'})).toHaveValue('hr')
+})
+
+test('rules of an input use the inputs above it', async ({mount, page}) => {
+  await mount(<Builder />)
+  const screenshots = page.getByRole('listitem', {name: 'File item 3'})
+  await expect(screenshots).toContainText('Shown if Service is IT')
+  await expect(
+    page.getByRole('listitem', {name: 'Radio item 1'})
+  ).toContainText('Controls 1 input')
+  await screenshots.getByRole('button', {name: 'File settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Screenshots'})
+  await sheet
+    .getByRole('radiogroup', {name: 'Disable this input'})
+    .getByRole('radio', {name: 'When…'})
+    .click()
+  // A new rule starts on the closest input above
+  const input = sheet.getByRole('button', {name: /Input of rule 1/}).last()
+  await expect(input).toContainText('Description')
+  await expect(screenshots).toContainText('Disabled if Description is')
+  await expect(screenshots).toContainText(
+    'Disable this input: Fill in what Description is compared with'
+  )
+})
+
+test('asks before deleting an input that rules use', async ({mount, page}) => {
+  await mount(<Builder />)
+  await page
+    .getByRole('listitem', {name: 'Radio item 1'})
+    .getByRole('button', {name: 'Remove Radio'})
+    .click()
+  const dialog = page.getByRole('dialog', {name: 'Delete Service?'})
+  await expect(dialog).toContainText('Screenshots depends on Service.')
+  await dialog.getByRole('button', {name: 'Delete and remove rules'}).click()
+  await expect(page.getByRole('listitem', {name: 'Radio item 1'})).toHaveCount(
+    0
+  )
+  await expect(
+    page.getByRole('listitem', {name: 'File item 2'})
+  ).not.toContainText('Shown if')
 })

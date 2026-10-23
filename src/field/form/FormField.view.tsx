@@ -1,21 +1,56 @@
-import {Badge, Text} from '#/components.js'
+import {Badge, Button, Text} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import type {FieldPath} from '#/core/Validation.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {
+  DashboardModal,
+  DashboardModalContent,
+  DashboardModalDialog,
+  DashboardModalFooter
+} from '#/dashboard/app/ui/DashboardModal.js'
+import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {useFieldNode, useFieldOptions} from '#/dashboard/hooks.js'
+import {IcRoundCallSplit} from '#/dashboard/icons.js'
 import {
   type ListFieldBadgesProps,
-  ListFieldView
+  ListFieldView,
+  type ListValue
 } from '#/field/list/ListField.view.js'
-import {type Atom, atom, useAtomValueRaw} from 'jotai'
-import {createContext, useCallback, useContext, useMemo} from 'react'
+import {type Atom, atom, useAtomValueRaw, useStore} from 'jotai'
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState
+} from 'react'
 import type {FormField} from './FormField.js'
 import {defaults} from './FormInputs.js'
+import {
+  type FormEntry,
+  dependents,
+  describeCondition,
+  entryLabel,
+  readingOrder,
+  withoutRulesOn
+} from './FormRules.js'
 
 const builtIn = new Set<unknown>(Object.values(defaults))
 
-/** The first error of each row by its id, from the outermost form field */
-const FormErrors = createContext<Atom<Map<string, string>> | null>(null)
+export interface FormBuilder {
+  /** The rows of the outermost form field in reading order */
+  order: Atom<Array<FormEntry>>
+  /** The first error of each row by its id */
+  errors: Atom<Map<string, string>>
+  /** The outermost list, to change rules of other rows */
+  root: ReactiveNode<Array<ListValue>>
+  /** Removes a row, asking first when rules use it */
+  remove(row: ListValue, remove: () => void): void
+}
+
+/** The form a row or its sheet belongs to, from the outermost form field */
+export const FormBuilderContext = createContext<FormBuilder | null>(null)
 
 const none = atom(undefined)
 
@@ -24,13 +59,75 @@ export interface FormFieldViewProps {
 }
 
 export function FormFieldView({field}: FormFieldViewProps) {
+  const parent = useContext(FormBuilderContext)
+  const view = <FormFieldList field={field} />
+  if (parent) return view
+  return <FormFieldRoot field={field}>{view}</FormFieldRoot>
+}
+
+interface FormFieldRootProps {
+  field: FormField
+  children: ReactNode
+}
+
+/** Shares the whole form with its rows, and asks before removing inputs */
+function FormFieldRoot({field, children}: FormFieldRootProps) {
   const {inputs} = useFieldOptions(field)
-  const parent = useContext(FormErrors)
-  const node = useFieldNode(field)
-  const errors = useMemo(
-    () => parent ?? atom(get => rowErrors(field, get(node.value))),
-    [parent, field, node]
+  const node = useFieldNode(field) as ReactiveNode<Array<ListValue>>
+  const store = useStore()
+  const [removing, setRemoving] = useState<Removal>()
+  const builder = useMemo<FormBuilder>(() => {
+    const order = atom(get => readingOrder(inputs, get(node.value)))
+    return {
+      order,
+      errors: atom(get => rowErrors(field, get(node.value))),
+      root: node,
+      remove(row, remove) {
+        const users = dependents(store.get(order), row._id).filter(
+          entry => entry.row._id !== row._id
+        )
+        if (users.length === 0) return remove()
+        const self = store.get(order).find(entry => entry.row._id === row._id)
+        setRemoving({
+          label: self ? entryLabel(self) : 'this input',
+          id: row._id,
+          users: users.map(entryLabel),
+          remove
+        })
+      }
+    }
+  }, [field, inputs, node, store])
+
+  function finish(removeRules: boolean) {
+    if (!removing) return
+    removing.remove()
+    if (removeRules)
+      store.set(
+        node.value,
+        withoutRulesOn(store.get(node.value), removing.id) as Array<ListValue>
+      )
+    setRemoving(undefined)
+  }
+
+  return (
+    <FormBuilderContext.Provider value={builder}>
+      {children}
+      <FormRemoveModal
+        removal={removing}
+        onCancel={() => setRemoving(undefined)}
+        onRemove={finish}
+      />
+    </FormBuilderContext.Provider>
   )
+}
+
+interface FormFieldListProps {
+  field: FormField
+}
+
+function FormFieldList({field}: FormFieldListProps) {
+  const {inputs} = useFieldOptions(field)
+  const builder = useContext(FormBuilderContext)
   const ownInputs = Object.values(inputs).some(input => !builtIn.has(input))
   const typeGroup = useCallback(
     (id: string) => {
@@ -40,34 +137,120 @@ export function FormFieldView({field}: FormFieldViewProps) {
     [inputs, ownInputs]
   )
   return (
-    <FormErrors.Provider value={errors}>
-      <ListFieldView
-        field={field}
-        labelField="label"
-        badges={FormRowBadges}
-        addLabel="Add input"
-        typeGroup={typeGroup}
-      />
-    </FormErrors.Provider>
+    <ListFieldView
+      field={field}
+      labelField="label"
+      badges={FormRowBadges}
+      addLabel="Add input"
+      typeGroup={typeGroup}
+      onRemove={builder?.remove}
+    />
   )
 }
 
+interface Removal {
+  id: string
+  label: string
+  users: Array<string>
+  remove: () => void
+}
+
+interface FormRemoveModalProps {
+  removal?: Removal
+  onCancel: () => void
+  onRemove: (removeRules: boolean) => void
+}
+
+function FormRemoveModal({removal, onCancel, onRemove}: FormRemoveModalProps) {
+  return (
+    <DashboardModal
+      open={Boolean(removal)}
+      onOpenChange={open => {
+        if (!open) onCancel()
+      }}
+    >
+      {removal && (
+        <DashboardModalDialog label={`Delete ${removal.label}?`}>
+          <DashboardModalContent>
+            <Text as="p">
+              {removal.users.length === 1
+                ? `${removal.users[0]} depends on ${removal.label}.`
+                : `${removal.users.length} inputs depend on ${removal.label}: ${list(removal.users)}.`}{' '}
+              {removal.users.length === 1
+                ? 'Its rules stop'
+                : 'Their rules stop'}{' '}
+              working when {removal.label} is deleted.
+            </Text>
+          </DashboardModalContent>
+          <DashboardModalFooter>
+            <Button variant="ghost" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button variant="outline" onClick={() => onRemove(false)}>
+              Keep the rules
+            </Button>
+            <Button color="destructive" onClick={() => onRemove(true)}>
+              Delete and remove rules
+            </Button>
+          </DashboardModalFooter>
+        </DashboardModalDialog>
+      )}
+    </DashboardModal>
+  )
+}
+
+function list(names: Array<string>): string {
+  if (names.length < 2) return names.join('')
+  return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+}
+
 function FormRowBadges({row}: ListFieldBadgesProps) {
-  const errors = useContext(FormErrors)
+  const builder = useContext(FormBuilderContext)
   const id = useAtomValueRaw(row.field('_id')) as string
   const required = useAtomValueRaw(row.field('required'))
-  const error = useAtomValueRaw(
+  const info = useAtomValueRaw(
     useMemo(
-      () => (errors ? atom(get => get(errors).get(id)) : none),
-      [errors, id]
+      () =>
+        builder
+          ? atom(get => {
+              const order = get(builder.order)
+              const byId = new Map(order.map(entry => [entry.row._id, entry]))
+              const self = byId.get(id)
+              const users = dependents(order, id).filter(
+                entry => entry.row._id !== id
+              )
+              return {
+                error: get(builder.errors).get(id),
+                shown: self && describeCondition(self.row.showWhen, byId),
+                disabled: self && describeCondition(self.row.disableWhen, byId),
+                controls: users.length
+              }
+            })
+          : none,
+      [builder, id]
     )
   )
   return (
     <>
       {required === true && <Badge size="sm">Required</Badge>}
-      {error && (
+      {info?.shown && (
+        <Badge size="sm" color="primary" icon={IcRoundCallSplit}>
+          Shown if {info.shown}
+        </Badge>
+      )}
+      {info?.disabled && (
+        <Badge size="sm" color="primary" icon={IcRoundCallSplit}>
+          Disabled if {info.disabled}
+        </Badge>
+      )}
+      {Boolean(info?.controls) && (
+        <Badge size="sm" icon={IcRoundCallSplit}>
+          Controls {info!.controls} {info!.controls === 1 ? 'input' : 'inputs'}
+        </Badge>
+      )}
+      {info?.error && (
         <Text size="sm" color="destructive">
-          {error}
+          {info.error}
         </Text>
       )}
     </>

@@ -75,7 +75,16 @@ const rows = [
         required: true,
         maxLength: 2000
       },
-      {_id: 'screenshots', _index: 'a2', _type: 'file', label: 'Screenshots'},
+      {
+        _id: 'screenshots',
+        _index: 'a2',
+        _type: 'file',
+        label: 'Screenshots',
+        showWhen: {
+          match: 'all',
+          rules: [{id: 'rule', input: 'service', op: 'is', value: ['it']}]
+        }
+      },
       {
         _id: 'rating',
         _index: 'a3',

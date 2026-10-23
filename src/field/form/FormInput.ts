@@ -1,5 +1,6 @@
 import type {StoredRow} from '#/core/Infer.js'
 import type {FieldsDefinition} from '#/core/Type.js'
+import type {FormKind} from './FormConditions.js'
 import type {ComponentType} from 'react'
 
 /** The HTML control that renders an input on the site */
@@ -30,6 +31,12 @@ export interface InputConfig<
   icon?: ComponentType
   /** How the input renders on the site, an `<input>` by default */
   control?: FormControl
+  /**
+   * What kind of answer the input gives, which decides how the rules of other
+   * inputs can test it. Follows the control unless set: a choice for a select
+   * or radio, choices for checkboxes, a check for a check and text otherwise.
+   */
+  kind?: FormKind
   /**
    * What the editor fills in under the input in the form builder, eg. the
    * options of a select made with `Form.options`
@@ -75,6 +82,21 @@ export function input<
 }
 
 export namespace Input {
+  export function kind(input: Input): FormKind {
+    if (input.kind) return input.kind
+    switch (input.control) {
+      case 'select':
+      case 'radio':
+        return 'choice'
+      case 'checkboxes':
+        return 'choices'
+      case 'check':
+        return 'check'
+      default:
+        return 'text'
+    }
+  }
+
   export function parse(input: Input, raw: FormRaw, settings: object): unknown {
     if (input.parse) return input.parse(raw, settings as any)
     const [first] = raw

@@ -3,6 +3,7 @@ import {IcRoundRule, IcRoundStarOutline} from 'alinea/dashboard/icons'
 
 const Rating = Form.input('Rating', {
   icon: IcRoundStarOutline,
+  kind: 'number',
   settings: {
     max: Field.number('Maximum', {initialValue: 5})
   },

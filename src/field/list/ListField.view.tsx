@@ -94,7 +94,7 @@ import css from './ListField.module.css'
 
 const styles = styler(css)
 
-interface ListValue {
+export interface ListValue {
   _id: string
   _type: string
   [key: string]: unknown
@@ -138,6 +138,8 @@ export interface ListFieldViewProps {
   addLabel?: string
   /** The heading a type is listed under in the type picker */
   typeGroup?: (id: string) => string | undefined
+  /** Called to remove a row, eg. to confirm it first */
+  onRemove?: (row: ListValue, remove: () => void) => void
 }
 
 export function ListFieldView({
@@ -145,7 +147,8 @@ export function ListFieldView({
   labelField,
   badges,
   addLabel,
-  typeGroup
+  typeGroup,
+  onRemove
 }: ListFieldViewProps) {
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
@@ -285,6 +288,7 @@ export function ListFieldView({
           labelField={labelField}
           badges={badges}
           compact={compact}
+          onRemove={onRemove}
           focus={focus?.id === rowIds[index] ? focus.at : undefined}
           onFocusRow={setFocus}
         />
@@ -453,6 +457,7 @@ interface ListFieldRowProps {
   labelField?: string
   badges?: ComponentType<ListFieldBadgesProps>
   compact: boolean
+  onRemove?: (row: ListValue, remove: () => void) => void
   /** Where to put the caret in the first input of this compact row */
   focus?: RowFocus['at']
   onFocusRow: (focus: RowFocus) => void
@@ -475,6 +480,7 @@ const ListFieldRow = memo(function ListFieldRow({
   labelField,
   badges: Badges,
   compact,
+  onRemove,
   focus,
   onFocusRow,
   onToggleRow,
@@ -498,6 +504,7 @@ const ListFieldRow = memo(function ListFieldRow({
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const sheet = useBlockSheet(itemId)
+  const store = useStore()
   const type = schema[typeName]
   if (!type) return null
 
@@ -508,7 +515,9 @@ const ListFieldRow = memo(function ListFieldRow({
   const expanded = expandable && isExpanded
 
   function deleteRow() {
-    removeRow(index)
+    const remove = () => removeRow(index)
+    if (onRemove) onRemove(store.get(row.value), remove)
+    else remove()
   }
 
   function updateCustomLabel(nextValue: string) {

@@ -3,7 +3,9 @@ import {isRecord, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import type {FieldValidationError} from '#/core/Validation.js'
 import {type FormChoice, choices} from './FormChoices.js'
+import type {FormConditionData} from './FormConditions.js'
 import type {FormControl, Input} from './FormInput.js'
+import {conditionData, readingOrder} from './FormRules.js'
 
 export type FormWidth = 'full' | 'half'
 
@@ -19,6 +21,8 @@ interface FormItemBase<Type extends string> {
   type: Type
   label: string
   help?: string
+  /** Shown while these rules hold, always shown without them */
+  showWhen?: FormConditionData
 }
 
 export interface FormInputData<
@@ -34,6 +38,8 @@ export interface FormInputData<
   initialValue?: unknown
   /** The other settings of the input */
   settings: Record<string, unknown>
+  /** Disabled while these rules hold, never disabled without them */
+  disableWhen?: FormConditionData
 }
 
 export interface FormSectionData<
@@ -59,13 +65,16 @@ export function inputKey(row: Record<string, unknown>): string {
 /** The stored rows of a form field as its definition */
 export function formDefinition(
   inputs: Record<string, Input>,
-  rows: unknown
+  rows: unknown,
+  order = readingOrder(inputs, rows)
 ): FormDefinition {
   if (!Array.isArray(rows)) return []
+  const byId = new Map(order.map(entry => [entry.row._id, entry]))
   return rows.filter(isRecord).flatMap((row): Array<FormItem> => {
     const type = row._type as string
     const input = inputs[type]
-    if (!input) return []
+    const self = byId.get(row._id as string)
+    if (!input || !self) return []
     const base: FormItemBase<string> = {
       id: row._id as string,
       type,
@@ -73,13 +82,15 @@ export function formDefinition(
     }
     const help = text(row.help)
     if (help) base.help = help
+    const showWhen = conditionData(row.showWhen, self, byId, inputKey)
+    if (showWhen) base.showWhen = showWhen
     if (input.control === 'section')
       return [
         {
           ...base,
           control: 'section',
           // Sections do not nest
-          inputs: formDefinition(inputs, row.inputs).filter(isInput)
+          inputs: formDefinition(inputs, row.inputs, order).filter(isInput)
         }
       ]
     const settings = settingsOf(input, row)
@@ -94,6 +105,8 @@ export function formDefinition(
       settings: filled(rest)
     }
     if ('options' in settings) data.choices = choices(options)
+    const disableWhen = conditionData(row.disableWhen, self, byId, inputKey)
+    if (disableWhen) data.disableWhen = disableWhen
     if (!isEmpty(initialValue)) data.initialValue = initialValue
     return [data]
   })
