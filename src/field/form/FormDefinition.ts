@@ -201,7 +201,8 @@ export function fixedKeys(
   })
 }
 
-function settingsOf(input: Input, row: Record<string, unknown>) {
+/** The values of the fields and settings an input defines */
+export function settingsOf(input: Input, row: Record<string, unknown>) {
   const settings: Record<string, unknown> = {}
   const names = [...keys(input.fields ?? {}), ...keys(input.settings ?? {})]
   for (const key of names) settings[key] = row[key]

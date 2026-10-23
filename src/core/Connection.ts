@@ -90,8 +90,37 @@ export interface UploadsApi {
   previewUpload?(entryId: string): Promise<Response>
 }
 
+/** The answers sent for a form, as they are stored */
+export interface Submission {
+  id: string
+  /** The id of the entry holding the form */
+  entryId: string
+  locale: string | null
+  /** The key of the form field in the entry */
+  field: string
+  /** The answers by the key of their input */
+  values: Record<string, unknown>
+  /** The form as it was sent, so the answers keep their labels */
+  definition: unknown
+  /** When it was sent, in seconds */
+  createdAt: number
+}
+
+export interface SubmissionsApi {
+  storeSubmission?(submission: Submission): Promise<void>
+  /** The submissions of a form, the latest first */
+  listSubmissions?(entryId: string): Promise<Array<Submission>>
+}
+
 export interface Connection
-  extends CommitApi, SyncApi, HistoryApi, DraftsApi, UploadsApi, UserApi {}
+  extends
+    CommitApi,
+    SyncApi,
+    HistoryApi,
+    DraftsApi,
+    UploadsApi,
+    UserApi,
+    SubmissionsApi {}
 
 export interface RequestContext {
   isDev: boolean

@@ -1,3 +1,4 @@
+import {SubmissionStore} from './SubmissionStore.js'
 import type {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {assert} from '#/core/util/Assert.js'
@@ -67,7 +68,8 @@ export function backendFromOptions(options: BackendOptions): BackendFactory {
     const auth = options.oauth2
       ? new OAuth2(context, config, options.oauth2)
       : new BasicAuth(context, options.auth!)
-    return composeBackend(ghApi, dbApi, uploadsApi ?? {}, auth)
+    const submissions = new SubmissionStore({db})
+    return composeBackend(ghApi, dbApi, submissions, uploadsApi ?? {}, auth)
   }
 }
 
@@ -129,6 +131,8 @@ export function composeBackend(
     listUsers: call('listUsers'),
     createUser: call('createUser'),
     updateUser: call('updateUser'),
-    removeUser: call('removeUser')
+    removeUser: call('removeUser'),
+    storeSubmission: call('storeSubmission'),
+    listSubmissions: call('listSubmissions')
   }
 }

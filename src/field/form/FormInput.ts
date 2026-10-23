@@ -100,6 +100,7 @@ export namespace Input {
   export function parse(input: Input, raw: FormRaw, settings: object): unknown {
     if (input.parse) return input.parse(raw, settings as any)
     const [first] = raw
-    return typeof first === 'string' && first !== '' ? first : undefined
+    const text = typeof first === 'string' ? first.trim() : ''
+    return text || undefined
   }
 }

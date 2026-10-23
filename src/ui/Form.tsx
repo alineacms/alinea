@@ -1,6 +1,8 @@
 'use client'
 
 import {type FormState, formState} from '#/field/form/FormConditions.js'
+import {formSpam} from '#/field/form/FormSpam.js'
+import type {FormErrors, FormResult} from '#/field/form/FormSubmission.js'
 import type {
   FormDefinition,
   FormInputData,
@@ -15,6 +17,9 @@ import {
   type ReactElement,
   type ReactNode,
   createElement,
+  startTransition,
+  useActionState,
+  useEffect,
   useMemo,
   useState
 } from 'react'
@@ -32,6 +37,7 @@ export type FormRole =
   | 'section'
   | 'legend'
   | 'submit'
+  | 'confirmation'
 
 export interface FormInputViewProps {
   input: FormInputData
@@ -59,11 +65,19 @@ export type FormViews<Type extends string = string> = {
     }
   : {[K in Type]?: ComponentType<FormInputViewProps>})
 
-export interface FormProps extends Omit<ComponentProps<'form'>, 'children'> {
+export interface FormProps extends Omit<
+  ComponentProps<'form'>,
+  'children' | 'action'
+> {
   definition: FormDefinition
   views?: FormViews
-  /** Errors returned by the server, by the key of the input */
-  errors?: Record<string, string>
+  /**
+   * Sends the answers, eg. a server action that calls `cms.forms.submit`.
+   * Its errors show on their inputs and its confirmation replaces the form.
+   */
+  action?: (data: FormData) => Promise<FormResult>
+  /** Errors by the key of the input, when the form is sent another way */
+  errors?: FormErrors
   /** The text of the submit button, unless its view has children */
   submitLabel?: string
 }
@@ -75,9 +89,11 @@ export interface FormProps extends Omit<ComponentProps<'form'>, 'children'> {
 export function Form({
   definition,
   views = {},
-  errors = {},
+  action,
+  errors,
   submitLabel = 'Send',
   onChange,
+  onSubmit,
   ...props
 }: FormProps) {
   const [values, setValues] = useState(() => initialValues(definition))
@@ -85,18 +101,84 @@ export function Form({
     () => formState(definition, values),
     [definition, values]
   )
+  const [result, send, pending] = useActionState(
+    (_: FormResult | undefined, data: FormData) => action!(data),
+    undefined
+  )
+  // Set once the form shows in the browser, so it renders the same on the
+  // server and a form sent without scripts is not taken for a bot
+  const [shownAt, setShownAt] = useState<number>()
+  useEffect(() => setShownAt(Date.now()), [])
+
   function change(event: FormEvent<HTMLFormElement>) {
     onChange?.(event)
     setValues(readValues(definition, new FormData(event.currentTarget)))
   }
-  const context = {views, errors, state}
-  return part(views.form, 'form', {...props, onChange: change}, [
-    ...definition.map(item => (
-      <FormItemView key={item.id} item={item} {...context} />
-    )),
-    part(views.submit, 'button', {key: 'submit', type: 'submit'}, submitLabel)
-  ])
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    onSubmit?.(event)
+    if (!action || event.defaultPrevented) return
+    // Sent from here rather than as the action of the form element, which
+    // React resets after it is sent, losing the answers when one is invalid
+    event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    startTransition(() => send(data))
+  }
+
+  if (result?.ok)
+    return part(
+      views.confirmation,
+      'div',
+      {role: 'status'},
+      result.confirmation || 'Thank you, your answers were sent.'
+    )
+  const failed = result && !result.ok ? result : undefined
+  const context = {views, errors: errors ?? failed?.errors ?? {}, state}
+  return part(
+    views.form,
+    'form',
+    {...props, onChange: change, onSubmit: submit, 'aria-busy': pending},
+    [
+      <input
+        key="honeypot"
+        name={formSpam.honeypot}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden
+        style={hidden}
+      />,
+      shownAt && (
+        <input
+          key="shown"
+          type="hidden"
+          name={formSpam.shownAt}
+          value={shownAt}
+        />
+      ),
+      ...definition.map(item => (
+        <FormItemView key={item.id} item={item} {...context} />
+      )),
+      failed?.message &&
+        part(views.error, 'p', {key: 'message', role: 'alert'}, failed.message),
+      part(
+        views.submit,
+        'button',
+        {key: 'submit', type: 'submit', disabled: pending || undefined},
+        submitLabel
+      )
+    ]
+  )
 }
+
+// Out of sight for people, without styles of the site
+const hidden = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clipPath: 'inset(50%)',
+  whiteSpace: 'nowrap'
+} as const
 
 interface FormItemViewProps {
   item: FormItem

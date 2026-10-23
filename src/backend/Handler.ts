@@ -1,3 +1,4 @@
+import {parseSubmitRequest, submitForm} from '#/backend/FormSubmit.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {
@@ -385,6 +386,14 @@ export function createHandler({
           query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
+      }
+
+      // Answers of a form, sent by the server of the site with the api key
+      if (action === HandleAction.Submit && request.method === 'POST') {
+        expectJson()
+        const submit = parseSubmitRequest(await body)
+        await periodicSync(cnx, cms.config.syncInterval)
+        return Response.json(await submitForm(cms.config, local, cnx, submit))
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
