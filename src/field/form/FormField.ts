@@ -140,12 +140,12 @@ function createRowType(input: Input): Type {
 }
 
 export interface FormConditionOptions extends FieldOptions<FormCondition | null> {
-  /** Whether the rules show or disable the input */
-  effect: 'show' | 'disable'
+  /** Whether the rules show or disable an input, or send a mail */
+  effect: 'show' | 'disable' | 'send'
 }
 
 /** The rules of an input or section, edited in its Logic tab */
-function condition(
+export function condition(
   label: string,
   effect: FormConditionOptions['effect']
 ): ScalarField<FormCondition | null, FormConditionOptions> {

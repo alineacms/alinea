@@ -5,6 +5,7 @@ import {createHandler} from '#/backend/Handler.js'
 import {createCMS} from '#/core.js'
 import type {AuthedContext, RequestContext} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
+import type {FormMail, FormsOptions} from '#/core/Forms.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field, Form} from '#/index.js'
 import {Database as BunSqlite} from 'bun:sqlite'
@@ -14,6 +15,8 @@ import * as driver from 'rado/driver'
 const Contact = Config.document('Contact', {
   fields: {inputs: Field.form('Inputs', {inputs: Form.defaults})}
 })
+
+const ServiceForm = Form.type('Request', {inputs: Form.defaults})
 
 const main = Config.workspace('Main', {
   source: 'content',
@@ -25,17 +28,28 @@ const rows = [
   {_id: 'mail', _index: 'a1', _type: 'email', label: 'Email', required: true}
 ]
 
-async function setup() {
-  const cms = createCMS({schema: {Contact}, workspaces: {main}})
+interface SetupOptions {
+  form?: typeof Contact | typeof ServiceForm
+  set?: Record<string, unknown>
+  forms?: FormsOptions
+}
+
+async function setup({
+  form = Contact,
+  set = {title: 'Contact', inputs: rows},
+  forms
+}: SetupOptions = {}) {
+  const cms = createCMS({schema: {Contact, ServiceForm}, workspaces: {main}})
   const db = new LocalDB(cms.config)
-  await db.create({type: Contact, set: {title: 'Contact', inputs: rows}})
-  const entryId = (await db.first({select: Entry.id, type: Contact}))!
+  await db.create({type: form, set: set as never})
+  const entryId = (await db.first({select: Entry.id, type: form}))!
   const store = new SubmissionStore({
     db: driver['bun:sqlite'](new BunSqlite(':memory:'))
   })
   const handle = createHandler({
     cms,
     db,
+    forms,
     remote() {
       return composeBackend(db, store, {
         async verify(): Promise<AuthedContext> {
@@ -132,4 +146,58 @@ test('the server of the site can not read submissions', async () => {
     context
   )
   expect(response.status).toBe(401)
+})
+
+test('mails go out through the mailer and are noted on the submission', async () => {
+  const sent: Array<FormMail> = []
+  const {entryId, store, submit} = await setup({
+    form: ServiceForm,
+    set: {
+      title: 'Request',
+      path: 'request',
+      inputs: rows,
+      after: 'message',
+      message: 'Thanks!',
+      mails: [
+        {
+          _id: 'desk',
+          _index: 'a0',
+          _type: 'mail',
+          name: 'Helpdesk',
+          to: 'address',
+          address: 'desk@example.com',
+          subject: 'Request from {{name}}',
+          body: 'Write back to {{email}}'
+        },
+        {
+          _id: 'fails',
+          _index: 'a1',
+          _type: 'mail',
+          name: 'Fails',
+          to: 'address',
+          address: 'fail@example.com',
+          subject: 'Fails',
+          body: ''
+        }
+      ]
+    },
+    forms: {
+      mailer(mail) {
+        if (mail.to.includes('fail@example.com')) throw new Error('Bounced')
+        sent.push(mail)
+      }
+    }
+  })
+  const result = await submit({name: 'Ann', email: 'ann@example.com'})
+  expect(result.body).toEqual({ok: true, confirmation: 'Thanks!'})
+  expect(sent).toEqual([
+    {
+      to: ['desk@example.com'],
+      subject: 'Request from Ann',
+      text: 'Write back to ann@example.com'
+    }
+  ])
+  // A mail that failed is left out, the answers are stored anyway
+  const [stored] = await store.listSubmissions(entryId)
+  expect(stored.notified).toEqual(['Helpdesk'])
 })

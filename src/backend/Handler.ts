@@ -21,6 +21,7 @@ import {developmentKeyHeader} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import {loggedSync} from '#/core/db/SyncStats.js'
 import type {DashboardEntry} from '#/core/DashboardEntry.js'
+import type {FormsOptions} from '#/core/Forms.js'
 import {
   committedEntries,
   type RemovedEntry,
@@ -95,6 +96,8 @@ export interface HandlerOptions extends HandlerHooks {
   remote?: (context: RequestContext) => RemoteConnection
   /** Log why and how long each sync took, for a deployed handler */
   logSyncs?: boolean
+  /** How submissions of forms are handled, eg. the mailer of their mails */
+  forms?: FormsOptions
   forwardMutations?(
     request: Request,
     context: AuthedContext
@@ -107,6 +110,7 @@ export function createHandler({
   db,
   forwardMutations,
   logSyncs = false,
+  forms,
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
@@ -397,7 +401,9 @@ export function createHandler({
         expectJson()
         const submit = parseSubmitRequest(await body)
         await periodicSync(cnx, cms.config.syncInterval)
-        return Response.json(await submitForm(cms.config, local, cnx, submit))
+        return Response.json(
+          await submitForm(cms.config, local, cnx, submit, forms)
+        )
       }
 
       // The submissions of a form, for editors who can read its entry

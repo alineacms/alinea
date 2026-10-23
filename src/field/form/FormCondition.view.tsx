@@ -16,8 +16,8 @@ import {createId} from '#/core/Id.js'
 import {useEditor, useField, useFieldOptions} from '#/dashboard/hooks.js'
 import {IcRoundAdd, IcRoundDelete} from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw} from 'jotai'
-import {useContext, useMemo} from 'react'
+import {useAtomValueRaw} from 'jotai'
+import {useMemo} from 'react'
 import {choices} from './FormChoices.js'
 import css from './FormCondition.module.css'
 import {
@@ -28,46 +28,50 @@ import {
   operators
 } from './FormConditions.js'
 import type {FormConditionOptions} from './FormField.js'
-import {FormBuilderContext} from './FormField.view.js'
+import {useFormOrder} from './UseFormOrder.js'
 import {Input} from './FormInput.js'
 import {type FormEntry, entryLabel, ruleProblem} from './FormRules.js'
 
 const styles = styler(css)
 
-const empty = atom<Array<FormEntry>>([])
-
 export interface FormConditionViewProps {
   field: ScalarField<FormCondition | null, FormConditionOptions>
 }
 
-/** Edits when an input is shown or disabled, from the inputs above it */
+/**
+ * Edits when an input is shown or disabled, from the inputs above it, or
+ * when a mail is sent, from every input of the form
+ */
 export function FormConditionView({field}: FormConditionViewProps) {
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
-  const builder = useContext(FormBuilderContext)
   const editor = useEditor()
   const id = useAtomValueRaw(editor.node.field('_id')) as string
-  const order = useAtomValueRaw(builder?.order ?? empty)
+  const order = useFormOrder()
   const byId = useMemo(
     () => new Map(order.map(entry => [entry.row._id, entry])),
     [order]
   )
   const self = byId.get(id)
-  // Rules follow the reading order, so they can not depend on each other
+  // Rules of inputs follow the reading order, so they can not depend on each
+  // other, rows outside the form use all of its inputs
+  const position = options.effect === 'send' ? Infinity : (self?.index ?? -1)
   const above = useMemo(
     () =>
-      self
-        ? order.filter(
-            entry =>
-              entry.index < self.index && entry.input.control !== 'section'
-          )
-        : [],
-    [order, self]
+      order.filter(
+        entry => entry.index < position && entry.input.control !== 'section'
+      ),
+    [order, position]
   )
   const readOnly = Boolean(options.readOnly)
-  const show = options.effect === 'show'
+  const always = options.effect !== 'disable'
   const condition = value ?? undefined
-  const subject = self?.input.control === 'section' ? 'section' : 'input'
+  const subject =
+    options.effect === 'send'
+      ? 'mail'
+      : self?.input.control === 'section'
+        ? 'section'
+        : 'input'
 
   function update(next: Partial<FormCondition>) {
     if (!condition) return
@@ -102,14 +106,14 @@ export function FormConditionView({field}: FormConditionViewProps) {
           }}
         >
           <ToggleGroupItem value="never">
-            {show ? 'Always' : 'Never'}
+            {always ? 'Always' : 'Never'}
           </ToggleGroupItem>
           <ToggleGroupItem value="when" disabled={above.length === 0}>
             When…
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-      {condition && self && (
+      {condition && position >= 0 && (
         <div className={styles.FormCondition.rules()}>
           <div className={styles.FormCondition.match()}>
             <Text size="sm">Match</Text>
@@ -136,7 +140,7 @@ export function FormConditionView({field}: FormConditionViewProps) {
               rule={rule}
               above={above}
               byId={byId}
-              self={self}
+              position={position}
               readOnly={readOnly}
               onChange={next =>
                 update({
@@ -191,7 +195,8 @@ interface FormRuleEditorProps {
   rule: FormRule
   above: Array<FormEntry>
   byId: Map<string, FormEntry>
-  self: FormEntry
+  /** The position of the input in reading order, see `ruleProblem` */
+  position: number
   readOnly: boolean
   onChange: (rule: FormRule) => void
   onTarget: (target: FormEntry) => void
@@ -203,7 +208,7 @@ function FormRuleEditor({
   rule,
   above,
   byId,
-  self,
+  position,
   readOnly,
   onChange,
   onTarget,
@@ -212,7 +217,7 @@ function FormRuleEditor({
   const name = `rule ${index + 1}`
   const target = byId.get(rule.input)
   const kind = target ? Input.kind(target.input) : undefined
-  const problem = ruleProblem(rule, self, byId)
+  const problem = ruleProblem(rule, position, byId)
   return (
     <div
       className={styles.FormRuleEditor()}

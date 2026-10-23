@@ -6,6 +6,7 @@ import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import type {FormMail} from '#/core/Forms.js'
 import {
   developmentKeyHeader,
   forwardedMutationHeader
@@ -21,7 +22,12 @@ import {generatedPaths} from '../generate/GeneratedPaths.js'
 import {generate} from '../Generate.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
-import {reportError, reportFatal, reportWarning} from '../util/Report.js'
+import {
+  reportError,
+  reportFatal,
+  reportInfo,
+  reportWarning
+} from '../util/Report.js'
 import {createLocalServer} from './CreateLocalServer.js'
 import {GitHistory} from './GitHistory.js'
 import {LiveReload} from './LiveReload.js'
@@ -164,6 +170,7 @@ export async function createDevServer(
           cms,
           remote: backend,
           db,
+          forms: {mailer: printMail},
           forwardMutations(request) {
             return forwardMutation(request, cms, context.apiKey)
           }
@@ -281,4 +288,15 @@ function forwardedRequestOrigin(request: Request): string | undefined {
     firstHeaderValue(request.headers.get('x-forwarded-proto')) ?? 'http'
   const normalizedProtocol = protocol.endsWith(':') ? protocol : `${protocol}:`
   return `${normalizedProtocol}//${host}`
+}
+
+/** Mails of forms are printed during development instead of sent */
+function printMail(mail: FormMail) {
+  reportInfo(
+    'mail',
+    mail.subject,
+    `To ${mail.to.join(', ')}`,
+    ...(mail.replyTo ? [`Reply to ${mail.replyTo}`] : []),
+    ...mail.text.split('\n')
+  )
 }

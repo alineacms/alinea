@@ -19,7 +19,8 @@ const SubmissionTable = table('alinea_submission', {
   values: column.json<Record<string, unknown>>().notNull(),
   definition: column.json<unknown>().notNull(),
   createdAt: column.integer().notNull(),
-  status: column.text().$type<SubmissionStatus>().notNull().default('new')
+  status: column.text().$type<SubmissionStatus>().notNull().default('new'),
+  notified: column.json<Array<string>>()
 })
 
 const prepared = new WeakMap<Database, Promise<Database>>()

@@ -1,4 +1,7 @@
 import type {Config} from '#/core/Config.js'
+import {Field} from '#/core/Field.js'
+import type {FormMailer, FormsOptions} from '#/core/Forms.js'
+import {type FormMailOut, formMails} from '#/field/form/FormMails.js'
 import type {SubmissionsApi, SubmitRequest} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
@@ -60,7 +63,8 @@ export async function submitForm(
   config: Config,
   graph: Graph,
   store: SubmissionsApi,
-  request: SubmitRequest
+  request: SubmitRequest,
+  forms: FormsOptions = {}
 ): Promise<FormResult> {
   const entry = await graph.first({
     id: request.entryId,
@@ -85,6 +89,19 @@ export async function submitForm(
   const rows = (entry.data as Record<string, unknown>)[key]
   const result = validateSubmission(field, rows, data)
   if (!result.ok) return {ok: false, errors: result.errors}
+  const content = entry.data as Record<string, unknown>
+  const notified =
+    type && isFormType(type)
+      ? await sendMails(
+          forms.mailer,
+          formMails(
+            Field.options(field).inputs,
+            rows,
+            content.mails,
+            result.values
+          )
+        )
+      : []
   await submissionStore(store).storeSubmission({
     id: createId(),
     entryId: request.entryId,
@@ -93,10 +110,40 @@ export async function submitForm(
     values: result.values,
     definition: result.definition,
     createdAt: Math.floor(Date.now() / 1000),
-    status: 'new'
+    status: 'new',
+    notified
   })
   if (!type || !isFormType(type)) return {ok: true}
   return afterSending(graph, entry.data as Record<string, unknown>)
+}
+
+/**
+ * Sends the mails, returning the names of those that went out. A mail that
+ * fails is reported, the answers are stored anyway.
+ */
+async function sendMails(
+  mailer: FormMailer | undefined,
+  mails: Array<FormMailOut>
+): Promise<Array<string>> {
+  if (mails.length === 0) return []
+  if (!mailer) {
+    console.warn(
+      `Alinea could not send ${mails.length} form mail(s): set forms.mailer in createHandler`
+    )
+    return []
+  }
+  const sent = await Promise.all(
+    mails.map(async ({name, mail}) => {
+      try {
+        await mailer(mail)
+        return [name]
+      } catch (error) {
+        console.error(`Alinea could not send the form mail "${name}"`, error)
+        return []
+      }
+    })
+  )
+  return sent.flat()
 }
 
 /** What a form made with `Form.type` does after it is sent */

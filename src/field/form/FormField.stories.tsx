@@ -12,6 +12,7 @@ import {views} from '../views.js'
 import {form} from './FormField.js'
 import {input} from './FormInput.js'
 import {defaults} from './FormInputs.js'
+import {formType} from './FormType.js'
 
 const rating = input('Rating', {
   icon: IcRoundStarOutline,
@@ -140,6 +141,63 @@ export function Empty() {
       <BlockSheetStoryFrame>
         <div style={storyStyle}>
           <NodeEditor node={node} type={emptyForm} />
+        </div>
+      </BlockSheetStoryFrame>
+    </StoryProvider>
+  )
+}
+
+const requestForm = formType('Service request', {
+  inputs: {...defaults, rating}
+})
+
+const mails = [
+  {
+    _id: 'helpdesk',
+    _index: 'a0',
+    _type: 'mail',
+    name: 'IT helpdesk',
+    to: 'address',
+    address: 'it-helpdesk@example.com',
+    replyTo: 'email',
+    sendWhen: {
+      match: 'all',
+      rules: [{id: 'rule', input: 'service', op: 'is', value: ['it']}]
+    },
+    subject: 'New request from {{name}}',
+    body: '{{description}}'
+  },
+  {
+    _id: 'confirm',
+    _index: 'a1',
+    _type: 'mail',
+    name: 'Confirmation to the sender',
+    to: 'input',
+    input: 'email',
+    subject: 'We received your request',
+    body: 'Thanks {{name}}'
+  }
+]
+
+/** The mails of a form, in its Notifications tab */
+export function Notifications() {
+  const node = useMemo(
+    () =>
+      new ReactiveNode(
+        Type.withInitialValue(requestForm, {
+          title: 'Service request',
+          path: 'service-request',
+          inputs: rows,
+          mails
+        }) as object
+      ),
+    []
+  )
+  return (
+    <StoryProvider views={views}>
+      <BlockSheetStoryFrame>
+        <div style={storyStyle}>
+          <NodeEditor node={node} type={requestForm} />
         </div>
       </BlockSheetStoryFrame>
     </StoryProvider>

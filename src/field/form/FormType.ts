@@ -8,7 +8,9 @@ import {
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {
   IcOutlineTableRows,
+  IcRoundCallSplit,
   IcRoundEdit,
+  IcRoundEmail,
   IcRoundRule,
   IcRoundSend
 } from '#/dashboard/icons.js'
@@ -17,8 +19,18 @@ import {path} from '#/field/path.js'
 import {select} from '#/field/select.js'
 import {tab, tabs} from '#/field/tabs.js'
 import {text} from '#/field/text.js'
-import {type FormField, form} from './FormField.js'
+import {type FormField, condition, form} from './FormField.js'
+import {Field, type FieldOptions} from '#/core/Field.js'
+import type {ListRow} from '#/core/ListRow.js'
+import type {Schema} from '#/core/Schema.js'
+import {ListField} from '#/core/field/ListField.js'
+import type {FieldGetter} from '#/core/Tracker.js'
+import {formInputs} from './FormAnswers.js'
+import {formDefinition} from './FormDefinition.js'
 import type {Input} from './FormInput.js'
+import type {FormCondition} from './FormConditions.js'
+import {mailProblem} from './FormMails.js'
+import {readingOrder} from './FormRules.js'
 
 export interface FormTypeConfig<
   Inputs extends Record<string, Input>,
@@ -35,12 +47,122 @@ export interface FormTypeFields<Type extends string> {
   title: ReturnType<typeof text>
   path: ReturnType<typeof path>
   inputs: FormField<Type>
+  mails: FormMailList
   after: ReturnType<typeof afterSending>
   message: ReturnType<typeof text>
   page: ReturnType<typeof entry>
 }
 
 const formTypes = new WeakSet<Type>()
+
+/** A notification mail as it is stored */
+export interface FormMailRow extends ListRow {
+  _type: 'mail'
+  name: string
+  to: 'address' | 'input' | null
+  address: string
+  /** The id of the email input whose answer it is sent to */
+  input: string | null
+  replyTo: string | null
+  sendWhen: FormCondition | null
+  subject: string
+  body: string
+}
+
+export type FormMailList = ListField<
+  FormMailRow,
+  FormMailRow,
+  FieldOptions<Array<FormMailRow>> & {schema: Schema}
+>
+
+/** The notification mails of a form, sent when it is submitted */
+function mailList(inputsField: FormField): FormMailList {
+  const inputs = Field.options(inputsField).inputs
+  const emailInputs = (get: FieldGetter) => {
+    const result: Record<string, string> = {}
+    for (const item of formInputs(formDefinition(inputs, get(inputsField))))
+      if (item.attributes.type === 'email') result[item.id] = item.label
+    return result
+  }
+  const to = select('Send to', {
+    options: {address: 'An address', input: 'An input of the form'},
+    initialValue: 'address'
+  })
+  const Mail = type('Mail', {
+    icon: IcRoundEmail,
+    fields: {},
+    tabs: {
+      recipient: tab('Recipient', {
+        fields: {
+          name: text('Name', {
+            required: true,
+            help: 'For editors, eg. IT helpdesk'
+          }),
+          to,
+          address: track.options(
+            text('Address', {help: 'Separate several addresses with commas'}),
+            get => ({
+              hidden: get(to) === 'input',
+              required: get(to) !== 'input'
+            })
+          ),
+          input: track.options(select('Input', {options: {}}), get => ({
+            options: emailInputs(get),
+            hidden: get(to) !== 'input',
+            required: get(to) === 'input'
+          })),
+          replyTo: track.options(
+            select('Reply to', {
+              options: {},
+              help: 'Answering the mail writes to the address in this input'
+            }),
+            get => ({options: emailInputs(get)})
+          )
+        }
+      }),
+      when: tab('Send when', {
+        icon: IcRoundCallSplit,
+        fields: {sendWhen: condition('Send this mail', 'send')}
+      }),
+      message: tab('Message', {
+        fields: {
+          subject: text('Subject', {required: true}),
+          body: text('Body', {
+            required: true,
+            multiline: true,
+            help: 'Insert answers with {{key}}, eg. {{name}}'
+          })
+        }
+      })
+    }
+  })
+  return track.options(
+    new ListField<
+      FormMailRow,
+      FormMailRow,
+      FieldOptions<Array<FormMailRow>> & {schema: Schema}
+    >(
+      {mail: Mail},
+      {
+        options: {label: 'Mails', schema: {mail: Mail}, initialValue: []},
+        view: viewKeys.FormMailsInput
+      }
+    ),
+    get => {
+      const order = readingOrder(inputs, get(inputsField))
+      const byId = new Map(order.map(entry => [entry.row._id, entry]))
+      return {
+        validate: (mails: Array<FormMailRow>) => {
+          for (const mail of mails) {
+            const problem = mailProblem(mail, byId)
+            if (problem) return problem
+          }
+          return undefined
+        }
+      }
+    }
+  )
+}
 
 /** Whether a type was made with `Form.type` */
 export function isFormType(type: Type): boolean {
@@ -67,6 +189,7 @@ export function formType<
   {inputs, fields, ...config}: FormTypeConfig<Inputs, Fields>
 ): Type<FormTypeFields<Extract<keyof Inputs, string>> & Fields> {
   const after = afterSending()
+  const inputsField = form('Inputs', {inputs})
   const result = type(label, {
     icon: IcRoundRule,
     ...config,
@@ -78,7 +201,7 @@ export function formType<
           title: text('Title', {required: true, width: 0.5}),
           path: path('Path', {required: true, width: 0.5}),
           ...fields,
-          inputs: form('Inputs', {inputs})
+          inputs: inputsField
         }
       }),
       tab('Submissions', {
@@ -88,6 +211,7 @@ export function formType<
       tab('Notifications', {
         icon: IcRoundSend,
         fields: {
+          mails: mailList(inputsField),
           after,
           message: track.options(
             text('Message', {

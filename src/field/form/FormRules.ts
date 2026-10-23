@@ -68,18 +68,21 @@ export function storedCondition(value: unknown): FormCondition | undefined {
   return {match: value.match === 'any' ? 'any' : 'all', rules}
 }
 
-/** Why a rule of an entry cannot work, or undefined while it can */
+/**
+ * Why a rule cannot work, or undefined while it can. Rules of an entry at
+ * this position in reading order use the entries before it, rules outside
+ * the form such as those of a mail use every entry (`Infinity`).
+ */
 export function ruleProblem(
   rule: FormRule,
-  self: FormEntry,
+  index: number,
   byId: Map<string, FormEntry>
 ): string | undefined {
   const target = byId.get(rule.input)
   if (!target || target.input.control === 'section')
     return 'Its rule uses an input that was removed'
   const label = entryLabel(target)
-  if (target.index >= self.index)
-    return `Its rule uses ${label}, which is below it`
+  if (target.index >= index) return `Its rule uses ${label}, which is below it`
   const kind = Input.kind(target.input)
   if (!(rule.op in operators[kind]))
     return `Its rule on ${label} no longer fits ${label}`
@@ -100,14 +103,14 @@ export function ruleProblem(
 /** The rules as the site gets them: keys and values, without broken rules */
 export function conditionData(
   value: unknown,
-  self: FormEntry,
+  index: number,
   byId: Map<string, FormEntry>,
   key: (row: Record<string, unknown>) => string
 ): FormConditionData | undefined {
   const condition = storedCondition(value)
   if (!condition) return undefined
   const rules = condition.rules.flatMap((rule): Array<FormRuleData> => {
-    if (ruleProblem(rule, self, byId)) return []
+    if (ruleProblem(rule, index, byId)) return []
     const target = byId.get(rule.input)!
     const data: FormRuleData = {input: key(target.row), op: rule.op}
     if (!needsValue(rule.op)) return [data]
@@ -140,7 +143,7 @@ export function ruleErrors(
       const condition = storedCondition(entry.row[field])
       if (!condition) return []
       const problem = condition.rules
-        .map(rule => ruleProblem(rule, entry, byId))
+        .map(rule => ruleProblem(rule, entry.index, byId))
         .find(Boolean)
       if (!problem) return []
       return [

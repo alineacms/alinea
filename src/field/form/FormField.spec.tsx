@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Builder} from './FormField.stories.js'
+import {Builder, Notifications} from './FormField.stories.js'
 
 test('names rows after their label and marks required ones', async ({
   mount,
@@ -124,4 +124,35 @@ test('asks before deleting an input that rules use', async ({mount, page}) => {
   await expect(
     page.getByRole('listitem', {name: 'File item 2'})
   ).not.toContainText('Shown if')
+})
+
+test('mails pick their recipient and rules from the form', async ({
+  mount,
+  page
+}) => {
+  await mount(<Notifications />)
+  await page.getByRole('tab', {name: 'Notifications'}).click()
+  const helpdesk = page.getByRole('listitem', {name: 'Mail item 1'})
+  await expect(helpdesk).toContainText('it-helpdesk@example.com')
+  await expect(helpdesk).toContainText('When Service is IT')
+  await expect(page.getByRole('listitem', {name: 'Mail item 2'})).toContainText(
+    'To the Email input'
+  )
+  await helpdesk.getByRole('button', {name: 'Mail settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'IT helpdesk'})
+  // Rules of a mail can use every input of the form
+  await sheet
+    .getByRole('button', {name: /Input of rule 1/})
+    .last()
+    .click()
+  await expect(page.getByRole('option')).toHaveText([
+    'Name',
+    'Email',
+    'Phone',
+    'Service',
+    'Description',
+    'Screenshots',
+    'How did we do last time?',
+    'I agree to the privacy policy'
+  ])
 })

@@ -388,6 +388,12 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
                 <DataListValue>{submission.locale}</DataListValue>
               </DataListItem>
             )}
+            {submission.notified && submission.notified.length > 0 && (
+              <DataListItem>
+                <DataListLabel>Notified</DataListLabel>
+                <DataListValue>{submission.notified.join(', ')}</DataListValue>
+              </DataListItem>
+            )}
           </DataList>
         </SheetSection>
       </SheetBody>

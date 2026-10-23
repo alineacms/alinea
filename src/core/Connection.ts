@@ -113,6 +113,8 @@ export interface Submission {
   /** When it was sent, in seconds */
   createdAt: number
   status: SubmissionStatus
+  /** The names of the notification mails that were sent for it */
+  notified?: Array<string> | null
 }
 
 export type SubmissionStatus = 'new' | 'read' | 'archived'

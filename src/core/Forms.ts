@@ -1,5 +1,22 @@
 import type {SubmitRequest, SubmitResult} from './Connection.js'
 
+/** A notification mail of a form, for the mailer of the site */
+export interface FormMail {
+  to: Array<string>
+  /** The address of the visitor, when the mail sets an input for it */
+  replyTo?: string
+  subject: string
+  text: string
+}
+
+/** Sends a mail, eg. `mail => resend.emails.send({from, ...mail})` */
+export type FormMailer = (mail: FormMail) => unknown | Promise<unknown>
+
+export interface FormsOptions {
+  /** Sends the notification mails of forms, see the Notifications tab */
+  mailer?: FormMailer
+}
+
 export interface FormSubmitOptions {
   /** The locale of the form, when its root is translated */
   locale?: string | null

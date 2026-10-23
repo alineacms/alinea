@@ -1,3 +1,4 @@
+import type {FormsOptions} from '#/core/Forms.js'
 import {
   backendFromOptions,
   type BackendFactory,
@@ -34,6 +35,8 @@ type Handler = (request: Request) => Promise<Response>
 export interface NextHandlerOptions extends HandlerHooks {
   cms: NextCMS
   backend?: BackendFactory | BackendOptions
+  /** How submissions of forms are handled, eg. the mailer of their mails */
+  forms?: FormsOptions
 }
 
 export type OpenGeneratedDatabase = (config: Config) => Promise<LocalStore>

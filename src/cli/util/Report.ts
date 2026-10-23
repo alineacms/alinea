@@ -5,6 +5,10 @@ export function reportWarning(...messages: Array<string>) {
   console[isBrowser ? 'warn' : 'log'](message)
 }
 
+export function reportInfo(type: string, ...messages: Array<string>) {
+  console.log(formatMessages(messages, type, cyan))
+}
+
 export function reportFatal(...messages: Array<string>) {
   const message = formatMessages(messages, 'error', red)
   console[isBrowser ? 'error' : 'log'](message)

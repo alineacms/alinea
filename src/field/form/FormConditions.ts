@@ -141,7 +141,8 @@ export function formState(
   return state
 }
 
-function holds(
+/** Whether the rules hold for these answers, `otherwise` without rules */
+export function holds(
   condition: FormConditionData | undefined,
   answers: Record<string, unknown>,
   otherwise: boolean

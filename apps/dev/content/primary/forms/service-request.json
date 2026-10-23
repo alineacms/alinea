@@ -184,5 +184,65 @@
     }
   ],
   "after": "message",
-  "message": "Thanks, we received your request and will reply within two working days."
+  "message": "Thanks, we received your request and will reply within two working days.",
+  "mails": [
+    {
+      "_id": "service-mail-it",
+      "_index": "a0",
+      "_type": "mail",
+      "name": "IT helpdesk",
+      "to": "address",
+      "address": "it-helpdesk@example.com",
+      "replyTo": "service-email",
+      "sendWhen": {
+        "match": "all",
+        "rules": [
+          {
+            "id": "rule-mail-it",
+            "input": "service-service",
+            "op": "is",
+            "value": [
+              "it"
+            ]
+          }
+        ]
+      },
+      "subject": "New request from {{name}}: {{device}}",
+      "body": "{{name}} ({{email}}) asked for help with {{device}}:\n\n{{description}}"
+    },
+    {
+      "_id": "service-mail-facilities",
+      "_index": "a1",
+      "_type": "mail",
+      "name": "Facilities",
+      "to": "address",
+      "address": "facilities@example.com",
+      "replyTo": "service-email",
+      "sendWhen": {
+        "match": "all",
+        "rules": [
+          {
+            "id": "rule-mail-fac",
+            "input": "service-service",
+            "op": "is",
+            "value": [
+              "facilities"
+            ]
+          }
+        ]
+      },
+      "subject": "Room {{room-number}}: request from {{name}}",
+      "body": "{{description}}"
+    },
+    {
+      "_id": "service-mail-confirm",
+      "_index": "a2",
+      "_type": "mail",
+      "name": "Confirmation to the sender",
+      "to": "input",
+      "input": "service-email",
+      "subject": "We received your request",
+      "body": "Hi {{name}},\n\nThanks, we received your request and will reply within two working days."
+    }
+  ]
 }

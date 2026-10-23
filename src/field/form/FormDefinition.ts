@@ -82,7 +82,7 @@ export function formDefinition(
     }
     const help = text(row.help)
     if (help) base.help = help
-    const showWhen = conditionData(row.showWhen, self, byId, inputKey)
+    const showWhen = conditionData(row.showWhen, self.index, byId, inputKey)
     if (showWhen) base.showWhen = showWhen
     if (input.control === 'section')
       return [
@@ -105,7 +105,12 @@ export function formDefinition(
       settings: filled(rest)
     }
     if ('options' in settings) data.choices = choices(options)
-    const disableWhen = conditionData(row.disableWhen, self, byId, inputKey)
+    const disableWhen = conditionData(
+      row.disableWhen,
+      self.index,
+      byId,
+      inputKey
+    )
     if (disableWhen) data.disableWhen = disableWhen
     if (!isEmpty(initialValue)) data.initialValue = initialValue
     return [data]
