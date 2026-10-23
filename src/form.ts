@@ -38,3 +38,5 @@ export type {
   FormValidation,
   FormValues
 } from '#/field/form/FormSubmission.js'
+export {formType as type} from '#/field/form/FormType.js'
+export type {FormTypeConfig, FormTypeFields} from '#/field/form/FormType.js'

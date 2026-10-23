@@ -1,4 +1,8 @@
-import {parseSubmitRequest, submitForm} from '#/backend/FormSubmit.js'
+import {
+  parseSubmitRequest,
+  submissionStore,
+  submitForm
+} from '#/backend/FormSubmit.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {
@@ -394,6 +398,39 @@ export function createHandler({
         const submit = parseSubmitRequest(await body)
         await periodicSync(cnx, cms.config.syncInterval)
         return Response.json(await submitForm(cms.config, local, cnx, submit))
+      }
+
+      // The submissions of a form, for editors who can read its entry
+      if (action === HandleAction.Submissions) {
+        const user = expectUser()
+        expectJson()
+        const entryId = string(url.searchParams.get('entryId'))
+        const entry = await local.first({
+          id: entryId,
+          status: 'preferPublished',
+          select: historyResource
+        })
+        if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
+        const policy = await user.policy
+        const store = submissionStore(cnx)
+        if (request.method === 'GET') {
+          policy.assert(Permission.Read, entry)
+          return Response.json(await store.listSubmissions(entryId))
+        }
+        const id = string(url.searchParams.get('id'))
+        if (request.method === 'DELETE') {
+          policy.assert(Permission.Delete, entry)
+          await store.deleteSubmission(entryId, id)
+          return new Response(null, {status: 204})
+        }
+        if (request.method === 'POST') {
+          policy.assert(Permission.Update, entry)
+          const {status} = (await body) as {status?: unknown}
+          if (status !== 'new' && status !== 'read' && status !== 'archived')
+            throw new HttpError(400, 'Unknown status')
+          await store.updateSubmission(entryId, id, status)
+          return new Response(null, {status: 204})
+        }
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {

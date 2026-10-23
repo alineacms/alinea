@@ -182,5 +182,7 @@
       "required": true,
       "width": "full"
     }
-  ]
+  ],
+  "after": "message",
+  "message": "Thanks, we received your request and will reply within two working days."
 }

@@ -1,0 +1,25 @@
+.FormSubmissions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.FormSubmissions-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.FormSubmissions-search {
+  flex: 1 1 240px;
+}
+
+.FormSubmissions-filter {
+  flex: 0 1 200px;
+  min-width: 160px;
+}
+
+.FormSubmissions-missing {
+  font-style: italic;
+}

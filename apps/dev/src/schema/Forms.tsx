@@ -1,5 +1,5 @@
-import {Config, Field, Form} from 'alinea'
-import {IcRoundRule, IcRoundStarOutline} from 'alinea/dashboard/icons'
+import {Field, Form} from 'alinea'
+import {IcRoundStarOutline} from 'alinea/dashboard/icons'
 
 const Rating = Form.input('Rating', {
   icon: IcRoundStarOutline,
@@ -15,11 +15,6 @@ const Rating = Form.input('Rating', {
       : undefined
 })
 
-export const FormEntry = Config.document('Form', {
-  icon: IcRoundRule,
-  fields: {
-    inputs: Field.form('Inputs', {
-      inputs: {...Form.defaults, rating: Rating}
-    })
-  }
+export const FormEntry = Form.type('Form', {
+  inputs: {...Form.defaults, rating: Rating}
 })

@@ -1,7 +1,8 @@
 import type {
   BackendCapabilities,
   LocalConnection,
-  Revision
+  Revision,
+  Submission
 } from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {User, UserInput} from '#/core/User.js'
@@ -12,6 +13,7 @@ interface TestConnectionOptions {
   previewToken?: string
   user?: User
   users?: Array<User>
+  submissions?: Array<Submission>
 }
 
 interface ConnectionOverrides extends Partial<
@@ -27,7 +29,27 @@ export function createTestConnection(
 ): LocalConnection {
   const currentUser: User = options.user ?? localUser
   let users = options.users?.slice() ?? [currentUser]
+  let submissions = options.submissions?.slice() ?? []
   return {
+    submissions(entryId) {
+      return Promise.resolve(
+        submissions.filter(submission => submission.entryId === entryId)
+      )
+    },
+    updateSubmission(entryId, id, status) {
+      submissions = submissions.map(submission =>
+        submission.entryId === entryId && submission.id === id
+          ? {...submission, status}
+          : submission
+      )
+      return Promise.resolve()
+    },
+    deleteSubmission(entryId, id) {
+      submissions = submissions.filter(
+        submission => submission.entryId !== entryId || submission.id !== id
+      )
+      return Promise.resolve()
+    },
     capabilities() {
       return Promise.resolve(options.capabilities ?? {users: true})
     },

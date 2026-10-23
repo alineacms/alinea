@@ -11,6 +11,8 @@ import type {
   DraftTransport,
   LocalConnection,
   Revision,
+  Submission,
+  SubmissionStatus,
   SubmitRequest,
   SubmitResult,
   UploadMetadata,
@@ -186,6 +188,31 @@ export class Client implements LocalConnection {
   }
 
   // History
+  // Forms
+  submissions(entryId: string): Promise<Array<Submission>> {
+    return this.#requestJson({action: HandleAction.Submissions, entryId}).then<
+      Array<Submission>
+    >(this.#failOnHttpError)
+  }
+
+  async updateSubmission(
+    entryId: string,
+    id: string,
+    status: SubmissionStatus
+  ): Promise<void> {
+    await this.#requestJson(
+      {action: HandleAction.Submissions, entryId, id},
+      {method: 'POST', body: JSON.stringify({status})}
+    ).then(res => this.#failOnHttpError(res, false))
+  }
+
+  async deleteSubmission(entryId: string, id: string): Promise<void> {
+    await this.#requestJson(
+      {action: HandleAction.Submissions, entryId, id},
+      {method: 'DELETE'}
+    ).then(res => this.#failOnHttpError(res, false))
+  }
+
   revisions(file: string): Promise<Array<Revision>> {
     return this.#requestJson({action: HandleAction.History, file}).then<
       Array<Revision>

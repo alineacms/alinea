@@ -5,6 +5,7 @@ export const viewKeys = {
   DateInput: 'alinea/field/date/DateField.view#DateFieldView',
   FormConditionInput: 'alinea/field/form/FormCondition.view#FormConditionView',
   FormInput: 'alinea/field/form/FormField.view#FormFieldView',
+  FormSubmissions: 'alinea/field/form/FormSubmissions.view#FormSubmissionsView',
   HiddenInput: 'alinea/field/hidden/HiddenField.view#HiddenInput',
   JsonInput: 'alinea/field/json/JsonField.view#JsonFieldView',
   LocalisedInput:

@@ -1,6 +1,10 @@
-import type {Submission, SubmissionsApi} from '#/core/Connection.js'
+import type {
+  Submission,
+  SubmissionStatus,
+  SubmissionsApi
+} from '#/core/Connection.js'
 import PLazy from 'p-lazy'
-import {type Database, desc, eq, sql, table} from 'rado'
+import {type Database, and, desc, eq, sql, table} from 'rado'
 import * as column from 'rado/universal/columns'
 
 export interface SubmissionStoreOptions {
@@ -14,7 +18,8 @@ const SubmissionTable = table('alinea_submission', {
   field: column.text().notNull(),
   values: column.json<Record<string, unknown>>().notNull(),
   definition: column.json<unknown>().notNull(),
-  createdAt: column.integer().notNull()
+  createdAt: column.integer().notNull(),
+  status: column.text().$type<SubmissionStatus>().notNull().default('new')
 })
 
 const prepared = new WeakMap<Database, Promise<Database>>()
@@ -40,6 +45,24 @@ export class SubmissionStore implements SubmissionsApi {
       .where(eq(SubmissionTable.entryId, entryId))
       .orderBy(desc(SubmissionTable.createdAt))
   }
+
+  async updateSubmission(
+    entryId: string,
+    id: string,
+    status: SubmissionStatus
+  ): Promise<void> {
+    const db = await this.#db
+    await db.update(SubmissionTable).set({status}).where(matches(entryId, id))
+  }
+
+  async deleteSubmission(entryId: string, id: string): Promise<void> {
+    const db = await this.#db
+    await db.delete(SubmissionTable).where(matches(entryId, id))
+  }
+}
+
+function matches(entryId: string, id: string) {
+  return and(eq(SubmissionTable.entryId, entryId), eq(SubmissionTable.id, id))
 }
 
 function prepare(db: Database): Promise<Database> {

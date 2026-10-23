@@ -54,6 +54,14 @@ export interface LocalConnection
     query: Query
   ): Promise<AnyQueryResult<Query>>
   user(): Promise<User | undefined>
+  /** The submissions of a form entry, the latest first */
+  submissions(entryId: string): Promise<Array<Submission>>
+  updateSubmission(
+    entryId: string,
+    id: string,
+    status: SubmissionStatus
+  ): Promise<void>
+  deleteSubmission(entryId: string, id: string): Promise<void>
 }
 
 export interface SyncApi {
@@ -104,7 +112,10 @@ export interface Submission {
   definition: unknown
   /** When it was sent, in seconds */
   createdAt: number
+  status: SubmissionStatus
 }
+
+export type SubmissionStatus = 'new' | 'read' | 'archived'
 
 /** What a site sends to the handler for a visitor's answers */
 export interface SubmitRequest {
@@ -119,13 +130,25 @@ export interface SubmitRequest {
 
 /** What the handler answers to a submission */
 export type SubmitResult =
-  | {ok: true; confirmation?: string}
+  | {
+      ok: true
+      /** The message to show instead of the form */
+      confirmation?: string
+      /** The url of the page to go to instead */
+      redirect?: string
+    }
   | {ok: false; errors?: Record<string, string>; message?: string}
 
 export interface SubmissionsApi {
   storeSubmission?(submission: Submission): Promise<void>
   /** The submissions of a form, the latest first */
   listSubmissions?(entryId: string): Promise<Array<Submission>>
+  updateSubmission?(
+    entryId: string,
+    id: string,
+    status: SubmissionStatus
+  ): Promise<void>
+  deleteSubmission?(entryId: string, id: string): Promise<void>
 }
 
 export interface Connection

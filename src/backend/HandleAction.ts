@@ -4,6 +4,7 @@ export enum HandleAction {
   User = 'user',
   Resolve = 'resolve',
   Submit = 'submit',
+  Submissions = 'submissions',
   Pending = 'pending',
   Sync = 'sync',
   Draft = 'draft',

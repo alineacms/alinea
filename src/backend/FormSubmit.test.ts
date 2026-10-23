@@ -59,7 +59,7 @@ async function setup() {
     )
     return {status: response.status, body: await response.json()}
   }
-  return {entryId, store, submit}
+  return {entryId, store, submit, handle}
 }
 
 const context: RequestContext = {
@@ -106,4 +106,30 @@ test('only the server of the site can submit', async () => {
   const {submit} = await setup()
   const result = await submit({name: 'Ann'}, 'wrong')
   expect(result.status).toBe(401)
+})
+
+test('editors mark, archive and delete submissions of a form', async () => {
+  const {entryId, store, submit} = await setup()
+  await submit({name: 'Ann', email: 'ann@example.com'})
+  const [{id}] = await store.listSubmissions(entryId)
+  // Another form's id does not reach it
+  await store.updateSubmission('other', id, 'archived')
+  await store.updateSubmission(entryId, id, 'read')
+  expect((await store.listSubmissions(entryId)).map(s => s.status)).toEqual([
+    'read'
+  ])
+  await store.deleteSubmission('other', id)
+  await store.deleteSubmission(entryId, id)
+  expect(await store.listSubmissions(entryId)).toEqual([])
+})
+
+test('the server of the site can not read submissions', async () => {
+  const {entryId, handle} = await setup()
+  const response = await handle(
+    new Request(`http://localhost/api?action=submissions&entryId=${entryId}`, {
+      headers: {accept: 'application/json', authorization: 'Bearer test'}
+    }),
+    context
+  )
+  expect(response.status).toBe(401)
 })

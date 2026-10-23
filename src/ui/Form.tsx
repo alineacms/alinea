@@ -101,7 +101,11 @@ export function Form({
     [definition, values]
   )
   const [result, send, pending] = useActionState(
-    (_: FormResult | undefined, data: FormData) => action!(data),
+    async (_: FormResult | undefined, data: FormData) => {
+      const result = await action!(data)
+      if (result.ok && result.redirect) window.location.assign(result.redirect)
+      return result
+    },
     undefined
   )
   function change(event: FormEvent<HTMLFormElement>) {

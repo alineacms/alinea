@@ -8,10 +8,31 @@ import {Type} from '#/core/Type.js'
 import {entries, isRecord} from '#/core/util/Objects.js'
 import {FormField} from '#/field/form/FormField.js'
 import {isSpam} from '#/field/form/FormSpam.js'
+import {isFormType} from '#/field/form/FormType.js'
+import {EntryReference} from '#/picker/entry/EntryReference.js'
 import {
   type FormResult,
   validateSubmission
 } from '#/field/form/FormSubmission.js'
+
+/** The submissions of the backend, which needs a database to keep them */
+export function submissionStore(api: SubmissionsApi): Required<SubmissionsApi> {
+  const {storeSubmission, listSubmissions, updateSubmission, deleteSubmission} =
+    api
+  if (
+    !storeSubmission ||
+    !listSubmissions ||
+    !updateSubmission ||
+    !deleteSubmission
+  )
+    throw new HttpError(501, 'Configure a database to store submissions')
+  return {
+    storeSubmission: storeSubmission.bind(api),
+    listSubmissions: listSubmissions.bind(api),
+    updateSubmission: updateSubmission.bind(api),
+    deleteSubmission: deleteSubmission.bind(api)
+  }
+}
 
 export function parseSubmitRequest(body: unknown): SubmitRequest {
   if (!isRecord(body) || typeof body.entryId !== 'string')
@@ -64,16 +85,34 @@ export async function submitForm(
   const rows = (entry.data as Record<string, unknown>)[key]
   const result = validateSubmission(field, rows, data)
   if (!result.ok) return {ok: false, errors: result.errors}
-  if (!store.storeSubmission)
-    throw new HttpError(501, 'Configure a database to store submissions')
-  await store.storeSubmission({
+  await submissionStore(store).storeSubmission({
     id: createId(),
     entryId: request.entryId,
     locale: entry.locale ?? null,
     field: key,
     values: result.values,
     definition: result.definition,
-    createdAt: Math.floor(Date.now() / 1000)
+    createdAt: Math.floor(Date.now() / 1000),
+    status: 'new'
   })
-  return {ok: true}
+  if (!type || !isFormType(type)) return {ok: true}
+  return afterSending(graph, entry.data as Record<string, unknown>)
+}
+
+/** What a form made with `Form.type` does after it is sent */
+async function afterSending(
+  graph: Graph,
+  data: Record<string, unknown>
+): Promise<FormResult> {
+  const message = typeof data.message === 'string' ? data.message.trim() : ''
+  if (data.after !== 'page')
+    return message ? {ok: true, confirmation: message} : {ok: true}
+  const page = isRecord(data.page) ? data.page[EntryReference.entry] : undefined
+  if (typeof page !== 'string') return {ok: true}
+  const url = await graph.first({
+    id: page,
+    select: Entry.url,
+    status: 'published'
+  })
+  return url ? {ok: true, redirect: url} : {ok: true}
 }

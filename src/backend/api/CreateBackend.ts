@@ -133,6 +133,8 @@ export function composeBackend(
     updateUser: call('updateUser'),
     removeUser: call('removeUser'),
     storeSubmission: call('storeSubmission'),
-    listSubmissions: call('listSubmissions')
+    listSubmissions: call('listSubmissions'),
+    updateSubmission: call('updateSubmission'),
+    deleteSubmission: call('deleteSubmission')
   }
 }
