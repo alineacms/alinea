@@ -110,10 +110,13 @@ test('broken rules are validation errors', async () => {
     error.message
   ])
   expect(errors).toEqual([
-    ['inputs[1].showWhen', 'A rule uses an option of Service that was removed'],
+    [
+      'inputs[1].showWhen',
+      'Its rule uses an option of Service that was removed'
+    ],
     [
       'inputs[2].inputs[0].disableWhen',
-      'A rule uses Later, which is not above this input anymore'
+      'Its rule uses Later, which is below it'
     ]
   ])
   // The site only gets the rules that work

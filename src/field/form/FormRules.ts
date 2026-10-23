@@ -76,24 +76,24 @@ export function ruleProblem(
 ): string | undefined {
   const target = byId.get(rule.input)
   if (!target || target.input.control === 'section')
-    return 'A rule uses an input that was removed'
+    return 'Its rule uses an input that was removed'
   const label = entryLabel(target)
   if (target.index >= self.index)
-    return `A rule uses ${label}, which is not above this input anymore`
+    return `Its rule uses ${label}, which is below it`
   const kind = Input.kind(target.input)
   if (!(rule.op in operators[kind]))
-    return `A rule on ${label} does not fit that input`
+    return `Its rule on ${label} no longer fits ${label}`
   if (!needsValue(rule.op)) return undefined
   if (kind === 'choice' || kind === 'choices') {
     const chosen = Array.isArray(rule.value) ? rule.value : []
-    if (chosen.length === 0) return `Choose the options of ${label} to look for`
+    if (chosen.length === 0) return `Its rule on ${label} has no options`
     const ids = new Set(choices(target.row.options).map(choice => choice.id))
     if (chosen.some(id => !ids.has(id)))
-      return `A rule uses an option of ${label} that was removed`
+      return `Its rule uses an option of ${label} that was removed`
     return undefined
   }
   if (rule.value === undefined || rule.value === '' || rule.value === null)
-    return `Fill in what ${label} is compared with`
+    return `Its rule on ${label} has no value`
   return undefined
 }
 

@@ -16,6 +16,7 @@ import {
   ListFieldView,
   type ListValue
 } from '#/field/list/ListField.view.js'
+import styler from '@alinea/styler'
 import {type Atom, atom, useAtomValueRaw, useStore} from 'jotai'
 import {
   type ReactNode,
@@ -26,6 +27,7 @@ import {
   useState
 } from 'react'
 import type {FormField} from './FormField.js'
+import css from './FormField.module.css'
 import {defaults} from './FormInputs.js'
 import {
   type FormEntry,
@@ -35,6 +37,8 @@ import {
   readingOrder,
   withoutRulesOn
 } from './FormRules.js'
+
+const styles = styler(css)
 
 const builtIn = new Set<unknown>(Object.values(defaults))
 
@@ -249,7 +253,13 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
         </Badge>
       )}
       {info?.error && (
-        <Text size="sm" color="destructive">
+        <Text
+          size="sm"
+          color="destructive"
+          truncate
+          title={info.error}
+          className={styles.FormRowBadges.error()}
+        >
           {info.error}
         </Text>
       )}
@@ -267,7 +277,10 @@ function rowErrors(field: FormField, value: unknown): Map<string, string> {
   })
   for (const {path, labels, message} of errors) {
     const id = rowId(value, path)
-    if (id && !result.has(id)) result.set(id, `${labels.at(-1)}: ${message}`)
+    if (!id || result.has(id)) continue
+    // Errors of rules name the input they use, others name their field
+    const rule = path.at(-1) === 'showWhen' || path.at(-1) === 'disableWhen'
+    result.set(id, rule ? message : `${labels.at(-1)}: ${message}`)
   }
   return result
 }

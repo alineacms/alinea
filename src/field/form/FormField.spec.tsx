@@ -105,7 +105,7 @@ test('rules of an input use the inputs above it', async ({mount, page}) => {
   await expect(input).toContainText('Description')
   await expect(screenshots).toContainText('Disabled if Description is')
   await expect(screenshots).toContainText(
-    'Disable this input: Fill in what Description is compared with'
+    'Its rule on Description has no value'
   )
 })
 
