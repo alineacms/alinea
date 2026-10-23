@@ -1,5 +1,5 @@
 import type {Config} from '#/core/Config.js'
-import type {SubmissionsApi} from '#/core/Connection.js'
+import type {SubmissionsApi, SubmitRequest} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
@@ -12,17 +12,6 @@ import {
   type FormResult,
   validateSubmission
 } from '#/field/form/FormSubmission.js'
-
-/** What a site sends to the handler for a visitor's answers */
-export interface SubmitRequest {
-  /** The id of the entry holding the form */
-  entryId: string
-  locale?: string | null
-  /** The key of the form field, the first one of the entry by default */
-  field?: string
-  /** The FormData the visitor sent, as its entries */
-  data: Array<[string, string]>
-}
 
 export function parseSubmitRequest(body: unknown): SubmitRequest {
   if (!isRecord(body) || typeof body.entryId !== 'string')

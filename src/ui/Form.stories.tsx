@@ -1,4 +1,5 @@
 import type {FormDefinition} from '#/field/form/FormDefinition.js'
+import type {FormResult} from '#/field/form/FormSubmission.js'
 import {Form} from './Form.js'
 
 const definition: FormDefinition = [
@@ -63,6 +64,29 @@ export function Rules() {
   return (
     <div style={{maxWidth: 480, padding: 24}}>
       <Form aria-label="Request" definition={definition} />
+    </div>
+  )
+}
+
+async function send(data: FormData): Promise<FormResult> {
+  await new Promise(resolve => setTimeout(resolve, 100))
+  const device = data.get('device')
+  if (!device) return {ok: false, errors: {device: 'Fill in this field'}}
+  if (device === 'Toaster')
+    return {ok: false, errors: {device: 'We do not repair toasters'}}
+  return {ok: true, confirmation: `We will look at your ${device}.`}
+}
+
+/** Sends to an action, which answers with errors or a confirmation */
+export function Submit() {
+  return (
+    <div style={{maxWidth: 480, padding: 24}}>
+      <Form
+        aria-label="Request"
+        definition={definition}
+        action={send}
+        noValidate
+      />
     </div>
   )
 }

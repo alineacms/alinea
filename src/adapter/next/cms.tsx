@@ -8,6 +8,7 @@ import {createThrottledSync, syncWait} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
+import {type Forms, formsOf} from '#/core/Forms.js'
 import {
   type RequestContext,
   type UploadMetadata,
@@ -352,6 +353,11 @@ export class NextCMS<
     const client = await this.#authenticatedClient()
     return client.user()
   }
+
+  /** Submits the answers of visitors to forms, see `Field.form` */
+  forms: Forms = formsOf(async () =>
+    createClient(this.config, await requestContext(this.config))
+  )
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     const client = await this.#authenticatedClient()

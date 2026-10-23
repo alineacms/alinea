@@ -133,10 +133,10 @@ textarea.FormViewControl {
   padding: 10px 22px;
 }
 
-.FormViewSubmitted {
-  background: #f4f4f7;
+.FormViewConfirmation {
+  background: color-mix(in srgb, var(--alinea-accent) 10%, white);
   border-radius: 8px;
-  font-size: 13px;
-  margin-top: 32px;
-  padding: 16px;
+  font-size: 16px;
+  margin: 0;
+  padding: 20px;
 }

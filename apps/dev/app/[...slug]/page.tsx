@@ -1,6 +1,7 @@
 import {cms} from '@/cms'
 import {ExampleView} from '@/ExampleView'
 import {FormView} from '@/FormView'
+import {submitForm} from '@/submitForm'
 import {Entry} from 'alinea/core'
 import type {FormDefinition} from 'alinea/form'
 import type {Metadata} from 'next'
@@ -132,7 +133,11 @@ export default async function Example(props: PageProps) {
   const title = text(content.title) ?? page.title
   if (page.type === 'FormEntry')
     return (
-      <FormView title={title} definition={content.inputs as FormDefinition} />
+      <FormView
+        title={title}
+        definition={content.inputs as FormDefinition}
+        action={submitForm.bind(null, page.id)}
+      />
     )
   return (
     <ExampleView

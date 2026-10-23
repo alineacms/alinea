@@ -1,3 +1,4 @@
+import type {SubmitResult} from '#/core/Connection.js'
 import {Field} from '#/core/Field.js'
 import {keys} from '#/core/util/Objects.js'
 import {formState} from './FormConditions.js'
@@ -18,9 +19,7 @@ export type FormValues = Record<string, unknown>
 export type FormErrors = Record<string, string>
 
 /** What a site's server action returns to `<Form>` after submitting */
-export type FormResult =
-  | {ok: true; confirmation?: string}
-  | {ok: false; errors?: FormErrors; message?: string}
+export type FormResult = SubmitResult
 
 export type FormValidation =
   | {ok: true; values: FormValues; definition: FormDefinition}

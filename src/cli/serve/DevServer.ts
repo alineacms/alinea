@@ -1,4 +1,5 @@
 import {composeBackend} from '#/backend/api/CreateBackend.js'
+import {SubmissionStore} from '#/backend/api/SubmissionStore.js'
 import {createHandler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
@@ -12,7 +13,11 @@ import {
 import {createId} from '#/core/Id.js'
 import {fetch, Headers, Request, type Response} from '@alinea/iso'
 import type {BuildOptions} from 'esbuild'
+import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
+import fs from 'node:fs/promises'
 import path from 'node:path'
+import PLazy from 'p-lazy'
+import {generatedPaths} from '../generate/GeneratedPaths.js'
 import {generate} from '../Generate.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
@@ -91,6 +96,15 @@ export async function createDevServer(
   }
 
   const drafts = new MemoryDrafts()
+  // Kept in a file next to the generated database, outside the project
+  const submissions = new SubmissionStore({
+    db: PLazy.from(async () => {
+      const {submissionsPath} = generatedPaths({rootDir, configLocation})
+      await fs.mkdir(path.dirname(submissionsPath), {recursive: true})
+      const handle = await runtimeDatabase({path: submissionsPath})
+      return handle.database
+    })
+  })
   const user = gitUser(rootDir).then(user =>
     options.roles ? {...user, roles: options.roles} : user
   )
@@ -172,7 +186,7 @@ export async function createDevServer(
           if (process.env.ALINEA_CLOUD_URL)
             return new CloudRemote(context, cms.config)
           const auth = new LocalAuth(context, user)
-          return composeBackend(auth, db, drafts, history)
+          return composeBackend(auth, db, drafts, history, submissions)
         }
       }
 

@@ -11,6 +11,8 @@ import type {
   DraftTransport,
   LocalConnection,
   Revision,
+  SubmitRequest,
+  SubmitResult,
   UploadMetadata,
   UploadResponse
 } from './Connection.js'
@@ -170,6 +172,13 @@ export class Client implements LocalConnection {
       {action: HandleAction.Mutate},
       {method: 'POST', body: JSON.stringify(mutations)}
     ).then<{sha: string}>(this.#failOnHttpError)
+  }
+
+  submit(request: SubmitRequest): Promise<SubmitResult> {
+    return this.#requestJson(
+      {action: HandleAction.Submit},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<SubmitResult>(this.#failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {

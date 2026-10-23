@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Rules} from './Form.stories.js'
+import {Rules, Submit} from './Form.stories.js'
 
 test('rules show and disable inputs as the form is filled in', async ({
   mount,
@@ -19,4 +19,23 @@ test('rules show and disable inputs as the form is filled in', async ({
   await expect(device).toBeDisabled()
   // A disabled input counts as empty, so the section hides again
   await expect(model).toHaveCount(0)
+})
+
+test('shows the errors of the action and keeps the answers', async ({
+  mount,
+  page
+}) => {
+  await mount(<Submit />)
+  await page.getByRole('radio', {name: 'IT'}).check()
+  const device = page.getByRole('textbox', {name: 'Device *'})
+  await device.fill('Toaster')
+  await page.getByRole('button', {name: 'Send'}).click()
+  await expect(page.getByRole('alert')).toHaveText('We do not repair toasters')
+  await expect(device).toHaveValue('Toaster')
+  await expect(device).toHaveAttribute('aria-invalid', 'true')
+  await device.fill('Laptop')
+  await page.getByRole('button', {name: 'Send'}).click()
+  await expect(page.getByRole('status')).toHaveText(
+    'We will look at your Laptop.'
+  )
 })

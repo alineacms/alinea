@@ -106,6 +106,22 @@ export interface Submission {
   createdAt: number
 }
 
+/** What a site sends to the handler for a visitor's answers */
+export interface SubmitRequest {
+  /** The id of the entry holding the form */
+  entryId: string
+  locale?: string | null
+  /** The key of the form field, the first one of the entry by default */
+  field?: string
+  /** The FormData the visitor sent, as its entries */
+  data: Array<[string, string]>
+}
+
+/** What the handler answers to a submission */
+export type SubmitResult =
+  | {ok: true; confirmation?: string}
+  | {ok: false; errors?: Record<string, string>; message?: string}
+
 export interface SubmissionsApi {
   storeSubmission?(submission: Submission): Promise<void>
   /** The submissions of a form, the latest first */

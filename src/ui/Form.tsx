@@ -19,7 +19,6 @@ import {
   createElement,
   startTransition,
   useActionState,
-  useEffect,
   useMemo,
   useState
 } from 'react'
@@ -105,11 +104,6 @@ export function Form({
     (_: FormResult | undefined, data: FormData) => action!(data),
     undefined
   )
-  // Set once the form shows in the browser, so it renders the same on the
-  // server and a form sent without scripts is not taken for a bot
-  const [shownAt, setShownAt] = useState<number>()
-  useEffect(() => setShownAt(Date.now()), [])
-
   function change(event: FormEvent<HTMLFormElement>) {
     onChange?.(event)
     setValues(readValues(definition, new FormData(event.currentTarget)))
@@ -147,14 +141,17 @@ export function Form({
         aria-hidden
         style={hidden}
       />,
-      shownAt && (
-        <input
-          key="shown"
-          type="hidden"
-          name={formSpam.shownAt}
-          value={shownAt}
-        />
-      ),
+      <input
+        key="shown"
+        type="hidden"
+        name={formSpam.shownAt}
+        // Filled in once the form shows in the browser, so it renders the
+        // same on the server and a form sent without scripts is not taken
+        // for a bot
+        ref={input => {
+          if (input && !input.value) input.value = String(Date.now())
+        }}
+      />,
       ...definition.map(item => (
         <FormItemView key={item.id} item={item} {...context} />
       )),
