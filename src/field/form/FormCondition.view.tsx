@@ -92,6 +92,7 @@ export function FormConditionView({field}: FormConditionViewProps) {
         <ToggleGroup
           type="single"
           size="sm"
+          variant="outline"
           aria-label={options.label}
           disabled={readOnly}
           value={condition ? 'when' : 'never'}
@@ -115,6 +116,7 @@ export function FormConditionView({field}: FormConditionViewProps) {
             <ToggleGroup
               type="single"
               size="sm"
+              variant="outline"
               aria-label="Match"
               disabled={readOnly}
               value={condition.match}
