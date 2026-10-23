@@ -86,7 +86,7 @@ test('the definition names inputs by their key', async () => {
           required: true,
           width: 'full',
           attributes: {type: 'text', maxLength: 80},
-          settings: {placeholder: '', maxLength: 80}
+          settings: {maxLength: 80}
         },
         {
           id: 'mail',
@@ -97,7 +97,7 @@ test('the definition names inputs by their key', async () => {
           required: false,
           width: 'half',
           attributes: {type: 'email', autoComplete: 'email'},
-          settings: {placeholder: undefined}
+          settings: {}
         }
       ]
     },
@@ -166,4 +166,41 @@ test('default inputs validate their values', () => {
     'Choose a listed option'
   )
   expect(Form.number.parse?.(['4'], {} as any)).toBe(4)
+})
+
+test('saving fixes keys and option values', () => {
+  const saved = CoreField.beforeSave(inputs, rows as any, {
+    action: 'update',
+    now: new Date()
+  })
+  const [about, service] = saved as Array<any>
+  expect(about.inputs.map((row: any) => row.key)).toEqual([
+    'your-name',
+    'address'
+  ])
+  expect(service.key).toBe('service')
+  expect(service.options.map((option: any) => option.value)).toEqual([
+    'it',
+    'people'
+  ])
+})
+
+test('options of an input have their own value', () => {
+  const errors = validateEntry(Contact, {
+    inputs: [
+      {
+        _id: 'pick',
+        _index: 'a0',
+        _type: 'select',
+        label: 'Pick',
+        options: [
+          {_id: 'a', _index: 'a0', _type: 'option', label: 'IT'},
+          {_id: 'b', _index: 'a1', _type: 'option', label: 'I.T.', value: 'it'}
+        ]
+      }
+    ]
+  }).map(error => [formatFieldPath(error.path), error.message])
+  expect(errors).toEqual([
+    ['inputs[0].options[1].value', 'Another option uses the value "it"']
+  ])
 })

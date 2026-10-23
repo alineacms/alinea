@@ -14,8 +14,9 @@ import {
   type FormDefinition,
   type FormItem,
   type FormRow,
+  fixedKeys,
   formDefinition,
-  keyErrors
+  formErrors
 } from './FormDefinition.js'
 import type {Input} from './FormInput.js'
 
@@ -70,7 +71,12 @@ export function form<Inputs extends Record<string, Input>>(
     options: {label, ...options, schema},
     view: viewKeys.FormInput,
     nestedErrors(value, context) {
-      return keyErrors(inputs, value, context.path, context.labels)
+      return formErrors(inputs, value, context.path, context.labels)
+    },
+    // Publishing a draft does not save it again, so keys are fixed whenever
+    // the form is saved
+    beforeSave({value}) {
+      return fixedKeys(inputs, value) as Array<FormRow>
     },
     async queryValue(value) {
       return formDefinition(inputs, value) as FormDefinition<any>

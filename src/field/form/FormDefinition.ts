@@ -91,7 +91,7 @@ export function formDefinition(
       required: row.required === true,
       width: row.width === 'half' ? 'half' : 'full',
       attributes: attributes(input, settings),
-      settings: rest
+      settings: filled(rest)
     }
     if ('options' in settings) data.choices = choices(options)
     if (!isEmpty(initialValue)) data.initialValue = initialValue
@@ -99,8 +99,11 @@ export function formDefinition(
   })
 }
 
-/** Inputs that have no key or share their key with an input above them */
-export function keyErrors(
+/**
+ * Inputs without a key or with the key of an input above them, and options
+ * with the value of another option of their input
+ */
+export function formErrors(
   inputs: Record<string, Input>,
   rows: unknown,
   path: Array<string | number>,
@@ -115,17 +118,73 @@ export function keyErrors(
     const at = [...path, index]
     const within = [...labels, input.label]
     if (input.control === 'section')
-      return keyErrors(inputs, row.inputs, [...at, 'inputs'], within, seen)
+      return formErrors(inputs, row.inputs, [...at, 'inputs'], within, seen)
+    const errors = optionErrors(row.options, [...at, 'options'], within)
     // A missing label is reported on the label
-    if (!text(row.label)) return []
+    if (!text(row.label)) return errors
     const key = inputKey(row)
     const error = (message: string) => [
+      ...errors,
       {path: [...at, 'key'], labels: [...within, 'Key'], message}
     ]
     if (!key) return error('Use letters or digits in the key')
     if (seen.has(key)) return error(`Another input uses the key "${key}"`)
     seen.add(key)
-    return []
+    return errors
+  })
+}
+
+function optionErrors(
+  options: unknown,
+  path: Array<string | number>,
+  labels: Array<string>
+): Array<FieldValidationError> {
+  if (!Array.isArray(options)) return []
+  const seen = new Set<string>()
+  return options.flatMap((option, index) => {
+    const [choice] = choices([option])
+    if (!choice) return []
+    if (!seen.has(choice.value)) {
+      seen.add(choice.value)
+      return []
+    }
+    return [
+      {
+        path: [...path, index, 'value'],
+        labels: [...labels, 'Options', 'Option', 'Value'],
+        message: `Another option uses the value "${choice.value}"`
+      }
+    ]
+  })
+}
+
+/**
+ * The rows with the keys of inputs and the values of options that still
+ * follow their label filled in, so renaming them later keeps the data that
+ * was submitted and sent to the site
+ */
+export function fixedKeys(
+  inputs: Record<string, Input>,
+  rows: unknown
+): unknown {
+  if (!Array.isArray(rows)) return rows
+  return rows.map(row => {
+    if (!isRecord(row)) return row
+    const input = inputs[row._type as string]
+    if (!input) return row
+    if (input.control === 'section')
+      return {...row, inputs: fixedKeys(inputs, row.inputs)}
+    const key = inputKey(row)
+    const next = key && !row.key ? {...row, key} : row
+    if (!Array.isArray(row.options)) return next
+    return {
+      ...next,
+      options: row.options.map(option => {
+        const [choice] = choices([option])
+        if (!choice || !isRecord(option) || option.value) return option
+        return {...option, value: choice.value}
+      })
+    }
   })
 }
 
@@ -134,6 +193,15 @@ function settingsOf(input: Input, row: Record<string, unknown>) {
   const names = [...keys(input.fields ?? {}), ...keys(input.settings ?? {})]
   for (const key of names) settings[key] = row[key]
   return settings
+}
+
+// The site gets the settings that were filled in
+function filled(settings: Record<string, unknown>) {
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(settings))
+    if (value !== undefined && value !== null && value !== '')
+      result[key] = value
+  return result
 }
 
 function attributes(input: Input, settings: Record<string, unknown>) {
