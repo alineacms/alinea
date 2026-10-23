@@ -1,23 +1,18 @@
-import styler from '@alinea/styler'
 import {useContext} from 'react'
 import {
-  DateInput,
-  DateSegment,
   TimeField as TimeFieldPrimitive,
   TimeFieldStateContext
 } from 'react-aria-components'
 import {Field} from './Field.js'
+import {DateControlInput} from './internal/DateControl.js'
 import {formatTime, toTime} from './internal/DateValue.js'
 import {Locale} from './internal/Locale.js'
-import css from './TimeField.module.css'
 import type {
   AriaProps,
   DataProps,
   FieldSharedProps,
   StyleProps
 } from './types.js'
-
-const styles = styler(css)
 
 export interface TimeFieldProps
   extends FieldSharedProps, StyleProps, AriaProps, DataProps {
@@ -70,7 +65,7 @@ export function TimeField({
       <TimeFieldPrimitive
         data-slot="time-field"
         {...props}
-        className={styles.TimeField(styler.merge({className}))}
+        className={className}
         value={toTime(value)}
         defaultValue={toTime(defaultValue)}
         onChange={
@@ -95,23 +90,7 @@ export function TimeField({
           icon={icon}
           shared={shared}
         >
-          <DateInput
-            data-slot="time-field-input"
-            className={styles.TimeField.input()}
-          >
-            {segment => (
-              <DateSegment
-                data-slot="time-field-segment"
-                className={state =>
-                  styles.TimeField.segment({
-                    placeholder: state.isPlaceholder,
-                    literal: segment.type === 'literal'
-                  })
-                }
-                segment={segment}
-              />
-            )}
-          </DateInput>
+          <DateControlInput dataSlot="time-field" framed />
           {name && (
             <TimeFieldValue
               name={name}

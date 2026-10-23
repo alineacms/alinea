@@ -102,10 +102,11 @@ export class EntryStore
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const {preview, ...withoutPreview} = query
+    const {preview} = query
     if (!preview || !('entry' in preview)) return this.database.resolve(query)
+    // The query keeps its preview: the 'preview' status shows that entry
     return this.#previewQueue.run(() =>
-      this.#resolvePreview(preview.entry, withoutPreview as Query)
+      this.#resolvePreview(preview.entry, query)
     )
   }
 

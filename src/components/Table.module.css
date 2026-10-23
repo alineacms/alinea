@@ -153,6 +153,35 @@
   font-size: 14px;
 }
 
+.TableHeader-info {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-inline-start: 2px;
+  padding: 2px;
+  border: 0;
+  border-radius: var(--alinea-radius-sm);
+  background: none;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    color: var(--alinea-fg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+  }
+}
+
+.TableHeader-info-content {
+  padding: 4px 6px;
+  color: var(--alinea-fg);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .TableRow {
   position: relative;
   box-sizing: border-box;

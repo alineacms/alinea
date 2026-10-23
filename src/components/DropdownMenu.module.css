@@ -31,9 +31,15 @@
     outline-offset: -2px;
   }
 
+  /* A checked item is tinted like the selected option of a select */
   &[aria-checked='true'] {
+    background: color-mix(in oklab, var(--alinea-selected), var(--alinea-bg) 60%);
     color: var(--alinea-selected-fg);
     font-weight: 500;
+
+    &:focus {
+      background: var(--alinea-selected);
+    }
   }
 
   &[aria-disabled='true'] {

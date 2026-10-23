@@ -56,7 +56,9 @@
   dashboard lists their children: columns (`Config.column`) with per-type
   selects, formatting and custom cells, built-in type, status, updated and
   author columns, sorting by column header (kept in the URL), the default
-  `sort`, `layout`, card `thumbnail` and toolbar `actions`. Filters can load
+  `sort`, `layout`, card `thumbnail` and toolbar `actions`. A column `header`
+  is text or a React element, and `info` explains the column in a popover
+  opened from an info button next to the header. Filters can load
   their options from the content with a function that receives the `graph`
   and `locale`. `tabs` list the entries of a filter per tab above the list
   (the selected tab is kept in the URL), and `header` renders a view between

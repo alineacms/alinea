@@ -376,7 +376,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`'preferDraft'`: one version per entry: the draft if there is one, then the published version, then the archived one. This is the default in Next.js draft mode."
+                  "text": "`'preferDraft'`: one version per entry: the draft if there is one, then the published version, then the archived one."
                 }
               ]
             }
@@ -391,6 +391,20 @@
                 {
                   "_type": "text",
                   "text": "`'preferPublished'`: one version per entry: the published one if there is one, then the archived one, then the draft."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`'preview'`: what a preview shows: published entries, with their draft if there is one, and the previewed entry in any status when it is looked up with `first` or `get`. Archived and unpublished entries are left out of listings, as on the live site. This is the default in Next.js draft mode."
                 }
               ]
             }

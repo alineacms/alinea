@@ -37,6 +37,7 @@ import {ScalarField} from '#/core/field/ScalarField.js'
 import {JsonField} from '#/field/json/JsonField.js'
 import {hasAuditMetadata} from '#/field/metadata/MetadataAudit.js'
 import {atom} from 'jotai'
+import type {ReactNode} from 'react'
 import {graphAtom} from './core.js'
 import {routeAtom} from './nav.js'
 
@@ -61,7 +62,8 @@ export type OverviewParent =
 /** A column of an overview, resolved against the schema */
 export interface OverviewColumnState {
   key: string
-  header: string
+  header: ReactNode
+  info?: ReactNode
   builtin?: OverviewBuiltinColumn
   width: OverviewColumnWidth
   minWidth?: number
@@ -83,7 +85,7 @@ export interface OverviewSelection {
 /** An order editors can pick, resolved against the schema */
 export interface OverviewSortState {
   key: string
-  label: string
+  label: ReactNode
   /** The values to order by, in order */
   by: Array<Expr<any>>
   /** The direction the order is first picked in */
@@ -439,6 +441,7 @@ function customColumn(
   return {
     key,
     header: column.header,
+    info: column.info,
     width: column.width ?? '1fr',
     minWidth: column.minWidth ?? (column.width === undefined ? 120 : undefined),
     align: column.align,

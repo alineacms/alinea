@@ -20,12 +20,14 @@ import {
   Virtualizer
 } from 'react-aria-components'
 import {
+  IcOutlineInfo,
   IcRoundKeyboardArrowDown,
   IcRoundKeyboardArrowUp
 } from '#/dashboard/icons.js'
 import css from './Table.module.css'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
+import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 import {SelectionCheckbox} from './internal/SelectionCheckbox.js'
 import {useDragDrop} from './internal/useDragDrop.js'
 import {Spinner} from './Spinner.js'
@@ -51,6 +53,8 @@ const selectionWidth = 30
 export interface TableColumn {
   id: Key
   header: ReactNode
+  /** Explains the column in a popover, opened from a button by the header */
+  info?: ReactNode
   /** A fixed width in pixels or a fraction of the remaining space */
   width?: number | `${number}fr`
   /** Minimum width in pixels of a fractional column */
@@ -397,10 +401,44 @@ function TableHeader({sortDescriptor, onSortChange}: TableHeaderProps) {
             ) : (
               label
             )}
+            {column.info ? <TableHeadInfo column={column} /> : null}
           </div>
         )
       })}
     </div>
+  )
+}
+
+interface TableHeadInfoProps {
+  column: TableColumn
+}
+
+function TableHeadInfo({column}: TableHeadInfoProps) {
+  const label =
+    typeof column.header === 'string'
+      ? `About ${column.header}`
+      : 'About this column'
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          data-slot="table-head-info"
+          aria-label={label}
+          className={styles.TableHeader.info()}
+        >
+          <Icon icon={IcOutlineInfo} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent aria-label={label} side="bottom" align="start">
+        <div
+          data-slot="table-head-info-content"
+          className={styles.TableHeader.info.content()}
+        >
+          {column.info}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 

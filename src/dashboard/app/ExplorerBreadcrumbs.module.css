@@ -1,0 +1,41 @@
+.ExplorerBreadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ExplorerBreadcrumbs-nav {
+  min-width: 0;
+}
+
+.ExplorerBreadcrumbs-list {
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-wrap: normal;
+}
+
+.ExplorerBreadcrumbs-item {
+  min-width: 0;
+}
+
+.ExplorerBreadcrumbs-page,
+.ExplorerBreadcrumbs-text,
+.ExplorerBreadcrumbs-link {
+  max-width: 160px;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ExplorerBreadcrumbs-text {
+  color: var(--alinea-fg-muted);
+}
+
+.ExplorerBreadcrumbs-link {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+}

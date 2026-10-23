@@ -243,14 +243,15 @@ test('only offers media roots when picking a file', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Pick a file'}).click()
 
   const location = page.getByRole('group', {name: 'Explorer location'})
+  const scope = page.getByRole('group', {name: 'Explorer scope'})
   await expect(location.getByText('Media', {exact: true})).toBeVisible()
-  await expect(location.getByRole('button', {name: 'Media'})).toHaveCount(0)
+  await expect(scope.getByRole('button', {name: 'Media'})).toHaveCount(0)
 
-  await location.getByRole('button', {name: 'Simple'}).click()
+  await scope.getByRole('button', {name: 'Simple'}).click()
   await page.getByRole('menuitemradio', {name: 'Many roots'}).click()
-  await expect(location.getByRole('button', {name: 'Many roots'})).toBeVisible()
+  await expect(scope.getByRole('button', {name: 'Many roots'})).toBeVisible()
   await expect(location.getByText('Media', {exact: true})).toBeVisible()
-  await expect(location.getByRole('button', {name: 'Media'})).toHaveCount(0)
+  await expect(scope.getByRole('button', {name: 'Media'})).toHaveCount(0)
 })
 
 test('keeps a link selected while filtering the picker', async ({
@@ -395,11 +396,11 @@ test('keeps static picker conditions outside an entry scope', async ({
   const picker = page.getByRole('dialog', {
     name: 'Pick a link in expanded view'
   })
-  const resultModes = picker.getByRole('radiogroup', {
-    name: 'Explorer results'
-  })
-  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
-  await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeDisabled()
+  // The matches of the condition are listed, without folders to browse
+  await expect(picker.getByRole('row', {name: /^Release notes /})).toBeVisible()
+  await expect(
+    picker.getByRole('radiogroup', {name: 'Explorer results'})
+  ).toHaveCount(0)
 })
 
 test('keeps picker copy for generic link fields', async ({mount, page}) => {
@@ -479,9 +480,49 @@ test('expands the compact entry picker into the explorer modal', async ({
   await expect(
     page.getByRole('treegrid', {name: 'Explorer entries'})
   ).toBeVisible()
-  await expect(page.getByRole('switch', {name: 'All locations'})).toBeVisible()
+  await expect(page.getByRole('button', {name: 'Simple'})).toBeVisible()
   await expect(page.getByLabel('Explorer view')).toBeVisible()
   await expect(page.getByRole('button', {name: 'Select'})).toBeVisible()
+})
+
+test('searches all roots or workspaces from the location dropdowns', async ({
+  mount,
+  page
+}) => {
+  await mount(<EntryPickerSingle />)
+  await page.getByRole('button', {name: 'Pick an entry'}).click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  const location = picker.getByRole('group', {name: 'Explorer location'})
+  const scope = picker.getByRole('group', {name: 'Explorer scope'})
+  await expect(location.getByText('Pages', {exact: true})).toBeVisible()
+
+  // Wider scopes list matches, so they wait for a search
+  await scope.getByRole('button', {name: 'Pages'}).click()
+  await expect(
+    page.getByRole('menuitemradio', {name: 'All roots'})
+  ).toBeDisabled()
+  await page.keyboard.press('Escape')
+
+  await picker.getByRole('searchbox', {name: 'Search'}).fill('About')
+  await scope.getByRole('button', {name: 'Pages'}).click()
+  await page.getByRole('menuitemradio', {name: 'All roots'}).click()
+  await expect(scope.getByRole('button', {name: 'All roots'})).toBeVisible()
+  await expect(location.getByText('Pages', {exact: true})).toHaveCount(0)
+
+  await scope.getByRole('button', {name: 'Simple'}).click()
+  await page.getByRole('menuitemradio', {name: 'All workspaces'}).click()
+  await expect(
+    scope.getByRole('button', {name: 'All workspaces'})
+  ).toBeVisible()
+  await expect(scope.getByRole('button', {name: 'All roots'})).toHaveCount(0)
+
+  await scope.getByRole('button', {name: 'All workspaces'}).click()
+  await page.getByRole('menuitemradio', {name: 'Simple'}).click()
+  await expect(scope.getByRole('button', {name: 'Pages'})).toBeVisible()
+  await expect(location.getByText('Pages', {exact: true})).toBeVisible()
 })
 
 test('centers the compact picker on the entire link field', async ({

@@ -256,7 +256,7 @@ export class NextCMS<
     let status = query.status
     const {context, hasPreview, isDraft, isBuild, preview, useLocalDb} =
       await this.#applyPreview()
-    if (isDraft && !status) status = 'preferDraft'
+    if (isDraft && !status) status = 'preview'
     const request = {...query, preview, status}
     const client = createClient(this.config, context)
     if (row) row.source = useLocalDb ? 'database' : 'handler'

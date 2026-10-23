@@ -10,6 +10,7 @@ import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field, Query} from '#/index.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
 import {entryStatus} from '#/dashboard/app/EntryStatusIcon.js'
+import {overviewTableColumn} from '#/dashboard/app/OverviewCell.js'
 import {
   Blog,
   Brand,
@@ -20,6 +21,7 @@ import {
 } from '#test/overview.js'
 import {expect, test} from 'bun:test'
 import {atom} from 'jotai'
+import {createElement} from 'react'
 import {loadEntryTableRows} from './entryTable.js'
 import {createExplorerAtoms} from './explorer.js'
 import {
@@ -140,6 +142,28 @@ test('sortable: false opts out of sorting', () => {
   // Links and lists need sortBy
   expect(sortBy('brand')).toBeUndefined()
   expect(sortBy('categories')).toBeUndefined()
+})
+
+test('headers can be elements with info explaining the column', () => {
+  const header = createElement('abbr', {title: 'Stock keeping unit'}, 'SKU')
+  const info = createElement('p', null, 'Units left in the warehouse')
+  const Stock = Config.document('Stock', {
+    fields: {},
+    contains: ['Product'],
+    overview: {
+      columns: {
+        stock: Config.column({header, info, select: Product.stock})
+      }
+    }
+  })
+  const overview = resolveOverview(config, {
+    kind: 'type',
+    name: 'Stock',
+    type: Stock
+  })
+  const column = overview.columns.find(column => column.key === 'stock')!
+  expect(overviewTableColumn(column)).toMatchObject({header, info})
+  expect(overview.sorts.find(sort => sort.key === 'stock')!.label).toBe(header)
 })
 
 test('the editor sort orders the query, the default order applies otherwise', () => {
