@@ -1,0 +1,60 @@
+{
+  "_id": "3L5XXwnX7petmVdTcyQNAncljVz",
+  "_type": "FormEntry",
+  "_index": "a0",
+  "_i18nId": "3L5XXwnX7petmVdTcyQNAncljVz",
+  "_root": "forms",
+  "title": "Contact",
+  "path": "contact",
+  "inputs": [
+    {
+      "_id": "contact-name",
+      "_index": "a0",
+      "_type": "text",
+      "label": "Name",
+      "required": true,
+      "width": "half",
+      "placeholder": "Jane Doe"
+    },
+    {
+      "_id": "contact-email",
+      "_index": "a1",
+      "_type": "email",
+      "label": "Email",
+      "required": true,
+      "width": "half",
+      "placeholder": "jane@example.com"
+    },
+    {
+      "_id": "contact-subject",
+      "_index": "a2",
+      "_type": "select",
+      "label": "Subject",
+      "required": true,
+      "width": "full",
+      "placeholder": "Choose a subject",
+      "options": [
+        {"_id": "general", "_index": "a0", "_type": "option", "label": "General question"},
+        {"_id": "feedback", "_index": "a1", "_type": "option", "label": "Feedback"},
+        {"_id": "press", "_index": "a2", "_type": "option", "label": "Press"}
+      ]
+    },
+    {
+      "_id": "contact-message",
+      "_index": "a3",
+      "_type": "textarea",
+      "label": "Message",
+      "required": true,
+      "width": "full",
+      "maxLength": 2000
+    },
+    {
+      "_id": "contact-privacy",
+      "_index": "a4",
+      "_type": "check",
+      "label": "I agree to the privacy policy",
+      "required": true,
+      "width": "full"
+    }
+  ]
+}

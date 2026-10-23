@@ -2,6 +2,28 @@ import { Config, Field } from "alinea";
 
 export const ListFields = Config.document("List fields", {
   fields: {
+    sizes: Field.list("Compact list", {
+      help: "Enter adds a size, Backspace in an empty one removes it",
+      compact: true,
+      schema: {
+        Size: Config.type("Size", {
+          fields: {
+            label: Field.text("Label", { width: 0.6 }),
+            code: Field.text("Code", { width: 0.4 }),
+          },
+          tabs: {
+            stock: Field.tab("Stock", {
+              fields: { stock: Field.number("In stock") },
+            }),
+          },
+        }),
+      },
+      initialValue: [
+        { _type: "Size", label: "Small", code: "S" },
+        { _type: "Size", label: "Medium", code: "M" },
+        { _type: "Size", label: "Large", code: "L" },
+      ],
+    }),
     list: Field.list("My list field", {
       schema: {
         Text: Config.type("Text", {

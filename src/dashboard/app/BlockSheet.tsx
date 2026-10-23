@@ -161,6 +161,18 @@ export function useBlockSheet(id: string): BlockSheetState {
   }
 }
 
+/** Opens the sheet of a block, eg. one that was just added */
+export function useOpenBlockSheet(): (id: string) => void {
+  const context = useContext(BlockSheetContext)
+  const store = useStore()
+  return useCallback(
+    (id: string) => {
+      if (context) store.set(context.open, id)
+    },
+    [context, store]
+  )
+}
+
 /** Whether any block sheet is open or still animating out */
 export function useBlockSheetOpen(): boolean {
   const context = useContext(BlockSheetContext)

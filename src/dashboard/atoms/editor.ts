@@ -72,6 +72,8 @@ export interface EditorField {
 export class EntryEditor implements EditorModel {
   anchors: Atom<Array<EntryAnchorTarget>>
   readonly readOnly: boolean
+  /** Fields render without their label, eg. in a compact list row */
+  readonly inline: boolean
   value: Atom<object>
   sections: Array<EntryEditorSection>
 
@@ -85,8 +87,10 @@ export class EntryEditor implements EditorModel {
       string,
       ResolvedEditorImage
     > = parent?.resolvedImages ?? emptyResolvedImages,
-    readOnly?: boolean
+    readOnly?: boolean,
+    inline?: boolean
   ) {
+    this.inline = Boolean(inline)
     this.readOnly = Boolean(readOnly || node.readOnly || parent?.readOnly)
     this.resource ??= parent?.resource
     this.policy ??= parent?.policy
@@ -166,9 +170,15 @@ class EntryEditorField implements EditorField {
 
   options = atom((get): FieldOptions<unknown> => {
     const tracked = trackedFieldOptions(this.field, get(this.#getter))
-    const options = this.editor.readOnly
-      ? {...tracked, readOnly: true}
-      : tracked
+    const {readOnly, inline} = this.editor
+    const options =
+      readOnly || inline
+        ? {
+            ...tracked,
+            ...(readOnly && {readOnly: true}),
+            ...(inline && {inline: true})
+          }
+        : tracked
     const {resource, policy} = this.editor
     if (!resource || !policy) return options
     return policyFieldOptions(

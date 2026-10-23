@@ -1,0 +1,107 @@
+{
+  "_id": "3L5XXv3fztLo8qQdFpq3AByFPnB",
+  "_type": "FormEntry",
+  "_index": "a2",
+  "_i18nId": "3L5XXv3fztLo8qQdFpq3AByFPnB",
+  "_root": "forms",
+  "title": "Workshop sign-up",
+  "path": "workshop-sign-up",
+  "inputs": [
+    {
+      "_id": "workshop-participant",
+      "_index": "a0",
+      "_type": "section",
+      "label": "Participant",
+      "inputs": [
+        {
+          "_id": "workshop-first-name",
+          "_index": "a0",
+          "_type": "text",
+          "label": "First name",
+          "required": true,
+          "width": "half"
+        },
+        {
+          "_id": "workshop-last-name",
+          "_index": "a1",
+          "_type": "text",
+          "label": "Last name",
+          "required": true,
+          "width": "half"
+        },
+        {
+          "_id": "workshop-email",
+          "_index": "a2",
+          "_type": "email",
+          "label": "Email",
+          "required": true,
+          "width": "half"
+        },
+        {
+          "_id": "workshop-organisation",
+          "_index": "a3",
+          "_type": "text",
+          "label": "Organisation",
+          "width": "half"
+        }
+      ]
+    },
+    {
+      "_id": "workshop-session",
+      "_index": "a1",
+      "_type": "section",
+      "label": "Session",
+      "inputs": [
+        {
+          "_id": "workshop-date",
+          "_index": "a0",
+          "_type": "date",
+          "label": "Preferred date",
+          "required": true,
+          "width": "half",
+          "min": "2026-11-02",
+          "max": "2026-12-18"
+        },
+        {
+          "_id": "workshop-attendees",
+          "_index": "a1",
+          "_type": "number",
+          "label": "Number of attendees",
+          "width": "half",
+          "min": 1,
+          "max": 5,
+          "initialValue": 1
+        },
+        {
+          "_id": "workshop-parts",
+          "_index": "a2",
+          "_type": "checkboxes",
+          "label": "Parts you will attend",
+          "required": true,
+          "width": "full",
+          "options": [
+            {"_id": "morning", "_index": "a0", "_type": "option", "label": "Morning session"},
+            {"_id": "lunch", "_index": "a1", "_type": "option", "label": "Lunch"},
+            {"_id": "afternoon", "_index": "a2", "_type": "option", "label": "Afternoon session"}
+          ]
+        },
+        {
+          "_id": "workshop-diet",
+          "_index": "a3",
+          "_type": "textarea",
+          "label": "Dietary requirements",
+          "width": "full",
+          "maxLength": 500
+        }
+      ]
+    },
+    {
+      "_id": "workshop-newsletter",
+      "_index": "a2",
+      "_type": "check",
+      "label": "Keep me posted about new workshops",
+      "width": "full",
+      "initialValue": true
+    }
+  ]
+}

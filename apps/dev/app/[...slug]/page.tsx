@@ -1,6 +1,8 @@
 import {cms} from '@/cms'
 import {ExampleView} from '@/ExampleView'
+import {FormView} from '@/FormView'
 import {Entry} from 'alinea/core'
+import type {FormDefinition} from 'alinea/form'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {cache} from 'react'
@@ -128,6 +130,10 @@ export default async function Example(props: PageProps) {
 
   const content = fields ?? (page.data as PageFields)
   const title = text(content.title) ?? page.title
+  if (page.type === 'FormEntry')
+    return (
+      <FormView title={title} definition={content.inputs as FormDefinition} />
+    )
   return (
     <ExampleView
       content={content}

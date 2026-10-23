@@ -2,6 +2,7 @@ import {
   Button,
   Command,
   CommandEmpty,
+  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
@@ -17,6 +18,7 @@ import {
   SortableListItemToggle,
   SortableListItemHeader,
   SortableListItemDescription,
+  SortableListItemHandle,
   SortableListItemInsert,
   SortableListItemTrigger,
   Popover,
@@ -35,18 +37,21 @@ import {
   TooltipContent,
   TooltipTrigger
 } from '#/components.js'
-import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
+import {Field} from '#/core/Field.js'
 import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Schema} from '#/core/Schema.js'
+import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
+import {entries, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/components.js'
 import {
   BlockSheet,
   type BlockSheetState,
-  useBlockSheet
+  useBlockSheet,
+  useOpenBlockSheet
 } from '#/dashboard/app/BlockSheet.js'
 import {BlockTabs} from '#/dashboard/app/BlockTabs.js'
 import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
@@ -74,10 +79,17 @@ import {
 import {ListOptions} from '#/field/list.js'
 import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
-import type {ComponentType, ReactNode} from 'react'
-import {memo, useCallback, useMemo, useRef, useState} from 'react'
+import type {ComponentType, KeyboardEvent, ReactNode} from 'react'
+import {
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import css from './ListField.module.css'
 
 const styles = styler(css)
@@ -97,6 +109,12 @@ export interface ListFieldTypeItem {
   id: string
   label: string
   type: Schema[string]
+  /** The heading the type is listed under in the type picker */
+  group?: string
+}
+
+export interface ListFieldBadgesProps {
+  row: ReactiveNode<ListValue>
 }
 
 interface ListFieldPickerOption {
@@ -108,10 +126,27 @@ interface ListFieldPickerOption {
 }
 
 export interface ListFieldViewProps {
-  field: CoreListField<ListRow, ListValue, ListOptions<Schema>>
+  field: Field<Array<ListRow>>
+  /**
+   * The field that names a row, in place of the label and anchor editors give
+   * it in its settings
+   */
+  labelField?: string
+  /** Shown in the header of a row, after its name */
+  badges?: ComponentType<ListFieldBadgesProps>
+  /** One button with this label adds a row, instead of one per type */
+  addLabel?: string
+  /** The heading a type is listed under in the type picker */
+  typeGroup?: (id: string) => string | undefined
 }
 
-export function ListFieldView({field}: ListFieldViewProps) {
+export function ListFieldView({
+  field,
+  labelField,
+  badges,
+  addLabel,
+  typeGroup
+}: ListFieldViewProps) {
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
   const list = useFieldNode(field) as ReactiveNode<Array<ListValue>>
@@ -128,9 +163,10 @@ export function ListFieldView({field}: ListFieldViewProps) {
       schemaEntries.map(([id, type]) => ({
         id,
         label: Type.label(type),
-        type
+        type,
+        group: typeGroup?.(id)
       })),
-    [schemaEntries]
+    [schemaEntries, typeGroup]
   )
   const readOnly = Boolean(options.readOnly)
   // A fold without a label next to it is a stray chevron
@@ -195,8 +231,34 @@ export function ListFieldView({field}: ListFieldViewProps) {
     })
   }, [])
 
+  const openSheet = useOpenBlockSheet()
+  const compact = Boolean(options.compact)
+  // The compact row to focus once it renders, after Enter or Backspace
+  const [focus, setFocus] = useState<RowFocus>()
+  const setUp = useCallback(
+    (row: ListValue) => {
+      const type = options.schema[row._type]
+      if (!type) return
+      // Rows named by a field or without fields to fold are set up in their
+      // settings, opened after the picker returns focus, which would close
+      // the sheet again
+      if (labelField || Type.sections(type).length === 0)
+        setTimeout(() => openSheet(row._id))
+    },
+    [options.schema, openSheet, labelField]
+  )
+  const insertNewRow = useCallback(
+    (index: number, row: ListValue) => {
+      insertRow(index, row)
+      setUp(row)
+    },
+    [insertRow, setUp]
+  )
+
   function addRow(typeName: string, type: Schema[string]) {
-    pushRow(createRow(typeName, type))
+    const row = createRow(typeName, type)
+    pushRow(row)
+    setUp(row)
   }
 
   const content = (hasRows || !readOnly) && (
@@ -207,7 +269,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
       {nodes.map((row, index) => (
         <ListFieldRow
           key={rowIds[index] || index}
-          onInsertRow={insertRow}
+          onInsertRow={insertNewRow}
           canCreate={canCreate}
           expanded={!foldedIds.has(rowIds[index])}
           index={index}
@@ -220,11 +282,17 @@ export function ListFieldView({field}: ListFieldViewProps) {
           schema={options.schema}
           pasted={pasted}
           typeItems={typeItems}
+          labelField={labelField}
+          badges={badges}
+          compact={compact}
+          focus={focus?.id === rowIds[index] ? focus.at : undefined}
+          onFocusRow={setFocus}
         />
       ))}
       {!readOnly && canCreate && (
         <SortableListAdd>
           <ListFieldCreateActions
+            addLabel={addLabel}
             items={typeItems}
             pasted={pasted && options.schema[pasted._type] ? pasted : undefined}
             onPaste={row => pushRow(cloneRow(row))}
@@ -252,7 +320,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
         onClick={toggleAll}
         description={options.help}
         shared={options.shared}
-        showFold={labelled}
+        showFold={labelled && !compact}
         inline={options.inline || !labelled}
       >
         {options.label}
@@ -301,6 +369,7 @@ function pasteBlockLabel(
 }
 
 interface ListFieldCreateActionsProps {
+  addLabel?: string
   items: Array<ListFieldTypeItem>
   pasted?: ListValue
   onPaste: (row: ListValue) => void
@@ -308,11 +377,26 @@ interface ListFieldCreateActionsProps {
 }
 
 function ListFieldCreateActions({
+  addLabel,
   items,
   pasted,
   onPaste,
   onSelect
 }: ListFieldCreateActionsProps) {
+  if (addLabel)
+    return (
+      <div className={styles.ListFieldCreateActions()}>
+        <ListFieldTypePicker
+          items={items}
+          label={addLabel}
+          triggerLabel={addLabel}
+          pasted={pasted}
+          pasteLabel={pasted ? pasteBlockLabel(pasted, items) : undefined}
+          onPaste={onPaste}
+          onSelect={onSelect}
+        />
+      </div>
+    )
   const visibleItems = items.slice(0, 3)
   const hasMenu = items.length > visibleItems.length
   return (
@@ -366,6 +450,12 @@ interface ListFieldRowProps {
   typeItems: Array<ListFieldTypeItem>
   pasted?: ListValue
   expanded: boolean
+  labelField?: string
+  badges?: ComponentType<ListFieldBadgesProps>
+  compact: boolean
+  /** Where to put the caret in the first input of this compact row */
+  focus?: RowFocus['at']
+  onFocusRow: (focus: RowFocus) => void
   onToggleRow: (rowId: string) => void
   onCopyRow: (rowId: string) => void
   onInsertRow: (index: number, row: ListValue) => void
@@ -381,14 +471,22 @@ const ListFieldRow = memo(function ListFieldRow({
   schema,
   typeItems,
   pasted,
-  expanded,
+  expanded: isExpanded,
+  labelField,
+  badges: Badges,
+  compact,
+  focus,
+  onFocusRow,
   onToggleRow,
   onCopyRow,
   onInsertRow
 }: ListFieldRowProps) {
   const itemId = useAtomValueRaw(row.field('_id')) as string
   const typeName = useAtomValueRaw(row.field('_type')) as string
-  const customLabelValue = useAtomValueRaw(row.field('_label')) as
+  // A compact row is named by its first field
+  const nameField =
+    labelField ?? (compact ? firstField(schema[typeName]) : undefined)
+  const customLabelValue = useAtomValueRaw(row.field(nameField ?? '_label')) as
     | string
     | undefined
   const anchorValue = useAtomValueRaw(row.field('_anchor')) as
@@ -405,6 +503,9 @@ const ListFieldRow = memo(function ListFieldRow({
 
   const label = Type.label(type)
   const typeIcon = getType(type).icon
+  // Rows that keep all their fields in tabs have nothing to fold
+  const expandable = Type.sections(type).length > 0
+  const expanded = expandable && isExpanded
 
   function deleteRow() {
     removeRow(index)
@@ -421,6 +522,63 @@ const ListFieldRow = memo(function ListFieldRow({
   function updateAnchor(nextValue: string) {
     setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
   }
+
+  const sheetContent = (
+    <BlockSheet id={itemId}>
+      <ListFieldRowSheet
+        anchor={nameField ? undefined : anchorValue}
+        labels={!nameField}
+        tabs={
+          <BlockTabs
+            node={row as ReactiveNode<object>}
+            type={type}
+            readOnly={readOnly}
+          />
+        }
+        canInsert={canCreate}
+        customLabel={customLabel}
+        isFirstRow={index === 0}
+        isLastRow={index === rows - 1}
+        items={typeItems}
+        label={label}
+        pasted={pasted && schema[pasted._type] ? pasted : undefined}
+        readOnly={readOnly}
+        typeIcon={typeIcon}
+        onAnchorChange={updateAnchor}
+        onClose={() => sheet.setOpen(false)}
+        onCopy={() => onCopyRow(itemId)}
+        onCustomLabelChange={updateCustomLabel}
+        onDelete={deleteRow}
+        onInsertAfter={value => onInsertRow(insertIndex(index, 'after'), value)}
+        onInsertBefore={value =>
+          onInsertRow(insertIndex(index, 'before'), value)
+        }
+        onMoveDown={() => moveListRow(index, index + 1)}
+        onMoveUp={() => moveListRow(index, index - 1)}
+      />
+    </BlockSheet>
+  )
+
+  if (compact)
+    return (
+      <>
+        <ListFieldCompactRow
+          index={index}
+          label={label}
+          list={list}
+          readOnly={readOnly}
+          row={row}
+          sheet={sheet}
+          type={type}
+          typeName={typeName}
+          focus={focus}
+          onDelete={deleteRow}
+          onFocusRow={onFocusRow}
+          onInsertRow={onInsertRow}
+        />
+        {sheetContent}
+      </>
+    )
 
   return (
     <>
@@ -441,12 +599,13 @@ const ListFieldRow = memo(function ListFieldRow({
           expanded={expanded}
           label={label}
           customLabel={customLabel}
-          anchor={anchorValue}
+          anchor={labelField ? undefined : anchorValue}
+          badges={Badges && <Badges row={row} />}
           readOnly={readOnly}
           sheet={sheet}
           typeIcon={typeIcon}
           onDelete={deleteRow}
-          onToggle={() => onToggleRow(itemId)}
+          onToggle={expandable ? () => onToggleRow(itemId) : undefined}
         />
         {expanded && (
           <SortableListItemContent>
@@ -455,40 +614,7 @@ const ListFieldRow = memo(function ListFieldRow({
         )}
       </SortableListItem>
       {/* Outside the item so events in the sheet don't reach its handlers */}
-      <BlockSheet id={itemId}>
-        <ListFieldRowSheet
-          anchor={anchorValue}
-          tabs={
-            <BlockTabs
-              node={row as ReactiveNode<object>}
-              type={type}
-              readOnly={readOnly}
-            />
-          }
-          canInsert={canCreate}
-          customLabel={customLabel}
-          isFirstRow={index === 0}
-          isLastRow={index === rows - 1}
-          items={typeItems}
-          label={label}
-          pasted={pasted && schema[pasted._type] ? pasted : undefined}
-          readOnly={readOnly}
-          typeIcon={typeIcon}
-          onAnchorChange={updateAnchor}
-          onClose={() => sheet.setOpen(false)}
-          onCopy={() => onCopyRow(itemId)}
-          onCustomLabelChange={updateCustomLabel}
-          onDelete={deleteRow}
-          onInsertAfter={value =>
-            onInsertRow(insertIndex(index, 'after'), value)
-          }
-          onInsertBefore={value =>
-            onInsertRow(insertIndex(index, 'before'), value)
-          }
-          onMoveDown={() => moveListRow(index, index + 1)}
-          onMoveUp={() => moveListRow(index, index - 1)}
-        />
-      </BlockSheet>
+      {sheetContent}
     </>
   )
 })
@@ -560,11 +686,13 @@ interface ListFieldRowHeaderProps {
   label: string
   customLabel: string
   anchor?: string
+  badges?: ReactNode
   readOnly: boolean
   sheet: BlockSheetState
   typeIcon?: ComponentType
   onDelete: () => void
-  onToggle: () => void
+  /** Left out for rows without fields to fold */
+  onToggle?: () => void
 }
 
 function ListFieldRowHeader({
@@ -572,6 +700,7 @@ function ListFieldRowHeader({
   label,
   customLabel,
   anchor,
+  badges,
   readOnly,
   sheet,
   typeIcon,
@@ -592,16 +721,19 @@ function ListFieldRowHeader({
         </SortableListItemDescription>
       )}
       {showAnchor && <Badge size="sm">#{displayAnchor}</Badge>}
+      {badges}
     </>
   )
   return (
     <SortableListItemHeader>
       <SortableListItemTitle>
-        <SortableListItemToggle
-          aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
-          expanded={expanded}
-          onClick={onToggle}
-        />
+        {onToggle && (
+          <SortableListItemToggle
+            aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+            expanded={expanded}
+            onClick={onToggle}
+          />
+        )}
         {sheet.available ? (
           <SortableListItemTrigger
             {...sheet.triggerProps}
@@ -609,7 +741,7 @@ function ListFieldRowHeader({
             aria-expanded={sheet.open}
             onClick={() => {
               // Opening the settings shows the row they belong to
-              if (!sheet.open && !expanded) onToggle()
+              if (!sheet.open && !expanded) onToggle?.()
               sheet.toggle()
             }}
           >
@@ -635,8 +767,142 @@ function ListFieldRowHeader({
 
 type InsertPosition = 'before' | 'after'
 
+interface RowFocus {
+  id: string
+  at: 'start' | 'end'
+}
+
+/** The key of the first field a row shows, outside its tabs */
+function firstField(type: Type | undefined): string | undefined {
+  const [section] = type ? Type.sections(type) : []
+  return section && keys(Section.fields(section))[0]
+}
+
+interface ListFieldCompactRowProps {
+  index: number
+  label: string
+  list: ReactiveNode<Array<ListValue>>
+  readOnly: boolean
+  row: ReactiveNode<ListValue>
+  sheet: BlockSheetState
+  type: Type
+  typeName: string
+  focus?: RowFocus['at']
+  onDelete: () => void
+  onFocusRow: (focus: RowFocus) => void
+  onInsertRow: (index: number, row: ListValue) => void
+}
+
+/**
+ * A row on one line with its fields side by side. Enter adds a row below,
+ * Backspace in an empty row removes it, its tabs open in the sheet.
+ */
+function ListFieldCompactRow({
+  index,
+  label,
+  list,
+  readOnly,
+  row,
+  sheet,
+  type,
+  typeName,
+  focus,
+  onDelete,
+  onFocusRow,
+  onInsertRow
+}: ListFieldCompactRowProps) {
+  const store = useStore()
+  const fields = useRef<HTMLDivElement>(null)
+  const itemId = useAtomValueRaw(row.field('_id')) as string
+  const name = `${label} item ${index + 1}`
+
+  useLayoutEffect(() => {
+    if (!focus) return
+    const input = fields.current?.querySelector<HTMLInputElement>(
+      'input:not([type="hidden"]), textarea'
+    )
+    if (!input) return
+    input.focus()
+    if (focus === 'end' && 'setSelectionRange' in input)
+      input.setSelectionRange(input.value.length, input.value.length)
+  }, [focus])
+
+  function keyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const target = event.target
+    if (readOnly || event.nativeEvent.isComposing) return
+    if (!(target instanceof HTMLInputElement)) return
+    // Pickers and comboboxes use these keys themselves
+    if (target.getAttribute('role') === 'combobox') return
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      const next = createRow(typeName, type)
+      onInsertRow(index + 1, next)
+      onFocusRow({id: next._id, at: 'start'})
+      return
+    }
+    if (event.key !== 'Backspace' || target.value) return
+    const value = store.get(row.value) as Record<string, unknown>
+    const empty = entries(Type.fields(type)).every(([key, field]) =>
+      Field.isEmpty(field, value[key])
+    )
+    const nodes = store.get(list.nodes) as Array<ReactiveNode<ListValue>>
+    if (!empty || nodes.length < 2) return
+    event.preventDefault()
+    const neighbour = nodes[index - 1] ?? nodes[index + 1]
+    onFocusRow({
+      id: store.get(neighbour.field('_id')) as string,
+      at: index > 0 ? 'end' : 'start'
+    })
+    onDelete()
+  }
+
+  return (
+    <SortableListItem
+      aria-label={name}
+      current={sheet.open}
+      id={itemId}
+      className={styles.ListFieldCompactRow()}
+    >
+      {!readOnly && <SortableListItemHandle aria-label={`Move ${name}`} />}
+      <div
+        ref={fields}
+        className={styles.ListFieldCompactRow.fields()}
+        onKeyDown={keyDown}
+      >
+        <NodeEditor
+          node={row as ReactiveNode<object>}
+          type={type}
+          readOnly={readOnly}
+          inline
+        />
+      </div>
+      {sheet.available && (
+        <Button
+          {...sheet.triggerProps}
+          variant="ghost"
+          size="icon-sm"
+          icon={IcRoundMoreHoriz}
+          aria-label={`${label} settings`}
+          aria-expanded={sheet.open}
+          onClick={() => sheet.toggle()}
+        />
+      )}
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        icon={IcRoundClose}
+        aria-label={`Remove ${name}`}
+        disabled={readOnly}
+        onClick={onDelete}
+      />
+    </SortableListItem>
+  )
+}
+
 interface ListFieldRowSheetProps {
   anchor?: string
+  /** Edit the label and anchor of the row */
+  labels: boolean
   /** The tabs of the row's type, rendered below the label and anchor */
   tabs?: ReactNode
   canInsert: boolean
@@ -661,6 +927,7 @@ interface ListFieldRowSheetProps {
 
 function ListFieldRowSheet({
   anchor,
+  labels,
   tabs,
   canInsert,
   customLabel,
@@ -734,37 +1001,39 @@ function ListFieldRowSheet({
       ) : (
         <>
           <SheetBody>
-            <SheetSection>
-              <TextField
-                label="Label"
-                disabled={readOnly}
-                onValueChange={onCustomLabelChange}
-                value={customLabel}
-              />
-              <div className={styles.ListFieldRowSheet.anchor()}>
-                <div className={styles.ListFieldRowSheet.anchor.field()}>
-                  <SlugField
-                    fieldValue={anchor}
-                    label="Anchor"
-                    isDisabled={readOnly}
-                    onChange={onAnchorChange}
-                    source={customLabel}
-                  />
-                </div>
-                {link && (
-                  <Tooltip>
-                    <TooltipTrigger
-                      variant="ghost"
-                      size="icon"
-                      icon={IcRoundLink}
-                      aria-label="Copy link to block"
-                      onClick={() => navigator.clipboard.writeText(link)}
+            {labels && (
+              <SheetSection>
+                <TextField
+                  label="Label"
+                  disabled={readOnly}
+                  onValueChange={onCustomLabelChange}
+                  value={customLabel}
+                />
+                <div className={styles.ListFieldRowSheet.anchor()}>
+                  <div className={styles.ListFieldRowSheet.anchor.field()}>
+                    <SlugField
+                      fieldValue={anchor}
+                      label="Anchor"
+                      isDisabled={readOnly}
+                      onChange={onAnchorChange}
+                      source={customLabel}
                     />
-                    <TooltipContent>Copy link to block</TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            </SheetSection>
+                  </div>
+                  {link && (
+                    <Tooltip>
+                      <TooltipTrigger
+                        variant="ghost"
+                        size="icon"
+                        icon={IcRoundLink}
+                        aria-label="Copy link to block"
+                        onClick={() => navigator.clipboard.writeText(link)}
+                      />
+                      <TooltipContent>Copy link to block</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </SheetSection>
+            )}
             {tabs}
           </SheetBody>
           <SheetFooter>
@@ -842,6 +1111,8 @@ interface ListFieldTypePickerProps {
   pasted?: ListValue
   pasteLabel?: string
   triggerIcon?: ComponentType
+  /** Show a button with this text instead of an icon */
+  triggerLabel?: string
   onPaste?: (row: ListValue) => void
   onSelect: (item: ListFieldTypeItem) => void
 }
@@ -855,6 +1126,7 @@ function ListFieldTypePicker({
   pasted,
   pasteLabel,
   triggerIcon = IcRoundAdd,
+  triggerLabel,
   onPaste,
   onSelect
 }: ListFieldTypePickerProps) {
@@ -867,16 +1139,30 @@ function ListFieldTypePicker({
 
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
-      <PopoverTrigger
-        aria-label={label}
-        className={styles.ListFieldTypePicker.trigger(
-          styler.merge({className})
-        )}
-        data-open={isOpen ? 'true' : undefined}
-        disabled={isDisabled}
-        size="icon"
-        icon={triggerIcon}
-      />
+      {triggerLabel ? (
+        <PopoverTrigger
+          className={styles.ListFieldCreateActions.button(
+            styler.merge({className})
+          )}
+          disabled={isDisabled}
+          size="sm"
+          variant="ghost"
+          icon={triggerIcon}
+        >
+          {triggerLabel}
+        </PopoverTrigger>
+      ) : (
+        <PopoverTrigger
+          aria-label={label}
+          className={styles.ListFieldTypePicker.trigger(
+            styler.merge({className})
+          )}
+          data-open={isOpen ? 'true' : undefined}
+          disabled={isDisabled}
+          size="icon"
+          icon={triggerIcon}
+        />
+      )}
       <PopoverContent
         aria-label={label}
         className={styles.ListFieldTypePicker.popover()}
@@ -936,22 +1222,44 @@ export function ListFieldTypeCommand({
       />
       <CommandList aria-label={label}>
         <CommandEmpty>No matching types</CommandEmpty>
-        {pickerItems.map(item => (
-          <CommandItem
-            key={item.id}
-            icon={item.icon}
-            value={item.id}
-            onSelect={() => {
-              if (item.pasted) onPaste?.(item.pasted)
-              if (item.typeItem) onSelect(item.typeItem)
-            }}
-          >
-            {item.label}
-          </CommandItem>
-        ))}
+        {groupItems(pickerItems).map(([group, items]) => {
+          const children = items.map(item => (
+            <CommandItem
+              key={item.id}
+              icon={item.icon}
+              value={item.id}
+              onSelect={() => {
+                if (item.pasted) onPaste?.(item.pasted)
+                if (item.typeItem) onSelect(item.typeItem)
+              }}
+            >
+              {item.label}
+            </CommandItem>
+          ))
+          if (!group) return children
+          return (
+            <CommandGroup key={group} heading={group}>
+              {children}
+            </CommandGroup>
+          )
+        })}
       </CommandList>
     </Command>
   )
+}
+
+/** Items by their group, in the order the groups first appear */
+function groupItems(
+  items: Array<ListFieldPickerOption>
+): Array<[string | undefined, Array<ListFieldPickerOption>]> {
+  const groups = new Map<string | undefined, Array<ListFieldPickerOption>>()
+  for (const item of items) {
+    const group = item.typeItem?.group
+    const members = groups.get(group)
+    if (members) members.push(item)
+    else groups.set(group, [item])
+  }
+  return [...groups]
 }
 
 function useListFieldPickerItems(

@@ -1,0 +1,142 @@
+.FormView {
+  --alinea-accent: #5f46d8;
+  --alinea-border: #d9d9e0;
+  --alinea-muted: #6b6b76;
+  color: #202026;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  margin: 0 auto;
+  max-width: 640px;
+  padding: clamp(40px, 8vw, 80px) 24px;
+}
+
+.FormViewEyebrow {
+  color: var(--alinea-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.FormViewTitle {
+  font-size: clamp(32px, 6vw, 48px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 8px 0 32px;
+}
+
+.FormViewForm,
+.FormViewSection {
+  display: grid;
+  gap: 20px 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.FormViewSection,
+.FormViewRow,
+.FormViewHelp,
+.FormViewSubmit {
+  grid-column: 1 / -1;
+}
+
+.FormViewRow[data-width='half'] {
+  grid-column: auto;
+}
+
+.FormViewSection {
+  border: 1px solid var(--alinea-border);
+  border-radius: 12px;
+  margin: 0;
+  padding: 20px;
+}
+
+.FormViewLegend {
+  font-size: 18px;
+  font-weight: 650;
+  padding: 0 6px;
+}
+
+.FormViewRow {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.FormViewLabel {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.FormViewHelp {
+  color: var(--alinea-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.FormViewError {
+  color: #c62828;
+  font-size: 13px;
+  margin: 0;
+}
+
+.FormViewControl {
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  font: inherit;
+  padding: 9px 12px;
+}
+
+.FormViewControl:focus-visible {
+  border-color: var(--alinea-accent);
+  outline: 2px solid color-mix(in srgb, var(--alinea-accent) 25%, transparent);
+}
+
+.FormViewControl[type='radio'],
+.FormViewControl[type='checkbox'] {
+  accent-color: var(--alinea-accent);
+  margin: 0;
+  padding: 0;
+}
+
+textarea.FormViewControl {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.FormViewChoice {
+  align-items: center;
+  display: flex;
+  font-size: 15px;
+  gap: 8px;
+}
+
+.FormViewSubmit {
+  background: var(--alinea-accent);
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  justify-self: start;
+  padding: 10px 22px;
+}
+
+.FormViewSubmitted {
+  background: #f4f4f7;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-top: 32px;
+  padding: 16px;
+}

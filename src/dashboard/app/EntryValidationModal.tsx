@@ -68,7 +68,9 @@ export function EntryValidationModal({
             <ul className={styles.EntryValidationModal.list()}>
               {failure?.errors.map((error, index) => (
                 <li key={index} className={styles.EntryValidationModal.item()}>
-                  <Text weight="medium">{error.labels.join(' › ')}</Text>
+                  <Text weight="medium">
+                    {error.labels.filter(Boolean).join(' › ')}
+                  </Text>
                   <Text color="destructive">{error.message}</Text>
                 </li>
               ))}

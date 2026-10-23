@@ -27,6 +27,12 @@ export interface ListOptions<Definitions extends Schema> extends Omit<
   /** Display a minimal version */
   inline?: boolean
   /** Show the rows folded when the entry opens, added rows start open */
+  /**
+   * Show each row on one line with its fields side by side and without their
+   * labels, for short rows such as options. Enter adds a row below, Backspace
+   * in an empty row removes it, the tabs of a row open from its "…" button.
+   */
+  compact?: boolean
   collapsed?: boolean
   /** Hide this list field */
   hidden?: boolean

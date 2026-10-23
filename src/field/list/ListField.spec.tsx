@@ -1,5 +1,11 @@
 import {expect, type MountResult, test} from '@playwright/experimental-ct-react'
-import {Collapsed, Example, MinMax, WithoutLabel} from './ListField.stories.js'
+import {
+  Collapsed,
+  Compact,
+  Example,
+  MinMax,
+  WithoutLabel
+} from './ListField.stories.js'
 
 test('keeps the remove control visible beside the settings button', async ({
   mount,
@@ -439,4 +445,54 @@ test('edits the tabs of a row in its sheet', async ({mount, page}) => {
   await page.keyboard.press('Escape')
   await hero.getByRole('button', {name: 'Hero settings'}).click()
   await expect(background).toHaveValue('Blue')
+})
+
+test('compact rows add on Enter and leave on Backspace', async ({
+  mount,
+  page
+}) => {
+  await mount(<Compact />)
+  const sizes = page.getByRole('list', {name: 'Sizes'})
+  const labels = () =>
+    sizes
+      .getByRole('textbox', {name: 'Label'})
+      .evaluateAll(inputs =>
+        inputs.map(input => (input as HTMLInputElement).value)
+      )
+  // Fields show without their label, side by side
+  await expect(page.getByText('Label', {exact: true})).toHaveCount(0)
+  const first = sizes.getByRole('listitem', {name: 'Size item 1'})
+  await first.getByRole('textbox', {name: 'Code'}).press('Enter')
+  const added = sizes.getByRole('listitem', {name: 'Size item 2'})
+  await expect(added.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  await expect.poll(labels).toEqual(['Small', '', 'Medium', 'Large'])
+  await page.keyboard.press('Backspace')
+  await expect.poll(labels).toEqual(['Small', 'Medium', 'Large'])
+  // The caret lands at the end of the row above
+  await expect(first.getByRole('textbox', {name: 'Label'})).toBeFocused()
+  await page.keyboard.press('Backspace')
+  await expect(first.getByRole('textbox', {name: 'Label'})).toHaveValue('Smal')
+})
+
+test('compact rows move by their handle and open their tabs', async ({
+  mount,
+  page
+}) => {
+  await mount(<Compact />)
+  const sizes = page.getByRole('list', {name: 'Sizes'})
+  await sizes
+    .getByRole('button', {name: 'Move Size item 3', exact: true})
+    .press('Alt+ArrowUp')
+  await expect(
+    sizes.getByRole('listitem', {name: 'Size item 2'}).getByRole('textbox', {
+      name: 'Label'
+    })
+  ).toHaveValue('Large')
+  await sizes
+    .getByRole('listitem', {name: 'Size item 1'})
+    .getByRole('button', {name: 'Size settings'})
+    .click()
+  const sheet = page.getByRole('dialog', {name: 'Small'})
+  await expect(sheet.getByRole('textbox', {name: 'In stock'})).toBeVisible()
+  await expect(sheet.getByRole('textbox', {name: 'Anchor'})).toHaveCount(0)
 })

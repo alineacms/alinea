@@ -33,3 +33,14 @@
   flex: 1;
   min-width: 0;
 }
+
+.ListFieldCompactRow {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 2px;
+}
+
+.ListFieldCompactRow-fields {
+  min-width: 0;
+}

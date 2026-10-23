@@ -11,6 +11,7 @@ import {
 import {flushSync} from 'react-dom'
 import {
   IcRoundAdd,
+  IcRoundDragIndicator,
   IcRoundMoreHoriz,
   IcRoundUnfoldLess,
   IcRoundUnfoldMore
@@ -226,6 +227,49 @@ export function SortableListItemHeader({
         if (list && key !== null) event.preventDefault()
       }}
     />
+  )
+}
+
+export interface SortableListItemHandleProps extends Omit<
+  ComponentPropsWithoutRef<'button'>,
+  'children' | 'type'
+> {}
+
+/**
+ * Drags its item, for items without a header to drag, eg. a row that is an
+ * input. Renders nothing while the list cannot be reordered.
+ */
+export function SortableListItemHandle({
+  className,
+  onPointerDown,
+  onKeyDown,
+  ...props
+}: SortableListItemHandleProps) {
+  const list = useContext(SortableListContext)
+  const key = useContext(SortableListItemContext)
+  if (!list || key === null) return null
+  return (
+    <button
+      data-slot="sortable-list-item-handle"
+      type="button"
+      aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+      {...props}
+      className={styles.SortableListItemHandle(styler.merge({className}))}
+      onPointerDown={event => {
+        onPointerDown?.(event)
+        if (event.button !== 0 || event.pointerType === 'touch') return
+        list.press(key, event)
+      }}
+      onKeyDown={event => {
+        onKeyDown?.(event)
+        if (event.defaultPrevented || !event.altKey) return
+        const direction =
+          event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0
+        if (direction && list.step(key, direction)) event.preventDefault()
+      }}
+    >
+      <Icon aria-hidden icon={IcRoundDragIndicator} />
+    </button>
   )
 }
 

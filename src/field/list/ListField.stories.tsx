@@ -360,6 +360,47 @@ export function WithoutLabel() {
   )
 }
 
+const sizeBlock = type('Size', {
+  fields: {
+    label: text('Label', {width: 0.6}),
+    code: text('Code', {width: 0.4})
+  },
+  tabs: {
+    stock: tab('Stock', {fields: {stock: number('In stock')}})
+  }
+})
+
+const compactType = type('Compact', {
+  fields: {
+    sizes: list('Sizes', {
+      schema: {size: sizeBlock},
+      compact: true,
+      initialValue: [
+        {_type: 'size', label: 'Small', code: 'S'},
+        {_type: 'size', label: 'Medium', code: 'M'},
+        {_type: 'size', label: 'Large', code: 'L'}
+      ]
+    })
+  }
+})
+
+/** Rows on one line, their tabs open from "…" */
+export function Compact() {
+  const node = useMemo(
+    () => new ReactiveNode(Type.initialValue(compactType) as object),
+    []
+  )
+  return (
+    <StoryProvider views={views}>
+      <BlockSheetStoryFrame>
+        <div style={storyStyle}>
+          <NodeEditor node={node} type={compactType} />
+        </div>
+      </BlockSheetStoryFrame>
+    </StoryProvider>
+  )
+}
+
 export default {
   title: 'Fields / ListField'
 }
