@@ -10,6 +10,7 @@ import type {
   RequestContext
 } from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
+import type {FormsOptions} from '#/core/Forms.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field, Form} from '#/index.js'
 import {Database as BunSqlite} from 'bun:sqlite'
@@ -46,7 +47,7 @@ const context: RequestContext = {
 
 const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1])
 
-async function setup() {
+async function setup(forms?: FormsOptions) {
   const cms = createCMS({schema: {Contact}, workspaces: {main}})
   const db = new LocalDB(cms.config)
   await db.create({type: Contact, set: {title: 'Contact', inputs: rows}})
@@ -57,6 +58,7 @@ async function setup() {
   const handle = createHandler({
     cms,
     db,
+    forms,
     remote() {
       return composeBackend(db, store, {
         async verify(): Promise<AuthedContext> {
@@ -113,7 +115,9 @@ test('an uploaded file is stored with the submission', async () => {
     ['screenshot', ticket.token]
   ])
   expect(result).toEqual({ok: true})
-  const [stored] = await store.listSubmissions(entryId)
+  const [stored] = await store
+    .listSubmissions(entryId)
+    .then(page => page.submissions)
   const [file] = stored.values.screenshot as Array<FormFileRef>
   expect(file).toEqual({
     id: file.id,
@@ -123,7 +127,7 @@ test('an uploaded file is stored with the submission', async () => {
   })
   const saved = await store.readFormFile(entryId, file.id)
   expect(saved?.submissionId).toBe(stored.id)
-  expect(Array.from(saved!.content)).toEqual(Array.from(png))
+  expect(Array.from(saved!.content!)).toEqual(Array.from(png))
   // A ticket is used once
   expect(
     await submit([
@@ -172,18 +176,49 @@ test('files that were never submitted or whose submission went are removed', asy
     type: 'image/png',
     submissionId: null,
     content: png,
+    visitor: null,
     createdAt
   })
   await store.storeFormFile(file('old', now - 2 * 24 * 60 * 60))
   await store.storeFormFile(file('recent', now))
+  await store.purgeSubmissions(now)
   expect(await store.readFormFile(entryId, 'old')).toBeUndefined()
   expect(await store.readFormFile(entryId, 'recent')).toBeDefined()
   const ticket = await prepare('error.png', png.length)
   if (!ticket.ok) throw new Error(ticket.message)
   await upload(ticket.url, png)
   await submit([['screenshot', ticket.token]])
-  const [submission] = await store.listSubmissions(entryId)
+  const [submission] = await store
+    .listSubmissions(entryId)
+    .then(page => page.submissions)
   const [sent] = submission.values.screenshot as Array<FormFileRef>
   await store.deleteSubmission(entryId, submission.id)
   expect(await store.readFormFile(entryId, sent.id)).toBeUndefined()
+})
+
+test('files go to forms.files when it is set', async () => {
+  const kept = new Map<string, Uint8Array>()
+  const {entryId, store, prepare, upload, submit} = await setup({
+    files: {
+      async write(key, content) {
+        kept.set(key, content)
+      },
+      async read(key) {
+        return kept.get(key)
+      },
+      async remove(keys) {
+        for (const key of keys) kept.delete(key)
+      }
+    }
+  })
+  const ticket = await prepare('error.png', png.length)
+  if (!ticket.ok) throw new Error(ticket.message)
+  await upload(ticket.url, png)
+  await submit([['screenshot', ticket.token]])
+  const [submission] = (await store.listSubmissions(entryId)).submissions
+  const [sent] = submission.values.screenshot as Array<FormFileRef>
+  expect((await store.readFormFile(entryId, sent.id))?.content).toBeNull()
+  expect(Array.from(kept.get(`${entryId}/${sent.id}`)!)).toEqual(
+    Array.from(png)
+  )
 })

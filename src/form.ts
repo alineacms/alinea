@@ -23,6 +23,7 @@ export {
   defaults,
   email,
   file,
+  hidden,
   number,
   radio,
   section,

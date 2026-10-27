@@ -1,15 +1,18 @@
 'use client'
 
 import {type FormState, formState} from '#/field/form/FormConditions.js'
-import {formSpam} from '#/field/form/FormSpam.js'
+import {formPage, formSpam} from '#/field/form/FormSpam.js'
 import type {PrepareUploadResult} from '#/core/Connection.js'
 import type {FormUploadFile} from '#/core/Forms.js'
 import type {FormErrors, FormResult} from '#/field/form/FormSubmission.js'
-import type {
-  FormDefinition,
-  FormInputData,
-  FormItem,
-  FormSectionData
+import {
+  type FormDefinition,
+  type FormInputData,
+  type FormItem,
+  type FormSectionData,
+  itemId,
+  itemName,
+  nameKey
 } from '#/field/form/FormDefinition.js'
 import {
   type ComponentProps,
@@ -22,6 +25,7 @@ import {
   startTransition,
   useActionState,
   useMemo,
+  useRef,
   useState
 } from 'react'
 
@@ -37,6 +41,9 @@ export type FormRole =
   | 'choice'
   | 'section'
   | 'legend'
+  | 'item'
+  | 'add'
+  | 'remove'
   | 'submit'
   | 'confirmation'
 
@@ -44,6 +51,11 @@ export interface FormInputViewProps {
   input: FormInputData
   /** The id of the control, the label points at it */
   id: string
+  /**
+   * The name of the control: the key of the input, or its name in an item of
+   * a repeatable section, eg. `participants.0.name`
+   */
+  name: string
   error?: string
   /** The rules of the input disable it for the current answers */
   disabled?: boolean
@@ -83,6 +95,12 @@ export interface FormProps extends Omit<
    * keeps them out of the action. Without it files are sent to the action.
    */
   upload?: (file: FormUploadFile) => Promise<PrepareUploadResult>
+  /**
+   * Answers the form starts with by the key of their input, instead of the
+   * initial values set in the form builder, eg. `{product: 'Bike'}` for a
+   * hidden input on the page of a product
+   */
+  values?: Record<string, string>
   /** Errors by the key of the input, when the form is sent another way */
   errors?: FormErrors
   /** The text of the submit button, unless its view has children */
@@ -94,7 +112,8 @@ export interface FormProps extends Omit<
  * for the answers so far are left out, the browser does not send them.
  */
 export function Form({
-  definition,
+  definition: defined,
+  values: prefilled,
   views = {},
   action,
   upload,
@@ -104,7 +123,17 @@ export function Form({
   onSubmit,
   ...props
 }: FormProps) {
-  const [values, setValues] = useState(() => initialValues(definition))
+  const definition = useMemo(
+    () => (prefilled ? prefill(defined, prefilled) : defined),
+    [defined, prefilled]
+  )
+  const nextItem = useRef(0)
+  // The items of each repeatable section, by an id that stays with an item
+  // when one above it is removed
+  const [items, setItems] = useState(() =>
+    initialItems(definition, () => nextItem.current++)
+  )
+  const [values, setValues] = useState(() => initialValues(definition, items))
   const state = useMemo(
     () => formState(definition, values),
     [definition, values]
@@ -121,7 +150,38 @@ export function Form({
   )
   function change(event: FormEvent<HTMLFormElement>) {
     onChange?.(event)
-    setValues(readValues(definition, new FormData(event.currentTarget)))
+    setValues(readValues(definition, new FormData(event.currentTarget), items))
+  }
+
+  // The answers of an item move with it, so the rules of the other items
+  // keep seeing theirs
+  const repeat: RepeatActions = {
+    items,
+    add(section) {
+      const item = nextItem.current++
+      const key = section.key!
+      const added = initialValues(section.inputs, {})
+      setItems(current => ({
+        ...current,
+        [key]: [...(current[key] ?? []), item]
+      }))
+      setValues(current => ({
+        ...current,
+        [key]: [...itemList(current[key]), added]
+      }))
+    },
+    remove(section, item) {
+      const key = section.key!
+      const index = (items[key] ?? []).indexOf(item)
+      setItems(current => ({
+        ...current,
+        [key]: (current[key] ?? []).filter(other => other !== item)
+      }))
+      setValues(current => ({
+        ...current,
+        [key]: itemList(current[key]).filter((_, at) => at !== index)
+      }))
+    }
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -131,6 +191,7 @@ export function Form({
     // React resets after it is sent, losing the answers when one is invalid
     event.preventDefault()
     const data = new FormData(event.currentTarget)
+    fromAddress(definition, data)
     startTransition(() => send(data))
   }
 
@@ -142,11 +203,22 @@ export function Form({
       result.confirmation || 'Thank you, your answers were sent.'
     )
   const failed = result && !result.ok ? result : undefined
-  const context = {views, errors: errors ?? failed?.errors ?? {}, state}
+  const context = {
+    views,
+    errors: errors ?? failed?.errors ?? {},
+    state,
+    repeat,
+    scope: topScope
+  }
   return part(
     views.form,
     'form',
-    {...props, onChange: change, onSubmit: submit, 'aria-busy': pending},
+    {
+      ...props,
+      onChange: change,
+      onSubmit: submit,
+      'aria-busy': pending
+    },
     [
       <input
         key="honeypot"
@@ -182,6 +254,40 @@ export function Form({
   )
 }
 
+/** The definition with the initial values of inputs replaced */
+function prefill(
+  definition: FormDefinition,
+  values: Record<string, string>
+): FormDefinition {
+  const fill = (input: FormInputData): FormInputData =>
+    input.key in values ? {...input, initialValue: values[input.key]} : input
+  return definition.map(item => {
+    if (item.control !== 'section') return fill(item)
+    if (item.repeat) return item
+    return {...item, inputs: item.inputs.map(fill)}
+  })
+}
+
+/**
+ * Fills in what is taken from the address of the page: the page itself, and
+ * hidden inputs that read a parameter of it
+ */
+function fromAddress(definition: FormDefinition, data: FormData) {
+  const {href, search} = window.location
+  data.set(formPage, href)
+  const params = new URLSearchParams(search)
+  const inputs = definition.flatMap(item =>
+    item.control !== 'section' ? [item] : item.repeat ? [] : item.inputs
+  )
+  for (const input of inputs) {
+    const param = input.settings.param
+    if (input.attributes.type !== 'hidden' || typeof param !== 'string')
+      continue
+    const value = param && params.get(param)
+    if (value && data.has(input.key)) data.set(input.key, value)
+  }
+}
+
 // Out of sight for people, without styles of the site
 const hidden = {
   position: 'absolute',
@@ -192,24 +298,59 @@ const hidden = {
   whiteSpace: 'nowrap'
 } as const
 
+/** The items of repeatable sections, and adding and removing them */
+interface RepeatActions {
+  /** The ids of the items by the key of their section */
+  items: Record<string, Array<number>>
+  add(section: FormSectionData): void
+  remove(section: FormSectionData, item: number): void
+}
+
+/** Where an input is: in the form, or in an item of a repeatable section */
+interface FormScope {
+  /** Added to the ids of inputs in the state, see `itemId` */
+  suffix: string
+  /** The name of the control of an input by its key */
+  name(key: string): string
+}
+
+const topScope: FormScope = {suffix: '', name: key => key}
+
 interface FormItemViewProps {
   item: FormItem
   views: FormViews
   errors: Record<string, string>
   state: FormState
+  repeat: RepeatActions
+  scope: FormScope
 }
 
-function FormItemView({item, views, errors, state}: FormItemViewProps) {
-  if (state.hidden.has(item.id)) return null
+function FormItemView({
+  item,
+  views,
+  errors,
+  state,
+  repeat,
+  scope
+}: FormItemViewProps) {
+  if (state.hidden.has(item.id + scope.suffix)) return null
   if (item.control === 'section')
     return (
-      <FormSection section={item} views={views} errors={errors} state={state} />
+      <FormSection
+        section={item}
+        views={views}
+        errors={errors}
+        state={state}
+        repeat={repeat}
+      />
     )
+  const name = scope.name(item.key)
   const props: FormInputViewProps = {
     input: item,
-    id: `form-${item.id}`,
-    error: errors[item.key],
-    disabled: state.disabled.has(item.id),
+    id: `form-${item.id}${scope.suffix.replace(':', '-')}`,
+    name,
+    error: errors[name],
+    disabled: state.disabled.has(item.id + scope.suffix),
     views
   }
   const Custom = (views as Record<string, unknown>)[item.type]
@@ -225,23 +366,108 @@ interface FormSectionProps {
   views: FormViews
   errors: Record<string, string>
   state: FormState
+  repeat: RepeatActions
 }
 
-function FormSection({section, views, errors, state}: FormSectionProps) {
-  return part(views.section, 'fieldset', {'data-section': section.type}, [
-    part(views.legend, 'legend', {key: 'legend'}, section.label),
-    section.help &&
-      part(views.help, 'p', {key: 'help', 'data-help': ''}, section.help),
-    ...section.inputs.map(input => (
-      <FormItemView
-        key={input.id}
-        item={input}
-        views={views}
-        errors={errors}
-        state={state}
-      />
-    ))
-  ])
+function FormSection({
+  section,
+  views,
+  errors,
+  state,
+  repeat
+}: FormSectionProps) {
+  const context = {views, errors, state, repeat}
+  const {key} = section
+  if (!section.repeat || !key)
+    return part(views.section, 'fieldset', {'data-section': section.type}, [
+      part(views.legend, 'legend', {key: 'legend'}, section.label),
+      section.help &&
+        part(views.help, 'p', {key: 'help', 'data-help': ''}, section.help),
+      ...section.inputs.map(input => (
+        <FormItemView
+          key={input.id}
+          item={input}
+          {...context}
+          scope={topScope}
+        />
+      ))
+    ])
+  const {min, max, add} = section.repeat
+  const items = repeat.items[key] ?? []
+  const error = errors[key]
+  const errorId = error ? `form-${section.id}-error` : undefined
+  return part(
+    views.section,
+    'fieldset',
+    {
+      'data-section': section.type,
+      'data-repeat': '',
+      'aria-describedby': errorId
+    },
+    [
+      part(views.legend, 'legend', {key: 'legend'}, section.label),
+      section.help &&
+        part(views.help, 'p', {key: 'help', 'data-help': ''}, section.help),
+      ...items.map((item, index) =>
+        part(
+          views.item,
+          'div',
+          {
+            key: item,
+            role: 'group',
+            'aria-label': `${section.label} ${index + 1}`,
+            'data-item': index
+          },
+          [
+            // Marks the item when none of its inputs are filled in
+            <input
+              key="item"
+              type="hidden"
+              name={itemName(key, index)}
+              value=""
+            />,
+            ...section.inputs.map(input => (
+              <FormItemView
+                key={input.id}
+                item={input}
+                {...context}
+                scope={{
+                  suffix: itemId('', index),
+                  name: inputKey => itemName(key, index, inputKey)
+                }}
+              />
+            )),
+            items.length > min &&
+              part(
+                views.remove,
+                'button',
+                {
+                  key: 'remove',
+                  type: 'button',
+                  'aria-label': `Remove ${section.label} ${index + 1}`,
+                  onClick: () => repeat.remove(section, item)
+                },
+                'Remove'
+              )
+          ]
+        )
+      ),
+      errorId &&
+        part(
+          views.error,
+          'p',
+          {key: 'error', id: errorId, role: 'alert'},
+          error
+        ),
+      (max === undefined || items.length < max) &&
+        part(
+          views.add,
+          'button',
+          {key: 'add', type: 'button', onClick: () => repeat.add(section)},
+          add ?? 'Add another'
+        )
+    ]
+  )
 }
 
 /** The answers with each file replaced by the token of its upload */
@@ -258,7 +484,8 @@ async function uploadFiles(
     }
     if (value.size === 0) continue
     const ticket = await upload({
-      input: key,
+      // Files in an item of a repeatable section are for the same input
+      input: nameKey(key),
       name: value.name,
       size: value.size,
       type: value.type
@@ -279,40 +506,86 @@ async function uploadFiles(
   return data
 }
 
+/** The answers of the items of a repeatable section */
+function itemList(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value) ? value : []
+}
+
+/** The fewest items of each repeatable section, shown when the form opens */
+function initialItems(
+  definition: FormDefinition,
+  next: () => number
+): Record<string, Array<number>> {
+  const items: Record<string, Array<number>> = {}
+  for (const item of definition)
+    if (item.control === 'section' && item.repeat && item.key)
+      items[item.key] = Array.from({length: item.repeat.min}, next)
+  return items
+}
+
 /** The answers the form starts with, by key */
-function initialValues(definition: FormDefinition): Record<string, unknown> {
-  const values: Record<string, unknown> = {}
-  for (const item of inputsOf(definition))
-    if (item.initialValue !== undefined) values[item.key] = item.initialValue
-  return values
+function initialValues(
+  definition: FormDefinition,
+  items: Record<string, Array<number>>
+): Record<string, unknown> {
+  return answers(definition, items, input => {
+    if (input.initialValue !== undefined) return input.initialValue
+  })
 }
 
 /** The answers in the form, by key, as the rules test them */
 function readValues(
   definition: FormDefinition,
-  data: FormData
+  data: FormData,
+  items: Record<string, Array<number>>
 ): Record<string, unknown> {
-  const values: Record<string, unknown> = {}
-  for (const item of inputsOf(definition)) {
+  return answers(definition, items, (input, name) => {
     const all = data
-      .getAll(item.key)
+      .getAll(name)
       .filter(value => typeof value === 'string' || value.size > 0)
-    values[item.key] =
-      item.control === 'checkboxes' || all.length > 1 ? all : all[0]
-  }
-  return values
+    return input.control === 'checkboxes' || all.length > 1 ? all : all[0]
+  })
 }
 
-function inputsOf(definition: FormDefinition): Array<FormInputData> {
-  return definition.flatMap(item =>
-    item.control === 'section' ? item.inputs : [item]
-  )
+/**
+ * The answers by key, a list of items for a repeatable section, with the
+ * answer of each input by its name
+ */
+function answers(
+  definition: FormDefinition,
+  items: Record<string, Array<number>>,
+  answer: (input: FormInputData, name: string) => unknown
+): Record<string, unknown> {
+  const values: Record<string, unknown> = {}
+  const read = (
+    inputs: Array<FormInputData>,
+    target: Record<string, unknown>,
+    name: (key: string) => string
+  ) => {
+    for (const input of inputs) {
+      const value = answer(input, name(input.key))
+      if (value !== undefined) target[input.key] = value
+    }
+    return target
+  }
+  for (const item of definition) {
+    if (item.control !== 'section') read([item], values, topScope.name)
+    else if (!item.repeat || !item.key) read(item.inputs, values, topScope.name)
+    else {
+      const key = item.key
+      values[key] = (items[key] ?? []).map((_, index) =>
+        read(item.inputs, {}, inputKey => itemName(key, index, inputKey))
+      )
+    }
+  }
+  return values
 }
 
 /** The default HTML of an input, its label, help and error */
 export function FormInput({
   input,
   id,
+  name,
   error,
   disabled,
   views
@@ -320,6 +593,17 @@ export function FormInput({
   const helpId = input.help ? `${id}-help` : undefined
   const errorId = error ? `${id}-error` : undefined
   const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined
+  // A hidden input has no row, label or error to show
+  if (input.attributes.type === 'hidden')
+    return (
+      <input
+        type="hidden"
+        name={name}
+        defaultValue={
+          input.initialValue === undefined ? '' : String(input.initialValue)
+        }
+      />
+    )
   const grouped = input.control === 'radio' || input.control === 'checkboxes'
   const row = {
     'data-input': input.type,
@@ -340,7 +624,7 @@ export function FormInput({
     errorId &&
     part(views.error, 'p', {key: 'error', id: errorId, role: 'alert'}, error)
   const control = {
-    name: input.key,
+    name,
     required: input.required,
     'aria-describedby': describedBy,
     'aria-invalid': error ? true : undefined,

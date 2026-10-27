@@ -1,6 +1,6 @@
 import type {FormMail} from '#/core/Forms.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {answerText, formInputs} from './FormAnswers.js'
+import {columnKey, columnText, formColumns} from './FormAnswers.js'
 import {holds} from './FormConditions.js'
 import {formDefinition, inputKey} from './FormDefinition.js'
 import type {Input} from './FormInput.js'
@@ -20,8 +20,9 @@ export interface FormMailOut {
 
 /**
  * The mails of a form whose rules hold for the answers, with the answers
- * filled in for their `{{key}}`. A mail with a rule that no longer works is
- * not sent, rather than sent to everyone.
+ * filled in for their `{{key}}`. The key of a repeatable section fills in
+ * all of its items. A mail with a rule that no longer works is not sent,
+ * rather than sent to everyone.
  */
 export function formMails(
   inputs: Record<string, Input>,
@@ -32,14 +33,16 @@ export function formMails(
   if (!Array.isArray(mails)) return []
   const order = readingOrder(inputs, rows)
   const byId = new Map(order.map(entry => [entry.row._id, entry]))
-  const definition = formInputs(formDefinition(inputs, rows, order))
+  const columns = formColumns(formDefinition(inputs, rows, order))
   const answer = (key: string) => {
-    const input = definition.find(input => input.key === key)
-    return input ? answerText(input, values[key]) : ''
+    const column = columns.find(column => columnKey(column) === key)
+    return column ? columnText(column, values) : ''
   }
   const answerOf = (id: unknown) => {
     const entry = typeof id === 'string' ? byId.get(id) : undefined
-    const value = entry ? values[inputKey(entry.row)] : undefined
+    // An input of a repeatable section has an answer per item
+    if (!entry || entry.repeat) return undefined
+    const value = values[inputKey(entry.row)]
     return typeof value === 'string' ? value : undefined
   }
   return mails.filter(isRecord).flatMap((mail): Array<FormMailOut> => {
@@ -85,8 +88,11 @@ export function mailProblem(
   for (const field of ['input', 'replyTo'] as const) {
     if (field === 'input' && to !== 'input') continue
     const id = (mail as Record<string, unknown>)[field]
-    if (typeof id === 'string' && id && !byId.has(id))
-      return `${name}: Its ${field === 'input' ? 'recipient' : 'reply to'} input was removed`
+    if (typeof id !== 'string' || !id) continue
+    const which = field === 'input' ? 'recipient' : 'reply to'
+    const entry = byId.get(id)
+    if (!entry) return `${name}: Its ${which} input was removed`
+    if (entry.repeat) return `${name}: Its ${which} input repeats`
   }
   return undefined
 }

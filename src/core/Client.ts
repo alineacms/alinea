@@ -13,7 +13,8 @@ import type {
   PrepareUploadRequest,
   PrepareUploadResult,
   Revision,
-  Submission,
+  SubmissionPage,
+  SubmissionQuery,
   SubmissionStatus,
   SubmitRequest,
   SubmitResult,
@@ -191,10 +192,15 @@ export class Client implements LocalConnection {
 
   // History
   // Forms
-  submissions(entryId: string): Promise<Array<Submission>> {
-    return this.#requestJson({action: HandleAction.Submissions, entryId}).then<
-      Array<Submission>
-    >(this.#failOnHttpError)
+  submissions(
+    entryId: string,
+    query: SubmissionQuery = {}
+  ): Promise<SubmissionPage> {
+    return this.#requestJson({
+      action: HandleAction.Submissions,
+      entryId,
+      query: JSON.stringify(query)
+    }).then<SubmissionPage>(this.#failOnHttpError)
   }
 
   async updateSubmission(

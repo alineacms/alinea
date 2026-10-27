@@ -6,6 +6,9 @@ export const formSpam = {
   shownAt: '_alinea_shown'
 }
 
+/** A hidden input `<Form>` adds with the address of the page it is on */
+export const formPage = '_alinea_page'
+
 /** Whether a submission looks like it was sent by a bot */
 export function isSpam(data: FormData, now = Date.now()): boolean {
   const honeypot = data.get(formSpam.honeypot)

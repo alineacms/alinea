@@ -25,7 +25,7 @@ import type {ListRow} from '#/core/ListRow.js'
 import type {Schema} from '#/core/Schema.js'
 import {ListField} from '#/core/field/ListField.js'
 import type {FieldGetter} from '#/core/Tracker.js'
-import {formInputs} from './FormAnswers.js'
+import {formColumns} from './FormAnswers.js'
 import {formDefinition} from './FormDefinition.js'
 import type {Input} from './FormInput.js'
 import type {FormCondition} from './FormConditions.js'
@@ -51,6 +51,7 @@ export interface FormTypeFields<Type extends string> {
   after: ReturnType<typeof afterSending>
   message: ReturnType<typeof text>
   page: ReturnType<typeof entry>
+  keep: ReturnType<typeof keepFor>
 }
 
 const formTypes = new WeakSet<Type>()
@@ -80,8 +81,10 @@ function mailList(inputsField: FormField): FormMailList {
   const inputs = Field.options(inputsField).inputs
   const emailInputs = (get: FieldGetter) => {
     const result: Record<string, string> = {}
-    for (const item of formInputs(formDefinition(inputs, get(inputsField))))
-      if (item.attributes.type === 'email') result[item.id] = item.label
+    // Inputs of repeatable sections have an address per item
+    for (const item of formColumns(formDefinition(inputs, get(inputsField))))
+      if (item.control !== 'section' && item.attributes.type === 'email')
+        result[item.id] = item.label
     return result
   }
   const to = select('Send to', {
@@ -169,6 +172,20 @@ export function isFormType(type: Type): boolean {
   return formTypes.has(type)
 }
 
+/** How long submissions are kept, in days, for the privacy of visitors */
+function keepFor() {
+  return select('Keep submissions', {
+    options: {
+      '30': 'For 30 days',
+      '90': 'For 90 days',
+      '365': 'For a year',
+      '730': 'For two years'
+    },
+    placeholder: 'Until they are deleted',
+    help: 'Older submissions and their files are removed'
+  })
+}
+
 function afterSending() {
   return select('After sending', {
     options: {message: 'Show a message', page: 'Go to a page'},
@@ -223,7 +240,8 @@ export function formType<
           page: track.options(
             entry('Page', {help: 'Where the visitor goes after sending'}),
             get => ({hidden: get(after) !== 'page'})
-          )
+          ),
+          keep: keepFor()
         }
       })
     )

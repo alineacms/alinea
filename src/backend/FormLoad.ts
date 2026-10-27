@@ -48,6 +48,14 @@ export async function loadForm(
   return {entry, type, data, key, field, rows, inputs}
 }
 
+/** Whether entries of a type hold a form */
+export function hasForm(type: Type | undefined): boolean {
+  if (!type) return false
+  return entries(Type.fields(type)).some(
+    ([, field]) => field instanceof FormField
+  )
+}
+
 /** The file inputs of a form, they are sent as tokens of their uploads */
 export function fileInputs(inputs: Array<FormInputData>): Array<FormInputData> {
   return inputs.filter(input => input.attributes.type === 'file')

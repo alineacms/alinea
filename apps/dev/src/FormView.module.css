@@ -33,17 +33,46 @@
 }
 
 .FormViewForm,
-.FormViewSection {
+.FormViewSection,
+.FormViewItem {
   display: grid;
   gap: 20px 16px;
   grid-template-columns: 1fr 1fr;
 }
 
 .FormViewSection,
+.FormViewItem,
 .FormViewRow,
 .FormViewHelp,
-.FormViewSubmit {
+.FormViewError,
+.FormViewSubmit,
+.FormViewAdd,
+.FormViewRemove {
   grid-column: 1 / -1;
+}
+
+/* Items of a repeatable section are divided by a line */
+.FormViewItem + .FormViewItem {
+  border-top: 1px solid var(--alinea-border);
+  padding-top: 20px;
+}
+
+.FormViewAdd,
+.FormViewRemove {
+  background: none;
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  justify-self: start;
+  padding: 6px 14px;
+}
+
+.FormViewRemove {
+  border-color: transparent;
+  color: var(--alinea-muted);
+  padding-inline: 0;
 }
 
 .FormViewRow[data-width='half'] {

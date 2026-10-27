@@ -10,7 +10,7 @@ import {
 } from '#/dashboard/app/ui/DashboardModal.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {useFieldNode, useFieldOptions} from '#/dashboard/hooks.js'
-import {IcRoundCallSplit} from '#/dashboard/icons.js'
+import {IcRoundCallSplit, IcRoundRepeat} from '#/dashboard/icons.js'
 import {
   type ListFieldBadgesProps,
   ListFieldView,
@@ -212,6 +212,9 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
   const builder = useContext(FormBuilderContext)
   const id = useAtomValueRaw(row.field('_id')) as string
   const required = useAtomValueRaw(row.field('required'))
+  const repeat = useAtomValueRaw(row.field('repeat'))
+  const min = useAtomValueRaw(row.field('min'))
+  const max = useAtomValueRaw(row.field('max'))
   const info = useAtomValueRaw(
     useMemo(
       () =>
@@ -237,6 +240,11 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
   return (
     <>
       {required === true && <Badge size="sm">Required</Badge>}
+      {repeat === true && (
+        <Badge size="sm" icon={IcRoundRepeat}>
+          {repeatLabel(min, max)}
+        </Badge>
+      )}
       {info?.shown && (
         <Badge size="sm" color="primary" icon={IcRoundCallSplit}>
           Shown if {info.shown}
@@ -265,6 +273,15 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
       )}
     </>
   )
+}
+
+/** How often a repeatable section is filled in, eg. "Repeats 1 to 5 times" */
+function repeatLabel(min: unknown, max: unknown): string {
+  const fewest = typeof min === 'number' ? min : 1
+  if (typeof max !== 'number')
+    return fewest > 1 ? `Repeats at least ${fewest} times` : 'Repeats'
+  if (max === fewest) return `Repeats ${max} times`
+  return `Repeats ${fewest} to ${max} times`
 }
 
 // Most fields of an input are in its sheet, its row shows what is wrong

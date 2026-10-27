@@ -55,6 +55,16 @@
       "label": "I agree to the privacy policy",
       "required": true,
       "width": "full"
+    },
+    {
+      "_id": "contact-campaign",
+      "_index": "a5",
+      "_type": "hidden",
+      "label": "Campaign",
+      "key": "campaign",
+      "initialValue": "none",
+      "param": "utm_campaign"
     }
-  ]
+  ],
+  "keep": "90"
 }

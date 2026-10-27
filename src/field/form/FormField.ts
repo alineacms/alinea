@@ -2,11 +2,13 @@ import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {ListFieldBase} from '#/core/field/ListField.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import type {Schema} from '#/core/Schema.js'
+import {type FieldGetter, track} from '#/core/Tracker.js'
 import {type Type, type} from '#/core/Type.js'
 import {entries, fromEntries, keys} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {IcRoundCallSplit} from '#/dashboard/icons.js'
 import {check} from '#/field/check.js'
+import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
 import {select} from '#/field/select.js'
 import {tab} from '#/field/tabs.js'
@@ -163,6 +165,11 @@ function sectionType(
   const inSection = fromEntries(
     entries(inputs).filter(([key]) => key in nested)
   )
+  const repeat = check('Repeatable', {
+    description: 'Visitors can add this section more than once'
+  })
+  // The other settings of a repeatable section show once it repeats
+  const hidden = (get: FieldGetter) => ({hidden: get(repeat) !== true})
   return type(input.label, {
     icon: input.icon,
     fields: {
@@ -181,7 +188,32 @@ function sectionType(
       input: tab('Section', {
         fields: {
           label: text('Title', {required: true}),
-          help: text('Description', {multiline: true})
+          help: text('Description', {multiline: true}),
+          repeat,
+          key: track.options(
+            path('Key', {
+              from: 'label',
+              help: 'The answers are a list under this key'
+            }),
+            hidden
+          ),
+          min: track.options(
+            number('Fewest items', {
+              initialValue: 1,
+              minValue: 0,
+              width: 0.5,
+              help: 'Shown when the form opens'
+            }),
+            hidden
+          ),
+          max: track.options(
+            number('Most items', {minValue: 1, width: 0.5}),
+            hidden
+          ),
+          add: track.options(
+            text('Add button', {help: 'Eg. Add a participant'}),
+            hidden
+          )
         }
       }),
       logic: tab('Logic', {

@@ -1,21 +1,27 @@
 import type {Config} from '#/core/Config.js'
-import type {SubmissionsApi, SubmitRequest} from '#/core/Connection.js'
+import type {
+  FormFileKey,
+  Submission,
+  SubmissionQuery,
+  SubmissionsApi,
+  SubmitRequest
+} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import {Field} from '#/core/Field.js'
-import type {FormMailer, FormsOptions} from '#/core/Forms.js'
+import type {FormLimits, FormMailer, FormsOptions} from '#/core/Forms.js'
 import type {Graph} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {Type} from '#/core/Type.js'
 import {entries, isRecord} from '#/core/util/Objects.js'
-import {formInputs} from '#/field/form/FormAnswers.js'
+import {formInputs, submissionIndex} from '#/field/form/FormAnswers.js'
 import {
   type FormInputData,
   formDefinition
 } from '#/field/form/FormDefinition.js'
 import {FormField} from '#/field/form/FormField.js'
 import {type FormMailOut, formMails} from '#/field/form/FormMails.js'
-import {isSpam} from '#/field/form/FormSpam.js'
+import {formPage, isSpam} from '#/field/form/FormSpam.js'
 import {
   type FormResult,
   validateSubmission
@@ -30,6 +36,8 @@ const storeMethods = [
   'listSubmissions',
   'updateSubmission',
   'deleteSubmission',
+  'purgeSubmissions',
+  'visitorActivity',
   'storeFormFile',
   'formFiles',
   'attachFormFiles',
@@ -48,6 +56,35 @@ export function submissionStore(api: SubmissionsApi): Required<SubmissionsApi> {
   return store as Required<SubmissionsApi>
 }
 
+export function parseSubmissionQuery(body: unknown): SubmissionQuery {
+  if (!isRecord(body)) return {}
+  const text = (value: unknown) =>
+    typeof value === 'string' ? value : undefined
+  const number = (value: unknown) =>
+    typeof value === 'number' && Number.isFinite(value) ? value : undefined
+  const status = text(body.status)
+  const choice = isRecord(body.choice) ? body.choice : undefined
+  return {
+    status:
+      status === 'open' ||
+      status === 'new' ||
+      status === 'read' ||
+      status === 'archived' ||
+      status === 'all'
+        ? status
+        : undefined,
+    search: text(body.search),
+    choice:
+      choice && text(choice.key) && text(choice.value)
+        ? {key: String(choice.key), value: String(choice.value)}
+        : undefined,
+    from: number(body.from),
+    until: number(body.until),
+    offset: number(body.offset),
+    limit: number(body.limit)
+  }
+}
+
 export function parseSubmitRequest(body: unknown): SubmitRequest {
   if (!isRecord(body) || typeof body.entryId !== 'string')
     throw new HttpError(400, 'Missing the id of the form')
@@ -62,6 +99,7 @@ export function parseSubmitRequest(body: unknown): SubmitRequest {
     entryId: body.entryId,
     locale: typeof body.locale === 'string' ? body.locale : null,
     field: typeof body.field === 'string' ? body.field : undefined,
+    visitor: typeof body.visitor === 'string' ? body.visitor : undefined,
     data
   }
 }
@@ -86,6 +124,18 @@ export async function submitForm(
   const posted = new FormData()
   for (const [name, value] of request.data) posted.append(name, value)
   if (isSpam(posted)) return {ok: true}
+  const now = Math.floor(Date.now() / 1000)
+  const visitor = await visitorHash(secret, request.visitor)
+  const limit = limitOf(forms, 'submissions')
+  if (visitor && limit) {
+    const recent = await store.visitorActivity(
+      request.entryId,
+      visitor,
+      now - hour
+    )
+    if (recent.submissions >= limit)
+      return {ok: false, message: 'You sent this form often, try again later'}
+  }
   const files = await resolveFiles(
     store,
     secret,
@@ -108,38 +158,112 @@ export async function submitForm(
           )
         )
       : []
-  const id = createId()
-  await store.storeSubmission({
-    id,
+  const submission: Submission = {
+    id: createId(),
     entryId: request.entryId,
     locale: entry.locale ?? null,
     field: key,
     values: result.values,
     definition: result.definition,
-    createdAt: Math.floor(Date.now() / 1000),
+    createdAt: now,
     status: 'new',
-    notified
+    notified,
+    page: pageOf(posted.get(formPage))
+  }
+  const keep = Number(data.keep)
+  await store.storeSubmission({
+    ...submission,
+    ...submissionIndex(result.definition, result.values),
+    visitor,
+    expiresAt: keep > 0 ? now + keep * day : null
   })
   // Files of inputs the rules hid stay behind and are cleaned up later
   await store.attachFormFiles(
     request.entryId,
-    id,
+    submission.id,
     submittedFiles(result.values)
   )
+  await purgeSubmissions(store, forms, now)
+  if (forms.onSubmit)
+    try {
+      const title = typeof data.title === 'string' ? data.title : ''
+      await forms.onSubmit({submission, title})
+    } catch (error) {
+      console.error('Alinea forms.onSubmit failed', error)
+    }
   if (!type || !isFormType(type)) return {ok: true}
   return afterSending(graph, data)
 }
 
-function submittedFiles(values: Record<string, unknown>): Array<string> {
-  return Object.values(values).flatMap(value =>
-    Array.isArray(value)
-      ? value.flatMap(item =>
-          isRecord(item) && typeof item.id === 'string' && 'size' in item
-            ? [item.id]
-            : []
-        )
-      : []
-  )
+const hour = 60 * 60
+const day = 24 * hour
+
+const defaultLimits: Required<FormLimits> = {submissions: 20, uploads: 50}
+
+/** How often a visitor may send to a form per hour, 0 when they may always */
+export function limitOf(forms: FormsOptions, kind: keyof FormLimits): number {
+  if (forms.limits === false) return 0
+  return forms.limits?.[kind] ?? defaultLimits[kind]
+}
+
+/** A visitor as they are kept: a hash, so their address is not stored */
+export async function visitorHash(
+  secret: string,
+  visitor: string | undefined
+): Promise<string | null> {
+  if (!visitor) return null
+  const data = new TextEncoder().encode(`${secret}:${visitor}`)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return [...new Uint8Array(digest).slice(0, 16)]
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/** Where the answers were sent from, without the query, which may be private */
+function pageOf(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== 'string' || value.length > 2000) return null
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    return url.origin + url.pathname
+  } catch {
+    return null
+  }
+}
+
+/** The key of a file in `forms.files` */
+export function fileKey(file: FormFileKey): string {
+  return `${file.entryId}/${file.id}`
+}
+
+/** Removes files of submissions that were kept in `forms.files` */
+export async function removeFiles(
+  forms: FormsOptions,
+  files: Array<FormFileKey>
+): Promise<void> {
+  if (!forms.files || files.length === 0) return
+  try {
+    await forms.files.remove(files.map(fileKey))
+  } catch (error) {
+    console.error('Alinea could not remove files of submissions', error)
+  }
+}
+
+/** Removes expired submissions and uploads that were never submitted */
+export async function purgeSubmissions(
+  store: Required<SubmissionsApi>,
+  forms: FormsOptions,
+  now = Math.floor(Date.now() / 1000)
+): Promise<void> {
+  await removeFiles(forms, await store.purgeSubmissions(now))
+}
+
+/** The ids of the files in the answers, also in items of repeated sections */
+function submittedFiles(value: unknown): Array<string> {
+  if (Array.isArray(value)) return value.flatMap(submittedFiles)
+  if (!isRecord(value)) return []
+  if (typeof value.id === 'string' && 'size' in value) return [value.id]
+  return Object.values(value).flatMap(submittedFiles)
 }
 
 /**

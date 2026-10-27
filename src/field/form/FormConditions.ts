@@ -1,3 +1,5 @@
+import {isRecord} from '#/core/util/Objects.js'
+
 /** What kind of answer an input gives, which decides how rules test it */
 export type FormKind =
   | 'text'
@@ -104,10 +106,14 @@ interface ConditionalItem {
   showWhen?: FormConditionData
   disableWhen?: FormConditionData
   inputs?: Array<ConditionalItem>
+  repeat?: object
 }
 
 export interface FormState {
-  /** Ids of items that are not shown, not required and not stored */
+  /**
+   * Ids of items that are not shown, not required and not stored. Inputs of
+   * a repeatable section are in it per item, see `itemId`.
+   */
   hidden: Set<string>
   /** Ids of inputs that are shown, but not editable and not stored */
   disabled: Set<string>
@@ -116,28 +122,50 @@ export interface FormState {
 /**
  * Which items of a form are hidden or disabled for these answers, by key.
  * Rules only use inputs above them, so one pass in reading order sees every
- * answer a rule needs. A hidden or disabled input counts as empty.
+ * answer a rule needs. A hidden or disabled input counts as empty. The
+ * answers of a repeatable section are a list of items, the rules of its
+ * inputs see the answers above the section and those above them in their
+ * own item.
  */
 export function formState(
   items: Array<ConditionalItem>,
   values: Record<string, unknown>
 ): FormState {
   const state: FormState = {hidden: new Set(), disabled: new Set()}
-  const answers: Record<string, unknown> = {}
-  function visit(items: Array<ConditionalItem>, hidden: boolean) {
+  function visit(
+    items: Array<ConditionalItem>,
+    hidden: boolean,
+    values: Record<string, unknown>,
+    answers: Record<string, unknown>,
+    suffix: string
+  ) {
     for (const item of items) {
       const off = hidden || !holds(item.showWhen, answers, true)
-      if (off) state.hidden.add(item.id)
+      if (off) state.hidden.add(item.id + suffix)
+      if (item.inputs && item.repeat && item.key) {
+        const list = values[item.key]
+        if (Array.isArray(list))
+          list.forEach((entry, index) =>
+            visit(
+              item.inputs!,
+              off,
+              isRecord(entry) ? entry : {},
+              {...answers},
+              `${suffix}:${index}`
+            )
+          )
+        continue
+      }
       if (item.inputs) {
-        visit(item.inputs, off)
+        visit(item.inputs, off, values, answers, suffix)
         continue
       }
       const disabled = !off && holds(item.disableWhen, answers, false)
-      if (disabled) state.disabled.add(item.id)
+      if (disabled) state.disabled.add(item.id + suffix)
       if (item.key && !off && !disabled) answers[item.key] = values[item.key]
     }
   }
-  visit(items, false)
+  visit(items, false, values, {}, '')
   return state
 }
 

@@ -1,6 +1,8 @@
+import type {DatabaseDeclaration} from '#/backend/api/CreateBackend.js'
 import type {
   PrepareUploadRequest,
   PrepareUploadResult,
+  Submission,
   SubmitRequest,
   SubmitResult
 } from './Connection.js'
@@ -17,9 +19,54 @@ export interface FormMail {
 /** Sends a mail, eg. `mail => resend.emails.send({from, ...mail})` */
 export type FormMailer = (mail: FormMail) => unknown | Promise<unknown>
 
+/** A submission that was just stored, for `forms.onSubmit` */
+export interface FormSubmitEvent {
+  submission: Submission
+  /** The title of the form entry */
+  title: string
+}
+
+/**
+ * Keeps the files visitors upload outside the database, eg. in a private
+ * bucket made with `formFiles.s3` from `alinea/backend`
+ */
+export interface FormFileStorage {
+  write(key: string, content: Uint8Array, type: string): Promise<void>
+  read(key: string): Promise<Uint8Array | undefined>
+  remove(keys: Array<string>): Promise<void>
+}
+
+/** How often a visitor may send to one form, per hour */
+export interface FormLimits {
+  /** 20 by default */
+  submissions?: number
+  /** 50 by default */
+  uploads?: number
+}
+
 export interface FormsOptions {
   /** Sends the notification mails of forms, see the Notifications tab */
   mailer?: FormMailer
+  /**
+   * Where submissions are stored when the backend has no database of its
+   * own, eg. when content is hosted on alinea.cloud
+   */
+  database?: DatabaseDeclaration
+  /**
+   * Keeps uploaded files outside the database. Without it they are stored
+   * in the database, which suits small files only.
+   */
+  files?: FormFileStorage
+  /**
+   * Called once a submission is stored, eg. to send it on to a CRM. It is
+   * awaited, a failure is logged and the visitor is not told.
+   */
+  onSubmit?(event: FormSubmitEvent): unknown | Promise<unknown>
+  /**
+   * Limits how often one visitor sends to a form, by the `visitor` the site
+   * passes to `cms.forms.submit`. Set to false to not limit.
+   */
+  limits?: FormLimits | false
 }
 
 export interface FormSubmitOptions {
@@ -32,6 +79,12 @@ export interface FormSubmitOptions {
    * honeypot and the time it took to fill in the form are checked anyway.
    */
   verify?(): boolean | Promise<boolean>
+  /**
+   * Who sends it, eg. their IP address, to limit how often they send. The
+   * handler keeps a hash of it. The Next.js adapter passes the IP address
+   * of the request.
+   */
+  visitor?: string
 }
 
 /** A file a visitor is about to upload to a file input of a form */
@@ -70,7 +123,17 @@ export interface FormsClient {
   prepareFormUpload(request: PrepareUploadRequest): Promise<PrepareUploadResult>
 }
 
-export function formsOf(client: () => Promise<FormsClient>): Forms {
+/**
+ * The forms of a client. The visitor is asked for when a submission does not
+ * pass one, eg. the IP address of the request.
+ */
+export function formsOf(
+  client: () => Promise<FormsClient>,
+  visitor?: () => Promise<string | undefined>
+): Forms {
+  async function visitorOf(options: {visitor?: string}) {
+    return options.visitor ?? (await visitor?.())
+  }
   async function prepareUpload(
     entryId: string,
     file: FormUploadFile,
@@ -80,12 +143,14 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
       entryId,
       locale: options.locale,
       field: options.field,
+      visitor: await visitorOf(options),
       ...file
     })
   }
   return {
     prepareUpload,
     async submit(entryId, data, options = {}) {
+      options = {...options, visitor: await visitorOf(options)}
       if (options.verify && !(await options.verify()))
         return {ok: false, message: 'Your answers could not be verified'}
       const entries = Array<[string, string]>()
@@ -119,6 +184,7 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
         entryId,
         locale: options.locale,
         field: options.field,
+        visitor: options.visitor,
         data: entries
       })
     }

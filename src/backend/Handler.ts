@@ -1,5 +1,9 @@
 import {
+  fileKey,
+  parseSubmissionQuery,
   parseSubmitRequest,
+  purgeSubmissions,
+  removeFiles,
   submissionStore,
   submitForm
 } from '#/backend/FormSubmit.js'
@@ -9,6 +13,8 @@ import {
   receiveUpload,
   uploadCors
 } from '#/backend/FormUploads.js'
+import {hasForm} from '#/backend/FormLoad.js'
+import {SubmissionStore} from '#/backend/api/SubmissionStore.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {
@@ -54,6 +60,8 @@ import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {isAbsolute, normalize, relative} from '#/core/util/Paths.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
+import type {Database} from 'rado'
+import * as driver from 'rado/driver'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {proxyMediaUrl} from './api/ProxyMedia.js'
@@ -120,6 +128,15 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
+  // Submissions are kept in forms.database when it is set, eg. for content
+  // on alinea.cloud, otherwise by the backend
+  const ownStore = forms?.database
+    ? new SubmissionStore({
+        db: (driver[forms.database.driver] as (client: unknown) => Database)(
+          forms.database.client
+        )
+      })
+    : undefined
   return async function handle(
     request: Request,
     context: RequestContext
@@ -161,6 +178,45 @@ export function createHandler({
       const params = url.searchParams
       const auth = params.get('auth')
       let cnx = remote(context)
+      const submissions = () => ownStore ?? cnx
+      /** The ids of entries with a form that the mutations remove */
+      async function removedForms(
+        mutations: ReadonlyArray<Mutation>
+      ): Promise<Array<string>> {
+        const ids = new Set(
+          mutations.flatMap(mutation =>
+            mutation.op === 'remove' && mutation.id ? [mutation.id] : []
+          )
+        )
+        const result = Array<string>()
+        for (const id of ids) {
+          const type = await local.first({
+            id,
+            status: 'all',
+            select: Entry.type
+          })
+          if (type && hasForm(cms.config.schema[type])) result.push(id)
+        }
+        return result
+      }
+      /** The submissions of form entries that were removed go with them */
+      async function removeSubmissionsOf(removed: Array<string>) {
+        const api = submissions()
+        if (removed.length === 0 || !api.deleteSubmission) return
+        for (const id of removed) {
+          // Removing a draft or a translation leaves the entry
+          const left = await local.first({id, status: 'all', select: Entry.id})
+          if (left) continue
+          try {
+            await removeFiles(
+              forms ?? {},
+              await api.deleteSubmission.call(api, id)
+            )
+          } catch (error) {
+            console.error('Alinea could not remove submissions', error)
+          }
+        }
+      }
       let userCtx: AuthedContext | undefined
       if (auth) {
         return await cnx.authenticate(request, {
@@ -291,7 +347,10 @@ export function createHandler({
       if (action === HandleAction.FormUpload && request.method === 'OPTIONS')
         return new Response(null, {status: 204, headers: uploadCors})
       if (action === HandleAction.FormUpload && request.method === 'PUT')
-        return receiveUpload(request, cnx, context.apiKey)
+        return receiveUpload(request, submissions(), {
+          forms,
+          secret: context.apiKey
+        })
 
       try {
         userCtx = await cnx.verify(request)
@@ -415,7 +474,7 @@ export function createHandler({
         const submit = parseSubmitRequest(await body)
         await periodicSync(cnx, cms.config.syncInterval)
         return Response.json(
-          await submitForm(cms.config, local, cnx, submit, {
+          await submitForm(cms.config, local, submissions(), submit, {
             forms,
             secret: context.apiKey
           })
@@ -428,7 +487,8 @@ export function createHandler({
         const prepare = parsePrepareRequest(await body)
         await periodicSync(cnx, cms.config.syncInterval)
         return Response.json(
-          await prepareUpload(cms.config, local, prepare, {
+          await prepareUpload(cms.config, local, submissions(), prepare, {
+            forms,
             secret: context.apiKey,
             handlerUrl: context.handlerUrl
           })
@@ -447,12 +507,15 @@ export function createHandler({
         if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
         const policy = await user.policy
         policy.assert(Permission.Read, entry)
-        const file = await submissionStore(cnx).readFormFile(
+        const file = await submissionStore(submissions()).readFormFile(
           entryId,
           string(url.searchParams.get('id'))
         )
-        if (!file) throw new HttpError(ErrorCode.NotFound, 'File not found')
-        return new Response(new Uint8Array(file.content), {
+        const content =
+          file && (file.content ?? (await forms?.files?.read(fileKey(file))))
+        if (!file || !content)
+          throw new HttpError(ErrorCode.NotFound, 'File not found')
+        return new Response(new Uint8Array(content), {
           headers: {
             'content-type': 'application/octet-stream',
             'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
@@ -474,15 +537,26 @@ export function createHandler({
         })
         if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
         const policy = await user.policy
-        const store = submissionStore(cnx)
+        const store = submissionStore(submissions())
         if (request.method === 'GET') {
           policy.assert(Permission.Read, entry)
-          return Response.json(await store.listSubmissions(entryId))
+          // Expired submissions are gone before the list is read
+          await purgeSubmissions(store, forms ?? {})
+          const query = url.searchParams.get('query')
+          return Response.json(
+            await store.listSubmissions(
+              entryId,
+              query ? parseSubmissionQuery(JSON.parse(query)) : {}
+            )
+          )
         }
         const id = string(url.searchParams.get('id'))
         if (request.method === 'DELETE') {
           policy.assert(Permission.Delete, entry)
-          await store.deleteSubmission(entryId, id)
+          await removeFiles(
+            forms ?? {},
+            await store.deleteSubmission(entryId, id)
+          )
           return new Response(null, {status: 204})
         }
         if (request.method === 'POST') {
@@ -504,6 +578,7 @@ export function createHandler({
         expectJson()
         const policy = await user.policy
         let mutations = (await body) as ReadonlyArray<Mutation>
+        const formsBefore = await removedForms(mutations)
         await sync(cnx, 'commit')
         const adjusted = await hooks.beforeCommit?.({
           mutations,
@@ -542,6 +617,7 @@ export function createHandler({
           return sha
         }
         const sha = await attempt()
+        await removeSubmissionsOf(formsBefore)
         try {
           if (hooks.afterCommit) {
             const entries = await committedEntries(local, mutations)

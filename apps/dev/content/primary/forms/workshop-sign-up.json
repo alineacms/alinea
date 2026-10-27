@@ -12,6 +12,11 @@
       "_index": "a0",
       "_type": "section",
       "label": "Participant",
+      "repeat": true,
+      "key": "participants",
+      "min": 1,
+      "max": 5,
+      "add": "Add a participant",
       "inputs": [
         {
           "_id": "workshop-first-name",

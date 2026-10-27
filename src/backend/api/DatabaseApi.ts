@@ -310,6 +310,15 @@ function prepareDatabase(db: Database): Promise<Database> {
 
 /** A blob of any size: a plain MySQL blob holds 64 KB at most. */
 export function largeBlob(): Column<Uint8Array> {
+  return blobColumn() as Column<Uint8Array>
+}
+
+/** A blob that may be left empty */
+export function optionalLargeBlob(): Column<Uint8Array | null> {
+  return blobColumn()
+}
+
+function blobColumn(): Column<Uint8Array | null> {
   return new Column({
     type: new ColumnType(
       'blob',
@@ -321,7 +330,7 @@ export function largeBlob(): Column<Uint8Array> {
       })
     ),
     mapFromDriverValue(value) {
-      return new Uint8Array(value as ArrayBufferLike)
+      return value === null ? null : new Uint8Array(value as ArrayBufferLike)
     }
   })
 }

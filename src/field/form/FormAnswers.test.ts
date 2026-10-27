@@ -108,9 +108,9 @@ test('csv has a column per input and quotes what needs it', () => {
     {...submission, id: 's2', values: {name: '=1+1', service: 'facilities'}}
   ])
   expect(csv.split('\r\n')).toEqual([
-    '﻿Received,Status,Language,Name,Phone,Service,Room number',
-    '2026-10-24T00:00:00.000Z,new,,"Ann, ""the"" tester",,IT,',
-    "2026-10-24T00:00:00.000Z,new,,'=1+1,,Facilities,",
+    '﻿Received,Status,Language,Page,Name,Phone,Service,Room number',
+    '2026-10-24T00:00:00.000Z,new,,,"Ann, ""the"" tester",,IT,',
+    "2026-10-24T00:00:00.000Z,new,,,'=1+1,,Facilities,",
     ''
   ])
 })

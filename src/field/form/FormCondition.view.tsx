@@ -56,12 +56,17 @@ export function FormConditionView({field}: FormConditionViewProps) {
   // Rules of inputs follow the reading order, so they can not depend on each
   // other, rows outside the form use all of its inputs
   const position = options.effect === 'send' ? Infinity : (self?.index ?? -1)
+  // Inputs of a repeatable section can only be used within that section
+  const within = options.effect === 'send' ? undefined : self?.repeat
   const above = useMemo(
     () =>
       order.filter(
-        entry => entry.index < position && entry.input.control !== 'section'
+        entry =>
+          entry.index < position &&
+          entry.input.control !== 'section' &&
+          (!entry.repeat || entry.repeat === within)
       ),
-    [order, position]
+    [order, position, within]
   )
   const readOnly = Boolean(options.readOnly)
   const always = options.effect !== 'disable'
@@ -141,6 +146,7 @@ export function FormConditionView({field}: FormConditionViewProps) {
               above={above}
               byId={byId}
               position={position}
+              within={within}
               readOnly={readOnly}
               onChange={next =>
                 update({
@@ -197,6 +203,8 @@ interface FormRuleEditorProps {
   byId: Map<string, FormEntry>
   /** The position of the input in reading order, see `ruleProblem` */
   position: number
+  /** The repeatable section the input is in, see `ruleProblem` */
+  within?: string
   readOnly: boolean
   onChange: (rule: FormRule) => void
   onTarget: (target: FormEntry) => void
@@ -209,6 +217,7 @@ function FormRuleEditor({
   above,
   byId,
   position,
+  within,
   readOnly,
   onChange,
   onTarget,
@@ -217,7 +226,7 @@ function FormRuleEditor({
   const name = `rule ${index + 1}`
   const target = byId.get(rule.input)
   const kind = target ? Input.kind(target.input) : undefined
-  const problem = ruleProblem(rule, position, byId)
+  const problem = ruleProblem(rule, position, byId, within)
   return (
     <div
       className={styles.FormRuleEditor()}

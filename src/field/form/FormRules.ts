@@ -20,6 +20,8 @@ export interface FormEntry {
   /** From the form field to the row, as validation errors point at it */
   path: FieldPath
   labels: Array<string>
+  /** The id of the repeatable section the row is in */
+  repeat?: string
 }
 
 export function readingOrder(
@@ -29,7 +31,12 @@ export function readingOrder(
   labels: Array<string> = []
 ): Array<FormEntry> {
   const result = Array<FormEntry>()
-  function visit(rows: unknown, path: FieldPath, labels: Array<string>) {
+  function visit(
+    rows: unknown,
+    path: FieldPath,
+    labels: Array<string>,
+    repeat?: string
+  ) {
     if (!Array.isArray(rows)) return
     rows.forEach((row, index) => {
       if (!isRecord(row) || typeof row._id !== 'string') return
@@ -42,10 +49,16 @@ export function readingOrder(
         input,
         index: result.length,
         path: at,
-        labels: within
+        labels: within,
+        ...(repeat && {repeat})
       })
       if (input.control === 'section')
-        visit(row.inputs, [...at, 'inputs'], within)
+        visit(
+          row.inputs,
+          [...at, 'inputs'],
+          within,
+          row.repeat === true ? row._id : undefined
+        )
     })
   }
   visit(rows, path, labels)
@@ -71,18 +84,23 @@ export function storedCondition(value: unknown): FormCondition | undefined {
 /**
  * Why a rule cannot work, or undefined while it can. Rules of an entry at
  * this position in reading order use the entries before it, rules outside
- * the form such as those of a mail use every entry (`Infinity`).
+ * the form such as those of a mail use every entry (`Infinity`). Inputs of a
+ * repeatable section have an answer per item, only rules within the same
+ * section (`within`, its id) can use them.
  */
 export function ruleProblem(
   rule: FormRule,
   index: number,
-  byId: Map<string, FormEntry>
+  byId: Map<string, FormEntry>,
+  within?: string
 ): string | undefined {
   const target = byId.get(rule.input)
   if (!target || target.input.control === 'section')
     return 'Its rule uses an input that was removed'
   const label = entryLabel(target)
   if (target.index >= index) return `Its rule uses ${label}, which is below it`
+  if (target.repeat && target.repeat !== within)
+    return `Its rule uses ${label}, which repeats`
   const kind = Input.kind(target.input)
   if (!(rule.op in operators[kind]))
     return `Its rule on ${label} no longer fits ${label}`
@@ -105,12 +123,13 @@ export function conditionData(
   value: unknown,
   index: number,
   byId: Map<string, FormEntry>,
-  key: (row: Record<string, unknown>) => string
+  key: (row: Record<string, unknown>) => string,
+  within?: string
 ): FormConditionData | undefined {
   const condition = storedCondition(value)
   if (!condition) return undefined
   const rules = condition.rules.flatMap((rule): Array<FormRuleData> => {
-    if (ruleProblem(rule, index, byId)) return []
+    if (ruleProblem(rule, index, byId, within)) return []
     const target = byId.get(rule.input)!
     const data: FormRuleData = {input: key(target.row), op: rule.op}
     if (!needsValue(rule.op)) return [data]
@@ -143,7 +162,7 @@ export function ruleErrors(
       const condition = storedCondition(entry.row[field])
       if (!condition) return []
       const problem = condition.rules
-        .map(rule => ruleProblem(rule, entry.index, byId))
+        .map(rule => ruleProblem(rule, entry.index, byId, entry.repeat))
         .find(Boolean)
       if (!problem) return []
       return [

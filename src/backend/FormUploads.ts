@@ -5,14 +5,16 @@ import type {
   PrepareUploadResult,
   SubmissionsApi
 } from '#/core/Connection.js'
+import type {FormsOptions} from '#/core/Forms.js'
 import type {Graph} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {sign, verify} from '#/core/util/JWT.js'
 import {isRecord} from '#/core/util/Objects.js'
-import type {FormInputData} from '#/field/form/FormDefinition.js'
+import {type FormInputData, nameKey} from '#/field/form/FormDefinition.js'
 import {contentProblem, isAccepted} from '#/field/form/FormFileTypes.js'
 import {HandleAction} from './HandleAction.js'
+import {fileKey, limitOf, submissionStore, visitorHash} from './FormSubmit.js'
 import {fileInputs, loadForm} from './FormLoad.js'
 
 /** How long a visitor has to upload a file after the site asked for it */
@@ -24,6 +26,8 @@ interface UploadTicket extends FormFileRef {
   entryId: string
   /** The key of the file input */
   input: string
+  /** A hash of the visitor, see `visitorHash` */
+  visitor: string | null
 }
 
 /** The browser uploads from the site to the handler, which may be elsewhere */
@@ -49,7 +53,8 @@ export function parsePrepareRequest(body: unknown): PrepareUploadRequest {
     input: body.input,
     name: body.name,
     size: body.size,
-    type: typeof body.type === 'string' ? body.type : ''
+    type: typeof body.type === 'string' ? body.type : '',
+    visitor: typeof body.visitor === 'string' ? body.visitor : undefined
   }
 }
 
@@ -70,8 +75,13 @@ function maxSize(config: Config, input: FormInputData): number {
 export async function prepareUpload(
   config: Config,
   graph: Graph,
+  api: SubmissionsApi,
   request: PrepareUploadRequest,
-  {secret, handlerUrl}: {secret: string; handlerUrl: URL}
+  {
+    forms = {},
+    secret,
+    handlerUrl
+  }: {forms?: FormsOptions; secret: string; handlerUrl: URL}
 ): Promise<PrepareUploadResult> {
   const {inputs} = await loadForm(config, graph, request)
   const input = fileInputs(inputs).find(input => input.key === request.input)
@@ -86,10 +96,22 @@ export async function prepareUpload(
       message: `Choose a file of at most ${Math.floor(limit / megabyte)} MB`
     }
   const issuedAt = Math.floor(Date.now() / 1000)
+  const visitor = await visitorHash(secret, request.visitor)
+  const perHour = limitOf(forms, 'uploads')
+  if (visitor && perHour) {
+    const recent = await submissionStore(api).visitorActivity(
+      request.entryId,
+      visitor,
+      issuedAt - 60 * 60
+    )
+    if (recent.files >= perHour)
+      return {ok: false, message: 'You sent many files, try again later'}
+  }
   const ticket: UploadTicket = {
     purpose: 'form-upload',
     entryId: request.entryId,
     input: input.key,
+    visitor,
     id: createId(),
     name: request.name,
     size: request.size,
@@ -124,7 +146,7 @@ async function readTicket(
 export async function receiveUpload(
   request: Request,
   api: SubmissionsApi,
-  secret: string
+  {forms = {}, secret}: {forms?: FormsOptions; secret: string}
 ): Promise<Response> {
   const fail = (status: number, message: string) =>
     new Response(message, {status, headers: uploadCors})
@@ -142,6 +164,14 @@ export async function receiveUpload(
   if (problem) return fail(415, problem)
   const store = api.storeFormFile
   if (!store) return fail(501, 'Configure a database to store submissions')
+  // The bytes go to the storage of forms.files when there is one, the
+  // database keeps what the file is
+  if (forms.files)
+    await forms.files.write(
+      fileKey({entryId: ticket.entryId, id: ticket.id}),
+      content,
+      ticket.type
+    )
   await store.call(api, {
     id: ticket.id,
     entryId: ticket.entryId,
@@ -150,7 +180,8 @@ export async function receiveUpload(
     size: ticket.size,
     type: ticket.type,
     submissionId: null,
-    content,
+    content: forms.files ? null : content,
+    visitor: ticket.visitor ?? null,
     createdAt: Math.floor(Date.now() / 1000)
   })
   return new Response(null, {status: 204, headers: uploadCors})
@@ -174,23 +205,26 @@ export async function resolveFiles(
   const keys = new Set(inputs.map(input => input.key))
   const data = new FormData()
   const errors: Record<string, string> = {}
-  const tickets = new Map<string, UploadTicket>()
-  for (const [key, value] of posted) {
+  // By the id of the file, with the name it was sent under: the key of its
+  // input, or its name in an item of a repeatable section
+  const tickets = new Map<string, {ticket: UploadTicket; name: string}>()
+  for (const [name, value] of posted) {
+    const key = nameKey(name)
     if (!keys.has(key)) {
-      data.append(key, value)
+      data.append(name, value)
       continue
     }
     if (typeof value !== 'string' || value === '') continue
     const ticket = await readTicket(value, secret)
     if (!ticket || ticket.entryId !== entryId || ticket.input !== key)
-      errors[key] = 'Upload the file again'
-    else tickets.set(ticket.id, ticket)
+      errors[name] = 'Upload the file again'
+    else tickets.set(ticket.id, {ticket, name})
   }
   const stored = await api.formFiles(entryId, [...tickets.keys()])
-  for (const ticket of tickets.values()) {
+  for (const {ticket, name} of tickets.values()) {
     const file = stored.find(file => file.id === ticket.id)
     if (!file || file.submissionId || file.input !== ticket.input) {
-      errors[ticket.input] = 'Upload the file again'
+      errors[name] = 'Upload the file again'
       continue
     }
     const ref: FormFileRef = {
@@ -199,7 +233,7 @@ export async function resolveFiles(
       size: file.size,
       type: file.type
     }
-    data.append(ticket.input, JSON.stringify(ref))
+    data.append(name, JSON.stringify(ref))
   }
   if (Object.keys(errors).length > 0) return {ok: false, errors}
   return {ok: true, data}

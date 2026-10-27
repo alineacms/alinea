@@ -10,7 +10,8 @@ import {
   IcRoundPhone,
   IcRoundRadioButtonChecked,
   IcRoundShortText,
-  IcRoundUploadFile
+  IcRoundUploadFile,
+  IcRoundVisibilityOff
 } from '#/dashboard/icons.js'
 import {check as checkField} from '#/field/check.js'
 import {date as dateField} from '#/field/date.js'
@@ -220,6 +221,25 @@ export const check = input('Check', {
   parse: ([raw]) => (raw ? true : undefined)
 })
 
+/**
+ * Sent with the answers without being shown, eg. the campaign a visitor came
+ * from. Its value is set in the form, taken from a parameter of the address
+ * of the page or passed to `<Form values>`.
+ */
+export const hidden = input('Hidden', {
+  icon: IcRoundVisibilityOff,
+  settings: {
+    initialValue: textField('Value', {help: 'Sent unless one is found below'}),
+    param: textField('From the address', {
+      help: 'A parameter of the address of the page, eg. utm_campaign'
+    })
+  },
+  attributes: settings => ({
+    type: 'hidden',
+    'data-param': settings.param || undefined
+  })
+})
+
 export const section = input('Section', {
   icon: IcOutlineViewList,
   control: 'section'
@@ -238,5 +258,6 @@ export const defaults = {
   checkboxes,
   select,
   check,
+  hidden,
   section
 }

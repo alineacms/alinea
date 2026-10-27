@@ -30,6 +30,7 @@ import {
 import type {
   FormFileRef,
   Submission,
+  SubmissionQuery,
   SubmissionStatus
 } from '#/core/Connection.js'
 import {Field} from '#/core/Field.js'
@@ -56,13 +57,15 @@ import {
   useSetAtom,
   useStore
 } from 'jotai'
-import {useMemo, useState} from 'react'
+import {useMemo, useRef, useState} from 'react'
 import {
   type FormAnswer,
+  type FormColumn,
   answerGroups,
   answerText,
-  formInputs,
-  matchesSearch,
+  columnText,
+  formColumns,
+  itemsOf,
   submissionsCsv
 } from './FormAnswers.js'
 import {formState} from './FormConditions.js'
@@ -76,16 +79,7 @@ const styles = styler(css)
 /** Bumped after a change, so the submissions of the entry load again */
 const version = dispense((entryId: string) => atom(0))
 
-const submissionsAtom = dispense((entryId: string) =>
-  atomWithPending(
-    atom(async get => {
-      get(version(entryId))
-      return get(clientAtom).submissions(entryId)
-    })
-  )
-)
-
-type StatusFilter = 'open' | SubmissionStatus | 'all'
+type StatusFilter = NonNullable<SubmissionQuery['status']>
 
 const statusFilters: Record<StatusFilter, string> = {
   open: 'New and read',
@@ -93,6 +87,80 @@ const statusFilters: Record<StatusFilter, string> = {
   read: 'Read',
   archived: 'Archived',
   all: 'All'
+}
+
+/** What editors filter the submissions of a form by */
+interface SubmissionFilter {
+  search: string
+  range: DateRange | null
+  status: StatusFilter
+  choice: {key: string; value: string} | null
+}
+
+const filterAtom = dispense((entryId: string) =>
+  atom<SubmissionFilter>({
+    search: '',
+    range: null,
+    status: 'open',
+    choice: null
+  })
+)
+
+/** How many pages of submissions are shown, more load on scrolling */
+const shownPages = dispense((entryId: string) => atom(1))
+
+const pageSize = 50
+
+/** A page of submissions, by the entry, the query and the page */
+const pageAtom = dispense((key: string) =>
+  atom(async get => {
+    const {entryId, query, page} = JSON.parse(key) as {
+      entryId: string
+      query: SubmissionQuery
+      page: number
+    }
+    return get(clientAtom).submissions(entryId, {
+      ...query,
+      offset: page * pageSize,
+      limit: pageSize
+    })
+  })
+)
+
+/** The submissions shown in the table, the pages loaded so far */
+const submissionsAtom = dispense((entryId: string) =>
+  atomWithPending(
+    atom(async get => {
+      const changes = get(version(entryId))
+      const query = submissionQuery(get(filterAtom(entryId)))
+      const pages = await Promise.all(
+        Array.from({length: get(shownPages(entryId))}, (_, page) =>
+          get(pageAtom(JSON.stringify({entryId, query, page, changes})))
+        )
+      )
+      return {
+        submissions: pages.flatMap(page => page.submissions),
+        total: pages.at(-1)?.total ?? 0
+      }
+    })
+  )
+)
+
+function submissionQuery(filter: SubmissionFilter): SubmissionQuery {
+  const {range} = filter
+  return {
+    status: filter.status,
+    search: filter.search.trim() || undefined,
+    choice: filter.choice ?? undefined,
+    // From the start of the first day to the start of the day after the last
+    from: range ? startOfDay(range.start) : undefined,
+    until: range ? startOfDay(range.end, 1) : undefined
+  }
+}
+
+function startOfDay(day: string, add = 0): number {
+  const [year, month, date] = day.split('-').map(Number)
+  return Math.floor(new Date(year, month - 1, date + add).getTime() / 1000)
 }
 
 const columns = 4
@@ -130,37 +198,68 @@ interface FormSubmissionsProps {
 }
 
 function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
-  const [pending, submissions = []] = useAtomValueRawSync(
-    submissionsAtom(entryId)
-  )
-  const [search, setSearch] = useState('')
-  const [range, setRange] = useState<DateRange | null>(null)
-  const [status, setStatus] = useState<StatusFilter>('open')
-  const inputs = useMemo(() => formInputs(definition), [definition])
+  const [pending, page] = useAtomValueRawSync(submissionsAtom(entryId))
+  const submissions = page?.submissions ?? []
+  const total = page?.total ?? 0
+  const filter = useAtomValueRaw(filterAtom(entryId))
+  const setFilter = useSetAtom(filterAtom(entryId))
+  const setPages = useSetAtom(shownPages(entryId))
+  const store = useStore()
+  const [search, setSearch] = useState(filter.search)
+  const searching = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const inputs = useMemo(() => formColumns(definition), [definition])
   // The first choice of the form filters the submissions, eg. a service
-  const choice = inputs.find(input => input.choices?.length)
-  const [chosen, setChosen] = useState<string | null>(null)
-  const [selected, setSelected] = useState<string>()
-  const openSheet = useOpenBlockSheet()
-  const shown = useMemo(
-    () =>
-      submissions.filter(
-        submission =>
-          statusMatches(status, submission.status) &&
-          inRange(range, submission.createdAt) &&
-          (!choice ||
-            !chosen ||
-            [submission.values[choice.key]].flat().includes(chosen)) &&
-          matchesSearch(definition, submission, search)
-      ),
-    [submissions, status, range, choice, chosen, definition, search]
+  const choice = inputs.find(
+    (input): input is FormInputData =>
+      input.control !== 'section' && Boolean(input.choices?.length)
   )
+  const [selected, setSelected] = useState<string>()
+  const [exporting, setExporting] = useState(false)
+  const openSheet = useOpenBlockSheet()
   const visible = inputs.slice(0, columns)
   const current = submissions.find(submission => submission.id === selected)
+  const filtered =
+    filter.search !== '' ||
+    filter.range !== null ||
+    filter.choice !== null ||
+    (filter.status !== 'open' && filter.status !== 'all')
+
+  function update(change: Partial<SubmissionFilter>) {
+    setPages(1)
+    setFilter(current => ({...current, ...change}))
+  }
+
+  // Searches once typing pauses, not for every key
+  function changeSearch(value: string) {
+    setSearch(value)
+    clearTimeout(searching.current)
+    searching.current = setTimeout(() => update({search: value}), 300)
+  }
 
   function open(id: string) {
     setSelected(id)
     openSheet(sheetId(id))
+  }
+
+  async function exportCsv() {
+    setExporting(true)
+    try {
+      const client = store.get(clientAtom)
+      const query = submissionQuery(filter)
+      const all = Array<Submission>()
+      while (true) {
+        const {submissions} = await client.submissions(entryId, {
+          ...query,
+          offset: all.length,
+          limit: 500
+        })
+        all.push(...submissions)
+        if (submissions.length < 500) break
+      }
+      download(definition, all)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -171,13 +270,13 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
           placeholder="Search answers..."
           className={styles.FormSubmissions.search()}
           value={search}
-          onValueChange={setSearch}
+          onValueChange={changeSearch}
         />
         <DateRangePicker
           aria-label="Received between"
           className={styles.FormSubmissions.filter()}
-          value={range}
-          onValueChange={setRange}
+          value={filter.range}
+          onValueChange={range => update({range})}
         />
         {choice && (
           <Select
@@ -185,9 +284,16 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
             className={styles.FormSubmissions.filter()}
             placeholder={choice.label}
             clearable
-            value={chosen}
+            value={
+              filter.choice?.key === choice.key ? filter.choice.value : null
+            }
             onValueChange={value =>
-              setChosen(value === null ? null : String(value))
+              update({
+                choice:
+                  value === null
+                    ? null
+                    : {key: choice.key, value: String(value)}
+              })
             }
           >
             {choice.choices!.map(option => (
@@ -200,8 +306,10 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
         <Select
           aria-label="Status"
           className={styles.FormSubmissions.filter()}
-          value={status}
-          onValueChange={value => value && setStatus(value as StatusFilter)}
+          value={filter.status}
+          onValueChange={value =>
+            value && update({status: value as StatusFilter})
+          }
         >
           {entries(statusFilters).map(([value, label]) => (
             <SelectItem key={value} value={value}>
@@ -212,16 +320,21 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
         <Button
           variant="outline"
           icon={IcRoundDownload}
-          disabled={shown.length === 0}
-          onClick={() => download(definition, shown)}
+          disabled={total === 0 || exporting}
+          onClick={exportCsv}
         >
           Export CSV
         </Button>
       </div>
       <Table
         aria-label="Submissions"
-        items={shown}
+        items={submissions}
         loading={pending && submissions.length === 0}
+        onLoadMore={
+          submissions.length < total && !pending
+            ? () => setPages(pages => pages + 1)
+            : undefined
+        }
         columns={[
           ...visible.map((input, index) => ({
             id: input.id,
@@ -242,9 +355,9 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
               </EmptyMedia>
               <EmptyTitle>No submissions</EmptyTitle>
               <EmptyDescription>
-                {submissions.length === 0
-                  ? 'Answers visitors send show up here.'
-                  : 'None match these filters.'}
+                {filtered
+                  ? 'None match these filters.'
+                  : 'Answers visitors send show up here.'}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -257,9 +370,9 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
             highlighted={submission.id === selected}
           >
             {[
-              ...visible.map(input => (
-                <TableCell key={input.id}>
-                  <AnswerText input={input} submission={submission} />
+              ...visible.map(column => (
+                <TableCell key={column.id}>
+                  <AnswerText column={column} submission={submission} />
                 </TableCell>
               )),
               <TableCell key="received">
@@ -284,24 +397,23 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
     </div>
   )
 }
-
 function sheetId(id: string) {
   return `submission:${id}`
 }
 
 interface AnswerTextProps {
-  input: FormInputData
+  column: FormColumn
   submission: Submission
 }
 
 /** An answer in the table, or why there is none */
-function AnswerText({input, submission}: AnswerTextProps) {
-  const text = answerText(input, submission.values[input.key])
+function AnswerText({column, submission}: AnswerTextProps) {
+  const text = columnText(column, submission.values)
   if (text) return <>{text}</>
   const sent = submission.definition as FormDefinition
-  const asked = formInputs(sent).some(other => other.id === input.id)
+  const asked = formColumns(sent).some(other => other.id === column.id)
   const hidden =
-    asked && formState(sent, submission.values).hidden.has(input.id)
+    asked && formState(sent, submission.values).hidden.has(column.id)
   if (asked && !hidden) return null
   return (
     <Text color="muted" className={styles.FormSubmissions.missing()}>
@@ -383,12 +495,12 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
                 ))}
             </DataList>
             {/* Files show below the answers of their section, as cards */}
-            {group.answers.filter(isFileAnswer).map(({input}) => (
+            {group.answers.filter(isFileAnswer).map(({input, value}) => (
               <SubmissionFiles
                 key={input.id}
                 entryId={entryId}
                 input={input.label}
-                files={submission.values[input.key]}
+                files={value}
               />
             ))}
           </SheetSection>
@@ -399,6 +511,12 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
               <DataListLabel>Received</DataListLabel>
               <DataListValue>{formatDate(submission.createdAt)}</DataListValue>
             </DataListItem>
+            {submission.page && (
+              <DataListItem>
+                <DataListLabel>Page</DataListLabel>
+                <DataListValue>{submission.page}</DataListValue>
+              </DataListItem>
+            )}
             {submission.locale && (
               <DataListItem>
                 <DataListLabel>Language</DataListLabel>
@@ -518,23 +636,19 @@ function formatSize(bytes: number): string {
 
 /** The first answer of a submission names it, eg. the name of the visitor */
 function rowTitle(definition: FormDefinition, submission: Submission): string {
-  for (const input of formInputs(definition)) {
-    const text = answerText(input, submission.values[input.key])
-    if (text) return text
+  for (const column of formColumns(definition)) {
+    // The first item of a repeatable section names it, eg. its first person
+    const values =
+      column.control === 'section'
+        ? (itemsOf(submission.values[column.key!])[0] ?? {})
+        : submission.values
+    const inputs = column.control === 'section' ? column.inputs : [column]
+    for (const input of inputs) {
+      const text = answerText(input, values[input.key])
+      if (text) return text
+    }
   }
   return 'Submission'
-}
-
-function statusMatches(filter: StatusFilter, status: SubmissionStatus) {
-  if (filter === 'all') return true
-  if (filter === 'open') return status !== 'archived'
-  return filter === status
-}
-
-function inRange(range: DateRange | null, createdAt: number) {
-  if (!range) return true
-  const day = localDay(createdAt)
-  return day >= range.start && day <= range.end
 }
 
 function localDay(seconds: number): string {

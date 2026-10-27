@@ -54,8 +54,8 @@ export interface LocalConnection
     query: Query
   ): Promise<AnyQueryResult<Query>>
   user(): Promise<User | undefined>
-  /** The submissions of a form entry, the latest first */
-  submissions(entryId: string): Promise<Array<Submission>>
+  /** A page of the submissions of a form entry, the latest first */
+  submissions(entryId: string, query?: SubmissionQuery): Promise<SubmissionPage>
   updateSubmission(
     entryId: string,
     id: string,
@@ -117,9 +117,46 @@ export interface Submission {
   status: SubmissionStatus
   /** The names of the notification mails that were sent for it */
   notified?: Array<string> | null
+  /** The page it was sent from, without its query */
+  page?: string | null
 }
 
 export type SubmissionStatus = 'new' | 'read' | 'archived'
+
+/** A submission as it is stored, with what it is found by */
+export interface StoredSubmission extends Submission {
+  /** The answers as lowercase text, which searches look in */
+  search: string
+  /** The answers of choices as `|key=value|`, which filters look in */
+  choices: string
+  /** A hash of the visitor who sent it, to limit how often they send */
+  visitor: string | null
+  /** When it is removed, in seconds, see the retention of its form */
+  expiresAt: number | null
+}
+
+/** Which submissions of a form to list */
+export interface SubmissionQuery {
+  /** Open is new and read, all includes archived ones */
+  status?: 'open' | SubmissionStatus | 'all'
+  /** Text the answers contain */
+  search?: string
+  /** An answer to a choice input, by its key */
+  choice?: {key: string; value: string}
+  /** Sent at or after, in seconds */
+  from?: number
+  /** Sent before, in seconds */
+  until?: number
+  offset?: number
+  /** At most 500, 50 by default */
+  limit?: number
+}
+
+export interface SubmissionPage {
+  submissions: Array<Submission>
+  /** How many submissions match the query, over all pages */
+  total: number
+}
 
 /** A file a visitor added to a file input, as the answer refers to it */
 export interface FormFileRef {
@@ -129,6 +166,12 @@ export interface FormFileRef {
   type: string
 }
 
+/** A file of a form kept outside the database, see orms.files */
+export interface FormFileKey {
+  entryId: string
+  id: string
+}
+
 /** A file of a form as it is stored */
 export interface StoredFormFile extends FormFileRef {
   entryId: string
@@ -136,7 +179,10 @@ export interface StoredFormFile extends FormFileRef {
   input: string
   /** The submission it belongs to, null until it is submitted */
   submissionId: string | null
-  content: Uint8Array
+  /** The bytes, unless they are kept in `forms.files` */
+  content: Uint8Array | null
+  /** A hash of the visitor who uploaded it */
+  visitor: string | null
   /** When it was uploaded, in seconds */
   createdAt: number
 }
@@ -151,6 +197,8 @@ export interface PrepareUploadRequest {
   name: string
   size: number
   type: string
+  /** Who uploads it, eg. their IP address, see `FormSubmitOptions.visitor` */
+  visitor?: string
 }
 
 /** Where to upload the file, and the token the submission refers to it by */
@@ -167,6 +215,8 @@ export interface SubmitRequest {
   field?: string
   /** The FormData the visitor sent, as its entries */
   data: Array<[string, string]>
+  /** Who sent it, eg. their IP address, see `FormSubmitOptions.visitor` */
+  visitor?: string
 }
 
 /** What the handler answers to a submission */
@@ -181,15 +231,33 @@ export type SubmitResult =
   | {ok: false; errors?: Record<string, string>; message?: string}
 
 export interface SubmissionsApi {
-  storeSubmission?(submission: Submission): Promise<void>
-  /** The submissions of a form, the latest first */
-  listSubmissions?(entryId: string): Promise<Array<Submission>>
+  storeSubmission?(submission: StoredSubmission): Promise<void>
+  /** A page of the submissions of a form, the latest first */
+  listSubmissions?(
+    entryId: string,
+    query?: SubmissionQuery
+  ): Promise<SubmissionPage>
   updateSubmission?(
     entryId: string,
     id: string,
     status: SubmissionStatus
   ): Promise<void>
-  deleteSubmission?(entryId: string, id: string): Promise<void>
+  /**
+   * Removes a submission, or all of a form without an id, and gives the
+   * files that were kept outside the database to remove
+   */
+  deleteSubmission?(entryId: string, id?: string): Promise<Array<FormFileKey>>
+  /**
+   * Removes the submissions that expired and the uploads that were never
+   * submitted, and gives the files that were kept outside the database
+   */
+  purgeSubmissions?(now: number): Promise<Array<FormFileKey>>
+  /** How much a visitor sent to a form since a moment, in seconds */
+  visitorActivity?(
+    entryId: string,
+    visitor: string,
+    since: number
+  ): Promise<{submissions: number; files: number}>
   /** Keeps an uploaded file until it is submitted, or a day at most */
   storeFormFile?(file: StoredFormFile): Promise<void>
   /** The files of a form with these ids, without their content */

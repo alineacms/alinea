@@ -355,8 +355,20 @@ export class NextCMS<
   }
 
   /** Submits the answers of visitors to forms, see `Field.form` */
-  forms: Forms = formsOf(async () =>
-    createClient(this.config, await requestContext(this.config))
+  forms: Forms = formsOf(
+    async () => createClient(this.config, await requestContext(this.config)),
+    // The visitor is limited by the address of the request, see forms.limits
+    async () => {
+      const {headers} = await import('next/headers.js')
+      try {
+        const request = await headers()
+        const forwarded = request.get('x-forwarded-for')?.split(',')[0]?.trim()
+        return forwarded || request.get('x-real-ip') || undefined
+      } catch {
+        // Outside of a request, eg. in a script, there is no visitor
+        return undefined
+      }
+    }
   )
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {

@@ -136,6 +136,8 @@ export function composeBackend(
     listSubmissions: call('listSubmissions'),
     updateSubmission: call('updateSubmission'),
     deleteSubmission: call('deleteSubmission'),
+    purgeSubmissions: call('purgeSubmissions'),
+    visitorActivity: call('visitorActivity'),
     storeFormFile: call('storeFormFile'),
     formFiles: call('formFiles'),
     attachFormFiles: call('attachFormFiles'),

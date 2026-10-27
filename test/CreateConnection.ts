@@ -31,10 +31,14 @@ export function createTestConnection(
   let users = options.users?.slice() ?? [currentUser]
   let submissions = options.submissions?.slice() ?? []
   return {
-    submissions(entryId) {
-      return Promise.resolve(
-        submissions.filter(submission => submission.entryId === entryId)
+    submissions(entryId, {offset = 0, limit = 50} = {}) {
+      const ofEntry = submissions.filter(
+        submission => submission.entryId === entryId
       )
+      return Promise.resolve({
+        submissions: ofEntry.slice(offset, offset + limit),
+        total: ofEntry.length
+      })
     },
     updateSubmission(entryId, id, status) {
       submissions = submissions.map(submission =>

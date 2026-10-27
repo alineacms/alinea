@@ -1,4 +1,4 @@
-import {cleanup, render, screen, within} from '#test/react.js'
+import {cleanup, fireEvent, render, screen, within} from '#test/react.js'
 import type {FormDefinition} from '#/field/form/FormDefinition.js'
 import {afterEach, expect, test} from 'bun:test'
 import {Form, type FormInputViewProps} from './Form.js'
@@ -94,4 +94,56 @@ test('views restyle parts and replace inputs', () => {
   expect(screen.getByRole('alert').textContent).toBe('Fill in your name')
   expect(screen.getByRole('button').textContent).toBe('Request')
   expect(screen.getByRole('status').textContent).toBe('Rate us out of 5')
+})
+
+const signUp: FormDefinition = [
+  {
+    id: 'people',
+    type: 'section',
+    label: 'Participant',
+    control: 'section',
+    key: 'participants',
+    repeat: {min: 1, max: 2, add: 'Add a participant'},
+    inputs: [
+      {
+        id: 'person',
+        type: 'text',
+        label: 'Name',
+        control: 'input',
+        key: 'name',
+        required: true,
+        width: 'full',
+        attributes: {type: 'text'},
+        settings: {}
+      }
+    ]
+  }
+]
+
+test('repeatable sections add and remove items', () => {
+  render(
+    <Form
+      definition={signUp}
+      errors={{'participants.1.name': 'Fill in this field'}}
+    />
+  )
+  const names = () =>
+    screen
+      .getAllByRole('textbox', {name: 'Name *'})
+      .map(input => input.getAttribute('name'))
+  expect(names()).toEqual(['participants.0.name'])
+  // The fewest items can not be removed
+  expect(screen.queryByRole('button', {name: /Remove/})).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: 'Add a participant'}))
+  expect(names()).toEqual(['participants.0.name', 'participants.1.name'])
+  expect(screen.getByRole('group', {name: 'Participant 2'})).toBeDefined()
+  expect(screen.getByRole('alert').textContent).toBe('Fill in this field')
+  // At the most items there is no button to add another
+  expect(screen.queryByRole('button', {name: 'Add a participant'})).toBeNull()
+  const first = screen.getAllByRole('textbox')[0] as HTMLInputElement
+  first.value = 'Ann'
+  fireEvent.click(screen.getByRole('button', {name: 'Remove Participant 1'}))
+  // The item that was second moves up and takes the first name
+  expect(names()).toEqual(['participants.0.name'])
+  expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('')
 })
