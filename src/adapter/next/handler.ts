@@ -1,4 +1,4 @@
-import type {FormsOptions} from '#/core/Forms.js'
+import type {FormEvent, FormsOptions} from '#/core/Forms.js'
 import {
   backendFromOptions,
   type BackendFactory,
@@ -97,11 +97,15 @@ export function createHandlerWithDatabase(
     context: RequestContext
   ): Promise<Response> {
     const action = new URL(request.url).searchParams.get('action')
-    if (action !== HandleAction.Mutate || request.method !== 'POST')
+    const handled =
+      action === HandleAction.Mutate || action === HandleAction.FormEvent
+    if (!handled || request.method !== 'POST')
       return failure(404, 'Answered by the Alinea dev server')
     const developmentKey = request.headers.get(developmentKeyHeader)
     if (!context.apiKey || developmentKey !== context.apiKey)
       return failure(401, 'Invalid development credentials')
+    if (action === HandleAction.FormEvent)
+      return handleFormEvent((await request.json()) as FormEvent)
     let mutations: Array<Mutation>
     try {
       mutations = await request.json()
@@ -152,6 +156,23 @@ export function createHandlerWithDatabase(
     }
     return Response.json({sha})
   }
+  /**
+   * The dev server stores the answers to forms and hands their mails and
+   * submissions here, so the mailer and onSubmit of this app run as they do
+   * once it is deployed
+   */
+  async function handleFormEvent(event: FormEvent): Promise<Response> {
+    const forms = options.forms ?? {}
+    if ('mail' in event) {
+      if (!forms.mailer) return failure(404, 'No mailer')
+      await forms.mailer(event.mail)
+    } else {
+      if (!forms.onSubmit) return failure(404, 'No onSubmit')
+      await forms.onSubmit(event.submitted)
+    }
+    return new Response(null, {status: 204})
+  }
+
   const handle: Handler = async request => {
     const url = new URL(request.url)
     const context = await requestContext(config, request)

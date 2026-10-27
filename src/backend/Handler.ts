@@ -111,8 +111,12 @@ export interface HandlerOptions extends HandlerHooks {
   remote?: (context: RequestContext) => RemoteConnection
   /** Log why and how long each sync took, for a deployed handler */
   logSyncs?: boolean
-  /** How submissions of forms are handled, eg. the mailer of their mails */
-  forms?: FormsOptions
+  /**
+   * How submissions of forms are handled, eg. the mailer of their mails. A
+   * function decides it for each request, as the dev server does to run the
+   * options of the app.
+   */
+  forms?: FormsOptions | ((request: Request) => FormsOptions)
   forwardMutations?(
     request: Request,
     context: AuthedContext
@@ -125,16 +129,17 @@ export function createHandler({
   db,
   forwardMutations,
   logSyncs = false,
-  forms,
+  forms: formsOption,
   ...hooks
 }: HandlerOptions): Handler {
+  const shared = typeof formsOption === 'function' ? undefined : formsOption
   const throttle = createThrottledSync()
   // Submissions are kept in forms.database when it is set, eg. for content
   // on alinea.cloud, otherwise by the backend
-  const ownStore = forms?.database
+  const ownStore = shared?.database
     ? new SubmissionStore({
-        db: (driver[forms.database.driver] as (client: unknown) => Database)(
-          forms.database.client
+        db: (driver[shared.database.driver] as (client: unknown) => Database)(
+          shared.database.client
         )
       })
     : undefined
@@ -143,6 +148,8 @@ export function createHandler({
     context: RequestContext
   ): Promise<Response> {
     const dev = process.env.ALINEA_DEV_SERVER
+    const forms =
+      typeof formsOption === 'function' ? formsOption(request) : formsOption
     const local = await db
     const simulateLatency = process.env.ALINEA_LATENCY
 

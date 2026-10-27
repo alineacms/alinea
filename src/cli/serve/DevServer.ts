@@ -1,12 +1,13 @@
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {SubmissionStore} from '#/backend/api/SubmissionStore.js'
+import {HandleAction} from '#/backend/HandleAction.js'
 import {createHandler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
-import type {FormMail} from '#/core/Forms.js'
+import type {FormEvent, FormMail} from '#/core/Forms.js'
 import {
   developmentKeyHeader,
   forwardedMutationHeader
@@ -170,7 +171,22 @@ export async function createDevServer(
           cms,
           remote: backend,
           db,
-          forms: {mailer: printMail},
+          // The mailer and onSubmit of the app run in its own handler, the
+          // site tells where it is when it sends a form
+          forms(request) {
+            const origin = forwardedRequestOrigin(request)
+            if (!origin) return {mailer: printMail}
+            const forward = (event: FormEvent) =>
+              forwardFormEvent(origin, cms, context.apiKey, event)
+            return {
+              async mailer(mail) {
+                if (!(await forward({mail}))) printMail(mail)
+              },
+              async onSubmit(submitted) {
+                await forward({submitted})
+              }
+            }
+          },
           forwardMutations(request) {
             return forwardMutation(request, cms, context.apiKey)
           }
@@ -250,6 +266,34 @@ export async function forwardMutation(
     duplex: 'half'
   }
   return fetch(new Request(target, init))
+}
+
+/**
+ * Hands a mail or submission of a form to the handler of the app. False when
+ * the app does not handle it, eg. when it has no mailer.
+ */
+async function forwardFormEvent(
+  origin: string,
+  cms: CMS,
+  apiKey: string,
+  event: FormEvent
+): Promise<boolean> {
+  const target = forwardedHandlerUrl(
+    Config.handlerUrl(cms.config),
+    origin,
+    `?action=${HandleAction.FormEvent}`
+  )
+  const response = await fetch(target, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      [developmentKeyHeader]: apiKey
+    },
+    body: JSON.stringify(event)
+  })
+  if (response.status === 404) return false
+  if (!response.ok) throw new Error(await response.text())
+  return true
 }
 
 function forwardedHandlerUrl(

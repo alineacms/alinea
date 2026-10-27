@@ -197,6 +197,53 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
   }
 })
 
+test('runs the mailer and onSubmit of the app for forms the dev server stored', async () => {
+  const heard: Array<unknown> = []
+  const devHandle = createHandlerWithDatabase(
+    {
+      cms,
+      forms: {
+        mailer(mail) {
+          heard.push(['mail', mail.subject])
+        },
+        onSubmit({title}) {
+          heard.push(['submitted', title])
+        }
+      }
+    },
+    async () => {
+      throw new Error('The dev server owns the database')
+    }
+  )
+  const withoutHooks = createHandlerWithDatabase(cms, async () => {
+    throw new Error('The dev server owns the database')
+  })
+  const event = (body: unknown, key: string | null = apiKey) =>
+    new Request('https://example.com/api/cms?action=formEvent', {
+      method: 'POST',
+      headers: key ? {[developmentKeyHeader]: key} : {},
+      body: JSON.stringify(body)
+    })
+  const mail = {to: ['desk@example.com'], subject: 'New request', text: ''}
+  nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
+  try {
+    expect((await devHandle(event({mail}))).status).toBe(204)
+    const submitted = {submission: {id: 's'}, title: 'Contact'}
+    expect((await devHandle(event({submitted}))).status).toBe(204)
+    expect(heard).toEqual([
+      ['mail', 'New request'],
+      ['submitted', 'Contact']
+    ])
+    // Without a mailer the dev server prints the mail itself
+    expect((await withoutHooks(event({mail}))).status).toBe(404)
+    // Only the dev server hands these over
+    expect((await devHandle(event({mail}, null))).status).toBe(401)
+    expect(heard).toHaveLength(2)
+  } finally {
+    nextMocks.devHandlerUrl = undefined
+  }
+})
+
 test('rejects an unrelated pathname with media query parameters', async () => {
   const response = await handle(
     new Request(

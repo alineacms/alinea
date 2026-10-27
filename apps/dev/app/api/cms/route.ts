@@ -4,7 +4,12 @@ import {createHandler} from 'alinea/next'
 const handler = createHandler({
   cms,
   beforeCommit: hook('beforeCommit'),
-  afterCommit: hook('afterCommit')
+  afterCommit: hook('afterCommit'),
+  // During alinea dev the dev server hands these over after storing answers
+  forms: {
+    mailer: hook('forms.mailer'),
+    onSubmit: hook('forms.onSubmit')
+  }
 })
 
 export const GET = handler

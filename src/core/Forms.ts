@@ -36,6 +36,12 @@ export interface FormFileStorage {
   remove(keys: Array<string>): Promise<void>
 }
 
+/**
+ * What the dev server hands to the handler of the app, so the mailer and
+ * onSubmit it defines run during development too
+ */
+export type FormEvent = {mail: FormMail} | {submitted: FormSubmitEvent}
+
 /** How often a visitor may send to one form, per hour */
 export interface FormLimits {
   /** 20 by default */

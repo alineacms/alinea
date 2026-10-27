@@ -254,7 +254,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "During `alinea dev`, the dev server answers forms itself. It keeps submissions in a SQLite file next to the generated content database, which stays when content is generated again, and prints mails in the terminal. The `forms` options of your handler route apply once your site is deployed."
+          "text": "During `alinea dev`, the dev server answers forms itself. It keeps submissions in a SQLite file next to the generated content database, which stays when content is generated again. Like commit hooks, the `mailer` and `onSubmit` of your handler route still run: once a submission is stored, the dev server hands its mails and the submission to your route. Without a `mailer` in your route the mails are printed in the terminal. `database`, `files` and `limits` apply once your site is deployed: in development submissions and files stay in the local file and visitors are not limited."
         }
       ]
     },
