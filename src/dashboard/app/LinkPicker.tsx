@@ -18,17 +18,12 @@ import type {
   DashboardEntry,
   DashboardExplorer,
   ExplorerOptions,
-  ExplorerParent,
   ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {useDashboardContext} from '../hooks.js'
 import {IcRoundOpenInFull} from '../icons.js'
-import {
-  ExplorerBody,
-  ExplorerHeader,
-  ExplorerParentBack,
-  ExplorerSearch
-} from './Explorer.js'
+import {ExplorerBody, ExplorerHeader, ExplorerSearch} from './Explorer.js'
+import {ExplorerBreadcrumbs} from './ExplorerBreadcrumbs.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {
   type createExplorerTree,
@@ -284,8 +279,10 @@ function LinkPickerCompact({
           page={page}
         />
       </SearchBar>
-      {page.parent && page.resultMode === 'browse' && (
-        <LinkPickerCompactParent explorer={explorer} parent={page.parent} />
+      {page.parent && page.scope === 'root' && (
+        <div className={styles.LinkPickerCompact.parent()}>
+          <ExplorerBreadcrumbs explorer={explorer} page={page} />
+        </div>
       )}
       <ExplorerBody
         compactTable
@@ -303,26 +300,6 @@ function LinkPickerCompact({
           </Button>
         </div>
       )}
-    </div>
-  )
-}
-
-interface LinkPickerCompactParentProps {
-  explorer: DashboardExplorer
-  parent: ExplorerParent
-}
-
-/** The entry whose children are listed, with a way back to its parent */
-function LinkPickerCompactParent({
-  explorer,
-  parent
-}: LinkPickerCompactParentProps) {
-  return (
-    <div className={styles.LinkPickerCompact.parent()}>
-      <ExplorerParentBack explorer={explorer} parent={parent} />
-      <Text className={styles.LinkPickerCompact.parent.title()}>
-        {parent.title}
-      </Text>
     </div>
   )
 }
@@ -361,7 +338,6 @@ function LinkPickerExpanded({
         <ExplorerModal>
           <ExplorerHeader
             autoFocusSearch
-            canBrowse={options.enableNavigation !== false}
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
             navigate

@@ -38,6 +38,7 @@ export function overviewTableColumn(column: OverviewColumnState): TableColumn {
   return {
     id: column.key,
     header: column.header,
+    info: column.info,
     width: column.width,
     minWidth: column.minWidth,
     align: column.align,

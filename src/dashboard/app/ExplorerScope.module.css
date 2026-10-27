@@ -1,0 +1,31 @@
+.ExplorerScope {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ExplorerScope-trigger {
+  gap: 4px;
+  min-width: 0;
+  max-width: 180px;
+  padding: 0 6px;
+  font-weight: 600;
+
+  &[aria-expanded='true'] {
+    background: color-mix(in oklab, currentColor 8%, transparent);
+  }
+}
+
+.ExplorerScope-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ExplorerScope-trigger-icon {
+  flex: 0 0 auto;
+  font-size: 12px;
+}

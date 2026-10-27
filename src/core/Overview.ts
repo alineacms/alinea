@@ -1,3 +1,4 @@
+import type {ReactNode} from 'react'
 import type {EntryStatus} from './Entry.js'
 import type {EntryFilterFields} from './EntryFields.js'
 import {Expr} from './Expr.js'
@@ -234,8 +235,13 @@ export interface OverviewHeaderProps {
 }
 
 interface OverviewColumnBase<Value> {
-  /** The column header */
-  header: string
+  /** The column header: text or a React element */
+  header: ReactNode
+  /**
+   * Explains the column in a popover, opened from an info button next to the
+   * header
+   */
+  info?: ReactNode
   /**
    * Order by this value when the column is sorted. Needed to sort columns
    * that select linked entries, which are not sortable otherwise.

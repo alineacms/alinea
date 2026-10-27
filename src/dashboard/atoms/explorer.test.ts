@@ -233,6 +233,18 @@ test('searching all locations of a limited picker stays within them', async () =
     ['main', 'pages'],
     ['other', 'pages']
   ])
+
+  store.set(explorer.searchScope, 'workspace')
+  expect(store.get(explorer.scope)).toBe('workspace')
+  const roots = await store.get(explorer.itemsReady(null))
+  expect(roots.map(item => [item.workspace, item.root]).sort()).toEqual([
+    ['main', 'news'],
+    ['main', 'pages']
+  ])
+
+  // Wider scopes list matches, browsing stays within the root
+  store.set(explorer.search, '')
+  expect(store.get(explorer.scope)).toBe('root')
 })
 
 test('ready pages snapshot the search that produced their items', async () => {

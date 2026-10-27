@@ -75,6 +75,19 @@ test('forwards Edge queries to the configured handler', async () => {
   expect(handlerFetch).toHaveBeenCalledTimes(1)
 })
 
+test('draft mode queries with the preview status unless one is given', async () => {
+  process.env.NEXT_RUNTIME = 'edge'
+  const statuses = Array<unknown>()
+  handlerFetch = mock(async (_input, init) => {
+    statuses.push(JSON.parse(String(init?.body)).status)
+    return Response.json(null)
+  })
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+  await cms.resolve({})
+  await cms.resolve({status: 'preferDraft'})
+  expect(statuses).toEqual(['preview', 'preferDraft'])
+})
+
 test('skips syncing a bundled database for a matching preview content hash', async () => {
   const contentHash = 'matching-content-hash'
   const syncWith = mock(async () => contentHash)

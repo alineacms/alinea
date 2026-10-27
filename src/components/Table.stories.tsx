@@ -83,7 +83,8 @@ const articleColumns: Array<TableColumn> = [
   {
     id: 'publicationDate',
     header: 'Publication date',
-    width: 140,
+    info: 'The day the article first went live on the website.',
+    width: 160,
     sortable: true
   },
   {id: 'createdBy', header: 'Created by', width: '1fr', minWidth: 110},
