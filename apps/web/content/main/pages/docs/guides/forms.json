@@ -1,0 +1,98 @@
+{
+  "_id": "3LJmMkotQu4YOvlG9uk06Jafyev",
+  "_type": "Docs",
+  "_index": "a9",
+  "title": "Forms",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors build the forms of your site in the dashboard: a contact form, a sign-up for a workshop, an application with a CV. Visitors' answers are checked on the server against the published form and stored by your handler, where editors read, filter and export them. Notification mails go out through a mailer you choose."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "These pages cover defining forms in your schema and rendering them, the inputs and rules editors work with, adding inputs of your own, reading submissions and setting up mails, and how answers and files are stored and protected."
+        }
+      ]
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3LTOrxyNZUEN3ZJvE1u14KLz5lB",
+      "link": {
+        "description": "Add form entries to your schema, render one and send its answers.",
+        "_id": "3Lnfua6Nw2IuM2ToM9n3JQQceHp",
+        "_type": "entry",
+        "_entry": "3L2nb3U4mu2ux194d2iwmq95xam"
+      }
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3LjqV8qnjiYcWn2WjVEmFP1pa9H",
+      "link": {
+        "description": "The inputs, sections, repeatable sections and rules editors use to build a form.",
+        "_id": "3LfU2lZPXx0X76sOI0bBCKkySAI",
+        "_type": "entry",
+        "_entry": "3LMClPIi7Ayj1vRERGozYA2W9kO"
+      }
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3LC2x53ogQbtOlSLq0nEWMC84Ck",
+      "link": {
+        "description": "Render a form with your own markup and styles, and send files from the browser.",
+        "_id": "3L4gc3xY0dOhygDZCn0uAx4T3tS",
+        "_type": "entry",
+        "_entry": "3LcYz2xic2qalTclBv16Tl2hMmR"
+      }
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3Lg0pF58tQ8PBVGz1bfvXxLqtNB",
+      "link": {
+        "description": "Add inputs of your own next to the built-in ones.",
+        "_id": "3L2BzufBAWK8Nrr6nfakwpXOBWm",
+        "_type": "entry",
+        "_entry": "3LrnloJyLvCpKfY16ZLY29bje83"
+      }
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3LTlkMe3oz2ivJNIYmRgoDROwqJ",
+      "link": {
+        "description": "Read and export answers, and send notification mails when a form is sent.",
+        "_id": "3LLqPCQrzjdwUkslu7UliRI5woR",
+        "_type": "entry",
+        "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
+      }
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3LL2mxBXnAwOQcmkkultOB45lOJ",
+      "link": {
+        "description": "Where submissions and files are stored, spam checks, rate limits and privacy.",
+        "_id": "3LMdyjniv2G8aUQ5yEg6aTZhmeB",
+        "_type": "entry",
+        "_entry": "3LuGkr9e1G4xeMby22aucMTJ3aI"
+      }
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "_id": "3LrnloJyLvCpKfY16ZLY29bje83",
+  "_type": "Doc",
+  "_index": "a3",
+  "title": "Custom inputs",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The built-in inputs are made with `Form.input`, and so are yours. An input describes what editors set up for it in the dashboard, how its answer is read from the FormData and checked on the server, and how it renders by default."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Create an input"
+        }
+      ],
+      "_anchor": "create-an-input"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Form.input` takes the label editors see in the Add input menu and a config:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`icon`: a component to show the input with in the form builder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`control`: how the input renders by default: `input` (the default), `textarea`, `select`, `radio`, `checkboxes` or `check`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`kind`: what kind of answer it gives, which decides how rules can test it and the error for a required input: `text`, `number`, `date`, `choice`, `choices`, `check` or `file`. It follows the control unless you set it: `choice` for a select or radio, `choices` for checkboxes, `check` for a check and `text` otherwise."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`fields`: fields editors fill in under the input in the form builder, such as the options of a choice made with `Form.options()`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`settings`: fields in a tab of their own, named after the input. A setting named `initialValue` prefills the input."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`parse(raw, settings)`: turns the FormData entries of the input into its answer. Without it, the answer is the first entry, trimmed, and an empty one counts as no answer. Return `undefined` for no answer."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`attributes(settings)`: HTML attributes of the rendered control, such as `type`, `min` or `maxLength`, so browsers check them too. Attributes that are `undefined`, `false` or empty are left out."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`validate(value, settings)`: checks an answer on the server and returns a message for the visitor when it doesn't pass. It runs after the required check and the rules, and only for inputs that have an answer."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`parse`, `attributes` and `validate` receive the values of the fields and settings the editor filled in for this input."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A rating from 1 up to a maximum editors choose:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LcjEHLwVZ2tmFXFXgAs3SyItVu",
+      "code": "import {Field, Form} from 'alinea'\nimport {IcRoundStarOutline} from 'alinea/dashboard/icons'\n\nexport const Rating = Form.input('Rating', {\n  icon: IcRoundStarOutline,\n  kind: 'number',\n  settings: {\n    max: Field.number('Maximum', {initialValue: 5})\n  },\n  parse([raw]) {\n    if (typeof raw !== 'string' || raw === '') return undefined\n    const value = Number(raw)\n    return Number.isInteger(value) ? value : undefined\n  },\n  attributes: settings => ({type: 'number', min: 1, max: settings.max ?? 5}),\n  validate(value, settings) {\n    const max = settings.max ?? 5\n    if (value < 1 || value > max) return `Choose 1 to ${max}`\n  }\n})",
+      "fileName": "schema/Rating.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Because its kind is `number`, rules of other inputs can test whether the rating is less than or more than a number. Answers are stored as `parse` returns them, so return something that turns into JSON."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add it to your forms"
+        }
+      ],
+      "_anchor": "add-it-to-your-forms"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add the input to `inputs` next to the built-in ones:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LIZHMHOsQCdBVlG9WCWxfw7D1o",
+      "code": "import {Form} from 'alinea'\nimport {Rating} from './Rating'\n\nexport const FormEntry = Form.type('Form', {\n  inputs: {...Form.defaults, rating: Rating}\n})",
+      "fileName": "schema/FormEntry.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors find inputs of your own in the Add input menu under This project. The key in `inputs`, here `rating`, is stored in the content of every form that uses the input, so keep it once forms use it. It is also the key of the input's view and the value of `data-input` on its row. To leave out a built-in input, leave it out of the object: `const {file, ...inputs} = Form.defaults`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An input whose `fields` hold its options under the key `options` is a choice: the definition lists them as `choices`, rules test it by its options and the Submissions tab can filter by it. Use `Form.options()` for them, as the built-in radio, checkboxes and select do."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render it"
+        }
+      ],
+      "_anchor": "render-it"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without a view, the input renders as its `control` with its `attributes`, so the rating is a number input from 1 to the maximum. To render it differently, give `<Form>` a component under the key of the input. It receives `FormInputViewProps`, see "
+        },
+        {
+          "_type": "text",
+          "text": "Rendering on your site",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Loab1xm0yADPHljCBny1M2MwIX",
+              "_link": "entry",
+              "_entry": "3LcYz2xic2qalTclBv16Tl2hMmR"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ":"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LVKkHxqHV60qjE04xIu3C3dyYK",
+      "code": "'use client'\n\nimport {Form, type FormInputViewProps, type FormProps} from 'alinea/ui'\n\nfunction RatingInput({input, name, error, disabled}: FormInputViewProps) {\n  const max = Number(input.settings.max ?? 5)\n  return (\n    <fieldset data-input=\"rating\" data-invalid={error ? '' : undefined}>\n      <legend>\n        {input.label}\n        {input.required && ' *'}\n      </legend>\n      {Array.from({length: max}, (_, index) => (\n        <label key={index}>\n          <input\n            type=\"radio\"\n            name={name}\n            value={index + 1}\n            required={input.required}\n            disabled={disabled}\n          />\n          {index + 1}\n        </label>\n      ))}\n      {error && <p role=\"alert\">{error}</p>}\n    </fieldset>\n  )\n}\n\nconst views = {rating: RatingInput}\n\nexport function RatedForm(props: Omit<FormProps, 'views'>) {\n  return <Form {...props} views={views} />\n}",
+      "fileName": "RatingInput.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Give the control the `name` from the props: it is how the answer is sent, and how the rules of the form read it while the visitor fills it in. The server reads the answer with the input's `parse` and checks it with `validate` whatever renders it."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

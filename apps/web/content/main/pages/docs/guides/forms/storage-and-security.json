@@ -1,0 +1,622 @@
+{
+  "_id": "3LuGkr9e1G4xeMby22aucMTJ3aI",
+  "_type": "Doc",
+  "_index": "a5",
+  "title": "Storage and security",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Your handler receives the answers of every form, checks them, stores them and sends the mails. This page covers the options it takes for forms, where answers and files end up and how the handler keeps out spam and abuse."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Handler options"
+        }
+      ],
+      "_anchor": "handler-options"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass the options for forms to `createHandler` as `forms`:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`mailer`: sends the notification mails, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Submissions and notifications",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3LHr0kiU1LDB5TdlP2iN3aR0wfi",
+                      "_link": "entry",
+                      "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`database`: where submissions are stored when the backend has no database of its own, for example with Alinea Cloud."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`files`: keeps uploaded files outside the database, for example in an S3 bucket."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`onSubmit`: called once a submission is stored, for example to send it on to a CRM."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`limits`: how often one visitor may send to a form per hour, or `false` to not limit."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ll9sceRkCa2vcfTJtOXIGhIkjc",
+      "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    limits: {submissions: 10, uploads: 20}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests\nexport const PUT = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Where submissions are stored"
+        }
+      ],
+      "_anchor": "where-submissions-are-stored"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Submissions are stored in a database, in three tables that are created the first time they are used: `alinea_submission` for the answers, `alinea_form_version` for each version of a form that answers were sent with, and `alinea_submission_file` for uploaded files. In Postgres, row level security is turned on for them, so they aren't exposed through an API such as the one of Supabase."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Self-hosted",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the backend keeps submissions in the database it already has, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Self-hosted",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3Lenxj27AAB6d8cF9LFaiIS3W2l",
+                      "_link": "entry",
+                      "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Alinea Cloud",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": your content is hosted, but submissions are not. Pass a database of your own as `forms.database`. It takes a `driver` and a `client`, like the `database` option of a self-hosted backend. A self-hosted backend uses it too when you pass it."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LPbcdHxdGzpADVRu28JB6IH3z5",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Pool} from 'pg'\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    database: {\n      driver: 'pg',\n      client: new Pool({connectionString: process.env.DATABASE_URL})\n    }\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The drivers are `pg`, `@neondatabase/serverless`, `@vercel/postgres`, `mysql2`, `@libsql/client`, `d1`, `@electric-sql/pglite` and `sql.js`. Without a database, sending a form fails with `Configure a database to store submissions`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "During `alinea dev`, the dev server answers forms itself. It keeps submissions in a SQLite file next to the generated content database, which stays when content is generated again, and prints mails in the terminal. The `forms` options of your handler route apply once your site is deployed."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Files"
+        }
+      ],
+      "_anchor": "files"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without `forms.files`, uploaded files are stored in the database with their submission, which suits small files only. Keep them in a bucket instead, with one of the storages of `formFiles` from `alinea/backend`:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`formFiles.s3({bucket, region, accessKeyId, secretAccessKey})` for S3, or a storage that speaks S3 such as R2 with `endpoint` and `forcePathStyle`. `prefix` is put before the key of each file, for example `form-files/`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`formFiles.supabase(supabase.storage.from('form-files'))` for a bucket of Supabase Storage, with a client that may write to it."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use a private bucket. The files are only read by the handler, for editors who can read the form, and are downloaded as attachments so browsers don't open them. You can also pass an object of your own with `write(key, content, type)`, `read(key)` and `remove(keys)`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The handler checks each file before it accepts it:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Its name or type must be in the accepted files of the input, when the input sets them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "It must be no larger than the maximum size of the input, and no larger than `maxUploadSize` of your config. Without either, the limit is 10 MB."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "It must be the size that was said when the ticket was asked for."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Its first bytes must fit its extension, so a script can't pass for a document. This is checked for `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.pdf`, `.zip`, `.docx`, `.xlsx`, `.pptx`, `.odt`, `.ods`, `.txt` and `.csv`. Other extensions are let through, limit them with the accepted files of the input."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Tickets to upload a file are signed with your API key and are valid for 15 minutes, for one file input of one form. A file that is uploaded but never submitted is removed after a day, and so are files of inputs the rules hid by the time the form was sent."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Uploads pass through your handler route, so the limits of your host on the size of a request apply. On Vercel a function receives at most 4.5 MB, keep the maximum size of file inputs below that."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Spam"
+        }
+      ],
+      "_anchor": "spam"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Every form rendered with `<Form>` has a honeypot input that people don't see, and records when it was shown. The handler takes answers with the honeypot filled in, or sent within two seconds of the form showing, for a bot. Bots are told their answers were sent, so they don't try again, but nothing is stored or mailed."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To check visitors further, for example with a captcha, pass `verify` to `cms.forms.submit`. When it returns `false`, the answers aren't sent and the visitor sees `Your answers could not be verified`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LzVa9yJ7F1Nn2GRMxMusn3xZqw",
+      "code": "'use server'\n\nimport {cms} from '@/cms'\nimport {verifyCaptcha} from '@/captcha'\n\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data, {\n    verify: () => verifyCaptcha(data.get('captcha-token'))\n  })\n}",
+      "fileName": "app/forms/[slug]/actions.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rate limits"
+        }
+      ],
+      "_anchor": "rate-limits"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The handler limits how often one visitor sends to a form: 20 submissions and 50 uploaded files per hour by default. Change the numbers with `limits: {submissions, uploads}`, or turn the limits off with `limits: false`. A visitor over the limit sees a message asking to try again later."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The Next.js adapter identifies a visitor by the IP address of the request, from the `x-forwarded-for` or `x-real-ip` header. Pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload` to identify them another way. Without a visitor, answers aren't limited. The handler only stores a hash of the visitor, made with your API key, not the address itself."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sending answers on"
+        }
+      ],
+      "_anchor": "sending-answers-on"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`onSubmit` is called for every stored submission, with the `submission` and the `title` of its entry. The submission holds its `id`, the `entryId` of the form, its `locale`, the `values` by key, the `definition` of the form it was sent with, `createdAt` in seconds, the `page` it was sent from and the names of the mails that were sent as `notified`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LHJQeDFTJoySxlZsdPEnIR3S6g",
+      "code": "const handler = createHandler({\n  cms,\n  forms: {\n    async onSubmit({submission, title}) {\n      await fetch(process.env.CRM_WEBHOOK_URL!, {\n        method: 'POST',\n        headers: {'content-type': 'application/json'},\n        body: JSON.stringify({form: title, answers: submission.values})\n      })\n    }\n  }\n})",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The visitor gets their answer once `onSubmit` is done, so keep it short. When it fails, the error is logged and the visitor isn't told: the submission is stored already."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Validation"
+        }
+      ],
+      "_anchor": "validation"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Answers are always checked on the server, against the published version of the form, whatever the browser did. Inputs the rules hide or disable are left out, required inputs must be filled in, every answer must pass the checks of its input, choices must be one of the options and repeatable sections must have an allowed number of items. Entries in the FormData that aren't inputs of the form are left out. Each submission is stored with the version of the form it was checked against."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Privacy"
+        }
+      ],
+      "_anchor": "privacy"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A submission holds the answers, the version of the form, when it was received, its language, the names of the mails sent for it, a hash of the visitor and the page it was sent from. The page is stored without its query string, which can hold personal details. IP addresses aren't stored."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set "
+        },
+        {
+          "_type": "text",
+          "text": "Keep submissions",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " on forms to remove submissions and their files after a time, see "
+        },
+        {
+          "_type": "text",
+          "text": "Submissions and notifications",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3L0xTjeP55Y2vkKSgLREBGgY38v",
+              "_link": "entry",
+              "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". Expired submissions are removed when a form receives answers and when editors open the Submissions tab."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}
