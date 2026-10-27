@@ -22,7 +22,6 @@
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-primary) 20%, transparent);
   }
 
-
   &:has(.NumberFieldInput[aria-invalid='true']) {
     border-color: var(--alinea-danger);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--alinea-danger) 20%, transparent);
@@ -56,7 +55,6 @@
   &::placeholder {
     color: var(--alinea-fg-disabled);
   }
-
 
   &[readonly] {
     color: var(--alinea-fg-disabled);
