@@ -1,5 +1,6 @@
 {
   "editor.defaultFormatter": "oxc.oxc-vscode",
+  "oxc.path.oxfmt": "node_modules/oxfmt/bin/oxfmt",
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "search.useGlobalIgnoreFiles": true,
