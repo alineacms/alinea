@@ -4,6 +4,7 @@ import {
   parseSubmitRequest,
   purgeSubmissions,
   removeFiles,
+  retentionOf,
   submissionStore,
   submitForm
 } from '#/backend/FormSubmit.js'
@@ -540,7 +541,17 @@ export function createHandler({
         const store = submissionStore(submissions())
         if (request.method === 'GET') {
           policy.assert(Permission.Read, entry)
-          // Expired submissions are gone before the list is read
+          // The form keeps its submissions as long as it says now, and those
+          // that expired are gone before the list is read
+          const data = await local.first({
+            id: entryId,
+            status: 'preferPublished',
+            select: Entry.data
+          })
+          await store.retainSubmissions(
+            entryId,
+            retentionOf((data ?? {}) as Record<string, unknown>)
+          )
           await purgeSubmissions(store, forms ?? {})
           const query = url.searchParams.get('query')
           return Response.json(

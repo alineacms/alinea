@@ -110,3 +110,25 @@ test('what a visitor sent within a time is counted', async () => {
     files: 0
   })
 })
+
+test('a retention set later applies to submissions sent before', async () => {
+  const store = createStore()
+  await store.storeSubmission(submission('old', 100))
+  await store.storeSubmission(submission('new', 1000))
+  await store.retainSubmissions('form', 500)
+  await store.purgeSubmissions(700)
+  const {submissions} = await store.listSubmissions('form')
+  expect(submissions.map(s => s.id)).toEqual(['new'])
+  // Keeping them until deleted again clears when they expire
+  await store.retainSubmissions('form', null)
+  await store.purgeSubmissions(10_000)
+  expect((await store.listSubmissions('form')).total).toBe(1)
+})
+
+test('the mails that went out are noted on a submission', async () => {
+  const store = createStore()
+  await store.storeSubmission(submission('one', 1))
+  await store.notifiedSubmission('form', 'one', ['Helpdesk'])
+  const [stored] = (await store.listSubmissions('form')).submissions
+  expect(stored.notified).toEqual(['Helpdesk'])
+})

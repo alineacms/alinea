@@ -152,7 +152,7 @@
         },
         {
           "_type": "text",
-          "text": " downloads every submission that matches the filters, not only the ones loaded. It has a column for when each was received, its status, language and page, and one for each input of the form as it is now. The items of a repeatable section share a column, numbered: `1. Ada, ada@example.com; 2. Grace, grace@example.com`."
+          "text": " downloads every submission that matches the filters, not only the ones loaded. It has a column for when each was received, its status, language and page, and one for each input of the form as it is now, followed by inputs that earlier versions of the form had, so no answer is left out. The items of a repeatable section share a column, numbered: `1. Ada, ada@example.com; 2. Grace, grace@example.com`."
         }
       ]
     },
@@ -279,7 +279,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": ": removes the submission and its files right away."
+                  "text": ": asks to confirm, then removes the submission and its files for good."
                 }
               ]
             }
@@ -301,7 +301,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3LLyC2J61n9owVCowa8auPpJrcJ",
+              "_id": "3LZQLRD9tiZiyWWIDLuF0dhgZhJ",
               "_link": "entry",
               "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
             }
@@ -470,7 +470,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LlidgY0RV9nbeFCk6tYwWh8On4",
+      "_id": "3Le7VIZhsVHQUwgmCH7f8p1NRSx",
       "code": "{{name}} signed up for {{workshop}} on {{date}}.\n\nParticipants: {{participants}}",
       "fileName": "Body",
       "language": "text",
@@ -509,7 +509,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LcRgLq6B2sQaKlGg0BpEbT47PF",
+      "_id": "3LNvdENodhfF6VxP3TtNqTXkBln",
       "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail})\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
@@ -521,7 +521,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Mails are sent once the answers passed the checks. A mail that fails is logged, and the submission is stored anyway. Without a `mailer` nothing is sent, and the handler logs a warning for each submission that had mails to send. A mail with a rule that no longer works, for example because its input was removed, isn't sent rather than sent to everyone. During `alinea dev`, mails are printed in the terminal instead of sent."
+          "text": "Mails are sent once the answers passed the checks and are stored, so no mail goes out for answers that were lost. A mail that fails is logged, and the submission is kept. Without a `mailer` nothing is sent, and the handler logs a warning for each submission that had mails to send. A mail with a rule that no longer works, for example because its input was removed, isn't sent rather than sent to everyone. During `alinea dev`, mails are printed in the terminal instead of sent."
         }
       ]
     },
@@ -634,7 +634,7 @@
         },
         {
           "_type": "text",
-          "text": " decides how long submissions are kept: until they are deleted (the default), for 30 days, 90 days, a year or two years. Older submissions and their files are removed. The date a submission is removed is set when it is received, so changing the setting applies to submissions received after that."
+          "text": " decides how long submissions are kept: until they are deleted (the default), for 30 days, 90 days, a year or two years. Older submissions and their files are removed. Changing the setting applies to all submissions of the form, also earlier ones, as soon as it receives answers or its Submissions tab is opened. Submissions that expired are removed then too, so a form nobody uses keeps them until that happens."
         }
       ]
     },

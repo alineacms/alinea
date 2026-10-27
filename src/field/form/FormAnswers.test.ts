@@ -114,3 +114,13 @@ test('csv has a column per input and quotes what needs it', () => {
     ''
   ])
 })
+
+test('csv keeps the answers to inputs the form no longer has', () => {
+  const [, ...current] = definition
+  const csv = submissionsCsv(current, [submission])
+  const [header, row] = csv.slice(1).split('\r\n')
+  expect(header).toBe(
+    'Received,Status,Language,Page,Service,Room number,Name,Phone'
+  )
+  expect(row).toBe('2026-10-24T00:00:00.000Z,new,,,IT,,"Ann, ""the"" tester",')
+})

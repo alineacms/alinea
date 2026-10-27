@@ -56,7 +56,7 @@
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "3LHr0kiU1LDB5TdlP2iN3aR0wfi",
+                      "_id": "3LELtYsYAoxx1zEXh1PmCqdhKhc",
                       "_link": "entry",
                       "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
                     }
@@ -134,7 +134,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3Ll9sceRkCa2vcfTJtOXIGhIkjc",
+      "_id": "3LdZysffaIRD3DzQshAJjm73na5",
       "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    limits: {submissions: 10, uploads: 20}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests\nexport const PUT = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
@@ -190,7 +190,7 @@
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "3Lenxj27AAB6d8cF9LFaiIS3W2l",
+                      "_id": "3LeRpz2nmixOd3YjIgHHL8oEdHc",
                       "_link": "entry",
                       "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
                     }
@@ -232,7 +232,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LPbcdHxdGzpADVRu28JB6IH3z5",
+      "_id": "3LDK3NBofdRqjrli8yJEBhFAAjL",
       "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Pool} from 'pg'\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    database: {\n      driver: 'pg',\n      client: new Pool({connectionString: process.env.DATABASE_URL})\n    }\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
@@ -452,7 +452,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LzVa9yJ7F1Nn2GRMxMusn3xZqw",
+      "_id": "3Lw45SyTuYF13NX8XggdSOuC7y4",
       "code": "'use server'\n\nimport {cms} from '@/cms'\nimport {verifyCaptcha} from '@/captcha'\n\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data, {\n    verify: () => verifyCaptcha(data.get('captcha-token'))\n  })\n}",
       "fileName": "app/forms/[slug]/actions.ts",
       "language": "tsx",
@@ -485,7 +485,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The Next.js adapter identifies a visitor by the IP address of the request, from the `x-forwarded-for` or `x-real-ip` header. Pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload` to identify them another way. Without a visitor, answers aren't limited. The handler only stores a hash of the visitor, made with your API key, not the address itself."
+          "text": "The Next.js adapter identifies a visitor by the IP address of the request, from a header the host sets (`x-vercel-forwarded-for`, `cf-connecting-ip`, `x-nf-client-connection-ip` or `x-real-ip`), or else the last address in `x-forwarded-for`, which the proxy in front of your site adds; a visitor can only set the first ones. Pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload` to identify them another way. Without a visitor, answers aren't limited. The handler only stores a hash of the visitor, made with your API key, not the address itself."
         }
       ]
     },
@@ -512,7 +512,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LHJQeDFTJoySxlZsdPEnIR3S6g",
+      "_id": "3Lhe95ml6b295gsq1oe1Wrz1RLS",
       "code": "const handler = createHandler({\n  cms,\n  forms: {\n    async onSubmit({submission, title}) {\n      await fetch(process.env.CRM_WEBHOOK_URL!, {\n        method: 'POST',\n        headers: {'content-type': 'application/json'},\n        body: JSON.stringify({form: title, answers: submission.values})\n      })\n    }\n  }\n})",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
@@ -597,7 +597,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3L0xTjeP55Y2vkKSgLREBGgY38v",
+              "_id": "3L4DY9PmJCCioIASZ4njJ6XqILY",
               "_link": "entry",
               "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
             }

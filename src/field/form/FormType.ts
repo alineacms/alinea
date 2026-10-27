@@ -172,8 +172,22 @@ export function isFormType(type: Type): boolean {
   return formTypes.has(type)
 }
 
-/** How long submissions are kept, in days, for the privacy of visitors */
-function keepFor() {
+/**
+ * A tab with the submissions of the form in an entry, for types that hold a
+ * form with `Field.form`, eg. `tabs(tab('Content', {...}), Form.submissions())`
+ */
+export function submissionsTab(label = 'Submissions') {
+  return tab(label, {
+    icon: IcOutlineTableRows,
+    view: viewKeys.FormSubmissions
+  })
+}
+
+/**
+ * How long submissions are kept, in days, for the privacy of visitors. Add
+ * it under the key `keep` to a type that holds a form with `Field.form`.
+ */
+export function keepFor() {
   return select('Keep submissions', {
     options: {
       '30': 'For 30 days',
@@ -221,10 +235,7 @@ export function formType<
           inputs: inputsField
         }
       }),
-      tab('Submissions', {
-        icon: IcOutlineTableRows,
-        view: viewKeys.FormSubmissions
-      }),
+      submissionsTab(),
       tab('Notifications', {
         icon: IcRoundSend,
         fields: {

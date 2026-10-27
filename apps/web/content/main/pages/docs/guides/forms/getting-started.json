@@ -40,7 +40,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3Lk3AdJ7y0QmVr7oHFXaQRvgbxp",
+              "_id": "3LdF3xICmPmlABIL8WgS13UrSJU",
               "_link": "entry",
               "_entry": "3LMClPIi7Ayj1vRERGozYA2W9kO"
             }
@@ -54,7 +54,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3L7S5Jeo0UMVQh4wjvOBTx2ueID",
+      "_id": "3LtCix1vIMsNldjjFwgULJpYBfG",
       "code": "import {Form} from 'alinea'\n\nexport const FormEntry = Form.type('Form', {\n  inputs: Form.defaults\n})",
       "fileName": "schema/FormEntry.ts",
       "language": "tsx",
@@ -169,7 +169,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3L3uxAlgqcIQXTEFkvXH2abUrhJ",
+      "_id": "3Lq4uIihqmUjYwIW1PuhJw3lf1R",
       "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport * as schema from './schema'\n\nexport const cms = createCMS({\n  schema,\n  workspaces: {\n    main: Config.workspace('My site', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {contains: ['Page']}),\n        forms: Config.root('Forms', {contains: ['FormEntry']}),\n        media: Config.media()\n      }\n    })\n  },\n  handlerUrl: '/api/cms'\n})",
       "fileName": "cms.ts",
       "language": "tsx",
@@ -208,7 +208,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LHobF6r51KhgcLb6dV7OLGGeL3",
+      "_id": "3LIoJXVRkBWlFBBEFkzWQxCBBp2",
       "code": "import {Config, Field, Form} from 'alinea'\n\nexport const Event = Config.type('Event', {\n  fields: {\n    title: Field.text('Title'),\n    path: Field.path('Path'),\n    signUp: Field.form('Sign-up form', {inputs: Form.defaults})\n  }\n})",
       "fileName": "schema/Event.ts",
       "language": "tsx",
@@ -220,7 +220,25 @@
       "content": [
         {
           "_type": "text",
-          "text": "Answers to it are checked and stored like those of form entries, but only form entries have a Submissions tab to read them, notification mails, a message after sending and a setting for how long submissions are kept. Use `Field.form` when you handle the answers yourself, for example with `onSubmit` in "
+          "text": "Answers to it are checked and stored like those of form entries. Notification mails and the message after sending are only part of form entries. Add `Form.submissions()` to the tabs of the type to read the answers, and `Form.keep()` under the key `keep` to choose how long they are kept:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Lhf8045UFibTVdxtoSisz9q8PV",
+      "code": "import {Config, Field, Form} from 'alinea'\n\nexport const Event = Config.type('Event', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Event', {\n        fields: {\n          title: Field.text('Title'),\n          path: Field.path('Path'),\n          signUp: Field.form('Sign-up form', {inputs: Form.defaults}),\n          keep: Form.keep()\n        }\n      }),\n      Form.submissions()\n    )\n  }\n})",
+      "fileName": "",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use `onSubmit` in "
         },
         {
           "_type": "text",
@@ -228,7 +246,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3LLyELe5Q7Wd1N2anLSoYsq94sG",
+              "_id": "3LTJYfoOGPUf23fHXJ1WmgMPjn4",
               "_link": "entry",
               "_entry": "3LuGkr9e1G4xeMby22aucMTJ3aI"
             }
@@ -236,7 +254,7 @@
         },
         {
           "_type": "text",
-          "text": "."
+          "text": " to handle the answers yourself as well."
         }
       ]
     },
@@ -273,7 +291,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LPnUG01aD6dOZr0s9RfYAtDCYy",
+      "_id": "3LZLNRbItvkDvVUfKfy7LkWg9Fl",
       "code": "import {cms} from '@/cms'\nimport {FormEntry} from '@/schema/FormEntry'\nimport {Query} from 'alinea'\nimport {Form} from 'alinea/ui'\nimport {notFound} from 'next/navigation'\nimport {prepareUpload, submitForm} from './actions'\n\ninterface PageProps {\n  params: Promise<{slug: string}>\n}\n\nexport default async function FormPage({params}: PageProps) {\n  const {slug} = await params\n  const form = await cms.first({\n    type: FormEntry,\n    path: slug,\n    select: {id: Query.id, title: Query.title, inputs: FormEntry.inputs}\n  })\n  if (!form) notFound()\n  return (\n    <main>\n      <h1>{form.title}</h1>\n      <Form\n        definition={form.inputs}\n        action={submitForm.bind(null, form.id)}\n        upload={prepareUpload.bind(null, form.id)}\n      />\n    </main>\n  )\n}",
       "fileName": "app/forms/[slug]/page.tsx",
       "language": "tsx",
@@ -291,7 +309,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LfjNSAGUI7IELqvTLeo5lZdK4r",
+      "_id": "3LUMXB7d0ZGtCkvMY4u5q5Oibhq",
       "code": "'use server'\n\nimport {cms} from '@/cms'\nimport type {FormUploadFile} from 'alinea/form'\n\n/** Sends the answers of a visitor to the form in an entry */\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data)\n}\n\n/** A ticket for the browser of the visitor to upload a file with */\nexport async function prepareUpload(entryId: string, file: FormUploadFile) {\n  return cms.forms.prepareUpload(entryId, file)\n}",
       "fileName": "app/forms/[slug]/actions.ts",
       "language": "tsx",
@@ -319,7 +337,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3Lfe1GhDRumUN3KXxNnLKN1IxKi",
+      "_id": "3L33ThSasP2Gv6akH2qqklgWXXG",
       "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
@@ -339,7 +357,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3LR0F7p1PwuBwAftMlIfEJdVKhT",
+              "_id": "3Lo9pw6NgTmsdJ1QBEnmma8F8su",
               "_link": "entry",
               "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
             }
@@ -376,7 +394,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3L5mkHV1B1QhLPFTqoI3ixbpkI5",
+              "_id": "3LRTY1S5Dw0Q3HqTq20IRBM1aox",
               "_link": "entry",
               "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
             }
@@ -392,7 +410,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3LbdNtWc91MVJDSO7RCyDfCHUyY",
+              "_id": "3LJ6Ch4FZf6nlPHkKR4SDFDbGeJ",
               "_link": "entry",
               "_entry": "c1qjY2L4hq8JWfscRb_dD"
             }
@@ -408,7 +426,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3LnumRzNW3CSyfLfy3bAw2pVL34",
+              "_id": "3L17qMzXPYuPAK6CxqFqGeieHDh",
               "_link": "entry",
               "_entry": "3LuGkr9e1G4xeMby22aucMTJ3aI"
             }
@@ -422,20 +440,20 @@
     },
     {
       "_type": "ChapterLinkBlock",
-      "_id": "3LYoU4wDDtrySzcHw64O91zBdIM",
+      "_id": "3LlGVIRaHnW4vaz3fU4DCzvLbtj",
       "link": {
         "description": "The inputs, sections and rules editors work with.",
-        "_id": "3LIQo4jDus7M4gbSbKWLAh13IqR",
+        "_id": "3LnqOCcoYnEkYB5X1ZYdnEQxZ08",
         "_type": "entry",
         "_entry": "3LMClPIi7Ayj1vRERGozYA2W9kO"
       }
     },
     {
       "_type": "ChapterLinkBlock",
-      "_id": "3LAHPmymiYB0iBr0CBW2TeaR3ig",
+      "_id": "3LmoXw8NGFRjpU6cWSIMg7l3AmX",
       "link": {
         "description": "Style the form and render inputs with your own components.",
-        "_id": "3LXt7kDUrXlqPPAEpIg83azaCJl",
+        "_id": "3Lgl5w9CVjlpqGjrFpRSjC4UMiI",
         "_type": "entry",
         "_entry": "3LcYz2xic2qalTclBv16Tl2hMmR"
       }

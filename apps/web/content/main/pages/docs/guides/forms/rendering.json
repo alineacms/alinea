@@ -169,7 +169,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LF8WMtc4KCL7KnfFjiKZDMWf4s",
+      "_id": "3LGaWzvsw6S6vekZXG9qqxP6r4D",
       "code": "import {Form, type FormProps} from 'alinea/ui'\nimport styles from './FormView.module.css'\n\nconst views = {\n  form: <form className={styles.form} />,\n  row: <div className={styles.row} />,\n  label: <label className={styles.label} />,\n  help: <p className={styles.help} />,\n  error: <p className={styles.error} />,\n  control: <input className={styles.control} />,\n  choice: <label className={styles.choice} />,\n  section: <fieldset className={styles.section} />,\n  legend: <legend className={styles.legend} />,\n  item: <div className={styles.item} />,\n  add: <button className={styles.add} />,\n  remove: <button className={styles.remove} />,\n  submit: <button className={styles.submit} />,\n  confirmation: <p className={styles.confirmation} />\n}\n\ninterface FormViewProps {\n  definition: FormProps['definition']\n  action: FormProps['action']\n  upload: FormProps['upload']\n}\n\nexport function FormView({definition, action, upload}: FormViewProps) {\n  return (\n    <Form\n      definition={definition}\n      views={views}\n      action={action}\n      upload={upload}\n    />\n  )\n}",
       "fileName": "FormView.tsx",
       "language": "tsx",
@@ -478,7 +478,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LpG8zeU5Pz90DKK5G2eFA2Vfga",
+      "_id": "3LNPrcrBDM8l1HhWCApRDM8n34O",
       "code": ".form,\n.section,\n.item {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  gap: 16px;\n}\n.form > *,\n.section > *,\n.item > * {\n  grid-column: 1 / -1;\n}\n.row[data-width='half'] {\n  grid-column: auto;\n}\n.row[data-invalid] .control {\n  border-color: crimson;\n}",
       "fileName": "FormView.module.css",
       "language": "css",
@@ -612,7 +612,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LGhWntcuLlkTKhi5Jh6CihrCKA",
+      "_id": "3L5YKck7PI105lJRqM4IRHHC2L0",
       "code": "'use client'\n\nimport {Form, FormInput, type FormInputViewProps} from 'alinea/ui'\n\nfunction Textarea(props: FormInputViewProps) {\n  const maxLength = props.input.attributes.maxLength\n  return (\n    <div className=\"textarea\">\n      <FormInput {...props} />\n      {maxLength && <p className=\"hint\">At most {maxLength} characters</p>}\n    </div>\n  )\n}\n\nconst views = {\n  textarea: Textarea\n}",
       "fileName": "FormView.tsx",
       "language": "tsx",
@@ -632,7 +632,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3Lvk2VcSYMno7w3oZ9j2Cip4iBF",
+              "_id": "3LxfHPizl7TIId4GKwrahwmBT5D",
               "_link": "entry",
               "_entry": "3LrnloJyLvCpKfY16ZLY29bje83"
             }
@@ -744,7 +744,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3LhlE2H33opUY3Kqr9O6Gr5ypjF",
+              "_id": "3Lk3hojHSlJEmMXKQYhUoKrV2xR",
               "_link": "entry",
               "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
             }
@@ -827,7 +827,7 @@
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "3Lgu34mXrjW7GvlsgMoneNREJEj",
+                      "_id": "3LvtoPSlxJAMHarIW1hA4r4e22H",
                       "_link": "entry",
                       "_entry": "3LuGkr9e1G4xeMby22aucMTJ3aI"
                     }

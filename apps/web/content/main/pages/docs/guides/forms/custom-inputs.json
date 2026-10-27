@@ -183,7 +183,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LcjEHLwVZ2tmFXFXgAs3SyItVu",
+      "_id": "3LdiD73tVTuCLUhYwMsfPV0whVd",
       "code": "import {Field, Form} from 'alinea'\nimport {IcRoundStarOutline} from 'alinea/dashboard/icons'\n\nexport const Rating = Form.input('Rating', {\n  icon: IcRoundStarOutline,\n  kind: 'number',\n  settings: {\n    max: Field.number('Maximum', {initialValue: 5})\n  },\n  parse([raw]) {\n    if (typeof raw !== 'string' || raw === '') return undefined\n    const value = Number(raw)\n    return Number.isInteger(value) ? value : undefined\n  },\n  attributes: settings => ({type: 'number', min: 1, max: settings.max ?? 5}),\n  validate(value, settings) {\n    const max = settings.max ?? 5\n    if (value < 1 || value > max) return `Choose 1 to ${max}`\n  }\n})",
       "fileName": "schema/Rating.ts",
       "language": "tsx",
@@ -222,7 +222,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LIZHMHOsQCdBVlG9WCWxfw7D1o",
+      "_id": "3LqXuiBrmeuHcyhIeVrEbROB1Gt",
       "code": "import {Form} from 'alinea'\nimport {Rating} from './Rating'\n\nexport const FormEntry = Form.type('Form', {\n  inputs: {...Form.defaults, rating: Rating}\n})",
       "fileName": "schema/FormEntry.ts",
       "language": "tsx",
@@ -273,7 +273,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3Loab1xm0yADPHljCBny1M2MwIX",
+              "_id": "3LSpyvWycU34vxzbxvmnxnfL30W",
               "_link": "entry",
               "_entry": "3LcYz2xic2qalTclBv16Tl2hMmR"
             }
@@ -287,7 +287,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3LVKkHxqHV60qjE04xIu3C3dyYK",
+      "_id": "3LKpK0YffuCMRvEqAFuZ4q17l7g",
       "code": "'use client'\n\nimport {Form, type FormInputViewProps, type FormProps} from 'alinea/ui'\n\nfunction RatingInput({input, name, error, disabled}: FormInputViewProps) {\n  const max = Number(input.settings.max ?? 5)\n  return (\n    <fieldset data-input=\"rating\" data-invalid={error ? '' : undefined}>\n      <legend>\n        {input.label}\n        {input.required && ' *'}\n      </legend>\n      {Array.from({length: max}, (_, index) => (\n        <label key={index}>\n          <input\n            type=\"radio\"\n            name={name}\n            value={index + 1}\n            required={input.required}\n            disabled={disabled}\n          />\n          {index + 1}\n        </label>\n      ))}\n      {error && <p role=\"alert\">{error}</p>}\n    </fieldset>\n  )\n}\n\nconst views = {rating: RatingInput}\n\nexport function RatedForm(props: Omit<FormProps, 'views'>) {\n  return <Form {...props} views={views} />\n}",
       "fileName": "RatingInput.tsx",
       "language": "tsx",

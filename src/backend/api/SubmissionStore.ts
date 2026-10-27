@@ -195,6 +195,36 @@ export class SubmissionStore implements SubmissionsApi {
       )
   }
 
+  async notifiedSubmission(
+    entryId: string,
+    id: string,
+    notified: Array<string>
+  ): Promise<void> {
+    const db = await this.#db
+    await db
+      .update(SubmissionTable)
+      .set({notified})
+      .where(
+        and(eq(SubmissionTable.entryId, entryId), eq(SubmissionTable.id, id))
+      )
+  }
+
+  async retainSubmissions(
+    entryId: string,
+    seconds: number | null
+  ): Promise<void> {
+    const db = await this.#db
+    await db
+      .update(SubmissionTable)
+      .set({
+        expiresAt:
+          seconds === null
+            ? null
+            : sql<number>`${SubmissionTable.createdAt} + ${seconds}`
+      })
+      .where(eq(SubmissionTable.entryId, entryId))
+  }
+
   async deleteSubmission(
     entryId: string,
     id?: string

@@ -247,6 +247,17 @@ export interface SubmissionsApi {
    * files that were kept outside the database to remove
    */
   deleteSubmission?(entryId: string, id?: string): Promise<Array<FormFileKey>>
+  /** Notes the names of the mails that were sent for a submission */
+  notifiedSubmission?(
+    entryId: string,
+    id: string,
+    notified: Array<string>
+  ): Promise<void>
+  /**
+   * Sets when all submissions of a form expire, a number of seconds after
+   * they were sent, or never with null
+   */
+  retainSubmissions?(entryId: string, seconds: number | null): Promise<void>
   /**
    * Removes the submissions that expired and the uploads that were never
    * submitted, and gives the files that were kept outside the database

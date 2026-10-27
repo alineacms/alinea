@@ -36,6 +36,8 @@ const storeMethods = [
   'listSubmissions',
   'updateSubmission',
   'deleteSubmission',
+  'notifiedSubmission',
+  'retainSubmissions',
   'purgeSubmissions',
   'visitorActivity',
   'storeFormFile',
@@ -146,18 +148,6 @@ export async function submitForm(
   if (!files.ok) return {ok: false, errors: files.errors}
   const result = validateSubmission(field, rows, files.data)
   if (!result.ok) return {ok: false, errors: result.errors}
-  const notified =
-    type && isFormType(type)
-      ? await sendMails(
-          forms.mailer,
-          formMails(
-            Field.options(field).inputs,
-            rows,
-            data.mails,
-            result.values
-          )
-        )
-      : []
   const submission: Submission = {
     id: createId(),
     entryId: request.entryId,
@@ -167,15 +157,15 @@ export async function submitForm(
     definition: result.definition,
     createdAt: now,
     status: 'new',
-    notified,
+    notified: [],
     page: pageOf(posted.get(formPage))
   }
-  const keep = Number(data.keep)
+  const keep = retentionOf(data)
   await store.storeSubmission({
     ...submission,
     ...submissionIndex(result.definition, result.values),
     visitor,
-    expiresAt: keep > 0 ? now + keep * day : null
+    expiresAt: keep === null ? null : now + keep
   })
   // Files of inputs the rules hid stay behind and are cleaned up later
   await store.attachFormFiles(
@@ -183,6 +173,21 @@ export async function submitForm(
     submission.id,
     submittedFiles(result.values)
   )
+  // Mails go out once the answers are kept, so none is sent for answers
+  // that were lost
+  if (type && isFormType(type)) {
+    submission.notified = await sendMails(
+      forms.mailer,
+      formMails(Field.options(field).inputs, rows, data.mails, result.values)
+    )
+    if (submission.notified.length > 0)
+      await store.notifiedSubmission(
+        request.entryId,
+        submission.id,
+        submission.notified
+      )
+  }
+  await store.retainSubmissions(request.entryId, keep)
   await purgeSubmissions(store, forms, now)
   if (forms.onSubmit)
     try {
@@ -199,6 +204,15 @@ const hour = 60 * 60
 const day = 24 * hour
 
 const defaultLimits: Required<FormLimits> = {submissions: 20, uploads: 50}
+
+/**
+ * How long the submissions of a form are kept, in seconds, by its Keep
+ * submissions setting, or null to keep them until they are deleted
+ */
+export function retentionOf(data: Record<string, unknown>): number | null {
+  const days = Number(data.keep)
+  return days > 0 ? days * day : null
+}
 
 /** How often a visitor may send to a form per hour, 0 when they may always */
 export function limitOf(forms: FormsOptions, kind: keyof FormLimits): number {

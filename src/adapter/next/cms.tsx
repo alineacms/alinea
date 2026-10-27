@@ -362,8 +362,20 @@ export class NextCMS<
       const {headers} = await import('next/headers.js')
       try {
         const request = await headers()
-        const forwarded = request.get('x-forwarded-for')?.split(',')[0]?.trim()
-        return forwarded || request.get('x-real-ip') || undefined
+        // Hosts set these themselves, visitors can not
+        for (const name of [
+          'x-vercel-forwarded-for',
+          'cf-connecting-ip',
+          'x-nf-client-connection-ip',
+          'x-real-ip'
+        ]) {
+          const address = request.get(name)?.split(',')[0]?.trim()
+          if (address) return address
+        }
+        // A visitor can start this list, the proxy in front of the site adds
+        // the address it saw last
+        const forwarded = request.get('x-forwarded-for')?.split(',')
+        return forwarded?.at(-1)?.trim() || undefined
       } catch {
         // Outside of a request, eg. in a script, there is no visitor
         return undefined

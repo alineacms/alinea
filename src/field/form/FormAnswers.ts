@@ -172,15 +172,36 @@ export function submissionIndex(
 }
 
 /**
+ * The columns of the form as it is now, followed by those of earlier
+ * versions the submissions were sent with, so no answer is left out
+ */
+export function exportColumns(
+  definition: FormDefinition,
+  submissions: Array<Submission>
+): Array<FormColumn> {
+  const columns = formColumns(definition)
+  const seen = new Set(columns.map(column => column.id))
+  for (const submission of submissions) {
+    if (!Array.isArray(submission.definition)) continue
+    for (const column of formColumns(submission.definition as FormDefinition))
+      if (!seen.has(column.id)) {
+        seen.add(column.id)
+        columns.push(column)
+      }
+  }
+  return columns
+}
+
+/**
  * The submissions as CSV, a column per input of the form as it is now and
- * one per repeatable section. Excel needs the byte order mark to read it as
- * UTF-8.
+ * one per repeatable section, then those of earlier versions of the form.
+ * Excel needs the byte order mark to read it as UTF-8.
  */
 export function submissionsCsv(
   definition: FormDefinition,
   submissions: Array<Submission>
 ): string {
-  const columns = formColumns(definition)
+  const columns = exportColumns(definition, submissions)
   const header = [
     'Received',
     'Status',

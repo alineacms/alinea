@@ -7,6 +7,14 @@ import {
   DataListValue,
   type DateRange,
   DateRangePicker,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -562,15 +570,36 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
             Archive
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          color="destructive"
-          icon={IcRoundDelete}
-          onClick={remove}
-        >
-          Delete
-        </Button>
+        <Dialog>
+          <DialogTrigger
+            variant="ghost"
+            size="sm"
+            color="destructive"
+            icon={IcRoundDelete}
+          >
+            Delete
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete this submission?</DialogTitle>
+              <DialogDescription>
+                The answers and files of {title} are removed for good.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose variant="outline" color="secondary">
+                Cancel
+              </DialogClose>
+              <DialogClose
+                color="destructive"
+                icon={IcRoundDelete}
+                onClick={remove}
+              >
+                Delete
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SheetFooter>
     </SheetContent>
   )
