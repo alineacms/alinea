@@ -259,8 +259,13 @@ function prefill(
   definition: FormDefinition,
   values: Record<string, string>
 ): FormDefinition {
-  const fill = (input: FormInputData): FormInputData =>
-    input.key in values ? {...input, initialValue: values[input.key]} : input
+  const fill = (input: FormInputData): FormInputData => {
+    if (!(input.key in values)) return input
+    const value = values[input.key]
+    // A check is checked by any value but an empty one
+    const initialValue = input.control === 'check' ? value !== '' : value
+    return {...input, initialValue}
+  }
   return definition.map(item => {
     if (item.control !== 'section') return fill(item)
     if (item.repeat) return item
@@ -661,6 +666,7 @@ export function FormInput({
             id: `${id}-${choice.id}`,
             type,
             value: choice.value,
+            defaultChecked: [input.initialValue].flat().includes(choice.value),
             // A group of checkboxes is valid with any of them checked
             required: type === 'radio' && input.required
           }),
@@ -690,22 +696,27 @@ function formControl(
     return part(views.control, 'textarea', {...props, defaultValue})
   if (input.control === 'select') {
     const placeholder = input.settings.placeholder
-    return part(views.control, 'select', {...props, defaultValue: ''}, [
-      part(
-        views.option,
-        'option',
-        {key: '', value: '', disabled: input.required},
-        typeof placeholder === 'string' && placeholder ? placeholder : ''
-      ),
-      ...(input.choices ?? []).map(choice =>
+    return part(
+      views.control,
+      'select',
+      {...props, defaultValue: defaultValue ?? ''},
+      [
         part(
           views.option,
           'option',
-          {key: choice.id, value: choice.value},
-          choice.label
+          {key: '', value: '', disabled: input.required},
+          typeof placeholder === 'string' && placeholder ? placeholder : ''
+        ),
+        ...(input.choices ?? []).map(choice =>
+          part(
+            views.option,
+            'option',
+            {key: choice.id, value: choice.value},
+            choice.label
+          )
         )
-      )
-    ])
+      ]
+    )
   }
   return part(views.control, 'input', {...props, defaultValue})
 }

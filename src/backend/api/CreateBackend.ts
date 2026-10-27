@@ -12,7 +12,10 @@ import {S3Uploads, type S3UploadsOptions} from './S3Uploads.js'
 
 export type BackendPart =
   | Partial<RemoteConnection>
-  | ((context: RequestContext, config: Config) => Partial<RemoteConnection>)
+  | ((
+      context: RequestContext,
+      config: Config
+    ) => Partial<RemoteConnection> | Array<Partial<RemoteConnection>>)
 
 export interface BackendFactory {
   (context: RequestContext, config: Config): RemoteConnection
@@ -76,8 +79,8 @@ export function backendFromOptions(options: BackendOptions): BackendFactory {
 export function createBackend(...parts: Array<BackendPart>): BackendFactory {
   return (context, config) => {
     return composeBackend(
-      ...parts.map(part =>
-        typeof part === 'function' ? part(context, config) : part
+      ...parts.flatMap(part =>
+        typeof part === 'function' ? part(context, config) : [part]
       )
     )
   }

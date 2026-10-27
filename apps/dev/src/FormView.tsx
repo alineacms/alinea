@@ -1,8 +1,11 @@
 'use client'
 
-import type {PrepareUploadResult} from 'alinea/core/Connection'
-import type {FormUploadFile} from 'alinea/core/Forms'
-import type {FormDefinition, FormResult} from 'alinea/form'
+import type {
+  FormDefinition,
+  FormResult,
+  FormUploadFile,
+  PrepareUploadResult
+} from 'alinea/form'
 import {Form} from 'alinea/ui'
 import styles from './FormView.module.css'
 

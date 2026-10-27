@@ -1,7 +1,7 @@
 'use server'
 
 import {cms} from '@/cms'
-import type {FormUploadFile} from 'alinea/core/Forms'
+import type {FormUploadFile} from 'alinea/form'
 
 /** Sends the answers of a visitor to the form in an entry */
 export async function submitForm(entryId: string, data: FormData) {

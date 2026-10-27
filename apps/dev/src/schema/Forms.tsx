@@ -7,7 +7,10 @@ const Rating = Form.input('Rating', {
   settings: {
     max: Field.number('Maximum', {initialValue: 5})
   },
-  parse: ([raw]) => (raw ? Number(raw) : undefined),
+  parse: ([raw]) => {
+    const value = Number(raw)
+    return raw && Number.isInteger(value) ? value : undefined
+  },
   attributes: settings => ({type: 'number', min: 1, max: settings.max ?? 5}),
   validate: (value, settings) =>
     value < 1 || value > (settings.max ?? 5)
