@@ -39,7 +39,7 @@ const storeMethods = [
   'notifiedSubmission',
   'retainSubmissions',
   'purgeSubmissions',
-  'visitorActivity',
+  'recentActivity',
   'storeFormFile',
   'formFiles',
   'attachFormFiles',
@@ -128,16 +128,14 @@ export async function submitForm(
   if (isSpam(posted)) return {ok: true}
   const now = Math.floor(Date.now() / 1000)
   const visitor = await visitorHash(secret, request.visitor)
-  const limit = limitOf(forms, 'submissions')
-  if (visitor && limit) {
-    const recent = await store.visitorActivity(
-      request.entryId,
-      visitor,
-      now - hour
-    )
-    if (recent.submissions >= limit)
-      return {ok: false, message: 'You sent this form often, try again later'}
-  }
+  const limited = await overLimit(
+    store,
+    forms,
+    request.entryId,
+    visitor,
+    'submissions'
+  )
+  if (limited) return {ok: false, message: limited}
   const files = await resolveFiles(
     store,
     secret,
@@ -203,7 +201,11 @@ export async function submitForm(
 const hour = 60 * 60
 const day = 24 * hour
 
-const defaultLimits: Required<FormLimits> = {submissions: 20, uploads: 50}
+type LimitKind = 'submissions' | 'uploads'
+
+/** What a form takes per hour, and one visitor of it */
+const formLimits = {submissions: 500, uploads: 1000}
+const visitorLimits = {submissions: 20, uploads: 50}
 
 /**
  * How long the submissions of a form are kept, in seconds, by its Keep
@@ -214,10 +216,31 @@ export function retentionOf(data: Record<string, unknown>): number | null {
   return days > 0 ? days * day : null
 }
 
-/** How often a visitor may send to a form per hour, 0 when they may always */
-export function limitOf(forms: FormsOptions, kind: keyof FormLimits): number {
-  if (forms.limits === false) return 0
-  return forms.limits?.[kind] ?? defaultLimits[kind]
+/**
+ * Why a form takes no more submissions or files now: it took as many as it
+ * does in an hour, or the visitor sent as many as one may
+ */
+export async function overLimit(
+  store: Required<SubmissionsApi>,
+  forms: FormsOptions,
+  entryId: string,
+  visitor: string | null,
+  kind: LimitKind
+): Promise<string | undefined> {
+  if (forms.limits === false) return undefined
+  const limits: FormLimits = forms.limits ?? {}
+  const since = Math.floor(Date.now() / 1000) - hour
+  const count = async (visitor?: string) => {
+    const recent = await store.recentActivity(entryId, since, visitor)
+    return kind === 'submissions' ? recent.submissions : recent.files
+  }
+  const perForm = limits[kind] ?? formLimits[kind]
+  if (perForm > 0 && (await count()) >= perForm)
+    return 'This form takes no more answers right now, try again later'
+  const perVisitor = limits.perVisitor?.[kind] ?? visitorLimits[kind]
+  if (visitor && perVisitor > 0 && (await count(visitor)) >= perVisitor)
+    return 'You sent this form often, try again later'
+  return undefined
 }
 
 /** A visitor as they are kept: a hash, so their address is not stored */

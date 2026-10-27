@@ -1,21 +1,13 @@
 import {
-  fileKey,
-  parseSubmissionQuery,
-  parseSubmitRequest,
-  purgeSubmissions,
-  removeFiles,
-  retentionOf,
-  submissionStore,
-  submitForm
-} from '#/backend/FormSubmit.js'
-import {
-  parsePrepareRequest,
-  prepareUpload,
-  receiveUpload,
-  uploadCors
-} from '#/backend/FormUploads.js'
+  type FormRequestOptions,
+  databaseStore,
+  editorPermission,
+  handleFormRequest,
+  isFormRequest,
+  isVisitorUpload
+} from '#/backend/FormRequests.js'
+import {removeFiles} from '#/backend/FormSubmit.js'
 import {hasForm} from '#/backend/FormLoad.js'
-import {SubmissionStore} from '#/backend/api/SubmissionStore.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {
@@ -61,8 +53,6 @@ import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {isAbsolute, normalize, relative} from '#/core/util/Paths.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
-import type {Database} from 'rado'
-import * as driver from 'rado/driver'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {proxyMediaUrl} from './api/ProxyMedia.js'
@@ -111,16 +101,18 @@ export interface HandlerOptions extends HandlerHooks {
   remote?: (context: RequestContext) => RemoteConnection
   /** Log why and how long each sync took, for a deployed handler */
   logSyncs?: boolean
-  /**
-   * How submissions of forms are handled, eg. the mailer of their mails. A
-   * function decides it for each request, as the dev server does to run the
-   * options of the app.
-   */
-  forms?: FormsOptions | ((request: Request) => FormsOptions)
+  /** How submissions of forms are handled, eg. the mailer of their mails */
+  forms?: FormsOptions
   forwardMutations?(
     request: Request,
     context: AuthedContext
   ): Promise<Response | undefined>
+  /**
+   * Hands the requests about forms to another handler, as the dev server
+   * does to let the app answer them with its own options. Requests of
+   * editors are checked here first.
+   */
+  forwardForms?(request: Request): Promise<Response>
 }
 
 export function createHandler({
@@ -128,28 +120,20 @@ export function createHandler({
   remote = context => new CloudRemote(context, cms.config),
   db,
   forwardMutations,
+  forwardForms,
   logSyncs = false,
-  forms: formsOption,
+  forms,
   ...hooks
 }: HandlerOptions): Handler {
-  const shared = typeof formsOption === 'function' ? undefined : formsOption
   const throttle = createThrottledSync()
   // Submissions are kept in forms.database when it is set, eg. for content
   // on alinea.cloud, otherwise by the backend
-  const ownStore = shared?.database
-    ? new SubmissionStore({
-        db: (driver[shared.database.driver] as (client: unknown) => Database)(
-          shared.database.client
-        )
-      })
-    : undefined
+  const ownStore = databaseStore(forms)
   return async function handle(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
     const dev = process.env.ALINEA_DEV_SERVER
-    const forms =
-      typeof formsOption === 'function' ? formsOption(request) : formsOption
     const local = await db
     const simulateLatency = process.env.ALINEA_LATENCY
 
@@ -223,6 +207,28 @@ export function createHandler({
           } catch (error) {
             console.error('Alinea could not remove submissions', error)
           }
+        }
+      }
+      /** Asserts the editor may do this with the form entry */
+      async function authorize(entryId: string, permission: Permission) {
+        const user = expectUser()
+        const entry = await local.first({
+          id: entryId,
+          status: 'preferPublished',
+          select: historyResource
+        })
+        if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
+        ;(await user.policy).assert(permission, entry)
+      }
+      function formOptions(): FormRequestOptions {
+        return {
+          config: cms.config,
+          graph: local,
+          api: submissions(),
+          forms: forms ?? {},
+          secret: context.apiKey,
+          handlerUrl: context.handlerUrl,
+          authorize
         }
       }
       let userCtx: AuthedContext | undefined
@@ -352,13 +358,11 @@ export function createHandler({
 
       // Visitors upload the files of a form from their browser, the signed
       // ticket the site asked for is all it takes
-      if (action === HandleAction.FormUpload && request.method === 'OPTIONS')
-        return new Response(null, {status: 204, headers: uploadCors})
-      if (action === HandleAction.FormUpload && request.method === 'PUT')
-        return receiveUpload(request, submissions(), {
-          forms,
-          secret: context.apiKey
-        })
+      if (isVisitorUpload(request)) {
+        if (forwardForms) return await forwardForms(request)
+        const response = await handleFormRequest(request, formOptions())
+        if (response) return response
+      }
 
       try {
         userCtx = await cnx.verify(request)
@@ -476,117 +480,23 @@ export function createHandler({
         return Response.json((await local.resolve(query)) ?? null)
       }
 
-      // Answers of a form, sent by the server of the site with the api key
-      if (action === HandleAction.Submit && request.method === 'POST') {
-        expectJson()
-        const submit = parseSubmitRequest(await body)
+      // Forms: the answers and uploads the site sends, the submissions
+      // editors read. The dev server checks editors and lets the app answer.
+      if (isFormRequest(request)) {
+        if (forwardForms) {
+          const entryId = url.searchParams.get('entryId')
+          if (
+            entryId &&
+            (action === HandleAction.Submissions ||
+              action === HandleAction.SubmissionFile)
+          )
+            await authorize(entryId, editorPermission(request.method))
+          return await forwardForms(request)
+        }
         await periodicSync(cnx, cms.config.syncInterval)
-        return Response.json(
-          await submitForm(cms.config, local, submissions(), submit, {
-            forms,
-            secret: context.apiKey
-          })
-        )
+        const response = await handleFormRequest(request, formOptions())
+        if (response) return response
       }
-
-      // A ticket to upload a file to a form, for the server of the site
-      if (action === HandleAction.FormUpload && request.method === 'POST') {
-        expectJson()
-        const prepare = parsePrepareRequest(await body)
-        await periodicSync(cnx, cms.config.syncInterval)
-        return Response.json(
-          await prepareUpload(cms.config, local, submissions(), prepare, {
-            forms,
-            secret: context.apiKey,
-            handlerUrl: context.handlerUrl
-          })
-        )
-      }
-
-      // A file of a submission, for editors who can read its form
-      if (action === HandleAction.SubmissionFile && request.method === 'GET') {
-        const user = expectUser()
-        const entryId = string(url.searchParams.get('entryId'))
-        const entry = await local.first({
-          id: entryId,
-          status: 'preferPublished',
-          select: historyResource
-        })
-        if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
-        const policy = await user.policy
-        policy.assert(Permission.Read, entry)
-        const file = await submissionStore(submissions()).readFormFile(
-          entryId,
-          string(url.searchParams.get('id'))
-        )
-        const content =
-          file && (file.content ?? (await forms?.files?.read(fileKey(file))))
-        if (!file || !content)
-          throw new HttpError(ErrorCode.NotFound, 'File not found')
-        return new Response(new Uint8Array(content), {
-          headers: {
-            'content-type': 'application/octet-stream',
-            'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
-            'x-content-type-options': 'nosniff',
-            'cache-control': 'private, no-store'
-          }
-        })
-      }
-
-      // The submissions of a form, for editors who can read its entry
-      if (action === HandleAction.Submissions) {
-        const user = expectUser()
-        expectJson()
-        const entryId = string(url.searchParams.get('entryId'))
-        const entry = await local.first({
-          id: entryId,
-          status: 'preferPublished',
-          select: historyResource
-        })
-        if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
-        const policy = await user.policy
-        const store = submissionStore(submissions())
-        if (request.method === 'GET') {
-          policy.assert(Permission.Read, entry)
-          // The form keeps its submissions as long as it says now, and those
-          // that expired are gone before the list is read
-          const data = await local.first({
-            id: entryId,
-            status: 'preferPublished',
-            select: Entry.data
-          })
-          await store.retainSubmissions(
-            entryId,
-            retentionOf((data ?? {}) as Record<string, unknown>)
-          )
-          await purgeSubmissions(store, forms ?? {})
-          const query = url.searchParams.get('query')
-          return Response.json(
-            await store.listSubmissions(
-              entryId,
-              query ? parseSubmissionQuery(JSON.parse(query)) : {}
-            )
-          )
-        }
-        const id = string(url.searchParams.get('id'))
-        if (request.method === 'DELETE') {
-          policy.assert(Permission.Delete, entry)
-          await removeFiles(
-            forms ?? {},
-            await store.deleteSubmission(entryId, id)
-          )
-          return new Response(null, {status: 204})
-        }
-        if (request.method === 'POST') {
-          policy.assert(Permission.Update, entry)
-          const {status} = (await body) as {status?: unknown}
-          if (status !== 'new' && status !== 'read' && status !== 'archived')
-            throw new HttpError(400, 'Unknown status')
-          await store.updateSubmission(entryId, id, status)
-          return new Response(null, {status: 204})
-        }
-      }
-
       if (action === HandleAction.Mutate && request.method === 'POST') {
         if (forwardMutations && userCtx) {
           const forwarded = await forwardMutations(request.clone(), userCtx)

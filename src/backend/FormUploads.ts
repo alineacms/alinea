@@ -14,7 +14,7 @@ import {isRecord} from '#/core/util/Objects.js'
 import {type FormInputData, nameKey} from '#/field/form/FormDefinition.js'
 import {contentProblem, isAccepted} from '#/field/form/FormFileTypes.js'
 import {HandleAction} from './HandleAction.js'
-import {fileKey, limitOf, submissionStore, visitorHash} from './FormSubmit.js'
+import {fileKey, overLimit, submissionStore, visitorHash} from './FormSubmit.js'
 import {fileInputs, loadForm} from './FormLoad.js'
 
 /** How long a visitor has to upload a file after the site asked for it */
@@ -97,16 +97,14 @@ export async function prepareUpload(
     }
   const issuedAt = Math.floor(Date.now() / 1000)
   const visitor = await visitorHash(secret, request.visitor)
-  const perHour = limitOf(forms, 'uploads')
-  if (visitor && perHour) {
-    const recent = await submissionStore(api).visitorActivity(
-      request.entryId,
-      visitor,
-      issuedAt - 60 * 60
-    )
-    if (recent.files >= perHour)
-      return {ok: false, message: 'You sent many files, try again later'}
-  }
+  const limited = await overLimit(
+    submissionStore(api),
+    forms,
+    request.entryId,
+    visitor,
+    'uploads'
+  )
+  if (limited) return {ok: false, message: limited}
   const ticket: UploadTicket = {
     purpose: 'form-upload',
     entryId: request.entryId,

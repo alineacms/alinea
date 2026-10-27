@@ -418,7 +418,7 @@
         },
         {
           "_type": "text",
-          "text": ", pass a database of your own as `forms.database`. During `alinea dev` the dev server keeps submissions in a local file and hands mails and submissions to the `mailer` and `onSubmit` of your route; without a mailer it prints mails in the terminal. See "
+          "text": ", pass a database of your own as `forms.database`. During `alinea dev` your route answers forms too, with the same options and storage, so the whole flow runs locally. See "
         },
         {
           "_type": "text",

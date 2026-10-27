@@ -87,6 +87,7 @@ const FileTable = table(
       row.submissionId
     ),
     index('alinea_submission_file_by_visitor').on(row.visitor, row.createdAt),
+    index('alinea_submission_file_by_entry').on(row.entryId, row.createdAt),
     index('alinea_submission_file_by_time').on(row.createdAt)
   ]
 )
@@ -268,10 +269,10 @@ export class SubmissionStore implements SubmissionsApi {
     return kept
   }
 
-  async visitorActivity(
+  async recentActivity(
     entryId: string,
-    visitor: string,
-    since: number
+    since: number,
+    visitor?: string
   ): Promise<{submissions: number; files: number}> {
     const db = await this.#db
     const [[submissions], [files]] = await Promise.all([
@@ -280,9 +281,11 @@ export class SubmissionStore implements SubmissionsApi {
         .from(SubmissionTable)
         .where(
           and(
-            eq(SubmissionTable.visitor, visitor),
             eq(SubmissionTable.entryId, entryId),
-            gte(SubmissionTable.createdAt, since)
+            gte(SubmissionTable.createdAt, since),
+            visitor === undefined
+              ? undefined
+              : eq(SubmissionTable.visitor, visitor)
           )
         ),
       db
@@ -290,9 +293,9 @@ export class SubmissionStore implements SubmissionsApi {
         .from(FileTable)
         .where(
           and(
-            eq(FileTable.visitor, visitor),
             eq(FileTable.entryId, entryId),
-            gte(FileTable.createdAt, since)
+            gte(FileTable.createdAt, since),
+            visitor === undefined ? undefined : eq(FileTable.visitor, visitor)
           )
         )
     ])
@@ -301,7 +304,6 @@ export class SubmissionStore implements SubmissionsApi {
       files: Number(files.count)
     }
   }
-
   async storeFormFile(file: StoredFormFile): Promise<void> {
     const db = await this.#db
     await db.insert(FileTable).values(file)

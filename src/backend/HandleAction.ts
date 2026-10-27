@@ -7,8 +7,6 @@ export enum HandleAction {
   Submissions = 'submissions',
   SubmissionFile = 'submissionFile',
   FormUpload = 'formUpload',
-  /** A mail or submission of a form the dev server hands to the app */
-  FormEvent = 'formEvent',
   Pending = 'pending',
   Sync = 'sync',
   Draft = 'draft',

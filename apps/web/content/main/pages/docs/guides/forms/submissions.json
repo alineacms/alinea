@@ -521,7 +521,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Mails are sent once the answers passed the checks and are stored, so no mail goes out for answers that were lost. A mail that fails is logged, and the submission is kept. Without a `mailer` nothing is sent, and the handler logs a warning for each submission that had mails to send. A mail with a rule that no longer works, for example because its input was removed, isn't sent rather than sent to everyone. During `alinea dev` the dev server hands mails to the `mailer` of your route, or prints them in the terminal when it has none."
+          "text": "Mails are sent once the answers passed the checks and are stored, so no mail goes out for answers that were lost. A mail that fails is logged, and the submission is kept. Without a `mailer` nothing is sent, and the handler logs a warning for each submission that had mails to send. A mail with a rule that no longer works, for example because its input was removed, isn't sent rather than sent to everyone. During `alinea dev` your route sends mails with its own `mailer` too."
         }
       ]
     },

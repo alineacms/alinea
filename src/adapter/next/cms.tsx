@@ -355,39 +355,17 @@ export class NextCMS<
   }
 
   /** Submits the answers of visitors to forms, see `Field.form` */
-  forms: Forms = formsOf(
-    async () => {
-      const context = await requestContext(this.config)
-      return createClient(
-        this.config,
-        context.isDev ? await withSiteOrigin(context) : context
-      )
-    },
-    // The visitor is limited by the address of the request, see forms.limits
-    async () => {
-      const {headers} = await import('next/headers.js')
-      try {
-        const request = await headers()
-        // Hosts set these themselves, visitors can not
-        for (const name of [
-          'x-vercel-forwarded-for',
-          'cf-connecting-ip',
-          'x-nf-client-connection-ip',
-          'x-real-ip'
-        ]) {
-          const address = request.get(name)?.split(',')[0]?.trim()
-          if (address) return address
-        }
-        // A visitor can start this list, the proxy in front of the site adds
-        // the address it saw last
-        const forwarded = request.get('x-forwarded-for')?.split(',')
-        return forwarded?.at(-1)?.trim() || undefined
-      } catch {
-        // Outside of a request, eg. in a script, there is no visitor
-        return undefined
-      }
-    }
-  )
+  forms: Forms = formsOf(async () => {
+    const context = await requestContext(this.config)
+    // During development forms go to the handler of this app, which
+    // answers them with its own options, as it does once deployed
+    return createClient(
+      this.config,
+      context.isDev
+        ? {...context, handlerUrl: appHandlerUrl(this.config)}
+        : context
+    )
+  })
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     const client = await this.#authenticatedClient()
@@ -443,34 +421,16 @@ function createClient(config: Config, context: RequestContext) {
   })
 }
 
-/**
- * Tells the dev server where the site is, as a proxy would, so it hands the
- * mails and submissions of forms to the handler of this app
- */
-async function withSiteOrigin(
-  context: RequestContext
-): Promise<RequestContext> {
-  const {headers} = await import('next/headers.js')
-  let host: string | null = null
-  let protocol = 'http'
-  try {
-    const request = await headers()
-    host = request.get('x-forwarded-host') ?? request.get('host')
-    protocol = request.get('x-forwarded-proto') ?? protocol
-  } catch {
-    // Outside of a request there is no site to tell about
-  }
-  if (!host) return context
-  return {
-    ...context,
-    applyAuth(init) {
-      const authorized = applyContextAuth(context, init)
-      const headers = new Headers(authorized.headers)
-      headers.set('x-forwarded-host', host)
-      headers.set('x-forwarded-proto', protocol)
-      return {...authorized, headers}
-    }
-  }
+/** The handler of this app while it runs in development */
+function appHandlerUrl(config: Config): URL {
+  // Next sets the origin of the server it runs, see withAlinea
+  const origin =
+    process.env.__NEXT_PRIVATE_ORIGIN ?? Config.baseUrl(config, 'development')
+  if (!origin)
+    throw new Error(
+      'Alinea could not find the address of this app to send forms to: set baseUrl.development in the config'
+    )
+  return new URL(Config.handlerUrl(config), origin)
 }
 
 function applyContextAuth(

@@ -124,7 +124,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`limits`: how often one visitor may send to a form per hour, or `false` to not limit."
+                  "text": "`limits`: how many submissions and files a form takes per hour, overall and per visitor, or `false` to not limit."
                 }
               ]
             }
@@ -135,7 +135,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3LdZysffaIRD3DzQshAJjm73na5",
-      "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    limits: {submissions: 10, uploads: 20}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests\nexport const PUT = handler",
+      "code": "import {cms} from '@/cms'\nimport {formFiles} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail}),\n    files: formFiles.s3({\n      bucket: 'my-site-form-files',\n      region: 'eu-west-1',\n      accessKeyId: process.env.S3_ACCESS_KEY_ID!,\n      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!\n    }),\n    limits: {submissions: 100, uploads: 200}\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\n// Visitors upload the files of forms with PUT requests\nexport const PUT = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
       "compact": false
@@ -244,7 +244,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The drivers are `pg`, `@neondatabase/serverless`, `@vercel/postgres`, `mysql2`, `@libsql/client`, `d1`, `@electric-sql/pglite` and `sql.js`. Without a database, sending a form fails with `Configure a database to store submissions`."
+          "text": "The drivers are `pg`, `@neondatabase/serverless`, `@vercel/postgres`, `mysql2`, `@libsql/client`, `d1`, `@electric-sql/pglite`, `sql.js` and `node:sqlite`. Without a database, sending a form fails with `Configure a database to store submissions`."
         }
       ]
     },
@@ -254,7 +254,25 @@
       "content": [
         {
           "_type": "text",
-          "text": "During `alinea dev`, the dev server answers forms itself. It keeps submissions in a SQLite file next to the generated content database, which stays when content is generated again. Like commit hooks, the `mailer` and `onSubmit` of your handler route still run: once a submission is stored, the dev server hands its mails and the submission to your route. Without a `mailer` in your route the mails are printed in the terminal. `database`, `files` and `limits` apply once your site is deployed: in development submissions and files stay in the local file and visitors are not limited."
+          "text": "During `alinea dev` your handler route answers forms as it does once deployed: `cms.forms` sends answers and uploads to it, and the dev server hands it the requests of the Submissions tab after checking the editor may make them. So your `database`, `files`, `mailer`, `onSubmit` and `limits` all run locally, and there is no separate store for development. Point them at what you want to use locally, for example a SQLite file next to your app:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Lw45SyTuYF13NX8XggdSOuC7y4",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {DatabaseSync} from 'node:sqlite'\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    database: {\n      driver: 'node:sqlite',\n      client: new DatabaseSync('.forms.sqlite')\n    }\n  }\n})",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Open the dashboard through your app, at `/admin`, to read submissions during development: that is how the dev server finds your route. `cms.forms` reaches your route at the address Next.js runs on, or `baseUrl.development` of your config."
         }
       ]
     },
@@ -452,7 +470,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3Lw45SyTuYF13NX8XggdSOuC7y4",
+      "_id": "3Lhe95ml6b295gsq1oe1Wrz1RLS",
       "code": "'use server'\n\nimport {cms} from '@/cms'\nimport {verifyCaptcha} from '@/captcha'\n\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data, {\n    verify: () => verifyCaptcha(data.get('captcha-token'))\n  })\n}",
       "fileName": "app/forms/[slug]/actions.ts",
       "language": "tsx",
@@ -475,7 +493,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The handler limits how often one visitor sends to a form: 20 submissions and 50 uploaded files per hour by default. Change the numbers with `limits: {submissions, uploads}`, or turn the limits off with `limits: false`. A visitor over the limit sees a message asking to try again later."
+          "text": "Each form takes at most 500 submissions and 1000 uploaded files per hour by default, so a flood of answers can't fill your database or bucket. Change the numbers with `limits: {submissions, uploads}`, or turn the limits off with `limits: false`. Once a form took its share, visitors see a message asking to try again later."
         }
       ]
     },
@@ -485,9 +503,17 @@
       "content": [
         {
           "_type": "text",
-          "text": "The Next.js adapter identifies a visitor by the IP address of the request, from a header the host sets (`x-vercel-forwarded-for`, `cf-connecting-ip`, `x-nf-client-connection-ip` or `x-real-ip`), or else the last address in `x-forwarded-for`, which the proxy in front of your site adds; a visitor can only set the first ones. Pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload` to identify them another way. Without a visitor, answers aren't limited. The handler only stores a hash of the visitor, made with your API key, not the address itself."
+          "text": "To limit each visitor as well, pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload`: anything that identifies them on your site, such as the id of their session. Alinea doesn't guess it from the request. One visitor may then send 20 submissions and 50 files per hour, set with `limits: {perVisitor: {submissions, uploads}}`. The handler only stores a hash of the visitor, made with your API key."
         }
       ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3L4DY9PmJCCioIASZ4njJ6XqILY",
+      "code": "export async function submitForm(entryId: string, data: FormData) {\n  const session = await getSession()\n  return cms.forms.submit(entryId, data, {visitor: session.id})\n}",
+      "fileName": "",
+      "language": "ts",
+      "compact": false
     },
     {
       "_type": "heading",
@@ -512,7 +538,7 @@
     },
     {
       "_type": "CodeBlock",
-      "_id": "3Lhe95ml6b295gsq1oe1Wrz1RLS",
+      "_id": "3LROBtaWHFHz3HgZHU3JIEJoUQR",
       "code": "const handler = createHandler({\n  cms,\n  forms: {\n    async onSubmit({submission, title}) {\n      await fetch(process.env.CRM_WEBHOOK_URL!, {\n        method: 'POST',\n        headers: {'content-type': 'application/json'},\n        body: JSON.stringify({form: title, answers: submission.values})\n      })\n    }\n  }\n})",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx",
@@ -566,7 +592,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "A submission holds the answers, the version of the form, when it was received, its language, the names of the mails sent for it, a hash of the visitor and the page it was sent from. The page is stored without its query string, which can hold personal details. IP addresses aren't stored."
+          "text": "A submission holds the answers, the version of the form, when it was received, its language, the names of the mails sent for it, a hash of the visitor when the site passed one, and the page it was sent from. The page is stored without its query string, which can hold personal details. IP addresses aren't stored."
         }
       ]
     },
@@ -597,7 +623,7 @@
           "marks": [
             {
               "_type": "link",
-              "_id": "3L4DY9PmJCCioIASZ4njJ6XqILY",
+              "_id": "3LofG0dTnXkPyG5vT30Da8nfRqg",
               "_link": "entry",
               "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
             }

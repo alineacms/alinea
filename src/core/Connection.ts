@@ -263,11 +263,14 @@ export interface SubmissionsApi {
    * submitted, and gives the files that were kept outside the database
    */
   purgeSubmissions?(now: number): Promise<Array<FormFileKey>>
-  /** How much a visitor sent to a form since a moment, in seconds */
-  visitorActivity?(
+  /**
+   * How much a form took since a moment, in seconds, from one visitor when
+   * their hash is given
+   */
+  recentActivity?(
     entryId: string,
-    visitor: string,
-    since: number
+    since: number,
+    visitor?: string
   ): Promise<{submissions: number; files: number}>
   /** Keeps an uploaded file until it is submitted, or a day at most */
   storeFormFile?(file: StoredFormFile): Promise<void>

@@ -1,4 +1,10 @@
-import type {FormEvent, FormsOptions} from '#/core/Forms.js'
+import {
+  databaseStore,
+  handleFormRequest,
+  isFormRequest,
+  isVisitorUpload
+} from '#/backend/FormRequests.js'
+import type {FormsOptions} from '#/core/Forms.js'
 import {
   backendFromOptions,
   type BackendFactory,
@@ -87,6 +93,40 @@ export function createHandlerWithDatabase(
     afterCommit
   })
 
+  const formsStore = databaseStore(options.forms)
+
+  /**
+   * Forms are answered here during development as they are once deployed,
+   * with the options and storage of this app. The site sends answers here,
+   * the dev server forwards the requests of editors it checked.
+   */
+  async function handleFormsInDevelopment(
+    request: Request,
+    context: RequestContext
+  ): Promise<Response> {
+    const developmentKey = request.headers.get(developmentKeyHeader)
+    const trusted = Boolean(context.apiKey) && developmentKey === context.apiKey
+    if (!trusted && !isVisitorUpload(request))
+      return failure(401, 'Invalid development credentials')
+    const url = new URL(request.url)
+    try {
+      const response = await handleFormRequest(request, {
+        config,
+        graph: options.cms,
+        api: formsStore ?? remote(context),
+        forms: options.forms ?? {},
+        secret: context.apiKey,
+        handlerUrl: new URL(handlerPathname(config, url), url.origin),
+        // The dev server checked the editor before it forwarded
+        async authorize() {}
+      })
+      return response ?? failure(404, 'Not found')
+    } catch (error) {
+      if (error instanceof HttpError) return failure(error.code, error.message)
+      throw error
+    }
+  }
+
   /**
    * During development the dev server owns the database and answers the
    * dashboard. It forwards mutations here only to run this app's commit
@@ -96,16 +136,14 @@ export function createHandlerWithDatabase(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
+    if (isFormRequest(request))
+      return handleFormsInDevelopment(request, context)
     const action = new URL(request.url).searchParams.get('action')
-    const handled =
-      action === HandleAction.Mutate || action === HandleAction.FormEvent
-    if (!handled || request.method !== 'POST')
+    if (action !== HandleAction.Mutate || request.method !== 'POST')
       return failure(404, 'Answered by the Alinea dev server')
     const developmentKey = request.headers.get(developmentKeyHeader)
     if (!context.apiKey || developmentKey !== context.apiKey)
       return failure(401, 'Invalid development credentials')
-    if (action === HandleAction.FormEvent)
-      return handleFormEvent((await request.json()) as FormEvent)
     let mutations: Array<Mutation>
     try {
       mutations = await request.json()
@@ -156,23 +194,6 @@ export function createHandlerWithDatabase(
     }
     return Response.json({sha})
   }
-  /**
-   * The dev server stores the answers to forms and hands their mails and
-   * submissions here, so the mailer and onSubmit of this app run as they do
-   * once it is deployed
-   */
-  async function handleFormEvent(event: FormEvent): Promise<Response> {
-    const forms = options.forms ?? {}
-    if ('mail' in event) {
-      if (!forms.mailer) return failure(404, 'No mailer')
-      await forms.mailer(event.mail)
-    } else {
-      if (!forms.onSubmit) return failure(404, 'No onSubmit')
-      await forms.onSubmit(event.submitted)
-    }
-    return new Response(null, {status: 204})
-  }
-
   const handle: Handler = async request => {
     const url = new URL(request.url)
     const context = await requestContext(config, request)

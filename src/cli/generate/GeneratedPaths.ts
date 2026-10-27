@@ -11,12 +11,7 @@ export interface GeneratedPaths {
   /** This project's compiled config and database, inside the package. */
   outDir: string
   databasePath: string
-  /** Where the dev server keeps the submissions of forms */
-  submissionsPath: string
 }
-
-/** The file of submissions, kept when the project is generated again */
-export const submissionsFile = 'submissions.sqlite'
 
 export interface GeneratedPathsOptions {
   /** Directory of the alinea package that serves the project. */
@@ -44,8 +39,7 @@ export function generatedPaths({
   return {
     packageDir,
     outDir,
-    databasePath: path.join(outDir, generatedDatabaseFile),
-    submissionsPath: path.join(outDir, submissionsFile)
+    databasePath: path.join(outDir, generatedDatabaseFile)
   }
 }
 

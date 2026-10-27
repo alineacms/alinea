@@ -3,7 +3,6 @@ import {generatedDatabaseFile} from '#/database/Version.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
-import {submissionsFile} from './GeneratedPaths.js'
 import type {GenerateContext} from './GenerateContext.js'
 
 const packageJson = {
@@ -33,10 +32,7 @@ export async function copyStaticFiles({
   const keep = new Set([
     generatedDatabaseFile,
     `${generatedDatabaseFile}-shm`,
-    `${generatedDatabaseFile}-wal`,
-    submissionsFile,
-    `${submissionsFile}-shm`,
-    `${submissionsFile}-wal`
+    `${generatedDatabaseFile}-wal`
   ])
   const files = await fs.readdir(outDir).catch(() => [])
   await Promise.all(

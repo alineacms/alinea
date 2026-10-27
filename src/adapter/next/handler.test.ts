@@ -197,48 +197,33 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
   }
 })
 
-test('runs the mailer and onSubmit of the app for forms the dev server stored', async () => {
-  const heard: Array<unknown> = []
-  const devHandle = createHandlerWithDatabase(
-    {
-      cms,
-      forms: {
-        mailer(mail) {
-          heard.push(['mail', mail.subject])
-        },
-        onSubmit({title}) {
-          heard.push(['submitted', title])
-        }
-      }
-    },
-    async () => {
-      throw new Error('The dev server owns the database')
-    }
-  )
-  const withoutHooks = createHandlerWithDatabase(cms, async () => {
+test('the app answers forms during development, with its own storage', async () => {
+  const devHandle = createHandlerWithDatabase(cms, async () => {
     throw new Error('The dev server owns the database')
   })
-  const event = (body: unknown, key: string | null = apiKey) =>
-    new Request('https://example.com/api/cms?action=formEvent', {
-      method: 'POST',
-      headers: key ? {[developmentKeyHeader]: key} : {},
-      body: JSON.stringify(body)
-    })
-  const mail = {to: ['desk@example.com'], subject: 'New request', text: ''}
+  const request = (action: string, init: RequestInit = {}) =>
+    devHandle(
+      new Request(
+        `https://example.com/api/cms?action=${action}&entryId=form`,
+        init
+      )
+    )
   nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
   try {
-    expect((await devHandle(event({mail}))).status).toBe(204)
-    const submitted = {submission: {id: 's'}, title: 'Contact'}
-    expect((await devHandle(event({submitted}))).status).toBe(204)
-    expect(heard).toEqual([
-      ['mail', 'New request'],
-      ['submitted', 'Contact']
-    ])
-    // Without a mailer the dev server prints the mail itself
-    expect((await withoutHooks(event({mail}))).status).toBe(404)
-    // Only the dev server hands these over
-    expect((await devHandle(event({mail}, null))).status).toBe(401)
-    expect(heard).toHaveLength(2)
+    // The site and the dev server send the development key
+    const listed = await request('submissions', {
+      headers: {[developmentKeyHeader]: apiKey}
+    })
+    // Answered here: without a database of its own the app says so
+    expect(listed.status).toBe(501)
+    expect((await request('submissions')).status).toBe(401)
+    // Browsers of visitors upload with a ticket, it is checked here too
+    const upload = await request('formUpload&token=wrong', {
+      method: 'PUT',
+      body: 'file'
+    })
+    expect(upload.status).toBe(401)
+    expect(await upload.text()).toBe('Upload the file again')
   } finally {
     nextMocks.devHandlerUrl = undefined
   }

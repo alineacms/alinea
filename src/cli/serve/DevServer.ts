@@ -1,34 +1,22 @@
 import {composeBackend} from '#/backend/api/CreateBackend.js'
-import {SubmissionStore} from '#/backend/api/SubmissionStore.js'
-import {HandleAction} from '#/backend/HandleAction.js'
 import {createHandler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
-import type {FormEvent, FormMail} from '#/core/Forms.js'
 import {
   developmentKeyHeader,
   forwardedMutationHeader
 } from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
-import {fetch, Headers, Request, type Response} from '@alinea/iso'
+import {fetch, Headers, Request, Response} from '@alinea/iso'
 import type {BuildOptions} from 'esbuild'
-import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
-import fs from 'node:fs/promises'
 import path from 'node:path'
-import PLazy from 'p-lazy'
-import {generatedPaths} from '../generate/GeneratedPaths.js'
 import {generate} from '../Generate.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
-import {
-  reportError,
-  reportFatal,
-  reportInfo,
-  reportWarning
-} from '../util/Report.js'
+import {reportError, reportFatal, reportWarning} from '../util/Report.js'
 import {createLocalServer} from './CreateLocalServer.js'
 import {GitHistory} from './GitHistory.js'
 import {LiveReload} from './LiveReload.js'
@@ -103,15 +91,6 @@ export async function createDevServer(
   }
 
   const drafts = new MemoryDrafts()
-  // Kept in a file next to the generated database, outside the project
-  const submissions = new SubmissionStore({
-    db: PLazy.from(async () => {
-      const {submissionsPath} = generatedPaths({rootDir, configLocation})
-      await fs.mkdir(path.dirname(submissionsPath), {recursive: true})
-      const handle = await runtimeDatabase({path: submissionsPath})
-      return handle.database
-    })
-  })
   const user = gitUser(rootDir).then(user =>
     options.roles ? {...user, roles: options.roles} : user
   )
@@ -171,24 +150,19 @@ export async function createDevServer(
           cms,
           remote: backend,
           db,
-          // The mailer and onSubmit of the app run in its own handler, the
-          // site tells where it is when it sends a form
-          forms(request) {
-            const origin = forwardedRequestOrigin(request)
-            if (!origin) return {mailer: printMail}
-            const forward = (event: FormEvent) =>
-              forwardFormEvent(origin, cms, context.apiKey, event)
-            return {
-              async mailer(mail) {
-                if (!(await forward({mail}))) printMail(mail)
-              },
-              async onSubmit(submitted) {
-                await forward({submitted})
-              }
-            }
-          },
           forwardMutations(request) {
             return forwardMutation(request, cms, context.apiKey)
+          },
+          // The app answers forms with its own options and storage, so its
+          // whole flow runs during development
+          async forwardForms(request) {
+            return (
+              (await forwardToApp(request, cms, context.apiKey)) ??
+              new Response(
+                'Open the dashboard through your app to work with forms',
+                {status: 501}
+              )
+            )
           }
         })
         const nextServer = createLocalServer(
@@ -209,7 +183,7 @@ export async function createDevServer(
           if (process.env.ALINEA_CLOUD_URL)
             return new CloudRemote(context, cms.config)
           const auth = new LocalAuth(context, user)
-          return composeBackend(auth, db, drafts, history, submissions)
+          return composeBackend(auth, db, drafts, history)
         }
       }
 
@@ -247,6 +221,18 @@ export async function forwardMutation(
 ): Promise<Response | undefined> {
   // The app ran its hooks and sent the mutation back to commit here.
   if (request.headers.has(forwardedMutationHeader)) return
+  return forwardToApp(request, cms, apiKey)
+}
+
+/**
+ * Sends a request on to the handler of the app, which the dashboard reaches
+ * through the app. Undefined when the request did not come through it.
+ */
+async function forwardToApp(
+  request: Request,
+  cms: CMS,
+  apiKey: string
+): Promise<Response | undefined> {
   const origin = forwardedRequestOrigin(request)
   if (!origin) return
   const source = new URL(request.url)
@@ -266,34 +252,6 @@ export async function forwardMutation(
     duplex: 'half'
   }
   return fetch(new Request(target, init))
-}
-
-/**
- * Hands a mail or submission of a form to the handler of the app. False when
- * the app does not handle it, eg. when it has no mailer.
- */
-async function forwardFormEvent(
-  origin: string,
-  cms: CMS,
-  apiKey: string,
-  event: FormEvent
-): Promise<boolean> {
-  const target = forwardedHandlerUrl(
-    Config.handlerUrl(cms.config),
-    origin,
-    `?action=${HandleAction.FormEvent}`
-  )
-  const response = await fetch(target, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      [developmentKeyHeader]: apiKey
-    },
-    body: JSON.stringify(event)
-  })
-  if (response.status === 404) return false
-  if (!response.ok) throw new Error(await response.text())
-  return true
 }
 
 function forwardedHandlerUrl(
@@ -332,15 +290,4 @@ function forwardedRequestOrigin(request: Request): string | undefined {
     firstHeaderValue(request.headers.get('x-forwarded-proto')) ?? 'http'
   const normalizedProtocol = protocol.endsWith(':') ? protocol : `${protocol}:`
   return `${normalizedProtocol}//${host}`
-}
-
-/** Mails of forms are printed during development instead of sent */
-function printMail(mail: FormMail) {
-  reportInfo(
-    'mail',
-    mail.subject,
-    `To ${mail.to.join(', ')}`,
-    ...(mail.replyTo ? [`Reply to ${mail.replyTo}`] : []),
-    ...mail.text.split('\n')
-  )
 }

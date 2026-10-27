@@ -100,13 +100,18 @@ test('all submissions of a form are deleted with it', async () => {
   expect((await store.listSubmissions('other')).total).toBe(1)
 })
 
-test('what a visitor sent within a time is counted', async () => {
+test('what a form or one visitor sent within a time is counted', async () => {
   const store = createStore()
   await store.storeSubmission(submission('a', 100, {visitor: 'v'}))
   await store.storeSubmission(submission('b', 200, {visitor: 'v'}))
   await store.storeSubmission(submission('c', 200, {visitor: 'w'}))
-  expect(await store.visitorActivity('form', 'v', 150)).toEqual({
+  expect(await store.recentActivity('form', 150, 'v')).toEqual({
     submissions: 1,
+    files: 0
+  })
+  // Without a visitor, all the form took
+  expect(await store.recentActivity('form', 150)).toEqual({
+    submissions: 2,
     files: 0
   })
 })

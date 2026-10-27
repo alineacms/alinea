@@ -220,19 +220,25 @@ test('mails go out through the mailer and are noted on the submission', async ()
   expect(stored.notified).toEqual(['Helpdesk'])
 })
 
-test('a visitor who sends a form often is asked to wait', async () => {
-  const {submit} = await setup({forms: {limits: {submissions: 2}}})
+test('a visitor the site names is limited, and so is the form', async () => {
+  const {submit} = await setup({
+    forms: {limits: {submissions: 4, perVisitor: {submissions: 2}}}
+  })
   const answers = {name: 'Ann', email: 'ann@example.com'}
-  expect((await submit(answers, 'test', '1.2.3.4')).body).toEqual({ok: true})
-  expect((await submit(answers, 'test', '1.2.3.4')).body).toEqual({ok: true})
-  expect((await submit(answers, 'test', '1.2.3.4')).body).toEqual({
+  expect((await submit(answers, 'test', 'session-a')).body).toEqual({ok: true})
+  expect((await submit(answers, 'test', 'session-a')).body).toEqual({ok: true})
+  expect((await submit(answers, 'test', 'session-a')).body).toEqual({
     ok: false,
     message: 'You sent this form often, try again later'
   })
-  // Another visitor may still send it
-  expect((await submit(answers, 'test', '5.6.7.8')).body).toEqual({ok: true})
+  // Another visitor may still send it, until the form took its share
+  expect((await submit(answers, 'test', 'session-b')).body).toEqual({ok: true})
+  expect((await submit(answers)).body).toEqual({ok: true})
+  expect((await submit(answers)).body).toEqual({
+    ok: false,
+    message: 'This form takes no more answers right now, try again later'
+  })
 })
-
 test('the page is kept without its query, onSubmit hears of it', async () => {
   const heard = Array<string>()
   const {entryId, store, submit} = await setup({

@@ -36,18 +36,17 @@ export interface FormFileStorage {
   remove(keys: Array<string>): Promise<void>
 }
 
-/**
- * What the dev server hands to the handler of the app, so the mailer and
- * onSubmit it defines run during development too
- */
-export type FormEvent = {mail: FormMail} | {submitted: FormSubmitEvent}
-
 /** How often a visitor may send to one form, per hour */
 export interface FormLimits {
-  /** 20 by default */
+  /** Submissions one form takes per hour, 500 by default */
   submissions?: number
-  /** 50 by default */
+  /** Files one form takes per hour, 1000 by default */
   uploads?: number
+  /**
+   * What one visitor may send to a form per hour, when the site passes a
+   * `visitor` to `cms.forms.submit`: 20 submissions and 50 files by default
+   */
+  perVisitor?: {submissions?: number; uploads?: number}
 }
 
 export interface FormsOptions {
@@ -86,9 +85,9 @@ export interface FormSubmitOptions {
    */
   verify?(): boolean | Promise<boolean>
   /**
-   * Who sends it, eg. their IP address, to limit how often they send. The
-   * handler keeps a hash of it. The Next.js adapter passes the IP address
-   * of the request.
+   * Who sends it, to limit how often one visitor sends, see
+   * `forms.limits.perVisitor`: anything that identifies them on your site,
+   * eg. the id of their session. The handler only keeps a hash of it.
    */
   visitor?: string
 }
@@ -129,17 +128,7 @@ export interface FormsClient {
   prepareFormUpload(request: PrepareUploadRequest): Promise<PrepareUploadResult>
 }
 
-/**
- * The forms of a client. The visitor is asked for when a submission does not
- * pass one, eg. the IP address of the request.
- */
-export function formsOf(
-  client: () => Promise<FormsClient>,
-  visitor?: () => Promise<string | undefined>
-): Forms {
-  async function visitorOf(options: {visitor?: string}) {
-    return options.visitor ?? (await visitor?.())
-  }
+export function formsOf(client: () => Promise<FormsClient>): Forms {
   async function prepareUpload(
     entryId: string,
     file: FormUploadFile,
@@ -149,14 +138,13 @@ export function formsOf(
       entryId,
       locale: options.locale,
       field: options.field,
-      visitor: await visitorOf(options),
+      visitor: options.visitor,
       ...file
     })
   }
   return {
     prepareUpload,
     async submit(entryId, data, options = {}) {
-      options = {...options, visitor: await visitorOf(options)}
       if (options.verify && !(await options.verify()))
         return {ok: false, message: 'Your answers could not be verified'}
       const entries = Array<[string, string]>()

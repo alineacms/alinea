@@ -1,12 +1,17 @@
 import {cms} from '@/cms'
 import {createHandler} from 'alinea/next'
+import {DatabaseSync} from 'node:sqlite'
 
 const handler = createHandler({
   cms,
   beforeCommit: hook('beforeCommit'),
   afterCommit: hook('afterCommit'),
-  // During alinea dev the dev server hands these over after storing answers
   forms: {
+    // Submissions of forms are kept in a SQLite file next to this app
+    database: {
+      driver: 'node:sqlite',
+      client: new DatabaseSync('.forms.sqlite')
+    },
     mailer: hook('forms.mailer'),
     onSubmit: hook('forms.onSubmit')
   }

@@ -2,6 +2,7 @@ import {SubmissionStore} from './SubmissionStore.js'
 import type {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {assert} from '#/core/util/Assert.js'
+import type {DatabaseSync} from 'node:sqlite'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
 import {isBlobStore, storedBlobs, storedWrites} from './BlobStore.js'
@@ -30,6 +31,7 @@ export type AvailableDrivers =
   | '@electric-sql/pglite'
   | 'sql.js'
   | '@libsql/client'
+  | 'node:sqlite'
 
 type DatabaseClient<Driver extends AvailableDrivers> = Parameters<
   (typeof driver)[Driver]
@@ -48,6 +50,8 @@ export type DatabaseDeclaration =
   | DatabaseOption<'@electric-sql/pglite'>
   | DatabaseOption<'sql.js'>
   | DatabaseOption<'@libsql/client'>
+  // The client type rado declares lags behind the one of Node
+  | {driver: 'node:sqlite'; client: DatabaseSync}
 
 export interface BackendOptions {
   auth?(username: string, password: string): boolean | Promise<boolean>
@@ -142,7 +146,7 @@ export function composeBackend(
     notifiedSubmission: call('notifiedSubmission'),
     retainSubmissions: call('retainSubmissions'),
     purgeSubmissions: call('purgeSubmissions'),
-    visitorActivity: call('visitorActivity'),
+    recentActivity: call('recentActivity'),
     storeFormFile: call('storeFormFile'),
     formFiles: call('formFiles'),
     attachFormFiles: call('attachFormFiles'),
