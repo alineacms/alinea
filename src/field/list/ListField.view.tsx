@@ -1009,7 +1009,7 @@ function ListFieldRowSheet({
         </SheetBody>
       ) : (
         <>
-          <SheetBody>
+          <SheetBody className={styles.ListFieldRowSheet.body()}>
             {labels && (
               <SheetSection>
                 <TextField
@@ -1044,67 +1044,70 @@ function ListFieldRowSheet({
               </SheetSection>
             )}
             {tabs}
+            {/* The actions follow the settings, at the end of what scrolls */}
+            <div className={styles.ListFieldRowSheet.actions()}>
+              <SheetFooter>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={IcRoundFirstPage}
+                  disabled={readOnly || !canInsert}
+                  onClick={() => startInsert('before')}
+                >
+                  Insert before
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={IcRoundLastPage}
+                  disabled={readOnly || !canInsert}
+                  onClick={() => startInsert('after')}
+                >
+                  Insert after
+                </Button>
+              </SheetFooter>
+              <SheetFooter>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={IcBaselineContentCopy}
+                  onClick={copy}
+                >
+                  Copy
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={IcRoundArrowUpward}
+                  disabled={readOnly || isFirstRow}
+                  onClick={onMoveUp}
+                >
+                  Move up
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={IcRoundArrowDownward}
+                  disabled={readOnly || isLastRow}
+                  onClick={onMoveDown}
+                >
+                  Move down
+                </Button>
+              </SheetFooter>
+              <SheetFooter>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  color="destructive"
+                  icon={IcRoundDelete}
+                  disabled={readOnly}
+                  onClick={onDelete}
+                >
+                  Delete
+                </Button>
+              </SheetFooter>
+            </div>
           </SheetBody>
-          <SheetFooter>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={IcRoundFirstPage}
-              disabled={readOnly || !canInsert}
-              onClick={() => startInsert('before')}
-            >
-              Insert before
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={IcRoundLastPage}
-              disabled={readOnly || !canInsert}
-              onClick={() => startInsert('after')}
-            >
-              Insert after
-            </Button>
-          </SheetFooter>
-          <SheetFooter>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={IcBaselineContentCopy}
-              onClick={copy}
-            >
-              Copy
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={IcRoundArrowUpward}
-              disabled={readOnly || isFirstRow}
-              onClick={onMoveUp}
-            >
-              Move up
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={IcRoundArrowDownward}
-              disabled={readOnly || isLastRow}
-              onClick={onMoveDown}
-            >
-              Move down
-            </Button>
-          </SheetFooter>
-          <SheetFooter>
-            <Button
-              variant="ghost"
-              size="sm"
-              color="destructive"
-              icon={IcRoundDelete}
-              disabled={readOnly}
-              onClick={onDelete}
-            >
-              Delete
-            </Button>
-          </SheetFooter>
         </>
       )}
     </SheetContent>

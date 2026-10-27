@@ -23,6 +23,16 @@
   padding: 0;
 }
 
+.ListFieldRowSheet-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Below the settings, at the bottom when they are short */
+.ListFieldRowSheet-actions {
+  margin-top: auto;
+}
+
 .ListFieldRowSheet-anchor {
   display: flex;
   align-items: flex-end;

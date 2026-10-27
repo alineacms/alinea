@@ -116,14 +116,10 @@ function createRowType(input: Input): Type {
             help: 'Used in exports and in the data sent to your site'
           }),
           help: text('Help text'),
-          required: check('Required', {
-            description: 'Must be filled in',
-            width: 0.5
-          }),
+          required: check('Required', {description: 'Must be filled in'}),
           width: select('Width', {
             options: {full: 'Full', half: 'Half'},
-            initialValue: 'full',
-            width: 0.5
+            initialValue: 'full'
           })
         }
       }),
