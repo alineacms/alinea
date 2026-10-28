@@ -119,8 +119,9 @@ export class DatabaseApi
     throw new Error('Not longer supported')
   }
 
-  // Not in a transaction, which D1 lacks: a heartbeat lost to a concurrent
-  // one is repeated by the next
+  // Not in a transaction, which D1 lacks: a concurrent heartbeat can undo
+  // another. Asks are sent with every heartbeat, a lost leave or answer waits
+  // for the lock to expire or the request to time out.
   async heartbeat(beat: Heartbeat, user: User): Promise<EditStatus> {
     const db = await this.#db
     const now = Date.now()
