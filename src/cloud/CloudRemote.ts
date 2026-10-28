@@ -289,7 +289,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     )
   }
 
-  // The cloud knows the user from the token and applies `nextLock` itself
+  // The cloud knows the user from the token
   heartbeat(beat: Heartbeat): Promise<EditStatus> {
     const ctx = this.#context
     return parseOutcome<EditStatus>(
