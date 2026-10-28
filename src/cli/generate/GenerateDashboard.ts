@@ -3,10 +3,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {writeFileIfContentsDiffer} from '#/cli/util/FS.js'
 import type {CMS} from '#/core/CMS.js'
+import {Config} from '#/core/Config.js'
 import {code} from '#/core/util/CodeGen.js'
 import esbuild from 'esbuild'
 import escapeHtml from 'escape-html'
 import {buildOptions} from '../build/BuildOptions.js'
+import {codeHash} from '../util/CodeHash.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
@@ -66,6 +68,12 @@ export async function generateDashboard(
     configDir,
     Object.keys(result.metafile.outputs)
   )
+  // Served as a static file so a deploy can tell if its code changed
+  const hash = await codeHash(rootDir, Config.contentDir(cms.config))
+  const hashFile = path.join(assetsFolder, 'build.txt')
+  // Without git, a file of an earlier build must not claim the code is equal
+  if (hash) await fs.promises.writeFile(hashFile, hash)
+  else await fs.promises.rm(hashFile, {force: true})
   const baseUrl = `./${escapeHtml(basename)}`
   await writeFileIfContentsDiffer(
     path.join(rootDir, staticFile),

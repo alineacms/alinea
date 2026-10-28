@@ -151,6 +151,10 @@
   rich text nodes.
 - Fix `alinea build` keeping a config watcher alive while the forwarded command
   runs, and a live preview refreshing twice in React strict mode.
+- `alinea build` writes a hash of the code outside the content directory to
+  `/admin/build.txt`. The instant publishing guide compares it with the next
+  commit to skip content-only builds on Vercel, also when a push ends with a
+  content-only commit.
 
 ## [1.7.0]
 - Add user roles and permission policies. Permissions can now be scoped by
