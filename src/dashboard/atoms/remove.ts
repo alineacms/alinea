@@ -5,7 +5,7 @@ import {Entry} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {Filter} from '#/core/Filter.js'
 import {getWorkspace} from '#/core/Internal.js'
-import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, isMediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Policy} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
 import type {Type} from '#/core/Type.js'
@@ -203,7 +203,7 @@ function redirectLocale(
 
 /** Pages have a public URL and keep the URLs that redirect to them */
 function hasUrl(type: Type | undefined): boolean {
-  if (!type || isFileType(type) || type === MediaLibrary) return false
+  if (!type || isFileType(type) || isMediaLibrary(type)) return false
   return hasUrlAliases(type)
 }
 

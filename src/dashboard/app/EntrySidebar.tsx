@@ -23,7 +23,7 @@ import {
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
-import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, isMediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -114,7 +114,7 @@ function entrySidebarTabs(
   hasPreview: boolean
 ): Array<EntrySidebarTab> {
   if (isFileType(type)) return ['references']
-  if (type === MediaLibrary || !hasPreview) return ['history', 'references']
+  if (isMediaLibrary(type) || !hasPreview) return ['history', 'references']
   return ['preview', 'history', 'references']
 }
 

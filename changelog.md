@@ -52,6 +52,10 @@
 - Define `MediaFile` in the schema with `Config.mediaFile` to give media files
   tabs or fields of your own. Files uploaded before have them too, and queries
   naming `MediaFile` find it.
+- Define `MediaLibrary` in the schema with `Config.mediaLibrary` to change the
+  overview of media folders, or give them tabs or fields of your own.
+  `Config.mediaOverview()` returns the built-in overview to reuse and extend
+  its columns, sorts and filters.
 - Add the `overview` option to container types and roots to configure how the
   dashboard lists their children: columns (`Config.column`) with per-type
   selects, formatting and custom cells, built-in type, status, updated and

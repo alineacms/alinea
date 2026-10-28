@@ -17,7 +17,7 @@ import {
 } from '#/core/db/EntryUrlConflictError.js'
 import type {Entry} from '#/core/Entry.js'
 import {getType} from '#/core/Internal.js'
-import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, isMediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {activityAtom} from '../atoms/activity.js'
@@ -243,8 +243,8 @@ export function EntryHeader({
   const type = config.schema[typeName]
   assert(type, `Type "${typeName}" not found in config`)
   const isMediaFile = isFileType(type)
-  const isMediaLibrary = type === MediaLibrary
-  const isMedia = isMediaFile || isMediaLibrary
+  const isFolder = isMediaLibrary(type)
+  const isMedia = isMediaFile || isFolder
   const typeData = getType(type)
   const isRevision = selectedVersion?.type === 'history'
   const isUnpublished = activeStatus === 'draft' && activeVersion.main
@@ -459,7 +459,7 @@ export function EntryHeader({
     draftsEnabled: Boolean(config.enableDrafts),
     isDirty,
     isMediaFile,
-    isMediaLibrary,
+    isMediaLibrary: isFolder,
     isParentUnpublished,
     isRevision,
     isUnpublished,

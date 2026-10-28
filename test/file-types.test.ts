@@ -5,9 +5,11 @@ import {Config as CoreConfig} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import {getType} from '#/core/Internal.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Root} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
+import {Type} from '#/core/Type.js'
+import {keys} from '#/core/util/Objects.js'
 import {rootAcceptsType} from '#/dashboard/atoms/move.js'
 import {LocalDB} from '#/database/LocalDB.js'
 
@@ -59,14 +61,17 @@ class DB extends LocalDB {
   }
 }
 
-async function withUploads<T>(run: (db: DB) => Promise<T>): Promise<T> {
+async function withUploads<T>(
+  run: (db: DB) => Promise<T>,
+  config: CoreConfig = cms.config
+): Promise<T> {
   const fetch = globalThis.fetch
   globalThis.fetch = Object.assign(
     async () => new Response(null, {status: 204}),
     {preconnect: fetch.preconnect}
   )
   try {
-    const db = new DB(cms.config)
+    const db = new DB(config)
     await db.sync()
     return await run(db)
   } finally {
@@ -316,4 +321,98 @@ test('queries naming MediaFile find the MediaFile of the schema', async () => {
   } finally {
     globalThis.fetch = fetch
   }
+})
+
+const {dimensions, ...mediaColumns} = Config.mediaOverview().columns!
+const FolderOverview = {
+  ...Config.mediaOverview(),
+  columns: {
+    ...mediaColumns,
+    downloads: Config.column({header: 'Downloads', select: Entry.id})
+  }
+}
+const OwnedMediaLibrary = Config.mediaLibrary({
+  overview: FolderOverview,
+  fields: {owner: Field.text('Owner')}
+})
+
+const libraryCms = createCMS({
+  schema: {Photo, MediaLibrary: OwnedMediaLibrary},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {media: Config.media({contains: ['MediaLibrary', 'Photo']})}
+    })
+  }
+})
+
+test('the schema can define MediaLibrary with an overview of its own', () => {
+  const {schema} = libraryCms.config
+  test.is(schema.MediaLibrary, OwnedMediaLibrary)
+  test.is(Type.overview(schema.MediaLibrary), FolderOverview)
+  test.equal(Type.contains(schema.MediaLibrary), ['MediaLibrary', 'MediaFile'])
+  test.equal(keys(Type.overview(MediaLibrary)!.columns!), [
+    'preview',
+    'dimensions',
+    'size',
+    'fileType'
+  ])
+  test.is(Schema.typeNames(schema).get(MediaLibrary), 'MediaLibrary')
+  test.throws(
+    () =>
+      createCMS({
+        schema: {MediaLibrary: Config.type('Folder', {fields: {}})},
+        workspaces: {}
+      }),
+    '"MediaLibrary" is a reserved Type name, create it with Config.mediaLibrary'
+  )
+  test.throws(
+    () => createCMS({schema: {Folder: Config.mediaLibrary()}, workspaces: {}}),
+    'Type "Folder" is created with Config.mediaLibrary, name it "MediaLibrary"'
+  )
+  test.throws(
+    () => Config.mediaLibrary({fields: {path: Field.text('Path')}}),
+    'Field "path" is defined twice in Type "Media directory"'
+  )
+})
+
+test('files upload into folders of the MediaLibrary of the schema', async () => {
+  test.equal(
+    CoreConfig.uploadTypes(libraryCms.config, {
+      workspace: 'main',
+      root: 'media',
+      parentType: 'MediaLibrary'
+    }),
+    ['Photo', 'MediaFile']
+  )
+  await withUploads(async db => {
+    const folder = await db.create({
+      type: MediaLibrary,
+      root: 'media',
+      set: {title: 'Documents', path: 'documents'}
+    })
+    await db.update({
+      type: OwnedMediaLibrary,
+      id: folder._id,
+      set: {owner: 'Ann'}
+    })
+    const photo = await db.upload({
+      file: file('photo.jpg'),
+      root: 'media',
+      parentId: folder._id
+    })
+    test.is(photo._type, 'Photo')
+    test.is(photo._parentId, folder._id)
+    test.equal(
+      await db.first({
+        type: MediaLibrary,
+        select: {
+          type: Entry.type,
+          title: MediaLibrary.title,
+          owner: OwnedMediaLibrary.owner
+        }
+      }),
+      {type: 'MediaLibrary', title: 'Documents', owner: 'Ann'}
+    )
+  }, libraryCms.config)
 })

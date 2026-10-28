@@ -398,6 +398,22 @@
       "language": "tsx"
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Media folders are entries of the built-in `MediaLibrary` type. Define it in the schema with `Config.mediaLibrary` to change how folders list their contents, or to give them tabs and fields of your own. Its `overview` option replaces the built-in one, which `Config.mediaOverview()` returns so you can reuse and extend its columns, sorts and filters. Queries naming `MediaLibrary` find it."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LJhznyPduJ6whvxVNyP3Juc8X5",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\n// The built-in columns of media folders, without dimensions\nconst {dimensions, ...columns} = Config.mediaOverview().columns!\n\nexport const cms = createCMS({\n  schema: {\n    ...schema,\n    MediaLibrary: Config.mediaLibrary({\n      overview: {\n        ...Config.mediaOverview(),\n        columns: {\n          ...columns,\n          downloads: Config.column({\n            header: 'Downloads',\n            view: '@/views/DownloadsCell'\n          })\n        }\n      }\n    })\n  },\n  workspaces\n})",
+      "fileName": "cms.tsx",
+      "language": "tsx"
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
