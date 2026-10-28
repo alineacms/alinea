@@ -92,6 +92,22 @@ const copyAtom = atomWithStorage<ListValue | undefined>(
   '@alinea/copypaste',
   undefined
 )
+// The type of the block copied in this tab, which other lists may hold under
+// another key. A block copied in another tab replaces the row only.
+const copyTypeAtom = atom<{id: string; type: Type} | undefined>(undefined)
+
+/** The copied block as a row of a list, under its key for the same type */
+function pastedRow(
+  row: ListValue | undefined,
+  copied: {id: string; type: Type} | undefined,
+  schema: Schema
+): ListValue | undefined {
+  if (!row) return
+  const type = copied?.id === row._id ? copied.type : undefined
+  const key = Object.keys(schema).find(key => schema[key] === type)
+  if (key) return {...row, _type: key}
+  return schema[row._type] ? row : undefined
+}
 
 export interface ListFieldTypeItem {
   id: string
@@ -118,7 +134,12 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const nodes = useNodes(list) as Array<ReactiveNode<ListValue>>
   const pushRow = useSetAtom(list.push)
   const insertRow = useSetAtom(list.insert)
-  const pasted = useAtomValueRaw(copyAtom)
+  const copied = useAtomValueRaw(copyAtom)
+  const copiedType = useAtomValueRaw(copyTypeAtom)
+  const pasted = useMemo(
+    () => pastedRow(copied, copiedType, options.schema),
+    [copied, copiedType, options.schema]
+  )
   const schemaEntries = useMemo(
     () => Object.entries(options.schema),
     [options.schema]
@@ -175,9 +196,12 @@ export function ListFieldView({field}: ListFieldViewProps) {
       atom(null, (get, set, rowId: string) => {
         const nodes = get(list.nodes) as Array<ReactiveNode<ListValue>>
         const node = nodes.find(node => get(node.field('_id')) === rowId)
-        if (node) set(copyAtom, get(node.value))
+        if (!node) return
+        const row = get(node.value)
+        set(copyAtom, row)
+        set(copyTypeAtom, {id: row._id, type: options.schema[row._type]})
       }),
-    [list]
+    [list, options.schema]
   )
   const copyRow = useSetAtom(copyRowAtom)
   const allExpanded = nodes.length > 0 && rowIds.every(id => !foldedIds.has(id))

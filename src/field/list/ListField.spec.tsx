@@ -4,6 +4,7 @@ import {
   Example,
   Inline,
   MinMax,
+  SharedType,
   WithoutLabel
 } from './ListField.stories.js'
 
@@ -384,6 +385,22 @@ test('copies and pastes rows', async ({mount, page}) => {
   await sections.getByRole('button', {name: 'Paste Hero'}).last().click()
   expect(await rowNames(sections)).toHaveLength(count + 1)
   expect((await rowNames(sections)).at(-1)).toBe(`Hero item ${count + 1}`)
+})
+
+test('pastes a row into a list holding its type under another key', async ({
+  mount,
+  page
+}) => {
+  await mount(<SharedType />)
+  const quotes = page.getByRole('list', {name: 'Quotes'})
+  await quotes.getByRole('button', {name: 'Quote settings'}).click()
+  const sheet = page.getByRole('dialog', {name: 'Quote'})
+  await sheet.getByRole('button', {name: 'Copy'}).click()
+  await expect(sheet).toBeHidden()
+  const citations = page.getByRole('list', {name: 'Citations'})
+  await citations.getByRole('button', {name: 'Paste Quote'}).click()
+  await expect(citations.getByRole('listitem')).toHaveCount(1)
+  await expect(citations.getByRole('textbox').first()).toHaveValue('First')
 })
 
 test('adds blocks from the type picker', async ({mount, page}) => {

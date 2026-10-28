@@ -388,6 +388,33 @@ export function Inline() {
   )
 }
 
+const sharedType = type('Shared', {
+  fields: {
+    quotes: list('Quotes', {
+      schema: {quote: quoteBlock},
+      initialValue: [{_type: 'quote', quote: 'First', author: 'Alinea'}]
+    }),
+    citations: list('Citations', {schema: {citation: quoteBlock}})
+  }
+})
+
+/** Two lists hold the same block type under different keys */
+export function SharedType() {
+  const node = useMemo(
+    () => new ReactiveNode(Type.initialValue(sharedType) as object),
+    []
+  )
+  return (
+    <StoryProvider views={views}>
+      <BlockSheetStoryFrame>
+        <div style={storyStyle}>
+          <NodeEditor node={node} type={sharedType} />
+        </div>
+      </BlockSheetStoryFrame>
+    </StoryProvider>
+  )
+}
+
 export default {
   title: 'Fields / ListField'
 }
