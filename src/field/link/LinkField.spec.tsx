@@ -492,7 +492,7 @@ test('expands the compact entry picker into the explorer modal', async ({
   ).toHaveCount(0)
 })
 
-test('gives the search a row of its own in a narrow expanded picker', async ({
+test('puts the search and close button on the first row of a narrow expanded picker', async ({
   mount,
   page
 }) => {
@@ -507,7 +507,12 @@ test('gives the search a row of its own in a narrow expanded picker', async ({
   const search = await picker
     .getByRole('searchbox', {name: 'Search'})
     .boundingBox()
-  expect(search?.width).toBeGreaterThanOrEqual(250)
+  const scope = await picker
+    .getByRole('group', {name: 'Explorer scope'})
+    .boundingBox()
+  expect(search?.width).toBeGreaterThanOrEqual(200)
+  // The location dropdowns start the next row instead of squeezing the search
+  expect(scope!.y).toBeGreaterThanOrEqual(search!.y + search!.height)
 })
 
 test('searches all roots or workspaces from the location dropdowns', async ({

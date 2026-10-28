@@ -29,3 +29,19 @@
   flex: 0 0 auto;
   font-size: 12px;
 }
+
+/* On narrow screens the location shares a row with the tools: it shrinks,
+   truncating its labels */
+@media (max-width: 768px) {
+  .ExplorerScope {
+    order: 3;
+    flex: 1 1 0;
+    /* Starts the row after the search instead of squeezing in beside it */
+    min-width: 96px;
+  }
+
+  /* The workspace is truncated first, the root keeps its name */
+  .ExplorerScope-trigger:last-child {
+    flex-shrink: 0;
+  }
+}

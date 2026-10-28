@@ -65,6 +65,12 @@
   justify-content: end;
 }
 
+.Explorer-toolbar-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
 .Explorer-toolbar-mediaActions {
   display: flex;
   align-items: center;
@@ -165,19 +171,27 @@
     flex-wrap: wrap;
   }
 
-  /* The search gets a row of its own, the scope and tools share the next */
-  .ExplorerHeader.is-navigation .Explorer-searchSlot {
+  /* A picker gets the search and close button on the first row, the
+     location and tools on the second */
+  .ExplorerHeader.is-navigation .Explorer-searchSlot,
+  .ExplorerHeader.is-navigation .Explorer-toolbar {
     display: contents;
   }
 
   .ExplorerHeader.is-navigation .Explorer-search {
-    flex-basis: 100%;
+    order: 1;
+    /* Leaves room for the close button, so the rest starts a new row */
+    flex: 1 1 calc(100% - 64px);
+    min-width: 0;
   }
 
-  .ExplorerHeader.is-navigation .Explorer-toolbar {
+  .ExplorerHeader.is-navigation .Explorer-toolbar-controls {
+    order: 2;
+  }
+
+  .ExplorerHeader.is-navigation .Explorer-toolbar-tools {
+    order: 4;
     flex: 0 0 auto;
-    width: auto;
-    margin-left: auto;
   }
 }
 

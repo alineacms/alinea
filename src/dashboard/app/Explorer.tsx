@@ -622,7 +622,11 @@ export function ExplorerHeader({
           </div>
           <div className={styles.Explorer.toolbar()}>
             <ExplorerToolbar explorer={explorer} page={page} />
-            {controls}
+            {controls && (
+              <div className={styles.Explorer.toolbar.controls()}>
+                {controls}
+              </div>
+            )}
           </div>
         </div>
         {navigate && (
