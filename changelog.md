@@ -112,6 +112,9 @@
 - Publish instantly: deployed sites sync new content as soon as it is committed,
   driven by the repository sha. `syncInterval` is now a fallback, defaulting to
   60 seconds.
+- Commits from the dashboard end with an `Alinea-Content` trailer holding the
+  content sha they commit, so a deploy can skip building a publish that only
+  changed content, see the instant publishing guide.
 - Add an MCP server to `alinea dev` (`http://localhost:4500/mcp`) so coding
   agents can read the schema and create, edit, publish, move and delete entries
   and upload media through the dashboard's save path.
