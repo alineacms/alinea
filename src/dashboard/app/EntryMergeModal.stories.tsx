@@ -11,16 +11,17 @@ function simple(
   yours: unknown,
   theirs: unknown
 ): EntryMergeField {
-  return {key, label, simple: true, yours, theirs, paths: [[]]}
+  return {key, label, simple: true, base: undefined, yours, theirs, paths: [[]]}
 }
 
 function nested(
   key: string,
   label: string,
+  base: unknown,
   yours: unknown,
   theirs: unknown
 ): EntryMergeField {
-  return {key, label, simple: false, yours, theirs, paths: [['row']]}
+  return {key, label, simple: false, base, yours, theirs, paths: [['row']]}
 }
 
 function paragraphs(...lines: Array<string>) {
@@ -30,13 +31,30 @@ function paragraphs(...lines: Array<string>) {
   }))
 }
 
-function sections(count: number) {
-  return Array.from({length: count}, (_, index) => ({
-    _id: `section-${index}`,
-    _index: `a${index}`,
-    _type: 'Text',
-    title: `Section ${index + 1}`
-  }))
+function section(id: number, title = `Section ${id}`) {
+  return {_id: `section-${id}`, _index: `a${id}`, _type: 'Text', title}
+}
+
+const body = {
+  base: paragraphs(
+    'Our spring sale starts Monday.',
+    'Come early, the best ones go first.'
+  ),
+  yours: paragraphs(
+    'Our spring sale starts Monday with twenty percent off all plants.',
+    'Come early, the best ones go first.'
+  ),
+  theirs: paragraphs(
+    'Our spring sale starts Monday.',
+    'Come early, the best ones go first.',
+    'Delivery is free for orders over fifty euros.'
+  )
+}
+
+const sections = {
+  base: [section(1), section(2), section(3)],
+  yours: [section(1, 'Opening hours'), section(2), section(3)],
+  theirs: [section(1), section(3), section(4)]
 }
 
 const simpleFields: EntryMerge = {
@@ -61,16 +79,63 @@ const listsAndRichText: EntryMerge = {
   merged: ['Intro', 'Tags'],
   fields: [
     simple('title', 'Title', 'Spring sale starts Monday', 'Spring sale'),
+    nested('body', 'Body', body.base, body.yours, body.theirs),
+    nested(
+      'sections',
+      'Sections',
+      sections.base,
+      sections.yours,
+      sections.theirs
+    )
+  ]
+}
+
+const manyFields: EntryMerge = {
+  name: 'Sam',
+  date: minutesAgo(12),
+  merged: ['Intro'],
+  fields: [
+    ...Array.from({length: 10}, (_, index) =>
+      simple(
+        `field${index}`,
+        `Field ${index + 1}`,
+        `My value ${index + 1}`,
+        `Their value ${index + 1}`
+      )
+    ),
+    nested('body', 'Body', body.base, body.yours, body.theirs),
+    nested(
+      'sections',
+      'Sections',
+      sections.base,
+      sections.yours,
+      sections.theirs
+    )
+  ]
+}
+
+const longText =
+  'A very long description that goes on and on about the spring sale, the plants and pots on offer, the opening hours of the shop in town, the delivery options and the trees we plant for every order, so it never fits in a card.'
+
+const longValues: EntryMerge = {
+  name: 'Sam',
+  date: minutesAgo(1),
+  merged: [],
+  fields: [
+    simple('summary', 'Summary', longText, `${longText} ${longText}`),
+    simple(
+      'link',
+      'Link',
+      'https://example.com/shop/spring-sale/plants-and-pots/twenty-percent-off/this-weekend-only?utm_source=newsletter&utm_campaign=spring',
+      'Supercalifragilisticexpialidociousplantsandpotsforeverybodyinthewholetown'
+    ),
     nested(
       'body',
       'Body',
-      paragraphs(
-        'Our spring sale starts Monday with twenty percent off all plants.',
-        'Come early, the best ones go first.'
-      ),
-      paragraphs('The spring sale is on: twenty percent off everything green.')
-    ),
-    nested('sections', 'Sections', sections(3), sections(4))
+      paragraphs('First line'),
+      paragraphs(longText, 'Second paragraph', 'Third paragraph'),
+      paragraphs('First line', longText)
+    )
   ]
 }
 
@@ -104,8 +169,17 @@ export function SimpleFields() {
   return <MergeStory merge={simpleFields} />
 }
 
+/** Review changes on Body or Sections opens the detail of the field */
 export function ListsAndRichText() {
   return <MergeStory merge={listsAndRichText} />
+}
+
+export function ManyFields() {
+  return <MergeStory merge={manyFields} />
+}
+
+export function LongValues() {
+  return <MergeStory merge={longValues} />
 }
 
 export function Publish() {

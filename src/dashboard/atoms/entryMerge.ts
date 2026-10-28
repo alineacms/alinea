@@ -11,6 +11,8 @@ export interface EntryMergeField {
   label: string
   /** A single value: either yours or theirs, a nested one can also merge */
   simple: boolean
+  /** The value both editors started from */
+  base: unknown
   yours: unknown
   theirs: unknown
   /** Where in the field both changed it */
@@ -55,6 +57,7 @@ export function entryMerge({
     key,
     label: label(key),
     simple: !isNested(mine[key]) && !isNested(theirs[key]),
+    base: loaded[key],
     yours: mine[key],
     theirs: theirs[key],
     paths: conflicts.filter(path => path[0] === key).map(path => path.slice(1))
