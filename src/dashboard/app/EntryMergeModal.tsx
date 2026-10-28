@@ -170,7 +170,7 @@ function EntryMergeRow({
             className={option}
             description={
               <span className={styles.EntryMergeModal.value()}>
-                Both changes, yours where you changed the same part
+                Yours win on overlap
               </span>
             }
           >
