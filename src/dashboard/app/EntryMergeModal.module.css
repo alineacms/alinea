@@ -1,14 +1,67 @@
 .EntryMergeModal-fields {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .EntryMergeModal-field {
+  padding: 14px 0;
+
+  & + & {
+    border-top: 1px solid var(--alinea-border);
+  }
+}
+
+.EntryMergeModal-choices {
+  & [data-slot='radio-group-items'] {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 6px;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.EntryMergeModal-option {
   padding: 10px 12px;
-  border-radius: 6px;
-  background: var(--alinea-muted);
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+  transition: var(--alinea-transition);
+  transition-property: border-color, background-color;
+
+  &:hover {
+    border-color: var(--alinea-border-strong);
+  }
+
+  & [data-slot='radio-group-item-label'] {
+    font-weight: 500;
+  }
+
+  &:has(:checked) {
+    border-color: var(--alinea-primary);
+    background: color-mix(in oklab, var(--alinea-primary) 8%, transparent);
+  }
+}
+
+.EntryMergeModal-value {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--alinea-fg);
+  font-style: normal;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+
+  &.is-empty {
+    color: var(--alinea-fg-muted);
+    font-style: italic;
+  }
 }

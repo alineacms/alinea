@@ -14,8 +14,29 @@ function simple(
   return {key, label, simple: true, yours, theirs, paths: [[]]}
 }
 
-function nested(key: string, label: string): EntryMergeField {
-  return {key, label, simple: false, yours: [], theirs: [], paths: [['row']]}
+function nested(
+  key: string,
+  label: string,
+  yours: unknown,
+  theirs: unknown
+): EntryMergeField {
+  return {key, label, simple: false, yours, theirs, paths: [['row']]}
+}
+
+function paragraphs(...lines: Array<string>) {
+  return lines.map(text => ({
+    _type: 'paragraph',
+    content: [{_type: 'text', text}]
+  }))
+}
+
+function sections(count: number) {
+  return Array.from({length: count}, (_, index) => ({
+    _id: `section-${index}`,
+    _index: `a${index}`,
+    _type: 'Text',
+    title: `Section ${index + 1}`
+  }))
 }
 
 const simpleFields: EntryMerge = {
@@ -24,7 +45,12 @@ const simpleFields: EntryMerge = {
   merged: [],
   fields: [
     simple('title', 'Title', 'Spring sale starts Monday', 'Spring sale'),
-    simple('summary', 'Summary', '', 'Twenty percent off all plants'),
+    simple(
+      'summary',
+      'Summary',
+      '',
+      'Twenty percent off all plants and pots, this weekend only. Visit the shop in town or order online, delivery is free for orders over fifty euros and we plant trees for every order.'
+    ),
     simple('servings', 'Servings', 4, 6)
   ]
 }
@@ -35,8 +61,16 @@ const listsAndRichText: EntryMerge = {
   merged: ['Intro', 'Tags'],
   fields: [
     simple('title', 'Title', 'Spring sale starts Monday', 'Spring sale'),
-    nested('body', 'Body'),
-    nested('sections', 'Sections')
+    nested(
+      'body',
+      'Body',
+      paragraphs(
+        'Our spring sale starts Monday with twenty percent off all plants.',
+        'Come early, the best ones go first.'
+      ),
+      paragraphs('The spring sale is on: twenty percent off everything green.')
+    ),
+    nested('sections', 'Sections', sections(3), sections(4))
   ]
 }
 

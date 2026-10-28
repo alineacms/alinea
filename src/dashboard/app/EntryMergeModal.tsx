@@ -1,11 +1,11 @@
 import {
   Button,
-  Field,
+  RadioGroup,
+  RadioGroupItem,
   Text,
-  Timestamp,
-  ToggleGroup,
-  ToggleGroupItem
+  Timestamp
 } from '#/components.js'
+import {entries, isRecord} from '#/core/util/Objects.js'
 import styler from '@alinea/styler'
 import {useState} from 'react'
 import type {
@@ -84,13 +84,17 @@ function EntryMergeDialog({
       label={`${merge.name ?? 'Someone'} saved this page while you were editing`}
     >
       <DashboardModalContent>
-        {merge.date !== undefined && (
-          <Text as="p" color="muted">
-            Saved <Timestamp date={merge.date} format="relative" />
+        {(merge.date !== undefined || merge.merged.length > 0) && (
+          <Text as="p" size="sm" color="muted">
+            {merge.date !== undefined && (
+              <>
+                Saved <Timestamp date={merge.date} format="relative" />
+              </>
+            )}
+            {merge.date !== undefined && merge.merged.length > 0 && ' · '}
+            {merge.merged.length > 0 &&
+              `Merged automatically: ${merge.merged.join(', ')}`}
           </Text>
-        )}
-        {merge.merged.length > 0 && (
-          <Text as="p">Merged automatically: {merge.merged.join(', ')}</Text>
         )}
         <Text as="p">You both changed these fields, choose what to keep.</Text>
         <ul className={styles.EntryMergeModal.fields()}>
@@ -98,6 +102,7 @@ function EntryMergeDialog({
             <EntryMergeRow
               key={field.key}
               field={field}
+              theirLabel={merge.name ? `${merge.name}'s` : 'Theirs'}
               choice={choices[field.key]}
               onChoice={choice =>
                 setChoices(current => ({...current, [field.key]: choice}))
@@ -124,48 +129,92 @@ function EntryMergeDialog({
 
 interface EntryMergeRowProps {
   field: EntryMergeField
+  theirLabel: string
   choice: MergeChoice
   onChoice(choice: MergeChoice): void
 }
 
-// What a choice keeps of a nested field, a list or rich text
-const nestedChoice = {
-  merge: 'Both changes, yours where you changed the same part',
-  yours: 'Your version of the whole field',
-  theirs: 'Their version of the whole field'
-}
-
-function EntryMergeRow({field, choice, onChoice}: EntryMergeRowProps) {
-  const value = choice === 'theirs' ? field.theirs : field.yours
-  const description = !field.simple
-    ? nestedChoice[choice]
-    : isEmpty(value)
-      ? 'Empty'
-      : String(value)
+function EntryMergeRow({
+  field,
+  theirLabel,
+  choice,
+  onChoice
+}: EntryMergeRowProps) {
+  const option = styles.EntryMergeModal.option()
   return (
     <li className={styles.EntryMergeModal.field()}>
-      <Field label={field.label} description={description}>
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          aria-label={`Keep for ${field.label}`}
-          value={choice}
-          onValueChange={next => {
-            if (next) onChoice(next as MergeChoice)
-          }}
+      <RadioGroup
+        label={field.label}
+        orientation="horizontal"
+        value={choice}
+        onValueChange={value => onChoice(value as MergeChoice)}
+        className={styles.EntryMergeModal.choices()}
+      >
+        <RadioGroupItem
+          value="yours"
+          className={option}
+          description={<EntryMergeValue value={field.yours} />}
         >
-          {!field.simple && (
-            <ToggleGroupItem value="merge">Merge</ToggleGroupItem>
-          )}
-          <ToggleGroupItem value="yours">Yours</ToggleGroupItem>
-          <ToggleGroupItem value="theirs">Theirs</ToggleGroupItem>
-        </ToggleGroup>
-      </Field>
+          Yours
+        </RadioGroupItem>
+        <RadioGroupItem
+          value="theirs"
+          className={option}
+          description={<EntryMergeValue value={field.theirs} />}
+        >
+          {theirLabel}
+        </RadioGroupItem>
+        {!field.simple && (
+          <RadioGroupItem
+            value="merge"
+            className={option}
+            description={
+              <span className={styles.EntryMergeModal.value()}>
+                Both changes, yours where you changed the same part
+              </span>
+            }
+          >
+            Combine both
+          </RadioGroupItem>
+        )}
+      </RadioGroup>
     </li>
   )
 }
 
-function isEmpty(value: unknown) {
-  return value === undefined || value === null || value === ''
+interface EntryMergeValueProps {
+  value: unknown
+}
+
+function EntryMergeValue({value}: EntryMergeValueProps) {
+  const text = summary(value)
+  return (
+    <span className={styles.EntryMergeModal.value({empty: !text})}>
+      {text || 'Empty'}
+    </span>
+  )
+}
+
+/** A line of text for a value: rows are counted, rich text shows its text */
+function summary(value: unknown): string {
+  if (value === undefined || value === null) return ''
+  if (typeof value !== 'object') return String(value)
+  if (Array.isArray(value)) {
+    const rows = value.every(item => isRecord(item) && '_id' in item)
+    if (rows && value.length > 0)
+      return value.length === 1 ? '1 item' : `${value.length} items`
+    return plainText(value)
+  }
+  const text = entries(value).find(
+    ([key, field]) => !key.startsWith('_') && typeof field === 'string' && field
+  )
+  return plainText(value) || (text?.[1] as string | undefined) || ''
+}
+
+function plainText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.map(plainText).join(' ').trim()
+  if (!isRecord(value)) return ''
+  if (typeof value.text === 'string') return value.text
+  return Array.isArray(value.content) ? plainText(value.content) : ''
 }
