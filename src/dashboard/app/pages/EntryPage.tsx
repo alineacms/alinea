@@ -15,7 +15,7 @@ import {
   TooltipTrigger
 } from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
-import {isFileType, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isFileType, isMediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
@@ -334,8 +334,8 @@ function EntryEditorContent({
   )
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = isFileType(type.type)
-  const isMediaLibrary = type.type === MediaLibrary
-  const isMedia = isMediaFile || isMediaLibrary
+  const isFolder = isMediaLibrary(type.type)
+  const isMedia = isMediaFile || isFolder
   const activeVersion = Array.from(versions.values()).find(
     version => version.active
   )

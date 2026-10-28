@@ -7,7 +7,7 @@ import {viewKeys} from '#/dashboard/ViewKeys.js'
 import prettyBytes from 'pretty-bytes'
 import {Entry} from '../Entry.js'
 import {Expr} from '../Expr.js'
-import {internalReplaces} from '../Internal.js'
+import {getReplaced, internalReplaces} from '../Internal.js'
 import {keys} from '../util/Objects.js'
 import {
   column,
@@ -206,16 +206,71 @@ export function mediaFile<
 }
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
-export const MediaLibrary = type('Media directory', {
-  icon: IcRoundPermMedia,
-  contains: ['MediaLibrary', 'MediaFile'],
-  defaultView: 'overview',
-  overview: mediaOverview(),
-  fields: {
-    title: text('Title', {required: true}),
-    path: path('Path')
-  }
-})
+const mediaLibraryFields = {
+  title: text('Title', {required: true}),
+  path: path('Path')
+}
+
+function libraryType<
+  Fields extends FieldsDefinition,
+  Tabs extends Record<string, Type>
+>(
+  fields: Fields,
+  {overview = mediaOverview(), tabs}: {overview?: OverviewOptions; tabs?: Tabs}
+): Type<Fields & TabFields<Tabs>> {
+  return type('Media directory', {
+    icon: IcRoundPermMedia,
+    contains: ['MediaLibrary', 'MediaFile'],
+    defaultView: 'overview',
+    overview,
+    fields,
+    tabs
+  })
+}
+
+export const MediaLibrary = libraryType(mediaLibraryFields, {})
+
+export interface MediaLibraryConfig<Fields, Tabs> {
+  /** Fields next to the title and path of the folder */
+  fields?: Fields
+  tabs?: Tabs
+  /**
+   * How folders list their contents, in place of the built-in
+   * `Config.mediaOverview()`
+   */
+  overview?: OverviewOptions
+}
+
+/**
+ * Media folders with an overview, tabs or fields of your own, as the
+ * `MediaLibrary` of the schema:
+ * `schema: {MediaLibrary: Config.mediaLibrary({overview: {...}})}`. Queries
+ * naming `MediaLibrary` find it.
+ */
+export function mediaLibrary<
+  Fields extends FieldsDefinition = {},
+  Tabs extends Record<string, Type> = {}
+>({
+  fields = {} as Fields,
+  ...config
+}: MediaLibraryConfig<Fields, Tabs> = {}): Type<
+  typeof mediaLibraryFields & Fields & TabFields<Tabs>
+> {
+  for (const name of keys(fields))
+    if (name in mediaLibraryFields)
+      throw new Error(
+        `Field "${name}" is defined twice in Type "Media directory"`
+      )
+  const result = libraryType({...mediaLibraryFields, ...fields}, config)
+  return Object.assign(result, {[internalReplaces]: MediaLibrary})
+}
+
+/** Whether `type` is `MediaLibrary`, or the type standing in for it */
+export function isMediaLibrary(type: Type | undefined): boolean {
+  return Boolean(
+    type && (type === MediaLibrary || getReplaced(type) === MediaLibrary)
+  )
+}
 
 /**
  * Picks media files of a kind. Folders always match, so editors can still

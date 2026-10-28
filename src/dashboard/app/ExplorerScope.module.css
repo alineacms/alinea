@@ -1,0 +1,47 @@
+.ExplorerScope {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ExplorerScope-trigger {
+  gap: 4px;
+  min-width: 0;
+  max-width: 180px;
+  padding: 0 6px;
+  font-weight: 600;
+
+  &[aria-expanded='true'] {
+    background: color-mix(in oklab, currentColor 8%, transparent);
+  }
+}
+
+.ExplorerScope-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ExplorerScope-trigger-icon {
+  flex: 0 0 auto;
+  font-size: 12px;
+}
+
+/* On narrow screens the location shares a row with the tools: it shrinks,
+   truncating its labels */
+@media (max-width: 768px) {
+  .ExplorerScope {
+    order: 3;
+    flex: 1 1 0;
+    /* Starts the row after the search instead of squeezing in beside it */
+    min-width: 96px;
+  }
+
+  /* The workspace is truncated first, the root keeps its name */
+  .ExplorerScope-trigger:last-child {
+    flex-shrink: 0;
+  }
+}

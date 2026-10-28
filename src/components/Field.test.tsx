@@ -21,3 +21,10 @@ test('Field renders required marker and error', () => {
   expect(screen.getByText('*', {exact: false})).toBeTruthy()
   expect(screen.getByRole('alert').textContent).toBe('Title is required')
 })
+
+test('Field fades the header of a read-only field', () => {
+  const {container} = render(<Field label="Title" readOnly />)
+  const header = container.querySelector('[data-slot="field-header"]')
+
+  expect(header?.className).toContain('is-disabled')
+})

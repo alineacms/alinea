@@ -11,9 +11,9 @@ export interface ObjectOptions<Definition> extends FieldOptions<
   width?: number
   /** Add instructional text to a field */
   help?: ReactNode
-  /** Display a minimal version */
+  /** Display a minimal version, without label and fold */
   inline?: boolean
-  /** Show the fields folded when the entry opens */
+  /** Show the fields folded when the entry opens, ignored for inline objects */
   collapsed?: boolean
 }
 

@@ -421,6 +421,62 @@ test('previews of a database that cannot fork roll back', async () => {
   }
 })
 
+test('previews leave out archived entries unless viewing one', async () => {
+  const {store} = await createForkableStore()
+  try {
+    await createPages(store, () => 'Published')
+    await store.mutate([
+      {
+        op: 'create',
+        id: 'page',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Draft'},
+        status: 'draft'
+      },
+      {
+        op: 'update',
+        id: 'other',
+        locale: null,
+        status: 'published',
+        set: {title: 'Archived'}
+      },
+      {op: 'archive', id: 'other', locale: null},
+      {
+        op: 'create',
+        id: 'unpublished',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Unpublished'},
+        status: 'draft'
+      }
+    ])
+    const titles = async (previewed?: Entry) =>
+      (
+        await store.find({
+          status: 'preview',
+          select: Entry.title,
+          preview: previewed && {entry: previewed}
+        })
+      ).sort()
+    expect(await titles()).toEqual(['Draft', 'Published', 'Unpublished'])
+    // Viewing an archived entry previews it as published
+    const archived = await store.get({
+      id: 'other',
+      select: Entry,
+      status: 'archived'
+    })
+    expect(await titles(archived)).toEqual([
+      'Archived',
+      'Draft',
+      'Published',
+      'Unpublished'
+    ])
+  } finally {
+    await store.close()
+  }
+})
+
 /** Rows of a preview through an overlay created for it alone. */
 async function referenceRows<Row>(
   store: EntryStore,

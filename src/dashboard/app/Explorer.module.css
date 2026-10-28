@@ -7,8 +7,8 @@
 }
 
 .ExplorerHeader.is-navigation {
-  height: 88px;
-  padding-block: 6px;
+  height: auto;
+  padding-block: 8px;
 }
 
 .ExplorerHeader-content {
@@ -65,6 +65,12 @@
   justify-content: end;
 }
 
+.Explorer-toolbar-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
 .Explorer-toolbar-mediaActions {
   display: flex;
   align-items: center;
@@ -84,14 +90,14 @@
   flex-grow: 1 !important;
 }
 
+.Explorer-resultMode {
+  flex: 0 0 auto;
+}
+
 .Explorer-searchScope {
   flex: 0 0 auto;
   font-size: 12px;
   white-space: nowrap;
-}
-
-.Explorer-resultMode {
-  flex: 0 0 auto;
 }
 
 /* Positions what floats over the list, such as the selection actions */
@@ -109,91 +115,17 @@
   gap: 8px;
 }
 
-.Explorer-locationBreadcrumbs {
+.Explorer-locale {
   display: flex;
-  flex: 0 1 auto;
-  min-width: 0;
-  align-items: center;
-  overflow: hidden;
-}
-
-.Explorer-locationBreadcrumbs-item {
-  min-width: 0;
-}
-
-.Explorer-locationBreadcrumbs-value {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  min-height: 30px;
-  padding: 3px 8px;
-  border: 1px solid transparent;
-  font-size: var(--alinea-font-size-base);
-  font-weight: 600;
-  line-height: 24px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.Explorer-locationBreadcrumbs-separator {
   flex: 0 0 auto;
-  padding: 0 8px;
-  color: var(--alinea-fg-muted);
+  align-items: center;
+  padding-right: 8px;
+  border-right: 1px solid var(--alinea-border);
 }
 
-.Explorer-locationBreadcrumbs-root {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.Explorer-locationBreadcrumbs-root-locale {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 0;
-  margin-left: 2px;
-}
-
-.Explorer-locationBreadcrumbs-localeValue {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
+.Explorer-locale-value {
   padding: 0 4px;
-  font-size: var(--alinea-font-size-base);
   font-weight: 600;
-  line-height: 24px;
-}
-
-.Explorer-locationBreadcrumbs-current {
-  min-width: 0;
-  max-width: 160px;
-  overflow: hidden;
-  color: var(--alinea-fg);
-  font-size: 13px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.Explorer-locationBreadcrumbs-parentAction {
-  min-width: 0;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.Explorer-locationBreadcrumbs-parentValue {
-  min-width: 0;
-  max-width: 140px;
-  overflow: hidden;
-  color: var(--alinea-fg-muted);
-  font-size: 13px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -237,6 +169,29 @@
   .Explorer-toolbar {
     width: 100%;
     flex-wrap: wrap;
+  }
+
+  /* A picker gets the search and close button on the first row, the
+     location and tools on the second */
+  .ExplorerHeader.is-navigation .Explorer-searchSlot,
+  .ExplorerHeader.is-navigation .Explorer-toolbar {
+    display: contents;
+  }
+
+  .ExplorerHeader.is-navigation .Explorer-search {
+    order: 1;
+    /* Leaves room for the close button, so the rest starts a new row */
+    flex: 1 1 calc(100% - 64px);
+    min-width: 0;
+  }
+
+  .ExplorerHeader.is-navigation .Explorer-toolbar-controls {
+    order: 2;
+  }
+
+  .ExplorerHeader.is-navigation .Explorer-toolbar-tools {
+    order: 4;
+    flex: 0 0 auto;
   }
 }
 

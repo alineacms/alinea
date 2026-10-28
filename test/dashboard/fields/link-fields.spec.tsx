@@ -159,13 +159,8 @@ test('hides card navigation when picker locations are limited', async ({
     picker.getByRole('treegrid', {name: 'Link folders'})
   ).toHaveCount(0)
   await expect(
-    picker
-      .getByRole('radiogroup', {name: 'Explorer results'})
-      .getByRole('radio', {name: 'Browse'})
-  ).toBeChecked()
-  await expect(picker.getByRole('switch', {name: 'All locations'})).toHaveCount(
-    0
-  )
+    picker.getByRole('group', {name: 'Explorer scope'}).getByRole('button')
+  ).toHaveCount(0)
   await expect(
     picker.getByRole('checkbox', {name: 'Select Alpha'})
   ).toBeVisible()
@@ -187,13 +182,9 @@ test('filters entries with a functional condition', async ({
 
   const picker = await expandLinkPicker(app.page)
   const location = picker.getByRole('group', {name: 'Explorer location'})
-  const resultModes = location.getByRole('radiogroup', {
-    name: 'Explorer results'
-  })
-  const allLocations = picker.getByRole('switch', {name: 'All locations'})
-  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
-  await expect(allLocations).not.toBeChecked()
-  await expect(location).toContainText(/References.*Reference library/)
+  const scope = picker.getByRole('group', {name: 'Explorer scope'})
+  await expect(scope.getByRole('button', {name: 'References'})).toBeVisible()
+  await expect(location).toContainText('Reference library')
   await expect(
     picker.getByRole('row', {name: /Reference target/})
   ).toBeVisible()
@@ -201,12 +192,17 @@ test('filters entries with a functional condition', async ({
     0
   )
 
-  await allLocations.press('Space')
-  await expect(allLocations).toBeChecked()
+  await scope.getByRole('button', {name: 'References'}).click()
+  await app.page.getByRole('menuitemradio', {name: 'All workspaces'}).click()
+  await expect(
+    scope.getByRole('button', {name: 'All workspaces'})
+  ).toBeVisible()
   await expect(
     picker.getByRole('row', {name: /Reference target/})
   ).toBeVisible()
-  await expect(location.getByText('References', {exact: true})).toHaveCount(0)
+  await expect(
+    location.getByText('Reference library', {exact: true})
+  ).toHaveCount(0)
   await expect(picker.getByRole('row', {name: /Other reference/})).toHaveCount(
     0
   )
@@ -236,40 +232,44 @@ test('defaults a condition without a location to all locations', async ({
 
   const picker = await expandLinkPicker(app.page)
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
-  const resultModes = picker.getByRole('radiogroup', {
+  const scope = picker.getByRole('group', {name: 'Explorer scope'})
+  const location = picker.getByRole('group', {name: 'Explorer location'})
+  const resultModes = location.getByRole('radiogroup', {
     name: 'Explorer results'
   })
   const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
   const filteredMode = resultModes.getByRole('radio', {name: 'Filtered'})
-  const allLocations = picker.getByRole('switch', {name: 'All locations'})
   await expect(filteredMode).toBeChecked()
-  await expect(allLocations).toBeChecked()
+  await expect(
+    scope.getByRole('button', {name: 'All workspaces'})
+  ).toBeVisible()
+  await expect(location.getByText('Pages', {exact: true})).toHaveCount(0)
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Folder/})).toHaveCount(0)
 
+  // Searches list matches, there is nothing to switch to
   const search = picker.getByRole('searchbox', {name: 'Search'})
   await search.fill('Child')
-  await expect(browseMode).toBeDisabled()
+  await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
+  await expect(resultModes).toHaveCount(0)
   await search.fill('')
   await expect(filteredMode).toBeChecked()
+  await expect(
+    scope.getByRole('button', {name: 'All workspaces'})
+  ).toBeVisible()
+  await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
 
+  // Browsing lists the folders of the root
   await browseMode.click()
   await expect(browseMode).toBeChecked()
-  await search.fill('Child')
-  await expect(filteredMode).toBeChecked()
-  await expect(browseMode).toBeDisabled()
-  await search.fill('')
-  await expect(browseMode).toBeChecked()
-  await expect(allLocations).toBeChecked()
-  await expect(allLocations).toBeDisabled()
-  await expect(allLocations).toHaveCSS('cursor', 'default')
+  await expect(scope.getByRole('button', {name: 'Main'})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Folder/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
-
   await filteredMode.click()
   await expect(filteredMode).toBeChecked()
-  await expect(allLocations).toBeChecked()
-  await expect(allLocations).toBeEnabled()
+  await expect(
+    scope.getByRole('button', {name: 'All workspaces'})
+  ).toBeVisible()
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
 
   const view = picker.getByRole('radiogroup', {name: 'Explorer view'})
@@ -281,16 +281,13 @@ test('defaults a condition without a location to all locations', async ({
   await expectVerticallyUnclipped(cards.getByText('Child', {exact: true}))
   await view.getByRole('radio', {name: 'Row view'}).click()
 
-  await allLocations.press('Space')
-  await expect(allLocations).not.toBeChecked()
+  // The matches of the picked location are listed
+  await scope.getByRole('button', {name: 'All workspaces'}).click()
+  await app.page.getByRole('menuitemradio', {name: 'Main'}).click()
+  await expect(scope.getByRole('button', {name: 'Main'})).toBeVisible()
+  await expect(location.getByText('Pages', {exact: true})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Folder/})).toHaveCount(0)
-
-  await browseMode.click()
-  await expect(browseMode).toBeChecked()
-  await expect(allLocations).toBeDisabled()
-  await expect(entries.getByRole('row', {name: /Folder/})).toBeVisible()
-  await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
 })
 
 test('toggles multiple links by clicking cards before using a checkbox', async ({
@@ -340,17 +337,18 @@ test('opens pickChildren at the children of the edited entry', async ({
     .click()
 
   const picker = await expandLinkPicker(app.page)
-  const resultModes = picker.getByRole('radiogroup', {
-    name: 'Explorer results'
-  })
-  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
-  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
-  await expect(browseMode).toBeDisabled()
-  await expect(browseMode).toHaveCSS('cursor', 'default')
+  await expect(
+    picker.getByRole('group', {name: 'Explorer scope'}).getByRole('button')
+  ).toHaveCount(0)
+  // Children are only listed, not browsed
+  await expect(
+    picker.getByRole('radiogroup', {name: 'Explorer results'})
+  ).toHaveCount(0)
   // The breadcrumbs only tell where the children are
   const location = picker.getByRole('group', {name: 'Explorer location'})
   await expect(location.getByText('Folder', {exact: true})).toBeVisible()
-  for (const breadcrumb of ['Main', 'Pages', 'Folder'])
+  await expect(picker.getByRole('button', {name: /^Back to/})).toHaveCount(0)
+  for (const breadcrumb of ['Pages', 'Folder'])
     await expect(
       location.getByRole('button', {name: breadcrumb, exact: true})
     ).toHaveCount(0)
@@ -371,11 +369,12 @@ test('navigates into folders without showing a suspense loader', async ({
 
   const picker = await expandLinkPicker(app.page)
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
-  const allLocations = picker.getByRole('switch', {name: 'All locations'})
-  await expect(allLocations).not.toBeChecked()
-  await expect(allLocations).toBeDisabled()
   const folder = entries.getByRole('row', {name: /Folder/})
   await expect(folder).toBeVisible()
+  // Without a condition there are no matches to filter
+  await expect(
+    picker.getByRole('radiogroup', {name: 'Explorer results'})
+  ).toHaveCount(0)
   await expect(
     picker.getByRole('treegrid', {name: 'Link folders'})
   ).toHaveCount(0)
@@ -575,38 +574,28 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
   ).toBeVisible()
 
   const location = picker.getByRole('group', {name: 'Explorer location'})
-  const resultModes = location.getByRole('radiogroup', {
-    name: 'Explorer results'
-  })
-  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
-  const allLocations = picker.getByRole('switch', {name: 'All locations'})
-  await expect(location).toContainText(/Browse.*Filtered.*Main.*Pages.*Folder/)
-  await expect(browseMode).toBeChecked()
-  await expect(allLocations).toBeDisabled()
+  const scope = picker.getByRole('group', {name: 'Explorer scope'})
+  await expect(location).toContainText(/Pages.*Folder/)
+  await expect(location.getByRole('button', {name: 'Pages'})).toBeVisible()
 
   const search = picker.getByRole('searchbox', {name: 'Search'})
   await search.fill('i18')
-  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
-  await expect(browseMode).toBeDisabled()
-  await expect(allLocations).toBeEnabled()
   await expect(folders).toHaveCount(0)
   await expect(picker.getByText('No results found')).toBeVisible()
 
-  await allLocations.press('Space')
-  await expect(allLocations).toBeChecked()
-  await expect(location.getByText('Main', {exact: true})).toHaveCount(0)
+  await scope.getByRole('button', {name: 'Main'}).click()
+  await app.page.getByRole('menuitemradio', {name: 'All workspaces'}).click()
+  await expect(location.getByText('Pages', {exact: true})).toHaveCount(0)
   await expect(
     picker.getByRole('checkbox', {name: 'Select I18 result'})
   ).toBeVisible()
 
-  await allLocations.press('Space')
-  await expect(allLocations).not.toBeChecked()
-  await expect(location).toContainText(/Main.*Pages.*Folder/)
+  await scope.getByRole('button', {name: 'All workspaces'}).click()
+  await app.page.getByRole('menuitemradio', {name: 'Main'}).click()
+  await expect(location).toContainText(/Pages.*Folder/)
   await expect(picker.getByText('No results found')).toBeVisible()
 
   await search.fill('')
-  await expect(browseMode).toBeChecked()
-  await expect(allLocations).toBeDisabled()
   await expect(folders).toBeVisible()
   await expect(
     picker.getByRole('checkbox', {name: 'Select Child'})
@@ -639,16 +628,6 @@ test('navigates through folders to matching rows in a link picker', async ({
 
   const picker = await expandLinkPicker(app.page)
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
-  const resultModes = picker.getByRole('radiogroup', {
-    name: 'Explorer results'
-  })
-  await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeChecked()
-  await expect(
-    picker.getByRole('switch', {name: 'All locations'})
-  ).not.toBeChecked()
-  await expect(
-    picker.getByRole('switch', {name: 'All locations'})
-  ).toBeDisabled()
   const folder = entries.getByRole('row', {name: /Folder/})
   await expect(
     folder.getByRole('checkbox', {name: 'Select Folder'})
@@ -704,7 +683,7 @@ test('opens a table parent as the current location on double click', async ({
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
   await expect(
     picker.getByRole('group', {name: 'Explorer location'})
-  ).toContainText(/Main.*Pages.*Folder/)
+  ).toContainText(/Pages.*Folder/)
 })
 
 test('selects existing images and files', async ({dashboard, mount}) => {
@@ -725,20 +704,9 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
   await expect(
     imagePicker
-      .getByRole('radiogroup', {name: 'Explorer results'})
-      .getByRole('radio', {name: 'Browse'})
-  ).toBeChecked()
-  await expect(
-    imagePicker
       .getByRole('radiogroup', {name: 'Explorer view'})
       .getByRole('radio', {name: 'Card view'})
   ).toBeChecked()
-  await expect(
-    imagePicker.getByRole('switch', {name: 'All locations'})
-  ).not.toBeChecked()
-  await expect(
-    imagePicker.getByRole('switch', {name: 'All locations'})
-  ).toBeDisabled()
   await expect(
     imagePicker.getByRole('treegrid', {name: 'Media folders'})
   ).toBeVisible()
@@ -783,17 +751,6 @@ test('selects existing images and files', async ({dashboard, mount}) => {
       .getByRole('radiogroup', {name: 'Explorer view'})
       .getByRole('radio', {name: 'Card view'})
   ).toBeChecked()
-  await expect(
-    filePicker
-      .getByRole('radiogroup', {name: 'Explorer results'})
-      .getByRole('radio', {name: 'Browse'})
-  ).toBeChecked()
-  await expect(
-    filePicker.getByRole('switch', {name: 'All locations'})
-  ).not.toBeChecked()
-  await expect(
-    filePicker.getByRole('switch', {name: 'All locations'})
-  ).toBeDisabled()
   await filePicker.getByText('Existing file', {exact: true}).click()
   await expect(filePicker).toBeHidden()
   await expect(fileField).toContainText('Existing file')
@@ -862,9 +819,19 @@ test('card image picker browses directories and filters within them', async ({
     picker.getByRole('checkbox', {name: 'Select Existing image'})
   ).toHaveCount(0)
 
+  // The images below the directory are listed
   await filteredMode.click()
   await expect(filteredMode).toBeChecked()
   await expect(folders).toHaveCount(0)
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Nested image'})
+  ).toBeVisible()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Existing image'})
+  ).toHaveCount(0)
+
+  await picker.getByRole('searchbox', {name: 'Search'}).fill('image')
+  await expect(resultModes).toHaveCount(0)
   await expect(
     picker.getByRole('checkbox', {name: 'Select Nested image'})
   ).toBeVisible()

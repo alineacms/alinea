@@ -45,7 +45,7 @@ function EmptyResults({explorer, page, root}: EmptyResultsProps) {
   const canSearchEverything = useAtomValueRaw(explorer.canSearchEverything)
   const canSearchAll =
     canSearchEverything &&
-    page.searchScope === 'workspace' &&
+    page.scope !== 'everything' &&
     (explorer.mode === 'search' || page.resultMode === 'matches')
   return (
     <Empty className={styles.ExplorerList.empty()}>

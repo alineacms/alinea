@@ -5,6 +5,7 @@ import type {
   Source
 } from '#/core/source/Source.js'
 import {applyChangesFrom, sourceAtTree} from '#/core/source/Source.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Entry} from '#/core/Entry.js'
@@ -12,6 +13,7 @@ import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {seedMutations} from '#/core/EntrySeed.js'
 import {TaskQueue} from '#/core/util/Async.js'
+import {fileVersions} from '#/core/util/EntryFilenames.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {Policy} from '#/core/Role.js'
 import type {
@@ -114,7 +116,11 @@ export class EntryStore
     entry: Entry,
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const contents = JSON.stringify(createRecord(entry, entry.status), null, 2)
+    // Previews leave out archived entries, except the one being viewed: it
+    // shows as published
+    const archived = entry.status === 'archived'
+    const status = archived ? 'published' : entry.status
+    const contents = JSON.stringify(createRecord(entry, status), null, 2)
     const revision = await this.database.getRevision()
     const tree = await this.source.getTree()
     const applied = JSON.stringify([
@@ -127,16 +133,27 @@ export class EntryStore
     if (this.#preview?.applied === applied)
       return this.#preview.database.resolve(query)
     const source = new OverlaySource(this.source, tree)
+    const blob = new TextEncoder().encode(contents)
     await source.applyChanges({
       fromSha: tree.sha,
-      changes: [
-        {
-          op: 'add',
-          path: entry.filePath,
-          sha: entry.fileHash,
-          contents: new TextEncoder().encode(contents)
-        }
-      ]
+      changes: archived
+        ? [
+            {op: 'delete', path: entry.filePath, sha: entry.fileHash},
+            {
+              op: 'add',
+              path: fileVersions(entry.filePath)[0],
+              sha: await hashBlob(blob),
+              contents: blob
+            }
+          ]
+        : [
+            {
+              op: 'add',
+              path: entry.filePath,
+              sha: entry.fileHash,
+              contents: blob
+            }
+          ]
     })
     // An unchanged record previews the store itself.
     if ((await source.getTree()).sha === revision)

@@ -32,6 +32,7 @@ import {
   inArray,
   include,
   isNull,
+  ne,
   or,
   sql,
   when,
@@ -264,6 +265,8 @@ export function statusCondition(
       return sql.value(true)
     case 'preferDraft':
       return eq(entry.active, true)
+    case 'preview':
+      return and(eq(entry.active, true), ne(entry.status, 'archived'))
     case 'preferPublished':
       return eq(entry.main, true)
     default:

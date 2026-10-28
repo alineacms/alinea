@@ -31,6 +31,7 @@ export function Field({
   error,
   required,
   disabled,
+  readOnly,
   icon,
   shared,
   htmlFor,
@@ -60,7 +61,7 @@ export function Field({
       {hasHeader && (
         <div
           data-slot="field-header"
-          className={styles.FieldHeader({disabled})}
+          className={styles.FieldHeader({disabled: disabled || readOnly})}
         >
           {icon && (
             <Icon

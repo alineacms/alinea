@@ -20,6 +20,7 @@ export function CheckFieldView({field}: CheckFieldViewProps) {
       description={options.help}
       error={error}
       required={options.description ? options.required : undefined}
+      readOnly={options.readOnly}
       shared={options.description ? options.shared : undefined}
     >
       <div className={styles.checkline()}>

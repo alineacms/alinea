@@ -69,10 +69,12 @@ export class GithubApi
 
     const {user} = request
 
-    let commitMessage = request.description
-    if (user?.name && user.email) {
-      commitMessage += `\n\nCo-authored-by: ${user.name} <${user.email}>`
-    }
+    // Marks a publish from the dashboard with the content sha it commits: a
+    // deploy can skip building a commit with this trailer that only changed
+    // content
+    let commitMessage = `${request.description}\n\nAlinea-Content: ${request.intoSha}`
+    if (user?.name && user.email)
+      commitMessage += `\nCo-authored-by: ${user.name} <${user.email}>`
     const newCommit = this.#options.author
       ? await this.#commitThroughRest(
           current,

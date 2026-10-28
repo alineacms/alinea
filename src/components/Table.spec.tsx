@@ -26,7 +26,13 @@ test('custom root view with thumbnails, custom columns and headers', async ({
   await expect(rows.first()).toContainText('2026-09-28')
 
   // Sortable column headers
-  await page.getByRole('button', {name: 'Publication date'}).click()
+  await page.getByRole('button', {name: 'About Publication date'}).click()
+  await expect(page.getByRole('dialog')).toContainText('first went live')
+  await page.keyboard.press('Escape')
+  await expect(rows.first()).toContainText('2026-09-28')
+  await page
+    .getByRole('button', {name: 'Publication date', exact: true})
+    .click()
   await expect(rows.first()).toContainText('2026-01-12')
   await page.getByRole('button', {name: 'Title'}).click()
   await expect(rows.first()).toContainText('2025 in twelve highlights')

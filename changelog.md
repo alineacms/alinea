@@ -52,11 +52,17 @@
 - Define `MediaFile` in the schema with `Config.mediaFile` to give media files
   tabs or fields of your own. Files uploaded before have them too, and queries
   naming `MediaFile` find it.
+- Define `MediaLibrary` in the schema with `Config.mediaLibrary` to change the
+  overview of media folders, or give them tabs or fields of your own.
+  `Config.mediaOverview()` returns the built-in overview to reuse and extend
+  its columns, sorts and filters.
 - Add the `overview` option to container types and roots to configure how the
   dashboard lists their children: columns (`Config.column`) with per-type
   selects, formatting and custom cells, built-in type, status, updated and
   author columns, sorting by column header (kept in the URL), the default
-  `sort`, `layout`, card `thumbnail` and toolbar `actions`. Filters can load
+  `sort`, `layout`, card `thumbnail` and toolbar `actions`. A column `header`
+  is text or a React element, and `info` explains the column in a popover
+  opened from an info button next to the header. Filters can load
   their options from the content with a function that receives the `graph`
   and `locale`. `tabs` list the entries of a filter per tab above the list
   (the selected tab is kept in the URL), and `header` renders a view between
@@ -110,6 +116,9 @@
 - Publish instantly: deployed sites sync new content as soon as it is committed,
   driven by the repository sha. `syncInterval` is now a fallback, defaulting to
   60 seconds.
+- Commits from the dashboard end with an `Alinea-Content` trailer holding the
+  content sha they commit, so a deploy can skip building a publish that only
+  changed content, see the instant publishing guide.
 - Add an MCP server to `alinea dev` (`http://localhost:4500/mcp`) so coding
   agents can read the schema and create, edit, publish, move and delete entries
   and upload media through the dashboard's save path.

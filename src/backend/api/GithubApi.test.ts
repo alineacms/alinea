@@ -81,7 +81,7 @@ test('uses commit request user for co-authored-by trailer', async () => {
     test.equal(await api.write(request), {sha: intoSha})
     test.is(
       commitMessage,
-      'Alinea content update\n\nCo-authored-by: Ada Lovelace <ada@example.com>'
+      `Alinea content update\n\nAlinea-Content: ${intoSha}\nCo-authored-by: Ada Lovelace <ada@example.com>`
     )
   } finally {
     globalThis.fetch = originalFetch
@@ -358,7 +358,8 @@ test('commits as the configured author through REST', async () => {
         method: 'POST',
         path: 'git/commits',
         body: {
-          message: 'Update\n\nCo-authored-by: Ada Lovelace <ada@example.com>',
+          message:
+            'Update\n\nAlinea-Content: into-sha\nCo-authored-by: Ada Lovelace <ada@example.com>',
           tree: 'new-tree',
           parents: ['head-oid'],
           author: {name: 'CMS', email: 'cms@example.com'}

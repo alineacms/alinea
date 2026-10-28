@@ -194,6 +194,10 @@
   gap: 6px;
   padding-block: 4px;
   margin-bottom: 8px;
+
+  &.is-readOnly {
+    opacity: 0.5;
+  }
 }
 
 .ListLabel .ListLabel-toggle {

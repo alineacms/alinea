@@ -1,10 +1,5 @@
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
   FileTrigger,
   type Key,
   PageBack,
@@ -21,7 +16,6 @@ import type {OverviewActionProps, OverviewHeaderProps} from '#/core/Overview.js'
 import {resolveView} from '#/core/View.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from './ViewToggle.js'
-import {rootAtoms} from '../atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
@@ -41,7 +35,6 @@ import {
   type DashboardExplorer,
   explorerPageIsPending,
   type ExplorerParent,
-  type ExplorerPathEntry,
   type ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {
@@ -52,11 +45,13 @@ import {
 } from '../icons.js'
 import css from './Explorer.module.css'
 import {ExplorerBatchActions} from './ExplorerBatchActions.js'
+import {ExplorerBreadcrumbs, ExplorerParentBack} from './ExplorerBreadcrumbs.js'
 import {ExplorerControls} from './ExplorerControls.js'
 import {ExplorerList} from './ExplorerList.js'
 import {ExplorerOverviewHeader} from './ExplorerOverviewHeader.js'
+import {ExplorerScope} from './ExplorerScope.js'
 import {ExplorerTabs} from './ExplorerTabs.js'
-import {LocaleMenu} from './LocaleMenu.js'
+import {LocaleMenuSelect} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
 import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 
@@ -78,7 +73,6 @@ export interface ExplorerHeaderEntry {
 }
 
 export interface ExplorerHeaderProps {
-  canBrowse?: boolean
   autoFocusSearch?: boolean
   /** Called when escape is pressed in the search field */
   onSearchEscape?: () => void
@@ -361,7 +355,7 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
       checked={searchScope === 'everything'}
       onCheckedChange={selected =>
         startTransition(() =>
-          setSearchScope(selected ? 'everything' : 'workspace')
+          setSearchScope(selected ? 'everything' : explorer.rootScope)
         )
       }
     >
@@ -371,80 +365,39 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
 }
 
 interface ExplorerResultModeProps {
-  canBrowse: boolean
   explorer: DashboardExplorer
   page: ExplorerReadyPage
 }
 
-function ExplorerResultMode({
-  canBrowse: navigationEnabled,
-  explorer,
-  page
-}: ExplorerResultModeProps) {
-  const resultMode = page.resultMode
+/** Switches between browsing folders and the matches below the location */
+function ExplorerResultMode({explorer, page}: ExplorerResultModeProps) {
   const setResultMode = useSetAtom(explorer.resultMode)
-  const search = useAtomValueRaw(explorer.search)
   const [, startTransition] = useTransition()
-  const canShowFiltered =
-    explorer.pickChildren || explorer.hasCondition || Boolean(search.trim())
-  const canBrowse =
-    navigationEnabled && !explorer.pickChildren && !search.trim()
+  const searching = Boolean(page.search.trim())
+  const canBrowse = explorer.canBrowse && !searching
+  const canFilter = explorer.hasCondition || explorer.pickChildren || searching
+  // A toggle with a single mode to pick does nothing
+  if (!canBrowse || !canFilter) return null
   return (
     <ToggleGroup
       type="single"
       aria-label="Explorer results"
       className={styles.Explorer.resultMode()}
-      value={resultMode}
+      value={page.resultMode}
       variant="outline"
       size="sm"
       onValueChange={value => {
         if (value !== 'browse' && value !== 'matches') return
-        if (!canBrowse && value === 'browse') return
-        startTransition(() => {
-          setResultMode(value)
-        })
+        startTransition(() => setResultMode(value))
       }}
     >
-      <ToggleGroupItem
-        value="browse"
-        icon={IcRoundAccountTree}
-        disabled={!canBrowse}
-      >
+      <ToggleGroupItem value="browse" icon={IcRoundAccountTree}>
         Browse
       </ToggleGroupItem>
-      <ToggleGroupItem
-        value="matches"
-        icon={IcRoundFilterList}
-        disabled={!canShowFiltered}
-      >
+      <ToggleGroupItem value="matches" icon={IcRoundFilterList}>
         Filtered
       </ToggleGroupItem>
     </ToggleGroup>
-  )
-}
-
-export interface ExplorerParentBackProps {
-  explorer: DashboardExplorer
-  parent: ExplorerParent
-}
-
-/** Lists the children of the parent of the listed entries, or the root */
-export function ExplorerParentBack({
-  explorer,
-  parent
-}: ExplorerParentBackProps) {
-  const setLocation = useSetAtom(explorer.location)
-  const [, startTransition] = useTransition()
-  const parentId = parent.parents.at(-1)
-  return (
-    <PageBack
-      label={parentId ? 'Back to parent entry' : 'Back to root'}
-      onClick={() =>
-        startTransition(() =>
-          setLocation(location => ({...location, parentId}))
-        )
-      }
-    />
   )
 }
 
@@ -496,261 +449,42 @@ function ExplorerHeaderMain({
   return null
 }
 
-interface ExplorerLocationMenuProps {
+interface ExplorerLocaleProps {
   explorer: DashboardExplorer
-  lockNavigation?: boolean
   page: ExplorerReadyPage
 }
 
-interface ExplorerLocationParentsProps {
-  explorer: DashboardExplorer
-  lockNavigation: boolean
-  parent: ExplorerParent
-}
-
-function ExplorerLocationParents({
-  explorer,
-  lockNavigation,
-  parent
-}: ExplorerLocationParentsProps) {
-  return [...parent.path, parent].map((entry, index, entries) => (
-    <ExplorerLocationParent
-      current={index === entries.length - 1}
-      entry={entry}
-      explorer={explorer}
-      key={entry.id}
-      lockNavigation={lockNavigation}
-    />
-  ))
-}
-
-interface ExplorerLocationParentProps {
-  current: boolean
-  entry: ExplorerPathEntry
-  explorer: DashboardExplorer
-  lockNavigation: boolean
-}
-
-function ExplorerLocationParent({
-  current,
-  entry,
-  explorer,
-  lockNavigation
-}: ExplorerLocationParentProps) {
-  const label = entry.title
-  const setLocation = useSetAtom(explorer.location)
-  return (
-    <>
-      <span
-        aria-hidden="true"
-        className={styles.Explorer.locationBreadcrumbs.separator()}
-      >
-        ›
-      </span>
-      {current || lockNavigation ? (
-        <span
-          className={
-            current
-              ? styles.Explorer.locationBreadcrumbs.current()
-              : styles.Explorer.locationBreadcrumbs.parentValue()
-          }
-        >
-          {label}
-        </span>
-      ) : (
-        <Button
-          variant="ghost"
-          className={styles.Explorer.locationBreadcrumbs.parentAction()}
-          onClick={() =>
-            setLocation(location => ({...location, parentId: entry.id}))
-          }
-        >
-          {label}
-        </Button>
-      )}
-    </>
-  )
-}
-
-function ExplorerLocationMenu({
-  explorer,
-  lockNavigation = false,
-  page
-}: ExplorerLocationMenuProps) {
+/** The language of the listed root, when it has more than one */
+function ExplorerLocale({explorer, page}: ExplorerLocaleProps) {
   const config = useAtomValueRaw(configAtom)
-  const location = page.location
-  const visibleLocations = useAtomValueRaw(explorer.locations)
-  const selectedLocale = page.locale
   const setSelectedLocale = useSetAtom(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
-  const {parent} = page
-  const locations = visibleLocations.map(candidate => {
-    const workspace = config.workspaces[candidate.workspace]
-    const workspaceLabel = workspace
-      ? getWorkspace(workspace).label
-      : candidate.workspace
-    const root = workspace
-      ? getWorkspace(workspace).roots[candidate.root]
+  const [, startTransition] = useTransition()
+  const {location} = page
+  const workspace = config.workspaces[location.workspace]
+  const root =
+    workspace && location.root
+      ? getWorkspace(workspace).roots[location.root]
       : undefined
-    const rootData = root ? getRoot(root) : undefined
-    const rootLabel = rootData?.label ?? candidate.root
-    const locales: ReadonlyArray<string> = rootData?.i18n?.locales ?? []
-    return {
-      ...candidate,
-      locales,
-      rootLabel,
-      workspaceLabel
-    }
-  })
-  const selected = locations.find(
-    candidate =>
-      candidate.workspace === location.workspace &&
-      candidate.root === location.root
-  )
-  const workspaces = Array.from(
-    new Map(
-      locations.map(candidate => [
-        candidate.workspace,
-        {
-          key: candidate.workspace,
-          label: candidate.workspaceLabel
-        }
-      ])
-    ).values()
-  )
-  const roots = locations.filter(
-    candidate => candidate.workspace === location.workspace
-  )
-  const locales = selected?.locales ?? []
-  const localeRoot = selected
-    ? rootAtoms(selected.workspace, selected.root)
-    : undefined
-
-  function selectLocation(candidate: (typeof locations)[number]) {
-    const locale = candidate.locales.includes(selectedLocale ?? '')
-      ? selectedLocale
-      : (candidate.locales[0] ?? null)
-    setSelectedLocale(locale)
-    setLocation({
-      workspace: candidate.workspace,
-      root: candidate.root,
-      locale: locale ?? undefined
-    })
-  }
-
-  function selectLocale(locale: string) {
-    setSelectedLocale(locale)
-    setLocation(current => ({...current, locale}))
-  }
-
+  const locales = root ? (getRoot(root).i18n?.locales ?? []) : []
+  if (page.scope !== 'root' || locales.length < 2) return null
   return (
-    <div className={styles.Explorer.locationBreadcrumbs()}>
-      <div className={styles.Explorer.locationBreadcrumbs.item()}>
-        {workspaces.length > 1 && !lockNavigation ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger variant="ghost">
-              {selected?.workspaceLabel ?? location.workspace}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuRadioGroup
-                value={location.workspace}
-                onValueChange={workspace => {
-                  const next =
-                    locations.find(
-                      candidate =>
-                        candidate.workspace === workspace &&
-                        candidate.root === location.root
-                    ) ??
-                    locations.find(
-                      candidate => candidate.workspace === workspace
-                    )
-                  if (!next) return
-                  selectLocation(next)
-                }}
-              >
-                {workspaces.map(workspace => (
-                  <DropdownMenuRadioItem
-                    key={workspace.key}
-                    value={workspace.key}
-                    textValue={workspace.label}
-                  >
-                    {workspace.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <span className={styles.Explorer.locationBreadcrumbs.value()}>
-            {selected?.workspaceLabel}
-          </span>
-        )}
-      </div>
-      <span
-        aria-hidden="true"
-        className={styles.Explorer.locationBreadcrumbs.separator()}
-      >
-        ›
-      </span>
-      <div className={styles.Explorer.locationBreadcrumbs.root()}>
-        <div className={styles.Explorer.locationBreadcrumbs.item()}>
-          {roots.length > 1 && !lockNavigation ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger variant="ghost">
-                {selected?.rootLabel ?? location.root ?? 'Select root'}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuRadioGroup
-                  value={location.root ?? null}
-                  onValueChange={root => {
-                    const next = roots.find(
-                      candidate => candidate.root === root
-                    )
-                    if (next) selectLocation(next)
-                  }}
-                >
-                  {roots.map(root => (
-                    <DropdownMenuRadioItem
-                      key={root.root}
-                      value={root.root}
-                      textValue={root.rootLabel}
-                    >
-                      {root.rootLabel}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <span className={styles.Explorer.locationBreadcrumbs.value()}>
-              {selected?.rootLabel ?? location.root ?? 'Select root'}
-            </span>
-          )}
-        </div>
-        {localeRoot && locales.length > 1 && (
-          <div className={styles.Explorer.locationBreadcrumbs.root.locale()}>
-            {lockNavigation ? (
-              <span
-                className={styles.Explorer.locationBreadcrumbs.localeValue()}
-              >
-                {(selectedLocale ?? locales[0])?.toUpperCase()}
-              </span>
-            ) : (
-              <LocaleMenu
-                size="lg"
-                root={localeRoot}
-                locale={selectedLocale}
-                onLocaleChange={selectLocale}
-              />
-            )}
-          </div>
-        )}
-      </div>
-      {parent && (
-        <ExplorerLocationParents
-          explorer={explorer}
-          lockNavigation={lockNavigation}
-          parent={parent}
+    <div className={styles.Explorer.locale()}>
+      {explorer.pickChildren ? (
+        <span className={styles.Explorer.locale.value()}>
+          {page.locale?.toUpperCase()}
+        </span>
+      ) : (
+        <LocaleMenuSelect
+          size="lg"
+          locales={locales}
+          locale={page.locale}
+          onLocaleChange={locale =>
+            startTransition(() => {
+              setSelectedLocale(locale)
+              setLocation(current => ({...current, locale}))
+            })
+          }
         />
       )}
     </div>
@@ -849,7 +583,6 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
 }
 
 export function ExplorerHeader({
-  canBrowse = true,
   autoFocusSearch,
   onSearchEscape,
   controls,
@@ -881,11 +614,19 @@ export function ExplorerHeader({
               onEscape={onSearchEscape}
               page={page}
             />
-            <ExplorerSearchScope explorer={explorer} page={page} />
+            {navigate ? (
+              <ExplorerScope explorer={explorer} page={page} />
+            ) : (
+              <ExplorerSearchScope explorer={explorer} page={page} />
+            )}
           </div>
           <div className={styles.Explorer.toolbar()}>
             <ExplorerToolbar explorer={explorer} page={page} />
-            {controls}
+            {controls && (
+              <div className={styles.Explorer.toolbar.controls()}>
+                {controls}
+              </div>
+            )}
           </div>
         </div>
         {navigate && (
@@ -894,23 +635,9 @@ export function ExplorerHeader({
             className={styles.ExplorerHeader.location()}
             role="group"
           >
-            {page.parent &&
-              page.resultMode === 'browse' &&
-              !explorer.pickChildren && (
-                <ExplorerParentBack explorer={explorer} parent={page.parent} />
-              )}
-            <ExplorerResultMode
-              canBrowse={canBrowse}
-              explorer={explorer}
-              page={page}
-            />
-            {!page.searchesEverything && (
-              <ExplorerLocationMenu
-                explorer={explorer}
-                lockNavigation={explorer.pickChildren}
-                page={page}
-              />
-            )}
+            <ExplorerResultMode explorer={explorer} page={page} />
+            <ExplorerLocale explorer={explorer} page={page} />
+            <ExplorerBreadcrumbs explorer={explorer} page={page} />
           </div>
         )}
       </div>
