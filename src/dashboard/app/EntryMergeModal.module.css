@@ -46,7 +46,10 @@
   transition: var(--alinea-transition);
   transition-property: border-color, background-color;
 
+  /* Lets compact values shrink to the card and end in an ellipsis */
   & [data-slot='radio-group-item-content'] {
+    flex: 1;
+    grid-template-columns: minmax(0, 1fr);
     min-width: 0;
   }
 
@@ -65,16 +68,12 @@
 }
 
 .EntryMergeModal-value {
-  display: -webkit-box;
-  overflow: hidden;
+  display: flex;
+  min-width: 0;
   margin-top: 4px;
+  overflow: hidden;
   color: var(--alinea-fg);
   font-style: normal;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
 
   &.is-empty {
     color: var(--alinea-fg-muted);
@@ -140,14 +139,10 @@
   }
 }
 
-.EntryMergeModal-part-text {
-  display: -webkit-box;
+.EntryMergeModal-part-value {
+  display: flex;
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  white-space: nowrap;
 }

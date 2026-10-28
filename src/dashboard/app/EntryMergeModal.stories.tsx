@@ -1,28 +1,53 @@
 import {Button} from '#/components.js'
-import type {EntryMerge, EntryMergeField} from '#/dashboard/atoms/entryMerge.js'
+import {
+  type EntryMerge,
+  type EntryMergeLink,
+  entryMerge
+} from '#/dashboard/atoms/entryMerge.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
+import {Config, Field} from '#/index.js'
 import {useState} from 'react'
+import {views} from '../../field/views.js'
 import {EntryMergeModal} from './EntryMergeModal.js'
 
-const minutesAgo = (minutes: number) => Date.now() - minutes * 60_000
+const Section = Config.type('Section', {
+  fields: {title: Field.text('Title')}
+})
 
-function simple(
-  key: string,
-  label: string,
-  yours: unknown,
-  theirs: unknown
-): EntryMergeField {
-  return {key, label, simple: true, base: undefined, yours, theirs, paths: [[]]}
-}
+const Page = Config.document('Page', {
+  fields: {
+    intro: Field.text('Intro'),
+    summary: Field.text('Summary', {multiline: true}),
+    servings: Field.number('Servings'),
+    featured: Field.check('Featured'),
+    body: Field.richText('Body'),
+    sections: Field.list('Sections', {schema: {Section}}),
+    link: Field.link('Link'),
+    related: Field.entry.multiple('Related pages'),
+    image: Field.image('Image'),
+    ...Object.fromEntries(
+      Array.from({length: 10}, (_, index) => [
+        `field${index + 1}`,
+        Field.text(`Field ${index + 1}`)
+      ])
+    )
+  }
+})
 
-function nested(
-  key: string,
-  label: string,
-  base: unknown,
-  yours: unknown,
-  theirs: unknown
-): EntryMergeField {
-  return {key, label, simple: false, base, yours, theirs, paths: [['row']]}
-}
+// A tiny image as the preview of the linked images
+const preview = (color: string) =>
+  `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="${color}"/></svg>`
+  )}`
+
+const links = new Map<string, EntryMergeLink>([
+  ['home', {title: 'Home'}],
+  ['about', {title: 'About us'}],
+  ['contact', {title: 'Contact'}],
+  ['shop', {title: 'Shop'}],
+  ['tulips', {title: 'Tulips in the garden', preview: preview('#e0567a')}],
+  ['ferns', {title: 'Ferns on a shelf', preview: preview('#3f8f5a')}]
+])
 
 function paragraphs(...lines: Array<string>) {
   return lines.map(text => ({
@@ -32,112 +57,155 @@ function paragraphs(...lines: Array<string>) {
 }
 
 function section(id: number, title = `Section ${id}`) {
-  return {_id: `section-${id}`, _index: `a${id}`, _type: 'Text', title}
+  return {_id: `section-${id}`, _index: `a${id}`, _type: 'Section', title}
 }
 
-const body = {
-  base: paragraphs(
-    'Our spring sale starts Monday.',
-    'Come early, the best ones go first.'
-  ),
-  yours: paragraphs(
-    'Our spring sale starts Monday with twenty percent off all plants.',
-    'Come early, the best ones go first.'
-  ),
-  theirs: paragraphs(
-    'Our spring sale starts Monday.',
-    'Come early, the best ones go first.',
-    'Delivery is free for orders over fifty euros.'
-  )
+function entry(id: string, target: string) {
+  return {_id: id, _index: `a${id}`, _type: 'entry', _entry: target}
 }
 
-const sections = {
-  base: [section(1), section(2), section(3)],
-  yours: [section(1, 'Opening hours'), section(2), section(3)],
-  theirs: [section(1), section(3), section(4)]
+function image(target: string) {
+  return {_id: 'image', _type: 'image', _entry: target}
 }
 
-const simpleFields: EntryMerge = {
-  name: 'Sam',
-  date: minutesAgo(2),
-  merged: [],
-  fields: [
-    simple('title', 'Title', 'Spring sale starts Monday', 'Spring sale'),
-    simple(
-      'summary',
-      'Summary',
-      '',
-      'Twenty percent off all plants and pots, this weekend only. Visit the shop in town or order online, delivery is free for orders over fifty euros and we plant trees for every order.'
-    ),
-    simple('servings', 'Servings', 4, 6)
-  ]
+type Values = Record<string, unknown>
+
+interface Scenario {
+  loaded: Values
+  mine: Values
+  theirs: Values
 }
 
-const listsAndRichText: EntryMerge = {
-  name: 'Sam',
-  date: minutesAgo(5),
-  merged: ['Intro', 'Tags'],
-  fields: [
-    simple('title', 'Title', 'Spring sale starts Monday', 'Spring sale'),
-    nested('body', 'Body', body.base, body.yours, body.theirs),
-    nested(
-      'sections',
-      'Sections',
-      sections.base,
-      sections.yours,
-      sections.theirs
-    )
-  ]
-}
-
-const manyFields: EntryMerge = {
-  name: 'Sam',
-  date: minutesAgo(12),
-  merged: ['Intro'],
-  fields: [
-    ...Array.from({length: 10}, (_, index) =>
-      simple(
-        `field${index}`,
-        `Field ${index + 1}`,
-        `My value ${index + 1}`,
-        `Their value ${index + 1}`
-      )
-    ),
-    nested('body', 'Body', body.base, body.yours, body.theirs),
-    nested(
-      'sections',
-      'Sections',
-      sections.base,
-      sections.yours,
-      sections.theirs
-    )
-  ]
+/** A merge where both changed each field mine sets */
+function scenario({loaded, mine, theirs}: Scenario): EntryMerge {
+  return entryMerge({
+    type: Page,
+    loaded,
+    mine: {...loaded, ...mine},
+    theirs: {...loaded, ...theirs},
+    conflicts: Object.keys(mine).map(key => [key]),
+    locale: null,
+    links,
+    name: 'Sam',
+    date: Date.now() - 5 * 60_000
+  })
 }
 
 const longText =
   'A very long description that goes on and on about the spring sale, the plants and pots on offer, the opening hours of the shop in town, the delivery options and the trees we plant for every order, so it never fits in a card.'
 
-const longValues: EntryMerge = {
-  name: 'Sam',
-  date: minutesAgo(1),
-  merged: [],
-  fields: [
-    simple('summary', 'Summary', longText, `${longText} ${longText}`),
-    simple(
-      'link',
-      'Link',
-      'https://example.com/shop/spring-sale/plants-and-pots/twenty-percent-off/this-weekend-only?utm_source=newsletter&utm_campaign=spring',
-      'Supercalifragilisticexpialidociousplantsandpotsforeverybodyinthewholetown'
+const simpleFields = scenario({
+  loaded: {title: 'Spring', summary: 'Sale', servings: 4, featured: false},
+  mine: {
+    title: 'Spring sale starts Monday',
+    summary: '',
+    servings: 4,
+    featured: true
+  },
+  theirs: {
+    title: 'Spring sale',
+    summary: 'Twenty percent off all plants and pots, this weekend only.',
+    servings: 6,
+    featured: false
+  }
+})
+
+const listsAndRichText = scenario({
+  loaded: {
+    title: 'Spring',
+    intro: 'Hello',
+    body: paragraphs(
+      'Our spring sale starts Monday.',
+      'Come early, the best ones go first.'
     ),
-    nested(
-      'body',
-      'Body',
-      paragraphs('First line'),
-      paragraphs(longText, 'Second paragraph', 'Third paragraph'),
-      paragraphs('First line', longText)
-    )
-  ]
-}
+    sections: [section(1), section(2), section(3)]
+  },
+  mine: {
+    title: 'Spring sale starts Monday',
+    body: paragraphs(
+      'Our spring sale starts Monday with twenty percent off all plants.',
+      'Come early, the best ones go first.'
+    ),
+    sections: [section(1, 'Opening hours'), section(2), section(3)]
+  },
+  theirs: {
+    title: 'Spring sale',
+    intro: 'Welcome to the spring sale',
+    body: paragraphs(
+      'Our spring sale starts Monday.',
+      'Come early, the best ones go first.',
+      'Delivery is free for orders over fifty euros.'
+    ),
+    sections: [section(1), section(3), section(4)]
+  }
+})
+
+const linksAndImages = scenario({
+  loaded: {
+    featured: false,
+    link: entry('link', 'home'),
+    related: [entry('1', 'home')],
+    image: image('tulips')
+  },
+  mine: {
+    featured: true,
+    link: entry('link', 'about'),
+    related: [entry('1', 'home'), entry('2', 'about')],
+    image: image('ferns')
+  },
+  theirs: {
+    featured: false,
+    link: {
+      _id: 'link',
+      _type: 'url',
+      _url: 'https://example.com/spring',
+      _title: 'Spring sale on example.com',
+      _target: '_blank'
+    },
+    related: [entry('3', 'contact'), entry('4', 'shop')],
+    image: null
+  }
+})
+
+const manyFields = scenario({
+  loaded: Object.fromEntries(
+    Array.from({length: 10}, (_, index) => [`field${index + 1}`, 'Value'])
+  ),
+  mine: {
+    ...Object.fromEntries(
+      Array.from({length: 10}, (_, index) => [
+        `field${index + 1}`,
+        `My value ${index + 1}`
+      ])
+    ),
+    sections: [section(1, 'Opening hours')]
+  },
+  theirs: {
+    ...Object.fromEntries(
+      Array.from({length: 10}, (_, index) => [
+        `field${index + 1}`,
+        `Their value ${index + 1}`
+      ])
+    ),
+    sections: [section(2)]
+  }
+})
+
+const longValues = scenario({
+  loaded: {summary: '', intro: '', body: paragraphs('First line')},
+  mine: {
+    summary: longText,
+    intro:
+      'https://example.com/shop/spring-sale/plants-and-pots/twenty-percent-off/this-weekend-only?utm_source=newsletter',
+    body: paragraphs(longText, 'Second paragraph', 'Third paragraph')
+  },
+  theirs: {
+    summary: `${longText} ${longText}`,
+    intro:
+      'Supercalifragilisticexpialidociousplantsandpotsforeverybodyinthewholetown',
+    body: paragraphs('First line', longText)
+  }
+})
 
 interface MergeStoryProps {
   merge: EntryMerge
@@ -147,7 +215,7 @@ interface MergeStoryProps {
 function MergeStory({merge, publish}: MergeStoryProps) {
   const [result, setResult] = useState<string>()
   return (
-    <>
+    <StoryProvider views={views}>
       <EntryMergeModal
         merge={result ? undefined : merge}
         publish={publish}
@@ -161,7 +229,7 @@ function MergeStory({merge, publish}: MergeStoryProps) {
           <Button onClick={() => setResult(undefined)}>Show again</Button>
         </>
       )}
-    </>
+    </StoryProvider>
   )
 }
 
@@ -172,6 +240,10 @@ export function SimpleFields() {
 /** Review changes on Body or Sections opens the detail of the field */
 export function ListsAndRichText() {
   return <MergeStory merge={listsAndRichText} />
+}
+
+export function LinksAndImages() {
+  return <MergeStory merge={linksAndImages} />
 }
 
 export function ManyFields() {

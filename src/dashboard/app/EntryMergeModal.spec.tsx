@@ -1,5 +1,6 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
+  LinksAndImages,
   ListsAndRichText,
   ManyFields,
   Publish
@@ -10,9 +11,7 @@ test('resolves fields both editors changed', async ({mount, page}) => {
   await expect(
     page.getByText('Sam saved this page while you were editing')
   ).toBeVisible()
-  await expect(
-    page.getByText(/Merged automatically: Intro, Tags/)
-  ).toBeVisible()
+  await expect(page.getByText(/Merged automatically: Intro/)).toBeVisible()
   const title = page.getByRole('radiogroup', {name: 'Title'})
   // Both values show, yours is kept unless the editor picks theirs
   await expect(title.getByText('Spring sale starts Monday')).toBeVisible()
@@ -84,4 +83,22 @@ test('keeps the header and footer in view with many fields', async ({
   await expect(
     page.getByText('Sam saved this page while you were editing')
   ).toBeInViewport()
+})
+
+test('renders values through their fields', async ({mount, page}) => {
+  await mount(<LinksAndImages />)
+  const featured = page.getByRole('radiogroup', {name: 'Featured'})
+  await expect(featured.getByText('Yes', {exact: true})).toBeVisible()
+  await expect(featured.getByText('No', {exact: true})).toBeVisible()
+  const link = page.getByRole('radiogroup', {name: 'Link'})
+  await expect(link.getByText('About us')).toBeVisible()
+  await expect(link.getByText('Spring sale on example.com')).toBeVisible()
+  // A single link or image is yours or theirs, a list of links combines
+  await expect(link.getByRole('radio')).toHaveCount(2)
+  const image = page.getByRole('radiogroup', {name: 'Image'})
+  await expect(image.getByText('Ferns on a shelf')).toBeVisible()
+  await expect(image.getByText('Empty')).toBeVisible()
+  const related = page.getByRole('radiogroup', {name: 'Related pages'})
+  await expect(related.getByRole('radio')).toHaveCount(3)
+  await expect(related.getByText('Contact')).toBeVisible()
 })

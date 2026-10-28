@@ -30,7 +30,13 @@ import {Atom, atom, Getter, Setter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
-import {type EntryMerge, entryMerge, type MergeChoice} from './entryMerge.js'
+import {
+  type EntryMerge,
+  type EntryMergeLink,
+  entryMerge,
+  linkedIds,
+  type MergeChoice
+} from './entryMerge.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
 import {ReactiveNode, rebaseValue} from './ReactiveNode.js'
@@ -599,6 +605,8 @@ export class EntryLocaleAtoms {
       )
       return this.#save(get, set, node, status)
     }
+    const keys = Array.from(new Set(conflicts.map(path => path[0])))
+    const ids = linkedIds(typeConfig, keys, [loaded, mine, theirs])
     set(this.conflict, {
       node,
       status,
@@ -612,11 +620,40 @@ export class EntryLocaleAtoms {
         mine,
         theirs,
         conflicts,
+        locale,
+        links: await this.#links(get, ids),
         name,
         date: current.updatedAt ?? undefined
       })
     })
     return false
+  }
+
+  /** Titles and previews of the linked entries the user can read */
+  async #links(get: Getter, ids: Array<string>) {
+    const links = new Map<string, EntryMergeLink>()
+    if (ids.length === 0) return links
+    const policy = get(policyAtom)
+    const rows = await get(graphAtom).find({
+      id: {in: ids},
+      status: 'preferDraft',
+      select: {
+        id: Entry.id,
+        title: Entry.title,
+        locale: Entry.locale,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        parents: Entry.parents,
+        preview: FileData.preview
+      }
+    })
+    for (const row of rows) {
+      if (!policy.check(Permission.Read, row)) continue
+      // A linked entry shows in the language of this one when it has it
+      if (links.has(row.id) && row.locale !== this.requestedLocale) continue
+      links.set(row.id, {title: row.title, preview: row.preview || undefined})
+    }
+    return links
   }
 
   saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {

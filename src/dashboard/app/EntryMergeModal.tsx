@@ -7,7 +7,12 @@ import {
   Text,
   Timestamp
 } from '#/components.js'
-import {entries, isRecord} from '#/core/util/Objects.js'
+import {Field} from '#/core/Field.js'
+import {ListField, ListFieldBase} from '#/core/field/ListField.js'
+import {RecordField} from '#/core/field/RecordField.js'
+import {RichTextField} from '#/core/field/RichTextField.js'
+import {Type} from '#/core/Type.js'
+import {entries, isEmptyValue, isRecord} from '#/core/util/Objects.js'
 import styler from '@alinea/styler'
 import {useState} from 'react'
 import type {
@@ -22,6 +27,11 @@ import {
   IcRoundChevronRight,
   IcRoundSave
 } from '../icons.js'
+import {
+  CompactField,
+  type CompactFieldContext,
+  CompactRecordFields
+} from './CompactField.js'
 import css from './EntryMergeModal.module.css'
 import {
   DashboardModal,
@@ -89,6 +99,7 @@ function EntryMergeDialog({
   )
   const [reviewing, setReviewing] = useState<string>()
   const theirLabel = merge.name ? `${merge.name}'s` : 'Theirs'
+  const context = {locale: merge.locale, links: merge.links}
   const detail = merge.fields.find(field => field.key === reviewing)
   const choose = (key: string) => (choice: MergeChoice) =>
     setChoices(current => ({...current, [key]: choice}))
@@ -100,6 +111,7 @@ function EntryMergeDialog({
         {detail ? (
           <EntryMergeDetail
             field={detail}
+            context={context}
             theirLabel={theirLabel}
             choice={choices[detail.key]}
             onChoice={choose(detail.key)}
@@ -140,6 +152,7 @@ function EntryMergeDialog({
                   </div>
                   <EntryMergeChoices
                     field={field}
+                    context={context}
                     theirLabel={theirLabel}
                     choice={choices[field.key]}
                     onChoice={choose(field.key)}
@@ -168,6 +181,7 @@ function EntryMergeDialog({
 
 interface EntryMergeChoicesProps {
   field: EntryMergeField
+  context: CompactFieldContext
   theirLabel: string
   choice: MergeChoice
   onChoice(choice: MergeChoice): void
@@ -175,6 +189,7 @@ interface EntryMergeChoicesProps {
 
 function EntryMergeChoices({
   field,
+  context,
   theirLabel,
   choice,
   onChoice
@@ -191,14 +206,26 @@ function EntryMergeChoices({
       <RadioGroupItem
         value="yours"
         className={option}
-        description={<EntryMergeValue value={field.yours} />}
+        description={
+          <EntryMergeValue
+            field={field}
+            context={context}
+            value={field.yours}
+          />
+        }
       >
         Yours
       </RadioGroupItem>
       <RadioGroupItem
         value="theirs"
         className={option}
-        description={<EntryMergeValue value={field.theirs} />}
+        description={
+          <EntryMergeValue
+            field={field}
+            context={context}
+            value={field.theirs}
+          />
+        }
       >
         {theirLabel}
       </RadioGroupItem>
@@ -217,7 +244,7 @@ interface EntryMergeDetailProps extends EntryMergeChoicesProps {
 
 /** The rows or paragraphs each editor changed in a list or rich text */
 function EntryMergeDetail({onBack, ...props}: EntryMergeDetailProps) {
-  const {field, theirLabel} = props
+  const {field, context, theirLabel} = props
   return (
     <div className={styles.EntryMergeModal.detail()}>
       <div>
@@ -234,10 +261,16 @@ function EntryMergeDetail({onBack, ...props}: EntryMergeDetailProps) {
         {field.label}
       </Heading>
       <div className={styles.EntryMergeModal.sides()}>
-        <EntryMergeSide title="Yours" base={field.base} value={field.yours} />
         <EntryMergeSide
+          field={field}
+          context={context}
+          title="Yours"
+          value={field.yours}
+        />
+        <EntryMergeSide
+          field={field}
+          context={context}
           title={theirLabel}
-          base={field.base}
           value={field.theirs}
         />
       </div>
@@ -247,25 +280,26 @@ function EntryMergeDetail({onBack, ...props}: EntryMergeDetailProps) {
 }
 
 interface EntryMergeSideProps {
+  field: EntryMergeField
+  context: CompactFieldContext
   title: string
-  base: unknown
   value: unknown
 }
 
 const changeLabel = {added: 'Added', changed: 'Changed', removed: 'Removed'}
 
-function EntryMergeSide({title, base, value}: EntryMergeSideProps) {
+function EntryMergeSide({field, context, title, value}: EntryMergeSideProps) {
   return (
     <section aria-label={title} className={styles.EntryMergeModal.side()}>
       <Text weight="medium">{title}</Text>
       <ul className={styles.EntryMergeModal.parts()}>
-        {changes(base, value).map(part => (
+        {changes(field, field.base, value).map(part => (
           <li
             key={`${part.state}-${part.id}`}
             className={styles.EntryMergeModal.part({[part.state]: true})}
           >
-            <span className={styles.EntryMergeModal.part.text()}>
-              {part.text || 'Empty'}
+            <span className={styles.EntryMergeModal.part.value()}>
+              <EntryMergePart part={part} context={context} />
             </span>
             {part.state !== 'same' && (
               <Badge size="sm">{changeLabel[part.state]}</Badge>
@@ -278,48 +312,115 @@ function EntryMergeSide({title, base, value}: EntryMergeSideProps) {
 }
 
 interface EntryMergeValueProps {
+  field: EntryMergeField
+  context: CompactFieldContext
   value: unknown
 }
 
-function EntryMergeValue({value}: EntryMergeValueProps) {
-  const text = summary(value)
+function EntryMergeValue({field, context, value}: EntryMergeValueProps) {
+  if (isEmptyValue(value))
+    return (
+      <span className={styles.EntryMergeModal.value({empty: true})}>Empty</span>
+    )
   return (
-    <span className={styles.EntryMergeModal.value({empty: !text})}>
-      {text || 'Empty'}
+    <span className={styles.EntryMergeModal.value()}>
+      {field.field ? (
+        <CompactField field={field.field} value={value} {...context} />
+      ) : (
+        String(value)
+      )}
     </span>
   )
 }
 
+/** A row, block or property of a field's value and the field rendering it */
 interface Part {
   id: string
-  text: string
   value: unknown
+  label?: string
+  field?: Field
+  /** Rendered with its row type's fields */
+  row?: Type
 }
 
 interface Change extends Part {
   state: 'same' | 'added' | 'changed' | 'removed'
 }
 
-/** The rows, paragraphs or properties of a value */
-function parts(value: unknown): Array<Part> {
-  if (Array.isArray(value))
-    return value.map((item, index) => ({
-      id:
-        isRecord(item) && typeof item._id === 'string' ? item._id : `${index}`,
-      text: summary(item),
-      value: item
+interface EntryMergePartProps {
+  part: Part
+  context: CompactFieldContext
+}
+
+function EntryMergePart({part, context}: EntryMergePartProps) {
+  if (part.row && isRecord(part.value))
+    return (
+      <>
+        <Badge size="sm">{Type.label(part.row)}</Badge>{' '}
+        <CompactRecordFields
+          fields={Type.fields(part.row)}
+          value={part.value}
+          {...context}
+        />
+      </>
+    )
+  return (
+    <>
+      {part.label && <Text weight="medium">{part.label}: </Text>}
+      {part.field ? (
+        <CompactField field={part.field} value={part.value} {...context} />
+      ) : (
+        String(part.value ?? '')
+      )}
+    </>
+  )
+}
+
+/** The parts of a value as its field stores them */
+function parts(field: Field | undefined, value: unknown): Array<Part> {
+  if (field instanceof ListField && Array.isArray(value)) {
+    const schema = Field.options(field).schema as Record<string, Type>
+    return value.map((row, index) => ({
+      id: rowId(row, index),
+      value: row,
+      row: isRecord(row) ? schema[row._type as string] : undefined
     }))
-  if (isRecord(value))
-    return entries(value)
-      .filter(([key]) => !key.startsWith('_'))
-      .map(([key, item]) => ({id: key, text: summary(item), value: item}))
-  return [{id: '', text: summary(value), value}]
+  }
+  if (
+    (field instanceof ListFieldBase || field instanceof RichTextField) &&
+    Array.isArray(value)
+  )
+    return value.map((item, index) => ({
+      id: rowId(item, index),
+      value: [item],
+      field
+    }))
+  if (field instanceof RecordField && isRecord(value)) {
+    const fields = Type.fields(Field.options(field).fields as Type)
+    return entries(fields)
+      .filter(([, inner]) => !Field.options(inner).hidden)
+      .map(([key, inner]) => ({
+        id: key,
+        value: value[key],
+        label: Field.label(inner),
+        field: inner
+      }))
+  }
+  return [{id: '', value, field}]
+}
+
+function rowId(row: unknown, index: number) {
+  return isRecord(row) && typeof row._id === 'string' ? row._id : `${index}`
 }
 
 /** The parts of a value compared to the value it was edited from */
-function changes(base: unknown, value: unknown): Array<Change> {
-  const before = parts(base)
-  const after = parts(value)
+function changes(
+  field: EntryMergeField,
+  base: unknown,
+  value: unknown
+): Array<Change> {
+  const before = parts(field.field, base)
+  const after = parts(field.field, value)
   const byId = new Map(before.map(part => [part.id, part]))
   const ids = new Set(after.map(part => part.id))
   return [
@@ -333,28 +434,4 @@ function changes(base: unknown, value: unknown): Array<Change> {
       .filter(part => !ids.has(part.id))
       .map((part): Change => ({...part, state: 'removed'}))
   ]
-}
-
-/** A line of text for a value: rows are counted, rich text shows its text */
-function summary(value: unknown): string {
-  if (value === undefined || value === null) return ''
-  if (typeof value !== 'object') return String(value)
-  if (Array.isArray(value)) {
-    const rows = value.every(item => isRecord(item) && '_id' in item)
-    if (rows && value.length > 0)
-      return value.length === 1 ? '1 item' : `${value.length} items`
-    return plainText(value)
-  }
-  const text = entries(value).find(
-    ([key, field]) => !key.startsWith('_') && typeof field === 'string' && field
-  )
-  return plainText(value) || (text?.[1] as string | undefined) || ''
-}
-
-function plainText(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (Array.isArray(value)) return value.map(plainText).join(' ').trim()
-  if (!isRecord(value)) return ''
-  if (typeof value.text === 'string') return value.text
-  return Array.isArray(value.content) ? plainText(value.content) : ''
 }
