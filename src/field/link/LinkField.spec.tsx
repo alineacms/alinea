@@ -396,7 +396,8 @@ test('keeps static picker conditions outside an entry scope', async ({
   const picker = page.getByRole('dialog', {
     name: 'Pick a link in expanded view'
   })
-  // The matches of the condition are listed, without folders to browse
+  // Navigation is disabled: the matches of the condition are listed, there
+  // is no browsing to switch to
   await expect(picker.getByRole('row', {name: /^Release notes /})).toBeVisible()
   await expect(
     picker.getByRole('radiogroup', {name: 'Explorer results'})
@@ -483,6 +484,35 @@ test('expands the compact entry picker into the explorer modal', async ({
   await expect(page.getByRole('button', {name: 'Simple'})).toBeVisible()
   await expect(page.getByLabel('Explorer view')).toBeVisible()
   await expect(page.getByRole('button', {name: 'Select'})).toBeVisible()
+  // Without a condition browsing is all there is
+  await expandedPicker.getByRole('searchbox', {name: 'Search'}).fill('')
+  await expect(page.getByRole('row', {name: /^Home /})).toBeVisible()
+  await expect(
+    expandedPicker.getByRole('radiogroup', {name: 'Explorer results'})
+  ).toHaveCount(0)
+})
+
+test('puts the search and close button on the first row of a narrow expanded picker', async ({
+  mount,
+  page
+}) => {
+  await page.setViewportSize({width: 375, height: 812})
+  await mount(<EntryPickerSingle />)
+  await page.getByRole('button', {name: 'Pick an entry'}).click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  await expect(picker.getByRole('button', {name: 'Simple'})).toBeVisible()
+  const search = await picker
+    .getByRole('searchbox', {name: 'Search'})
+    .boundingBox()
+  const scope = await picker
+    .getByRole('group', {name: 'Explorer scope'})
+    .boundingBox()
+  expect(search?.width).toBeGreaterThanOrEqual(200)
+  // The location dropdowns start the next row instead of squeezing the search
+  expect(scope!.y).toBeGreaterThanOrEqual(search!.y + search!.height)
 })
 
 test('searches all roots or workspaces from the location dropdowns', async ({
