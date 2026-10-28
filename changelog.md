@@ -1,6 +1,32 @@
 # Changelog
 
 ## [2.0.0]
+
+### Upgrading from 2.0.0-rc1
+- `settings` on `Config.type` and `Config.document` is replaced by `tabs`:
+  move the fields into a tab, eg.
+  `tabs: {settings: Field.tab('Settings', {fields: {...}})}`. List rows and
+  rich text blocks show their tabs in the settings sheet, where the settings
+  were.
+- `showMedia` on entry pickers is removed, it had no effect: image and file
+  pickers list uploaded files of every file type.
+- `Root.mediaI18n` is removed, use `Root.fieldI18n`. `Config.media({i18n})`
+  translates fields: a media file is a single entry whose alt text holds a
+  value per locale.
+- Draft mode queries with the new `'preview'` status instead of
+  `'preferDraft'`: previews leave out archived entries, except the entry
+  being previewed, which shows as published.
+- `inline: true` hides the label of number fields again, and the fold toggle
+  of lists.
+- Uploads become the first file type of their location that accepts them,
+  locations without file types still create media files. `MediaFile` and
+  `MediaLibrary` stay reserved names, define them with `Config.mediaFile` and
+  `Config.mediaLibrary` to change them.
+- Projects that skip content-only builds on Vercel should take the new
+  `ignoreCommand` from the instant publishing guide: it only skips commits
+  made by the dashboard, which carry an `Alinea-Content` trailer.
+
+### Changes
 - Rebuild the dashboard on React Aria Components, with keyboard navigation,
   focus management and screen reader support throughout, a new theme with dark
   mode, a responsive layout, entry history and a references panel that shows
