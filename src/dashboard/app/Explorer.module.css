@@ -175,8 +175,9 @@
   }
 
   .ExplorerHeader.is-navigation .Explorer-toolbar {
-    flex: 1 1 0;
+    flex: 0 0 auto;
     width: auto;
+    margin-left: auto;
   }
 }
 
