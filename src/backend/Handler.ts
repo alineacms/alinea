@@ -40,7 +40,17 @@ import {within} from '#/core/util/Async.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {isAbsolute, normalize, relative} from '#/core/util/Paths.js'
-import {array, number, object, optional, string} from 'cito'
+import {
+  array,
+  boolean,
+  literal,
+  nullable,
+  number,
+  object,
+  optional,
+  string,
+  union
+} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
@@ -52,6 +62,15 @@ import {createThrottledSync, syncWait} from './util/Syncable.js'
 const PrepareBody = object({
   filename: string,
   size: optional(number)
+})
+
+const HeartbeatBody = object({
+  entryId: string,
+  locale: nullable(string),
+  session: string,
+  ask: optional(boolean),
+  answer: optional(union(literal('allow'), literal('decline'))),
+  leave: optional(boolean)
 })
 
 export interface Handler {
@@ -601,6 +620,14 @@ export function createHandler({
         const data = (await body) as DraftTransport
         const draft = {...data, draft: base64.parse(data.draft)}
         return Response.json(await cnx.storeDraft(draft))
+      }
+
+      // Locks
+      if (action === HandleAction.Lock && request.method === 'POST') {
+        const user = expectUser()
+        expectJson()
+        const beat = HeartbeatBody(await body)
+        return Response.json(await cnx.heartbeat(beat, user.claims))
       }
 
       return new Response('Bad Request', {status: 400})

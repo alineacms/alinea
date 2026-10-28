@@ -1912,3 +1912,32 @@ test('rejects unauthenticated sha requests like tree requests', async () => {
   test.is(tree.status, 401)
   test.is(sha.status, 401)
 })
+
+test('tells an editor who holds the entry they open', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  let user: User = {sub: 'ada', name: 'Ada'}
+  const handle = createHandler({
+    cms,
+    db: new LocalDB(cms.config),
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {...context, token: 'test', user}
+        }
+      })
+    }
+  })
+  const beat = (session: string) =>
+    new Request('http://localhost/api?action=lock', {
+      method: 'POST',
+      headers: {accept: 'application/json', 'content-type': 'application/json'},
+      body: JSON.stringify({entryId: 'locked-page', locale: null, session})
+    })
+  const first = await handle(beat('x'), requestContext())
+  test.equal(await first.json(), {holds: true})
+  user = {sub: 'bob', name: 'Bob'}
+  const second = await handle(beat('y'), requestContext())
+  const status = await second.json()
+  test.is(status.holds, false)
+  test.equal(status.holder.user, {sub: 'ada', name: 'Ada'})
+})

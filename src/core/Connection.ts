@@ -2,6 +2,7 @@ import type {Request, Response} from '@alinea/iso'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
+import type {EditStatus, Heartbeat} from './EditLock.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import type {GetBlobsOptions} from './source/Source.js'
@@ -54,6 +55,7 @@ export interface LocalConnection
     query: Query
   ): Promise<AnyQueryResult<Query>>
   user(): Promise<User | undefined>
+  heartbeat(beat: Heartbeat): Promise<EditStatus>
 }
 
 export interface SyncApi {
@@ -81,6 +83,11 @@ export interface DraftsApi {
   storeDraft(draft: Draft): Promise<void>
 }
 
+/** Who is editing an entry, see `EditLock` */
+export interface LocksApi {
+  heartbeat(beat: Heartbeat, user: User): Promise<EditStatus>
+}
+
 export interface UploadsApi {
   prepareUpload(
     file: string,
@@ -91,7 +98,14 @@ export interface UploadsApi {
 }
 
 export interface Connection
-  extends CommitApi, SyncApi, HistoryApi, DraftsApi, UploadsApi, UserApi {}
+  extends
+    CommitApi,
+    SyncApi,
+    HistoryApi,
+    DraftsApi,
+    LocksApi,
+    UploadsApi,
+    UserApi {}
 
 export interface RequestContext {
   isDev: boolean
