@@ -1644,6 +1644,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
       description={options.help}
       label={options.inline ? undefined : options.label}
       required={options.required}
+      readOnly={readOnly}
       error={error}
       shared={options.shared}
     >
@@ -1750,6 +1751,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     <>
       <ListLabel
         required={options.required}
+        readOnly={readOnly}
         aria-label={
           hasRows
             ? allExpanded
@@ -1763,7 +1765,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         onClick={toggleAll}
         description={options.help}
         shared={options.shared}
-        showFold={!options.inline && hasFoldableRows}
+        showFold={hasFoldableRows}
         inline={options.inline}
       >
         {options.label}

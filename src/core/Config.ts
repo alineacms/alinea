@@ -3,6 +3,7 @@ import {
   type FileFields,
   fileTypeAccepts,
   isFileType,
+  isMediaLibrary,
   MediaFile,
   MediaLibrary
 } from '#/core/media/MediaTypes.js'
@@ -17,7 +18,7 @@ import {getScope} from './Scope.js'
 import type {Tracer} from './Trace.js'
 import {Type} from './Type.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, values} from './util/Objects.js'
+import {entries, fromEntries, values} from './util/Objects.js'
 import * as paths from './util/Paths.js'
 import {Workspace, type WorkspaceInternal} from './Workspace.js'
 import {RecordField} from './field/RecordField.js'
@@ -221,7 +222,7 @@ export namespace Config {
       ? config.schema[location.parentType]
       : undefined
     // Media folders hold what their root holds
-    const inRoot = !parent || parent === MediaLibrary
+    const inRoot = !parent || isMediaLibrary(parent)
     const contains = inRoot ? Root.contains(root) : Type.contains(parent)
     const names = Schema.contained(config.schema, contains).filter(name =>
       isFileType(config.schema[name])
@@ -360,31 +361,41 @@ function normalizeUrlPath(value: string): string {
 
 const normalized = new WeakSet()
 
+function creator(name: string): string {
+  return `Config.${name[0].toLowerCase()}${name.slice(1)}`
+}
+
 /** Create a new config instance */
 export function createConfig<Definition extends Config>(
   definition: Definition
 ): Definition {
   if (normalized.has(definition)) return definition
-  const mediaFile = definition.schema.MediaFile ?? MediaFile
-  if (mediaFile !== MediaFile && getReplaced(mediaFile) !== MediaFile)
-    throw new Error(
-      `"MediaFile" is a reserved Type name, create it with Config.mediaFile`
-    )
-  for (const [name, type] of entries(definition.schema))
-    if (name !== 'MediaFile' && getReplaced(type))
+  // Built-in types the schema only defines with their Config function
+  const builtins = new Map<string, Type>([
+    ['MediaLibrary', MediaLibrary],
+    ['MediaFile', MediaFile]
+  ])
+  const schema = {...definition.schema, ...fromEntries(builtins)}
+  for (const [name, type] of entries(definition.schema)) {
+    const builtin = builtins.get(name)
+    const replaced = getReplaced(type)
+    if (builtin && type !== builtin && replaced !== builtin)
       throw new Error(
-        `Type "${name}" is created with Config.mediaFile, name it "MediaFile"`
+        `"${name}" is a reserved Type name, create it with ${creator(name)}`
       )
-  if (
-    definition.schema.MediaLibrary &&
-    definition.schema.MediaLibrary !== MediaLibrary
-  )
-    throw new Error(`"MediaLibrary" is a reserved Type name`)
+    if (replaced && replaced !== builtin) {
+      const [key] = [...builtins].find(([, type]) => type === replaced)!
+      throw new Error(
+        `Type "${name}" is created with ${creator(key)}, name it "${key}"`
+      )
+    }
+    if (builtin) schema[name] = type
+  }
   const res = {
     ...definition,
     roles: {admin, ...definition.roles},
     publicDir: definition.publicDir ?? '/public',
-    schema: {...definition.schema, MediaLibrary, MediaFile: mediaFile}
+    schema
   }
   Config.validate(res)
   normalized.add(res)

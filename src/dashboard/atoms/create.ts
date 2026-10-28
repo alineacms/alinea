@@ -1,6 +1,6 @@
 import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
-import {MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isMediaLibrary} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
@@ -75,7 +75,7 @@ export const createEntryAtom = atom(
       parentId: request.parentId,
       locale: request.locale,
       status:
-        type === MediaLibrary || !config.enableDrafts ? 'published' : 'draft',
+        isMediaLibrary(type) || !config.enableDrafts ? 'published' : 'draft',
       insertOrder:
         parentInsertOrder && parentInsertOrder !== 'free'
           ? parentInsertOrder

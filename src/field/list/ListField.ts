@@ -24,9 +24,10 @@ export interface ListOptions<Definitions extends Schema> extends Omit<
   width?: number
   /** Add instructional text to a field */
   help?: ReactNode
-  /** Display a minimal version */
+  /** Display a minimal version, without label and fold */
   inline?: boolean
-  /** Show the rows folded when the entry opens, added rows start open */
+  /** Show the rows folded when the entry opens, added rows start open.
+   * Ignored for inline lists, which can not be folded */
   collapsed?: boolean
   /** Hide this list field */
   hidden?: boolean

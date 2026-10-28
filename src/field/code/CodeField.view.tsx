@@ -89,6 +89,7 @@ export function CodeEditorInput({
       description={description}
       error={errorMessage}
       required={isRequired}
+      readOnly={readOnly}
       shared={shared}
     >
       <div

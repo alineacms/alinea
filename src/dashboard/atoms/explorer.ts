@@ -10,8 +10,8 @@ import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {
   FileData,
   isFileType,
-  MediaFile,
-  MediaLibrary
+  isMediaLibrary,
+  MediaFile
 } from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Policy, type Resource} from '#/core/Role.js'
@@ -425,7 +425,7 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
   const schema = config.schema
   const wanted = items.map(item => {
     const type = schema[item.type]
-    if (!type || isFileType(type) || type === MediaLibrary)
+    if (!type || isFileType(type) || isMediaLibrary(type))
       return {thumbnail: undefined, links: []}
     return {
       thumbnail: thumbnails ? cardThumbnailId(get, overview, item) : undefined,

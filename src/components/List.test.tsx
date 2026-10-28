@@ -104,6 +104,18 @@ test('ListLabel with a fold toggles all rows', () => {
   expect(onClick).toHaveBeenCalledTimes(1)
 })
 
+test('an inline ListLabel has no fold', () => {
+  render(
+    <ListLabel expanded hasRows inline description="Help">
+      Sections
+    </ListLabel>
+  )
+
+  expect(screen.queryByRole('button')).toBeNull()
+  expect(screen.queryByText('Sections')).toBeNull()
+  expect(screen.getByText('Help')).toBeTruthy()
+})
+
 function EmptyIcon() {
   return <svg data-testid="empty-icon" />
 }

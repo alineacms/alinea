@@ -30,6 +30,7 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
       <Field
         description={options.help}
         required={options.required}
+        readOnly={options.readOnly}
         error={error}
         shared={options.shared}
       >
@@ -43,6 +44,7 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
         expanded={expanded}
         hasRows
         required={options.required}
+        readOnly={options.readOnly}
         description={options.help}
         shared={options.shared}
         onClick={() => setExpanded(!expanded)}
