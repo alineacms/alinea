@@ -219,6 +219,7 @@ export interface ListLabelProps extends Omit<
   readOnly?: boolean
   showFold?: boolean
   description?: ReactNode
+  /** Hides the label and with it the fold, which would float alone */
   inline?: boolean
 }
 
@@ -235,7 +236,8 @@ export function ListLabel({
   inline = false,
   ...props
 }: ListLabelProps) {
-  if (inline && !showFold && !description && !shared) return null
+  const fold = showFold && !inline
+  if (inline && !description && !shared) return null
   const text = !inline && (
     <span className={styles.ListLabel.title.text()}>
       {children}
@@ -255,7 +257,7 @@ export function ListLabel({
       data-slot="list-label"
       className={styles.ListLabel({readOnly}, styler.merge({className}))}
     >
-      {showFold ? (
+      {fold ? (
         <Button
           {...props}
           variant="ghost"

@@ -1765,7 +1765,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         onClick={toggleAll}
         description={options.help}
         shared={options.shared}
-        showFold={!options.inline && hasFoldableRows}
+        showFold={hasFoldableRows}
         inline={options.inline}
       >
         {options.label}

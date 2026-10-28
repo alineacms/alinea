@@ -133,8 +133,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
     [schemaEntries]
   )
   const readOnly = Boolean(options.readOnly)
-  // A fold without a label next to it is a stray chevron
-  const labelled = Boolean(options.label)
+  // A fold without a label next to it is a stray chevron, so lists without
+  // a visible label are always unfolded
+  const labelled = Boolean(options.label) && !options.inline
   const hasRows = nodes.length > 0
   const canCreate = options.max === undefined || nodes.length < options.max
   const rowIdsAtom = useMemo(
@@ -147,7 +148,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
   )
   const rowIds = useAtomValueRaw(rowIdsAtom)
   const [foldedIds, setFoldedIds] = useState<Set<string>>(
-    () => new Set(options.collapsed ? rowIds : [])
+    () => new Set(options.collapsed && labelled ? rowIds : [])
   )
   const moveRowAtom = useMemo(
     () =>
@@ -254,7 +255,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
         description={options.help}
         shared={options.shared}
         showFold={labelled}
-        inline={options.inline || !labelled}
+        inline={!labelled}
       >
         {options.label}
       </ListLabel>

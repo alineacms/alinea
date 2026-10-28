@@ -360,6 +360,34 @@ export function WithoutLabel() {
   )
 }
 
+const inlineType = type('Inline', {
+  fields: {
+    quotes: list('Quotes', {
+      schema: {quote: quoteBlock},
+      inline: true,
+      collapsed: true,
+      initialValue: [{_type: 'quote', quote: 'First', author: 'Alinea'}]
+    })
+  }
+})
+
+/** An inline list hides its label and fold, its rows are always unfolded */
+export function Inline() {
+  const node = useMemo(
+    () => new ReactiveNode(Type.initialValue(inlineType) as object),
+    []
+  )
+  return (
+    <StoryProvider views={views}>
+      <BlockSheetStoryFrame>
+        <div style={storyStyle}>
+          <NodeEditor node={node} type={inlineType} />
+        </div>
+      </BlockSheetStoryFrame>
+    </StoryProvider>
+  )
+}
+
 export default {
   title: 'Fields / ListField'
 }
