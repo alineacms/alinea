@@ -206,6 +206,7 @@ interface RichTextFixtureProps {
     | typeof readOnlyImageEntry
     | typeof customEntry
     | typeof readOnlyEntry
+    | typeof inlineBlocksEntry
   withDashboard?: boolean
   withSheet?: boolean
 }
@@ -359,4 +360,18 @@ const inlineEntry = type('Inline entry', {
 
 export function RichTextInlineStory() {
   return <RichTextFixture initialBody={[]} entryType={inlineEntry} />
+}
+
+const inlineBlocksEntry = type('Inline blocks entry', {
+  fields: {
+    body: richText('Body', {
+      inline: true,
+      required: true,
+      schema: {Callout: callout}
+    })
+  }
+})
+
+export function RichTextInlineBlocksStory() {
+  return <RichTextFixture initialBody={[]} entryType={inlineBlocksEntry} />
 }

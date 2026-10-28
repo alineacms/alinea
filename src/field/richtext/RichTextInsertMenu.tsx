@@ -38,10 +38,19 @@ export function RichTextInsertMenu({
       })),
     [schema]
   )
+  const options = useMemo(
+    () => ({
+      // The menu is placed after the caret, which in an empty field sits in
+      // front of the placeholder, so move it past the placeholder text
+      offset: () => 8 + placeholderWidth(editor)
+    }),
+    [editor]
+  )
   return (
     <FloatingMenu
       editor={editor}
       className={styles.RichTextInsertMenu()}
+      options={options}
       shouldShow={({editor, state}) => {
         const {selection} = state
         return (
@@ -79,4 +88,10 @@ export function RichTextInsertMenu({
       </Popover>
     </FloatingMenu>
   )
+}
+
+function placeholderWidth(editor: Editor): number {
+  const {node} = editor.view.domAtPos(editor.state.selection.from)
+  if (!(node instanceof Element)) return 0
+  return Number.parseFloat(getComputedStyle(node, '::before').width) || 0
 }

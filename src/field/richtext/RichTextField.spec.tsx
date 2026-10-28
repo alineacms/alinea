@@ -5,6 +5,7 @@ import {
   RichTextImageDisabledStory,
   RichTextImageStory,
   RichTextImportedListStory,
+  RichTextInlineBlocksStory,
   RichTextLargeStory,
   RichTextLegacyEmptyStory,
   RichTextPlainStory,
@@ -867,6 +868,30 @@ test('inserts a block at the active text position', async ({mount, page}) => {
     '{"_type":"paragraph"}'
   )
   expect(errors).toEqual([])
+})
+
+test('places the insert control beside the placeholder', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextInlineBlocksStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.click()
+  const insert = page.getByRole('button', {name: 'Insert block'})
+  await expect(insert).toBeVisible()
+  const placeholderEnd = await editor
+    .locator('[data-placeholder]')
+    .evaluate(element => {
+      const context = document.createElement('canvas').getContext('2d')!
+      context.font = getComputedStyle(element).font
+      const text = element.getAttribute('data-placeholder')!
+      return (
+        element.getBoundingClientRect().left + context.measureText(text).width
+      )
+    })
+  const box = await insert.boundingBox()
+  expect(box!.x).toBeGreaterThan(placeholderEnd)
 })
 
 /**
