@@ -7,7 +7,9 @@ import {
   PageHeader,
   PageTitle,
   SearchField,
-  Switch
+  Switch,
+  ToggleGroup,
+  ToggleGroupItem
 } from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import type {OverviewActionProps, OverviewHeaderProps} from '#/core/Overview.js'
@@ -35,7 +37,12 @@ import {
   type ExplorerParent,
   type ExplorerReadyPage
 } from '../atoms/explorer.js'
-import {IcRoundSearch, IcRoundUploadFile} from '../icons.js'
+import {
+  IcRoundAccountTree,
+  IcRoundFilterList,
+  IcRoundSearch,
+  IcRoundUploadFile
+} from '../icons.js'
 import css from './Explorer.module.css'
 import {ExplorerBatchActions} from './ExplorerBatchActions.js'
 import {ExplorerBreadcrumbs, ExplorerParentBack} from './ExplorerBreadcrumbs.js'
@@ -357,6 +364,43 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
   )
 }
 
+interface ExplorerResultModeProps {
+  explorer: DashboardExplorer
+  page: ExplorerReadyPage
+}
+
+/** Switches between browsing folders and the matches below the location */
+function ExplorerResultMode({explorer, page}: ExplorerResultModeProps) {
+  const setResultMode = useSetAtom(explorer.resultMode)
+  const [, startTransition] = useTransition()
+  const searching = Boolean(page.search.trim())
+  const canBrowse = explorer.canBrowse && !searching
+  const canFilter = explorer.hasCondition || explorer.pickChildren || searching
+  // A toggle with a single mode to pick does nothing
+  if (!canBrowse || !canFilter) return null
+  return (
+    <ToggleGroup
+      type="single"
+      aria-label="Explorer results"
+      className={styles.Explorer.resultMode()}
+      value={page.resultMode}
+      variant="outline"
+      size="sm"
+      onValueChange={value => {
+        if (value !== 'browse' && value !== 'matches') return
+        startTransition(() => setResultMode(value))
+      }}
+    >
+      <ToggleGroupItem value="browse" icon={IcRoundAccountTree}>
+        Browse
+      </ToggleGroupItem>
+      <ToggleGroupItem value="matches" icon={IcRoundFilterList}>
+        Filtered
+      </ToggleGroupItem>
+    </ToggleGroup>
+  )
+}
+
 function ExplorerHeaderParentMain({
   explorer,
   parent: current,
@@ -587,6 +631,7 @@ export function ExplorerHeader({
             className={styles.ExplorerHeader.location()}
             role="group"
           >
+            <ExplorerResultMode explorer={explorer} page={page} />
             <ExplorerLocale explorer={explorer} page={page} />
             <ExplorerBreadcrumbs explorer={explorer} page={page} />
           </div>

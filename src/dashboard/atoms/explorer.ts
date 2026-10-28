@@ -633,6 +633,8 @@ export class ExplorerAtoms {
   readonly searchDepth
   readonly supportsInlineExpansion
   readonly pickChildren
+  /** Whether folders can be browsed, besides listing filtered matches */
+  readonly canBrowse: boolean
   readonly hasCondition
   readonly permission: Permission
   readonly canSearchEverything: Atom<boolean>
@@ -758,6 +760,7 @@ export class ExplorerAtoms {
     this.linkedKeys = new Set<Key>(options.initialSelection)
     this.supportsInlineExpansion = options.nestedNavigation ?? false
     this.pickChildren = options.pickChildren ?? false
+    this.canBrowse = options.enableNavigation !== false && !this.pickChildren
     this.hasCondition = Boolean(options.condition)
     this.permission = options.permission ?? Permission.Read
     this.canSearchEverything = atom(

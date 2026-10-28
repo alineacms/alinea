@@ -84,6 +84,10 @@
   flex-grow: 1 !important;
 }
 
+.Explorer-resultMode {
+  flex: 0 0 auto;
+}
+
 .Explorer-searchScope {
   flex: 0 0 auto;
   font-size: 12px;
@@ -159,6 +163,20 @@
   .Explorer-toolbar {
     width: 100%;
     flex-wrap: wrap;
+  }
+
+  /* The search gets a row of its own, the scope and tools share the next */
+  .ExplorerHeader.is-navigation .Explorer-searchSlot {
+    display: contents;
+  }
+
+  .ExplorerHeader.is-navigation .Explorer-search {
+    flex-basis: 100%;
+  }
+
+  .ExplorerHeader.is-navigation .Explorer-toolbar {
+    flex: 1 1 0;
+    width: auto;
   }
 }
 
