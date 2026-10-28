@@ -194,18 +194,16 @@ function EntryMergeChoices({
   choice,
   onChoice
 }: EntryMergeChoicesProps) {
-  const option = styles.EntryMergeModal.option()
   return (
     <RadioGroup
       aria-label={field.label}
+      variant="card"
       orientation="horizontal"
       value={choice}
       onValueChange={value => onChoice(value as MergeChoice)}
-      className={styles.EntryMergeModal.choices()}
     >
       <RadioGroupItem
         value="yours"
-        className={option}
         description={
           <EntryMergeValue
             field={field}
@@ -218,7 +216,6 @@ function EntryMergeChoices({
       </RadioGroupItem>
       <RadioGroupItem
         value="theirs"
-        className={option}
         description={
           <EntryMergeValue
             field={field}
@@ -230,9 +227,7 @@ function EntryMergeChoices({
         {theirLabel}
       </RadioGroupItem>
       {!field.simple && (
-        <RadioGroupItem value="merge" className={option}>
-          Combine both
-        </RadioGroupItem>
+        <RadioGroupItem value="merge">Combine both</RadioGroupItem>
       )}
     </RadioGroup>
   )

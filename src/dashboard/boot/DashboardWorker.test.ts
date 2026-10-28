@@ -968,14 +968,47 @@ test('cancels a save the remote rejects for its base', async () => {
   expect(title).toBe('Remote title')
 })
 
-async function createSyncedFixture() {
+test('keeps a save the remote did not take to retry', async () => {
+  const {
+    db: remoteDB,
+    worker,
+    recipe
+  } = await createSyncedFixture({
+    mutate: () => Promise.reject(new Error('Remote unavailable'))
+  })
+  const db = await worker.db
+  const base = await db.get({id: recipe._id, select: Entry.fileHash})
+
+  const saved = worker.queue('unsaved', [
+    {
+      op: 'update',
+      id: recipe._id,
+      locale: null,
+      status: 'published',
+      base,
+      set: {title: 'Local title'}
+    }
+  ])
+
+  await expect(saved).rejects.toMatchObject({name: 'PendingMutationError'})
+  expect(
+    worker.activities().find(activity => activity.id === 'unsaved')
+  ).toMatchObject({status: 'failed', error: 'Remote unavailable'})
+  const title = await remoteDB.get({id: recipe._id, select: Entry.title})
+  expect(title).toBe(recipe.title)
+})
+
+async function createSyncedFixture(client?: Partial<LocalConnection>) {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteSource = new MemorySource()
   await syncWith(remoteSource, fixture)
   const db = new LocalDB(cms.config, remoteSource)
   await db.sync()
   const worker = new DashboardWorker(new MemorySource())
-  await worker.load('synced', cms.config, createTestConnection(db))
+  await worker.load('synced', cms.config, {
+    ...createTestConnection(db),
+    ...client
+  })
   await worker.sync()
   const recipe = await db.get({
     type: cms.schema.DemoRecipe,

@@ -32,12 +32,12 @@ import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
 import {
   type EntryMerge,
-  type EntryMergeLink,
   entryMerge,
   linkedIds,
   type MergeChoice
 } from './entryMerge.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
+import {linkedEntryVersions, pickLinkedEntry} from './linked.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
 import {ReactiveNode, rebaseValue} from './ReactiveNode.js'
 import {requestUploadsAtom} from './upload.js'
@@ -569,6 +569,9 @@ export class EntryLocaleAtoms {
       set(node.rebase, {checkpoint, saved: saved.data})
       return true
     } catch (error) {
+      // Kept to retry in the activity, the editor keeps the edits unsaved
+      if (error instanceof Error && error.name === 'PendingMutationError')
+        return false
       if (!isEntryConflict(error)) throw error
     }
     const current = await graph.first({
@@ -597,13 +600,15 @@ export class EntryLocaleAtoms {
     if (conflicts.length === 0) {
       this.#bases.set(node, current.fileHash)
       set(node.rebase, {checkpoint: loaded, saved: theirs})
-      set(
-        this.mergeNotice,
-        name
-          ? `Merged with changes ${name} saved meanwhile`
-          : 'Merged with changes saved meanwhile'
-      )
-      return this.#save(get, set, node, status)
+      const saved = await this.#save(get, set, node, status)
+      if (saved)
+        set(
+          this.mergeNotice,
+          name
+            ? `Merged with changes ${name} saved meanwhile`
+            : 'Merged with changes saved meanwhile'
+        )
+      return saved
     }
     const keys = Array.from(new Set(conflicts.map(path => path[0])))
     const ids = linkedIds(typeConfig, keys, [loaded, mine, theirs])
@@ -631,29 +636,13 @@ export class EntryLocaleAtoms {
 
   /** Titles and previews of the linked entries the user can read */
   async #links(get: Getter, ids: Array<string>) {
-    const links = new Map<string, EntryMergeLink>()
-    if (ids.length === 0) return links
-    const policy = get(policyAtom)
-    const rows = await get(graphAtom).find({
-      id: {in: ids},
-      status: 'preferDraft',
-      select: {
-        id: Entry.id,
-        title: Entry.title,
-        locale: Entry.locale,
-        workspace: Entry.workspace,
-        root: Entry.root,
-        parents: Entry.parents,
-        preview: FileData.preview
-      }
-    })
-    for (const row of rows) {
-      if (!policy.check(Permission.Read, row)) continue
-      // A linked entry shows in the language of this one when it has it
-      if (links.has(row.id) && row.locale !== this.requestedLocale) continue
-      links.set(row.id, {title: row.title, preview: row.preview || undefined})
-    }
-    return links
+    const versions = await linkedEntryVersions(get, ids, Permission.Read)
+    return new Map(
+      ids.flatMap(id => {
+        const entry = pickLinkedEntry(versions.get(id), this.requestedLocale)
+        return entry ? [[id, entry] as const] : []
+      })
+    )
   }
 
   saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
@@ -693,9 +682,11 @@ export class EntryLocaleAtoms {
       status: config.enableDrafts ? 'draft' : 'published',
       set: data,
       user: get(userAtom),
-      select: Entry.data
+      select: {data: Entry.data, fileHash: Entry.fileHash}
     })
-    set(node.rebase, {checkpoint, saved})
+    // The editor stays open on the translation, later saves start from it
+    this.#bases.set(node, saved.fileHash)
+    set(node.rebase, {checkpoint, saved: saved.data})
   })
 
   #activeEntry(get: Getter) {

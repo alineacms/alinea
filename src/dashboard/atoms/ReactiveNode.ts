@@ -92,19 +92,28 @@ function rebaseRows(
       )
     )
     .filter(row => row !== undefined) as Array<Row>
-  // Rows of a list carry their order, other rows keep the edited order
-  if (result.every(row => typeof row._index === 'string'))
-    result.sort((a, b) => (a._index! < b._index! ? -1 : 1))
+  // Rows of a list carry their order, other rows keep the edited order. Rows
+  // both inserted at one place can share a key, which gets repaired.
+  const ordered = result.every(row => typeof row._index === 'string')
+    ? withOrderKeys(result.sort(byIndex))
+    : result
   const same =
-    result.length === saved.length &&
-    result.every((row, index) => row === saved[index])
-  return same ? saved : result
+    ordered.length === saved.length &&
+    ordered.every((row, index) => row === saved[index])
+  return same ? saved : ordered
 }
 
-function isRows(value: unknown): value is Array<Row> {
+function byIndex(a: Row, b: Row) {
+  if (a._index !== b._index) return a._index! < b._index! ? -1 : 1
+  return a._id < b._id ? -1 : a._id > b._id ? 1 : 0
+}
+
+/** Rows pair by their `_id`, which must be unique to tell them apart */
+export function isRows(value: unknown): value is Array<Row> {
+  if (!Array.isArray(value)) return false
+  const ids = value.map(item => isRecord(item) && item._id)
   return (
-    Array.isArray(value) &&
-    value.every(item => isRecord(item) && typeof item._id === 'string')
+    ids.every(id => typeof id === 'string') && new Set(ids).size === ids.length
   )
 }
 

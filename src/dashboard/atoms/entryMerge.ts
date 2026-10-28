@@ -5,7 +5,7 @@ import {RichTextField} from '#/core/field/RichTextField.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {LocalisedField} from '#/field/localiser/Localiser.js'
-import {equal} from './ReactiveNode.js'
+import {equal, isRows} from './ReactiveNode.js'
 
 export type MergeChoice = 'merge' | 'yours' | 'theirs'
 
@@ -21,8 +21,6 @@ export interface EntryMergeField {
   base: unknown
   yours: unknown
   theirs: unknown
-  /** Where in the field both changed it */
-  paths: Array<Array<string>>
 }
 
 export interface EntryMerge {
@@ -72,16 +70,19 @@ export function entryMerge({
     return field ? Field.label(field) : key
   }
   const keys = Array.from(new Set(conflicts.map(path => path[0])))
-  const fields = keys.map(key => ({
-    key,
-    label: label(key),
-    field: Type.field(type, key),
-    simple: !combines(Type.field(type, key)),
-    base: loaded[key],
-    yours: mine[key],
-    theirs: theirs[key],
-    paths: conflicts.filter(path => path[0] === key).map(path => path.slice(1))
-  }))
+  const fields = keys.map(key => {
+    const field = Type.field(type, key)
+    const values = [loaded[key], mine[key], theirs[key]]
+    return {
+      key,
+      label: label(key),
+      field,
+      simple: !combines(field, values),
+      base: loaded[key],
+      yours: mine[key],
+      theirs: theirs[key]
+    }
+  })
   const merged = Object.keys(theirs)
     .filter(key => !keys.includes(key))
     .filter(
@@ -91,14 +92,17 @@ export function entryMerge({
   return {name, date, merged, fields, locale, links}
 }
 
-/** Fields of rows, blocks or other fields merge their parts separately */
-function combines(field: Field | undefined) {
-  return (
-    field instanceof ListFieldBase ||
-    field instanceof RichTextField ||
-    field instanceof RecordField ||
-    field instanceof LocalisedField
-  )
+/**
+ * Whether both versions of a field can combine: rows and blocks pair by their
+ * id and records by their keys, other values are either yours or theirs. Rich
+ * text paragraphs have no id, so rich text with paragraphs does not combine.
+ */
+function combines(field: Field | undefined, values: Array<unknown>) {
+  if (field instanceof ListFieldBase || field instanceof RichTextField)
+    return values.every(isRows)
+  if (field instanceof RecordField || field instanceof LocalisedField)
+    return values.every(isRecord)
+  return false
 }
 
 /** The ids of the entries the values of the fields link to */

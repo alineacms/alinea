@@ -19,9 +19,10 @@ test('resolves fields both editors changed', async ({mount, page}) => {
   await expect(title.getByRole('radio', {name: 'Yours'})).toBeChecked()
   await title.getByText("Sam's").click()
   await expect(title.getByRole('radio', {name: "Sam's"})).toBeChecked()
+  // Rich text paragraphs have no ids to pair, so it is yours or theirs
   const body = page.getByRole('radiogroup', {name: 'Body'})
-  await expect(body.getByRole('radio', {name: 'Combine both'})).toBeChecked()
-  await body.getByText('Yours', {exact: true}).click()
+  await expect(body.getByRole('radio')).toHaveCount(2)
+  await expect(body.getByRole('radio', {name: 'Yours'})).toBeChecked()
   const sections = page.getByRole('radiogroup', {name: 'Sections'})
   await expect(sections.getByText('3 items')).toHaveCount(2)
   await page.getByRole('button', {name: 'Apply and save draft'}).click()
@@ -64,7 +65,7 @@ test('reviews the changes to a list and goes back', async ({mount, page}) => {
   await expect(choices.getByRole('radio', {name: "Sam's"})).toBeChecked()
   await page.getByRole('button', {name: 'Apply and save draft'}).click()
   await expect(page.locator('pre')).toHaveText(
-    '{"title":"yours","body":"merge","sections":"theirs"}'
+    '{"title":"yours","body":"yours","sections":"theirs"}'
   )
 })
 

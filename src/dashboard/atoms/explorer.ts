@@ -54,6 +54,11 @@ import {
   thumbnailField
 } from './overview.js'
 import {shaAtom} from './graph.js'
+import {
+  type LinkedEntry,
+  linkedEntryVersions,
+  pickLinkedEntry
+} from './linked.js'
 import {routeAtom} from './nav.js'
 import {requestUploadsAtom} from './upload.js'
 import {policyAtom} from './user.js'
@@ -347,13 +352,7 @@ export interface ExplorerItemData {
 }
 
 /** What the explorer shows of an entry linked from another entry */
-export interface ExplorerLinkedEntry {
-  id: string
-  title: string
-  /** A small data url preview of an image */
-  preview?: string
-  averageColor?: string
-}
+export interface ExplorerLinkedEntry extends LinkedEntry {}
 
 /**
  * The id of the first image an entry links to, following the order of the
@@ -367,27 +366,6 @@ export function explorerThumbnailId(
   return Type.references(type, data).find(
     reference => reference.linkType === 'image'
   )?.targetId
-}
-
-interface LinkedEntryRow extends ExplorerLinkedEntry {
-  locale: string | null
-}
-
-function pickLinkedEntry(
-  rows: Array<LinkedEntryRow> | undefined,
-  locale: string | null
-): ExplorerLinkedEntry | undefined {
-  if (!rows?.length) return undefined
-  const row =
-    rows.find(row => row.locale === locale) ??
-    rows.find(row => row.locale === null) ??
-    rows[0]
-  return {
-    id: row.id,
-    title: row.title,
-    preview: row.preview || undefined,
-    averageColor: row.averageColor || undefined
-  }
 }
 
 /** The id of the image shown on the card of an entry */
@@ -440,29 +418,7 @@ export async function withLinkedEntries<Item extends ExplorerItemData>(
     )
   )
   if (ids.length === 0) return items
-  const graph = get(graphAtom)
-  const policy = get(policyAtom)
-  const rows = await graph.find({
-    id: {in: ids},
-    status: 'preferDraft',
-    select: {
-      id: Entry.id,
-      title: Entry.title,
-      workspace: Entry.workspace,
-      root: Entry.root,
-      locale: Entry.locale,
-      parents: Entry.parents,
-      preview: FileData.preview,
-      averageColor: FileData.averageColor
-    }
-  })
-  const byId = new Map<string, Array<LinkedEntryRow>>()
-  for (const row of rows) {
-    if (!policy.check(permission, row)) continue
-    const versions = byId.get(row.id) ?? []
-    versions.push(row as LinkedEntryRow)
-    byId.set(row.id, versions)
-  }
+  const byId = await linkedEntryVersions(get, ids, permission)
   return items.map((item, index) => {
     const {thumbnail, links} = wanted[index]
     const linked: Record<string, ExplorerLinkedEntry> = {}

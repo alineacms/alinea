@@ -23,50 +23,6 @@
   margin-bottom: 6px;
 }
 
-.EntryMergeModal-choices {
-  min-width: 0;
-
-  & [data-slot='radio-group-items'] {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    align-items: stretch;
-    gap: 8px;
-
-    @media (max-width: 600px) {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-}
-
-.EntryMergeModal-option {
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--alinea-border);
-  border-radius: var(--alinea-radius);
-  transition: var(--alinea-transition);
-  transition-property: border-color, background-color;
-
-  /* Lets compact values shrink to the card and end in an ellipsis */
-  & [data-slot='radio-group-item-content'] {
-    flex: 1;
-    grid-template-columns: minmax(0, 1fr);
-    min-width: 0;
-  }
-
-  & [data-slot='radio-group-item-label'] {
-    font-weight: 500;
-  }
-
-  &:hover {
-    border-color: var(--alinea-border-strong);
-  }
-
-  &:has(:checked) {
-    border-color: var(--alinea-primary);
-    background: color-mix(in oklab, var(--alinea-primary) 8%, transparent);
-  }
-}
-
 .EntryMergeModal-value {
   display: flex;
   min-width: 0;

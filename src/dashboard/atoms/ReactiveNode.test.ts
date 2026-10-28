@@ -408,3 +408,23 @@ test('a row removed on one side and edited on the other conflicts', () => {
     conflicts: [['list', 'a']]
   })
 })
+
+test('rows sharing an id merge as a whole', () => {
+  const a = textRow('a', 'a0', 'A')
+  const mine = {list: [a, {...a, text: 'Mine'}]}
+  expect(rebase({list: [a, a]}, mine, {list: [a]})).toEqual({
+    value: mine,
+    conflicts: [['list']]
+  })
+})
+
+test('rows both inserted at one place get distinct order keys', () => {
+  const a = textRow('a', 'a0', 'A')
+  const value = rebaseValue(
+    {list: [a]},
+    {list: [a, textRow('m', 'a1', 'Mine')]},
+    {list: [a, textRow('t', 'a1', 'Theirs')]}
+  ) as {list: Array<{_id: string; _index: string}>}
+  expect(value.list.map(row => row._id)).toEqual(['a', 'm', 't'])
+  expect(new Set(value.list.map(row => row._index)).size).toBe(3)
+})

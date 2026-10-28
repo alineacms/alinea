@@ -41,6 +41,7 @@ import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
 import {
   type ComponentType,
+  useEffect,
   useState,
   useTransition,
   type ReactNode
@@ -236,6 +237,9 @@ export function EntryHeader({
   const [conflict, setConflict] = useAtom(localeData.conflict)
   const resolveConflict = useSetAtom(localeData.resolveConflict)
   const discardConflict = useSetAtom(localeData.discardConflict)
+  // A conflict holds the version saved when it was found: leaving the entry
+  // drops it, the next save compares with the version saved by then
+  useEffect(() => () => setConflict(undefined), [setConflict])
   const reset = useSetAtom(node.reset)
   const isDirty = useAtomValueRaw(node.isDirty)
   const activeVersion = Array.from(versions.values()).find(

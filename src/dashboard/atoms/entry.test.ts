@@ -242,6 +242,52 @@ test('untranslated entries save the path of their translated title', async () =>
   expect(path).toBe('titre-francais')
 })
 
+test('saves after a translation start from the saved translation', async () => {
+  const Page = Config.document('Page', {
+    fields: {summary: Field.text('Summary')}
+  })
+  const config = translatedPathConfig(Page)
+  const db = new LocalDB(config)
+  await db.create({
+    id: 'translated',
+    locale: 'en',
+    root: 'pages',
+    type: Page,
+    set: {title: 'English title'}
+  })
+  const store = createDashboardStore(config, db)
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms('translated'))
+  const unsubscribe = store.sub(entry.data, () => {})
+  const locale = entry.locales('fr')
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  store.set(node.field('title'), 'Titre')
+  await store.set(locale.saveTranslation, node)
+  events.emit(new IndexEvent({op: 'index', sha: 'fr', ids: ['translated']}))
+  while (store.get(locale.untranslated))
+    await new Promise(resolve => setTimeout(resolve))
+  // Another editor changes the translation
+  await db.update({
+    type: Page,
+    id: 'translated',
+    locale: 'fr',
+    set: {summary: 'Their summary'}
+  })
+
+  store.set(node.field('title'), 'Mon titre')
+  expect(await store.set(locale.publishEdits, node)).toBeTrue()
+  const saved = await db.first({
+    id: 'translated',
+    locale: 'fr',
+    select: {title: Page.title, summary: Page.summary}
+  })
+  expect(saved).toEqual({title: 'Mon titre', summary: 'Their summary'})
+  unsubscribe()
+})
+
 test('untranslated entries follow the path source until the path is edited', async () => {
   const Page = Config.type('Page', {
     fields: {
