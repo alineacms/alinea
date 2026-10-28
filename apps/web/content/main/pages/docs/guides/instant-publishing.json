@@ -65,14 +65,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Because content is synced at runtime, a commit that only changes content does not need a new deployment. On Vercel you can skip those builds with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when the latest commit changed nothing outside the `content` directory:"
+          "text": "Because content is synced at runtime, a publish from the dashboard does not need a new deployment. Every commit the dashboard makes ends with an `Alinea-Content` trailer, holding the hash of the content it commits. On Vercel you can skip the builds of those commits with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when the latest commit is a publish from the dashboard and changed nothing outside the `content` directory:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjNWfZKlJJcGLyuGry1Hl8DMVK",
-      "code": "{\n  \"ignoreCommand\": \"git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
+      "code": "{\n  \"ignoreCommand\": \"git log -1 --format=%B | grep -q '^Alinea-Content:' && git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
       "fileName": "vercel.json",
       "language": "json",
       "compact": false
@@ -83,7 +83,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "It only looks at the latest commit. Every publish from the dashboard is a commit of its own, so that covers them. A push of several commits that ends with a content-only commit, such as a merge that pulled in published content, skips its build too: build it from the Vercel dashboard when that happens."
+          "text": "Everything else builds as before: commits you push yourself never carry the trailer, so a merge that pulled in published content, or a push of code with a content commit on top, still deploys your code. A publish that uploads a file to a media directory outside `content` builds too."
         }
       ]
     },
