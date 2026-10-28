@@ -190,9 +190,9 @@ export type Status =
   /** Prefer published, then archived, then drafts */
   | 'preferPublished'
   /**
-   * What a preview shows: published entries, preferring their drafts, and
-   * the previewed entry in any status when it is looked up with `first` or
-   * `get`. Draft mode queries with this status.
+   * Like `preferDraft` without archived entries: what a preview shows. The
+   * previewed entry shows as published, also when it is archived. Draft mode
+   * queries with this status.
    */
   | 'preview'
   /** All statuses */

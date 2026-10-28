@@ -32,6 +32,7 @@ import {
   inArray,
   include,
   isNull,
+  ne,
   or,
   sql,
   when,
@@ -257,8 +258,7 @@ class Expressions {
 /** Rows visible under a query status; the default addresses published rows. */
 export function statusCondition(
   entry: EntryIndexTarget,
-  status: Status = 'published',
-  previewed?: string
+  status: Status = 'published'
 ): Sql<boolean> {
   switch (status) {
     case 'all':
@@ -266,16 +266,7 @@ export function statusCondition(
     case 'preferDraft':
       return eq(entry.active, true)
     case 'preview':
-      // The draft of a published language is never its main version, while
-      // an archived or unpublished language shows its main version as active
-      return and(
-        eq(entry.active, true),
-        or(
-          eq(entry.status, 'published'),
-          eq(entry.main, false),
-          previewed === undefined ? undefined : eq(entry.id, previewed)
-        )
-      )
+      return and(eq(entry.active, true), ne(entry.status, 'archived'))
     case 'preferPublished':
       return eq(entry.main, true)
     default:
@@ -378,8 +369,7 @@ export function compileEntryQuery(
     baseEntry = entry
   } = options
   const search = options.search ?? searchQuery(query.search, entry)
-  // A previewed entry is synced in by then, an encoded payload is not
-  if (query.preview && !('entry' in query.preview))
+  if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
   // A related entry's value, eg. to order by the title of a linked entry
@@ -444,11 +434,7 @@ export function compileEntryQuery(
       conditions.push(referencedByCondition(entry, source, via, ownLocale))
     } else conditions.push(relationCondition(entry, edge, source))
   }
-  // Only the page itself shows the previewed entry, never listings: the
-  // preview cookie outlives navigating to another page in the preview
-  const previewed =
-    query.first || query.get ? query.preview?.entry.id : undefined
-  conditions.push(statusCondition(entry, query.status, previewed))
+  conditions.push(statusCondition(entry, query.status))
   for (const key of [
     'id',
     'parentId',
