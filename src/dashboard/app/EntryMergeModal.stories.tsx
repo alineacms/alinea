@@ -1,36 +1,51 @@
-import type {EntryMerge} from '#/dashboard/atoms/entryMerge.js'
+import {Button} from '#/components.js'
+import type {EntryMerge, EntryMergeField} from '#/dashboard/atoms/entryMerge.js'
 import {useState} from 'react'
 import {EntryMergeModal} from './EntryMergeModal.js'
 
-const merge: EntryMerge = {
+const minutesAgo = (minutes: number) => Date.now() - minutes * 60_000
+
+function simple(
+  key: string,
+  label: string,
+  yours: unknown,
+  theirs: unknown
+): EntryMergeField {
+  return {key, label, simple: true, yours, theirs, paths: [[]]}
+}
+
+function nested(key: string, label: string): EntryMergeField {
+  return {key, label, simple: false, yours: [], theirs: [], paths: [['row']]}
+}
+
+const simpleFields: EntryMerge = {
   name: 'Sam',
-  date: Date.now() - 5 * 60_000,
+  date: minutesAgo(2),
+  merged: [],
+  fields: [
+    simple('title', 'Title', 'Spring sale starts Monday', 'Spring sale'),
+    simple('summary', 'Summary', '', 'Twenty percent off all plants'),
+    simple('servings', 'Servings', 4, 6)
+  ]
+}
+
+const listsAndRichText: EntryMerge = {
+  name: 'Sam',
+  date: minutesAgo(5),
   merged: ['Intro', 'Tags'],
   fields: [
-    {
-      key: 'title',
-      label: 'Title',
-      simple: true,
-      yours: 'Spring sale starts Monday',
-      theirs: 'Spring sale',
-      paths: [[]]
-    },
-    {
-      key: 'body',
-      label: 'Body',
-      simple: false,
-      yours: [],
-      theirs: [],
-      paths: [['row-1', 'text']]
-    }
+    simple('title', 'Title', 'Spring sale starts Monday', 'Spring sale'),
+    nested('body', 'Body'),
+    nested('sections', 'Sections')
   ]
 }
 
 interface MergeStoryProps {
+  merge: EntryMerge
   publish?: boolean
 }
 
-function MergeStory({publish}: MergeStoryProps) {
+function MergeStory({merge, publish}: MergeStoryProps) {
   const [result, setResult] = useState<string>()
   return (
     <>
@@ -41,17 +56,26 @@ function MergeStory({publish}: MergeStoryProps) {
         onDiscard={() => setResult('Discarded')}
         onClose={() => setResult('Closed')}
       />
-      {result && <pre>{result}</pre>}
+      {result && (
+        <>
+          <pre>{result}</pre>
+          <Button onClick={() => setResult(undefined)}>Show again</Button>
+        </>
+      )}
     </>
   )
 }
 
-export function Draft() {
-  return <MergeStory />
+export function SimpleFields() {
+  return <MergeStory merge={simpleFields} />
+}
+
+export function ListsAndRichText() {
+  return <MergeStory merge={listsAndRichText} />
 }
 
 export function Publish() {
-  return <MergeStory publish />
+  return <MergeStory merge={listsAndRichText} publish />
 }
 
 export default {

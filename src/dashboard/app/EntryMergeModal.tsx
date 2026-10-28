@@ -1,5 +1,6 @@
 import {
   Button,
+  Field,
   Text,
   Timestamp,
   ToggleGroup,
@@ -127,34 +128,40 @@ interface EntryMergeRowProps {
   onChoice(choice: MergeChoice): void
 }
 
+// What a choice keeps of a nested field, a list or rich text
+const nestedChoice = {
+  merge: 'Both changes, yours where you changed the same part',
+  yours: 'Your version of the whole field',
+  theirs: 'Their version of the whole field'
+}
+
 function EntryMergeRow({field, choice, onChoice}: EntryMergeRowProps) {
   const value = choice === 'theirs' ? field.theirs : field.yours
+  const description = !field.simple
+    ? nestedChoice[choice]
+    : isEmpty(value)
+      ? 'Empty'
+      : String(value)
   return (
     <li className={styles.EntryMergeModal.field()}>
-      <div className={styles.EntryMergeModal.field.text()}>
-        <Text weight="medium">{field.label}</Text>
-        {field.simple && (
-          <Text color="muted" truncate>
-            {isEmpty(value) ? 'Empty' : String(value)}
-          </Text>
-        )}
-      </div>
-      <ToggleGroup
-        type="single"
-        variant="outline"
-        size="sm"
-        aria-label={`Keep for ${field.label}`}
-        value={choice}
-        onValueChange={next => {
-          if (next) onChoice(next as MergeChoice)
-        }}
-      >
-        {!field.simple && (
-          <ToggleGroupItem value="merge">Merge</ToggleGroupItem>
-        )}
-        <ToggleGroupItem value="yours">Yours</ToggleGroupItem>
-        <ToggleGroupItem value="theirs">Theirs</ToggleGroupItem>
-      </ToggleGroup>
+      <Field label={field.label} description={description}>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          aria-label={`Keep for ${field.label}`}
+          value={choice}
+          onValueChange={next => {
+            if (next) onChoice(next as MergeChoice)
+          }}
+        >
+          {!field.simple && (
+            <ToggleGroupItem value="merge">Merge</ToggleGroupItem>
+          )}
+          <ToggleGroupItem value="yours">Yours</ToggleGroupItem>
+          <ToggleGroupItem value="theirs">Theirs</ToggleGroupItem>
+        </ToggleGroup>
+      </Field>
     </li>
   )
 }

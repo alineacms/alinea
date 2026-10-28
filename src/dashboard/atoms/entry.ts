@@ -32,9 +32,8 @@ import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
 import {type EntryMerge, entryMerge, type MergeChoice} from './entryMerge.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
-import {merge} from './merge.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
-import {ReactiveNode} from './ReactiveNode.js'
+import {ReactiveNode, rebaseValue} from './ReactiveNode.js'
 import {requestUploadsAtom} from './upload.js'
 import {policyAtom, userAtom} from './user.js'
 import {atomWithPending, dispense, loader} from './utils.js'
@@ -586,7 +585,8 @@ export class EntryLocaleAtoms {
       {...Type.initialValue(typeConfig), ...current.data},
       {fieldI18n: Config.fieldI18n(config, workspace, root)}
     )
-    const {conflicts} = merge(loaded, mine, theirs)
+    const conflicts = Array<Array<string>>()
+    rebaseValue(loaded, mine, theirs, conflicts)
     const name = current.updatedBy?.name || undefined
     if (conflicts.length === 0) {
       this.#bases.set(node, current.fileHash)

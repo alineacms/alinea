@@ -1,7 +1,7 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {equal} from './merge.js'
+import {equal} from './ReactiveNode.js'
 
 export type MergeChoice = 'merge' | 'yours' | 'theirs'
 

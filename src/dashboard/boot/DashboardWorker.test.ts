@@ -13,7 +13,7 @@ import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
-import {merge} from '../atoms/merge.js'
+import {rebaseValue} from '../atoms/ReactiveNode.js'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {SyncEvent} from './SyncEvent.js'
@@ -925,9 +925,10 @@ test('keeps remote edits to an entry saved from stored content', async () => {
   release()
   await expect(queued).rejects.toBeInstanceOf(EntryConflictError)
   const current = await db.get({id: recipe._id, select})
-  const merged = merge(loaded.data, mine, current.data)
-  expect(merged.conflicts).toEqual([])
-  await save(merged.value as Record<string, unknown>, current.fileHash)
+  const conflicts = Array<Array<string>>()
+  const merged = rebaseValue(loaded.data, mine, current.data, conflicts)
+  expect(conflicts).toEqual([])
+  await save(merged as Record<string, unknown>, current.fileHash)
 
   const result = await remoteDB.get({
     type: cms.schema.DemoRecipe,

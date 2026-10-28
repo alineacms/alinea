@@ -1,8 +1,8 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Draft, Publish} from './EntryMergeModal.stories.js'
+import {ListsAndRichText, Publish} from './EntryMergeModal.stories.js'
 
 test('resolves fields both editors changed', async ({mount, page}) => {
-  await mount(<Draft />)
+  await mount(<ListsAndRichText />)
   await expect(
     page.getByText('Sam saved this page while you were editing')
   ).toBeVisible()
@@ -25,7 +25,7 @@ test('resolves fields both editors changed', async ({mount, page}) => {
   await body.getByRole('radio', {name: 'Yours'}).click()
   await page.getByRole('button', {name: 'Apply and save draft'}).click()
   await expect(page.locator('pre')).toHaveText(
-    '{"title":"theirs","body":"yours"}'
+    '{"title":"theirs","body":"yours","sections":"merge"}'
   )
 })
 
