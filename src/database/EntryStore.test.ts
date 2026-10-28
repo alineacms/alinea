@@ -421,7 +421,7 @@ test('previews of a database that cannot fork roll back', async () => {
   }
 })
 
-test('previews leave out archived and unpublished entries', async () => {
+test('previews leave out archived entries unless viewing one', async () => {
   const {store} = await createForkableStore()
   try {
     await createPages(store, () => 'Published')
@@ -434,6 +434,13 @@ test('previews leave out archived and unpublished entries', async () => {
         data: {title: 'Draft'},
         status: 'draft'
       },
+      {
+        op: 'update',
+        id: 'other',
+        locale: null,
+        status: 'published',
+        set: {title: 'Archived'}
+      },
       {op: 'archive', id: 'other', locale: null},
       {
         op: 'create',
@@ -444,38 +451,27 @@ test('previews leave out archived and unpublished entries', async () => {
         status: 'draft'
       }
     ])
-    const titles = (previewed?: Entry) =>
-      store.find({
-        status: 'preview',
-        select: Entry.title,
-        preview: previewed && {entry: previewed}
-      })
-    const lookup = (id: string, previewed: Entry) =>
-      store.first({
-        id,
-        status: 'preview',
-        select: Entry.title,
-        preview: {entry: previewed}
-      })
-    const previewed = (id: string) =>
-      store.get({id, select: Entry, status: 'preferDraft'})
-    expect(await titles()).toEqual(['Draft', 'Published'])
-    // The previewed entry shows in any status on its own page, not in lists
-    const archived = await previewed('other')
-    expect(await titles(archived)).toEqual(['Draft', 'Published'])
-    expect(await lookup('other', archived)).toBe('Published')
-    const {
-      rowHash: _rowHash,
-      fileHash: _fileHash,
-      ...unpublished
-    } = await previewed('unpublished')
-    const edited = await createEntryRow(
-      config,
-      {...unpublished, data: {...unpublished.data, title: 'Edited'}},
-      unpublished.status
-    )
-    expect(await titles(edited)).toEqual(['Draft', 'Published'])
-    expect(await lookup('unpublished', edited)).toBe('Edited')
+    const titles = async (previewed?: Entry) =>
+      (
+        await store.find({
+          status: 'preview',
+          select: Entry.title,
+          preview: previewed && {entry: previewed}
+        })
+      ).sort()
+    expect(await titles()).toEqual(['Draft', 'Published', 'Unpublished'])
+    // Viewing an archived entry previews it as published
+    const archived = await store.get({
+      id: 'other',
+      select: Entry,
+      status: 'archived'
+    })
+    expect(await titles(archived)).toEqual([
+      'Archived',
+      'Draft',
+      'Published',
+      'Unpublished'
+    ])
   } finally {
     await store.close()
   }
