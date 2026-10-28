@@ -2,15 +2,18 @@ import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
+import {EntryConflictError} from '#/core/db/EntryConflictError.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Entry} from '#/core/Entry.js'
+import {createId} from '#/core/Id.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
+import {merge} from '../atoms/merge.js'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {SyncEvent} from './SyncEvent.js'
@@ -863,13 +866,10 @@ test('syncs a replaced graph of a caught up store', async () => {
   expect(title).toBe('Remote title')
 })
 
-// Known limitation: stored content shows before it caught up with the
-// remote, so a form can be built from an entry the remote changed meanwhile.
-// The save waits for the catch-up, but like every mutation it carries no base
-// revision, and the entry form sends all of its data: the remote edit to
-// another field is silently overwritten (fails on the title below). A todo
-// until saves can detect this; `bun test --todo` runs it.
-test.todo('keeps remote edits to an entry saved from stored content', async () => {
+// Stored content shows before it caught up with the remote, so a form can be
+// built from an entry the remote changed meanwhile. The save waits for the
+// catch-up and fails on its base, the editor merges and saves again.
+test('keeps remote edits to an entry saved from stored content', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const stored = new MemorySource()
   await syncWith(stored, fixture)
@@ -902,29 +902,32 @@ test.todo('keeps remote edits to an entry saved from stored content', async () =
   await worker.load('stale-edit', cms.config, client)
   await worker.ready()
   const db = await worker.db
-  const data = await db.get({
-    type: cms.schema.DemoRecipe,
-    id: recipe._id,
-    select: Entry.data
-  })
-  expect(data.title).toBe('Chocolate chip')
-  const saved = mutationActivity(worker, 'stale-edit', 'succeeded')
+  const select = {data: Entry.data, fileHash: Entry.fileHash}
+  const loaded = await db.get({id: recipe._id, select})
+  expect(loaded.data.title).toBe('Chocolate chip')
+  const save = (data: Record<string, unknown>, base: string) =>
+    worker.queue(createId(), [
+      {
+        op: 'create',
+        id: recipe._id,
+        type: 'DemoRecipe',
+        locale: null,
+        status: 'published',
+        overwrite: true,
+        base,
+        data
+      }
+    ])
 
   // The form saves the stored entry with another field edited
-  const queued = worker.queue('stale-edit', [
-    {
-      op: 'create',
-      id: recipe._id,
-      type: 'DemoRecipe',
-      locale: null,
-      status: 'published',
-      overwrite: true,
-      data: {...data, intro: []}
-    }
-  ])
+  const mine = {...loaded.data, intro: []}
+  const queued = save(mine, loaded.fileHash)
   release()
-  await queued
-  await saved
+  await expect(queued).rejects.toBeInstanceOf(EntryConflictError)
+  const current = await db.get({id: recipe._id, select})
+  const merged = merge(loaded.data, mine, current.data)
+  expect(merged.conflicts).toEqual([])
+  await save(merged.value as Record<string, unknown>, current.fileHash)
 
   const result = await remoteDB.get({
     type: cms.schema.DemoRecipe,
@@ -933,6 +936,52 @@ test.todo('keeps remote edits to an entry saved from stored content', async () =
   expect(result.intro).toEqual([])
   expect(result.title).toBe('Remote title')
 })
+
+test('cancels a save the remote rejects for its base', async () => {
+  const {db: remoteDB, worker, recipe} = await createSyncedFixture()
+  const db = await worker.db
+  const base = await db.get({id: recipe._id, select: Entry.fileHash})
+  // Another editor saves before this store syncs it
+  await remoteDB.update({
+    type: cms.schema.DemoRecipe,
+    id: recipe._id,
+    set: {title: 'Remote title'}
+  })
+
+  const saved = worker.queue('remote-conflict', [
+    {
+      op: 'update',
+      id: recipe._id,
+      locale: null,
+      status: 'published',
+      base,
+      set: {title: 'Local title'}
+    }
+  ])
+
+  await expect(saved).rejects.toBeInstanceOf(EntryConflictError)
+  expect(
+    worker.activities().find(activity => activity.id === 'remote-conflict')
+  ).toMatchObject({status: 'cancelled'})
+  const title = await db.get({id: recipe._id, select: Entry.title})
+  expect(title).toBe('Remote title')
+})
+
+async function createSyncedFixture() {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, fixture)
+  const db = new LocalDB(cms.config, remoteSource)
+  await db.sync()
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('synced', cms.config, createTestConnection(db))
+  await worker.sync()
+  const recipe = await db.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  return {db, worker, recipe}
+}
 
 async function createStoredFixture(local?: MemorySource) {
   const fixture = new FSSource('test/fixtures/demo')

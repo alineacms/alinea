@@ -65,6 +65,7 @@ import {
   entryHeaderActions,
   entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
+import {EntryMergeModal} from './EntryMergeModal.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 import {
   type EntryValidationFailure,
@@ -232,6 +233,9 @@ export function EntryHeader({
   const deleteEntries = useSetAtom(deleteEntriesAtom)
   const archiveEntries = useSetAtom(archiveEntriesAtom)
   const replaceFile = useSetAtom(localeData.replaceFile)
+  const [conflict, setConflict] = useAtom(localeData.conflict)
+  const resolveConflict = useSetAtom(localeData.resolveConflict)
+  const discardConflict = useSetAtom(localeData.discardConflict)
   const reset = useSetAtom(node.reset)
   const isDirty = useAtomValueRaw(node.isDirty)
   const activeVersion = Array.from(versions.values()).find(
@@ -262,7 +266,7 @@ export function EntryHeader({
   const [moving, setMoving] = useState<MoveTargets>()
   const [removing, setRemoving] = useState<EntryHeaderRemoval>()
 
-  function runAction(action: () => void | Promise<void>) {
+  function runAction(action: () => unknown) {
     startTransition(async () => {
       try {
         await action()
@@ -276,7 +280,7 @@ export function EntryHeader({
 
   // Invalid fields are listed before publishing, which the editor may do
   // anyway; drafts are work in progress
-  function runPublish(action: () => void | Promise<void>) {
+  function runPublish(action: () => unknown) {
     // Validated when publishing, not on every edit
     const errors = store.get(localeData.errors(node))
     if (errors.length > 0) setInvalid({errors, publish: action})
@@ -349,8 +353,8 @@ export function EntryHeader({
 
   function createDraft() {
     runAction(async () => {
-      await saveDraft(node)
-      setSelectedVersion({type: 'status', status: 'draft'})
+      if (await saveDraft(node))
+        setSelectedVersion({type: 'status', status: 'draft'})
     })
   }
 
@@ -596,6 +600,13 @@ export function EntryHeader({
         failure={invalid}
         onClose={() => setInvalid(undefined)}
         onPublish={runAction}
+      />
+      <EntryMergeModal
+        merge={conflict?.node === node ? conflict.merge : undefined}
+        publish={conflict?.status === 'published'}
+        onApply={choices => runAction(() => resolveConflict(choices))}
+        onDiscard={discardConflict}
+        onClose={() => setConflict(undefined)}
       />
       <MoveDialog targets={moving} onClose={() => setMoving(undefined)} />
       <RemoveDialog

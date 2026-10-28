@@ -12,6 +12,7 @@ import type {
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {EntryConflictError} from '#/core/db/EntryConflictError.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
 import {
@@ -197,7 +198,7 @@ export class DashboardWorker extends EventTarget {
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
     if (this.#blocked) await this.discardActivity()
-    return this.#local(async () => {
+    const {sha, flush} = await this.#local(async () => {
       const db = await this.db
       if (this.#blocked) {
         throw new Error('Resolve the sync error before making more changes')
@@ -221,12 +222,14 @@ export class DashboardWorker extends EventTarget {
       this.#mutations.push(item)
       this.#emitActivity()
       try {
-        item.sha = (await db.mutate(mutations)).sha
+        const sha = (item.sha = (await db.mutate(mutations)).sha)
         this.#emitActivity()
-        void this.#flush(item)
-        return item.sha
+        return {sha, flush: this.#flush(item)}
       } catch (error) {
-        if (error instanceof EntryUrlConflictError) {
+        if (
+          error instanceof EntryUrlConflictError ||
+          error instanceof EntryConflictError
+        ) {
           this.#cancelMutation(item, error)
           throw error
         }
@@ -235,6 +238,11 @@ export class DashboardWorker extends EventTarget {
         throw error
       }
     })
+    // An edit saved over its base version waits for the remote, which may
+    // have a version this store did not sync yet
+    if (mutations.some(mutation => 'base' in mutation && mutation.base))
+      await flush
+    return sha
   }
 
   async retryActivity(): Promise<void> {
@@ -320,6 +328,11 @@ export class DashboardWorker extends EventTarget {
         // would fail on a created id or commit them twice.
         if (revision && revision === item.sha)
           return this.#completeMutation(item)
+        // The sync replaced the edit with the version saved meanwhile
+        if (revision && error instanceof EntryConflictError) {
+          this.#cancelMutation(item, error)
+          throw error
+        }
         this.#blocked = true
         this.#failActivity(item.activity, error)
         if (revision) item.sha = undefined

@@ -110,13 +110,14 @@ test('rebases edits made while persisted data was pending', () => {
     }
   })
 
+  // An array without row ids merges as a whole, the edit wins
   expect(store.get(article.value)).toEqual({
     title: 'Typed while saving',
     metadata: {
       description: 'Edited while saving',
       generated: 'Added while saving'
     },
-    tags: ['local news', 'submitted', 'persisted']
+    tags: ['local news', 'submitted']
   })
   expect(store.get(article.isDirty)).toBeTrue()
 

@@ -3,6 +3,7 @@ import {withOrderKeys} from '#/core/util/OrderKeys.js'
 import type {Getter, PrimitiveAtom, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
+import {merge} from './merge.js'
 import {dispense} from './utils.js'
 
 export type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
@@ -17,57 +18,6 @@ type ReactiveObject = Record<string, ReactiveNode>
 interface Rebase<Value> {
   checkpoint: Value
   saved: Value
-}
-
-const USE_SAVED = Symbol('use saved value')
-
-function rebaseValue(
-  checkpoint: unknown,
-  edited: unknown,
-  saved: unknown
-): unknown {
-  if (Object.is(checkpoint, edited) || Object.is(edited, saved)) {
-    return USE_SAVED
-  }
-  if (isArray(checkpoint) && isArray(edited)) {
-    const savedItems = isArray(saved) ? saved : []
-    const result = []
-    let changed = false
-    const length = Math.max(checkpoint.length, edited.length, savedItems.length)
-    for (let index = 0; index < length; index++) {
-      const value = rebaseValue(
-        checkpoint[index],
-        edited[index],
-        savedItems[index]
-      )
-      if (value === USE_SAVED) {
-        if (index < savedItems.length) result.push(savedItems[index])
-      } else {
-        changed = true
-        if (value !== undefined) result.push(value)
-      }
-    }
-    return changed ? result : USE_SAVED
-  }
-  if (isRecord(checkpoint) && isRecord(edited)) {
-    const savedFields = isRecord(saved) ? saved : {}
-    const result = {...savedFields}
-    let changed = false
-    const keys = new Set([
-      ...Object.keys(checkpoint),
-      ...Object.keys(edited),
-      ...Object.keys(savedFields)
-    ])
-    for (const key of keys) {
-      const value = rebaseValue(checkpoint[key], edited[key], savedFields[key])
-      if (value === USE_SAVED) continue
-      changed = true
-      if (value === undefined) delete result[key]
-      else result[key] = value
-    }
-    return changed ? result : USE_SAVED
-  }
-  return edited
 }
 
 function resolveUpdate<Value>(
@@ -125,6 +75,8 @@ export class ReactiveNode<Value = unknown> {
     set(this.#dirty, next !== get(this.#initialValue))
   }
 
+  /** The value last committed, or loaded */
+  committed = atom(get => get(this.#initialValue))
   isEmpty = atom(get => get(this.value) === undefined)
   #dirty = atom(false)
   isDirty: WritableAtom<boolean, [false], void> = atom(
@@ -218,12 +170,11 @@ export class ReactiveNode<Value = unknown> {
     return value
   })
 
+  /** Commit `saved` and keep the edits made since `checkpoint` on top */
   rebase = atom(null, (get, set, {checkpoint, saved}: Rebase<Value>): Value => {
-    const edited = get(this.value)
-    const rebased = rebaseValue(checkpoint, edited, saved)
+    const {value} = merge(checkpoint, get(this.value), saved)
     set(this.commit, saved)
-    if (rebased !== USE_SAVED && !this.readOnly)
-      this.#assign(get, set, rebased, false)
+    if (value !== saved && !this.readOnly) this.#assign(get, set, value, false)
     return get(this.value)
   })
 

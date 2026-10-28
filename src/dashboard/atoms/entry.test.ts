@@ -601,3 +601,82 @@ test('invalid fields are reported but do not block publishing', async () => {
   })
   expect(published).toBe('')
 })
+
+async function createConflictFixture() {
+  const Article = Config.document('Article', {
+    fields: {
+      summary: Field.text('Summary'),
+      body: Field.text('Body')
+    }
+  })
+  const config = Config.create({
+    schema: {Article},
+    enableDrafts: true,
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages', {contains: ['Article']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const created = await db.create({
+    type: Article,
+    root: 'pages',
+    set: {title: 'Article', summary: 'Summary', body: 'Body'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms(created._id))
+  const locale = entry.locales(null)
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  // Another editor saves after this one loaded the entry
+  await db.update({
+    type: Article,
+    id: created._id,
+    set: {summary: 'Their summary'}
+  })
+  const draft = () =>
+    db.first({
+      type: Article,
+      id: created._id,
+      status: 'draft',
+      select: {title: Article.title, summary: Article.summary}
+    })
+  return {store, locale, node, draft}
+}
+
+test('merges and saves edits to other fields than saved meanwhile', async () => {
+  const {store, locale, node, draft} = await createConflictFixture()
+  store.set(node.field('title'), 'My title')
+
+  expect(await store.set(locale.saveDraft, node)).toBeTrue()
+  expect(await draft()).toEqual({title: 'My title', summary: 'Their summary'})
+  expect(store.get(locale.mergeNotice)).toBe(
+    'Merged with changes saved meanwhile'
+  )
+  expect(store.get(node.isDirty)).toBeFalse()
+})
+
+test('leaves fields both editors changed to the merge dialog', async () => {
+  const {store, locale, node, draft} = await createConflictFixture()
+  store.set(node.field('title'), 'My title')
+  store.set(node.field('summary'), 'My summary')
+
+  expect(await store.set(locale.saveDraft, node)).toBeFalse()
+  expect(await draft()).toBeNull()
+  const conflict = store.get(locale.conflict)
+  expect(conflict?.merge.fields).toMatchObject([
+    {key: 'summary', label: 'Summary', simple: true}
+  ])
+  // Stamping who saved the entry is not a change to merge
+  expect(conflict?.merge.merged).toEqual([])
+
+  expect(
+    await store.set(locale.resolveConflict, {summary: 'theirs'})
+  ).toBeTrue()
+  expect(await draft()).toEqual({title: 'My title', summary: 'Their summary'})
+  expect(store.get(locale.conflict)).toBeUndefined()
+})

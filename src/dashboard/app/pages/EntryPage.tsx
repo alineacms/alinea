@@ -1,4 +1,7 @@
 import {
+  Alert,
+  AlertActions,
+  AlertDescription,
   Button,
   Code,
   Empty,
@@ -327,6 +330,7 @@ function EntryEditorContent({
   const publishEdits = useSetAtom(localeData.publishEdits)
   const hasErrors = useAtomValueRaw(localeData.hasErrors(node))
   const reset = useSetAtom(node.reset)
+  const [mergeNotice, setMergeNotice] = useAtom(localeData.mergeNotice)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
   const setSidebarOpen = useSetAtom(
@@ -349,14 +353,15 @@ function EntryEditorContent({
     routeBlock?.confirm()
   }
 
+  // Stay to merge the edits when another editor saved meanwhile
   const publishAndConfirm = async () => {
-    await publishEdits(node)
-    routeBlock?.confirm()
+    if (await publishEdits(node)) routeBlock?.confirm()
+    else setRouteBlock(null)
   }
 
   const saveDraftAndConfirm = async () => {
-    await saveDraft(node)
-    routeBlock?.confirm()
+    if (await saveDraft(node)) routeBlock?.confirm()
+    else setRouteBlock(null)
   }
 
   useEffect(() => {
@@ -384,6 +389,22 @@ function EntryEditorContent({
       onSourceLocaleChange={setSourceLocale}
     />
   )
+  const banner =
+    translationBanner ||
+    (mergeNotice && (
+      <Alert>
+        <AlertDescription>{mergeNotice}</AlertDescription>
+        <AlertActions>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setMergeNotice(undefined)}
+          >
+            Dismiss
+          </Button>
+        </AlertActions>
+      </Alert>
+    ))
 
   let editorBody = (
     <>
@@ -393,10 +414,8 @@ function EntryEditorContent({
         className={styles.EntryEditor.body()}
       >
         <div className={styles.EntryEditor.fields()}>
-          {translationBanner && (
-            <div className={styles.EntryEditor.banner()}>
-              {translationBanner}
-            </div>
+          {banner && (
+            <div className={styles.EntryEditor.banner()}>{banner}</div>
           )}
 
           <NodeEditor node={node} type={entryForm(type.type)}>
@@ -427,10 +446,8 @@ function EntryEditorContent({
   if (View) {
     editorBody = (
       <>
-        {translationBanner && (
-          <div className={styles.EntryEditor.viewBanner()}>
-            {translationBanner}
-          </div>
+        {banner && (
+          <div className={styles.EntryEditor.viewBanner()}>{banner}</div>
         )}
         <PageContent ref={editorBodyRef} className={styles.EntryEditor.view()}>
           <NodeEditor node={node} type={entryForm(type.type)}>
