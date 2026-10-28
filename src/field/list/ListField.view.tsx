@@ -239,6 +239,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
     <>
       <ListLabel
         required={options.required}
+        readOnly={readOnly}
         aria-label={
           hasRows
             ? allExpanded

@@ -284,6 +284,7 @@ export function RichTextFieldView<Blocks extends Schema>({
         description={options.help}
         error={error}
         required={!options.inline && options.required}
+        readOnly={readOnly}
         label={options.inline ? undefined : options.label}
         shared={options.shared}
       >

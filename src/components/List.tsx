@@ -215,6 +215,8 @@ export interface ListLabelProps extends Omit<
   shared?: boolean
   /** Marks the label with an asterisk, like a required field label */
   required?: boolean
+  /** Fades the label like the label of a read-only field */
+  readOnly?: boolean
   showFold?: boolean
   description?: ReactNode
   inline?: boolean
@@ -226,6 +228,7 @@ export function ListLabel({
   hasRows,
   shared,
   required,
+  readOnly,
   showFold = true,
   className,
   description,
@@ -250,7 +253,7 @@ export function ListLabel({
   return (
     <div
       data-slot="list-label"
-      className={styles.ListLabel(styler.merge({className}))}
+      className={styles.ListLabel({readOnly}, styler.merge({className}))}
     >
       {showFold ? (
         <Button
