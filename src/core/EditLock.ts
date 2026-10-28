@@ -1,7 +1,7 @@
 import type {User} from './User.js'
 
 /** Editors that stop sending heartbeats are forgotten after this long */
-export const lockExpiry = 45_000
+export const lockExpiry = 120_000
 /** The holder has this long to answer a request before control passes */
 export const lockTimeout = 30_000
 
