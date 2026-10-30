@@ -19,55 +19,112 @@ interface Rebase<Value> {
   saved: Value
 }
 
-const USE_SAVED = Symbol('use saved value')
+interface Row {
+  _id: string
+  _index?: string
+}
 
-function rebaseValue(
+/**
+ * Three-way merge of the edits from `checkpoint` to `edited` into `saved`.
+ * Rows of lists and blocks pair by their `_id`, other arrays merge as a
+ * whole. Where both sides changed a value the edit wins, and its path is
+ * added to `conflicts`. Values that end up as saved keep their reference.
+ */
+export function rebaseValue(
   checkpoint: unknown,
   edited: unknown,
-  saved: unknown
+  saved: unknown,
+  conflicts: Array<Array<string>> = [],
+  path: Array<string> = []
 ): unknown {
-  if (Object.is(checkpoint, edited) || Object.is(edited, saved)) {
-    return USE_SAVED
-  }
-  if (isArray(checkpoint) && isArray(edited)) {
-    const savedItems = isArray(saved) ? saved : []
-    const result = []
-    let changed = false
-    const length = Math.max(checkpoint.length, edited.length, savedItems.length)
-    for (let index = 0; index < length; index++) {
-      const value = rebaseValue(
-        checkpoint[index],
-        edited[index],
-        savedItems[index]
-      )
-      if (value === USE_SAVED) {
-        if (index < savedItems.length) result.push(savedItems[index])
-      } else {
-        changed = true
-        if (value !== undefined) result.push(value)
-      }
-    }
-    return changed ? result : USE_SAVED
-  }
-  if (isRecord(checkpoint) && isRecord(edited)) {
-    const savedFields = isRecord(saved) ? saved : {}
-    const result = {...savedFields}
+  if (equal(checkpoint, edited) || equal(edited, saved)) return saved
+  if (isRecord(checkpoint) && isRecord(edited) && isRecord(saved)) {
+    const result = {...saved}
     let changed = false
     const keys = new Set([
       ...Object.keys(checkpoint),
       ...Object.keys(edited),
-      ...Object.keys(savedFields)
+      ...Object.keys(saved)
     ])
     for (const key of keys) {
-      const value = rebaseValue(checkpoint[key], edited[key], savedFields[key])
-      if (value === USE_SAVED) continue
+      const value = rebaseValue(
+        checkpoint[key],
+        edited[key],
+        saved[key],
+        conflicts,
+        [...path, key]
+      )
+      if (value === saved[key]) continue
       changed = true
       if (value === undefined) delete result[key]
       else result[key] = value
     }
-    return changed ? result : USE_SAVED
+    return changed ? result : saved
   }
+  if (isRows(checkpoint) && isRows(edited) && isRows(saved))
+    return rebaseRows(checkpoint, edited, saved, conflicts, path)
+  if (!equal(checkpoint, saved)) conflicts.push(path)
   return edited
+}
+
+function rebaseRows(
+  checkpoint: Array<Row>,
+  edited: Array<Row>,
+  saved: Array<Row>,
+  conflicts: Array<Array<string>>,
+  path: Array<string>
+): Array<Row> {
+  const byId = (rows: Array<Row>) => new Map(rows.map(row => [row._id, row]))
+  const [checkpointRows, editedRows, savedRows] = [
+    checkpoint,
+    edited,
+    saved
+  ].map(byId)
+  const ids = new Set([...edited, ...saved].map(row => row._id))
+  const result = Array.from(ids)
+    .map(id =>
+      rebaseValue(
+        checkpointRows.get(id),
+        editedRows.get(id),
+        savedRows.get(id),
+        conflicts,
+        [...path, id]
+      )
+    )
+    .filter(row => row !== undefined) as Array<Row>
+  // Rows of a list carry their order, other rows keep the edited order. Rows
+  // both inserted at one place can share a key, which gets repaired.
+  const ordered = result.every(row => typeof row._index === 'string')
+    ? withOrderKeys(result.sort(byIndex))
+    : result
+  const same =
+    ordered.length === saved.length &&
+    ordered.every((row, index) => row === saved[index])
+  return same ? saved : ordered
+}
+
+function byIndex(a: Row, b: Row) {
+  if (a._index !== b._index) return a._index! < b._index! ? -1 : 1
+  return a._id < b._id ? -1 : a._id > b._id ? 1 : 0
+}
+
+/** Rows pair by their `_id`, which must be unique to tell them apart */
+export function isRows(value: unknown): value is Array<Row> {
+  if (!Array.isArray(value)) return false
+  const ids = value.map(item => isRecord(item) && item._id)
+  return (
+    ids.every(id => typeof id === 'string') && new Set(ids).size === ids.length
+  )
+}
+
+export function equal(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true
+  if (Array.isArray(a) && Array.isArray(b))
+    return a.length === b.length && a.every((item, i) => equal(item, b[i]))
+  if (!isRecord(a) || !isRecord(b)) return false
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
+  for (const key of keys) if (!equal(a[key], b[key])) return false
+  return true
 }
 
 function resolveUpdate<Value>(
@@ -125,6 +182,8 @@ export class ReactiveNode<Value = unknown> {
     set(this.#dirty, next !== get(this.#initialValue))
   }
 
+  /** The value last committed, or loaded */
+  committed = atom(get => get(this.#initialValue))
   isEmpty = atom(get => get(this.value) === undefined)
   #dirty = atom(false)
   isDirty: WritableAtom<boolean, [false], void> = atom(
@@ -218,12 +277,11 @@ export class ReactiveNode<Value = unknown> {
     return value
   })
 
+  /** Commit `saved` and keep the edits made since `checkpoint` on top */
   rebase = atom(null, (get, set, {checkpoint, saved}: Rebase<Value>): Value => {
-    const edited = get(this.value)
-    const rebased = rebaseValue(checkpoint, edited, saved)
+    const value = rebaseValue(checkpoint, get(this.value), saved)
     set(this.commit, saved)
-    if (rebased !== USE_SAVED && !this.readOnly)
-      this.#assign(get, set, rebased, false)
+    if (value !== saved && !this.readOnly) this.#assign(get, set, value, false)
     return get(this.value)
   })
 

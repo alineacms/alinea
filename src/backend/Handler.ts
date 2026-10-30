@@ -27,6 +27,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
+import {EntryConflictError} from '#/core/db/EntryConflictError.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {FileData} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
@@ -611,7 +612,8 @@ export function createHandler({
       return Response.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
+          conflict: error instanceof EntryConflictError ? error.info : undefined
         },
         {status}
       )

@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 import {createStore} from 'jotai'
-import {ReactiveNode} from './ReactiveNode.js'
+import {ReactiveNode, rebaseValue} from './ReactiveNode.js'
 
 interface Article {
   title: string
@@ -110,13 +110,14 @@ test('rebases edits made while persisted data was pending', () => {
     }
   })
 
+  // An array without row ids merges as a whole, the edit wins
   expect(store.get(article.value)).toEqual({
     title: 'Typed while saving',
     metadata: {
       description: 'Edited while saving',
       generated: 'Added while saving'
     },
-    tags: ['local news', 'submitted', 'persisted']
+    tags: ['local news', 'submitted']
   })
   expect(store.get(article.isDirty)).toBeTrue()
 
@@ -325,4 +326,105 @@ test('keeps persisted rows exactly as committed', () => {
   store.set(list.commit, saved)
   expect(store.get(list.value)).toEqual(saved)
   expect(store.get(list.isDirty)).toBeFalse()
+})
+
+function rebase(checkpoint: unknown, edited: unknown, saved: unknown) {
+  const conflicts = Array<Array<string>>()
+  const value = rebaseValue(checkpoint, edited, saved, conflicts)
+  return {value, conflicts}
+}
+
+function textRow(id: string, index: string, text: string) {
+  return {_id: id, _index: index, _type: 'Text', text}
+}
+
+test('merges changes to different fields', () => {
+  const base = {title: 'Title', intro: 'Intro'}
+  const mine = {title: 'My title', intro: 'Intro'}
+  const theirs = {title: 'Title', intro: 'Their intro'}
+  expect(rebase(base, mine, theirs)).toEqual({
+    value: {title: 'My title', intro: 'Their intro'},
+    conflicts: []
+  })
+})
+
+test('keeps theirs when nothing was edited', () => {
+  const theirs = {title: 'Theirs', list: [textRow('a', 'a0', 'A')]}
+  const base = {title: 'Title', list: []}
+  expect(rebaseValue(base, {...base}, theirs)).toBe(theirs)
+})
+
+test('pairs list rows by id', () => {
+  const a = textRow('a', 'a0', 'A')
+  const b = textRow('b', 'a1', 'B')
+  const base = {list: [a, b]}
+  // They inserted a row at the start, I edited the second row
+  const mine = {list: [a, {...b, text: 'My B'}]}
+  const theirs = {list: [textRow('c', 'Zz', 'C'), a, b]}
+  expect(rebase(base, mine, theirs)).toEqual({
+    value: {list: [textRow('c', 'Zz', 'C'), a, {...b, text: 'My B'}]},
+    conflicts: []
+  })
+})
+
+test('merges added, moved and removed rows', () => {
+  const a = textRow('a', 'a0', 'A')
+  const b = textRow('b', 'a1', 'B')
+  const c = textRow('c', 'a2', 'C')
+  const base = {list: [a, b, c]}
+  // I moved c to the start and removed b, they edited a and added d
+  const mine = {list: [{...c, _index: 'Zz'}, a]}
+  const theirs = {
+    list: [{...a, text: 'Their A'}, b, c, textRow('d', 'a3', 'D')]
+  }
+  expect(rebase(base, mine, theirs)).toEqual({
+    value: {
+      list: [
+        {...c, _index: 'Zz'},
+        {...a, text: 'Their A'},
+        textRow('d', 'a3', 'D')
+      ]
+    },
+    conflicts: []
+  })
+})
+
+test('reports values both changed, mine wins', () => {
+  const a = textRow('a', 'a0', 'A')
+  const base = {title: 'Title', list: [a], tags: ['x']}
+  const mine = {title: 'Mine', list: [{...a, text: 'My A'}], tags: ['y']}
+  const theirs = {title: 'Theirs', list: [{...a, text: 'Their A'}], tags: []}
+  expect(rebase(base, mine, theirs)).toEqual({
+    value: mine,
+    conflicts: [['title'], ['list', 'a', 'text'], ['tags']]
+  })
+})
+
+test('a row removed on one side and edited on the other conflicts', () => {
+  const a = textRow('a', 'a0', 'A')
+  const base = {list: [a]}
+  expect(rebase(base, {list: []}, {list: [{...a, text: 'Their A'}]})).toEqual({
+    value: {list: []},
+    conflicts: [['list', 'a']]
+  })
+})
+
+test('rows sharing an id merge as a whole', () => {
+  const a = textRow('a', 'a0', 'A')
+  const mine = {list: [a, {...a, text: 'Mine'}]}
+  expect(rebase({list: [a, a]}, mine, {list: [a]})).toEqual({
+    value: mine,
+    conflicts: [['list']]
+  })
+})
+
+test('rows both inserted at one place get distinct order keys', () => {
+  const a = textRow('a', 'a0', 'A')
+  const value = rebaseValue(
+    {list: [a]},
+    {list: [a, textRow('m', 'a1', 'Mine')]},
+    {list: [a, textRow('t', 'a1', 'Theirs')]}
+  ) as {list: Array<{_id: string; _index: string}>}
+  expect(value.list.map(row => row._id)).toEqual(['a', 'm', 't'])
+  expect(new Set(value.list.map(row => row._index)).size).toBe(3)
 })

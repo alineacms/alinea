@@ -1,0 +1,104 @@
+.EntryMergeModal-fields {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.EntryMergeModal-field {
+  padding: 14px 0;
+
+  & + & {
+    border-top: 1px solid var(--alinea-border);
+  }
+}
+
+.EntryMergeModal-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+  margin-bottom: 6px;
+}
+
+.EntryMergeModal-value {
+  display: flex;
+  min-width: 0;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-style: normal;
+
+  &.is-empty {
+    color: var(--alinea-fg-muted);
+    font-style: italic;
+  }
+}
+
+.EntryMergeModal-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.EntryMergeModal-sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.EntryMergeModal-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+}
+
+.EntryMergeModal-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.EntryMergeModal-part {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  &.is-same {
+    color: var(--alinea-fg-muted);
+  }
+
+  &.is-added,
+  &.is-changed {
+    margin-left: -12px;
+    padding-left: 10px;
+    border-left: 2px solid var(--alinea-primary);
+  }
+
+  &.is-removed {
+    color: var(--alinea-fg-muted);
+    text-decoration: line-through;
+  }
+}
+
+.EntryMergeModal-part-value {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}

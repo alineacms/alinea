@@ -1,5 +1,6 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
+import {isEntryConflict} from '#/core/db/EntryConflictError.js'
 import type {EntryReference} from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
@@ -25,13 +26,20 @@ import {
 import {PathField} from '#/field/path/PathField.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
-import {Atom, atom, Getter} from 'jotai'
+import {Atom, atom, Getter, Setter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
+import {
+  type EntryMerge,
+  entryMerge,
+  linkedIds,
+  type MergeChoice
+} from './entryMerge.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
+import {linkedEntryVersions, pickLinkedEntry} from './linked.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
-import {ReactiveNode} from './ReactiveNode.js'
+import {ReactiveNode, rebaseValue} from './ReactiveNode.js'
 import {requestUploadsAtom} from './upload.js'
 import {policyAtom, userAtom} from './user.js'
 import {atomWithPending, dispense, loader} from './utils.js'
@@ -95,6 +103,18 @@ const selection = {
   entries: translations({select: Entry, includeSelf: true})
 }
 
+/** Edits that conflict with a version saved meanwhile, see `#save` */
+export interface EntryConflict {
+  node: ReactiveNode<object>
+  status: 'draft' | 'published'
+  loaded: Record<string, unknown>
+  mine: Record<string, unknown>
+  theirs: Record<string, unknown>
+  /** The file hash of the version saved meanwhile */
+  fileHash: string
+  merge: EntryMerge
+}
+
 export type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
@@ -123,6 +143,12 @@ export class EntryLocaleAtoms {
   ) {}
 
   currentlyEditing = atom<ReactiveNode<object>>()
+  /** The file hash of the version each editor's committed values are from */
+  #bases = new WeakMap<ReactiveNode<object>, string>()
+  /** Edits not saved because both editors changed some fields */
+  conflict = atom<EntryConflict>()
+  /** Edits merged with a version saved meanwhile, then saved */
+  mergeNotice = atom<string>()
   untranslated = atom(get => {
     const data = get(this.entry.data)
     return !data.entries.some(entry => entry.locale === this.requestedLocale)
@@ -287,7 +313,9 @@ export class EntryLocaleAtoms {
       },
       {fieldI18n: Config.fieldI18n(config, entry.workspace, entry.root)}
     )
-    return new ReactiveNode<object>(value, readOnly)
+    const node = new ReactiveNode<object>(value, readOnly)
+    if (!isUntranslated) this.#bases.set(node, entry.fileHash)
+    return node
   })
   richTextImages = atom(async get => {
     const entry = await get(this.selectedEntry)
@@ -465,59 +493,157 @@ export class EntryLocaleAtoms {
     atom(get => get(this.errors(node)).length > 0)
   )
 
-  saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
-    const dataState = get(this.entry.data)
-    const {id, type} = dataState
-    const policy = get(policyAtom)
-    const config = get(configAtom)
-    const typeConfig = config.schema[type]
-    assert(typeConfig, `Type "${type}" not found in config`)
-    const activeEntry = dataState.entries.find(entry => {
-      return entry.locale === this.requestedLocale && entry.active
-    })
-    assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
-    const graph = get(graphAtom)
-    const {checkpoint, data} = prepareData(get, node, typeConfig)
-    policy.assert(Permission.Update, activeEntry)
-    const saved = await graph.create({
-      type: typeConfig,
-      id,
-      locale: this.requestedLocale,
-      status: 'draft',
-      set: data,
-      overwrite: true,
-      user: get(userAtom),
-      select: Entry.data
-    })
-    set(node.rebase, {checkpoint, saved})
+  saveDraft = atom(null, (get, set, node: ReactiveNode<object>) => {
+    set(this.mergeNotice, undefined)
+    return this.#save(get, set, node, 'draft')
   })
 
-  publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
-    const dataState = get(this.entry.data)
-    const {id, type} = dataState
-    const policy = get(policyAtom)
+  publishEdits = atom(null, (get, set, node: ReactiveNode<object>) => {
+    set(this.mergeNotice, undefined)
+    return this.#save(get, set, node, 'published')
+  })
+
+  /** Save the merge with the field choices, or open a new conflict */
+  resolveConflict = atom(
+    null,
+    async (get, set, choices: Record<string, MergeChoice>) => {
+      const conflict = get(this.conflict)
+      if (!conflict) return false
+      const {node, loaded, mine, theirs} = conflict
+      set(this.conflict, undefined)
+      this.#bases.set(node, conflict.fileHash)
+      set(node.rebase, {checkpoint: loaded, saved: theirs})
+      for (const [key, choice] of entries(choices)) {
+        if (choice === 'yours') set(node.field(key), mine[key])
+        if (choice === 'theirs') set(node.field(key), theirs[key])
+      }
+      return this.#save(get, set, node, conflict.status)
+    }
+  )
+
+  /** Drop the edits for the version saved meanwhile */
+  discardConflict = atom(null, (get, set) => {
+    const conflict = get(this.conflict)
+    if (!conflict) return
+    set(this.conflict, undefined)
+    this.#bases.set(conflict.node, conflict.fileHash)
+    set(conflict.node.commit, conflict.theirs)
+  })
+
+  /**
+   * Save the edits over the version they started from. When another version
+   * was saved meanwhile, its changes are merged in and saved when no field
+   * was changed by both, otherwise the conflict is left to the editor.
+   * Resolves whether the edits were saved.
+   */
+  async #save(
+    get: Getter,
+    set: Setter,
+    node: ReactiveNode<object>,
+    status: 'draft' | 'published'
+  ): Promise<boolean> {
+    const {id, type, workspace, root} = get(this.entry.data)
     const config = get(configAtom)
     const typeConfig = config.schema[type]
     assert(typeConfig, `Type "${type}" not found in config`)
-    const activeEntry = dataState.entries.find(entry => {
-      return entry.locale === this.requestedLocale && entry.active
-    })
-    assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
+    get(policyAtom).assert(
+      status === 'draft' ? Permission.Update : Permission.Publish,
+      this.#activeEntry(get)
+    )
     const graph = get(graphAtom)
+    const locale = this.requestedLocale
     const {checkpoint, data} = prepareData(get, node, typeConfig)
-    policy.assert(Permission.Publish, activeEntry)
-    const saved = await graph.create({
-      type: typeConfig,
+    try {
+      const saved = await graph.create({
+        type: typeConfig,
+        id,
+        locale,
+        status,
+        set: data,
+        overwrite: true,
+        user: get(userAtom),
+        base: this.#bases.get(node),
+        select: {data: Entry.data, fileHash: Entry.fileHash}
+      })
+      this.#bases.set(node, saved.fileHash)
+      set(node.rebase, {checkpoint, saved: saved.data})
+      return true
+    } catch (error) {
+      // Kept to retry in the activity, the editor keeps the edits unsaved
+      if (error instanceof Error && error.name === 'PendingMutationError')
+        return false
+      if (!isEntryConflict(error)) throw error
+    }
+    const current = await graph.first({
       id,
-      locale: this.requestedLocale,
-      status: 'published',
-      set: data,
-      overwrite: true,
-      user: get(userAtom),
-      select: Entry.data
+      locale,
+      status: 'preferDraft',
+      select: {
+        data: Entry.data,
+        fileHash: Entry.fileHash,
+        updatedAt: Entry.updatedAt,
+        updatedBy: Entry.updatedBy
+      }
     })
-    set(node.rebase, {checkpoint, saved})
-  })
+    assert(current, `Entry "${id}" not found`)
+    const loaded = get(node.committed) as Record<string, unknown>
+    const mine = checkpoint as Record<string, unknown>
+    // Compare with values as the editor loads them
+    const theirs = Type.withInitialValue(
+      typeConfig,
+      {...Type.initialValue(typeConfig), ...current.data},
+      {fieldI18n: Config.fieldI18n(config, workspace, root)}
+    )
+    const conflicts = Array<Array<string>>()
+    rebaseValue(loaded, mine, theirs, conflicts)
+    const name = current.updatedBy?.name || undefined
+    if (conflicts.length === 0) {
+      this.#bases.set(node, current.fileHash)
+      set(node.rebase, {checkpoint: loaded, saved: theirs})
+      const saved = await this.#save(get, set, node, status)
+      if (saved)
+        set(
+          this.mergeNotice,
+          name
+            ? `Merged with changes ${name} saved meanwhile`
+            : 'Merged with changes saved meanwhile'
+        )
+      return saved
+    }
+    const keys = Array.from(new Set(conflicts.map(path => path[0])))
+    const ids = linkedIds(typeConfig, keys, [loaded, mine, theirs])
+    set(this.conflict, {
+      node,
+      status,
+      loaded,
+      mine,
+      theirs,
+      fileHash: current.fileHash,
+      merge: entryMerge({
+        type: typeConfig,
+        loaded,
+        mine,
+        theirs,
+        conflicts,
+        locale,
+        links: await this.#links(get, ids),
+        name,
+        date: current.updatedAt ?? undefined
+      })
+    })
+    return false
+  }
+
+  /** Titles and previews of the linked entries the user can read */
+  async #links(get: Getter, ids: Array<string>) {
+    const versions = await linkedEntryVersions(get, ids, Permission.Read)
+    return new Map(
+      ids.flatMap(id => {
+        const entry = pickLinkedEntry(versions.get(id), this.requestedLocale)
+        return entry ? [[id, entry] as const] : []
+      })
+    )
+  }
 
   saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
     assert(
@@ -556,9 +682,11 @@ export class EntryLocaleAtoms {
       status: config.enableDrafts ? 'draft' : 'published',
       set: data,
       user: get(userAtom),
-      select: Entry.data
+      select: {data: Entry.data, fileHash: Entry.fileHash}
     })
-    set(node.rebase, {checkpoint, saved})
+    // The editor stays open on the translation, later saves start from it
+    this.#bases.set(node, saved.fileHash)
+    set(node.rebase, {checkpoint, saved: saved.data})
   })
 
   #activeEntry(get: Getter) {
