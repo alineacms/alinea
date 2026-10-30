@@ -81,7 +81,9 @@ export function ExplorerBreadcrumbs({
             return (
               <Fragment key={crumb.id ?? ''}>
                 {index > 0 && <BreadcrumbSeparator />}
-                <BreadcrumbItem className={styles.ExplorerBreadcrumbs.item()}>
+                <BreadcrumbItem
+                  className={styles.ExplorerBreadcrumbs.item({current})}
+                >
                   {current ? (
                     <BreadcrumbPage
                       className={styles.ExplorerBreadcrumbs.page()}
