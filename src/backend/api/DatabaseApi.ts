@@ -1,11 +1,20 @@
 import type {
   DraftsApi,
+  LocksApi,
   RequestContext,
   UploadResponse,
   UploadsApi,
   UserApi
 } from '#/core/Connection.js'
 import {type Draft, type DraftKey} from '#/core/Draft.js'
+import {
+  type EditLock,
+  type EditStatus,
+  type Heartbeat,
+  lockExpires,
+  lockKey,
+  nextLock
+} from '#/core/EditLock.js'
 import {createId} from '#/core/Id.js'
 import type {User, UserInput} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
@@ -58,7 +67,15 @@ const BlobTable = table('alinea_blob', {
   usedAt: column.integer().notNull()
 })
 
-const tables = [UploadTable, UserTable, UserRoleTable, BlobTable]
+/** Who is editing which entry, see `EditLock` */
+const LockTable = table('alinea_lock', {
+  key: column.varchar(undefined, {length: 64}).primaryKey(),
+  lock: column.json<EditLock>().notNull(),
+  /** In seconds */
+  expiresAt: column.integer().notNull()
+})
+
+const tables = [UploadTable, UserTable, UserRoleTable, BlobTable, LockTable]
 
 /** Parameters bound per statement: D1 allows 100, the fewest of all drivers. */
 const maxParams = 100
@@ -83,7 +100,9 @@ const selectUser = {
   )
 }
 
-export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
+export class DatabaseApi
+  implements DraftsApi, LocksApi, UploadsApi, UserApi, BlobStore
+{
   #context: RequestContext
   #db: Promise<Database>
 
@@ -98,6 +117,28 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi, BlobStore {
 
   async storeDraft(draft: Draft): Promise<void> {
     throw new Error('Not longer supported')
+  }
+
+  // Not in a transaction, which D1 lacks: a concurrent heartbeat can undo
+  // another. Asks are sent with every heartbeat, a lost leave or answer waits
+  // for the lock to expire or the request to time out.
+  async heartbeat(beat: Heartbeat, user: User): Promise<EditStatus> {
+    const db = await this.#db
+    const now = Date.now()
+    const key = lockKey(beat)
+    await db.delete(LockTable).where(lt(LockTable.expiresAt, seconds()))
+    const row = await db
+      .select(LockTable.lock)
+      .from(LockTable)
+      .where(eq(LockTable.key, key))
+      .get()
+    const [lock, status] = nextLock(row ?? undefined, beat, user, now)
+    await db.delete(LockTable).where(eq(LockTable.key, key))
+    if (lock) {
+      const expiresAt = Math.ceil(lockExpires(lock) / 1000)
+      await db.insert(LockTable).values({key, lock, expiresAt})
+    }
+    return status
   }
 
   async prepareUpload(file: string): Promise<UploadResponse> {

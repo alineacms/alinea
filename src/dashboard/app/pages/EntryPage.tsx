@@ -29,6 +29,11 @@ import {
 } from '#/dashboard/atoms/entry.js'
 import type {ResolvedEditorImage} from '#/dashboard/atoms/editor.js'
 import {
+  entryLock,
+  type EntryLockAtoms,
+  type LockStatus
+} from '#/dashboard/atoms/lock.js'
+import {
   Page,
   page,
   routeAtom,
@@ -39,7 +44,7 @@ import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {atom, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {type ReactNode, useEffect, useLayoutEffect, useRef} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
@@ -55,6 +60,7 @@ import {EntryFields} from './../EntryFields.js'
 import {NodeEditor} from './../NodeEditor.js'
 import {entryForm} from '../EntryForm.js'
 import {EntryHeader} from './../EntryHeader.js'
+import {EntryLockDialogs, EntryLockNotice} from './../EntryLock.js'
 import {entryDirtyActions} from './../EntryHeaderActions.js'
 import {
   EntrySidebar,
@@ -78,6 +84,7 @@ import {
 import css from './EntryPage.module.css'
 
 const styles = styler(css)
+const noLock = atom(undefined)
 
 export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
@@ -107,9 +114,16 @@ export const entryPage = page(async (page, get) => {
     const copyTranslationSource = get(localeData.copyTranslationSource)
     const isSidebarOpen = get(entrySidebarOpen(Boolean(get(entry.preview))))
     const sidebar = await entrySidebar(get, entry, localeData, isSidebarOpen)
+    // Only editors take part, someone reading along does not hold the entry
+    const lock = selectedNode.readOnly
+      ? undefined
+      : entryLock(entry.id, page.locale)
+    const lockStatus = lock && (await get(lock.ready))
     return (
       <EntryEditorContent
         entry={entry}
+        lock={lock}
+        lockStatus={lockStatus}
         copyTranslationSource={copyTranslationSource}
         isSidebarOpen={Boolean(sidebar && isSidebarOpen)}
         localeData={localeData}
@@ -237,6 +251,8 @@ interface EntryEditorContentProps {
   copyTranslationSource: boolean
   isSidebarOpen: boolean
   localeData: EntryLocaleAtoms
+  lock: EntryLockAtoms | undefined
+  lockStatus: LockStatus | undefined
   parentNeedsTranslation: boolean
   richTextImages: ReadonlyMap<string, ResolvedEditorImage>
   selectedEntry: Entry
@@ -301,6 +317,8 @@ function EntryEditorContent({
   copyTranslationSource,
   isSidebarOpen,
   localeData,
+  lock,
+  lockStatus: readyLockStatus,
   parentNeedsTranslation,
   richTextImages,
   selectedEntry,
@@ -308,6 +326,8 @@ function EntryEditorContent({
   sourceLocale,
   node
 }: EntryEditorContentProps) {
+  const lockStatus = useAtomValueRaw(lock?.live ?? noLock) ?? readyLockStatus
+  const isDirty = useAtomValueRaw(node.isDirty)
   const typeName = useAtomValueRaw(entry.type)
   const type = useAtomValueRaw(typeAtoms(typeName))
   const hasChildren = useAtomValueRaw(entry.hasChildren)
@@ -359,6 +379,12 @@ function EntryEditorContent({
     routeBlock?.confirm()
   }
 
+  // Another session holds the entry, the lock is advisory: saving still works
+  const isLocked = Boolean(lockStatus?.holder)
+  const lockNotice = lock && lockStatus && isLocked && (
+    <EntryLockNotice lock={lock} status={lockStatus} />
+  )
+
   useEffect(() => {
     setEditing(node.readOnly && !isUntranslated ? undefined : node)
   }, [isUntranslated, node, setEditing])
@@ -393,13 +419,20 @@ function EntryEditorContent({
         className={styles.EntryEditor.body()}
       >
         <div className={styles.EntryEditor.fields()}>
+          {lockNotice && (
+            <div className={styles.EntryEditor.banner()}>{lockNotice}</div>
+          )}
           {translationBanner && (
             <div className={styles.EntryEditor.banner()}>
               {translationBanner}
             </div>
           )}
 
-          <NodeEditor node={node} type={entryForm(type.type)}>
+          <NodeEditor
+            node={node}
+            readOnly={isLocked}
+            type={entryForm(type.type)}
+          >
             <EntryFields />
           </NodeEditor>
         </div>
@@ -410,8 +443,11 @@ function EntryEditorContent({
   if (isMediaFile) {
     editorBody = (
       <>
+        {lockNotice && (
+          <div className={styles.EntryEditor.viewBanner()}>{lockNotice}</div>
+        )}
         <PageContent ref={editorBodyRef} className={styles.EntryEditor.body()}>
-          <NodeEditor node={node} type={type.type}>
+          <NodeEditor node={node} readOnly={isLocked} type={type.type}>
             <FileEditor
               parentPaths={parentPaths}
               workspace={selectedEntry.workspace}
@@ -427,13 +463,20 @@ function EntryEditorContent({
   if (View) {
     editorBody = (
       <>
+        {lockNotice && (
+          <div className={styles.EntryEditor.viewBanner()}>{lockNotice}</div>
+        )}
         {translationBanner && (
           <div className={styles.EntryEditor.viewBanner()}>
             {translationBanner}
           </div>
         )}
         <PageContent ref={editorBodyRef} className={styles.EntryEditor.view()}>
-          <NodeEditor node={node} type={entryForm(type.type)}>
+          <NodeEditor
+            node={node}
+            readOnly={isLocked}
+            type={entryForm(type.type)}
+          >
             <View type={type.type} />
           </NodeEditor>
         </PageContent>
@@ -466,6 +509,17 @@ function EntryEditorContent({
 
   return (
     <>
+      {lock && (
+        <EntryLockDialogs
+          lock={lock}
+          status={lockStatus}
+          isDirty={isDirty}
+          onDiscard={reset}
+          onMerge={() =>
+            void (canSaveDraft ? saveDraft(node) : publishEdits(node))
+          }
+        />
+      )}
       <DashboardModal
         open={Boolean(routeBlock)}
         onOpenChange={open => !open && setRouteBlock(null)}
