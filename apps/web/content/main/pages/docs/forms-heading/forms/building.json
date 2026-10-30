@@ -1,0 +1,987 @@
+{
+  "_id": "3LMClPIi7Ayj1vRERGozYA2W9kO",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "Building forms",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors build a form in the Form tab of its entry. "
+        },
+        {
+          "_type": "text",
+          "text": "Add input",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " adds a row, rows are reordered by dragging and open to show their settings. This page goes through what editors can set up, and what that means for the answers your site receives."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Built-in inputs"
+        }
+      ],
+      "_anchor": "built-in-inputs"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Form.defaults` holds these inputs, by the key you find them under in the definition and in `views`:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`text`: a single line. Settings: placeholder, maximum length and initial value."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`email`: an email address, checked to look like one. Setting: placeholder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`tel`: a phone number: digits, spaces and `+ ( ) . / -`, at least six. Setting: placeholder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`number`: a number. Settings: minimum, maximum, step and initial value."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`textarea`: several lines. Settings: placeholder, maximum length and initial value."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`date`: a date, sent as `2026-09-23`. Settings: earliest and latest date."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`file`: one or more files. Settings: accepted files (`.png, .jpg, .pdf` or `image/*`), maximum size in megabytes and whether several files are allowed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`radio`: one choice out of its options, as radio buttons."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`checkboxes`: any number of its options, as checkboxes. The answer is a list."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`select`: one choice out of its options, as a dropdown. Setting: placeholder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`check`: a single checkbox, for example to accept terms. Setting: checked by default. The answer is `true` when it is checked."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`hidden`: a value sent along without being shown, see below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`section`: a group of inputs with a title, see below."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The answers of choices are the values of their options, the answers of files are references to the uploaded files. Leave out inputs you don't want editors to use, or add your own, see "
+        },
+        {
+          "_type": "text",
+          "text": "Custom inputs",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3L5S74nOe2LVLYH7IHFQ40agCuQ",
+              "_link": "entry",
+              "_entry": "3LrnloJyLvCpKfY16ZLY29bje83"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Settings of every input"
+        }
+      ],
+      "_anchor": "settings-of-every-input"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each input has an Input tab:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Label",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the label visitors see. Required."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Key",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the name of the answer in the data your site sends and in exports. It follows the label as a slug until you change it, so `Your name` becomes `your-name`. The key is fixed once the form is saved, so renaming the label later keeps the answers that were already sent under the same key. Keys are unique within a form, sections included."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Help text",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": shown under the label."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Required",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the input must be filled in. A required input that the rules hide or disable is not required."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Width",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": full or half. It is passed to your site as `data-width`, your styles decide what it looks like, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Rendering on your site",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3LkWWCHKgKJePCZq6Zw0gYdzh6g",
+                      "_link": "entry",
+                      "_entry": "3LcYz2xic2qalTclBv16Tl2hMmR"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Inputs with settings of their own have a tab named after the input for them, and every input has a Logic tab for its rules."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Options"
+        }
+      ],
+      "_anchor": "options"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Radio, checkboxes and select inputs list their options under the row, one line each. Empty lines are left out. Each option has a value, in its Option tab: the value is what the browser sends and what is stored, and follows the label until you change it. It is fixed once the form is saved, like keys. Two options of an input can't have the same value. Rules point at options rather than at their labels, so renaming an option keeps the rules that use it working."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sections"
+        }
+      ],
+      "_anchor": "sections"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A section groups inputs under a title, rendered as a fieldset with a legend. It has a Title and a Description. Add inputs to it in the section itself. Sections don't nest."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Repeatable sections"
+        }
+      ],
+      "_anchor": "repeatable-sections"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Turn on "
+        },
+        {
+          "_type": "text",
+          "text": "Repeatable",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to let visitors fill in the inputs of a section more than once, for example a participant for each person they sign up. A repeatable section has a few more settings:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Key",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the name of the list of answers. It follows the title until you change it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Fewest items",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": how many items show when the form opens, 1 by default. Use 0 to start without any."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Most items",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the most items a visitor can add. Without it there is no limit."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Add button",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the text of the button that adds an item, for example `Add a participant`. It is `Add another` by default."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Visitors add items with the add button and remove them with the remove button that each item shows while there are more than the fewest. The answers are a list under the key of the section, an object per item with the answers of its inputs by their keys:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LLAw6AH4yw1tBr90JkmgJE7ES3",
+      "code": "{\n  \"participants\": [\n    {\"first-name\": \"Ada\", \"email\": \"ada@example.com\"},\n    {\"first-name\": \"Grace\", \"email\": \"grace@example.com\"}\n  ],\n  \"date\": \"2026-11-12\"\n}",
+      "fileName": "",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In the FormData of the form, the inputs of an item are named after the section, the position of the item and the key of the input, for example `participants.0.first-name`. The server checks that there are at least the fewest and at most the most items."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rules"
+        }
+      ],
+      "_anchor": "rules"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The Logic tab of an input holds two rules:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Show this input",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Always, or When… the rules hold. A hidden input is left out of the form, isn't required and its answer isn't stored."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Disable this input",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Never, or When… the rules hold. A disabled input shows, but can't be filled in and its answer isn't stored."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sections have a show rule only: hiding a section hides all of its inputs. Choose whether all or any of the rules must match, then add rules. Each rule tests the answer of an input, with what fits that input:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Text, email, phone and textarea: is, contains, is filled in, is empty. Text compares without regard to case."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Number: is, is less than, is more than, is filled in, is empty."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Date: is, is before, is after, is filled in, is empty."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Radio and select: is any of, is none of, is chosen, is not chosen."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Checkboxes: includes any of, includes none of, has a choice, has no choice."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Check: is checked, is not checked."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "File: has a file, has no file."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rules can only use the inputs above them, so the form reads from top to bottom. An input that is hidden or disabled counts as empty for the rules below it. The inputs in a repeatable section have an answer per item: rules inside the section can use the inputs above the section and those above them in the same item, while rules outside the section, and the rules of mails, can't use them."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`<Form>` applies the rules while visitors fill in the form, and the server applies them again to the answers it receives. A rule that no longer works, because the input it uses was removed or moved below it, or an option it uses was removed, shows as an error on its row. Deleting an input that rules use asks whether to remove those rules as well."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Hidden inputs"
+        }
+      ],
+      "_anchor": "hidden-inputs"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A hidden input sends a value along with the answers without showing anything, for example the campaign a visitor came from. It gets its value in one of three ways:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Value",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a fixed value, set in its settings."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "From the address",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a parameter of the address of the page, for example `utm_campaign`. When a visitor opens the page with `?utm_campaign=spring`, `spring` is sent. Without the parameter, the fixed value is sent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`<Form values>`",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": your site passes it by the key of the input, for example `values={{product: 'Bike'}}` on the page of a product."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Visitors can change the values of hidden inputs before they send the form, so don't trust them for anything that matters."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

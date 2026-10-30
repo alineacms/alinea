@@ -1,0 +1,60 @@
+{
+  "_id": "3L5XXvsM6yFhCjZjQUAW4LpMxuo",
+  "_type": "FormEntry",
+  "_index": "a3",
+  "_i18nId": "3L5XXvsM6yFhCjZjQUAW4LpMxuo",
+  "_root": "forms",
+  "title": "Open day",
+  "path": "open-day",
+  "inputs": [
+    {
+      "_id": "openday-name",
+      "_index": "a0",
+      "_type": "text",
+      "label": "Name",
+      "required": true,
+      "width": "half"
+    },
+    {
+      "_id": "openday-email",
+      "_index": "a1",
+      "_type": "email",
+      "label": "Email",
+      "required": true,
+      "width": "half"
+    },
+    {
+      "_id": "openday-programme",
+      "_index": "a2",
+      "_type": "radio",
+      "label": "Programme",
+      "required": true,
+      "width": "full",
+      "options": [
+        {"_id": "design", "_index": "a0", "_type": "option", "label": "Design"},
+        {"_id": "engineering", "_index": "a1", "_type": "option", "label": "Engineering"},
+        {"_id": "healthcare", "_index": "a2", "_type": "option", "label": "Healthcare"}
+      ]
+    },
+    {
+      "_id": "openday-source",
+      "_index": "a3",
+      "_type": "select",
+      "label": "How did you hear about us?",
+      "width": "full",
+      "options": [
+        {"_id": "school", "_index": "a0", "_type": "option", "label": "At school"},
+        {"_id": "friends", "_index": "a1", "_type": "option", "label": "Friends or family"},
+        {"_id": "online", "_index": "a2", "_type": "option", "label": "Online"}
+      ]
+    },
+    {
+      "_id": "openday-questions",
+      "_index": "a4",
+      "_type": "textarea",
+      "label": "Questions",
+      "help": "Anything you'd like us to prepare for your visit",
+      "width": "full"
+    }
+  ]
+}

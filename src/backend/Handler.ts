@@ -1,3 +1,13 @@
+import {
+  type FormRequestOptions,
+  databaseStore,
+  editorPermission,
+  handleFormRequest,
+  isFormRequest,
+  isVisitorUpload
+} from '#/backend/FormRequests.js'
+import {removeFiles} from '#/backend/FormSubmit.js'
+import {hasForm} from '#/backend/FormLoad.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {
@@ -16,6 +26,7 @@ import {developmentKeyHeader} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import {loggedSync} from '#/core/db/SyncStats.js'
 import type {DashboardEntry} from '#/core/DashboardEntry.js'
+import type {FormsOptions} from '#/core/Forms.js'
 import {
   committedEntries,
   type RemovedEntry,
@@ -90,10 +101,18 @@ export interface HandlerOptions extends HandlerHooks {
   remote?: (context: RequestContext) => RemoteConnection
   /** Log why and how long each sync took, for a deployed handler */
   logSyncs?: boolean
+  /** How submissions of forms are handled, eg. the mailer of their mails */
+  forms?: FormsOptions
   forwardMutations?(
     request: Request,
     context: AuthedContext
   ): Promise<Response | undefined>
+  /**
+   * Hands the requests about forms to another handler, as the dev server
+   * does to let the app answer them with its own options. Requests of
+   * editors are checked here first.
+   */
+  forwardForms?(request: Request): Promise<Response>
 }
 
 export function createHandler({
@@ -101,10 +120,15 @@ export function createHandler({
   remote = context => new CloudRemote(context, cms.config),
   db,
   forwardMutations,
+  forwardForms,
   logSyncs = false,
+  forms,
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
+  // Submissions are kept in forms.database when it is set, eg. for content
+  // on alinea.cloud, otherwise by the backend
+  const ownStore = databaseStore(forms)
   return async function handle(
     request: Request,
     context: RequestContext
@@ -146,6 +170,67 @@ export function createHandler({
       const params = url.searchParams
       const auth = params.get('auth')
       let cnx = remote(context)
+      const submissions = () => ownStore ?? cnx
+      /** The ids of entries with a form that the mutations remove */
+      async function removedForms(
+        mutations: ReadonlyArray<Mutation>
+      ): Promise<Array<string>> {
+        const ids = new Set(
+          mutations.flatMap(mutation =>
+            mutation.op === 'remove' && mutation.id ? [mutation.id] : []
+          )
+        )
+        const result = Array<string>()
+        for (const id of ids) {
+          const type = await local.first({
+            id,
+            status: 'all',
+            select: Entry.type
+          })
+          if (type && hasForm(cms.config.schema[type])) result.push(id)
+        }
+        return result
+      }
+      /** The submissions of form entries that were removed go with them */
+      async function removeSubmissionsOf(removed: Array<string>) {
+        const api = submissions()
+        if (removed.length === 0 || !api.deleteSubmission) return
+        for (const id of removed) {
+          // Removing a draft or a translation leaves the entry
+          const left = await local.first({id, status: 'all', select: Entry.id})
+          if (left) continue
+          try {
+            await removeFiles(
+              forms ?? {},
+              await api.deleteSubmission.call(api, id)
+            )
+          } catch (error) {
+            console.error('Alinea could not remove submissions', error)
+          }
+        }
+      }
+      /** Asserts the editor may do this with the form entry */
+      async function authorize(entryId: string, permission: Permission) {
+        const user = expectUser()
+        const entry = await local.first({
+          id: entryId,
+          status: 'preferPublished',
+          select: historyResource
+        })
+        if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
+        ;(await user.policy).assert(permission, entry)
+      }
+      function formOptions(): FormRequestOptions {
+        return {
+          config: cms.config,
+          graph: local,
+          api: submissions(),
+          forms: forms ?? {},
+          secret: context.apiKey,
+          handlerUrl: context.handlerUrl,
+          authorize
+        }
+      }
       let userCtx: AuthedContext | undefined
       if (auth) {
         return await cnx.authenticate(request, {
@@ -271,6 +356,14 @@ export function createHandler({
           return await cnx.previewUpload(entryId)
       }
 
+      // Visitors upload the files of a form from their browser, the signed
+      // ticket the site asked for is all it takes
+      if (isVisitorUpload(request)) {
+        if (forwardForms) return await forwardForms(request)
+        const response = await handleFormRequest(request, formOptions())
+        if (response) return response
+      }
+
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
@@ -387,6 +480,23 @@ export function createHandler({
         return Response.json((await local.resolve(query)) ?? null)
       }
 
+      // Forms: the answers and uploads the site sends, the submissions
+      // editors read. The dev server checks editors and lets the app answer.
+      if (isFormRequest(request)) {
+        if (forwardForms) {
+          const entryId = url.searchParams.get('entryId')
+          if (
+            entryId &&
+            (action === HandleAction.Submissions ||
+              action === HandleAction.SubmissionFile)
+          )
+            await authorize(entryId, editorPermission(request.method))
+          return await forwardForms(request)
+        }
+        await periodicSync(cnx, cms.config.syncInterval)
+        const response = await handleFormRequest(request, formOptions())
+        if (response) return response
+      }
       if (action === HandleAction.Mutate && request.method === 'POST') {
         if (forwardMutations && userCtx) {
           const forwarded = await forwardMutations(request.clone(), userCtx)
@@ -396,6 +506,7 @@ export function createHandler({
         expectJson()
         const policy = await user.policy
         let mutations = (await body) as ReadonlyArray<Mutation>
+        const formsBefore = await removedForms(mutations)
         await sync(cnx, 'commit')
         const adjusted = await hooks.beforeCommit?.({
           mutations,
@@ -434,6 +545,7 @@ export function createHandler({
           return sha
         }
         const sha = await attempt()
+        await removeSubmissionsOf(formsBefore)
         try {
           if (hooks.afterCommit) {
             const entries = await committedEntries(local, mutations)

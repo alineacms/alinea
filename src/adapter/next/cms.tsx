@@ -8,6 +8,7 @@ import {createThrottledSync, syncWait} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
+import {type Forms, formsOf} from '#/core/Forms.js'
 import {
   type RequestContext,
   type UploadMetadata,
@@ -353,6 +354,19 @@ export class NextCMS<
     return client.user()
   }
 
+  /** Submits the answers of visitors to forms, see `Field.form` */
+  forms: Forms = formsOf(async () => {
+    const context = await requestContext(this.config)
+    // During development forms go to the handler of this app, which
+    // answers them with its own options, as it does once deployed
+    return createClient(
+      this.config,
+      context.isDev
+        ? {...context, handlerUrl: appHandlerUrl(this.config)}
+        : context
+    )
+  })
+
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     const client = await this.#authenticatedClient()
     return client.mutate(mutations)
@@ -405,6 +419,18 @@ function createClient(config: Config, context: RequestContext) {
     url: context.handlerUrl.href,
     applyAuth: init => applyContextAuth(context, init)
   })
+}
+
+/** The handler of this app while it runs in development */
+function appHandlerUrl(config: Config): URL {
+  // Next sets the origin of the server it runs, see withAlinea
+  const origin =
+    process.env.__NEXT_PRIVATE_ORIGIN ?? Config.baseUrl(config, 'development')
+  if (!origin)
+    throw new Error(
+      'Alinea could not find the address of this app to send forms to: set baseUrl.development in the config'
+    )
+  return new URL(Config.handlerUrl(config), origin)
 }
 
 function applyContextAuth(

@@ -1,0 +1,897 @@
+{
+  "_id": "3LcYz2xic2qalTclBv16Tl2hMmR",
+  "_type": "Doc",
+  "_index": "a2",
+  "title": "Rendering on your site",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`<Form>` from `alinea/ui` renders a form definition as plain HTML: a `<form>` with labels, controls, help texts and error messages, without styles of its own. It applies the rules of the form while visitors fill it in, sends the answers and shows the result."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Props"
+        }
+      ],
+      "_anchor": "props"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`definition`: the form, as you query it from the form field."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`action`: a function that sends the answers, usually a server action that calls `cms.forms.submit`. It receives the FormData and returns the result of the handler."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`upload`: a function that asks for a ticket to upload a file, usually a server action that calls `cms.forms.prepareUpload`. Only needed when the form has a file input, see below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`views`: elements that restyle the parts of the form, and components that replace inputs."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`values`: answers to start with by the key of their input, instead of the initial values set in the dashboard, for example `{product: 'Bike'}`. It fills in inputs outside repeatable sections; for checkboxes pass one of the option values, and a check is checked by any value but an empty one."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`errors`: errors to show by the name of their input, when you check answers another way."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`submitLabel`: the text of the submit button, `Send` by default."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Other props go to the `<form>` element, such as `className`, `id` or `aria-label`. `onChange` and `onSubmit` are called before `<Form>` handles the event, and calling `event.preventDefault()` in `onSubmit` stops it from sending."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Views"
+        }
+      ],
+      "_anchor": "views"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`views` sets the props of each part of the form by its role. Each view is an element whose props are merged into that part: class names are joined, other props replace those `<Form>` sets. Only the props of the element are used, not its tag, so `label: <label className=\"label\" />` also styles the legend of a group of radio buttons."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LGaWzvsw6S6vekZXG9qqxP6r4D",
+      "code": "import {Form, type FormProps} from 'alinea/ui'\nimport styles from './FormView.module.css'\n\nconst views = {\n  form: <form className={styles.form} />,\n  row: <div className={styles.row} />,\n  label: <label className={styles.label} />,\n  help: <p className={styles.help} />,\n  error: <p className={styles.error} />,\n  control: <input className={styles.control} />,\n  choice: <label className={styles.choice} />,\n  section: <fieldset className={styles.section} />,\n  legend: <legend className={styles.legend} />,\n  item: <div className={styles.item} />,\n  add: <button className={styles.add} />,\n  remove: <button className={styles.remove} />,\n  submit: <button className={styles.submit} />,\n  confirmation: <p className={styles.confirmation} />\n}\n\ninterface FormViewProps {\n  definition: FormProps['definition']\n  action: FormProps['action']\n  upload: FormProps['upload']\n}\n\nexport function FormView({definition, action, upload}: FormViewProps) {\n  return (\n    <Form\n      definition={definition}\n      views={views}\n      action={action}\n      upload={upload}\n    />\n  )\n}",
+      "fileName": "FormView.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The roles are:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`form`: the `<form>` element."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`row`: what holds an input with its label, help and error: a `<div>`, or a `<fieldset>` for radio buttons and checkboxes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`label`: the `<label>` of an input, or the `<legend>` of a group of radio buttons or checkboxes. A required input adds ` *` to it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`help`: the help text of an input, or the description of a section."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`error`: the error of an input, of the number of items in a repeatable section, or of the form as a whole."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`control`: the `<input>`, `<textarea>` or `<select>`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`option`: an `<option>` of a select."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`choice`: the `<label>` around each radio button or checkbox, and around a check."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`section`: the `<fieldset>` of a section, and `legend` its title."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`item`: the `<div>` of each item of a repeatable section."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`add` and `remove`: the buttons that add and remove items."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`submit`: the submit button."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`confirmation`: what replaces the form once it is sent."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Children of a view replace the text `<Form>` puts in that part: `submit: <button className={styles.submit}>Sign up</button>` changes the text of the submit button. Leave out children of views that are used for many parts, such as `label`, or every one of them shows the same text. A `confirmation` with children replaces the message editors set up."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Data attributes"
+        }
+      ],
+      "_anchor": "data-attributes"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Style the state of a part with the attributes `<Form>` renders:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "On a row: `data-input` with the key of the input in `inputs`, such as `email` or `rating`, `data-width` with `full` or `half`, `data-invalid` while it has an error and `data-disabled` while its rules disable it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "On a section: `data-section` with the key of its input, `section` for the built-in one, and `data-repeat` when it is repeatable."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "On an item of a repeatable section: `data-item` with its position, starting from 0."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For example, inputs set to half width side by side:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LNPrcrBDM8l1HhWCApRDM8n34O",
+      "code": ".form,\n.section,\n.item {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  gap: 16px;\n}\n.form > *,\n.section > *,\n.item > * {\n  grid-column: 1 / -1;\n}\n.row[data-width='half'] {\n  grid-column: auto;\n}\n.row[data-invalid] .control {\n  border-color: crimson;\n}",
+      "fileName": "FormView.module.css",
+      "language": "css",
+      "compact": false
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Your own component for an input"
+        }
+      ],
+      "_anchor": "your-own-component-for-an-input"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To render an input type with a component of your own, add it to `views` under the key of the input. It receives `FormInputViewProps`:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`input`: the input from the definition: its `label`, `key`, `required`, `help`, `width`, `attributes`, `settings`, `choices` and `initialValue`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`name`: the name to give the control. Always use it: in a repeatable section it is the name in the item, such as `participants.0.email`, and the rules of the form read the answer by it."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`id`: the id of the control, for the label to point at."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`error`: the error to show, if any."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`disabled`: whether the rules disable the input right now."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`views`: the views of the form."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`FormInput` renders the default HTML of an input, so a component can wrap it:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3L5YKck7PI105lJRqM4IRHHC2L0",
+      "code": "'use client'\n\nimport {Form, FormInput, type FormInputViewProps} from 'alinea/ui'\n\nfunction Textarea(props: FormInputViewProps) {\n  const maxLength = props.input.attributes.maxLength\n  return (\n    <div className=\"textarea\">\n      <FormInput {...props} />\n      {maxLength && <p className=\"hint\">At most {maxLength} characters</p>}\n    </div>\n  )\n}\n\nconst views = {\n  textarea: Textarea\n}",
+      "fileName": "FormView.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Components can't be passed from a server component to a client one, so set up `views` with components in a file that starts with `'use client'`. See "
+        },
+        {
+          "_type": "text",
+          "text": "Custom inputs",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3LxfHPizl7TIId4GKwrahwmBT5D",
+              "_link": "entry",
+              "_entry": "3LrnloJyLvCpKfY16ZLY29bje83"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " for a complete input."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "After sending"
+        }
+      ],
+      "_anchor": "after-sending"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "While the answers are sent, the form has `aria-busy` and the submit button is disabled. The handler then answers with one of these:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Errors by input: they show under their inputs and the answers stay as they were."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A message for the form, for example when a visitor sent too often: it shows above the submit button."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A confirmation: the form is replaced with the message editors set up, or `Thank you, your answers were sent.` without one."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "A page: the browser goes to that address."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editors choose between the message and the page in the Notifications tab, see "
+        },
+        {
+          "_type": "text",
+          "text": "Submissions and notifications",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Lk3hojHSlJEmMXKQYhUoKrV2xR",
+              "_link": "entry",
+              "_entry": "3Lf4oNQOoY5pazp5OkF4CS2FPCu"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Added for you"
+        }
+      ],
+      "_anchor": "added-for-you"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`<Form>` adds a few hidden inputs that you don't need to render yourself:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_alinea_website`: a honeypot, out of sight for people. Bots that fill in every input fill it in too."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_alinea_shown`: the time the form showed in the browser. A form sent within two seconds was not sent by a person."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_alinea_page`: the address of the page the form is on, added when it is sent. The handler stores it without its query string, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Storage and security",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3LvtoPSlxJAMHarIW1hA4r4e22H",
+                      "_link": "entry",
+                      "_entry": "3LuGkr9e1G4xeMby22aucMTJ3aI"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Don't give inputs of your own these names."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Files"
+        }
+      ],
+      "_anchor": "files"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With the `upload` prop, files go from the browser to the handler directly. For each file, `<Form>` asks your action for a ticket, which the handler only gives for a file that fits the input: its accepted types and maximum size. The browser then uploads the file with the ticket, and sends a reference to the upload in place of the file. Problems show under the file input."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Without `upload`, files are posted to your server action along with the other answers, and `cms.forms.submit` uploads them from there. Next.js limits what a server action receives to 1 MB by default, so pass `upload` for any form with a file input."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

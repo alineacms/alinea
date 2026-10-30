@@ -2,6 +2,7 @@ import {referenceFieldPath} from '../db/EntryReference.js'
 import {
   Field,
   type EntryAnchorTarget,
+  type FieldData,
   type FieldMeta,
   type FieldOptions
 } from '../Field.js'
@@ -40,11 +41,21 @@ export class ListFieldBase<
       Array<QueryValue>,
       ListMutator<StoredValue>,
       Options
-    >
+    > &
+      Pick<
+        FieldData<
+          Array<StoredValue>,
+          Array<QueryValue>,
+          ListMutator<StoredValue>,
+          Options
+        >,
+        'nestedErrors'
+      >
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
     const customLocalizeLinks = meta.localizeLinks
+    const customErrors = meta.nestedErrors
     super({
       referencedViews: Schema.referencedViews(schema),
       nestedTypes: Object.values(schema),
@@ -93,7 +104,7 @@ export class ListFieldBase<
       },
       nestedErrors(value, context) {
         const rows = Array.isArray(value) ? value : []
-        return rows.flatMap((row, index) => {
+        const errors = rows.flatMap((row, index) => {
           const type = schema[row[ListRow.type]]
           if (!type) return []
           return validateType(type, row, {
@@ -102,6 +113,7 @@ export class ListFieldBase<
             labels: [...context.labels, Type.label(type)]
           })
         })
+        return errors.concat(customErrors?.(value, context) ?? [])
       },
       references(value, context) {
         const result = customReferences?.(value, context) ?? []

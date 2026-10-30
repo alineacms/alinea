@@ -1,0 +1,54 @@
+.FormSubmissions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.FormSubmissions-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.FormSubmissions-search {
+  flex: 1 1 240px;
+}
+
+.FormSubmissions-filter {
+  flex: 0 1 200px;
+  min-width: 160px;
+}
+
+.FormSubmissions-missing {
+  font-style: italic;
+}
+
+.FormSubmissions-files {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.FormSubmissions-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--alinea-border);
+  border-radius: var(--alinea-radius);
+  background: var(--alinea-bg);
+}
+
+.FormSubmissions-file-icon {
+  flex: none;
+  color: var(--alinea-fg-muted);
+}
+
+.FormSubmissions-file-label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}

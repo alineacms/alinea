@@ -197,6 +197,38 @@ test('runs the commit hooks around mutations the dev server forwards', async () 
   }
 })
 
+test('the app answers forms during development, with its own storage', async () => {
+  const devHandle = createHandlerWithDatabase(cms, async () => {
+    throw new Error('The dev server owns the database')
+  })
+  const request = (action: string, init: RequestInit = {}) =>
+    devHandle(
+      new Request(
+        `https://example.com/api/cms?action=${action}&entryId=form`,
+        init
+      )
+    )
+  nextMocks.devHandlerUrl = new URL('http://localhost:4500/api')
+  try {
+    // The site and the dev server send the development key
+    const listed = await request('submissions', {
+      headers: {[developmentKeyHeader]: apiKey}
+    })
+    // Answered here: without a database of its own the app says so
+    expect(listed.status).toBe(501)
+    expect((await request('submissions')).status).toBe(401)
+    // Browsers of visitors upload with a ticket, it is checked here too
+    const upload = await request('formUpload&token=wrong', {
+      method: 'PUT',
+      body: 'file'
+    })
+    expect(upload.status).toBe(401)
+    expect(await upload.text()).toBe('Upload the file again')
+  } finally {
+    nextMocks.devHandlerUrl = undefined
+  }
+})
+
 test('rejects an unrelated pathname with media query parameters', async () => {
   const response = await handle(
     new Request(

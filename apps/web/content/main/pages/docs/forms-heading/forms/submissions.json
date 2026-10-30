@@ -1,0 +1,672 @@
+{
+  "_id": "3Lf4oNQOoY5pazp5OkF4CS2FPCu",
+  "_type": "Doc",
+  "_index": "a4",
+  "title": "Submissions and notifications",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Form entries made with `Form.type` keep the answers visitors sent in their Submissions tab, and set up what happens when a form is sent in their Notifications tab."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "The Submissions tab"
+        }
+      ],
+      "_anchor": "the-submissions-tab"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The Submissions tab lists the submissions of the form, the latest first, with the answers to its first four inputs, when each was received and its status. More load as you scroll. Above the table you narrow down the list:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Search answers",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": submissions whose answers contain the text."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Received between",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": a range of days."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The first choice of the form",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": when the form has a radio, checkboxes or select input outside a repeatable section, submissions with an option of the first one, for example a service or a department."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Status",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": New and read (the default), New, Read, Archived or All."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Export CSV",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " downloads every submission that matches the filters, not only the ones loaded. It has a column for when each was received, its status, language and page, and one for each input of the form as it is now, followed by inputs that earlier versions of the form had, so no answer is left out. The items of a repeatable section share a column, numbered: `1. Ada, ada@example.com; 2. Grace, grace@example.com`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "A submission"
+        }
+      ],
+      "_anchor": "a-submission"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Click a submission to open it in a sheet. Its answers show with the form as it was when the visitor sent it, so the labels are right even when the form changed since. The answers are grouped by section, and each item of a repeatable section is a group of its own, such as Participant 1 and Participant 2. Answers to inputs the rules hid say not shown, inputs the visitor skipped say left empty."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Uploaded files show as cards with a download button. They are downloaded through the handler, which only gives them to editors who can read the form entry. Below the answers you find when it was received, the page it was sent from, its language and the notification mails that were sent for it."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The buttons at the bottom change its status:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Mark as read",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": for new submissions. Opening one doesn't mark it as read."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Archive",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": hides it from the default list. "
+                },
+                {
+                  "_type": "text",
+                  "text": "Restore",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " brings it back as read."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Delete",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": asks to confirm, then removes the submission and its files for good."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Reading submissions needs permission to read the form entry, changing their status needs permission to update it and deleting them needs permission to delete it. See "
+        },
+        {
+          "_type": "text",
+          "text": "Roles and permissions",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3LZQLRD9tiZiyWWIDLuF0dhgZhJ",
+              "_link": "entry",
+              "_entry": "3AhqfX37Pijf2zOEwYVVU4NmdHG"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Notification mails"
+        }
+      ],
+      "_anchor": "notification-mails"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The Notifications tab lists the mails that go out when a form is sent. Each mail has three tabs."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Recipient",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ":"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Name",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": for editors, for example IT helpdesk. Submissions list the names of the mails that were sent for them."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Send to",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": an address, or an input of the form. Separate several addresses with commas. An input sends the mail to the address the visitor filled in, for example to confirm their sign-up. Only email inputs outside repeatable sections can be chosen."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Reply to",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": an email input. Answering the mail writes to the address the visitor filled in there."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Send when",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": always, or only when the rules hold, for example when the service a visitor chose is IT. Rules of mails can use every input of the form, except those in repeatable sections."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Message",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": the subject and the body, as plain text. Insert answers with the key of their input between double braces:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Le7VIZhsVHQUwgmCH7f8p1NRSx",
+      "code": "{{name}} signed up for {{workshop}} on {{date}}.\n\nParticipants: {{participants}}",
+      "fileName": "Body",
+      "language": "text",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Choices fill in the labels of their options. The key of a repeatable section fills in all of its items. A key the form doesn't have fills in nothing."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Delivering mails"
+        }
+      ],
+      "_anchor": "delivering-mails"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The handler sends mails with the `mailer` you pass in its `forms` options. It receives the recipients as `to`, the `replyTo` address when the mail sets one, the `subject` and the `text`, so you add the sender. For example with Resend:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LNvdENodhfF6VxP3TtNqTXkBln",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\nimport {Resend} from 'resend'\n\nconst resend = new Resend(process.env.RESEND_API_KEY)\n\nconst handler = createHandler({\n  cms,\n  forms: {\n    mailer: mail =>\n      resend.emails.send({from: 'My site <forms@example.com>', ...mail})\n  }\n})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Mails are sent once the answers passed the checks and are stored, so no mail goes out for answers that were lost. A mail that fails is logged, and the submission is kept. Without a `mailer` nothing is sent, and the handler logs a warning for each submission that had mails to send. A mail with a rule that no longer works, for example because its input was removed, isn't sent rather than sent to everyone. During `alinea dev` your route sends mails with its own `mailer` too."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "After sending"
+        }
+      ],
+      "_anchor": "after-sending"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "After sending",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " decides what visitors see once their answers are sent:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Show a message",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the Message replaces the form. Without one, `<Form>` shows a short thank you."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Go to a page",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the browser goes to the Page you link to, for example a thank you page. It must be published."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Keep submissions"
+        }
+      ],
+      "_anchor": "keep-submissions"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Keep submissions",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " decides how long submissions are kept: until they are deleted (the default), for 30 days, 90 days, a year or two years. Older submissions and their files are removed. Changing the setting applies to all submissions of the form, also earlier ones, as soon as it receives answers or its Submissions tab is opened. Submissions that expired are removed then too, so a form nobody uses keeps them until that happens."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Removing a form"
+        }
+      ],
+      "_anchor": "removing-a-form"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Deleting a form entry deletes its submissions and their files as well. Removing a draft or a translation of the entry keeps them."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}
