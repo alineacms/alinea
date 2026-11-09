@@ -173,6 +173,27 @@ export function useOpenBlockSheet(): (id: string) => void {
   )
 }
 
+/**
+ * The id of the open block sheet, or null. Views that open sheets of their
+ * own can read which one is open from here rather than keep it in state, which
+ * is lost when opening the sheet remounts them, eg. as the sidebar appears.
+ */
+export function useOpenBlockSheetId(): string | null {
+  const context = useContext(BlockSheetContext)
+  return useAtomValueRaw(
+    useMemo(() => (context ? context.open : none), [context])
+  )
+}
+
+/** Closes the open block sheet */
+export function useCloseBlockSheet(): () => void {
+  const context = useContext(BlockSheetContext)
+  const store = useStore()
+  return useCallback(() => {
+    if (context) store.set(context.open, null)
+  }, [context, store])
+}
+
 /** Whether any block sheet is open or still animating out */
 export function useBlockSheetOpen(): boolean {
   const context = useContext(BlockSheetContext)

@@ -44,7 +44,12 @@ import type {
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
-import {BlockSheet, useOpenBlockSheet} from '#/dashboard/app/BlockSheet.js'
+import {
+  BlockSheet,
+  useCloseBlockSheet,
+  useOpenBlockSheet,
+  useOpenBlockSheetId
+} from '#/dashboard/app/BlockSheet.js'
 import {clientAtom} from '#/dashboard/atoms/core.js'
 import {atomWithPending, dispense} from '#/dashboard/atoms/utils.js'
 import {useEditor, useEntry} from '#/dashboard/hooks.js'
@@ -221,11 +226,22 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
     (input): input is FormInputData =>
       input.control !== 'section' && Boolean(input.choices?.length)
   )
-  const [selected, setSelected] = useState<string>()
+  // The open submission is read from the sheet, opening it can remount this
+  // view as the sidebar appears
+  const openId = useOpenBlockSheetId()
+  const selected = openId?.startsWith(sheetPrefix)
+    ? openId.slice(sheetPrefix.length)
+    : undefined
+  // The last one opened stays mounted while its sheet animates out
+  const [shown, setShown] = useState<string>()
+  if (selected && selected !== shown) setShown(selected)
   const [exporting, setExporting] = useState(false)
   const openSheet = useOpenBlockSheet()
+  const closeSheet = useCloseBlockSheet()
   const visible = inputs.slice(0, columns)
-  const current = submissions.find(submission => submission.id === selected)
+  const current = submissions.find(
+    submission => submission.id === (selected ?? shown)
+  )
   const filtered =
     filter.search !== '' ||
     filter.range !== null ||
@@ -245,7 +261,6 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
   }
 
   function open(id: string) {
-    setSelected(id)
     openSheet(sheetId(id))
   }
 
@@ -399,14 +414,17 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
             entryId={entryId}
             submission={current}
             title={rowTitle(definition, current)}
+            onClose={closeSheet}
           />
         </BlockSheet>
       )}
     </div>
   )
 }
+const sheetPrefix = 'submission:'
+
 function sheetId(id: string) {
-  return `submission:${id}`
+  return sheetPrefix + id
 }
 
 interface AnswerTextProps {
@@ -452,10 +470,17 @@ interface SubmissionSheetProps {
   entryId: string
   submission: Submission
   title: string
+  /** Closes the sheet, from its close button and on Escape */
+  onClose: () => void
 }
 
 /** One submission with the form as it was sent */
-function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
+function SubmissionSheet({
+  entryId,
+  submission,
+  title,
+  onClose
+}: SubmissionSheetProps) {
   const store = useStore()
   const reload = useSetAtom(version(entryId))
   const definition = submission.definition as FormDefinition
@@ -472,7 +497,7 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
   }
 
   return (
-    <SheetContent>
+    <SheetContent onClose={onClose}>
       <SheetHeader>
         <SubmissionBadge status={submission.status} />
         <SheetTitle>{title}</SheetTitle>
