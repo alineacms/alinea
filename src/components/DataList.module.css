@@ -5,7 +5,8 @@
   line-height: 1.35;
 
   &[data-orientation='horizontal'] {
-    grid-template-columns: auto minmax(0, 1fr);
+    /* Long labels wrap rather than leave the values no room */
+    grid-template-columns: fit-content(40%) minmax(0, 1fr);
     gap: 12px 24px;
   }
 

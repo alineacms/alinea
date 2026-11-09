@@ -251,6 +251,24 @@ export function BlockSheet({id, children}: BlockSheetProps) {
     document.addEventListener('focusin', onFocusIn)
     return () => document.removeEventListener('focusin', onFocusIn)
   }, [context, store, open, id])
+  // Whether the last press was on the sheet. While a modal popover of one of
+  // its fields is open the page is inert, so that press lands on the body
+  // rather than the sheet and focus goes nowhere: tell it apart by position.
+  const pressedInside = useRef(false)
+  useEffect(() => {
+    if (!open || !host) return
+    const onPointerDown = (event: PointerEvent) => {
+      const rect = host.getBoundingClientRect()
+      pressedInside.current =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () =>
+      document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [host, open])
   function onBlur(event: ReactFocusEvent) {
     if (!context || !open || event.relatedTarget) return
     // Focus went nowhere, eg. a click on a non focusable part of the page,
@@ -259,6 +277,14 @@ export function BlockSheet({id, children}: BlockSheetProps) {
     setTimeout(() => {
       const active = document.activeElement
       if (!document.hasFocus() || (active && active !== document.body)) return
+      if (pressedInside.current) {
+        // A press on the sheet keeps it open, focus returns to it as it
+        // would have without the popover
+        host
+          ?.querySelector<HTMLElement>('[role="dialog"]')
+          ?.focus({preventScroll: true})
+        return
+      }
       store.set(context.open, current => (current === id ? null : current))
     })
   }

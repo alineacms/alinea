@@ -481,11 +481,12 @@ function SubmissionSheet({entryId, submission, title}: SubmissionSheetProps) {
       <SheetBody>
         {groups.map((group, index) => (
           <SheetSection key={index} title={group.title}>
-            <DataList>
+            {/* Questions are often long, the answer reads best below it */}
+            <DataList orientation="vertical">
               {group.answers
                 .filter(answer => !isFileAnswer(answer))
                 .map(({input, text, state}) => (
-                  <DataListItem key={input.id}>
+                  <DataListItem key={input.id} full>
                     <DataListLabel>{input.label}</DataListLabel>
                     <DataListValue>
                       {state === 'answered' ? (
