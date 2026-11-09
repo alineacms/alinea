@@ -680,8 +680,11 @@ export function FormInput({
           defaultChecked: input.initialValue === true
         }),
         ' ',
-        input.label,
-        input.required && <span key="required"> *</span>
+        // One element for the text, so the choice lays out as control and text
+        <span key="text">
+          {input.label}
+          {input.required && <span> *</span>}
+        </span>
       ]),
       help,
       message
