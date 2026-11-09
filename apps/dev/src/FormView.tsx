@@ -29,6 +29,7 @@ const views = {
   error: <p className={styles.FormViewError} />,
   control: <input className={styles.FormViewControl} />,
   choice: <label className={styles.FormViewChoice} />,
+  choiceControl: <input className={styles.FormViewChoiceControl} />,
   submit: <button className={styles.FormViewSubmit}>Send</button>,
   confirmation: <p className={styles.FormViewConfirmation} />
 }

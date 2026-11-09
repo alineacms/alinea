@@ -128,7 +128,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`submitLabel`: the text of the submit button, `Send` by default."
+                  "text": "`labels`: the texts `<Form>` adds itself, for sites in another language: `submit` (`Send`), `confirmation` (`Thank you, your answers were sent.`, when editors set no message), `add` (`Add another`, for a repeatable section without a text of its own) and `remove` (`Remove`). For example `labels={{submit: 'Verzenden'}}`."
                 }
               ]
             }
@@ -170,7 +170,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3LGaWzvsw6S6vekZXG9qqxP6r4D",
-      "code": "import {Form, type FormProps} from 'alinea/ui'\nimport styles from './FormView.module.css'\n\nconst views = {\n  form: <form className={styles.form} />,\n  row: <div className={styles.row} />,\n  label: <label className={styles.label} />,\n  help: <p className={styles.help} />,\n  error: <p className={styles.error} />,\n  control: <input className={styles.control} />,\n  choice: <label className={styles.choice} />,\n  section: <fieldset className={styles.section} />,\n  legend: <legend className={styles.legend} />,\n  item: <div className={styles.item} />,\n  add: <button className={styles.add} />,\n  remove: <button className={styles.remove} />,\n  submit: <button className={styles.submit} />,\n  confirmation: <p className={styles.confirmation} />\n}\n\ninterface FormViewProps {\n  definition: FormProps['definition']\n  action: FormProps['action']\n  upload: FormProps['upload']\n}\n\nexport function FormView({definition, action, upload}: FormViewProps) {\n  return (\n    <Form\n      definition={definition}\n      views={views}\n      action={action}\n      upload={upload}\n    />\n  )\n}",
+      "code": "import {Form, type FormProps} from 'alinea/ui'\nimport styles from './FormView.module.css'\n\nconst views = {\n  form: <form className={styles.form} />,\n  row: <div className={styles.row} />,\n  label: <label className={styles.label} />,\n  help: <p className={styles.help} />,\n  error: <p className={styles.error} />,\n  control: <input className={styles.control} />,\n  choice: <label className={styles.choice} />,\n  choiceControl: <input className={styles.choiceControl} />,\n  section: <fieldset className={styles.section} />,\n  legend: <legend className={styles.legend} />,\n  item: <div className={styles.item} />,\n  add: <button className={styles.add} />,\n  remove: <button className={styles.remove} />,\n  submit: <button className={styles.submit} />,\n  confirmation: <p className={styles.confirmation} />\n}\n\ninterface FormViewProps {\n  definition: FormProps['definition']\n  action: FormProps['action']\n  upload: FormProps['upload']\n}\n\nexport function FormView({definition, action, upload}: FormViewProps) {\n  return (\n    <Form\n      definition={definition}\n      views={views}\n      action={action}\n      upload={upload}\n    />\n  )\n}",
       "fileName": "FormView.tsx",
       "language": "tsx",
       "compact": false
@@ -272,7 +272,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`control`: the `<input>`, `<textarea>` or `<select>`."
+                  "text": "`control`: the `<input>`, `<textarea>` or `<select>`, except radio buttons and checkboxes."
                 }
               ]
             }
@@ -303,6 +303,21 @@
                 {
                   "_type": "text",
                   "text": "`choice`: the `<label>` around each radio button or checkbox, and around a check."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`choiceControl`: the `<input>` of each radio button or checkbox, and of a check, so they are styled apart from text inputs."
                 }
               ]
             }
@@ -707,7 +722,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "A confirmation: the form is replaced with the message editors set up, or `Thank you, your answers were sent.` without one."
+                  "text": "A confirmation: the form is replaced with the message editors set up, or the `confirmation` of `labels` without one."
                 }
               ]
             }

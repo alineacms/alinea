@@ -39,6 +39,7 @@ export type FormRole =
   | 'control'
   | 'option'
   | 'choice'
+  | 'choiceControl'
   | 'section'
   | 'legend'
   | 'item'
@@ -46,6 +47,25 @@ export type FormRole =
   | 'remove'
   | 'submit'
   | 'confirmation'
+
+/** The texts `<Form>` adds itself, for sites in other languages */
+export interface FormLabels {
+  /** The submit button */
+  submit: string
+  /** Shown after sending, when editors set no message of their own */
+  confirmation: string
+  /** Adds an item to a repeatable section that has no text of its own */
+  add: string
+  /** Removes an item of a repeatable section */
+  remove: string
+}
+
+const defaultLabels: FormLabels = {
+  submit: 'Send',
+  confirmation: 'Thank you, your answers were sent.',
+  add: 'Add another',
+  remove: 'Remove'
+}
 
 export interface FormInputViewProps {
   input: FormInputData
@@ -103,8 +123,11 @@ export interface FormProps extends Omit<
   values?: Record<string, string>
   /** Errors by the key of the input, when the form is sent another way */
   errors?: FormErrors
-  /** The text of the submit button, unless its view has children */
-  submitLabel?: string
+  /**
+   * The texts `<Form>` adds itself, eg. `{submit: 'Verzenden'}`, unless
+   * their view has children
+   */
+  labels?: Partial<FormLabels>
 }
 
 /**
@@ -118,11 +141,15 @@ export function Form({
   action,
   upload,
   errors,
-  submitLabel = 'Send',
+  labels: labelsProp,
   onChange,
   onSubmit,
   ...props
 }: FormProps) {
+  const labels = useMemo(
+    () => ({...defaultLabels, ...labelsProp}),
+    [labelsProp]
+  )
   const definition = useMemo(
     () => (prefilled ? prefill(defined, prefilled) : defined),
     [defined, prefilled]
@@ -200,11 +227,12 @@ export function Form({
       views.confirmation,
       'div',
       {role: 'status'},
-      result.confirmation || 'Thank you, your answers were sent.'
+      result.confirmation || labels.confirmation
     )
   const failed = result && !result.ok ? result : undefined
   const context = {
     views,
+    labels,
     errors: errors ?? failed?.errors ?? {},
     state,
     repeat,
@@ -248,7 +276,7 @@ export function Form({
         views.submit,
         'button',
         {key: 'submit', type: 'submit', disabled: pending || undefined},
-        submitLabel
+        labels.submit
       )
     ]
   )
@@ -324,6 +352,7 @@ const topScope: FormScope = {suffix: '', name: key => key}
 interface FormItemViewProps {
   item: FormItem
   views: FormViews
+  labels: FormLabels
   errors: Record<string, string>
   state: FormState
   repeat: RepeatActions
@@ -333,6 +362,7 @@ interface FormItemViewProps {
 function FormItemView({
   item,
   views,
+  labels,
   errors,
   state,
   repeat,
@@ -344,6 +374,7 @@ function FormItemView({
       <FormSection
         section={item}
         views={views}
+        labels={labels}
         errors={errors}
         state={state}
         repeat={repeat}
@@ -369,6 +400,7 @@ function FormItemView({
 interface FormSectionProps {
   section: FormSectionData
   views: FormViews
+  labels: FormLabels
   errors: Record<string, string>
   state: FormState
   repeat: RepeatActions
@@ -377,11 +409,12 @@ interface FormSectionProps {
 function FormSection({
   section,
   views,
+  labels,
   errors,
   state,
   repeat
 }: FormSectionProps) {
-  const context = {views, errors, state, repeat}
+  const context = {views, labels, errors, state, repeat}
   const {key} = section
   if (!section.repeat || !key)
     return part(views.section, 'fieldset', {'data-section': section.type}, [
@@ -449,10 +482,10 @@ function FormSection({
                 {
                   key: 'remove',
                   type: 'button',
-                  'aria-label': `Remove ${section.label} ${index + 1}`,
+                  'aria-label': `${labels.remove} ${section.label} ${index + 1}`,
                   onClick: () => repeat.remove(section, item)
                 },
-                'Remove'
+                labels.remove
               )
           ]
         )
@@ -469,7 +502,7 @@ function FormSection({
           views.add,
           'button',
           {key: 'add', type: 'button', onClick: () => repeat.add(section)},
-          add ?? 'Add another'
+          add ?? labels.add
         )
     ]
   )
@@ -639,7 +672,7 @@ export function FormInput({
   if (input.control === 'check')
     return part(views.row, 'div', row, [
       part(views.choice, 'label', {key: 'choice'}, [
-        part(views.control, 'input', {
+        part(views.choiceControl, 'input', {
           ...control,
           key: 'control',
           id,
@@ -660,7 +693,7 @@ export function FormInput({
       help,
       ...(input.choices ?? []).map(choice =>
         part(views.choice, 'label', {key: choice.id}, [
-          part(views.control, 'input', {
+          part(views.choiceControl, 'input', {
             ...control,
             key: 'control',
             id: `${id}-${choice.id}`,

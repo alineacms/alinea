@@ -131,8 +131,7 @@
   outline: 2px solid color-mix(in srgb, var(--alinea-accent) 25%, transparent);
 }
 
-.FormViewControl[type='radio'],
-.FormViewControl[type='checkbox'] {
+.FormViewChoiceControl {
   accent-color: var(--alinea-accent);
   margin: 0;
   padding: 0;

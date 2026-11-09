@@ -83,6 +83,7 @@ test('views restyle parts and replace inputs', () => {
       errors={{name: 'Fill in your name'}}
       views={{
         control: <input className="input" />,
+        choiceControl: <input className="choice" />,
         submit: <button className="button">Request</button>,
         rating: Rating
       }}
@@ -90,6 +91,8 @@ test('views restyle parts and replace inputs', () => {
   )
   const name = screen.getByRole('textbox', {name: 'Name *'})
   expect(name.className).toBe('input')
+  for (const radio of screen.getAllByRole('radio'))
+    expect(radio.className).toBe('choice')
   expect(name.getAttribute('aria-invalid')).toBe('true')
   expect(screen.getByRole('alert').textContent).toBe('Fill in your name')
   expect(screen.getByRole('button').textContent).toBe('Request')
@@ -146,4 +149,18 @@ test('repeatable sections add and remove items', () => {
   // The item that was second moves up and takes the first name
   expect(names()).toEqual(['participants.0.name'])
   expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('')
+})
+
+test('labels replace the texts of the form', () => {
+  render(
+    <Form
+      definition={signUp}
+      labels={{submit: 'Verzenden', remove: 'Verwijder'}}
+    />
+  )
+  expect(screen.getByRole('button', {name: 'Verzenden'})).toBeDefined()
+  fireEvent.click(screen.getByRole('button', {name: 'Add a participant'}))
+  expect(
+    screen.getByRole('button', {name: 'Verwijder Participant 2'}).textContent
+  ).toBe('Verwijder')
 })
