@@ -4,6 +4,7 @@ import {
   atom,
   type PrimitiveAtom,
   useAtomValueRaw,
+  useAtomValueRawSync,
   useStore,
   type WritableAtom
 } from 'jotai'
@@ -245,8 +246,10 @@ export function BlockSheet({id, children}: BlockSheetProps) {
       [context, id]
     )
   )
-  // Read with the state, the slot can mount before this subscribes
-  const host = useAtomValueRaw(
+  // The slot can mount in the same commit as this sheet, before an effect
+  // would subscribe, eg. as opening the sheet shows the sidebar: read it in
+  // sync so that change is not missed
+  const host = useAtomValueRawSync(
     useMemo(
       () =>
         context
