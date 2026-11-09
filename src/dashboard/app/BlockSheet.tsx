@@ -95,8 +95,15 @@ export function BlockSheetSlot({className, style}: BlockSheetSlotProps) {
   const context = useContext(BlockSheetContext)
   const store = useStore()
   const ref = useCallback(
-    (element: HTMLDivElement | null) => {
-      if (context) store.set(context.host, element)
+    (element: HTMLDivElement) => {
+      if (!context) return
+      store.set(context.host, element)
+      // A slot that unmounts after another one mounted, as the sidebar appears,
+      // leaves the newer one in place
+      return () =>
+        store.set(context.host, current =>
+          current === element ? null : current
+        )
     },
     [context, store]
   )
