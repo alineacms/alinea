@@ -19,14 +19,24 @@
   min-width: 0;
 }
 
+/* The current level shrinks before the levels above it do */
+.ExplorerBreadcrumbs-item.is-current {
+  flex-shrink: 1000;
+}
+
 .ExplorerBreadcrumbs-page,
 .ExplorerBreadcrumbs-text,
 .ExplorerBreadcrumbs-link {
-  max-width: 160px;
   overflow: hidden;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The current level takes the room left, it is cut only once the row is full */
+.ExplorerBreadcrumbs-text,
+.ExplorerBreadcrumbs-link {
+  max-width: 160px;
 }
 
 .ExplorerBreadcrumbs-text {
