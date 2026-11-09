@@ -1,5 +1,13 @@
 export type {PrepareUploadResult, Submission} from '#/core/Connection.js'
-export type {FormUploadFile} from '#/core/Forms.js'
+export type {
+  FormFileStorage,
+  FormLimits,
+  FormMail,
+  FormMailer,
+  FormSubmitEvent,
+  FormsOptions,
+  FormUploadFile
+} from '#/core/Forms.js'
 export {options} from '#/field/form/FormChoices.js'
 export type {FormChoice} from '#/field/form/FormChoices.js'
 export {formDefinition as definition} from '#/field/form/FormDefinition.js'
