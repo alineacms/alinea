@@ -46,7 +46,6 @@ import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {proxyMediaUrl} from './api/ProxyMedia.js'
 import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
-import {compressResponse} from './router/Router.js'
 import {createThrottledSync, syncWait} from './util/Syncable.js'
 
 const PrepareBody = object({
@@ -500,7 +499,9 @@ export function createHandler({
         const reason = `tree from ${sha.slice(0, 7)}, remote tree ${remoteMs} ms`
         await syncForRead(sync(source, reason))
         const tree = await local.getTreeIfDifferent(sha)
-        return compressResponse(request, Response.json(tree ?? null))
+        // Compression is left to the host: some, such as Vercel, drop the
+        // content-encoding of a function response and compress it again
+        return Response.json(tree ?? null)
       }
 
       if (action === HandleAction.Sha && request.method === 'GET') {
@@ -531,12 +532,9 @@ export function createHandler({
             yield* local.source.getBlobs(fromLocal, options)
           if (fromRemote.length > 0) yield* cnx.getBlobs(fromRemote, options)
         }
-        return compressResponse(
-          request,
-          new Response(encodeBlobSequence(blobs()), {
-            headers: {'content-type': BLOB_SEQUENCE_CONTENT_TYPE}
-          })
-        )
+        return new Response(encodeBlobSequence(blobs()), {
+          headers: {'content-type': BLOB_SEQUENCE_CONTENT_TYPE}
+        })
       }
 
       // Media
