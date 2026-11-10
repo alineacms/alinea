@@ -1874,13 +1874,17 @@ test('answers a current tree request without syncing first', async () => {
       })
     }
   })
-  const tree = (sha: string) =>
-    handle(
+  const tree = async (sha: string) => {
+    const response = await handle(
       new Request(`http://localhost/api?action=tree&sha=${sha}`, {
-        headers: {accept: 'application/json'}
+        headers: {accept: 'application/json', 'accept-encoding': 'gzip'}
       }),
       requestContext()
-    ).then(response => response.json())
+    )
+    // The host compresses responses, see Handler
+    test.is(response.headers.get('content-encoding'), null)
+    return response.json()
+  }
 
   test.is(await tree(await remoteDb.sha), null)
   test.is(await db.sha, before)
