@@ -1,6 +1,7 @@
 import {suite} from '@alinea/suite'
 import {MemorySource} from './MemorySource.js'
-import {SourceTransaction} from './Source.js'
+import {SourceTransaction, sourceFromTree} from './Source.js'
+import {ReadonlyTree} from './Tree.js'
 
 const test = suite(import.meta)
 const encoder = new TextEncoder()
@@ -27,4 +28,15 @@ test('compiles incremental changes against a previous tree', async () => {
     complete.changes.map(change => change.path),
     ['one.txt', 'two.txt']
   )
+})
+
+test('applies a fetched tree only to the revision it was fetched against', async () => {
+  const source = new MemorySource()
+  const stale = new ReadonlyTree({sha: 'stale', entries: []})
+  const from = sourceFromTree(source, 'from', stale)
+  test.is(await from.getTreeIfDifferent('from'), stale)
+  test.is(await from.getTreeIfDifferent('stale'), undefined)
+  // A store that moved on meanwhile is answered by the source itself
+  const latest = await source.getTree()
+  test.is((await from.getTreeIfDifferent('elsewhere'))?.sha, latest.sha)
 })

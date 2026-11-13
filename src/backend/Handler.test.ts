@@ -1729,6 +1729,63 @@ test('fetches blobs from the remote once for every client that asks', async () =
   test.is(treeRequests, 1)
 })
 
+test('answers a client behind it from its own tree', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const remoteDb = new LocalDB(cms.config)
+  const db = new LocalDB(cms.config)
+  const behind = await db.sha
+  const asked = Array<string>()
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(
+        {
+          getTreeIfDifferent(sha) {
+            asked.push(sha)
+            return remoteDb.getTreeIfDifferent(sha)
+          },
+          getBlobs: (shas, options) => remoteDb.getBlobs(shas, options)
+        },
+        {
+          async verify(): Promise<AuthedContext> {
+            return {
+              ...context,
+              token: 'test',
+              user: {roles: ['admin'], sub: 'admin'}
+            }
+          }
+        }
+      )
+    }
+  })
+  const get = (query: string) =>
+    handle(
+      new Request(`http://localhost/api?${query}`, {
+        headers: {accept: 'application/json'}
+      }),
+      requestContext()
+    ).then(response => response.json())
+  const tree = (sha: string) => get(`action=tree&sha=${sha}`)
+
+  const {_id: id} = await remoteDb.create({
+    type: Page,
+    set: {title: 'Edited'}
+  })
+  const edited = await remoteDb.sha
+  test.is(await get('action=sha'), edited)
+
+  // The remote is at this instance's revision: it sends no tree
+  asked.length = 0
+  test.is((await tree(behind)).sha, edited)
+  test.equal(asked, [edited])
+
+  // The edit is undone elsewhere: the client at that revision is current
+  await remoteDb.remove(id)
+  test.is(await remoteDb.sha, behind)
+  test.is(await tree(behind), null)
+})
+
 test('serves current content when a read cannot sync with the remote', async () => {
   const cms = createCMS({
     schema: {Page},

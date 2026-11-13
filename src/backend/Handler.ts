@@ -33,7 +33,7 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import {type RemoteSource, sourceAtTree} from '#/core/source/Source.js'
+import {type RemoteSource, sourceFromTree} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {within} from '#/core/util/Async.js'
@@ -482,14 +482,21 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        // The remote tells whether the client is current in one request, where
-        // syncing an instance behind it first downloads every change
+        // Ask the remote against this instance's revision: when the remote is
+        // there too it answers without sending its tree, often a second or
+        // more, and the client is answered from here. A remote that moved on
+        // sends its tree. A client already there needs nothing, otherwise the
+        // tree is synced here so the blobs the client asks for next are found
+        // here too.
+        const current = await local.sha
         let source: RemoteSource = cnx
         const start = performance.now()
         try {
-          const remoteTree = await cnx.getTreeIfDifferent(sha)
-          if (!remoteTree) return Response.json(null)
-          source = sourceAtTree(cnx, remoteTree)
+          const remoteTree = await cnx.getTreeIfDifferent(current)
+          if (!remoteTree)
+            return Response.json((await local.getTreeIfDifferent(sha)) ?? null)
+          if (remoteTree.sha === sha) return Response.json(null)
+          source = sourceFromTree(cnx, current, remoteTree)
         } catch {
           // The sync below warns about an unreachable remote and serves the
           // current content

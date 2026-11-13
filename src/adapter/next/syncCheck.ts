@@ -1,10 +1,9 @@
 import type {Client} from '#/core/Client.js'
-import type {SyncOptions} from '#/core/db/LocalStore.js'
-import type {RemoteSource} from '#/core/source/Source.js'
 
 interface SyncableDB {
   readonly sha: string | Promise<string>
-  syncWith(source: RemoteSource, options?: SyncOptions): Promise<string>
+  /** Sync with the handler, unless another sync moved on from `from` first. */
+  sync(from?: string): Promise<unknown>
 }
 
 // Tag for the shared latest-content-sha entry. Static pages that query
@@ -117,16 +116,16 @@ export async function syncIfStale(
   db: SyncableDB,
   client: Client,
   syncInterval?: number,
-  shaWindow = SHA_REVALIDATE_SECONDS,
-  options?: SyncOptions
+  shaWindow = SHA_REVALIDATE_SECONDS
 ): Promise<boolean> {
   if (syncInterval === Number.POSITIVE_INFINITY) return true
   if (syncInterval === 0) {
-    await db.syncWith(client, options)
+    await db.sync()
     return true
   }
   const expected = await latestSha(client, shaWindow)
   if (!expected) return false
-  if (expected !== (await db.sha)) await db.syncWith(client, options)
+  const current = await db.sha
+  if (expected !== current) await db.sync(current)
   return true
 }
