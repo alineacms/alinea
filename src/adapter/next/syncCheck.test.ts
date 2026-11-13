@@ -9,9 +9,9 @@ import {
 } from './syncCheck.js'
 
 function dbWith(sha: string) {
-  const syncWith = mock(async () => sha)
-  const db = {sha, syncWith}
-  return {db, syncWith}
+  const sync = mock(async (_target?: string) => sha)
+  const db = {sha, sync}
+  return {db, sync}
 }
 
 function clientWith(sha: string | undefined) {
@@ -23,45 +23,52 @@ function clientWith(sha: string | undefined) {
 }
 
 test('returns false when the latest sha cannot be determined', async () => {
-  const {db, syncWith} = dbWith('local')
+  const {db, sync} = dbWith('local')
   const {client} = clientWith(undefined)
   const settled = await syncIfStale(db, client, 60)
   expect(settled).toBe(false)
-  expect(syncWith).not.toHaveBeenCalled()
+  expect(sync).not.toHaveBeenCalled()
 })
 
 test('forces sync when syncInterval is 0 without fetching the sha', async () => {
-  const {db, syncWith} = dbWith('local')
+  const {db, sync} = dbWith('local')
   const {client, getSha} = clientWith('other')
   const settled = await syncIfStale(db, client, 0)
   expect(settled).toBe(true)
-  expect(syncWith).toHaveBeenCalledTimes(1)
+  expect(sync).toHaveBeenCalledTimes(1)
   expect(getSha).not.toHaveBeenCalled()
 })
 
 test('skips everything when sync is disabled', async () => {
-  const {db, syncWith} = dbWith('local')
+  const {db, sync} = dbWith('local')
   const {client, getSha} = clientWith('other')
   const settled = await syncIfStale(db, client, Number.POSITIVE_INFINITY)
   expect(settled).toBe(true)
-  expect(syncWith).not.toHaveBeenCalled()
+  expect(sync).not.toHaveBeenCalled()
   expect(getSha).not.toHaveBeenCalled()
 })
 
 test('syncs once when the isolate db is behind the shared sha', async () => {
-  const {db, syncWith} = dbWith('stale-sha')
+  const {db, sync} = dbWith('stale-sha')
   const {client} = clientWith('fresh-sha')
   const settled = await syncIfStale(db, client, 3600)
   expect(settled).toBe(true)
-  expect(syncWith).toHaveBeenCalledTimes(1)
+  expect(sync).toHaveBeenCalledTimes(1)
+})
+
+test('syncs towards the shared sha', async () => {
+  const {db, sync} = dbWith('stale-sha')
+  const {client} = clientWith('fresh-sha')
+  await syncIfStale(db, client, 3600)
+  expect(sync).toHaveBeenCalledWith('fresh-sha')
 })
 
 test('skips sync when the isolate db matches the shared sha', async () => {
-  const {db, syncWith} = dbWith('fresh-sha')
+  const {db, sync} = dbWith('fresh-sha')
   const {client} = clientWith('fresh-sha')
   const settled = await syncIfStale(db, client, 3600)
   expect(settled).toBe(true)
-  expect(syncWith).not.toHaveBeenCalled()
+  expect(sync).not.toHaveBeenCalled()
 })
 
 test('marks the content sha stale after a commit instead of expiring it', async () => {

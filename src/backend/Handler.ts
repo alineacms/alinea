@@ -14,7 +14,7 @@ import type {
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
-import {loggedSync} from '#/core/db/SyncStats.js'
+import {loggedSync, syncStats} from '#/core/db/SyncStats.js'
 import type {DashboardEntry} from '#/core/DashboardEntry.js'
 import {
   committedEntries,
@@ -104,6 +104,13 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
+  // Revisions this instance moved on from: a client at one of them is behind.
+  // Clients lag a few revisions at most, older ones are forgotten.
+  const passed = new Set<string>()
+  function pass(sha: string) {
+    passed.add(sha)
+    if (passed.size > 100) passed.delete(passed.values().next().value!)
+  }
   return async function handle(
     request: Request,
     context: RequestContext
@@ -128,9 +135,13 @@ export function createHandler({
     }
 
     /** Log why and how long each sync took, except with files on disk. */
-    function sync(remote: RemoteSource, reason: string): Promise<string> {
-      if (dev || !logSyncs) return local.syncWith(remote)
-      return loggedSync(local, remote, reason)
+    async function sync(remote: RemoteSource, reason: string) {
+      const stats = syncStats()
+      const to = await (dev || !logSyncs
+        ? local.syncWith(remote, {stats})
+        : loggedSync(local, remote, reason, {stats}))
+      if (stats.from && stats.from !== to) pass(stats.from)
+      return to
     }
 
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
@@ -425,8 +436,10 @@ export function createHandler({
           // again, eg. when a read synced a later commit in meanwhile. Catch
           // up with the remote instead, or with its next sync.
           try {
-            if (sha === request.intoSha) await local.write(request)
-            else sha = await sync(cnx, 'after commit')
+            if (sha === request.intoSha) {
+              await local.write(request)
+              pass(request.fromSha)
+            } else sha = await sync(cnx, 'after commit')
           } catch {
             sha = await sync(cnx, 'after commit').catch(() => sha)
           }
@@ -482,6 +495,16 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
+        const target = url.searchParams.get('target')
+        // Asking the remote costs a round trip, often over a second. A client
+        // at a revision this instance moved on from is behind it, and is
+        // answered from here when this instance reached the revision it is
+        // after. One that may be ahead is left to the remote, so it never
+        // moves back.
+        const reached =
+          target && (passed.has(target) || (await local.sha) === target)
+        if (reached && passed.has(sha))
+          return Response.json((await local.getTreeIfDifferent(sha)) ?? null)
         // The remote tells whether the client is current in one request, where
         // syncing an instance behind it first downloads every change
         let source: RemoteSource = cnx

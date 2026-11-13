@@ -20,6 +20,7 @@ import {loggedSync, syncStats} from '#/core/db/SyncStats.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
+import type {RemoteSource} from '#/core/source/Source.js'
 import {getScope} from '#/core/Scope.js'
 import {trace} from '#/core/Trace.js'
 import {within} from '#/core/util/Async.js'
@@ -139,22 +140,27 @@ export class NextCMS<
     return {isBuild, useLocalDb: !isEdge && (!context.isDev || isBuild)}
   }
 
-  /** Renders keep serving the current content when the handler is unreachable. */
+  /**
+   * Renders keep serving the current content when the handler is
+   * unreachable. A `target` is a revision the handler is known to have.
+   */
   async #syncDb(
     db: LocalStore,
     client: Client,
     reason: string,
-    render: RenderStats | undefined
+    render: RenderStats | undefined,
+    target?: string
   ): Promise<string> {
     const stats = syncStats()
+    const remote = target ? towards(client, target) : client
     const sync = async () => {
       try {
         const options = {...preValidatedRemote, stats}
         // Only deployments log their syncs, `next dev` would be noisy
         const synced =
           process.env.NODE_ENV === 'production'
-            ? loggedSync(db, client, reason, options)
-            : db.syncWith(client, options)
+            ? loggedSync(db, remote, reason, options)
+            : db.syncWith(remote, options)
         const sha = await within(synced, syncWait)
         this.#syncedAt = Date.now()
         return sha
@@ -222,7 +228,8 @@ export class NextCMS<
         db,
         createClient(this.config, context),
         `preview at ${decoded.contentHash.slice(0, 7)}`,
-        this.#render().stats
+        this.#render().stats,
+        decoded.contentHash
       )
     return applyPreviewUpdate(db, decoded)
   }
@@ -301,7 +308,8 @@ export class NextCMS<
       // as this isolate's last sync.
       const tracked = {
         sha: db.sha,
-        syncWith: () => this.#syncDb(db, client, 'stale', stats)
+        sync: (target?: string) =>
+          this.#syncDb(db, client, 'stale', stats, target)
       }
       const settled =
         !isDraft &&
@@ -397,6 +405,21 @@ export function createCMS<Definition extends Config>(
   config: Definition
 ): NextCMS<Definition> {
   return new NextCMS(config)
+}
+
+/**
+ * Sync through the handler towards a revision known to exist there. Queries
+ * of concurrent renders find the db behind together and queue their syncs:
+ * once one reached the target, the others end without asking the handler.
+ */
+function towards(client: Client, target: string): RemoteSource {
+  return {
+    async getTreeIfDifferent(sha) {
+      if (sha === target) return undefined
+      return client.getTreeIfDifferent(sha, target)
+    },
+    getBlobs: (shas, options) => client.getBlobs(shas, options)
+  }
 }
 
 function createClient(config: Config, context: RequestContext) {

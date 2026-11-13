@@ -198,10 +198,18 @@ export class Client implements LocalConnection {
 
   // Source
 
-  getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
+  /**
+   * With the `target` revision the caller is after, a handler instance that
+   * already holds it answers without asking its remote.
+   */
+  getTreeIfDifferent(
+    sha: string,
+    target?: string
+  ): Promise<ReadonlyTree | undefined> {
     return this.#requestJson({
       action: HandleAction.Tree,
-      sha
+      sha,
+      ...(target ? {target} : {})
     })
       .then<Tree | null>(this.#failOnHttpError)
       .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
