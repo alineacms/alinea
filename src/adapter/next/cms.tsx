@@ -142,17 +142,18 @@ export class NextCMS<
 
   /**
    * Renders keep serving the current content when the handler is
-   * unreachable. A `target` is a revision the handler is known to have.
+   * unreachable. Given `from`, the revision a render found behind, the sync
+   * ends when another moved the db on from it first.
    */
   async #syncDb(
     db: LocalStore,
     client: Client,
     reason: string,
     render: RenderStats | undefined,
-    target?: string
+    from?: string
   ): Promise<string> {
     const stats = syncStats()
-    const remote = target ? towards(client, target) : client
+    const remote = from ? since(client, from) : client
     const sync = async () => {
       try {
         const options = {...preValidatedRemote, stats}
@@ -223,13 +224,14 @@ export class NextCMS<
     context: RequestContext
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
-    if ((await db.sha) !== decoded.contentHash)
+    const current = await db.sha
+    if (current !== decoded.contentHash)
       await this.#syncDb(
         db,
         createClient(this.config, context),
         `preview at ${decoded.contentHash.slice(0, 7)}`,
         this.#render().stats,
-        decoded.contentHash
+        current
       )
     return applyPreviewUpdate(db, decoded)
   }
@@ -308,8 +310,7 @@ export class NextCMS<
       // as this isolate's last sync.
       const tracked = {
         sha: db.sha,
-        sync: (target?: string) =>
-          this.#syncDb(db, client, 'stale', stats, target)
+        sync: (from?: string) => this.#syncDb(db, client, 'stale', stats, from)
       }
       const settled =
         !isDraft &&
@@ -408,15 +409,15 @@ export function createCMS<Definition extends Config>(
 }
 
 /**
- * Sync through the handler towards a revision known to exist there. Queries
- * of concurrent renders find the db behind together and queue their syncs:
- * once one reached the target, the others end without asking the handler.
+ * Queries of concurrent renders find the db behind together and queue their
+ * syncs: once one moved the db on from `from`, wherever to, the others end
+ * without asking the handler.
  */
-function towards(client: Client, target: string): RemoteSource {
+function since(client: Client, from: string): RemoteSource {
   return {
     async getTreeIfDifferent(sha) {
-      if (sha === target) return undefined
-      return client.getTreeIfDifferent(sha, target)
+      if (sha !== from) return undefined
+      return client.getTreeIfDifferent(sha)
     },
     getBlobs: (shas, options) => client.getBlobs(shas, options)
   }

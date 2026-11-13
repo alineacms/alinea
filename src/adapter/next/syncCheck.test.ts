@@ -56,11 +56,11 @@ test('syncs once when the isolate db is behind the shared sha', async () => {
   expect(sync).toHaveBeenCalledTimes(1)
 })
 
-test('syncs towards the shared sha', async () => {
+test('syncs from the revision it found behind', async () => {
   const {db, sync} = dbWith('stale-sha')
   const {client} = clientWith('fresh-sha')
   await syncIfStale(db, client, 3600)
-  expect(sync).toHaveBeenCalledWith('fresh-sha')
+  expect(sync).toHaveBeenCalledWith('stale-sha')
 })
 
 test('skips sync when the isolate db matches the shared sha', async () => {

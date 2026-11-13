@@ -418,8 +418,10 @@ test('asks the handler once for queries that find the db behind', async () => {
   let treeRequests = 0
   handlerFetch = mock(async (input, init) => {
     const request = new Request(input, init)
-    if (new URL(request.url).searchParams.get('action') === 'tree')
-      treeRequests += 1
+    const action = new URL(request.url).searchParams.get('action')
+    // The shared sha can trail the handler, which then syncs past it
+    if (action === 'sha') return Response.json('trailing-sha')
+    if (action === 'tree') treeRequests += 1
     return handle(request)
   })
 

@@ -41,6 +41,28 @@ export function sourceAtTree(
   }
 }
 
+/**
+ * A tree fetched against revision `from`, for a sync that may wait its turn:
+ * one that finds the store moved on asks the source again instead of taking
+ * the store back to this tree.
+ */
+export function sourceFromTree(
+  source: RemoteSource,
+  from: string,
+  tree: ReadonlyTree
+): RemoteSource {
+  return {
+    async getTreeIfDifferent(revision) {
+      if (revision === from) return tree
+      if (revision === tree.sha) return undefined
+      return source.getTreeIfDifferent(revision)
+    },
+    getBlobs(shas, options) {
+      return source.getBlobs(shas, options)
+    }
+  }
+}
+
 export async function applyChangesFrom(
   source: Source,
   remote: RemoteSource,

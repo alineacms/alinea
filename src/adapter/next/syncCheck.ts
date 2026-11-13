@@ -2,8 +2,8 @@ import type {Client} from '#/core/Client.js'
 
 interface SyncableDB {
   readonly sha: string | Promise<string>
-  /** Sync with the handler, towards `target` when it is known. */
-  sync(target?: string): Promise<unknown>
+  /** Sync with the handler, unless another sync moved on from `from` first. */
+  sync(from?: string): Promise<unknown>
 }
 
 // Tag for the shared latest-content-sha entry. Static pages that query
@@ -125,6 +125,7 @@ export async function syncIfStale(
   }
   const expected = await latestSha(client, shaWindow)
   if (!expected) return false
-  if (expected !== (await db.sha)) await db.sync(expected)
+  const current = await db.sha
+  if (expected !== current) await db.sync(current)
   return true
 }

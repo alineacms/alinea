@@ -1732,11 +1732,9 @@ test('fetches blobs from the remote once for every client that asks', async () =
 test('answers a client behind it from its own tree', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const remoteDb = new LocalDB(cms.config)
-  await remoteDb.create({type: Page, set: {title: 'Committed elsewhere'}})
-  const target = await remoteDb.sha
   const db = new LocalDB(cms.config)
   const behind = await db.sha
-  let treeRequests = 0
+  const asked = Array<string>()
   const handle = createHandler({
     cms,
     db,
@@ -1744,7 +1742,7 @@ test('answers a client behind it from its own tree', async () => {
       return composeBackend(
         {
           getTreeIfDifferent(sha) {
-            treeRequests += 1
+            asked.push(sha)
             return remoteDb.getTreeIfDifferent(sha)
           },
           getBlobs: (shas, options) => remoteDb.getBlobs(shas, options)
@@ -1768,26 +1766,24 @@ test('answers a client behind it from its own tree', async () => {
       }),
       requestContext()
     ).then(response => response.json())
-  test.is(await get('action=sha'), target)
-  treeRequests = 0
+  const tree = (sha: string) => get(`action=tree&sha=${sha}`)
 
-  const tree = await get(`action=tree&sha=${behind}&target=${target}`)
-  test.is(tree.sha, target)
-  test.is(treeRequests, 0)
+  const {_id: id} = await remoteDb.create({
+    type: Page,
+    set: {title: 'Edited'}
+  })
+  const edited = await remoteDb.sha
+  test.is(await get('action=sha'), edited)
 
-  // Without a target, or for a client that may be ahead, the remote answers
-  await get(`action=tree&sha=${behind}`)
-  test.is(treeRequests, 1)
-  await get(`action=tree&sha=ahead&target=${target}`)
-  test.is(treeRequests, 2)
+  // The remote is at this instance's revision: it sends no tree
+  asked.length = 0
+  test.is((await tree(behind)).sha, edited)
+  test.equal(asked, [edited])
 
-  // Past the target, the client gets the newer tree it is behind on
-  await remoteDb.create({type: Page, set: {title: 'Committed later'}})
-  const later = await get('action=sha')
-  treeRequests = 0
-  const newer = await get(`action=tree&sha=${behind}&target=${target}`)
-  test.is(newer.sha, later)
-  test.is(treeRequests, 0)
+  // The edit is undone elsewhere: the client at that revision is current
+  await remoteDb.remove(id)
+  test.is(await remoteDb.sha, behind)
+  test.is(await tree(behind), null)
 })
 
 test('serves current content when a read cannot sync with the remote', async () => {
