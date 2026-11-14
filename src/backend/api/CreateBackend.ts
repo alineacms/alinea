@@ -1,6 +1,8 @@
+import {SubmissionStore} from './SubmissionStore.js'
 import type {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {assert} from '#/core/util/Assert.js'
+import type {DatabaseSync} from 'node:sqlite'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
 import {isBlobStore, storedBlobs, storedWrites} from './BlobStore.js'
@@ -11,7 +13,10 @@ import {S3Uploads, type S3UploadsOptions} from './S3Uploads.js'
 
 export type BackendPart =
   | Partial<RemoteConnection>
-  | ((context: RequestContext, config: Config) => Partial<RemoteConnection>)
+  | ((
+      context: RequestContext,
+      config: Config
+    ) => Partial<RemoteConnection> | Array<Partial<RemoteConnection>>)
 
 export interface BackendFactory {
   (context: RequestContext, config: Config): RemoteConnection
@@ -26,6 +31,7 @@ export type AvailableDrivers =
   | '@electric-sql/pglite'
   | 'sql.js'
   | '@libsql/client'
+  | 'node:sqlite'
 
 type DatabaseClient<Driver extends AvailableDrivers> = Parameters<
   (typeof driver)[Driver]
@@ -44,6 +50,8 @@ export type DatabaseDeclaration =
   | DatabaseOption<'@electric-sql/pglite'>
   | DatabaseOption<'sql.js'>
   | DatabaseOption<'@libsql/client'>
+  // The client type rado declares lags behind the one of Node
+  | {driver: 'node:sqlite'; client: DatabaseSync}
 
 export interface BackendOptions {
   auth?(username: string, password: string): boolean | Promise<boolean>
@@ -67,15 +75,16 @@ export function backendFromOptions(options: BackendOptions): BackendFactory {
     const auth = options.oauth2
       ? new OAuth2(context, config, options.oauth2)
       : new BasicAuth(context, options.auth!)
-    return composeBackend(ghApi, dbApi, uploadsApi ?? {}, auth)
+    const submissions = new SubmissionStore({db})
+    return composeBackend(ghApi, dbApi, submissions, uploadsApi ?? {}, auth)
   }
 }
 
 export function createBackend(...parts: Array<BackendPart>): BackendFactory {
   return (context, config) => {
     return composeBackend(
-      ...parts.map(part =>
-        typeof part === 'function' ? part(context, config) : part
+      ...parts.flatMap(part =>
+        typeof part === 'function' ? part(context, config) : [part]
       )
     )
   }
@@ -129,6 +138,18 @@ export function composeBackend(
     listUsers: call('listUsers'),
     createUser: call('createUser'),
     updateUser: call('updateUser'),
-    removeUser: call('removeUser')
+    removeUser: call('removeUser'),
+    storeSubmission: call('storeSubmission'),
+    listSubmissions: call('listSubmissions'),
+    updateSubmission: call('updateSubmission'),
+    deleteSubmission: call('deleteSubmission'),
+    notifiedSubmission: call('notifiedSubmission'),
+    retainSubmissions: call('retainSubmissions'),
+    purgeSubmissions: call('purgeSubmissions'),
+    recentActivity: call('recentActivity'),
+    storeFormFile: call('storeFormFile'),
+    formFiles: call('formFiles'),
+    attachFormFiles: call('attachFormFiles'),
+    readFormFile: call('readFormFile')
   }
 }

@@ -1,0 +1,471 @@
+{
+  "_id": "3L2nb3U4mu2ux194d2iwmq95xam",
+  "_type": "Doc",
+  "_index": "a0",
+  "title": "Getting started",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "There are two ways to give editors a form builder. `Form.type` creates a type for form entries, with everything a form needs: the inputs, the answers visitors sent and the mails that go out. `Field.form` adds only the inputs, as a field of any type. Most sites want form entries."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Form entries"
+        }
+      ],
+      "_anchor": "form-entries"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Form.type` takes a label and the `inputs` editors can add. `Form.defaults` holds the built-in inputs, see "
+        },
+        {
+          "_type": "text",
+          "text": "Building forms",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3LdF3xICmPmlABIL8WgS13UrSJU",
+              "_link": "entry",
+              "_entry": "3LMClPIi7Ayj1vRERGozYA2W9kO"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ":"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LtCix1vIMsNldjjFwgULJpYBfG",
+      "code": "import {Form} from 'alinea'\n\nexport const FormEntry = Form.type('Form', {\n  inputs: Form.defaults\n})",
+      "fileName": "schema/FormEntry.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entries of this type open with three tabs:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Form",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the title, the path and the inputs of the form."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Submissions",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the answers visitors sent, to read, filter, export and archive."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Notifications",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": the mails that are sent for each submission, what the visitor sees after sending and how long submissions are kept."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Pass `fields` to add fields of your own to the Form tab, next to the title and path, for example an introduction you show above the form. Other options work as they do for any type, such as `icon`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Keep form entries in a root of their own, so editors find them in one place and pages can link to them:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Lq4uIihqmUjYwIW1PuhJw3lf1R",
+      "code": "import {Config} from 'alinea'\nimport {createCMS} from 'alinea/next'\nimport * as schema from './schema'\n\nexport const cms = createCMS({\n  schema,\n  workspaces: {\n    main: Config.workspace('My site', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {contains: ['Page']}),\n        forms: Config.root('Forms', {contains: ['FormEntry']}),\n        media: Config.media()\n      }\n    })\n  },\n  handlerUrl: '/api/cms'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A page shows a form by linking to it with an entry field, for example `form: Field.entry('Form', {condition: {_type: 'FormEntry'}})`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "A form in any type"
+        }
+      ],
+      "_anchor": "a-form-in-any-type"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.form` is the form builder on its own. Add it to the fields of a type:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LIoJXVRkBWlFBBEFkzWQxCBBp2",
+      "code": "import {Config, Field, Form} from 'alinea'\n\nexport const Event = Config.type('Event', {\n  fields: {\n    title: Field.text('Title'),\n    path: Field.path('Path'),\n    signUp: Field.form('Sign-up form', {inputs: Form.defaults})\n  }\n})",
+      "fileName": "schema/Event.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Answers to it are checked and stored like those of form entries. Notification mails and the message after sending are only part of form entries. Add `Form.submissions()` to the tabs of the type to read the answers, and `Form.keep()` under the key `keep` to choose how long they are kept:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Lhf8045UFibTVdxtoSisz9q8PV",
+      "code": "import {Config, Field, Form} from 'alinea'\n\nexport const Event = Config.type('Event', {\n  fields: {\n    ...Field.tabs(\n      Field.tab('Event', {\n        fields: {\n          title: Field.text('Title'),\n          path: Field.path('Path'),\n          signUp: Field.form('Sign-up form', {inputs: Form.defaults}),\n          keep: Form.keep()\n        }\n      }),\n      Form.submissions()\n    )\n  }\n})",
+      "fileName": "",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use `onSubmit` in "
+        },
+        {
+          "_type": "text",
+          "text": "Storage and security",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3LTJYfoOGPUf23fHXJ1WmgMPjn4",
+              "_link": "entry",
+              "_entry": "3LuGkr9e1G4xeMby22aucMTJ3aI"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to handle the answers yourself as well."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The form has to be a field of the entry itself, not one inside a list or a block. When a type has more than one form field, pass the key of the one to submit as the `field` option of `cms.forms.submit`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Render the form"
+        }
+      ],
+      "_anchor": "render-the-form"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Querying a form field gives the form definition: a list of the inputs and sections of the published form, with their keys, labels, settings and rules. It is plain data, so a server component can pass it on. Render it with `<Form>` from `alinea/ui`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LZLNRbItvkDvVUfKfy7LkWg9Fl",
+      "code": "import {cms} from '@/cms'\nimport {FormEntry} from '@/schema/FormEntry'\nimport {Query} from 'alinea'\nimport {Form} from 'alinea/ui'\nimport {notFound} from 'next/navigation'\nimport {prepareUpload, submitForm} from './actions'\n\ninterface PageProps {\n  params: Promise<{slug: string}>\n}\n\nexport default async function FormPage({params}: PageProps) {\n  const {slug} = await params\n  const form = await cms.first({\n    type: FormEntry,\n    path: slug,\n    select: {id: Query.id, title: Query.title, inputs: FormEntry.inputs}\n  })\n  if (!form) notFound()\n  return (\n    <main>\n      <h1>{form.title}</h1>\n      <Form\n        definition={form.inputs}\n        action={submitForm.bind(null, form.id)}\n        upload={prepareUpload.bind(null, form.id)}\n      />\n    </main>\n  )\n}",
+      "fileName": "app/forms/[slug]/page.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The answers go to a server action, which sends them to the handler with `cms.forms.submit`. It uses your API key, so call it on the server only:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3LUMXB7d0ZGtCkvMY4u5q5Oibhq",
+      "code": "'use server'\n\nimport {cms} from '@/cms'\nimport type {FormUploadFile} from 'alinea/form'\n\n/** Sends the answers of a visitor to the form in an entry */\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data)\n}\n\n/** A ticket for the browser of the visitor to upload a file with */\nexport async function prepareUpload(entryId: string, file: FormUploadFile) {\n  return cms.forms.prepareUpload(entryId, file)\n}",
+      "fileName": "app/forms/[slug]/actions.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The handler checks the answers against the published version of the form, stores them and answers with what `<Form>` shows next: the errors under their inputs, or the confirmation message in place of the form, or the page to go to. Publish a form entry before you test it: a draft can't be submitted."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The `upload` prop is only needed when the form has a file input. With it, the browser asks your action for a signed ticket per file and uploads the file to the handler itself, so files don't pass through your server action. The handler receives those uploads as `PUT` requests, so export your handler for `PUT` as well:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3L33ThSasP2Gv6akH2qqklgWXXG",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When the root of your forms is translated, pass the locale of the page: `cms.forms.submit(entryId, data, {locale})`, and the same option to `cms.forms.prepareUpload`. See "
+        },
+        {
+          "_type": "text",
+          "text": "Internationalization",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3Lo9pw6NgTmsdJ1QBEnmma8F8su",
+              "_link": "entry",
+              "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Where answers go"
+        }
+      ],
+      "_anchor": "where-answers-go"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The handler needs a database to store submissions. A "
+        },
+        {
+          "_type": "text",
+          "text": "self-hosted backend",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3LRTY1S5Dw0Q3HqTq20IRBM1aox",
+              "_link": "entry",
+              "_entry": "2YlEGKqhO4mqRqEwQexeqRI8Jfu"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " already has one and keeps them there. With "
+        },
+        {
+          "_type": "text",
+          "text": "Alinea Cloud",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3LJ6Ch4FZf6nlPHkKR4SDFDbGeJ",
+              "_link": "entry",
+              "_entry": "c1qjY2L4hq8JWfscRb_dD"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", pass a database of your own as `forms.database`. During `alinea dev` your route answers forms too, with the same options and storage, so the whole flow runs locally. See "
+        },
+        {
+          "_type": "text",
+          "text": "Storage and security",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3L17qMzXPYuPAK6CxqFqGeieHDh",
+              "_link": "entry",
+              "_entry": "3LuGkr9e1G4xeMby22aucMTJ3aI"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3LlGVIRaHnW4vaz3fU4DCzvLbtj",
+      "link": {
+        "description": "The inputs, sections and rules editors work with.",
+        "_id": "3LnqOCcoYnEkYB5X1ZYdnEQxZ08",
+        "_type": "entry",
+        "_entry": "3LMClPIi7Ayj1vRERGozYA2W9kO"
+      }
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3LmoXw8NGFRjpU6cWSIMg7l3AmX",
+      "link": {
+        "description": "Style the form and render inputs with your own components.",
+        "_id": "3Lgl5w9CVjlpqGjrFpRSjC4UMiI",
+        "_type": "entry",
+        "_entry": "3LcYz2xic2qalTclBv16Tl2hMmR"
+      }
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  }
+}

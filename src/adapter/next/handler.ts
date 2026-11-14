@@ -1,4 +1,11 @@
 import {
+  databaseStore,
+  handleFormRequest,
+  isFormRequest,
+  isVisitorUpload
+} from '#/backend/FormRequests.js'
+import type {FormsOptions} from '#/core/Forms.js'
+import {
   backendFromOptions,
   type BackendFactory,
   type BackendOptions
@@ -34,6 +41,8 @@ type Handler = (request: Request) => Promise<Response>
 export interface NextHandlerOptions extends HandlerHooks {
   cms: NextCMS
   backend?: BackendFactory | BackendOptions
+  /** How submissions of forms are handled, eg. the mailer of their mails */
+  forms?: FormsOptions
 }
 
 export type OpenGeneratedDatabase = (config: Config) => Promise<LocalStore>
@@ -84,6 +93,40 @@ export function createHandlerWithDatabase(
     afterCommit
   })
 
+  const formsStore = databaseStore(options.forms)
+
+  /**
+   * Forms are answered here during development as they are once deployed,
+   * with the options and storage of this app. The site sends answers here,
+   * the dev server forwards the requests of editors it checked.
+   */
+  async function handleFormsInDevelopment(
+    request: Request,
+    context: RequestContext
+  ): Promise<Response> {
+    const developmentKey = request.headers.get(developmentKeyHeader)
+    const trusted = Boolean(context.apiKey) && developmentKey === context.apiKey
+    if (!trusted && !isVisitorUpload(request))
+      return failure(401, 'Invalid development credentials')
+    const url = new URL(request.url)
+    try {
+      const response = await handleFormRequest(request, {
+        config,
+        graph: options.cms,
+        api: formsStore ?? remote(context),
+        forms: options.forms ?? {},
+        secret: context.apiKey,
+        handlerUrl: new URL(handlerPathname(config, url), url.origin),
+        // The dev server checked the editor before it forwarded
+        async authorize() {}
+      })
+      return response ?? failure(404, 'Not found')
+    } catch (error) {
+      if (error instanceof HttpError) return failure(error.code, error.message)
+      throw error
+    }
+  }
+
   /**
    * During development the dev server owns the database and answers the
    * dashboard. It forwards mutations here only to run this app's commit
@@ -93,6 +136,8 @@ export function createHandlerWithDatabase(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
+    if (isFormRequest(request))
+      return handleFormsInDevelopment(request, context)
     const action = new URL(request.url).searchParams.get('action')
     if (action !== HandleAction.Mutate || request.method !== 'POST')
       return failure(404, 'Answered by the Alinea dev server')

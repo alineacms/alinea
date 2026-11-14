@@ -21,6 +21,7 @@ import {renderNodes} from '@/page/docs/DocMarkdown'
 import {docsPages, getDocsTree} from '@/page/docs/DocsTree'
 import {DocToc} from '@/page/docs/DocToc'
 import {Doc} from '@/schema/Doc'
+import {Docs} from '@/schema/Docs'
 import {describeText, getMetadata, siteUrl} from '@/utils/metadata'
 import css from './DocPage.module.scss'
 
@@ -43,8 +44,14 @@ async function getDoc(params: DocPageParams) {
     include: {
       ...Doc,
       id: Entry.id,
+      navigationOnly: Docs.navigationOnly,
       parents: Query.parents({
-        select: {id: Entry.id, title: Entry.title, url: Entry.url}
+        select: {
+          id: Entry.id,
+          title: Entry.title,
+          url: Entry.url,
+          navigationOnly: Docs.navigationOnly
+        }
       })
     }
   })
@@ -52,11 +59,14 @@ async function getDoc(params: DocPageParams) {
 
 export const dynamicParams = false
 export async function generateStaticParams() {
-  const urls = await cms.find({
+  const docs = await cms.find({
     location: cms.workspaces.main.pages.docs,
-    select: Entry.url
+    select: {url: Entry.url, navigationOnly: Docs.navigationOnly}
   })
-  return urls.map(url => ({slug: url.split('/').slice(2)}))
+  // A heading of the navigation has no page
+  return docs
+    .filter(doc => !doc.navigationOnly)
+    .map(doc => ({slug: doc.url.split('/').slice(2)}))
 }
 
 export async function generateMetadata({
@@ -92,7 +102,13 @@ export default async function DocPage({params}: DocPageProps) {
     ? firstGroup
       ? [{id: firstGroup.id, title: firstGroup.title, url: firstGroup.url}]
       : []
-    : doc.parents.filter(parent => parent.id !== tree.root.id)
+    : doc.parents.filter(
+        parent => parent.id !== tree.root.id && !parent.navigationOnly
+      )
+  // Below a heading of the navigation the page goes by its own title, the
+  // navigation calls it eg. Overview
+  const underHeading = doc.parents.at(-1)?.navigationOnly
+  const current = underHeading ? doc.title : doc.navigationTitle || doc.title
   const {lead, rest} = splitLead(withHeadingAnchors(doc.body))
   const headings = docHeadings(rest)
   // A catalog lists the children of the page already, and needs the room
@@ -103,7 +119,7 @@ export default async function DocPage({params}: DocPageProps) {
   const trail = [
     {title: 'Docs', url: tree.root.url},
     ...parents,
-    {title: doc.navigationTitle || doc.title, url: doc._url}
+    {title: current, url: doc._url}
   ]
   const breadcrumbList = {
     '@type': 'BreadcrumbList',
@@ -119,10 +135,7 @@ export default async function DocPage({params}: DocPageProps) {
       {!isIndex && <JsonLd data={breadcrumbList} />}
       <article className={styles.root.article()}>
         <div className={styles.root.top()}>
-          <Breadcrumbs
-            parents={parents}
-            current={doc.navigationTitle || doc.title}
-          />
+          <Breadcrumbs parents={parents} current={current} />
           <CopyMarkdownButton markdown={markdown} />
         </div>
         <header className={styles.root.header()}>

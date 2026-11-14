@@ -1,0 +1,5 @@
+/* Takes the room left in the header of the row, the whole text on hover */
+.FormRowBadges-error {
+  flex: 1 1 0;
+  min-width: 0;
+}

@@ -4,6 +4,7 @@ import {
   atom,
   type PrimitiveAtom,
   useAtomValueRaw,
+  useAtomValueRawSync,
   useStore,
   type WritableAtom
 } from 'jotai'
@@ -95,8 +96,15 @@ export function BlockSheetSlot({className, style}: BlockSheetSlotProps) {
   const context = useContext(BlockSheetContext)
   const store = useStore()
   const ref = useCallback(
-    (element: HTMLDivElement | null) => {
-      if (context) store.set(context.host, element)
+    (element: HTMLDivElement) => {
+      if (!context) return
+      store.set(context.host, element)
+      // A slot that unmounts after another one mounted, as the sidebar appears,
+      // leaves the newer one in place
+      return () =>
+        store.set(context.host, current =>
+          current === element ? null : current
+        )
     },
     [context, store]
   )
@@ -161,6 +169,39 @@ export function useBlockSheet(id: string): BlockSheetState {
   }
 }
 
+/** Opens the sheet of a block, eg. one that was just added */
+export function useOpenBlockSheet(): (id: string) => void {
+  const context = useContext(BlockSheetContext)
+  const store = useStore()
+  return useCallback(
+    (id: string) => {
+      if (context) store.set(context.open, id)
+    },
+    [context, store]
+  )
+}
+
+/**
+ * The id of the open block sheet, or null. Views that open sheets of their
+ * own can read which one is open from here rather than keep it in state, which
+ * is lost when opening the sheet remounts them, eg. as the sidebar appears.
+ */
+export function useOpenBlockSheetId(): string | null {
+  const context = useContext(BlockSheetContext)
+  return useAtomValueRaw(
+    useMemo(() => (context ? context.open : none), [context])
+  )
+}
+
+/** Closes the open block sheet */
+export function useCloseBlockSheet(): () => void {
+  const context = useContext(BlockSheetContext)
+  const store = useStore()
+  return useCallback(() => {
+    if (context) store.set(context.open, null)
+  }, [context, store])
+}
+
 /** Whether any block sheet is open or still animating out */
 export function useBlockSheetOpen(): boolean {
   const context = useContext(BlockSheetContext)
@@ -205,8 +246,10 @@ export function BlockSheet({id, children}: BlockSheetProps) {
       [context, id]
     )
   )
-  // Read with the state, the slot can mount before this subscribes
-  const host = useAtomValueRaw(
+  // The slot can mount in the same commit as this sheet, before an effect
+  // would subscribe, eg. as opening the sheet shows the sidebar: read it in
+  // sync so that change is not missed
+  const host = useAtomValueRawSync(
     useMemo(
       () =>
         context
@@ -239,6 +282,24 @@ export function BlockSheet({id, children}: BlockSheetProps) {
     document.addEventListener('focusin', onFocusIn)
     return () => document.removeEventListener('focusin', onFocusIn)
   }, [context, store, open, id])
+  // Whether the last press was on the sheet. While a modal popover of one of
+  // its fields is open the page is inert, so that press lands on the body
+  // rather than the sheet and focus goes nowhere: tell it apart by position.
+  const pressedInside = useRef(false)
+  useEffect(() => {
+    if (!open || !host) return
+    const onPointerDown = (event: PointerEvent) => {
+      const rect = host.getBoundingClientRect()
+      pressedInside.current =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () =>
+      document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [host, open])
   function onBlur(event: ReactFocusEvent) {
     if (!context || !open || event.relatedTarget) return
     // Focus went nowhere, eg. a click on a non focusable part of the page,
@@ -247,6 +308,14 @@ export function BlockSheet({id, children}: BlockSheetProps) {
     setTimeout(() => {
       const active = document.activeElement
       if (!document.hasFocus() || (active && active !== document.body)) return
+      if (pressedInside.current) {
+        // A press on the sheet keeps it open, focus returns to it as it
+        // would have without the popover
+        host
+          ?.querySelector<HTMLElement>('[role="dialog"]')
+          ?.focus({preventScroll: true})
+        return
+      }
       store.set(context.open, current => (current === id ? null : current))
     })
   }

@@ -174,7 +174,8 @@ export function useOptionalEntryAtoms(): EntryContextValue | null {
 export function useNodeEditor(
   node: EditorNode,
   type: Type,
-  readOnly?: boolean
+  readOnly?: boolean,
+  inline?: boolean
 ) {
   const parent = useContext(editorContext)
   const scope = useContext(entryContext)
@@ -188,9 +189,11 @@ export function useNodeEditor(
       activeVersion ?? undefined,
       policy,
       scope?.richTextImages,
-      readOnly
+      readOnly,
+      inline
     )
   }, [
+    inline,
     activeVersion,
     node,
     parent,

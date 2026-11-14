@@ -3,6 +3,7 @@ import type {Graph} from 'alinea/core/Graph'
 import {cache} from 'react'
 import {cms} from '@/cms'
 import {Doc} from '@/schema/Doc'
+import {Docs} from '@/schema/Docs'
 import type {DocsNavGroup, DocsNavItem} from './DocsNav'
 
 const navSelect = {
@@ -11,6 +12,7 @@ const navSelect = {
   title: Entry.title,
   index: Entry.index,
   navigationTitle: Doc.navigationTitle,
+  navigationOnly: Docs.navigationOnly,
   parent: Entry.parentId
 }
 
@@ -57,7 +59,12 @@ export const getDocsTree = cache(async function getDocsTree(
     children: []
   }
   const groups = (byParent.get(root.id) ?? []).map((group, i) => {
-    const {children} = toItem(group)
+    const {children: items} = toItem(group)
+    // Below a heading the pages of its entries are listed next to them, eg.
+    // the overview of forms and then its pages
+    const children = group.navigationOnly
+      ? items.flatMap(item => [{...item, children: []}, ...item.children])
+      : items
     return {
       id: group.id,
       title: group.navigationTitle || group.title,

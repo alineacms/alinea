@@ -25,7 +25,7 @@ export interface S3UploadsOptions {
 }
 
 interface S3PresignOptions {
-  method: 'GET' | 'HEAD' | 'PUT'
+  method: 'GET' | 'HEAD' | 'PUT' | 'DELETE'
   url: URL
   region: string
   accessKeyId: string
@@ -101,25 +101,36 @@ export class S3Uploads implements UploadsApi {
   }
 
   #objectUrl(key: string): URL {
-    const {bucket, endpoint, forcePathStyle} = this.#options
-    const pathStyle = forcePathStyle ?? Boolean(endpoint)
-    if (endpoint) {
-      const base = new URL(endpoint)
-      if (pathStyle) {
-        base.pathname = join(base.pathname, bucket, key)
-      } else {
-        base.hostname = `${bucket}.${base.hostname}`
-        base.pathname = join(base.pathname, key)
-      }
-      return base
-    }
-    return new URL(
-      `https://${bucket}.s3.${this.#options.region}.amazonaws.com/${key
-        .split('/')
-        .map(encodeURIComponent)
-        .join('/')}`
-    )
+    return s3ObjectUrl(this.#options, key)
   }
+}
+
+/** The url of an object in a bucket */
+export function s3ObjectUrl(
+  options: Pick<
+    S3UploadsOptions,
+    'bucket' | 'endpoint' | 'forcePathStyle' | 'region'
+  >,
+  key: string
+): URL {
+  const {bucket, endpoint, forcePathStyle} = options
+  const pathStyle = forcePathStyle ?? Boolean(endpoint)
+  if (endpoint) {
+    const base = new URL(endpoint)
+    if (pathStyle) {
+      base.pathname = join(base.pathname, bucket, key)
+    } else {
+      base.hostname = `${bucket}.${base.hostname}`
+      base.pathname = join(base.pathname, key)
+    }
+    return base
+  }
+  return new URL(
+    `https://${bucket}.s3.${options.region}.amazonaws.com/${key
+      .split('/')
+      .map(encodeURIComponent)
+      .join('/')}`
+  )
 }
 
 export async function presignS3Url(options: S3PresignOptions): Promise<string> {
