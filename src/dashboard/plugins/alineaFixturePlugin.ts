@@ -216,6 +216,10 @@ class FixtureDB extends EntryStore {
   storeDraft() {
     return Promise.resolve()
   }
+
+  heartbeat() {
+    return Promise.resolve({holds: true})
+  }
 }
 
 const runtime = await EntryStore.memory(cms.config, source)

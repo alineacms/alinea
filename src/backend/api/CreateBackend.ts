@@ -6,6 +6,7 @@ import {BasicAuth} from './BasicAuth.js'
 import {isBlobStore, storedBlobs, storedWrites} from './BlobStore.js'
 import {DatabaseApi} from './DatabaseApi.js'
 import {GithubApi, type GithubOptions} from './GithubApi.js'
+import {MemoryLocks} from './MemoryLocks.js'
 import {OAuth2, type OAuth2Options} from './OAuth2.js'
 import {S3Uploads, type S3UploadsOptions} from './S3Uploads.js'
 
@@ -81,6 +82,10 @@ export function createBackend(...parts: Array<BackendPart>): BackendFactory {
   }
 }
 
+// Backends without a store of their own keep locks in the memory of their
+// process, shared by the backends composed for each request
+const memoryLocks = new MemoryLocks()
+
 export function composeBackend(
   ...impl: Array<Partial<RemoteConnection>>
 ): RemoteConnection {
@@ -90,6 +95,9 @@ export function composeBackend(
   const fallback: Partial<RemoteConnection> = {
     async enrichUser(user) {
       return user
+    },
+    heartbeat(beat, user) {
+      return memoryLocks.heartbeat(beat, user)
     },
     async capabilities() {
       return {
@@ -122,6 +130,7 @@ export function composeBackend(
     revisionData: call('revisionData'),
     getDraft: call('getDraft'),
     storeDraft: call('storeDraft'),
+    heartbeat: call('heartbeat'),
     prepareUpload: call('prepareUpload'),
     handleUpload: call('handleUpload'),
     previewUpload: call('previewUpload'),

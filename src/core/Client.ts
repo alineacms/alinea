@@ -16,6 +16,7 @@ import type {
 } from './Connection.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
+import type {EditStatus, Heartbeat} from './EditLock.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
@@ -257,6 +258,13 @@ export class Client implements LocalConnection {
         body: JSON.stringify({...draft, draft: base64.stringify(draft.draft)})
       }
     ).then<void>(res => this.#failOnHttpError(res, false))
+  }
+
+  heartbeat(beat: Heartbeat): Promise<EditStatus> {
+    return this.#requestJson(
+      {action: HandleAction.Lock},
+      {method: 'POST', body: JSON.stringify(beat)}
+    ).then<EditStatus>(this.#failOnHttpError)
   }
 
   #request(

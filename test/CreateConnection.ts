@@ -1,3 +1,4 @@
+import {MemoryLocks} from '#/backend/api/MemoryLocks.js'
 import type {
   BackendCapabilities,
   LocalConnection,
@@ -12,6 +13,8 @@ interface TestConnectionOptions {
   previewToken?: string
   user?: User
   users?: Array<User>
+  /** Shared with other editors of the same entries */
+  locks?: MemoryLocks
 }
 
 interface ConnectionOverrides extends Partial<
@@ -27,6 +30,7 @@ export function createTestConnection(
 ): LocalConnection {
   const currentUser: User = options.user ?? localUser
   let users = options.users?.slice() ?? [currentUser]
+  const locks = options.locks ?? new MemoryLocks()
   return {
     capabilities() {
       return Promise.resolve(options.capabilities ?? {users: true})
@@ -86,6 +90,9 @@ export function createTestConnection(
     },
     storeDraft(draft) {
       return db.storeDraft?.(draft) ?? Promise.resolve()
+    },
+    heartbeat(beat) {
+      return locks.heartbeat(beat, currentUser)
     },
     prepareUpload(file, metadata) {
       return db.prepareUpload(file, metadata)

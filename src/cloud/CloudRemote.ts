@@ -16,6 +16,7 @@ import {
   formatDraftKey,
   parseDraftKey
 } from '#/core/Draft.js'
+import type {EditStatus, Heartbeat} from '#/core/EditLock.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import {HttpError} from '#/core/HttpError.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
@@ -284,6 +285,17 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
             update: base64.stringify(draft.draft)
           })
         })
+      )
+    )
+  }
+
+  // The cloud knows the user from the token
+  heartbeat(beat: Heartbeat): Promise<EditStatus> {
+    const ctx = this.#context
+    return parseOutcome<EditStatus>(
+      read(
+        cloudConfig.lock,
+        json({method: 'POST', headers: bearer(ctx), body: JSON.stringify(beat)})
       )
     )
   }

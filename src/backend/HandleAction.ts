@@ -6,6 +6,7 @@ export enum HandleAction {
   Pending = 'pending',
   Sync = 'sync',
   Draft = 'draft',
+  Lock = 'lock',
   History = 'history',
   PreviewToken = 'previewToken',
   Mutate = 'mutate',
