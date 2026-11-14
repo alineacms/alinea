@@ -94,3 +94,41 @@
 .RadioGroupItem-label {
   color: inherit;
 }
+
+.RadioGroup[data-variant='card'] {
+  .RadioGroup-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .RadioGroupItem {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--alinea-border);
+    border-radius: var(--alinea-radius);
+    transition: var(--alinea-transition);
+    transition-property: border-color, background-color;
+
+    &:hover {
+      border-color: var(--alinea-border-strong);
+    }
+
+    &:has(:checked) {
+      border-color: var(--alinea-primary);
+      background: color-mix(in oklab, var(--alinea-primary) 8%, transparent);
+    }
+  }
+
+  /* Lets descriptions shrink to the card and end in an ellipsis */
+  .RadioGroupItem-content {
+    flex: 1;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+
+  .RadioGroupItem-label {
+    font-weight: 500;
+  }
+}

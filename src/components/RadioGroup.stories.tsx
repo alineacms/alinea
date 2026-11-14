@@ -61,6 +61,29 @@ export function States() {
   )
 }
 
+export function Cards() {
+  return (
+    <div style={{maxWidth: 560}}>
+      <RadioGroup
+        label="Plan"
+        variant="card"
+        orientation="horizontal"
+        defaultValue="pro"
+      >
+        <RadioGroupItem value="free" description="Up to 3 projects">
+          Free
+        </RadioGroupItem>
+        <RadioGroupItem value="pro" description="Unlimited projects">
+          Pro
+        </RadioGroupItem>
+        <RadioGroupItem value="team" description="Shared billing and roles">
+          Team
+        </RadioGroupItem>
+      </RadioGroup>
+    </div>
+  )
+}
+
 export default {
   title: 'Pure components / RadioGroup'
 }

@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Controlled, Example, States} from './RadioGroup.stories.js'
+import {Cards, Controlled, Example, States} from './RadioGroup.stories.js'
 
 test('labels the group and selects the default item', async ({mount, page}) => {
   await mount(<Example />)
@@ -51,4 +51,12 @@ test('shows no focus ring when selected with the pointer', async ({
   await page.keyboard.press('ArrowUp')
   await page.keyboard.press('ArrowDown')
   await expect(indicator).toHaveCSS('outline-style', 'solid')
+})
+
+test('lays out items as cards', async ({mount, page}) => {
+  await mount(<Cards />)
+  const group = page.getByRole('radiogroup', {name: 'Plan'})
+  await expect(group).toHaveAttribute('data-variant', 'card')
+  await page.getByText('Team', {exact: true}).click()
+  await expect(page.getByRole('radio', {name: 'Team'})).toBeChecked()
 })

@@ -1,4 +1,5 @@
 import {createCMS, Entry} from '#/core.js'
+import {EntryConflictError} from '#/core/db/EntryConflictError.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -752,4 +753,96 @@ test('a redirect that fails leaves the archived entry in place', async () => {
     select: Entry.status
   })
   test.is(status, 'published')
+})
+
+test('saves over the base version it started from', async () => {
+  const db = await createDb()
+  const base = await db.get({id: 'one', select: Entry.fileHash})
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'one',
+      type: 'Page',
+      locale: null,
+      status: 'draft',
+      overwrite: true,
+      base,
+      data: {title: 'Draft'}
+    }
+  ])
+  const draft = await db.get({
+    id: 'one',
+    status: 'draft',
+    select: Entry.fileHash
+  })
+  await db.mutate([
+    {
+      op: 'update',
+      id: 'one',
+      locale: null,
+      status: 'draft',
+      base: draft,
+      set: {title: 'Updated draft'}
+    }
+  ])
+  const updated = await db.get({
+    id: 'one',
+    status: 'draft',
+    select: Entry.fileHash
+  })
+  await db.mutate([
+    {op: 'publish', id: 'one', locale: null, status: 'draft', base: updated}
+  ])
+  const title = await db.first({id: 'one', select: Entry.title})
+  test.is(title, 'Updated draft')
+})
+
+test('rejects saves over a version saved meanwhile', async () => {
+  const db = await createDb()
+  const base = await db.get({id: 'one', select: Entry.fileHash})
+  await db.update({type: Page, id: 'one', set: {title: 'Saved meanwhile'}})
+  const current = await db.get({id: 'one', select: Entry.fileHash})
+  const stale = [
+    {
+      op: 'create',
+      id: 'one',
+      type: 'Page',
+      locale: null,
+      overwrite: true,
+      base,
+      data: {title: 'Stale'}
+    },
+    {
+      op: 'update',
+      id: 'one',
+      locale: null,
+      status: 'published',
+      base,
+      set: {title: 'Stale'}
+    }
+  ] as const
+  for (const mutation of stale) {
+    const error = await db.mutate([mutation]).catch(error => error)
+    test.ok(error instanceof EntryConflictError)
+    test.equal(error.info, {entryId: 'one', locale: null, fileHash: current})
+  }
+  const title = await db.first({id: 'one', select: Entry.title})
+  test.is(title, 'Saved meanwhile')
+})
+
+test('saves without a base over any version', async () => {
+  const db = await createDb()
+  await db.update({type: Page, id: 'one', set: {title: 'Saved meanwhile'}})
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'one',
+      type: 'Page',
+      locale: null,
+      overwrite: true,
+      data: {title: 'Overwritten'}
+    }
+  ])
+  const title = await db.first({id: 'one', select: Entry.title})
+  test.is(title, 'Overwritten')
 })

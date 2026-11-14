@@ -12,6 +12,7 @@ import type {
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {EntryConflictError} from '#/core/db/EntryConflictError.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
 import {
@@ -26,6 +27,7 @@ import {
   type ActivityOperation,
   type ActivityTarget
 } from './ActivityEvent.js'
+import {PendingMutationError} from './PendingMutationError.js'
 import {SyncEvent} from './SyncEvent.js'
 
 const remote = pLimit(1)
@@ -197,7 +199,7 @@ export class DashboardWorker extends EventTarget {
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
     if (this.#blocked) await this.discardActivity()
-    return this.#local(async () => {
+    const {sha, flush, activity} = await this.#local(async () => {
       const db = await this.db
       if (this.#blocked) {
         throw new Error('Resolve the sync error before making more changes')
@@ -221,12 +223,14 @@ export class DashboardWorker extends EventTarget {
       this.#mutations.push(item)
       this.#emitActivity()
       try {
-        item.sha = (await db.mutate(mutations)).sha
+        const sha = (item.sha = (await db.mutate(mutations)).sha)
         this.#emitActivity()
-        void this.#flush(item)
-        return item.sha
+        return {sha, flush: this.#flush(item), activity}
       } catch (error) {
-        if (error instanceof EntryUrlConflictError) {
+        if (
+          error instanceof EntryUrlConflictError ||
+          error instanceof EntryConflictError
+        ) {
           this.#cancelMutation(item, error)
           throw error
         }
@@ -235,6 +239,13 @@ export class DashboardWorker extends EventTarget {
         throw error
       }
     })
+    // An edit saved over its base version waits for the remote, which may
+    // have a version this store did not sync yet. One the remote did not take
+    // is not saved yet: the editor keeps it, the activity retries it.
+    const base = mutations.some(mutation => 'base' in mutation && mutation.base)
+    if (base && !(await flush))
+      throw new PendingMutationError(activity.error ?? 'Changes not saved')
+    return sha
   }
 
   async retryActivity(): Promise<void> {
@@ -289,16 +300,17 @@ export class DashboardWorker extends EventTarget {
     })
   }
 
-  #flush(item: QueuedMutation): Promise<void> {
+  /** Commit the mutations to the remote, resolves whether they landed */
+  #flush(item: QueuedMutation): Promise<boolean> {
     const attempt = item.attempt
     return remote(async () => {
-      if (item.attempt !== attempt) return
+      if (item.attempt !== attempt) return false
       if (this.#blocked) {
         item.activity.status = 'blocked'
         this.#emitActivity()
-        return
+        return false
       }
-      if (item.activity.status === 'failed') return
+      if (item.activity.status === 'failed') return false
       item.activity.status = 'running'
       this.#emitActivity()
       const client = await this.#client
@@ -308,6 +320,7 @@ export class DashboardWorker extends EventTarget {
         if (remote.pendingCount === 0 && sha !== item.sha)
           await this.#syncWithClient(db, client)
         this.#completeMutation(item)
+        return true
       } catch (error) {
         let revision: string | undefined
         try {
@@ -318,11 +331,19 @@ export class DashboardWorker extends EventTarget {
         // A commit can land while its response is lost. The remote then has
         // exactly the content the mutations made here: committing them again
         // would fail on a created id or commit them twice.
-        if (revision && revision === item.sha)
-          return this.#completeMutation(item)
+        if (revision && revision === item.sha) {
+          this.#completeMutation(item)
+          return true
+        }
+        // The sync replaced the edit with the version saved meanwhile
+        if (revision && error instanceof EntryConflictError) {
+          this.#cancelMutation(item, error)
+          throw error
+        }
         this.#blocked = true
         this.#failActivity(item.activity, error)
         if (revision) item.sha = undefined
+        return false
       }
     })
   }

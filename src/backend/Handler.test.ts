@@ -1085,6 +1085,54 @@ test('does not commit again when a sync moved past a landed commit', async () =>
   test.equal(titles.toSorted(), ['Landed', 'Other'])
 })
 
+test('answers a save over a version saved meanwhile with a conflict', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const page = await db.create({type: Page, set: {title: 'Loaded'}})
+  const base = await db.first({id: page._id, select: Entry.fileHash})
+  await db.update({type: Page, id: page._id, set: {title: 'Saved meanwhile'}})
+  const fileHash = await db.first({id: page._id, select: Entry.fileHash})
+  let writes = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async write(request) {
+          writes += 1
+          return db.write(request)
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    mutationRequest([
+      {
+        op: 'update',
+        id: page._id,
+        locale: null,
+        status: 'published',
+        base,
+        set: {title: 'Stale'}
+      }
+    ]),
+    requestContext()
+  )
+
+  test.is(response.status, 409)
+  const body = await response.json()
+  test.equal(body.conflict, {entryId: page._id, locale: null, fileHash})
+  test.is(writes, 0)
+})
+
 test('serves the history of entries the user can read', async () => {
   const cms = createCMS({
     schema: {Page},

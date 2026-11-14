@@ -49,6 +49,8 @@ export interface CreateQuery<Fields> {
   overwrite?: boolean
   /** Recorded as the creator, or the last editor of an overwritten entry */
   user?: User | null
+  /** See CreateMutation.base */
+  base?: string
 }
 
 function typeName(config: Config, type: Type) {
@@ -84,7 +86,8 @@ export class CreateOp<Fields> extends Operation {
           status: op.status,
           overwrite: op.overwrite,
           root: op.root,
-          workspace: op.workspace
+          workspace: op.workspace,
+          base: op.base
         }
       ]
     })
@@ -144,19 +147,22 @@ export interface UpdateQuery<Fields> {
   locale?: string | null
   /** Recorded as the last editor */
   user?: User | null
+  /** See CreateMutation.base */
+  base?: string
 }
 
 export class UpdateOperation<Definition> extends Operation {
   constructor(query: UpdateQuery<Definition>) {
     super(async (db): Promise<Array<Mutation>> => {
-      const {status = 'published', locale = null, id, set} = query
+      const {status = 'published', locale = null, id, base} = query
       return [
         {
           op: 'update',
           id,
           locale,
           status: status as EntryStatus,
-          set: await beforeUpdate(db, query)
+          set: await beforeUpdate(db, query),
+          base
         }
       ]
     })
@@ -209,6 +215,8 @@ export interface PublishQuery {
   id: string
   status: 'draft' | 'archived'
   locale?: string | null
+  /** See CreateMutation.base */
+  base?: string
 }
 
 export class PublishOperation extends Operation {

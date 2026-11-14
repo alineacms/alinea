@@ -14,13 +14,13 @@ const styles = styler(css)
 export interface EntryValidationFailure {
   errors: Array<FieldValidationError>
   /** Publishes the entry as it is */
-  publish(): void | Promise<void>
+  publish(): unknown
 }
 
 export interface EntryValidationModalProps {
   failure?: EntryValidationFailure
   onClose(): void
-  onPublish(publish: () => void | Promise<void>): void
+  onPublish(publish: () => unknown): void
 }
 
 /** Focus the first invalid field rendered in the editor */

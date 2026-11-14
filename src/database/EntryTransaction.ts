@@ -43,6 +43,7 @@ import type {
   UpdateMutation,
   UploadFileMutation
 } from '#/core/db/Mutation.js'
+import {EntryConflictError} from '#/core/db/EntryConflictError.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
@@ -261,11 +262,13 @@ export class EntryTransaction implements AsyncDisposable {
     id,
     insertOrder = 'last',
     status = 'published',
-    overwrite = false
+    overwrite = false,
+    base
   }: Op<CreateMutation>): Promise<void> {
     assert(id, 'Create mutation is missing an id')
     const config = this.#workingDatabase.config
     const existing = await this.#versions(id)
+    this.#assertBase(existing, locale, base)
     const existingMain = existing.find(
       entry => entry.locale === locale && entry.main
     )
@@ -471,8 +474,15 @@ export class EntryTransaction implements AsyncDisposable {
     this.#messages.push(this.#report('create', title))
   }
 
-  async update({id, locale, status, set}: Op<UpdateMutation>): Promise<void> {
+  async update({
+    id,
+    locale,
+    status,
+    set,
+    base
+  }: Op<UpdateMutation>): Promise<void> {
     assert(id, 'Update mutation is missing an id')
+    if (base) this.#assertBase(await this.#versions(id, locale), locale, base)
     const entry = await this.#firstEntry({
       id,
       locale,
@@ -533,9 +543,15 @@ export class EntryTransaction implements AsyncDisposable {
     this.#messages.push(this.#report('update', entry.title))
   }
 
-  async publish({id, locale, status}: Op<PublishMutation>): Promise<void> {
+  async publish({
+    id,
+    locale,
+    status,
+    base
+  }: Op<PublishMutation>): Promise<void> {
     assert(id, 'Publish mutation is missing an id')
     const versions = await this.#versions(id, locale)
+    this.#assertBase(versions, locale, base)
     const entry = versions.find(version => version.versionStatus === status)
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Publish, entry)
@@ -1237,6 +1253,28 @@ export class EntryTransaction implements AsyncDisposable {
         select: EntrySelection
       })) as TransactionEntry | null) ?? undefined
     )
+  }
+
+  /**
+   * An edit started from the `base` version saves over the version the
+   * dashboard shows, the draft if there is one. Another version means it was
+   * saved meanwhile. A removed version is saved again, as without a base.
+   */
+  #assertBase(
+    versions: Array<TransactionEntry>,
+    locale: string | null,
+    base: string | undefined
+  ) {
+    if (!base) return
+    const current = versions.find(
+      version => version.locale === locale && version.active
+    )
+    if (current && current.fileHash !== base)
+      throw new EntryConflictError({
+        entryId: current.id,
+        locale,
+        fileHash: current.fileHash
+      })
   }
 
   #versions(

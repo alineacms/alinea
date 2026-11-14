@@ -14,6 +14,10 @@ import type {
   UploadMetadata,
   UploadResponse
 } from './Connection.js'
+import {
+  EntryConflictError,
+  type EntryConflictErrorInfo
+} from './db/EntryConflictError.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
@@ -301,6 +305,10 @@ export class Client implements LocalConnection {
             // We'll attempt a single retry if the access token is refreshed
             if (!retry) return this.#request(params, init, true)
           }
+          if (res.status === 409 && isRecord(body) && isRecord(body.conflict))
+            throw new EntryConflictError(
+              body.conflict as unknown as EntryConflictErrorInfo
+            )
           if (isRecord(body) && typeof body.error === 'string')
             errorMessage = body.error
           else errorMessage = JSON.stringify(body, null, 2)

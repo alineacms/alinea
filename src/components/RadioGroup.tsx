@@ -23,6 +23,8 @@ export interface RadioGroupProps
   defaultValue?: string
   onValueChange?: (value: string) => void
   orientation?: Orientation
+  /** `card` lays the items out as bordered cards in a grid */
+  variant?: 'default' | 'card'
   name?: string
   /** `RadioGroupItem` elements */
   children?: ReactNode
@@ -41,6 +43,7 @@ export function RadioGroup({
   defaultValue,
   onValueChange,
   orientation = 'vertical',
+  variant = 'default',
   className,
   children,
   ...props
@@ -49,6 +52,7 @@ export function RadioGroup({
     <RadioGroupPrimitive
       data-slot="radio-group"
       {...props}
+      data-variant={variant}
       className={styles.RadioGroup(styler.merge({className}))}
       value={value}
       defaultValue={defaultValue}

@@ -242,6 +242,52 @@ test('untranslated entries save the path of their translated title', async () =>
   expect(path).toBe('titre-francais')
 })
 
+test('saves after a translation start from the saved translation', async () => {
+  const Page = Config.document('Page', {
+    fields: {summary: Field.text('Summary')}
+  })
+  const config = translatedPathConfig(Page)
+  const db = new LocalDB(config)
+  await db.create({
+    id: 'translated',
+    locale: 'en',
+    root: 'pages',
+    type: Page,
+    set: {title: 'English title'}
+  })
+  const store = createDashboardStore(config, db)
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms('translated'))
+  const unsubscribe = store.sub(entry.data, () => {})
+  const locale = entry.locales('fr')
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  store.set(node.field('title'), 'Titre')
+  await store.set(locale.saveTranslation, node)
+  events.emit(new IndexEvent({op: 'index', sha: 'fr', ids: ['translated']}))
+  while (store.get(locale.untranslated))
+    await new Promise(resolve => setTimeout(resolve))
+  // Another editor changes the translation
+  await db.update({
+    type: Page,
+    id: 'translated',
+    locale: 'fr',
+    set: {summary: 'Their summary'}
+  })
+
+  store.set(node.field('title'), 'Mon titre')
+  expect(await store.set(locale.publishEdits, node)).toBeTrue()
+  const saved = await db.first({
+    id: 'translated',
+    locale: 'fr',
+    select: {title: Page.title, summary: Page.summary}
+  })
+  expect(saved).toEqual({title: 'Mon titre', summary: 'Their summary'})
+  unsubscribe()
+})
+
 test('untranslated entries follow the path source until the path is edited', async () => {
   const Page = Config.type('Page', {
     fields: {
@@ -600,4 +646,83 @@ test('invalid fields are reported but do not block publishing', async () => {
     select: Article.summary
   })
   expect(published).toBe('')
+})
+
+async function createConflictFixture() {
+  const Article = Config.document('Article', {
+    fields: {
+      summary: Field.text('Summary'),
+      body: Field.text('Body')
+    }
+  })
+  const config = Config.create({
+    schema: {Article},
+    enableDrafts: true,
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages', {contains: ['Article']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const created = await db.create({
+    type: Article,
+    root: 'pages',
+    set: {title: 'Article', summary: 'Summary', body: 'Body'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms(created._id))
+  const locale = entry.locales(null)
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  // Another editor saves after this one loaded the entry
+  await db.update({
+    type: Article,
+    id: created._id,
+    set: {summary: 'Their summary'}
+  })
+  const draft = () =>
+    db.first({
+      type: Article,
+      id: created._id,
+      status: 'draft',
+      select: {title: Article.title, summary: Article.summary}
+    })
+  return {store, locale, node, draft}
+}
+
+test('merges and saves edits to other fields than saved meanwhile', async () => {
+  const {store, locale, node, draft} = await createConflictFixture()
+  store.set(node.field('title'), 'My title')
+
+  expect(await store.set(locale.saveDraft, node)).toBeTrue()
+  expect(await draft()).toEqual({title: 'My title', summary: 'Their summary'})
+  expect(store.get(locale.mergeNotice)).toBe(
+    'Merged with changes saved meanwhile'
+  )
+  expect(store.get(node.isDirty)).toBeFalse()
+})
+
+test('leaves fields both editors changed to the merge dialog', async () => {
+  const {store, locale, node, draft} = await createConflictFixture()
+  store.set(node.field('title'), 'My title')
+  store.set(node.field('summary'), 'My summary')
+
+  expect(await store.set(locale.saveDraft, node)).toBeFalse()
+  expect(await draft()).toBeNull()
+  const conflict = store.get(locale.conflict)
+  expect(conflict?.merge.fields).toMatchObject([
+    {key: 'summary', label: 'Summary', simple: true}
+  ])
+  // Stamping who saved the entry is not a change to merge
+  expect(conflict?.merge.merged).toEqual([])
+
+  expect(
+    await store.set(locale.resolveConflict, {summary: 'theirs'})
+  ).toBeTrue()
+  expect(await draft()).toEqual({title: 'My title', summary: 'Their summary'})
+  expect(store.get(locale.conflict)).toBeUndefined()
 })

@@ -24,6 +24,9 @@ export interface CreateMutation {
   fromSeed?: string
   root?: string
   workspace?: string
+  /** The file hash of the version the edit started from, saving fails with
+   * an EntryConflictError when another version was saved meanwhile */
+  base?: string
 }
 
 export interface UpdateMutation {
@@ -32,6 +35,8 @@ export interface UpdateMutation {
   locale: string | null
   status: EntryStatus
   set: Record<string, unknown>
+  /** See CreateMutation.base */
+  base?: string
 }
 
 export interface RemoveMutation {
@@ -46,6 +51,8 @@ export interface PublishMutation {
   id: string
   locale: string | null
   status: 'draft' | 'archived'
+  /** See CreateMutation.base */
+  base?: string
 }
 
 export interface UnpublishMutation {
