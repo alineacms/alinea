@@ -8,6 +8,8 @@ import {
   RichTextInlineBlocksStory,
   RichTextLargeStory,
   RichTextLegacyEmptyStory,
+  RichTextAdjacentLinksStory,
+  RichTextLinkStory,
   RichTextPlainStory,
   RichTextReadOnlyStory,
   RichTextReadOnlyImageStory,
@@ -1250,4 +1252,178 @@ test('undoes and redoes text changes', async ({mount, page}) => {
   await expect(segment).not.toContainText('Changed')
   await page.keyboard.press('ControlOrMeta+Shift+z')
   await expect(segment).toContainText('Changed')
+})
+
+interface StoredTextNode extends StoredRichTextNode {
+  text?: string
+  marks?: Array<StoredRichTextNode>
+}
+
+/** The text nodes of the first paragraphs, with their link marks */
+async function storedTexts(page: Page): Promise<Array<StoredTextNode>> {
+  const value = await storedValue(page)
+  return value.flatMap(
+    node => (node.content as Array<StoredTextNode> | undefined) ?? []
+  )
+}
+
+async function storedLinks(page: Page) {
+  const texts = await storedTexts(page)
+  return texts.flatMap(node =>
+    (node.marks ?? [])
+      .filter(mark => mark._type === 'link')
+      .map(mark => ({text: node.text, ...mark}))
+  )
+}
+
+test('keeps the title of a stored link while editing it', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLinkStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await placeCaret(editor.locator('a'), 'end')
+  await page.getByRole('button', {name: 'Link', exact: true}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Pick text link'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('textbox', {name: /Tooltip/})).toHaveCount(0)
+  await dialog.getByRole('button', {name: 'Confirm'}).click()
+  await expect(dialog).toHaveCount(0)
+
+  await expect(editor.locator('a')).toHaveAttribute('title', 'Opens the guide')
+  await expect
+    .poll(() => storedLinks(page))
+    .toEqual([
+      expect.objectContaining({
+        text: 'the guide',
+        href: 'https://example.com/guide',
+        title: 'Opens the guide'
+      })
+    ])
+})
+
+/** Selects the first occurrence of `text` within `target` */
+async function selectSubstring(target: Locator, text: string) {
+  await target.evaluate((element, text) => {
+    const editor = element.closest('[contenteditable]')
+    const selection = window.getSelection()
+    if (!(editor instanceof HTMLElement) || !selection)
+      throw new Error('Rich text selection target not found')
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const index = node.textContent?.indexOf(text) ?? -1
+      if (index < 0) continue
+      editor.focus()
+      const range = document.createRange()
+      range.setStart(node, index)
+      range.setEnd(node, index + text.length)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      document.dispatchEvent(new Event('selectionchange'))
+      return new Promise<void>(resolve =>
+        requestAnimationFrame(() => resolve())
+      )
+    }
+    throw new Error(`Text not found: ${text}`)
+  }, text)
+}
+
+test('links selected text to an external url without a label', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLinkStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await selectSubstring(editor.locator('p').nth(1), 'some')
+  await page.getByRole('button', {name: 'Link', exact: true}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Pick text link'})
+  await dialog.getByRole('button', {name: 'External link'}).click()
+  const external = page.getByRole('dialog', {name: 'External link'})
+  await expect(external.getByRole('textbox', {name: /URL/})).toBeVisible()
+  await expect(external.getByRole('textbox', {name: /Label/})).toHaveCount(0)
+  await external
+    .getByRole('textbox', {name: /URL/})
+    .fill('https://example.com/some')
+  await external.getByRole('button', {name: 'Add link'}).click()
+  await expect(external).toHaveCount(0)
+  await dialog.getByRole('button', {name: 'Confirm'}).click()
+  await expect(dialog).toHaveCount(0)
+
+  await expect(editor.locator('p').nth(1)).toHaveText('Link some of this text.')
+  await expect(editor.locator('p').nth(1).locator('a')).toHaveText('some')
+  await expect
+    .poll(async () => (await storedLinks(page)).map(link => link.text))
+    .toEqual(['the guide', 'some'])
+})
+
+test('asks for the label of an external link without selected text', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLinkStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await placeCaret(editor.locator('p').nth(1), 'end')
+  await page.getByRole('button', {name: 'Link', exact: true}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Pick text link'})
+  await dialog.getByRole('button', {name: 'External link'}).click()
+  const external = page.getByRole('dialog', {name: 'External link'})
+  await expect(external.getByRole('textbox', {name: /Label/})).toBeVisible()
+})
+
+function selectedText(page: Page) {
+  return page.evaluate(() => window.getSelection()?.toString() ?? '')
+}
+
+test('selects a whole link on click and removes it in one go', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLinkStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  const link = editor.locator('a')
+  // Focus first, the toolbar that shows on focus moves the text down
+  await editor.getByText('Link some of this text.').click()
+  await link.click()
+  await expect.poll(() => selectedText(page)).toBe('the guide')
+
+  // A second click places the caret within the link
+  await link.click()
+  await expect.poll(() => selectedText(page)).toBe('')
+
+  await page.getByRole('button', {name: 'Remove link'}).click()
+  await expect(link).toHaveCount(0)
+  await expect(editor.locator('p').first()).toHaveText(
+    'Read the guide before you start.'
+  )
+  await expect.poll(() => storedLinks(page)).toEqual([])
+  await expect
+    .poll(async () => (await storedTexts(page))[0])
+    .toEqual({_type: 'text', text: 'Read the guide before you start.'})
+  await expect(page.getByRole('button', {name: 'Remove link'})).toHaveCount(0)
+})
+
+test('picks the clicked one of two links that touch', async ({mount, page}) => {
+  await mount(<RichTextAdjacentLinksStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('tail').click()
+  // The right edge of the last letter of the first link
+  const alpha = editor.locator('a', {hasText: 'alpha'})
+  const box = (await alpha.boundingBox())!
+  await page.mouse.click(box.x + box.width * 0.9, box.y + box.height / 2)
+  await expect.poll(() => selectedText(page)).toBe('alpha')
+
+  // With the caret at the end of the first link, the first one is removed
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(() => selectedText(page)).toBe('')
+  await page.getByRole('button', {name: 'Remove link'}).click()
+  await expect(editor.locator('a')).toHaveCount(1)
+  await expect(editor.locator('a')).toHaveText('beta')
 })

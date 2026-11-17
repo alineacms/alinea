@@ -144,6 +144,8 @@
   `Field.time()`.
 - Move the rich text editor to Tiptap 3. `extensions` is now a function that
   receives the default extensions, `defaultToolbar` takes an options object.
+  Toolbar buttons take `hidden`, and the links group has a Remove link
+  button shown while the selection is in a link.
 - Change `Edit.move` to `{id, target, dropPosition}`.
 - Remove the `remote` handler option and the unused entry hooks. OAuth2 backends
   require `validateClaims`. Drafts are no longer stored in the database.
