@@ -7,7 +7,6 @@ import {
   PageHeader,
   PageTitle,
   SearchField,
-  Switch,
   ToggleGroup,
   ToggleGroupItem
 } from '#/components.js'
@@ -333,37 +332,6 @@ export function ExplorerSearch({
   )
 }
 
-interface ExplorerSearchScopeProps {
-  explorer: DashboardExplorer
-  page: ExplorerReadyPage
-}
-
-function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
-  const searchScope = page.searchScope
-  const setSearchScope = useSetAtom(explorer.searchScope)
-  const resultMode = page.resultMode
-  const canSearchEverything = useAtomValueRaw(explorer.canSearchEverything)
-  const [, startTransition] = useTransition()
-  if (!explorer.allowAllWorkspaces) return null
-  const isDisabled =
-    !canSearchEverything ||
-    (explorer.mode !== 'search' && resultMode !== 'matches')
-  return (
-    <Switch
-      className={styles.Explorer.searchScope()}
-      disabled={isDisabled}
-      checked={searchScope === 'everything'}
-      onCheckedChange={selected =>
-        startTransition(() =>
-          setSearchScope(selected ? 'everything' : explorer.rootScope)
-        )
-      }
-    >
-      All locations
-    </Switch>
-  )
-}
-
 interface ExplorerResultModeProps {
   explorer: DashboardExplorer
   page: ExplorerReadyPage
@@ -614,10 +582,8 @@ export function ExplorerHeader({
               onEscape={onSearchEscape}
               page={page}
             />
-            {navigate ? (
+            {(navigate || explorer.allowAllWorkspaces) && (
               <ExplorerScope explorer={explorer} page={page} />
-            ) : (
-              <ExplorerSearchScope explorer={explorer} page={page} />
             )}
           </div>
           <div className={styles.Explorer.toolbar()}>

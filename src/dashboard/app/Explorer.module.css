@@ -94,12 +94,6 @@
   flex: 0 0 auto;
 }
 
-.Explorer-searchScope {
-  flex: 0 0 auto;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 /* Positions what floats over the list, such as the selection actions */
 .Explorer-viewport {
   position: relative;

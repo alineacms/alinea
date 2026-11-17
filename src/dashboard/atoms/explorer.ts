@@ -770,9 +770,11 @@ export class ExplorerAtoms {
           this.hasCondition ||
           Boolean(get(this.search).trim()))
     )
-    // Wider scopes list matches, browsing stays within the root
+    // Wider scopes list matches, browsing stays within the root. Searches
+    // only list matches, in the scope the editor picked.
     this.scope = atom(get =>
-      get(this.canSearchEverything) && get(this.resultMode) === 'matches'
+      get(this.canSearchEverything) &&
+      (this.mode === 'search' || get(this.resultMode) === 'matches')
         ? get(this.searchScope)
         : this.rootScope
     )
@@ -1377,7 +1379,9 @@ export class ExplorerAtoms {
             : scope === 'everything'
               ? null
               : (location.parentId ?? null),
-        locale: searchesMultipleRoots ? undefined : locale,
+        // Searches find entries in any language
+        locale:
+          searchesMultipleRoots || this.mode === 'search' ? undefined : locale,
         search: search || undefined,
         filter,
         status: 'preferDraft',
