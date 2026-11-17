@@ -290,6 +290,33 @@ test('defaults a condition without a location to all locations', async ({
   await expect(entries.getByRole('row', {name: /Folder/})).toHaveCount(0)
 })
 
+test('browsing from a selected match opens its folder', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page
+    .getByRole('list', {name: 'Matching pages'})
+    .getByRole('button', {name: 'Matching pages'})
+    .click()
+  const picker = await expandLinkPicker(app.page)
+  const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
+  const location = picker.getByRole('group', {name: 'Explorer location'})
+  const child = entries.getByRole('row', {name: /Child/})
+  await expect(entries.getByRole('row', {name: /Folder/})).toHaveCount(0)
+  await child.click()
+  await expect(child).toHaveAttribute('aria-selected', 'true')
+
+  await location
+    .getByRole('radiogroup', {name: 'Explorer results'})
+    .getByRole('radio', {name: 'Browse'})
+    .click()
+  await expect(location.getByText('Folder', {exact: true})).toBeVisible()
+  await expect(child).toBeVisible()
+  await expect(child).toHaveAttribute('aria-selected', 'true')
+})
+
 test('toggles multiple links by clicking cards before using a checkbox', async ({
   dashboard,
   mount

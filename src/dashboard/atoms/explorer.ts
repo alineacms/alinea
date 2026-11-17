@@ -734,8 +734,30 @@ export class ExplorerAtoms {
         get(this.search).trim()
           ? ('matches' as const)
           : get(this.#selectedResultMode),
-      (_get, set, resultMode: ExplorerResultMode) =>
+      (get, set, resultMode: ExplorerResultMode) => {
         set(this.#selectedResultMode, resultMode)
+        if (resultMode !== 'browse') return
+        // Browsing opens the folder of the match selected last, so it stays
+        // in view
+        const selection = get(this.selection)
+        const page = get(this.page)
+        if (selection === 'all' || !page || page.resultMode !== 'matches')
+          return
+        const selected = [...selection]
+          .reverse()
+          .map(key => page.items.find(item => item.id === String(key)))
+          .find(item => item !== undefined)
+        if (!selected) return
+        const {data} = get(selected.data)
+        const {workspace, root, parentId, locale} = get(data.item)
+        set(this.selectedLocale, locale)
+        set(this.location, {
+          workspace,
+          root,
+          parentId: parentId ?? undefined,
+          locale: locale ?? undefined
+        })
+      }
     )
     this.#selectedView = atom(options.initialView)
     this.scrollOffset =

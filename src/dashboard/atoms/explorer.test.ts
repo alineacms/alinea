@@ -306,6 +306,62 @@ test('searches filter by the types found in the scope they search', async () => 
   expect(await typeOptions()).toEqual(['Article', 'Event', 'Tag'])
 })
 
+test('browsing from the matches opens the folder of the selected match', async () => {
+  const Folder = Config.document('Folder', {
+    fields: {title: Field.text('Title')},
+    contains: ['Event']
+  })
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Folder, Event},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {pages: Config.root('Pages', {contains: ['Folder', 'Event']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  const folder = await db.create({
+    type: Folder,
+    root: 'pages',
+    set: {title: 'Folder'}
+  })
+  await db.create({type: Event, root: 'pages', set: {title: 'Top'}})
+  const nested = await db.create({
+    type: Event,
+    root: 'pages',
+    parentId: folder._id,
+    set: {title: 'Nested'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {condition: {_type: 'Event'}, onConfirm() {}}
+  )
+  store.sub(explorer.page, () => {})
+  const matches = await store.get(explorer.pageReady)
+  expect(matches.resultMode).toBe('matches')
+  expect(matches.items.map(item => item.title).sort()).toEqual([
+    'Nested',
+    'Top'
+  ])
+
+  // The rendered page lists the selected match
+  while (!store.get(explorer.page)) await Promise.resolve()
+  store.set(explorer.selection, new Set<Key>([nested._id]))
+  store.set(explorer.resultMode, 'browse')
+
+  expect(store.get(explorer.location).parentId).toBe(folder._id)
+  const browse = await store.get(explorer.pageReady)
+  expect(browse.resultMode).toBe('browse')
+  expect(browse.items.map(item => item.id)).toEqual([nested._id])
+  expect(store.get(explorer.selection)).toEqual(new Set<Key>([nested._id]))
+})
+
 test('ready pages snapshot the search that produced their items', async () => {
   const {store} = await createDashboardAtomFixture()
   await store.get(userPolicyReadyAtom)
