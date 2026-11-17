@@ -83,6 +83,11 @@
   sidebar content tree from the start.
 - Add `width` to the options of every field, and fix `Field.create` typing
   for options that extend `FieldOptions`.
+- Order titles regardless of case, accents and leading punctuation, with
+  numbers by their value and letters a locale orders after z (eg. æ, ø and å
+  in Danish) there. The local database is rebuilt once after upgrading.
+- Global search picks its workspace and root from dropdowns and filters on
+  the entry types found there.
 - Query the entries that link to an entry with `Query.referencedBy`, eg.
   `select: {products: Query.referencedBy({type: Product, field: Product.brand})}`,
   count them with `count: true` (overview columns that count are sortable) and

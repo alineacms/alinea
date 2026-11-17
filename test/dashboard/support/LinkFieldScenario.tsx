@@ -43,6 +43,9 @@ const ScenarioPage = Config.document('Page', {
     globalFilteredPage: Field.entry('Global filtered page', {
       condition: {_id: dashboardScenarioIds.child}
     }),
+    matchingPages: Field.entry.multiple('Matching pages', {
+      condition: {_id: dashboardScenarioIds.child}
+    }),
     localizedPage: Field.entry('Localized page', {
       location: {workspace: 'localized', root: 'pages'}
     }),

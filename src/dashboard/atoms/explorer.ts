@@ -15,7 +15,7 @@ import {
 } from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Policy, type Resource} from '#/core/Role.js'
-import type {RootData} from '#/core/Root.js'
+import {Root, type RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {chunks} from '#/core/util/Arrays.js'
 import type {Infer} from '#/types.js'
@@ -51,7 +51,8 @@ import {
   resolveOverview,
   sortedColumn,
   summarizeRows,
-  thumbnailField
+  thumbnailField,
+  withTypeFilter
 } from './overview.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
@@ -679,6 +680,11 @@ export class ExplorerAtoms {
    * restored when a page with the same key is shown again
    */
   scrollOffset: (key: string) => PrimitiveAtom<number>
+  /**
+   * The entry the next page scrolls into view instead of restoring its
+   * offset, set when browsing to the folder of a selected match
+   */
+  revealKey = atom<string | undefined>(undefined)
   #options: ExplorerOptions
   /** The entry a location lists the children of, loaded with its parents */
   #parent = dispense((parentId: string, locale: string | null) =>
@@ -733,8 +739,41 @@ export class ExplorerAtoms {
         get(this.search).trim()
           ? ('matches' as const)
           : get(this.#selectedResultMode),
-      (_get, set, resultMode: ExplorerResultMode) =>
+      (get, set, resultMode: ExplorerResultMode) => {
         set(this.#selectedResultMode, resultMode)
+        if (resultMode !== 'browse') return
+        // Browsing opens the folder of the match selected last, so it stays
+        // in view
+        const selection = get(this.selection)
+        const page = get(this.page)
+        if (selection === 'all' || !page || page.resultMode !== 'matches')
+          return
+        const selected = [...selection]
+          .reverse()
+          .map(key => page.items.find(item => item.id === String(key)))
+          .find(item => item !== undefined)
+        if (!selected) return
+        const {data} = get(selected.data)
+        const {workspace, root, parentId, locale: matchLocale} = get(data.item)
+        // Matches across roots can be of another language: stay in the one
+        // the picker shows while the root of the match has it
+        const current = get(this.selectedLocale)
+        const rootConfig = getWorkspace(get(configAtom).workspaces[workspace])
+          .roots[root]
+        const locales = rootConfig
+          ? getRoot(rootConfig).i18n?.locales
+          : undefined
+        const locale =
+          current && locales?.includes(current) ? current : matchLocale
+        set(this.selectedLocale, locale)
+        set(this.revealKey, selected.id)
+        set(this.location, {
+          workspace,
+          root,
+          parentId: parentId ?? undefined,
+          locale: locale ?? undefined
+        })
+      }
     )
     this.#selectedView = atom(options.initialView)
     this.scrollOffset =
@@ -770,9 +809,11 @@ export class ExplorerAtoms {
           this.hasCondition ||
           Boolean(get(this.search).trim()))
     )
-    // Wider scopes list matches, browsing stays within the root
+    // Wider scopes list matches, browsing stays within the root. Searches
+    // only list matches, in the scope the editor picked.
     this.scope = atom(get =>
-      get(this.canSearchEverything) && get(this.resultMode) === 'matches'
+      get(this.canSearchEverything) &&
+      (this.mode === 'search' || get(this.resultMode) === 'matches')
         ? get(this.searchScope)
         : this.rootScope
     )
@@ -997,15 +1038,49 @@ export class ExplorerAtoms {
    */
   overview = atom(async get => {
     const parent = await get(get(this.#overviewParent))
-    const overview = resolveOverview(get(configAtom), parent, {
+    const config = get(configAtom)
+    const resolved = resolveOverview(config, parent, {
       mixed: !get(this.#listedParent)
     })
+    // Searches can be narrowed down to the types they find
+    const overview =
+      this.mode === 'search'
+        ? withTypeFilter(config, resolved, await get(this.#searchedTypes))
+        : resolved
     if (!hasFilterLoaders(overview)) return overview
     // Options built from the content follow its changes
     get(shaAtom)
     return loadFilterOptions(overview, {
       graph: get(graphAtom),
       locale: get(this.selectedLocale)
+    })
+  })
+  /** The locations the scope of the results covers */
+  #scopeLocations = atom(get => {
+    const location = get(this.location)
+    const scope = get(this.scope)
+    return get(this.locations).filter(
+      limit =>
+        scope === 'everything' ||
+        (limit.workspace === location.workspace &&
+          (scope === 'workspace' || limit.root === location.root))
+    )
+  })
+  /** The types of the entries in the scope a search matches in */
+  #searchedTypes = atom(async get => {
+    get(shaAtom)
+    const locations = get(this.#scopeLocations)
+    if (locations.length === 0) return []
+    return get(graphAtom).find({
+      filter: {
+        or: locations.map(limit => ({
+          _workspace: limit.workspace,
+          _root: limit.root
+        }))
+      },
+      status: 'preferDraft',
+      groupBy: Entry.type,
+      select: Entry.type
     })
   })
   #parentAt = dispense(
@@ -1383,6 +1458,8 @@ export class ExplorerAtoms {
             : scope === 'everything'
               ? null
               : (location.parentId ?? null),
+        // Searches of several roots find entries in any language, a search
+        // of one root stays in the language it shows
         locale: searchesMultipleRoots ? undefined : locale,
         search: search || undefined,
         filter,
@@ -1414,14 +1491,34 @@ export class ExplorerAtoms {
         location.parentId
           ? location.parentId
           : undefined
-      const entries = await graph.find({
-        ...query,
-        // Search results arrive ranked; loading every match with its data
-        // costs seconds on large sites while only the best ones are shown.
-        take: search ? searchResultLimit : undefined,
-        groupBy: Entry.id,
-        select: explorerItemSelect
-      })
+      const listed = query
+      function find(within: Partial<ExplorerQuery> = {}) {
+        return graph.find({
+          ...listed,
+          ...within,
+          // Search results arrive ranked; loading every match with its data
+          // costs seconds on large sites while only the best ones are shown.
+          take: search ? searchResultLimit : undefined,
+          groupBy: Entry.id,
+          select: explorerItemSelect
+        })
+      }
+      // Matches of several roots are listed root by root, each in the
+      // order of its overview, unless the editor sorted them
+      const byRoot = scope !== 'root' && !search && !query.orderBy
+      const entries = byRoot
+        ? (
+            await Promise.all(
+              get(this.#scopeLocations).map(limit =>
+                find({
+                  workspace: limit.workspace,
+                  root: limit.root,
+                  orderBy: locationOrder(config, limit)
+                })
+              )
+            )
+          ).flat()
+        : await find()
       const policy = get(policyAtom)
       const condition = this.#options.condition
       const matchesCondition = condition
@@ -1456,6 +1553,16 @@ export class ExplorerAtoms {
       )
     })
   )
+}
+
+/** The default order of the children of a root */
+function locationOrder(
+  config: Config,
+  {workspace, root}: ExplorerLimitLocation
+) {
+  const data = config.workspaces[workspace]
+  const value = data && getWorkspace(data).roots[root]
+  return value ? Root.childrenOrder(getRoot(value)) : undefined
 }
 
 /**

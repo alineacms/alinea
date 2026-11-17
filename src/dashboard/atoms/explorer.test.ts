@@ -7,7 +7,7 @@ import {Permission, Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
 import {Entry} from '#/core/Entry.js'
-import {Config, Field} from '#/index.js'
+import {Config, Field, Query} from '#/index.js'
 import {expect, test} from 'bun:test'
 import type {DropTarget, Key} from '#/components.js'
 import {atom, createStore} from 'jotai'
@@ -245,6 +245,252 @@ test('searching all locations of a limited picker stays within them', async () =
   // Wider scopes list matches, browsing stays within the root
   store.set(explorer.search, '')
   expect(store.get(explorer.scope)).toBe('root')
+})
+
+test('searches filter by the types found in the scope they search', async () => {
+  const Article = Config.document('Article', {
+    fields: {title: Field.text('Title')}
+  })
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const Tag = Config.document('Tag', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Article, Event, Tag},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {
+          news: Config.root('News', {contains: ['Article', 'Event']}),
+          events: Config.root('Events', {contains: ['Event']})
+        }
+      }),
+      other: Config.workspace('Other', {
+        source: 'other',
+        roots: {tags: Config.root('Tags', {contains: ['Tag']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.create({type: Article, root: 'news', set: {title: 'Shared'}})
+  await db.create({type: Event, root: 'events', set: {title: 'Shared'}})
+  await db.create({
+    type: Tag,
+    workspace: 'other',
+    root: 'tags',
+    set: {title: 'Shared'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'news'},
+    {allowAllWorkspaces: true, mode: 'search'}
+  )
+  async function typeOptions() {
+    const overview = await store.get(explorer.overview)
+    const filter = overview.filters.find(filter => filter.label === 'Type')
+    return filter?.options.map(option => option.label)
+  }
+
+  expect(await typeOptions()).toEqual(['Article', 'Event'])
+
+  store.set(explorer.search, 'Shared')
+  const [type] = (await store.get(explorer.overview)).filters
+  store.set(explorer.toggleFilter, type, 'Event')
+  const page = await store.get(explorer.pageReady)
+  expect(page.items.map(item => item.root)).toEqual(['events'])
+
+  store.set(explorer.searchScope, 'everything')
+  expect(await typeOptions()).toEqual(['Article', 'Event', 'Tag'])
+})
+
+test('browsing from the matches opens the folder of the selected match', async () => {
+  const Folder = Config.document('Folder', {
+    fields: {title: Field.text('Title')},
+    contains: ['Event']
+  })
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Folder, Event},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {pages: Config.root('Pages', {contains: ['Folder', 'Event']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  const folder = await db.create({
+    type: Folder,
+    root: 'pages',
+    set: {title: 'Folder'}
+  })
+  await db.create({type: Event, root: 'pages', set: {title: 'Top'}})
+  const nested = await db.create({
+    type: Event,
+    root: 'pages',
+    parentId: folder._id,
+    set: {title: 'Nested'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {condition: {_type: 'Event'}, onConfirm() {}}
+  )
+  store.sub(explorer.page, () => {})
+  const matches = await store.get(explorer.pageReady)
+  expect(matches.resultMode).toBe('matches')
+  expect(matches.items.map(item => item.title).sort()).toEqual([
+    'Nested',
+    'Top'
+  ])
+
+  // The rendered page lists the selected match
+  while (!store.get(explorer.page)) await Promise.resolve()
+  store.set(explorer.selection, new Set<Key>([nested._id]))
+  store.set(explorer.resultMode, 'browse')
+
+  expect(store.get(explorer.location).parentId).toBe(folder._id)
+  const browse = await store.get(explorer.pageReady)
+  expect(browse.resultMode).toBe('browse')
+  expect(browse.items.map(item => item.id)).toEqual([nested._id])
+  expect(store.get(explorer.selection)).toEqual(new Set<Key>([nested._id]))
+})
+
+test('browsing from a match of another language stays in the shown language', async () => {
+  const Folder = Config.document('Folder', {
+    fields: {title: Field.text('Title')},
+    contains: ['Event']
+  })
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const i18n = {locales: ['en', 'nl']}
+  const config = Config.create({
+    schema: {Folder, Event},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {
+          pages: Config.root('Pages', {contains: ['Folder', 'Event'], i18n}),
+          archive: Config.root('Archive', {contains: ['Event'], i18n})
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  const folder = await db.create({
+    type: Folder,
+    root: 'pages',
+    locale: 'en',
+    set: {title: 'Folder'}
+  })
+  await db.create({
+    type: Folder,
+    id: folder._id,
+    root: 'pages',
+    locale: 'nl',
+    set: {title: 'Map'}
+  })
+  const nested = await db.create({
+    type: Event,
+    root: 'pages',
+    locale: 'en',
+    parentId: folder._id,
+    set: {title: 'Nested'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages', locale: 'nl'},
+    {
+      allowAllWorkspaces: true,
+      condition: {_type: 'Event'},
+      initialSearchScope: 'everything',
+      onConfirm() {}
+    }
+  )
+  store.sub(explorer.page, () => {})
+  const matches = await store.get(explorer.pageReady)
+  // Matches of several roots are found in any language
+  expect(matches.items.map(item => item.id)).toEqual([nested._id])
+  while (!store.get(explorer.page)) await Promise.resolve()
+  store.set(explorer.selection, new Set<Key>([nested._id]))
+  store.set(explorer.resultMode, 'browse')
+
+  expect(store.get(explorer.selectedLocale)).toBe('nl')
+  expect(store.get(explorer.location)).toMatchObject({
+    root: 'pages',
+    parentId: folder._id,
+    locale: 'nl'
+  })
+})
+
+test('matches of several roots are listed in the order of their root', async () => {
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Event},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {
+          events: Config.root('Events', {
+            contains: ['Event'],
+            overview: {sort: {asc: Query.title}}
+          }),
+          archive: Config.root('Archive', {
+            contains: ['Event'],
+            overview: {sort: {desc: Query.title}}
+          })
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  for (const title of ['Zeta', 'alpha', 'Beta'])
+    for (const root of ['events', 'archive'])
+      await db.create({type: Event, root, set: {title: `${root} ${title}`}})
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'events'},
+    {
+      allowAllWorkspaces: true,
+      condition: {_type: 'Event'},
+      initialSearchScope: 'everything',
+      onConfirm() {}
+    }
+  )
+
+  const page = await store.get(explorer.pageReady)
+  expect(page.scope).toBe('everything')
+  expect(page.items.map(item => item.title)).toEqual([
+    'events alpha',
+    'events Beta',
+    'events Zeta',
+    'archive Zeta',
+    'archive Beta',
+    'archive alpha'
+  ])
+
+  // An order the editor picks applies to every match
+  store.set(explorer.requestedSort, {column: 'title', direction: 'asc'})
+  const sorted = await store.get(explorer.pageReady)
+  expect(sorted.items.map(item => item.title)).toEqual([
+    'archive alpha',
+    'archive Beta',
+    'archive Zeta',
+    'events alpha',
+    'events Beta',
+    'events Zeta'
+  ])
 })
 
 test('ready pages snapshot the search that produced their items', async () => {

@@ -411,6 +411,45 @@ function filterState(key: string, filter: OverviewFilter): OverviewFilterState {
   return {...base, options: filterOptions(options)}
 }
 
+/** The key of the filter of search results by their type */
+export const typeFilterKey = '_type'
+
+/**
+ * Adds a filter by type to an overview, offering the given types by label.
+ * Searches list entries of any type, editors narrow them down with it.
+ */
+export function withTypeFilter(
+  config: Config,
+  overview: OverviewState,
+  types: ReadonlyArray<string>
+): OverviewState {
+  const options = types
+    .flatMap(name => {
+      const type = config.schema[name]
+      if (!type) return []
+      const option: OverviewFilterOptionState = {
+        key: name,
+        label: Type.label(type),
+        filter: {_type: name}
+      }
+      return [option]
+    })
+    .sort((a, b) => a.label.localeCompare(b.label))
+  const filter: OverviewFilterState = {
+    key: typeFilterKey,
+    label: 'Type',
+    multiple: true,
+    options
+  }
+  return {
+    ...overview,
+    filters: [
+      filter,
+      ...overview.filters.filter(other => other.key !== typeFilterKey)
+    ]
+  }
+}
+
 /** Whether an overview has filters whose options load from the content */
 export function hasFilterLoaders(overview: OverviewState): boolean {
   return overview.filters.some(filter => filter.load)

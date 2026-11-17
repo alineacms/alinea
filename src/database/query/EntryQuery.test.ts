@@ -577,3 +577,44 @@ test('path lookups and counts read an index', async () => {
   expect(count).toContain('COVERING INDEX alinea_entry_index_by_type')
   expect(count).not.toContain('TEMP B-TREE')
 })
+
+test('titles order naturally, ignoring case, accents and leading quotes', async () => {
+  const db = await wasmDatabase()
+  await db.create(EntryIndexTable)
+  const titles = [
+    'Zebra',
+    'émile',
+    'Eagle',
+    'apple',
+    '"Quoted"',
+    '‘Banana’',
+    'Item 10',
+    'Item 2',
+    'Ölberg'
+  ]
+  for (const [index, title] of titles.entries())
+    await db
+      .insert(EntryIndexTable)
+      .values(entryIndexRow(entry(`e${index}`, {title, data: {title}})))
+  async function ordered(query: GraphQuery) {
+    return compileEntryQuery(config, {...query, select: Entry.title}).rows.all(
+      db
+    )
+  }
+  const expected = [
+    'apple',
+    '‘Banana’',
+    'Eagle',
+    'émile',
+    'Item 2',
+    'Item 10',
+    'Ölberg',
+    '"Quoted"',
+    'Zebra'
+  ]
+  expect(await ordered({orderBy: {asc: Query.title}})).toEqual(expected)
+  expect(await ordered({orderBy: {asc: Page.title}})).toEqual(expected)
+  expect(await ordered({orderBy: {desc: Query.title}})).toEqual(
+    expected.toReversed()
+  )
+})
