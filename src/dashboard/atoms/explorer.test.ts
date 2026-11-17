@@ -247,6 +247,65 @@ test('searching all locations of a limited picker stays within them', async () =
   expect(store.get(explorer.scope)).toBe('root')
 })
 
+test('searches filter by the types found in the scope they search', async () => {
+  const Article = Config.document('Article', {
+    fields: {title: Field.text('Title')}
+  })
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const Tag = Config.document('Tag', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Article, Event, Tag},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {
+          news: Config.root('News', {contains: ['Article', 'Event']}),
+          events: Config.root('Events', {contains: ['Event']})
+        }
+      }),
+      other: Config.workspace('Other', {
+        source: 'other',
+        roots: {tags: Config.root('Tags', {contains: ['Tag']})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.create({type: Article, root: 'news', set: {title: 'Shared'}})
+  await db.create({type: Event, root: 'events', set: {title: 'Shared'}})
+  await db.create({
+    type: Tag,
+    workspace: 'other',
+    root: 'tags',
+    set: {title: 'Shared'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'news'},
+    {allowAllWorkspaces: true, mode: 'search'}
+  )
+  async function typeOptions() {
+    const overview = await store.get(explorer.overview)
+    const filter = overview.filters.find(filter => filter.label === 'Type')
+    return filter?.options.map(option => option.label)
+  }
+
+  expect(await typeOptions()).toEqual(['Article', 'Event'])
+
+  store.set(explorer.search, 'Shared')
+  const [type] = (await store.get(explorer.overview)).filters
+  store.set(explorer.toggleFilter, type, 'Event')
+  const page = await store.get(explorer.pageReady)
+  expect(page.items.map(item => item.root)).toEqual(['events'])
+
+  store.set(explorer.searchScope, 'everything')
+  expect(await typeOptions()).toEqual(['Article', 'Event', 'Tag'])
+})
+
 test('ready pages snapshot the search that produced their items', async () => {
   const {store} = await createDashboardAtomFixture()
   await store.get(userPolicyReadyAtom)

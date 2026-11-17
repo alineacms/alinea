@@ -51,7 +51,8 @@ import {
   resolveOverview,
   sortedColumn,
   summarizeRows,
-  thumbnailField
+  thumbnailField,
+  withTypeFilter
 } from './overview.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
@@ -999,15 +1000,45 @@ export class ExplorerAtoms {
    */
   overview = atom(async get => {
     const parent = await get(get(this.#overviewParent))
-    const overview = resolveOverview(get(configAtom), parent, {
+    const config = get(configAtom)
+    const resolved = resolveOverview(config, parent, {
       mixed: !get(this.#listedParent)
     })
+    // Searches can be narrowed down to the types they find
+    const overview =
+      this.mode === 'search'
+        ? withTypeFilter(config, resolved, await get(this.#searchedTypes))
+        : resolved
     if (!hasFilterLoaders(overview)) return overview
     // Options built from the content follow its changes
     get(shaAtom)
     return loadFilterOptions(overview, {
       graph: get(graphAtom),
       locale: get(this.selectedLocale)
+    })
+  })
+  /** The types of the entries in the scope a search matches in */
+  #searchedTypes = atom(async get => {
+    get(shaAtom)
+    const location = get(this.location)
+    const scope = get(this.scope)
+    const locations = get(this.locations).filter(
+      limit =>
+        scope === 'everything' ||
+        (limit.workspace === location.workspace &&
+          (scope === 'workspace' || limit.root === location.root))
+    )
+    if (locations.length === 0) return []
+    return get(graphAtom).find({
+      filter: {
+        or: locations.map(limit => ({
+          _workspace: limit.workspace,
+          _root: limit.root
+        }))
+      },
+      status: 'preferDraft',
+      groupBy: Entry.type,
+      select: Entry.type
     })
   })
   #parentAt = dispense(

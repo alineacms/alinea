@@ -42,6 +42,32 @@ test('global search starts in the current workspace and can pick another scope',
   await expect(dialog.getByText('Checklist', {exact: true})).toBeVisible()
 })
 
+test('global search filters by the types in the searched scope', async ({
+  mount,
+  page
+}) => {
+  await mount(<GlobalSearchStory />)
+  await page.getByRole('button', {name: 'Search entries'}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Search entries'})
+  const search = dialog.getByRole('combobox', {name: 'Search'})
+  await search.fill('Blog')
+  await expect(dialog.getByText('Blog', {exact: true})).toBeVisible()
+
+  await dialog.getByRole('button', {name: 'Filter and sort'}).click()
+  const types = page.getByRole('group', {name: 'Type'})
+  await expect(types.getByRole('button', {name: 'Folder'})).toBeVisible()
+  const pages = types.getByRole('button', {name: 'Page'})
+  await pages.click()
+  await expect(pages).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('Escape')
+
+  // Blog is a folder
+  await expect(dialog.getByText('No results found')).toBeVisible()
+  await search.fill('About')
+  await expect(dialog.getByText('About', {exact: true})).toBeVisible()
+})
+
 test('global search includes localized entries', async ({mount, page}) => {
   await mount(<LocalizedGlobalSearchStory />)
   await page.getByRole('button', {name: 'Search entries'}).click()
