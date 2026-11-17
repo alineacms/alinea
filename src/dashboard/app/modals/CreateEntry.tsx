@@ -65,11 +65,18 @@ interface LinkEditor {
   value: LinkFieldValueAtom
 }
 
-function entryReference(id: string, key: string): EntryReference {
+function entryReference(
+  id: string,
+  key: string,
+  locale: string | null
+): EntryReference {
   return {
     [Reference.id]: key,
     [Reference.type]: 'entry',
-    [EntryReference.entry]: id
+    [EntryReference.entry]: id,
+    // The modal is not part of an entry editor, so show the link in the
+    // locale the dashboard is editing
+    ...(locale ? {[EntryReference.locale]: locale} : undefined)
   }
 }
 
@@ -147,7 +154,7 @@ function CreateEntryForm() {
     const field = entryField('Parent', {
       condition: {_type: {in: containerTypes}},
       initialValue: initialParentId
-        ? entryReference(initialParentId, 'parent')
+        ? entryReference(initialParentId, 'parent', locale)
         : null!,
       location: {workspace: root.workspace, root: root.key},
       title: 'Select parent'
@@ -155,9 +162,9 @@ function CreateEntryForm() {
     return createLinkEditor(
       'parent',
       field,
-      initialParentId ? entryReference(initialParentId, 'parent') : null
+      initialParentId ? entryReference(initialParentId, 'parent', locale) : null
     )
-  }, [containerTypes, initialParentId, root.key, root.workspace])
+  }, [containerTypes, initialParentId, locale, root.key, root.workspace])
   const parentValue = useAtomValueRaw(parent.value)
   const parentId = entryIdOf(parentValue)
   const parentItemAtom = useMemo(
