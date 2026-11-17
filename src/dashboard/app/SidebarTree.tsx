@@ -407,7 +407,9 @@ export const SidebarTree = memo(function SidebarTree({
           workspace: root.workspace,
           root: root.key,
           entry: page.entry,
-          locale
+          locale,
+          // Switching language keeps the entry on the view it shows
+          view: page.view
         })
       }
       onExpandedChange={next =>

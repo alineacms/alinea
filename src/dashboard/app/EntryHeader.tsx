@@ -13,7 +13,8 @@ import {
 } from '#/components.js'
 import {
   EntryUrlConflictError,
-  type EntryUrlConflictErrorInfo
+  type EntryUrlConflictErrorInfo,
+  urlConflictResolution
 } from '#/core/db/EntryUrlConflictError.js'
 import type {Entry} from '#/core/Entry.js'
 import {getType} from '#/core/Internal.js'
@@ -111,14 +112,22 @@ function UrlConflictModal({conflict, onClose}: UrlConflictModalProps) {
       {conflict && (
         <DashboardModalDialog label="URL already in use">
           <DashboardModalContent>
+            {conflict.locale === undefined ? (
+              <Text as="p">
+                The URL <strong>{conflict.url}</strong> is already defined on
+                entry <strong>{conflict.entryId}</strong> in workspace{' '}
+                <strong>{conflict.workspace}</strong>, root{' '}
+                <strong>{conflict.root}</strong>.
+              </Text>
+            ) : (
+              <Text as="p">
+                The URL <strong>{conflict.url}</strong> is already defined on
+                the <strong>{conflict.locale ?? 'untranslated'}</strong>{' '}
+                translation of this entry.
+              </Text>
+            )}
             <Text as="p">
-              The URL <strong>{conflict.url}</strong> is already defined on
-              entry <strong>{conflict.entryId}</strong> in workspace{' '}
-              <strong>{conflict.workspace}</strong>, root{' '}
-              <strong>{conflict.root}</strong>.
-            </Text>
-            <Text as="p">
-              Change the entry path or remove this alias, then try again.
+              {urlConflictResolution(conflict)} Then try again.
             </Text>
           </DashboardModalContent>
           <DashboardModalFooter>
@@ -150,7 +159,15 @@ function entryUrlConflictInfo(
       url: info.url,
       entryId: info.entryId,
       workspace: info.workspace,
-      root: info.root
+      root: info.root,
+      ...(typeof info.locale === 'string' || info.locale === null
+        ? {locale: info.locale}
+        : undefined),
+      ...(info.alias === 'candidate' ||
+      info.alias === 'existing' ||
+      info.alias === 'shared'
+        ? {alias: info.alias}
+        : undefined)
     }
   }
 }

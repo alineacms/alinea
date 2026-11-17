@@ -103,3 +103,20 @@ test('loads a parent selected from a collapsed branch by id', async ({
     app.page.getByRole('option', {name: 'Ordered folder'})
   ).toHaveCount(0)
 })
+
+test('shows the parent in the locale being edited', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'localizedTarget',
+    routeRoot: 'localized:fr',
+    title: 'Cible localisée'
+  })
+
+  await app.page.getByRole('button', {name: 'Create new'}).click()
+  const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
+  const parent = createEntry.getByRole('list', {name: 'Parent'})
+  await expect(parent).toContainText('Cible localisée')
+  await expect(parent).not.toContainText('Localized target')
+})

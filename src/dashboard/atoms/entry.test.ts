@@ -3,7 +3,7 @@ import {Entry} from '#/core/Entry.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {Type} from '#/core/Type.js'
-import {Config, Field} from '#/index.js'
+import {Config, Edit, Field} from '#/index.js'
 import {
   createDashboardAtomFixture,
   createDashboardStore,
@@ -190,6 +190,94 @@ test('untranslated entries can start with empty fields instead of copied content
     title: 'English title',
     body: 'English body'
   })
+})
+
+test('untranslated entries started without copied content keep shared fields', async () => {
+  const Page = Config.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      body: Field.text('Body'),
+      code: Field.text('Code', {shared: true})
+    }
+  })
+  const config = translatedPathConfig(Page)
+  const db = new LocalDB(config)
+  await db.create({
+    id: 'shared-translation-source',
+    locale: 'en',
+    root: 'pages',
+    type: Page,
+    set: {title: 'English title', body: 'English body', code: 'ABC'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms('shared-translation-source'))
+  const locale = entry.locales('fr')
+
+  store.set(locale.copyTranslationSource, false)
+  const node = await store.get(locale.selectedNode)
+  expect(store.get(node.value)).toMatchObject({body: '', code: 'ABC'})
+
+  store.set(node.field('title'), 'Titre français')
+  await store.set(locale.saveTranslation, node)
+  const saved = await db.find({
+    select: {locale: Entry.locale, code: Page.code, body: Page.body},
+    id: 'shared-translation-source',
+    status: 'preferDraft'
+  })
+  expect(saved).toEqual(
+    expect.arrayContaining([
+      {locale: 'en', code: 'ABC', body: 'English body'},
+      {locale: 'fr', code: 'ABC', body: ''}
+    ])
+  )
+})
+
+test('translations do not copy the URL aliases of their source', async () => {
+  const Page = Config.document('Page', {fields: {}})
+  const config = translatedPathConfig(Page)
+  const db = new LocalDB(config)
+  const source = await db.create({
+    id: 'aliased-translation-source',
+    locale: 'en',
+    root: 'pages',
+    type: Page,
+    set: {title: 'English title'}
+  })
+  await db.update({
+    id: source._id,
+    locale: 'en',
+    set: {
+      metadata: {
+        ...source.metadata,
+        aliases: Edit.list(Page.metadata.aliases)
+          .add('alias', {url: '/en/old'})
+          .value()
+      }
+    }
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms(source._id))
+  const locale = entry.locales('fr')
+  const node = await store.get(locale.selectedNode)
+  expect(store.get(node.value)).toMatchObject({
+    title: 'English title',
+    metadata: {aliases: []}
+  })
+  store.set(node.field('title'), 'Titre français')
+  await store.set(locale.saveTranslation, node)
+  const aliases = await db.find({
+    select: {locale: Entry.locale, aliases: Entry.aliases},
+    id: source._id,
+    status: 'preferDraft'
+  })
+  expect(aliases).toEqual(
+    expect.arrayContaining([
+      {locale: 'en', aliases: [expect.objectContaining({url: '/en/old'})]},
+      {locale: 'fr', aliases: []}
+    ])
+  )
 })
 
 function translatedPathConfig(Page: Type) {
