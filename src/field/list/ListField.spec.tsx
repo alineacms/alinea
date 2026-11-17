@@ -1,4 +1,5 @@
 import {expect, type MountResult, test} from '@playwright/experimental-ct-react'
+import type {Page} from 'playwright'
 import {
   Collapsed,
   Example,
@@ -385,6 +386,59 @@ test('copies and pastes rows', async ({mount, page}) => {
   await sections.getByRole('button', {name: 'Paste Hero'}).last().click()
   expect(await rowNames(sections)).toHaveLength(count + 1)
   expect((await rowNames(sections)).at(-1)).toBe(`Hero item ${count + 1}`)
+})
+
+const copyKey = '@alinea/copypaste'
+
+async function storeCopy(page: Page, expiresAt: number) {
+  await page.evaluate(
+    ([key, value]) => localStorage.setItem(key, value),
+    [
+      copyKey,
+      JSON.stringify({
+        row: {_id: 'copied', _type: 'hero', _index: 'a0', heading: 'Copied'},
+        expiresAt
+      })
+    ]
+  )
+}
+
+test('keeps a copied row for a day', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  await sections.getByRole('button', {name: 'Hero settings'}).first().click()
+  const sheet = page.getByRole('dialog', {name: 'Hero'})
+  await sheet.getByRole('button', {name: 'Copy'}).click()
+  const stored = await page.evaluate(
+    key => JSON.parse(localStorage.getItem(key) ?? 'null'),
+    copyKey
+  )
+  const day = 24 * 60 * 60 * 1000
+  expect(stored.row._type).toBe('hero')
+  expect(stored.expiresAt - Date.now()).toBeGreaterThan(day - 60_000)
+  expect(stored.expiresAt - Date.now()).toBeLessThanOrEqual(day)
+})
+
+test('pastes a row copied earlier until it expires', async ({mount, page}) => {
+  await storeCopy(page, Date.now() + 60_000)
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  await expect(
+    sections.getByRole('button', {name: 'Paste Hero'}).last()
+  ).toBeVisible()
+})
+
+test('ignores and clears an expired copy', async ({mount, page}) => {
+  await storeCopy(page, Date.now() - 1)
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  await expect(sections.getByRole('listitem').first()).toBeVisible()
+  await expect(sections.getByRole('button', {name: 'Paste Hero'})).toHaveCount(
+    0
+  )
+  await expect
+    .poll(() => page.evaluate(key => localStorage.getItem(key), copyKey))
+    .toBeNull()
 })
 
 test('pastes a row into a list holding its type under another key', async ({

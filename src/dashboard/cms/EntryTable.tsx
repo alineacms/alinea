@@ -210,9 +210,17 @@ interface EntryTableAtoms {
   requested: PrimitiveAtom<OverviewSort | undefined>
   ready: Atom<Promise<Array<ExplorerItemData>>>
   rows: Atom<Array<ExplorerItemData> | undefined>
+  /**
+   * The rows loaded when the table was created, shown until `rows` has
+   * loaded. The suspended content waits for these instead of reading `ready`
+   * again on every retry: content changes while it loads restart `ready`, so
+   * a retry could keep waiting for the next load and never show the table.
+   */
+  initial: Promise<Array<ExplorerItemData>>
 }
 
 function useEntryTable(props: EntryTableProps): EntryTableState {
+  const store = useStore()
   const config = useAtomValueRaw(configAtom)
   const contextLocale = useLocale()
   const locale = props.locale === undefined ? contextLocale : props.locale
@@ -257,9 +265,14 @@ function useEntryTable(props: EntryTableProps): EntryTableState {
         overview
       )
     )
-    return {requested, ready, rows: unwrap(ready, previous => previous)}
+    return {
+      requested,
+      ready,
+      rows: unwrap(ready, previous => previous),
+      initial: store.get(ready)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [store, key])
   return {config, locale, types, configured, overview, atoms}
 }
 
@@ -269,12 +282,11 @@ interface EntryTableContentProps extends EntryTableProps {
 
 function EntryTableContent(props: EntryTableContentProps) {
   const {config, locale, types, configured, overview, atoms} = props.table
-  const store = useStore()
   const openEntry = useSetAtom(openEntryAtom)
   const requested = useAtomValueRaw(atoms.requested)
   const setRequested = useSetAtom(atoms.requested)
   const loaded = useAtomValueRawSync(atoms.rows)
-  const rows = loaded ?? use(store.get(atoms.ready))
+  const rows = loaded ?? use(atoms.initial)
   const shown = resolveOverviewOptions(
     config,
     props.columns ? {...configured, columns: props.columns} : configured,

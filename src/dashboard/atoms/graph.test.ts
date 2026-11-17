@@ -186,3 +186,20 @@ test('hydrates activity after a worker action already started', async () => {
 
   unsubscribe()
 })
+
+test('an index event that changes nothing keeps the content hash', async () => {
+  const {db} = await createDashboardAtomFixture()
+  const store = createStore()
+  const events = new TestEvents()
+  store.set(graphAtom, db)
+  store.set(eventsAtom, events)
+  const unsubscribe = store.sub(shaAtom, () => {})
+  events.emit(new IndexEvent({op: 'index', sha: 'same', ids: ['a']}))
+  const first = store.get(shaAtom)
+  events.emit(new IndexEvent({op: 'index', sha: 'same', ids: ['a']}))
+  // The same promise: queries that wait on the hash don't restart
+  expect(store.get(shaAtom)).toBe(first)
+  events.emit(new IndexEvent({op: 'index', sha: 'next', ids: ['a']}))
+  expect(store.get(shaAtom)).not.toBe(first)
+  unsubscribe()
+})
