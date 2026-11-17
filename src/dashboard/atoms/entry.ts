@@ -254,10 +254,12 @@ export class EntryLocaleAtoms {
     const readOnly =
       version?.type === 'history' ||
       (!isUntranslated && (!entry.active || !policy.canUpdate(entry)))
+    // Starting a translation from scratch still keeps the shared fields, as
+    // saving it writes them to every language
     let data =
       !isUntranslated || get(this.copyTranslationSource)
         ? entry.data
-        : undefined
+        : Type.sharedData(type, entry.data)
     if (isUntranslated && data && this.requestedLocale) {
       const linkIds = new Set(
         Type.references(type, data)
