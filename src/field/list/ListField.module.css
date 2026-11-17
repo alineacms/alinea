@@ -33,3 +33,8 @@
   flex: 1;
   min-width: 0;
 }
+
+.ListFieldRowHeader-badge[data-slot='badge'] {
+  background: color-mix(in oklab, var(--alinea-selected), var(--alinea-bg) 50%);
+  color: var(--alinea-selected-fg);
+}

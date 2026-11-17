@@ -609,7 +609,11 @@ function ListFieldRowHeader({
   const showAnchor = Boolean(displayAnchor && !displayLabel)
   const title = (
     <>
-      <Badge icon={typeIcon} size="sm" color="primary">
+      <Badge
+        icon={typeIcon}
+        size="sm"
+        className={styles.ListFieldRowHeader.badge()}
+      >
         {label}
       </Badge>
       {displayLabel && (
