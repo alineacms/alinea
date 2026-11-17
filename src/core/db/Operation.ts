@@ -402,9 +402,15 @@ export class UploadOperation extends Operation {
           // A replaced file keeps the fields stored with it, see overwrite
           query.replaceId
             ? uploaded
-            : Type.withInitialValue(fileType, uploaded, {
-                fieldI18n: Config.fieldI18n(db.config, workspace, root)
-              }),
+            : // The entry takes the path of the file, which falls back to
+              // file where the title slugifies to nothing
+              Type.withInitialValue(
+                fileType,
+                {...uploaded, path},
+                {
+                  fieldI18n: Config.fieldI18n(db.config, workspace, root)
+                }
+              ),
           {
             action: query.replaceId ? 'update' : 'create',
             user: query.user,

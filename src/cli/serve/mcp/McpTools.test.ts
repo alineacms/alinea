@@ -606,6 +606,18 @@ test('translations, moves and archiving', async () => {
   test.is((await env.ok('get_entry', {id: a.id})).status, 'published')
 })
 
+test('a file named only of punctuation uploads with the path file', async () => {
+  await using env = await setup()
+  using _uploads = stubUploads(env.rootDir)
+  const filePath = await env.dashboardUpload(
+    new File([await readFile('test/fixtures/example.jpg')], '€€€.jpg')
+  )
+  test.is(basename(filePath), 'file.json')
+  const stored = await env.readEntry(join('content', filePath))
+  test.is(stored.title, '€€€')
+  test.ok(basename(stored.location).startsWith('file.'))
+})
+
 test('upload_file creates and replaces media entries', async () => {
   await using env = await setup()
   await copyFile('test/fixtures/example.jpg', join(env.rootDir, 'example.jpg'))
