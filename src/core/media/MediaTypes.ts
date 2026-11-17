@@ -337,8 +337,18 @@ export function mediaOverview(): OverviewOptions {
       },
       usage: {
         label: 'Usage',
+        // Folders stay to browse into
         options: {
-          // Files no entry links to, folders stay to browse into
+          all: {label: 'All'},
+          used: {
+            label: 'Used',
+            filter: {
+              or: [
+                {_type: 'MediaLibrary'},
+                {_type: 'MediaFile', _referenced: true}
+              ]
+            }
+          },
           unused: {
             label: 'Unused',
             filter: {

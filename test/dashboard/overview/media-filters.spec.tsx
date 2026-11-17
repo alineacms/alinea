@@ -93,6 +93,38 @@ test('filters the media library to PDFs and sorts it Z–A', async ({
   await expect(menu.getByRole('button', {name: 'Reset'})).toHaveCount(0)
 })
 
+test('lists the used or unused media files, or all of them', async ({
+  mount,
+  page
+}) => {
+  await open(page, '#/entry/main/media')
+  await mount(<OverviewScenarioMount />)
+  await page.getByRole('radio', {name: 'Row view'}).click()
+  await expect
+    .poll(async () => (await titles(page)).length)
+    .toBeGreaterThanOrEqual(5)
+
+  await page.getByRole('button', {name: 'Filter and sort'}).click()
+  const usage = page
+    .getByRole('dialog', {name: 'Filter and sort'})
+    .getByRole('group', {name: 'Usage'})
+  const option = (name: string) =>
+    usage.getByRole('button', {name, exact: true})
+  await expect(option('All')).toHaveAttribute('aria-pressed', 'true')
+  // The post links to the photo, the folder stays to browse into
+  await option('Used').click()
+  await expect(option('All')).toHaveAttribute('aria-pressed', 'false')
+  await expect.poll(() => titles(page)).toEqual(['Archive', 'Photo'])
+  await option('Unused').click()
+  await expect(option('Used')).toHaveAttribute('aria-pressed', 'false')
+  await expect
+    .poll(() => titles(page))
+    .toEqual(['Archive', 'Notes', 'Letter', 'Annual report'])
+  await option('All').click()
+  await expect(option('All')).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(async () => (await titles(page)).length).toBe(5)
+})
+
 test('lists the unused media files and deletes them all', async ({
   mount,
   page

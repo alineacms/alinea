@@ -7,7 +7,7 @@ import {FileData, MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config} from '#/index.js'
 import {createDashboardStore} from '#test/DashboardFixture.js'
-import {Brand, Product, config} from '#test/overview.js'
+import {Blog, BlogPost, Brand, Product, config} from '#test/overview.js'
 import type {OverviewFilter} from '#/core/Overview.js'
 import {expect, setSystemTime, test} from 'bun:test'
 import {atom} from 'jotai'
@@ -247,6 +247,75 @@ test('explorers filter media by file type, keeping folders', async () => {
     'Archive'
   ])
   expect((await store.get(explorer.pageReady)).filters).toEqual({})
+})
+
+test('explorers filter media by usage, all by default', async () => {
+  const db = await mediaLibrary()
+  const photo = await db.get({
+    type: MediaFile,
+    filter: {_root: 'media', title: 'Photo'},
+    select: Entry.id
+  })
+  const blog = await db.create({
+    type: Blog,
+    workspace: 'main',
+    root: 'blog',
+    set: {title: 'Blog'}
+  })
+  await db.create({
+    type: BlogPost,
+    workspace: 'main',
+    root: 'blog',
+    parentId: blog._id,
+    set: {
+      title: 'Post',
+      cover: {_id: createId(), _type: 'image', _entry: photo}
+    }
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'media'},
+    {rootData: atom(getRoot(config.workspaces.main.media))}
+  )
+  const titles = async () =>
+    (await store.get(explorer.itemsReady(null))).map(item => item.title)
+  const media = await store.get(explorer.overview)
+  const usage = media.filters.find(filter => filter.key === 'usage')!
+  expect(usage.options.map(option => option.label)).toEqual([
+    'All',
+    'Used',
+    'Unused'
+  ])
+  const all = [
+    'Folder',
+    'Archive',
+    'Scanned letter',
+    'Photo',
+    'Meeting notes',
+    'Annual report'
+  ]
+  expect(await titles()).toEqual(all)
+
+  // Folders stay to browse into
+  store.set(explorer.toggleFilter, usage, 'used')
+  expect(await titles()).toEqual(['Folder', 'Archive', 'Photo'])
+  store.set(explorer.toggleFilter, usage, 'unused')
+  expect(store.get(explorer.requestedFilters)).toEqual({usage: ['unused']})
+  expect(await titles()).toEqual([
+    'Folder',
+    'Archive',
+    'Scanned letter',
+    'Meeting notes',
+    'Annual report'
+  ])
+
+  // All lists every file again and is not a picked filter
+  store.set(explorer.toggleFilter, usage, 'all')
+  expect(store.get(explorer.requestedFilters)).toEqual({})
+  expect(await titles()).toEqual(all)
+  expect(pickedFilters(media, {usage: ['all']})).toEqual({})
+  expect(overviewFilter(media, {usage: ['all']})).toBeUndefined()
 })
 
 test('filter options can be loaded from the content', async () => {

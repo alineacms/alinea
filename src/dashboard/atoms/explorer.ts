@@ -1020,17 +1020,23 @@ export class ExplorerAtoms {
   )
   /**
    * Picks an option of a filter, or unpicks it when picked. Options of
-   * filters that allow one replace the picked option.
+   * filters that allow one replace the picked option, the option without a
+   * condition unpicks every option.
    */
   toggleFilter = atom(
     null,
     (get, set, filter: OverviewFilterState, option: string) => {
       const {[filter.key]: current = [], ...others} = get(this.requestedFilters)
-      const picked = current.includes(option)
-        ? current.filter(key => key !== option)
-        : filter.multiple
-          ? [...current, option]
-          : [option]
+      const listsAll = filter.options.some(
+        candidate => candidate.key === option && !candidate.filter
+      )
+      const picked = listsAll
+        ? []
+        : current.includes(option)
+          ? current.filter(key => key !== option)
+          : filter.multiple
+            ? [...current, option]
+            : [option]
       set(
         this.requestedFilters,
         picked.length > 0 ? {...others, [filter.key]: picked} : others
