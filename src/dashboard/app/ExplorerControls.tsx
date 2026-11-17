@@ -93,7 +93,11 @@ export function ExplorerControlsMenu({
                   key={option.key}
                   size="sm"
                   variant="outline"
-                  pressed={Boolean(picked[filter.key]?.includes(option.key))}
+                  pressed={
+                    option.filter
+                      ? Boolean(picked[filter.key]?.includes(option.key))
+                      : !picked[filter.key]
+                  }
                   onPressedChange={() => onToggleFilter(filter, option.key)}
                 >
                   {option.label}

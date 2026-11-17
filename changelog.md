@@ -64,7 +64,8 @@
   is text or a React element, and `info` explains the column in a popover
   opened from an info button next to the header. Filters can load
   their options from the content with a function that receives the `graph`
-  and `locale`. `tabs` list the entries of a filter per tab above the list
+  and `locale`, and an option without `filter` lists every entry and is
+  picked while no other option of its filter is. `tabs` list the entries of a filter per tab above the list
   (the selected tab is kept in the URL), and `header` renders a view between
   the toolbar and the list, eg. totals of the listed entries. The media library lists previews, dimensions, sizes and file
   types. `EntryTable` in `alinea/cms` renders the same columns in custom

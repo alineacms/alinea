@@ -345,7 +345,9 @@ export class UploadOperation extends Operation {
       const originalExtension = extname(fileName)
       const title = basename(fileName, originalExtension)
       const extension = originalExtension.toLowerCase()
-      const path = slugify(title)
+      // A file named only of punctuation slugifies to nothing, and a media
+      // file needs a path
+      const path = slugify(title) || 'file'
       const uploadLocation = MediaLocation.storagePath(
         db.config,
         workspace,

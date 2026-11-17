@@ -1029,7 +1029,7 @@
         },
         {
           "_type": "text",
-          "text": " on the fields of the listed entries. Editors pick one option of a filter, or several with `multiple: true`: entries then match any of them. Entries match every filter that is applied, and the search terms. Rows can't be reordered while a filter applies."
+          "text": " on the fields of the listed entries. Editors pick one option of a filter, or several with `multiple: true`: entries then match any of them. An option without `filter` lists every entry: it shows as picked while no other option of its filter is, and picking it clears the filter. Entries match every filter that is applied, and the search terms. Rows can't be reordered while a filter applies."
         }
       ]
     },
@@ -1080,7 +1080,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3KdUIuG2uvsUKiiRmnAlnBbrO0Z",
-      "code": "import {Config, Query} from 'alinea'\nimport {Category, Product} from './Product'\n\nexport const Products = Config.document('Products', {\n  contains: ['Product'],\n  overview: {\n    filters: {\n      category: {\n        label: 'Category',\n        multiple: true,\n        async options({graph, locale}) {\n          const categories = await graph.find({\n            type: Category,\n            locale,\n            select: {id: Query.id, title: Query.title},\n            orderBy: {asc: Query.title}\n          })\n          return Object.fromEntries(\n            categories.map(category => [\n              category.id,\n              {\n                label: category.title,\n                filter: {categories: {includes: {_entry: category.id}}}\n              }\n            ])\n          )\n        }\n      },\n      usage: {\n        label: 'Usage',\n        options: {\n          linked: {label: 'Linked from other entries', filter: {_referenced: true}},\n          unused: {label: 'Not linked anywhere', filter: {_referenced: false}}\n        }\n      }\n    }\n  },\n  fields: {}\n})",
+      "code": "import {Config, Query} from 'alinea'\nimport {Category, Product} from './Product'\n\nexport const Products = Config.document('Products', {\n  contains: ['Product'],\n  overview: {\n    filters: {\n      category: {\n        label: 'Category',\n        multiple: true,\n        async options({graph, locale}) {\n          const categories = await graph.find({\n            type: Category,\n            locale,\n            select: {id: Query.id, title: Query.title},\n            orderBy: {asc: Query.title}\n          })\n          return Object.fromEntries(\n            categories.map(category => [\n              category.id,\n              {\n                label: category.title,\n                filter: {categories: {includes: {_entry: category.id}}}\n              }\n            ])\n          )\n        }\n      },\n      usage: {\n        label: 'Usage',\n        options: {\n          all: {label: 'All'},\n          linked: {label: 'Linked from other entries', filter: {_referenced: true}},\n          unused: {label: 'Not linked anywhere', filter: {_referenced: false}}\n        }\n      }\n    }\n  },\n  fields: {}\n})",
       "fileName": "schema/Products.ts",
       "language": "tsx"
     },

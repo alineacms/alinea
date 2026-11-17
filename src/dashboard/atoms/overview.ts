@@ -96,7 +96,8 @@ export interface OverviewSortState {
 export interface OverviewFilterOptionState {
   key: string
   label: string
-  filter: OpenFilter<EntryFields>
+  /** Undefined for the option that lists every entry */
+  filter?: OpenFilter<EntryFields>
 }
 
 /** A filter editors can apply, resolved against the schema */
@@ -654,7 +655,9 @@ export function pickedFilters(
   const picked: Record<string, Array<string>> = {}
   for (const filter of overview.filters) {
     const keys = filter.options
-      .filter(option => selection[filter.key]?.includes(option.key))
+      .filter(
+        option => option.filter && selection[filter.key]?.includes(option.key)
+      )
       .map(option => option.key)
     if (keys.length === 0) continue
     picked[filter.key] = filter.multiple ? keys : keys.slice(0, 1)
@@ -686,12 +689,14 @@ export function overviewFilter(
   const picked = pickedFilters(overview, selection)
   const tabFilter = pickedTab(overview, tab)?.filter
   const conditions = overview.filters.flatMap(filter => {
-    const options = filter.options.filter(option =>
-      picked[filter.key]?.includes(option.key)
+    const options = filter.options.flatMap(option =>
+      option.filter && picked[filter.key]?.includes(option.key)
+        ? [option.filter]
+        : []
     )
     if (options.length === 0) return []
-    if (options.length === 1) return [options[0].filter]
-    return [{or: options.map(option => option.filter)}]
+    if (options.length === 1) return options
+    return [{or: options}]
   })
   if (tabFilter) conditions.unshift(tabFilter)
   if (conditions.length === 0) return undefined
