@@ -41,6 +41,7 @@ import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/components.js'
 import {
@@ -74,10 +75,10 @@ import {
 import {ListOptions} from '#/field/list.js'
 import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {atomWithStorage} from 'jotai/utils'
+import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
+import {atomWithStorage, createJSONStorage, RESET} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
-import {memo, useCallback, useMemo, useRef, useState} from 'react'
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import css from './ListField.module.css'
 
 const styles = styler(css)
@@ -88,9 +89,36 @@ interface ListValue {
   [key: string]: unknown
 }
 
-const copyAtom = atomWithStorage<ListValue | undefined>(
+/** How long a copied block can be pasted, in milliseconds */
+const copyLifetime = 24 * 60 * 60 * 1000
+
+interface CopiedBlock {
+  row: ListValue
+  expiresAt: number
+}
+
+function isCopiedBlock(value: unknown): value is CopiedBlock {
+  return (
+    isRecord(value) &&
+    isRecord(value.row) &&
+    typeof value.expiresAt === 'number'
+  )
+}
+
+const copyStorage = createJSONStorage<CopiedBlock | undefined>()
+// Expired copies, and copies stored without an expiry, are cleared on load
+const copyAtom = atomWithStorage<CopiedBlock | undefined>(
   '@alinea/copypaste',
-  undefined
+  undefined,
+  {
+    ...copyStorage,
+    getItem(key, initialValue) {
+      const value = copyStorage.getItem(key, initialValue)
+      if (isCopiedBlock(value) && value.expiresAt > Date.now()) return value
+      if (value !== initialValue) copyStorage.removeItem(key)
+      return initialValue
+    }
+  }
 )
 // The type of the block copied in this tab, which other lists may hold under
 // another key. A block copied in another tab replaces the row only.
@@ -134,12 +162,24 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const nodes = useNodes(list) as Array<ReactiveNode<ListValue>>
   const pushRow = useSetAtom(list.push)
   const insertRow = useSetAtom(list.insert)
-  const copied = useAtomValueRaw(copyAtom)
+  // The stored copy is read when the atom mounts, which can happen before
+  // this view subscribes, eg. when a nested list mounts it first
+  const copied = useAtomValueRawSync(copyAtom)
+  const setCopied = useSetAtom(copyAtom)
   const copiedType = useAtomValueRaw(copyTypeAtom)
   const pasted = useMemo(
-    () => pastedRow(copied, copiedType, options.schema),
+    () => pastedRow(copied?.row, copiedType, options.schema),
     [copied, copiedType, options.schema]
   )
+  // Clear the copy when it expires while the dashboard stays open
+  useEffect(() => {
+    if (!copied) return
+    const timeout = setTimeout(
+      () => setCopied(current => (current === copied ? RESET : current)),
+      copied.expiresAt - Date.now()
+    )
+    return () => clearTimeout(timeout)
+  }, [copied, setCopied])
   const schemaEntries = useMemo(
     () => Object.entries(options.schema),
     [options.schema]
@@ -198,7 +238,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
         const node = nodes.find(node => get(node.field('_id')) === rowId)
         if (!node) return
         const row = get(node.value)
-        set(copyAtom, row)
+        set(copyAtom, {row, expiresAt: Date.now() + copyLifetime})
         set(copyTypeAtom, {id: row._id, type: options.schema[row._type]})
       }),
     [list, options.schema]
