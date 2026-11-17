@@ -2,11 +2,6 @@ import {Config, Field} from 'alinea'
 
 export const Page = Config.document('Page', {
   fields: {},
-  tabs: {
-    references: Field.tab('References', {
-      view: '@/schema/PageReferences.view#PageReferences'
-    })
-  },
   seo: {
     brandShareImage: Field.check('Brand the share image', {
       description: 'Add the site logo over the Open Graph image',
