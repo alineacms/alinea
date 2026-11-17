@@ -15,7 +15,7 @@ import {
 } from '#/core/media/MediaTypes.js'
 import type {OverviewSort} from '#/core/Overview.js'
 import {Permission, type Policy, type Resource} from '#/core/Role.js'
-import type {RootData} from '#/core/Root.js'
+import {Root, type RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {chunks} from '#/core/util/Arrays.js'
 import type {Infer} from '#/types.js'
@@ -1039,17 +1039,21 @@ export class ExplorerAtoms {
       locale: get(this.selectedLocale)
     })
   })
-  /** The types of the entries in the scope a search matches in */
-  #searchedTypes = atom(async get => {
-    get(shaAtom)
+  /** The locations the scope of the results covers */
+  #scopeLocations = atom(get => {
     const location = get(this.location)
     const scope = get(this.scope)
-    const locations = get(this.locations).filter(
+    return get(this.locations).filter(
       limit =>
         scope === 'everything' ||
         (limit.workspace === location.workspace &&
           (scope === 'workspace' || limit.root === location.root))
     )
+  })
+  /** The types of the entries in the scope a search matches in */
+  #searchedTypes = atom(async get => {
+    get(shaAtom)
+    const locations = get(this.#scopeLocations)
     if (locations.length === 0) return []
     return get(graphAtom).find({
       filter: {
@@ -1465,14 +1469,34 @@ export class ExplorerAtoms {
         location.parentId
           ? location.parentId
           : undefined
-      const entries = await graph.find({
-        ...query,
-        // Search results arrive ranked; loading every match with its data
-        // costs seconds on large sites while only the best ones are shown.
-        take: search ? searchResultLimit : undefined,
-        groupBy: Entry.id,
-        select: explorerItemSelect
-      })
+      const listed = query
+      function find(within: Partial<ExplorerQuery> = {}) {
+        return graph.find({
+          ...listed,
+          ...within,
+          // Search results arrive ranked; loading every match with its data
+          // costs seconds on large sites while only the best ones are shown.
+          take: search ? searchResultLimit : undefined,
+          groupBy: Entry.id,
+          select: explorerItemSelect
+        })
+      }
+      // Matches of several roots are listed root by root, each in the
+      // order of its overview, unless the editor sorted them
+      const byRoot = scope !== 'root' && !search && !query.orderBy
+      const entries = byRoot
+        ? (
+            await Promise.all(
+              get(this.#scopeLocations).map(limit =>
+                find({
+                  workspace: limit.workspace,
+                  root: limit.root,
+                  orderBy: locationOrder(config, limit)
+                })
+              )
+            )
+          ).flat()
+        : await find()
       const policy = get(policyAtom)
       const condition = this.#options.condition
       const matchesCondition = condition
@@ -1507,6 +1531,16 @@ export class ExplorerAtoms {
       )
     })
   )
+}
+
+/** The default order of the children of a root */
+function locationOrder(
+  config: Config,
+  {workspace, root}: ExplorerLimitLocation
+) {
+  const data = config.workspaces[workspace]
+  const value = data && getWorkspace(data).roots[root]
+  return value ? Root.childrenOrder(getRoot(value)) : undefined
 }
 
 /**

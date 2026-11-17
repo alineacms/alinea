@@ -7,7 +7,7 @@ import {Permission, Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
 import {Entry} from '#/core/Entry.js'
-import {Config, Field} from '#/index.js'
+import {Config, Field, Query} from '#/index.js'
 import {expect, test} from 'bun:test'
 import type {DropTarget, Key} from '#/components.js'
 import {atom, createStore} from 'jotai'
@@ -360,6 +360,68 @@ test('browsing from the matches opens the folder of the selected match', async (
   expect(browse.resultMode).toBe('browse')
   expect(browse.items.map(item => item.id)).toEqual([nested._id])
   expect(store.get(explorer.selection)).toEqual(new Set<Key>([nested._id]))
+})
+
+test('matches of several roots are listed in the order of their root', async () => {
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Event},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {
+          events: Config.root('Events', {
+            contains: ['Event'],
+            overview: {sort: {asc: Query.title}}
+          }),
+          archive: Config.root('Archive', {
+            contains: ['Event'],
+            overview: {sort: {desc: Query.title}}
+          })
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  for (const title of ['Zeta', 'alpha', 'Beta'])
+    for (const root of ['events', 'archive'])
+      await db.create({type: Event, root, set: {title: `${root} ${title}`}})
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'events'},
+    {
+      allowAllWorkspaces: true,
+      condition: {_type: 'Event'},
+      initialSearchScope: 'everything',
+      onConfirm() {}
+    }
+  )
+
+  const page = await store.get(explorer.pageReady)
+  expect(page.scope).toBe('everything')
+  expect(page.items.map(item => item.title)).toEqual([
+    'events alpha',
+    'events Beta',
+    'events Zeta',
+    'archive Zeta',
+    'archive Beta',
+    'archive alpha'
+  ])
+
+  // An order the editor picks applies to every match
+  store.set(explorer.requestedSort, {column: 'title', direction: 'asc'})
+  const sorted = await store.get(explorer.pageReady)
+  expect(sorted.items.map(item => item.title)).toEqual([
+    'archive alpha',
+    'archive Beta',
+    'archive Zeta',
+    'events alpha',
+    'events Beta',
+    'events Zeta'
+  ])
 })
 
 test('ready pages snapshot the search that produced their items', async () => {
