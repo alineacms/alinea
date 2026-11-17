@@ -8,6 +8,7 @@ import {
   RichTextInlineBlocksStory,
   RichTextLargeStory,
   RichTextLegacyEmptyStory,
+  RichTextAdjacentLinksStory,
   RichTextLinkStory,
   RichTextPlainStory,
   RichTextReadOnlyStory,
@@ -1406,4 +1407,23 @@ test('selects a whole link on click and removes it in one go', async ({
     .poll(async () => (await storedTexts(page))[0])
     .toEqual({_type: 'text', text: 'Read the guide before you start.'})
   await expect(page.getByRole('button', {name: 'Remove link'})).toHaveCount(0)
+})
+
+test('picks the clicked one of two links that touch', async ({mount, page}) => {
+  await mount(<RichTextAdjacentLinksStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('tail').click()
+  // The right edge of the last letter of the first link
+  const alpha = editor.locator('a', {hasText: 'alpha'})
+  const box = (await alpha.boundingBox())!
+  await page.mouse.click(box.x + box.width * 0.9, box.y + box.height / 2)
+  await expect.poll(() => selectedText(page)).toBe('alpha')
+
+  // With the caret at the end of the first link, the first one is removed
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(() => selectedText(page)).toBe('')
+  await page.getByRole('button', {name: 'Remove link'}).click()
+  await expect(editor.locator('a')).toHaveCount(1)
+  await expect(editor.locator('a')).toHaveText('beta')
 })

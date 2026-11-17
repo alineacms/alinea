@@ -29,6 +29,7 @@ import type {
 } from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import {currentAnchor} from './extensions/Anchor.js'
+import {selectedLinkRange} from './extensions/Link.js'
 import {
   defaultToolbar,
   type RichTextToolbarContext,
@@ -165,7 +166,7 @@ interface ToolbarItemsProps {
 }
 
 function ToolbarItems({config, context, menu, ownerId}: ToolbarItemsProps) {
-  return entries(config).flatMap(([name, entry], index) => {
+  return visibleEntries(config, context).flatMap(([name, entry], index) => {
     const separator =
       index === 0
         ? []
@@ -178,6 +179,15 @@ function ToolbarItems({config, context, menu, ownerId}: ToolbarItemsProps) {
           ]
     return [...separator, renderEntry(name, entry, context, menu, ownerId)]
   })
+}
+
+function visibleEntries(
+  config: ToolbarConfig,
+  context: RichTextToolbarContext
+) {
+  return entries(config).filter(
+    ([, entry]) => !('hidden' in entry && entry.hidden?.(context))
+  )
 }
 
 function renderEntry(
@@ -232,7 +242,7 @@ function renderEntry(
   if ('group' in entry) {
     const group =
       typeof entry.group === 'function' ? entry.group(context) : entry.group
-    const children = entries(group).map(([childName, child]) =>
+    const children = visibleEntries(group, context).map(([childName, child]) =>
       renderEntry(`${name}-${childName}`, child, context, menu, ownerId)
     )
     return menu ? children : <ToolbarGroup key={name}>{children}</ToolbarGroup>
@@ -335,7 +345,7 @@ function applyLink(
 ) {
   if (picked === undefined) return
   if (!picked.link) {
-    if (existing) exec().extendMarkRange('link').unsetLink().run()
+    if (existing) selectLink(editor, exec()).unsetLink().run()
     else exec().unsetLink().run()
     return
   }
@@ -346,7 +356,7 @@ function applyLink(
       (picked.link as UrlReference)._target ??
       (picked.blank ? '_blank' : undefined)
   }
-  if (existing) exec().extendMarkRange('link').setLink(attributes).run()
+  if (existing) selectLink(editor, exec()).setLink(attributes).run()
   else if (selected) exec().setLink(attributes).run()
   else
     exec()
@@ -360,6 +370,12 @@ function applyLink(
         marks: [{type: 'link', attrs: attributes}]
       })
       .run()
+}
+
+/** Selects the whole link the selection is in */
+function selectLink(editor: Editor, chain: ReturnType<Editor['chain']>) {
+  const range = selectedLinkRange(editor.state, editor.schema.marks.link)
+  return range ? chain.setTextSelection(range) : chain.extendMarkRange('link')
 }
 
 function browserLink(

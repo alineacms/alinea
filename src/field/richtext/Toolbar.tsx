@@ -38,6 +38,7 @@ import type {ComponentType, ReactElement, ReactNode} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 import type {PickRichTextImageFunc} from './PickTextLink.js'
 import {currentAnchor} from './extensions/Anchor.js'
+import {selectedLinkRange} from './extensions/Link.js'
 
 export interface RichTextCommand {
   (): ReturnType<Editor['chain']>
@@ -51,6 +52,8 @@ export interface ToolbarButton {
   title?: string
   disabled?: (ctx: RichTextToolbarContext) => boolean
   active?: (ctx: RichTextToolbarContext) => boolean
+  /** Leaves the button out of the toolbar */
+  hidden?: (ctx: RichTextToolbarContext) => boolean
   onSelect: (ctx: RichTextToolbarContext) => void
 }
 
@@ -343,21 +346,25 @@ export const lists = {
 } satisfies ToolbarGroup
 
 export const links = {
-  group({editor}): ToolbarConfig {
-    const link: ToolbarButton = {
+  group: {
+    link: {
       icon: () => <IcRoundLink />,
       title: 'Link',
       active: ({editor}) => editor.isActive('link'),
       onSelect: ({handleLink}) => handleLink()
-    }
-    if (!editor.isActive('link')) return {link}
-    // Removes the whole link the selection is in, not only the selected text
-    const unlink: ToolbarButton = {
+    },
+    unlink: {
       icon: () => <IcRoundLinkOff />,
       title: 'Remove link',
-      onSelect: ({exec}) => exec().extendMarkRange('link').unsetLink().run()
+      hidden: ({editor}) => !editor.isActive('link'),
+      // The whole link, not only the selected text
+      onSelect: ({editor, exec}) => {
+        const range = selectedLinkRange(editor.state, editor.schema.marks.link)
+        const chain = exec()
+        if (range) chain.setTextSelection(range)
+        chain.unsetLink().run()
+      }
     }
-    return {link, unlink}
   }
 } satisfies ToolbarGroup
 
