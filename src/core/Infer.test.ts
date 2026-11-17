@@ -43,20 +43,26 @@ test('infers custom labels on queried links', () => {
       link: Field.link('Link'),
       links: Field.link.multiple('Links'),
       entry: Field.entry('Entry'),
-      image: Field.image('Image')
+      image: Field.image('Image'),
+      url: Field.url('Url'),
+      file: Field.file('File')
     }
   })
   type Navigation = Infer<typeof Navigation>
-  expectTypeOf<Navigation['link']['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['link']['label']>().toEqualTypeOf<
     string | undefined
   >()
-  expectTypeOf<Navigation['links'][number]['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['links'][number]['label']>().toEqualTypeOf<
     string | undefined
   >()
-  expectTypeOf<Navigation['entry']['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['entry']['label']>().toEqualTypeOf<
     string | undefined
   >()
-  expectTypeOf<Navigation['image']['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['image']['label']>().toEqualTypeOf<
+    string | undefined
+  >()
+  expectTypeOf<Navigation['url']['label']>().toEqualTypeOf<string | undefined>()
+  expectTypeOf<Navigation['file']['label']>().toEqualTypeOf<
     string | undefined
   >()
 })

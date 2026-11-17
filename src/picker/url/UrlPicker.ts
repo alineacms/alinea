@@ -55,6 +55,7 @@ export function urlPicker<Fields>(
       // The title given in the link picker is the label of the link, unless
       // the label was set, also to nothing
       if (label === undefined && title) row[ListRow.label] = title
+      if (row[ListRow.label] !== undefined) row.label = row[ListRow.label]
       row.target = target
       row.fields = fields
     }

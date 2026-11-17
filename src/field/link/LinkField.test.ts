@@ -59,12 +59,15 @@ test('custom link labels stay on the queried link', async () => {
     loader
   )
 
-  expectTypeOf(single._label).toEqualTypeOf<string | undefined>()
-  expectTypeOf(url._label).toEqualTypeOf<string | undefined>()
-  expectTypeOf(entryLink._label).toEqualTypeOf<string | undefined>()
-  expect(single).toMatchObject({_label: 'Custom', fields: {}, url: '/target'})
-  expect(url).toMatchObject({_label: 'External', fields: {}})
-  expect(entryLink).toMatchObject({_label: 'Entry', fields: {}})
+  expectTypeOf(single.label).toEqualTypeOf<string | undefined>()
+  expectTypeOf(url.label).toEqualTypeOf<string | undefined>()
+  expectTypeOf(entryLink.label).toEqualTypeOf<string | undefined>()
+  expect(single).toMatchObject({label: 'Custom', fields: {}, url: '/target'})
+  expect(url).toMatchObject({label: 'External', fields: {}})
+  expect(entryLink).toMatchObject({label: 'Entry', fields: {}})
+  expect(page).not.toHaveProperty('label')
+  // The stored _label stays on the queried link for existing queries
+  expect(single).toMatchObject({_label: 'Custom'})
   expect(page).not.toHaveProperty('_label')
   for (const value of [single, url, page, entryLink])
     expect(value.fields).toEqual({})
@@ -94,8 +97,8 @@ test('external links take the title of the link picker as their label', async ()
     ],
     {} as LinkResolver
   )
-  expect(titled._label).toBe('Example')
-  expect(labeled._label).toBe('Custom')
+  expect(titled.label).toBe('Example')
+  expect(labeled.label).toBe('Custom')
   const [cleared] = await Field.queryValue(
     link.multiple('Links'),
     [
@@ -111,7 +114,7 @@ test('external links take the title of the link picker as their label', async ()
     ],
     {} as LinkResolver
   )
-  expect(cleared._label).toBe('')
+  expect(cleared.label).toBe('')
 })
 
 test('link types default to links without fields', () => {
