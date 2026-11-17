@@ -1,6 +1,9 @@
 # Changelog
 
-## [2.0.0]
+## [2.0.0] - 2026-11-17
+
+### New
+
 - Rebuild the dashboard on React Aria Components, with keyboard navigation,
   focus management and screen reader support throughout, a new theme with dark
   mode, a responsive layout, entry history and a references panel that shows
@@ -16,10 +19,6 @@
   descriptions and icons, `filter` and `loading`, and `TextField` has
   `maxRows`, `inputMode` and `pattern`. Collection keys are strings or numbers.
   Dashboard icons are available from `alinea/dashboard/icons`.
-- The theme tokens and resets of `alinea/css` apply inside elements with
-  `data-alinea-theme`, which the dashboard sets on `<html>`, so the stylesheet
-  can be loaded on a site without restyling it. The workspace color is
-  `--alinea-workspace-color`.
 - Add `alinea/cms` for custom fields and views: field hooks that read and
   write the fields of the row, a parent row or the entry when passed that
   field (`useFieldValue` also takes the key of a field of the row),
@@ -62,32 +61,23 @@
   author columns, sorting by column header (kept in the URL), the default
   `sort`, `layout`, card `thumbnail` and toolbar `actions`. A column `header`
   is text or a React element, and `info` explains the column in a popover
-  opened from an info button next to the header. Filters can load
-  their options from the content with a function that receives the `graph`
-  and `locale`, and an option without `filter` lists every entry and is
-  picked while no other option of its filter is. `tabs` list the entries of a filter per tab above the list
-  (the selected tab is kept in the URL), and `header` renders a view between
-  the toolbar and the list, eg. totals of the listed entries. The media library lists previews, dimensions, sizes and file
-  types. `EntryTable` in `alinea/cms` renders the same columns in custom
-  views. `overview.sort` replaces `orderChildrenBy`, `summaryRow` and
-  `summaryThumb` are deprecated and the `overview` field option only applies
-  when the parent defines no columns.
+  opened from an info button next to the header. Filters can load their
+  options from the content with a function that receives the `graph` and
+  `locale`, and an option without `filter` lists every entry and is picked
+  while no other option of its filter is. `tabs` list the entries of a filter
+  per tab above the list (the selected tab is kept in the URL), and `header`
+  renders a view between the toolbar and the list, eg. totals of the listed
+  entries. The media library lists previews, dimensions, sizes and file types.
+  `EntryTable` in `alinea/cms` renders the same columns in custom views.
+  `overview.sort` replaces `orderChildrenBy`, `summaryRow` and `summaryThumb`
+  are deprecated and the `overview` field option only applies when the parent
+  defines no columns.
 - Add the `actions` type option: components in the entry header, next to the
   publish button.
-- A type's `view` replaces the form below the entry header instead of the
-  whole editor: the field hooks of `alinea/cms`, `EditField` and `EditFields`
-  edit the fields of the entry, the header publishes or saves them as a draft,
-  the sidebar shows history and references, and leaving with unsaved changes
-  asks to confirm. `view` also accepts a component instead of a path.
 - The `collapsed: false` type option expands an entry's children in the
   sidebar content tree from the start.
 - Add `width` to the options of every field, and fix `Field.create` typing
   for options that extend `FieldOptions`.
-- Order titles regardless of case, accents and leading punctuation, with
-  numbers by their value and letters a locale orders after z (eg. æ, ø and å
-  in Danish) there. The local database is rebuilt once after upgrading.
-- Global search picks its workspace and root from dropdowns and filters on
-  the entry types found there.
 - Query the entries that link to an entry with `Query.referencedBy`, eg.
   `select: {products: Query.referencedBy({type: Product, field: Product.brand})}`,
   count them with `count: true` (overview columns that count are sortable) and
@@ -106,12 +96,6 @@
 - Record URL aliases in the metadata field when an entry's URL changes, and
   resolve them in queries (`alias` filter, `Query.aliases`). The metadata field
   also stores `createdAt`, `createdBy`, `updatedAt` and `updatedBy`.
-- Roles combine per role: a deny only applies within the role that sets it, so
-  another role of the same user can still allow the action. Before, a deny in
-  any role blocked it for the user.
-- Enforce the `explore` permission: link and image pickers list the entries a
-  role can explore, without opening them in the dashboard. Allowing `read`
-  allows `explore`, denying `read` denies it unless `explore` is allowed.
 - Target fields inside object fields in role permissions, such as
   `{field: Article.visibility.germany, deny: {all: true}}`.
 - Add `beforeCommit` and `afterCommit` handler hooks to rewrite changes before
@@ -119,9 +103,6 @@
   the `user` that commits, `afterCommit` also the committed `entries` and the
   `removed` entries with the url they had. `alinea dev --role <name>` signs in
   the local user with that role, for saves, hooks and `cms.user()`.
-- Publish instantly: deployed sites sync new content as soon as it is committed,
-  driven by the repository sha. `syncInterval` is now a fallback, defaulting to
-  60 seconds.
 - Commits from the dashboard end with an `Alinea-Content` trailer holding the
   content sha they commit, so a deploy can skip building a publish that only
   changed content, see the instant publishing guide.
@@ -137,12 +118,32 @@
   `kinds: ['entry', 'url']`; stored links of other kinds are left out when
   queried. Queried links have the label the editor gave them as `label`,
   `_label` is deprecated.
-- Options trackers type `get(field)` by the field, so single link fields read
-  as possibly `null`. Calls that pass the value type, eg. `get<string>(field)`,
-  no longer compile: pass the field only.
 - Add a composable backend in `alinea/backend` (`createBackend`, `auth`,
   `database`, `github`, `uploads`) with S3 and Supabase uploads and user
   management.
+
+### Improved
+
+- The theme tokens and resets of `alinea/css` apply inside elements with
+  `data-alinea-theme`, which the dashboard sets on `<html>`, so the stylesheet
+  can be loaded on a site without restyling it. The workspace color is
+  `--alinea-workspace-color`.
+- Order titles regardless of case, accents and leading punctuation, with
+  numbers by their value and letters a locale orders after z (eg. æ, ø and å
+  in Danish) there. The local database is rebuilt once after upgrading.
+- Global search picks its workspace and root from dropdowns and filters on
+  the entry types found there.
+- Enforce the `explore` permission: link and image pickers list the entries a
+  role can explore, without opening them in the dashboard. Allowing `read`
+  allows `explore`, denying `read` denies it unless `explore` is allowed.
+- Publish instantly: deployed sites sync new content as soon as it is committed,
+  driven by the repository sha. `syncInterval` is now a fallback, defaulting to
+  60 seconds.
+
+### Breaking changes
+
+- Upgrading from 1.x? The [upgrade guide](https://alineacms.com/docs/upgrading)
+  walks through the changes below.
 - Require Node.js 24 or higher and React 19.
 - Require `handlerUrl` in the config, and a production `baseUrl` unless
   `handlerUrl` is absolute: server renders reach the handler through it.
@@ -163,6 +164,20 @@
   require `validateClaims`. Drafts are no longer stored in the database.
 - Remove the components from `alinea/ui` except `RichText`, and the form atoms
   from `alinea/dashboard`.
+- A type's `view` replaces the form below the entry header instead of the
+  whole editor: the field hooks of `alinea/cms`, `EditField` and `EditFields`
+  edit the fields of the entry, the header publishes or saves them as a draft,
+  the sidebar shows history and references, and leaving with unsaved changes
+  asks to confirm. `view` also accepts a component instead of a path.
+- Roles combine per role: a deny only applies within the role that sets it, so
+  another role of the same user can still allow the action. Before, a deny in
+  any role blocked it for the user.
+- Options trackers type `get(field)` by the field, so single link fields read
+  as possibly `null`. Calls that pass the value type, eg. `get<string>(field)`,
+  no longer compile: pass the field only.
+
+### Fixed
+
 - Fix read-only roles for nested fields and upload permissions in nested media
   folders.
 - Fix the locale of translations created in another root.
