@@ -60,3 +60,33 @@ test('keeps a path edited while translating', async ({dashboard, mount}) => {
   ).toHaveCount(0)
   await expect(path).toHaveValue('depart')
 })
+
+test('keeps the view of the entry when switching language', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'localizedFolder',
+    routeRoot: 'localized:en',
+    title: 'Localized folder'
+  })
+  const switchLanguage = async (name: RegExp) => {
+    await app.page.getByRole('button', {name: 'Language'}).first().click()
+    await app.page.getByRole('menuitemradio', {name}).click()
+  }
+
+  // An entry with children opens on its overview
+  await app.page.getByRole('button', {name: 'Edit entry'}).click()
+  const showOverview = app.page.getByRole('button', {name: 'Show overview'})
+  await expect(showOverview).toBeVisible()
+  await switchLanguage(/^FR/)
+  await expect(app.page).toHaveURL(/localized:fr/)
+  await expect(showOverview).toBeVisible()
+
+  await showOverview.click()
+  const editEntry = app.page.getByRole('button', {name: 'Edit entry'})
+  await expect(editEntry).toBeVisible()
+  await switchLanguage(/^EN/)
+  await expect(app.page).toHaveURL(/localized:en/)
+  await expect(editEntry).toBeVisible()
+})
