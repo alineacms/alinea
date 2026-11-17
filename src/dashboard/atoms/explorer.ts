@@ -680,6 +680,11 @@ export class ExplorerAtoms {
    * restored when a page with the same key is shown again
    */
   scrollOffset: (key: string) => PrimitiveAtom<number>
+  /**
+   * The entry the next page scrolls into view instead of restoring its
+   * offset, set when browsing to the folder of a selected match
+   */
+  revealKey = atom<string | undefined>(undefined)
   #options: ExplorerOptions
   /** The entry a location lists the children of, loaded with its parents */
   #parent = dispense((parentId: string, locale: string | null) =>
@@ -761,6 +766,7 @@ export class ExplorerAtoms {
         const locale =
           current && locales?.includes(current) ? current : matchLocale
         set(this.selectedLocale, locale)
+        set(this.revealKey, selected.id)
         set(this.location, {
           workspace,
           root,

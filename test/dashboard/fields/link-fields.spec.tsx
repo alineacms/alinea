@@ -313,7 +313,7 @@ test('browsing from a selected match opens its folder', async ({
     .getByRole('radio', {name: 'Browse'})
     .click()
   await expect(location.getByText('Folder', {exact: true})).toBeVisible()
-  await expect(child).toBeVisible()
+  await expect(child).toBeInViewport()
   await expect(child).toHaveAttribute('aria-selected', 'true')
 })
 
