@@ -1,4 +1,5 @@
 import {Config} from '#/core/Config.js'
+import {dataWithoutAliases} from '#/core/db/EntryAliases.js'
 import {Entry} from '#/core/Entry.js'
 import {isMediaLibrary} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
@@ -62,7 +63,8 @@ export const createEntryAtom = atom(
       type,
       {
         ...Type.initialValue(type),
-        ...copiedData,
+        // An old url belongs to the entry it was copied from
+        ...(copiedData && dataWithoutAliases(copiedData)),
         title,
         path: slugify(title)
       },
