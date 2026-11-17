@@ -1,11 +1,12 @@
 import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {expect, expectTypeOf, test} from 'bun:test'
-import {entry} from './EntryLink.js'
+import {entry, type EntryLink} from './EntryLink.js'
 import type {InferQueryValue} from '#/core/Infer.js'
 import {text} from '#/field/text.js'
 import {image, type ImageLink} from './ImageLink.js'
 import {link, type Link} from './Link.js'
+import type {UrlLink} from './UrlLink.js'
 
 test('multiple link fields configure duplicate entries independently', () => {
   expect(Field.options(entry.multiple('Entries')).allowDuplicates).toBe(false)
@@ -134,4 +135,27 @@ test('link types default to links without fields', () => {
     {} as InferQueryValue<typeof captioned>
   ]
   expect(images).toHaveLength(2)
+})
+
+test('link fields can be limited to some kinds of links', () => {
+  const pagesAndUrls = link('Link', {kinds: ['entry', 'url']})
+  const urls = link.multiple('Links', {kinds: ['url'], max: 3})
+  expect(Object.keys(Field.options(pagesAndUrls).pickers)).toEqual([
+    'entry',
+    'url'
+  ])
+  expect(Object.keys(Field.options(urls).pickers)).toEqual(['url'])
+  expect(Object.keys(Field.options(link('Link')).pickers)).toEqual([
+    'entry',
+    'url',
+    'file'
+  ])
+  expect(Field.options(urls).max).toBe(3)
+  expect(Field.options(pagesAndUrls)).not.toHaveProperty('kinds')
+  expectTypeOf<InferQueryValue<typeof pagesAndUrls>>().toEqualTypeOf<
+    EntryLink | UrlLink
+  >()
+  expectTypeOf<InferQueryValue<typeof urls>>().toEqualTypeOf<Array<UrlLink>>()
+  expectTypeOf<InferQueryValue<ReturnType<typeof link>>>().toEqualTypeOf<Link>()
+  expect(() => link('Link', {kinds: []})).toThrow()
 })

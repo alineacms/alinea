@@ -128,6 +128,20 @@
               "content": [
                 {
                   "_type": "text",
+                  "text": "`kinds`: the kinds of links editors can pick, any of `'entry'`, `'url'` and `'file'`. All of them by default, see below."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
                   "text": "`max` (multiple only): the maximum number of links."
                 }
               ]
@@ -367,14 +381,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Field.link` has no option to hide one of its kinds. To accept two of them, such as a page or a url but no file, reject the third in `validate`. The stored link's `_type` is `'entry'`, `'url'` or `'file'`:"
+          "text": "To accept two of them, such as a page or a url but no file, pass the `kinds` of links editors can pick. The picker only offers those, and the queried value is typed to match:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JlRxqHbYq7a1ISpt7yE0IzqF0Y",
-      "code": "import {Field} from 'alinea'\n\n// A page or an external url, but no file\nField.link('Button link', {\n  validate(link) {\n    if (link?._type === 'file') return 'Link to a page or a url'\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\n// A page or an external url, but no file\nField.link('Button link', {kinds: ['entry', 'url']})",
       "fileName": "",
       "language": "tsx"
     },

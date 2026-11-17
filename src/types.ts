@@ -52,7 +52,7 @@ export type {
   ImageOptions,
   ImagesOptions
 } from '#/field/link/ImageLink.js'
-export type {Link} from '#/field/link/Link.js'
+export type {Link, LinkKind} from '#/field/link/Link.js'
 export type {UrlLink} from '#/field/link/UrlLink.js'
 export type {EntryReference} from '#/picker/entry/EntryReference.js'
 export type {UrlReference} from '#/picker/url.js'
