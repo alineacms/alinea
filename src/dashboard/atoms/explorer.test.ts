@@ -362,6 +362,75 @@ test('browsing from the matches opens the folder of the selected match', async (
   expect(store.get(explorer.selection)).toEqual(new Set<Key>([nested._id]))
 })
 
+test('browsing from a match of another language stays in the shown language', async () => {
+  const Folder = Config.document('Folder', {
+    fields: {title: Field.text('Title')},
+    contains: ['Event']
+  })
+  const Event = Config.document('Event', {
+    fields: {title: Field.text('Title')}
+  })
+  const i18n = {locales: ['en', 'nl']}
+  const config = Config.create({
+    schema: {Folder, Event},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'main',
+        roots: {
+          pages: Config.root('Pages', {contains: ['Folder', 'Event'], i18n}),
+          archive: Config.root('Archive', {contains: ['Event'], i18n})
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  const folder = await db.create({
+    type: Folder,
+    root: 'pages',
+    locale: 'en',
+    set: {title: 'Folder'}
+  })
+  await db.create({
+    type: Folder,
+    id: folder._id,
+    root: 'pages',
+    locale: 'nl',
+    set: {title: 'Map'}
+  })
+  const nested = await db.create({
+    type: Event,
+    root: 'pages',
+    locale: 'en',
+    parentId: folder._id,
+    set: {title: 'Nested'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages', locale: 'nl'},
+    {
+      allowAllWorkspaces: true,
+      condition: {_type: 'Event'},
+      initialSearchScope: 'everything',
+      onConfirm() {}
+    }
+  )
+  store.sub(explorer.page, () => {})
+  const matches = await store.get(explorer.pageReady)
+  // Matches of several roots are found in any language
+  expect(matches.items.map(item => item.id)).toEqual([nested._id])
+  while (!store.get(explorer.page)) await Promise.resolve()
+  store.set(explorer.selection, new Set<Key>([nested._id]))
+  store.set(explorer.resultMode, 'browse')
+
+  expect(store.get(explorer.selectedLocale)).toBe('nl')
+  expect(store.get(explorer.location)).toMatchObject({
+    root: 'pages',
+    parentId: folder._id,
+    locale: 'nl'
+  })
+})
+
 test('matches of several roots are listed in the order of their root', async () => {
   const Event = Config.document('Event', {
     fields: {title: Field.text('Title')}

@@ -749,7 +749,17 @@ export class ExplorerAtoms {
           .find(item => item !== undefined)
         if (!selected) return
         const {data} = get(selected.data)
-        const {workspace, root, parentId, locale} = get(data.item)
+        const {workspace, root, parentId, locale: matchLocale} = get(data.item)
+        // Matches across roots can be of another language: stay in the one
+        // the picker shows while the root of the match has it
+        const current = get(this.selectedLocale)
+        const rootConfig = getWorkspace(get(configAtom).workspaces[workspace])
+          .roots[root]
+        const locales = rootConfig
+          ? getRoot(rootConfig).i18n?.locales
+          : undefined
+        const locale =
+          current && locales?.includes(current) ? current : matchLocale
         set(this.selectedLocale, locale)
         set(this.location, {
           workspace,
@@ -1436,9 +1446,9 @@ export class ExplorerAtoms {
             : scope === 'everything'
               ? null
               : (location.parentId ?? null),
-        // Searches find entries in any language
-        locale:
-          searchesMultipleRoots || this.mode === 'search' ? undefined : locale,
+        // Searches of several roots find entries in any language, a search
+        // of one root stays in the language it shows
+        locale: searchesMultipleRoots ? undefined : locale,
         search: search || undefined,
         filter,
         status: 'preferDraft',
