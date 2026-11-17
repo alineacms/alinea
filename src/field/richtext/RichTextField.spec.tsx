@@ -8,6 +8,7 @@ import {
   RichTextInlineBlocksStory,
   RichTextLargeStory,
   RichTextLegacyEmptyStory,
+  RichTextLinkStory,
   RichTextPlainStory,
   RichTextReadOnlyStory,
   RichTextReadOnlyImageStory,
@@ -1250,4 +1251,54 @@ test('undoes and redoes text changes', async ({mount, page}) => {
   await expect(segment).not.toContainText('Changed')
   await page.keyboard.press('ControlOrMeta+Shift+z')
   await expect(segment).toContainText('Changed')
+})
+
+interface StoredTextNode extends StoredRichTextNode {
+  text?: string
+  marks?: Array<StoredRichTextNode>
+}
+
+/** The text nodes of the first paragraphs, with their link marks */
+async function storedTexts(page: Page): Promise<Array<StoredTextNode>> {
+  const value = await storedValue(page)
+  return value.flatMap(
+    node => (node.content as Array<StoredTextNode> | undefined) ?? []
+  )
+}
+
+async function storedLinks(page: Page) {
+  const texts = await storedTexts(page)
+  return texts.flatMap(node =>
+    (node.marks ?? [])
+      .filter(mark => mark._type === 'link')
+      .map(mark => ({text: node.text, ...mark}))
+  )
+}
+
+test('keeps the title of a stored link while editing it', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLinkStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await placeCaret(editor.locator('a'), 'end')
+  await page.getByRole('button', {name: 'Link', exact: true}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Pick text link'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('textbox', {name: /Tooltip/})).toHaveCount(0)
+  await dialog.getByRole('button', {name: 'Confirm'}).click()
+  await expect(dialog).toHaveCount(0)
+
+  await expect(editor.locator('a')).toHaveAttribute('title', 'Opens the guide')
+  await expect
+    .poll(() => storedLinks(page))
+    .toEqual([
+      expect.objectContaining({
+        text: 'the guide',
+        href: 'https://example.com/guide',
+        title: 'Opens the guide'
+      })
+    ])
 })

@@ -1,4 +1,4 @@
-import {Button, Dialog, TextField, useDialog} from '#/components.js'
+import {Button, Dialog, useDialog} from '#/components.js'
 import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
@@ -239,14 +239,14 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
     [options.link, linkOptions]
   )
   const link = useAtomValueRaw(linkEditor.value)
-  const [title, setTitle] = useState(options.title ?? '')
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     if (event.target !== event.currentTarget) return
     event.preventDefault()
+    // The title is no longer edited here, but links stored with one keep it
     picker.confirm({
       link: link ?? undefined,
-      title: title.trim()
+      title: options.title
     })
     modal.close()
   }
@@ -261,12 +261,6 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
         <DashboardModalFormBody>
           <div className={styles.PickTextLink()}>
             <NodeEditor node={linkEditor.node} type={linkEditor.type} />
-            <TextField
-              description="Extra information that describes the link, shown on hover"
-              label="Tooltip"
-              value={title}
-              onValueChange={setTitle}
-            />
           </div>
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
