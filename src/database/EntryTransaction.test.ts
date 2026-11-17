@@ -765,6 +765,85 @@ test('translations keep URL aliases of their own', async () => {
   test.equal(aliasUrls(aliases), ['/en/old-article'])
 })
 
+test('translations with URL aliases of their own publish again', async () => {
+  const {db, translate} = await createTranslatedDb(['/nl/oud-artikel'])
+  await translate(['/en/old-article'])
+  for (const [locale, data] of [
+    ['nl', pageData('Artikel', 'artikel', ['/nl/oud-artikel'])],
+    ['en', pageData('Article', 'article', ['/en/old-article'])]
+  ] as const)
+    await db.mutate([
+      {op: 'update', id: 'article', locale, status: 'published', set: data}
+    ])
+})
+
+test('names the language an alias was copied into when publishing the one it belongs to', async () => {
+  // Content from before translations stopped copying aliases: the nl alias
+  // is in the en translation too
+  const {db, translate} = await createTranslatedDb([])
+  await translate(['/nl/oud-artikel'])
+  await test.throws(
+    () =>
+      db.mutate([
+        {
+          op: 'update',
+          id: 'article',
+          locale: 'nl',
+          status: 'published',
+          set: pageData('Artikel', 'artikel', ['/nl/oud-artikel'])
+        }
+      ]),
+    'Remove the URL alias "/nl/oud-artikel" from the en translation of this entry.'
+  )
+})
+
+const DomainPage = Config.document('Domain page', {
+  // Every language is served from its own domain
+  entryUrl: ({parentPaths, path}) =>
+    `/${parentPaths
+      .concat(path)
+      .filter(segment => segment !== 'index')
+      .join('/')}`,
+  fields: {}
+})
+
+test('translations share urls and aliases when the url has no locale', async () => {
+  const domainCms = createCMS({
+    schema: {DomainPage},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: Config.root('Pages', {
+            contains: ['DomainPage'],
+            i18n: {locales: ['en', 'nl']}
+          })
+        }
+      })
+    }
+  })
+  const db = await EntryStore.memory(domainCms.config, new MemorySource())
+  await db.sync()
+  for (const locale of ['nl', 'en'])
+    await db.mutate([
+      {
+        op: 'create',
+        id: 'home',
+        type: 'DomainPage',
+        locale,
+        root: 'pages',
+        status: 'published',
+        data: pageData('Home', 'index', ['/welcome'])
+      }
+    ])
+  const urls = await db.find({
+    id: 'home',
+    select: Entry.url,
+    orderBy: {asc: Entry.locale}
+  })
+  test.equal(urls, ['/', '/'])
+})
+
 async function createRedirectDb() {
   const db = await createDocumentDb()
   for (const [id, title] of [

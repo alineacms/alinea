@@ -44,7 +44,10 @@ import type {
   UploadFileMutation
 } from '#/core/db/Mutation.js'
 import {aliasUrlsFromData} from '#/core/db/EntryAliases.js'
-import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
+import {
+  EntryUrlConflictError,
+  type EntryUrlConflictErrorInfo
+} from '#/core/db/EntryUrlConflictError.js'
 import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
@@ -955,9 +958,6 @@ export class EntryTransaction implements AsyncDisposable {
       workspace: Entry.workspace,
       root: Entry.root
     }
-    // Translations share their id, so another language of this entry counts
-    const isOther = (entry: {id: string; locale: string | null}) =>
-      entry.id !== candidate.id || entry.locale !== candidate.locale
     const conflict = (
       found: {
         id: string
@@ -966,7 +966,7 @@ export class EntryTransaction implements AsyncDisposable {
         root: string
       },
       conflictUrl: string,
-      alias?: 'candidate' | 'existing'
+      alias?: EntryUrlConflictErrorInfo['alias']
     ) =>
       new EntryUrlConflictError({
         url: conflictUrl,
@@ -976,9 +976,11 @@ export class EntryTransaction implements AsyncDisposable {
         ...(found.id === candidate.id ? {locale: found.locale} : undefined),
         ...(alias ? {alias} : undefined)
       })
+    // Translations share their id and may share their url, eg. when every
+    // language is served from its own domain
     const sameUrl = (
       await this.#workingDatabase.find({...scope, url, select})
-    ).find(isOther)
+    ).find(entry => entry.id !== candidate.id)
     if (sameUrl) throw conflict(sameUrl, url)
     if (candidate.locale === null) return
     const translations = (
@@ -987,19 +989,48 @@ export class EntryTransaction implements AsyncDisposable {
         id: candidate.id,
         select: {...select, url: Entry.url, aliases: Entry.aliases}
       })
-    ).filter(isOther)
+    ).filter(entry => entry.locale !== candidate.locale)
+    if (translations.length === 0) return
     const aliasUrls = aliasUrlsFromData(candidate.data)
     for (const translation of translations) {
+      // Without the locale in the url, the languages don't share a set of urls
+      // and the same url or alias in two of them is fine
+      if (!(await this.#urlHasLocale(candidate, translation.locale))) continue
       const translationAliases = (translation.aliases ?? []).map(
         alias => alias.url
       )
       if (translationAliases.includes(url))
         throw conflict(translation, url, 'existing')
-      const shared = aliasUrls.find(
-        alias => alias === translation.url || translationAliases.includes(alias)
-      )
-      if (shared) throw conflict(translation, shared, 'candidate')
+      const ofUrl = aliasUrls.find(alias => alias === translation.url)
+      if (ofUrl) throw conflict(translation, ofUrl, 'candidate')
+      const shared = aliasUrls.find(alias => translationAliases.includes(alias))
+      if (shared) {
+        // Name the language the old url doesn't belong to, which is the one
+        // it was copied into: the one whose url has less in common with it
+        const own = commonPrefixLength(shared, url)
+        const other = commonPrefixLength(shared, translation.url)
+        throw conflict(
+          translation,
+          shared,
+          own > other ? 'existing' : own < other ? 'candidate' : 'shared'
+        )
+      }
     }
+  }
+
+  async #urlHasLocale(
+    candidate: UrlCandidate,
+    otherLocale: string | null
+  ): Promise<boolean> {
+    if (candidate.url !== undefined) return true
+    const parentPaths =
+      candidate.parentPaths ??
+      (await this.#parentPaths(candidate.parentId, candidate.locale))
+    const [own, other] = await Promise.all([
+      this.#resolvedUrl({...candidate, parentPaths}),
+      this.#resolvedUrl({...candidate, parentPaths, locale: otherLocale})
+    ])
+    return own !== other
   }
 
   async #resolvedUrl(candidate: UrlCandidate): Promise<string> {
@@ -1335,4 +1366,10 @@ export class EntryTransaction implements AsyncDisposable {
   #assertOpen(): void {
     if (this.#closed) throw new Error('EntryTransaction is closed')
   }
+}
+
+function commonPrefixLength(a: string, b: string): number {
+  let length = 0
+  while (length < a.length && a[length] === b[length]) length++
+  return length
 }

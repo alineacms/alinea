@@ -163,7 +163,9 @@ function entryUrlConflictInfo(
       ...(typeof info.locale === 'string' || info.locale === null
         ? {locale: info.locale}
         : undefined),
-      ...(info.alias === 'candidate' || info.alias === 'existing'
+      ...(info.alias === 'candidate' ||
+      info.alias === 'existing' ||
+      info.alias === 'shared'
         ? {alias: info.alias}
         : undefined)
     }

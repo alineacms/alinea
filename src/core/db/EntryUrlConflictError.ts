@@ -7,9 +7,10 @@ export interface EntryUrlConflictErrorInfo {
   locale?: string | null
   /**
    * Set when the URL is an alias: of the entry being published (`candidate`)
-   * or of the entry that already uses it (`existing`)
+   * or of the entry that already uses it (`existing`), or of both when it's
+   * not clear which translation it belongs to (`shared`)
    */
-  alias?: 'candidate' | 'existing'
+  alias?: 'candidate' | 'existing' | 'shared'
 }
 
 /** What an editor should do to resolve the conflict */
@@ -23,6 +24,8 @@ export function urlConflictResolution(info: EntryUrlConflictErrorInfo): string {
       return `Remove the URL alias "${info.url}" from this translation.`
     case 'existing':
       return `Remove the URL alias "${info.url}" from ${translation ?? `entry ${info.entryId}`}.`
+    case 'shared':
+      return `Remove the URL alias "${info.url}" from the translation it doesn't belong to: this one or ${translation ?? `entry ${info.entryId}`}.`
     default:
       return 'Change the entry path or remove this URL alias.'
   }
