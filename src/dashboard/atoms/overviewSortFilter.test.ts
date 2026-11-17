@@ -272,6 +272,24 @@ test('explorers filter media by usage, all by default', async () => {
       cover: {_id: createId(), _type: 'image', _entry: photo}
     }
   })
+  // A file linked only from a draft is in use too, so it is never offered as
+  // unused
+  const report = await db.get({
+    type: MediaFile,
+    filter: {_root: 'media', title: 'Annual report'},
+    select: Entry.id
+  })
+  await db.create({
+    type: BlogPost,
+    workspace: 'main',
+    root: 'blog',
+    parentId: blog._id,
+    status: 'draft',
+    set: {
+      title: 'Draft post',
+      cover: {_id: createId(), _type: 'image', _entry: report}
+    }
+  })
   const store = createDashboardStore(config, db)
   await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
@@ -299,15 +317,19 @@ test('explorers filter media by usage, all by default', async () => {
 
   // Folders stay to browse into
   store.set(explorer.toggleFilter, usage, 'used')
-  expect(await titles()).toEqual(['Folder', 'Archive', 'Photo'])
+  expect(await titles()).toEqual([
+    'Folder',
+    'Archive',
+    'Photo',
+    'Annual report'
+  ])
   store.set(explorer.toggleFilter, usage, 'unused')
   expect(store.get(explorer.requestedFilters)).toEqual({usage: ['unused']})
   expect(await titles()).toEqual([
     'Folder',
     'Archive',
     'Scanned letter',
-    'Meeting notes',
-    'Annual report'
+    'Meeting notes'
   ])
 
   // All lists every file again and is not a picked filter
