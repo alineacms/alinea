@@ -100,6 +100,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       } = row as EntryReference & ListRow
       for (const key of keys(fields)) delete row[key]
       row.fields = fields
+      if (label !== undefined) row.label = label
       if (!entryId) {
         row[unresolvedEntryMarker] = true
         return

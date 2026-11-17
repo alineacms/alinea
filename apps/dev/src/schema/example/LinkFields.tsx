@@ -24,6 +24,10 @@ export const LinkFields = Config.document('Link fields', {
       }
     }),
     linkMultiple: Field.link.multiple('Mixed links, multiple'),
+    pageOrUrl: Field.link('Page or external link', {
+      help: 'Pages and external urls, no files',
+      kinds: ['entry', 'url']
+    }),
     image: Field.image('Image link'),
     images: Field.image.multiple('Image link (multiple)'),
     file: Field.file('File link'),
