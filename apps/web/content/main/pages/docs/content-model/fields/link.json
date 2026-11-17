@@ -483,7 +483,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Every kind has a `label`: the label the editor gave the link in its row. An external link takes the title entered in the link picker as its label, unless the editor changes it. The values of the extra `fields` are on `link.fields`. A single link is `null` while it's empty, a multiple link field is an array."
+          "text": "Every kind has a `label`: the label the editor gave the link in its row. An external link takes the title entered in the link picker as its label, unless the editor changes it. The values of the extra `fields` are on `link.fields`. Projects that added a label field of their own, eg. `fields: {label: Field.text('Label')}`, can drop it and read `link.label`; links stored with it keep it on `link.fields.label`. A single link is `null` while it's empty, a multiple link field is an array."
         }
       ]
     },

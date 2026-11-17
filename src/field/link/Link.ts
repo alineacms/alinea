@@ -39,13 +39,13 @@ export interface LinkOptions<Definition, Row, Kind extends LinkKind = LinkKind>
    * The kinds of links editors can pick, eg. `['entry', 'url']` for pages and
    * external urls but no files. All of them by default.
    */
-  kinds?: Array<Kind>
+  kinds?: ReadonlyArray<Kind>
 }
 
 export type LinkRow = (EntryReference | UrlReference) & ListRow
 
 function linkPickers<Fields>(
-  kinds: Array<LinkKind> | undefined,
+  kinds: ReadonlyArray<LinkKind> | undefined,
   multiple: boolean,
   options: WithoutLabel<LinkOptions<Fields, unknown>>
 ): Record<string, Picker<any, any>> {

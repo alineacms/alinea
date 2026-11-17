@@ -127,6 +127,13 @@
 - Add `Field.select.multiple`, `min` and `max` for lists, images and link
   options in rich text, rich text anchors, link anchors and suffixes, and
   `allowDuplicates` for links.
+- Limit `Field.link` to some kinds of links with `kinds`, eg.
+  `kinds: ['entry', 'url']`; stored links of other kinds are left out when
+  queried. Queried links have the label the editor gave them as `label`,
+  `_label` is deprecated.
+- Options trackers type `get(field)` by the field, so single link fields read
+  as possibly `null`. Calls that pass the value type, eg. `get<string>(field)`,
+  no longer compile: pass the field only.
 - Add a composable backend in `alinea/backend` (`createBackend`, `auth`,
   `database`, `github`, `uploads`) with S3 and Supabase uploads and user
   management.

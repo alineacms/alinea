@@ -3,14 +3,17 @@ import type {UnionMutator} from './UnionRow.js'
 
 /**
  * The value of a field as an options tracker reads it. Single link fields are
- * stored as null while empty, so they read as possibly null.
+ * stored as null while empty, so they read as possibly null. A field typed
+ * without its mutator, eg. `Field<boolean>`, reads as its value.
  */
 export type TrackedValue<F> =
-  F extends Field<infer Value, any, UnionMutator<any>>
-    ? Value | null
-    : F extends Field<infer Value>
+  F extends Field<infer Value, any, infer Mutator>
+    ? 0 extends 1 & Mutator
       ? Value
-      : never
+      : Mutator extends UnionMutator<any>
+        ? Value | null
+        : Value
+    : never
 
 export interface FieldGetter {
   <F extends Field>(field: F): TrackedValue<F>

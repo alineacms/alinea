@@ -414,7 +414,9 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
 /**
  * The fields of the tabs of a type, see `TypeConfig.tabs`. A tab without
  * fields is a plain `HasType`, its fields infer as `unknown` and would absorb
- * the fields of the other tabs in the union, so it is left out.
+ * the fields of the other tabs in the union, so it is left out. So is a tab
+ * written inline without fields, which infers as the index signature of
+ * `FieldsDefinition` and would let any property through.
  */
 export type TabFields<Tabs> = [keyof Tabs] extends [never]
   ? {}
@@ -423,7 +425,9 @@ export type TabFields<Tabs> = [keyof Tabs] extends [never]
         [K in keyof Tabs]: Tabs[K] extends Type<infer F>
           ? unknown extends F
             ? never
-            : F
+            : string extends keyof F
+              ? never
+              : F
           : never
       }[keyof Tabs]
     >

@@ -110,3 +110,18 @@ test('a tab without fields keeps the fields of the other tabs', () => {
   expectTypeOf<Page['visibility']>().toEqualTypeOf<'a' | null>()
   expectTypeOf<Page['intro']>().toEqualTypeOf<string>()
 })
+
+test('a tab without fields written inline adds no index signature', () => {
+  const Page = Config.document('Page', {
+    tabs: {
+      settings: Field.tab('Settings', {fields: {intro: Field.text('Intro')}}),
+      analytics: Field.tab('Analytics', {view: '@/dashboard/PageViewsTab'})
+    },
+    fields: {}
+  })
+  type Page = Infer.Entry<typeof Page>
+  expectTypeOf<Page['intro']>().toEqualTypeOf<string>()
+  expectTypeOf<
+    'typo' extends keyof Page ? true : false
+  >().toEqualTypeOf<false>()
+})

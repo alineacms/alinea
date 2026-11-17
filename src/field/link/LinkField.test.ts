@@ -5,7 +5,7 @@ import {entry, type EntryLink} from './EntryLink.js'
 import type {InferQueryValue} from '#/core/Infer.js'
 import {text} from '#/field/text.js'
 import {image, type ImageLink} from './ImageLink.js'
-import {link, type Link} from './Link.js'
+import {link, type Link, type LinkRow} from './Link.js'
 import type {UrlLink} from './UrlLink.js'
 
 test('multiple link fields configure duplicate entries independently', () => {
@@ -158,4 +158,49 @@ test('link fields can be limited to some kinds of links', () => {
   expectTypeOf<InferQueryValue<typeof urls>>().toEqualTypeOf<Array<UrlLink>>()
   expectTypeOf<InferQueryValue<ReturnType<typeof link>>>().toEqualTypeOf<Link>()
   expect(() => link('Link', {kinds: []})).toThrow()
+})
+
+test('link fields take kinds from a shared constant', () => {
+  const kinds = ['entry', 'url'] as const
+  const field = link('Link', {kinds})
+  expectTypeOf<InferQueryValue<typeof field>>().toEqualTypeOf<
+    EntryLink | UrlLink
+  >()
+})
+
+test('links of a kind a field no longer offers are left out', async () => {
+  const loader = {
+    async resolveLinks() {
+      return [{title: 'Target', url: '/target'}]
+    }
+  } as unknown as LinkResolver
+  // Stored while the field still offered files
+  const fileLink = {
+    _id: 'file',
+    _type: 'file',
+    _index: 'a0',
+    _entry: 'doc'
+  } as unknown as LinkRow
+  const single = await Field.queryValue(
+    link('Link', {kinds: ['entry', 'url']}),
+    fileLink,
+    loader
+  )
+  expect(single).toBeNull()
+  const rows = await Field.queryValue(
+    link.multiple('Links', {kinds: ['url']}),
+    [
+      fileLink,
+      {
+        _id: 'url',
+        _type: 'url',
+        _index: 'a1',
+        _url: 'https://example.com',
+        _title: '',
+        _target: ''
+      } as unknown as LinkRow
+    ],
+    loader
+  )
+  expect(rows.map(row => row._id)).toEqual(['url'])
 })
