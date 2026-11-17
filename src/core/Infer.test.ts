@@ -90,3 +90,17 @@ test('preserves custom stored fields for single and multiple link editors', () =
     expect(value).toMatchObject(custom)
   }
 })
+
+test('a tab without fields keeps the fields of the other tabs', () => {
+  const settings = Field.tab('Settings', {
+    fields: {visibility: Field.select('Visibility', {options: {a: 'A'}})}
+  })
+  const analytics = Field.tab('Analytics', {view: '@/dashboard/PageViewsTab'})
+  const Page = Config.document('Page', {
+    tabs: {settings, analytics},
+    fields: {intro: Field.text('Intro')}
+  })
+  type Page = Infer.Entry<typeof Page>
+  expectTypeOf<Page['visibility']>().toEqualTypeOf<'a' | null>()
+  expectTypeOf<Page['intro']>().toEqualTypeOf<string>()
+})

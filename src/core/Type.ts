@@ -411,11 +411,21 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   sections: Array<Section>
 }
 
-/** The fields of the tabs of a type, see `TypeConfig.tabs` */
+/**
+ * The fields of the tabs of a type, see `TypeConfig.tabs`. A tab without
+ * fields is a plain `HasType`, its fields infer as `unknown` and would absorb
+ * the fields of the other tabs in the union, so it is left out.
+ */
 export type TabFields<Tabs> = [keyof Tabs] extends [never]
   ? {}
   : UnionToIntersection<
-      {[K in keyof Tabs]: Tabs[K] extends Type<infer F> ? F : never}[keyof Tabs]
+      {
+        [K in keyof Tabs]: Tabs[K] extends Type<infer F>
+          ? unknown extends F
+            ? never
+            : F
+          : never
+      }[keyof Tabs]
     >
 
 /** Create a new type */
