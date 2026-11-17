@@ -219,7 +219,7 @@ export function entryIndexRow(entry: IndexedEntry) {
     status: entry.status,
     type: entry.type,
     title: entry.title,
-    titleSortKey: textSortKey(entry.title),
+    titleSortKey: textSortKey(entry.title, entry.locale),
     workspace: entry.workspace,
     root: entry.root,
     sourceRoot:
