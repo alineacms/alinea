@@ -300,7 +300,8 @@ function createLinkHandler(
       title: attributes.title,
       blank: attributes.target === '_blank',
       hasLink: Boolean(existing),
-      requireDescription: !selected
+      // Selected text, or the text of the link that is edited, is the label
+      requireDescription: !selected && !existing
     }).then(picked => applyLink(editor, exec, picked, existing, selected))
   }
 }

@@ -1302,3 +1302,75 @@ test('keeps the title of a stored link while editing it', async ({
       })
     ])
 })
+
+/** Selects the first occurrence of `text` within `target` */
+async function selectSubstring(target: Locator, text: string) {
+  await target.evaluate((element, text) => {
+    const editor = element.closest('[contenteditable]')
+    const selection = window.getSelection()
+    if (!(editor instanceof HTMLElement) || !selection)
+      throw new Error('Rich text selection target not found')
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const index = node.textContent?.indexOf(text) ?? -1
+      if (index < 0) continue
+      editor.focus()
+      const range = document.createRange()
+      range.setStart(node, index)
+      range.setEnd(node, index + text.length)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      document.dispatchEvent(new Event('selectionchange'))
+      return new Promise<void>(resolve =>
+        requestAnimationFrame(() => resolve())
+      )
+    }
+    throw new Error(`Text not found: ${text}`)
+  }, text)
+}
+
+test('links selected text to an external url without a label', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLinkStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await selectSubstring(editor.locator('p').nth(1), 'some')
+  await page.getByRole('button', {name: 'Link', exact: true}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Pick text link'})
+  await dialog.getByRole('button', {name: 'External link'}).click()
+  const external = page.getByRole('dialog', {name: 'External link'})
+  await expect(external.getByRole('textbox', {name: /URL/})).toBeVisible()
+  await expect(external.getByRole('textbox', {name: /Label/})).toHaveCount(0)
+  await external
+    .getByRole('textbox', {name: /URL/})
+    .fill('https://example.com/some')
+  await external.getByRole('button', {name: 'Add link'}).click()
+  await expect(external).toHaveCount(0)
+  await dialog.getByRole('button', {name: 'Confirm'}).click()
+  await expect(dialog).toHaveCount(0)
+
+  await expect(editor.locator('p').nth(1)).toHaveText('Link some of this text.')
+  await expect(editor.locator('p').nth(1).locator('a')).toHaveText('some')
+  await expect
+    .poll(async () => (await storedLinks(page)).map(link => link.text))
+    .toEqual(['the guide', 'some'])
+})
+
+test('asks for the label of an external link without selected text', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLinkStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await placeCaret(editor.locator('p').nth(1), 'end')
+  await page.getByRole('button', {name: 'Link', exact: true}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Pick text link'})
+  await dialog.getByRole('button', {name: 'External link'}).click()
+  const external = page.getByRole('dialog', {name: 'External link'})
+  await expect(external.getByRole('textbox', {name: /Label/})).toBeVisible()
+})

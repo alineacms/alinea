@@ -14,6 +14,7 @@ import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
+import {ExternalLinkLabelScope} from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {
   DashboardModal,
@@ -260,7 +261,12 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
         </DashboardModalFormHeader>
         <DashboardModalFormBody>
           <div className={styles.PickTextLink()}>
-            <NodeEditor node={linkEditor.node} type={linkEditor.type} />
+            {/* Selected or linked text labels the link, new text needs one */}
+            <ExternalLinkLabelScope
+              showLabel={Boolean(options.requireDescription)}
+            >
+              <NodeEditor node={linkEditor.node} type={linkEditor.type} />
+            </ExternalLinkLabelScope>
           </div>
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
