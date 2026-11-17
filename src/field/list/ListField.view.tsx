@@ -633,6 +633,20 @@ interface ListFieldRowHeaderProps {
   onToggle: () => void
 }
 
+interface ListFieldTypeBadgeProps {
+  icon?: ComponentType
+  children: ReactNode
+}
+
+/** The type of a row, in its header and in its settings sheet */
+function ListFieldTypeBadge({icon, children}: ListFieldTypeBadgeProps) {
+  return (
+    <Badge icon={icon} size="sm" className={styles.ListFieldTypeBadge()}>
+      {children}
+    </Badge>
+  )
+}
+
 function ListFieldRowHeader({
   expanded,
   label,
@@ -649,13 +663,7 @@ function ListFieldRowHeader({
   const showAnchor = Boolean(displayAnchor && !displayLabel)
   const title = (
     <>
-      <Badge
-        icon={typeIcon}
-        size="sm"
-        className={styles.ListFieldRowHeader.badge()}
-      >
-        {label}
-      </Badge>
+      <ListFieldTypeBadge icon={typeIcon}>{label}</ListFieldTypeBadge>
       {displayLabel && (
         <SortableListItemDescription>
           {displayLabel}
@@ -782,9 +790,7 @@ function ListFieldRowSheet({
   return (
     <SheetContent onClose={onClose}>
       <SheetHeader>
-        <Badge icon={typeIcon} size="sm" color="primary">
-          {label}
-        </Badge>
+        <ListFieldTypeBadge icon={typeIcon}>{label}</ListFieldTypeBadge>
         <SheetTitle>{title}</SheetTitle>
         <SheetClose aria-label="Close block settings" />
       </SheetHeader>
