@@ -334,7 +334,11 @@ function applyLink(
   selected: boolean
 ) {
   if (picked === undefined) return
-  if (!picked.link) return void exec().unsetLink().run()
+  if (!picked.link) {
+    if (existing) exec().extendMarkRange('link').unsetLink().run()
+    else exec().unsetLink().run()
+    return
+  }
   const attributes = {
     title: picked.title,
     ...referenceToAttributes(picked.link),

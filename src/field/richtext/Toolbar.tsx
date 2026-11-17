@@ -12,6 +12,7 @@ import {
   IcRoundHorizontalRule,
   IcRoundImage,
   IcRoundLink,
+  IcRoundLinkOff,
   IcRoundQuote,
   IcRoundSubscript,
   IcRoundSuperscript,
@@ -342,13 +343,21 @@ export const lists = {
 } satisfies ToolbarGroup
 
 export const links = {
-  group: {
-    link: {
+  group({editor}): ToolbarConfig {
+    const link: ToolbarButton = {
       icon: () => <IcRoundLink />,
       title: 'Link',
       active: ({editor}) => editor.isActive('link'),
       onSelect: ({handleLink}) => handleLink()
     }
+    if (!editor.isActive('link')) return {link}
+    // Removes the whole link the selection is in, not only the selected text
+    const unlink: ToolbarButton = {
+      icon: () => <IcRoundLinkOff />,
+      title: 'Remove link',
+      onSelect: ({exec}) => exec().extendMarkRange('link').unsetLink().run()
+    }
+    return {link, unlink}
   }
 } satisfies ToolbarGroup
 

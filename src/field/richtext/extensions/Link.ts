@@ -1,4 +1,5 @@
-import {Mark, mergeAttributes} from '@tiptap/core'
+import {getMarkRange, Mark, mergeAttributes} from '@tiptap/core'
+import {Plugin, PluginKey, TextSelection} from '@tiptap/pm/state'
 
 interface LinkAttributes {
   'data-id'?: string
@@ -76,5 +77,37 @@ export const Link = Mark.create<LinkOptions>({
         ({chain}) =>
           chain().unsetMark(this.name, {extendEmptyMarkRange: true}).run()
     }
+  },
+  addProseMirrorPlugins() {
+    const type = this.type
+    return [
+      new Plugin({
+        key: new PluginKey('linkClickSelection'),
+        props: {
+          // Clicking a link selects all of its text, so editing or removing
+          // the link applies to the whole link rather than a part of it. A
+          // second click places the caret within the selected link.
+          handleClick(view, pos, event) {
+            if (!view.editable || event.button !== 0) return false
+            if (event.shiftKey || event.metaKey || event.ctrlKey) return false
+            const target = event.target
+            if (!(target instanceof Element)) return false
+            const anchor = target.closest('a')
+            if (!anchor || !view.dom.contains(anchor)) return false
+            const {doc, selection} = view.state
+            const range = getMarkRange(doc.resolve(pos), type)
+            if (!range) return false
+            if (selection.from === range.from && selection.to === range.to)
+              return false
+            view.dispatch(
+              view.state.tr.setSelection(
+                TextSelection.create(doc, range.from, range.to)
+              )
+            )
+            return true
+          }
+        }
+      })
+    ]
   }
 })
