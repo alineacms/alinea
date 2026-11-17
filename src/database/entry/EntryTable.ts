@@ -7,6 +7,7 @@ import {
 } from '#/core/EntryRecord.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
+import {textSortKey} from '#/core/util/TextSortKey.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {DateField} from '#/field/date/DateField.js'
 import {NumberField} from '#/field/number/NumberField.js'
@@ -42,6 +43,8 @@ export const EntryIndexColumns = {
     .$type<EntryStatus>(),
   type: column.varchar(undefined, {length: 255}).notNull(),
   title: column.text().notNull(),
+  /** Orders titles by `textSortKey`, regardless of case and accents */
+  titleSortKey: column.text().notNull(),
   workspace: column.varchar(undefined, {length: 255}).notNull(),
   root: column.varchar(undefined, {length: 255}).notNull(),
   sourceRoot: column.varchar(undefined, {length: 255}),
@@ -216,6 +219,7 @@ export function entryIndexRow(entry: IndexedEntry) {
     status: entry.status,
     type: entry.type,
     title: entry.title,
+    titleSortKey: textSortKey(entry.title),
     workspace: entry.workspace,
     root: entry.root,
     sourceRoot:
