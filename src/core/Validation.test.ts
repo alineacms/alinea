@@ -279,3 +279,20 @@ test('localised fields are validated per locale', () => {
     ['title.nl', 'Field is required']
   ])
 })
+
+test('media files need a title and a path', () => {
+  const data = {location: 'file.pdf', extension: '.pdf'}
+  const required = [
+    ['title', 'Field is required'],
+    ['path', 'Field is required']
+  ]
+  expect(messages(Config.mediaFile(), {...data, title: '', path: ''})).toEqual(
+    required
+  )
+  expect(
+    messages(Config.file('Document'), {...data, title: '', path: ''})
+  ).toEqual(required)
+  expect(
+    messages(Config.mediaFile(), {...data, title: 'File', path: 'file'})
+  ).toEqual([])
+})
