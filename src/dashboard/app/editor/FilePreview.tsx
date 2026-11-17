@@ -12,6 +12,8 @@ export type {FocusPoint}
 export interface FilePreviewProps {
   /** The focus point field of the file's type */
   focus: FileFields['focus']
+  /** Edit the focus point on the preview, for images */
+  editFocus?: boolean
   liveUrl?: string
   preview: string
   /** Thumbhash data url shown behind the image */
@@ -23,6 +25,7 @@ export interface FilePreviewProps {
 
 export function FilePreview({
   focus,
+  editFocus = true,
   liveUrl,
   preview,
   placeholder,
@@ -69,9 +72,9 @@ export function FilePreview({
       width={width}
       height={height}
       alt="Preview of media file"
-      focus={focusPoint}
-      onFocusChange={setFocusPoint}
-      onFocusHover={onHoverPointChange}
+      focus={editFocus ? focusPoint : undefined}
+      onFocusChange={editFocus ? setFocusPoint : undefined}
+      onFocusHover={editFocus ? onHoverPointChange : undefined}
     />
   )
 }

@@ -15,6 +15,7 @@ import {
 import {Config} from '#/core/Config.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
+import {hasPreviewImage} from '#/core/media/Pdf.js'
 import {fileFieldKeys, type FileFields} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {getType} from '#/core/Internal.js'
@@ -73,6 +74,9 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const width = useFieldValue(fields.width)
   const height = useFieldValue(fields.height)
   const preview = useFieldValue(fields.preview)
+  // Pdfs show the image of their first page, like in the media library
+  const hasPreview =
+    isImage || (Boolean(preview) && hasPreviewImage(extension ?? ''))
   const thumbHash = useFieldValue(fields.thumbHash)
   const placeholder = useMemo(() => {
     if (!thumbHash) return undefined
@@ -125,10 +129,11 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
             <NodeEditor node={node} type={editable} />
           </div>
           <div className={styles.FileEditor()}>
-            {isImage && (
+            {hasPreview && (
               <FilePreview
                 focus={fields.focus}
-                liveUrl={liveUrl?.href}
+                editFocus={Boolean(isImage)}
+                liveUrl={isImage ? liveUrl?.href : undefined}
                 preview={preview}
                 placeholder={placeholder}
                 width={width}

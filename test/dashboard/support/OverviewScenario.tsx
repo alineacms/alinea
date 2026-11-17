@@ -148,7 +148,9 @@ async function createOverviewScenario() {
         location: `${id}${extension}`,
         extension,
         size,
-        hash: String(id)
+        hash: String(id),
+        // Pdfs have the image of their first page as preview
+        ...(id === ids.annualReport && {preview: overviewPhotoPreview})
       }
     }))
   ])
