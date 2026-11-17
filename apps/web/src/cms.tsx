@@ -4,7 +4,7 @@ import {demoWorkspace} from '@/page/demo/demoWorkspace'
 import * as schema from '@/schema'
 
 /** Canonical origin of the website, also on preview and local deploys */
-export const siteUrl = 'https://v2.alineacms.com'
+export const siteUrl = 'https://alineacms.com'
 
 /** Content refers to the site origin as `{site}`, eg. in copy prompts */
 export function withSiteUrl(text: string) {

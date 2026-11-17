@@ -154,7 +154,7 @@ export default async function BlogPage() {
 
 The npm package includes the documentation of its version as Markdown in
 `node_modules/alinea/docs/` (start at `index.md`), and the website lists every
-page in [`/llms.txt`](https://v2.alineacms.com/llms.txt). `alinea init` adds a
+page in [`/llms.txt`](https://alineacms.com/llms.txt). `alinea init` adds a
 marked section to your `AGENTS.md` that points agents to both, and registers an
 MCP server in `.mcp.json`. While `alinea dev` runs, agents use it to read your
 schema and create, edit and publish entries through the same save path as the
