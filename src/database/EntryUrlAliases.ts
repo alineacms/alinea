@@ -1,4 +1,4 @@
-import {aliasesFromData, aliasUrl} from '#/core/db/EntryAliases.js'
+import {aliasUrl, aliasUrlsFromData} from '#/core/db/EntryAliases.js'
 import {Field} from '#/core/Field.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type} from '#/core/Type.js'
@@ -6,15 +6,6 @@ import {ListEditor} from '#/core/field/ListField.js'
 import {assert} from '#/core/util/Assert.js'
 import {isValidOrderKey} from '#/core/util/FractionalIndexing.js'
 import {isRecord} from '#/core/util/Objects.js'
-
-function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
-  const result = new Set<string>()
-  for (const alias of aliasesFromData(data) ?? []) {
-    const url = aliasUrl(alias)
-    if (url) result.add(url)
-  }
-  return Array.from(result)
-}
 
 /** Entries of the type keep URL aliases in their metadata */
 export function hasUrlAliases(type: Type): boolean {

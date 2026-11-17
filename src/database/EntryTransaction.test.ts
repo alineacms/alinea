@@ -311,7 +311,7 @@ function aliasUrls(value: unknown): Array<string> {
   })
 }
 
-test('url aliases are never checked for uniqueness', async () => {
+test('url aliases are not checked for uniqueness across entries', async () => {
   const db = await createDb()
   const page = (
     root: string,
@@ -682,6 +682,87 @@ test('creates a translation in the root of its other locales', async () => {
     select: {workspace: Entry.workspace, root: Entry.root}
   })
   test.equal(translation, {workspace: 'international', root: 'articles'})
+})
+
+const localizedDocumentCms = createCMS({
+  schema: {DocumentPage},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {
+        articles: Config.root('Articles', {
+          contains: ['DocumentPage'],
+          i18n: {locales: ['en', 'nl']}
+        })
+      }
+    })
+  }
+})
+
+async function createTranslatedDb(nlAliases: Array<string>) {
+  const db = await EntryStore.memory(
+    localizedDocumentCms.config,
+    new MemorySource()
+  )
+  await db.sync()
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'article',
+      type: 'DocumentPage',
+      locale: 'nl',
+      root: 'articles',
+      status: 'published',
+      data: pageData('Artikel', 'artikel', nlAliases)
+    }
+  ])
+  const translate = (enAliases: Array<string>, path = 'article') =>
+    db.mutate([
+      {
+        op: 'create',
+        id: 'article',
+        type: 'DocumentPage',
+        locale: 'en',
+        status: 'published',
+        data: pageData('Article', path, enAliases)
+      }
+    ])
+  return {db, translate}
+}
+
+test('blocks a URL alias that another language of the entry also has', async () => {
+  const {translate} = await createTranslatedDb(['/nl/oud-artikel'])
+  await test.throws(
+    () => translate(['/nl/oud-artikel']),
+    'URL "/nl/oud-artikel" is already defined by the nl translation of this entry. Remove the URL alias "/nl/oud-artikel" from this translation.'
+  )
+})
+
+test('blocks a URL alias that is the url of another language of the entry', async () => {
+  const {translate} = await createTranslatedDb([])
+  await test.throws(
+    () => translate(['/nl/artikel']),
+    'Remove the URL alias "/nl/artikel" from this translation.'
+  )
+})
+
+test('blocks a url that is an alias of another language of the entry', async () => {
+  const {translate} = await createTranslatedDb(['/en/article'])
+  await test.throws(
+    () => translate([]),
+    'URL "/en/article" is already defined by the nl translation of this entry. Remove the URL alias "/en/article" from the nl translation of this entry.'
+  )
+})
+
+test('translations keep URL aliases of their own', async () => {
+  const {db, translate} = await createTranslatedDb(['/nl/oud-artikel'])
+  await translate(['/en/old-article'])
+  const aliases = await db.get({
+    id: 'article',
+    locale: 'en',
+    select: Entry.aliases
+  })
+  test.equal(aliasUrls(aliases), ['/en/old-article'])
 })
 
 async function createRedirectDb() {

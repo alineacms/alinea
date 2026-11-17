@@ -43,6 +43,7 @@ import type {
   UpdateMutation,
   UploadFileMutation
 } from '#/core/db/Mutation.js'
+import {aliasUrlsFromData} from '#/core/db/EntryAliases.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
@@ -948,22 +949,57 @@ export class EntryTransaction implements AsyncDisposable {
     const scope = this.#isFile(candidate.type)
       ? {}
       : {workspace: candidate.workspace, root: candidate.root}
-    const existing = await this.#workingDatabase.first({
-      ...scope,
-      url,
-      select: {
-        id: Entry.id,
-        workspace: Entry.workspace,
-        root: Entry.root
-      }
-    })
-    if (existing && existing.id !== candidate.id)
-      throw new EntryUrlConflictError({
-        url,
-        entryId: existing.id,
-        workspace: existing.workspace,
-        root: existing.root
+    const select = {
+      id: Entry.id,
+      locale: Entry.locale,
+      workspace: Entry.workspace,
+      root: Entry.root
+    }
+    // Translations share their id, so another language of this entry counts
+    const isOther = (entry: {id: string; locale: string | null}) =>
+      entry.id !== candidate.id || entry.locale !== candidate.locale
+    const conflict = (
+      found: {
+        id: string
+        locale: string | null
+        workspace: string
+        root: string
+      },
+      conflictUrl: string,
+      alias?: 'candidate' | 'existing'
+    ) =>
+      new EntryUrlConflictError({
+        url: conflictUrl,
+        entryId: found.id,
+        workspace: found.workspace,
+        root: found.root,
+        ...(found.id === candidate.id ? {locale: found.locale} : undefined),
+        ...(alias ? {alias} : undefined)
       })
+    const sameUrl = (
+      await this.#workingDatabase.find({...scope, url, select})
+    ).find(isOther)
+    if (sameUrl) throw conflict(sameUrl, url)
+    if (candidate.locale === null) return
+    const translations = (
+      await this.#workingDatabase.find({
+        ...scope,
+        id: candidate.id,
+        select: {...select, url: Entry.url, aliases: Entry.aliases}
+      })
+    ).filter(isOther)
+    const aliasUrls = aliasUrlsFromData(candidate.data)
+    for (const translation of translations) {
+      const translationAliases = (translation.aliases ?? []).map(
+        alias => alias.url
+      )
+      if (translationAliases.includes(url))
+        throw conflict(translation, url, 'existing')
+      const shared = aliasUrls.find(
+        alias => alias === translation.url || translationAliases.includes(alias)
+      )
+      if (shared) throw conflict(translation, shared, 'candidate')
+    }
   }
 
   async #resolvedUrl(candidate: UrlCandidate): Promise<string> {

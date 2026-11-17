@@ -1,5 +1,6 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
+import {dataWithoutAliases} from '#/core/db/EntryAliases.js'
 import type {EntryReference} from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
@@ -260,6 +261,8 @@ export class EntryLocaleAtoms {
       !isUntranslated || get(this.copyTranslationSource)
         ? entry.data
         : Type.sharedData(type, entry.data)
+    // An old URL belongs to the language it was published in
+    if (isUntranslated && data) data = dataWithoutAliases(data)
     if (isUntranslated && data && this.requestedLocale) {
       const linkIds = new Set(
         Type.references(type, data)
