@@ -14,7 +14,8 @@ plugin({
       const source = await Bun.file(args.path).text()
       const contents = source.replace(
         /(from\s+|import\s*\(\s*)(['"])alinea(\/[^'"]*)?\2/g,
-        (_, start, quote, sub = '') => `${start}${quote}${resolveSrc(sub)}${quote}`
+        (_, start, quote, sub = '') =>
+          `${start}${quote}${resolveSrc(sub)}${quote}`
       )
       return {contents, loader: args.path.endsWith('x') ? 'tsx' : 'ts'}
     })
@@ -37,12 +38,19 @@ export interface Corpus {
 /** The configs of the content in this repository, with where it lives */
 export async function corpora(): Promise<Array<Corpus>> {
   const root = join(import.meta.dir, '../..')
-  const dev = await import('../../apps/dev/src/cms.tsx')
-  const web = await import('../../apps/web/src/cms.tsx')
+  // The apps are left out of the type check, so they are loaded by path
+  const app = async (name: string): Promise<{cms: CMS}> =>
+    import(join(root, `apps/${name}/src/cms.tsx`))
+  const dev = await app('dev')
+  const web = await app('web')
   const fixture = await import('#/dashboard/fixture/cms.js')
   return [
     {name: 'dev', cms: dev.cms, dir: join(root, 'apps/dev')},
     {name: 'web', cms: web.cms, dir: join(root, 'apps/web')},
-    {name: 'fixture', cms: fixture.cms, dir: join(root, 'src/dashboard/fixture')}
+    {
+      name: 'fixture',
+      cms: fixture.cms,
+      dir: join(root, 'src/dashboard/fixture')
+    }
   ]
 }

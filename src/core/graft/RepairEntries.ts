@@ -209,7 +209,10 @@ async function restoreParents(
   changed: Array<string>
 ) {
   const {base, ours, theirs} = input.trees
-  const sides = [base, ...(input.prefer === 'ours' ? [ours, theirs] : [theirs, ours])]
+  const sides = [
+    base,
+    ...(input.prefer === 'ours' ? [ours, theirs] : [theirs, ours])
+  ]
   for (const path of changed) {
     const file = files.entry(path)!
     if (!(await files.exists(path))) continue
@@ -262,7 +265,11 @@ async function shareFields(
     )
     if (shared.length === 0) continue
     const rootDir =
-      files.prefix + file.path.split('/').slice(0, file.levelOffset - 1).join('/')
+      files.prefix +
+      file.path
+        .split('/')
+        .slice(0, file.levelOffset - 1)
+        .join('/')
     if (!roots.has(rootDir)) roots.set(rootDir, translationsIn(files, rootDir))
     const translations = (await roots.get(rootDir)!).get(id) ?? []
     if (translations.length < 2) continue
@@ -272,7 +279,9 @@ async function shareFields(
       if (values.every(value => dequal(value, values[0]))) continue
       const baseTree = input.trees.base
       const before = await Promise.all(
-        translations.map(t => (baseTree ? files.record(t, baseTree) : undefined))
+        translations.map(t =>
+          baseTree ? files.record(t, baseTree) : undefined
+        )
       )
       const baseValue = before.find(Boolean)?.[key]
       const sideValue = async (tree: string) => {

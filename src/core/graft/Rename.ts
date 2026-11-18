@@ -36,11 +36,13 @@ export function renameEdits(
     case 'map': {
       if (!isObject(ours)) return [base, ours]
       const b = isObject(base) ? {...base} : undefined
-      const fields = Object.entries(ours).map(([key, value]): [string, Json] => {
-        const [nextBase, next] = renameEdits(shape.values, b?.[key], value)
-        if (b && nextBase !== undefined) b[key] = nextBase as Json
-        return [key, next as Json]
-      })
+      const fields = Object.entries(ours).map(
+        ([key, value]): [string, Json] => {
+          const [nextBase, next] = renameEdits(shape.values, b?.[key], value)
+          if (b && nextBase !== undefined) b[key] = nextBase as Json
+          return [key, next as Json]
+        }
+      )
       return [b, Object.fromEntries(fields)]
     }
     case 'union': {

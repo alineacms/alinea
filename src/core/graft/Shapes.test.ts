@@ -109,7 +109,11 @@ test('list rows merge by id', () => {
   const base = {blocks: [row('a', 'a0', 'A'), row('b', 'a1', 'B')]}
   const ours = {blocks: [row('b', 'a1', 'B edited'), row('a', 'a0', 'A')]}
   const theirs = {
-    blocks: [row('a', 'a0', 'A edited'), row('b', 'a1', 'B'), row('c', 'a2', 'C')]
+    blocks: [
+      row('a', 'a0', 'A edited'),
+      row('b', 'a1', 'B'),
+      row('c', 'a2', 'C')
+    ]
   }
   test.equal(mergeData(Page, base, ours, theirs), {
     blocks: [
@@ -161,9 +165,13 @@ test('a rename inside list rows', () => {
     rows: [{_id: 'r', _index: 'a0', _type: 'Row', label: 'Stored', caption: ''}]
   }
   const ours = {
-    rows: [{_id: 'r', _index: 'a0', _type: 'Row', label: 'Stored', caption: 'New'}]
+    rows: [
+      {_id: 'r', _index: 'a0', _type: 'Row', label: 'Stored', caption: 'New'}
+    ]
   }
-  const theirs = {rows: [{_id: 'r', _index: 'a0', _type: 'Row', label: 'Stored'}]}
+  const theirs = {
+    rows: [{_id: 'r', _index: 'a0', _type: 'Row', label: 'Stored'}]
+  }
   test.equal(mergeData(Renamed, base, ours, theirs), {
     rows: [{_id: 'r', _index: 'a0', _type: 'Row', label: 'New'}]
   })

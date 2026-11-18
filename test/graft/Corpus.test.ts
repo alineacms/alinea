@@ -47,7 +47,11 @@ function editable(value: unknown, path: Path = []): Array<Path> {
   )
 }
 
-function update(value: unknown, path: Path, change: (s: string) => string) {
+function update(
+  value: unknown,
+  path: Path,
+  change: (s: string) => string
+): unknown {
   if (path.length === 0) return change(value as string)
   const [key, ...rest] = path
   if (Array.isArray(value))
@@ -111,9 +115,13 @@ test('every entry reads and writes back byte for byte', () => {
     const codec = entryCodec(corpus.cms.config.schema)
     for (const file of contentOf(corpus)) {
       const value = codec.parse(file.contents)
-      test.ok(value !== undefined, file.path)
+      test.ok(value !== undefined)
       const written = codec.format(value!, file.contents)
-      test.is(decoder.decode(written), decoder.decode(file.contents), file.path)
+      // The path names the file that fails
+      test.equal(
+        {path: file.path, text: decoder.decode(written)},
+        {path: file.path, text: decoder.decode(file.contents)}
+      )
       count++
     }
   }
@@ -147,10 +155,10 @@ test('edits to different parts of an entry merge', async () => {
               },
               {prefer}
             )
+            const label = `${file.path} ${a.join('.')} ${b.join('.')}`
             test.equal(
-              JSON.parse(decoder.decode(merged!)),
-              expected,
-              `${file.path} ${a.join('.')} ${b.join('.')}`
+              {label, value: JSON.parse(decoder.decode(merged!))},
+              {label, value: expected}
             )
             merges++
           }
@@ -191,10 +199,10 @@ test('a row edited on one side and a row added on the other merge', async () => 
           },
           {prefer: 'ours'}
         )
+        const label = `${file.path} ${list.join('.')}`
         test.equal(
-          JSON.parse(decoder.decode(merged!)),
-          expected,
-          `${file.path} ${list.join('.')}`
+          {label, value: JSON.parse(decoder.decode(merged!))},
+          {label, value: expected}
         )
         merges++
       }

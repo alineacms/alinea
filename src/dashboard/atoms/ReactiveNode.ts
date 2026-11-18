@@ -1,12 +1,6 @@
 import {entries, fromEntries, isRecord, values} from '#/core/util/Objects.js'
 import {withOrderKeys} from '#/core/util/OrderKeys.js'
-import type {
-  Atom,
-  Getter,
-  PrimitiveAtom,
-  Setter,
-  WritableAtom
-} from 'jotai'
+import type {Atom, Getter, PrimitiveAtom, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
 import {dispense} from './utils.js'
