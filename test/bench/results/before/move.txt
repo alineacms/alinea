@@ -1,0 +1,4 @@
+index 19836 files                                                        2520 ms
+move 2795 files: a page with 799 descendants, in 4 locales                579 ms, 2795 blobs read
+move 5467 files: a page with 1596 descendants, in 4 locales              1106 ms, 5467 blobs read
+move 7727 files: a page with 2290 descendants, in 4 locales              1549 ms, 7727 blobs read

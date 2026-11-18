@@ -12,15 +12,25 @@
  * a worker in Chromium, as the dashboard does: an initial sync, a reload,
  * syncs of 1, 100 and 1000 changes on the server, then of 10 until the
  * head lies over the most deltas it may, a reload over those deltas, and a
- * store of another config deriving its entries from the stored ones. Each phase runs in a worker of its own, so
- * the Wasm heap it reports, which never shrinks, is its peak. There is no
- * profile of the browser run: Playwright opens CDP sessions on pages only,
- * not on workers.
+ * store of another config deriving its entries from the stored ones. Each
+ * phase runs in a worker of its own, so the Wasm heap it reports, which never
+ * shrinks, is its peak. There is no profile of the browser run: Playwright
+ * opens CDP sessions on pages only, not on workers.
+ *
+ * Syncs also move the page with the most descendants below another, and
+ * count the bytes the handler sent, as is and gzipped as a host would.
+ *
+ * With --graft the content is kept in a graft store (in memory), as the
+ * graft backend keeps it: the handler's index syncs from its head, and
+ * stores that keep git objects sync with packs.
  *
  *   bun test/bench/initial-sync.ts [files] [overhead ms] [bandwidth MB/s]
- *     [--browser]
+ *     [--browser] [--graft]
  */
 import {MissingCredentialsError} from '#/backend/Auth.js'
+import {composeBackend} from '#/backend/api/CreateBackend.js'
+import type {GraftApi} from '#/backend/api/GraftApi.js'
+import {graft} from '#/backend/api/graft.js'
 import {createHandler} from '#/backend/Handler.js'
 import {createGeneratedDatabase} from '#/backend/store/GeneratedDatabase.js'
 import type {Change} from '#/core/source/Change.js'
@@ -32,20 +42,24 @@ import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {accumulate} from '#/core/util/Async.js'
+import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
 import {DatabaseSource} from '#/database/DatabaseSource.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
 import {openWasmDatabase} from '#/database/driver/WasmDatabase.js'
-import {mkdtemp, rm} from 'node:fs/promises'
+import {commit, MemoryObjectStore, type Person} from '@alinea/graft'
+import {memorySnapshots} from '@alinea/sqlite-wasm/snapshots'
+import {copyFile, mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {cms} from './initial-sync.cms.js'
+import {cms, locales} from './initial-sync.cms.js'
 import {content} from './initial-sync.content.js'
 import type {Phase, Row} from './initial-sync.worker.js'
 
 const args = process.argv.slice(2).filter(arg => !arg.startsWith('--'))
 const browser = process.argv.includes('--browser')
+const graftMode = process.argv.includes('--graft')
 const size = Number(args[0] ?? 20_000)
 const overhead = Number(args[1] ?? 0)
 const bandwidth = Number(args[2] ?? 0) * 1024 * 1024
@@ -86,7 +100,7 @@ let round = 0
  * media file, one in ten removes one, and the rest edit the title of a page,
  * article or person.
  */
-async function change(source: MemorySource, count: number): Promise<string> {
+async function change(count: number): Promise<string> {
   round++
   const paths = [...files.keys()]
   const isMedia = (path: string) => /\/file-\d+\.json$/.test(path)
@@ -120,13 +134,77 @@ async function change(source: MemorySource, count: number): Promise<string> {
       })
     )
   ])
-  const tree = await source.getTree()
-  await source.applyChanges({fromSha: tree.sha, changes})
-  for (const change of changes)
-    if (change.op === 'add') files.set(change.path, change.contents!)
-    else files.delete(change.path)
+  await apply(changes)
   if (count === 1) return '1 change'
   return `${count} changes (${edits} edits, ${adds} adds, ${removes} removes)`
+}
+
+/**
+ * Move the page with the most descendants below another page, in every
+ * locale: translations share their parent.
+ */
+async function move(): Promise<string> {
+  const descendants = new Map<string, number>()
+  for (const path of files.keys()) {
+    const match = /^(pages\/en\/[^/]+)\//.exec(path)
+    if (match) descendants.set(match[1], (descendants.get(match[1]) ?? 0) + 1)
+  }
+  const [[from, count], [into]] = [...descendants].sort((a, b) => b[1] - a[1])
+  const changes = Array<Promise<Change>>()
+  for (const locale of locales) {
+    const local = (path: string) =>
+      path.replace(/^pages\/en\/en-/, `pages/${locale}/${locale}-`)
+    const source = local(from)
+    const target = `${local(into)}/${source.slice(source.lastIndexOf('/') + 1)}`
+    for (const [path, contents] of files) {
+      if (path !== `${source}.json` && !path.startsWith(`${source}/`)) continue
+      changes.push(
+        hashBlob(contents).then((sha): Change => ({op: 'delete', path, sha})),
+        add(target + path.slice(source.length), contents)
+      )
+    }
+  }
+  await apply(await Promise.all(changes))
+  return `move of a page with ${count} descendants, in ${locales.length} locales`
+}
+
+const person: Person = {
+  name: 'Bench',
+  email: 'bench@example.com',
+  timestamp: 0,
+  timezone: '+0000'
+}
+
+/** The content as the backend keeps it: in memory, or in a graft store. */
+let source: MemorySource
+let api: GraftApi | undefined
+
+async function apply(changes: Array<Change>): Promise<void> {
+  if (api) {
+    const head = await api.repo.refs.get(api.ref)
+    await commit(api.repo, api.ref, {
+      parents: [head!],
+      changes: changes.map(change =>
+        change.op === 'delete'
+          ? {op: 'remove', path: `content/${change.path}`}
+          : {
+              op: 'put',
+              path: `content/${change.path}`,
+              contents: change.contents!
+            }
+      ),
+      author: person,
+      committer: person,
+      message: 'Change\n'
+    })
+  } else {
+    const tree = await source.getTree()
+    await source.applyChanges({fromSha: tree.sha, changes})
+  }
+  for (const change of changes)
+    if (change.op === 'delete') files.delete(change.path)
+  for (const change of changes)
+    if (change.op === 'add') files.set(change.path, change.contents!)
 }
 
 /** A browser store: WASM SQLite whose source is its own database. */
@@ -179,6 +257,8 @@ function throttle() {
 const columns: Array<[label: string, format: (row: Row) => string]> = [
   ['ms', row => fixed(row.ms)],
   ['blobs', row => fixed(row.blobs)],
+  ['sent', row => bytes(row.sent)],
+  ['gzipped', row => bytes(row.gzipped)],
   ['stored ms', row => fixed(row.stored)],
   ['written', row => bytes(row.written)],
   ['reads', row => fixed(row.reads)],
@@ -196,6 +276,7 @@ function fixed(value: number | undefined) {
 
 function bytes(value: number | undefined) {
   if (value === undefined) return ''
+  if (value < 10 * 1024) return `${value.toFixed(0)} B`
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(0)} KB`
   return `${(value / 1024 / 1024).toFixed(1)} MB`
 }
@@ -231,16 +312,42 @@ async function time<T>(label: string, run: () => Promise<T>) {
   return result
 }
 
+/** What the handler sent: responses as they are, and gzipped. */
+const traffic = {sent: 0, gzipped: 0, pending: Array<Promise<number>>()}
+
+function count(response: Response): Response {
+  if (!response.body) return response
+  const [body, copy] = response.body.tee()
+  traffic.pending.push(
+    new Response(copy.pipeThrough(new CompressionStream('gzip')))
+      .arrayBuffer()
+      .then(gzipped => gzipped.byteLength)
+  )
+  const counter = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      traffic.sent += chunk.length
+      controller.enqueue(chunk)
+    }
+  })
+  return new Response(body.pipeThrough(counter), response)
+}
+
+async function transferred() {
+  const sizes = await Promise.all(traffic.pending.splice(0))
+  traffic.gzipped += sizes.reduce((sum, size) => sum + size, 0)
+  return {sent: traffic.sent, gzipped: traffic.gzipped}
+}
+
 const dir = await mkdtemp(join(tmpdir(), 'alinea-sync-bench-'))
 const path = join(dir, 'generated.sqlite')
 try {
-  const source = await time(`generate ${size} files`, generate)
+  source = await time(`generate ${size} files`, generate)
   const tree = await source.getTree()
   const shas = [...new Set(tree.index().values())]
   const blobs = await accumulate(source.getBlobs(shas))
-  const bytes = blobs.reduce((sum, [, blob]) => sum + blob.length, 0)
+  const total = blobs.reduce((sum, [, blob]) => sum + blob.length, 0)
   console.log(
-    `${shas.length} blobs, ${(bytes / 1024 / 1024).toFixed(1)} MB of JSON\n`
+    `${shas.length} blobs, ${(total / 1024 / 1024).toFixed(1)} MB of JSON\n`
   )
 
   await time('build the generated database (native)', async () => {
@@ -256,28 +363,46 @@ try {
     await store.close()
   })
 
+  // The handler's syncs write to its file: a cold one opens a copy
+  const coldPath = join(dir, 'cold.sqlite')
+  await copyFile(path, coldPath)
   const server = await createGeneratedDatabase(
     config,
     await runtimeDatabase({path})
   )
+  const context = {
+    isDev: false,
+    handlerUrl: new URL('http://localhost/api'),
+    apiKey: 'bench'
+  }
+  const auth = {
+    async verify(): Promise<never> {
+      throw new MissingCredentialsError('No user')
+    }
+  }
+  if (graftMode) {
+    api = graft()(context, config)
+    await time('import the content into a graft store', () => api!.seed(source))
+  }
   // The handler asks its remote whether a client is current before it
   // syncs, so the remote serves the generated site as a git host would.
-  const remote = {
-    async verify() {
-      throw new MissingCredentialsError('No user')
-    },
-    async getTreeIfDifferent(sha: string) {
-      const tree = await source.getTree()
-      return tree.sha === sha ? undefined : tree
-    },
-    getBlobs: source.getBlobs.bind(source)
-  } as unknown as RemoteConnection
+  const remote = api
+    ? composeBackend(api, auth)
+    : ({
+        ...auth,
+        async getTreeIfDifferent(sha: string) {
+          const tree = await source.getTree()
+          return tree.sha === sha ? undefined : tree
+        },
+        getBlobs: source.getBlobs.bind(source)
+      } as unknown as RemoteConnection)
   const handler = createHandler({cms, db: server, remote: () => remote})
   const requests = new Map<string, {count: number; ms: number}>()
   const http = Bun.serve({
     port: 0,
+    idleTimeout: 255,
     async fetch(request) {
-      const {pathname} = new URL(request.url)
+      const {pathname, searchParams} = new URL(request.url)
       if (pathname === '/')
         return new Response('<script type="module" src="/page.js"></script>', {
           headers: {'content-type': 'text/html'}
@@ -285,19 +410,19 @@ try {
       if (pathname === '/page.js') return new Response(await bundle('page'))
       if (pathname === '/worker.js') return new Response(await bundle('worker'))
       if (pathname === '/change') {
-        const count = Number(new URL(request.url).searchParams.get('count'))
-        const changed = await change(source, count)
-        await server.syncWith(source)
+        const changed = searchParams.has('move')
+          ? await move()
+          : await change(Number(searchParams.get('count')))
+        await server.syncWith(api ? remote : source)
         return new Response(changed)
       }
-      const action = new URL(request.url).searchParams.get('action') ?? '?'
+      if (pathname === '/transferred') return Response.json(await transferred())
+      const action = searchParams.get('action') ?? '?'
       const start = performance.now()
       await sleep(overhead)
-      const response = await handler(request, {
-        isDev: false,
-        handlerUrl: new URL(request.url),
-        apiKey: 'bench'
-      })
+      const response = count(
+        await handler(request, {...context, handlerUrl: new URL(request.url)})
+      )
       const stat = requests.get(action) ?? {count: 0, ms: 0}
       stat.count++
       stat.ms += performance.now() - start
@@ -408,6 +533,52 @@ try {
     const stored = handle.export().length / 1024 / 1024
     console.log(`  ${stored.toFixed(1)} MB database to store`)
     await store.close()
+
+    // The dashboard's store, its bases in memory, with objects of its own
+    // when the backend keeps the content as objects
+    console.log('\ndashboard store, end to end')
+    const dashboard = await BrowserEntryStore.open(config, {
+      name: 'bench',
+      fingerprint: 'bench',
+      storage: memorySnapshots(),
+      ...(api ? {objects: new MemoryObjectStore()} : {})
+    })
+    const sync = async (label: string, before?: () => Promise<string>) => {
+      const what = before ? await before() : ''
+      const {sent, gzipped} = await transferred()
+      requests.clear()
+      await time(`${label}${what}`, () =>
+        dashboard.syncWith(client, {validate: false})
+      )
+      const after = await transferred()
+      const actions = [...requests]
+        .map(([action, {count}]) => `${count} ${action}`)
+        .join(', ')
+      console.log(
+        `  ${actions}: sent ${bytes(after.sent - sent)}, gzipped ${bytes(after.gzipped - gzipped)}`
+      )
+    }
+    const changed = (n: number) => async () => {
+      const label = n ? await change(n) : await move()
+      await server.syncWith(api ? remote : source)
+      return label
+    }
+    await sync('initial sync')
+    console.log(`  ${await dashboard.count({status: 'all'})} entries indexed`)
+    await sync('sync, current')
+    for (const n of [1, 100, 1000]) await sync('sync ', changed(n))
+    await sync('sync ', changed(0))
+    await dashboard.close()
+
+    // A cold instance opens the index of the build and catches up
+    const cold = await createGeneratedDatabase(
+      config,
+      await runtimeDatabase({path: coldPath})
+    )
+    await time('cold handler: open the build, catch up with the changes', () =>
+      cold.syncWith(api ? remote : source)
+    )
+    await cold.close()
   }
   http.stop(true)
   await server.close()

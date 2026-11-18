@@ -1,0 +1,21 @@
+synced 20000 files in 1881ms
+
+synced
+  alinea_entry_index                     6432 leaves   95% in order
+  sqlite_autoindex_alinea_entry_reference_1    230 leaves   24% in order
+  alinea_entry_reference                  202 leaves   99% in order
+  alinea_entry_reference_by_source        122 leaves   98% in order
+  alinea_entry_index_recent_id            115 leaves    1% in order
+  alinea_entry_index_by_field_metadata.createdAt     97 leaves    1% in order
+  all                                    7952 leaves   82% in order
+
+compacted (vacuum into)
+  alinea_entry_index                     6356 leaves  100% in order
+  sqlite_autoindex_alinea_entry_reference_1    211 leaves  100% in order
+  alinea_entry_reference                  202 leaves  100% in order
+  alinea_entry_reference_by_source        107 leaves  100% in order
+  alinea_entry_index_recent_id             91 leaves  100% in order
+  alinea_entry_index_by_field_metadata.createdAt     86 leaves  100% in order
+  all                                    7738 leaves  100% in order
+
+wrote <tmp>

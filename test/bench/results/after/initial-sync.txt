@@ -1,0 +1,39 @@
+generate 20000 files                                    734 ms
+19836 blobs, 119.7 MB of JSON
+
+build the generated database (native)                  3067 ms
+phases
+tree request                                             27 ms
+blobs: one request, decoded                             453 ms
+blobs: 2 parallel requests, decoded                     386 ms
+blobs: 4 parallel requests, decoded                     364 ms
+blobs: 8 parallel requests, decoded                     498 ms
+blobs: 250 per request, 5 in flight (as before)         493 ms
+blobs: server reads them from its database              174 ms
+blobs: encode as CBOR sequence                           89 ms
+blobs: gzip the encoded sequence                        595 ms
+blobs: decode the CBOR sequence                         117 ms
+index from memory (parse, insert, derive)              2526 ms
+
+end to end
+initial sync over HTTP                                 3213 ms
+  tree        1 requests, 10 ms in handler
+  blob        4 requests, 88 ms in handler
+  19824 entries indexed
+  122.7 MB database to store
+
+dashboard store, end to end
+initial sync                                           2502 ms
+  1 tree, 4 blob: sent 85.1 MB, gzipped 4.7 MB
+  19824 entries indexed
+sync, current                                             2 ms
+  1 tree: sent 4 B, gzipped 24 B
+sync 1 change                                           102 ms
+  1 tree, 1 blob: sent 2.2 MB, gzipped 591 KB
+sync 100 changes (80 edits, 10 adds, 10 removes)        102 ms
+  1 tree, 1 blob: sent 2.6 MB, gzipped 615 KB
+sync 1000 changes (800 edits, 100 adds, 100 removes)    379 ms
+  1 tree, 1 blob: sent 6.4 MB, gzipped 820 KB
+sync move of a page with 799 descendants, in 4 locales    259 ms
+  1 tree, 1 blob: sent 2.2 MB, gzipped 592 KB
+cold handler: open the build, catch up with the changes   1772 ms

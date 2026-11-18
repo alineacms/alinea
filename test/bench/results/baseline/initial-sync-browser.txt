@@ -1,0 +1,44 @@
+generate 20000 files                                    662 ms
+19836 blobs, 119.7 MB of JSON
+
+build the generated database (native)                  3199 ms
+
+initial sync
+                                        ms      blobs  stored ms    written      reads       read    read ms  snapshots      chain all stored       heap
+open an empty store                     52          0                                0       0 KB          0                                     16.1 MB
+sync: tree, blobs, index              4195      19836         80   126.9 MB          0       0 KB          0          1          1   126.9 MB   300.0 MB
+  of which until the last blob        1772                                                                                                              
+first query (count all entries)          3          0                                0       0 KB          0                                    300.0 MB
+synced and queryable                  4250                                                                                                              
+
+reload (next page load)
+                                      ms      blobs      reads       read    read ms  snapshots      chain all stored       heap
+open the head                         26          0          1     1.0 MB          0          1          1   126.9 MB    16.1 MB
+first query (one entry by id)          5          0          8     128 KB          1                                     16.1 MB
+count all entries                     13          0         44     2.7 MB          5                                     16.1 MB
+
+incremental syncs
+                                                             ms      blobs  stored ms    written      reads       read    read ms  snapshots      chain all stored       heap
+sync 1 change                                               100          1          1     464 KB         42     6.4 MB          7          2          2   127.3 MB    16.1 MB
+sync 100 changes (80 edits, 10 adds, 10 removes)            384         90         20    22.9 MB       1280   276.9 MB        188          3          3   150.3 MB   104.6 MB
+sync 1000 changes (800 edits, 100 adds, 100 removes)        882        900         57    54.4 MB       2291   515.1 MB        330          4          4   204.7 MB   189.3 MB
+sync 10 changes (8 edits, 1 adds, 1 removes)                 77          9          3     6.9 MB         84    12.1 MB          9          5          5   211.6 MB   189.3 MB
+sync 10 changes (8 edits, 1 adds, 1 removes)                 53          9         11     7.0 MB         24     4.3 MB          3          6          6   218.6 MB   189.3 MB
+sync 10 changes (8 edits, 1 adds, 1 removes)                 59          9          4     7.2 MB         27     3.4 MB          3          7          7   225.7 MB   189.3 MB
+sync 10 changes (8 edits, 1 adds, 1 removes)                 62          9          4     6.7 MB         27     4.4 MB          3          8          8   232.4 MB   189.3 MB
+sync 10 changes (8 edits, 1 adds, 1 removes)                 51          9          7     7.0 MB         21     1.3 MB          2          9          9   239.4 MB   189.3 MB
+
+reload over the deltas
+                                      ms      blobs      reads       read    read ms  snapshots      chain all stored       heap
+open the head                         29          0          2     2.0 MB          1          9          9   239.4 MB    16.1 MB
+first query (one entry by id)          6          0          9     1.1 MB          2                                     16.1 MB
+count all entries                     15          0         35    14.3 MB          9                                     16.1 MB
+
+another config
+                                                         ms      blobs  stored ms    written      reads       read    read ms  snapshots      chain all stored       heap
+open with another config (reindex)                     4898          0                             5426   758.3 MB        613                                    360.0 MB
+first query (one entry by id)                             2          0                                0       0 KB          0                                    360.0 MB
+sync (tree unchanged)                                     9          0         85   134.4 MB          0       0 KB          0         10          1   373.8 MB   360.0 MB
+sync 100 changes (80 edits, 10 adds, 10 removes)        233         90         30    24.3 MB       1100    76.3 MB         90         11          2   398.0 MB   360.0 MB
+
+reindex 4898 ms vs initial sync 4195 ms

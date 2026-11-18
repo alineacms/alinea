@@ -1,0 +1,23 @@
+generate 20000 files                                    829 ms
+19836 blobs, 119.7 MB of JSON
+
+build the generated database (native)                  4268 ms
+phases
+tree request                                             29 ms
+blobs: one request, decoded                             730 ms
+blobs: 2 parallel requests, decoded                     524 ms
+blobs: 4 parallel requests, decoded                     622 ms
+blobs: 8 parallel requests, decoded                     512 ms
+blobs: 250 per request, 5 in flight (as before)         490 ms
+blobs: server reads them from its database              207 ms
+blobs: encode as CBOR sequence                           95 ms
+blobs: gzip the encoded sequence                        590 ms
+blobs: decode the CBOR sequence                         135 ms
+index from memory (parse, insert, derive)              3201 ms
+
+end to end
+initial sync over HTTP                                 3110 ms
+  tree        1 requests, 18 ms in handler
+  blob        4 requests, 190 ms in handler
+  19824 entries indexed
+  122.7 MB database to store

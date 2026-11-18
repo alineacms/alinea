@@ -1,0 +1,8 @@
+10000 children, 10 runs each
+
+explorer page load (cold store)              median  267.0 ms  min  231.2 ms
+columns: type, updated, author, path, intro, venue
+summarize the loaded children                median    0.8 ms  min    0.4 ms
+resolve the columns from the summary         median    0.5 ms  min    0.4 ms
+count children (a scan of the children)      median    3.3 ms  min    3.0 ms
+sort change and back                         median  431.8 ms  min  354.6 ms

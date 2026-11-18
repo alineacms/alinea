@@ -13,6 +13,9 @@ export interface Row {
   step: string
   ms?: number
   blobs?: number
+  /** Bytes the handler sent, and gzipped as a host would send them */
+  sent?: number
+  gzipped?: number
   stored?: number
   written?: number
   reads?: number
@@ -101,7 +104,18 @@ const remote: RemoteSource = {
     io.blobs += shas.length
     yield* client.getBlobs(shas, options)
     io.lastBlob = performance.now()
+  },
+  // A handler without packs answers it as older ones do
+  async getPack(have) {
+    const pack = await client.getPack(have)
+    io.lastBlob = performance.now()
+    return pack
   }
+}
+
+/** What the handler sent so far. */
+async function transferred(): Promise<{sent: number; gzipped: number}> {
+  return (await fetch('/transferred')).json()
 }
 
 function open(fingerprint: string) {
@@ -111,6 +125,12 @@ function open(fingerprint: string) {
 /** Change entries on the server, describing what changed. */
 async function change(count: number): Promise<string> {
   const response = await fetch(`/change?count=${count}`, {method: 'POST'})
+  return response.text()
+}
+
+/** Move the page with the most descendants on the server. */
+async function move(): Promise<string> {
+  const response = await fetch('/change?move', {method: 'POST'})
   return response.text()
 }
 
@@ -163,12 +183,17 @@ async function step<T>(
   run: () => Promise<T>
 ): Promise<T> {
   const {blobs, reads, read, reading} = io
+  const before = await transferred()
   const start = performance.now()
   const result = await run()
+  const ms = performance.now() - start
+  const after = await transferred()
   rows.push({
     step: label,
-    ms: performance.now() - start,
+    ms,
     blobs: io.blobs - blobs,
+    sent: after.sent - before.sent,
+    gzipped: after.gzipped - before.gzipped,
     reads: io.reads - reads,
     read: io.read - read,
     reading: io.reading - reading,
@@ -231,6 +256,7 @@ const phases: Record<Phase, () => Promise<Array<Row>>> = {
     const store = await open(build)
     for (const count of [1, 100, 1000])
       await sync(rows, `sync ${await change(count)}`, store, build)
+    await sync(rows, `sync ${await move()}`, store, build)
     // Then small ones until the head lies over as many deltas as it may.
     while (rows.at(-1)!.chain! <= maxDepth && rows.length < 16)
       await sync(rows, `sync ${await change(10)}`, store, build)
