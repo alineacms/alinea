@@ -32,6 +32,8 @@ export interface UserApi {
 
 export interface BackendCapabilities {
   users: boolean
+  /** Editors can edit entries together, see `StoreApi.serveSession` */
+  sessions?: boolean
 }
 
 export interface CapabilitiesApi {
@@ -49,6 +51,17 @@ export interface StoreApi {
   replicate?(interval?: number): Promise<unknown>
   /** Answers a push webhook, `?action=replicate&secret=` */
   webhook?(request: Request): Promise<Response>
+  /**
+   * Serves live editing below `<handler>/session`; `authorize` names who
+   * makes a request on an entry file, by its path in the content directory
+   */
+  serveSession?(
+    request: Request,
+    authorize: (
+      request: Request,
+      path: string
+    ) => Promise<{name: string; email: string} | Response>
+  ): Promise<Response>
   /** Serves the content over git's smart HTTP, below `<handler>/git` */
   serveGit?(
     request: Request,
@@ -69,6 +82,13 @@ export interface LocalConnection
     query: Query
   ): Promise<AnyQueryResult<Query>>
   user(): Promise<User | undefined>
+  /** Where live editing is served, and how to reach it signed in */
+  live?: LiveEndpoint
+}
+
+export interface LiveEndpoint {
+  url: string
+  fetch(request: Request): Promise<Response>
 }
 
 export interface SyncApi {

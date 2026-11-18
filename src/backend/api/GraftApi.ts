@@ -1,4 +1,5 @@
 import {
+  type Author,
   type Change,
   commit,
   gitServer,
@@ -19,6 +20,8 @@ import {
   type Repository,
   revisions,
   save,
+  type SessionLog,
+  sessionServer,
   StrictError,
   type TreeEntry,
   type TreeMergeOptions,
@@ -34,6 +37,8 @@ import type {
 } from '#/core/Connection.js'
 import type {CommitChange, CommitRequest} from '#/core/db/CommitRequest.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
+import {entryCodec} from '#/core/graft/EntryCodec.js'
+import {contentRoot, mediaRoot} from '#/core/graft/Roots.js'
 import {identifyEntry} from '#/core/graft/IdentifyEntry.js'
 import {mergeEntryFiles} from '#/core/graft/MergeEntryFiles.js'
 import {repairEntries} from '#/core/graft/RepairEntries.js'
@@ -41,10 +46,6 @@ import {HttpError} from '#/core/HttpError.js'
 import {ReadonlyTree, type Entry as TreeNode} from '#/core/source/Tree.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import * as paths from '#/core/util/Paths.js'
-
-/** The roots of the canonical tree: entries, and uploaded media files */
-export const contentRoot = 'content'
-export const mediaRoot = 'media'
 
 export interface GraftApiOptions {
   repo: Repository
@@ -60,7 +61,18 @@ export interface GraftApiOptions {
    * characters at least. Without it there is no webhook.
    */
   webhookSecret?: string
+  /**
+   * Where live editing keeps its sessions. Without it there is no live
+   * editing, the project opts in by giving one.
+   */
+  sessions?: SessionLog
 }
+
+/** Who makes a session request, or a response that refuses it */
+export type SessionAuthorize = (
+  request: Request,
+  path: string
+) => Promise<Author | Response>
 
 /** Who may use a git route: a response refuses the request */
 export type GraftAuthorize = (request: Request) => Promise<Response | undefined>
@@ -81,6 +93,13 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
   #webhook: Handler | undefined
   #git: Handler | undefined
   #authorizers = new WeakMap<Request, GraftAuthorize>()
+  #sessionAuthorizers = new WeakMap<Request, SessionAuthorize>()
+  #sessions: Handler | undefined
+  /** Serves live editing below `<handler>/session`, when the project has it */
+  serveSession?: (
+    request: Request,
+    authorize: SessionAuthorize
+  ) => Promise<Response>
 
   constructor(options: GraftApiOptions) {
     this.#repo = options.repo
@@ -88,6 +107,13 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
     this.#ref = options.ref ?? 'refs/heads/main'
     this.#replicas = options.replicas ?? []
     this.#webhookSecret = options.webhookSecret
+    const log = options.sessions
+    if (log)
+      this.serveSession = (request, authorize) => {
+        this.#sessionAuthorizers.set(request, authorize)
+        this.#sessions ??= this.#sessionServer(log)
+        return this.#sessions(request)
+      }
     this.#committer = options.committer ?? {
       name: 'Alinea',
       email: 'noreply@alineacms.com'
@@ -244,6 +270,35 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
       }
     })
     return this.#git(request)
+  }
+
+  /**
+   * Sessions on the entry files of the content, on the ref, as the codec
+   * of its entries reads them. Sessions save to the ref when they close.
+   */
+  #sessionServer(log: SessionLog): Handler {
+    const codec = entryCodec(this.#config.schema)
+    const committer = this.#committer
+    return sessionServer({
+      repo: this.#repo,
+      log,
+      settings: ({branch, path}) => {
+        if (branch !== this.#ref) return undefined
+        if (!path.startsWith(`${contentRoot}/`) || !path.endsWith('.json'))
+          return undefined
+        return {
+          codec,
+          host: committer,
+          now: () => Math.floor(Date.now() / 1000),
+          merge: this.#merge
+        }
+      },
+      authorize: async (request, access) => {
+        const check = this.#sessionAuthorizers.get(request)
+        if (!check) return new Response('Unauthorized', {status: 401})
+        return check(request, access.path.slice(contentRoot.length + 1))
+      }
+    })
   }
 
   /** A replication pass for replicas not passed in the last `interval` ms */

@@ -9,6 +9,7 @@ import type {Config} from './Config.js'
 import type {
   BackendCapabilities,
   DraftTransport,
+  LiveEndpoint,
   LocalConnection,
   Revision,
   UploadMetadata,
@@ -71,6 +72,24 @@ export class Client implements LocalConnection {
     })
       .then(res => this.#failOnHttpError(res, false))
       .then(endSession)
+  }
+
+  get live(): LiveEndpoint {
+    const {url, applyAuth = init => init} = this.#options
+    return {
+      url: `${url.replace(/\/$/, '')}/session`,
+      fetch: request =>
+        fetch(request.url, {
+          ...applyAuth({
+            method: request.method,
+            headers: request.headers,
+            body: request.body
+          }),
+          signal: request.signal,
+          // @ts-ignore Node needs it for a streamed body
+          duplex: 'half'
+        })
+    }
   }
 
   capabilities(): Promise<BackendCapabilities> {

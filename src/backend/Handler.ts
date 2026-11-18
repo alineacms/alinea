@@ -39,7 +39,7 @@ import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {within} from '#/core/util/Async.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {fileVersions} from '#/core/util/EntryFilenames.js'
+import {fileVersions, parseEntryFilePath} from '#/core/util/EntryFilenames.js'
 import {isAbsolute, normalize, relative} from '#/core/util/Paths.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
@@ -310,6 +310,32 @@ export function createHandler({
           // Git serves every object by sha: only for who may read it all
           if (!policy?.canAll()) return new Response('Forbidden', {status: 403})
           return undefined
+        })
+
+      if (below.startsWith('/session/') && cnx.serveSession)
+        return await cnx.serveSession(request, async (request, path) => {
+          const authed = await cnx.verify(request).catch(() => undefined)
+          if (!authed) return new Response('Unauthorized', {status: 401})
+          const {user} = authed
+          const roles = user.roles
+          const policy = roles ? await local.createPolicy(roles) : undefined
+          let location: ReturnType<typeof parseEntryFilePath>
+          try {
+            location = parseEntryFilePath(cms.config, path)
+          } catch {
+            return new Response('Not found', {status: 404})
+          }
+          const resource = {
+            workspace: location.workspace,
+            root: location.root,
+            locale: location.locale
+          }
+          if (!policy?.check(Permission.Update, resource))
+            return new Response('Forbidden', {status: 403})
+          return {
+            name: user.name ?? user.email ?? user.sub,
+            email: user.email ?? `${user.sub}@alinea`
+          }
         })
 
       if (action === HandleAction.Capabilities && request.method === 'GET') {

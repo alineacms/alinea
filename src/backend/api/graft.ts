@@ -1,15 +1,18 @@
 import {
   type ContentDir,
   gitRemote,
+  MemorySessionLog,
   memoryRepository,
   type ReplicaEndpoint,
   type Repository
 } from '@alinea/graft'
 import {sqlRepository} from '@alinea/graft/sql'
+import {SqlSessionLog} from '@alinea/graft/sql-session'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
 import type {Database} from 'rado'
-import {contentRoot, GraftApi, mediaRoot} from './GraftApi.js'
+import {contentRoot, mediaRoot} from '#/core/graft/Roots.js'
+import {GraftApi} from './GraftApi.js'
 
 /** A git repository the content replicates to, on any host */
 export interface ReplicaOptions {
@@ -42,6 +45,8 @@ export interface GraftBackendOptions {
   replicas?: Array<ReplicaOptions>
   /** The secret of the push webhook, `?action=replicate&secret=` */
   webhookSecret?: string
+  /** Lets editors edit entries together, live */
+  sessions?: boolean
 }
 
 /**
@@ -61,7 +66,12 @@ export function graft(
       replicas: (options.replicas ?? []).map(replica =>
         endpoint(config, replica)
       ),
-      webhookSecret: options.webhookSecret
+      webhookSecret: options.webhookSecret,
+      sessions: options.sessions
+        ? options.database
+          ? new SqlSessionLog(options.database)
+          : new MemorySessionLog()
+        : undefined
     })
     return api
   }

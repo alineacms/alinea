@@ -112,7 +112,8 @@ export function composeBackend(
     },
     async capabilities() {
       return {
-        users: hasMethod('listUsers')
+        users: hasMethod('listUsers'),
+        ...(hasMethod('serveSession') ? {sessions: true} : {})
       }
     }
   }
@@ -154,6 +155,7 @@ export function composeBackend(
     seed: optional('seed'),
     replicate: optional('replicate'),
     webhook: optional('webhook'),
-    serveGit: optional('serveGit')
+    serveGit: optional('serveGit'),
+    serveSession: optional('serveSession')
   }
 }

@@ -13,6 +13,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Switch,
   Text,
   Tooltip,
   TooltipContent,
@@ -27,7 +28,7 @@ import {setUserRolesAtom} from '../atoms/auth.js'
 import {policyAtom} from '../atoms/user.js'
 import {useUser} from '../hooks.js'
 import styler from '@alinea/styler'
-import {useAtomValueRaw, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {
   IcBaselineAccountCircle,
   IcOutlineSettings,
@@ -35,6 +36,7 @@ import {
   IcRoundUnfoldMore
 } from '../icons.js'
 import {ActivityStatus} from './ActivityStatus.js'
+import {liveEditingAtom, sessionsAvailableAtom} from '../atoms/live.js'
 import {AppearanceToggle} from './AppearanceToggle.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
@@ -112,6 +114,8 @@ function WorkspaceProfileMenu({
   const setUserRoles = useSetAtom(setUserRolesAtom)
   const setRoute = useSetAtom(routeAtom)
   const logout = useSetAtom(logoutAtom)
+  const sessionsAvailable = useAtomValueRawSync(sessionsAvailableAtom)
+  const [liveEditing, setLiveEditing] = useAtom(liveEditingAtom)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
   const selectedRoles = new Set(user.roles)
@@ -182,6 +186,13 @@ function WorkspaceProfileMenu({
               <Text as="p">Appearance</Text>
               <AppearanceToggle />
             </li>
+            {sessionsAvailable && (
+              <li className={styles.WorkspaceRoots.profile.popover.item()}>
+                <Switch checked={liveEditing} onCheckedChange={setLiveEditing}>
+                  Edit together
+                </Switch>
+              </li>
+            )}
             {isLocal && roleEntries.length > 0 && (
               <li className={styles.WorkspaceRoots.profile.popover.item()}>
                 <Text as="p">Role</Text>

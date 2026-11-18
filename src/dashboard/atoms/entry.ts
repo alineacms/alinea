@@ -117,7 +117,8 @@ function prepareData(get: Getter, node: ReactiveNode<object>, type: Type) {
   return {
     checkpoint: current,
     data: withPath(type, current),
-    base: withPath(type, initial)
+    // A version from history replaces the entry rather than editing it
+    base: node.readOnly ? undefined : withPath(type, initial)
   }
 }
 

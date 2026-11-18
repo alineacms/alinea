@@ -75,6 +75,7 @@ import {
   DashboardModalDialog,
   DashboardModalFooter
 } from './../ui/DashboardModal.js'
+import {useLiveSession} from '#/dashboard/live/useLiveSession.js'
 import css from './EntryPage.module.css'
 
 const styles = styler(css)
@@ -321,6 +322,7 @@ function EntryEditorContent({
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
   const setEditing = useSetAtom(localeData.currentlyEditing)
+  useLiveSession(localeData)
   const setCopyTranslationSource = useSetAtom(localeData.copyTranslationSource)
   const setSourceLocale = useSetAtom(localeData.translationSourceLocale)
   const saveDraft = useSetAtom(localeData.saveDraft)
