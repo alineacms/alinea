@@ -1,3 +1,4 @@
+import {MemoryLocks} from '#/backend/api/MemoryLocks.js'
 import type {LocalConnection, Revision} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
@@ -150,6 +151,9 @@ export interface DashboardScenarioProps {
   // Sync the content from a remote through the dashboard worker, which sends
   // each file after this many milliseconds
   syncDelay?: number
+  // Alice edits the first entry: she opened it first and does not answer,
+  // declines requests to edit, or opens it after the dashboard and asks
+  otherEditor?: 'away' | 'decline' | 'ask'
 }
 
 class ScenarioDB extends LocalDB {
@@ -210,6 +214,7 @@ async function createDashboardScenario({
   readDelay = 0,
   failFirstUserList,
   syncDelay,
+  otherEditor,
   ...props
 }: DashboardScenarioProps): Promise<DashboardScenarioState> {
   const db = new ScenarioDB(scenarioConfig(props))
@@ -572,10 +577,18 @@ async function createDashboardScenario({
   })
   db.seeding = false
   db.readDelay = readDelay
-  const baseClient = createTestConnection(db, {users})
+  const locks = new MemoryLocks()
+  const baseClient = createTestConnection(db, {users, locks})
+  const aliceEdits = otherEditor && editAsAlice(locks, otherEditor)
+  if (otherEditor !== 'ask') await aliceEdits?.()
   let failUserList = failFirstUserList
   const client: LocalConnection = {
     ...baseClient,
+    async heartbeat(beat) {
+      const status = await baseClient.heartbeat(beat)
+      await aliceEdits?.()
+      return status
+    },
     listUsers() {
       if (!failUserList) return baseClient.listUsers()
       failUserList = false
@@ -615,6 +628,31 @@ async function createDashboardScenario({
     client: remote,
     graph: new WorkerDB(workerConfig, worker, remote, worker),
     events: worker
+  }
+}
+
+function editAsAlice(
+  locks: MemoryLocks,
+  mode: NonNullable<DashboardScenarioProps['otherEditor']>
+) {
+  const user = users[1]
+  const beat = {
+    entryId: dashboardScenarioIds.alpha,
+    locale: null,
+    session: 'alice',
+    ask: mode === 'ask'
+  }
+  async function edit() {
+    const status = await locks.heartbeat(beat, user)
+    if (mode === 'decline' && status.request)
+      await locks.heartbeat({...beat, answer: 'decline'}, user)
+  }
+  let started = false
+  return async () => {
+    if (started) return
+    started = true
+    await edit()
+    setInterval(edit, 1000)
   }
 }
 

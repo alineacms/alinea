@@ -1,3 +1,4 @@
+import {MemoryLocks} from 'alinea/backend/api/MemoryLocks'
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {Config} from 'alinea/core/Config'
 import type {
@@ -10,6 +11,7 @@ import type {
 import type {CommitRequest} from 'alinea/core/db/CommitRequest'
 import type {Mutation} from 'alinea/core/db/Mutation'
 import {type Draft, type DraftKey, formatDraftKey} from 'alinea/core/Draft'
+import type {EditStatus, Heartbeat} from 'alinea/core/EditLock'
 import type {EntryRecord} from 'alinea/core/EntryRecord'
 import type {AnyQueryResult, GraphQuery} from 'alinea/core/Graph'
 import {createId} from 'alinea/core/Id'
@@ -102,6 +104,7 @@ export class DemoConnection implements LocalConnection {
   #revisions: Array<SessionRevision>
   #users: Array<User>
   #drafts = new Map<DraftKey, Draft>()
+  #locks = new MemoryLocks()
 
   constructor(
     config: Config,
@@ -276,6 +279,12 @@ export class DemoConnection implements LocalConnection {
       formatDraftKey({id: draft.entryId, locale: draft.locale}),
       draft
     )
+  }
+
+  // Locks
+
+  heartbeat(beat: Heartbeat): Promise<EditStatus> {
+    return this.#locks.heartbeat(beat, demoUser)
   }
 
   // Uploads

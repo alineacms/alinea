@@ -171,3 +171,24 @@ function testContext(): RequestContext {
     apiKey: 'test'
   }
 }
+
+test('locks are kept in the database', async () => {
+  const sqlite = new BunSqlite(':memory:')
+  const db = driver['bun:sqlite'](sqlite)
+  const entry = {entryId: 'page', locale: 'en'}
+  try {
+    const first = new DatabaseApi(testContext(), {db})
+    const held = await first.heartbeat({...entry, session: 'x'}, {sub: 'ada'})
+    test.equal(held, {holds: true})
+    // Another instance sees the same holder
+    const second = new DatabaseApi(testContext(), {db})
+    const seen = await second.heartbeat({...entry, session: 'y'}, {sub: 'bob'})
+    test.is(seen.holds, false)
+    test.is(seen.holder?.user.sub, 'ada')
+    await first.heartbeat({...entry, session: 'x', leave: true}, {sub: 'ada'})
+    const free = await second.heartbeat({...entry, session: 'y'}, {sub: 'bob'})
+    test.equal(free, {holds: true})
+  } finally {
+    sqlite.close()
+  }
+})
