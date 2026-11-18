@@ -9,8 +9,8 @@ import {reportError, reportFatal} from '../util/Report.js'
 import type {GenerateContext} from './GenerateContext.js'
 import {loadCMS} from './LoadConfig.js'
 
-function buildConfig(ctx: GenerateContext): BuildOptions {
-  const {rootDir} = ctx
+/** How a project's config compiles, from the project's root directory */
+export function buildConfig(rootDir: string): BuildOptions {
   const tsConfigFile = path.join(rootDir, 'tsconfig.json')
   const define = publicDefines(process.env)
   return {
@@ -35,7 +35,7 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
 
 export async function* compileConfig(ctx: GenerateContext) {
   const {outDir, configLocation, cmd} = ctx
-  const config = buildConfig(ctx)
+  const config = buildConfig(ctx.rootDir)
   const location = path
     .relative(process.cwd(), configLocation)
     .replace(/\\/g, '/')

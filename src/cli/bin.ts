@@ -108,4 +108,35 @@ prog
     })
   })
 
+  .command('merge-driver [base] [ours] [theirs] [path]')
+  .describe(
+    'Merge content files for git as the server merges saves. ' +
+      'Run `alinea merge-driver install` once to let git use it'
+  )
+  .option('-c, --config', 'Config file location')
+  .option('-d, --dir', 'Root directory of the project')
+  .option('--prefer', 'The side that wins what both changed', 'ours')
+  .action(async (base, ours, theirs, file, args) => {
+    ensureNode()
+    const {installMergeDriver, mergeDriver} = await import('./MergeDriver.js')
+    if (base === 'install') {
+      const {attributes, driver} = await installMergeDriver({
+        cwd: args.dir,
+        configFile: args.config
+      })
+      console.log(`> .gitattributes: ${attributes}`)
+      console.log(`> git config merge.alinea.driver: ${driver}`)
+      return
+    }
+    if (!base || !ours || !theirs || !file) {
+      console.error('Usage: alinea merge-driver %O %A %B %P')
+      process.exit(2)
+    }
+    const prefer = args.prefer === 'theirs' ? 'theirs' : 'ours'
+    await mergeDriver(
+      {base, ours, theirs, path: file},
+      {dir: args.dir, configFile: args.config, prefer}
+    )
+  })
+
 prog.parse(process.argv)
