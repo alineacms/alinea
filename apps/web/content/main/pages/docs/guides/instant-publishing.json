@@ -65,14 +65,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "Because content is synced at runtime, a publish from the dashboard does not need a new deployment. Every commit the dashboard makes ends with an `Alinea-Content` trailer, holding the hash of the content it commits. On Vercel you can skip the builds of those commits with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when the latest commit is a publish from the dashboard and changed nothing outside the `content` directory:"
+          "text": "Because content is synced at runtime, a publish from the dashboard does not need a new deployment. Every commit the dashboard makes ends with an `Alinea-Content` trailer, holding the hash of the content it commits, and every commit a graft store replicates to the repository ends with a `Graft-Content` trailer. On Vercel you can skip the builds of those commits with an `ignoreCommand` in `vercel.json`. The command exits successfully, which tells Vercel to skip the build, when the latest commit is a publish from the dashboard and changed nothing outside the `content` directory:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JjNWfZKlJJcGLyuGry1Hl8DMVK",
-      "code": "{\n  \"ignoreCommand\": \"git log -1 --format=%B | grep -q '^Alinea-Content:' && git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
+      "code": "{\n  \"ignoreCommand\": \"git log -1 --format=%B | grep -qE '^(Alinea|Graft)-Content:' && git diff --quiet HEAD^ HEAD -- . ':!content'\"\n}",
       "fileName": "vercel.json",
       "language": "json",
       "compact": false
