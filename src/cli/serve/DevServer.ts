@@ -18,6 +18,7 @@ import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
 import {reportError, reportFatal, reportWarning} from '../util/Report.js'
 import {createLocalServer} from './CreateLocalServer.js'
+import {DevPacks} from './DevPacks.js'
 import {GitHistory} from './GitHistory.js'
 import {LiveReload} from './LiveReload.js'
 import {LocalAuth} from './LocalAuth.js'
@@ -146,6 +147,7 @@ export async function createDevServer(
         }
 
         const history = new GitHistory(cms.config, rootDir)
+        const packs = new DevPacks(db.source)
         const handleApi = createHandler({
           cms,
           remote: backend,
@@ -172,7 +174,7 @@ export async function createDevServer(
           if (process.env.ALINEA_CLOUD_URL)
             return new CloudRemote(context, cms.config)
           const auth = new LocalAuth(context, user)
-          return composeBackend(auth, db, drafts, history)
+          return composeBackend(auth, db, packs, drafts, history)
         }
       }
 

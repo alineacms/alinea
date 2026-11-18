@@ -205,3 +205,22 @@ database records each file's mtime and size (`alinea_source_file`,
 index told which working-tree files changed since `HEAD`, and graft does
 not parse `.git/index` (GRAFT-NEEDS.md 4). Without it every file must still
 be read and hashed, which a cold start does anyway to index them.
+
+## The dev dashboard syncs with packs
+
+`alinea dev` answers `?action=sync&have=` too (`src/cli/serve/DevPacks.ts`):
+it keeps every content tree it served as git trees in memory and reads
+blobs from disk, so an edit on disk reaches the dashboard as a thin pack of
+the changed file and the directories above it. As on the graft backend the
+dashboard's first sync still goes through Tree and Blob, until graft writes
+a full pack with deltas fast enough (GRAFT-NEEDS.md 2). After a restart of
+the dev server, a dashboard's tree is no base, so its next pack holds all.
+
+Measured on `apps/dev` (61 records), the dashboard in headless Chromium
+behind a logging proxy:
+
+| sync | Tree and Blob | pack |
+| --- | ---: | ---: |
+| first load | 9.8 KB tree + 84.9 KB blobs | (Tree and Blob) |
+| one entry edited on disk | 9.8 KB tree + the blob | 282 B |
+| reload, nothing changed | tree request | 304, 0 B |
