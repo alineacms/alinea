@@ -1,8 +1,13 @@
 import type {Config} from '#/core/Config.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
-import type {RemoteSource} from '#/core/source/Source.js'
+import {HttpError} from '#/core/HttpError.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
+import type {ContentPack, RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {objectBlobs, treeObjects} from '#/core/source/TreeObjects.js'
 import {isRecord} from '#/core/util/Objects.js'
+import type {ObjectStore, StoredObject} from '@alinea/graft'
+import {readPack} from '@alinea/graft/git'
 import type {Database as WasmSqlite} from '@alinea/sqlite-wasm/Database.js'
 import {
   indexedDBSnapshots,
@@ -16,6 +21,7 @@ import {EntryDatabase} from './EntryDatabase.js'
 import {EntryStore} from './EntryStore.js'
 import {DatabaseSource} from './DatabaseSource.js'
 import {wasmHandle, wasmSqlite} from './driver/WasmDatabase.js'
+import {IndexedDBObjects} from './IndexedDBObjects.js'
 
 /**
  * Page cache in KiB. Pages of a base are read from IndexedDB as queries need
@@ -47,6 +53,11 @@ export interface BrowserEntryStoreOptions {
    * when it turned out to be corrupt.
    */
   reset?: boolean
+  /**
+   * Where the git objects of the content are kept, in IndexedDB by default:
+   * a remote that answers with packs then sends what changed since.
+   */
+  objects?: ObjectStore
 }
 
 /**
@@ -62,6 +73,9 @@ export class BrowserEntryStore extends EntryStore {
   #stored: string | undefined
   #written: Promise<unknown> = Promise.resolve()
   #cleanup: Promise<void> = Promise.resolve()
+  #objects: ObjectStore | undefined
+  /** The remote answered a pack request as an older handler does */
+  #packless = false
   /**
    * The entries were derived again from a base of another config. Refetching
    * everything after each deploy that changes the config costs more than
@@ -77,6 +91,11 @@ export class BrowserEntryStore extends EntryStore {
     const storage =
       options.storage ??
       indexedDBSnapshots(`${versionedCacheName(name)}-snapshots`)
+    const objects =
+      options.objects ??
+      (!options.storage && globalThis.indexedDB
+        ? new IndexedDBObjects(indexedDB, `${versionedCacheName(name)}-objects`)
+        : undefined)
     // Other caches are deleted in the background, they don't affect this one.
     const cleanup =
       !options.storage && globalThis.indexedDB
@@ -96,12 +115,19 @@ export class BrowserEntryStore extends EntryStore {
       config,
       session,
       storage,
-      fingerprint
+      fingerprint,
+      objects
     ).catch(error => {
       if (!session.snapshot) throw error
       // Start over from an empty database rather than one this build cannot
       // read or derive again.
-      return BrowserEntryStore.#on(config, empty(), storage, fingerprint)
+      return BrowserEntryStore.#on(
+        config,
+        empty(),
+        storage,
+        fingerprint,
+        objects
+      )
     })
     store.#cleanup = cleanup
     return store
@@ -111,7 +137,8 @@ export class BrowserEntryStore extends EntryStore {
     config: Config,
     session: Session<WasmSqlite>,
     storage: SnapshotStorage,
-    fingerprint: string
+    fingerprint: string,
+    objects: ObjectStore | undefined
   ): Promise<BrowserEntryStore> {
     const sqlite = session.db
     const branch = session.snapshot?.branch
@@ -130,7 +157,7 @@ export class BrowserEntryStore extends EntryStore {
       // save smaller deltas. Only applies to a new database.
       await db.run(sql`pragma page_size = 16384`)
       await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
-      const database = new EntryDatabase(config, db, {fork: preview})
+      const database = new EntryDatabase(config, db, {fork: preview, objects})
       // Content stored for another config is derived again for this one,
       // instead of syncing every entry from the remote into an empty
       // database.
@@ -138,6 +165,7 @@ export class BrowserEntryStore extends EntryStore {
       if (derived) await withoutJournal(sqlite, () => database.reindex(config))
       const store = new BrowserEntryStore(config, database, session, storage)
       store.#derived = derived
+      store.#objects = objects
       return store
     } catch (error) {
       await db.close()
@@ -167,7 +195,107 @@ export class BrowserEntryStore extends EntryStore {
     remote: RemoteSource,
     options?: SyncOptions
   ): Promise<string> {
-    return this.#checkpoint(await super.syncWith(remote, options))
+    const synced =
+      (await this.#syncPack(remote, options)) ??
+      (await super.syncWith(remote, options))
+    return this.#checkpoint(synced)
+  }
+
+  /**
+   * Sync with one request: a pack of what changed since the content tree
+   * whose objects this store holds. A store that holds none yet syncs its
+   * trees and blobs as before, which compress better as a whole than a pack
+   * without deltas, and keeps them as objects. Resolves to undefined for a
+   * remote that sends no packs.
+   */
+  async #syncPack(
+    remote: RemoteSource,
+    options?: SyncOptions
+  ): Promise<string | undefined> {
+    const objects = this.#objects
+    if (!objects || !remote.getPack || this.#packless) return undefined
+    const revision = await this.database.getRevision()
+    const holds =
+      revision !== ReadonlyTree.EMPTY.sha &&
+      (await objects.has([revision])).has(revision)
+    let pack: ContentPack | undefined
+    try {
+      pack = await remote.getPack(holds ? revision : undefined)
+    } catch (error) {
+      const older =
+        error instanceof HttpError && (error.code === 400 || error.code === 404)
+      if (!older) throw error
+      this.#packless = true
+      return undefined
+    }
+    if (!pack) return revision
+    if (!pack.pack) return this.#syncKeeping(remote, objects, options)
+    let received: Awaited<ReturnType<typeof readPack>>
+    try {
+      received = await readPack(pack.pack, {bases: objects})
+    } catch {
+      // The objects lack a base the pack is a delta of, or hold another
+      // version of it: ask for all of them
+      pack = (await remote.getPack(ReadonlyTree.EMPTY.sha))!
+      received = await readPack(pack.pack!)
+    }
+    // Stored before the index moves on, so they hold whatever it indexes
+    await objects.put(received)
+    const sha = pack.sha
+    return super.syncWith(
+      {
+        async getHead() {
+          return {sha, objects}
+        },
+        // An index the objects do not hold syncs as before
+        getTreeIfDifferent: sha => remote.getTreeIfDifferent(sha),
+        async *getBlobs(shas, options) {
+          const missing = new Set(shas)
+          for await (const [sha, blob] of objectBlobs(objects).getBlobs(
+            shas,
+            options
+          )) {
+            missing.delete(sha)
+            yield [sha, blob]
+          }
+          if (missing.size) yield* remote.getBlobs([...missing], options)
+        }
+      },
+      options
+    )
+  }
+
+  /** Sync through trees and blobs, and keep them as objects. */
+  async #syncKeeping(
+    remote: RemoteSource,
+    objects: ObjectStore,
+    options?: SyncOptions
+  ): Promise<string> {
+    let tree: ReadonlyTree | undefined
+    const blobs = Array<StoredObject>()
+    const revision = await super.syncWith(
+      {
+        async getTreeIfDifferent(sha) {
+          return (tree = await remote.getTreeIfDifferent(sha))
+        },
+        async *getBlobs(shas, options) {
+          for await (const [sha, data] of remote.getBlobs(shas, options)) {
+            blobs.push({sha, type: 'blob', data})
+            yield [sha, data]
+          }
+        }
+      },
+      options
+    )
+    // An older handler serves the data of an index, which can differ from
+    // the file: only exact blobs are kept
+    const hashes = await Promise.all(blobs.map(blob => hashBlob(blob.data)))
+    const exact = blobs.filter((blob, index) => hashes[index] === blob.sha)
+    // An index synced before it kept objects lacks the unchanged blobs: a
+    // pack that is a delta of one of them is then asked for whole
+    if (tree?.sha === revision)
+      await objects.put([...exact, ...treeObjects(tree)])
+    return revision
   }
 
   /** Store the content at `revision` as a base, in the background. */

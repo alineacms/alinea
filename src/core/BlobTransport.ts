@@ -8,6 +8,9 @@ import type {GetBlobsOptions} from './source/Source.js'
 import {assert} from './util/Assert.js'
 
 export const BLOB_SEQUENCE_CONTENT_TYPE = 'application/cbor-seq'
+/** A sync answers with a git pack, and names the content tree it leads to */
+export const PACK_CONTENT_TYPE = 'application/x-git-packed-objects'
+export const CONTENT_TREE_HEADER = 'alinea-content-tree'
 
 const streamChunkSize = 256 * 1024
 

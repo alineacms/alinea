@@ -4,7 +4,11 @@ import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
-import type {ContentHead, GetBlobsOptions} from './source/Source.js'
+import type {
+  ContentHead,
+  ContentPack,
+  GetBlobsOptions
+} from './source/Source.js'
 import type {ReadonlyTree} from './source/Tree.js'
 import type {User, UserInput} from './User.js'
 
@@ -99,6 +103,8 @@ export interface SyncApi {
   ): AsyncIterable<[sha: string, blob: Uint8Array]>
   /** See `RemoteSource` */
   getHead?(): Promise<ContentHead>
+  /** See `RemoteSource` */
+  getPack?(have?: string): Promise<ContentPack | undefined>
 }
 
 export interface CommitApi {

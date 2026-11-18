@@ -2,7 +2,9 @@ import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {
   BLOB_SEQUENCE_CONTENT_TYPE,
-  encodeBlobSequence
+  CONTENT_TREE_HEADER,
+  encodeBlobSequence,
+  PACK_CONTENT_TYPE
 } from '#/core/BlobTransport.js'
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
@@ -343,6 +345,11 @@ export function createHandler({
         return Response.json(await cnx.capabilities())
       }
 
+      // Clients ask once whether the backend sends packs, before they sync
+      // through the Tree and Blob actions: answer before signing them in
+      if (action === HandleAction.Sync && !cnx.getPack)
+        return new Response('Not found', {status: 404})
+
       if (action === HandleAction.Upload && request.method === 'GET') {
         const entryId = url.searchParams.get('entryId')
         if (entryId && cnx.previewUpload)
@@ -582,6 +589,28 @@ export function createHandler({
         return Response.json(tree ?? null)
       }
 
+      // A pack of what changed since the content tree the client has, from
+      // a store that keeps the content as git objects
+      if (
+        action === HandleAction.Sync &&
+        request.method === 'GET' &&
+        cnx.getPack
+      ) {
+        await periodicSync(cnx)
+        if (cnx.seed) await cnx.seed(local)
+        const pack = await cnx.getPack(params.get('have') ?? undefined)
+        if (!pack) return new Response(null, {status: 304})
+        const headers = {
+          [CONTENT_TREE_HEADER]: pack.sha,
+          'access-control-expose-headers': CONTENT_TREE_HEADER
+        }
+        // Asked without have, it names the head only
+        if (!pack.pack) return new Response(null, {status: 204, headers})
+        return new Response(pack.pack as Uint8Array<ArrayBuffer>, {
+          headers: {...headers, 'content-type': PACK_CONTENT_TYPE}
+        })
+      }
+
       if (action === HandleAction.Sha && request.method === 'GET') {
         expectJson()
         await syncForRead(sync(cnx, 'sha'))
@@ -590,6 +619,13 @@ export function createHandler({
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
+        // A store of git objects holds every blob exactly as it was saved,
+        // where the index may hold an entry's data reformatted
+        if (cnx.getHead)
+          return new Response(
+            encodeBlobSequence(cnx.getBlobs(shas, {signal: request.signal})),
+            {headers: {'content-type': BLOB_SEQUENCE_CONTENT_TYPE}}
+          )
         // Clients ask for blobs of a tree an instance answered with: one that
         // has not synced to it yet does so now and keeps them, so the remote
         // is asked for each change once instead of for every client.

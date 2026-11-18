@@ -40,11 +40,12 @@ import {identifyEntry} from '#/core/graft/IdentifyEntry.js'
 import {mergeEntryFiles} from '#/core/graft/MergeEntryFiles.js'
 import {repairEntries} from '#/core/graft/RepairEntries.js'
 import {HttpError} from '#/core/HttpError.js'
-import type {ContentHead} from '#/core/source/Source.js'
+import type {ContentHead, ContentPack} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {objectReader, readTree} from '#/core/source/TreeObjects.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import * as paths from '#/core/util/Paths.js'
+import {writeContentPack} from './ContentPack.js'
 
 export interface GraftApiOptions {
   repo: Repository
@@ -195,6 +196,20 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
 
   async getHead(): Promise<ContentHead> {
     return {sha: await this.#headTree(), objects: this.#repo.objects}
+  }
+
+  async getPack(have?: string): Promise<ContentPack | undefined> {
+    const sha = await this.#headTree()
+    if (have === undefined) return {sha}
+    if (have === sha) return undefined
+    // A content tree this store never held is no base: send all
+    const held = have && (await this.#repo.objects.has([have])).has(have)
+    const pack = await writeContentPack(
+      this.#repo.objects,
+      held ? have : undefined,
+      sha
+    )
+    return {sha, pack}
   }
 
   async #headTree(): Promise<string> {

@@ -14,6 +14,16 @@ export interface ContentHead {
   objects: ObjectStore
 }
 
+/** The content tree at a head, with the objects that lead up to it. */
+export interface ContentPack {
+  sha: string
+  /**
+   * A git pack, thin: it may store objects as deltas of what `have` holds.
+   * Missing when asked without `have`, which only names the head.
+   */
+  pack?: Uint8Array
+}
+
 export interface RemoteSource {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
   getBlobs(
@@ -25,6 +35,12 @@ export interface RemoteSource {
    * then reads the directories that changed by sha, instead of whole trees.
    */
   getHead?(): Promise<ContentHead>
+  /**
+   * A pack of the objects the content gained since `have`, a content tree
+   * whose objects the caller holds all of, or all of them for the empty
+   * tree; undefined when `have` is current.
+   */
+  getPack?(have?: string): Promise<ContentPack | undefined>
 }
 
 export interface Source extends RemoteSource {

@@ -3,7 +3,9 @@ import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import {
   BLOB_SEQUENCE_CONTENT_TYPE,
-  decodeBlobSequence
+  CONTENT_TREE_HEADER,
+  decodeBlobSequence,
+  PACK_CONTENT_TYPE
 } from './BlobTransport.js'
 import type {Config} from './Config.js'
 import type {
@@ -22,7 +24,7 @@ import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
-import type {GetBlobsOptions} from './source/Source.js'
+import type {ContentPack, GetBlobsOptions} from './source/Source.js'
 import type {User, UserInput} from './User.js'
 import {base64} from './util/Encoding.js'
 import {isRecord} from './util/Objects.js'
@@ -48,6 +50,7 @@ const reads = new Set<HandleAction>([
   HandleAction.Tree,
   HandleAction.Sha,
   HandleAction.Blob,
+  HandleAction.Sync,
   HandleAction.Resolve
 ])
 
@@ -226,6 +229,19 @@ export class Client implements LocalConnection {
       .then(tree => (tree ? new ReadonlyTree(tree) : undefined))
   }
 
+  /** Undefined when `have` is current */
+  async getPack(have?: string): Promise<ContentPack | undefined> {
+    const response = await this.#request(
+      {action: HandleAction.Sync, ...(have ? {have} : {})},
+      {headers: {accept: PACK_CONTENT_TYPE}}
+    )
+    if (response.status === 304) return undefined
+    const sha = response.headers.get(CONTENT_TREE_HEADER)
+    if (!sha) throw new Error('Missing content tree of the pack')
+    if (response.status === 204) return {sha}
+    return {sha, pack: new Uint8Array(await response.arrayBuffer())}
+  }
+
   getSha(): Promise<string> {
     return this.#requestJson({action: HandleAction.Sha}).then<string>(
       this.#failOnHttpError
@@ -305,7 +321,7 @@ export class Client implements LocalConnection {
         )
       })
       .then(async res => {
-        if (res.ok) return res
+        if (res.ok || res.status === 304) return res
         const isJson = res.headers
           .get('content-type')
           ?.includes('application/json')
