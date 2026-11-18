@@ -6,6 +6,7 @@ import {BasicAuth} from './BasicAuth.js'
 import {isBlobStore, storedBlobs, storedWrites} from './BlobStore.js'
 import {DatabaseApi} from './DatabaseApi.js'
 import {GithubApi, type GithubOptions} from './GithubApi.js'
+import {graft, type ReplicaOptions} from './graft.js'
 import {OAuth2, type OAuth2Options} from './OAuth2.js'
 import {S3Uploads, type S3UploadsOptions} from './S3Uploads.js'
 
@@ -49,7 +50,18 @@ export interface BackendOptions {
   auth?(username: string, password: string): boolean | Promise<boolean>
   oauth2?: OAuth2Options
   database: DatabaseDeclaration
-  github: GithubOptions
+  /**
+   * Keep content in a GitHub repository. Without it the content is kept in
+   * the database, see `replicas`.
+   */
+  github?: GithubOptions
+  /**
+   * Git repositories on any host the content replicates to, when it is
+   * kept in the database
+   */
+  replicas?: Array<ReplicaOptions>
+  /** The secret of the push webhook, `?action=replicate&secret=` */
+  webhookSecret?: string
   uploads?: {
     s3: S3UploadsOptions
   }
@@ -57,8 +69,15 @@ export interface BackendOptions {
 
 export function backendFromOptions(options: BackendOptions): BackendFactory {
   const db = driver[options.database.driver](options.database.client)
+  const store = options.github
+    ? () => new GithubApi(options.github!)
+    : graft({
+        database: db,
+        replicas: options.replicas,
+        webhookSecret: options.webhookSecret
+      })
   return (context, config) => {
-    const ghApi = new GithubApi(options.github)
+    const content = store(context, config)
     const dbApi = new DatabaseApi(context, {db})
     const uploadsApi = options.uploads?.s3
       ? new S3Uploads(options.uploads.s3, config.maxUploadSize)
@@ -67,7 +86,7 @@ export function backendFromOptions(options: BackendOptions): BackendFactory {
     const auth = options.oauth2
       ? new OAuth2(context, config, options.oauth2)
       : new BasicAuth(context, options.auth!)
-    return composeBackend(ghApi, dbApi, uploadsApi ?? {}, auth)
+    return composeBackend(content, dbApi, uploadsApi ?? {}, auth)
   }
 }
 
@@ -106,6 +125,8 @@ export function composeBackend(
           throw new Error(`Backend does not implement ${name}`)
         }
   }
+  const optional = (name: keyof RemoteConnection) =>
+    hasMethod(name) ? call(name) : undefined
   // A part that stores blobs, such as the database, answers the blobs it
   // has before the remote is asked, and keeps what is fetched or committed.
   const blobStore = impl.find(isBlobStore)
@@ -129,6 +150,10 @@ export function composeBackend(
     listUsers: call('listUsers'),
     createUser: call('createUser'),
     updateUser: call('updateUser'),
-    removeUser: call('removeUser')
+    removeUser: call('removeUser'),
+    seed: optional('seed'),
+    replicate: optional('replicate'),
+    webhook: optional('webhook'),
+    serveGit: optional('serveGit')
   }
 }

@@ -39,7 +39,22 @@ export interface CapabilitiesApi {
 }
 
 export interface RemoteConnection
-  extends Connection, AuthApi, CapabilitiesApi {}
+  extends Connection, AuthApi, CapabilitiesApi, StoreApi {}
+
+/** A backend keeping the content itself, such as a graft store */
+export interface StoreApi {
+  /** Imports the content deployed with the build when it holds none */
+  seed?(build: SyncApi): Promise<void>
+  /** Passes replicas not passed in the last `interval` milliseconds */
+  replicate?(interval?: number): Promise<unknown>
+  /** Answers a push webhook, `?action=replicate&secret=` */
+  webhook?(request: Request): Promise<Response>
+  /** Serves the content over git's smart HTTP, below `<handler>/git` */
+  serveGit?(
+    request: Request,
+    authorize: (request: Request) => Promise<Response | undefined>
+  ): Promise<Response>
+}
 
 export interface BrowserConnection extends Connection {
   logout?(): Promise<void>

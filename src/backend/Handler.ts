@@ -10,6 +10,7 @@ import type {
   AuthedContext,
   DraftTransport,
   RemoteConnection,
+  StoreApi,
   RequestContext
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
@@ -128,15 +129,32 @@ export function createHandler({
     }
 
     /** Log why and how long each sync took, except with files on disk. */
-    function sync(remote: RemoteSource, reason: string): Promise<string> {
+    async function sync(
+      remote: RemoteSource & StoreApi,
+      reason: string
+    ): Promise<string> {
+      // A store that keeps the content imports what was built once
+      if (remote.seed) await remote.seed(local)
       if (dev || !logSyncs) return local.syncWith(remote)
       return loggedSync(local, remote, reason)
     }
 
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
+      // Replicas get what was saved when content is read, at most every
+      // interval; their passes are claimed in the store, across servers
+      const seconds = syncInterval ?? cms.config.syncInterval ?? 60
+      const replicate =
+        cnx.replicate && Number.isFinite(seconds)
+          ? cnx.replicate(seconds * 1000)
+          : undefined
       // Waits outside the throttle: reads queued behind a hung sync answer too
-      return syncForRead(throttle(() => sync(cnx, 'interval'), syncInterval))
+      return syncForRead(
+        Promise.all([
+          throttle(() => sync(cnx, 'interval'), syncInterval),
+          replicate
+        ])
+      )
     }
 
     try {
@@ -258,6 +276,41 @@ export function createHandler({
           ?.includes('application/json')
         if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
       }
+
+      // The webhook's secret is its authorization
+      if (action === HandleAction.Replicate && cnx.webhook)
+        return await cnx.webhook(request)
+
+      // Git clients append their routes to the url they are given
+      const below = url.pathname.slice(
+        context.handlerUrl.pathname.replace(/\/$/, '').length
+      )
+      if (below.startsWith('/git/') && cnx.serveGit)
+        return await cnx.serveGit(request, async request => {
+          // Git sends the token as the password of Basic auth
+          const basic = request.headers.get('authorization')
+          const token = basic?.startsWith('Basic ')
+            ? atob(basic.slice('Basic '.length)).split(':').slice(1).join(':')
+            : undefined
+          const unauthorized = new Response('Unauthorized', {
+            status: 401,
+            headers: {'www-authenticate': 'Basic realm="alinea"'}
+          })
+          if (!token) return unauthorized
+          const authed = await cnx
+            .verify(
+              new Request(request.url, {
+                headers: {authorization: `Bearer ${token}`}
+              })
+            )
+            .catch(() => undefined)
+          if (!authed) return unauthorized
+          const roles = authed.user.roles
+          const policy = roles ? await local.createPolicy(roles) : undefined
+          // Git serves every object by sha: only for who may read it all
+          if (!policy?.canAll()) return new Response('Forbidden', {status: 403})
+          return undefined
+        })
 
       if (action === HandleAction.Capabilities && request.method === 'GET') {
         expectJson()
