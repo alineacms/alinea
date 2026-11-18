@@ -1,62 +1,90 @@
-import type {ObjectStore, StoredObject} from '@alinea/graft'
-import type {TreeItem, TreeReader} from './CompareTrees.js'
+import type {GitObject, ObjectStore, StoredObject} from '@alinea/graft'
 import {parseTreeEntries, serializeTreeEntries} from './GitUtils.js'
 import type {GetBlobsOptions, RemoteSource} from './Source.js'
 import {ReadonlyTree, type Entry} from './Tree.js'
 
-/** Reads directories from git objects, such as a graft store holds. */
-export function objectReader(objects: ObjectStore): TreeReader {
-  return async shas => {
-    const found = await objects.get([...new Set(shas)])
-    const result = new Map<string, Array<TreeItem>>()
-    for (const [sha, object] of found) {
-      if (object.type !== 'tree') continue
-      result.set(
-        sha,
-        parseTreeEntries(object.data).flatMap(entry => {
-          const tree = entry.mode === '040000'
-          // Symlinks and submodules are not content
-          if (!tree && entry.mode !== '100644' && entry.mode !== '100755')
-            return []
-          return [{name: entry.name, sha: entry.sha, tree}]
-        })
-      )
-    }
-    if (shas.includes(ReadonlyTree.EMPTY.sha))
-      result.set(ReadonlyTree.EMPTY.sha, [])
-    return result
-  }
-}
-
-/** The whole tree at `sha`, read a level at a time. */
+/** The whole tree at `sha` in alinea's form, read a level at a time. */
 export async function readTree(
-  read: TreeReader,
+  objects: ObjectStore,
   sha: string
 ): Promise<ReadonlyTree> {
-  const trees = new Map<string, ReadonlyArray<TreeItem>>()
-  let level = [sha]
+  const trees = new Map<string, Array<Entry>>([[ReadonlyTree.EMPTY.sha, []]])
+  let level = sha === ReadonlyTree.EMPTY.sha ? [] : [sha]
   while (level.length > 0) {
-    const found = await read(level)
-    for (const sha of level)
-      if (!found.has(sha)) throw new Error(`Missing tree ${sha}`)
-    for (const [sha, items] of found) trees.set(sha, items)
-    level = [...found.values()]
-      .flat()
-      .filter(item => item.tree && !trees.has(item.sha))
-      .map(item => item.sha)
+    const found = await objects.get(level)
+    for (const sha of level) {
+      const object = found.get(sha)
+      if (object?.type !== 'tree') throw new Error(`Missing tree ${sha}`)
+      // Symlinks and submodules are not content
+      trees.set(
+        sha,
+        parseTreeEntries(object.data).filter(
+          entry =>
+            entry.mode === '040000' ||
+            entry.mode === '100644' ||
+            entry.mode === '100755'
+        )
+      )
+    }
+    level = [
+      ...new Set(
+        level.flatMap(sha =>
+          trees
+            .get(sha)!
+            .filter(entry => entry.mode === '040000' && !trees.has(entry.sha))
+            .map(entry => entry.sha)
+        )
+      )
+    ]
   }
   const build = (sha: string): Array<Entry> =>
-    trees.get(sha)!.map(item =>
-      item.tree
+    trees.get(sha)!.map(entry =>
+      entry.mode === '040000'
         ? {
-            name: item.name,
+            name: entry.name,
             mode: '040000',
-            sha: item.sha,
-            entries: build(item.sha)
+            sha: entry.sha,
+            entries: build(entry.sha)
           }
-        : {name: item.name, mode: '100644', sha: item.sha}
+        : {name: entry.name, mode: entry.mode, sha: entry.sha}
     )
   return new ReadonlyTree({sha, entries: build(sha)})
+}
+
+/**
+ * In-memory trees as a store of their directories, read as a comparison
+ * reaches them, for graft's tree functions. It holds no blobs.
+ */
+export function treeStore(...roots: Array<ReadonlyTree>): ObjectStore {
+  const bySha = new Map<string, ReadonlyTree>()
+  for (const root of roots) bySha.set(root.sha, root)
+  const object = (tree: ReadonlyTree): GitObject => {
+    const entries = Array<Entry>()
+    for (const [name, child] of tree.children()) {
+      // Git sorts a directory, marked by its entries, as `name/`
+      if (child instanceof ReadonlyTree) {
+        bySha.set(child.sha, child)
+        entries.push({name, mode: child.mode, sha: child.sha, entries: []})
+      } else entries.push({name, mode: child.mode, sha: child.sha})
+    }
+    return {type: 'tree', data: serializeTreeEntries(entries)}
+  }
+  return {
+    async get(shas) {
+      const result = new Map<string, GitObject>()
+      for (const sha of shas) {
+        const tree = bySha.get(sha)
+        if (tree) result.set(sha, object(tree))
+      }
+      return result
+    },
+    async has(shas) {
+      return new Set(shas.filter(sha => bySha.has(sha)))
+    },
+    async put() {
+      throw new Error('In-memory trees are read only')
+    }
+  }
 }
 
 /** The directories of a tree as git tree objects. */

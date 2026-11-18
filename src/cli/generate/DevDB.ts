@@ -7,6 +7,7 @@ import {Entry, type EntryStatus} from '#/core/Entry.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
+import {stagedFiles} from './StagedFiles.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import type {Change} from '#/core/source/Change.js'
@@ -66,9 +67,8 @@ export class DevDB extends EntryStore {
   }
 
   static async create(options: DevDBOptions): Promise<DevDB> {
-    const source = new CachedFSSource(
-      join(options.rootDir, Config.contentDir(options.config))
-    )
+    const contentDir = join(options.rootDir, Config.contentDir(options.config))
+    const source = new CachedFSSource(contentDir)
     const {database: db} = await runtimeDatabase({
       path: options.databasePath
     })
@@ -91,6 +91,11 @@ export class DevDB extends EntryStore {
         }
       } catch {
         // Without a persisted tree every file is read from disk again
+      }
+      // A cold start hashes only files changed since git staged them
+      if (!devDb.#hydrated) {
+        const staged = await stagedFiles(contentDir)
+        if (staged) source.stage(staged)
       }
       return devDb
     } catch (error) {

@@ -2,9 +2,9 @@ import {
   type Json,
   type MaybeJson,
   type Participant,
-  session,
   SessionClient,
-  type Shape
+  type Shape,
+  ShapeMismatchError
 } from '@alinea/graft'
 import type {Atom, WritableAtom} from 'jotai'
 import type {SetStateAction} from 'react'
@@ -106,7 +106,7 @@ export class LiveSession {
     try {
       participant = await this.#client.join(this.#shape, {branch, path})
     } catch (error) {
-      if (!(error instanceof session.ShapeMismatchError)) throw error
+      if (!(error instanceof ShapeMismatchError)) throw error
       this.#shape = await this.#reload()
       participant = await this.#client.join(this.#shape, {branch, path})
     }

@@ -1,7 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import type {SyncProgress, SyncStats} from '#/core/db/LocalStore.js'
 import {timeStep} from '#/core/db/SyncStats.js'
-import {compareTrees, type TreeReader} from '#/core/source/CompareTrees.js'
+import {compareTrees, type ObjectStore} from '@alinea/graft'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {TaskQueue} from '#/core/util/Async.js'
@@ -22,10 +22,10 @@ export interface EntrySyncOptions {
    */
   recordsTree?: boolean
   /**
-   * Reads the directories of both revisions by sha, for a sync to a tree
+   * Holds the directories and files of both revisions, for a sync to a tree
    * sha: it reads only directories that changed, and records no tree.
    */
-  reader?: TreeReader
+  objects?: ObjectStore
   onProgress?(progress: SyncProgress): void
   stats?: SyncStats
 }
@@ -72,7 +72,7 @@ export class EntrySyncer {
       withinTransaction = false,
       validate = true,
       recordsTree = true,
-      reader,
+      objects,
       onProgress,
       stats
     }: EntrySyncOptions
@@ -87,7 +87,10 @@ export class EntrySyncer {
           ? await mergeChanges(
               this.#config,
               source,
-              await compareTrees(reader!, fromRevision, tree),
+              {
+                store: objects!,
+                changes: await compareTrees(objects!, fromRevision, tree)
+              },
               queries,
               {onProgress, stats}
             )

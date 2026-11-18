@@ -3,11 +3,16 @@ import type {SyncOptions} from '#/core/db/LocalStore.js'
 import {timeStep} from '#/core/db/SyncStats.js'
 import {
   compareTrees,
-  treeReader,
-  type TreeComparison,
+  emptyTree,
+  listFiles,
+  type ObjectStore,
+  type PathChange,
+  type TreeChanges,
   type TreeMove
-} from '#/core/source/CompareTrees.js'
+} from '@alinea/graft'
 import type {Change} from '#/core/source/Change.js'
+import {treeStore} from '#/core/source/TreeObjects.js'
+import {compareStrings} from '#/core/source/Utils.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
@@ -130,21 +135,32 @@ export async function mergeTrees(
   queries: SyncQueries,
   options: SyncOptions = {}
 ): Promise<SyncChanges> {
-  const comparison = await compareTrees(
-    treeReader(previousTree, tree),
-    previousTree.sha,
-    tree.sha
-  )
+  const store = treeStore(previousTree, tree)
+  const changes = await compareTrees(store, previousTree.sha, tree.sha)
   // The whole tree is at hand: it answers for any directory
   const dirSha = (path: string) => sourceDirectorySha(tree, path)
-  return mergeChanges(config, source, {...comparison, dirSha}, queries, options)
+  return mergeChanges(
+    config,
+    source,
+    {store, changes, dirSha},
+    queries,
+    options
+  )
+}
+
+/** Two trees compared in a store, as graft's `compareTrees` gives them */
+export interface StoreComparison {
+  store: ObjectStore
+  changes: TreeChanges
+  /** The sha of a directory of the second tree, by default as compared */
+  dirSha?(path: string): string
 }
 
 /** Write the changes of a tree comparison to the entry table. */
 export async function mergeChanges(
   config: Config,
   source: RemoteSource,
-  comparison: TreeComparison,
+  comparison: StoreComparison,
   queries: SyncQueries,
   {onProgress, stats}: SyncOptions = {}
 ): Promise<SyncChanges> {
@@ -156,16 +172,21 @@ export async function mergeChanges(
     containers: new Set(),
     relocated: new Set()
   }
-  const {dirSha, moves} = comparison
-  const diff = Array<Change>(...comparison.changes)
+  const {store, changes: compared} = comparison
+  const {moves} = compared
+  const dirSha =
+    comparison.dirSha ??
+    ((path: string) => compared.trees.get(path) ?? emptyTree)
+  const diff = compared.files.flatMap(fileChange)
   // A directory moved whole keeps its files: their versions only change
   // paths, without reading or parsing them again
   for (const move of moves) {
     const relocated = await timeStep(stats, 'write', () =>
       relocate(config, queries, changes, move)
     )
-    if (!relocated) diff.push(...(await comparison.expand(move)))
+    if (!relocated) diff.push(...(await expand(store, move)))
   }
+  sortChanges(diff)
   const deleted = diff.flatMap(change =>
     change.op === 'delete' ? [change.path] : []
   )
@@ -221,6 +242,39 @@ export async function mergeChanges(
     )
   )
   return changes
+}
+
+const contentModes = new Set(['100644', '100755'])
+
+/** A file change as the index takes it: changed files are added again */
+function fileChange(change: PathChange): Array<Change> {
+  const entry = change.op === 'remove' ? change.before : change.after
+  // Symlinks and submodules are not content
+  if (!contentModes.has(entry.mode)) return []
+  if (change.op === 'remove')
+    return [{op: 'delete', path: change.path, sha: entry.sha}]
+  return [{op: 'add', path: change.path, sha: entry.sha}]
+}
+
+/** The files a move removes and adds, for when it cannot be relocated */
+async function expand(store: ObjectStore, move: TreeMove) {
+  const files = await listFiles(store, move.sha)
+  return [...files].flatMap(([path, entry]): Array<Change> => {
+    if (!contentModes.has(entry.mode)) return []
+    return [
+      {op: 'delete', path: `${move.from}/${path}`, sha: entry.sha},
+      {op: 'add', path: `${move.to}/${path}`, sha: entry.sha}
+    ]
+  })
+}
+
+/** Removals first, deepest first, then additions in path order. */
+function sortChanges(changes: Array<Change>): void {
+  changes.sort((a, b) => {
+    if (a.op !== b.op) return a.op === 'delete' ? -1 : 1
+    const order = compareStrings(a.path, b.path)
+    return a.op === 'delete' ? -order : order
+  })
 }
 
 /**

@@ -1,5 +1,5 @@
+import {packSince} from '@alinea/graft/git'
 import {MemoryObjectStore, type ObjectStore} from '@alinea/graft'
-import {writeContentPack} from '#/backend/api/ContentPack.js'
 import type {SyncApi} from '#/core/Connection.js'
 import type {
   ContentPack,
@@ -66,11 +66,11 @@ export class DevPacks implements SyncApi {
     await this.#keep(tree)
     // A tree this server never served, as after a restart, is no base
     const held = have && (await this.#kept.has([have])).has(have)
-    const pack = await writeContentPack(
-      this.#objects,
-      held ? have : undefined,
-      sha
-    )
+    // Changes are deltas of the version the client holds only; a full pack
+    // tries neighbours too, which costs little and saves bytes
+    const pack = held
+      ? await packSince(this.#objects, have, sha, {window: 0})
+      : await packSince(this.#objects, undefined, sha)
     return {sha, pack}
   }
 

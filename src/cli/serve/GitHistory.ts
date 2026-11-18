@@ -9,6 +9,7 @@ import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {readCommit, readFile, revisions} from '@alinea/graft'
 import {type GitRepository, gitRepository} from '@alinea/graft/fs'
 import {parseCoAuthoredBy} from '../util/CommitMessage.js'
+import {workTreeOf} from '../util/WorkTree.js'
 
 /**
  * History of entries read from the project's `.git`, without running git.
@@ -92,15 +93,4 @@ export class GitHistory implements HistoryApi {
 async function headOf(git: GitRepository): Promise<string | undefined> {
   const branch = await git.refs.symbolic('HEAD')
   return git.refs.get(branch ?? 'HEAD')
-}
-
-/** The directory holding `.git`, at or above the project's root */
-function workTreeOf(dir: string): string | undefined {
-  let current = dir
-  while (true) {
-    if (fs.existsSync(path.join(current, '.git'))) return current
-    const parent = path.dirname(current)
-    if (parent === current) return undefined
-    current = parent
-  }
 }

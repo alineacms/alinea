@@ -20,12 +20,7 @@ import {
   type Source
 } from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {
-  objectBlobs,
-  objectReader,
-  readTree,
-  treeObjects
-} from '#/core/source/TreeObjects.js'
+import {objectBlobs, readTree, treeObjects} from '#/core/source/TreeObjects.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {TaskQueue} from '#/core/util/Async.js'
 import type {ObjectStore} from '@alinea/graft'
@@ -354,7 +349,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         head.sha,
         current,
         {
-          reader: objectReader(head.objects),
+          objects: head.objects,
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
           onProgress: options?.onProgress,
@@ -464,7 +459,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
                 ReadonlyTree.EMPTY.sha,
                 {
                   previousTree: ReadonlyTree.EMPTY,
-                  reader: objects && objectReader(objects),
+                  objects,
                   withinTransaction: true,
                   validate: true,
                   recordsTree: this.#recordsTree
@@ -654,9 +649,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#tree = row.tree
       ? new ReadonlyTree(row.tree)
       : this.#objects
-        ? await readTree(objectReader(this.#objects), row.revision).catch(
-            () => undefined
-          )
+        ? await readTree(this.#objects, row.revision).catch(() => undefined)
         : undefined
     return {revision: row.revision, tree: this.#tree}
   }

@@ -1,7 +1,6 @@
 import {type Json, merge} from '@alinea/graft'
 import {Type} from '../Type.js'
 import {isRecord} from '../util/Objects.js'
-import {renameEdits} from './Rename.js'
 
 type Data = Record<string, unknown>
 
@@ -18,9 +17,11 @@ export function mergeData(
   ours: Data,
   theirs: Data
 ): Data {
-  const shape = Type.shape(type)
-  const [from, into] = renameEdits(shape, json(base), json(ours))
-  const merged = merge(shape, from, into, json(theirs), {prefer: 'ours'})
+  // Values under old field names move to their current name in the merge,
+  // also an edit a dashboard on an older schema made under the old one
+  const merged = merge(Type.shape(type), json(base), json(ours), json(theirs), {
+    prefer: 'ours'
+  })
   return isRecord(merged) ? merged : ours
 }
 

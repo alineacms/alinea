@@ -8,7 +8,7 @@ import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {objectReader, readTree} from '#/core/source/TreeObjects.js'
+import {readTree} from '#/core/source/TreeObjects.js'
 import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
 import {DatabaseStateTable} from '#/database/DatabaseTables.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
@@ -117,7 +117,7 @@ test('a pack since a content tree holds only what changed', async () => {
   const client = new MemoryObjectStore()
   const first = (await api.getPack(ReadonlyTree.EMPTY.sha))!
   await client.put(await readPack(first.pack!))
-  const tree = await readTree(objectReader(client), first.sha)
+  const tree = await readTree(client, first.sha)
   expect(tree.sha).toBe(first.sha)
 
   expect(await api.getPack(first.sha)).toBe(undefined)

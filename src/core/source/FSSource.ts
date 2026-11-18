@@ -52,14 +52,37 @@ export interface FileStat {
   size: number
 }
 
+/** A file as git's index stages it, see `@alinea/graft/fs` */
+export interface StagedFile extends FileStat {
+  sha: string
+  ctimeMs: number
+  /** Changed in the second the index was written: its stat proves nothing */
+  racy: boolean
+}
+
+/** Stat times as git and `fs.Stats` give them, in milliseconds */
+function sameTime(a: number, b: number): boolean {
+  return Math.abs(a - b) < 0.001
+}
+
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #cwd: string
   #locations = new Map<string, string>()
   #lastModified = new Map<string, FileStat>()
+  #staged = new Map<string, StagedFile>()
 
   constructor(cwd: string) {
     this.#cwd = cwd
+  }
+
+  /**
+   * Files git's index stages, by path below this source, for a cold start:
+   * a file whose stat matches its entry holds the entry's sha, so it is not
+   * read and hashed.
+   */
+  stage(files: ReadonlyMap<string, StagedFile>): void {
+    this.#staged = new Map(files)
   }
 
   /**
@@ -131,6 +154,19 @@ export class FSSource implements Source {
         builder.add(filePath, previous.sha)
         return
       }
+    }
+    const staged = this.#staged.get(filePath)
+    if (
+      staged &&
+      !staged.racy &&
+      staged.size === stat.size &&
+      sameTime(staged.mtimeMs, stat.mtimeMs) &&
+      sameTime(staged.ctimeMs, stat.ctimeMs)
+    ) {
+      this.#locations.set(staged.sha, filePath)
+      this.#lastModified.set(filePath, {mtimeMs: stat.mtimeMs, size: stat.size})
+      builder.add(filePath, staged.sha)
+      return
     }
     let contents: Uint8Array
     try {

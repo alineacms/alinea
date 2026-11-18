@@ -6,8 +6,8 @@
 `"@alinea/graft": "file:vendor/alinea-graft-0.1.0.tgz"`. It is a dev
 dependency, as alinea's build bundles it.
 
-Built from graft at commit `7de650f707c9c1f732ce4bff34215416b497e644` (`main`), from a clean
-`git archive` of that commit.
+Built from graft at commit `31d51ac48dceff2bb1f3f7e9668aafa8ada80752`
+(`main`), from a clean `git archive` of that commit.
 
 graft's `rado` peer range, `>=1.3.0-preview.11 <2`, holds alinea's
 `1.3.0-preview.11`, so both use one copy and one `Database` type.

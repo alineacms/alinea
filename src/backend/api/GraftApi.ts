@@ -1,3 +1,4 @@
+import {packSince} from '@alinea/graft/git'
 import {
   type Author,
   type Change,
@@ -42,10 +43,9 @@ import {repairEntries} from '#/core/graft/RepairEntries.js'
 import {HttpError} from '#/core/HttpError.js'
 import type {ContentHead, ContentPack} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {objectReader, readTree} from '#/core/source/TreeObjects.js'
+import {readTree} from '#/core/source/TreeObjects.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import * as paths from '#/core/util/Paths.js'
-import {writeContentPack} from './ContentPack.js'
 
 export interface GraftApiOptions {
   repo: Repository
@@ -191,7 +191,7 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
     const root = await this.#headTree()
     if (root === sha) return undefined
-    return readTree(objectReader(this.#repo.objects), root)
+    return readTree(this.#repo.objects, root)
   }
 
   async getHead(): Promise<ContentHead> {
@@ -204,11 +204,11 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
     if (have === sha) return undefined
     // A content tree this store never held is no base: send all
     const held = have && (await this.#repo.objects.has([have])).has(have)
-    const pack = await writeContentPack(
-      this.#repo.objects,
-      held ? have : undefined,
-      sha
-    )
+    // Changes are deltas of the version the client holds only; a full pack
+    // tries neighbours too, which costs little and saves bytes
+    const pack = held
+      ? await packSince(this.#repo.objects, have, sha, {window: 0})
+      : await packSince(this.#repo.objects, undefined, sha)
     return {sha, pack}
   }
 

@@ -1,158 +1,57 @@
 # What alinea needs from graft
 
-Found while integrating graft into alinea on `graft-integration`: needs 1
-to 4 while making the index and the dashboard's sync faster on the graft
-backend, 5 to 7 in saves and live editing. Against the vendored graft
-`7de650f`; 1 to 4 also still hold on graft `main` at `9d776de`. Each need has an example that
-fails or is slow today, and what alinea does meanwhile. Numbers are from an
-Apple M4, Bun 1.4.4, Chromium from Playwright, on the generated site of
-`test/bench/initial-sync.ts` (20,000 files, 120 MB of JSON).
+Against the vendored graft `31d51ac` (`main`). The earlier needs are all in
+graft now; what is left follows them.
 
-## 1. Deltas against the receiver's version only (`writePack` with `window: 0`)
+## Landed in `31d51ac`, and what alinea did with them
 
-`writePack` considers the `bases` hint only when `window > 0`
-(`src/git/Pack.ts`, `deltable = window > 0 && ...`). A pack of edited files,
-each a delta of the version the client has, also tries a neighbour of the
-same type for every object, which almost never helps: the neighbours are
-ordered by type and size, not by path.
+| Need | In graft | In alinea |
+| --- | --- | --- |
+| Deltas against the receiver's version only | `packSince(store, have, head, {window: 0})` | `GET ?action=sync&have=` (graft backend and `alinea dev`) writes with `window: 0`; a full pack uses the default window |
+| A full pack with deltas fast enough for a build | about 2 s at 20,000 files | not used yet: the first dashboard sync stays on Tree and Blob, see `BENCHMARKS.md` |
+| `diffTrees` with moves, a pack since a tree | `compareTrees`, `packSince` | `src/core/source/CompareTrees.ts` and `src/backend/api/ContentPack.ts` removed |
+| Reading git's index | `GitRepository.index()` | a cold `alinea dev` takes staged shas (`src/cli/generate/StagedFiles.ts`) |
+| Renames where one side left the record alone | `merge` renames all three values first | `src/core/graft/Rename.ts` removed |
+| An edit under an old name next to the new one | the old name counts as that side's edit | as above |
+| `ShapeMismatchError` and `fingerprint` at the root | exported | `LiveSession` imports `ShapeMismatchError` from the root |
 
-```ts
-import {blob, stored, writePack} from '@alinea/graft/git'
+`TreeMergeOptions.baseOf` became `basesOf`: alinea had no call site.
 
-const before = await stored(blob(new TextEncoder().encode('{"title": "A", "body": "...6 KB..."}')))
-const after = await stored(blob(new TextEncoder().encode('{"title": "B", "body": "...6 KB..."}')))
-const pack = await writePack([after], {bases: new Map([[after.sha, before]]), window: 0})
-// Expected: one REF_DELTA entry of a few dozen bytes
-// Actual: `after` stored whole, as window 0 turns every delta off
+## 1. Whether a checkout writes the bytes git stages
+
+`GitRepository.index()` gives the sha git staged, which is the sha of the
+file after its clean conversion. A file checked out with CRLF line endings
+(`core.autocrlf=true`, `eol=crlf`, `text` on Windows), through a filter or
+with `ident` holds other bytes than that blob, even with a matching stat:
+
+```sh
+git init -q repo && cd repo
+git config core.autocrlf true
+printf '{"title":"A"}\n' > a.json && git add a.json
+git ls-files -s a.json                 # the sha of the LF file
+rm a.json && git checkout a.json       # written back with CRLF
+git hash-object --no-filters a.json    # another sha, same stat as staged
 ```
 
-A sync of 1,000 edits (1,861 changed trees and blobs) writes in 317 ms with
-`window: 1`, 109 ms with `window: 0`, but the latter is 1.1 MB instead of
-122 KB. alinea uses `window: 1` for thin packs (`src/backend/api/ContentPack.ts`).
-Wanted: hints tried with any window, or `window: 0` meaning "hints only".
+So alinea guesses from the repository's config, the user's global config
+and `.gitattributes` files from the content directory up whether a checkout
+converts, and then hashes every file (`converts` in
+`src/cli/generate/StagedFiles.ts`). The guess reads no system config, no
+`include`/`includeIf`, and no `.gitattributes` below the content directory.
+What would make it exact: per index entry, whether the checkout of the path
+converts it (git's `convert_to_working_tree` decision from config and
+attributes), or a function answering that for a path.
 
-## 2. A full pack with deltas, fast enough for a build
-
-A pack of all 20,000 blobs takes 1.05 s and 13.3 MB with `window: 0`, and
-17.8 s and 3.3 MB with `window: 10` (`readPack` of it: 1.8 s and 0.9 s).
-The prebuilt pack of point 3 of the plan (a static, cacheable pack of the
-content at a commit, for a first dashboard load) wants the 3.3 MB at build
-time, where 18 s per 20,000 files is too slow, and gzip of the plain
-concatenated JSON already gets 4.7 MB.
-
-```ts
-const objects = files.map(file => blob(file.contents)) // 20,000 entry files
-await writePack(objects, {window: 10}) // 17.8 s
-```
-
-Wanted: candidates ordered by path (git's name hash: files of one directory
-or one name in other locales are near each other) instead of by size only,
-and a faster `createDelta` (an index of the base, as git's `diff-delta`, is
-built once per base rather than once per pair).
-
-## 3. A pack of what a content tree lacks, as an engine function
-
-The design's `GET /sync?have=` (decision 7) needs "the objects head holds
-that have does not". `gitServer` computes that for upload-pack (`collect`
-in `src/git/Server.ts`, with thin bases paired by path), but works on
-commits and is not exported. `diffTrees` returns changed files only: not
-the trees it read, not the directories that moved whole, so it cannot
-build that pack, nor let an index skip a moved directory.
-
-```ts
-import {diffTrees} from '@alinea/graft'
-
-// pages/a moved to pages/b/a with 800 files below it
-await diffTrees(store, before, after)
-// Actual: 800 removals and 800 additions, and the moved trees read
-// Wanted: {files, trees read, moves: [{from: 'pages/a', to: 'pages/b/a', sha}]}
-```
-
-alinea has its own level-by-level comparison for this
-(`src/core/source/CompareTrees.ts`: changed files, moved directories, the
-trees of the new side it read, the previous sha of each object changed in
-place, the shas the old side lists) and builds the pack from it
-(`src/backend/api/ContentPack.ts`). Wanted: `diffTrees` with moves and the
-trees it read, and `packSince(store, haveTree, headTree, options)` returning
-a thin pack, so the cloud and alinea run the same code.
-
-## 4. Reading git's index for local development
-
-Local development indexes the content directory of a working tree. The
-committed content is in `.git`, which `@alinea/graft/fs` reads
-(`gitRepository`), but which working-tree files changed since `HEAD` can
-only be known by hashing every file: graft does not parse `.git/index`.
-
-```ts
-import {gitRepository} from '@alinea/graft/fs'
-
-const repo = gitRepository('.') // reads objects and refs, never the index
-// Wanted: the staged entries with the stat data git compares
-await repo.index() // Property 'index' does not exist on type GitRepository
-// -> Map<path, {sha, mode, size, mtimeMs, ctimeMs, ino, dev}>
-```
-
-With it a cold dev start (no `.alinea` database yet) would stat each file,
-take the sha from the index for files whose stat matches, and hash only the
-others, then reuse an index built for `HEAD`'s content tree and parse only
-the changed files. Today alinea's dev database keeps its own stat cache
-(`alinea_source_file`, `CachedFSSource`), so a warm start already hashes
-only changed files; a cold start reads and hashes all of them. Index
-versions 2 to 4 (with path prefix compression in 4), and the `split index`
-and `untracked cache` extensions, would need handling or an explicit
-refusal.
-
-## 5. Renames where one side left the record alone
-
-`merge` returns a side as it is when the other equals the base, before a
-record's `renamed` applies, so a file written under an old name keeps it,
-and so does the merged result:
-
-```ts
-const page = shape.record({tagline: shape.atomic()}, {renamed: {subtitle: 'tagline'}})
-merge(page, {subtitle: 'a'}, {subtitle: 'a'}, {subtitle: 'b'}, {prefer: 'ours'})
-// {subtitle: 'b'}, expected {tagline: 'b'}
-```
-
-Saves in alinea do not depend on it: the save path moves old names itself
-(`src/core/graft/Rename.ts`, below). Tree merges and the merge driver do, for
-entries written before a rename that one side left alone.
-
-## 6. An edit under an old name, next to the new one
-
-A dashboard on an older schema keeps a field it does not know as it read it
-and edits the old name, so its side holds both. `rename` keeps the value
-under the current name and drops the edit:
-
-```ts
-merge(page, {tagline: 'a', subtitle: ''}, {tagline: 'a', subtitle: 'edited'},
-  {tagline: 'a'}, {prefer: 'ours'})
-// {tagline: 'a'}, expected {tagline: 'edited'}
-```
-
-alinea moves an old name that changed against the base onto the new one
-before merging (`renameEdits` in `src/core/graft/Rename.ts`, tested in
-`src/core/graft/Shapes.test.ts` and `test/graft/SaveMerge.test.ts`). With a
-base-aware rule in `mergeRecord` (an old name that changed against the base
-is that side's edit of the new one) alinea could drop it.
-
-## 7. Session errors and fingerprints at the root
-
-`SessionClient.join` throws `ShapeMismatchError`, but it is only exported as
-`session.ShapeMismatchError`, so a dashboard that only joins imports the host
-namespace to catch it (`src/dashboard/live/LiveSession.ts`). `fingerprint`
-is not exported at all: alinea cannot say before joining, or in an error,
-which shape it holds. Both at the root, or in the `./session` entry the API
-review proposes, would do.
-
-## 8. Observations that are not needs (yet)
+## 2. Observations that are not needs (yet)
 
 - `readPack` inflates in JavaScript (the pack format needs to know where
   each zlib stream ends): 1.8 s for 13 MB with 20,000 objects in Bun. alinea
-  avoids full packs on a first dashboard load for this reason, and syncs
-  trees and blobs through its own endpoints, keeping them as objects.
+  keeps the first dashboard load on Tree and Blob partly for this reason.
+  graft's new streaming `unpack` is not used by alinea yet.
 - `sqlRepository` stores objects uncompressed, so the server's database
-  holds the 120 MB of content once more beside alinea's index.
-- Hashing in `readPack` is one `crypto.subtle.digest` per object, awaited
-  in turn. That measured 8 µs per 6 KB object in a Chromium worker, so it is
-  not where time goes.
+  holds the content once more beside alinea's index. `BucketStore` and
+  `LazyStore`'s cache could keep blobs in R2 or S3 instead; not adopted.
+- Not adopted either, possibly useful later: `packStream` and
+  `Remote.fetch({store})` for the first load, `gitServer`'s `stage`, the
+  Durable Object store (`@alinea/graft/durable`), `gitRemote({paths})`, and
+  lenses with separate `create` and `remove` rights for reading rights.
