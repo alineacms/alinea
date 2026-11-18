@@ -171,7 +171,7 @@
 
     "@alinea/dev": ["@alinea/dev@workspace:apps/dev"],
 
-    "@alinea/graft": ["@alinea/graft@vendor/alinea-graft-0.1.0.tgz", { "peerDependencies": { "rado": ">=1.3.0-preview.11 <2" }, "optionalPeers": ["rado"] }, "sha512-QZtulmLsCYaZrVKuv/LfhQLRGzVOv6KwAsAY1adHJkZwL0OKa5MAem28sp6aTDSEJvEeN27Uw/kJdUUdly7/4w=="],
+    "@alinea/graft": ["@alinea/graft@vendor/alinea-graft-0.1.0.tgz", { "peerDependencies": { "rado": ">=1.3.0-preview.11 <2" }, "optionalPeers": ["rado"] }, "sha512-GaNQxuJZz97YsGCCA8pL/mJNdFW3xlu+KDdgq65fN4sn+ifASOC4lRtEYZNtXpvUFiaKSJp8yENj3+WwB+h2YA=="],
 
     "@alinea/iso": ["@alinea/iso@0.3.3", "", {}, "sha512-ftRGW2+sM/9SBbn3zF6hXICNluEInaAMw49IHGKCUBkrsn0SN8mG/+bK1iz9+ibE1Dto736KwDfr3lcBVN5t8g=="],
 
