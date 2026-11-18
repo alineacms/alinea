@@ -14,13 +14,21 @@ import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {
   SourceTransaction,
+  type ContentHead,
   type GetBlobsOptions,
   type RemoteSource,
   type Source
 } from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {
+  objectBlobs,
+  objectReader,
+  readTree,
+  treeObjects
+} from '#/core/source/TreeObjects.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {TaskQueue} from '#/core/util/Async.js'
+import type {ObjectStore} from '@alinea/graft'
 import {eq, getTable, inArray, Rollback, sql, type Database} from 'rado'
 import {DatabaseSource} from './DatabaseSource.js'
 import {
@@ -69,6 +77,11 @@ export interface EntryDatabaseOptions {
    * A database that keeps the statistics it was built with skips the cost.
    */
   analyzes?: boolean
+  /**
+   * Git objects of the content, kept apart from the index: syncs from a head
+   * in them record no tree, and blobs are read from them.
+   */
+  objects?: ObjectStore
 }
 
 export interface EntryApplyOptions {
@@ -102,6 +115,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #queue = new TaskQueue()
   #syncQueue = new TaskQueue()
   #tree?: ReadonlyTree
+  /** Git objects of the indexed content, when it came from them. */
+  #objects?: ObjectStore
   #initialTree?: ReadonlyTree
   #recordsTree: boolean
   #analyzes: boolean
@@ -123,6 +138,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#syncer = new EntrySyncer(config, db)
     this.#recordsTree = options.recordsTree ?? true
     this.#analyzes = options.analyzes ?? true
+    this.#objects = options.objects
   }
 
   get config(): Config {
@@ -183,6 +199,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       analyzes: false
     })
     overlay.#tree = tree
+    overlay.#objects = this.#objects
     try {
       await overlay.syncWith(source)
       return overlay
@@ -269,17 +286,30 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#assertOpen()
     return this.#syncQueue.run(async () => {
       const current = await this.#queue.run(() => this.#getRevision(this.#db))
+      const head = await timeStep(options?.stats, 'tree', async () =>
+        source.getHead?.()
+      )
+      if (head?.sha === current) return {revision: current, changedEntryIds: []}
+      if (head && (await this.#holds(head.objects, current)))
+        return this.#syncHead(head, current, options)
       const tree = await timeStep(options?.stats, 'tree', () =>
         source.getTreeIfDifferent(current)
       )
       if (!tree) return {revision: current, changedEntryIds: []}
       this.#initialTree ??= tree
       const changedEntryIds = await this.#queue.run(async () => {
+        // Another instance on the same database file (the dev server and the
+        // site, or a restarted process) may have moved the revision on, then
+        // the stored tree is the one to diff against. A database synced from
+        // objects records none: they hold it.
+        const previousTree =
+          this.#tree?.sha === current
+            ? this.#tree
+            : this.#objects
+              ? (await this.#readTreeState()).tree
+              : undefined
         const changed = await this.#syncer.sync(source, tree, current, {
-          // Another instance on the same database file (the dev server and
-          // the site, or a restarted process) may have moved the revision on,
-          // then the stored tree is the one to diff against
-          previousTree: this.#tree?.sha === current ? this.#tree : undefined,
+          previousTree,
           withinTransaction: this.#transactional,
           validate: options?.validate ?? true,
           recordsTree: this.#recordsTree,
@@ -295,6 +325,51 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       this.#emitChange(change)
       return change
     })
+  }
+
+  /**
+   * Whether the objects hold the indexed tree, to compare a head with. This
+   * database's own store gets the directories of the tree it recorded before
+   * it kept one.
+   */
+  async #holds(objects: ObjectStore, revision: string): Promise<boolean> {
+    if (revision === ReadonlyTree.EMPTY.sha) return true
+    if ((await objects.has([revision])).has(revision)) return true
+    if (objects !== this.#options.objects) return false
+    const {tree} = await this.#queue.run(() => this.#readTreeState())
+    if (!tree) return false
+    await objects.put(treeObjects(tree))
+    return true
+  }
+
+  /** Sync to a head by comparing its directories with the indexed ones. */
+  async #syncHead(
+    head: ContentHead,
+    current: string,
+    options?: SyncOptions
+  ): Promise<EntrySyncResult> {
+    const changedEntryIds = await this.#queue.run(async () => {
+      const changed = await this.#syncer.sync(
+        objectBlobs(head.objects),
+        head.sha,
+        current,
+        {
+          reader: objectReader(head.objects),
+          withinTransaction: this.#transactional,
+          validate: options?.validate ?? true,
+          onProgress: options?.onProgress,
+          stats: options?.stats
+        }
+      )
+      this.#objects = head.objects
+      this.#tree = undefined
+      if (changed.length > 0)
+        await timeStep(options?.stats, 'analyze', () => this.#optimize())
+      return changed
+    })
+    const change = {revision: head.sha, changedEntryIds}
+    this.#emitChange(change)
+    return change
   }
 
   /**
@@ -323,17 +398,31 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         const {tree} = await this.#readTreeState()
         if (!tree)
           throw new Error('Cannot reindex a database without a source tree')
+        const holds = this.#objects && (await this.#objects.has([tree.sha]))
+        const objects = holds?.has(tree.sha) ? this.#objects : undefined
         const reindexed = await this.#db.transaction(
           async tx => {
-            // The stored payloads are the exact source files of the recorded
-            // tree, so they feed the sync back in without an external source.
-            await tx.run(sql`drop table if exists temp.${blobs}`)
-            await tx.run(sql`create temp table ${blobs} as
-              select ${entries.fileHash} as sha,
-                coalesce(${entries.payload}, ${entryDataText(entries)}) as blob
-              from ${entries}`)
-            // Read back in batches by hash: a scan per batch takes a second.
-            await tx.run(sql`create index temp.${blobsBySha} on ${blobs} (sha)`)
+            // Blobs come from the objects of the content, else from the
+            // stored payloads: the exact source files of the recorded tree.
+            // Either feeds the sync back in without an external source.
+            const hashes = await tx.all<{sha: string}>(
+              sql`select distinct ${entries.fileHash} as sha from ${entries}`
+            )
+            const held = objects
+              ? await objects.has(hashes.map(row => row.sha))
+              : new Set<string>()
+            const fromRows = held.size < hashes.length
+            if (fromRows) {
+              await tx.run(sql`drop table if exists temp.${blobs}`)
+              await tx.run(sql`create temp table ${blobs} as
+                select ${entries.fileHash} as sha,
+                  coalesce(${entries.payload}, ${entryDataText(entries)}) as blob
+                from ${entries}`)
+              // Read back in batches by hash: a scan per batch takes a second.
+              await tx.run(
+                sql`create index temp.${blobsBySha} on ${blobs} (sha)`
+              )
+            }
             await tx.delete(entries)
             await tx.delete(EntrySearchTable)
             await tx.delete(EntryReferenceTable)
@@ -351,7 +440,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
                 return tree
               },
               async *getBlobs(shas) {
-                for (const batch of chunks(shas, 400)) {
+                const stored = shas.filter(sha => held.has(sha))
+                if (objects && stored.length)
+                  yield* objectBlobs(objects).getBlobs(stored)
+                const rest = shas.filter(sha => !held.has(sha))
+                for (const batch of chunks(rest, 400)) {
                   const rows = await tx.all<{sha: string; blob: string}>(
                     sql`select sha, blob from temp.${blobs}
                       where sha in (${sql.join(
@@ -367,10 +460,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
             try {
               const changedEntryIds = await this.#syncer.sync(
                 snapshot,
-                tree,
+                objects ? tree.sha : tree,
                 ReadonlyTree.EMPTY.sha,
                 {
                   previousTree: ReadonlyTree.EMPTY,
+                  reader: objects && objectReader(objects),
                   withinTransaction: true,
                   validate: true,
                   recordsTree: this.#recordsTree
@@ -378,7 +472,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
               )
               return {revision: tree.sha, changedEntryIds, tree}
             } finally {
-              await tx.run(sql`drop table if exists temp.${blobs}`)
+              if (fromRows)
+                await tx.run(sql`drop table if exists temp.${blobs}`)
             }
           },
           {async: true}
@@ -501,6 +596,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
             })
             working.#syncer = this.#syncer
             working.#tree = tree
+            working.#objects = this.#objects
             working.#transactional = true
             const result = await run(working)
             return commit ? result : tx.rollback(result)
@@ -555,7 +651,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       .where(eq(state.id, 1))
       .get()
     if (row == null) throw new Error('Missing database state')
-    this.#tree = row.tree ? new ReadonlyTree(row.tree) : undefined
+    this.#tree = row.tree
+      ? new ReadonlyTree(row.tree)
+      : this.#objects
+        ? await readTree(objectReader(this.#objects), row.revision)
+        : undefined
     return {revision: row.revision, tree: this.#tree}
   }
 
@@ -565,7 +665,19 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const encoder = new TextEncoder()
     const requested = new Set(shas)
-    for (const batch of chunks(shas, 400)) {
+    let pending = shas
+    if (this.#objects) {
+      for await (const [sha, blob] of objectBlobs(this.#objects).getBlobs(
+        shas,
+        options
+      )) {
+        requested.delete(sha)
+        yield [sha, blob]
+      }
+      // An index synced before it kept objects holds the others
+      pending = [...requested]
+    }
+    for (const batch of chunks(pending, 400)) {
       if (options.signal?.aborted)
         throw options.signal.reason ?? new Error('Blob transfer aborted')
       const target = EntryIndexTable

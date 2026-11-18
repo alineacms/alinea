@@ -1,13 +1,14 @@
 import type {Config} from '#/core/Config.js'
 import type {SyncProgress, SyncStats} from '#/core/db/LocalStore.js'
 import {timeStep} from '#/core/db/SyncStats.js'
+import {compareTrees, type TreeReader} from '#/core/source/CompareTrees.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {TaskQueue} from '#/core/util/Async.js'
 import type {Database} from 'rado'
 import {supportsJsonb} from '../entry/EntryData.js'
 import {deriveEntries} from './Derive.js'
-import {mergeTrees} from './Ingest.js'
+import {mergeChanges, mergeTrees} from './Ingest.js'
 import {prepareSyncQueries, type SyncQueries} from './SyncQueries.js'
 
 export interface EntrySyncOptions {
@@ -20,6 +21,11 @@ export interface EntrySyncOptions {
    * reopened and synced from it. Defaults to true.
    */
   recordsTree?: boolean
+  /**
+   * Reads the directories of both revisions by sha, for a sync to a tree
+   * sha: it reads only directories that changed, and records no tree.
+   */
+  reader?: TreeReader
   onProgress?(progress: SyncProgress): void
   stats?: SyncStats
 }
@@ -47,7 +53,7 @@ export class EntrySyncer {
   /** Stream a source/tree diff directly into the canonical SQLite table. */
   sync(
     source: RemoteSource,
-    tree: ReadonlyTree,
+    tree: ReadonlyTree | string,
     fromRevision: string,
     options: EntrySyncOptions = {}
   ): Promise<Array<string>> {
@@ -59,13 +65,14 @@ export class EntrySyncer {
 
   async #sync(
     source: RemoteSource,
-    tree: ReadonlyTree,
+    tree: ReadonlyTree | string,
     fromRevision: string,
     {
       previousTree,
       withinTransaction = false,
       validate = true,
       recordsTree = true,
+      reader,
       onProgress,
       stats
     }: EntrySyncOptions
@@ -75,34 +82,51 @@ export class EntrySyncer {
       const state = await queries.revision.get()
       if (state?.revision !== fromRevision)
         throw new Error('Database revision mismatch')
-      if (previousTree && previousTree.sha !== fromRevision)
-        throw new Error('Cached tree revision mismatch')
-      const stored = previousTree ? undefined : await queries.tree.get()
-      const storedTree =
-        previousTree ??
-        (stored?.tree ? new ReadonlyTree(stored.tree) : undefined)
-      if (!storedTree && (await queries.entryCount.get())?.value !== 0)
-        throw new Error(
-          'Cannot sync a populated database without a recorded source tree'
-        )
-      const changes = await mergeTrees(
-        this.#config,
-        source,
-        storedTree ?? ReadonlyTree.EMPTY,
-        tree,
-        queries,
-        {onProgress, stats}
-      )
+      const changes =
+        typeof tree === 'string'
+          ? await mergeChanges(
+              this.#config,
+              source,
+              await compareTrees(reader!, fromRevision, tree),
+              queries,
+              {onProgress, stats}
+            )
+          : await mergeTrees(
+              this.#config,
+              source,
+              await this.#storedTree(queries, fromRevision, previousTree),
+              tree,
+              queries,
+              {onProgress, stats}
+            )
       const changed = await timeStep(stats, 'derive', () =>
         deriveEntries(this.#config, queries, changes, validate, stats)
       )
+      const recorded = typeof tree !== 'string' && recordsTree
       await queries.setRevision.run({
-        revision: tree.sha,
-        tree: recordsTree ? JSON.stringify(tree) : null
+        revision: typeof tree === 'string' ? tree : tree.sha,
+        tree: recorded ? JSON.stringify(tree) : null
       })
       return changed
     }
     return withinTransaction ? run() : this.#db.transaction(run, {async: true})
+  }
+
+  async #storedTree(
+    queries: SyncQueries,
+    fromRevision: string,
+    previousTree?: ReadonlyTree
+  ): Promise<ReadonlyTree> {
+    if (previousTree && previousTree.sha !== fromRevision)
+      throw new Error('Cached tree revision mismatch')
+    if (previousTree) return previousTree
+    const stored = await queries.tree.get()
+    if (stored?.tree) return new ReadonlyTree(stored.tree)
+    if ((await queries.entryCount.get())?.value !== 0)
+      throw new Error(
+        'Cannot sync a populated database without a recorded source tree'
+      )
+    return ReadonlyTree.EMPTY
   }
 
   #prepared(): Promise<SyncQueries> {

@@ -1,3 +1,4 @@
+import type {ObjectStore} from '@alinea/graft'
 import {accumulate} from '../util/Async.js'
 import type {Change, ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
@@ -7,12 +8,23 @@ export interface GetBlobsOptions {
   signal?: AbortSignal
 }
 
+/** A content tree and the git objects holding it, such as a graft store. */
+export interface ContentHead {
+  sha: string
+  objects: ObjectStore
+}
+
 export interface RemoteSource {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
   getBlobs(
     shas: ReadonlyArray<string>,
     options?: GetBlobsOptions
   ): AsyncIterable<[sha: string, blob: Uint8Array]>
+  /**
+   * The content tree this source is at, with the objects holding it: a sync
+   * then reads the directories that changed by sha, instead of whole trees.
+   */
+  getHead?(): Promise<ContentHead>
 }
 
 export interface Source extends RemoteSource {

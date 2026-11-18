@@ -139,6 +139,7 @@ export function composeBackend(
     getBlobs: blobStore
       ? storedBlobs(blobStore, call('getBlobs'))
       : call('getBlobs'),
+    getHead: optional('getHead'),
     write: blobStore ? storedWrites(blobStore, call('write')) : call('write'),
     revisions: call('revisions'),
     revisionData: call('revisionData'),

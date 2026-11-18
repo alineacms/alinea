@@ -96,6 +96,11 @@ class TreeBase<Node extends TreeBase<Node>> {
     return this.nodes.has(name)
   }
 
+  /** The files and directories directly in this tree. */
+  children(): IterableIterator<[string, Node | Leaf]> {
+    return this.nodes.entries()
+  }
+
   *[Symbol.iterator](): IterableIterator<[string, Node | Leaf]> {
     for (const [name, entry] of this.nodes) {
       yield [name, entry] as const

@@ -247,8 +247,9 @@ async function deriveStatus(
 
 /**
  * Give every version of a language the url of its main version. That url
- * depends on the main version's own file only: it is parsed along with the
- * file, and computed again when an older version becomes main.
+ * depends on the main version's own file and path: it is parsed along with
+ * the file, and computed again when an older version becomes main or the
+ * version moved along with its directory.
  */
 async function deriveUrls(
   config: Config,
@@ -256,14 +257,16 @@ async function deriveUrls(
   languages: Map<string, Language>,
   keys: Iterable<string>,
   inserted: Set<string>,
-  mainChanged: Set<string>
+  mainChanged: Set<string>,
+  relocated: Set<string>
 ): Promise<void> {
   const pending = Array<{language: Language; main: Version}>()
   for (const key of keys) {
     const language = languages.get(key)!
     const main = language.find(version => version.main)
     if (!main) continue
-    if (inserted.has(main.versionId) || !mainChanged.has(key))
+    const stale = mainChanged.has(key) || relocated.has(main.versionId)
+    if (inserted.has(main.versionId) || !stale)
       for (const version of language) version.url = main.url
     else pending.push({language, main})
   }
@@ -372,13 +375,19 @@ export async function deriveEntries(
     new Set([...touched, ...moved]),
     changes.touched
   )
+  const relocated = Array.from(languages.keys()).filter(key =>
+    languages
+      .get(key)!
+      .some(version => changes.relocated.has(version.versionId))
+  )
   await deriveUrls(
     config,
     queries,
     languages,
-    new Set([...touched, ...mainChanged]),
+    new Set([...touched, ...mainChanged, ...relocated]),
     changes.inserted,
-    mainChanged
+    mainChanged,
+    changes.relocated
   )
   const written = new Set<string>()
   const updates = Array<object>()

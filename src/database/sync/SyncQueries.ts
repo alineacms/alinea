@@ -260,6 +260,19 @@ export function prepareSyncQueries(
       .from(sql`json_each(${versions})`)
       .where(eq(entries.versionId, derived<string>('versionId')))
       .prepare(undefined, db),
+    /** Move versions to the paths given as a JSON array of objects. */
+    relocateVersions: builder
+      .update(entries)
+      .set({
+        filePath: derived<string>('filePath'),
+        parentDir: derived<string>('parentDir'),
+        childrenDir: derived<string>('childrenDir'),
+        level: derived<number>('level'),
+        sourceRoot: derived<string | null>('sourceRoot')
+      })
+      .from(sql`json_each(${versions})`)
+      .where(eq(entries.versionId, derived<string>('versionId')))
+      .prepare(undefined, db),
     /** An entry whose versions disagree on what all of them must share. */
     mismatchedEntry: builder
       .select({id: entries.id})

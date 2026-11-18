@@ -8,12 +8,10 @@ import {
   connect,
   emptyTree,
   entryAt,
-  Mode,
   parseTrailers,
   type Person,
   readCommit,
   readFile,
-  readTrees,
   replicate,
   type ReplicaEndpoint,
   type ReplicaStatus,
@@ -23,7 +21,6 @@ import {
   type SessionLog,
   sessionServer,
   StrictError,
-  type TreeEntry,
   type TreeMergeOptions,
   webhook,
   withTrailers
@@ -43,7 +40,9 @@ import {identifyEntry} from '#/core/graft/IdentifyEntry.js'
 import {mergeEntryFiles} from '#/core/graft/MergeEntryFiles.js'
 import {repairEntries} from '#/core/graft/RepairEntries.js'
 import {HttpError} from '#/core/HttpError.js'
-import {ReadonlyTree, type Entry as TreeNode} from '#/core/source/Tree.js'
+import type {ContentHead} from '#/core/source/Source.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
+import {objectReader, readTree} from '#/core/source/TreeObjects.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import * as paths from '#/core/util/Paths.js'
 
@@ -189,10 +188,18 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
   }
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
-    const head = await this.#repo.refs.get(this.#ref)
-    const root = head ? await this.#contentTree(head) : emptyTree
+    const root = await this.#headTree()
     if (root === sha) return undefined
-    return this.#readTree(root)
+    return readTree(objectReader(this.#repo.objects), root)
+  }
+
+  async getHead(): Promise<ContentHead> {
+    return {sha: await this.#headTree(), objects: this.#repo.objects}
+  }
+
+  async #headTree(): Promise<string> {
+    const head = await this.#repo.refs.get(this.#ref)
+    return head ? this.#contentTree(head) : emptyTree
   }
 
   async *getBlobs(
@@ -439,39 +446,5 @@ export class GraftApi implements CommitApi, SyncApi, HistoryApi {
       current = (await readCommit(this.#repo.objects, current)).parents[0]
     }
     return this.#repo.refs.get(this.#ref)
-  }
-
-  /** The content tree in alinea's form, read a level at a time */
-  async #readTree(root: string): Promise<ReadonlyTree> {
-    const trees = new Map<string, Array<TreeEntry>>()
-    let level = [root]
-    while (level.length > 0) {
-      const read = await readTrees(this.#repo.objects, level)
-      for (const [sha, entries] of read) trees.set(sha, entries)
-      level = [...read.values()]
-        .flat()
-        .filter(entry => entry.mode === Mode.tree && !trees.has(entry.sha))
-        .map(entry => entry.sha)
-    }
-    const build = (sha: string): Array<TreeNode> =>
-      trees
-        .get(sha)!
-        .filter(
-          entry =>
-            entry.mode === Mode.tree ||
-            entry.mode === Mode.file ||
-            entry.mode === Mode.executable
-        )
-        .map(entry =>
-          entry.mode === Mode.tree
-            ? {
-                name: entry.name,
-                mode: '040000',
-                sha: entry.sha,
-                entries: build(entry.sha)
-              }
-            : {name: entry.name, mode: entry.mode, sha: entry.sha}
-        )
-    return new ReadonlyTree({sha: root, entries: build(root)})
   }
 }

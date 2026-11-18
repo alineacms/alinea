@@ -694,3 +694,45 @@ test('a sync measures its steps and the versions it derives', async () => {
     sqlite.close()
   }
 })
+
+test('a moved directory keeps its entries without reading them', async () => {
+  const source = new MemorySource()
+  await syncWith(source, new FSSource('test/fixtures/demo'))
+  const read = Array<string>()
+  const remote: Source = {
+    getTree: () => source.getTree(),
+    getTreeIfDifferent: sha => source.getTreeIfDifferent(sha),
+    async *getBlobs(shas, options) {
+      read.push(...shas)
+      yield* source.getBlobs(shas, options)
+    },
+    applyChanges: batch => source.applyChanges(batch)
+  }
+  const incremental = await openRuntime(cms.config)
+  const full = await openRuntime(cms.config)
+  try {
+    await incremental.runtime.syncWith(remote)
+    await change(source, tx => {
+      tx.rename('pages/recipes.json', 'pages/index/cookies.json')
+      tx.rename('pages/recipes', 'pages/index/cookies')
+    })
+    read.length = 0
+    const result = await incremental.runtime.syncWith(remote)
+    // Only the moved entry's own file
+    expect(read.length).toBe(1)
+    expect(result.changedEntryIds).toContain('oi4qtV9YaXNRIUDT2s61Y')
+    const moved = await incremental.db
+      .select({url: EntryIndexTable.url, level: EntryIndexTable.level})
+      .from(EntryIndexTable)
+      .where(eq(EntryIndexTable.id, 'oi4qtV9YaXNRIUDT2s61Y'))
+      .get()
+    expect(moved).toEqual({url: '/cookies/chocolate-chip', level: 2})
+    await full.runtime.syncWith(source)
+    expect(await storedRows(incremental.db)).toEqual(await storedRows(full.db))
+  } finally {
+    await incremental.runtime.close()
+    incremental.sqlite.close()
+    await full.runtime.close()
+    full.sqlite.close()
+  }
+})

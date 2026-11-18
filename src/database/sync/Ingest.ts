@@ -1,10 +1,18 @@
 import type {Config} from '#/core/Config.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
 import {timeStep} from '#/core/db/SyncStats.js'
+import {
+  compareTrees,
+  treeReader,
+  type TreeComparison,
+  type TreeMove
+} from '#/core/source/CompareTrees.js'
+import type {Change} from '#/core/source/Change.js'
 import type {RemoteSource} from '#/core/source/Source.js'
-import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
+import {parseEntryFilePath} from '#/core/util/EntryFilenames.js'
 import {entryIndexRow} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {insertEntryValues, type SyncQueries} from './SyncQueries.js'
@@ -26,6 +34,8 @@ export interface SyncChanges {
   childDirs: Set<string>
   /** Entries whose child directory changed in the source tree. */
   containers: Set<string>
+  /** Versions moved along with a directory, whose url follows the move. */
+  relocated: Set<string>
 }
 
 interface FileRow {
@@ -64,7 +74,7 @@ async function removeVersions(
 
 function parseFiles(
   config: Config,
-  tree: ReadonlyTree,
+  dirSha: (path: string) => string,
   files: ReadonlyArray<FileRow>,
   blobs: ReadonlyMap<string, Uint8Array>
 ) {
@@ -74,7 +84,7 @@ function parseFiles(
     const entry = parseSourceEntry(config, file.filePath, file.fileHash, blob)
     return {
       ...entryIndexRow(entry),
-      childrenSha: sourceDirectorySha(tree, entry.childrenDir),
+      childrenSha: dirSha(entry.childrenDir),
       searchableText: entry.searchableText,
       references: entry.references
     }
@@ -84,7 +94,7 @@ function parseFiles(
 /** Record the source hash of every directory above a changed file. */
 async function updateDirectoryHashes(
   queries: SyncQueries,
-  tree: ReadonlyTree,
+  dirSha: (path: string) => string,
   filePaths: ReadonlyArray<string>,
   changes: SyncChanges
 ): Promise<void> {
@@ -102,7 +112,7 @@ async function updateDirectoryHashes(
   })
   const changed = new Map<string, string>()
   for (const row of rows) {
-    const childrenSha = sourceDirectorySha(tree, row.childrenDir)
+    const childrenSha = dirSha(row.childrenDir)
     if (childrenSha === row.childrenSha) continue
     changes.containers.add(row.id)
     changed.set(row.childrenDir, childrenSha)
@@ -118,6 +128,24 @@ export async function mergeTrees(
   previousTree: ReadonlyTree,
   tree: ReadonlyTree,
   queries: SyncQueries,
+  options: SyncOptions = {}
+): Promise<SyncChanges> {
+  const comparison = await compareTrees(
+    treeReader(previousTree, tree),
+    previousTree.sha,
+    tree.sha
+  )
+  // The whole tree is at hand: it answers for any directory
+  const dirSha = (path: string) => sourceDirectorySha(tree, path)
+  return mergeChanges(config, source, {...comparison, dirSha}, queries, options)
+}
+
+/** Write the changes of a tree comparison to the entry table. */
+export async function mergeChanges(
+  config: Config,
+  source: RemoteSource,
+  comparison: TreeComparison,
+  queries: SyncQueries,
   {onProgress, stats}: SyncOptions = {}
 ): Promise<SyncChanges> {
   const changes: SyncChanges = {
@@ -125,9 +153,19 @@ export async function mergeTrees(
     inserted: new Set(),
     parents: new Set(),
     childDirs: new Set(),
-    containers: new Set()
+    containers: new Set(),
+    relocated: new Set()
   }
-  const diff = previousTree.diff(tree).changes
+  const {dirSha, moves} = comparison
+  const diff = Array<Change>(...comparison.changes)
+  // A directory moved whole keeps its files: their versions only change
+  // paths, without reading or parsing them again
+  for (const move of moves) {
+    const relocated = await timeStep(stats, 'write', () =>
+      relocate(config, queries, changes, move)
+    )
+    if (!relocated) diff.push(...(await comparison.expand(move)))
+  }
   const deleted = diff.flatMap(change =>
     change.op === 'delete' ? [change.path] : []
   )
@@ -167,19 +205,69 @@ export async function mergeTrees(
   for (const [index, files] of parts.entries()) {
     const blobs = await timeStep(stats, 'blobs', () => reads[index])
     const rows = await timeStep(stats, 'parse', () =>
-      parseFiles(config, tree, files, blobs)
+      parseFiles(config, dirSha, files, blobs)
     )
     await timeStep(stats, 'write', () => writeRows(queries, changes, rows))
   }
   await timeStep(stats, 'write', () =>
     updateDirectoryHashes(
       queries,
-      tree,
-      diff.map(change => change.path),
+      dirSha,
+      [
+        ...diff.map(change => change.path),
+        ...moves.flatMap(move => [move.from, move.to])
+      ],
       changes
     )
   )
   return changes
+}
+
+/**
+ * Point the versions stored below a moved directory at its new place. A
+ * move into another workspace, root or locale changes more than paths, and
+ * is left to parse again.
+ */
+async function relocate(
+  config: Config,
+  queries: SyncQueries,
+  changes: SyncChanges,
+  move: TreeMove
+): Promise<boolean> {
+  const rows = await queries.versionsBelow.all({
+    from: `${move.from}/`,
+    to: `${move.from}0`
+  })
+  const versions = Array<object>()
+  for (const row of rows) {
+    const filePath = move.to + row.filePath.slice(move.from.length)
+    let location: ReturnType<typeof parseEntryFilePath>
+    try {
+      location = parseEntryFilePath(config, filePath)
+    } catch {
+      return false
+    }
+    const same =
+      location.workspace === row.workspace &&
+      location.root === row.root &&
+      location.locale === row.locale &&
+      location.path === row.path
+    if (!same) return false
+    const {parentDir, childrenDir, level} = location
+    versions.push({
+      versionId: row.versionId,
+      filePath,
+      parentDir,
+      childrenDir,
+      level,
+      sourceRoot: level > 0 ? (parentDir.split('/').at(-level) ?? null) : null
+    })
+  }
+  if (versions.length)
+    await queries.relocateVersions.run({versions: JSON.stringify(versions)})
+  for (const row of rows) changes.relocated.add(row.versionId)
+  changes.childDirs.add(move.to)
+  return true
 }
 
 async function writeRows(
@@ -227,6 +315,6 @@ async function readBlobs(
 function sourceDirectorySha(tree: ReadonlyTree, path: string): string {
   const node = tree.get(path)
   if (!node) return ReadonlyTree.EMPTY.sha
-  assert(!(node instanceof Leaf), `Entry children path is a file: ${path}`)
+  assert(node instanceof ReadonlyTree, `Entry children path is a file: ${path}`)
   return node.sha
 }
