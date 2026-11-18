@@ -1,3 +1,4 @@
+import {shape as s} from '@alinea/graft'
 import {referenceFieldPath} from '../db/EntryReference.js'
 import {
   Field,
@@ -48,6 +49,10 @@ export class ListFieldBase<
     super({
       referencedViews: Schema.referencedViews(schema),
       nestedTypes: Object.values(schema),
+      shape: s.list(s.union(ListRow.type, Schema.shapes(schema)), {
+        identity: s.byKey(ListRow.id, {fallback: s.byMatch()}),
+        order: s.byFractionalKey(ListRow.index)
+      }),
       ...meta,
       defaultValue() {
         return meta.options.initialValue ?? []

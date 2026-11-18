@@ -1,4 +1,5 @@
 import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {shape} from '@alinea/graft'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ComponentType, ReactNode} from 'react'
@@ -38,6 +39,9 @@ export function text(label: string, options: WithoutLabel<TextOptions> = {}) {
       ...options,
       initialValue: options.initialValue ?? ''
     },
+    // A line both saves changed takes the later one, so two edits of a
+    // title never interleave
+    shape: options.multiline ? shape.text() : shape.text({unit: 'line'}),
     view: viewKeys.TextInput
   })
 }

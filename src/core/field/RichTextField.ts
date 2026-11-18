@@ -1,3 +1,4 @@
+import {shape as s} from '@alinea/graft'
 import {Parser} from 'htmlparser2'
 import type {
   EntryReferenceTarget,
@@ -19,12 +20,14 @@ import {MediaLocation} from '../media/MediaLocation.js'
 import {FileData} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
+  BlockNode,
+  ElementNode,
   type ImageNode,
   LinkMark,
   Mark,
   Node,
-  type ElementNode,
-  type TextDoc
+  type TextDoc,
+  TextNode
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
@@ -68,6 +71,15 @@ export class RichTextField<
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       nestedTypes: schema ? Object.values(schema) : [],
+      shape: s.richText({
+        type: Node.type,
+        content: ElementNode.content,
+        text: TextNode.text,
+        marks: TextNode.marks,
+        textType: 'text',
+        embeds: schema ? Schema.shapes(schema) : {},
+        embedId: BlockNode.id
+      }),
       ...meta,
       defaultValue() {
         return meta.options.initialValue ?? ([] as TextDoc<Blocks>)

@@ -1,3 +1,4 @@
+import {shape} from '@alinea/graft'
 import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
@@ -82,6 +83,7 @@ export function localiser<const Locale extends string>({
             ? [data.view, ...(data.referencedViews ?? [])]
             : data.referencedViews,
         view: viewKeys.LocalisedInput,
+        shape: shape.map(Field.shape(field)),
         options: {
           ...data.options,
           initialValue: initialValue()
@@ -291,6 +293,7 @@ function rootLocalised<StoredValue, QueryValue, Mutator, Options>(
           ? [data.view, ...(data.referencedViews ?? [])]
           : data.referencedViews,
       view: viewKeys.LocalisedInput,
+      shape: shape.map(Field.shape(field)),
       options: {...data.options, initialValue: undefined} as Omit<
         Options,
         'initialValue' | 'validate'

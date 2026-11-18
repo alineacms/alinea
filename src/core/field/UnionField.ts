@@ -1,3 +1,4 @@
+import {shape as s} from '@alinea/graft'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
@@ -20,6 +21,7 @@ export class UnionField<
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       nestedTypes: schema ? Object.values(schema) : [],
+      shape: s.union(UnionRow.type, schema ? Schema.shapes(schema) : {}),
       ...meta,
       defaultValue() {
         return meta.options.initialValue ?? ({} as StoredValue)

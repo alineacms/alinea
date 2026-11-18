@@ -1,4 +1,5 @@
 import type {FieldOptions, WithoutLabel} from '#/core.js'
+import {shape} from '@alinea/graft'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ReactNode} from 'react'
@@ -27,6 +28,7 @@ export function code(
 ): CodeField {
   return new CodeField({
     options: {label, ...options},
+    shape: shape.text(),
     view: viewKeys.CodeInput
   })
 }

@@ -1,6 +1,12 @@
 import {entries, fromEntries, isRecord, values} from '#/core/util/Objects.js'
 import {withOrderKeys} from '#/core/util/OrderKeys.js'
-import type {Getter, PrimitiveAtom, Setter, WritableAtom} from 'jotai'
+import type {
+  Atom,
+  Getter,
+  PrimitiveAtom,
+  Setter,
+  WritableAtom
+} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
 import {dispense} from './utils.js'
@@ -100,6 +106,8 @@ export class ReactiveNode<Value = unknown> {
   })
   value: Writable<Value>
   peek: Peek<Value> = atom(null, get => get(this.value))
+  /** The value as it was read or last committed, which edits start from */
+  initial: Atom<Value> = atom(get => get(this.#initialValue))
 
   constructor(initialValue: Value, readOnly = false) {
     this.#initialValue = atom(initialValue)

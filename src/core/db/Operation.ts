@@ -47,6 +47,11 @@ export interface CreateQuery<Fields> {
   set: Partial<CreateInputRow<Fields>>
   insertOrder?: 'first' | 'last'
   overwrite?: boolean
+  /**
+   * The data the editor started from, for an overwrite: the save then
+   * merges with what was saved since instead of replacing it
+   */
+  base?: Record<string, unknown>
   /** Recorded as the creator, or the last editor of an overwritten entry */
   user?: User | null
 }
@@ -83,6 +88,7 @@ export class CreateOp<Fields> extends Operation {
           insertOrder: op.insertOrder,
           status: op.status,
           overwrite: op.overwrite,
+          base: op.base,
           root: op.root,
           workspace: op.workspace
         }
@@ -142,6 +148,11 @@ export interface UpdateQuery<Fields> {
   set: Partial<StoredRow<Fields>>
   status?: 'draft' | 'published' | 'archived'
   locale?: string | null
+  /**
+   * The data the editor started from: the update then merges with what was
+   * saved since
+   */
+  base?: Record<string, unknown>
   /** Recorded as the last editor */
   user?: User | null
 }
@@ -156,7 +167,8 @@ export class UpdateOperation<Definition> extends Operation {
           id,
           locale,
           status: status as EntryStatus,
-          set: await beforeUpdate(db, query)
+          set: await beforeUpdate(db, query),
+          base: query.base
         }
       ]
     })

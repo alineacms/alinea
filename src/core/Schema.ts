@@ -1,11 +1,54 @@
+import {type RecordShape, type UnionShape, shape as s} from '@alinea/graft'
+import {EntryRecord} from './EntryRecord.js'
 import {getReplaced, getType} from './Internal.js'
 import {Type} from './Type.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, values} from './util/Objects.js'
+import {lazyRecord} from './util/LazyRecord.js'
+import {entries, fromEntries, keys, values} from './util/Objects.js'
 
 export interface Schema<Definitions = {}> extends Record<string, Type> {}
 
+const entryShapes = new WeakMap<Schema, UnionShape>()
+
+/** Keys of an entry file around its fields, see `parseRecord` */
+const header = [
+  EntryRecord.id,
+  EntryRecord.type,
+  EntryRecord.index,
+  EntryRecord.root,
+  EntryRecord.seeded,
+  '_i18nId'
+]
+
 export namespace Schema {
+  /** The shapes of the types of a schema by name, see `Type.shape` */
+  export function shapes(schema: Schema): Record<string, RecordShape> {
+    return lazyRecord(
+      () => keys(schema),
+      key => Type.shape(schema[key])
+    )
+  }
+
+  /** How entry files of a schema merge: by their type, then per field */
+  export function shape(schema: Schema): UnionShape {
+    const known = entryShapes.get(schema)
+    if (known) return known
+    const atomic = s.atomic()
+    const types = lazyRecord(
+      () => keys(schema),
+      key => {
+        const type = Type.shape(schema[key])
+        return s.record(
+          {...fromEntries(header.map(name => [name, atomic])), ...type.fields},
+          {renamed: type.renamed}
+        )
+      }
+    )
+    const result = s.union(EntryRecord.type, types)
+    entryShapes.set(schema, result)
+    return result
+  }
+
   export function referencedViews(schema: Schema): Array<string> {
     return values(schema).flatMap(type => Type.referencedViews(type))
   }

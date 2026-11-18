@@ -1,3 +1,4 @@
+import {shape as s} from '@alinea/graft'
 import {Field, type FieldData, type FieldOptions} from '../Field.js'
 import {Type} from '../Type.js'
 import {entries} from '../util/Objects.js'
@@ -20,6 +21,7 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
     super({
       referencedViews: Type.referencedViews(type),
       nestedTypes: [type],
+      shape: Type.shape(type),
       defaultValue() {
         return Type.initialValue(type) as Row
       },

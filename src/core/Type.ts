@@ -1,3 +1,4 @@
+import {type RecordShape, shape as s} from '@alinea/graft'
 import type {EntryActionProps} from './DashboardEntry.js'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
@@ -127,6 +128,25 @@ export namespace Type {
         labels: [...labels, label]
       })
     })
+  }
+
+  /** Old field names mapped to their current name, see `TypeConfig.renamed` */
+  export function renamed(type: Type): Record<string, string> {
+    return getType(type).renamed ?? {}
+  }
+
+  /** How values of the type merge: per field, by the shape of each */
+  export function shape(type: Type): RecordShape {
+    const known = shapes.get(type)
+    if (known) return known
+    const result = s.record(
+      fromEntries(
+        entries(fields(type)).map(([key, field]) => [key, Field.shape(field)])
+      ),
+      {renamed: renamed(type)}
+    )
+    shapes.set(type, result)
+    return result
   }
 
   export function fields(type: Type): Record<string, Field> {
@@ -295,6 +315,8 @@ export namespace Type {
   }
 }
 
+const shapes = new WeakMap<Type, RecordShape>()
+
 function mergeInitialValue(value: unknown, initialValue: unknown): unknown {
   if (!isRecord(initialValue)) return value
   if (!isRecord(value)) return initialValue
@@ -340,6 +362,12 @@ export interface TypeConfig<Definition> {
   tabs?: Record<string, Type>
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
+  /**
+   * Old field names mapped to their current name, eg. `{subtitle: 'tagline'}`.
+   * A save or merge of a value written under the old name lands in the new
+   * one.
+   */
+  renamed?: Record<string, string>
   /** How the dashboard lists the children of entries of this type */
   overview?: OverviewOptions
   /**

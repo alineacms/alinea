@@ -113,7 +113,12 @@ function withPath(type: Type, value: Record<string, unknown>) {
 
 function prepareData(get: Getter, node: ReactiveNode<object>, type: Type) {
   const current = get(node.value) as Record<string, unknown>
-  return {checkpoint: current, data: withPath(type, current)}
+  const initial = get(node.initial) as Record<string, unknown>
+  return {
+    checkpoint: current,
+    data: withPath(type, current),
+    base: withPath(type, initial)
+  }
 }
 
 export class EntryLocaleAtoms {
@@ -477,7 +482,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {checkpoint, data} = prepareData(get, node, typeConfig)
+    const {checkpoint, data, base} = prepareData(get, node, typeConfig)
     policy.assert(Permission.Update, activeEntry)
     const saved = await graph.create({
       type: typeConfig,
@@ -486,6 +491,7 @@ export class EntryLocaleAtoms {
       status: 'draft',
       set: data,
       overwrite: true,
+      base,
       user: get(userAtom),
       select: Entry.data
     })
@@ -504,7 +510,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {checkpoint, data} = prepareData(get, node, typeConfig)
+    const {checkpoint, data, base} = prepareData(get, node, typeConfig)
     policy.assert(Permission.Publish, activeEntry)
     const saved = await graph.create({
       type: typeConfig,
@@ -513,6 +519,7 @@ export class EntryLocaleAtoms {
       status: 'published',
       set: data,
       overwrite: true,
+      base,
       user: get(userAtom),
       select: Entry.data
     })

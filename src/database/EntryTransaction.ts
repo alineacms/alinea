@@ -44,6 +44,7 @@ import type {
   UploadFileMutation
 } from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
+import {mergeData} from '#/core/graft/MergeData.js'
 import type {EntryDatabase} from './EntryDatabase.js'
 import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
@@ -261,7 +262,8 @@ export class EntryTransaction implements AsyncDisposable {
     id,
     insertOrder = 'last',
     status = 'published',
-    overwrite = false
+    overwrite = false,
+    base
   }: Op<CreateMutation>): Promise<void> {
     assert(id, 'Create mutation is missing an id')
     const config = this.#workingDatabase.config
@@ -341,6 +343,11 @@ export class EntryTransaction implements AsyncDisposable {
       this.#policy.assert(Permission.Create, parent)
     }
     assert(typeof data === 'object', 'Invalid data')
+    const editing = existing.find(
+      entry => entry.locale === locale && entry.active
+    )
+    if (overwrite && base && editing?.type === type)
+      data = this.#mergedData(editing, base, data)
     const title = data.title ?? data.path
     assert(typeof title === 'string', 'Missing title')
     let path = slugify(typeof data.path === 'string' ? data.path : title)
@@ -471,7 +478,13 @@ export class EntryTransaction implements AsyncDisposable {
     this.#messages.push(this.#report('create', title))
   }
 
-  async update({id, locale, status, set}: Op<UpdateMutation>): Promise<void> {
+  async update({
+    id,
+    locale,
+    status,
+    set,
+    base
+  }: Op<UpdateMutation>): Promise<void> {
     assert(id, 'Update mutation is missing an id')
     const entry = await this.#firstEntry({
       id,
@@ -482,7 +495,9 @@ export class EntryTransaction implements AsyncDisposable {
     const updates = fromEntries(
       entries(set).map(([key, value]) => [key, value ?? null])
     )
-    let data = {...entry.data, ...updates}
+    let data = base
+      ? this.#mergedData(entry, base, {...base, ...updates})
+      : {...entry.data, ...updates}
     this.#assertUpdate(entry, data)
     const desiredPath = slugify(
       (data.path as string) ?? entry.data.path ?? entry.path
@@ -1004,6 +1019,30 @@ export class EntryTransaction implements AsyncDisposable {
    * that changes. Values compare as an editor sees them, stored values over
    * initial values, so a save of the whole entry only checks what it changes.
    */
+  /**
+   * A save merged with what was saved since its base, each with the values
+   * the dashboard fills in for fields they lack
+   */
+  #mergedData(
+    entry: TransactionEntry,
+    base: Record<string, unknown>,
+    ours: Record<string, unknown>
+  ): Record<string, unknown> {
+    const config = this.#workingDatabase.config
+    const type = config.schema[entry.type]
+    assert(type, `Type not found: ${entry.type}`)
+    const context = {
+      fieldI18n: Config.fieldI18n(config, entry.workspace, entry.root)
+    }
+    const initial = (data: Record<string, unknown>) =>
+      Type.withInitialValue(
+        type,
+        {...Type.initialValue(type), ...data},
+        context
+      )
+    return mergeData(type, initial(base), initial(ours), initial(entry.data))
+  }
+
   #assertUpdate(entry: TransactionEntry, data: Record<string, unknown>): void {
     this.#policy.assert(Permission.Update, entry)
     const type = this.#workingDatabase.config.schema[entry.type]

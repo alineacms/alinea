@@ -1,3 +1,4 @@
+import {type Shape, shape as s} from '@alinea/graft'
 import type {
   EntryReferenceTarget,
   FieldReferenceContext
@@ -122,6 +123,12 @@ export interface FieldData<
   referencedViews?: Array<string>
   /** The types of the values nested in this field: list rows, blocks, ... */
   nestedTypes?: Array<Type>
+  /**
+   * How the stored value merges when two saves changed it, see
+   * `@alinea/graft`. Fields without one merge as unknown values: objects per
+   * key, anything else as a whole.
+   */
+  shape?: Shape
   defaultValue?: () => StoredValue
   withInitialValue?: (
     value: StoredValue,
@@ -151,6 +158,8 @@ export interface FieldData<
 export interface FieldInternal extends FieldData<any, any, any, any> {
   ref: symbol
 }
+
+const anything = s.unknown()
 
 declare const brand: unique symbol
 export class Field<
@@ -194,6 +203,11 @@ export namespace Field {
     context?: FieldInitialContext
   ): StoredValue {
     return getField(field).withInitialValue?.(value, context) ?? value
+  }
+
+  /** How the value of a field merges, see `FieldData.shape` */
+  export function shape(field: HasField): Shape {
+    return getField(field).shape ?? anything
   }
 
   /** The types of the values nested in a field, such as list rows */

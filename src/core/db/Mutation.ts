@@ -21,6 +21,11 @@ export interface CreateMutation {
   insertOrder?: 'first' | 'last'
   status?: 'draft' | 'archived' | 'published'
   overwrite?: boolean
+  /**
+   * The data the editor started from. With it an overwrite merges field by field
+   * with what was saved since, instead of replacing it.
+   */
+  base?: Record<string, unknown>
   fromSeed?: string
   root?: string
   workspace?: string
@@ -32,6 +37,11 @@ export interface UpdateMutation {
   locale: string | null
   status: EntryStatus
   set: Record<string, unknown>
+  /**
+   * The data the editor started from. With it the save merges field by field
+   * with what was saved since, instead of replacing it.
+   */
+  base?: Record<string, unknown>
 }
 
 export interface RemoveMutation {

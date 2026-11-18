@@ -1,4 +1,5 @@
 import type {FieldOptions, WithoutLabel} from '#/core.js'
+import {shape} from '@alinea/graft'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ReactNode} from 'react'
@@ -96,6 +97,7 @@ export namespace select {
         initialValue: [],
         ...options
       },
+      shape: shape.set(),
       view: viewKeys.MultipleSelectInput
     })
   }
