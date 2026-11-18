@@ -224,3 +224,53 @@ behind a logging proxy:
 | first load | 9.8 KB tree + 84.9 KB blobs | (Tree and Blob) |
 | one entry edited on disk | 9.8 KB tree + the blob | 282 B |
 | reload, nothing changed | tree request | 304, 0 B |
+
+## With graft `31d51ac`
+
+graft now writes packs since a tree with deltas of the client's versions
+only (`packSince`, `window: 0`), and alinea uses it for `?action=sync&have=`.
+Raw output: `test/bench/results/graft-31d51ac`. Same machine, single runs.
+
+| graft backend | before | after (graft `7de650f`) | graft `31d51ac` |
+| --- | ---: | ---: | ---: |
+| Bun, sync 1 change | 69 ms | 11–19 ms | 26 ms |
+| Bun, sync 100 changes | 90 ms | 94–170 ms | 206 ms |
+| Bun, sync 1,000 changes | 364 ms | 451–485 ms | 483 ms |
+| Bun, move of 2,795 files | 709 ms | 153–221 ms | 271 ms |
+| Bun, cold handler catching up | 2493 ms | 1523–1749 ms | 2322 ms |
+| Chromium, sync 1 change | 135 ms | 37 ms | 57 ms |
+| Chromium, sync 100 changes | 403 ms | 359 ms | 486 ms |
+| Chromium, sync 1,000 changes | 963 ms | 1169 ms | 1203 ms |
+| Chromium, move of 2,795 files | 980 ms | 271 ms | 387 ms |
+| bytes, 100 changes (gzipped) | 615 KB | 15 KB | 17 KB |
+| bytes, 1,000 changes (gzipped) | 820 KB | 99 KB | 119 KB |
+
+End to end these are within the run-to-run noise of this machine, or
+slower, so the update does not by itself win back the syncs of 100 to
+1,000 changes. Writing the pack is not where that time goes any more: timed
+alone, on a store of 20,000 files of about 6 KB,
+
+| pack since a tree | `window: 0` | default window |
+| --- | ---: | ---: |
+| 100 changes | 23 ms, 15 KB | 20 ms, 15 KB |
+| 1,000 changes | 73 ms, 81 KB | 119 ms, 81 KB |
+
+against about 300 ms before for the bench's 1,000 changes. What is left is
+the client's index: a sync of 1,000 changes in Chromium reads 513 MB of
+pages from the snapshots in IndexedDB. Packs with `window: 0` are a little
+larger, as files a sync adds are no longer deltas of their neighbours.
+
+A full pack of the same store took 5.2 s (2.5 MB); graft reports about 2 s
+on the bench's site. The first dashboard load still syncs through Tree and
+Blob.
+
+A cold `alinea dev` takes the shas git's index stages for files whose stat
+matches (`src/cli/generate/StagedFiles.ts`). Building the content tree of
+20,000 files of 6 KB:
+
+| cold start | hash every file | from git's index |
+| --- | ---: | ---: |
+| run 1 | 542 ms | 127 ms (index read 23 ms) |
+| run 2 | 407 ms | 105 ms (index read 19 ms) |
+
+The trees were identical in both runs.
