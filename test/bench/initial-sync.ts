@@ -260,13 +260,17 @@ try {
     config,
     await runtimeDatabase({path})
   )
+  // The handler asks its remote whether a client is current before it
+  // syncs, so the remote serves the generated site as a git host would.
   const remote = {
     async verify() {
       throw new MissingCredentialsError('No user')
     },
-    async getTreeIfDifferent() {
-      return undefined
-    }
+    async getTreeIfDifferent(sha: string) {
+      const tree = await source.getTree()
+      return tree.sha === sha ? undefined : tree
+    },
+    getBlobs: source.getBlobs.bind(source)
   } as unknown as RemoteConnection
   const handler = createHandler({cms, db: server, remote: () => remote})
   const requests = new Map<string, {count: number; ms: number}>()
