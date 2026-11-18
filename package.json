@@ -106,6 +106,7 @@
     "react-dom": ">=19.0.0"
   },
   "devDependencies": {
+    "@alinea/graft": "file:vendor/alinea-graft-0.1.0.tgz",
     "@alinea/styler": "^1.0.3",
     "@alinea/suite": "^0.6.3",
     "@badgateway/oauth2-client": "^3.2.0",
