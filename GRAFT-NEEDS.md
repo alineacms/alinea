@@ -1,8 +1,9 @@
 # What alinea needs from graft
 
-Found while making alinea's index and dashboard sync on the graft backend
-faster (branch `graft-sync-perf`, against the vendored graft `7de650f`, and
-still true of graft `main` at `9d776de`). Each need has an example that
+Found while integrating graft into alinea on `graft-integration`: needs 1
+to 4 while making the index and the dashboard's sync faster on the graft
+backend, 5 to 7 in saves and live editing. Against the vendored graft
+`7de650f`; 1 to 4 also still hold on graft `main` at `9d776de`. Each need has an example that
 fails or is slow today, and what alinea does meanwhile. Numbers are from an
 Apple M4, Bun 1.4.4, Chromium from Playwright, on the generated site of
 `test/bench/initial-sync.ts` (20,000 files, 120 MB of JSON).
@@ -101,7 +102,50 @@ versions 2 to 4 (with path prefix compression in 4), and the `split index`
 and `untracked cache` extensions, would need handling or an explicit
 refusal.
 
-## 5. Observations that are not needs (yet)
+## 5. Renames where one side left the record alone
+
+`merge` returns a side as it is when the other equals the base, before a
+record's `renamed` applies, so a file written under an old name keeps it,
+and so does the merged result:
+
+```ts
+const page = shape.record({tagline: shape.atomic()}, {renamed: {subtitle: 'tagline'}})
+merge(page, {subtitle: 'a'}, {subtitle: 'a'}, {subtitle: 'b'}, {prefer: 'ours'})
+// {subtitle: 'b'}, expected {tagline: 'b'}
+```
+
+Saves in alinea do not depend on it: the save path moves old names itself
+(`src/core/graft/Rename.ts`, below). Tree merges and the merge driver do, for
+entries written before a rename that one side left alone.
+
+## 6. An edit under an old name, next to the new one
+
+A dashboard on an older schema keeps a field it does not know as it read it
+and edits the old name, so its side holds both. `rename` keeps the value
+under the current name and drops the edit:
+
+```ts
+merge(page, {tagline: 'a', subtitle: ''}, {tagline: 'a', subtitle: 'edited'},
+  {tagline: 'a'}, {prefer: 'ours'})
+// {tagline: 'a'}, expected {tagline: 'edited'}
+```
+
+alinea moves an old name that changed against the base onto the new one
+before merging (`renameEdits` in `src/core/graft/Rename.ts`, tested in
+`src/core/graft/Shapes.test.ts` and `test/graft/SaveMerge.test.ts`). With a
+base-aware rule in `mergeRecord` (an old name that changed against the base
+is that side's edit of the new one) alinea could drop it.
+
+## 7. Session errors and fingerprints at the root
+
+`SessionClient.join` throws `ShapeMismatchError`, but it is only exported as
+`session.ShapeMismatchError`, so a dashboard that only joins imports the host
+namespace to catch it (`src/dashboard/live/LiveSession.ts`). `fingerprint`
+is not exported at all: alinea cannot say before joining, or in an error,
+which shape it holds. Both at the root, or in the `./session` entry the API
+review proposes, would do.
+
+## 8. Observations that are not needs (yet)
 
 - `readPack` inflates in JavaScript (the pack format needs to know where
   each zlib stream ends): 1.8 s for 13 MB with 20,000 objects in Bun. alinea
