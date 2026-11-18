@@ -74,3 +74,13 @@ export function createRecord(
   if (status !== 'draft') delete result.path
   return result
 }
+
+/**
+ * An entry's record written as JSON, however its file is formatted: the base
+ * a preview's delta is made from (see `PreviewDelta`)
+ */
+export function recordJson(
+  entry: RequiredEntryFields & {status: EntryStatus}
+): string {
+  return JSON.stringify(createRecord(entry, entry.status))
+}

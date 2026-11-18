@@ -3,7 +3,7 @@ import {Config} from '#/core/Config.js'
 import type {EntryReference} from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
-import {createRecord, parseRecord} from '#/core/EntryRecord.js'
+import {createRecord, parseRecord, recordJson} from '#/core/EntryRecord.js'
 import {Field} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
@@ -423,20 +423,18 @@ export class EntryLocaleAtoms {
       data: value,
       status
     }
-    const schema = get(configAtom).schema
-    const decoder = new TextDecoder()
-    const baseText = decoder.decode(
-      JsonLoader.format(schema, createRecord(activeEntry, activeEntry.status))
-    )
-    const nextText = decoder.decode(
-      JsonLoader.format(schema, createRecord(nextEntry, status))
-    )
+    const draft = createRecord(nextEntry, status)
     return encodePreviewPayload({
+      version: 2,
       locale: activeEntry.locale,
       entryId: activeEntry.id,
       contentHash,
       status,
-      patch: await createFilePatch(baseText, nextText)
+      fileHash: activeEntry.fileHash,
+      delta: await createFilePatch(
+        recordJson(activeEntry),
+        JSON.stringify(draft)
+      )
     })
   })
 

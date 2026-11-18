@@ -1,7 +1,7 @@
 import {
-  applyPreview as applyPreviewUpdate,
   type DecodedPreviewRequest,
-  decodePreviewRequest
+  decodePreviewRequest,
+  resolvePreview
 } from '#/backend/resolver/ParsePreview.js'
 import {dashboardUrl} from './dashboardUrl.js'
 import {createThrottledSync, syncWait} from '#/backend/util/Syncable.js'
@@ -217,14 +217,14 @@ export class NextCMS<
     context: RequestContext
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
-    if ((await db.sha) !== decoded.contentHash)
-      await this.#syncDb(
+    return resolvePreview(db, decoded, () =>
+      this.#syncDb(
         db,
         createClient(this.config, context),
         `preview at ${decoded.contentHash.slice(0, 7)}`,
         this.#render().stats
       )
-    return applyPreviewUpdate(db, decoded)
+    )
   }
 
   /** Where queries are answered from and how fresh that side is. */

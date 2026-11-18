@@ -45,7 +45,7 @@ import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {proxyMediaUrl} from './api/ProxyMedia.js'
-import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
+import {decodePreviewRequest, resolvePreview} from './resolver/ParsePreview.js'
 import {createThrottledSync, syncWait} from './util/Syncable.js'
 
 const PrepareBody = object({
@@ -374,14 +374,13 @@ export function createHandler({
           )
         } else {
           const preview = await decodePreviewRequest(query.preview)
-          if (
-            'contentHash' in preview &&
-            (await local.sha) !== preview.contentHash
+          query.preview = await resolvePreview(local, preview, () =>
+            'contentHash' in preview
+              ? syncForRead(
+                  sync(cnx, `preview at ${preview.contentHash.slice(0, 7)}`)
+                )
+              : Promise.resolve()
           )
-            await syncForRead(
-              sync(cnx, `preview at ${preview.contentHash.slice(0, 7)}`)
-            )
-          query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
       }
