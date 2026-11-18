@@ -185,8 +185,8 @@ export class IndexedDBObjects implements ObjectStore {
       data: new Blob(list.map(object => object.data as Uint8Array<ArrayBuffer>))
     }
     const db = await this.#connect()
-    // A lost write is fetched again: skip waiting for the disk
-    const tx = db.transaction(storeName, 'readwrite', {durability: 'relaxed'})
+    // Durable before the index that needs them is stored
+    const tx = db.transaction(storeName, 'readwrite')
     tx.objectStore(storeName).add(pack)
     await transactionComplete(tx)
     this.#index(pack)

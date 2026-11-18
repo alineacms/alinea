@@ -654,7 +654,9 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#tree = row.tree
       ? new ReadonlyTree(row.tree)
       : this.#objects
-        ? await readTree(objectReader(this.#objects), row.revision)
+        ? await readTree(objectReader(this.#objects), row.revision).catch(
+            () => undefined
+          )
         : undefined
     return {revision: row.revision, tree: this.#tree}
   }
