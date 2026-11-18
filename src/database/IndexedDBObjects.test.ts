@@ -1,10 +1,13 @@
 import {blob, stored} from '@alinea/graft/git'
 import {expect, test} from 'bun:test'
-import {IDBFactory} from 'fake-indexeddb'
+import {IDBFactory, IDBKeyRange} from 'fake-indexeddb'
 import {IndexedDBObjects} from './IndexedDBObjects.js'
 
+globalThis.IDBKeyRange ??= IDBKeyRange
+
 test('keeps objects by sha', async () => {
-  const objects = new IndexedDBObjects(new IDBFactory(), 'objects')
+  const factory = new IDBFactory()
+  const objects = new IndexedDBObjects(factory, 'objects')
   const hello = await stored(blob(new TextEncoder().encode('hello')))
   await objects.put([hello])
   const held = await objects.has([hello.sha, 'missing'])
@@ -13,4 +16,12 @@ test('keeps objects by sha', async () => {
   expect([...found.keys()]).toEqual([hello.sha])
   expect(new TextDecoder().decode(found.get(hello.sha)!.data)).toBe('hello')
   objects.close()
+
+  // Another store reads what this one stored
+  const other = new IndexedDBObjects(factory, 'objects')
+  const world = await stored(blob(new TextEncoder().encode('world')))
+  await other.put([hello, world])
+  const both = await other.get([hello.sha, world.sha])
+  expect(both.size).toBe(2)
+  other.close()
 })
