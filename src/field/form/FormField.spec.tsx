@@ -44,14 +44,16 @@ test('marks a row whose key another input uses', async ({mount, page}) => {
   await expect(phone).toContainText('Key: Another input uses the key "email"')
 })
 
-test('adds an input from a menu grouped by origin', async ({mount, page}) => {
+test('adds an input from one menu with the inputs of the project', async ({
+  mount,
+  page
+}) => {
   await mount(<Builder />)
   await page.getByRole('button', {name: 'Add input'}).last().click()
   const menu = page.getByRole('listbox', {name: 'Add input'})
-  await expect(menu.getByRole('group')).toHaveCount(2)
-  await expect(
-    menu.getByRole('group', {name: 'This project'}).getByRole('option')
-  ).toHaveText(['Rating'])
+  // Inputs of the project are listed with the built-in ones
+  await expect(menu.getByRole('group')).toHaveCount(0)
+  await expect(menu.getByRole('option', {name: 'Rating'})).toBeVisible()
   await menu.getByRole('option', {name: 'Rating'}).click()
   // A new input opens its settings to be named
   const sheet = page.getByRole('dialog', {name: 'Rating'})
