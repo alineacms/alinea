@@ -20,6 +20,7 @@ import {SidebarTree} from './SidebarTree.js'
 import {SidebarLayout} from './SidebarLayout.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
+import {DashboardUpdate} from './DashboardUpdate.js'
 import {CreateEntry} from './modals/CreateEntry.js'
 import {MoveConfirmDialog} from './MoveConfirmDialog.js'
 import {PendingUploadsDialog} from './PendingUploadsDialog.js'
@@ -74,6 +75,7 @@ export function DashboardLayout({
       </AppShell>
       <PendingUploadsDialog />
       <MoveConfirmDialog />
+      <DashboardUpdate />
     </DashboardScope>
   )
 }

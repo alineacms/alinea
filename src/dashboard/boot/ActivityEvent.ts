@@ -21,6 +21,16 @@ export interface Activity {
   upload?: ActivityUpload
 }
 
+/** Whether an activity still has to succeed, or be retried or discarded. */
+export function isUnsettled(activity: Activity): boolean {
+  return (
+    activity.status === 'pending' ||
+    activity.status === 'running' ||
+    activity.status === 'blocked' ||
+    activity.status === 'failed'
+  )
+}
+
 export interface ActivityTarget {
   workspace: string
   root: string

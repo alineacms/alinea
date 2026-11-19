@@ -20,6 +20,7 @@ import type {Entry} from '#/core/Entry.js'
 import {getType} from '#/core/Internal.js'
 import {isFileType, isMediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
+import {isOutdatedDashboardError} from '#/core/OutdatedDashboardError.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {activityAtom} from '../atoms/activity.js'
 import {configAtom} from '../atoms/core.js'
@@ -284,6 +285,8 @@ export function EntryHeader({
       try {
         await action()
       } catch (error) {
+        // The update banner asks for a reload, the editor keeps the changes
+        if (isOutdatedDashboardError(error)) return
         const conflict = entryUrlConflictInfo(error)
         if (conflict) setUrlConflict(conflict)
         else throw error

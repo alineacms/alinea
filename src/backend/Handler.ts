@@ -12,7 +12,10 @@ import type {
   RemoteConnection,
   RequestContext
 } from '#/core/Connection.js'
-import {developmentKeyHeader} from '#/core/Connection.js'
+import {
+  configFingerprintHeader,
+  developmentKeyHeader
+} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import {loggedSync} from '#/core/db/SyncStats.js'
 import type {DashboardEntry} from '#/core/DashboardEntry.js'
@@ -27,6 +30,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
+import {OutdatedDashboardError} from '#/core/OutdatedDashboardError.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {FileData} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
@@ -104,7 +108,45 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
-  return async function handle(
+  // The config this handler was generated with, read once: its database is
+  // replaced by the next deploy rather than changed
+  let builtWith: Promise<string | undefined> | undefined
+  function configFingerprint(local: LocalStore) {
+    if (process.env.ALINEA_DEV_SERVER) return Promise.resolve(undefined)
+    return (builtWith ??= Promise.resolve(local.configFingerprint?.()).catch(
+      () => undefined
+    ))
+  }
+
+  /**
+   * Whether the request comes from a dashboard built with another config
+   * than this handler, as after a deploy: its fields may no longer match. A
+   * side that does not know its config is never outdated.
+   */
+  async function fromOutdatedDashboard(request: Request, local: LocalStore) {
+    const server = await configFingerprint(local)
+    const dashboard = request.headers.get(configFingerprintHeader)
+    return Boolean(server && dashboard && server !== dashboard)
+  }
+
+  /** Answer with the config this handler was built with, see `Client`. */
+  return async function handleWithConfig(
+    request: Request,
+    context: RequestContext
+  ): Promise<Response> {
+    const response = await handle(request, context)
+    const server = await configFingerprint(await db)
+    if (!server) return response
+    try {
+      response.headers.set(configFingerprintHeader, server)
+      return response
+    } catch {
+      // Some responses, such as redirects, have immutable headers
+      return response
+    }
+  }
+
+  async function handle(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
@@ -387,11 +429,20 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
+        const user = expectUser()
+        if (await fromOutdatedDashboard(request, local))
+          return Response.json(
+            {
+              success: false,
+              error: new OutdatedDashboardError().message,
+              outdated: true
+            },
+            {status: ErrorCode.Conflict}
+          )
         if (forwardMutations && userCtx) {
           const forwarded = await forwardMutations(request.clone(), userCtx)
           if (forwarded) return forwarded
         }
-        const user = expectUser()
         expectJson()
         const policy = await user.policy
         let mutations = (await body) as ReadonlyArray<Mutation>

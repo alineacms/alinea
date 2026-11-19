@@ -70,6 +70,19 @@ function rebaseValue(
   return edited
 }
 
+/**
+ * The edits made from `checkpoint` to `edited`, applied to `saved`: other
+ * changes to the saved value are kept. Undefined when there are none.
+ */
+export function rebasedEdits(
+  checkpoint: unknown,
+  edited: unknown,
+  saved: unknown
+): unknown {
+  const value = rebaseValue(checkpoint, edited, saved)
+  return value === USE_SAVED ? undefined : value
+}
+
 function resolveUpdate<Value>(
   update: SetStateAction<Value>,
   current: Value
@@ -101,12 +114,21 @@ export class ReactiveNode<Value = unknown> {
   value: Writable<Value>
   peek: Peek<Value> = atom(null, get => get(this.value))
 
-  constructor(initialValue: Value, readOnly = false) {
+  /**
+   * A node of `initialValue`, the value it is saved with. A node started from
+   * `edited` holds changes from it that are not saved yet.
+   */
+  constructor(initialValue: Value, readOnly = false, edited?: Value) {
+    const start = edited === undefined || readOnly ? initialValue : edited
     this.#initialValue = atom(initialValue)
     this.readOnly = readOnly
-    this.nodes = atom(this.#wrap(initialValue))
+    this.nodes = atom(this.#wrap(start))
     this.value = atom(this.#read, this.#write)
+    this.#dirty = atom(start !== initialValue)
   }
+
+  /** The value the edits started from: the saved value, as last committed. */
+  checkpoint = atom(get => get(this.#initialValue))
 
   #read = (get: Getter) => this.#unwrap(get, get(this.nodes)) as Value
 
@@ -126,7 +148,7 @@ export class ReactiveNode<Value = unknown> {
   }
 
   isEmpty = atom(get => get(this.value) === undefined)
-  #dirty = atom(false)
+  #dirty: PrimitiveAtom<boolean>
   isDirty: WritableAtom<boolean, [false], void> = atom(
     get => get(this.#dirty) || get(this.#inner).some(node => get(node.isDirty)),
     (get, set, value: false) => {
