@@ -51,6 +51,12 @@ export interface InputConfig<
    * `initialValue` prefills the input.
    */
   settings?: Settings
+  /**
+   * The fields and settings that are texts visitors read, eg. a placeholder.
+   * In a form that shares its structure between languages each language has
+   * its own, all others are shared. The label and help always are texts.
+   */
+  strings?: Array<string>
   /** FormData entries to a value, defaults to the first string */
   parse?(
     raw: FormRaw,
@@ -89,7 +95,10 @@ export function input<
 export type ContentConfig<
   Fields extends FieldsDefinition,
   Settings extends FieldsDefinition
-> = Pick<InputConfig<Fields, Settings, never>, 'icon' | 'fields' | 'settings'>
+> = Pick<
+  InputConfig<Fields, Settings, never>,
+  'icon' | 'fields' | 'settings' | 'strings'
+>
 
 /**
  * Create content that editors can add between the inputs of a form, eg. an

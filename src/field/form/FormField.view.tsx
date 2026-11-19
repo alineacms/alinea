@@ -1,7 +1,7 @@
 import {Badge, Button, Text} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import type {FieldPath} from '#/core/Validation.js'
-import {isRecord} from '#/core/util/Objects.js'
+import {isEmptyValue, isRecord} from '#/core/util/Objects.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -10,7 +10,13 @@ import {
 } from '#/dashboard/app/ui/DashboardModal.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {useFieldNode, useFieldOptions} from '#/dashboard/hooks.js'
-import {IcRoundCallSplit, IcRoundRepeat} from '#/dashboard/icons.js'
+import {
+  IcRoundCallSplit,
+  IcRoundRepeat,
+  IcRoundTranslate
+} from '#/dashboard/icons.js'
+import {useOtherLanguages} from '#/dashboard/app/useMissingLanguages.js'
+import {fieldSharingContext} from '#/dashboard/contexts.js'
 import {
   type ListFieldBadgesProps,
   ListFieldView,
@@ -27,6 +33,8 @@ import {
   useState
 } from 'react'
 import type {FormField} from './FormField.js'
+import type {Input} from './FormInput.js'
+import {isSharedFormField, textKeys} from './FormShare.js'
 import css from './FormField.module.css'
 import {FormTranslationAlert} from './FormTranslationAlert.js'
 import {defaults} from './FormInputs.js'
@@ -44,6 +52,10 @@ const styles = styler(css)
 const builtIn = new Set<unknown>(Object.values(defaults))
 
 export interface FormBuilder {
+  /** The inputs editors can add */
+  inputs: Record<string, Input>
+  /** The form shares its structure between languages */
+  shared: boolean
   /** The rows of the outermost form field in reading order */
   order: Atom<Array<FormEntry>>
   /** The first error of each row by its id */
@@ -85,6 +97,8 @@ function FormFieldRoot({field, children}: FormFieldRootProps) {
   const builder = useMemo<FormBuilder>(() => {
     const order = atom(get => readingOrder(inputs, get(node.value)))
     return {
+      inputs,
+      shared: Boolean(Field.options(field).shared),
       order,
       errors: atom(get => rowErrors(field, get(node.value))),
       root: node,
@@ -117,8 +131,16 @@ function FormFieldRoot({field, children}: FormFieldRootProps) {
 
   return (
     <FormBuilderContext.Provider value={builder}>
-      <FormTranslationAlert field={field} rows={rows} />
-      {children}
+      {builder.shared ? (
+        <fieldSharingContext.Provider value={isSharedFormField}>
+          {children}
+        </fieldSharingContext.Provider>
+      ) : (
+        <>
+          <FormTranslationAlert field={field} rows={rows} />
+          {children}
+        </>
+      )}
       <FormRemoveModal
         removal={removing}
         onCancel={() => setRemoving(undefined)}
@@ -215,6 +237,20 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
   const builder = useContext(FormBuilderContext)
   const id = useAtomValueRaw(row.field('_id')) as string
   const required = useAtomValueRaw(row.field('required'))
+  const type = useAtomValueRaw(row.field('_type')) as string
+  const value = useAtomValueRaw(row.value) as Record<string, unknown>
+  const others = useOtherLanguages(id)
+  const input = builder?.inputs[type]
+  // Texts another language filled in that this one did not
+  const untranslated = input
+    ? others
+        .filter(({record}) =>
+          [...textKeys(input)].some(
+            key => isEmptyValue(value?.[key]) && !isEmptyValue(record[key])
+          )
+        )
+        .map(({locale}) => locale.toUpperCase())
+    : []
   const repeat = useAtomValueRaw(row.field('repeat'))
   const min = useAtomValueRaw(row.field('min'))
   const max = useAtomValueRaw(row.field('max'))
@@ -243,6 +279,15 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
   )
   return (
     <>
+      {untranslated.length > 0 && (
+        <Badge
+          size="sm"
+          icon={IcRoundTranslate}
+          title={`Filled in in ${untranslated.join(', ')}`}
+        >
+          Not translated
+        </Badge>
+      )}
       {required === true && <Badge size="sm">Required</Badge>}
       {repeat === true && (
         <Badge size="sm" icon={IcRoundRepeat}>

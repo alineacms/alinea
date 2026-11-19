@@ -847,6 +847,55 @@
     },
     {
       "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Shared forms"
+        }
+      ],
+      "_anchor": "shared-forms"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With `shared: true` every language asks the same. The inputs, their order, keys, settings, options and rules and the mails are shared: saving the form in one language writes them into the others. Each language keeps its own texts: labels, help, placeholders, option labels, the titles of sections, Text content and the subject and body of mails."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3MOrb4ac8bUw3NegiP1fjH6U7A2",
+      "code": "export const FormEntry = Form.type('Form', {\n  inputs: Form.defaults,\n  shared: true\n})",
+      "fileName": "",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "An input added in one language shows up in the others without texts. The fields that are shared show the Shared label, rows and fields another language filled in show Not translated until they are. A label is required, so a translation with an untranslated input can not be published until it is translated."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Field.form` takes `shared: true` too, for a form in another type."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
       "level": 2,
       "content": [
         {

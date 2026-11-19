@@ -24,6 +24,7 @@ import {
 } from './FormDefinition.js'
 import type {FormCondition} from './FormConditions.js'
 import {readingOrder, ruleErrors} from './FormRules.js'
+import {languageText, shareForm} from './FormShare.js'
 import {Input} from './FormInput.js'
 
 /** Optional settings to configure a form field */
@@ -82,6 +83,11 @@ export function form<Inputs extends Record<string, Input>>(
         ...ruleErrors(readingOrder(inputs, value, context.path, context.labels))
       ]
     },
+    // A shared form shares its structure, each language keeps its texts
+    ...(options.shared && {
+      share: (source: Array<FormRow>, target: Array<FormRow> | undefined) =>
+        shareForm(inputs, source, target) as Array<FormRow>
+    }),
     // Publishing a draft does not save it again, so keys are fixed whenever
     // the form is saved
     beforeSave({value}) {
@@ -108,7 +114,17 @@ function rowType(input: Input): Type {
   return result
 }
 
+/** Marks the fields of an input that are texts of each language */
+function markTexts(input: Input) {
+  const own = {...input.fields, ...input.settings} as Record<string, unknown>
+  for (const key of input.strings ?? []) {
+    const field = own[key]
+    if (field) languageText(field as Parameters<typeof languageText>[0])
+  }
+}
+
 function createRowType(input: Input): Type {
+  markTexts(input)
   if (input.control === 'content') return contentType(input)
   const settings = input.settings ?? {}
   return type(input.label, {
@@ -117,12 +133,12 @@ function createRowType(input: Input): Type {
     tabs: {
       input: tab('Input', {
         fields: {
-          label: text('Label', {required: true}),
+          label: languageText(text('Label', {required: true})),
           key: path('Key', {
             from: 'label',
             help: 'Used in exports and in the data sent to your site'
           }),
-          help: text('Help text'),
+          help: languageText(text('Help text')),
           required: check('Required', {description: 'Must be filled in'}),
           ...(canBeUnique(input) && {
             unique: check('Unique', {
@@ -163,9 +179,11 @@ function contentType(input: Input): Type {
     tabs: {
       input: tab(input.label, {
         fields: {
-          label: text('Name', {
-            help: 'Only shown in the form builder, eg. Privacy notice'
-          }),
+          label: languageText(
+            text('Name', {
+              help: 'Only shown in the form builder, eg. Privacy notice'
+            })
+          ),
           ...settings
         }
       }),
@@ -223,8 +241,8 @@ function sectionType(
     tabs: {
       input: tab('Section', {
         fields: {
-          label: text('Title', {required: true}),
-          help: text('Description', {multiline: true}),
+          label: languageText(text('Title', {required: true})),
+          help: languageText(text('Description', {multiline: true})),
           repeat,
           key: track.options(
             path('Key', {
@@ -247,7 +265,7 @@ function sectionType(
             hidden
           ),
           add: track.options(
-            text('Add button', {help: 'Eg. Add a participant'}),
+            languageText(text('Add button', {help: 'Eg. Add a participant'})),
             hidden
           )
         }

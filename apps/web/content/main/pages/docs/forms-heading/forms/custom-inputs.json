@@ -167,6 +167,16 @@
       "content": [
         {
           "_type": "text",
+          "text": "`strings` lists the fields and settings that are texts visitors read, for example `strings: ['unit']`. In a shared form each language has its own, all others are shared. The label and help text always are texts."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
           "text": "`parse`, `attributes` and `validate` receive the values of the fields and settings the editor filled in for this input."
         }
       ]

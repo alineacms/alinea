@@ -8,6 +8,7 @@ import {type ListOptions, list} from '#/field/list.js'
 import {path} from '#/field/path.js'
 import {tab} from '#/field/tabs.js'
 import {text} from '#/field/text.js'
+import {languageText} from './FormShare.js'
 
 export interface FormChoice {
   /** The id of the option row, which conditions point at */
@@ -19,7 +20,7 @@ export interface FormChoice {
 
 const Option = type('Option', {
   fields: {
-    label: text('Label')
+    label: languageText(text('Label'))
   },
   tabs: {
     option: tab('Option', {

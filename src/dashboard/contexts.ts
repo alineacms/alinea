@@ -46,6 +46,15 @@ export interface DashboardContextValue {
 }
 
 export const entryContext = createContext<EntryContextValue | null>(null)
+
+/**
+ * Tells whether a field nested in a shared field is shared between the
+ * languages, eg. the settings of an input in a form that shares its
+ * structure. Fields are shared by their own `shared` option without it.
+ */
+export const fieldSharingContext = createContext<
+  ((field: Field) => boolean) | null
+>(null)
 export const dashboardContext = createContext<DashboardContextValue | null>(
   null
 )

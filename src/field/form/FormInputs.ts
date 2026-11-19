@@ -44,6 +44,7 @@ function unknownChoice(values: Array<string>, options: unknown) {
 
 export const text = input('Text', {
   icon: IcRoundShortText,
+  strings: ['placeholder', 'initialValue'],
   settings: {
     placeholder: textField('Placeholder'),
     maxLength: numberField('Maximum length', {minValue: 1}),
@@ -59,6 +60,7 @@ export const text = input('Text', {
 
 export const email = input('Email', {
   icon: IcRoundEmail,
+  strings: ['placeholder'],
   settings: {
     placeholder: textField('Placeholder')
   },
@@ -73,6 +75,7 @@ export const email = input('Email', {
 
 export const tel = input('Phone', {
   icon: IcRoundPhone,
+  strings: ['placeholder'],
   settings: {
     placeholder: textField('Placeholder')
   },
@@ -111,6 +114,7 @@ export const number = input('Number', {
 export const textarea = input('Textarea', {
   icon: IcRoundNotes,
   control: 'textarea',
+  strings: ['placeholder', 'initialValue'],
   settings: {
     placeholder: textField('Placeholder'),
     maxLength: numberField('Maximum length', {minValue: 1}),
@@ -210,6 +214,7 @@ export const select = input('Select', {
   icon: IcRoundArrowDropDownCircle,
   control: 'select',
   fields: {options: options()},
+  strings: ['placeholder'],
   settings: {placeholder: textField('Placeholder')},
   validate: (value, settings) => unknownChoice([value], settings.options)
 })
@@ -253,7 +258,8 @@ export const section = input('Section', {
  */
 export const textContent = content('Text', {
   icon: IcRoundSubject,
-  fields: {body: richText('Text')}
+  fields: {body: richText('Text')},
+  strings: ['body']
 })
 
 /** The inputs alinea provides, add your own next to them */

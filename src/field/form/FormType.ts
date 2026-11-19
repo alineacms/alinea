@@ -34,6 +34,7 @@ import type {Input} from './FormInput.js'
 import type {FormCondition} from './FormConditions.js'
 import {mailProblem} from './FormMails.js'
 import {readingOrder} from './FormRules.js'
+import {languageText, shareRows} from './FormShare.js'
 
 export interface FormTypeConfig<
   Inputs extends Record<string, Input>,
@@ -49,6 +50,11 @@ export interface FormTypeConfig<
    * own, made with `Field.tab`
    */
   tabs?: Tabs
+  /**
+   * Every language of the form asks the same: its inputs, keys, settings,
+   * rules and mails are shared, each language has its own texts
+   */
+  shared?: boolean
 }
 
 /** The fields every form entry has, next to the fields of its type */
@@ -88,7 +94,10 @@ export type FormMailList = ListField<
 >
 
 /** The notification mails of a form, sent when it is submitted */
-function mailList(inputsField: FormField): FormMailList {
+/** The fields of a mail that each language has of its own */
+const mailTexts = new Set(['subject', 'body'])
+
+function mailList(inputsField: FormField, shared?: boolean): FormMailList {
   const inputs = Field.options(inputsField).inputs
   const emailInputs = (get: FieldGetter) => {
     const result: Record<string, string> = {}
@@ -140,12 +149,14 @@ function mailList(inputsField: FormField): FormMailList {
       }),
       message: tab('Message', {
         fields: {
-          subject: text('Subject', {required: true}),
-          body: text('Body', {
-            required: true,
-            multiline: true,
-            help: 'Insert answers with {{key}}, eg. {{name}}'
-          })
+          subject: languageText(text('Subject', {required: true})),
+          body: languageText(
+            text('Body', {
+              required: true,
+              multiline: true,
+              help: 'Insert answers with {{key}}, eg. {{name}}'
+            })
+          )
         }
       })
     }
@@ -158,8 +169,22 @@ function mailList(inputsField: FormField): FormMailList {
     >(
       {mail: Mail},
       {
-        options: {label: 'Mails', schema: {mail: Mail}, initialValue: []},
-        view: viewKeys.FormMailsInput
+        options: {
+          label: 'Mails',
+          schema: {mail: Mail},
+          initialValue: [],
+          shared
+        },
+        view: viewKeys.FormMailsInput,
+        ...(shared && {
+          share: (source: Array<FormMailRow>, target?: Array<FormMailRow>) =>
+            shareRows(
+              source,
+              target,
+              () => mailTexts,
+              (_, __, value) => value
+            ) as Array<FormMailRow>
+        })
       }
     ),
     get => {
@@ -259,13 +284,14 @@ export function formType<
     inputs,
     fields,
     tabs: extraTabs = {} as Tabs,
+    shared,
     ...config
   }: FormTypeConfig<Inputs, Fields, Tabs>
 ): Type<
   FormTypeFields<Extract<keyof Inputs, string>> & Fields & TabFields<Tabs>
 > {
   const after = afterSending()
-  const inputsField = form('Inputs', {inputs})
+  const inputsField = form('Inputs', {inputs, shared})
   const result = type(label, {
     icon: IcRoundRule,
     ...config,
@@ -285,7 +311,7 @@ export function formType<
       tab('Notifications', {
         icon: IcRoundSend,
         fields: {
-          mails: mailList(inputsField),
+          mails: mailList(inputsField, shared),
           after,
           message: track.options(
             text('Message', {

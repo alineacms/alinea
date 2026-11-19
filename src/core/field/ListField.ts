@@ -49,7 +49,7 @@ export class ListFieldBase<
           ListMutator<StoredValue>,
           Options
         >,
-        'nestedErrors'
+        'nestedErrors' | 'share'
       >
   ) {
     const customQueryValue = meta.queryValue

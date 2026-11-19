@@ -1,4 +1,6 @@
 import {Badge} from '#/components.js'
+import {Field} from '#/core/Field.js'
+import {fieldSharingContext} from '#/dashboard/contexts.js'
 import {IcRoundCallSplit} from '#/dashboard/icons.js'
 import {
   type ListFieldBadgesProps,
@@ -7,6 +9,7 @@ import {
 import {useAtomValueRaw} from 'jotai'
 import {useMemo} from 'react'
 import {describeCondition, entryLabel} from './FormRules.js'
+import {isSharedFormField} from './FormShare.js'
 import type {FormMailList} from './FormType.js'
 import {useFormOrder} from './UseFormOrder.js'
 
@@ -16,8 +19,15 @@ export interface FormMailsViewProps {
 
 /** The notification mails of a form, named by their name */
 export function FormMailsView({field}: FormMailsViewProps) {
-  return (
+  const view = (
     <ListFieldView field={field} labelField="name" badges={FormMailBadges} />
+  )
+  if (!Field.options(field).shared) return view
+  // The mails of a shared form share all but their subject and body
+  return (
+    <fieldSharingContext.Provider value={isSharedFormField}>
+      {view}
+    </fieldSharingContext.Provider>
   )
 }
 
