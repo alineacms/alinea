@@ -308,6 +308,12 @@ export class DashboardWorker extends EventTarget {
         if (remote.pendingCount === 0 && sha !== item.sha)
           await this.#syncWithClient(db, client)
         this.#completeMutation(item)
+        // Once committed, a reload shows the changes: only then, a change
+        // that was never committed would show as saved after a reload
+        if (this.#mutations.length === 0 && db instanceof BrowserEntryStore)
+          void db.storeBase().catch(() => {
+            // The next sync stores a base too
+          })
       } catch (error) {
         let revision: string | undefined
         try {

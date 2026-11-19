@@ -136,6 +136,40 @@ test('stores on one base change apart', async () => {
   }
 })
 
+test('reopens with committed changes once their base is stored', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const create = (id: string) => ({
+    op: 'create' as const,
+    id,
+    type: 'Page',
+    locale: null,
+    data: {title: id}
+  })
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  // Applied here, but not committed: a reload does not show it as saved
+  await first.mutate([create('pending')])
+  await first.close()
+  const second = await BrowserEntryStore.open(pages(false), options)
+  expect((await second.find({select: Entry.id})).toSorted()).toEqual(['page'])
+
+  // Committed by the remote, as the dashboard worker stores it then
+  const committed = await second.mutate([create('committed')])
+  await second.storeBase()
+  await second.close()
+  const third = await BrowserEntryStore.open(pages(false), options)
+  try {
+    expect(await third.sha).toBe(committed.sha)
+    expect((await third.find({select: Entry.id})).toSorted()).toEqual([
+      'committed',
+      'page'
+    ])
+  } finally {
+    await third.close()
+  }
+})
+
 test('previews an entry over a store on a base', async () => {
   const storage = memorySnapshots()
   const options = {name, fingerprint: 'config-1', storage}

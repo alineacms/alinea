@@ -170,6 +170,15 @@ export class BrowserEntryStore extends EntryStore {
     return this.#checkpoint(await super.syncWith(remote, options))
   }
 
+  /**
+   * Store the current content as a base, as after changes the remote
+   * committed: a reload opens the last stored base, which would show the
+   * content from before them until a sync catches up.
+   */
+  async storeBase(): Promise<void> {
+    this.#checkpoint(await this.sha)
+  }
+
   /** Store the content at `revision` as a base, in the background. */
   #checkpoint(revision: string): string {
     if (!this.#storage.supported() || this.#stored === revision) return revision
