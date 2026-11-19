@@ -91,6 +91,10 @@ export class EntryStore
     return this.database.getRevision()
   }
 
+  configFingerprint(): Promise<string | undefined> {
+    return this.database.configFingerprint()
+  }
+
   includedAtBuild(filePath: string): boolean | Promise<boolean> {
     return this.database.includedAtBuild(filePath)
   }

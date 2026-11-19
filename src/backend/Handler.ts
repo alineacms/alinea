@@ -12,7 +12,10 @@ import type {
   RemoteConnection,
   RequestContext
 } from '#/core/Connection.js'
-import {developmentKeyHeader} from '#/core/Connection.js'
+import {
+  configFingerprintHeader,
+  developmentKeyHeader
+} from '#/core/Connection.js'
 import type {LocalStore} from '#/core/db/LocalStore.js'
 import {loggedSync} from '#/core/db/SyncStats.js'
 import type {DashboardEntry} from '#/core/DashboardEntry.js'
@@ -27,6 +30,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
+import {OutdatedDashboardError} from '#/core/OutdatedDashboardError.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {FileData} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
@@ -104,7 +108,47 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
-  return async function handle(
+  // The config this handler was generated with, read once: its database is
+  // replaced by the next deploy rather than changed
+  let builtWith: Promise<string | undefined> | undefined
+  function configFingerprint(local: LocalStore) {
+    if (process.env.ALINEA_DEV_SERVER) return Promise.resolve(undefined)
+    return (builtWith ??= Promise.resolve(local.configFingerprint?.()).catch(
+      () => undefined
+    ))
+  }
+
+  /**
+   * Answer with the config this handler was built with, and refuse changes
+   * from a dashboard built with another: its fields may no longer match.
+   * A side that does not know its config is never refused.
+   */
+  return async function handleWithConfig(
+    request: Request,
+    context: RequestContext
+  ): Promise<Response> {
+    const server = await configFingerprint(await db)
+    const dashboard = request.headers.get(configFingerprintHeader)
+    const outdated = Boolean(server && dashboard && server !== dashboard)
+    const action = new URL(request.url).searchParams.get('action')
+    const response =
+      outdated && action === HandleAction.Mutate && request.method === 'POST'
+        ? Response.json(
+            {success: false, error: new OutdatedDashboardError().message},
+            {status: ErrorCode.Conflict}
+          )
+        : await handle(request, context)
+    if (!server) return response
+    try {
+      response.headers.set(configFingerprintHeader, server)
+      return response
+    } catch {
+      // Some responses, such as redirects, have immutable headers
+      return response
+    }
+  }
+
+  async function handle(
     request: Request,
     context: RequestContext
   ): Promise<Response> {

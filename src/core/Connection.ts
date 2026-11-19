@@ -54,6 +54,11 @@ export interface LocalConnection
     query: Query
   ): Promise<AnyQueryResult<Query>>
   user(): Promise<User | undefined>
+  /**
+   * Listen for the handler running another config than this connection was
+   * built with, as after a deploy. Returns a function that stops listening.
+   */
+  onOutdated?(listener: () => void): () => void
 }
 
 export interface SyncApi {
@@ -108,6 +113,11 @@ export interface RequestContext {
 export const developmentKeyHeader = 'x-alinea-dev-key'
 /** Marks a mutation an app sends back to the dev server after its hooks ran. */
 export const forwardedMutationHeader = 'x-alinea-forwarded'
+/**
+ * The fingerprint of the config a dashboard was built with, and in responses
+ * the one the handler was built with: they differ after a deploy.
+ */
+export const configFingerprintHeader = 'x-alinea-config'
 
 export interface AuthedContext extends RequestContext {
   user: User

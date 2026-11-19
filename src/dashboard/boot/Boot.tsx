@@ -9,6 +9,7 @@ import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
 import {SyncEvent} from './SyncEvent.js'
+import {VersionEvent} from './VersionEvent.js'
 import {WorkerDB} from './WorkerDB.js'
 
 export interface ConfigBatch {
@@ -97,6 +98,8 @@ function listen(source: EventTarget) {
       events.dispatchEvent(new ActivityEvent(data.activities))
     } else if (data.type === SyncEvent.type) {
       events.dispatchEvent(new SyncEvent(data.progress))
+    } else if (data.type === VersionEvent.type) {
+      events.dispatchEvent(new VersionEvent(data.outdated))
     }
   })
   return events

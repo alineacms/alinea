@@ -1,0 +1,18 @@
+.DashboardUpdate {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 16px;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding-inline: 16px;
+  pointer-events: none;
+}
+
+.DashboardUpdate-alert {
+  pointer-events: auto;
+  max-width: 560px;
+  width: 100%;
+  background: var(--alinea-bg);
+  box-shadow: var(--alinea-shadow-tooltip);
+}

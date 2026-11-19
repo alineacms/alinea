@@ -4,6 +4,7 @@ import {ActivityEvent} from './ActivityEvent.js'
 import type {ConfigGenerator} from './Boot.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {SyncEvent} from './SyncEvent.js'
+import {VersionEvent} from './VersionEvent.js'
 
 interface Target {
   postMessage(message: unknown): void
@@ -20,11 +21,13 @@ export async function loadWorker(gen: ConfigGenerator) {
         worker.removeEventListener(IndexEvent.type, listen)
         worker.removeEventListener(ActivityEvent.type, listen)
         worker.removeEventListener(SyncEvent.type, listen)
+        worker.removeEventListener(VersionEvent.type, listen)
       }
     }
     worker.addEventListener(IndexEvent.type, listen)
     worker.addEventListener(ActivityEvent.type, listen)
     worker.addEventListener(SyncEvent.type, listen)
+    worker.addEventListener(VersionEvent.type, listen)
   }
 
   // A shared worker serves every tab through a port per connection, while a

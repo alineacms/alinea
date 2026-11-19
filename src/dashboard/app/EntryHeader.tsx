@@ -284,6 +284,8 @@ export function EntryHeader({
       try {
         await action()
       } catch (error) {
+        // The update banner asks for a reload, the editor keeps the changes
+        if (isRecord(error) && error.name === 'OutdatedDashboardError') return
         const conflict = entryUrlConflictInfo(error)
         if (conflict) setUrlConflict(conflict)
         else throw error

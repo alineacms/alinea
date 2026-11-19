@@ -6,11 +6,12 @@ import {syncWait} from '#/backend/util/Syncable.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {decodeBlobSequence} from '#/core/BlobTransport.js'
 import {createCMS} from '#/core.js'
-import type {
-  AuthOptions,
-  AuthedContext,
-  RequestContext,
-  Revision
+import {
+  type AuthOptions,
+  type AuthedContext,
+  configFingerprintHeader,
+  type RequestContext,
+  type Revision
 } from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
@@ -1972,4 +1973,71 @@ test('rejects unauthenticated sha requests like tree requests', async () => {
   const sha = await handle(request('action=sha'), requestContext())
   test.is(tree.status, 401)
   test.is(sha.status, 401)
+})
+
+test('refuses mutations from a dashboard built with another config', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = Object.assign(new LocalDB(cms.config), {
+    async configFingerprint() {
+      return 'deployed'
+    }
+  })
+  let commits = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {email: 'ada@example.com', roles: ['admin'], sub: 'ada'}
+          }
+        },
+        async getTreeIfDifferent() {
+          return undefined
+        },
+        async *getBlobs() {},
+        async write(request) {
+          commits++
+          return {sha: request.intoSha}
+        }
+      })
+    }
+  })
+  const request = (action: string, fingerprint?: string) =>
+    new Request(`http://localhost/api?action=${action}`, {
+      method: action === 'mutate' ? 'POST' : 'GET',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        ...(fingerprint ? {[configFingerprintHeader]: fingerprint} : {})
+      },
+      body: action === 'mutate' ? JSON.stringify([]) : undefined
+    })
+
+  const outdated = await handle(request('mutate', 'previous'), requestContext())
+  test.is(outdated.status, 409)
+  test.is(outdated.headers.get(configFingerprintHeader), 'deployed')
+  test.is(commits, 0)
+
+  const current = await handle(request('mutate', 'deployed'), requestContext())
+  test.is(current.status, 200)
+  test.is(commits, 1)
+
+  // A client that does not send its config is not refused
+  const unknown = await handle(request('mutate'), requestContext())
+  test.is(unknown.status, 200)
+
+  // Reads answer, and tell an outdated dashboard
+  const tree = await handle(
+    request(`tree&sha=${await db.sha}`, 'previous'),
+    requestContext()
+  )
+  test.is(tree.status, 200)
+  test.is(tree.headers.get(configFingerprintHeader), 'deployed')
 })

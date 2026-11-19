@@ -72,6 +72,10 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.activities()
   }
 
+  async outdated(): Promise<boolean> {
+    return this.#worker.outdated()
+  }
+
   prepareUpload(
     file: string,
     metadata?: UploadMetadata
