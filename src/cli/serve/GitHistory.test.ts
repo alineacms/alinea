@@ -48,6 +48,69 @@ test('GitHistory preserves unicode paths from git history', async () => {
   ).toEqual({_id: 'entry', _type: 'Page', _index: 'a', title: 'Second'})
 })
 
+test('GitHistory leaves out the commit that deleted a version', async () => {
+  const rootDir = mkdtempSync(join(tmpdir(), 'alinea-git-history-'))
+  tempDirs.push(rootDir)
+  git(rootDir, 'init')
+  git(rootDir, 'config', 'user.email', 'test@example.com')
+  git(rootDir, 'config', 'user.name', 'Test User')
+  const write = (file: string, title: string) => {
+    // Removing the last file of a directory with git removes the directory
+    mkdirSync(join(rootDir, 'content'), {recursive: true})
+    writeFileSync(
+      join(rootDir, 'content', file),
+      JSON.stringify({_id: 'entry', _type: 'Page', _index: 'a', title})
+    )
+  }
+  write('page.json', 'Published')
+  git(rootDir, 'add', '.')
+  git(rootDir, 'commit', '-m', 'Publish')
+  // Unpublishing removes the published file and adds the draft
+  git(rootDir, 'rm', '-q', 'content/page.json')
+  write('page.draft.json', 'Unpublished draft')
+  git(rootDir, 'add', '.')
+  git(rootDir, 'commit', '-m', 'Unpublish')
+
+  const history = new GitHistory({} as Config, rootDir)
+  const revisions = await history.revisions('content/page.draft.json')
+
+  // Both commits can land in the same second, which orders them
+  expect(
+    revisions.map(revision => [revision.description, revision.file]).sort()
+  ).toEqual([
+    ['Publish', 'content/page.json'],
+    ['Unpublish', 'content/page.draft.json']
+  ])
+  for (const revision of revisions)
+    await history.revisionData(revision.file, revision.ref)
+})
+
 function git(cwd: string, ...args: Array<string>) {
   execFileSync('git', args, {cwd, stdio: 'pipe'})
 }
+
+test('GitHistory reads commits with an empty message', async () => {
+  const rootDir = mkdtempSync(join(tmpdir(), 'alinea-git-history-'))
+  tempDirs.push(rootDir)
+  git(rootDir, 'init')
+  git(rootDir, 'config', 'user.email', 'test@example.com')
+  git(rootDir, 'config', 'user.name', 'Test User')
+  mkdirSync(join(rootDir, 'content'), {recursive: true})
+  const file = join(rootDir, 'content', 'page.json')
+  writeFileSync(file, '{"_id":"entry","_type":"Page","_index":"a","title":"A"}')
+  git(rootDir, 'add', '.')
+  git(rootDir, 'commit', '-m', 'Create')
+  writeFileSync(file, '{"_id":"entry","_type":"Page","_index":"a","title":"B"}')
+  git(rootDir, 'add', '.')
+  git(rootDir, 'commit', '--allow-empty-message', '-m', '')
+
+  const history = new GitHistory({} as Config, rootDir)
+  const revisions = await history.revisions('content/page.json')
+
+  expect(revisions).toHaveLength(2)
+  expect(
+    revisions.every(revision => revision.file === 'content/page.json')
+  ).toBe(true)
+  for (const revision of revisions)
+    await history.revisionData(revision.file, revision.ref)
+})

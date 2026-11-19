@@ -326,3 +326,21 @@ test('keeps persisted rows exactly as committed', () => {
   expect(store.get(list.value)).toEqual(saved)
   expect(store.get(list.isDirty)).toBeFalse()
 })
+
+test('starts from edits that are not saved yet', () => {
+  const store = createStore()
+  const saved = {title: 'Saved', tags: ['a']}
+  const node = new ReactiveNode(saved, false, {title: 'Edited', tags: ['a']})
+
+  expect(store.get(node.value)).toEqual({title: 'Edited', tags: ['a']})
+  expect(store.get(node.checkpoint)).toBe(saved)
+  expect(store.get(node.isDirty)).toBe(true)
+  store.set(node.reset)
+  expect(store.get(node.value)).toEqual(saved)
+  expect(store.get(node.isDirty)).toBe(false)
+
+  // A read-only node shows what is saved
+  const readOnly = new ReactiveNode(saved, true, {title: 'Edited', tags: []})
+  expect(store.get(readOnly.value)).toEqual(saved)
+  expect(store.get(readOnly.isDirty)).toBe(false)
+})

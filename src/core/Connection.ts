@@ -64,6 +64,11 @@ export interface LocalConnection
   deleteSubmission(entryId: string, id: string): Promise<void>
   /** A file of a submission, for editors who can read its form */
   submissionFile(entryId: string, id: string): Promise<Blob>
+  /**
+   * Listen for the handler running another config than this connection was
+   * built with, as after a deploy. Returns a function that stops listening.
+   */
+  onOutdated?(listener: () => void): () => void
 }
 
 export interface SyncApi {
@@ -331,6 +336,11 @@ export interface RequestContext {
 export const developmentKeyHeader = 'x-alinea-dev-key'
 /** Marks a mutation an app sends back to the dev server after its hooks ran. */
 export const forwardedMutationHeader = 'x-alinea-forwarded'
+/**
+ * The fingerprint of the config a dashboard was built with, and in responses
+ * the one the handler was built with: they differ after a deploy.
+ */
+export const configFingerprintHeader = 'x-alinea-config'
 
 export interface AuthedContext extends RequestContext {
   user: User

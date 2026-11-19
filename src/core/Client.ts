@@ -1,33 +1,35 @@
 import {HandleAction} from '#/backend/HandleAction.js'
 import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
-import {AbortController, fetch, type Response} from '@alinea/iso'
+import {AbortController, fetch, Headers, type Response} from '@alinea/iso'
 import {
   BLOB_SEQUENCE_CONTENT_TYPE,
   decodeBlobSequence
 } from './BlobTransport.js'
 import type {Config} from './Config.js'
-import type {
-  BackendCapabilities,
-  DraftTransport,
-  LocalConnection,
-  FormStatus,
-  FormStatusRequest,
-  PrepareUploadRequest,
-  PrepareUploadResult,
-  Revision,
-  SubmissionPage,
-  SubmissionQuery,
-  SubmissionStatus,
-  SubmitRequest,
-  SubmitResult,
-  UploadMetadata,
-  UploadResponse
+import {
+  type BackendCapabilities,
+  configFingerprintHeader,
+  type DraftTransport,
+  type FormStatus,
+  type FormStatusRequest,
+  type LocalConnection,
+  type PrepareUploadRequest,
+  type PrepareUploadResult,
+  type Revision,
+  type SubmissionPage,
+  type SubmissionQuery,
+  type SubmissionStatus,
+  type SubmitRequest,
+  type SubmitResult,
+  type UploadMetadata,
+  type UploadResponse
 } from './Connection.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
+import {OutdatedDashboardError} from './OutdatedDashboardError.js'
 import {getScope} from './Scope.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
 import type {GetBlobsOptions} from './source/Source.js'
@@ -44,6 +46,12 @@ export interface ClientOptions {
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
+  /**
+   * The fingerprint of the config this client was built with. The handler
+   * refuses mutations from another config and `onOutdated` listeners hear of
+   * it, see `configFingerprintHeader`.
+   */
+  configFingerprint?: string
 }
 
 // Reads give up when the handler does not respond in time, so a hung handler
@@ -59,10 +67,44 @@ const reads = new Set<HandleAction>([
   HandleAction.Resolve
 ])
 
+interface OutdatedState {
+  outdated: boolean
+  listeners: Set<() => void>
+}
+
 export class Client implements LocalConnection {
   #options: ClientOptions
-  constructor(options: ClientOptions) {
+  #outdated: OutdatedState
+  constructor(options: ClientOptions, outdated?: OutdatedState) {
     this.#options = options
+    this.#outdated = outdated ?? {outdated: false, listeners: new Set()}
+  }
+
+  /**
+   * Listen for the handler answering with another config than this client's,
+   * as after a deploy. Returns a function that stops listening.
+   */
+  onOutdated(listener: () => void): () => void {
+    const state = this.#outdated
+    state.listeners.add(listener)
+    if (state.outdated) listener()
+    return () => {
+      state.listeners.delete(listener)
+    }
+  }
+
+  /** Note a response of a handler built with another config. */
+  #checkConfig(res: Response): void {
+    const own = this.#options.configFingerprint
+    const theirs = res.headers.get(configFingerprintHeader)
+    if (own && theirs && own !== theirs) this.#markOutdated()
+  }
+
+  #markOutdated(): void {
+    const state = this.#outdated
+    if (state.outdated) return
+    state.outdated = true
+    for (const listener of state.listeners) listener()
   }
 
   authStatus(): Promise<AuthResult> {
@@ -189,7 +231,10 @@ export class Client implements LocalConnection {
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
-    return new Client({...this.#options, applyAuth, unauthorized})
+    return new Client(
+      {...this.#options, applyAuth, unauthorized},
+      this.#outdated
+    )
   }
 
   // History
@@ -338,7 +383,12 @@ export class Client implements LocalConnection {
     init: RequestInit = {},
     retry = false
   ): Promise<Response> {
-    const {url, applyAuth = v => v, unauthorized} = this.#options
+    const {
+      url,
+      applyAuth = v => v,
+      unauthorized,
+      configFingerprint
+    } = this.#options
     const controller = new AbortController()
     const signal = controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
@@ -348,8 +398,11 @@ export class Client implements LocalConnection {
           controller.abort(new Error(`No response within ${seconds}s`))
         }, readTimeout)
       : undefined
+    const headers = new Headers(init.headers)
+    if (configFingerprint)
+      headers.set(configFingerprintHeader, configFingerprint)
     const promise = fetch(location, {
-      ...applyAuth(init),
+      ...applyAuth({...init, headers}),
       signal
     })
       .finally(() => clearTimeout(timer))
@@ -360,6 +413,7 @@ export class Client implements LocalConnection {
         )
       })
       .then(async res => {
+        this.#checkConfig(res)
         if (res.ok) return res
         const isJson = res.headers
           .get('content-type')
@@ -374,6 +428,11 @@ export class Client implements LocalConnection {
           ) {
             // We'll attempt a single retry if the access token is refreshed
             if (!retry) return this.#request(params, init, true)
+          }
+          // The handler refused a change of this outdated dashboard
+          if (isRecord(body) && body.outdated === true) {
+            this.#markOutdated()
+            throw new OutdatedDashboardError()
           }
           if (isRecord(body) && typeof body.error === 'string')
             errorMessage = body.error

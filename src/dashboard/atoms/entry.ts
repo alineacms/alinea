@@ -32,10 +32,11 @@ import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
-import {ReactiveNode} from './ReactiveNode.js'
+import {ReactiveNode, rebasedEdits} from './ReactiveNode.js'
 import {requestUploadsAtom} from './upload.js'
 import {policyAtom, userAtom} from './user.js'
 import {atomWithPending, dispense, loader} from './utils.js'
+import {keptEditsAtom} from './version.js'
 
 interface EntryData {
   id: string
@@ -236,7 +237,12 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const client = get(clientAtom)
     const file = join(Config.contentDir(config), entry.filePath)
-    return (await client.revisions(file)).slice(1)
+    const revisions = await client.revisions(file)
+    // The latest revision of the file the entry is in holds its current
+    // content. The latest of all can be another version, such as a draft
+    // that was discarded since.
+    const current = revisions.findIndex(revision => revision.file === file)
+    return revisions.filter((_, index) => index !== current)
   })
   historyState = atomWithPending(this.historyReady)
 
@@ -292,7 +298,15 @@ export class EntryLocaleAtoms {
       },
       {fieldI18n: Config.fieldI18n(config, entry.workspace, entry.root)}
     )
-    return new ReactiveNode<object>(value, readOnly)
+    // Changes kept over a reload for an update apply to what is saved now
+    const kept = get(keptEditsAtom)
+    const edited =
+      kept &&
+      kept.entryId === this.entry.id &&
+      kept.locale === this.requestedLocale
+        ? (rebasedEdits(kept.checkpoint, kept.edited, value) as object)
+        : undefined
+    return new ReactiveNode<object>(value, readOnly, edited)
   })
   /**
    * Brings the node being edited up to date with this language as it is

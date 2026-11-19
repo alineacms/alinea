@@ -5,6 +5,7 @@ import {LocalDB} from '#/database/LocalDB.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Entry} from '#/core/Entry.js'
+import {OutdatedDashboardError} from '#/core/OutdatedDashboardError.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -14,6 +15,7 @@ import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {SyncEvent} from './SyncEvent.js'
+import {VersionEvent} from './VersionEvent.js'
 
 test('loads local state without starting a remote sync', async () => {
   const fixture = new FSSource('test/fixtures/demo')
@@ -994,3 +996,107 @@ function mutationActivity(worker: DashboardWorker, id: string, status: string) {
     })
   })
 }
+
+test('an outdated dashboard stops sending changes and tells its tabs', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const local = new MemorySource()
+  await syncWith(local, fixture)
+  const baseClient = createTestConnection(remoteDB)
+  const listeners = new Set<() => void>()
+  let commits = 0
+  const client: LocalConnection = {
+    ...baseClient,
+    onOutdated(listener) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    async mutate() {
+      // The handler of a newer deploy answers
+      commits += 1
+      for (const listener of listeners) listener()
+      throw new OutdatedDashboardError()
+    }
+  }
+  const worker = new DashboardWorker(local)
+  await worker.load('test', cms.config, client)
+  await worker.sync()
+  const versions = Array<boolean>()
+  worker.addEventListener(VersionEvent.type, event => {
+    if (event instanceof VersionEvent) versions.push(event.outdated)
+  })
+  const db = await worker.db
+  const recipe = await db.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  const update = (title: string): Mutation => ({
+    op: 'update',
+    id: recipe._id,
+    locale: null,
+    status: 'published',
+    set: {title}
+  })
+
+  const failed = mutationActivity(worker, 'refused', 'failed')
+  await worker.queue('refused', [update('Refused title')])
+  await failed
+  expect(worker.outdated()).toBe(true)
+  expect(versions).toEqual([true])
+  expect(worker.activities()).toContainEqual(
+    expect.objectContaining({
+      id: 'refused',
+      error: new OutdatedDashboardError().message
+    })
+  )
+  // Trying again would be refused the same way, also on request
+  await new Promise(resolve => setTimeout(resolve, 10))
+  await worker.retryActivity()
+  await new Promise(resolve => setTimeout(resolve, 10))
+  expect(commits).toBe(1)
+
+  // Later changes are refused before they change anything here
+  let error: unknown
+  try {
+    await worker.queue('later', [update('Later title')])
+  } catch (caught) {
+    error = caught
+  }
+  expect(error).toBeInstanceOf(OutdatedDashboardError)
+  expect(
+    await db.get({type: cms.schema.DemoRecipe, id: recipe._id})
+  ).toMatchObject({title: 'Refused title'})
+  expect(commits).toBe(1)
+})
+
+test('shows background syncs that keep failing until one succeeds', async () => {
+  const {release, setUnavailable, worker} = await createStoredFixture()
+  release()
+  await worker.ready()
+  await syncActivity(worker, 'succeeded')
+
+  setUnavailable(true)
+  // A graph replaced on a caught up store syncs in the background
+  await worker.ready()
+  await new Promise(resolve => setTimeout(resolve, 10))
+  // Once can be a blip of the network
+  expect(
+    worker.activities().filter(activity => activity.status === 'failed')
+  ).toEqual([])
+
+  const failed = syncActivity(worker, 'failed')
+  await worker.ready()
+  await failed
+  await worker.ready()
+  await new Promise(resolve => setTimeout(resolve, 10))
+  expect(
+    worker.activities().filter(activity => activity.status === 'failed')
+  ).toMatchObject([{type: 'sync', error: 'Remote unavailable'}])
+
+  setUnavailable(false)
+  await worker.sync()
+  expect(
+    worker.activities().filter(activity => activity.status === 'failed')
+  ).toEqual([])
+})

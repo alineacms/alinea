@@ -13,6 +13,7 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {SyncProgress} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
+import {OutdatedDashboardError} from '#/core/OutdatedDashboardError.js'
 import type {Source} from '#/core/source/Source.js'
 import {
   BrowserEntryStore,
@@ -23,10 +24,12 @@ import pLimit from 'p-limit'
 import {
   type Activity,
   ActivityEvent,
+  isUnsettled,
   type ActivityOperation,
   type ActivityTarget
 } from './ActivityEvent.js'
 import {SyncEvent} from './SyncEvent.js'
+import {VersionEvent} from './VersionEvent.js'
 
 const remote = pLimit(1)
 const cacheName = 'alinea-entry-database'
@@ -56,6 +59,8 @@ interface CacheFailure {
 }
 
 const activityHistoryLimit = 100
+// One failed background sync can be a blip of the network, the next is not
+const reportSyncFailuresAfter = 2
 
 export class DashboardWorker extends EventTarget {
   #source: Source | undefined
@@ -69,6 +74,11 @@ export class DashboardWorker extends EventTarget {
   #local = pLimit(1)
   #blocked = false
   #syncInterval: ReturnType<typeof setInterval> | undefined
+  /** The handler runs another config than this dashboard, see `outdated` */
+  #outdated = false
+  #stopListening: (() => void) | undefined
+  /** Background syncs that failed since the last one that succeeded */
+  #syncFailures = 0
 
   /** Keep the content in memory with `source`, instead of in the browser. */
   constructor(source?: Source) {
@@ -114,9 +124,36 @@ export class DashboardWorker extends EventTarget {
     if (!loaded.caughtUp) return void (loaded.caughtUp = this.#catchUp())
     // A graph replaced on the same store, as on a dev server refetch after
     // content changed on disk, still has to fetch those changes
-    this.sync().catch(() => {
-      // Background sync failures are silent and retried on the next interval.
+    this.sync().catch(error => this.#backgroundSyncFailed(error))
+  }
+
+  /**
+   * A background sync failed: it is retried on the next interval. Failing
+   * again shows as a failed sync, which the first sync that succeeds settles,
+   * instead of the content silently falling behind.
+   */
+  #backgroundSyncFailed(error: unknown) {
+    this.#syncFailures += 1
+    if (this.#syncFailures < reportSyncFailuresAfter) return
+    const failed = this.#activities.find(
+      activity =>
+        activity.type === 'sync' &&
+        (activity.status === 'running' || activity.status === 'failed')
+    )
+    if (failed?.status === 'running') return
+    if (failed) return this.#failActivity(failed, error)
+    const now = Date.now()
+    this.#activities.unshift({
+      id: createId(),
+      type: 'sync',
+      status: 'failed',
+      operations: [{op: 'sync'}],
+      startedAt: now,
+      finishedAt: now,
+      error: errorMessage(error)
     })
+    this.#trimActivities()
+    this.#emitActivity()
   }
 
   #catchUp(): Promise<void> {
@@ -151,6 +188,7 @@ export class DashboardWorker extends EventTarget {
 
   /** Content that synced is caught up: settle the catch-up activities. */
   #settleSyncs() {
+    this.#syncFailures = 0
     const syncs = this.#activities.filter(
       activity =>
         activity.type === 'sync' &&
@@ -196,6 +234,8 @@ export class DashboardWorker extends EventTarget {
   }
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
+    // Refused before it changes anything here: the editor keeps the changes
+    if (this.#outdated) throw new OutdatedDashboardError()
     if (this.#blocked) await this.discardActivity()
     return this.#local(async () => {
       const db = await this.db
@@ -242,7 +282,8 @@ export class DashboardWorker extends EventTarget {
       activity => activity.type === 'sync' && activity.status === 'failed'
     )
     if (syncs.length > 0) await this.#syncActivities(syncs)
-    if (this.#blocked) await this.#retryMutations()
+    // The handler refuses changes of an outdated dashboard every time
+    if (this.#blocked && !this.#outdated) await this.#retryMutations()
   }
 
   async #retryMutations(): Promise<void> {
@@ -308,7 +349,20 @@ export class DashboardWorker extends EventTarget {
         if (remote.pendingCount === 0 && sha !== item.sha)
           await this.#syncWithClient(db, client)
         this.#completeMutation(item)
+        // Once committed, a reload shows the changes: only then, a change
+        // that was never committed would show as saved after a reload
+        if (this.#mutations.length === 0 && db instanceof BrowserEntryStore)
+          void db.storeBase().catch(() => {
+            // The next sync stores a base too
+          })
       } catch (error) {
+        if (error instanceof OutdatedDashboardError) {
+          // Nothing was committed, and trying again fails the same way
+          this.#markOutdated()
+          this.#blocked = true
+          this.#failActivity(item.activity, error)
+          return
+        }
         let revision: string | undefined
         try {
           revision = await this.#syncWithClient(db, client)
@@ -357,6 +411,20 @@ export class DashboardWorker extends EventTarget {
     this.dispatchEvent(new ActivityEvent(this.activities()))
   }
 
+  /**
+   * Whether a newer dashboard was deployed: the handler runs another config,
+   * and refuses changes from this one until it is reloaded.
+   */
+  outdated(): boolean {
+    return this.#outdated
+  }
+
+  #markOutdated = () => {
+    if (this.#outdated) return
+    this.#outdated = true
+    this.dispatchEvent(new VersionEvent(true))
+  }
+
   async #syncWithClient(db: EntryStore, client: LocalConnection) {
     // Fetch syncs are intentionally not recorded as activities: they run on
     // every load and on an interval, so history rows would just be noise.
@@ -392,14 +460,7 @@ export class DashboardWorker extends EventTarget {
     let excess = this.#activities.length - activityHistoryLimit
     for (let index = this.#activities.length - 1; excess > 0; index--) {
       if (index < 0) break
-      const activity = this.#activities[index]
-      if (
-        activity.status === 'pending' ||
-        activity.status === 'running' ||
-        activity.status === 'blocked' ||
-        activity.status === 'failed'
-      )
-        continue
+      if (isUnsettled(this.#activities[index])) continue
       this.#activities.splice(index, 1)
       excess -= 1
     }
@@ -467,6 +528,8 @@ export class DashboardWorker extends EventTarget {
         })
       this.#localDB = db
       this.#localClient = client
+      this.#stopListening?.()
+      this.#stopListening = client.onOutdated?.(this.#markOutdated)
       nextLoad.resolve({
         db,
         client,
@@ -516,9 +579,7 @@ export class DashboardWorker extends EventTarget {
   #startSyncing() {
     if (this.#syncInterval) return
     const sync = () => {
-      void this.sync().catch(() => {
-        // Background sync failures are silent and retried on the next interval.
-      })
+      void this.sync().catch(error => this.#backgroundSyncFailed(error))
     }
     this.#syncInterval = setInterval(sync, syncInterval)
   }

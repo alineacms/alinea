@@ -38,6 +38,7 @@ import {
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
+import {keptEditsAtom, openEditsAtom} from '#/dashboard/atoms/version.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {type ReactNode, useEffect, useLayoutEffect, useRef} from 'react'
@@ -329,6 +330,8 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
+  const setOpenEdits = useSetAtom(openEditsAtom)
+  const setKeptEdits = useSetAtom(keptEditsAtom)
   const setSidebarOpen = useSetAtom(
     entrySidebarOpen(Boolean(useAtomValueRaw(entry.preview)))
   )
@@ -360,8 +363,16 @@ function EntryEditorContent({
   }
 
   useEffect(() => {
-    setEditing(node.readOnly && !isUntranslated ? undefined : node)
-  }, [isUntranslated, node, setEditing])
+    const editing = node.readOnly && !isUntranslated ? undefined : node
+    setEditing(editing)
+    // Changes kept over a reload for an update are in this editor now
+    if (editing)
+      setKeptEdits(kept =>
+        kept?.entryId === entry.id && kept.locale === localeData.requestedLocale
+          ? undefined
+          : kept
+      )
+  }, [entry.id, isUntranslated, localeData, node, setEditing, setKeptEdits])
 
   // Another language can change this one, eg. through shared fields
   const refreshEditing = useSetAtom(localeData.refreshEditing)
@@ -371,10 +382,13 @@ function EntryEditorContent({
 
   useEffect(() => {
     setRouteGuard(node.isDirty)
+    const open = {entryId: entry.id, locale: localeData.requestedLocale, node}
+    setOpenEdits(open)
     return () => {
       setRouteGuard(current => (current === node.isDirty ? null : current))
+      setOpenEdits(current => (current === open ? null : current))
     }
-  }, [node, setRouteGuard])
+  }, [entry.id, localeData, node, setOpenEdits, setRouteGuard])
 
   useLayoutEffect(() => {
     if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0

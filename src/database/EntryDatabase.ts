@@ -537,6 +537,24 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     return this.#queue.run(() => this.#getRevision(this.#db))
   }
 
+  /**
+   * The fingerprint of the config this database was generated for, as the
+   * dashboard of the same build carries it. Undefined when none was given.
+   */
+  configFingerprint(): Promise<string | undefined> {
+    return this.#queue.run(async () => {
+      const row = await this.#db
+        .select({fingerprint: DatabaseMetadataTable.configFingerprint})
+        .from(DatabaseMetadataTable)
+        .where(eq(DatabaseMetadataTable.id, 1))
+        .get()
+      const fingerprint = row?.fingerprint
+      return fingerprint && fingerprint !== defaultConfigFingerprint
+        ? fingerprint
+        : undefined
+    })
+  }
+
   async getTree(): Promise<ReadonlyTree> {
     const state = await this.#queue.run(() => this.#readTreeState())
     if (!state.tree)

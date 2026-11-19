@@ -15,13 +15,18 @@ export function bootProd(
   buildId: string = process.env.ALINEA_BUILD_ID as string
 ) {
   async function* getConfig() {
+    const configFingerprint = process.env.ALINEA_CONFIG_FINGERPRINT as string
     yield {
       local: false,
       revision: buildId,
-      configFingerprint: process.env.ALINEA_CONFIG_FINGERPRINT as string,
+      configFingerprint,
       config: cms.config,
       views,
-      client: new Client({config: cms.config, url: handlerUrl})
+      client: new Client({
+        config: cms.config,
+        url: handlerUrl,
+        configFingerprint
+      })
     }
   }
   return boot(getConfig())

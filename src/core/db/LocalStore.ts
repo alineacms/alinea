@@ -49,6 +49,11 @@ export interface LocalStore extends WriteableGraph, RemoteSource {
   /** How the store reads its database, when it is a SQLite connection. */
   driver?: 'native' | 'overlay' | 'wasm'
   sha: string | Promise<string>
+  /**
+   * The fingerprint of the config the store was generated for: a dashboard
+   * built with another config is outdated. Undefined when unknown.
+   */
+  configFingerprint?(): Promise<string | undefined>
   sync(): Promise<string>
   syncWith(remote: RemoteSource, options?: SyncOptions): Promise<string>
   includedAtBuild(filePath: string): boolean | Promise<boolean>
