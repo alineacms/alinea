@@ -715,6 +715,142 @@
       "content": [
         {
           "_type": "text",
+          "text": "Translated forms"
+        }
+      ],
+      "_anchor": "translated-forms"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a translated root each language has a form of its own: its inputs, rules, mails and messages. The site passes the language to `cms.forms.submit`, the answers are checked against the form of that language and stored with it. All languages share one Submissions tab:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Language",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " filters the submissions by the language they were sent in."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Each submission shows the labels and options of the form its visitor saw."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Export CSV",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " has a column per key, so the answers of every language line up when they use the same keys."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Keep submissions",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and "
+                },
+                {
+                  "_type": "text",
+                  "text": "Most submissions",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " are the same in every language: there is one set of places and one retention."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The form builder warns when another language asks other keys, uses another type for a key or has other option values, since those answers would not line up. Translate labels, help and option labels freely, keep keys and values the same."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Removing a form"
         }
       ],

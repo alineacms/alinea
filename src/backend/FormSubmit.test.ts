@@ -5,6 +5,8 @@ import {createHandler} from '#/backend/Handler.js'
 import {createCMS} from '#/core.js'
 import type {AuthedContext, RequestContext} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
+import {Field as CoreField} from '#/core/Field.js'
+import {Type} from '#/core/Type.js'
 import type {FormMail, FormsOptions} from '#/core/Forms.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field, Form} from '#/index.js'
@@ -365,4 +367,16 @@ test('a unique input takes each answer once', async () => {
   expect(
     (await submit({name: 'Ann', email: 'other@example.com'})).body.ok
   ).toBe(true)
+})
+
+test('submissions are listed by the language they were sent in', async () => {
+  const {entryId, store, submit} = await setup()
+  await submit({name: 'Ann', email: 'ann@example.com'})
+  expect((await store.listSubmissions(entryId, {locale: 'en'})).total).toBe(0)
+  expect((await store.listSubmissions(entryId)).total).toBe(1)
+})
+
+test('keep and most submissions are the same in every language', () => {
+  for (const key of ['keep', 'limit'])
+    expect(CoreField.options(Type.field(ServiceForm, key)!).shared).toBe(true)
 })

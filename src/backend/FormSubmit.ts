@@ -89,6 +89,7 @@ export function parseSubmissionQuery(body: unknown): SubmissionQuery {
       choice && text(choice.key) && text(choice.value)
         ? {key: String(choice.key), value: String(choice.value)}
         : undefined,
+    locale: text(body.locale),
     from: number(body.from),
     until: number(body.until),
     offset: number(body.offset),

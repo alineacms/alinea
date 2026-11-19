@@ -207,7 +207,9 @@ export function keepFor() {
       '730': 'For two years'
     },
     placeholder: 'Until they are deleted',
-    help: 'Older submissions and their files are removed'
+    help: 'Older submissions and their files are removed',
+    // The submissions of every language are kept alike
+    shared: true
   })
 }
 
@@ -219,6 +221,8 @@ export function keepFor() {
 export function limitFields() {
   const limit = number('Most submissions', {
     minValue: 1,
+    // The places are those of all languages together
+    shared: true,
     help: 'The form closes once this many were sent, eg. the places on a waiting list'
   })
   return {

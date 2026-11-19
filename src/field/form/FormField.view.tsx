@@ -28,6 +28,7 @@ import {
 } from 'react'
 import type {FormField} from './FormField.js'
 import css from './FormField.module.css'
+import {FormTranslationAlert} from './FormTranslationAlert.js'
 import {defaults} from './FormInputs.js'
 import {
   type FormEntry,
@@ -80,6 +81,7 @@ function FormFieldRoot({field, children}: FormFieldRootProps) {
   const node = useFieldNode(field) as ReactiveNode<Array<ListValue>>
   const store = useStore()
   const [removing, setRemoving] = useState<Removal>()
+  const rows = useAtomValueRaw(node.value)
   const builder = useMemo<FormBuilder>(() => {
     const order = atom(get => readingOrder(inputs, get(node.value)))
     return {
@@ -115,6 +117,7 @@ function FormFieldRoot({field, children}: FormFieldRootProps) {
 
   return (
     <FormBuilderContext.Provider value={builder}>
+      <FormTranslationAlert field={field} rows={rows} />
       {children}
       <FormRemoveModal
         removal={removing}

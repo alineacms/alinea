@@ -139,6 +139,7 @@ export class SubmissionStore implements SubmissionsApi {
     const where = and(
       eq(SubmissionTable.entryId, entryId),
       statusCondition(query.status ?? 'all'),
+      query.locale ? eq(SubmissionTable.locale, query.locale) : undefined,
       query.from !== undefined
         ? gte(SubmissionTable.createdAt, query.from)
         : undefined,

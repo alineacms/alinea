@@ -50,7 +50,8 @@ import {
   useOpenBlockSheet,
   useOpenBlockSheetId
 } from '#/dashboard/app/BlockSheet.js'
-import {clientAtom} from '#/dashboard/atoms/core.js'
+import {clientAtom, configAtom} from '#/dashboard/atoms/core.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {atomWithPending, dispense} from '#/dashboard/atoms/utils.js'
 import {useEditor, useEntry} from '#/dashboard/hooks.js'
 import {
@@ -79,6 +80,9 @@ import {
   columnText,
   formColumns,
   itemsOf,
+  sentColumn,
+  sentDefinition,
+  submissionText,
   submissionsCsv
 } from './FormAnswers.js'
 import {formState} from './FormConditions.js'
@@ -108,6 +112,7 @@ interface SubmissionFilter {
   range: DateRange | null
   status: StatusFilter
   choice: {key: string; value: string} | null
+  locale: string | null
 }
 
 const filterAtom = dispense((entryId: string) =>
@@ -115,7 +120,8 @@ const filterAtom = dispense((entryId: string) =>
     search: '',
     range: null,
     status: 'open',
-    choice: null
+    choice: null,
+    locale: null
   })
 )
 
@@ -165,6 +171,7 @@ function submissionQuery(filter: SubmissionFilter): SubmissionQuery {
     status: filter.status,
     search: filter.search.trim() || undefined,
     choice: filter.choice ?? undefined,
+    locale: filter.locale ?? undefined,
     // From the start of the first day to the start of the day after the last
     from: range ? startOfDay(range.start) : undefined,
     until: range ? startOfDay(range.end, 1) : undefined
@@ -182,8 +189,20 @@ const columns = 4
 export function FormSubmissionsView() {
   const entry = useEntry()
   const definition = useFormDefinition()
+  const config = useAtomValueRaw(configAtom)
+  const locales = useMemo(() => {
+    const workspace = entry && config.workspaces[entry.workspace]
+    const root = workspace && getWorkspace(workspace).roots[entry.root]
+    return root ? (getRoot(root).i18n?.locales ?? []) : []
+  }, [config, entry])
   if (!entry || !definition) return null
-  return <FormSubmissions entryId={entry.id} definition={definition} />
+  return (
+    <FormSubmissions
+      entryId={entry.id}
+      definition={definition}
+      locales={locales}
+    />
+  )
 }
 
 /** The form as it is now in the editor, which the table shows columns for */
@@ -208,9 +227,11 @@ function useFormDefinition(): FormDefinition | undefined {
 interface FormSubmissionsProps {
   entryId: string
   definition: FormDefinition
+  /** The languages of the root of the form, none when it is not translated */
+  locales: ReadonlyArray<string>
 }
 
-function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
+function FormSubmissions({entryId, definition, locales}: FormSubmissionsProps) {
   const [pending, page] = useAtomValueRawSync(submissionsAtom(entryId))
   const submissions = page?.submissions ?? []
   const total = page?.total ?? 0
@@ -246,6 +267,7 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
     filter.search !== '' ||
     filter.range !== null ||
     filter.choice !== null ||
+    filter.locale !== null ||
     (filter.status !== 'open' && filter.status !== 'all')
 
   function update(change: Partial<SubmissionFilter>) {
@@ -322,6 +344,24 @@ function FormSubmissions({entryId, definition}: FormSubmissionsProps) {
             {choice.choices!.map(option => (
               <SelectItem key={option.id} value={option.value}>
                 {option.label}
+              </SelectItem>
+            ))}
+          </Select>
+        )}
+        {locales.length > 1 && (
+          <Select
+            aria-label="Language"
+            className={styles.FormSubmissions.filter()}
+            placeholder="Language"
+            clearable
+            value={filter.locale}
+            onValueChange={value =>
+              update({locale: value === null ? null : String(value)})
+            }
+          >
+            {locales.map(locale => (
+              <SelectItem key={locale} value={locale}>
+                {locale.toUpperCase()}
               </SelectItem>
             ))}
           </Select>
@@ -434,13 +474,13 @@ interface AnswerTextProps {
 
 /** An answer in the table, or why there is none */
 function AnswerText({column, submission}: AnswerTextProps) {
-  const text = columnText(column, submission.values)
+  const text = submissionText(column, submission)
   if (text) return <>{text}</>
-  const sent = submission.definition as FormDefinition
-  const asked = formColumns(sent).some(other => other.id === column.id)
+  const own = sentColumn(column, submission)
   const hidden =
-    asked && formState(sent, submission.values).hidden.has(column.id)
-  if (asked && !hidden) return null
+    own !== undefined &&
+    formState(sentDefinition(submission), submission.values).hidden.has(own.id)
+  if (own && !hidden) return null
   return (
     <Text color="muted" className={styles.FormSubmissions.missing()}>
       {hidden ? 'not shown' : 'not asked'}
@@ -689,9 +729,13 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-/** The first answer of a submission names it, eg. the name of the visitor */
+/**
+ * The first answer of a submission names it, eg. the name of the visitor, in
+ * the form it was sent with
+ */
 function rowTitle(definition: FormDefinition, submission: Submission): string {
-  for (const column of formColumns(definition)) {
+  const sent = sentDefinition(submission)
+  for (const column of formColumns(sent.length > 0 ? sent : definition)) {
     // The first item of a repeatable section names it, eg. its first person
     const values =
       column.control === 'section'

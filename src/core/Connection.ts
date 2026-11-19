@@ -143,6 +143,8 @@ export interface SubmissionQuery {
   search?: string
   /** An answer to a choice input, by its key */
   choice?: {key: string; value: string}
+  /** Sent in this language */
+  locale?: string
   /** Sent at or after, in seconds */
   from?: number
   /** Sent before, in seconds */

@@ -178,23 +178,51 @@ export function submissionIndex(
 
 /**
  * The columns of the form as it is now, followed by those of earlier
- * versions the submissions were sent with, so no answer is left out
+ * versions and other languages the submissions were sent with, so no answer
+ * is left out. Answers are stored by key, a column is one key.
  */
 export function exportColumns(
   definition: FormDefinition,
   submissions: Array<Submission>
 ): Array<FormColumn> {
   const columns = formColumns(definition)
-  const seen = new Set(columns.map(column => column.id))
-  for (const submission of submissions) {
-    if (!Array.isArray(submission.definition)) continue
-    for (const column of formColumns(submission.definition as FormDefinition))
-      if (!seen.has(column.id)) {
-        seen.add(column.id)
+  const seen = new Set(columns.map(columnKey))
+  for (const submission of submissions)
+    for (const column of formColumns(sentDefinition(submission)))
+      if (!seen.has(columnKey(column))) {
+        seen.add(columnKey(column))
         columns.push(column)
       }
-  }
   return columns
+}
+
+/** The form a submission was sent with, in its language */
+export function sentDefinition(submission: Submission): FormDefinition {
+  return Array.isArray(submission.definition)
+    ? (submission.definition as FormDefinition)
+    : []
+}
+
+/**
+ * The column of the form a submission was sent with that holds the answer to
+ * a column, by its key: its labels and options are those the visitor saw
+ */
+export function sentColumn(
+  column: FormColumn,
+  submission: Submission
+): FormColumn | undefined {
+  const key = columnKey(column)
+  return formColumns(sentDefinition(submission)).find(
+    other => columnKey(other) === key
+  )
+}
+
+/** The answer to a column as text, as the visitor answered it */
+export function submissionText(
+  column: FormColumn,
+  submission: Submission
+): string {
+  return columnText(sentColumn(column, submission) ?? column, submission.values)
 }
 
 /**
@@ -219,7 +247,7 @@ export function submissionsCsv(
     submission.status,
     submission.locale ?? '',
     submission.page ?? '',
-    ...columns.map(column => columnText(column, submission.values))
+    ...columns.map(column => submissionText(column, submission))
   ])
   const lines = [header, ...rows].map(row => row.map(csvCell).join(','))
   return `﻿${lines.join('\r\n')}\r\n`

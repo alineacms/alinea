@@ -124,3 +124,21 @@ test('csv keeps the answers to inputs the form no longer has', () => {
   )
   expect(row).toBe('2026-10-24T00:00:00.000Z,new,,,IT,,"Ann, ""the"" tester",')
 })
+
+test('csv lines up the answers of other languages by key', () => {
+  // The English form has other rows and labels, the same keys
+  const english = definition.map(item =>
+    item.control === 'section'
+      ? item
+      : {...item, id: `en-${item.id}`, label: `${item.label} (en)`}
+  )
+  const csv = submissionsCsv(definition, [
+    submission,
+    {...submission, id: 's2', locale: 'en', definition: english}
+  ])
+  const [header, nl, en] = csv.slice(1).split('\r\n')
+  expect(header).toBe(
+    'Received,Status,Language,Page,Name,Phone,Service,Room number'
+  )
+  expect(en.replace(',en,', ',,')).toBe(nl)
+})
