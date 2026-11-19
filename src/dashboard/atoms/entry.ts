@@ -236,7 +236,12 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const client = get(clientAtom)
     const file = join(Config.contentDir(config), entry.filePath)
-    return (await client.revisions(file)).slice(1)
+    const revisions = await client.revisions(file)
+    // The latest revision of the file the entry is in holds its current
+    // content. The latest of all can be another version, such as a draft
+    // that was discarded since.
+    const current = revisions.findIndex(revision => revision.file === file)
+    return revisions.filter((_, index) => index !== current)
   })
   historyState = atomWithPending(this.historyReady)
 

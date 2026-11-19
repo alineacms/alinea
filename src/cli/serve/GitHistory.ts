@@ -24,30 +24,33 @@ export class GitHistory implements HistoryApi {
         'log',
         '--follow',
         '--name-status',
-        '--pretty=format:%H%n%at%n%s%n%ae%n%an%n%f',
+        // Each commit starts with a record separator: a subject can be empty,
+        // so blank lines do not separate commits
+        '--pretty=format:%x1e%H%n%at%n%s%n%ae%n%an',
         '--',
         versioned
       ])
-      const revisions = output
-        .split('\n\n')
-        .filter(entry => {
-          return entry.includes('\n')
+      const revisions = Array<Revision>()
+      for (const entry of output.split('\x1e')) {
+        const [ref, timestamp, message, email, name, ...rest] =
+          entry.split('\n')
+        if (!ref || !timestamp) continue
+        const [status, ...paths] =
+          rest
+            .filter(line => line.trim())
+            .at(-1)
+            ?.split('\t') ?? []
+        // The commit that deleted the file, such as a publish removing the
+        // draft, has no version of it to show
+        if (status === 'D') continue
+        revisions.push({
+          ref,
+          createdAt: Number.parseInt(timestamp) * 1000,
+          description: message,
+          file: paths.at(-1)?.trim() || versioned,
+          user: parseCoAuthoredBy(message) ?? {name, email}
         })
-        .map(entry => {
-          const [ref, timestamp, message, email, name, changedFile, ...rest] =
-            entry.split('\n')
-          const fileLocation = rest.length
-            ? rest[rest.length - 1].split('\t').pop()!.trim()
-            : versioned
-          const user = parseCoAuthoredBy(message) ?? {name, email}
-          return {
-            ref,
-            createdAt: Number.parseInt(timestamp) * 1000,
-            description: message,
-            file: fileLocation,
-            user
-          }
-        })
+      }
       results.push(...revisions)
     }
 
