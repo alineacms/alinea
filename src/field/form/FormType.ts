@@ -1,10 +1,12 @@
 import {track} from '#/core/Tracker.js'
 import {
   type FieldsDefinition,
+  type TabFields,
   type Type,
   type TypeConfig,
   type
 } from '#/core/Type.js'
+import {values} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {
   IcOutlineTableRows,
@@ -34,12 +36,18 @@ import {readingOrder} from './FormRules.js'
 
 export interface FormTypeConfig<
   Inputs extends Record<string, Input>,
-  Fields extends FieldsDefinition
+  Fields extends FieldsDefinition,
+  Tabs extends Record<string, Type> = {}
 > extends Omit<TypeConfig<Fields>, 'fields' | 'tabs'> {
   /** The inputs editors can add, eg. `{...Form.defaults, rating: Rating}` */
   inputs: Inputs
   /** Fields of the form entry next to its inputs, eg. an intro */
   fields?: Fields
+  /**
+   * Tabs after the Form tab, eg. a Page tab when forms are pages of their
+   * own, made with `Field.tab`
+   */
+  tabs?: Tabs
 }
 
 /** The fields every form entry has, next to the fields of its type */
@@ -214,11 +222,19 @@ function afterSending() {
  */
 export function formType<
   Inputs extends Record<string, Input>,
-  Fields extends FieldsDefinition = {}
+  Fields extends FieldsDefinition = {},
+  Tabs extends Record<string, Type> = {}
 >(
   label: string,
-  {inputs, fields, ...config}: FormTypeConfig<Inputs, Fields>
-): Type<FormTypeFields<Extract<keyof Inputs, string>> & Fields> {
+  {
+    inputs,
+    fields,
+    tabs: extraTabs = {} as Tabs,
+    ...config
+  }: FormTypeConfig<Inputs, Fields, Tabs>
+): Type<
+  FormTypeFields<Extract<keyof Inputs, string>> & Fields & TabFields<Tabs>
+> {
   const after = afterSending()
   const inputsField = form('Inputs', {inputs})
   const result = type(label, {
@@ -235,6 +251,7 @@ export function formType<
           inputs: inputsField
         }
       }),
+      ...values(extraTabs),
       submissionsTab(),
       tab('Notifications', {
         icon: IcRoundSend,
