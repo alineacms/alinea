@@ -88,3 +88,29 @@ test('GitHistory leaves out the commit that deleted a version', async () => {
 function git(cwd: string, ...args: Array<string>) {
   execFileSync('git', args, {cwd, stdio: 'pipe'})
 }
+
+test('GitHistory reads commits with an empty message', async () => {
+  const rootDir = mkdtempSync(join(tmpdir(), 'alinea-git-history-'))
+  tempDirs.push(rootDir)
+  git(rootDir, 'init')
+  git(rootDir, 'config', 'user.email', 'test@example.com')
+  git(rootDir, 'config', 'user.name', 'Test User')
+  mkdirSync(join(rootDir, 'content'), {recursive: true})
+  const file = join(rootDir, 'content', 'page.json')
+  writeFileSync(file, '{"_id":"entry","_type":"Page","_index":"a","title":"A"}')
+  git(rootDir, 'add', '.')
+  git(rootDir, 'commit', '-m', 'Create')
+  writeFileSync(file, '{"_id":"entry","_type":"Page","_index":"a","title":"B"}')
+  git(rootDir, 'add', '.')
+  git(rootDir, 'commit', '--allow-empty-message', '-m', '')
+
+  const history = new GitHistory({} as Config, rootDir)
+  const revisions = await history.revisions('content/page.json')
+
+  expect(revisions).toHaveLength(2)
+  expect(
+    revisions.every(revision => revision.file === 'content/page.json')
+  ).toBe(true)
+  for (const revision of revisions)
+    await history.revisionData(revision.file, revision.ref)
+})

@@ -195,26 +195,30 @@ export class GithubApi
       const result = await this.#graphQL(gql, variables, authToken)
 
       for (const {alias, version, path} of aliasMap) {
-        const commits = result.data.repository.ref.target[alias]?.nodes || []
+        const commits: Array<HistoryCommit> =
+          result.data.repository.ref.target[alias]?.nodes || []
         if (!commits.length) continue
 
-        // The history of a path includes the commit that deleted it, such as
-        // a publish removing the draft or a rename: the file is not there
-        allRevisions.push(
-          ...commits
-            .filter((commit: any) => commit.file)
-            .map((commit: any) => ({
-              ref: commit.oid,
-              createdAt: new Date(commit.committedDate).getTime(),
-              file: version,
-              user:
-                parseCoAuthoredBy(commit.message) ??
-                (commit.author
-                  ? {name: commit.author.name, email: commit.author.email}
-                  : undefined),
-              description: commit.message
-            }))
-        )
+        for (const commit of commits) {
+          // The history of a path includes the commit that deleted it, such
+          // as a publish removing the draft or a rename: the file is not there
+          if (!commit.file) continue
+          // A commit that changed several versions of the entry, such as a
+          // rename of its draft and published version, is one revision
+          if (allRevisions.some(revision => revision.ref === commit.oid))
+            continue
+          allRevisions.push({
+            ref: commit.oid,
+            createdAt: new Date(commit.committedDate).getTime(),
+            file: version,
+            user:
+              parseCoAuthoredBy(commit.message) ??
+              (commit.author
+                ? {name: commit.author.name, email: commit.author.email}
+                : undefined),
+            description: commit.message
+          })
+        }
 
         // Follow rename of the earliest commit
         const earliest = commits[commits.length - 1].oid
@@ -581,6 +585,16 @@ function commitState(commit: unknown): CommitState {
  * GitHub reports a path missing from a commit as an error next to a null
  * file, such as a content directory before its first entry.
  */
+/** A commit in the history of a path, see `#getFileCommitHistory` */
+interface HistoryCommit {
+  oid: string
+  committedDate: string
+  message: string
+  author: {name: string; email: string} | null
+  /** Missing in the commit that deleted the file */
+  file: {oid: string} | null
+}
+
 function isMissingFile(error: unknown): boolean {
   return (
     isRecord(error) &&

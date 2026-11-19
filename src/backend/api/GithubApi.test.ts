@@ -684,6 +684,9 @@ test('history leaves out the commits that deleted a file', async () => {
           // Created as a draft, published, then renamed to "new"
           if (path === 'content/new.json')
             return [node('rename', '2026-03-01T00:00:00Z', true)]
+          // The rename also moved a draft: still one revision
+          if (path === 'content/new.draft.json')
+            return [node('rename', '2026-03-01T00:00:00Z', true)]
           if (path === 'content/old.json')
             return [
               node('rename', '2026-03-01T00:00:00Z', false),

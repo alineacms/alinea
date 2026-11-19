@@ -1,3 +1,4 @@
+import type {LocalConnection} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {Entry} from '#/core/Entry.js'
 import {LocalDB} from '#/database/LocalDB.js'
@@ -11,7 +12,7 @@ import {
 } from '#test/DashboardFixture.js'
 import {expect, spyOn, test} from 'bun:test'
 import {atom} from 'jotai'
-import {configAtom, eventsAtom} from './core.js'
+import {clientAtom, configAtom, eventsAtom} from './core.js'
 import {EntryAtoms, entryAtoms} from './entry.js'
 import {userPolicyReadyAtom} from './user.js'
 
@@ -688,4 +689,36 @@ test('invalid fields are reported but do not block publishing', async () => {
     select: Article.summary
   })
   expect(published).toBe('')
+})
+
+test('history leaves out the current content, not the latest revision', async () => {
+  const {parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  let requested = ''
+  const client = {
+    async revisions(file: string) {
+      requested = file
+      const revision = (ref: string, revisionFile: string) => ({
+        ref,
+        file: revisionFile,
+        createdAt: 0,
+        description: ref
+      })
+      // A version that is gone since, such as a discarded draft, was saved
+      // after the current content
+      return [
+        revision('discarded', `${file}.other.json`),
+        revision('current', file),
+        revision('earlier', file)
+      ]
+    }
+  }
+  store.set(clientAtom, client as unknown as LocalConnection)
+  const entry = await store.get(entryAtoms(parent._id))
+  const history = await store.get(entry.locales(null).historyReady)
+  expect(requested).not.toBe('')
+  expect(history.map(revision => revision.ref)).toEqual([
+    'discarded',
+    'earlier'
+  ])
 })
