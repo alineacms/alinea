@@ -4,6 +4,7 @@ import {VersionEvent} from '../boot/VersionEvent.js'
 import {activityAtom} from './activity.js'
 import {eventsAtom, graphAtom} from './core.js'
 import {routeGuardAtom} from './nav.js'
+import type {ReactiveNode} from './ReactiveNode.js'
 
 interface VersionSource {
   outdated(): Promise<boolean>
@@ -49,14 +50,74 @@ export const hasUnsavedChangesAtom = atom(get => {
   return guard ? get(guard) : false
 })
 
+/** The editor of the entry that is open, set by its page. */
+export interface OpenEdits {
+  entryId: string
+  locale: string | null
+  node: ReactiveNode<object>
+}
+
+export const openEditsAtom = atom<OpenEdits | null>(null)
+
+/** Unsaved changes of an entry, kept over a reload for an update. */
+export interface KeptEdits {
+  entryId: string
+  locale: string | null
+  /** The saved value the changes started from */
+  checkpoint: object
+  edited: object
+}
+
+const keptEditsKey = 'alinea-edits-kept-for-update'
+
 /**
- * Whether a reload loses nothing: no unsaved changes, and no change or upload
- * that is not committed yet. A failed sync does not count, a reload is what
- * resolves the sync of an outdated dashboard. Asks the worker, so activities
- * a tab has not heard of yet count too.
+ * The changes the page kept before it reloaded, read once when it loads.
+ * They live in the session storage of the tab: other tabs do not see them,
+ * and they are gone with the tab.
+ */
+function takeKeptEdits(): KeptEdits | undefined {
+  try {
+    const stored = sessionStorage.getItem(keptEditsKey)
+    sessionStorage.removeItem(keptEditsKey)
+    return stored ? (JSON.parse(stored) as KeptEdits) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** Edits kept over a reload, until the editor of their entry takes them. */
+export const keptEditsAtom = atom<KeptEdits | undefined>(takeKeptEdits())
+
+/**
+ * Keep the unsaved changes of the open entry for after a reload. Returns
+ * whether nothing unsaved is lost: false when the changes could not be
+ * stored.
+ */
+export const keepEditsAtom = atom(null, (get): boolean => {
+  const open = get(openEditsAtom)
+  if (!open || !get(open.node.isDirty)) return true
+  const kept: KeptEdits = {
+    entryId: open.entryId,
+    locale: open.locale,
+    checkpoint: get(open.node.checkpoint),
+    edited: get(open.node.value)
+  }
+  try {
+    sessionStorage.setItem(keptEditsKey, JSON.stringify(kept))
+    return true
+  } catch {
+    return false
+  }
+})
+
+/**
+ * Whether a reload loses nothing: no change or upload that is not committed
+ * yet. Unsaved changes of the open entry are kept over the reload, see
+ * `keepEditsAtom`. A failed sync does not count, a reload is what resolves
+ * the sync of an outdated dashboard. Asks the worker, so activities a tab has
+ * not heard of yet count too.
  */
 export const canReloadSafelyAtom = atom(null, async (get): Promise<boolean> => {
-  if (get(hasUnsavedChangesAtom)) return false
   const source = get(graphAtom) as object & Partial<ActivitySource>
   // Uploads run in this tab, changes in the worker
   const activities = [

@@ -32,10 +32,11 @@ import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
-import {ReactiveNode} from './ReactiveNode.js'
+import {ReactiveNode, rebasedEdits} from './ReactiveNode.js'
 import {requestUploadsAtom} from './upload.js'
 import {policyAtom, userAtom} from './user.js'
 import {atomWithPending, dispense, loader} from './utils.js'
+import {keptEditsAtom} from './version.js'
 
 interface EntryData {
   id: string
@@ -292,7 +293,15 @@ export class EntryLocaleAtoms {
       },
       {fieldI18n: Config.fieldI18n(config, entry.workspace, entry.root)}
     )
-    return new ReactiveNode<object>(value, readOnly)
+    // Changes kept over a reload for an update apply to what is saved now
+    const kept = get(keptEditsAtom)
+    const edited =
+      kept &&
+      kept.entryId === this.entry.id &&
+      kept.locale === this.requestedLocale
+        ? (rebasedEdits(kept.checkpoint, kept.edited, value) as object)
+        : undefined
+    return new ReactiveNode<object>(value, readOnly, edited)
   })
   richTextImages = atom(async get => {
     const entry = await get(this.selectedEntry)

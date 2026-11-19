@@ -1,13 +1,16 @@
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {act, cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, beforeEach, expect, test} from 'bun:test'
-import {atom, Provider} from 'jotai'
+import {Provider} from 'jotai'
 import {eventsAtom, graphAtom} from '../atoms/core.js'
 import {routeGuardAtom} from '../atoms/nav.js'
+import {ReactiveNode} from '../atoms/ReactiveNode.js'
+import {openEditsAtom} from '../atoms/version.js'
 import type {Activity} from '../boot/ActivityEvent.js'
 import {VersionEvent} from '../boot/VersionEvent.js'
 import {DashboardUpdate} from './DashboardUpdate.js'
 
+const keptEditsKey = 'alinea-edits-kept-for-update'
 let visibility: DocumentVisibilityState = 'visible'
 let reloads = 0
 let confirms = 0
@@ -49,7 +52,13 @@ interface OutdatedOptions {
 
 async function renderOutdated({unsaved, activities}: OutdatedOptions = {}) {
   const {store} = await createDashboardAtomFixture()
-  if (unsaved) store.set(routeGuardAtom, atom(true))
+  if (unsaved) {
+    const node = new ReactiveNode<object>({title: 'Saved'}, false, {
+      title: 'Edited'
+    })
+    store.set(routeGuardAtom, node.isDirty)
+    store.set(openEditsAtom, {entryId: 'entry', locale: null, node})
+  }
   const worker = {activities: activities ?? []}
   Object.assign(store.get(graphAtom), {
     async activities() {
@@ -96,10 +105,21 @@ test('a tab reloads once it is out of view', async () => {
   expect(reloads).toBe(1)
 })
 
-test('a tab with unsaved changes does not reload by itself', async () => {
+test('a tab with unsaved changes keeps them over the reload', async () => {
   await renderOutdated({unsaved: true})
+  expect(
+    screen.getByText(
+      'Reload to continue editing. Your unsaved changes are kept.'
+    )
+  ).toBeTruthy()
   await hide()
-  expect(reloads).toBe(0)
+  expect(reloads).toBe(1)
+  expect(JSON.parse(sessionStorage.getItem(keptEditsKey)!)).toEqual({
+    entryId: 'entry',
+    locale: null,
+    checkpoint: {title: 'Saved'},
+    edited: {title: 'Edited'}
+  })
 })
 
 test('a tab with a change that is not committed does not reload by itself', async () => {
@@ -136,11 +156,13 @@ test('a tab that just reloaded for an update does not reload again', async () =>
 })
 
 test('reloading by hand asks first when a change would be lost', async () => {
-  await renderOutdated({activities: [failedChange]})
+  await renderOutdated({unsaved: true, activities: [failedChange]})
   await act(async () => {
     fireEvent.click(screen.getByRole('button', {name: 'Reload'}))
     await new Promise(resolve => setTimeout(resolve, 10))
   })
   expect(confirms).toBe(1)
   expect(reloads).toBe(0)
+  // A cancelled reload keeps nothing for later
+  expect(sessionStorage.getItem(keptEditsKey)).toBeNull()
 })

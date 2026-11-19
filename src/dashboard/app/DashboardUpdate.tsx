@@ -11,7 +11,8 @@ import {useEffect} from 'react'
 import {
   canReloadSafelyAtom,
   dashboardOutdatedAtom,
-  hasUnsavedChangesAtom
+  hasUnsavedChangesAtom,
+  keepEditsAtom
 } from '../atoms/version.js'
 import {IcRoundRefresh} from '../icons.js'
 import css from './DashboardUpdate.module.css'
@@ -51,13 +52,15 @@ function reload() {
 }
 
 /**
- * Tells the user a new version of the dashboard was deployed. A tab out of
- * view reloads by itself when that loses nothing.
+ * Tells the user a new version of the dashboard was deployed. Reloading
+ * keeps the unsaved changes of the open entry, and a tab out of view reloads
+ * by itself when nothing else would be lost.
  */
 export function DashboardUpdate() {
   const outdated = useAtomValueRaw(dashboardOutdatedAtom)
   const hasUnsavedChanges = useAtomValueRaw(hasUnsavedChangesAtom)
   const canReloadSafely = useSetAtom(canReloadSafelyAtom)
+  const keepEdits = useSetAtom(keepEditsAtom)
 
   useEffect(() => {
     if (!outdated) return
@@ -68,6 +71,7 @@ export function DashboardUpdate() {
       if (!(await canReloadSafely())) return
       // Still out of view once the activities are known
       if (reloading || document.visibilityState !== 'hidden') return
+      if (!keepEdits()) return
       reloading = true
       reload()
     }
@@ -79,18 +83,19 @@ export function DashboardUpdate() {
       document.removeEventListener('visibilitychange', check)
       clearInterval(interval)
     }
-  }, [outdated, canReloadSafely])
+  }, [outdated, canReloadSafely, keepEdits])
 
   if (!outdated) return null
 
   async function reloadOnRequest() {
-    if (
-      !(await canReloadSafely()) &&
-      !window.confirm(
+    const confirmLoss = () =>
+      window.confirm(
         'Reload the dashboard? Changes that are not saved yet will be lost.'
       )
-    )
-      return
+    // A change that was refused is not kept: it was never saved
+    if (!(await canReloadSafely()) && !confirmLoss()) return
+    // Kept right before reloading, so a cancelled reload keeps nothing
+    if (!keepEdits() && !confirmLoss()) return
     reload()
   }
 
@@ -104,8 +109,8 @@ export function DashboardUpdate() {
         <AlertTitle>A new version of the dashboard is available</AlertTitle>
         <AlertDescription>
           {hasUnsavedChanges
-            ? 'Changes made in this version can not be saved. Copy any unsaved changes, then reload.'
-            : 'Reload to keep editing: changes made in this version can not be saved.'}
+            ? 'Reload to continue editing. Your unsaved changes are kept.'
+            : 'Reload to continue editing.'}
         </AlertDescription>
         <AlertActions>
           <Button
