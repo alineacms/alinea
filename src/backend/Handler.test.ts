@@ -3,6 +3,7 @@ import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {type AfterCommitContext, createHandler} from '#/backend/Handler.js'
 import {syncWait} from '#/backend/util/Syncable.js'
+import {OutdatedDashboardError} from '#/core/OutdatedDashboardError.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {decodeBlobSequence} from '#/core/BlobTransport.js'
 import {createCMS} from '#/core.js'
@@ -1986,12 +1987,15 @@ test('refuses mutations from a dashboard built with another config', async () =>
     }
   })
   let commits = 0
+  let signedIn = true
   const handle = createHandler({
     cms,
     db,
     remote(context) {
       return composeBackend({
         async verify(): Promise<AuthedContext> {
+          if (!signedIn)
+            throw new MissingCredentialsError('Missing user credentials')
           return {
             ...context,
             token: 'test',
@@ -2022,6 +2026,11 @@ test('refuses mutations from a dashboard built with another config', async () =>
 
   const outdated = await handle(request('mutate', 'previous'), requestContext())
   test.is(outdated.status, 409)
+  test.equal(await outdated.json(), {
+    success: false,
+    error: new OutdatedDashboardError().message,
+    outdated: true
+  })
   test.is(outdated.headers.get(configFingerprintHeader), 'deployed')
   test.is(commits, 0)
 
@@ -2032,6 +2041,15 @@ test('refuses mutations from a dashboard built with another config', async () =>
   // A client that does not send its config is not refused
   const unknown = await handle(request('mutate'), requestContext())
   test.is(unknown.status, 200)
+
+  // Signing in again comes first
+  signedIn = false
+  const signedOut = await handle(
+    request('mutate', 'previous'),
+    requestContext()
+  )
+  test.is(signedOut.status, 401)
+  signedIn = true
 
   // Reads answer, and tell an outdated dashboard
   const tree = await handle(

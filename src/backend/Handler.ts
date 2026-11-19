@@ -119,25 +119,23 @@ export function createHandler({
   }
 
   /**
-   * Answer with the config this handler was built with, and refuse changes
-   * from a dashboard built with another: its fields may no longer match.
-   * A side that does not know its config is never refused.
+   * Whether the request comes from a dashboard built with another config
+   * than this handler, as after a deploy: its fields may no longer match. A
+   * side that does not know its config is never outdated.
    */
+  async function fromOutdatedDashboard(request: Request, local: LocalStore) {
+    const server = await configFingerprint(local)
+    const dashboard = request.headers.get(configFingerprintHeader)
+    return Boolean(server && dashboard && server !== dashboard)
+  }
+
+  /** Answer with the config this handler was built with, see `Client`. */
   return async function handleWithConfig(
     request: Request,
     context: RequestContext
   ): Promise<Response> {
+    const response = await handle(request, context)
     const server = await configFingerprint(await db)
-    const dashboard = request.headers.get(configFingerprintHeader)
-    const outdated = Boolean(server && dashboard && server !== dashboard)
-    const action = new URL(request.url).searchParams.get('action')
-    const response =
-      outdated && action === HandleAction.Mutate && request.method === 'POST'
-        ? Response.json(
-            {success: false, error: new OutdatedDashboardError().message},
-            {status: ErrorCode.Conflict}
-          )
-        : await handle(request, context)
     if (!server) return response
     try {
       response.headers.set(configFingerprintHeader, server)
@@ -431,11 +429,20 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
+        const user = expectUser()
+        if (await fromOutdatedDashboard(request, local))
+          return Response.json(
+            {
+              success: false,
+              error: new OutdatedDashboardError().message,
+              outdated: true
+            },
+            {status: ErrorCode.Conflict}
+          )
         if (forwardMutations && userCtx) {
           const forwarded = await forwardMutations(request.clone(), userCtx)
           if (forwarded) return forwarded
         }
-        const user = expectUser()
         expectJson()
         const policy = await user.policy
         let mutations = (await body) as ReadonlyArray<Mutation>

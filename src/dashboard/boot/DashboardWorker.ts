@@ -24,6 +24,7 @@ import pLimit from 'p-limit'
 import {
   type Activity,
   ActivityEvent,
+  isUnsettled,
   type ActivityOperation,
   type ActivityTarget
 } from './ActivityEvent.js'
@@ -141,16 +142,18 @@ export class DashboardWorker extends EventTarget {
     )
     if (failed?.status === 'running') return
     if (failed) return this.#failActivity(failed, error)
-    const activity: Activity = {
+    const now = Date.now()
+    this.#activities.unshift({
       id: createId(),
       type: 'sync',
-      status: 'running',
+      status: 'failed',
       operations: [{op: 'sync'}],
-      startedAt: Date.now()
-    }
-    this.#activities.unshift(activity)
+      startedAt: now,
+      finishedAt: now,
+      error: errorMessage(error)
+    })
     this.#trimActivities()
-    this.#failActivity(activity, error)
+    this.#emitActivity()
   }
 
   #catchUp(): Promise<void> {
@@ -279,7 +282,8 @@ export class DashboardWorker extends EventTarget {
       activity => activity.type === 'sync' && activity.status === 'failed'
     )
     if (syncs.length > 0) await this.#syncActivities(syncs)
-    if (this.#blocked) await this.#retryMutations()
+    // The handler refuses changes of an outdated dashboard every time
+    if (this.#blocked && !this.#outdated) await this.#retryMutations()
   }
 
   async #retryMutations(): Promise<void> {
@@ -450,14 +454,7 @@ export class DashboardWorker extends EventTarget {
     let excess = this.#activities.length - activityHistoryLimit
     for (let index = this.#activities.length - 1; excess > 0; index--) {
       if (index < 0) break
-      const activity = this.#activities[index]
-      if (
-        activity.status === 'pending' ||
-        activity.status === 'running' ||
-        activity.status === 'blocked' ||
-        activity.status === 'failed'
-      )
-        continue
+      if (isUnsettled(this.#activities[index])) continue
       this.#activities.splice(index, 1)
       excess -= 1
     }

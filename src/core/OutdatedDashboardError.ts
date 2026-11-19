@@ -14,3 +14,14 @@ export class OutdatedDashboardError extends HttpError {
     )
   }
 }
+
+/**
+ * Whether an error is an `OutdatedDashboardError`, also once it crossed from
+ * the dashboard worker, which keeps only its name and message.
+ */
+export function isOutdatedDashboardError(error: unknown): boolean {
+  return (
+    error instanceof OutdatedDashboardError ||
+    (error instanceof Error && error.name === 'OutdatedDashboardError')
+  )
+}

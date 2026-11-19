@@ -19,7 +19,7 @@ import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
-import {ErrorCode, HttpError} from './HttpError.js'
+import {HttpError} from './HttpError.js'
 import {OutdatedDashboardError} from './OutdatedDashboardError.js'
 import {getScope} from './Scope.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
@@ -84,17 +84,18 @@ export class Client implements LocalConnection {
     }
   }
 
-  /** Whether the response comes from a handler built with another config. */
-  #checkConfig(res: Response): boolean {
+  /** Note a response of a handler built with another config. */
+  #checkConfig(res: Response): void {
     const own = this.#options.configFingerprint
     const theirs = res.headers.get(configFingerprintHeader)
-    if (!own || !theirs || own === theirs) return false
+    if (own && theirs && own !== theirs) this.#markOutdated()
+  }
+
+  #markOutdated(): void {
     const state = this.#outdated
-    if (!state.outdated) {
-      state.outdated = true
-      for (const listener of state.listeners) listener()
-    }
-    return true
+    if (state.outdated) return
+    state.outdated = true
+    for (const listener of state.listeners) listener()
   }
 
   authStatus(): Promise<AuthResult> {
@@ -338,10 +339,8 @@ export class Client implements LocalConnection {
         )
       })
       .then(async res => {
-        const outdated = this.#checkConfig(res)
+        this.#checkConfig(res)
         if (res.ok) return res
-        if (outdated && res.status === ErrorCode.Conflict)
-          throw new OutdatedDashboardError()
         const isJson = res.headers
           .get('content-type')
           ?.includes('application/json')
@@ -355,6 +354,11 @@ export class Client implements LocalConnection {
           ) {
             // We'll attempt a single retry if the access token is refreshed
             if (!retry) return this.#request(params, init, true)
+          }
+          // The handler refused a change of this outdated dashboard
+          if (isRecord(body) && body.outdated === true) {
+            this.#markOutdated()
+            throw new OutdatedDashboardError()
           }
           if (isRecord(body) && typeof body.error === 'string')
             errorMessage = body.error

@@ -3,6 +3,7 @@ import {Config} from '#/index.js'
 import {suite} from '@alinea/suite'
 import {Client} from './Client.js'
 import {configFingerprintHeader} from './Connection.js'
+import {HttpError} from './HttpError.js'
 import {OutdatedDashboardError} from './OutdatedDashboardError.js'
 
 const test = suite(import.meta)
@@ -74,7 +75,7 @@ test('a refused mutation of an outdated dashboard throws its own error', () =>
   withHandler(
     () =>
       Response.json(
-        {success: false, error: 'outdated'},
+        {success: false, error: 'outdated', outdated: true},
         {status: 409, headers: {[configFingerprintHeader]: 'deployed'}}
       ),
     async url => {
@@ -90,5 +91,29 @@ test('a refused mutation of an outdated dashboard throws its own error', () =>
         error = caught
       }
       test.ok(error instanceof OutdatedDashboardError)
+    }
+  ))
+
+test('other conflicts of an outdated dashboard keep their error', () =>
+  withHandler(
+    () =>
+      Response.json(
+        {success: false, error: 'Conflict'},
+        {status: 409, headers: {[configFingerprintHeader]: 'deployed'}}
+      ),
+    async url => {
+      const client = new Client({
+        config: cms.config,
+        url,
+        configFingerprint: 'built'
+      })
+      let error: unknown
+      try {
+        await client.mutate([])
+      } catch (caught) {
+        error = caught
+      }
+      test.ok(error instanceof HttpError)
+      test.not.ok(error instanceof OutdatedDashboardError)
     }
   ))

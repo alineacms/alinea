@@ -1050,7 +1050,9 @@ test('an outdated dashboard stops sending changes and tells its tabs', async () 
       error: new OutdatedDashboardError().message
     })
   )
-  // Trying again would be refused the same way
+  // Trying again would be refused the same way, also on request
+  await new Promise(resolve => setTimeout(resolve, 10))
+  await worker.retryActivity()
   await new Promise(resolve => setTimeout(resolve, 10))
   expect(commits).toBe(1)
 

@@ -1,4 +1,5 @@
 import {atom} from 'jotai'
+import {type ActivitySource, isUnsettled} from '../boot/ActivityEvent.js'
 import {VersionEvent} from '../boot/VersionEvent.js'
 import {activityAtom} from './activity.js'
 import {eventsAtom, graphAtom} from './core.js'
@@ -50,17 +51,19 @@ export const hasUnsavedChangesAtom = atom(get => {
 
 /**
  * Whether a reload loses nothing: no unsaved changes, and no change or upload
- * waiting to be committed. A failed sync does not count, a reload is what
- * resolves the sync of an outdated dashboard.
+ * that is not committed yet. A failed sync does not count, a reload is what
+ * resolves the sync of an outdated dashboard. Asks the worker, so activities
+ * a tab has not heard of yet count too.
  */
-export const canReloadSafelyAtom = atom(get => {
+export const canReloadSafelyAtom = atom(null, async (get): Promise<boolean> => {
   if (get(hasUnsavedChangesAtom)) return false
-  return !get(activityAtom).items.some(
-    activity =>
-      activity.type !== 'sync' &&
-      (activity.status === 'pending' ||
-        activity.status === 'running' ||
-        activity.status === 'blocked' ||
-        activity.status === 'failed')
+  const source = get(graphAtom) as object & Partial<ActivitySource>
+  // Uploads run in this tab, changes in the worker
+  const activities = [
+    ...get(activityAtom).items,
+    ...((await source.activities?.()) ?? [])
+  ]
+  return !activities.some(
+    activity => activity.type !== 'sync' && isUnsettled(activity)
   )
 })

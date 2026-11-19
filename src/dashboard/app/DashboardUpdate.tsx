@@ -6,7 +6,7 @@ import {
   Button
 } from '#/components.js'
 import {styler} from '@alinea/styler'
-import {useAtomValueRaw} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {
   canReloadSafelyAtom,
@@ -22,6 +22,8 @@ const reloadedKey = 'alinea-reloaded-for-update'
 // A dashboard still outdated this soon after reloading for an update (cached
 // files, or a request answered by the previous deploy) does not reload again
 const reloadInterval = 10 * 60_000
+// A tab out of view checks again, as its changes settle or that time passes
+const checkInterval = 60_000
 
 function reloadedRecently(): boolean {
   try {
@@ -30,6 +32,13 @@ function reloadedRecently(): boolean {
   } catch {
     return false
   }
+}
+
+/** A dialog can hold input the route guard does not know of. */
+function hasOpenDialog(): boolean {
+  return (
+    document.querySelector('[role="dialog"], [role="alertdialog"]') !== null
+  )
 }
 
 function reload() {
@@ -47,28 +56,38 @@ function reload() {
  */
 export function DashboardUpdate() {
   const outdated = useAtomValueRaw(dashboardOutdatedAtom)
-  const canReloadSafely = useAtomValueRaw(canReloadSafelyAtom)
   const hasUnsavedChanges = useAtomValueRaw(hasUnsavedChangesAtom)
+  const canReloadSafely = useSetAtom(canReloadSafelyAtom)
 
   useEffect(() => {
-    if (!outdated || !canReloadSafely || reloadedRecently()) return
-    function reloadOutOfView() {
-      if (document.visibilityState === 'hidden') reload()
+    if (!outdated) return
+    let reloading = false
+    async function reloadOutOfView() {
+      if (reloading || document.visibilityState !== 'hidden') return
+      if (reloadedRecently() || hasOpenDialog()) return
+      if (!(await canReloadSafely())) return
+      // Still out of view once the activities are known
+      if (reloading || document.visibilityState !== 'hidden') return
+      reloading = true
+      reload()
     }
-    reloadOutOfView()
-    document.addEventListener('visibilitychange', reloadOutOfView)
+    void reloadOutOfView()
+    const check = () => void reloadOutOfView()
+    document.addEventListener('visibilitychange', check)
+    const interval = setInterval(check, checkInterval)
     return () => {
-      document.removeEventListener('visibilitychange', reloadOutOfView)
+      document.removeEventListener('visibilitychange', check)
+      clearInterval(interval)
     }
   }, [outdated, canReloadSafely])
 
   if (!outdated) return null
 
-  function reloadOnRequest() {
+  async function reloadOnRequest() {
     if (
-      hasUnsavedChanges &&
+      !(await canReloadSafely()) &&
       !window.confirm(
-        'Reload the dashboard? Your unsaved changes will be lost.'
+        'Reload the dashboard? Changes that are not saved yet will be lost.'
       )
     )
       return
@@ -89,7 +108,11 @@ export function DashboardUpdate() {
             : 'Reload to keep editing: changes made in this version can not be saved.'}
         </AlertDescription>
         <AlertActions>
-          <Button size="sm" icon={IcRoundRefresh} onClick={reloadOnRequest}>
+          <Button
+            size="sm"
+            icon={IcRoundRefresh}
+            onClick={() => void reloadOnRequest()}
+          >
             Reload
           </Button>
         </AlertActions>
