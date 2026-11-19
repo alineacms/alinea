@@ -11,11 +11,14 @@ export type {
 export {options} from '#/field/form/FormChoices.js'
 export type {FormChoice} from '#/field/form/FormChoices.js'
 export {formDefinition as definition} from '#/field/form/FormDefinition.js'
+export {inputsOf, isFormInput} from '#/field/form/FormDefinition.js'
 export type {
+  FormContentData,
   FormDefinition,
   FormInputData,
   FormItem,
   FormSectionData,
+  FormSectionItem,
   FormWidth
 } from '#/field/form/FormDefinition.js'
 export {input} from '#/field/form/FormInput.js'
@@ -29,6 +32,7 @@ export type {
 export {
   check,
   checkboxes,
+  content,
   date,
   defaults,
   email,
