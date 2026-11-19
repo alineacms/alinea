@@ -1,7 +1,7 @@
 import {accumulate} from '../util/Async.js'
 import type {Change, ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
-import type {ReadonlyTree, WriteableTree} from './Tree.js'
+import {Leaf, type ReadonlyTree, type WriteableTree} from './Tree.js'
 
 export interface GetBlobsOptions {
   signal?: AbortSignal
@@ -191,20 +191,29 @@ export class SourceTransaction {
         : await accumulate(this.#source.getBlobs(fromSource))
     )
     // A source can answer a blob with other bytes of the same content, such
-    // as a database that serializes an entry again. The commit stores those
-    // bytes, so a moved file takes their hash or the tree would not match it.
-    let rehashed = false
-    for (const change of forwards.changes) {
-      if (change.op !== 'add' || this.#blobs.has(change.sha)) continue
-      const contents = blobs.get(change.sha)
-      if (!contents) continue
-      const sha = await hashBlob(contents)
-      if (sha === change.sha) continue
-      this.#blobs.set(sha, contents)
-      this.#into.add(change.path, sha)
-      rehashed = true
+    // as a database that serializes an entry again. A moved file keeps its
+    // bytes when they can be found, or the tree takes the hash of the bytes
+    // the commit stores, so it matches the commit.
+    const rehashed = new Map<string, string>()
+    for (const [sha, contents] of blobs) {
+      const actual = await hashBlob(contents)
+      if (actual === sha) continue
+      const original = entryFile(contents)
+      if (original && (await hashBlob(original)) === sha) {
+        this.#blobs.set(sha, original)
+        continue
+      }
+      this.#blobs.set(actual, contents)
+      rehashed.set(sha, actual)
     }
-    if (rehashed) {
+    if (rehashed.size > 0) {
+      for (const change of forwards.changes) {
+        const actual = change.op === 'add' && rehashed.get(change.sha)
+        if (!actual) continue
+        const leaf = into.get(change.path)
+        const mode = leaf instanceof Leaf ? leaf.mode : '100644'
+        this.#into.add(change.path, new Leaf({sha: actual, mode}))
+      }
       into = await this.#into.compile(previous)
       forwards = from.diff(into)
     }
@@ -218,5 +227,18 @@ export class SourceTransaction {
       into,
       changes: forwards.changes.map(bundleContents)
     }
+  }
+}
+
+/**
+ * The bytes of a JSON file as entries are written (`JSON.stringify` with an
+ * indent of two), or undefined for other contents.
+ */
+function entryFile(contents: Uint8Array): Uint8Array | undefined {
+  try {
+    const data = JSON.parse(new TextDecoder().decode(contents))
+    return new TextEncoder().encode(JSON.stringify(data, null, 2))
+  } catch {
+    return undefined
   }
 }

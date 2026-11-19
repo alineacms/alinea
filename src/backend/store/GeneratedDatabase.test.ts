@@ -351,6 +351,18 @@ test('renaming a parent plans the tree its commit holds', () =>
           set: {path: 'after'}
         }
       ])
+      // The child moves as it is, it is not written again
+      const moved = request.changes.flatMap(change =>
+        (change.op === 'addContent' || change.op === 'deleteContent') &&
+        change.path.endsWith('child.json')
+          ? [{op: change.op, path: change.path, sha: change.sha}]
+          : []
+      )
+      expect(new Set(moved.map(change => change.sha)).size).toBe(1)
+      expect(moved.map(change => change.op).sort()).toEqual([
+        'addContent',
+        'deleteContent'
+      ])
       // Like git, store the sent bytes under their own hash
       const batch = sourceChanges(request)
       const changes = await Promise.all(
