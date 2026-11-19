@@ -28,7 +28,6 @@ import {type Atom, atom, useAtomValueRaw, useStore} from 'jotai'
 import {
   type ReactNode,
   createContext,
-  useCallback,
   useContext,
   useMemo,
   useState
@@ -38,7 +37,6 @@ import type {Input} from './FormInput.js'
 import {isSharedFormField, textKeys} from './FormShare.js'
 import css from './FormField.module.css'
 import {FormTranslationAlert} from './FormTranslationAlert.js'
-import {defaults} from './FormInputs.js'
 import {
   type FormEntry,
   dependents,
@@ -49,8 +47,6 @@ import {
 } from './FormRules.js'
 
 const styles = styler(css)
-
-const builtIn = new Set<unknown>(Object.values(defaults))
 
 export interface FormBuilder {
   /** The inputs editors can add */
@@ -156,23 +152,13 @@ interface FormFieldListProps {
 }
 
 function FormFieldList({field}: FormFieldListProps) {
-  const {inputs} = useFieldOptions(field)
   const builder = useContext(FormBuilderContext)
-  const ownInputs = Object.values(inputs).some(input => !builtIn.has(input))
-  const typeGroup = useCallback(
-    (id: string) => {
-      if (!ownInputs) return undefined
-      return builtIn.has(inputs[id]) ? 'Inputs' : 'This project'
-    },
-    [inputs, ownInputs]
-  )
   return (
     <ListFieldView
       field={field}
       labelField="label"
       badges={FormRowBadges}
       addLabel="Add input"
-      typeGroup={typeGroup}
       onRemove={builder?.remove}
     />
   )

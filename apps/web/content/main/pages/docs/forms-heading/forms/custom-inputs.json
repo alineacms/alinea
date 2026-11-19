@@ -244,7 +244,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Editors find inputs of your own in the Add input menu under This project. The key in `inputs`, here `rating`, is stored in the content of every form that uses the input, so keep it once forms use it. It is also the key of the input's view and the value of `data-input` on its row. To leave out a built-in input, leave it out of the object: `const {file, ...inputs} = Form.defaults`."
+          "text": "Editors find inputs of your own in the Add input menu, next to the built-in ones. The key in `inputs`, here `rating`, is stored in the content of every form that uses the input, so keep it once forms use it. It is also the key of the input's view and the value of `data-input` on its row. To leave out a built-in input, leave it out of the object: `const {file, ...inputs} = Form.defaults`."
         }
       ]
     },
