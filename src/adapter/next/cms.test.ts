@@ -380,6 +380,58 @@ test('sends the dev key with uploads to the dev server only', async () => {
   }
 })
 
+test('asks the handler once for queries that find the db behind', async () => {
+  nextMocks.draftMode = false
+  const Page = Config.document('Page', {fields: {}})
+  const config = Config.create({
+    baseUrl: 'https://example.com',
+    handlerUrl: '/api/cms',
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  })
+  const content = new LocalDB(config)
+  await content.sync()
+  await content.create({type: Page, set: {title: 'Committed elsewhere'}})
+  const cms = new NextCMS(config)
+  cms.bundledDb = PLazy.from(async () => {
+    const store = new LocalDB(config)
+    await store.sync()
+    return store
+  })
+  const handle = createHandlerWithDatabase(
+    {
+      cms,
+      backend: () =>
+        composeBackend(content, {
+          async verify() {
+            throw new MissingCredentialsError('Only the release key')
+          }
+        })
+    },
+    async () => new LocalDB(config)
+  )
+  let treeRequests = 0
+  handlerFetch = mock(async (input, init) => {
+    const request = new Request(input, init)
+    const action = new URL(request.url).searchParams.get('action')
+    // The shared sha can trail the handler, which then syncs past it
+    if (action === 'sha') return Response.json('trailing-sha')
+    if (action === 'tree') treeRequests += 1
+    return handle(request)
+  })
+
+  const query = () => cms.find({type: Page, select: Page.title})
+  const results = await Promise.all([query(), query(), query()])
+
+  expect(results.flat()).toEqual(Array(3).fill('Committed elsewhere'))
+  expect(treeRequests).toBe(1)
+})
+
 test('syncs through a handler that answers in the same process', async () => {
   nextMocks.draftMode = false
   const Page = Config.document('Page', {fields: {}})

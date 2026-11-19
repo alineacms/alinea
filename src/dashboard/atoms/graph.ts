@@ -24,6 +24,12 @@ const indexStateAtom = Object.assign(
         const data = event.data
         if (data.op !== 'index') return
         set(indexStateValueAtom, current => {
+          // An event that changes nothing keeps the state, so queries that
+          // depend on the sha don't restart
+          const unchanged =
+            current.sha === data.sha &&
+            data.ids.every(id => current.entryRevisions.get(id) === data.sha)
+          if (unchanged) return current
           const entryRevisions = new Map(current.entryRevisions)
           for (const id of data.ids) entryRevisions.set(id, data.sha)
           return {sha: data.sha, entryRevisions}
@@ -75,7 +81,9 @@ export const syncAtom = atom(null, async (get, set) => {
   const graph = get(graphAtom)
   if (!isSyncableGraph(graph)) return
   const sha = await graph.sync()
-  set(indexStateValueAtom, current => ({...current, sha}))
+  set(indexStateValueAtom, current =>
+    current.sha === sha ? current : {...current, sha}
+  )
   return sha
 })
 

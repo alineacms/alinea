@@ -544,7 +544,17 @@ export function compileEntryQuery(
       const internal = getExpr(expression)
       const ordersByFilePath =
         internal.type === 'entryField' && internal.name === 'filePath'
-      const value = membership.expr(expression)
+      // Titles, the entry's or its title field, order by their sort key:
+      // natural, ignoring case, accents and leading punctuation
+      const ordersByTitle =
+        !order.caseSensitive &&
+        (internal.type === 'entryField'
+          ? !internal.path && internal.name === 'title'
+          : internal.type === 'field' &&
+            scope.dataPathOf(expression as Field)?.join() === 'title')
+      const value = ordersByTitle
+        ? entry.titleSortKey
+        : membership.expr(expression)
       const ordersByIndex =
         internal.type === 'field'
           ? isOrderedField(expression)
@@ -556,6 +566,7 @@ export function compileEntryQuery(
       // and indexes are base62 keys, which only order as stored.
       const collated =
         ordersByIndex ||
+        ordersByTitle ||
         order.caseSensitive ||
         (internal.type === 'entryField' &&
           !internal.path &&

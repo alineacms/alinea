@@ -4,26 +4,68 @@ import {
   LocalizedGlobalSearchStory
 } from './WorkspaceMenu.stories.js'
 
-test('global search starts in the current workspace and can expand to everything', async ({
+test('global search starts in the current workspace and can pick another scope', async ({
   mount,
   page
 }) => {
   await mount(<GlobalSearchStory />)
   await page.getByRole('button', {name: 'Search entries'}).click()
 
-  const search = page.getByRole('combobox', {name: 'Search'})
-  const everything = page.getByRole('switch', {name: 'All locations'})
+  const dialog = page.getByRole('dialog', {name: 'Search entries'})
+  const search = dialog.getByRole('combobox', {name: 'Search'})
+  const scope = dialog.getByRole('group', {name: 'Explorer scope'})
   await expect(search).toBeFocused()
-  await expect(everything).not.toBeChecked()
-  await expect(everything).toBeEnabled()
+  await expect(dialog.getByRole('switch')).toHaveCount(0)
+  const [workspace, root] = [
+    scope.getByRole('button').first(),
+    scope.getByRole('button').last()
+  ]
+  await expect(workspace).toHaveText('Simple')
+  await expect(root).toHaveText('All roots')
 
   await search.fill('About')
-  await expect(page.getByText('About', {exact: true})).toBeVisible()
+  await expect(dialog.getByText('About', {exact: true})).toBeVisible()
 
-  await everything.press('Space')
-  await expect(everything).toBeChecked()
+  // A root limits the matches to it
+  await root.click()
+  await page.getByRole('menuitemradio', {name: 'Media'}).click()
+  await expect(root).toHaveText('Media')
+  await expect(dialog.getByText('No results found')).toBeVisible()
+  await root.click()
+  await page.getByRole('menuitemradio', {name: 'All roots'}).click()
+  await expect(dialog.getByText('About', {exact: true})).toBeVisible()
+
+  await workspace.click()
+  await page.getByRole('menuitemradio', {name: 'All workspaces'}).click()
+  await expect(workspace).toHaveText('All workspaces')
   await search.fill('Checklist')
-  await expect(page.getByText('Checklist', {exact: true})).toBeVisible()
+  await expect(dialog.getByText('Checklist', {exact: true})).toBeVisible()
+})
+
+test('global search filters by the types in the searched scope', async ({
+  mount,
+  page
+}) => {
+  await mount(<GlobalSearchStory />)
+  await page.getByRole('button', {name: 'Search entries'}).click()
+
+  const dialog = page.getByRole('dialog', {name: 'Search entries'})
+  const search = dialog.getByRole('combobox', {name: 'Search'})
+  await search.fill('Blog')
+  await expect(dialog.getByText('Blog', {exact: true})).toBeVisible()
+
+  await dialog.getByRole('button', {name: 'Filter and sort'}).click()
+  const types = page.getByRole('group', {name: 'Type'})
+  await expect(types.getByRole('button', {name: 'Folder'})).toBeVisible()
+  const pages = types.getByRole('button', {name: 'Page'})
+  await pages.click()
+  await expect(pages).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('Escape')
+
+  // Blog is a folder
+  await expect(dialog.getByText('No results found')).toBeVisible()
+  await search.fill('About')
+  await expect(dialog.getByText('About', {exact: true})).toBeVisible()
 })
 
 test('global search includes localized entries', async ({mount, page}) => {

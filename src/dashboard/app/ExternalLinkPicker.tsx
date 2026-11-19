@@ -1,5 +1,11 @@
 import {Button, Checkbox, Field, TextField, useDialog} from '#/components.js'
-import {useState, type FormEvent} from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  type FormEvent,
+  type ReactNode
+} from 'react'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -15,6 +21,29 @@ export interface ExternalLinkValue {
   url: string
   title: string
   target: string
+}
+
+const ExternalLinkLabelContext = createContext(true)
+
+export interface ExternalLinkLabelScopeProps {
+  /** Ask for the label of external links picked within */
+  showLabel: boolean
+  children: ReactNode
+}
+
+/**
+ * Leaves the label out of external links picked within, eg. when the text
+ * that is linked already labels the link
+ */
+export function ExternalLinkLabelScope({
+  showLabel,
+  children
+}: ExternalLinkLabelScopeProps) {
+  return (
+    <ExternalLinkLabelContext.Provider value={showLabel}>
+      {children}
+    </ExternalLinkLabelContext.Provider>
+  )
 }
 
 export interface ExternalLinkPickerProps {
@@ -53,6 +82,7 @@ function ExternalLinkPickerDialog({
   onConfirm
 }: ExternalLinkPickerProps) {
   const modal = useDialog()
+  const showLabel = useContext(ExternalLinkLabelContext)
   const initialUrl = initialValue?.url ?? ''
   const initialTitle = initialValue?.title ?? ''
   const [url, setUrl] = useState(initialUrl)
@@ -95,12 +125,14 @@ function ExternalLinkPickerDialog({
             error={urlError}
             required
           />
-          <TextField
-            label="Label"
-            value={title}
-            onValueChange={setTitle}
-            required
-          />
+          {showLabel && (
+            <TextField
+              label="Label"
+              value={title}
+              onValueChange={setTitle}
+              required
+            />
+          )}
           <Field label="Target">
             <Checkbox checked={openInNewTab} onCheckedChange={setOpenInNewTab}>
               Open link in new tab

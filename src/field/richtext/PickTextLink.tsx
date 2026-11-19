@@ -1,4 +1,4 @@
-import {Button, Dialog, TextField, useDialog} from '#/components.js'
+import {Button, Dialog, useDialog} from '#/components.js'
 import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
@@ -14,6 +14,7 @@ import {NodeEditor} from '#/dashboard/app/NodeEditor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
+import {ExternalLinkLabelScope} from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {
   DashboardModal,
@@ -239,16 +240,30 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
     [options.link, linkOptions]
   )
   const link = useAtomValueRaw(linkEditor.value)
-  const [title, setTitle] = useState(options.title ?? '')
+  const graph = useAtomValueRaw(graphAtom)
+  const locale = useDashboardContext().page.locale ?? undefined
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     if (event.target !== event.currentTarget) return
     event.preventDefault()
-    picker.confirm({
-      link: link ?? undefined,
-      title: title.trim()
-    })
-    modal.close()
+    const picked = link ?? undefined
+    // The title is no longer edited here, but a link stored with one keeps it
+    // while it points at the same target
+    const title =
+      picked && options.link && picked._id === options.link._id
+        ? options.title
+        : undefined
+    void linkDescription(graph, picked, options, locale).then(
+      description => {
+        picker.confirm({link: picked, title, description})
+        modal.close()
+      },
+      error => {
+        console.error(error)
+        picker.cancel()
+        modal.close()
+      }
+    )
   }
 
   return (
@@ -260,13 +275,12 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
         </DashboardModalFormHeader>
         <DashboardModalFormBody>
           <div className={styles.PickTextLink()}>
-            <NodeEditor node={linkEditor.node} type={linkEditor.type} />
-            <TextField
-              description="Extra information that describes the link, shown on hover"
-              label="Tooltip"
-              value={title}
-              onValueChange={setTitle}
-            />
+            {/* Selected or linked text labels the link, new text needs one */}
+            <ExternalLinkLabelScope
+              showLabel={Boolean(options.requireDescription)}
+            >
+              <NodeEditor node={linkEditor.node} type={linkEditor.type} />
+            </ExternalLinkLabelScope>
           </div>
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
@@ -283,6 +297,24 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
       </DashboardModalForm>
     </DashboardModalDialog>
   )
+}
+
+/** The text of a link to an entry that is inserted without selected text */
+async function linkDescription(
+  graph: Graph,
+  link: Reference | undefined,
+  options: Partial<PickerOptions>,
+  locale: string | undefined
+): Promise<string | undefined> {
+  if (!options.requireDescription || !link || !('_entry' in link)) return
+  if (typeof link._entry !== 'string') return
+  const title = await graph.first({
+    id: link._entry,
+    locale,
+    status: 'preferDraft',
+    select: Entry.title
+  })
+  return title ?? undefined
 }
 
 function createLinkEditor(

@@ -193,6 +193,19 @@ test('lists media with a preview, dimensions, size and file type', async ({
   )
 })
 
+test('shows the preview of a pdf on its detail page', async ({mount, page}) => {
+  await open(page, `#/entry/main/media/${ids.annualReport}`)
+  await mount(<OverviewScenarioMount />)
+  await expect(page.getByRole('heading', {level: 1})).toHaveText(
+    'Annual report'
+  )
+  await expect(
+    page.getByRole('img', {name: 'Preview of media file'})
+  ).toHaveAttribute('src', overviewPhotoPreview)
+  // Only images have a focus point
+  await expect(page.getByRole('slider', {name: 'Focus point'})).toHaveCount(0)
+})
+
 test('lists the products of a brand with an entry table', async ({
   mount,
   page

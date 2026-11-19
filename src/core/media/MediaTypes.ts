@@ -49,8 +49,8 @@ export interface FileTypeConfig<Fields> extends Omit<
 /** The data alinea keeps of every uploaded file */
 function fileFields() {
   return {
-    title: text('Title', {width: 0.5}),
-    path: path('Path', {width: 0.5}),
+    title: text('Title', {width: 0.5, required: true}),
+    path: path('Path', {width: 0.5, required: true}),
     metadata: auditMetadata(),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
@@ -337,8 +337,18 @@ export function mediaOverview(): OverviewOptions {
       },
       usage: {
         label: 'Usage',
+        // Folders stay to browse into
         options: {
-          // Files no entry links to, folders stay to browse into
+          all: {label: 'All'},
+          used: {
+            label: 'Used',
+            filter: {
+              or: [
+                {_type: 'MediaLibrary'},
+                {_type: 'MediaFile', _referenced: true}
+              ]
+            }
+          },
           unused: {
             label: 'Unused',
             filter: {

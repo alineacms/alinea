@@ -213,6 +213,7 @@ export class EntryStore
         return this.database.getRevision()
       }
       const localTree = await this.source.getTree()
+      if (options?.stats) options.stats.from = localTree.sha
       const remoteTree = await timeStep(options?.stats, 'tree', () =>
         remote.getTreeIfDifferent(localTree.sha)
       )

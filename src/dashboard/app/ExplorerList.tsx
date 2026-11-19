@@ -12,7 +12,7 @@ import {
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom, useStore} from 'jotai'
-import {useLayoutEffect, useRef} from 'react'
+import {type RefObject, useLayoutEffect, useRef} from 'react'
 import {
   explorerPageIsPending,
   explorerScrollKey,
@@ -115,7 +115,9 @@ function useScrollRestoration(
       '[role="grid"], [role="treegrid"]'
     )
     const target = store.get(scrollOffset)
-    let restoring = scroller !== null
+    // A page that shows a selected match scrolls to it instead
+    let restoring =
+      scroller !== null && store.get(explorer.revealKey) === undefined
     let frame = 0
     let frames = 0
     let settled = 0
@@ -159,8 +161,77 @@ function useScrollRestoration(
       element.removeEventListener('pointerdown', stopRestoring)
       element.removeEventListener('keydown', stopRestoring)
     }
-  }, [scrollOffset, store])
+  }, [explorer.revealKey, scrollOffset, store])
   return container
+}
+
+/**
+ * Scrolls the match an editor selected into view once the folder that holds
+ * it is shown, after browsing from the matches
+ */
+/** The element that scrolls the results: the grid or one of its parents */
+function scrollingElement(element: HTMLElement): HTMLElement | undefined {
+  let current: HTMLElement | null = element
+  while (current) {
+    if (current.scrollHeight > current.clientHeight) {
+      const {overflowY} = getComputedStyle(current)
+      if (overflowY === 'auto' || overflowY === 'scroll') return current
+    }
+    current = current.parentElement
+  }
+  return undefined
+}
+
+/**
+ * Whether a row is rendered near the visible part of the results: rows kept
+ * rendered for focus may sit far outside of it
+ */
+function isNear(row: HTMLElement, scroller: HTMLElement) {
+  const box = row.getBoundingClientRect()
+  const view = scroller.getBoundingClientRect()
+  return (
+    box.bottom > view.top - view.height && box.top < view.bottom + view.height
+  )
+}
+
+function useRevealSelected(
+  explorer: DashboardExplorer,
+  page: ExplorerReadyPage,
+  container: RefObject<HTMLDivElement | null>
+) {
+  const store = useStore()
+  useLayoutEffect(() => {
+    const key = store.get(explorer.revealKey)
+    if (key === undefined || page.resultMode !== 'browse') return
+    const index = page.items.findIndex(item => item.id === key)
+    store.set(explorer.revealKey, undefined)
+    if (index === -1) return
+    const id = key
+    let frame = 0
+    let frames = 0
+    // Virtualized results size their contents after rendering, so the
+    // element that scrolls them is looked up again each frame
+    function reveal() {
+      const results = container.current?.querySelector<HTMLElement>(
+        '[role="grid"], [role="treegrid"]'
+      )
+      const scroller = results && scrollingElement(results)
+      if (results && scroller) {
+        const row = results.querySelector<HTMLElement>(
+          `[data-key="${CSS.escape(id)}"]`
+        )
+        if (row && isNear(row, scroller))
+          return row.scrollIntoView({block: 'nearest'})
+        // Scroll to the estimated position so the row gets rendered
+        scroller.scrollTop =
+          (index / page.items.length) * scroller.scrollHeight -
+          scroller.clientHeight / 2
+      }
+      if (++frames <= scrollRestoreFrames) frame = requestAnimationFrame(reveal)
+    }
+    reveal()
+    return () => cancelAnimationFrame(frame)
+  }, [container, explorer.revealKey, page, store])
 }
 
 export interface ExplorerListProps {
@@ -182,6 +253,7 @@ export function ExplorerList({
 }: ExplorerListProps) {
   const showResults = explorer.mode !== 'search' || Boolean(page.search.trim())
   const container = useScrollRestoration(explorer, page)
+  useRevealSelected(explorer, page, container)
   const getDragData = useSetAtom(explorer.getDragData)
   const canDrop = useSetAtom(explorer.canDrop)
   const moveInto = useSetAtom(explorer.moveInto)

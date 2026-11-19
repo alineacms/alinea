@@ -43,20 +43,26 @@ test('infers custom labels on queried links', () => {
       link: Field.link('Link'),
       links: Field.link.multiple('Links'),
       entry: Field.entry('Entry'),
-      image: Field.image('Image')
+      image: Field.image('Image'),
+      url: Field.url('Url'),
+      file: Field.file('File')
     }
   })
   type Navigation = Infer<typeof Navigation>
-  expectTypeOf<Navigation['link']['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['link']['label']>().toEqualTypeOf<
     string | undefined
   >()
-  expectTypeOf<Navigation['links'][number]['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['links'][number]['label']>().toEqualTypeOf<
     string | undefined
   >()
-  expectTypeOf<Navigation['entry']['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['entry']['label']>().toEqualTypeOf<
     string | undefined
   >()
-  expectTypeOf<Navigation['image']['_label']>().toEqualTypeOf<
+  expectTypeOf<Navigation['image']['label']>().toEqualTypeOf<
+    string | undefined
+  >()
+  expectTypeOf<Navigation['url']['label']>().toEqualTypeOf<string | undefined>()
+  expectTypeOf<Navigation['file']['label']>().toEqualTypeOf<
     string | undefined
   >()
 })
@@ -89,4 +95,33 @@ test('preserves custom stored fields for single and multiple link editors', () =
   for (const value of [image, ...files, ...entries, ...urls]) {
     expect(value).toMatchObject(custom)
   }
+})
+
+test('a tab without fields keeps the fields of the other tabs', () => {
+  const settings = Field.tab('Settings', {
+    fields: {visibility: Field.select('Visibility', {options: {a: 'A'}})}
+  })
+  const analytics = Field.tab('Analytics', {view: '@/dashboard/PageViewsTab'})
+  const Page = Config.document('Page', {
+    tabs: {settings, analytics},
+    fields: {intro: Field.text('Intro')}
+  })
+  type Page = Infer.Entry<typeof Page>
+  expectTypeOf<Page['visibility']>().toEqualTypeOf<'a' | null>()
+  expectTypeOf<Page['intro']>().toEqualTypeOf<string>()
+})
+
+test('a tab without fields written inline adds no index signature', () => {
+  const Page = Config.document('Page', {
+    tabs: {
+      settings: Field.tab('Settings', {fields: {intro: Field.text('Intro')}}),
+      analytics: Field.tab('Analytics', {view: '@/dashboard/PageViewsTab'})
+    },
+    fields: {}
+  })
+  type Page = Infer.Entry<typeof Page>
+  expectTypeOf<Page['intro']>().toEqualTypeOf<string>()
+  expectTypeOf<
+    'typo' extends keyof Page ? true : false
+  >().toEqualTypeOf<false>()
 })

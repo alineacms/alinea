@@ -269,6 +269,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#assertOpen()
     return this.#syncQueue.run(async () => {
       const current = await this.#queue.run(() => this.#getRevision(this.#db))
+      if (options?.stats) options.stats.from ??= current
       const tree = await timeStep(options?.stats, 'tree', () =>
         source.getTreeIfDifferent(current)
       )

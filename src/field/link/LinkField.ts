@@ -91,7 +91,9 @@ export function createLink<StoredValue extends Reference, QueryValue>(
     async queryValue(value, loader) {
       const type = value[Reference.type]
       const picker = options.pickers[type]
-      if (!picker) return value as unknown as QueryValue
+      // A link of a kind the field no longer offers, eg. after `kinds` was
+      // narrowed, is left out as if it were empty
+      if (!picker) return null as QueryValue
       if (picker.postProcess) await picker.postProcess(value, loader)
       return value as unknown as QueryValue
     },
@@ -183,11 +185,13 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
         if (picker.postProcess) tasks.push(picker.postProcess(row, loader))
       }
       await Promise.all(tasks)
+      // Rows of a kind the field no longer offers are left out too
       for (let index = rows.length - 1; index >= 0; index--) {
         const row = rows[index] as StoredValue & {
           [unresolvedEntryMarker]?: true
         }
-        if (row[unresolvedEntryMarker]) rows.splice(index, 1)
+        if (row[unresolvedEntryMarker] || !options.pickers[row[ListRow.type]])
+          rows.splice(index, 1)
       }
       return rows as unknown as Array<QueryValue>
     },

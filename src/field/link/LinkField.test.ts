@@ -1,11 +1,12 @@
 import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {expect, expectTypeOf, test} from 'bun:test'
-import {entry} from './EntryLink.js'
+import {entry, type EntryLink} from './EntryLink.js'
 import type {InferQueryValue} from '#/core/Infer.js'
 import {text} from '#/field/text.js'
 import {image, type ImageLink} from './ImageLink.js'
-import {link, type Link} from './Link.js'
+import {link, type Link, type LinkRow} from './Link.js'
+import type {UrlLink} from './UrlLink.js'
 
 test('multiple link fields configure duplicate entries independently', () => {
   expect(Field.options(entry.multiple('Entries')).allowDuplicates).toBe(false)
@@ -59,12 +60,15 @@ test('custom link labels stay on the queried link', async () => {
     loader
   )
 
-  expectTypeOf(single._label).toEqualTypeOf<string | undefined>()
-  expectTypeOf(url._label).toEqualTypeOf<string | undefined>()
-  expectTypeOf(entryLink._label).toEqualTypeOf<string | undefined>()
-  expect(single).toMatchObject({_label: 'Custom', fields: {}, url: '/target'})
-  expect(url).toMatchObject({_label: 'External', fields: {}})
-  expect(entryLink).toMatchObject({_label: 'Entry', fields: {}})
+  expectTypeOf(single.label).toEqualTypeOf<string | undefined>()
+  expectTypeOf(url.label).toEqualTypeOf<string | undefined>()
+  expectTypeOf(entryLink.label).toEqualTypeOf<string | undefined>()
+  expect(single).toMatchObject({label: 'Custom', fields: {}, url: '/target'})
+  expect(url).toMatchObject({label: 'External', fields: {}})
+  expect(entryLink).toMatchObject({label: 'Entry', fields: {}})
+  expect(page).not.toHaveProperty('label')
+  // The stored _label stays on the queried link for existing queries
+  expect(single).toMatchObject({_label: 'Custom'})
   expect(page).not.toHaveProperty('_label')
   for (const value of [single, url, page, entryLink])
     expect(value.fields).toEqual({})
@@ -94,8 +98,8 @@ test('external links take the title of the link picker as their label', async ()
     ],
     {} as LinkResolver
   )
-  expect(titled._label).toBe('Example')
-  expect(labeled._label).toBe('Custom')
+  expect(titled.label).toBe('Example')
+  expect(labeled.label).toBe('Custom')
   const [cleared] = await Field.queryValue(
     link.multiple('Links'),
     [
@@ -111,7 +115,7 @@ test('external links take the title of the link picker as their label', async ()
     ],
     {} as LinkResolver
   )
-  expect(cleared._label).toBe('')
+  expect(cleared.label).toBe('')
 })
 
 test('link types default to links without fields', () => {
@@ -131,4 +135,72 @@ test('link types default to links without fields', () => {
     {} as InferQueryValue<typeof captioned>
   ]
   expect(images).toHaveLength(2)
+})
+
+test('link fields can be limited to some kinds of links', () => {
+  const pagesAndUrls = link('Link', {kinds: ['entry', 'url']})
+  const urls = link.multiple('Links', {kinds: ['url'], max: 3})
+  expect(Object.keys(Field.options(pagesAndUrls).pickers)).toEqual([
+    'entry',
+    'url'
+  ])
+  expect(Object.keys(Field.options(urls).pickers)).toEqual(['url'])
+  expect(Object.keys(Field.options(link('Link')).pickers)).toEqual([
+    'entry',
+    'url',
+    'file'
+  ])
+  expect(Field.options(urls).max).toBe(3)
+  expect(Field.options(pagesAndUrls)).not.toHaveProperty('kinds')
+  expectTypeOf<InferQueryValue<typeof pagesAndUrls>>().toEqualTypeOf<
+    EntryLink | UrlLink
+  >()
+  expectTypeOf<InferQueryValue<typeof urls>>().toEqualTypeOf<Array<UrlLink>>()
+  expectTypeOf<InferQueryValue<ReturnType<typeof link>>>().toEqualTypeOf<Link>()
+  expect(() => link('Link', {kinds: []})).toThrow()
+})
+
+test('link fields take kinds from a shared constant', () => {
+  const kinds = ['entry', 'url'] as const
+  const field = link('Link', {kinds})
+  expectTypeOf<InferQueryValue<typeof field>>().toEqualTypeOf<
+    EntryLink | UrlLink
+  >()
+})
+
+test('links of a kind a field no longer offers are left out', async () => {
+  const loader = {
+    async resolveLinks() {
+      return [{title: 'Target', url: '/target'}]
+    }
+  } as unknown as LinkResolver
+  // Stored while the field still offered files
+  const fileLink = {
+    _id: 'file',
+    _type: 'file',
+    _index: 'a0',
+    _entry: 'doc'
+  } as unknown as LinkRow
+  const single = await Field.queryValue(
+    link('Link', {kinds: ['entry', 'url']}),
+    fileLink,
+    loader
+  )
+  expect(single).toBeNull()
+  const rows = await Field.queryValue(
+    link.multiple('Links', {kinds: ['url']}),
+    [
+      fileLink,
+      {
+        _id: 'url',
+        _type: 'url',
+        _index: 'a1',
+        _url: 'https://example.com',
+        _title: '',
+        _target: ''
+      } as unknown as LinkRow
+    ],
+    loader
+  )
+  expect(rows.map(row => row._id)).toEqual(['url'])
 })

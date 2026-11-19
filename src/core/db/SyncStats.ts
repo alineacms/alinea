@@ -45,13 +45,15 @@ export async function loggedSync(
   options: SyncOptions = {}
 ): Promise<string> {
   const stats = options.stats ?? syncStats()
-  const from = await store.sha
+  const before = await store.sha
   const start = performance.now()
   let to: string | undefined
   try {
     return (to = await store.syncWith(remote, {...options, stats}))
   } finally {
     const durationMs = performance.now() - start
+    // A sync queued behind another starts from where that one ended
+    const from = stats.from ?? before
     console.info(describeSync(reason, from, to, durationMs, stats))
   }
 }

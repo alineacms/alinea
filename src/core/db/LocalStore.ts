@@ -35,6 +35,8 @@ export interface SyncStats {
   files: number
   /** Entry versions derived again */
   versions: number
+  /** The revision the sync started from, once its turn in the queue came */
+  from?: string
 }
 
 /**

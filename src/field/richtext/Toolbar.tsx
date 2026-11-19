@@ -12,6 +12,7 @@ import {
   IcRoundHorizontalRule,
   IcRoundImage,
   IcRoundLink,
+  IcRoundLinkOff,
   IcRoundQuote,
   IcRoundSubscript,
   IcRoundSuperscript,
@@ -37,6 +38,7 @@ import type {ComponentType, ReactElement, ReactNode} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
 import type {PickRichTextImageFunc} from './PickTextLink.js'
 import {currentAnchor} from './extensions/Anchor.js'
+import {selectedLinkRange} from './extensions/Link.js'
 
 export interface RichTextCommand {
   (): ReturnType<Editor['chain']>
@@ -50,6 +52,8 @@ export interface ToolbarButton {
   title?: string
   disabled?: (ctx: RichTextToolbarContext) => boolean
   active?: (ctx: RichTextToolbarContext) => boolean
+  /** Leaves the button out of the toolbar */
+  hidden?: (ctx: RichTextToolbarContext) => boolean
   onSelect: (ctx: RichTextToolbarContext) => void
 }
 
@@ -348,6 +352,18 @@ export const links = {
       title: 'Link',
       active: ({editor}) => editor.isActive('link'),
       onSelect: ({handleLink}) => handleLink()
+    },
+    unlink: {
+      icon: () => <IcRoundLinkOff />,
+      title: 'Remove link',
+      hidden: ({editor}) => !editor.isActive('link'),
+      // The whole link, not only the selected text
+      onSelect: ({editor, exec}) => {
+        const range = selectedLinkRange(editor.state, editor.schema.marks.link)
+        const chain = exec()
+        if (range) chain.setTextSelection(range)
+        chain.unsetLink().run()
+      }
     }
   }
 } satisfies ToolbarGroup

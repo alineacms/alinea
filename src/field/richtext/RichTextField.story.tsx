@@ -145,6 +145,26 @@ export function RichTextImageStory() {
   )
 }
 
+export function RichTextLinkStory() {
+  return (
+    <RichTextFixture
+      initialBody={linkValue}
+      entryType={plainEntry}
+      withDashboard
+    />
+  )
+}
+
+export function RichTextAdjacentLinksStory() {
+  return (
+    <RichTextFixture
+      initialBody={adjacentLinksValue}
+      entryType={plainEntry}
+      withDashboard
+    />
+  )
+}
+
 export function RichTextImageDisabledStory() {
   return <RichTextFixture initialBody={imageValue} entryType={plainEntry} />
 }
@@ -286,6 +306,54 @@ function paragraph(text: string) {
     content: [{_type: 'text', text}]
   }
 }
+
+const linkValue = [
+  {
+    _type: 'paragraph',
+    content: [
+      {_type: 'text', text: 'Read '},
+      {
+        _type: 'text',
+        text: 'the guide',
+        marks: [
+          {
+            _type: 'link',
+            _id: 'link-1',
+            _link: 'url',
+            href: 'https://example.com/guide',
+            target: '_blank',
+            title: 'Opens the guide'
+          }
+        ]
+      },
+      {_type: 'text', text: ' before you start.'}
+    ]
+  },
+  paragraph('Link some of this text.')
+]
+
+function urlLink(id: string, href: string) {
+  return {_type: 'link', _id: id, _link: 'url', href}
+}
+
+const adjacentLinksValue = [
+  {
+    _type: 'paragraph',
+    content: [
+      {
+        _type: 'text',
+        text: 'alpha',
+        marks: [urlLink('link-a', 'https://a.test')]
+      },
+      {
+        _type: 'text',
+        text: 'beta',
+        marks: [urlLink('link-b', 'https://b.test')]
+      },
+      {_type: 'text', text: ' tail'}
+    ]
+  }
+]
 
 const blocksValue = [
   paragraph('Before the block.'),

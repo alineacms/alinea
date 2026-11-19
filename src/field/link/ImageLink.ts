@@ -30,6 +30,10 @@ export interface ImageLink<InferredFields = {}> extends EntryReference {
   thumbHash: string
   focus: {x: number; y: number}
   fields: InferredFields
+  /** The label the editor gave the link */
+  label?: string
+  /** @deprecated Use `label`, `_label` is how the label is stored */
+  _label?: string
 }
 
 export namespace ImageLink {

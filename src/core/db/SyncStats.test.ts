@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {describeSync, syncStats} from './SyncStats.js'
+import {describeSync, loggedSync, syncStats} from './SyncStats.js'
 
 const from = '1a2b3c4d5e6f'
 const to = '5d6e7f8a9b0c'
@@ -17,6 +17,25 @@ test('describes a sync that found nothing new', () => {
   expect(describeSync('sha', to, to, 81, stats)).toBe(
     'Alinea is current at 5d6e7f8 (sha) in 81 ms: tree 80 ms'
   )
+})
+
+test('logs a queued sync from the revision it started at', async () => {
+  const store = {
+    sha: from,
+    async syncWith(_remote: unknown, options?: {stats?: {from?: string}}) {
+      options!.stats!.from = to
+      return to
+    }
+  }
+  const info = console.info
+  const logged = Array<string>()
+  console.info = (message: string) => logged.push(message)
+  try {
+    await loggedSync(store, undefined!, 'stale')
+  } finally {
+    console.info = info
+  }
+  expect(logged[0]).toStartWith('Alinea is current at 5d6e7f8 (stale)')
 })
 
 test('describes a sync that failed', () => {

@@ -134,8 +134,12 @@ export interface OverviewSortOption {
 export interface OverviewFilterOption {
   /** Shown in the menu, eg. `PDF` */
   label: string
-  /** The condition entries match when the option is picked */
-  filter: OpenFilter<EntryFilterFields>
+  /**
+   * The condition entries match when the option is picked. An option without
+   * one lists every entry, eg. `All`: it shows picked while no other option
+   * of the filter is, and picking it unpicks them.
+   */
+  filter?: OpenFilter<EntryFilterFields>
 }
 
 /** The choices of an overview filter, keyed by a name unique within it */

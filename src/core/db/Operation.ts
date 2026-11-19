@@ -345,7 +345,9 @@ export class UploadOperation extends Operation {
       const originalExtension = extname(fileName)
       const title = basename(fileName, originalExtension)
       const extension = originalExtension.toLowerCase()
-      const path = slugify(title)
+      // A file named only of punctuation slugifies to nothing, and a media
+      // file needs a path
+      const path = slugify(title) || 'file'
       const uploadLocation = MediaLocation.storagePath(
         db.config,
         workspace,
@@ -400,9 +402,15 @@ export class UploadOperation extends Operation {
           // A replaced file keeps the fields stored with it, see overwrite
           query.replaceId
             ? uploaded
-            : Type.withInitialValue(fileType, uploaded, {
-                fieldI18n: Config.fieldI18n(db.config, workspace, root)
-              }),
+            : // The entry takes the path of the file, which falls back to
+              // file where the title slugifies to nothing
+              Type.withInitialValue(
+                fileType,
+                {...uploaded, path},
+                {
+                  fieldI18n: Config.fieldI18n(db.config, workspace, root)
+                }
+              ),
           {
             action: query.replaceId ? 'update' : 'create',
             user: query.user,

@@ -54,3 +54,8 @@
 .ListFieldCompactRow-fields {
   min-width: 0;
 }
+
+.ListFieldTypeBadge[data-slot='badge'] {
+  background: color-mix(in oklab, var(--alinea-selected), var(--alinea-bg) 50%);
+  color: var(--alinea-selected-fg);
+}

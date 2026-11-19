@@ -110,10 +110,17 @@ export function ExplorerScope({explorer, page}: ExplorerScopeProps) {
     startTransition(() => setScope(next))
   }
 
-  function select(next: ExplorerLimitLocation) {
+  /**
+   * Lists a location in the given scope: pickers list the root, searches
+   * of a picked workspace match in all of its roots
+   */
+  function select(
+    next: ExplorerLimitLocation,
+    nextScope: 'root' | 'workspace' = 'root'
+  ) {
     // Narrowing back to the listed location keeps the open parent
     if (next.workspace === location.workspace && next.root === location.root)
-      return startTransition(() => setScope(explorer.rootScope))
+      return startTransition(() => setScope(nextScope))
     const locales: ReadonlyArray<string> =
       rootData(config, next)?.i18n?.locales ?? []
     const locale =
@@ -121,7 +128,7 @@ export function ExplorerScope({explorer, page}: ExplorerScopeProps) {
         ? page.locale
         : (locales[0] ?? null)
     startTransition(() => {
-      setScope(explorer.rootScope)
+      setScope(nextScope)
       setSelectedLocale(locale)
       setLocation({...next, locale: locale ?? undefined})
     })
@@ -152,7 +159,7 @@ export function ExplorerScope({explorer, page}: ExplorerScopeProps) {
               locations.find(
                 item => item.workspace === key && item.root === location.root
               ) ?? locations.find(item => item.workspace === key)
-            if (next) select(next)
+            if (next) select(next, explorer.rootScope)
           }}
         />
       )}

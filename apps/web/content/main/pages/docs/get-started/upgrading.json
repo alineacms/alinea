@@ -51,7 +51,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "Update the package: `npm install alinea@preview` (or `pnpm add`, `yarn add`, `bun add`)."
+                  "text": "Update the package: `npm install alinea@latest` (or `pnpm add`, `yarn add`, `bun add`)."
                 }
               ]
             }
@@ -734,6 +734,34 @@
                 {
                   "_type": "text",
                   "text": "Trackers from `Config.track.options` must return their value synchronously, and `Config.track.value` was removed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Options trackers type `get(field)` by the field, so a single link field reads as possibly `null`. Calls that pass the value type, eg. `get<string>(field)`, no longer compile: pass the field only."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Queried links have the label the editor gave them as `label`. `_label` still holds the same value but is deprecated."
                 }
               ]
             }
@@ -1507,7 +1535,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Projects on a 2.0 preview have most of the above already. These changes landed in the release candidate:"
+          "text": "Projects on a 2.0 preview or release candidate have most of the above already. These changes landed in the release candidates:"
         }
       ]
     },
@@ -1715,6 +1743,118 @@
       ]
     },
     {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "And these after the second release candidate:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Queried links have the label the editor gave them as `label`. `_label` still holds the same value but is deprecated."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Options trackers type `get(field)` by the field, so a single link field reads as possibly `null`. Calls that pass the value type, eg. `get<string>(field)`, no longer compile: pass the field only."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Field.link` takes `kinds`, eg. `kinds: ['entry', 'url']`, to limit the links editors can pick. Stored links of a kind the field no longer offers are left out when queried."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Titles sort regardless of case, accents and leading punctuation, with numbers by their value. The local content database is rebuilt once after upgrading."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The title and path of media files are required."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "An option of an overview filter can leave out `filter`: it then lists every entry and is picked while no other option of its filter is."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Rich text toolbar buttons take `hidden`, and the links group has a Remove link button shown while the selection is in a link. Custom toolbars that copy the links group get it too."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
@@ -1734,7 +1874,7 @@
         },
         {
           "_type": "text",
-          "text": "Field.localiser",
+          "text": "Field.localised",
           "marks": [
             {
               "_type": "link",

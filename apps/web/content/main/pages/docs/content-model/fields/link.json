@@ -89,7 +89,7 @@
     {
       "_type": "ExampleBlock",
       "_id": "7JteCOtZTREVRHMMcZqMR",
-      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Link field', {\n  fields: {\n    link: Field.link('Single link'),\n    linkMultiple: Field.link.multiple('Multiple links'),\n    linkWithLabel: Field.link('Link with label', {\n      fields: {label: Field.text('Label')}\n    })\n  }\n})"
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Link field', {\n  fields: {\n    link: Field.link('Single link'),\n    linkMultiple: Field.link.multiple('Multiple links')\n  }\n})"
     },
     {
       "_type": "heading",
@@ -114,7 +114,21 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`fields`: extra fields stored on each link, such as a label or an \"open in new tab\" toggle. Pass an object of fields or a type."
+                  "text": "`fields`: extra fields stored on each link, such as a style or an \"open in new tab\" toggle. Every link already has a label, see Value below. Pass an object of fields or a type."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`kinds`: the kinds of links editors can pick, any of `'entry'`, `'url'` and `'file'`. All of them by default, see below."
                 }
               ]
             }
@@ -367,14 +381,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "`Field.link` has no option to hide one of its kinds. To accept two of them, such as a page or a url but no file, reject the third in `validate`. The stored link's `_type` is `'entry'`, `'url'` or `'file'`:"
+          "text": "To accept two of them, such as a page or a url but no file, pass the `kinds` of links editors can pick. The picker only offers those, and the queried value is typed to match:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JlRxqHbYq7a1ISpt7yE0IzqF0Y",
-      "code": "import {Field} from 'alinea'\n\n// A page or an external url, but no file\nField.link('Button link', {\n  validate(link) {\n    if (link?._type === 'file') return 'Link to a page or a url'\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\n// A page or an external url, but no file\nField.link('Button link', {kinds: ['entry', 'url']})",
       "fileName": "",
       "language": "tsx"
     },
@@ -469,14 +483,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "The values of the extra `fields` are on `link.fields`. A single link is `null` while it's empty, a multiple link field is an array."
+          "text": "Every kind has a `label`: the label the editor gave the link in its row. An external link takes the title entered in the link picker as its label, unless the editor changes it. The values of the extra `fields` are on `link.fields`. Projects that added a label field of their own, eg. `fields: {label: Field.text('Label')}`, can drop it and read `link.label`; links stored with it keep it on `link.fields.label`. A single link is `null` while it's empty, a multiple link field is an array."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3JkEzvzsEvwi1guW6TwL5O9kq17",
-      "code": "import type {Link as LinkValue} from 'alinea'\nimport Link from 'next/link'\n\ninterface ButtonProps {\n  link: LinkValue<{label: string}> | null\n}\n\nexport function Button({link}: ButtonProps) {\n  if (!link?.href) return null\n  const label = link.fields.label || link.title\n  if (link._type === 'url')\n    return (\n      <a href={link.href} target={link.target || undefined}>\n        {label}\n      </a>\n    )\n  return <Link href={link.href}>{label}</Link>\n}",
+      "code": "import type {Link as LinkValue} from 'alinea'\nimport Link from 'next/link'\n\ninterface ButtonProps {\n  link: LinkValue | null\n}\n\nexport function Button({link}: ButtonProps) {\n  if (!link?.href) return null\n  const label = link.label || link.title\n  if (link._type === 'url')\n    return (\n      <a href={link.href} target={link.target || undefined}>\n        {label}\n      </a>\n    )\n  return <Link href={link.href}>{label}</Link>\n}",
       "fileName": "",
       "language": "tsx"
     },
@@ -503,7 +517,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2bLjsYUBGxzkuxwV3LJNOBMsarU",
-      "code": "import {Field} from 'alinea'\n\nField.link('Call to action', {\n  fields: {\n    label: Field.text('Label', {width: 0.5}),\n    style: Field.select('Style', {\n      width: 0.5,\n      initialValue: 'primary',\n      options: {primary: 'Primary', secondary: 'Secondary'}\n    })\n  }\n})",
+      "code": "import {Field} from 'alinea'\n\nField.link('Call to action', {\n  fields: {\n    style: Field.select('Style', {\n      initialValue: 'primary',\n      options: {primary: 'Primary', secondary: 'Secondary'}\n    })\n  }\n})",
       "fileName": "",
       "language": "tsx"
     },
@@ -512,7 +526,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "Editors fill in these fields in the link's row after picking the target. `LinkValue<{label: string}>` in the example above types them; see "
+          "text": "Editors fill in these fields in the link's row after picking the target. `LinkValue<{style: 'primary' | 'secondary'}>` types them; see "
         },
         {
           "_type": "text",
