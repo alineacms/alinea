@@ -187,6 +187,20 @@ export interface StoredFormFile extends FormFileRef {
   createdAt: number
 }
 
+/** Which form a site asks the status of */
+export interface FormStatusRequest {
+  entryId: string
+  locale?: string | null
+  field?: string
+}
+
+/** Whether a form takes answers, see `cms.forms.status` */
+export interface FormStatus {
+  open: boolean
+  /** Why it does not, to show instead of the form */
+  message?: string
+}
+
 /** What a site asks for before a visitor uploads a file to a form */
 export interface PrepareUploadRequest {
   entryId: string

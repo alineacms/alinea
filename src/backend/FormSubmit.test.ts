@@ -323,3 +323,46 @@ test('removing a form entry removes its submissions, a draft does not', async ()
   expect(await db.first({id: entryId, status: 'all'})).toBeNull()
   expect((await store.listSubmissions(entryId)).total).toBe(0)
 })
+
+async function status(
+  handle: Awaited<ReturnType<typeof setup>>['handle'],
+  entryId: string
+) {
+  const response = await handle(
+    new Request(`http://localhost/api?action=formStatus&entryId=${entryId}`, {
+      headers: {accept: 'application/json', authorization: 'Bearer test'}
+    }),
+    context
+  )
+  return response.json()
+}
+
+test('a form closes once it took its most submissions', async () => {
+  const {entryId, submit, handle} = await setup({
+    form: ServiceForm,
+    set: {title: 'Waiting list', inputs: rows, limit: 1, full: 'It is full'}
+  })
+  expect(await status(handle, entryId)).toEqual({open: true})
+  const first = await submit({name: 'Ann', email: 'ann@example.com'})
+  expect(first.body.ok).toBe(true)
+  expect(await status(handle, entryId)).toEqual({
+    open: false,
+    message: 'It is full'
+  })
+  const second = await submit({name: 'Bob', email: 'bob@example.com'})
+  expect(second.body).toEqual({ok: false, message: 'It is full'})
+})
+
+test('a unique input takes each answer once', async () => {
+  const unique = [rows[0], {...rows[1], unique: true}]
+  const {submit} = await setup({set: {title: 'Contact', inputs: unique}})
+  expect((await submit({name: 'Ann', email: 'ann@example.com'})).body.ok).toBe(
+    true
+  )
+  expect(
+    (await submit({name: 'Ann', email: ' ANN@example.com '})).body
+  ).toEqual({ok: false, errors: {email: 'This answer was already sent'}})
+  expect(
+    (await submit({name: 'Ann', email: 'other@example.com'})).body.ok
+  ).toBe(true)
+})

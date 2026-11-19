@@ -85,6 +85,28 @@ export function input<
   return {label, ...config}
 }
 
+/** What a content input is made of: what the editor fills in, no answer */
+export type ContentConfig<
+  Fields extends FieldsDefinition,
+  Settings extends FieldsDefinition
+> = Pick<InputConfig<Fields, Settings, never>, 'icon' | 'fields' | 'settings'>
+
+/**
+ * Create content that editors can add between the inputs of a form, eg. an
+ * image or a notice. Visitors do not answer it. Its fields are resolved like
+ * those of an entry. `<Form>` renders it with the view of its type, eg.
+ * `views={{image: ImageContent}}`, or shows a rich text field named `body`.
+ */
+export function content<
+  Fields extends FieldsDefinition = {},
+  Settings extends FieldsDefinition = {}
+>(
+  label: string,
+  config: ContentConfig<Fields, Settings> = {}
+): Input<Fields, Settings, never> {
+  return {label, ...config, control: 'content', parse: () => undefined}
+}
+
 export namespace Input {
   export function kind(input: Input): FormKind {
     if (input.kind) return input.kind

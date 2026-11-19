@@ -256,7 +256,7 @@
               "content": [
                 {
                   "_type": "text",
-                  "text": "`content`: text between the inputs, such as how long answers are kept. It is rich text, so it can hold links, and it has no answer. Its name only shows in the form builder."
+                  "text": "`content`: text between the inputs, such as how long answers are kept. It is rich text, so it can hold links, and it has no answer. Its name only shows in the form builder. Make content of your own with `Form.content`, see Custom inputs."
                 }
               ]
             }
@@ -405,6 +405,30 @@
                 {
                   "_type": "text",
                   "text": ": the input must be filled in. A required input that the rules hide or disable is not required."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Unique",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": each answer can be sent once, for example one sign-up per email address. A visitor who sends an answer that is already in a submission gets an error on the input. Text and choice inputs have it, inputs of repeatable sections are not compared. Deleted submissions free their answers."
                 }
               ]
             }
@@ -684,7 +708,7 @@
       "content": [
         {
           "_type": "text",
-          "text": "The Logic tab of an input holds two rules:"
+          "text": "The Logic tab of an input holds three rules:"
         }
       ]
     },
@@ -734,6 +758,30 @@
                 {
                   "_type": "text",
                   "text": ": Never, or When… the rules hold. A disabled input shows, but can't be filled in and its answer isn't stored."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Require this input",
+                  "marks": [
+                    {
+                      "_type": "bold"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": ": Never, or When… the rules hold. The input must be filled in while they do, next to inputs that are always required. Use it for an answer that only matters for some visitors, for example a phone number when they asked to be called."
                 }
               ]
             }

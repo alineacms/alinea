@@ -17,6 +17,7 @@ import {
   IcRoundSend
 } from '#/dashboard/icons.js'
 import {entry} from '#/field/link/EntryLink.js'
+import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
 import {select} from '#/field/select.js'
 import {tab, tabs} from '#/field/tabs.js'
@@ -60,6 +61,8 @@ export interface FormTypeFields<Type extends string> {
   message: ReturnType<typeof text>
   page: ReturnType<typeof entry>
   keep: ReturnType<typeof keepFor>
+  limit: ReturnType<typeof limitFields>['limit']
+  full: ReturnType<typeof limitFields>['full']
 }
 
 const formTypes = new WeakSet<Type>()
@@ -208,6 +211,28 @@ export function keepFor() {
   })
 }
 
+/**
+ * How many submissions a form takes, eg. the places on a waiting list, and
+ * what visitors see once it is full. Spread them under the keys `limit` and
+ * `full` into a type that holds a form with `Field.form`.
+ */
+export function limitFields() {
+  const limit = number('Most submissions', {
+    minValue: 1,
+    help: 'The form closes once this many were sent, eg. the places on a waiting list'
+  })
+  return {
+    limit,
+    full: track.options(
+      text('Message when full', {
+        multiline: true,
+        help: 'Shown instead of the form once it is full'
+      }),
+      get => ({hidden: !get(limit)})
+    )
+  }
+}
+
 function afterSending() {
   return select('After sending', {
     options: {message: 'Show a message', page: 'Go to a page'},
@@ -269,7 +294,8 @@ export function formType<
             entry('Page', {help: 'Where the visitor goes after sending'}),
             get => ({hidden: get(after) !== 'page'})
           ),
-          keep: keepFor()
+          keep: keepFor(),
+          ...limitFields()
         }
       })
     )

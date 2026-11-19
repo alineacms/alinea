@@ -35,7 +35,7 @@ test('text between inputs is in the definition with its body', () => {
     type: 'content',
     label: 'Privacy',
     control: 'content',
-    body
+    data: {body}
   })
   const section = definition[2]
   if (section.control !== 'section') throw new Error('Expected a section')
@@ -70,4 +70,32 @@ test('a submission skips text', () => {
     name: 'Ann',
     street: 'Main street'
   })
+})
+
+test('content of your own holds its fields and settings', () => {
+  const notice = Form.content('Notice', {
+    fields: {title: Field.text('Title')},
+    settings: {tone: Field.select('Tone', {options: {info: 'Info'}})}
+  })
+  const own = {...Form.defaults, notice}
+  const definition = formDefinition(own, [
+    {_id: 'n', _index: 'a0', _type: 'notice', title: 'Closed', tone: 'info'}
+  ])
+  expect(definition).toEqual([
+    {
+      id: 'n',
+      type: 'notice',
+      label: '',
+      control: 'content',
+      data: {title: 'Closed', tone: 'info'}
+    }
+  ])
+  const form = Field.form('Inputs', {inputs: own})
+  const data = new FormData()
+  const result = validateSubmission(
+    form,
+    [{_id: 'n', _index: 'a0', _type: 'notice'}],
+    data
+  )
+  expect(result.ok && result.values).toEqual({})
 })

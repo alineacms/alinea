@@ -644,6 +644,77 @@
       "content": [
         {
           "_type": "text",
+          "text": "Most submissions"
+        }
+      ],
+      "_anchor": "most-submissions"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most submissions",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " in the Notifications tab closes the form once it took that many, for example the places on a waiting list. Archived submissions count, deleted ones free their place. Once it is full, the server answers with the "
+        },
+        {
+          "_type": "text",
+          "text": "Message when full",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " instead of storing the answers."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Ask whether a form takes answers before you show it, to show the message instead of a form nobody can send:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3MgzyXWYQFI0ehIN6k3uw5VZHzd",
+      "code": "const status = await cms.forms.status(form._id, {locale})\nif (!status.open) return <p>{status.message}</p>\nreturn <SiteForm definition={form.inputs} action={submitForm} />",
+      "fileName": "",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A type that holds a form with `Field.form` gets the same settings with `...Form.limits()`, which adds the fields `limit` and `full`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
           "text": "Removing a form"
         }
       ],

@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import type {
   FormFileKey,
+  FormStatus,
   Submission,
   SubmissionQuery,
   SubmissionsApi,
@@ -13,9 +14,15 @@ import type {Graph} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {Type} from '#/core/Type.js'
-import {entries, isRecord} from '#/core/util/Objects.js'
-import {formInputs, submissionIndex} from '#/field/form/FormAnswers.js'
+import {entries, isRecord, keys} from '#/core/util/Objects.js'
 import {
+  answerText,
+  formColumns,
+  formInputs,
+  submissionIndex
+} from '#/field/form/FormAnswers.js'
+import {
+  type FormDefinition,
   type FormInputData,
   formDefinition
 } from '#/field/form/FormDefinition.js'
@@ -23,12 +30,14 @@ import {FormField} from '#/field/form/FormField.js'
 import {type FormMailOut, formMails} from '#/field/form/FormMails.js'
 import {formPage, isSpam} from '#/field/form/FormSpam.js'
 import {
+  type FormErrors,
   type FormResult,
+  type FormValues,
   validateSubmission
 } from '#/field/form/FormSubmission.js'
 import {isFormType} from '#/field/form/FormType.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
-import {fileInputs, loadForm} from './FormLoad.js'
+import {type FormLocation, fileInputs, loadForm} from './FormLoad.js'
 import {resolveFiles} from './FormUploads.js'
 
 const storeMethods = [
@@ -136,6 +145,8 @@ export async function submitForm(
     'submissions'
   )
   if (limited) return {ok: false, message: limited}
+  const full = await fullMessage(store, request.entryId, data)
+  if (full) return {ok: false, message: full}
   const files = await resolveFiles(
     store,
     secret,
@@ -146,6 +157,13 @@ export async function submitForm(
   if (!files.ok) return {ok: false, errors: files.errors}
   const result = validateSubmission(field, rows, files.data)
   if (!result.ok) return {ok: false, errors: result.errors}
+  const repeated = await repeatedAnswers(
+    store,
+    request.entryId,
+    result.definition,
+    result.values
+  )
+  if (keys(repeated).length > 0) return {ok: false, errors: repeated}
   const submission: Submission = {
     id: createId(),
     entryId: request.entryId,
@@ -196,6 +214,89 @@ export async function submitForm(
     }
   if (!type || !isFormType(type)) return {ok: true}
   return afterSending(graph, data)
+}
+
+/** Whether the published form of an entry still takes answers */
+export async function formStatus(
+  config: Config,
+  graph: Graph,
+  api: SubmissionsApi,
+  location: FormLocation
+): Promise<FormStatus> {
+  const {data} = await loadForm(config, graph, location)
+  const message = await fullMessage(
+    submissionStore(api),
+    location.entryId,
+    data
+  )
+  return message ? {open: false, message} : {open: true}
+}
+
+/**
+ * The most submissions a form takes by its Most submissions setting, or null
+ * when it takes any number
+ */
+export function limitOf(data: Record<string, unknown>): number | null {
+  const limit = Number(data.limit)
+  return Number.isInteger(limit) && limit > 0 ? limit : null
+}
+
+/** What visitors see once a form took its most submissions */
+async function fullMessage(
+  store: Required<SubmissionsApi>,
+  entryId: string,
+  data: Record<string, unknown>
+): Promise<string | undefined> {
+  const limit = limitOf(data)
+  if (limit === null) return undefined
+  // Archived submissions count, deleted ones free their place
+  const {total} = await store.listSubmissions(entryId, {
+    status: 'all',
+    limit: 1
+  })
+  if (total < limit) return undefined
+  const full = typeof data.full === 'string' ? data.full.trim() : ''
+  return full || 'This form no longer takes answers'
+}
+
+/**
+ * Errors for answers to unique inputs that an earlier submission sent, eg.
+ * an email address that is on the waiting list. Inputs of repeatable
+ * sections are not compared.
+ */
+async function repeatedAnswers(
+  store: Required<SubmissionsApi>,
+  entryId: string,
+  definition: FormDefinition,
+  values: FormValues
+): Promise<FormErrors> {
+  const errors: FormErrors = {}
+  const unique = formColumns(definition).filter(
+    (column): column is FormInputData =>
+      column.control !== 'section' && column.unique === true
+  )
+  for (const input of unique) {
+    const value = values[input.key]
+    if (value === undefined) continue
+    // The search text holds answers as text, which narrows it down
+    const {submissions} = await store.listSubmissions(entryId, {
+      status: 'all',
+      search: answerText(input, value),
+      limit: 500
+    })
+    const same = submissions.some(
+      submission =>
+        comparable(submission.values[input.key]) === comparable(value)
+    )
+    if (same) errors[input.key] = 'This answer was already sent'
+  }
+  return errors
+}
+
+function comparable(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
 }
 
 const hour = 60 * 60

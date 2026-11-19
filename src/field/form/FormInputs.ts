@@ -22,7 +22,7 @@ import {text as textField} from '#/field/text.js'
 import {choices, options} from './FormChoices.js'
 import type {FormFileRef} from '#/core/Connection.js'
 import {isAccepted} from './FormFileTypes.js'
-import {input} from './FormInput.js'
+import {content, input} from './FormInput.js'
 
 const email_ = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const phone = /^\+?[0-9 ()./-]{6,}$/
@@ -251,11 +251,9 @@ export const section = input('Section', {
  * Text between the inputs, eg. how the answers are kept. It is shown in the
  * form and has no answer.
  */
-export const content = input('Text', {
+export const textContent = content('Text', {
   icon: IcRoundSubject,
-  control: 'content',
-  fields: {body: richText('Text')},
-  parse: () => undefined
+  fields: {body: richText('Text')}
 })
 
 /** The inputs alinea provides, add your own next to them */
@@ -273,5 +271,5 @@ export const defaults = {
   check,
   hidden,
   section,
-  content
+  content: textContent
 }

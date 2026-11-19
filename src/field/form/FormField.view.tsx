@@ -230,6 +230,7 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
                 error: get(builder.errors).get(id),
                 shown: self && describeCondition(self.row.showWhen, byId),
                 disabled: self && describeCondition(self.row.disableWhen, byId),
+                required: self && describeCondition(self.row.requireWhen, byId),
                 controls: users.length
               }
             })
@@ -248,6 +249,11 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
       {info?.shown && (
         <Badge size="sm" color="primary" icon={IcRoundCallSplit}>
           Shown if {info.shown}
+        </Badge>
+      )}
+      {info?.required && (
+        <Badge size="sm" color="primary" icon={IcRoundCallSplit}>
+          Required if {info.required}
         </Badge>
       )}
       {info?.disabled && (
@@ -296,7 +302,9 @@ function rowErrors(field: FormField, value: unknown): Map<string, string> {
     const id = rowId(value, path)
     if (!id || result.has(id)) continue
     // Errors of rules name the input they use, others name their field
-    const rule = path.at(-1) === 'showWhen' || path.at(-1) === 'disableWhen'
+    const rule = ['showWhen', 'disableWhen', 'requireWhen'].includes(
+      String(path.at(-1))
+    )
     result.set(id, rule ? message : `${labels.at(-1)}: ${message}`)
   }
   return result

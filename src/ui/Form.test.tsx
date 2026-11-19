@@ -1,7 +1,11 @@
 import {cleanup, fireEvent, render, screen, within} from '#test/react.js'
 import type {FormDefinition} from '#/field/form/FormDefinition.js'
 import {afterEach, expect, test} from 'bun:test'
-import {Form, type FormInputViewProps} from './Form.js'
+import {
+  Form,
+  type FormContentViewProps,
+  type FormInputViewProps
+} from './Form.js'
 
 afterEach(cleanup)
 
@@ -174,26 +178,28 @@ test('text between inputs renders as rich text', () => {
           type: 'content',
           label: 'Privacy',
           control: 'content',
-          body: [
-            {
-              _type: 'paragraph',
-              content: [
-                {_type: 'text', text: 'Mail '},
-                {
-                  _type: 'text',
-                  text: 'us',
-                  marks: [
-                    {
-                      _type: 'link',
-                      _id: 'l',
-                      _link: 'url',
-                      href: 'mailto:help@example.com'
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+          data: {
+            body: [
+              {
+                _type: 'paragraph',
+                content: [
+                  {_type: 'text', text: 'Mail '},
+                  {
+                    _type: 'text',
+                    text: 'us',
+                    marks: [
+                      {
+                        _type: 'link',
+                        _id: 'l',
+                        _link: 'url',
+                        href: 'mailto:help@example.com'
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         }
       ]}
       views={{content: <div className="note" />}}
@@ -202,4 +208,27 @@ test('text between inputs renders as rich text', () => {
   const link = screen.getByRole('link', {name: 'us'})
   expect(link.getAttribute('href')).toBe('mailto:help@example.com')
   expect(link.closest('[data-content]')?.className).toBe('note')
+})
+
+test('content renders with the view of its type', () => {
+  function Notice({content}: FormContentViewProps) {
+    return <aside>{String(content.data.title)}</aside>
+  }
+  render(
+    <Form
+      definition={[
+        {
+          id: 'notice',
+          type: 'notice',
+          label: '',
+          control: 'content',
+          data: {title: 'Closed on Mondays'}
+        }
+      ]}
+      views={{notice: Notice}}
+    />
+  )
+  expect(screen.getByRole('complementary').textContent).toBe(
+    'Closed on Mondays'
+  )
 })

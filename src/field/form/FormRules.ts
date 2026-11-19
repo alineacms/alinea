@@ -153,7 +153,8 @@ export function conditionData(
 
 const conditionFields = {
   showWhen: 'Show this input',
-  disableWhen: 'Disable this input'
+  disableWhen: 'Disable this input',
+  requireWhen: 'Require this input'
 }
 
 /** Rules that point at removed or moved inputs or at removed options */

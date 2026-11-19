@@ -302,6 +302,63 @@
           "text": "Give the control the `name` from the props: it is how the answer is sent, and how the rules of the form read it while the visitor fills it in. The server reads the answer with the input's `parse` and checks it with `validate` whatever renders it."
         }
       ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content of your own"
+        }
+      ],
+      "_anchor": "content-of-your-own"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content sits between the inputs and has no answer, like the built-in Text input. Make it with `Form.content`, which takes a label, an `icon`, the `fields` editors fill in under the row and the `settings` of its tab:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3My8lEZiNlCp5ORD6iyp6soFSHG",
+      "code": "import {Field, Form} from 'alinea'\n\nexport const Notice = Form.content('Notice', {\n  fields: {\n    title: Field.text('Title'),\n    image: Field.image('Image')\n  },\n  settings: {\n    tone: Field.select('Tone', {options: {info: 'Info', warning: 'Warning'}})\n  }\n})\n\nexport const FormEntry = Form.type('Form', {\n  inputs: {...Form.defaults, notice: Notice}\n})",
+      "fileName": "",
+      "language": "ts",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Its fields are resolved like those of an entry, so images and links arrive ready to render. They are in the `data` of the content in the definition. Render it with a view under the key of its type. Content without a view shows a rich text field named `body`, as the Text input does."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3MVuRPWrWiyTOCIp504e12VwEGB",
+      "code": "'use client'\n\nimport {Form, type FormContentViewProps, type FormProps} from 'alinea/ui'\n\nfunction NoticeView({content}: FormContentViewProps) {\n  const {title, tone} = content.data as {title?: string; tone?: string}\n  return <aside data-tone={tone}>{title}</aside>\n}\n\nexport function SiteForm(props: FormProps) {\n  return <Form {...props} views={{notice: NoticeView}} />\n}",
+      "fileName": "",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Content can be shown or hidden by rules like an input, it can not be tested by them. It is left out of submissions, exports and mails."
+        }
+      ]
     }
   ],
   "metadata": {

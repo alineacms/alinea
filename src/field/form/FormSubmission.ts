@@ -115,7 +115,8 @@ class Checker {
       const {row, input} = this.#byId.get(item.id)!
       const value = parsed[item.key]
       if (value === undefined) {
-        if (row.required === true) this.errors[name(item.key)] = required(input)
+        if (row.required === true || this.#state.required.has(id))
+          this.errors[name(item.key)] = required(input)
         continue
       }
       const message = validate(input, value, settingsOf(input, row))

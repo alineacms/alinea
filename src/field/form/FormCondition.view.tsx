@@ -70,7 +70,8 @@ export function FormConditionView({field}: FormConditionViewProps) {
     [order, position, within]
   )
   const readOnly = Boolean(options.readOnly)
-  const always = options.effect !== 'disable'
+  // Without rules an input is shown, but not disabled or required by them
+  const always = options.effect === 'show' || options.effect === 'send'
   const condition = value ?? undefined
   const subject =
     options.effect === 'send'

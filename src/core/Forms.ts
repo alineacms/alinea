@@ -1,5 +1,7 @@
 import type {DatabaseDeclaration} from '#/backend/api/CreateBackend.js'
 import type {
+  FormStatus,
+  FormStatusRequest,
   PrepareUploadRequest,
   PrepareUploadResult,
   Submission,
@@ -121,10 +123,19 @@ export interface Forms {
     file: FormUploadFile,
     options?: Omit<FormSubmitOptions, 'verify'>
   ): Promise<PrepareUploadResult>
+  /**
+   * Whether a form still takes answers, eg. not once it took its most
+   * submissions, with the message to show instead of it
+   */
+  status(
+    entryId: string,
+    options?: Pick<FormSubmitOptions, 'locale' | 'field'>
+  ): Promise<FormStatus>
 }
 
 export interface FormsClient {
   submit(request: SubmitRequest): Promise<SubmitResult>
+  formStatus(request: FormStatusRequest): Promise<FormStatus>
   prepareFormUpload(request: PrepareUploadRequest): Promise<PrepareUploadResult>
 }
 
@@ -144,6 +155,13 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
   }
   return {
     prepareUpload,
+    async status(entryId, options = {}) {
+      return (await client()).formStatus({
+        entryId,
+        locale: options.locale,
+        field: options.field
+      })
+    },
     async submit(entryId, data, options = {}) {
       if (options.verify && !(await options.verify()))
         return {ok: false, message: 'Your answers could not be verified'}

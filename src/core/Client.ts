@@ -10,6 +10,8 @@ import type {
   BackendCapabilities,
   DraftTransport,
   LocalConnection,
+  FormStatus,
+  FormStatusRequest,
   PrepareUploadRequest,
   PrepareUploadResult,
   Revision,
@@ -229,6 +231,15 @@ export class Client implements LocalConnection {
     })
     if (!response.ok) throw new Error(`Could not download the file`)
     return response.blob()
+  }
+
+  formStatus(location: FormStatusRequest): Promise<FormStatus> {
+    return this.#requestJson({
+      action: HandleAction.FormStatus,
+      entryId: location.entryId,
+      ...(location.locale && {locale: location.locale}),
+      ...(location.field && {field: location.field})
+    }).then<FormStatus>(this.#failOnHttpError)
   }
 
   prepareFormUpload(

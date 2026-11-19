@@ -1,5 +1,4 @@
 import type {ListRow} from '#/core/ListRow.js'
-import type {TextDoc} from '#/core/TextDoc.js'
 import {isRecord, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import type {FieldValidationError} from '#/core/Validation.js'
@@ -41,6 +40,10 @@ export interface FormInputData<
   settings: Record<string, unknown>
   /** Disabled while these rules hold, never disabled without them */
   disableWhen?: FormConditionData
+  /** Required while these rules hold, next to `required` */
+  requireWhen?: FormConditionData
+  /** Each answer can be sent once, eg. one sign-up per email address */
+  unique?: true
 }
 
 export interface FormSectionData<
@@ -54,12 +57,13 @@ export interface FormSectionData<
   repeat?: FormRepeat
 }
 
-/** Text between the inputs, visitors do not answer it */
+/** Content between the inputs, eg. text, visitors do not answer it */
 export interface FormContentData<
   Type extends string = string
 > extends FormItemBase<Type> {
   control: 'content'
-  body: TextDoc
+  /** The fields and settings of the content input, resolved */
+  data: Record<string, unknown>
 }
 
 /** What a section holds: inputs and text */
@@ -176,10 +180,10 @@ export function formDefinition(
       if (row.repeat !== true) return [section]
       return [{...section, key: inputKey(row), repeat: repeatOf(row)}]
     }
-    if (input.control === 'content') {
-      const body = Array.isArray(row.body) ? (row.body as TextDoc) : []
-      return [{...base, control: 'content', body}]
-    }
+    if (input.control === 'content')
+      return [
+        {...base, control: 'content', data: filled(settingsOf(input, row))}
+      ]
     const settings = settingsOf(input, row)
     const {options, initialValue, ...rest} = settings
     const data: FormInputData = {
@@ -200,6 +204,15 @@ export function formDefinition(
       self.repeat
     )
     if (disableWhen) data.disableWhen = disableWhen
+    const requireWhen = conditionData(
+      row.requireWhen,
+      self.index,
+      byId,
+      inputKey,
+      self.repeat
+    )
+    if (requireWhen) data.requireWhen = requireWhen
+    if (row.unique === true) data.unique = true
     if (!isEmpty(initialValue)) data.initialValue = initialValue
     return [data]
   })

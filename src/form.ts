@@ -1,4 +1,8 @@
-export type {PrepareUploadResult, Submission} from '#/core/Connection.js'
+export type {
+  FormStatus,
+  PrepareUploadResult,
+  Submission
+} from '#/core/Connection.js'
 export type {
   FormFileStorage,
   FormLimits,
@@ -21,18 +25,18 @@ export type {
   FormSectionItem,
   FormWidth
 } from '#/field/form/FormDefinition.js'
-export {input} from '#/field/form/FormInput.js'
+export {content, input} from '#/field/form/FormInput.js'
 export type {
   FormAttributes,
   FormControl,
   FormRaw,
+  ContentConfig,
   Input,
   InputConfig
 } from '#/field/form/FormInput.js'
 export {
   check,
   checkboxes,
-  content,
   date,
   defaults,
   email,
@@ -44,7 +48,8 @@ export {
   select,
   tel,
   text,
-  textarea
+  textarea,
+  textContent
 } from '#/field/form/FormInputs.js'
 export {validateSubmission as validate} from '#/field/form/FormSubmission.js'
 export type {
@@ -56,6 +61,7 @@ export type {
 export {
   formType as type,
   keepFor as keep,
+  limitFields as limits,
   submissionsTab as submissions
 } from '#/field/form/FormType.js'
 export type {FormTypeConfig, FormTypeFields} from '#/field/form/FormType.js'

@@ -24,7 +24,7 @@ import {
 } from './FormDefinition.js'
 import type {FormCondition} from './FormConditions.js'
 import {readingOrder, ruleErrors} from './FormRules.js'
-import type {Input} from './FormInput.js'
+import {Input} from './FormInput.js'
 
 /** Optional settings to configure a form field */
 export interface FormOptions<Inputs extends Record<string, Input>> extends Omit<
@@ -93,6 +93,12 @@ export function form<Inputs extends Record<string, Input>>(
   })
 }
 
+/** Inputs with one answer that can be compared, not files or checks */
+function canBeUnique(input: Input): boolean {
+  const kind = Input.kind(input)
+  return kind === 'text' || kind === 'choice'
+}
+
 const types = new WeakMap<Input, Type>()
 
 /** Inputs are the same type in every form and section they are used in */
@@ -118,6 +124,12 @@ function createRowType(input: Input): Type {
           }),
           help: text('Help text'),
           required: check('Required', {description: 'Must be filled in'}),
+          ...(canBeUnique(input) && {
+            unique: check('Unique', {
+              description:
+                'Each answer can be sent once, eg. one sign-up per email address'
+            })
+          }),
           width: select('Width', {
             options: {full: 'Full', half: 'Half'},
             initialValue: 'full'
@@ -131,15 +143,20 @@ function createRowType(input: Input): Type {
         icon: IcRoundCallSplit,
         fields: {
           showWhen: condition('Show this input', 'show'),
-          disableWhen: condition('Disable this input', 'disable')
+          disableWhen: condition('Disable this input', 'disable'),
+          requireWhen: condition('Require this input', 'require')
         }
       })
     }
   })
 }
 
-/** Text between the inputs: its text, a name for editors and when it shows */
+/**
+ * Content between the inputs: its fields, a name for editors, its settings
+ * and when it shows
+ */
 function contentType(input: Input): Type {
+  const settings = input.settings ?? {}
   return type(input.label, {
     icon: input.icon,
     fields: input.fields ?? {},
@@ -148,7 +165,8 @@ function contentType(input: Input): Type {
         fields: {
           label: text('Name', {
             help: 'Only shown in the form builder, eg. Privacy notice'
-          })
+          }),
+          ...settings
         }
       }),
       logic: tab('Logic', {
@@ -160,8 +178,8 @@ function contentType(input: Input): Type {
 }
 
 export interface FormConditionOptions extends FieldOptions<FormCondition | null> {
-  /** Whether the rules show or disable an input, or send a mail */
-  effect: 'show' | 'disable' | 'send'
+  /** Whether the rules show, disable or require an input, or send a mail */
+  effect: 'show' | 'disable' | 'require' | 'send'
 }
 
 /** The rules of an input or section, edited in its Logic tab */

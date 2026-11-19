@@ -105,6 +105,7 @@ interface ConditionalItem {
   key?: string
   showWhen?: FormConditionData
   disableWhen?: FormConditionData
+  requireWhen?: FormConditionData
   inputs?: Array<ConditionalItem>
   repeat?: object
 }
@@ -117,6 +118,8 @@ export interface FormState {
   hidden: Set<string>
   /** Ids of inputs that are shown, but not editable and not stored */
   disabled: Set<string>
+  /** Ids of inputs their rules make required, next to those always required */
+  required: Set<string>
 }
 
 /**
@@ -131,7 +134,11 @@ export function formState(
   items: Array<ConditionalItem>,
   values: Record<string, unknown>
 ): FormState {
-  const state: FormState = {hidden: new Set(), disabled: new Set()}
+  const state: FormState = {
+    hidden: new Set(),
+    disabled: new Set(),
+    required: new Set()
+  }
   function visit(
     items: Array<ConditionalItem>,
     hidden: boolean,
@@ -162,6 +169,8 @@ export function formState(
       }
       const disabled = !off && holds(item.disableWhen, answers, false)
       if (disabled) state.disabled.add(item.id + suffix)
+      if (!off && !disabled && holds(item.requireWhen, answers, false))
+        state.required.add(item.id + suffix)
       if (item.key && !off && !disabled) answers[item.key] = values[item.key]
     }
   }

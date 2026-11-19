@@ -10,6 +10,7 @@ import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {Permission} from '#/core/Role.js'
 import {
   fileKey,
+  formStatus,
   parseSubmissionQuery,
   parseSubmitRequest,
   purgeSubmissions,
@@ -40,6 +41,7 @@ export function databaseStore(
 export const formActions = new Set<string>([
   HandleAction.Submit,
   HandleAction.FormUpload,
+  HandleAction.FormStatus,
   HandleAction.Submissions,
   HandleAction.SubmissionFile
 ])
@@ -114,6 +116,16 @@ export async function handleFormRequest(
       await submitForm(config, graph, api, submit, {forms, secret})
     )
   }
+
+  // Whether a form takes answers, for the server of the site
+  if (action === HandleAction.FormStatus && request.method === 'GET')
+    return Response.json(
+      await formStatus(config, graph, api, {
+        entryId: param('entryId'),
+        locale: url.searchParams.get('locale'),
+        field: url.searchParams.get('field') ?? undefined
+      })
+    )
 
   // A ticket to upload a file to a form, for the server of the site
   if (action === HandleAction.FormUpload && request.method === 'POST') {

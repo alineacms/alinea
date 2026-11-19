@@ -32,6 +32,7 @@ import {
   useRef,
   useState
 } from 'react'
+import type {TextDoc} from '#/core/TextDoc.js'
 import {RichText} from './RichText.js'
 
 /** The parts of a form that a view element can restyle */
@@ -73,6 +74,11 @@ const defaultLabels: FormLabels = {
   remove: 'Remove'
 }
 
+export interface FormContentViewProps {
+  content: FormContentData
+  views: FormViews
+}
+
 export interface FormInputViewProps {
   input: FormInputData
   /** The id of the control, the label points at it */
@@ -88,21 +94,22 @@ export interface FormInputViewProps {
   views: FormViews
 }
 
+/** Renders an input or the content of a type, see `FormViews` */
+export type FormTypeView =
+  | ComponentType<FormInputViewProps>
+  | ComponentType<FormContentViewProps>
+
 /**
  * Elements merge their props into a part of the form, eg.
  * `row: <div className="form-row" />`. A key of an input type replaces that
- * input, eg. `rating: RatingInput`.
+ * input, eg. `rating: RatingInput`, a key of a content type renders it, eg.
+ * `image: ImageContent`.
  */
 export type FormViews<Type extends string = string> = {
   [K in FormRole]?: ReactElement
 } & (string extends Type
-  ? {
-      [type: string]:
-        | ReactElement
-        | ComponentType<FormInputViewProps>
-        | undefined
-    }
-  : {[K in Type]?: ComponentType<FormInputViewProps>})
+  ? {[type: string]: ReactElement | FormTypeView | undefined}
+  : {[K in Type]?: FormTypeView})
 
 export interface FormProps extends Omit<
   ComponentProps<'form'>,
@@ -397,12 +404,15 @@ function FormItemView({
   if (item.control === 'content')
     return <FormContent content={item} views={views} />
   const name = scope.name(item.key)
+  const id = item.id + scope.suffix
+  // Rules can make an input required for the answers so far
+  const required = item.required || state.required.has(id)
   const props: FormInputViewProps = {
-    input: item,
+    input: required === item.required ? item : {...item, required},
     id: `form-${item.id}${scope.suffix.replace(':', '-')}`,
     name,
     error: errors[name],
-    disabled: state.disabled.has(item.id + scope.suffix),
+    disabled: state.disabled.has(id),
     views
   }
   const Custom = (views as Record<string, unknown>)[item.type]
@@ -413,18 +423,22 @@ function FormItemView({
   return <FormInput {...props} />
 }
 
-interface FormContentProps {
-  content: FormContentData
-  views: FormViews
-}
-
-/** Text between the inputs, as the editor wrote it */
-function FormContent({content, views}: FormContentProps) {
+/**
+ * Content between the inputs: the view of its type, or for content without
+ * one its `body` field as rich text, eg. the Text input
+ */
+function FormContent({content, views}: FormContentViewProps) {
+  const Custom = (views as Record<string, unknown>)[content.type]
+  if (typeof Custom === 'function') {
+    const View = Custom as ComponentType<FormContentViewProps>
+    return <View content={content} views={views} />
+  }
+  const {body} = content.data
   return part(
     views.content,
     'div',
     {'data-content': content.type},
-    <RichText doc={content.body} />
+    Array.isArray(body) && <RichText doc={body as TextDoc} />
   )
 }
 
