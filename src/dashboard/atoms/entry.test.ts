@@ -52,6 +52,35 @@ test('entry atoms only reload for matching index event ids', async () => {
   resolve.mockRestore()
 })
 
+test('changes kept over a reload apply to what is saved now', async () => {
+  const {parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms(parent._id))
+  const locale = entry.locales(null)
+  const saved = store.get((await store.get(locale.selectedNode)).value) as {
+    path: string
+  }
+  // The title was edited when the path was another, saved since
+  const checkpoint = {...saved, path: 'before'}
+  store.set(keptEditsAtom, {
+    entryId: parent._id,
+    locale: null,
+    checkpoint,
+    edited: {...checkpoint, title: 'Kept title'}
+  })
+  const node = await store.get(locale.selectedNode)
+  expect(store.get(node.value)).toMatchObject({
+    title: 'Kept title',
+    path: saved.path
+  })
+  expect(store.get(node.isDirty)).toBe(true)
+
+  // Changes of another entry are not applied
+  store.set(keptEditsAtom, {...store.get(keptEditsAtom)!, entryId: 'other'})
+  const other = await store.get(locale.selectedNode)
+  expect(store.get(other.isDirty)).toBe(false)
+})
+
 test('currently editing nodes preserve arbitrary JSON values', async () => {
   const Page = Config.document('Page', {
     fields: {
@@ -689,33 +718,4 @@ test('invalid fields are reported but do not block publishing', async () => {
     select: Article.summary
   })
   expect(published).toBe('')
-})
-
-test('changes kept over a reload apply to what is saved now', async () => {
-  const {parent, store} = await createDashboardAtomFixture()
-  await store.get(userPolicyReadyAtom)
-  const entry = await store.get(entryAtoms(parent._id))
-  const locale = entry.locales(null)
-  const saved = store.get((await store.get(locale.selectedNode)).value) as {
-    path: string
-  }
-  // The title was edited when the path was another, saved since
-  const checkpoint = {...saved, path: 'before'}
-  store.set(keptEditsAtom, {
-    entryId: parent._id,
-    locale: null,
-    checkpoint,
-    edited: {...checkpoint, title: 'Kept title'}
-  })
-  const node = await store.get(locale.selectedNode)
-  expect(store.get(node.value)).toMatchObject({
-    title: 'Kept title',
-    path: saved.path
-  })
-  expect(store.get(node.isDirty)).toBe(true)
-
-  // Changes of another entry are not applied
-  store.set(keptEditsAtom, {...store.get(keptEditsAtom)!, entryId: 'other'})
-  const other = await store.get(locale.selectedNode)
-  expect(store.get(other.isDirty)).toBe(false)
 })
