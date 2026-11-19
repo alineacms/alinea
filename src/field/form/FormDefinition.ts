@@ -1,4 +1,5 @@
 import type {ListRow} from '#/core/ListRow.js'
+import type {TextDoc} from '#/core/TextDoc.js'
 import {isRecord, keys} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import type {FieldValidationError} from '#/core/Validation.js'
@@ -28,7 +29,7 @@ interface FormItemBase<Type extends string> {
 export interface FormInputData<
   Type extends string = string
 > extends FormItemBase<Type> {
-  control: Exclude<FormControl, 'section'>
+  control: Exclude<FormControl, 'section' | 'content'>
   /** The name of the control, in the FormData and in submissions */
   key: string
   required: boolean
@@ -46,12 +47,25 @@ export interface FormSectionData<
   Type extends string = string
 > extends FormItemBase<Type> {
   control: 'section'
-  inputs: Array<FormInputData<Type>>
+  inputs: Array<FormSectionItem<Type>>
   /** The name of the answers of a repeatable section, a list of items */
   key?: string
   /** Visitors can add the inputs of the section more than once */
   repeat?: FormRepeat
 }
+
+/** Text between the inputs, visitors do not answer it */
+export interface FormContentData<
+  Type extends string = string
+> extends FormItemBase<Type> {
+  control: 'content'
+  body: TextDoc
+}
+
+/** What a section holds: inputs and text */
+export type FormSectionItem<Type extends string = string> =
+  | FormInputData<Type>
+  | FormContentData<Type>
 
 /** How often visitors fill in a repeatable section */
 export interface FormRepeat {
@@ -99,6 +113,21 @@ export function itemId(id: string, index: number): string {
 export type FormItem<Type extends string = string> =
   | FormInputData<Type>
   | FormSectionData<Type>
+  | FormContentData<Type>
+
+/** Whether an item is an input that visitors answer */
+export function isFormInput<Type extends string>(
+  item: FormItem<Type>
+): item is FormInputData<Type> {
+  return item.control !== 'section' && item.control !== 'content'
+}
+
+/** The inputs among items, without the text between them */
+export function inputsOf<Type extends string>(
+  items: Array<FormItem<Type>>
+): Array<FormInputData<Type>> {
+  return items.filter(isFormInput)
+}
 
 /** A form as the site and the server see it, serialisable */
 export type FormDefinition<Type extends string = string> = Array<FormItem<Type>>
@@ -142,16 +171,20 @@ export function formDefinition(
         ...base,
         control: 'section',
         // Sections do not nest
-        inputs: formDefinition(inputs, row.inputs, order).filter(isInput)
+        inputs: formDefinition(inputs, row.inputs, order).filter(inSection)
       }
       if (row.repeat !== true) return [section]
       return [{...section, key: inputKey(row), repeat: repeatOf(row)}]
+    }
+    if (input.control === 'content') {
+      const body = Array.isArray(row.body) ? (row.body as TextDoc) : []
+      return [{...base, control: 'content', body}]
     }
     const settings = settingsOf(input, row)
     const {options, initialValue, ...rest} = settings
     const data: FormInputData = {
       ...base,
-      control: input.control ?? 'input',
+      control: (input.control ?? 'input') as FormInputData['control'],
       key: inputKey(row),
       required: row.required === true,
       width: row.width === 'half' ? 'half' : 'full',
@@ -212,6 +245,8 @@ export function formErrors(
         ...formErrors(inputs, row.inputs, [...at, 'inputs'], within, seen)
       ]
     }
+    // Text has no answer, so no key
+    if (input.control === 'content') return []
     return keyError(optionErrors(row.options, [...at, 'options'], within))
   })
 }
@@ -287,6 +322,7 @@ export function fixedKeys(
       const key = inputKey(row)
       return row.repeat === true && key && !row.key ? {...fixed, key} : fixed
     }
+    if (input.control === 'content') return row
     const key = inputKey(row)
     const next = key && !row.key ? {...row, key} : row
     if (!Array.isArray(row.options)) return next
@@ -337,6 +373,6 @@ function isEmpty(value: unknown): boolean {
   )
 }
 
-function isInput(item: FormItem): item is FormInputData {
+function inSection(item: FormItem): item is FormSectionItem {
   return item.control !== 'section'
 }

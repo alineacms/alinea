@@ -64,6 +64,7 @@ export function FormConditionView({field}: FormConditionViewProps) {
         entry =>
           entry.index < position &&
           entry.input.control !== 'section' &&
+          entry.input.control !== 'content' &&
           (!entry.repeat || entry.repeat === within)
       ),
     [order, position, within]
@@ -76,7 +77,9 @@ export function FormConditionView({field}: FormConditionViewProps) {
       ? 'mail'
       : self?.input.control === 'section'
         ? 'section'
-        : 'input'
+        : self?.input.control === 'content'
+          ? 'text'
+          : 'input'
 
   function update(next: Partial<FormCondition>) {
     if (!condition) return

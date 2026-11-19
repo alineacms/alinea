@@ -6,7 +6,9 @@ import {
   type FormDefinition,
   type FormInputData,
   type FormSectionData,
+  type FormSectionItem,
   formDefinition,
+  inputsOf,
   itemId,
   itemIndexes,
   itemName,
@@ -49,9 +51,12 @@ export function validateSubmission(
   const order = readingOrder(inputs, rows)
   const definition = formDefinition(inputs, rows, order)
   const byId = new Map(order.map(entry => [entry.row._id, entry]))
-  const read = (items: Array<FormInputData>, name: (key: string) => string) => {
+  const read = (
+    items: Array<FormSectionItem>,
+    name: (key: string) => string
+  ) => {
     const result: FormValues = {}
-    for (const item of items) {
+    for (const item of inputsOf(items)) {
       const {row, input} = byId.get(item.id)!
       const raw = data.getAll(name(item.key))
       const value = Input.parse(input, raw, settingsOf(input, row))
@@ -98,13 +103,13 @@ class Checker {
   }
 
   inputs(
-    items: Array<FormInputData>,
+    items: Array<FormSectionItem>,
     parsed: FormValues,
     suffix: string,
     name: (key: string) => string
   ): FormValues {
     const values: FormValues = {}
-    for (const item of items) {
+    for (const item of inputsOf(items)) {
       const id = item.id + suffix
       if (this.#state.hidden.has(id) || this.#state.disabled.has(id)) continue
       const {row, input} = this.#byId.get(item.id)!

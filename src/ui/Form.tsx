@@ -6,10 +6,14 @@ import type {PrepareUploadResult} from '#/core/Connection.js'
 import type {FormUploadFile} from '#/core/Forms.js'
 import type {FormErrors, FormResult} from '#/field/form/FormSubmission.js'
 import {
+  type FormContentData,
   type FormDefinition,
   type FormInputData,
   type FormItem,
   type FormSectionData,
+  type FormSectionItem,
+  inputsOf,
+  isFormInput,
   itemId,
   itemName,
   nameKey
@@ -28,6 +32,7 @@ import {
   useRef,
   useState
 } from 'react'
+import {RichText} from './RichText.js'
 
 /** The parts of a form that a view element can restyle */
 export type FormRole =
@@ -47,6 +52,7 @@ export type FormRole =
   | 'remove'
   | 'submit'
   | 'confirmation'
+  | 'content'
 
 /** The texts `<Form>` adds itself, for sites in other languages */
 export interface FormLabels {
@@ -295,9 +301,15 @@ function prefill(
     return {...input, initialValue}
   }
   return definition.map(item => {
+    if (item.control === 'content') return item
     if (item.control !== 'section') return fill(item)
     if (item.repeat) return item
-    return {...item, inputs: item.inputs.map(fill)}
+    return {
+      ...item,
+      inputs: item.inputs.map(input =>
+        isFormInput(input) ? fill(input) : input
+      )
+    }
   })
 }
 
@@ -309,8 +321,10 @@ function fromAddress(definition: FormDefinition, data: FormData) {
   const {href, search} = window.location
   data.set(formPage, href)
   const params = new URLSearchParams(search)
-  const inputs = definition.flatMap(item =>
-    item.control !== 'section' ? [item] : item.repeat ? [] : item.inputs
+  const inputs = inputsOf(
+    definition.flatMap(item =>
+      item.control !== 'section' ? [item] : item.repeat ? [] : item.inputs
+    )
   )
   for (const input of inputs) {
     const param = input.settings.param
@@ -380,6 +394,8 @@ function FormItemView({
         repeat={repeat}
       />
     )
+  if (item.control === 'content')
+    return <FormContent content={item} views={views} />
   const name = scope.name(item.key)
   const props: FormInputViewProps = {
     input: item,
@@ -395,6 +411,21 @@ function FormItemView({
     return <View {...props} />
   }
   return <FormInput {...props} />
+}
+
+interface FormContentProps {
+  content: FormContentData
+  views: FormViews
+}
+
+/** Text between the inputs, as the editor wrote it */
+function FormContent({content, views}: FormContentProps) {
+  return part(
+    views.content,
+    'div',
+    {'data-content': content.type},
+    <RichText doc={content.body} />
+  )
 }
 
 interface FormSectionProps {
@@ -596,11 +627,11 @@ function answers(
 ): Record<string, unknown> {
   const values: Record<string, unknown> = {}
   const read = (
-    inputs: Array<FormInputData>,
+    items: Array<FormSectionItem>,
     target: Record<string, unknown>,
     name: (key: string) => string
   ) => {
-    for (const input of inputs) {
+    for (const input of inputsOf(items)) {
       const value = answer(input, name(input.key))
       if (value !== undefined) target[input.key] = value
     }

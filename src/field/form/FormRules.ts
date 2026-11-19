@@ -95,7 +95,11 @@ export function ruleProblem(
   within?: string
 ): string | undefined {
   const target = byId.get(rule.input)
-  if (!target || target.input.control === 'section')
+  if (
+    !target ||
+    target.input.control === 'section' ||
+    target.input.control === 'content'
+  )
     return 'Its rule uses an input that was removed'
   const label = entryLabel(target)
   if (target.index >= index) return `Its rule uses ${label}, which is below it`

@@ -103,6 +103,7 @@ function rowType(input: Input): Type {
 }
 
 function createRowType(input: Input): Type {
+  if (input.control === 'content') return contentType(input)
   const settings = input.settings ?? {}
   return type(input.label, {
     icon: input.icon,
@@ -132,6 +133,27 @@ function createRowType(input: Input): Type {
           showWhen: condition('Show this input', 'show'),
           disableWhen: condition('Disable this input', 'disable')
         }
+      })
+    }
+  })
+}
+
+/** Text between the inputs: its text, a name for editors and when it shows */
+function contentType(input: Input): Type {
+  return type(input.label, {
+    icon: input.icon,
+    fields: input.fields ?? {},
+    tabs: {
+      input: tab(input.label, {
+        fields: {
+          label: text('Name', {
+            help: 'Only shown in the form builder, eg. Privacy notice'
+          })
+        }
+      }),
+      logic: tab('Logic', {
+        icon: IcRoundCallSplit,
+        fields: {showWhen: condition('Show this text', 'show')}
       })
     }
   })

@@ -83,7 +83,7 @@ import {
 } from './FormAnswers.js'
 import {formState} from './FormConditions.js'
 import type {FormDefinition, FormInputData} from './FormDefinition.js'
-import {formDefinition} from './FormDefinition.js'
+import {formDefinition, inputsOf} from './FormDefinition.js'
 import {FormField} from './FormField.js'
 import css from './FormSubmissions.module.css'
 
@@ -697,7 +697,8 @@ function rowTitle(definition: FormDefinition, submission: Submission): string {
       column.control === 'section'
         ? (itemsOf(submission.values[column.key!])[0] ?? {})
         : submission.values
-    const inputs = column.control === 'section' ? column.inputs : [column]
+    const inputs =
+      column.control === 'section' ? inputsOf(column.inputs) : [column]
     for (const input of inputs) {
       const text = answerText(input, values[input.key])
       if (text) return text

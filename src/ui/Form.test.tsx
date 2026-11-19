@@ -164,3 +164,42 @@ test('labels replace the texts of the form', () => {
     screen.getByRole('button', {name: 'Verwijder Participant 2'}).textContent
   ).toBe('Verwijder')
 })
+
+test('text between inputs renders as rich text', () => {
+  render(
+    <Form
+      definition={[
+        {
+          id: 'note',
+          type: 'content',
+          label: 'Privacy',
+          control: 'content',
+          body: [
+            {
+              _type: 'paragraph',
+              content: [
+                {_type: 'text', text: 'Mail '},
+                {
+                  _type: 'text',
+                  text: 'us',
+                  marks: [
+                    {
+                      _type: 'link',
+                      _id: 'l',
+                      _link: 'url',
+                      href: 'mailto:help@example.com'
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]}
+      views={{content: <div className="note" />}}
+    />
+  )
+  const link = screen.getByRole('link', {name: 'us'})
+  expect(link.getAttribute('href')).toBe('mailto:help@example.com')
+  expect(link.closest('[data-content]')?.className).toBe('note')
+})

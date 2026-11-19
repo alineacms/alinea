@@ -5,6 +5,7 @@ import {
   type FormDefinition,
   type FormInputData,
   type FormSectionData,
+  inputsOf,
   itemId
 } from './FormDefinition.js'
 
@@ -32,16 +33,19 @@ export type FormColumn = FormInputData | FormSectionData
 
 /** The inputs of a form in reading order, also those of repeated sections */
 export function formInputs(definition: FormDefinition): Array<FormInputData> {
-  return definition.flatMap(item =>
-    item.control === 'section' ? item.inputs : [item]
+  return inputsOf(
+    definition.flatMap(item =>
+      item.control === 'section' ? item.inputs : [item]
+    )
   )
 }
 
 /** The answers of a form in reading order, a repeated section is one */
 export function formColumns(definition: FormDefinition): Array<FormColumn> {
   return definition.flatMap((item): Array<FormColumn> => {
+    if (item.control === 'content') return []
     if (item.control !== 'section') return [item]
-    return item.repeat && item.key ? [item] : item.inputs
+    return item.repeat && item.key ? [item] : inputsOf(item.inputs)
   })
 }
 
@@ -71,7 +75,7 @@ export function answerGroups(
       if (!item.repeat || !item.key) {
         groups.push({
           title: item.label,
-          answers: item.inputs.map(answer(values, ''))
+          answers: inputsOf(item.inputs).map(answer(values, ''))
         })
         continue
       }
@@ -79,11 +83,12 @@ export function answerGroups(
       itemsOf(values[item.key]).forEach((entry, index) =>
         groups.push({
           title: `${item.label} ${index + 1}`,
-          answers: item.inputs.map(answer(entry, itemId('', index)))
+          answers: inputsOf(item.inputs).map(answer(entry, itemId('', index)))
         })
       )
       continue
     }
+    if (item.control === 'content') continue
     const last = groups.at(-1)
     if (last && last.title === undefined)
       last.answers.push(answer(values, '')(item))
@@ -110,7 +115,7 @@ export function columnText(
   const items = itemsOf(column.key ? values[column.key] : undefined)
   return items
     .map((item, index) => {
-      const answers = column.inputs
+      const answers = inputsOf(column.inputs)
         .map(input => answerText(input, item[input.key]))
         .filter(Boolean)
         .join(', ')

@@ -12,6 +12,7 @@ export type FormControl =
   | 'checkboxes'
   | 'check'
   | 'section'
+  | 'content'
 
 /** Attributes of the rendered control, undefined ones are left out */
 export type FormAttributes = Record<
@@ -29,7 +30,10 @@ export interface InputConfig<
 > {
   /** An icon to represent the input in the form builder */
   icon?: ComponentType
-  /** How the input renders on the site, an `<input>` by default */
+  /**
+   * How the input renders on the site, an `<input>` by default. Content is
+   * text between the inputs that visitors do not answer.
+   */
   control?: FormControl
   /**
    * What kind of answer the input gives, which decides how the rules of other

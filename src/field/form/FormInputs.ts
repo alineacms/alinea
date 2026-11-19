@@ -10,12 +10,14 @@ import {
   IcRoundPhone,
   IcRoundRadioButtonChecked,
   IcRoundShortText,
+  IcRoundSubject,
   IcRoundUploadFile,
   IcRoundVisibilityOff
 } from '#/dashboard/icons.js'
 import {check as checkField} from '#/field/check.js'
 import {date as dateField} from '#/field/date.js'
 import {number as numberField} from '#/field/number.js'
+import {richText} from '#/field/richtext.js'
 import {text as textField} from '#/field/text.js'
 import {choices, options} from './FormChoices.js'
 import type {FormFileRef} from '#/core/Connection.js'
@@ -245,6 +247,17 @@ export const section = input('Section', {
   control: 'section'
 })
 
+/**
+ * Text between the inputs, eg. how the answers are kept. It is shown in the
+ * form and has no answer.
+ */
+export const content = input('Text', {
+  icon: IcRoundSubject,
+  control: 'content',
+  fields: {body: richText('Text')},
+  parse: () => undefined
+})
+
 /** The inputs alinea provides, add your own next to them */
 export const defaults = {
   text,
@@ -259,5 +272,6 @@ export const defaults = {
   select,
   check,
   hidden,
-  section
+  section,
+  content
 }

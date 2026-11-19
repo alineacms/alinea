@@ -246,6 +246,21 @@
               ]
             }
           ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`content`: text between the inputs, such as how long answers are kept. It is rich text, so it can hold links, and it has no answer. Its name only shows in the form builder."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
