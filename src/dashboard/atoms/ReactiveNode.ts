@@ -203,6 +203,9 @@ export class ReactiveNode<Value = unknown> {
     if (current !== next) set(this.nodes, this.#wrap(next))
   }
 
+  /** The value as it was last loaded or saved, before the edits since */
+  checkpoint = atom(get => get(this.#initialValue))
+
   reset = atom(null, (get, set) => {
     if (!this.readOnly) this.#assign(get, set, get(this.#initialValue), false)
     set(this.isDirty, false)

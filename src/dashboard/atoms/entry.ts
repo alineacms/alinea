@@ -294,6 +294,29 @@ export class EntryLocaleAtoms {
     )
     return new ReactiveNode<object>(value, readOnly)
   })
+  /**
+   * Brings the node being edited up to date with this language as it is
+   * saved now, eg. after saving another language wrote its shared fields
+   * into this one. Edits made since keep their changes.
+   */
+  refreshEditing = atom(null, async (get, set) => {
+    const editing = get(this.currentlyEditing)
+    if (!editing || editing.readOnly || get(this.untranslated)) return
+    const version = get(this.selectedVersion)
+    const entry = await get(this.selectedEntry)
+    if (version || !entry.active) return
+    const config = get(configAtom)
+    const type = config.schema[entry.type]
+    if (!type) return
+    const saved = Type.withInitialValue(
+      type,
+      {...Type.initialValue(type), ...entry.data},
+      {fieldI18n: Config.fieldI18n(config, entry.workspace, entry.root)}
+    )
+    const checkpoint = get(editing.checkpoint)
+    if (JSON.stringify(checkpoint) === JSON.stringify(saved)) return
+    set(editing.rebase, {checkpoint, saved})
+  })
   richTextImages = atom(async get => {
     const entry = await get(this.selectedEntry)
     const config = get(configAtom)

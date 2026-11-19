@@ -11,6 +11,7 @@ import {
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {useFieldNode, useFieldOptions} from '#/dashboard/hooks.js'
 import {
+  IcBaselineErrorOutline,
   IcRoundCallSplit,
   IcRoundRepeat,
   IcRoundTranslate
@@ -315,15 +316,15 @@ function FormRowBadges({row}: ListFieldBadgesProps) {
         </Badge>
       )}
       {info?.error && (
-        <Text
+        <Badge
           size="sm"
           color="destructive"
-          truncate
+          icon={IcBaselineErrorOutline}
           title={info.error}
           className={styles.FormRowBadges.error()}
         >
           {info.error}
-        </Text>
+        </Badge>
       )}
     </>
   )

@@ -4,6 +4,7 @@ import {
   IcRoundCheck,
   IcRoundEdit,
   IcRoundFlashOn,
+  IcBaselineErrorOutline,
   IcRoundPublic,
   IcRoundVisibility
 } from '#/dashboard/icons.js'
@@ -45,6 +46,13 @@ export function Usages() {
       <div style={rowStyle}>
         <Badge size="sm" color="primary">
           Hero
+        </Badge>
+      </div>
+
+      <h2 style={headingStyle}>Problem</h2>
+      <div style={rowStyle}>
+        <Badge icon={IcBaselineErrorOutline} size="sm" color="destructive">
+          Label: Field is required
         </Badge>
       </div>
 

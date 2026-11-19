@@ -363,6 +363,12 @@ function EntryEditorContent({
     setEditing(node.readOnly && !isUntranslated ? undefined : node)
   }, [isUntranslated, node, setEditing])
 
+  // Another language can change this one, eg. through shared fields
+  const refreshEditing = useSetAtom(localeData.refreshEditing)
+  useEffect(() => {
+    void refreshEditing()
+  }, [refreshEditing, selectedEntry])
+
   useEffect(() => {
     setRouteGuard(node.isDirty)
     return () => {
