@@ -136,6 +136,33 @@ test('stores on one base change apart', async () => {
   }
 })
 
+test('reopens with the changes made since the last sync', async () => {
+  const storage = memorySnapshots()
+  const options = {name, fingerprint: 'config-1', storage}
+  const create = (id: string) => ({
+    op: 'create' as const,
+    id,
+    type: 'Page',
+    locale: null,
+    data: {title: id}
+  })
+  const first = await BrowserEntryStore.open(pages(false), options)
+  await first.syncWith(await pageSource())
+  const mutated = await first.mutate([create('mutated')])
+  await first.close()
+
+  const second = await BrowserEntryStore.open(pages(false), options)
+  try {
+    expect(await second.sha).toBe(mutated.sha)
+    expect((await second.find({select: Entry.id})).toSorted()).toEqual([
+      'mutated',
+      'page'
+    ])
+  } finally {
+    await second.close()
+  }
+})
+
 test('previews an entry over a store on a base', async () => {
   const storage = memorySnapshots()
   const options = {name, fingerprint: 'config-1', storage}

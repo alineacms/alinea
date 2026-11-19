@@ -175,8 +175,8 @@ export class SourceTransaction {
     const todo = this.#tasks.splice(0)
     for (const task of todo) await task()
     const from = previous ?? this.#from
-    const into = await this.#into.compile(previous)
-    const forwards = from.diff(into)
+    let into = await this.#into.compile(previous)
+    let forwards = from.diff(into)
     const fromSource = Array.from(
       new Set(
         forwards.changes
@@ -190,6 +190,24 @@ export class SourceTransaction {
         ? []
         : await accumulate(this.#source.getBlobs(fromSource))
     )
+    // A source can answer a blob with other bytes of the same content, such
+    // as a database that serializes an entry again. The commit stores those
+    // bytes, so a moved file takes their hash or the tree would not match it.
+    let rehashed = false
+    for (const change of forwards.changes) {
+      if (change.op !== 'add' || this.#blobs.has(change.sha)) continue
+      const contents = blobs.get(change.sha)
+      if (!contents) continue
+      const sha = await hashBlob(contents)
+      if (sha === change.sha) continue
+      this.#blobs.set(sha, contents)
+      this.#into.add(change.path, sha)
+      rehashed = true
+    }
+    if (rehashed) {
+      into = await this.#into.compile(previous)
+      forwards = from.diff(into)
+    }
     const bundleContents = (change: Change) => {
       if (change.op === 'delete') return change
       const contents = this.#blobs.get(change.sha) ?? blobs.get(change.sha)

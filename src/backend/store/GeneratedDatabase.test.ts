@@ -1,5 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
+import {sourceChanges} from '#/core/db/CommitRequest.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
@@ -41,10 +43,14 @@ function pages(titles: Record<string, string>): Promise<MemorySource> {
 }
 
 /** Generate a database file the way the CLI does, with a built index. */
-async function generate(file: string, source: MemorySource) {
+async function generate(
+  file: string,
+  source: MemorySource,
+  generateConfig = config
+) {
   const {database: db} = await runtimeDatabase({path: file})
-  await EntryDatabase.createSchema(db, config, ReadonlyTree.EMPTY.sha)
-  const database = new EntryDatabase(config, db)
+  await EntryDatabase.createSchema(db, generateConfig, ReadonlyTree.EMPTY.sha)
+  const database = new EntryDatabase(generateConfig, db)
   await database.syncWith(source)
   await database.compact()
   return database
@@ -296,4 +302,67 @@ test('a rewrite lays out the tables of a file that synced many changes', () =>
     expect(entryLeavesInOrder(file)).toBeLessThan(0.9)
     await open(database => database.compact({rewrite: true}))
     expect(entryLeavesInOrder(file)).toBe(1)
+  }))
+
+test('renaming a parent plans the tree its commit holds', () =>
+  withDirectory(async dir => {
+    const Parent = ConfigBuilder.document('Parent', {
+      contains: ['Page'],
+      fields: {title: Field.text('Title'), path: Field.path('Path')}
+    })
+    const Child = ConfigBuilder.document('Page', {
+      fields: {title: Field.text('Title'), path: Field.path('Path')}
+    })
+    const nested: Config = {
+      schema: {Parent, Page: Child},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {
+            pages: ConfigBuilder.root('Pages', {contains: ['Parent', 'Page']})
+          }
+        })
+      }
+    }
+    // Files on disk are formatted, the database keeps only their data
+    const remote = await createEntrySource(nested, [
+      {id: 'parent', type: 'Parent', index: 'a0', data: {path: 'before'}},
+      {
+        id: 'child',
+        type: 'Page',
+        index: 'a0',
+        parentPaths: ['before'],
+        data: {path: 'child'}
+      }
+    ])
+    const file = join(dir, 'database.sqlite')
+    await (await generate(file, remote, nested)).close()
+    const store = await createGeneratedDatabase(
+      nested,
+      await runtimeDatabase({path: file, overlay: true})
+    )
+    try {
+      const request = await store.request([
+        {
+          op: 'update',
+          id: 'parent',
+          locale: null,
+          status: 'published',
+          set: {path: 'after'}
+        }
+      ])
+      // Like git, store the sent bytes under their own hash
+      const batch = sourceChanges(request)
+      const changes = await Promise.all(
+        batch.changes.map(async change =>
+          change.op === 'add' && change.contents
+            ? {...change, sha: await hashBlob(change.contents)}
+            : change
+        )
+      )
+      await remote.applyChanges({...batch, changes})
+      expect((await remote.getTree()).sha).toBe(request.intoSha)
+    } finally {
+      await store.close()
+    }
   }))

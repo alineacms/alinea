@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -168,6 +169,16 @@ export class BrowserEntryStore extends EntryStore {
     options?: SyncOptions
   ): Promise<string> {
     return this.#checkpoint(await super.syncWith(remote, options))
+  }
+
+  /**
+   * A reload opens the last stored base: store the user's own changes too, or
+   * a reload shows the content from before them until a sync catches up.
+   */
+  override async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
+    const result = await super.mutate(mutations)
+    this.#checkpoint(result.sha)
+    return result
   }
 
   /** Store the content at `revision` as a base, in the background. */
