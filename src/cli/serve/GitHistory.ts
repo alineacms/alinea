@@ -31,7 +31,11 @@ export class GitHistory implements HistoryApi {
       const revisions = output
         .split('\n\n')
         .filter(entry => {
-          return entry.includes('\n')
+          if (!entry.includes('\n')) return false
+          // The commit that deleted the file, such as a publish removing the
+          // draft, has no version of it to show
+          const status = entry.split('\n').at(-1)?.split('\t')[0]
+          return status !== 'D'
         })
         .map(entry => {
           const [ref, timestamp, message, email, name, changedFile, ...rest] =

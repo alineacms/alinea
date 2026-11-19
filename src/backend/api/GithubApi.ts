@@ -176,6 +176,7 @@ export class GithubApi
               committedDate
               message
               author { name email }
+              file(path: $${alias}) { oid }
             }
           }`
         )
@@ -197,19 +198,22 @@ export class GithubApi
         const commits = result.data.repository.ref.target[alias]?.nodes || []
         if (!commits.length) continue
 
-        // Add revisions
+        // The history of a path includes the commit that deleted it, such as
+        // a publish removing the draft or a rename: the file is not there
         allRevisions.push(
-          ...commits.map((commit: any) => ({
-            ref: commit.oid,
-            createdAt: new Date(commit.committedDate).getTime(),
-            file: version,
-            user:
-              parseCoAuthoredBy(commit.message) ??
-              (commit.author
-                ? {name: commit.author.name, email: commit.author.email}
-                : undefined),
-            description: commit.message
-          }))
+          ...commits
+            .filter((commit: any) => commit.file)
+            .map((commit: any) => ({
+              ref: commit.oid,
+              createdAt: new Date(commit.committedDate).getTime(),
+              file: version,
+              user:
+                parseCoAuthoredBy(commit.message) ??
+                (commit.author
+                  ? {name: commit.author.name, email: commit.author.email}
+                  : undefined),
+              description: commit.message
+            }))
         )
 
         // Follow rename of the earliest commit

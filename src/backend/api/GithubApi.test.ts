@@ -602,7 +602,8 @@ test('history passes paths as variables and follows renames', async () => {
     oid,
     committedDate: date,
     message,
-    author: {name: 'Ada', email: 'ada@example.com'}
+    author: {name: 'Ada', email: 'ada@example.com'},
+    file: {oid: `${oid}-blob`}
   })
   globalThis.fetch = Object.assign(
     async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -660,6 +661,99 @@ test('history passes paths as variables and follows renames', async () => {
       file2: 'web/content/pages/"about".archived.json'
     })
     test.is(queries[1].variables.file0, 'web/content/pages/old.json')
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('history leaves out the commits that deleted a file', async () => {
+  const originalFetch = globalThis.fetch
+  const node = (oid: string, date: string, exists: boolean) => ({
+    oid,
+    committedDate: date,
+    message: oid,
+    author: {name: 'Ada', email: 'ada@example.com'},
+    file: exists ? {oid: `${oid}-blob`} : null
+  })
+  globalThis.fetch = Object.assign(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url === 'https://api.github.com/graphql') {
+        const {variables} = JSON.parse(String(init?.body))
+        const history = (path: string) => {
+          // Created as a draft, published, then renamed to "new"
+          if (path === 'content/new.json')
+            return [node('rename', '2026-03-01T00:00:00Z', true)]
+          if (path === 'content/old.json')
+            return [
+              node('rename', '2026-03-01T00:00:00Z', false),
+              node('publish', '2026-02-01T00:00:00Z', true)
+            ]
+          if (path === 'content/old.draft.json')
+            return [
+              node('publish', '2026-02-01T00:00:00Z', false),
+              node('create', '2026-01-01T00:00:00Z', true)
+            ]
+          return []
+        }
+        const target: Record<string, unknown> = {}
+        const errors = Array<object>()
+        for (const [key, path] of Object.entries(variables)) {
+          if (!key.startsWith('file')) continue
+          const nodes = history(path as string)
+          target[key] = {nodes}
+          // GitHub reports each missing file as an error next to the data
+          for (const [index, node] of nodes.entries())
+            if (!node.file)
+              errors.push({
+                type: 'NOT_FOUND',
+                path: [
+                  'repository',
+                  'ref',
+                  'target',
+                  key,
+                  'nodes',
+                  index,
+                  'file'
+                ],
+                message: `Could not resolve file for path '${path}'.`
+              })
+        }
+        return Response.json({data: {repository: {ref: {target}}}, errors})
+      }
+      if (url === 'https://api.github.com/repos/owner/repo/commits/rename')
+        return Response.json({
+          files: [
+            {
+              filename: 'content/new.json',
+              previous_filename: 'content/old.json'
+            }
+          ]
+        })
+      if (url.startsWith('https://api.github.com/repos/owner/repo/commits/'))
+        return Response.json({files: []})
+      throw new Error(`Unexpected request: ${url}`)
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+  try {
+    const api = new GithubApi({
+      authToken: 'token',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      rootDir: '',
+      contentDir: 'content'
+    })
+    const revisions = await api.revisions('content/new.json')
+    test.equal(
+      revisions.map(({ref, file}) => ({ref, file})),
+      [
+        {ref: 'rename', file: 'content/new.json'},
+        {ref: 'publish', file: 'content/old.json'},
+        {ref: 'create', file: 'content/old.draft.json'}
+      ]
+    )
   } finally {
     globalThis.fetch = originalFetch
   }
