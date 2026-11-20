@@ -52,30 +52,34 @@ export function dataWithUrlAliases(
   return {...data, metadata: {...metadata, aliases}}
 }
 
-/** The data without the aliases of the url that a removed entry left */
-export function withoutRemovedAlias(
-  data: Record<string, unknown>,
-  url: string
-): Record<string, unknown> {
-  return withoutUrlAlias(
-    data,
-    url,
-    alias => isRecord(alias) && typeof alias.removed === 'string'
-  )
-}
-
-function withoutUrlAlias(
+/** The data without the alias of the url that the removed entry left */
+export function withoutRedirect(
   data: Record<string, unknown>,
   url: string,
-  matches = (_alias: unknown): boolean => true
+  removed: string
 ): Record<string, unknown> {
   const metadata = data.metadata
   if (!isRecord(metadata) || !Array.isArray(metadata.aliases)) return data
   const aliases = metadata.aliases.filter(
-    alias => aliasUrl(alias) !== url || !matches(alias)
+    alias => !isRecord(alias) || alias.url !== url || alias.removed !== removed
   )
   if (aliases.length === metadata.aliases.length) return data
   return {...data, metadata: {...metadata, aliases}}
+}
+
+function withoutUrlAlias(
+  data: Record<string, unknown>,
+  url: string
+): Record<string, unknown> {
+  const metadata = data.metadata
+  if (!isRecord(metadata) || !Array.isArray(metadata.aliases)) return data
+  return {
+    ...data,
+    metadata: {
+      ...metadata,
+      aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
+    }
+  }
 }
 
 interface UrlAliasRow extends ListRow {

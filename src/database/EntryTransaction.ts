@@ -49,7 +49,7 @@ import {
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
 import type {EntryDatabase} from './EntryDatabase.js'
-import {dataWithUrlAlias, withoutRemovedAlias} from './EntryUrlAliases.js'
+import {dataWithUrlAlias, withoutRedirect} from './EntryUrlAliases.js'
 
 type Op<T> = Omit<T, 'op'>
 
@@ -982,28 +982,6 @@ export class EntryTransaction implements AsyncDisposable {
       await this.#workingDatabase.find({...scope, url, select})
     ).find(entry => entry.id !== candidate.id)
     if (sameUrl) throw conflict(sameUrl, url)
-    // Archiving or deleting a page can redirect its url with an alias marked
-    // as removed, which gives the url back. An alias an editor added keeps it.
-    const holders = await this.#findEntries({
-      ...scope,
-      alias: url,
-      id: {isNot: candidate.id}
-    })
-    for (const holder of holders) {
-      const data = withoutRemovedAlias(holder.data, url)
-      if (aliasUrlsFromData(data).includes(url)) {
-        if (holder.versionStatus === 'published')
-          throw conflict(holder, url, 'existing')
-        continue
-      }
-      this.#assertUpdate(holder, data)
-      if (holder.versionStatus === 'published')
-        this.#policy.assert(Permission.Publish, holder)
-      this.#addRecord(
-        holder.filePath,
-        createRecord({...holder, data}, holder.versionStatus)
-      )
-    }
     if (candidate.locale === null) return
     const translations = (
       await this.#workingDatabase.find({
@@ -1037,6 +1015,28 @@ export class EntryTransaction implements AsyncDisposable {
           own > other ? 'existing' : own < other ? 'candidate' : 'shared'
         )
       }
+    }
+  }
+
+  /**
+   * Archiving or deleting a page can redirect its url to another page, marked
+   * with its id. Publishing it again takes its url back.
+   */
+  async #releaseRedirects(candidate: UrlCandidate): Promise<void> {
+    if (this.#isFile(candidate.type)) return
+    const url = await this.#resolvedUrl(candidate)
+    const holders = await this.#findEntries({
+      workspace: candidate.workspace,
+      alias: url,
+      id: {isNot: candidate.id}
+    })
+    for (const holder of holders) {
+      const data = withoutRedirect(holder.data, url, candidate.id)
+      if (data === holder.data) continue
+      this.#addRecord(
+        holder.filePath,
+        createRecord({...holder, data}, holder.versionStatus)
+      )
     }
   }
 
@@ -1110,17 +1110,21 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   /**
-   * Carry over the previous URL as an alias, share translated fields and
-   * guard URL uniqueness for an entry that is about to be published.
+   * Carry over the previous URL as an alias, release its redirects, share
+   * translated fields and guard URL uniqueness for an entry that is about to
+   * be published.
    */
   async #publishedData(
     candidate: UrlCandidate,
     previous: Entry | undefined,
-    shareFields = true
+    moving = false
   ): Promise<Record<string, unknown>> {
     const data = await this.#dataWithPreviousUrlAlias(candidate, previous)
     const {locale} = candidate
-    if (shareFields && locale !== null)
+    // Moved descendants are written from the data they had, which would put
+    // a released alias back
+    if (!moving) await this.#releaseRedirects(candidate)
+    if (!moving && locale !== null)
       await this.#persistSharedFields(
         candidate.id,
         locale,
@@ -1244,7 +1248,7 @@ export class EntryTransaction implements AsyncDisposable {
           data: entry.data
         },
         entry,
-        false
+        true
       )
       updates.push({
         entry,

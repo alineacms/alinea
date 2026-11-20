@@ -8,9 +8,8 @@ import {type TextField, text} from '#/field/text.js'
 export interface MetadataAlias extends ListRow {
   _type: 'alias'
   url: string
-  /** The id of the entry that was archived or deleted at the url, set when
-   * the url redirects since then. Publishing an entry at the url again
-   * removes the alias. */
+  /** The entry archived or deleted at the url, which takes it back when
+   * published again */
   removed?: string
 }
 
