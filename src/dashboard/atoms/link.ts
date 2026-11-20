@@ -1,9 +1,10 @@
 import type {EntryAnchorTarget} from '#/core/Field.js'
 import type {Entry} from '#/core/Entry.js'
+import type {Config} from '#/core/Config.js'
+import {linkedMediaAlt} from '#/core/media/MediaAltField.js'
 import {isFileType} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
-import {isRecord, values} from '#/core/util/Objects.js'
 import {Type} from '#/core/Type.js'
 import {atom, type Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -69,7 +70,11 @@ function count(value: unknown) {
   return typeof value === 'number' ? value : undefined
 }
 
-function fileSummary(entry: Entry, locale?: string): LinkFileSummary {
+function fileSummary(
+  config: Config,
+  entry: Entry,
+  locale?: string
+): LinkFileSummary {
   const {data} = entry
   const extension = text(data.extension)
   return {
@@ -78,18 +83,10 @@ function fileSummary(entry: Entry, locale?: string): LinkFileSummary {
     size: count(data.size),
     width: count(data.width),
     height: count(data.height),
-    alt: fileAlt(data.alt, locale),
+    alt: linkedMediaAlt(config, entry, data.alt, locale ?? null) || undefined,
     averageColor: text(data.averageColor),
     thumbHash: text(data.thumbHash)
   }
-}
-
-// Alt text can be localised while the media library itself is not
-function fileAlt(alt: unknown, locale?: string) {
-  if (typeof alt === 'string') return alt || undefined
-  if (!isRecord(alt)) return undefined
-  const localised = locale ? alt[locale] : undefined
-  return text(localised) || values(alt).map(text).find(Boolean)
 }
 
 export const linkEntryAtoms = dispense((id: string, locale?: string) => {
@@ -123,7 +120,7 @@ export const linkEntryAtoms = dispense((id: string, locale?: string) => {
       preview: text(entry.data.preview),
       parents,
       rootLabel: root ? Root.label(root) : undefined,
-      file: isFileType(type) ? fileSummary(entry, locale) : undefined,
+      file: isFileType(type) ? fileSummary(config, entry, locale) : undefined,
       anchors: type ? Type.anchors(type, entry.data) : [],
       readable: get(policyAtom).canRead(entry)
     }

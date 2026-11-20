@@ -9,30 +9,16 @@ import {
 import {Config} from '#/core/Config.js'
 import {isImage} from '#/core/media/IsImage.js'
 import {hasPreviewImage} from '#/core/media/Pdf.js'
-import {base64} from '#/core/util/Encoding.js'
+import {FileInfo} from '#/dashboard/app/editor/FileInfo.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import type {LinkEntrySummary} from '#/dashboard/atoms/link.js'
+import {imageBlurUrl} from '#/ui/util/ImageBlurUrl.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import prettyBytes from 'pretty-bytes'
-import {thumbHashToDataURL} from 'thumbhash'
 import css from './LinkDetails.module.css'
+import {openableUrl} from './LinkUrl.js'
 
 const styles = styler(css)
-
-const openableProtocols = new Set(['http:', 'https:', 'mailto:', 'tel:'])
-
-/** The absolute url of a link, unless it would run script like javascript: */
-export function openableUrl(
-  url: string | undefined,
-  base: string
-): string | undefined {
-  if (!url) return undefined
-  const parsed = URL.parse(url, base)
-  return parsed && openableProtocols.has(parsed.protocol)
-    ? parsed.href
-    : undefined
-}
 
 export interface LinkDetailsProps {
   /** Where the link points, relative urls resolve on the site */
@@ -45,105 +31,57 @@ export interface LinkDetailsProps {
 export function LinkDetails({url, entry}: LinkDetailsProps) {
   const config = useAtomValueRaw(configAtom)
   const href = openableUrl(url, Config.baseUrl(config) ?? window.location.href)
-  const file = entry?.file
-  if (!href && !file) return null
+  if (entry?.file) return <LinkFileDetails entry={entry} href={href} />
+  if (!href) return null
   return (
-    <div className={styles.LinkDetails()}>
-      {entry && file && <LinkFilePreview entry={entry} />}
-      <DataList aria-label="Link details">
-        {entry && file && <LinkFileDetails entry={entry} />}
-        {href && (
-          <DataListItem>
-            <DataListLabel>URL</DataListLabel>
-            <DataListValue>
-              <Link href={href} target="_blank" rel="noreferrer">
-                {href}
-              </Link>
-            </DataListValue>
-          </DataListItem>
-        )}
-      </DataList>
-    </div>
+    <DataList aria-label="Link details">
+      <DataListItem>
+        <DataListLabel>URL</DataListLabel>
+        <DataListValue>
+          <Link href={href} target="_blank" rel="noopener noreferrer">
+            {href}
+          </Link>
+        </DataListValue>
+      </DataListItem>
+    </DataList>
   )
 }
 
-interface LinkFileProps {
+interface LinkFileDetailsProps {
   entry: LinkEntrySummary
+  href?: string
 }
 
-function LinkFilePreview({entry}: LinkFileProps) {
+function LinkFileDetails({entry, href}: LinkFileDetailsProps) {
   const {file, preview} = entry
-  const extension = file?.extension ?? ''
-  if (!file || !preview) return null
-  if (!isImage(extension) && !hasPreviewImage(extension)) return null
-  return (
-    <MediaPreview
-      className={styles.LinkDetails.preview()}
-      src={preview}
-      placeholder={
-        file.thumbHash
-          ? thumbHashToDataURL(base64.parse(file.thumbHash))
-          : undefined
-      }
-      averageColor={file.averageColor}
-      width={file.width}
-      height={file.height}
-      alt={file.alt ?? ''}
-    />
-  )
-}
-
-function LinkFileDetails({entry}: LinkFileProps) {
-  const {file} = entry
   if (!file) return null
-  const image = Boolean(file.extension && isImage(file.extension))
+  const extension = file.extension ?? ''
+  const image = Boolean(isImage(extension))
   const location = [entry.rootLabel, ...entry.parents.map(p => p.title)]
     .filter(Boolean)
     .join(' / ')
   return (
-    <>
-      <DataListItem>
-        <DataListLabel>Title</DataListLabel>
-        <DataListValue>{entry.title}</DataListValue>
-      </DataListItem>
-      {file.name && (
-        <DataListItem>
-          <DataListLabel>File name</DataListLabel>
-          <DataListValue>{file.name}</DataListValue>
-        </DataListItem>
+    <div className={styles.LinkDetails()}>
+      {preview && hasPreviewImage(extension) && (
+        <MediaPreview
+          className={styles.LinkDetails.preview()}
+          src={preview}
+          placeholder={imageBlurUrl(file) || undefined}
+          averageColor={file.averageColor}
+          width={file.width}
+          height={file.height}
+          alt={file.alt ?? ''}
+        />
       )}
-      {file.extension && (
-        <DataListItem>
-          <DataListLabel>Extension</DataListLabel>
-          <DataListValue>{file.extension}</DataListValue>
-        </DataListItem>
-      )}
-      {file.size !== undefined && (
-        <DataListItem>
-          <DataListLabel>File size</DataListLabel>
-          <DataListValue>{prettyBytes(file.size)}</DataListValue>
-        </DataListItem>
-      )}
-      {image && file.width && file.height ? (
-        <DataListItem>
-          <DataListLabel>Dimensions</DataListLabel>
-          <DataListValue>
-            {file.width}px x {file.height}px
-          </DataListValue>
-        </DataListItem>
-      ) : null}
-      {image && (
-        <DataListItem>
-          <DataListLabel>Alt text</DataListLabel>
-          <DataListValue>{file.alt ?? 'None'}</DataListValue>
-        </DataListItem>
-      )}
-      {location && (
-        <DataListItem>
-          <DataListLabel>Location</DataListLabel>
-          <DataListValue>{location}</DataListValue>
-        </DataListItem>
-      )}
-    </>
+      <FileInfo
+        name={file.name}
+        size={file.size}
+        width={image ? file.width : undefined}
+        height={image ? file.height : undefined}
+        alt={image ? (file.alt ?? '') : undefined}
+        location={location}
+        url={href}
+      />
+    </div>
   )
 }

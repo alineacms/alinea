@@ -89,7 +89,6 @@ import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import {assertPickerCondition} from '#/picker/entry/EntryPicker.js'
-import {applyUrlSuffix} from '#/core/util/Anchors.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -100,8 +99,9 @@ import type {
   RefObject
 } from 'react'
 import {useId, useMemo, useRef, useState} from 'react'
-import {LinkDetails, openableUrl} from './LinkDetails.js'
+import {LinkDetails} from './LinkDetails.js'
 import css from './LinkField.module.css'
+import {openableUrl, suffixedUrl} from './LinkUrl.js'
 
 const styles = styler(css)
 
@@ -1322,7 +1322,7 @@ function EntryLinkSheetDetails({
   const suffix = useAtomValueRaw(node.field('_suffix')) as string | undefined
   const entry = state.state === 'hasData' ? state.data : undefined
   if (!entry) return null
-  const url = entry.file ? entry.url : applyUrlSuffix(entry.url, suffix, anchor)
+  const url = entry.file ? entry.url : suffixedUrl(entry.url, suffix, anchor)
   return (
     <SheetSection>
       <LinkDetails entry={entry} url={entry.url && url} />

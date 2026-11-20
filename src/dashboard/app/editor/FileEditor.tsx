@@ -1,11 +1,6 @@
 import {type} from '#/config.js'
 import {
-  DataList,
-  DataListItem,
-  DataListLabel,
-  DataListValue,
   Icon,
-  Link,
   Surface,
   Tabs,
   TabsContent,
@@ -20,7 +15,6 @@ import {fileFieldKeys, type FileFields} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {getType} from '#/core/Internal.js'
 import {entries, fromEntries, keys, values} from '#/core/util/Objects.js'
-import {base64} from '#/core/util/Encoding.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {
   useEditor,
@@ -32,12 +26,12 @@ import {
 import {IcRoundInfo, IcRoundInsertDriveFile} from '#/dashboard/icons.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
-import {thumbHashToDataURL} from 'thumbhash'
+import {imageBlurUrl} from '#/ui/util/ImageBlurUrl.js'
 import {EditFields} from '../EntryFields.js'
 import {NodeEditor} from '../NodeEditor.js'
 import css from './FileEditor.module.css'
+import {FileInfo} from './FileInfo.js'
 import {FilePreview, type FocusPoint} from './FilePreview.js'
 
 const styles = styler(css)
@@ -78,10 +72,7 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const hasPreview =
     isImage || (Boolean(preview) && hasPreviewImage(extension ?? ''))
   const thumbHash = useFieldValue(fields.thumbHash)
-  const placeholder = useMemo(() => {
-    if (!thumbHash) return undefined
-    return thumbHashToDataURL(base64.parse(thumbHash))
-  }, [thumbHash])
+  const placeholder = useMemo(() => imageBlurUrl({thumbHash}), [thumbHash])
   const [focusPoint = {x: 0.5, y: 0.5}] = useField(fields.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
   const publicLocation = MediaLocation.publicUrl(config, {
@@ -143,38 +134,15 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
             )}
             <div className={styles.FileEditor.content()}>
               <Surface variant="muted" className={styles.FileEditor.metadata()}>
-                <DataList orientation="vertical" aria-label="File details">
-                  <DataListItem>
-                    <DataListLabel>Extension</DataListLabel>
-                    <DataListValue>{extension}</DataListValue>
-                  </DataListItem>
-                  <DataListItem>
-                    <DataListLabel>File size</DataListLabel>
-                    <DataListValue>{prettyBytes(size)}</DataListValue>
-                  </DataListItem>
-                  {isImage && width && height ? (
-                    <DataListItem>
-                      <DataListLabel>Dimensions</DataListLabel>
-                      <DataListValue>
-                        {width}px x {height}px
-                      </DataListValue>
-                    </DataListItem>
-                  ) : null}
-                  {liveUrl && (
-                    <DataListItem full>
-                      <DataListLabel>URL</DataListLabel>
-                      <DataListValue>
-                        <Link
-                          href={liveUrl.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {displayedUrl}
-                        </Link>
-                      </DataListValue>
-                    </DataListItem>
-                  )}
-                </DataList>
+                <FileInfo
+                  orientation="vertical"
+                  extension={extension}
+                  size={size}
+                  width={isImage ? width : undefined}
+                  height={isImage ? height : undefined}
+                  url={liveUrl?.href}
+                  urlLabel={displayedUrl}
+                />
               </Surface>
               {isImage && (
                 <div className={styles.FileEditor.focus()}>
