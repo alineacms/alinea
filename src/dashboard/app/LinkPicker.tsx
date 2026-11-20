@@ -177,6 +177,7 @@ function LinkPickerReady({
         <LinkPickerCompact
           explorer={explorer}
           page={page}
+          onCommit={options.onConfirm}
           onExpand={() => onExpandedChange(true)}
         />
       </LinkPickerPopover>
@@ -210,12 +211,17 @@ function useLinkPickerExplorer(options: LinkPickerOptions) {
 interface LinkPickerCompactProps {
   explorer: DashboardExplorer
   page: ExplorerReadyPage
+  onCommit: LinkPickerOptions['onConfirm']
   onExpand: () => void
 }
 
-function LinkPickerCompact({explorer, page, onExpand}: LinkPickerCompactProps) {
+function LinkPickerCompact({
+  explorer,
+  page,
+  onCommit,
+  onExpand
+}: LinkPickerCompactProps) {
   const popover = useDialog()
-  const confirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValueRaw(explorer.selection)
   const setSelection = useSetAtom(explorer.selection)
   const selectsMultiple = explorer.selectionMode === 'multiple'
@@ -227,7 +233,7 @@ function LinkPickerCompact({explorer, page, onExpand}: LinkPickerCompactProps) {
       (selection.size === 0 && explorer.selectionMode !== 'multiple')
     )
       return
-    confirm(page.locale)
+    onCommit?.([...selection].map(String), page.locale)
     popover.close()
   }
 

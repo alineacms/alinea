@@ -88,59 +88,6 @@ test('picker confirmation can use the rendered locale while another loads', () =
   expect(confirmed).toEqual({selection: ['entry-1'], locale: null})
 })
 
-test('picked matches of another root confirm the locale they exist in', async () => {
-  const Person = Config.document('Person', {
-    fields: {title: Field.text('Title')}
-  })
-  const config = Config.create({
-    schema: {Person},
-    workspaces: {
-      development: Config.workspace('Development', {
-        source: 'development',
-        roots: {pages: Config.root('Pages', {i18n: {locales: ['en', 'nl']}})}
-      }),
-      main: Config.workspace('Main', {
-        source: 'main',
-        roots: {
-          general: Config.root('General', {
-            contains: ['Person'],
-            i18n: {locales: ['nl']}
-          })
-        }
-      })
-    }
-  })
-  const db = new LocalDB(config)
-  const person = await db.create({
-    type: Person,
-    workspace: 'main',
-    root: 'general',
-    locale: 'nl',
-    set: {title: 'Ann'}
-  })
-  const store = createDashboardStore(config, db)
-  await store.get(userPolicyReadyAtom)
-  let locales: ReadonlyMap<string, string | null> | undefined
-  const explorer = createExplorerAtoms(
-    {workspace: 'development', root: 'pages', locale: 'en'},
-    {
-      allowAllWorkspaces: true,
-      condition: {_type: 'Person'},
-      initialSearchScope: 'everything',
-      onConfirm(_selection, _locale, picked) {
-        locales = picked
-      }
-    }
-  )
-  store.sub(explorer.page, () => {})
-  await store.get(explorer.pageReady)
-  while (!store.get(explorer.page)) await Promise.resolve()
-  store.set(explorer.selection, new Set<Key>([person._id]))
-  store.set(explorer.onConfirm, 'en')
-
-  expect(locales?.get(person._id)).toBe('nl')
-})
-
 test('page explorers browse into media folders instead of editing them', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'media'},

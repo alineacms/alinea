@@ -70,28 +70,29 @@ test('links of all result rows resolve in one query', async () => {
   ])
 })
 
-test('links resolve to an entry that only exists in another locale', async () => {
-  const Person = ConfigBuilder.document('Person', {fields: {}})
-  const Team = ConfigBuilder.document('Team', {
-    fields: {members: Field.entry.multiple('Members')}
-  })
-  const people = {
-    schema: {Person, Team},
-    workspaces: {
-      development: ConfigBuilder.workspace('Development', {
-        source: 'development',
-        roots: {
-          pages: ConfigBuilder.root('Pages', {i18n: {locales: ['en', 'nl']}})
-        }
-      }),
-      main: ConfigBuilder.workspace('Main', {
-        source: 'main',
-        roots: {
-          general: ConfigBuilder.root('General', {i18n: {locales: ['nl']}})
-        }
-      })
-    }
+const Person = ConfigBuilder.document('Person', {fields: {}})
+const Team = ConfigBuilder.document('Team', {
+  fields: {members: Field.entry.multiple('Members')}
+})
+const people = {
+  schema: {Person, Team},
+  workspaces: {
+    development: ConfigBuilder.workspace('Development', {
+      source: 'development',
+      roots: {
+        pages: ConfigBuilder.root('Pages', {i18n: {locales: ['en', 'nl']}})
+      }
+    }),
+    main: ConfigBuilder.workspace('Main', {
+      source: 'main',
+      roots: {
+        general: ConfigBuilder.root('General', {i18n: {locales: ['nl']}})
+      }
+    })
   }
+}
+
+async function teamMembers(person: {workspace: string; root: string}) {
   const db = connect(new Database(':memory:'))
   await EntryDatabase.createSchema(db, people, ReadonlyTree.EMPTY.sha)
   const store = new EntryStore(
@@ -112,8 +113,7 @@ test('links resolve to an entry that only exists in another locale', async () =>
       id,
       type: 'Person',
       locale: 'nl',
-      workspace: 'main',
-      root: 'general',
+      ...person,
       data: {title: id, path: id}
     })),
     {
@@ -126,7 +126,7 @@ test('links resolve to an entry that only exists in another locale', async () =>
       data: {
         title: 'Team',
         path: 'team',
-        // Links picked before the picker stored the locale of the entry
+        // The picker stores the locale it shows
         members: [member('ann', 'en'), member('bob', 'nl')]
       }
     }
@@ -136,8 +136,18 @@ test('links resolve to an entry that only exists in another locale', async () =>
     locale: 'en',
     select: {members: Team.members}
   })
-  expect(team.members.map(link => (link as {title: string}).title)).toEqual([
+  return team.members.map(link => (link as {title: string}).title)
+}
+
+test('links resolve to an entry of a root without their locale', async () => {
+  expect(await teamMembers({workspace: 'main', root: 'general'})).toEqual([
     'ann',
+    'bob'
+  ])
+})
+
+test('links to an untranslated entry of a root with their locale', async () => {
+  expect(await teamMembers({workspace: 'development', root: 'pages'})).toEqual([
     'bob'
   ])
 })

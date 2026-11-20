@@ -312,10 +312,9 @@ function LinkPickerAction({
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
-    onConfirm(entryIds, shown, locales) {
+    onConfirm(entryIds: Array<string>, locale: string | null) {
       const existing = allowDuplicates ? [] : selection
       const links = entryIds.map(entryId => {
-        const locale = locales.get(entryId) ?? shown
         const current = existing?.find(
           row => '_entry' in row && row._entry === entryId
         )
@@ -446,9 +445,9 @@ function LinkPickerDialog({
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
-    onConfirm(selection, shown, locales) {
+    onConfirm(selection: Array<string>, locale: string | null) {
       const links = selection.map(entryId =>
-        createEntryLink(type, entryId, picker, locales.get(entryId) ?? shown)
+        createEntryLink(type, entryId, picker, locale)
       )
       if (onPickMany) {
         onPickMany(links)

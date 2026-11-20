@@ -1,4 +1,5 @@
 import {Config} from '#/core/Config.js'
+import {Entry} from '#/core/Entry.js'
 import {Field} from '#/core/Field.js'
 import type {
   GraphQuery,
@@ -100,67 +101,85 @@ function createLinkBatcher(
     ids: Array<string>,
     locale: string | undefined
   ): Promise<Array<{id: string; value: unknown}>> {
-    const found = await linkRows(projection, ids, locale)
-    if (!locale) return found
-    const resolved = new Set(found.map(row => row.id))
-    const missing = ids.filter(id => !resolved.has(id))
-    if (!missing.length) return found
-    // A link can name a locale its entry has no version in, eg. one picked
-    // from a root with other locales: it resolves like a link from that root
-    const versions = await linkRows(projection, missing, undefined)
-    const fallback = missing.flatMap(id => {
-      const rows = versions.filter(row => row.id === id)
-      return rows.length ? [fallbackVersion(context.config, rows, locale)] : []
-    })
-    return [...found, ...fallback]
-  }
-  async function linkRows(
-    projection: Projection,
-    ids: Array<string>,
-    locale: string | undefined
-  ): Promise<Array<LinkRow>> {
     const {rows, plan} = compileEntryQuery(
       context.config,
       {select: projection, id: {in: ids}, status, preferredLocale: locale},
       {withId: true}
     )
-    const result = (await rows.all(context.database)) as Array<LinkRow>
-    return Promise.all(
+    const result = await rows.all(context.database)
+    const found = await Promise.all(
       result.map(async row => ({
-        ...row,
+        id: (row as {id: string}).id,
         value: await projectRow(status, plan, row, context, load)
       }))
     )
+    if (!locale || found.length === ids.length) return found
+    const resolved = new Set(found.map(row => row.id))
+    const missing = ids.filter(id => !resolved.has(id))
+    return [...found, ...(await loadFallbacks(projection, missing, locale))]
+  }
+  // A link picked from a root with other locales names a locale the root of
+  // its entry doesn't have: it resolves like a link from within that root
+  async function loadFallbacks(
+    projection: Projection,
+    ids: Array<string>,
+    locale: string
+  ): Promise<Array<{id: string; value: unknown}>> {
+    const versions = (await compileEntryQuery(context.config, {
+      select: {
+        id: Entry.id,
+        locale: Entry.locale,
+        workspace: Entry.workspace,
+        root: Entry.root
+      },
+      id: {in: ids},
+      status
+    }).rows.all(context.database)) as Array<LinkVersion>
+    const linked = await Promise.all(
+      ids.map(async id => {
+        const chosen = fallbackLocale(
+          context.config,
+          versions.filter(version => version.id === id),
+          locale
+        )
+        if (chosen === undefined) return []
+        const [value] = await load(projection, [id], chosen ?? undefined)
+        return value === undefined ? [] : [{id, value}]
+      })
+    )
+    return linked.flat()
   }
   return load
 }
 
-interface LinkRow {
+interface LinkVersion {
   id: string
   locale: string | null
   workspace: string
   root: string
-  value: unknown
 }
 
-/** The version of an entry its root falls back to from the given locale */
-function fallbackVersion(
+function fallbackLocale(
   config: Config,
-  rows: Array<LinkRow>,
+  versions: Array<LinkVersion>,
   locale: string
-): LinkRow {
-  const [first] = rows
+): string | null | undefined {
+  const [first] = versions
+  if (!first) return
   const workspace = config.workspaces[first.workspace]
   const root = workspace && getWorkspace(workspace).roots[first.root]
   const i18n = root && Root.data(root).i18n
-  const order = [...(i18n?.fallback?.(locale) ?? []), ...(i18n?.locales ?? [])]
-  for (const preferred of order) {
-    const row = rows.find(
-      row => row.locale?.toLowerCase() === preferred.toLowerCase()
+  const wanted = locale.toLowerCase()
+  // The entry has no version in a locale its root has: it stays unresolved
+  if (!i18n || i18n.locales.some(name => name.toLowerCase() === wanted)) return
+  const order = [...(i18n.fallback?.(locale) ?? []), ...i18n.locales]
+  for (const preferred of order.map(name => name.toLowerCase())) {
+    const version = versions.find(
+      version => version.locale?.toLowerCase() === preferred
     )
-    if (row) return row
+    if (version) return version.locale
   }
-  return first
+  return first.locale
 }
 
 function createLinkResolver(
