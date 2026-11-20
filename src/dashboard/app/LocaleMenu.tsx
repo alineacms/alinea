@@ -30,7 +30,7 @@ export interface LocaleMenuSelectProps {
   onLocaleChange(locale: string): void
 }
 
-export interface LocaleDisplay {
+interface LocaleDisplay {
   code: string | null
   name: string
   textValue: string

@@ -7,11 +7,10 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '#/components.js'
-import type {EntryStatus} from '#/core/Entry.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {useState} from 'react'
-import type {EntryAtoms} from '../atoms/entry.js'
+import type {EntryAtoms, EntryTranslation} from '../atoms/entry.js'
 import {routeAtom} from '../atoms/nav.js'
 import {IcRoundLanguage} from '../icons.js'
 import css from './EntryTranslations.module.css'
@@ -22,12 +21,14 @@ const styles = styler(css)
 const statusLabel = {
   published: 'Published',
   draft: 'Draft',
+  unpublished: 'Unpublished',
   archived: 'Archived'
 }
 
 const statusColor = {
   published: 'success',
   draft: 'warning',
+  unpublished: 'warning',
   archived: 'muted'
 } as const
 
@@ -45,7 +46,9 @@ export function EntryTranslations({entry, locale}: EntryTranslationsProps) {
   const [open, setOpen] = useState(false)
   if (translations.length < 2) return null
   const total = translations.length
-  const translated = translations.filter(item => item.status).length
+  const translated = translations.filter(
+    item => item.status && item.status !== 'archived'
+  ).length
   function select(next: string) {
     setOpen(false)
     setRoute({workspace, root, entry: entry.id, locale: next, view: route.view})
@@ -79,7 +82,7 @@ export function EntryTranslations({entry, locale}: EntryTranslationsProps) {
 }
 
 interface EntryTranslationStatusProps {
-  status?: EntryStatus
+  status: EntryTranslation['status']
 }
 
 function EntryTranslationStatus({status}: EntryTranslationStatusProps) {

@@ -653,17 +653,19 @@ export class EntryLocaleAtoms {
 
 export interface EntryTranslation {
   locale: string
-  /** The status of the version an editor works on, none when untranslated */
-  status?: EntryStatus
+  status?: EntryStatus | 'unpublished'
 }
 
 export function entryTranslations(
   locales: ReadonlyArray<string>,
-  entries: Array<Pick<Entry, 'locale' | 'status' | 'active'>>
+  entries: Array<Pick<Entry, 'locale' | 'status' | 'active' | 'main'>>
 ): Array<EntryTranslation> {
   return locales.map(locale => {
-    const versions = entries.filter(entry => entry.locale === locale)
-    const version = versions.find(entry => entry.active) ?? versions[0]
+    const version = entries.find(
+      entry => entry.locale === locale && entry.active
+    )
+    if (version?.status === 'draft' && version.main)
+      return {locale, status: 'unpublished'}
     return {locale, status: version?.status}
   })
 }
@@ -744,9 +746,16 @@ export class EntryAtoms {
       )
     )
   })
-  translations = atom(get =>
-    entryTranslations(get(this.#settings).locales, get(this.data).entries)
-  )
+  translations = atom(get => {
+    const {workspace, root, entries} = get(this.data)
+    const policy = get(policyAtom)
+    // Versions the user can not read are left out of the entries, so their
+    // locales would look untranslated
+    const locales = get(this.#settings).locales.filter(locale =>
+      policy.canRead({workspace, root, locale})
+    )
+    return entryTranslations(locales, entries)
+  })
   view = atom(
     get => get(this.#selectedView) ?? get(this.#settings).defaultView,
     (get, set, next: EntryDefaultView) => {

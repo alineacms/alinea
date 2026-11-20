@@ -755,19 +755,21 @@ test('history leaves out the current content, not the latest revision', async ()
 
 test('translations show the status of the version an editor works on', () => {
   const translations = entryTranslations(
-    ['en', 'nl', 'fr', 'de'],
+    ['en', 'nl', 'fr', 'es', 'de'],
     [
-      {locale: 'en', status: 'published', active: false},
-      {locale: 'en', status: 'draft', active: true},
-      {locale: 'nl', status: 'published', active: true},
-      {locale: 'fr', status: 'archived', active: true},
-      {locale: null, status: 'published', active: true}
+      {locale: 'en', status: 'published', active: false, main: true},
+      {locale: 'en', status: 'draft', active: true, main: false},
+      {locale: 'nl', status: 'published', active: true, main: true},
+      {locale: 'fr', status: 'archived', active: true, main: true},
+      {locale: 'es', status: 'draft', active: true, main: true},
+      {locale: null, status: 'published', active: true, main: true}
     ]
   )
   expect(translations).toEqual([
     {locale: 'en', status: 'draft'},
     {locale: 'nl', status: 'published'},
     {locale: 'fr', status: 'archived'},
+    {locale: 'es', status: 'unpublished'},
     {locale: 'de', status: undefined}
   ])
 })
