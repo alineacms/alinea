@@ -73,6 +73,15 @@ export interface EdgeReferencedBy {
   field?: HasField & Expr
 }
 
+/**
+ * Entries the entry links to, through any field or through the given link
+ * field of its type
+ */
+export interface EdgeReferences {
+  edge: 'references'
+  field?: HasField & Expr
+}
+
 export type Edge =
   | EdgeTranslations
   | EdgeChildren
@@ -84,6 +93,7 @@ export type Edge =
   | EdgeEntries
   | EdgeEntry
   | EdgeReferencedBy
+  | EdgeReferences
 
 /** Options that change a query result into a single entry or a count */
 export interface QueryModifiers {

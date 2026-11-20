@@ -84,8 +84,9 @@ export interface EntryTableProps {
   type?: Type | Array<Type>
   /**
    * Only list entries matching this filter, like the `filter` of a query,
-   * eg. `{brand: {has: {_entry: entryId}}}` or
-   * `{_referenced: Query.referencedBy({type: Product})}`
+   * eg. `{brand: {has: {_entry: entryId}}}`,
+   * `{_referenced: Query.referencedBy({type: Product})}` or
+   * `{_references: {_id: entryId}}` for the entries linking to an entry
    */
   filter?: OpenFilter<EntryFilterFields>
   /** Only list entries of this workspace */

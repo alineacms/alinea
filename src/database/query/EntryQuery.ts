@@ -5,7 +5,7 @@ import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import type {Field} from '#/core/Field.js'
-import type {RelationCondition} from '#/core/Filter.js'
+import {relationEdges, type RelationCondition} from '#/core/Filter.js'
 import type {EdgeQuery, GraphQuery, Status} from '#/core/Graph.js'
 import {
   getExpr,
@@ -61,6 +61,7 @@ import {searchableText, searchQuery} from './Search.js'
 import {
   linkRelation,
   referencedByCondition,
+  referencesCondition,
   relationCondition
 } from './Relation.js'
 
@@ -138,13 +139,18 @@ class Expressions {
       // Relations select fields by name.
       return selecting ? text.as(name) : text
     }
-    // Filters match entries another entry links to with `_referenced`
-    if (name === 'referenced')
+    // Filters match entries another entry links to with `_referenced`, and
+    // entries that link to another with `_references`
+    if (name === 'referenced' || name === 'references')
       return exists(
         builder
           .select(sql.value(1))
           .from(EntryReferenceTable)
-          .where(eq(EntryReferenceTable.targetId, this.#entry.id))
+          .where(
+            name === 'referenced'
+              ? eq(EntryReferenceTable.targetId, this.#entry.id)
+              : eq(EntryReferenceTable.source, this.#entry.rowid)
+          )
       )
     if (Object.hasOwn(this.#entry, name))
       return this.#entry[name as keyof EntryIndexTarget] as HasSql
@@ -423,7 +429,7 @@ export function compileEntryQuery(
       const name = scope.nameOf(edge.field)
       if (!name) throw new Error('Link field is not in the configured schema')
       links = linkRelation(source, name, edge.edge === 'entryMultiple')
-    } else if (edge.edge === 'referencedBy') {
+    } else if (edge.edge === 'referencedBy' || edge.edge === 'references') {
       const field = edge.field
       const path = field && scope.dataPathOf(field as Field)
       if (field && !path)
@@ -431,7 +437,9 @@ export function compileEntryQuery(
       const via = path && {path, multiple: field instanceof LinksField}
       // A locale the query asks for replaces the locale of the source
       const ownLocale = query.locale === undefined && !query.preferredLocale
-      conditions.push(referencedByCondition(entry, source, via, ownLocale))
+      const condition =
+        edge.edge === 'references' ? referencesCondition : referencedByCondition
+      conditions.push(condition(entry, source, via, ownLocale))
     } else conditions.push(relationCondition(entry, edge, source))
   }
   conditions.push(statusCondition(entry, query.status))
@@ -504,7 +512,8 @@ export function compileEntryQuery(
     )
   // A related entry exists, eg. `{_referenced: Query.referencedBy(...)}`
   function related(name: string, condition: RelationCondition): Sql<boolean> {
-    if (name !== '_referenced' || condition.edge !== 'referencedBy')
+    const edge = Object.hasOwn(relationEdges, name) && relationEdges[name]
+    if (!edge || condition.edge !== edge)
       throw new Error(`Unsupported relation condition on ${name}`)
     const {rows} = compileEntryQuery(
       config,
