@@ -160,28 +160,35 @@ export async function receiveUpload(
     return fail(400, 'The file is not the size that was said')
   const problem = contentProblem(ticket, content)
   if (problem) return fail(415, problem)
-  const store = api.storeFormFile
-  if (!store) return fail(501, 'Configure a database to store submissions')
-  // The bytes go to the storage of forms.files when there is one, the
-  // database keeps what the file is
+  const {storeFormFile, formFiles} = api
+  if (!storeFormFile || !formFiles)
+    return fail(501, 'Configure a database to store submissions')
+  // The row is stored first so a ticket that is sent again is refused before
+  // it overwrites the bytes in forms.files
+  try {
+    await storeFormFile.call(api, {
+      id: ticket.id,
+      entryId: ticket.entryId,
+      input: ticket.input,
+      name: ticket.name,
+      size: ticket.size,
+      type: ticket.type,
+      submissionId: null,
+      content: forms.files ? null : content,
+      visitor: ticket.visitor ?? null,
+      createdAt: Math.floor(Date.now() / 1000)
+    })
+  } catch (error) {
+    const [stored] = await formFiles.call(api, ticket.entryId, [ticket.id])
+    if (stored) return fail(409, 'This file was uploaded already')
+    throw error
+  }
   if (forms.files)
     await forms.files.write(
       fileKey({entryId: ticket.entryId, id: ticket.id}),
       content,
       ticket.type
     )
-  await store.call(api, {
-    id: ticket.id,
-    entryId: ticket.entryId,
-    input: ticket.input,
-    name: ticket.name,
-    size: ticket.size,
-    type: ticket.type,
-    submissionId: null,
-    content: forms.files ? null : content,
-    visitor: ticket.visitor ?? null,
-    createdAt: Math.floor(Date.now() / 1000)
-  })
   return new Response(null, {status: 204, headers: uploadCors})
 }
 

@@ -84,11 +84,16 @@ async function setup(forms?: FormsOptions) {
     return (await response.json()) as PrepareUploadResult
   }
   // The browser of the visitor sends the file, without the api key
-  async function upload(url: string, content: Uint8Array<ArrayBuffer>) {
-    const response = await handle(
-      new Request(url, {method: 'PUT', body: content}),
-      context
-    )
+  async function upload(
+    url: string,
+    content: Uint8Array<ArrayBuffer>,
+    chunked = false
+  ) {
+    // A stream is sent in chunks, without a content-length
+    const body = chunked ? new Blob([content]).stream() : content
+    const request = new Request(url, {method: 'PUT', body})
+    if (chunked) expect(request.headers.get('content-length')).toBeNull()
+    const response = await handle(request, context)
     return {status: response.status, text: await response.text()}
   }
   async function submit(data: Array<[string, string]>) {
@@ -221,4 +226,31 @@ test('files go to forms.files when it is set', async () => {
   expect(Array.from(kept.get(`${entryId}/${sent.id}`)!)).toEqual(
     Array.from(png)
   )
+})
+
+test('a ticket uploads one file', async () => {
+  const kept = new Map<string, Uint8Array>()
+  const {prepare, upload} = await setup({
+    files: {
+      async write(key, content) {
+        kept.set(key, content)
+      },
+      async read(key) {
+        return kept.get(key)
+      },
+      async remove(keys) {
+        for (const key of keys) kept.delete(key)
+      }
+    }
+  })
+  const ticket = await prepare('error.png', png.length)
+  if (!ticket.ok) throw new Error(ticket.message)
+  expect((await upload(ticket.url, png)).status).toBe(204)
+  const other = png.slice()
+  other[8] = 2
+  expect(await upload(ticket.url, other)).toEqual({
+    status: 409,
+    text: 'This file was uploaded already'
+  })
+  expect([...kept.values()].map(content => content[8])).toEqual([1])
 })
