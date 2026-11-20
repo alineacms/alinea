@@ -4,6 +4,7 @@ import type {
   BackendCapabilities,
   LocalConnection,
   Revision,
+  SubmissionPage,
   UploadMetadata,
   UploadResponse
 } from 'alinea/core/Connection'
@@ -207,6 +208,19 @@ export class DemoConnection implements LocalConnection {
 
   async previewToken(): Promise<string> {
     return 'demo-preview'
+  }
+
+  // Forms: the demo receives no submissions
+  async submissions(): Promise<SubmissionPage> {
+    return {submissions: [], total: 0}
+  }
+
+  async updateSubmission(): Promise<void> {}
+
+  async deleteSubmission(): Promise<void> {}
+
+  async submissionFile(): Promise<Blob> {
+    throw new Error('The demo has no submissions')
   }
 
   // History

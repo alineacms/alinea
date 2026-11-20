@@ -374,6 +374,12 @@ function EntryEditorContent({
       )
   }, [entry.id, isUntranslated, localeData, node, setEditing, setKeptEdits])
 
+  // Another language can change this one, eg. through shared fields
+  const refreshEditing = useSetAtom(localeData.refreshEditing)
+  useEffect(() => {
+    void refreshEditing()
+  }, [refreshEditing, selectedEntry])
+
   useEffect(() => {
     setRouteGuard(node.isDirty)
     const open = {entryId: entry.id, locale: localeData.requestedLocale, node}

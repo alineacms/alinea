@@ -137,7 +137,7 @@
     {
       "_type": "CodeBlock",
       "_id": "2nsIBLDV4OlNWhy9FpZnT3EJWvR",
-      "code": "import {cms} from '@/cms'\nimport {auth, createBackend, database, github} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Pool} from 'pg'\n\nconst backend = createBackend(\n  auth.basic(\n    (username, password) =>\n      username === process.env.ALINEA_USERNAME &&\n      password === process.env.ALINEA_PASSWORD\n  ),\n  database({\n    driver: 'pg',\n    client: new Pool({connectionString: process.env.DATABASE_URL})\n  }),\n  github({\n    authToken: process.env.GITHUB_TOKEN!,\n    owner: 'my-org',\n    repo: 'my-site',\n    branch: 'main',\n    rootDir: '',\n    contentDir: 'content'\n  })\n)\n\nconst handler = createHandler({cms, backend})\n\nexport const GET = handler\nexport const POST = handler",
+      "code": "import {cms} from '@/cms'\nimport {auth, createBackend, database, github} from 'alinea/backend'\nimport {createHandler} from 'alinea/next'\nimport {Pool} from 'pg'\n\nconst backend = createBackend(\n  auth.basic(\n    (username, password) =>\n      username === process.env.ALINEA_USERNAME &&\n      password === process.env.ALINEA_PASSWORD\n  ),\n  database({\n    driver: 'pg',\n    client: new Pool({connectionString: process.env.DATABASE_URL})\n  }),\n  github({\n    authToken: process.env.GITHUB_TOKEN!,\n    owner: 'my-org',\n    repo: 'my-site',\n    branch: 'main',\n    rootDir: '',\n    contentDir: 'content'\n  })\n)\n\nconst handler = createHandler({cms, backend})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx"
     },

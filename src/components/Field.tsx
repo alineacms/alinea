@@ -6,9 +6,10 @@ import {
   Text
 } from 'react-aria-components'
 import {Badge} from './Badge.js'
-import {IcRoundPublic} from '#/dashboard/icons.js'
+import {IcRoundPublic, IcRoundTranslate} from '#/dashboard/icons.js'
 import css from './Field.module.css'
 import {Icon} from './Icon.js'
+import {FieldMissingIn} from './internal/FieldTranslation.js'
 import {FormScope} from './internal/FormScope.js'
 import type {FieldSharedProps, StyleProps} from './types.js'
 
@@ -41,6 +42,8 @@ export function Field({
 }: FieldProps) {
   const validation = useContext(FieldErrorContext)
   const inForm = useContext(FormScope)
+  const missingIn = useContext(FieldMissingIn)
+  const untranslated = Boolean(missingIn?.length)
   // Inside a Form the errors of react-aria's validation (native constraints
   // and Form validationErrors) are shown when the field has none of its own
   const message =
@@ -48,7 +51,7 @@ export function Field({
     (inForm && validation?.isInvalid
       ? validation.validationErrors.join(' ')
       : undefined)
-  const hasHeader = label || icon || description || shared
+  const hasHeader = label || icon || description || shared || untranslated
   if (!hasHeader && !message && !children) return null
   return (
     <div
@@ -77,6 +80,7 @@ export function Field({
           )}
           {description && <FieldDescription>{description}</FieldDescription>}
           {shared && <FieldSharedBadge />}
+          {untranslated && <FieldUntranslatedBadge languages={missingIn!} />}
         </div>
       )}
       {children}
@@ -153,6 +157,26 @@ export function FieldError({className, ...props}: FieldErrorProps) {
 
 export interface FieldSharedBadgeProps extends StyleProps {
   children?: ReactNode
+}
+
+interface FieldUntranslatedBadgeProps {
+  /** The languages that have a value */
+  languages: ReadonlyArray<string>
+}
+
+/** Marks a field that another language filled in and this one did not */
+function FieldUntranslatedBadge({languages}: FieldUntranslatedBadgeProps) {
+  const names = languages.map(language => language.toUpperCase()).join(', ')
+  return (
+    <Badge
+      data-slot="field-untranslated-badge"
+      icon={IcRoundTranslate}
+      size="sm"
+      title={`Filled in in ${names}`}
+    >
+      Not translated
+    </Badge>
+  )
 }
 
 /** Marks a field as shared between translations */

@@ -369,7 +369,7 @@
     {
       "_type": "CodeBlock",
       "_id": "3JjtPyyPHHW5R8yWM9OwQ8DO6So",
-      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\n// This handler responds to the API requests of the dashboard\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\n// This handler responds to the API requests of the dashboard\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler\nexport const PUT = handler",
       "fileName": "app/(alinea)/api/cms/route.ts",
       "language": "tsx"
     },

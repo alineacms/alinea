@@ -131,6 +131,12 @@ export interface FieldData<
   searchableText?: (value: StoredValue) => string
   /** Whether the value counts as missing for the `required` option */
   isEmpty?: (value: StoredValue) => boolean
+  /**
+   * How the value of a `shared` field is written into another language, from
+   * the language it was saved in. Without it the value replaces theirs, a
+   * form keeps the texts of the other language and shares its structure.
+   */
+  share?: (source: StoredValue, target: StoredValue | undefined) => StoredValue
   /** Validate fields nested in the value (list rows, object fields, blocks) */
   nestedErrors?: (
     value: StoredValue,
@@ -246,6 +252,16 @@ export namespace Field {
     Options extends FieldOptions<StoredValue>
   >(field: Field<StoredValue, QueryValue, any, Options>): Options {
     return getField(field).options
+  }
+
+  /** The value of a shared field as it is written into another language */
+  export function share<StoredValue>(
+    field: Field<StoredValue>,
+    source: StoredValue,
+    target: StoredValue | undefined
+  ): StoredValue {
+    const data = getField(field)
+    return data.share ? data.share(source, target) : source
   }
 
   export async function queryValue<StoredValue, QueryValue, Mutator, Options>(

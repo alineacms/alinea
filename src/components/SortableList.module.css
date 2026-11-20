@@ -272,6 +272,30 @@
   color: var(--alinea-fg);
 }
 
+.SortableListItemHandle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: calc(var(--alinea-radius) - 2px);
+  background: none;
+  color: var(--alinea-fg-muted);
+  cursor: grab;
+}
+
+.SortableListItemHandle:hover {
+  color: var(--alinea-fg);
+}
+
+.SortableListItemHandle:focus-visible {
+  outline: 2px solid var(--alinea-ring);
+  outline-offset: -2px;
+}
+
 .SortableListItemContent {
   display: grid;
   gap: 12px;

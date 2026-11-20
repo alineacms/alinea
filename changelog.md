@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Upgrading
+
+- Visitors upload the files of form file inputs to the handler with `PUT`
+  requests. Add `export const PUT = handler` next to `GET` and `POST` in the
+  route of `createHandler`, eg. `app/(alinea)/api/cms/route.ts`: routes made
+  before only export those two and refuse the uploads.
+
 ## [2.0.0] - 2026-11-17
 
 ### New

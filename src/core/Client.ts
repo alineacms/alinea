@@ -10,8 +10,17 @@ import {
   type BackendCapabilities,
   configFingerprintHeader,
   type DraftTransport,
+  type FormStatus,
+  type FormStatusRequest,
   type LocalConnection,
+  type PrepareUploadRequest,
+  type PrepareUploadResult,
   type Revision,
+  type SubmissionPage,
+  type SubmissionQuery,
+  type SubmissionStatus,
+  type SubmitRequest,
+  type SubmitResult,
   type UploadMetadata,
   type UploadResponse
 } from './Connection.js'
@@ -214,6 +223,13 @@ export class Client implements LocalConnection {
     ).then<{sha: string}>(this.#failOnHttpError)
   }
 
+  submit(request: SubmitRequest): Promise<SubmitResult> {
+    return this.#requestJson(
+      {action: HandleAction.Submit},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<SubmitResult>(this.#failOnHttpError)
+  }
+
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
     return new Client(
       {...this.#options, applyAuth, unauthorized},
@@ -222,6 +238,64 @@ export class Client implements LocalConnection {
   }
 
   // History
+  // Forms
+  submissions(
+    entryId: string,
+    query: SubmissionQuery = {}
+  ): Promise<SubmissionPage> {
+    return this.#requestJson({
+      action: HandleAction.Submissions,
+      entryId,
+      query: JSON.stringify(query)
+    }).then<SubmissionPage>(this.#failOnHttpError)
+  }
+
+  async updateSubmission(
+    entryId: string,
+    id: string,
+    status: SubmissionStatus
+  ): Promise<void> {
+    await this.#requestJson(
+      {action: HandleAction.Submissions, entryId, id},
+      {method: 'POST', body: JSON.stringify({status})}
+    ).then(res => this.#failOnHttpError(res, false))
+  }
+
+  async deleteSubmission(entryId: string, id: string): Promise<void> {
+    await this.#requestJson(
+      {action: HandleAction.Submissions, entryId, id},
+      {method: 'DELETE'}
+    ).then(res => this.#failOnHttpError(res, false))
+  }
+
+  async submissionFile(entryId: string, id: string): Promise<Blob> {
+    const response = await this.#request({
+      action: HandleAction.SubmissionFile,
+      entryId,
+      id
+    })
+    if (!response.ok) throw new Error(`Could not download the file`)
+    return response.blob()
+  }
+
+  formStatus(location: FormStatusRequest): Promise<FormStatus> {
+    return this.#requestJson({
+      action: HandleAction.FormStatus,
+      entryId: location.entryId,
+      ...(location.locale && {locale: location.locale}),
+      ...(location.field && {field: location.field})
+    }).then<FormStatus>(this.#failOnHttpError)
+  }
+
+  prepareFormUpload(
+    request: PrepareUploadRequest
+  ): Promise<PrepareUploadResult> {
+    return this.#requestJson(
+      {action: HandleAction.FormUpload},
+      {method: 'POST', body: JSON.stringify(request)}
+    ).then<PrepareUploadResult>(this.#failOnHttpError)
+  }
+
   revisions(file: string): Promise<Array<Revision>> {
     return this.#requestJson({action: HandleAction.History, file}).then<
       Array<Revision>

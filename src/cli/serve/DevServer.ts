@@ -10,7 +10,7 @@ import {
   forwardedMutationHeader
 } from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
-import {fetch, Headers, Request, type Response} from '@alinea/iso'
+import {fetch, Headers, Request, Response} from '@alinea/iso'
 import type {BuildOptions} from 'esbuild'
 import path from 'node:path'
 import {generate} from '../Generate.js'
@@ -152,6 +152,17 @@ export async function createDevServer(
           db,
           forwardMutations(request) {
             return forwardMutation(request, cms, context.apiKey)
+          },
+          // The app answers forms with its own options and storage, so its
+          // whole flow runs during development
+          async forwardForms(request) {
+            return (
+              (await forwardToApp(request, cms, context.apiKey)) ??
+              new Response(
+                'Open the dashboard through your app to work with forms',
+                {status: 501}
+              )
+            )
           }
         })
         const nextServer = createLocalServer(
@@ -210,6 +221,18 @@ export async function forwardMutation(
 ): Promise<Response | undefined> {
   // The app ran its hooks and sent the mutation back to commit here.
   if (request.headers.has(forwardedMutationHeader)) return
+  return forwardToApp(request, cms, apiKey)
+}
+
+/**
+ * Sends a request on to the handler of the app, which the dashboard reaches
+ * through the app. Undefined when the request did not come through it.
+ */
+async function forwardToApp(
+  request: Request,
+  cms: CMS,
+  apiKey: string
+): Promise<Response | undefined> {
   const origin = forwardedRequestOrigin(request)
   if (!origin) return
   const source = new URL(request.url)

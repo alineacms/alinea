@@ -27,6 +27,7 @@ import {policyAtom, userAtom} from '../atoms/user.js'
 import {
   dashboardContext,
   entryContext,
+  fieldSharingContext,
   useEditor,
   useFieldInfo
 } from '../contexts.js'
@@ -146,7 +147,17 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
   const info = useFieldInfo(field)
-  return useAtomValueRaw(info.options) as Options
+  const options = useAtomValueRaw(info.options) as Options
+  const sharing = useContext(fieldSharingContext)
+  // A field nested in a shared field can be shared without its own option
+  const shared = Boolean(sharing?.(field))
+  return useMemo(
+    () =>
+      shared && !(options as {shared?: boolean}).shared
+        ? {...options, shared: true}
+        : options,
+    [options, shared]
+  )
 }
 
 /**

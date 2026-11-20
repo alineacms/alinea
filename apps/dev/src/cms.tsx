@@ -54,7 +54,8 @@ export const cms = createCMS({
       process.env.VERCEL_ENV === 'production'
         ? 'dev.alineacms.com'
         : (process.env.VERCEL_URL ?? 'dev.alineacms.com'),
-    development: 'http://localhost:3000'
+    // Set when port 3000 is taken, eg. by another checkout
+    development: process.env.NEXT_PUBLIC_DEV_URL ?? 'http://localhost:3000'
   },
   schema,
   roles: {editor},
@@ -86,6 +87,9 @@ export const cms = createCMS({
               }
             })
           }
+        }),
+        forms: Config.root('Forms', {
+          contains: [schema.FormEntry]
         }),
         custom: Config.root('Custom', {
           contains: [schema.CustomPage],
