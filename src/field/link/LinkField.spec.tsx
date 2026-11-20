@@ -223,6 +223,44 @@ test('expands a folded link row when its settings open', async ({
   ).toBeVisible()
 })
 
+test('shows what a link points to in its settings sheet', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const relatedLink = page.getByRole('list', {name: 'Related link'})
+  await relatedLink.getByRole('button', {name: 'Page Home'}).click()
+  const home = page.getByRole('dialog', {name: 'Home'})
+  const homeUrl = home.getByRole('link')
+  await expect(homeUrl).toHaveAttribute('target', '_blank')
+  await expect(homeUrl).toHaveAttribute('rel', 'noreferrer')
+  await home.getByRole('textbox', {name: 'URL suffix'}).fill('?s=search')
+  await expect(homeUrl).toHaveAttribute('href', /\?s=search$/)
+  await expect(homeUrl).toHaveText(/\?s=search$/)
+  await home.getByRole('button', {name: 'Close link settings'}).click()
+
+  const resources = page.getByRole('list', {name: 'Resources'})
+  await resources
+    .getByRole('button', {name: 'External link Alinea documentation'})
+    .click()
+  const docs = page.getByRole('dialog', {name: 'Alinea documentation'})
+  await expect(
+    docs.getByRole('link', {name: 'https://alineacms.com/docs'})
+  ).toHaveAttribute('href', 'https://alineacms.com/docs')
+  await docs.getByRole('button', {name: 'Close link settings'}).click()
+
+  const heroImage = page.getByRole('list', {name: 'Hero image'})
+  await heroImage.getByRole('button', {name: 'landscape'}).click()
+  const image = page.getByRole('dialog', {name: 'landscape'})
+  const details = image.getByRole('definition')
+  await expect(image.getByText('Dimensions', {exact: true})).toBeVisible()
+  await expect(image.getByText('Alt text', {exact: true})).toBeVisible()
+  await expect(image.getByText('Location', {exact: true})).toBeVisible()
+  await expect(details.filter({hasText: /\.jpe?g$/}).first()).toBeVisible()
+  await expect(image.locator('img').first()).toBeAttached()
+})
+
 test('shows read-only link rows without opening their settings', async ({
   mount,
   page
