@@ -155,7 +155,8 @@ export async function receiveUpload(
   if (!ticket) return fail(401, 'Upload the file again')
   const length = Number(request.headers.get('content-length'))
   if (length > ticket.size) return fail(413, 'The file is larger than said')
-  const content = new Uint8Array(await request.arrayBuffer())
+  const content = await readBody(request, ticket.size)
+  if (!content) return fail(413, 'The file is larger than said')
   if (content.byteLength !== ticket.size)
     return fail(400, 'The file is not the size that was said')
   const problem = contentProblem(ticket, content)
@@ -190,6 +191,33 @@ export async function receiveUpload(
       ticket.type
     )
   return new Response(null, {status: 204, headers: uploadCors})
+}
+
+/** The body of a request, or undefined once it is longer than the limit */
+async function readBody(
+  request: Request,
+  limit: number
+): Promise<Uint8Array | undefined> {
+  if (!request.body) return new Uint8Array()
+  const reader = request.body.getReader()
+  const chunks = Array<Uint8Array>()
+  let size = 0
+  while (true) {
+    const {done, value} = await reader.read()
+    if (done) break
+    if ((size += value.byteLength) > limit) {
+      await reader.cancel()
+      return undefined
+    }
+    chunks.push(value)
+  }
+  const content = new Uint8Array(size)
+  let offset = 0
+  for (const chunk of chunks) {
+    content.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return content
 }
 
 type ResolvedFiles =

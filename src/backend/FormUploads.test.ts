@@ -254,3 +254,15 @@ test('a ticket uploads one file', async () => {
   })
   expect([...kept.values()].map(content => content[8])).toEqual([1])
 })
+
+test('a body without a length stops once it is larger than said', async () => {
+  const {prepare, upload} = await setup()
+  const ticket = await prepare('error.png', png.length)
+  if (!ticket.ok) throw new Error(ticket.message)
+  const big = new Uint8Array(png.length + 1)
+  big.set(png)
+  expect(await upload(ticket.url, big, true)).toEqual({
+    status: 413,
+    text: 'The file is larger than said'
+  })
+})
