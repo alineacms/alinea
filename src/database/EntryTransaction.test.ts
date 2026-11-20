@@ -858,7 +858,7 @@ async function createRedirectDb() {
       set: {title, path: id}
     })
   const metadata = await db.get({id: 'two', select: Entry.data})
-  const redirect = (url: string) => ({
+  const redirect = (url: string, removed?: string) => ({
     op: 'update' as const,
     id: 'two',
     locale: null,
@@ -867,7 +867,7 @@ async function createRedirectDb() {
       metadata: {
         ...metadata.metadata,
         aliases: Edit.list(DocumentPage.metadata.aliases)
-          .add('alias', {url})
+          .add('alias', removed ? {url, removed} : {url})
           .value()
       }
     }
@@ -877,13 +877,38 @@ async function createRedirectDb() {
 
 test('an alias takes the url of an entry archived in the same commit', async () => {
   const {db, redirect} = await createRedirectDb()
-  await db.mutate([{op: 'archive', id: 'one', locale: null}, redirect('/one')])
+  await db.mutate([
+    {op: 'archive', id: 'one', locale: null},
+    redirect('/one', 'one')
+  ])
   test.is(await db.first({alias: '/one', select: Entry.id}), 'two')
   test.is(await db.first({url: '/one', select: Entry.id}), null)
-  // The archived entry still gets its url back when it is published again
+})
+
+test('publishing an archived entry removes the alias its archive left', async () => {
+  const {db, redirect} = await createRedirectDb()
+  await db.mutate([
+    {op: 'archive', id: 'one', locale: null},
+    redirect('/one', 'one')
+  ])
   await db.publish({id: 'one', locale: null, status: 'archived'})
-  const restored = await db.first({url: '/one', select: Entry.id})
-  test.is(restored, 'one')
+  test.is(await db.first({url: '/one', select: Entry.id}), 'one')
+  test.is(await db.first({alias: '/one', select: Entry.id}), null)
+})
+
+test('publishing at the url of an alias an editor added fails', async () => {
+  const {db, redirect} = await createRedirectDb()
+  await db.mutate([{op: 'archive', id: 'one', locale: null}, redirect('/one')])
+  await test.throws(
+    () => db.publish({id: 'one', locale: null, status: 'archived'}),
+    'URL "/one" is already defined by entry two'
+  )
+  const status = await db.first({
+    id: 'one',
+    status: 'all',
+    select: Entry.status
+  })
+  test.is(status, 'archived')
   test.is(await db.first({alias: '/one', select: Entry.id}), 'two')
 })
 

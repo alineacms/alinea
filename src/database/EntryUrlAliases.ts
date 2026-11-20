@@ -31,10 +31,14 @@ export function dataWithUrlAlias(
   return dataWithUrlAliases(nextData, [previousUrl])
 }
 
-/** Adds the urls that are not an alias yet to the aliases in the metadata */
+/**
+ * Adds the urls that are not an alias yet to the aliases in the metadata,
+ * marked with the id of the entry that was removed from them, if any
+ */
 export function dataWithUrlAliases(
   data: Record<string, unknown>,
-  urls: Array<string>
+  urls: Array<string>,
+  removed?: string
 ): Record<string, unknown> {
   const existing = aliasUrlsFromData(data)
   const added = new Set(urls.filter(url => url && !existing.includes(url)))
@@ -42,37 +46,54 @@ export function dataWithUrlAliases(
   const metadata = isRecord(data.metadata) ? data.metadata : {}
   const current = Array.isArray(metadata.aliases) ? metadata.aliases : []
   const aliases = Array.from(added).reduce(
-    (rows, url) => rows.concat(createUrlAliasRow(url, rows)),
+    (rows, url) => rows.concat(createUrlAliasRow(url, rows, removed)),
     current
   )
   return {...data, metadata: {...metadata, aliases}}
 }
 
-function withoutUrlAlias(
+/** The data without the aliases of the url that a removed entry left */
+export function withoutRemovedAlias(
   data: Record<string, unknown>,
   url: string
 ): Record<string, unknown> {
+  return withoutUrlAlias(
+    data,
+    url,
+    alias => isRecord(alias) && typeof alias.removed === 'string'
+  )
+}
+
+function withoutUrlAlias(
+  data: Record<string, unknown>,
+  url: string,
+  matches = (_alias: unknown): boolean => true
+): Record<string, unknown> {
   const metadata = data.metadata
   if (!isRecord(metadata) || !Array.isArray(metadata.aliases)) return data
-  return {
-    ...data,
-    metadata: {
-      ...metadata,
-      aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
-    }
-  }
+  const aliases = metadata.aliases.filter(
+    alias => aliasUrl(alias) !== url || !matches(alias)
+  )
+  if (aliases.length === metadata.aliases.length) return data
+  return {...data, metadata: {...metadata, aliases}}
 }
 
 interface UrlAliasRow extends ListRow {
   _type: 'alias'
   url: string
+  removed?: string
 }
 
-function createUrlAliasRow(url: string, aliases: Array<unknown>) {
+function createUrlAliasRow(
+  url: string,
+  aliases: Array<unknown>,
+  removed?: string
+) {
   const editor = new ListEditor<UrlAliasRow>(
     aliases.filter(isOrderedUrlAliasRow)
   )
-  const created = editor.add('alias', {url}).value().at(-1)
+  const row = removed ? {url, removed} : {url}
+  const created = editor.add('alias', row).value().at(-1)
   assert(created)
   return created
 }

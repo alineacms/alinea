@@ -376,10 +376,11 @@ async function redirects(
   })
   const locales = versions.map(version => version.locale)
   return versions.flatMap(({locale, status, data}): Array<Mutation> => {
-    const redirected = urls
+    // Marked with the removed entry, which takes its url back when it is
+    // published again
+    const next = urls
       .filter(url => redirectLocale(locales, url.locale) === locale)
-      .map(url => url.url)
-    const next = dataWithUrlAliases(data, redirected)
+      .reduce((data, url) => dataWithUrlAliases(data, [url.url], url.id), data)
     if (next === data) return []
     const set = {metadata: next.metadata}
     return [{op: 'update', id: target.id, locale, status, set}]

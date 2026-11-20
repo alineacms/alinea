@@ -49,7 +49,7 @@ import {
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
 import type {EntryDatabase} from './EntryDatabase.js'
-import {dataWithUrlAlias} from './EntryUrlAliases.js'
+import {dataWithUrlAlias, withoutRemovedAlias} from './EntryUrlAliases.js'
 
 type Op<T> = Omit<T, 'op'>
 
@@ -982,6 +982,28 @@ export class EntryTransaction implements AsyncDisposable {
       await this.#workingDatabase.find({...scope, url, select})
     ).find(entry => entry.id !== candidate.id)
     if (sameUrl) throw conflict(sameUrl, url)
+    // Archiving or deleting a page can redirect its url with an alias marked
+    // as removed, which gives the url back. An alias an editor added keeps it.
+    const holders = await this.#findEntries({
+      ...scope,
+      alias: url,
+      id: {isNot: candidate.id}
+    })
+    for (const holder of holders) {
+      const data = withoutRemovedAlias(holder.data, url)
+      if (aliasUrlsFromData(data).includes(url)) {
+        if (holder.versionStatus === 'published')
+          throw conflict(holder, url, 'existing')
+        continue
+      }
+      this.#assertUpdate(holder, data)
+      if (holder.versionStatus === 'published')
+        this.#policy.assert(Permission.Publish, holder)
+      this.#addRecord(
+        holder.filePath,
+        createRecord({...holder, data}, holder.versionStatus)
+      )
+    }
     if (candidate.locale === null) return
     const translations = (
       await this.#workingDatabase.find({
