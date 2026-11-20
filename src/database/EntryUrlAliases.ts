@@ -31,10 +31,14 @@ export function dataWithUrlAlias(
   return dataWithUrlAliases(nextData, [previousUrl])
 }
 
-/** Adds the urls that are not an alias yet to the aliases in the metadata */
+/**
+ * Adds the urls that are not an alias yet to the aliases in the metadata,
+ * marked with the id of the entry that was removed from them, if any
+ */
 export function dataWithUrlAliases(
   data: Record<string, unknown>,
-  urls: Array<string>
+  urls: Array<string>,
+  removed?: string
 ): Record<string, unknown> {
   const existing = aliasUrlsFromData(data)
   const added = new Set(urls.filter(url => url && !existing.includes(url)))
@@ -42,9 +46,24 @@ export function dataWithUrlAliases(
   const metadata = isRecord(data.metadata) ? data.metadata : {}
   const current = Array.isArray(metadata.aliases) ? metadata.aliases : []
   const aliases = Array.from(added).reduce(
-    (rows, url) => rows.concat(createUrlAliasRow(url, rows)),
+    (rows, url) => rows.concat(createUrlAliasRow(url, rows, removed)),
     current
   )
+  return {...data, metadata: {...metadata, aliases}}
+}
+
+/** The data without the alias of the url that the removed entry left */
+export function withoutRedirect(
+  data: Record<string, unknown>,
+  url: string,
+  removed: string
+): Record<string, unknown> {
+  const metadata = data.metadata
+  if (!isRecord(metadata) || !Array.isArray(metadata.aliases)) return data
+  const aliases = metadata.aliases.filter(
+    alias => !isRecord(alias) || alias.url !== url || alias.removed !== removed
+  )
+  if (aliases.length === metadata.aliases.length) return data
   return {...data, metadata: {...metadata, aliases}}
 }
 
@@ -66,13 +85,19 @@ function withoutUrlAlias(
 interface UrlAliasRow extends ListRow {
   _type: 'alias'
   url: string
+  removed?: string
 }
 
-function createUrlAliasRow(url: string, aliases: Array<unknown>) {
+function createUrlAliasRow(
+  url: string,
+  aliases: Array<unknown>,
+  removed?: string
+) {
   const editor = new ListEditor<UrlAliasRow>(
     aliases.filter(isOrderedUrlAliasRow)
   )
-  const created = editor.add('alias', {url}).value().at(-1)
+  const row = removed ? {url, removed} : {url}
+  const created = editor.add('alias', row).value().at(-1)
   assert(created)
   return created
 }

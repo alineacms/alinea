@@ -410,6 +410,9 @@ test('archiving redirects the url in the same commit', async () => {
   expect(status).toBe('archived')
   // The draft keeps the alias when it is published
   expect(await aliasesOf(db, 'target')).toEqual(['en /en/test', 'en /en/test'])
+  // Until the archived page is published again and takes its url back
+  await db.publish({id: 'test', locale: 'en', status: 'archived'})
+  expect(await aliasesOf(db, 'target')).toEqual(['en', 'en'])
 })
 
 test('an entry that is not published has no url to redirect', async () => {
