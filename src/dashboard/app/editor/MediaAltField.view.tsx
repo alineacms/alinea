@@ -1,11 +1,11 @@
 import {TextField} from '#/components.js'
 import {
+  mediaAltLocalise,
   mediaAltText,
   type MediaAltField,
   type MediaAltOptions,
   type MediaAltValue
 } from '#/core/media/MediaAltField.js'
-import {isRecord} from '#/core/util/Objects.js'
 import {
   useEntryAtoms,
   useField,
@@ -52,7 +52,9 @@ export function MediaAltFieldView({field}: MediaAltFieldViewProps) {
           options={options}
           value={mediaAltText(value, locale)}
           onChange={next => {
-            setValue(current => mediaAltLocalise(current, locale, next))
+            setValue(current =>
+              mediaAltLocalise(current, i18n.locales, locale, next)
+            )
           }}
         />
       )}
@@ -90,20 +92,4 @@ function MediaAltTextField({
       onValueChange={onChange}
     />
   )
-}
-
-function mediaAltLocalise(
-  value: MediaAltValue,
-  locale: string,
-  next: string
-): Record<string, string> {
-  const current = isRecord(value)
-    ? Object.fromEntries(
-        Object.entries(value).filter(
-          (entry): entry is [string, string] => typeof entry[1] === 'string'
-        )
-      )
-    : {}
-  if (typeof value === 'string') current[locale] = value
-  return {...current, [locale]: next}
 }
