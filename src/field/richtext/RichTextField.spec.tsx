@@ -13,6 +13,7 @@ import {
   RichTextPlainStory,
   RichTextReadOnlyStory,
   RichTextReadOnlyImageStory,
+  RichTextReadOnlyTrailingBlockStory,
   RichTextStory,
   RichTextTrailingBlockStory
 } from './RichTextField.story.js'
@@ -1467,11 +1468,27 @@ test('leaves the value alone when clicking below a trailing block', async ({
   const before = await page.getByTestId('value').textContent()
   const height = (await editor.boundingBox())?.height
   await clickBelowTrailingBlock(page)
-  await page.waitForTimeout(100)
 
   await expect(editor.locator('.ProseMirror-gapcursor')).toHaveCount(1)
   expect((await editor.boundingBox())?.height).toBe(height)
 
+  await expect(page.getByTestId('value')).toHaveText(before ?? '')
+  await expect(page.getByTestId('dirty')).toHaveText('false')
+})
+
+test('ignores clicks below a trailing block when read only', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextReadOnlyTrailingBlockStory />)
+  const editor = page.locator('.ProseMirror').first()
+  const before = await page.getByTestId('value').textContent()
+  const box = await editor.boundingBox()
+  if (!box) throw new Error('Editor not rendered')
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height - 2)
+  await page.keyboard.type('After')
+
+  await expect(editor.locator('.ProseMirror-gapcursor')).toHaveCount(0)
   await expect(page.getByTestId('value')).toHaveText(before ?? '')
   await expect(page.getByTestId('dirty')).toHaveText('false')
 })

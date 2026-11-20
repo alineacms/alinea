@@ -127,6 +127,15 @@ export function RichTextTrailingBlockStory() {
   return <RichTextFixture initialBody={trailingBlockValue} entryType={entry} />
 }
 
+export function RichTextReadOnlyTrailingBlockStory() {
+  return (
+    <RichTextFixture
+      initialBody={trailingBlockValue}
+      entryType={readOnlyEntry}
+    />
+  )
+}
+
 export function RichTextPlainStory() {
   return (
     <RichTextFixture

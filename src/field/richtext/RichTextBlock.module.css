@@ -8,8 +8,13 @@
   margin-top: 0;
 }
 
-:global([data-richtext-block-host]:last-child) > .RichTextBlock,
-:global([data-richtext-block-host]:has(+ .ProseMirror-gapcursor:last-child)) > .RichTextBlock {
+:global(
+    :is(
+      [data-richtext-block-host]:last-child,
+      [data-richtext-block-host]:has(+ .ProseMirror-gapcursor:last-child)
+    )
+  )
+  > .RichTextBlock {
   margin-bottom: 0;
 }
 

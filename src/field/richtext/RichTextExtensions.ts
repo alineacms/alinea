@@ -340,6 +340,9 @@ export const richTextBlockClipboard = Extension.create({
 
 // A block at the end leaves no line to click on. A click in the space below it
 // places a gap cursor there, which only turns into a paragraph once typed in.
+// This runs on mousedown rather than as handleClick: focusing the editor shows
+// its toolbar, which can shift the layout before mouseup so the click resolves
+// inside the block instead.
 export const richTextTrailingGap = Extension.create({
   name: 'richTextTrailingGap',
   addProseMirrorPlugins() {
@@ -349,6 +352,7 @@ export const richTextTrailingGap = Extension.create({
           handleDOMEvents: {
             mousedown(view, event) {
               if (!view.editable || event.button !== 0) return false
+              if (event.shiftKey || event.ctrlKey || event.metaKey) return false
               const {doc} = view.state
               const last = doc.lastChild
               if (!last || !isRichTextBlockNode(last)) return false
