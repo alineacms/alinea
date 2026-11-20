@@ -503,17 +503,27 @@
       "content": [
         {
           "_type": "text",
-          "text": "To limit each visitor as well, pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload`: anything that identifies them on your site, such as the id of their session. Alinea doesn't guess it from the request. One visitor may then send 20 submissions and 50 files per hour, set with `limits: {perVisitor: {submissions, uploads}}`. The handler only stores a hash of the visitor, made with your API key."
+          "text": "To limit each visitor as well, pass `visitor` to `cms.forms.submit` and `cms.forms.prepareUpload`: anything that identifies them on your site, such as their IP address or the id of their session. Alinea doesn't guess it from the request, which reaches the handler from your server. One visitor may then send 20 submissions and 50 files per hour, set with `limits: {perVisitor: {submissions, uploads}}`. The handler only stores a hash of the visitor, made with your API key."
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3L4DY9PmJCCioIASZ4njJ6XqILY",
-      "code": "export async function submitForm(entryId: string, data: FormData) {\n  const session = await getSession()\n  return cms.forms.submit(entryId, data, {visitor: session.id})\n}",
+      "code": "import {headers} from 'next/headers'\n\n/** Who sends the form, to limit how often one visitor sends */\nasync function visitor() {\n  // Use a header your host sets, a visitor can send x-forwarded-for\n  // themselves when nothing in front of your site replaces it\n  const list = await headers()\n  const forwarded = list.get('x-forwarded-for')?.split(',')[0]\n  return list.get('x-real-ip') ?? forwarded\n}\n\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data, {visitor: await visitor()})\n}",
       "fileName": "",
       "language": "ts",
       "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Always pass a visitor once a form sends a mail to the address a visitor fills in, such as a confirmation. Without it, anyone can make your site mail a stranger's address as often as the form takes submissions."
+        }
+      ]
     },
     {
       "_type": "heading",

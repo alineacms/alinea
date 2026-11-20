@@ -303,14 +303,14 @@
       "content": [
         {
           "_type": "text",
-          "text": "The answers go to a server action, which sends them to the handler with `cms.forms.submit`. It uses your API key, so call it on the server only:"
+          "text": "The answers go to a server action, which sends them to the handler with `cms.forms.submit`. It uses your API key, so call it on the server only. Pass the `visitor`, for example their IP address, so one visitor can only send a form so often, see Storage and security:"
         }
       ]
     },
     {
       "_type": "CodeBlock",
       "_id": "3LUMXB7d0ZGtCkvMY4u5q5Oibhq",
-      "code": "'use server'\n\nimport {cms} from '@/cms'\nimport type {FormUploadFile} from 'alinea/form'\n\n/** Sends the answers of a visitor to the form in an entry */\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data)\n}\n\n/** A ticket for the browser of the visitor to upload a file with */\nexport async function prepareUpload(entryId: string, file: FormUploadFile) {\n  return cms.forms.prepareUpload(entryId, file)\n}",
+      "code": "'use server'\n\nimport {cms} from '@/cms'\nimport type {FormUploadFile} from 'alinea/form'\nimport {headers} from 'next/headers'\n\n/** Who sends the form, to limit how often one visitor sends */\nasync function visitor() {\n  // Use a header your host sets, a visitor can send x-forwarded-for\n  // themselves when nothing in front of your site replaces it\n  const list = await headers()\n  const forwarded = list.get('x-forwarded-for')?.split(',')[0]\n  return list.get('x-real-ip') ?? forwarded\n}\n\n/** Sends the answers of a visitor to the form in an entry */\nexport async function submitForm(entryId: string, data: FormData) {\n  return cms.forms.submit(entryId, data, {visitor: await visitor()})\n}\n\n/** A ticket for the browser of the visitor to upload a file with */\nexport async function prepareUpload(entryId: string, file: FormUploadFile) {\n  return cms.forms.prepareUpload(entryId, file, {visitor: await visitor()})\n}",
       "fileName": "app/forms/[slug]/actions.ts",
       "language": "tsx",
       "compact": false

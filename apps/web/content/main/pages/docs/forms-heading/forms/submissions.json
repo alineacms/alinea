@@ -398,7 +398,7 @@
                 },
                 {
                   "_type": "text",
-                  "text": ": an address, or an input of the form. Separate several addresses with commas. An input sends the mail to the address the visitor filled in, for example to confirm their sign-up. Only email inputs outside repeatable sections can be chosen."
+                  "text": ": an address, or an input of the form. Separate several addresses with commas. An input sends the mail to the address the visitor filled in, for example to confirm their sign-up. Only email inputs outside repeatable sections can be chosen. Anyone can fill in any address, so pass a `visitor` to `cms.forms.submit` to limit how often one visitor sends, see the rate limits in Storage and security."
                 }
               ]
             }
