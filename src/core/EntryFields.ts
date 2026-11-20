@@ -22,17 +22,16 @@ export interface EntryFields {
 export interface EntryFilterFields extends EntryFields {
   /**
    * Whether another entry links to the entry, or an entry that matches a
-   * query, eg. `{_referenced: Query.referencedBy({type: Product})}` or a
-   * filter, eg. `{_referenced: {_id: id}}`
+   * query, eg. `{_referenced: Query.referencedBy({type: Product})}`
    */
-  _referenced: Related<{edge: 'referencedBy'}, EntryFilterFields>
+  _referenced: Related<{edge: 'referencedBy'}>
   /**
    * Whether the entry links to another entry, or to an entry that matches a
-   * filter, eg. `{_references: {_id: id}}`, or a query, eg.
-   * `{_references: Query.references({field: Page.author, filter: {_id: id}})}`
-   * to only follow one link field. Links in lists and rich text count too.
+   * query, eg. `{_references: Query.references({id: personId})}`. Set the
+   * `field` of the query to only follow one link field. Links in lists and
+   * rich text count too.
    */
-  _references: Related<{edge: 'references'}, EntryFilterFields>
+  _references: Related<{edge: 'references'}>
 }
 
 export const EntryFields = {

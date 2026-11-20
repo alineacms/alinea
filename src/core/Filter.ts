@@ -26,27 +26,23 @@ declare const related: unique symbol
 
 /**
  * A field matched by a query of related entries, eg. `_referenced`. Its
- * condition holds when the query finds an entry. A filter on the `Fields` of
- * the related entry is short for a query with that filter.
+ * condition holds when the query finds an entry.
  */
-export interface Related<Query, Fields> {
-  [related]: [Query, Fields]
+export interface Related<Query> {
+  [related]: Query
 }
 
 /** A query of related entries used as a condition */
 export interface RelationCondition {
   edge: string
-  filter?: unknown
 }
 
 type FieldOps<Fields> = {
   [K in keyof Fields]?: Condition<Fields[K]>
 }
 
-export type Condition<Value> = [Value] extends [
-  Related<infer Query, infer Fields>
-]
-  ? Condition<boolean> | Query | Filter<Fields>
+export type Condition<Value> = [Value] extends [Related<infer Query>]
+  ? Condition<boolean> | Query
   : [Value] extends [Primitive]
     ? Ops<Value> | Value
     : [Value] extends [Array<any>]
@@ -60,12 +56,6 @@ export type AnyCondition =
   | ArrayOps<unknown>
   | ObjectOps<unknown>
   | RelationCondition
-  | RelatedFilter
-
-/** A filter on the entry fields of a related entry, eg. `{_id: id}` */
-interface RelatedFilter {
-  [field: `_${string}`]: AnyCondition | undefined
-}
 
 /**
  * A filter on known fields that also accepts conditions on any other field,
@@ -114,28 +104,9 @@ export function parseFilter(filter: unknown): FilterNode {
   const nodes = Array<FilterNode>()
   for (const [name, value] of Object.entries(filter)) {
     if (value === undefined) continue
-    nodes.push({op: 'field', name, condition: fieldCondition(name, value)})
+    nodes.push({op: 'field', name, condition: parseCondition(value)})
   }
   return {op: 'and', nodes}
-}
-
-/** The edges of the relation queries the relation fields take */
-export const relationEdges: Record<string, string> = {
-  _referenced: 'referencedBy',
-  _references: 'references'
-}
-
-const booleanOps = new Set(['is', 'isNot', 'in', 'notIn'])
-
-function fieldCondition(name: string, value: unknown): ConditionNode {
-  const edge = Object.hasOwn(relationEdges, name) && relationEdges[name]
-  const filter =
-    edge &&
-    isRecord(value) &&
-    !('edge' in value) &&
-    !Object.keys(value).every(key => booleanOps.has(key))
-  if (filter) return {op: 'relation', query: {edge, filter: value}}
-  return parseCondition(value)
 }
 
 export function parseCondition(condition: unknown): ConditionNode {
@@ -265,7 +236,8 @@ function conditionCheck(node: ConditionNode): FilterCheck<unknown> {
 }
 
 const relationMessage =
-  'Relation filters such as `_referenced` and `_references` only work ' +
+  'Relation filters such as `_referenced: Query.referencedBy(...)` or ' +
+  '`_references: Query.references(...)` only work ' +
   'in queries (graph.find, EntryTable, overview filters), they cannot be ' +
   'checked against loaded entries'
 

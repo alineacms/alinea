@@ -4,6 +4,7 @@ import {createCMS} from '#/core.js'
 import {Entry} from '#/core/Entry.js'
 import type {EntryFilterFields} from '#/core/EntryFields.js'
 import type {Filter, OpenFilter} from '#/core/Filter.js'
+import type {Status} from '#/core/Graph.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field, Query} from '#/index.js'
 
@@ -83,6 +84,14 @@ const entries = [
   {id: 'acme', type: 'Brand', index: 'a1', root: 'brands', path: 'acme'},
   {id: 'zeta', type: 'Brand', index: 'a2', root: 'brands', path: 'zeta'},
   {id: 'idle', type: 'Brand', index: 'a3', root: 'brands', path: 'idle'},
+  {
+    id: 'draft',
+    type: 'Brand',
+    index: 'a4',
+    root: 'brands',
+    path: 'draft',
+    status: 'draft' as const
+  },
   product('p1', 'en', {active: true, brand: link('acme', 'l1')}),
   product('p1', 'de', {active: true, brand: link('acme', 'l2')}),
   product('p2', 'en', {active: false, brand: link('zeta', 'l3')}),
@@ -91,6 +100,10 @@ const entries = [
     brand: link('zeta', 'l4'),
     related: [link('acme', 'l5')]
   }),
+  product('p4', 'en', {}),
+  product('p4', 'de', {}),
+  {...product('p5', 'en', {}), status: 'draft' as const},
+  product('p5', 'de', {}),
   article('direct', {brand: link('acme', 'l6')}),
   article('listed', {
     rows: [{_id: 'r1', _type: 'Row', _index: 'a0', link: link('zeta', 'l7')}]
@@ -109,7 +122,17 @@ const entries = [
       }
     ]
   }),
-  article('plain', {})
+  article('plain', {}),
+  article('dangling', {
+    brand: link('gone', 'l9'),
+    rows: [{_id: 'r2', _type: 'Row', _index: 'a0', link: link('draft', 'l10')}]
+  }),
+  article('translated', {
+    rows: [
+      {_id: 'r3', _type: 'Row', _index: 'a0', link: link('p4', 'l11')},
+      {_id: 'r4', _type: 'Row', _index: 'a1', link: link('p5', 'l12')}
+    ]
+  })
 ]
 
 const db = new LocalDB(cms.config)
@@ -231,30 +254,53 @@ test('references share the locale of a localized entry', async () => {
 })
 
 test('filters on the entries an entry links to', async () => {
-  const articles = (filter: Filter<EntryFilterFields>) =>
-    db.find({type: Article, filter, select: Entry.id})
-  expect(await articles({_references: {_id: 'acme'}})).toEqual(['direct'])
-  expect(await articles({_references: {_id: 'zeta'}})).toEqual([
-    'listed',
-    'written'
-  ])
-  expect(await articles({_references: true})).toEqual([
-    'direct',
-    'listed',
-    'written'
-  ])
-  expect(await articles({_references: false})).toEqual(['plain'])
+  const articles = (filter: Filter<EntryFilterFields>, status?: Status) =>
+    db.find({type: Article, filter, status, select: Entry.id})
+  expect(await articles({_references: Query.references({id: 'acme'})})).toEqual(
+    ['direct']
+  )
+  expect(await articles({_references: Query.references({id: 'zeta'})})).toEqual(
+    ['listed', 'written']
+  )
   expect(
-    await articles({_references: {_id: {in: ['acme', 'zeta']}, _type: 'Brand'}})
+    await articles({_references: Query.references({type: Brand})})
   ).toEqual(['direct', 'listed', 'written'])
   expect(
     await db.find({
       type: Product,
       locale: 'en',
-      filter: {_references: {_id: 'acme'}},
+      filter: {_references: Query.references({id: 'acme'})},
       select: Entry.id
     })
   ).toEqual(['p1', 'p3'])
+  const filter: OpenFilter<EntryFilterFields> = {
+    _references: Query.references({id: 'acme'})
+  }
+  expect(await db.find({type: Article, filter, select: Entry.id})).toEqual([
+    'direct'
+  ])
+})
+
+test('only links to entries under the status of the query count', async () => {
+  const articles = (filter: Filter<EntryFilterFields>, status?: Status) =>
+    db.find({type: Article, filter, status, select: Entry.id})
+  expect(await articles({_references: true})).toEqual([
+    'direct',
+    'listed',
+    'translated',
+    'written'
+  ])
+  expect(await articles({_references: false})).toEqual(['dangling', 'plain'])
+  const draft = {_references: Query.references({id: 'draft'})}
+  expect(await articles(draft)).toEqual([])
+  expect(await articles(draft, 'preferDraft')).toEqual(['dangling'])
+  expect(await articles({_references: true}, 'preferDraft')).toEqual([
+    'dangling',
+    'direct',
+    'listed',
+    'translated',
+    'written'
+  ])
 })
 
 test('filters on the entries an entry links to through one field', async () => {
@@ -262,7 +308,7 @@ test('filters on the entries an entry links to through one field', async () => {
     db.find({
       type: Product,
       locale: 'en',
-      filter: {_references: Query.references({field, filter: {_id: 'acme'}})},
+      filter: {_references: Query.references({field, id: 'acme'})},
       select: Entry.id
     })
   expect(await through(Product.brand)).toEqual(['p1'])
@@ -288,16 +334,28 @@ test('selects the entries an entry links to', async () => {
   expect(p3).toEqual({all: ['acme', 'zeta'], related: ['acme'], brands: 2})
 })
 
-test('filters on the entries linking to an entry by their fields', async () => {
+test('a link from an entry without a locale finds one translation', async () => {
+  const linked = (preferredLocale?: string) =>
+    db.get({
+      type: Article,
+      id: 'translated',
+      preferredLocale,
+      select: {
+        count: Query.references({count: true}),
+        titles: Query.references({select: Entry.title})
+      }
+    })
+  // The first locale of the root, or the first that is published
+  expect(await linked()).toEqual({count: 2, titles: ['p4 en', 'p5 de']})
+  expect(await linked('de')).toEqual({count: 2, titles: ['p4 de', 'p5 de']})
+})
+
+test('relation fields take conditions on whether an entry is related', async () => {
   expect(
     await db.find({
       type: Brand,
-      filter: {_referenced: {_type: 'Article'}},
+      filter: {_referenced: {or: [{is: true}]}},
       select: Entry.id
     })
   ).toEqual(['acme', 'zeta'])
-  const filter: OpenFilter<EntryFilterFields> = {_references: {_id: 'acme'}}
-  expect(await db.find({type: Article, filter, select: Entry.id})).toEqual([
-    'direct'
-  ])
 })

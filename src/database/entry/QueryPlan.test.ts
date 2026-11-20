@@ -131,7 +131,12 @@ const queries: Record<string, GraphQuery> = {
   referencing: {
     type: Page,
     locale: 'en',
-    filter: {_references: {_id: 'team'}},
+    filter: {_references: Query.references({id: 'team'})},
+    select: Entry.id
+  },
+  referencingAnyLocale: {
+    type: Page,
+    filter: {_references: Query.references({id: 'team'})},
     select: Entry.id
   },
   link: {

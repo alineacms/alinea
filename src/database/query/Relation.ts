@@ -16,6 +16,7 @@ import {
   not,
   or,
   sql,
+  when,
   type HasSql,
   type Sql
 } from 'rado'
@@ -191,13 +192,15 @@ export function referencedByCondition(
 /**
  * Entries the source links to: the reference index of the source finds them,
  * a link field of the source narrows them down to the ones it links through.
- * They share the locale of the source, unless either has none.
+ * They share the locale of the source, unless either has none. Translations
+ * linked from a source without a locale must match `unlocalized`, leave it
+ * out to match every locale.
  */
 export function referencesCondition(
   entry: EntryIndexTarget,
   source: EntryIndexTarget,
   field?: ReferenceField,
-  sameLocale = true
+  unlocalized?: Sql<boolean>
 ): Sql<boolean> {
   const targets = new Builder()
     .select(EntryReferenceTable.targetId)
@@ -206,7 +209,15 @@ export function referencesCondition(
   return and(
     inArray(entry.id, targets),
     linksThrough(source, field, entry.id),
-    sameLocale ? localeOf(entry, source) : sql.value(true)
+    unlocalized
+      ? or(
+          sql<boolean>`${entry.locale} is null`,
+          when(
+            [sql<boolean>`${source.locale} is null`, unlocalized],
+            eq(entry.locale, source.locale)
+          )
+        )
+      : sql.value(true)
   )
 }
 

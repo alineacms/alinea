@@ -1,14 +1,13 @@
 import {Entry} from '#/core/Entry.js'
-import type {Expr} from '#/core/Expr.js'
 import type {
   GraphQuery,
   IncludeGuard,
   PickModifiers,
   QueryModifiers,
+  ReferenceOptions,
   SelectionGuard,
   TypeGuard
 } from '#/core/Graph.js'
-import type {HasField} from '#/core/Internal.js'
 
 export const id = Entry.id
 export const title = Entry.title
@@ -131,11 +130,9 @@ export function referencedBy<
   Include extends IncludeGuard = undefined,
   Modifiers extends QueryModifiers = {}
 >(
-  query: GraphQuery<Selection, Type, Include> &
-    Modifiers & {field?: HasField & Expr}
-): RelationQuery<'referencedBy', Selection, Type, Include, Modifiers> & {
-  field?: HasField & Expr
-} {
+  query: GraphQuery<Selection, Type, Include> & Modifiers & ReferenceOptions
+): RelationQuery<'referencedBy', Selection, Type, Include, Modifiers> &
+  ReferenceOptions {
   return {edge: 'referencedBy' as const, ...query}
 }
 
@@ -150,10 +147,8 @@ export function references<
   Include extends IncludeGuard = undefined,
   Modifiers extends QueryModifiers = {}
 >(
-  query: GraphQuery<Selection, Type, Include> &
-    Modifiers & {field?: HasField & Expr}
-): RelationQuery<'references', Selection, Type, Include, Modifiers> & {
-  field?: HasField & Expr
-} {
+  query: GraphQuery<Selection, Type, Include> & Modifiers & ReferenceOptions
+): RelationQuery<'references', Selection, Type, Include, Modifiers> &
+  ReferenceOptions {
   return {edge: 'references' as const, ...query}
 }

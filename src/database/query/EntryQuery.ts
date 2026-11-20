@@ -5,7 +5,7 @@ import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import type {Field} from '#/core/Field.js'
-import {relationEdges, type RelationCondition} from '#/core/Filter.js'
+import type {RelationCondition} from '#/core/Filter.js'
 import type {EdgeQuery, GraphQuery, Status} from '#/core/Graph.js'
 import {
   getExpr,
@@ -66,6 +66,12 @@ import {
 } from './Relation.js'
 
 const builder = new Builder()
+
+/** The edge of the relation queries each relation filter field takes */
+const relationEdges: Record<string, string> = {
+  _referenced: 'referencedBy',
+  _references: 'references'
+}
 
 /** Read a selected JSON path; SQLite's -> yields SQL null only when absent. */
 function readJson(value: unknown, specs: DriverSpecs): unknown {
@@ -139,18 +145,13 @@ class Expressions {
       // Relations select fields by name.
       return selecting ? text.as(name) : text
     }
-    // Filters match entries another entry links to with `_referenced`, and
-    // entries that link to another with `_references`
-    if (name === 'referenced' || name === 'references')
+    // Filters match entries another entry links to with `_referenced`
+    if (name === 'referenced')
       return exists(
         builder
           .select(sql.value(1))
           .from(EntryReferenceTable)
-          .where(
-            name === 'referenced'
-              ? eq(EntryReferenceTable.targetId, this.#entry.id)
-              : eq(EntryReferenceTable.source, this.#entry.rowid)
-          )
+          .where(eq(EntryReferenceTable.targetId, this.#entry.id))
       )
     if (Object.hasOwn(this.#entry, name))
       return this.#entry[name as keyof EntryIndexTarget] as HasSql
@@ -351,6 +352,56 @@ function queryLocaleCondition(
   return or(own, and(isNull(entry.locale), or(...roots)))
 }
 
+/**
+ * The translation an entry without a locale links to: the one in the locale
+ * the query asked for, or else the one in the first locale of its root that
+ * exists under the query's status, so a link finds a single entry
+ */
+function unlocalizedTarget(
+  config: Config,
+  scope: Scope,
+  entry: EntryIndexTarget,
+  locale: string | null | undefined,
+  {
+    base,
+    depth,
+    status
+  }: {base: EntryIndexTarget; depth: number; status?: Status}
+): Sql<boolean> {
+  if (locale) return localeCondition(scope, entry, locale)
+  const translation = alias(base, `alinea_translation_${depth}`)
+  const defaults = entries(config.workspaces).flatMap(([workspace, data]) =>
+    entries(getWorkspace(data).roots).flatMap(([root, rootConfig]) => {
+      const first = Root.defaultLocale(rootConfig)
+      if (!first) return []
+      return [
+        [
+          and(
+            eq(translation.workspace, workspace),
+            eq(translation.root, root),
+            eq(translation.locale, first)
+          ),
+          0
+        ] as [Sql<boolean>, number]
+      ]
+    })
+  )
+  const first = builder
+    .select(translation.locale)
+    .from(translation)
+    .where(
+      eq(translation.id, entry.id),
+      eq(translation.visible, true),
+      statusCondition(translation, status)
+    )
+    .orderBy(
+      ...(defaults.length ? [asc(when(...defaults, 1))] : []),
+      asc(translation.locale)
+    )
+    .limit(1)
+  return inArray(entry.locale, first)
+}
+
 interface EntryQueryOptions {
   source?: EntryIndexTarget
   search?: ReturnType<typeof searchQuery>
@@ -361,6 +412,8 @@ interface EntryQueryOptions {
   scalar?: boolean
   /** Wrap every row and carry its entry id next to the selection. */
   withId?: boolean
+  /** The locale an outer query asked for */
+  locale?: string | null
 }
 
 export function compileEntryQuery(
@@ -378,6 +431,7 @@ export function compileEntryQuery(
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
+  const locale = query.locale ?? query.preferredLocale ?? options.locale
   // A related entry's value, eg. to order by the title of a linked entry
   function scalar(relationQuery: EdgeQuery): HasSql {
     if (relationQuery.count) {
@@ -388,7 +442,8 @@ export function compileEntryQuery(
           source: entry,
           entry: alias(baseEntry, `alinea_scalar_${depth + 1}`),
           depth: depth + 1,
-          baseEntry
+          baseEntry,
+          locale
         }
       )
       const matches = rows.as(`alinea_scalar_count_${depth + 1}`)
@@ -406,7 +461,8 @@ export function compileEntryQuery(
         entry: alias(baseEntry, `alinea_scalar_${depth + 1}`),
         depth: depth + 1,
         baseEntry,
-        scalar: true
+        scalar: true,
+        locale
       }
     )
     return sql`(${getQuery(rows)})`
@@ -437,9 +493,23 @@ export function compileEntryQuery(
       const via = path && {path, multiple: field instanceof LinksField}
       // A locale the query asks for replaces the locale of the source
       const ownLocale = query.locale === undefined && !query.preferredLocale
-      const condition =
-        edge.edge === 'references' ? referencesCondition : referencedByCondition
-      conditions.push(condition(entry, source, via, ownLocale))
+      if (edge.edge === 'referencedBy')
+        conditions.push(referencedByCondition(entry, source, via, ownLocale))
+      else
+        conditions.push(
+          referencesCondition(
+            entry,
+            source,
+            via,
+            ownLocale
+              ? unlocalizedTarget(config, scope, entry, locale, {
+                  base: baseEntry,
+                  depth,
+                  status: query.status
+                })
+              : undefined
+          )
+        )
     } else conditions.push(relationCondition(entry, edge, source))
   }
   conditions.push(statusCondition(entry, query.status))
@@ -526,14 +596,23 @@ export function compileEntryQuery(
         source: entry,
         entry: alias(baseEntry, `alinea_exists_${depth + 1}`),
         depth: depth + 1,
-        baseEntry
+        baseEntry,
+        locale
       }
     )
     return exists(rows)
   }
   if (query.filter !== undefined)
     conditions.push(
-      compileFilter(query.filter, name => membership.field(name), related)
+      compileFilter(
+        query.filter,
+        // Only links to entries that exist under the query's status count
+        name =>
+          name === '_references'
+            ? related(name, {edge: 'references'})
+            : membership.field(name),
+        related
+      )
     )
   if (Array.isArray(query.groupBy))
     throw new Error('groupBy must be a single field')
@@ -617,7 +696,8 @@ export function compileEntryQuery(
         source: entry,
         entry: nestedEntry,
         depth: depth + 1,
-        baseEntry
+        baseEntry,
+        locale
       }
     )
     if (plan.count) {

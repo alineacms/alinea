@@ -1,10 +1,5 @@
 import {expect, test} from 'bun:test'
-import {
-  filterChecker,
-  parseCondition,
-  parseFilter,
-  type FilterNode
-} from './Filter.js'
+import {filterChecker, parseCondition, parseFilter} from './Filter.js'
 
 test('parses field conditions into one shared tree', () => {
   expect(parseFilter({title: 'a', count: {gt: 1, lt: 5}})).toEqual({
@@ -90,32 +85,6 @@ test('nested has and includes filters address the stored value', () => {
 test('relation conditions cannot be checked against loaded entries', () => {
   const filter = {_referenced: {edge: 'referencedBy', type: 'Product'}}
   expect(() => filterChecker(filter)).toThrow(/only work in queries/)
-  expect(() => filterChecker({_references: {_id: 'a'}})).toThrow(
-    /only work in queries/
-  )
-})
-
-test('a filter on a relation field is short for a relation query', () => {
-  const relation = (
-    name: string,
-    edge: string,
-    filter: unknown
-  ): FilterNode => ({
-    op: 'and',
-    nodes: [
-      {op: 'field', name, condition: {op: 'relation', query: {edge, filter}}}
-    ]
-  })
-  expect(parseFilter({_references: {_id: 'a'}})).toEqual(
-    relation('_references', 'references', {_id: 'a'})
-  )
-  expect(parseFilter({_referenced: {_type: 'Product'}})).toEqual(
-    relation('_referenced', 'referencedBy', {_type: 'Product'})
-  )
-  expect(parseFilter({_references: {is: true}})).toEqual({
-    op: 'and',
-    nodes: [
-      {op: 'field', name: '_references', condition: {op: 'is', value: true}}
-    ]
-  })
+  const references = {_references: {edge: 'references', id: 'a'}}
+  expect(() => filterChecker(references)).toThrow(/only work in queries/)
 })
