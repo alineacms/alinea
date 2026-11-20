@@ -13,7 +13,7 @@ import {
 import {expect, spyOn, test} from 'bun:test'
 import {atom} from 'jotai'
 import {clientAtom, configAtom, eventsAtom} from './core.js'
-import {EntryAtoms, entryAtoms} from './entry.js'
+import {EntryAtoms, entryAtoms, entryTranslations} from './entry.js'
 import {userPolicyReadyAtom} from './user.js'
 import {keptEditsAtom} from './version.js'
 
@@ -750,5 +750,24 @@ test('history leaves out the current content, not the latest revision', async ()
   expect(history.map(revision => revision.ref)).toEqual([
     'discarded',
     'earlier'
+  ])
+})
+
+test('translations show the status of the version an editor works on', () => {
+  const translations = entryTranslations(
+    ['en', 'nl', 'fr', 'de'],
+    [
+      {locale: 'en', status: 'published', active: false},
+      {locale: 'en', status: 'draft', active: true},
+      {locale: 'nl', status: 'published', active: true},
+      {locale: 'fr', status: 'archived', active: true},
+      {locale: null, status: 'published', active: true}
+    ]
+  )
+  expect(translations).toEqual([
+    {locale: 'en', status: 'draft'},
+    {locale: 'nl', status: 'published'},
+    {locale: 'fr', status: 'archived'},
+    {locale: 'de', status: undefined}
   ])
 })

@@ -30,7 +30,7 @@ export interface LocaleMenuSelectProps {
   onLocaleChange(locale: string): void
 }
 
-interface LocaleDisplay {
+export interface LocaleDisplay {
   code: string | null
   name: string
   textValue: string
@@ -40,7 +40,7 @@ interface LocaleLabelProps {
   locale: string
 }
 
-function localeDisplay(locale: string): LocaleDisplay {
+export function localeDisplay(locale: string): LocaleDisplay {
   let parsed: Intl.Locale
   try {
     parsed = new Intl.Locale(locale)

@@ -651,6 +651,23 @@ export class EntryLocaleAtoms {
   })
 }
 
+export interface EntryTranslation {
+  locale: string
+  /** The status of the version an editor works on, none when untranslated */
+  status?: EntryStatus
+}
+
+export function entryTranslations(
+  locales: ReadonlyArray<string>,
+  entries: Array<Pick<Entry, 'locale' | 'status' | 'active'>>
+): Array<EntryTranslation> {
+  return locales.map(locale => {
+    const versions = entries.filter(entry => entry.locale === locale)
+    const version = versions.find(entry => entry.active) ?? versions[0]
+    return {locale, status: version?.status}
+  })
+}
+
 export class EntryAtoms {
   constructor(
     public readonly id: string,
@@ -690,7 +707,13 @@ export class EntryAtoms {
       rootData.preview ??
       workspaceData.preview ??
       config.preview
-    return {defaultView, fieldI18n: Root.fieldI18n(rootData), preview}
+    const locales = rootData.isMediaRoot ? [] : (rootData.i18n?.locales ?? [])
+    return {
+      defaultView,
+      fieldI18n: Root.fieldI18n(rootData),
+      locales,
+      preview
+    }
   })
 
   type = atom(get => get(this.data).type)
@@ -721,6 +744,9 @@ export class EntryAtoms {
       )
     )
   })
+  translations = atom(get =>
+    entryTranslations(get(this.#settings).locales, get(this.data).entries)
+  )
   view = atom(
     get => get(this.#selectedView) ?? get(this.#settings).defaultView,
     (get, set, next: EntryDefaultView) => {
