@@ -229,15 +229,25 @@ test('shows what a link points to in its settings sheet', async ({
 }) => {
   await mount(<Example />)
 
+  const origin = new URL(page.url()).origin
   const relatedLink = page.getByRole('list', {name: 'Related link'})
   await relatedLink.getByRole('button', {name: 'Page Home'}).click()
   const home = page.getByRole('dialog', {name: 'Home'})
-  const homeUrl = home.getByRole('link')
+  const homeUrl = home.getByRole('link', {name: `${origin}/home`})
+  await expect(homeUrl).toHaveAttribute('href', `${origin}/home`)
   await expect(homeUrl).toHaveAttribute('target', '_blank')
-  await expect(homeUrl).toHaveAttribute('rel', 'noreferrer')
-  await home.getByRole('textbox', {name: 'URL suffix'}).fill('?s=search')
-  await expect(homeUrl).toHaveAttribute('href', /\?s=search$/)
-  await expect(homeUrl).toHaveText(/\?s=search$/)
+  await expect(homeUrl).toHaveAttribute('rel', 'noopener noreferrer')
+  const suffix = home.getByRole('textbox', {name: 'URL suffix'})
+  await suffix.fill('?s=search')
+  await expect(
+    home.getByRole('link', {name: `${origin}/home?s=search`})
+  ).toHaveAttribute('href', `${origin}/home?s=search`)
+  // A half typed suffix is no url yet
+  await suffix.fill('//')
+  await expect(home.getByRole('link', {name: origin})).toHaveCount(0)
+  await expect(suffix).toHaveValue('//')
+  await suffix.fill('')
+  await expect(homeUrl).toBeVisible()
   await home.getByRole('button', {name: 'Close link settings'}).click()
 
   const resources = page.getByRole('list', {name: 'Resources'})
@@ -253,12 +263,18 @@ test('shows what a link points to in its settings sheet', async ({
   const heroImage = page.getByRole('list', {name: 'Hero image'})
   await heroImage.getByRole('button', {name: 'landscape'}).click()
   const image = page.getByRole('dialog', {name: 'landscape'})
-  const details = image.getByRole('definition')
-  await expect(image.getByText('Dimensions', {exact: true})).toBeVisible()
-  await expect(image.getByText('Alt text', {exact: true})).toBeVisible()
-  await expect(image.getByText('Location', {exact: true})).toBeVisible()
-  await expect(details.filter({hasText: /\.jpe?g$/}).first()).toBeVisible()
-  await expect(image.locator('img').first()).toBeAttached()
+  await expect(image.locator('[data-slot="media-preview"]')).toBeVisible()
+  const details = image.getByLabel('File details')
+  await expect(details.getByText('landscape.jpg', {exact: true})).toBeVisible()
+  await expect(details.getByText('919 kB', {exact: true})).toBeVisible()
+  await expect(
+    details.getByText('3970px x 2717px', {exact: true})
+  ).toBeVisible()
+  await expect(
+    details.getByText('A mountain path through a valley', {exact: true})
+  ).toBeVisible()
+  await expect(details.getByText('Media', {exact: true})).toBeVisible()
+  await expect(details.getByText('Extension')).toHaveCount(0)
 })
 
 test('shows read-only link rows without opening their settings', async ({

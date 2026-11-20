@@ -274,6 +274,7 @@ test('loads linked entry summaries in the locale stored on the link', async () =
     state: 'hasData',
     data: {
       preview: 'data:image/jpeg;base64,preview',
+      url: '/admin/file/preview-file.jpg',
       rootLabel: 'Media',
       file: {
         name: 'preview-file.jpg',
@@ -287,7 +288,7 @@ test('loads linked entry summaries in the locale stored on the link', async () =
   })
   expect(store.get(french)).toMatchObject({
     state: 'hasData',
-    data: {url: expect.stringContaining('/'), file: undefined}
+    data: {url: '/fr/parent-francais/titre-francais-publie', file: undefined}
   })
 })
 
