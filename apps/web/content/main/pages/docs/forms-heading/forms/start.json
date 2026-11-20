@@ -349,6 +349,16 @@
       "content": [
         {
           "_type": "text",
+          "text": "A route made before Alinea had forms only exports `GET` and `POST`. Without `PUT` the handler never receives the files: `<Form>` shows that the file could not be uploaded under its input and logs what is missing in the console of the browser."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
           "text": "When the root of your forms is translated, pass the locale of the page: `cms.forms.submit(entryId, data, {locale})`, and the same option to `cms.forms.prepareUpload`. See "
         },
         {

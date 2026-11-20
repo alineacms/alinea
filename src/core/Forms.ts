@@ -189,7 +189,7 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
           body: value
         })
         if (uploaded.ok) entries.push([key, ticket.token])
-        else errors[key] = await uploaded.text()
+        else errors[key] = await uploadError(uploaded)
       }
       if (Object.keys(errors).length > 0) return {ok: false, errors}
       return (await client()).submit({
@@ -201,4 +201,15 @@ export function formsOf(client: () => Promise<FormsClient>): Forms {
       })
     }
   }
+}
+
+/** What a visitor sees when the handler refused their file */
+export async function uploadError(response: Response): Promise<string> {
+  const fallback = 'The file could not be uploaded'
+  if (response.status !== 405) return (await response.text()) || fallback
+  // Routes made before forms had file inputs only export GET and POST
+  console.error(
+    'Alinea could not upload a file: export PUT from the route of createHandler'
+  )
+  return fallback
 }

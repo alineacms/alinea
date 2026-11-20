@@ -3,7 +3,7 @@
 import {type FormState, formState} from '#/field/form/FormConditions.js'
 import {formPage, formSpam} from '#/field/form/FormSpam.js'
 import type {PrepareUploadResult} from '#/core/Connection.js'
-import type {FormUploadFile} from '#/core/Forms.js'
+import {type FormUploadFile, uploadError} from '#/core/Forms.js'
 import type {FormErrors, FormResult} from '#/field/form/FormSubmission.js'
 import {
   type FormContentData,
@@ -583,7 +583,7 @@ async function uploadFiles(
       body: value
     })
     if (response.ok) data.append(key, ticket.token)
-    else errors[key] = await response.text()
+    else errors[key] = await uploadError(response)
   }
   if (Object.keys(errors).length > 0) return {ok: false, errors}
   return data
