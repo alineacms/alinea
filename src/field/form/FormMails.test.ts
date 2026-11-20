@@ -94,3 +94,16 @@ test('a mail is not sent when its rules do not hold or it has no address', () =>
   )
   expect(names).toEqual([])
 })
+
+test('answers can not add lines to the headers of a mail', () => {
+  const [helpdesk, ...rest] = formMails(inputs, rows, mails, {
+    name: 'Ann\r\nBcc: all@example.com',
+    email: 'ann@example.com\nBcc: all@example.com',
+    service: 'it'
+  })
+  expect(helpdesk.mail.subject).toBe(
+    'New request from Ann Bcc: all@example.com'
+  )
+  expect(helpdesk.mail.replyTo).toBeUndefined()
+  expect(rest).toEqual([])
+})

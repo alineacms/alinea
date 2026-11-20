@@ -43,7 +43,9 @@ export function formMails(
     // An input of a repeatable section has an answer per item
     if (!entry || entry.repeat) return undefined
     const value = values[inputKey(entry.row)]
-    return typeof value === 'string' ? value : undefined
+    return typeof value === 'string' && !/[\r\n]/.test(value)
+      ? value
+      : undefined
   }
   return mails.filter(isRecord).flatMap((mail): Array<FormMailOut> => {
     if (mailProblem(mail, byId)) return []
@@ -65,7 +67,8 @@ export function formMails(
         mail: {
           to: to as Array<string>,
           ...(replyTo && {replyTo}),
-          subject: fill(mail.subject),
+          // A line break in a header could add headers of its own
+          subject: fill(mail.subject).replace(/[\r\n]+/g, ' '),
           text: fill(mail.body)
         }
       }
