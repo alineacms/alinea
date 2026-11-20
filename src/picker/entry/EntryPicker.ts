@@ -6,13 +6,12 @@ import type {Graph, Projection} from '#/core/Graph.js'
 import type {Label} from '#/core/Label.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
-import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
+import {linkedMediaAlt} from '#/core/media/MediaAltField.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {applyUrlSuffix} from '#/core/util/Anchors.js'
-import {assign, isRecord, keys} from '#/core/util/Objects.js'
-import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
+import {assign, keys} from '#/core/util/Objects.js'
 import {EntryReference} from './EntryReference.js'
 
 export const unresolvedEntryMarker = Symbol('unresolvedEntryMarker')
@@ -134,15 +133,17 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         workspace: _workspace,
         ...rest
       } = extra
-      const selectedAlt = selectImageAlt(alt, loader, {
-        root: _root,
-        workspace: _workspace
-      })
+      const selectedAlt = linkedMediaAlt(
+        loader.config,
+        {root: _root, workspace: _workspace},
+        alt,
+        loader.locale
+      )
       const version = typeof rest.hash === 'string' ? rest.hash : undefined
       const versionedSrc =
         typeof src === 'string' ? MediaLocation.versionedUrl(src, version) : src
       assign(row, rest, {extension, src: versionedSrc})
-      if (typeof selectedAlt === 'string') row.alt = selectedAlt
+      row.alt = selectedAlt
     }
   }
 }
@@ -156,42 +157,6 @@ function applyUrlSuffixToRow(
     row.url = applyUrlSuffix(row.url, suffix, anchor)
   if (typeof row.href === 'string')
     row.href = applyUrlSuffix(row.href, suffix, anchor)
-}
-
-interface LinkedEntryLocation {
-  root: unknown
-  workspace: unknown
-}
-
-function selectImageAlt(
-  alt: unknown,
-  loader: LinkResolver,
-  location: LinkedEntryLocation
-): string {
-  if (isRecord(alt)) {
-    const localisation = linkedLocalisation(loader, location)
-    return selectLocalisedValue({
-      value: alt as LocalisedValue<string, string>,
-      locale: loader.locale,
-      locales: localisation?.locales ?? keys(alt),
-      fallback: localisation?.fallback,
-      defaultValue: ''
-    })
-  }
-  if (typeof alt === 'string') return alt
-  return ''
-}
-
-function linkedLocalisation(
-  loader: LinkResolver,
-  {workspace, root}: LinkedEntryLocation
-): RootI18n | undefined {
-  if (typeof workspace !== 'string' || typeof root !== 'string') return
-  const workspaceConfig = loader.config.workspaces[workspace]
-  const rootConfig = workspaceConfig?.[root]
-  if (!rootConfig) return
-  const rootData = Root.data(rootConfig)
-  return Root.fieldI18n(rootData) ?? rootData.i18n
 }
 
 /** @internal Throws for conditions an entry picker can't check, eg. relation filters */
