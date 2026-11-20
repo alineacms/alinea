@@ -60,6 +60,22 @@
   line-height: 1.5;
 }
 
+/* Room below a trailing block to click and start a new line (a gap cursor is
+   placed after the block while that line is empty) */
+.RichTextFieldView
+  :global(
+    .ProseMirror:has(
+      > [data-richtext-block-host]:last-child,
+      > [data-richtext-block-host] + .ProseMirror-gapcursor:last-child
+    )
+  ) {
+  padding-bottom: calc(1.5em + 16px);
+}
+
+.RichTextFieldView :global(.ProseMirror-gapcursor::after) {
+  border-top-color: var(--alinea-fg);
+}
+
 .RichTextFieldView[data-read-only='true'] :global(.ProseMirror) {
   color: var(--alinea-fg-disabled);
 }
