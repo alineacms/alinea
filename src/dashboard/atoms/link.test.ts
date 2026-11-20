@@ -221,6 +221,10 @@ test('loads linked entry summaries in the locale stored on the link', async () =
       path: 'preview-file',
       location: 'preview.jpg',
       extension: '.jpg',
+      size: 2048,
+      width: 640,
+      height: 480,
+      alt: {en: 'English alt', fr: 'Texte alternatif'},
       preview: 'data:image/jpeg;base64,preview'
     }
   })
@@ -262,13 +266,28 @@ test('loads linked entry summaries in the locale stored on the link', async () =
     data: {title: 'English title'}
   })
 
-  const preview = linkEntryAtoms('link-preview-file')
+  const preview = linkEntryAtoms('link-preview-file', 'fr')
   const previewChanged = waitForChange(store, preview)
   expect(store.get(preview)).toEqual({state: 'loading'})
   await previewChanged
   expect(store.get(preview)).toMatchObject({
     state: 'hasData',
-    data: {preview: 'data:image/jpeg;base64,preview'}
+    data: {
+      preview: 'data:image/jpeg;base64,preview',
+      rootLabel: 'Media',
+      file: {
+        name: 'preview-file.jpg',
+        extension: '.jpg',
+        size: 2048,
+        width: 640,
+        height: 480,
+        alt: 'Texte alternatif'
+      }
+    }
+  })
+  expect(store.get(french)).toMatchObject({
+    state: 'hasData',
+    data: {url: expect.stringContaining('/'), file: undefined}
   })
 })
 
