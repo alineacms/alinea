@@ -177,7 +177,13 @@ export interface ExplorerOptions {
    */
   searchDepth?: 'current' | 'all'
   onAction?: (entry: ExplorerEntry) => void
-  onConfirm?: (selection: Array<string>, locale: string | null) => void
+  // Entries listed from other roots can exist only in another locale than
+  // the shown one, `locales` holds the locale of each listed entry
+  onConfirm?: (
+    selection: Array<string>,
+    locale: string | null,
+    locales: ReadonlyMap<string, string | null>
+  ) => void
   preselect?: boolean
 }
 
@@ -1292,11 +1298,13 @@ export class ExplorerAtoms {
   })
   onConfirm = atom(null, (get, _set, locale?: string | null) => {
     const selected = get(this.selection)
-    if (selected !== 'all')
-      this.#options.onConfirm?.(
-        [...selected].map(String),
-        locale === undefined ? get(this.selectedLocale) : locale
-      )
+    if (selected === 'all') return
+    const items = get(this.page)?.items ?? []
+    this.#options.onConfirm?.(
+      [...selected].map(String),
+      locale === undefined ? get(this.selectedLocale) : locale,
+      new Map(items.map(entry => [entry.id, entry.locale]))
+    )
   })
   /** The listed entries that are selected, and what can be done with them */
   selectionActions = atom((get): ExplorerSelectionActions => {

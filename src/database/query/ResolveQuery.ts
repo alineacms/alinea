@@ -7,7 +7,8 @@ import type {
   Status
 } from '#/core/Graph.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
-import type {RootI18n} from '#/core/Root.js'
+import {getWorkspace} from '#/core/Internal.js'
+import {Root, type RootI18n} from '#/core/Root.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
 import {compileEntryQuery, type ProjectionPlan} from './EntryQuery.js'
@@ -99,20 +100,67 @@ function createLinkBatcher(
     ids: Array<string>,
     locale: string | undefined
   ): Promise<Array<{id: string; value: unknown}>> {
+    const found = await linkRows(projection, ids, locale)
+    if (!locale) return found
+    const resolved = new Set(found.map(row => row.id))
+    const missing = ids.filter(id => !resolved.has(id))
+    if (!missing.length) return found
+    // A link can name a locale its entry has no version in, eg. one picked
+    // from a root with other locales: it resolves like a link from that root
+    const versions = await linkRows(projection, missing, undefined)
+    const fallback = missing.flatMap(id => {
+      const rows = versions.filter(row => row.id === id)
+      return rows.length ? [fallbackVersion(context.config, rows, locale)] : []
+    })
+    return [...found, ...fallback]
+  }
+  async function linkRows(
+    projection: Projection,
+    ids: Array<string>,
+    locale: string | undefined
+  ): Promise<Array<LinkRow>> {
     const {rows, plan} = compileEntryQuery(
       context.config,
       {select: projection, id: {in: ids}, status, preferredLocale: locale},
       {withId: true}
     )
-    const result = await rows.all(context.database)
+    const result = (await rows.all(context.database)) as Array<LinkRow>
     return Promise.all(
       result.map(async row => ({
-        id: (row as {id: string}).id,
+        ...row,
         value: await projectRow(status, plan, row, context, load)
       }))
     )
   }
   return load
+}
+
+interface LinkRow {
+  id: string
+  locale: string | null
+  workspace: string
+  root: string
+  value: unknown
+}
+
+/** The version of an entry its root falls back to from the given locale */
+function fallbackVersion(
+  config: Config,
+  rows: Array<LinkRow>,
+  locale: string
+): LinkRow {
+  const [first] = rows
+  const workspace = config.workspaces[first.workspace]
+  const root = workspace && getWorkspace(workspace).roots[first.root]
+  const i18n = root && Root.data(root).i18n
+  const order = [...(i18n?.fallback?.(locale) ?? []), ...(i18n?.locales ?? [])]
+  for (const preferred of order) {
+    const row = rows.find(
+      row => row.locale?.toLowerCase() === preferred.toLowerCase()
+    )
+    if (row) return row
+  }
+  return first
 }
 
 function createLinkResolver(
