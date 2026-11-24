@@ -46,7 +46,8 @@ import {
   defaultExtensionConfig,
   richTextBlockClipboard,
   richTextBlockExtensions,
-  richTextDocumentExtension
+  richTextDocumentExtension,
+  richTextTrailingGap
 } from './RichTextExtensions.js'
 import {
   blockAttributes,
@@ -127,6 +128,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     return [
       richTextDocumentExtension(blocks.length > 0),
       richTextBlockClipboard,
+      richTextTrailingGap,
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]

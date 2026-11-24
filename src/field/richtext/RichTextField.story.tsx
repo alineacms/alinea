@@ -123,6 +123,19 @@ export function RichTextStory() {
   )
 }
 
+export function RichTextTrailingBlockStory() {
+  return <RichTextFixture initialBody={trailingBlockValue} entryType={entry} />
+}
+
+export function RichTextReadOnlyTrailingBlockStory() {
+  return (
+    <RichTextFixture
+      initialBody={trailingBlockValue}
+      entryType={readOnlyEntry}
+    />
+  )
+}
+
 export function RichTextPlainStory() {
   return (
     <RichTextFixture
@@ -365,6 +378,8 @@ const blocksValue = [
   },
   paragraph('After the block.')
 ]
+
+const trailingBlockValue = blocksValue.slice(0, 2)
 
 const imageValue = [
   paragraph('Text before an existing image.'),
