@@ -80,7 +80,7 @@ test('lists the links that break when an entry is archived', async ({
   await expect(dialog.getByText('If this page was publicly')).toHaveCount(0)
   await expect(
     dialog.getByRole('list', {
-      name: 'Redirect the URL to another page (recommended)'
+      name: 'Redirect to'
     })
   ).toBeVisible()
   await dialog.getByRole('button', {name: 'Archive', exact: true}).click()
@@ -98,7 +98,7 @@ test('redirects the url of the archived page to the picked page', async ({
 
   await app.runEntryAction('Archive')
   const dialog = app.page.getByRole('dialog', {name: 'Archive entry'})
-  const label = 'Redirect the URL to another page (recommended)'
+  const label = 'Redirect to'
   const field = dialog.getByRole('list', {name: label})
   const pick = async () => {
     await field.getByRole('button', {name: label}).click()

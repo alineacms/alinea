@@ -200,15 +200,15 @@ test('redirects the url of a deleted page to the picked page', async ({
   ).toBeVisible()
   await expect(
     dialog.getByRole('list', {
-      name: 'Redirect the URL to another page (recommended)'
+      name: 'Redirect to'
     })
   ).toBeVisible()
   const field = dialog.getByRole('list', {
-    name: 'Redirect the URL to another page (recommended)'
+    name: 'Redirect to'
   })
   await field
     .getByRole('button', {
-      name: 'Redirect the URL to another page (recommended)'
+      name: 'Redirect to'
     })
     .click()
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})

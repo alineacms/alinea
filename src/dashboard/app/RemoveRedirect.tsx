@@ -37,12 +37,13 @@ export function RemoveRedirect({plan, disabled}: RemoveRedirectProps) {
   const form = useMemo(() => {
     const [first] = plan.subjects
     const {condition, locations} = redirectPicker(config, plan.subjects)
-    const label = several
-      ? 'Redirect the URLs to another page (recommended)'
-      : 'Redirect the URL to another page (recommended)'
+    const help = several
+      ? 'Recommended, so visitors of the old URLs land on this page'
+      : 'Recommended, so visitors of the old URL land on this page'
     return type('Redirect', {
       fields: {
-        redirect: entry(label, {
+        redirect: entry('Redirect to', {
+          help,
           condition,
           limitLocations: locations,
           location: {
