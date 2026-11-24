@@ -1,4 +1,5 @@
 import {Config} from '#/core/Config.js'
+import {Entry} from '#/core/Entry.js'
 import {Field} from '#/core/Field.js'
 import type {
   GraphQuery,
@@ -7,7 +8,8 @@ import type {
   Status
 } from '#/core/Graph.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
-import type {RootI18n} from '#/core/Root.js'
+import {getWorkspace} from '#/core/Internal.js'
+import {Root, type RootI18n} from '#/core/Root.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
 import {compileEntryQuery, type ProjectionPlan} from './EntryQuery.js'
@@ -105,14 +107,79 @@ function createLinkBatcher(
       {withId: true}
     )
     const result = await rows.all(context.database)
-    return Promise.all(
+    const found = await Promise.all(
       result.map(async row => ({
         id: (row as {id: string}).id,
         value: await projectRow(status, plan, row, context, load)
       }))
     )
+    if (!locale || found.length === ids.length) return found
+    const resolved = new Set(found.map(row => row.id))
+    const missing = ids.filter(id => !resolved.has(id))
+    return [...found, ...(await loadFallbacks(projection, missing, locale))]
+  }
+  // A link picked from a root with other locales names a locale the root of
+  // its entry doesn't have: it resolves like a link from within that root
+  async function loadFallbacks(
+    projection: Projection,
+    ids: Array<string>,
+    locale: string
+  ): Promise<Array<{id: string; value: unknown}>> {
+    const versions = (await compileEntryQuery(context.config, {
+      select: {
+        id: Entry.id,
+        locale: Entry.locale,
+        workspace: Entry.workspace,
+        root: Entry.root
+      },
+      id: {in: ids},
+      status
+    }).rows.all(context.database)) as Array<LinkVersion>
+    const linked = await Promise.all(
+      ids.map(async id => {
+        const chosen = fallbackLocale(
+          context.config,
+          versions.filter(version => version.id === id),
+          locale
+        )
+        if (chosen === undefined) return []
+        const [value] = await load(projection, [id], chosen ?? undefined)
+        return value === undefined ? [] : [{id, value}]
+      })
+    )
+    return linked.flat()
   }
   return load
+}
+
+interface LinkVersion {
+  id: string
+  locale: string | null
+  workspace: string
+  root: string
+}
+
+function fallbackLocale(
+  config: Config,
+  versions: Array<LinkVersion>,
+  locale: string
+): string | null | undefined {
+  const [first] = versions
+  if (!first) return
+  const workspace = config.workspaces[first.workspace]
+  const root = workspace && getWorkspace(workspace).roots[first.root]
+  const i18n = root && Root.data(root).i18n
+  const wanted = locale.toLowerCase()
+  // The entry has no version in a locale its root has: it stays unresolved
+  if (!i18n || i18n.locales.some(name => name.toLowerCase() === wanted)) return
+  const order = [...(i18n.fallback?.(locale) ?? []), ...i18n.locales]
+  for (const preferred of order.map(name => name.toLowerCase())) {
+    const version = versions.find(
+      version => version.locale?.toLowerCase() === preferred
+    )
+    if (version) return version.locale
+  }
+  return first.locale
 }
 
 function createLinkResolver(

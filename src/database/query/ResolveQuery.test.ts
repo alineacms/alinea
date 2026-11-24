@@ -1,7 +1,7 @@
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import {Edit} from '#/index.js'
+import {Config as ConfigBuilder, Edit, Field} from '#/index.js'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import {expect, test} from 'bun:test'
@@ -67,5 +67,87 @@ test('links of all result rows resolve in one query', async () => {
     ['s2', ['b', 'c']],
     ['s3', ['c', 'a']],
     ['s4', ['a', 'b']]
+  ])
+})
+
+const Person = ConfigBuilder.document('Person', {fields: {}})
+const Team = ConfigBuilder.document('Team', {
+  fields: {members: Field.entry.multiple('Members')}
+})
+const people = {
+  schema: {Person, Team},
+  workspaces: {
+    development: ConfigBuilder.workspace('Development', {
+      source: 'development',
+      roots: {
+        pages: ConfigBuilder.root('Pages', {i18n: {locales: ['en', 'nl']}})
+      }
+    }),
+    main: ConfigBuilder.workspace('Main', {
+      source: 'main',
+      roots: {
+        general: ConfigBuilder.root('General', {i18n: {locales: ['nl']}})
+      }
+    })
+  }
+}
+
+async function teamMembers(person: {workspace: string; root: string}) {
+  const db = connect(new Database(':memory:'))
+  await EntryDatabase.createSchema(db, people, ReadonlyTree.EMPTY.sha)
+  const store = new EntryStore(
+    people,
+    new EntryDatabase(people, db),
+    new MemorySource()
+  )
+  const member = (id: string, locale: string) => ({
+    _type: 'entry',
+    _id: `link-${id}`,
+    _index: id,
+    _entry: id,
+    _locale: locale
+  })
+  await store.mutate([
+    ...['ann', 'bob'].map(id => ({
+      op: 'create' as const,
+      id,
+      type: 'Person',
+      locale: 'nl',
+      ...person,
+      data: {title: id, path: id}
+    })),
+    {
+      op: 'create',
+      id: 'team',
+      type: 'Team',
+      locale: 'en',
+      workspace: 'development',
+      root: 'pages',
+      data: {
+        title: 'Team',
+        path: 'team',
+        // The picker stores the locale it shows
+        members: [member('ann', 'en'), member('bob', 'nl')]
+      }
+    }
+  ])
+  const team = await store.get({
+    type: Team,
+    locale: 'en',
+    select: {members: Team.members}
+  })
+  return team.members.map(link => (link as {title: string}).title)
+}
+
+test('links resolve to an entry of a root without their locale', async () => {
+  expect(await teamMembers({workspace: 'main', root: 'general'})).toEqual([
+    'ann',
+    'bob'
+  ])
+})
+
+test('links to an untranslated entry of a root with their locale', async () => {
+  expect(await teamMembers({workspace: 'development', root: 'pages'})).toEqual([
+    'bob'
   ])
 })
