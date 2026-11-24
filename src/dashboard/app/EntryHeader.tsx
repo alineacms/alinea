@@ -68,6 +68,7 @@ import {
   entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {EntryTranslations} from './EntryTranslations.js'
 import {
   type EntryValidationFailure,
   EntryValidationModal
@@ -562,6 +563,7 @@ export function EntryHeader({
       <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
         {typeData.label}
       </Badge>
+      <EntryTranslations entry={entry} locale={localeData.requestedLocale} />
       {!access.update && <ReadOnlyBadge />}
       {menuItems.length > 0 && (
         <DropdownMenu>
