@@ -430,32 +430,14 @@ test('an entry that is not published has no url to redirect', async () => {
   expect(store.get(plan.urls)).toEqual([])
 })
 
-test('urls redirect to pages that are not removed and can be edited', () => {
-  const policy = new WriteablePolicy(getScope(config))
-    .allowAll()
-    .set({root: other, deny: {update: true}})
-  const picker = redirectPicker(config, policy, [subject])
-  const item = (id: string, root = 'pages', parents = Array<string>()) => ({
-    id,
-    title: id,
-    path: id,
-    type: 'Page',
-    workspace: 'main',
-    root,
-    locale: null,
-    parentId: parents.at(-1) ?? null,
-    parents,
-    index: 'a0',
-    data: {},
-    hasChildren: false
+test('urls redirect to pages that are not removed', () => {
+  const picker = redirectPicker(config, [subject])
+  expect(picker.condition).toEqual({
+    _type: {in: ['Page']},
+    _id: {notIn: ['test']}
   })
-  expect(picker.condition).toEqual({_type: {in: ['Page']}})
   expect(picker.locations).toEqual([
     {workspace: 'main', root: 'pages'},
     {workspace: 'main', root: 'other'}
   ])
-  expect(picker.canSelect(item('home'))).toBe(true)
-  expect(picker.canSelect(item('test'))).toBe(false)
-  expect(picker.canSelect(item('child', 'pages', ['test']))).toBe(false)
-  expect(picker.canSelect(item('plain', 'other'))).toBe(false)
 })

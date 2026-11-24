@@ -199,9 +199,18 @@ test('redirects the url of a deleted page to the picked page', async ({
     )
   ).toBeVisible()
   await expect(
-    dialog.getByText('Redirect the URL to another page (recommended)')
+    dialog.getByRole('list', {
+      name: 'Redirect the URL to another page (recommended)'
+    })
   ).toBeVisible()
-  await dialog.getByRole('button', {name: 'Choose page…'}).click()
+  const field = dialog.getByRole('list', {
+    name: 'Redirect the URL to another page (recommended)'
+  })
+  await field
+    .getByRole('button', {
+      name: 'Redirect the URL to another page (recommended)'
+    })
+    .click()
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
   // The deleted page can't be picked
   await expect(picker.getByRole('row', {name: /^Beta/})).toHaveAttribute(
@@ -210,7 +219,7 @@ test('redirects the url of a deleted page to the picked page', async ({
   )
   await picker.getByRole('row', {name: /^Alpha/}).click()
   await expect(picker).toHaveCount(0)
-  await expect(dialog.getByText('/alpha', {exact: true})).toBeVisible()
+  await expect(field.getByRole('button', {name: /Alpha/})).toBeVisible()
   await dialog.getByRole('button', {name: 'Delete', exact: true}).click()
   await expect(dialog).toHaveCount(0)
 
