@@ -236,7 +236,8 @@ function conditionCheck(node: ConditionNode): FilterCheck<unknown> {
 }
 
 const relationMessage =
-  'Relation filters such as `_referenced: Query.referencedBy(...)` only work ' +
+  'Relation filters such as `_referenced: Query.referencedBy(...)` or ' +
+  '`_references: Query.references(...)` only work ' +
   'in queries (graph.find, EntryTable, overview filters), they cannot be ' +
   'checked against loaded entries'
 

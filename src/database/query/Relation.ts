@@ -16,6 +16,8 @@ import {
   not,
   or,
   sql,
+  when,
+  type HasSql,
   type Sql
 } from 'rado'
 import {
@@ -180,21 +182,65 @@ export function referencedByCondition(
     .select(EntryReferenceTable.source)
     .from(EntryReferenceTable)
     .where(eq(EntryReferenceTable.targetId, source.id))
-  const value = field && jsonField(entry.data, field.path)
-  const linked = !value
-    ? sql.value(true)
-    : field.multiple
-      ? arrayIncludes(value, item => eq(jsonField(item, ['_entry']), source.id))
-      : eq(jsonField(value, ['_entry']), source.id)
   return and(
     inArray(entry.rowid, references),
-    linked,
-    sameLocale
+    linksThrough(entry, field, source.id),
+    sameLocale ? localeOf(entry, source) : sql.value(true)
+  )
+}
+
+/**
+ * Entries the source links to: the reference index of the source finds them,
+ * a link field of the source narrows them down to the ones it links through.
+ * They share the locale of the source, unless either has none. Translations
+ * linked from a source without a locale must match `unlocalized`, leave it
+ * out to match every locale.
+ */
+export function referencesCondition(
+  entry: EntryIndexTarget,
+  source: EntryIndexTarget,
+  field?: ReferenceField,
+  unlocalized?: Sql<boolean>
+): Sql<boolean> {
+  const targets = new Builder()
+    .select(EntryReferenceTable.targetId)
+    .from(EntryReferenceTable)
+    .where(eq(EntryReferenceTable.source, source.rowid))
+  return and(
+    inArray(entry.id, targets),
+    linksThrough(source, field, entry.id),
+    unlocalized
       ? or(
-          sql<boolean>`${source.locale} is null`,
           sql<boolean>`${entry.locale} is null`,
-          eq(entry.locale, source.locale)
+          when(
+            [sql<boolean>`${source.locale} is null`, unlocalized],
+            eq(entry.locale, source.locale)
+          )
         )
       : sql.value(true)
+  )
+}
+
+/** Whether the link field of an entry links to the target */
+function linksThrough(
+  entry: EntryIndexTarget,
+  field: ReferenceField | undefined,
+  target: HasSql
+): Sql<boolean> {
+  if (!field) return sql.value(true)
+  const value = jsonField(entry.data, field.path)
+  return field.multiple
+    ? arrayIncludes(value, item => eq(jsonField(item, ['_entry']), target))
+    : eq(jsonField(value, ['_entry']), target)
+}
+
+function localeOf(
+  entry: EntryIndexTarget,
+  source: EntryIndexTarget
+): Sql<boolean> {
+  return or(
+    sql<boolean>`${source.locale} is null`,
+    sql<boolean>`${entry.locale} is null`,
+    eq(entry.locale, source.locale)
   )
 }

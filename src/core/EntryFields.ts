@@ -25,6 +25,13 @@ export interface EntryFilterFields extends EntryFields {
    * query, eg. `{_referenced: Query.referencedBy({type: Product})}`
    */
   _referenced: Related<{edge: 'referencedBy'}>
+  /**
+   * Whether the entry links to another entry, or to an entry that matches a
+   * query, eg. `{_references: Query.references({id: personId})}`. Set the
+   * `field` of the query to only follow one link field. Links in lists and
+   * rich text count too.
+   */
+  _references: Related<{edge: 'references'}>
 }
 
 export const EntryFields = {
