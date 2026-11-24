@@ -684,6 +684,61 @@ test('creates a translation in the root of its other locales', async () => {
   test.equal(translation, {workspace: 'international', root: 'articles'})
 })
 
+test('publishing a translation under a new path leaves no draft behind', async () => {
+  const db = await EntryStore.memory(localizedCms.config, new MemorySource())
+  await db.sync()
+  const create = (
+    id: string,
+    locale: string,
+    status: 'draft' | 'published',
+    title: string,
+    parentId?: string
+  ) =>
+    db.mutate([
+      {
+        op: 'create',
+        id,
+        type: 'Page',
+        locale,
+        workspace: 'international',
+        root: 'articles',
+        parentId,
+        status,
+        overwrite: true,
+        data: {title, path: title.toLowerCase()}
+      }
+    ])
+  const nl = () =>
+    db.find({
+      id: 'article',
+      locale: 'nl',
+      status: 'all',
+      select: {status: Entry.status, title: Entry.title, path: Entry.path}
+    })
+  await create('article', 'en', 'published', 'Article')
+  // The translation starts as a copy of the source language, under its path
+  await create('article', 'nl', 'draft', 'Article')
+  await create('article', 'nl', 'published', 'Artikel')
+  test.equal(await nl(), [
+    {status: 'published', title: 'Artikel', path: 'artikel'}
+  ])
+  // A draft next to a published version with children
+  await create('child', 'nl', 'published', 'Child', 'article')
+  await create('article', 'nl', 'draft', 'Artikel')
+  await create('article', 'nl', 'published', 'Nieuw')
+  test.equal(await nl(), [{status: 'published', title: 'Nieuw', path: 'nieuw'}])
+  const child = await db.first({
+    id: 'child',
+    locale: 'nl',
+    status: 'all',
+    select: {filePath: Entry.filePath, parentId: Entry.parentId}
+  })
+  test.equal(child, {
+    filePath: 'international/articles/nl/nieuw/child.json',
+    parentId: 'article'
+  })
+})
+
 const localizedDocumentCms = createCMS({
   schema: {DocumentPage},
   workspaces: {

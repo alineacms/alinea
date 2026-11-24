@@ -15,7 +15,7 @@ import {Root} from '#/core/Root.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
-import {entries} from '#/core/util/Objects.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {
@@ -270,8 +270,11 @@ export class EntryLocaleAtoms {
     // An old URL belongs to the language it was published in
     if (isUntranslated && data) data = dataWithoutAliases(data)
     if (isUntranslated && data && this.requestedLocale) {
+      // Shared values are saved to every language, their links stay as they are
+      const shared = Type.sharedData(type, data) ?? {}
+      const own = fromEntries(entries(data).filter(([key]) => !(key in shared)))
       const linkIds = new Set(
-        Type.references(type, data)
+        Type.references(type, own)
           .filter(reference => reference.linkType === 'entry')
           .map(reference => reference.targetId)
       )
@@ -283,10 +286,13 @@ export class EntryLocaleAtoms {
           locale: this.requestedLocale,
           status: 'preferDraft'
         })
-        data = Type.localizeLinks(type, data, {
-          locale: this.requestedLocale,
-          entryIds: new Set(translated)
-        })
+        data = {
+          ...data,
+          ...Type.localizeLinks(type, own, {
+            locale: this.requestedLocale,
+            entryIds: new Set(translated)
+          })
+        }
       }
     }
     const value = Type.withInitialValue(

@@ -359,8 +359,6 @@ export class EntryTransaction implements AsyncDisposable {
         locale
       })
     if (status !== 'published' && existingPath) path = existingPath
-    if (existingPath && existingPath !== path && status === 'published')
-      await this.#rename(id, locale, path)
 
     if (overwrite && existingMain && this.#isFile(existingMain.type)) {
       const stored = existingMain.data
@@ -417,10 +415,6 @@ export class EntryTransaction implements AsyncDisposable {
           : await this.#siblingIndex(location, 'asc')
       index = generateKeyBetween(previous, next)
     }
-    if (status === 'published') {
-      for (const version of existing.filter(entry => entry.locale === locale))
-        this.#sourceTransaction.remove(version.filePath)
-    }
     const parentDir = await this.#parentDir(
       parentId,
       locale,
@@ -471,6 +465,17 @@ export class EntryTransaction implements AsyncDisposable {
       status
     )
     if (fromSeed && data.title === undefined) delete record.title
+    if (status === 'published') {
+      // Publishing replaces the versions of this locale, its children move
+      // along to a new path
+      for (const version of existing.filter(entry => entry.locale === locale))
+        this.#sourceTransaction.remove(version.filePath)
+      if (existingMain && existingMain.path !== path)
+        this.#sourceTransaction.rename(
+          existingMain.childrenDir,
+          paths.join(existingMain.parentDir, path)
+        )
+    }
     this.#addRecord(filePath, record)
     this.#messages.push(this.#report('create', title))
   }
