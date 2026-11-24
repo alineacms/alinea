@@ -684,6 +684,41 @@ test('creates a translation in the root of its other locales', async () => {
   test.equal(translation, {workspace: 'international', root: 'articles'})
 })
 
+test('publishing a draft translation under a new path leaves no draft behind', async () => {
+  const db = await EntryStore.memory(localizedCms.config, new MemorySource())
+  await db.sync()
+  const create = (
+    locale: string,
+    status: 'draft' | 'published',
+    title: string
+  ) =>
+    db.mutate([
+      {
+        op: 'create',
+        id: 'article',
+        type: 'Page',
+        locale,
+        workspace: 'international',
+        root: 'articles',
+        status,
+        data: {title, path: title.toLowerCase()}
+      }
+    ])
+  await create('en', 'published', 'Article')
+  // The translation starts as a copy of the source language, under its path
+  await create('nl', 'draft', 'Article')
+  await create('nl', 'published', 'Artikel')
+  const versions = await db.find({
+    id: 'article',
+    locale: 'nl',
+    status: 'all',
+    select: {status: Entry.status, title: Entry.title, path: Entry.path}
+  })
+  test.equal(versions, [
+    {status: 'published', title: 'Artikel', path: 'artikel'}
+  ])
+})
+
 const localizedDocumentCms = createCMS({
   schema: {DocumentPage},
   workspaces: {

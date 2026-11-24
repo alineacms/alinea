@@ -427,6 +427,25 @@ test('Localizes entry links to translated targets', () => {
   )
 })
 
+test('localizeLinks leaves shared fields alone', () => {
+  // A shared value is saved to every language
+  const Linked = type('Linked', {
+    fields: {
+      own: entry('Own'),
+      shared: entry('Shared', {shared: true})
+    }
+  })
+  const input = {
+    own: {_type: 'entry', _id: 'own', _entry: 'news'},
+    shared: {_type: 'entry', _id: 'shared', _entry: 'news'}
+  }
+  const localized = Type.localizeLinks(Linked, input, {
+    locale: 'nl',
+    entryIds: new Set(['news'])
+  })
+  test.equal(localized, {...input, own: {...input.own, _locale: 'nl'}})
+})
+
 test('references carry the labels of the fields leading to them', () => {
   const Documents = type('Documents', {
     fields: {links: link.multiple('Links')}

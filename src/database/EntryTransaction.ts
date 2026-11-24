@@ -359,6 +359,12 @@ export class EntryTransaction implements AsyncDisposable {
         locale
       })
     if (status !== 'published' && existingPath) path = existingPath
+    // Publishing replaces the versions of this locale. Remove them before a
+    // rename, which would otherwise move a draft out of reach of the removal.
+    if (status === 'published') {
+      for (const version of existing.filter(entry => entry.locale === locale))
+        this.#sourceTransaction.remove(version.filePath)
+    }
     if (existingPath && existingPath !== path && status === 'published')
       await this.#rename(id, locale, path)
 
@@ -416,10 +422,6 @@ export class EntryTransaction implements AsyncDisposable {
           ? null
           : await this.#siblingIndex(location, 'asc')
       index = generateKeyBetween(previous, next)
-    }
-    if (status === 'published') {
-      for (const version of existing.filter(entry => entry.locale === locale))
-        this.#sourceTransaction.remove(version.filePath)
     }
     const parentDir = await this.#parentDir(
       parentId,

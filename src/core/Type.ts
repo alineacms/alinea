@@ -215,6 +215,8 @@ export namespace Type {
   ): Record<string, unknown> {
     let next = value
     for (const [key, field] of entries(fields(type))) {
+      // A shared value is saved to every language, its links stay as they are
+      if (Field.options(field).shared) continue
       const before = next[key]
       const after = Field.localizeLinks(field, before, context)
       if (after === before) continue
