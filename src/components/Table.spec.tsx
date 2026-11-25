@@ -49,7 +49,7 @@ test('custom root view with thumbnails, custom columns and headers', async ({
   await expect(row).toHaveAttribute('aria-selected', 'true')
 
   // Filtering
-  await page.getByRole('button', {name: /All owner regions/}).click()
+  await page.getByLabel('Owner region').click()
   await page.getByRole('option', {name: 'Netherlands'}).click()
   await expect(rows).toHaveCount(4)
   await expect(page.getByText(/4 articles/)).toBeVisible()

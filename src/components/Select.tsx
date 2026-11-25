@@ -178,7 +178,9 @@ function SelectTrigger({
         >
           {({isPlaceholder, defaultChildren}) =>
             isPlaceholder ? (
-              <span className={styles.SelectTrigger.placeholder()}>
+              // The value names the button next to the label, a placeholder
+              // would only repeat it
+              <span aria-hidden className={styles.SelectTrigger.placeholder()}>
                 {defaultChildren}
               </span>
             ) : (
