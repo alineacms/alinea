@@ -87,13 +87,16 @@ export function FormConditionView({field}: FormConditionViewProps) {
   const always = options.effect === 'show' || options.effect === 'send'
   const condition = value ?? undefined
   const subject =
+    self?.input.control === 'section'
+      ? 'section'
+      : self?.input.control === 'content'
+        ? 'text'
+        : 'input'
+  // A mail is sent once every answer is in, it is not above or below them
+  const scope =
     options.effect === 'send'
-      ? 'mail'
-      : self?.input.control === 'section'
-        ? 'section'
-        : self?.input.control === 'content'
-          ? 'text'
-          : 'input'
+      ? 'the inputs of the form outside repeatable sections'
+      : `the inputs above this ${subject}`
 
   function update(next: Partial<FormCondition>) {
     if (!condition) return
@@ -209,10 +212,10 @@ export function FormConditionView({field}: FormConditionViewProps) {
       )}
       <Text size="sm" color="muted">
         {!initial
-          ? `Rules use the inputs above this ${subject}, there are none yet.`
+          ? `Rules use ${scope}, there are none yet.`
           : locales.length > 0
-            ? `Rules can use the language and the inputs above this ${subject}.`
-            : `Rules can use the inputs above this ${subject}.`}
+            ? `Rules can use the language and ${scope}.`
+            : `Rules can use ${scope}.`}
       </Text>
     </div>
   )
