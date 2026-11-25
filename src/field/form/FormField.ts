@@ -25,7 +25,7 @@ import {
 } from './FormDefinition.js'
 import type {FormCondition} from './FormConditions.js'
 import {readingOrder, ruleErrors} from './FormRules.js'
-import {languageText, shareForm} from './FormShare.js'
+import {fillForm, languageText, shareForm} from './FormShare.js'
 import {Input} from './FormInput.js'
 
 /** Optional settings to configure a form field */
@@ -75,7 +75,8 @@ export function form<Inputs extends Record<string, Input>>(
         : nested[key]
     ])
   )
-  return new FormField(schema, {
+  type Keys = Extract<keyof Inputs, string>
+  const field: FormField<Keys> = new FormField(schema, {
     options: {label, ...options, schema},
     view: viewKeys.FormInput,
     nestedErrors(value, context) {
@@ -94,10 +95,15 @@ export function form<Inputs extends Record<string, Input>>(
     beforeSave({value}) {
       return fixedKeys(inputs, value) as Array<FormRow>
     },
-    async queryValue(value) {
-      return formDefinition(inputs, value) as FormDefinition<any>
+    async queryValue(value, loader) {
+      // Texts a language has not translated yet show in another language
+      const rows = options.shared
+        ? fillForm(inputs, value, await loader.translations(field))
+        : value
+      return formDefinition(inputs, rows) as FormDefinition<any>
     }
   })
+  return field
 }
 
 /** Inputs with one answer that can be compared, not files or checks */

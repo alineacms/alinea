@@ -42,6 +42,7 @@ import type {
   SubmissionStatus
 } from '#/core/Connection.js'
 import {Field} from '#/core/Field.js'
+import {Root, type RootI18n} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
 import {
@@ -53,7 +54,8 @@ import {
 import {clientAtom, configAtom} from '#/dashboard/atoms/core.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {atomWithPending, dispense} from '#/dashboard/atoms/utils.js'
-import {useEditor, useEntry} from '#/dashboard/hooks.js'
+import {useEditor, useEntry, useLocale} from '#/dashboard/hooks.js'
+import {useOtherVersions} from '#/dashboard/app/useMissingLanguages.js'
 import {
   IcOutlineTableRows,
   IcRoundArchive,
@@ -89,6 +91,7 @@ import {formState} from './FormConditions.js'
 import type {FormDefinition, FormInputData} from './FormDefinition.js'
 import {formDefinition, inputsOf} from './FormDefinition.js'
 import {FormField} from './FormField.js'
+import {fillForm} from './FormShare.js'
 import css from './FormSubmissions.module.css'
 
 const styles = styler(css)
@@ -184,17 +187,19 @@ function startOfDay(day: string, add = 0): number {
 }
 
 const columns = 4
+const noLocales: ReadonlyArray<string> = []
 
 /** The answers visitors sent to the form of the entry */
 export function FormSubmissionsView() {
   const entry = useEntry()
-  const definition = useFormDefinition()
   const config = useAtomValueRaw(configAtom)
-  const locales = useMemo(() => {
+  const i18n = useMemo(() => {
     const workspace = entry && config.workspaces[entry.workspace]
     const root = workspace && getWorkspace(workspace).roots[entry.root]
-    return root ? (getRoot(root).i18n?.locales ?? []) : []
+    return root ? getRoot(root).i18n : undefined
   }, [config, entry])
+  const definition = useFormDefinition(i18n)
+  const locales = i18n?.locales ?? noLocales
   if (!entry || !definition) return null
   return (
     <FormSubmissions
@@ -206,8 +211,12 @@ export function FormSubmissionsView() {
 }
 
 /** The form as it is now in the editor, which the table shows columns for */
-function useFormDefinition(): FormDefinition | undefined {
+function useFormDefinition(
+  i18n: RootI18n | undefined
+): FormDefinition | undefined {
   const editor = useEditor()
+  const locale = useLocale()
+  const versions = useOtherVersions()
   const [key, field] =
     entries(Type.fields(editor.type)).find(
       ([, field]) => field instanceof FormField
@@ -215,13 +224,18 @@ function useFormDefinition(): FormDefinition | undefined {
   const rows = useAtomValueRaw(
     useMemo(() => editor.node.field(key ?? '_form'), [editor, key])
   )
-  return useMemo(
-    () =>
-      field instanceof FormField
-        ? formDefinition(Field.options(field).inputs, rows)
-        : undefined,
-    [field, rows]
-  )
+  return useMemo(() => {
+    if (!key || !(field instanceof FormField)) return undefined
+    const {inputs, shared} = Field.options(field)
+    // Columns show texts this language has not translated yet like the site
+    const others =
+      shared && locale
+        ? Root.fallbackOrder(i18n, locale, versions).map(
+            version => (version.data as Record<string, unknown>)[key]
+          )
+        : []
+    return formDefinition(inputs, fillForm(inputs, rows, others))
+  }, [field, i18n, key, locale, rows, versions])
 }
 
 interface FormSubmissionsProps {

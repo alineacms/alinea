@@ -9,6 +9,7 @@ import type {
 } from '#/core/Graph.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {getWorkspace} from '#/core/Internal.js'
+import {getScope} from '#/core/Scope.js'
 import {Root, type RootI18n} from '#/core/Root.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
@@ -46,6 +47,45 @@ interface LinkLoader {
     ids: ReadonlyArray<string>,
     locale: string | undefined
   ): Promise<Array<unknown>>
+  /** The data of an entry in each of its locales */
+  versions(id: string): Promise<Array<EntryVersion>>
+}
+
+interface EntryVersion {
+  id: string
+  locale: string | null
+  data: Record<string, unknown>
+}
+
+/**
+ * The versions of the entries that rows ask for while they project, loaded
+ * by one query
+ */
+function createVersionBatcher(
+  status: Status,
+  context: EntryQueryContext
+): (id: string) => Promise<Array<EntryVersion>> {
+  let batch: {ids: Set<string>; rows: Promise<Array<EntryVersion>>} | undefined
+  return async id => {
+    if (!batch) {
+      const ids = new Set<string>()
+      batch = {
+        ids,
+        rows: nextTurn().then(() => {
+          batch = undefined
+          const {rows} = compileEntryQuery(context.config, {
+            select: {id: Entry.id, locale: Entry.locale, data: Entry.data},
+            id: {in: [...ids]},
+            status
+          })
+          return rows.all(context.database) as Promise<Array<EntryVersion>>
+        })
+      }
+    }
+    const {ids, rows} = batch
+    ids.add(id)
+    return (await rows).filter(row => row.id === id)
+  }
 }
 
 interface LinkBatch {
@@ -73,7 +113,14 @@ function createLinkBatcher(
   context: EntryQueryContext
 ): LinkLoader {
   const pending = new Map<Projection, Map<string | undefined, LinkBatch>>()
-  const load: LinkLoader = async (projection, ids, locale) => {
+  const load: LinkLoader = Object.assign(links, {
+    versions: createVersionBatcher(status, context)
+  })
+  async function links(
+    projection: Projection,
+    ids: ReadonlyArray<string>,
+    locale: string | undefined
+  ): Promise<Array<unknown>> {
     let byLocale = pending.get(projection)
     if (!byLocale) pending.set(projection, (byLocale = new Map()))
     let batch = byLocale.get(locale)
@@ -182,16 +229,37 @@ function fallbackLocale(
   return first.locale
 }
 
+interface ProjectedRow {
+  id: string
+  value: unknown
+  locale: string | null
+  workspace: string
+  root: string
+}
+
 function createLinkResolver(
   locale: string | null,
   context: EntryQueryContext,
   links: LinkLoader,
-  fieldI18n?: RootI18n
+  fieldI18n: RootI18n | undefined,
+  entry: ProjectedRow
 ): LinkResolver {
   const loader: LinkResolver = {
     config: context.config,
     locale,
     fieldI18n,
+    async translations(field) {
+      if (!entry.locale) return []
+      const [, path] = getScope(context.config).fieldOf(field) ?? []
+      if (!path) return []
+      const workspace = context.config.workspaces[entry.workspace]
+      const root = workspace && getWorkspace(workspace).roots[entry.root]
+      const i18n = root && Root.data(root).i18n
+      const versions = await links.versions(entry.id)
+      return Root.fallbackOrder(i18n, entry.locale, versions).map(version =>
+        getProjectionValue(version.data, path.split('.'))
+      )
+    },
     includedAtBuild(filePath) {
       return context.includedAtBuild(filePath)
     },
@@ -267,12 +335,7 @@ async function projectRow(
   inheritedLocale: string | null = null
 ): Promise<unknown> {
   if (!plan.wrapped) return row
-  const projected = row as {
-    value: unknown
-    locale: string | null
-    workspace: string
-    root: string
-  }
+  const projected = row as ProjectedRow
   let value = projected.value
   if (!plan.relations.length && !plan.fields.length) return value
   // Field values resolve in the locale of their row, or for an untranslated
@@ -284,7 +347,13 @@ async function projectRow(
     projected.workspace,
     projected.root
   )
-  const loader = createLinkResolver(locale, context, links, fieldI18n)
+  const loader = createLinkResolver(
+    locale,
+    context,
+    links,
+    fieldI18n,
+    projected
+  )
   await Promise.all(
     plan.fields.map(async selected => {
       if (!selected.path.length) {

@@ -1,4 +1,5 @@
 import type {Field} from '#/core/Field.js'
+import {isEmptyDoc} from '#/core/TextDoc.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {Input} from './FormInput.js'
 
@@ -105,5 +106,102 @@ export function shareForm(
         )
       return value
     }
+  )
+}
+
+/** The fields of a mail that each language has of its own */
+export const mailTexts = new Set(['subject', 'body'])
+
+function isBlank(value: unknown): boolean {
+  if (Array.isArray(value)) return isEmptyDoc(value)
+  return value === undefined || value === null || value === ''
+}
+
+/**
+ * Rows with the texts they have not translated yet taken from `others`, the
+ * same rows in other languages, the language to fall back to first
+ */
+export function fillRows(
+  rows: unknown,
+  others: Array<unknown>,
+  keysOf: (row: Row) => Set<string> | undefined,
+  nested: (
+    row: Row,
+    key: string,
+    value: unknown,
+    theirs: Array<unknown>
+  ) => unknown
+): unknown {
+  if (!Array.isArray(rows) || others.length === 0) return rows
+  const theirs = others.map(
+    other => new Map(rowsOf(other).map(row => [row._id, row]))
+  )
+  return rows.map(row => {
+    if (!isRecord(row)) return row
+    const texts = keysOf(row)
+    if (!texts) return row
+    const same = theirs.flatMap(map => {
+      const other = map.get(row._id)
+      return other && other._type === row._type ? [other] : []
+    })
+    const result: Row = {}
+    for (const [key, value] of Object.entries(row))
+      result[key] = texts.has(key)
+        ? value
+        : nested(
+            row,
+            key,
+            value,
+            same.map(other => other[key])
+          )
+    for (const key of texts) {
+      if (!isBlank(row[key])) continue
+      const found = same.find(other => !isBlank(other[key]))
+      if (found) result[key] = found[key]
+    }
+    return result
+  })
+}
+
+/**
+ * The rows of a shared form with the texts a language has not translated
+ * yet taken from `others`, the rows of the other languages in the order to
+ * fall back to them
+ */
+export function fillForm(
+  inputs: Record<string, Input>,
+  rows: unknown,
+  others: Array<unknown>
+): unknown {
+  return fillRows(
+    rows,
+    others,
+    row => {
+      const input = inputs[row._type as string]
+      return input && textKeys(input)
+    },
+    (row, key, value, theirs) => {
+      const input = inputs[row._type as string]
+      if (input?.control === 'section' && key === 'inputs')
+        return fillForm(inputs, value, theirs)
+      if (key === 'options')
+        return fillRows(
+          value,
+          theirs,
+          option => (option._type === 'option' ? optionTexts : undefined),
+          (_, __, nestedValue) => nestedValue
+        )
+      return value
+    }
+  )
+}
+
+/** The mails of a shared form with an empty subject or body filled in */
+export function fillMails(mails: unknown, others: Array<unknown>): unknown {
+  return fillRows(
+    mails,
+    others,
+    () => mailTexts,
+    (_, __, value) => value
   )
 }

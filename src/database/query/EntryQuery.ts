@@ -410,7 +410,7 @@ interface EntryQueryOptions {
   baseEntry?: EntryIndexTarget
   /** Select the single expression of the query, to use it as a subquery */
   scalar?: boolean
-  /** Wrap every row and carry its entry id next to the selection. */
+  /** Wrap every row, which carries its entry id next to the selection */
   withId?: boolean
   /** The locale an outer query asked for */
   locale?: string | null
@@ -815,7 +815,7 @@ export function compileEntryQuery(
             // Localised fields read the locales of the root of their entry
             workspace: entry.workspace,
             root: entry.root,
-            ...(options.withId ? {id: entry.id} : {}),
+            id: entry.id,
             ...(selfFirst ? {selfFirst} : {})
           }
         : selection

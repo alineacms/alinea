@@ -58,6 +58,17 @@ function otherLanguages(versions: Array<Entry>, locale: string): Array<Entry> {
 const noEntry = atom<{entries: Array<Entry>} | null>(null)
 const translated = atom(false)
 
+/** The entry being edited in each other language, published first */
+export function useOtherVersions(): Array<Entry> {
+  const context = useContext(entryContext)
+  const locale = useLocale()
+  const data = useAtomValueRaw(context?.entry.data ?? noEntry)
+  return useMemo(
+    () => (data && locale ? otherLanguages(data.entries, locale) : []),
+    [data, locale]
+  )
+}
+
 /**
  * The record with this id, eg. a list row, in the other languages of the
  * entry being edited, to compare what each language filled in

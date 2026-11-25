@@ -3,7 +3,7 @@ import {MemorySource} from '#/core/source/MemorySource.js'
 import {EntryStore} from '#/database/EntryStore.js'
 import {Config, Form} from '#/index.js'
 import {expect, test} from 'bun:test'
-import {shareForm} from './FormShare.js'
+import {fillForm, shareForm} from './FormShare.js'
 
 const option = (id: string, label: string) => ({
   _id: id,
@@ -137,4 +137,92 @@ test('saving a shared form writes its structure into the other languages', async
     ['room', 'Kot'],
     ['mail', undefined]
   ])
+})
+
+const mail = {_id: 'mail', _index: 'a2', _type: 'email', key: 'email'}
+
+test('texts not translated yet fall back to another language', () => {
+  const rows = [
+    {...dutch[0], placeholder: ''},
+    {
+      ...dutch[1],
+      options: [option('yes', 'Ja'), {...option('no', 'No'), label: undefined}]
+    },
+    mail
+  ]
+  const theirs = [
+    english[0],
+    {...english[1], options: [option('yes', 'Yes'), option('no', 'No')]},
+    {...mail, label: 'Email'}
+  ]
+  const filled = fillForm(Form.defaults, rows, [theirs]) as Array<{
+    label: string
+    placeholder?: string
+    options?: Array<{label: string}>
+  }>
+  expect(filled.map(row => row.label)).toEqual(['Naam', 'Kot', 'Email'])
+  expect(filled[0].placeholder).toBe('Your name')
+  expect(filled[1].options!.map(option => option.label)).toEqual(['Ja', 'No'])
+})
+
+async function translatedForm(
+  i18n: {locales: Array<string>; fallback?: (locale: string) => Array<string>},
+  versions: Record<string, Array<Record<string, unknown>>>
+) {
+  const FormEntry = Form.type('Form', {inputs: Form.defaults, shared: true})
+  const cms = createCMS({
+    schema: {FormEntry},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {forms: Config.root('Forms', {contains: ['FormEntry'], i18n})}
+      })
+    }
+  })
+  const db = await EntryStore.memory(cms.config, new MemorySource())
+  await db.sync()
+  for (const [locale, inputs] of Object.entries(versions))
+    await db.mutate([
+      {
+        op: 'create',
+        id: 'form',
+        locale,
+        type: 'FormEntry',
+        workspace: 'main',
+        root: 'forms',
+        data: {title: 'Form', path: `form-${locale}`, inputs}
+      }
+    ])
+  return async (locale: string) => {
+    const inputs = await db.first({
+      id: 'form',
+      locale,
+      select: FormEntry.inputs
+    })
+    return inputs!.map(item => item.label)
+  }
+}
+
+test('a shared form shows the texts of the default language', async () => {
+  const labels = await translatedForm(
+    {locales: ['en', 'nl']},
+    {en: [...english, {...mail, label: 'Email'}], nl: [...dutch, mail]}
+  )
+  expect(await labels('nl')).toEqual(['Naam', 'Kot', 'Email'])
+  expect(await labels('en')).toEqual(['Name', 'Room', 'Email'])
+})
+
+test('a shared form follows the fallback of its root', async () => {
+  const versions = {
+    en: [...english, {...mail, label: 'Email'}],
+    nl: [...dutch, {...mail, label: 'E-mail'}],
+    'nl-BE': [english[0], english[1], mail].map(row => ({...row, label: ''}))
+  }
+  const plain = await translatedForm({locales: ['en', 'nl', 'nl-BE']}, versions)
+  expect(await plain('nl-BE')).toEqual(['Name', 'Room', 'Email'])
+  const flemish = await translatedForm(
+    {locales: ['en', 'nl', 'nl-BE'], fallback: () => ['nl']},
+    versions
+  )
+  expect(await flemish('nl-BE')).toEqual(['Naam', 'Kot', 'E-mail'])
 })

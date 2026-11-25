@@ -37,7 +37,7 @@ import type {Input} from './FormInput.js'
 import type {FormCondition} from './FormConditions.js'
 import {answerKeys, mailProblem, mailTextProblem} from './FormMails.js'
 import {readingOrder} from './FormRules.js'
-import {languageText, shareRows} from './FormShare.js'
+import {languageText, mailTexts, shareRows} from './FormShare.js'
 
 export interface FormTypeConfig<
   Inputs extends Record<string, Input>,
@@ -101,8 +101,6 @@ export type FormMailList = ListField<
 >
 
 /** The notification mails of a form, sent when it is submitted */
-/** The fields of a mail that each language has of its own */
-const mailTexts = new Set(['subject', 'body'])
 
 function mailList(inputsField: FormField, shared?: boolean): FormMailList {
   const inputs = Field.options(inputsField).inputs
