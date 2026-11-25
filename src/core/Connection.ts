@@ -158,6 +158,8 @@ export interface SubmissionQuery {
   choice?: {key: string; value: string}
   /** Sent in this language */
   locale?: string
+  /** Sent in one of these languages, null for a form without languages */
+  locales?: Array<string | null>
   /** Sent at or after, in seconds */
   from?: number
   /** Sent before, in seconds */

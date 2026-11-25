@@ -2,7 +2,7 @@ import type {Database} from 'rado'
 import * as driver from 'rado/driver'
 import {SubmissionStore} from './api/SubmissionStore.js'
 import type {Config} from '#/core/Config.js'
-import type {SubmissionsApi} from '#/core/Connection.js'
+import type {Submission, SubmissionsApi} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {FormsOptions} from '#/core/Forms.js'
 import type {Graph} from '#/core/Graph.js'
@@ -30,6 +30,19 @@ import {HandleAction} from './HandleAction.js'
 function expectJson(request: Request) {
   if (!request.headers.get('content-type')?.includes('application/json'))
     throw new HttpError(400, 'Expected JSON')
+}
+
+async function submissionOf(
+  store: Required<SubmissionsApi>,
+  entryId: string,
+  id: string
+): Promise<Submission | undefined> {
+  const {submissions} = await store.listSubmissions(entryId, {
+    id,
+    status: 'all',
+    limit: 1
+  })
+  return submissions[0]
 }
 
 /** The store of forms.database, when it is set */
@@ -73,6 +86,20 @@ export function editorPermission(method: string): Permission {
   return Permission.Read
 }
 
+/**
+ * The languages of a form an editor may work with the submissions of, or
+ * all of them
+ */
+export type FormAccess = 'all' | Array<string | null>
+
+function allows(access: FormAccess, locale: string | null): boolean {
+  return access === 'all' || access.includes(locale)
+}
+
+function refuse(): never {
+  throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
+}
+
 export interface FormRequestOptions {
   config: Config
   /** The content, where the published forms are read from */
@@ -85,10 +112,11 @@ export interface FormRequestOptions {
   /** Where browsers upload the files of forms to */
   handlerUrl: URL
   /**
-   * Asserts the editor may do this with the form entry, for requests of the
-   * dashboard. The caller checks the api key of requests of the site.
+   * Asserts the editor may do this with the form entry and gives the
+   * languages they may, for requests of the dashboard. The caller checks
+   * the api key of requests of the site.
    */
-  authorize(entryId: string, permission: Permission): Promise<void>
+  authorize(entryId: string, permission: Permission): Promise<FormAccess>
 }
 
 /**
@@ -157,12 +185,18 @@ export async function handleFormRequest(
   // A file of a submission, for editors who can read its form
   if (action === HandleAction.SubmissionFile && request.method === 'GET') {
     const entryId = param('entryId')
-    await authorize(entryId, Permission.Read)
-    const file = await submissionStore(api).readFormFile(entryId, param('id'))
-    const content =
-      file && (file.content ?? (await forms.files?.read(fileKey(file))))
-    if (!file || !content)
-      throw new HttpError(ErrorCode.NotFound, 'File not found')
+    const access = await authorize(entryId, Permission.Read)
+    const store = submissionStore(api)
+    const file = await store.readFormFile(entryId, param('id'))
+    if (!file) throw new HttpError(ErrorCode.NotFound, 'File not found')
+    if (access !== 'all') {
+      const submission =
+        file.submissionId &&
+        (await submissionOf(store, entryId, file.submissionId))
+      if (!submission || !allows(access, submission.locale)) refuse()
+    }
+    const content = file.content ?? (await forms.files?.read(fileKey(file)))
+    if (!content) throw new HttpError(ErrorCode.NotFound, 'File not found')
     return new Response(new Uint8Array(content), {
       headers: {
         'content-type': 'application/octet-stream',
@@ -178,7 +212,7 @@ export async function handleFormRequest(
     const entryId = param('entryId')
     const store = submissionStore(api)
     if (request.method === 'GET') {
-      await authorize(entryId, Permission.Read)
+      const access = await authorize(entryId, Permission.Read)
       // The form keeps its submissions as long as it says now
       const entry = await graph.first({
         id: entryId,
@@ -191,24 +225,30 @@ export async function handleFormRequest(
           formSettings(config.schema[entry.type], entry.data).keep
         )
       await purgeSubmissions(store, forms)
-      const query = url.searchParams.get('query')
+      const search = url.searchParams.get('query')
+      const query = search ? parseSubmissionQuery(JSON.parse(search)) : {}
+      if (query.locale !== undefined && !allows(access, query.locale)) refuse()
       return Response.json(
         await store.listSubmissions(
           entryId,
-          query ? parseSubmissionQuery(JSON.parse(query)) : {}
+          access === 'all' ? query : {...query, locales: access}
         )
       )
     }
     const id = param('id')
     // Browsers ask before they send json to another site, a form can not
     expectJson(request)
+    const permission = editorPermission(request.method)
+    const access = await authorize(entryId, permission)
+    if (access !== 'all') {
+      const submission = await submissionOf(store, entryId, id)
+      if (submission && !allows(access, submission.locale)) refuse()
+    }
     if (request.method === 'DELETE') {
-      await authorize(entryId, Permission.Delete)
       await removeFiles(forms, await store.deleteSubmission(entryId, id))
       return new Response(null, {status: 204})
     }
     if (request.method === 'POST') {
-      await authorize(entryId, Permission.Update)
       const {status} = (await request.json()) as {status?: unknown}
       if (status !== 'new' && status !== 'read' && status !== 'archived')
         throw new HttpError(400, 'Unknown status')

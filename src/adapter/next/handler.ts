@@ -117,8 +117,11 @@ export function createHandlerWithDatabase(
         forms: options.forms ?? {},
         secret: context.apiKey,
         handlerUrl: new URL(handlerPathname(config, url), url.origin),
-        // The dev server checked the editor before it forwarded
-        async authorize() {}
+        // The dev server checked the editor may work with every language
+        // of the form before it forwarded
+        async authorize() {
+          return 'all'
+        }
       })
       return response ?? failure(404, 'Not found')
     } catch (error) {

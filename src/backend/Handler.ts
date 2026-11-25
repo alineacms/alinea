@@ -1,4 +1,5 @@
 import {
+  type FormAccess,
   type FormRequestOptions,
   databaseStore,
   editorPermission,
@@ -250,16 +251,29 @@ export function createHandler({
           }
         }
       }
-      /** Asserts the editor may do this with the form entry */
-      async function authorize(entryId: string, permission: Permission) {
+      /**
+       * The languages of the form entry the editor may do this with, as
+       * a role can be limited to some of them
+       */
+      async function authorize(
+        entryId: string,
+        permission: Permission
+      ): Promise<FormAccess> {
         const user = expectUser()
-        const entry = await local.first({
+        const versions = await local.find({
           id: entryId,
           status: 'preferPublished',
           select: historyResource
         })
-        if (!entry) throw new HttpError(ErrorCode.NotFound, 'Entry not found')
-        ;(await user.policy).assert(permission, entry)
+        if (versions.length === 0)
+          throw new HttpError(ErrorCode.NotFound, 'Entry not found')
+        const policy = await user.policy
+        const allowed = versions.filter(version =>
+          policy.check(permission, version)
+        )
+        if (allowed.length === 0) policy.assert(permission, versions[0])
+        if (allowed.length === versions.length) return 'all'
+        return allowed.map(version => version.locale)
       }
       function formOptions(): FormRequestOptions {
         return {
@@ -530,8 +544,16 @@ export function createHandler({
             entryId &&
             (action === HandleAction.Submissions ||
               action === HandleAction.SubmissionFile)
-          )
-            await authorize(entryId, editorPermission(request.method))
+          ) {
+            // The app does not see the editor, nor which languages they
+            // may work with, so they need to be allowed in all of them
+            const access = await authorize(
+              entryId,
+              editorPermission(request.method)
+            )
+            if (access !== 'all')
+              throw new HttpError(ErrorCode.Unauthorized, 'Permission denied')
+          }
           return await forwardForms(request)
         }
         await periodicSync(cnx, cms.config.syncInterval)

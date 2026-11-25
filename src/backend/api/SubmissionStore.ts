@@ -204,6 +204,7 @@ export class SubmissionStore implements SubmissionsApi {
       query.id ? eq(SubmissionTable.id, query.id) : undefined,
       statusCondition(query.status ?? 'all'),
       query.locale ? eq(SubmissionTable.locale, query.locale) : undefined,
+      query.locales && inLocales(query.locales),
       query.from !== undefined
         ? gte(SubmissionTable.createdAt, query.from)
         : undefined,
@@ -427,6 +428,16 @@ export class SubmissionStore implements SubmissionsApi {
       .where(and(eq(FileTable.entryId, entryId), eq(FileTable.id, id)))
     return file
   }
+}
+
+function inLocales(locales: Array<string | null>) {
+  const named = locales.filter(locale => locale !== null)
+  return or(
+    named.length > 0 ? inArray(SubmissionTable.locale, named) : undefined,
+    locales.includes(null) ? isNull(SubmissionTable.locale) : undefined,
+    // No language at all matches nothing
+    sql<boolean>`1 = 0`
+  )
 }
 
 /** A text column that contains the text, its wildcards matched as they are */

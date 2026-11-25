@@ -10,6 +10,7 @@ import {Type} from '#/core/Type.js'
 import type {FormMail, FormsOptions} from '#/core/Forms.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field, Form} from '#/index.js'
+import {role} from '#/core/Role.js'
 import {Database as BunSqlite} from 'bun:sqlite'
 import {expect, test} from 'bun:test'
 import * as driver from 'rado/driver'
@@ -693,4 +694,84 @@ test('a mail links to the submission and attaches its files', async () => {
     }
   ])
   expect(plain.attachments).toBeUndefined()
+})
+
+test('an editor of one language reads the submissions sent in it', async () => {
+  const cms = createCMS({
+    schema: {Contact},
+    workspaces: {main: translated},
+    roles: {
+      dutch: role('Dutch', {
+        permissions(policy) {
+          policy.set({locale: 'nl', allow: {read: true, update: true}})
+        }
+      })
+    }
+  })
+  const db = new LocalDB(cms.config)
+  for (const locale of ['en', 'nl'])
+    await db.create({
+      type: Contact,
+      id: 'contact',
+      locale,
+      set: {title: 'Contact', inputs: rows}
+    })
+  const store = new SubmissionStore({
+    db: driver['bun:sqlite'](new BunSqlite(':memory:'))
+  })
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, store, {
+        async verify(): Promise<AuthedContext> {
+          return {...context, token: 'test', user: {roles: ['dutch'], sub: 'a'}}
+        }
+      })
+    }
+  })
+  const json = {accept: 'application/json', 'content-type': 'application/json'}
+  for (const locale of ['en', 'nl'])
+    await handle(
+      new Request('http://localhost/api?action=submit', {
+        method: 'POST',
+        headers: {...json, authorization: 'Bearer test'},
+        body: JSON.stringify({
+          entryId: 'contact',
+          locale,
+          data: [
+            ['name', locale],
+            ['email', 'ann@example.com']
+          ]
+        })
+      }),
+      context
+    )
+  const list = async (query: object) => {
+    const params = new URLSearchParams({
+      action: 'submissions',
+      entryId: 'contact',
+      query: JSON.stringify(query)
+    })
+    const response = await handle(
+      new Request(`http://localhost/api?${params}`, {headers: json}),
+      context
+    )
+    return response.ok ? (await response.json()).submissions : response.status
+  }
+  const [dutch] = await list({})
+  expect(dutch.locale).toBe('nl')
+  expect(await list({locale: 'en'})).toBe(401)
+  const [english] = (await store.listSubmissions('contact', {locale: 'en'}))
+    .submissions
+  const archive = (id: string) =>
+    handle(
+      new Request(
+        `http://localhost/api?action=submissions&entryId=contact&id=${id}`,
+        {method: 'POST', headers: json, body: '{"status":"archived"}'}
+      ),
+      context
+    )
+  expect((await archive(english.id)).status).toBe(401)
+  expect((await archive(dutch.id)).status).toBe(204)
 })
