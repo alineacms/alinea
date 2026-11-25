@@ -1437,7 +1437,7 @@ async function clickBelowTrailingBlock(page: Page) {
   const editorBox = await editor.boundingBox()
   if (!blockBox || !editorBox) throw new Error('Editor not rendered')
   const below = editorBox.y + editorBox.height - (blockBox.y + blockBox.height)
-  expect(below).toBeGreaterThanOrEqual(24)
+  expect(below).toBeGreaterThanOrEqual(8)
   await page.mouse.click(
     blockBox.x + blockBox.width / 2,
     blockBox.y + blockBox.height + below / 2

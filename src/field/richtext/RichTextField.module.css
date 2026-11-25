@@ -60,13 +60,6 @@
   line-height: 1.5;
 }
 
-/* Room below a trailing block to click in, the space blocks keep between
-   them. A click puts a gap cursor there. */
-.RichTextFieldView:not([data-read-only])
-  :global(.ProseMirror:has(> [data-richtext-block-host]:last-child)) {
-  padding-bottom: 24px;
-}
-
 .RichTextFieldView :global(.ProseMirror-gapcursor::after) {
   border-top-color: var(--alinea-fg);
 }
