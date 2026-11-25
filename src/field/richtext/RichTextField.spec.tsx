@@ -1470,7 +1470,8 @@ test('leaves the value alone when clicking below a trailing block', async ({
   await clickBelowTrailingBlock(page)
 
   await expect(editor.locator('.ProseMirror-gapcursor')).toHaveCount(1)
-  expect((await editor.boundingBox())?.height).toBe(height)
+  // The new line only opens once clicked
+  expect((await editor.boundingBox())?.height).toBeGreaterThan(height ?? 0)
 
   await expect(page.getByTestId('value')).toHaveText(before ?? '')
   await expect(page.getByTestId('dirty')).toHaveText('false')

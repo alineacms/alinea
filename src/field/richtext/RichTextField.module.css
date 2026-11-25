@@ -60,15 +60,16 @@
   line-height: 1.5;
 }
 
-/* Room below a trailing block to click and start a new line, as tall as that
-   line will be once typed in. Until then a gap cursor follows the block. */
+/* Room below a trailing block to click in, the space blocks keep between
+   them. A click opens a line there, as tall as it will be once typed in, with
+   a gap cursor until then. */
 .RichTextFieldView:not([data-read-only])
-  :global(
-    .ProseMirror:has(
-      > [data-richtext-block-host]:last-child,
-      > [data-richtext-block-host] + .ProseMirror-gapcursor:last-child
-    )
-  ) {
+  :global(.ProseMirror:has(> [data-richtext-block-host]:last-child)) {
+  padding-bottom: 24px;
+}
+
+.RichTextFieldView:not([data-read-only])
+  :global(.ProseMirror:has(> [data-richtext-block-host] + .ProseMirror-gapcursor:last-child)) {
   padding-bottom: calc(1.5em + 24px);
 }
 
