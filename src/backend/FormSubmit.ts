@@ -158,7 +158,10 @@ export async function submitForm(
   const text = translate(locale, forms.messages)
   const posted = new FormData()
   for (const [name, value] of request.data) posted.append(name, value)
-  if (isSpam(posted)) return {ok: true}
+  const sent = () =>
+    type && isFormType(type) ? afterSending(graph, data) : {ok: true as const}
+  // Bots see what people see, so they can not tell they were caught
+  if (isSpam(posted)) return sent()
   const now = Math.floor(Date.now() / 1000)
   const visitor = await visitorHash(secret, request.visitor)
   const limited = await overLimit(
@@ -267,8 +270,7 @@ export async function submitForm(
     } catch (error) {
       console.error('Alinea forms.onSubmit failed', error)
     }
-  if (!type || !isFormType(type)) return {ok: true}
-  return afterSending(graph, data)
+  return sent()
 }
 
 /** Whether the published form of an entry still takes answers */

@@ -165,6 +165,19 @@ test('bots are told it worked, nothing is stored', async () => {
   ).toEqual([])
 })
 
+test('bots see the message of the form like people do', async () => {
+  const {submit} = await setup({
+    form: ServiceForm,
+    set: {title: 'Request', inputs: rows, after: 'message', message: 'Thanks!'}
+  })
+  const result = await submit({
+    name: 'Bot',
+    email: 'bot@example.com',
+    _alinea_website: 'https://spam.example'
+  })
+  expect(result.body).toEqual({ok: true, confirmation: 'Thanks!'})
+})
+
 test('only the server of the site can submit', async () => {
   const {submit} = await setup()
   const result = await submit({name: 'Ann'}, 'wrong')
